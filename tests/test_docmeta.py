@@ -4,7 +4,7 @@ from src.docmeta.core import get_file_metadata
 class TestDocMeta(unittest.TestCase):
 
     def test_pdf_sample(self):
-        meta = get_file_metadata("samples/pdf/캐치업코리아-낙하리_현대해상.pdf")
+        meta = get_file_metadata("samples/application/pdf/캐치업코리아-낙하리_현대해상.pdf")
         self.assertEqual(meta["extension"], ".pdf")
         self.assertEqual(meta["type"], "pdf")
         self.assertTrue(meta["mime"].startswith("application/pdf"))
