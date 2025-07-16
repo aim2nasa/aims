@@ -10,7 +10,7 @@ class TestDocMeta(unittest.TestCase):
         self.assertTrue(meta["mime"].startswith("application/pdf"))
 
     def test_image_sample(self):
-        meta = get_file_metadata("samples/image/캐치업자동차견적.jpg")
+        meta = get_file_metadata("samples/image/jpeg/캐치업자동차견적.jpg")
         self.assertEqual(meta["extension"], ".jpg")
         self.assertEqual(meta["type"], "image")
         self.assertTrue(meta["mime"].startswith("image/"))
