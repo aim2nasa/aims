@@ -29,6 +29,12 @@ class TestDocMetaDynamic(unittest.TestCase):
                 self.assertIn(meta["status"], ["ok", "not_found"],
                               f"status 이상: {file_path} → {meta['status']}")
 
+                # PDF면 페이지 수가 int인지 확인
+                if meta["mime"] == "application/pdf":
+                    self.assertIn("pdf_pages", meta, f"PDF 페이지수 필드 누락됨: {file_path}")
+                    self.assertIsInstance(meta["pdf_pages"], (int, type(None)),
+                                          f"PDF 페이지수 타입 오류: {file_path}")
+
                 # 이미지라면 exif 필드 반드시 dict
                 if meta["mime"].startswith("image/"):
                     self.assertIn("exif", meta, f"EXIF 필드 누락됨: {file_path}")
