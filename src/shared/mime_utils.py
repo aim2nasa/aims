@@ -43,16 +43,3 @@ def get_mime_type(file_path: str) -> str:
     except Exception:
         return "application/octet-stream"
 
-
-def detect_logical_type(mime: str) -> str:
-    """MIME → 논리적 타입(image/pdf/text/unknown) 매핑"""
-    if mime is None:
-        return "unknown"
-    if mime.startswith("image/"):
-        return "image"
-    if mime == "application/pdf":
-        return "pdf"
-    if mime.startswith("text/"):
-        return "text"
-    return "unknown"
-

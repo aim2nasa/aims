@@ -1,4 +1,6 @@
-import sys
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 from src.docmeta.core import get_file_metadata
 
 def analyze_file(file_path: str):
