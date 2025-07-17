@@ -29,7 +29,11 @@ class TestDocMetaDynamic(unittest.TestCase):
                 self.assertIn(meta["status"], ["ok", "not_found"],
                               f"status 이상: {file_path} → {meta['status']}")
 
-                # -v 옵션이 있을 때만 파일별 상세 출력
+                # 이미지라면 exif 필드 반드시 dict
+                if meta["mime"].startswith("image/"):
+                    self.assertIn("exif", meta, f"EXIF 필드 누락됨: {file_path}")
+                    self.assertIsInstance(meta["exif"], dict, f"EXIF 필드 타입 오류: {file_path}")
+
                 if VERBOSE:
                     print(f"ok: {file_path} → mime={meta['mime']}")
 
