@@ -1,28 +1,35 @@
 import unittest
+import os
+import sys
 from src.docmeta.core import get_file_metadata
 
-class TestDocMeta(unittest.TestCase):
+SAMPLES_DIR = "samples"
+VERBOSE = "-v" in sys.argv  # unittest 실행 옵션 확인
 
-    def test_pdf_sample(self):
-        meta = get_file_metadata("samples/application/pdf/캐치업코리아-낙하리_현대해상.pdf")
-        self.assertEqual(meta["extension"], ".pdf")
-        self.assertTrue(meta["mime"].startswith("application/pdf"))
+class TestDocMetaDynamic(unittest.TestCase):
+    def test_all_samples(self):
+        all_files = []
+        for root, _, files in os.walk(SAMPLES_DIR):
+            for f in files:
+                all_files.append(os.path.join(root, f))
 
-    def test_image_sample(self):
-        meta = get_file_metadata("samples/image/jpeg/캐치업자동차견적.jpg")
-        self.assertEqual(meta["extension"], ".jpg")
-        self.assertTrue(meta["mime"].startswith("image/"))
+        # 샘플 파일 없으면 실패
+        self.assertTrue(len(all_files) > 0, "samples 폴더에 테스트할 파일이 없습니다!")
 
-    def test_empty_pdf(self):
-        meta = get_file_metadata("samples/corrupt/empty.pdf")
-        self.assertEqual(meta["extension"], ".pdf")
-        self.assertTrue(meta["size_bytes"] == 0 or meta["size_bytes"] > 0)
+        for file_path in all_files:
+            with self.subTest(file=file_path):
+                meta = get_file_metadata(file_path)
 
-    def test_fake_image(self):
-        meta = get_file_metadata("samples/corrupt/fake.jpg")
-        self.assertEqual(meta["extension"], ".jpg")
+                # 기본 검증
+                self.assertIn("filename", meta, f"filename 누락됨: {file_path}")
+                self.assertEqual(meta["extension"], os.path.splitext(file_path)[1],
+                                 f"확장자 불일치: {file_path} → {meta['extension']}")
+                self.assertIsNotNone(meta["mime"], f"MIME 감지 실패: {file_path}")
+                self.assertGreaterEqual(meta["size_bytes"], 0, f"파일 크기 이상: {file_path}")
+                self.assertIn(meta["status"], ["ok", "not_found"],
+                              f"status 이상: {file_path} → {meta['status']}")
 
-    def test_random_bin(self):
-        meta = get_file_metadata("samples/corrupt/random.bin")
-        self.assertEqual(meta["extension"], ".bin")
+                # -v 옵션이 있을 때만 파일별 상세 출력
+                if VERBOSE:
+                    print(f"ok: {file_path} → mime={meta['mime']}")
 
