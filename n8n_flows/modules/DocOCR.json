@@ -47,7 +47,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.fullText }}\"\n}",
+        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.limitedText }}\"\n}",
         "options": {
           "systemMessage": "=당신은 OCR 후처리 AI입니다.\n\n입력은 JSON 형식으로 두 가지가 제공됩니다:\n- ocr_confidence: OCR API가 반환한 신뢰도 값\n- ocr_text: OCR로 인식된 원문\n\n이 두 가지를 아래 JSON 형식으로 그대로 반환하세요.\n\n{\n  \"confidence\": \"<ocr_confidence 그대로 넣기, 수정/추론 금지>\",\n  \"summary\": \"<ocr_text 내용을 3~5줄로 요약>\"\n}\n\n⚠️ 절대 문서 내용을 confidence에 넣지 마세요.\n⚠️ confidence는 입력 ocr_confidence 값 그대로 복사하세요.\n⚠️ summary에는 ocr_text 요약만 넣으세요."
         }
@@ -105,7 +105,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pages = $json.pages || [];\nlet combined = \"\";\n\nfor (const page of pages) {\n  combined += page.text + \"\\n\\n\";\n}\n\nreturn [{\n  ...$json,\n  fullText: combined.trim()\n}];"
+        "jsCode": "const pages = $json.pages || [];\n\n// 5페이지까지만 추출 (5페이지 이하 문서는 그대로)\nconst selectedPages = pages.slice(0, 5);\n\nlet limitedText = \"\";\nfor (const page of selectedPages) {\n  limitedText += page.text + \"\\n\\n\";\n}\n\n// 선택된 페이지만 합친 결과 반환\nreturn [{\n  ...$json,\n  limitedText: limitedText.trim()\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -173,7 +173,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ec0edf02-69de-4f54-a80f-7b59f4a14070",
+  "versionId": "debb4c7c-1df9-45b2-b692-9b501a78c209",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
