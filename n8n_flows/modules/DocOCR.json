@@ -1,0 +1,159 @@
+{
+  "name": "DocOCR",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.upstage.ai/v1/document-digitization",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer up_CuatSnZ5jDDHsJNPLByxijBXdmw0A"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "ocr"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -500,
+        -140
+      ],
+      "id": "bb4fbc1e-7802-4166-a99f-aa5860191c5b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.pages[0].text }}\"\n}",
+        "options": {
+          "systemMessage": "=당신은 OCR 후처리 AI입니다.\n\n입력은 JSON 형식으로 두 가지가 제공됩니다:\n- ocr_confidence: OCR API가 반환한 신뢰도 값\n- ocr_text: OCR로 인식된 원문\n\n이 두 가지를 아래 JSON 형식으로 그대로 반환하세요.\n\n{\n  \"confidence\": \"<ocr_confidence 그대로 넣기, 수정/추론 금지>\",\n  \"summary\": \"<ocr_text 내용을 3~5줄로 요약>\"\n}\n\n⚠️ 절대 문서 내용을 confidence에 넣지 마세요.\n⚠️ confidence는 입력 ocr_confidence 값 그대로 복사하세요.\n⚠️ summary에는 ocr_text 요약만 넣으세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        -140
+      ],
+      "id": "e1a44d4f-d181-4f0f-87ab-20ddf9153993",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        80
+      ],
+      "id": "368ffdbd-2fc4-4203-a0c5-ebfa064a305b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "T3sQKJvrbzgpZfuT",
+          "name": "OpenAi account - lecture용"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dococr",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        -140
+      ],
+      "id": "07379dbe-1d68-45a5-a20f-5b49a29bd4fb",
+      "name": "Webhook",
+      "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ca62d92c-0932-494b-8895-41110c862cdb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "NjpOxFx8s9HTDOqk",
+  "tags": []
+}
