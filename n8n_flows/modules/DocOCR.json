@@ -38,7 +38,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -500,
+        -740,
         -140
       ],
       "id": "bb4fbc1e-7802-4166-a99f-aa5860191c5b",
@@ -47,7 +47,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.pages[0].text }}\"\n}",
+        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.fullText }}\"\n}",
         "options": {
           "systemMessage": "=당신은 OCR 후처리 AI입니다.\n\n입력은 JSON 형식으로 두 가지가 제공됩니다:\n- ocr_confidence: OCR API가 반환한 신뢰도 값\n- ocr_text: OCR로 인식된 원문\n\n이 두 가지를 아래 JSON 형식으로 그대로 반환하세요.\n\n{\n  \"confidence\": \"<ocr_confidence 그대로 넣기, 수정/추론 금지>\",\n  \"summary\": \"<ocr_text 내용을 3~5줄로 요약>\"\n}\n\n⚠️ 절대 문서 내용을 confidence에 넣지 마세요.\n⚠️ confidence는 입력 ocr_confidence 값 그대로 복사하세요.\n⚠️ summary에는 ocr_text 요약만 넣으세요."
         }
@@ -96,12 +96,25 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -720,
+        -960,
         -140
       ],
       "id": "07379dbe-1d68-45a5-a20f-5b49a29bd4fb",
       "name": "Webhook",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const pages = $json.pages || [];\nlet combined = \"\";\n\nfor (const page of pages) {\n  combined += page.text + \"\\n\\n\";\n}\n\nreturn [{\n  ...$json,\n  fullText: combined.trim()\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        -140
+      ],
+      "id": "206112f6-e7af-47c9-8faa-a31c139bce63",
+      "name": "Code"
     }
   ],
   "pinData": {},
@@ -110,7 +123,7 @@
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Code",
             "type": "main",
             "index": 0
           }
@@ -143,13 +156,24 @@
       "main": [
         []
       ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ca62d92c-0932-494b-8895-41110c862cdb",
+  "versionId": "ec0edf02-69de-4f54-a80f-7b59f4a14070",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
