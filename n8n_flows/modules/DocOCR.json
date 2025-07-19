@@ -75,7 +75,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pages = $json.pages || [];\nlet limitedText = \"\";\n\nfor (const page of pages.slice(0, 5)) {\n  limitedText += (page.text || \"\") + \"\\n\\n\";\n}\n\nreturn [{\n  json: {\n    confidence: $input.first().json.confidence,\n    limitedText: limitedText.trim()\n  }\n}];\n"
+        "jsCode": "const pages = $json.pages || [];\n\n// ✅ 전체 텍스트(full_text)\nlet fullText = \"\";\nfor (const page of pages) {\n  fullText += (page.text || \"\") + \"\\n\\n\";\n}\n\n// ✅ 요약에만 사용할 제한 텍스트(limitedText)\nlet limitedText = \"\";\nfor (const page of pages.slice(0, 5)) {\n  limitedText += (page.text || \"\") + \"\\n\\n\";\n}\n\nreturn [{\n  json: {\n    confidence: $input.first().json.confidence,\n    full_text: fullText.trim(),      // ✅ DB 저장용 전체 텍스트\n    limitedText: limitedText.trim()  // ✅ 요약용 5p 제한 텍스트\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -186,11 +186,24 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -1080,
+        -900,
         260
       ],
       "id": "52d75aa2-0798-4dc2-85f0-2a30b6119f90",
       "name": "OCR Return"
+    },
+    {
+      "parameters": {
+        "jsCode": "let aiOutput = $node[\"AI Agent\"].json.output;\n\n// ✅ output이 문자열이면 JSON 파싱 시도\nif (typeof aiOutput === \"string\") {\n  try {\n    aiOutput = JSON.parse(aiOutput);\n  } catch (e) {\n    // 파싱 실패하면 문자열 그대로 유지\n  }\n}\n\nreturn [{\n  json: {\n    confidence: $node[\"Limit & Merge Pages\"].json.confidence,    // OCR 신뢰도\n    full_text: $node[\"Limit & Merge Pages\"].json.full_text,      // DB 저장용 전체 텍스트\n    summary: aiOutput.summary || aiOutput                       // summary 있으면 출력, 없으면 전체 반환\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        260
+      ],
+      "id": "6e2459db-13d1-431c-98a4-3d19d183a52a",
+      "name": "Merge with FullText"
     }
   ],
   "pinData": {},
@@ -221,7 +234,7 @@
       "main": [
         [
           {
-            "node": "OCR Return",
+            "node": "Merge with FullText",
             "type": "main",
             "index": 0
           }
@@ -278,13 +291,24 @@
           }
         ]
       ]
+    },
+    "Merge with FullText": {
+      "main": [
+        [
+          {
+            "node": "OCR Return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5c267021-08f1-44a3-b464-efe875c5d500",
+  "versionId": "12eb6e8d-5e81-4bfe-bf03-6dad2dd5db53",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
