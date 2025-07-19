@@ -76,7 +76,7 @@ def run_test(file_path, expect_success=True):
     print(f"  Response: {json.dumps(data, ensure_ascii=False)}")
 
     if expect_success:
-        if "output" in data and "confidence" in data["output"] and "summary" in data["output"]:
+        if "confidence" in data and "summary" in data:
             print(f"✅ PASS: {filename}")
         else:
             print(f"❌ FAIL: confidence/summary missing → {filename}")
