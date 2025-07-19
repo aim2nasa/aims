@@ -1,0 +1,134 @@
+{
+  "name": "DocMeta",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docmeta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "id": "aa6cfcdb-e78c-46cb-87bb-b93876809a9f",
+      "name": "DocMeta Webhook",
+      "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        0
+      ],
+      "id": "cda24570-d20d-4aca-97c7-179fb3489bb2",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/tmp/{{$binary.file.fileName}}",
+        "dataPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f6e8bc77-a519-4007-9a65-c438e75bfa4d",
+      "name": "Save Upload to Temp"
+    },
+    {
+      "parameters": {
+        "command": "=node /data/rossi/aims/tools/mime_type_analyzer/file_analyzer.js /tmp/{{$binary.file.fileName}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "e411928a-beee-423c-b615-6b099d6e1f9a",
+      "name": "Run DocMeta Analyzer"
+    },
+    {
+      "parameters": {
+        "jsCode": "return JSON.parse($json.stdout);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "86696f3f-b57e-4a5e-abe9-d025a5f52dd0",
+      "name": "Parse Analyzer Output"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DocMeta Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Upload to Temp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Upload to Temp": {
+      "main": [
+        [
+          {
+            "node": "Run DocMeta Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run DocMeta Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Parse Analyzer Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analyzer Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "702ac272-0252-462e-aa7b-558015a319f7",
+  "meta": {
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "8m0BTeAkQyGFEnZ2",
+  "tags": []
+}
