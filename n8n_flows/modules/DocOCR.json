@@ -75,7 +75,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pages = $json.pages || [];\nlet limitedText = \"\";\n\nfor (const page of pages.slice(0, 5)) {\n  limitedText += (page.text || \"\") + \"\\n\\n\";\n}\n\nreturn [{\n  json: {\n    limitedText: limitedText.trim()\n  }\n}];\n"
+        "jsCode": "const pages = $json.pages || [];\nlet limitedText = \"\";\n\nfor (const page of pages.slice(0, 5)) {\n  limitedText += (page.text || \"\") + \"\\n\\n\";\n}\n\nreturn [{\n  json: {\n    confidence: $input.first().json.confidence,\n    limitedText: limitedText.trim()\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -284,7 +284,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "41ce7d6e-a44d-4429-b110-8655d0a2261e",
+  "versionId": "cab58a64-8ae1-4cb5-98fe-f39ee35275ea",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
