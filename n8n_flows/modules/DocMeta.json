@@ -72,6 +72,19 @@
       ],
       "id": "86696f3f-b57e-4a5e-abe9-d025a5f52dd0",
       "name": "Parse Analyzer Output"
+    },
+    {
+      "parameters": {
+        "command": "=rm -f \"{{$node['Save Upload to Temp'].json['fileName']}}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "59a7a01e-bbaa-4131-9b1b-d25f9a843b61",
+      "name": "Delete Temp File"
     }
   ],
   "pinData": {},
@@ -119,13 +132,29 @@
           }
         ]
       ]
+    },
+    "Delete Temp File": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Delete Temp File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "702ac272-0252-462e-aa7b-558015a319f7",
+  "versionId": "f5f018bf-8d0b-46b3-8bbc-6253d2e5c170",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
