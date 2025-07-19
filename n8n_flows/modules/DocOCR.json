@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\n\n// Upstage OCR에서 에러가 포함된 경우\nif (response.error || response.status === 413 || response.error?.message?.includes('too many pages')) {\n  return [{\n    json: {                               // ✅ json 래핑\n      error: true,\n      status: response.status || 413,     // 상태코드 유지\n      userMessage: \"❌ OCR 실패: 문서 페이지가 너무 많습니다. 30페이지 이하 문서만 지원됩니다.\"\n    }\n  }];\n}\n\n// 에러가 아니면 정상 응답 플래그와 함께 반환\nreturn [{\n  json: {                                // ✅ json 래핑\n    error: false,\n    ...response\n  }\n}];\n"
+        "jsCode": "const response = $json;\n\n// ✅ 429: 요청 제한 초과\nif (response.status === 429) {\n  return [{\n    json: {\n      error: true,\n      status: 429,\n      userMessage: \"❌ OCR 요청 제한 초과: 잠시 후 다시 시도하세요.\"\n    }\n  }];\n}\n\n// ✅ 413: 문서 페이지 초과\nif (response.status === 413 || response.error?.message?.includes('too many pages')) {\n  return [{\n    json: {\n      error: true,\n      status: 413,\n      userMessage: \"❌ OCR 실패: 문서 페이지가 너무 많습니다. 30페이지 이하 문서만 지원됩니다.\"\n    }\n  }];\n}\n\n// ✅ 그 외 에러 → Upstage 메시지 그대로 전달\nif (response.error) {\n  return [{\n    json: {\n      error: true,\n      status: response.status || 500,\n      userMessage: response.error.message || \"❌ OCR 처리 실패\"\n    }\n  }];\n}\n\n// ✅ 정상 응답\nreturn [{\n  json: {\n    error: false,\n    ...response\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -280,11 +280,11 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "cab58a64-8ae1-4cb5-98fe-f39ee35275ea",
+  "versionId": "5c267021-08f1-44a3-b464-efe875c5d500",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
