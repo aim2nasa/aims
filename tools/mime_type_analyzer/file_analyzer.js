@@ -45,11 +45,17 @@ async function getFileMetadata(filePath) {
     meta.pdf_pages = pdfData.numpages;
   }
 
-  // 이미지면 EXIF 추출
-  if (mimeType && mimeType.startsWith("image/")) {
-    const buffer = fs.readFileSync(filePath);
-    const parser = exif.create(buffer);
-    meta.exif = parser.parse().tags;
+  // JPEG만 EXIF 파싱, PNG 등은 스킵
+  if (mimeType === 'image/jpeg') {
+      try {
+          const buffer = fs.readFileSync(filePath);
+          const parser = exif.create(buffer);
+          meta.exif = parser.parse().tags;
+      } catch (error) {
+          meta.exif = {};
+      }
+  } else {
+      meta.exif = {}; // PNG, PDF 등은 EXIF 없음
   }
 
   return meta;
