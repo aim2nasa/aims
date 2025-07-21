@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -540,
+        0,
         0
       ],
-      "id": "14659d65-d267-4bc6-8598-b713476767a3",
+      "id": "8082dafe-decf-4d19-b046-8fbb8d9a82d4",
       "name": "DocUpload Webhook",
       "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -320,
+        220,
         0
       ],
-      "id": "ba8b15f2-e227-482b-88c9-7cb5ae1b5f3c",
+      "id": "f573f2d4-3cb2-41bf-aac8-ab78c8e8f8c5",
       "name": "Save to Temp File"
     },
     {
@@ -41,10 +41,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -100,
+        440,
         0
       ],
-      "id": "75b4e44d-ce9a-46c0-87fe-c9a8551575b6",
+      "id": "f4daf762-7239-4733-9adc-08eade8acb94",
       "name": "Generate Final Path"
     },
     {
@@ -54,10 +54,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        120,
+        660,
         0
       ],
-      "id": "3456fee9-4cf5-43a8-a702-baa6cc143e0e",
+      "id": "aacaa851-5664-40d2-88ba-bf2d54508553",
       "name": "Exec mkdir",
       "alwaysOutputData": true
     },
@@ -68,10 +68,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        340,
+        880,
         0
       ],
-      "id": "bd105f86-4e5d-40c1-a00e-b17f5d004e8e",
+      "id": "38088cb0-95f3-40e8-805d-e40e8806eae3",
       "name": "Exec mv"
     },
     {
@@ -83,11 +83,48 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        560,
+        1540,
         0
       ],
-      "id": "3855aa10-974b-456b-9289-535c96f9c1f2",
+      "id": "5fc56798-5db5-47fb-89ff-bf9016844a2e",
       "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"originalName\": \"{{$node[\"Generate Final Path\"].json[\"originalName\"] }}\",\n  \"saveName\": \"{{$node[\"Generate Final Path\"].json[\"saveName\"] }}\",\n  \"destPath\": \"{{$node[\"Generate Final Path\"].json[\"destPath\"] }}\",\n  \"folder\": \"{{$node[\"Generate Final Path\"].json[\"folder\"] }}\",\n  \"uploaded_at\": \"{{ $now.format('yyyy-MM-dd\\'T\\'HH:mm:ss.SSSxxx') }}\"\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "c5e9c400-e998-4aa4-a7ea-b23def9a5cfa",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "files",
+        "fields": "=originalName,saveName,destPath,folder,uploaded_at",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "92126106-b593-49fc-a16d-dc1616ba3fe3",
+      "name": "Save File Metadata to DB",
+      "credentials": {
+        "mongoDb": {
+          "id": "iOJAgJOlMFh18tcD",
+          "name": "MongoDB account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -140,6 +177,28 @@
       "main": [
         [
           {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Save File Metadata to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save File Metadata to DB": {
+      "main": [
+        [
+          {
             "node": "Respond to Webhook",
             "type": "main",
             "index": 0
@@ -152,10 +211,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e259040a-4a28-4ebe-bd6d-2d4ce348a327",
+  "versionId": "e4ae585b-5c2d-4a59-be17-1e0b0f6dd2b9",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
-  "id": "3uyjPfmlN9ETHNqJ",
+  "id": "GDKL1nh5yLXlwb74",
   "tags": []
 }
