@@ -32,7 +32,8 @@
         40
       ],
       "id": "d4b96fd4-4f44-4305-a0f9-a8be4fd396af",
-      "name": "Save to Temp File"
+      "name": "Save to Temp File",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -41,8 +42,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        40
+        1100,
+        140
       ],
       "id": "c60ad833-66fd-493d-9da4-56140fba03ee",
       "name": "Generate Final Path"
@@ -54,8 +55,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1100,
-        40
+        1320,
+        140
       ],
       "id": "43ddd746-feb4-4eb5-a19b-7c12930967ed",
       "name": "Exec mkdir",
@@ -68,8 +69,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1320,
-        40
+        1540,
+        140
       ],
       "id": "290d458e-bbfc-467e-a143-6599fa2d9d14",
       "name": "Exec mv"
@@ -83,8 +84,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1980,
-        40
+        2200,
+        140
       ],
       "id": "f3eccaed-7337-4daa-84c7-bb38395dee9b",
       "name": "Respond to Webhook"
@@ -98,8 +99,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1540,
-        40
+        1760,
+        140
       ],
       "id": "43d7862f-a867-4d3c-bacf-809397c28abb",
       "name": "Edit Fields"
@@ -114,8 +115,8 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1760,
-        40
+        1980,
+        140
       ],
       "id": "ffad93d1-e690-4111-8986-813b3cbb5633",
       "name": "Save File Metadata to DB",
@@ -138,6 +139,70 @@
       ],
       "id": "36d0d769-31d7-4029-98c2-f82fb3731313",
       "name": "Check Binary File"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"{{$json.code}}\",\n  \"message\": \"{{$json.message}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        -160
+      ],
+      "id": "130104a4-63c8-4b4d-a8ae-96e2eadb730d",
+      "name": "Respond 400 BadRequest"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"TEMP_SAVE_FAILED\",\n  \"message\": \"Failed to save file to temp storage\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        -60
+      ],
+      "id": "278ddfa2-4894-4dd7-8ee0-d534935ab3ec",
+      "name": "Respond 500 Temp Save Failed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e1ae6da-0a84-4689-9e4d-e8a4ea783ae2",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        40
+      ],
+      "id": "3b84b86a-1b55-4cf9-89cc-f6c1211aacd1",
+      "name": "Save Error?"
     },
     {
       "parameters": {
@@ -171,22 +236,7 @@
         -60
       ],
       "id": "5342738e-05a4-44c5-9dc7-51c75eb50808",
-      "name": "Error?"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"{{$json.code}}\",\n  \"message\": \"{{$json.message}}\"\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        660,
-        -160
-      ],
-      "id": "130104a4-63c8-4b4d-a8ae-96e2eadb730d",
-      "name": "Respond 400 BadRequest"
+      "name": "File Exist?"
     }
   ],
   "pinData": {},
@@ -206,7 +256,7 @@
       "main": [
         [
           {
-            "node": "Generate Final Path",
+            "node": "Save Error?",
             "type": "main",
             "index": 0
           }
@@ -272,14 +322,32 @@
       "main": [
         [
           {
-            "node": "Error?",
+            "node": "File Exist?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Error?": {
+    "Save Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond 500 Temp Save Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Final Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Exist?": {
       "main": [
         [
           {
@@ -302,7 +370,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f8960cbc-d94e-4262-98cf-f863f6021fd0",
+  "versionId": "5ff221f1-dab5-468d-af97-3a0b64c7e83a",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
