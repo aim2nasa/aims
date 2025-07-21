@@ -1,0 +1,115 @@
+{
+  "name": "Json MongoDB Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "34121981-bb9f-47c1-98d1-abb3f677435e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ef185d73-ef01-4d71-9544-ef433e1c73b9",
+              "name": "original_name",
+              "value": "sample.doc",
+              "type": "string"
+            },
+            {
+              "id": "b97d5a2f-5cee-4029-b898-9dc5c76181a9",
+              "name": "saved_name",
+              "value": "250721193721_fe5jmen2.doc",
+              "type": "string"
+            },
+            {
+              "id": "f4605369-bf5a-4f30-a3d4-abe3cf24fc0d",
+              "name": "path",
+              "value": "/data/files/2025/07/sample.doc",
+              "type": "string"
+            },
+            {
+              "id": "1aabec35-34e1-402b-ab72-70671899beb8",
+              "name": "uploaded_at",
+              "value": "2025-07-21T11:56:51.616Z",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "776f0000-5d1d-46c3-b805-6d455cedc5dc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "files",
+        "fields": "=original_name,saved_name,path,uploaded_at",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "ce32ac7a-3584-4924-8592-378a4b1e78c2",
+      "name": "MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "iOJAgJOlMFh18tcD",
+          "name": "MongoDB account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "69a6257e-0fac-4526-81e8-8a1295905ba0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "LnMYzWkYzDSK2Yon",
+  "tags": []
+}
