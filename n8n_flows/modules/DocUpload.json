@@ -1,0 +1,161 @@
+{
+  "name": "DocUpload",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docupload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -540,
+        0
+      ],
+      "id": "14659d65-d267-4bc6-8598-b713476767a3",
+      "name": "DocUpload Webhook",
+      "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{\"/data/tmp/upload_\" + $now.toString().replace(/[^0-9A-Za-z]/g,'') + \"_\" + Math.random().toString(36).slice(2,8) + \".\" + ($binary.file.fileExtension || \"bin\").replace(/[^0-9A-Za-z]/g,'')}}",
+        "dataPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "ba8b15f2-e227-482b-88c9-7cb5ae1b5f3c",
+      "name": "Save to Temp File"
+    },
+    {
+      "parameters": {
+        "jsCode": "function randomToken(len = 8) {\n  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';\n  let out = '';\n  for (let i = 0; i < len; i++) {\n    out += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return out;\n}\n\n// 현재 시각\nconst now = new Date();\nconst yyyy = now.getFullYear();\nconst mm = ('0' + (now.getMonth() + 1)).slice(-2);\nconst dd = ('0' + now.getDate()).slice(-2);\nconst hh = ('0' + now.getHours()).slice(-2);\nconst min = ('0' + now.getMinutes()).slice(-2);\nconst ss = ('0' + now.getSeconds()).slice(-2);\n\n// YYMMDDhhmmss 타임스탬프\nconst timestamp = `${String(yyyy).slice(-2)}${mm}${dd}${hh}${min}${ss}`;\n\n// 랜덤 토큰\nconst token = randomToken(8);\n\n// 확장자 (없으면 bin)\nconst ext = $binary.file?.fileExtension || 'bin';\n\n// ✅ 최종 폴더 (/data/files/YYYY/MM)\nconst folder = `/data/files/${yyyy}/${mm}`;\n\n// ✅ 최종 파일명 (YYMMDDhhmmss_random.ext)\nconst saveName = `${timestamp}_${token}.${ext}`;\n\n// ✅ 최종 전체 경로\nconst destPath = `${folder}/${saveName}`;\n\n// ✅ 원본 파일명 (Webhook binary에서 가져옴)\nconst originalName = $binary.file?.fileName || 'unknown';\n\nreturn [{\n  json: {\n    tmpPath: $json.filePath,   // 임시 저장 경로 (/tmp/upload_...)\n    folder,                    // 최종 폴더 (/data/files/YYYY/MM)\n    destPath,                  // 최종 경로\n    saveName,                  // YYMMDDhhmmss_random.ext\n    originalName               // 업로드 원본명\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        0
+      ],
+      "id": "75b4e44d-ce9a-46c0-87fe-c9a8551575b6",
+      "name": "Generate Final Path"
+    },
+    {
+      "parameters": {
+        "command": "=mkdir -p {{$json[\"folder\"]}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        120,
+        0
+      ],
+      "id": "3456fee9-4cf5-43a8-a702-baa6cc143e0e",
+      "name": "Exec mkdir",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "command": "=mv {{ $('Save to Temp File').item.json.fileName }} {{$node[\"Generate Final Path\"].json[\"destPath\"]}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        340,
+        0
+      ],
+      "id": "bd105f86-4e5d-40c1-a00e-b17f5d004e8e",
+      "name": "Exec mv"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"result\": \"success\",\n  \"original\": \"{{$node['Generate Final Path'].json['originalName']}}\",\n  \"saved_name\": \"{{$node['Generate Final Path'].json['saveName']}}\",\n  \"path\": \"{{$node['Generate Final Path'].json['destPath']}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "3855aa10-974b-456b-9289-535c96f9c1f2",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DocUpload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save to Temp File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Temp File": {
+      "main": [
+        [
+          {
+            "node": "Generate Final Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Final Path": {
+      "main": [
+        [
+          {
+            "node": "Exec mkdir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exec mkdir": {
+      "main": [
+        [
+          {
+            "node": "Exec mv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exec mv": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "daf920ec-bb41-49d3-8c4e-bd7b7ea09cf9",
+  "meta": {
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "3uyjPfmlN9ETHNqJ",
+  "tags": []
+}
