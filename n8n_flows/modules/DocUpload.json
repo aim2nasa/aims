@@ -12,9 +12,9 @@
       "typeVersion": 2,
       "position": [
         0,
-        0
+        -60
       ],
-      "id": "8082dafe-decf-4d19-b046-8fbb8d9a82d4",
+      "id": "7489f288-59c3-44e1-abc9-29f60a86ab4c",
       "name": "DocUpload Webhook",
       "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        220,
-        0
+        660,
+        40
       ],
-      "id": "f573f2d4-3cb2-41bf-aac8-ab78c8e8f8c5",
+      "id": "d4b96fd4-4f44-4305-a0f9-a8be4fd396af",
       "name": "Save to Temp File"
     },
     {
@@ -41,10 +41,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        0
+        880,
+        40
       ],
-      "id": "f4daf762-7239-4733-9adc-08eade8acb94",
+      "id": "c60ad833-66fd-493d-9da4-56140fba03ee",
       "name": "Generate Final Path"
     },
     {
@@ -54,10 +54,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        660,
-        0
+        1100,
+        40
       ],
-      "id": "aacaa851-5664-40d2-88ba-bf2d54508553",
+      "id": "43ddd746-feb4-4eb5-a19b-7c12930967ed",
       "name": "Exec mkdir",
       "alwaysOutputData": true
     },
@@ -68,10 +68,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        880,
-        0
+        1320,
+        40
       ],
-      "id": "38088cb0-95f3-40e8-805d-e40e8806eae3",
+      "id": "290d458e-bbfc-467e-a143-6599fa2d9d14",
       "name": "Exec mv"
     },
     {
@@ -83,10 +83,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1540,
-        0
+        1980,
+        40
       ],
-      "id": "5fc56798-5db5-47fb-89ff-bf9016844a2e",
+      "id": "f3eccaed-7337-4daa-84c7-bb38395dee9b",
       "name": "Respond to Webhook"
     },
     {
@@ -98,10 +98,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1100,
-        0
+        1540,
+        40
       ],
-      "id": "c5e9c400-e998-4aa4-a7ea-b23def9a5cfa",
+      "id": "43d7862f-a867-4d3c-bacf-809397c28abb",
       "name": "Edit Fields"
     },
     {
@@ -114,10 +114,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1320,
-        0
+        1760,
+        40
       ],
-      "id": "92126106-b593-49fc-a16d-dc1616ba3fe3",
+      "id": "ffad93d1-e690-4111-8986-813b3cbb5633",
       "name": "Save File Metadata to DB",
       "credentials": {
         "mongoDb": {
@@ -125,6 +125,68 @@
           "name": "MongoDB account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate uploaded file existence\nif (!$binary?.file) {\n  return [\n    {\n      json: {\n        error: true,\n        code: \"REQUEST_INVALID\",\n        message: \"No file received or parse error\"\n      }\n    }\n  ];\n}\n\n// 정상일 때 (테스트 모드라 실행 안 됨)\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -60
+      ],
+      "id": "36d0d769-31d7-4029-98c2-f82fb3731313",
+      "name": "Check Binary File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d8eef84-63a9-4140-8330-d24d19158fba",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        -60
+      ],
+      "id": "5342738e-05a4-44c5-9dc7-51c75eb50808",
+      "name": "Error?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"{{$json.code}}\",\n  \"message\": \"{{$json.message}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        -160
+      ],
+      "id": "130104a4-63c8-4b4d-a8ae-96e2eadb730d",
+      "name": "Respond 400 BadRequest"
     }
   ],
   "pinData": {},
@@ -133,7 +195,7 @@
       "main": [
         [
           {
-            "node": "Save to Temp File",
+            "node": "Check Binary File",
             "type": "main",
             "index": 0
           }
@@ -205,17 +267,45 @@
           }
         ]
       ]
+    },
+    "Check Binary File": {
+      "main": [
+        [
+          {
+            "node": "Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond 400 BadRequest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save to Temp File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e4ae585b-5c2d-4a59-be17-1e0b0f6dd2b9",
+  "versionId": "f8960cbc-d94e-4262-98cf-f863f6021fd0",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
-  "id": "GDKL1nh5yLXlwb74",
+  "id": "mw7evXMK35vpTlu2",
   "tags": []
 }
