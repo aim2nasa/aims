@@ -240,11 +240,11 @@
           "conditions": [
             {
               "id": "a3405ef5-dcfa-4a20-9caf-6f39f0178a63",
-              "leftValue": "={{ $json.status==ok }}",
+              "leftValue": "={{ $json.status && $json.status.toString().toLowerCase() === \"ok\" }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
-                "operation": "true",
+                "operation": "false",
                 "singleValue": true
               }
             }
@@ -427,7 +427,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f01109c9-b698-48f9-9fa6-e9a2db5338ed",
+  "versionId": "bc7b5d7a-fbfc-4ae5-9d84-4351906a3498",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
