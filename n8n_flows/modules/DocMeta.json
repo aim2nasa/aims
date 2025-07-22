@@ -25,8 +25,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        420,
-        260
+        640,
+        360
       ],
       "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
       "name": "Respond to Webhook"
@@ -45,7 +45,8 @@
         260
       ],
       "id": "f72a8bfe-378d-4b6b-9c02-86fe6643a667",
-      "name": "Save Upload to Temp"
+      "name": "Save Upload to Temp",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -54,8 +55,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -20,
-        260
+        200,
+        360
       ],
       "id": "590822e8-d380-4b98-ba87-a2da0d666fa0",
       "name": "Run DocMeta Analyzer"
@@ -67,8 +68,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        200,
-        260
+        420,
+        360
       ],
       "id": "8164819f-edaf-401f-ad04-0cd19bb6e71b",
       "name": "Parse Analyzer Output"
@@ -80,11 +81,28 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        640,
-        260
+        860,
+        360
       ],
       "id": "e4673920-06d9-41f2-a884-ce6c99e0e63e",
       "name": "Delete Temp File"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"NO_BINARY_FILE\",\n  \"message\": \"No file received for DocMeta\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -240,
+        60
+      ],
+      "id": "0c669be8-aa9b-4750-a29e-460705289b75",
+      "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
     },
     {
       "parameters": {
@@ -118,24 +136,58 @@
         160
       ],
       "id": "15a0a28d-7c80-4119-ba07-fe996168a23b",
-      "name": "If"
+      "name": "File Exist?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b2e318dc-a3aa-43cd-be16-84a627174481",
+              "leftValue": "={{ $json.fileName == undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -20,
+        260
+      ],
+      "id": "8408d817-55a6-4864-b1d0-fe9165b41868",
+      "name": "Save Error?"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"NO_BINARY_FILE\",\n  \"message\": \"No file received for DocMeta\"\n}",
+        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"SAVE_FAIL\",\n  \"message\": \"Failed to save file to temp directory\"\n}\n",
         "options": {
-          "responseCode": 400
+          "responseCode": 500
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -240,
-        60
+        200,
+        160
       ],
-      "id": "0c669be8-aa9b-4750-a29e-460705289b75",
-      "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
+      "id": "2d965f64-90a0-40d2-996e-7daa84e93168",
+      "name": "Respond 500 SaveFail"
     }
   ],
   "pinData": {},
@@ -144,7 +196,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "File Exist?",
             "type": "main",
             "index": 0
           }
@@ -155,7 +207,7 @@
       "main": [
         [
           {
-            "node": "Run DocMeta Analyzer",
+            "node": "Save Error?",
             "type": "main",
             "index": 0
           }
@@ -195,7 +247,7 @@
         ]
       ]
     },
-    "If": {
+    "File Exist?": {
       "main": [
         [
           {
@@ -212,13 +264,31 @@
           }
         ]
       ]
+    },
+    "Save Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond 500 SaveFail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run DocMeta Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "363f4b91-2091-4e7e-b339-788c6bdd6f57",
+  "versionId": "b86ee3cd-19f5-4440-b6cc-38e2b8632df0",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
