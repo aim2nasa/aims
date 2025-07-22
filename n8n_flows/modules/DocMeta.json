@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -220,
+        0,
         0
       ],
-      "id": "aa6cfcdb-e78c-46cb-87bb-b93876809a9f",
+      "id": "575f2c37-7b13-4f80-a73e-eab0aa0b0211",
       "name": "DocMeta Webhook",
       "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
     },
@@ -25,39 +25,39 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        660,
+        880,
         0
       ],
-      "id": "cda24570-d20d-4aca-97c7-179fb3489bb2",
+      "id": "1cb874fd-e128-4c53-981f-83fa7e88423c",
       "name": "Respond to Webhook"
     },
     {
       "parameters": {
         "operation": "write",
-        "fileName": "=/tmp/{{$binary.file.fileName}}",
+        "fileName": "=/data/tmp/{{$binary.file.fileName}}",
         "dataPropertyName": "file",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        0,
+        220,
         0
       ],
-      "id": "f6e8bc77-a519-4007-9a65-c438e75bfa4d",
+      "id": "b2dd3f0f-92a3-4a3a-a8c3-cc2a46e63f6b",
       "name": "Save Upload to Temp"
     },
     {
       "parameters": {
-        "command": "=node /data/rossi/aims/tools/mime_type_analyzer/file_analyzer.js /tmp/{{$binary.file.fileName}}"
+        "command": "=node /data/mime_analyzer/file_analyzer.js /data/tmp/{{$binary.file.fileName}}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        220,
+        440,
         0
       ],
-      "id": "e411928a-beee-423c-b615-6b099d6e1f9a",
+      "id": "0f9f6e7f-dc0c-4db6-9a28-ab66fa5b0ee7",
       "name": "Run DocMeta Analyzer"
     },
     {
@@ -67,10 +67,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
+        660,
         0
       ],
-      "id": "86696f3f-b57e-4a5e-abe9-d025a5f52dd0",
+      "id": "f1ccbb04-deff-4cfd-b4d1-cca991ecf219",
       "name": "Parse Analyzer Output"
     },
     {
@@ -80,10 +80,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        880,
+        1100,
         0
       ],
-      "id": "59a7a01e-bbaa-4131-9b1b-d25f9a843b61",
+      "id": "9fe44f84-c5c4-4aff-a46e-17970fc3ec03",
       "name": "Delete Temp File"
     }
   ],
@@ -133,11 +133,6 @@
         ]
       ]
     },
-    "Delete Temp File": {
-      "main": [
-        []
-      ]
-    },
     "Respond to Webhook": {
       "main": [
         [
@@ -154,10 +149,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f5f018bf-8d0b-46b3-8bbc-6253d2e5c170",
+  "versionId": "bf511d83-3ae1-461b-931a-76a1ea808722",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
-  "id": "8m0BTeAkQyGFEnZ2",
+  "id": "kbMpbUynCeTkPfpZ",
   "tags": []
 }
