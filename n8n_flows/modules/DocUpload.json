@@ -85,8 +85,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2640,
-        340
+        2860,
+        440
       ],
       "id": "f3eccaed-7337-4daa-84c7-bb38395dee9b",
       "name": "Respond to Webhook"
@@ -121,6 +121,7 @@
       ],
       "id": "ffad93d1-e690-4111-8986-813b3cbb5633",
       "name": "Save File Metadata to DB",
+      "alwaysOutputData": true,
       "credentials": {
         "mongoDb": {
           "id": "iOJAgJOlMFh18tcD",
@@ -336,6 +337,55 @@
       ],
       "id": "3321f84d-4c1e-46e7-ae45-28b48e350e84",
       "name": "Respond 500 MOVE_FAILED"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d84d670-777d-4d7e-b7d3-89e62a75d446",
+              "leftValue": "={{$json.error}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        340
+      ],
+      "id": "1c465c7d-59c4-41e7-b077-155664a6f68d",
+      "name": "DB Error?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"DB_INSERT_FAILED\",\n  \"message\": \"{{$json.message || 'Failed to insert file metadata into DB'}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2860,
+        240
+      ],
+      "id": "6db63cd6-4674-430d-96c3-d57be66e59db",
+      "name": "Respond 500 DB_INSERT_FAILED"
     }
   ],
   "pinData": {},
@@ -410,7 +460,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "DB Error?",
             "type": "main",
             "index": 0
           }
@@ -499,13 +549,31 @@
           }
         ]
       ]
+    },
+    "DB Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond 500 DB_INSERT_FAILED",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1069d234-dd2b-4a6e-a8f3-0d0db2d17644",
+  "versionId": "bc19c68c-2efd-4568-b1ba-1b55db716308",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
