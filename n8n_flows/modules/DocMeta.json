@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        0
+        -680,
+        160
       ],
-      "id": "575f2c37-7b13-4f80-a73e-eab0aa0b0211",
+      "id": "13460ef1-ef45-4a65-a94c-2ef97bd616f4",
       "name": "DocMeta Webhook",
       "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
     },
@@ -25,10 +25,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        880,
-        0
+        420,
+        260
       ],
-      "id": "1cb874fd-e128-4c53-981f-83fa7e88423c",
+      "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
       "name": "Respond to Webhook"
     },
     {
@@ -41,10 +41,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        220,
-        0
+        -240,
+        260
       ],
-      "id": "b2dd3f0f-92a3-4a3a-a8c3-cc2a46e63f6b",
+      "id": "f72a8bfe-378d-4b6b-9c02-86fe6643a667",
       "name": "Save Upload to Temp"
     },
     {
@@ -54,10 +54,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        440,
-        0
+        -20,
+        260
       ],
-      "id": "0f9f6e7f-dc0c-4db6-9a28-ab66fa5b0ee7",
+      "id": "590822e8-d380-4b98-ba87-a2da0d666fa0",
       "name": "Run DocMeta Analyzer"
     },
     {
@@ -67,10 +67,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        660,
-        0
+        200,
+        260
       ],
-      "id": "f1ccbb04-deff-4cfd-b4d1-cca991ecf219",
+      "id": "8164819f-edaf-401f-ad04-0cd19bb6e71b",
       "name": "Parse Analyzer Output"
     },
     {
@@ -80,11 +80,62 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1100,
-        0
+        640,
+        260
       ],
-      "id": "9fe44f84-c5c4-4aff-a46e-17970fc3ec03",
+      "id": "e4673920-06d9-41f2-a884-ce6c99e0e63e",
       "name": "Delete Temp File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2a6a9aba-3fd9-41c0-b335-5570fce61c6d",
+              "leftValue": "={{ $binary.file == undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -460,
+        160
+      ],
+      "id": "15a0a28d-7c80-4119-ba07-fe996168a23b",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"NO_BINARY_FILE\",\n  \"message\": \"No file received for DocMeta\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -240,
+        60
+      ],
+      "id": "0c669be8-aa9b-4750-a29e-460705289b75",
+      "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
     }
   ],
   "pinData": {},
@@ -93,7 +144,7 @@
       "main": [
         [
           {
-            "node": "Save Upload to Temp",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -143,13 +194,31 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond 400 BadRequest (NO_BINARY_FILE)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Upload to Temp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "bf511d83-3ae1-461b-931a-76a1ea808722",
+  "versionId": "363f4b91-2091-4e7e-b339-788c6bdd6f57",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
