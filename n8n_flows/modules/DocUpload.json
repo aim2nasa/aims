@@ -73,7 +73,8 @@
         240
       ],
       "id": "290d458e-bbfc-467e-a143-6599fa2d9d14",
-      "name": "Exec mv"
+      "name": "Exec mv",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -84,8 +85,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2420,
-        240
+        2640,
+        340
       ],
       "id": "f3eccaed-7337-4daa-84c7-bb38395dee9b",
       "name": "Respond to Webhook"
@@ -99,8 +100,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1980,
-        240
+        2200,
+        340
       ],
       "id": "43d7862f-a867-4d3c-bacf-809397c28abb",
       "name": "Edit Fields"
@@ -115,8 +116,8 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        2200,
-        240
+        2420,
+        340
       ],
       "id": "ffad93d1-e690-4111-8986-813b3cbb5633",
       "name": "Save File Metadata to DB",
@@ -240,6 +241,21 @@
     },
     {
       "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"MKDIR_FAILED\",\n  \"message\": \"{{$json.stderr}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        40
+      ],
+      "id": "6d99ffce-f2d7-4e37-bf1b-9692a4378b47",
+      "name": "Respond 500 MKDIR_FAILED"
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -270,22 +286,56 @@
         140
       ],
       "id": "200888ba-b616-4c73-a91a-a321cd36c6e4",
-      "name": "If"
+      "name": "Mkdir Error?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6c053a19-c78b-448d-b2ab-e3d107b98e7f",
+              "leftValue": "={{$json.exitCode}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        240
+      ],
+      "id": "bbb4ed8c-182c-49cd-9485-60b05d637169",
+      "name": "Mv Error?"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"MKDIR_FAILED\",\n  \"message\": \"{{$json.stderr}}\"\n}",
+        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"MOVE_FAILED\",\n  \"message\": \"{{$json.stderr}}\"\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1760,
-        40
+        2200,
+        140
       ],
-      "id": "6d99ffce-f2d7-4e37-bf1b-9692a4378b47",
-      "name": "Respond 500 MKDIR_FAILED"
+      "id": "3321f84d-4c1e-46e7-ae45-28b48e350e84",
+      "name": "Respond 500 MOVE_FAILED"
     }
   ],
   "pinData": {},
@@ -327,7 +377,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Mkdir Error?",
             "type": "main",
             "index": 0
           }
@@ -338,7 +388,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Mv Error?",
             "type": "main",
             "index": 0
           }
@@ -414,7 +464,7 @@
         ]
       ]
     },
-    "If": {
+    "Mkdir Error?": {
       "main": [
         [
           {
@@ -431,13 +481,31 @@
           }
         ]
       ]
+    },
+    "Mv Error?": {
+      "main": [
+        [
+          {
+            "node": "Respond 500 MOVE_FAILED",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5ea1e888-4b3c-4e6b-baf5-0ee7b811f75b",
+  "versionId": "1069d234-dd2b-4a6e-a8f3-0d0db2d17644",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
