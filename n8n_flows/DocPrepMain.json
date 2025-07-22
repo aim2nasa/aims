@@ -1,0 +1,77 @@
+{
+  "name": "DocPrepMain",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docprep-main",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "477a7345-0167-4cad-910a-2cff9eb8caf4",
+      "name": "DocPrepMain Webhook",
+      "webhookId": "3be242b1-3628-4384-b151-cc43d91e3147"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nd.giize.com/webhook/docupload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "e02dac84-9e75-4abe-aba6-7fc702d4b2fe",
+      "name": "DocUpload Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DocPrepMain Webhook": {
+      "main": [
+        [
+          {
+            "node": "DocUpload Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DocUpload Request": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d014bee2-a01e-46cb-b51b-3ecdc294031f",
+  "meta": {
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "IxdVFdbMBedaNNfz",
+  "tags": []
+}
