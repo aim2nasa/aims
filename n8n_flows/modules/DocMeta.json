@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -680,
-        160
+        -1160,
+        120
       ],
-      "id": "13460ef1-ef45-4a65-a94c-2ef97bd616f4",
+      "id": "a7d2407a-0798-49ea-8ffd-3cf99fe30a38",
       "name": "DocMeta Webhook",
       "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -240,
-        260
+        -500,
+        120
       ],
-      "id": "f72a8bfe-378d-4b6b-9c02-86fe6643a667",
+      "id": "19fc8273-4941-49b7-bccc-ab17bd65cf9b",
       "name": "Save Upload to Temp",
       "alwaysOutputData": true
     },
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        200,
-        360
+        -60,
+        220
       ],
-      "id": "590822e8-d380-4b98-ba87-a2da0d666fa0",
+      "id": "23b9fcc5-0925-4d70-a56a-9135d6a5acc5",
       "name": "Run DocMeta Analyzer",
       "alwaysOutputData": true
     },
@@ -56,25 +56,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        460
+        380,
+        420
       ],
-      "id": "8164819f-edaf-401f-ad04-0cd19bb6e71b",
+      "id": "7c70b9e2-0d5c-4e30-8394-a9f48d009205",
       "name": "Parse Analyzer Output"
-    },
-    {
-      "parameters": {
-        "command": "=rm -f \"{{$node['Save Upload to Temp'].json['fileName']}}\""
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1300,
-        560
-      ],
-      "id": "e4673920-06d9-41f2-a884-ce6c99e0e63e",
-      "name": "Delete Temp File",
-      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -87,45 +73,11 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -240,
-        60
+        -720,
+        20
       ],
-      "id": "0c669be8-aa9b-4750-a29e-460705289b75",
+      "id": "55a7eeb7-db82-4530-b573-eae6268fb7b8",
       "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "2a6a9aba-3fd9-41c0-b335-5570fce61c6d",
-              "leftValue": "={{ $binary.file == undefined }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -460,
-        160
-      ],
-      "id": "15a0a28d-7c80-4119-ba07-fe996168a23b",
-      "name": "File Exist?"
     },
     {
       "parameters": {
@@ -155,10 +107,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -20,
-        260
+        -280,
+        120
       ],
-      "id": "8408d817-55a6-4864-b1d0-fe9165b41868",
+      "id": "b8518ea3-7fe1-44ed-ad01-7bbf4396e7fe",
       "name": "Save Error?"
     },
     {
@@ -172,10 +124,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        200,
-        160
+        -60,
+        20
       ],
-      "id": "2d965f64-90a0-40d2-996e-7daa84e93168",
+      "id": "415fd826-32d8-485d-a089-94879f85fa1d",
       "name": "Respond 500 SaveFail"
     },
     {
@@ -189,10 +141,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        640,
-        260
+        380,
+        220
       ],
-      "id": "673585ef-1f4b-45ea-ad9a-640ab93a8862",
+      "id": "3877241e-954d-4443-8dcb-31a9e3f43f96",
       "name": "Respond 500 AnalyzerFail"
     },
     {
@@ -223,10 +175,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        420,
-        360
+        160,
+        320
       ],
-      "id": "60169b53-5c44-4dc1-ac04-04e6e6e70881",
+      "id": "206f52cb-8ddd-4d21-a7c1-0b73d1e0c02c",
       "name": "Analyzed?"
     },
     {
@@ -257,10 +209,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        860,
-        460
+        600,
+        420
       ],
-      "id": "1cbf717e-785b-4651-a709-d968ea328ff9",
+      "id": "b5e97ec6-3a29-4fa1-a1d7-a70a1c069c5a",
       "name": "Parsed?"
     },
     {
@@ -274,10 +226,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1080,
-        360
+        820,
+        320
       ],
-      "id": "8da843f5-8c74-4a97-ac3a-b99749c38eef",
+      "id": "0385991c-ddc5-4d11-aa53-28bc7b7f68b9",
       "name": "Respond 500 AnalyzerOutputFail"
     },
     {
@@ -287,11 +239,92 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1080,
-        560
+        820,
+        520
       ],
-      "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
+      "id": "238abb03-fac4-4703-ab98-d39386c3cf52",
       "name": "Respond to DocMeta Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2a6a9aba-3fd9-41c0-b335-5570fce61c6d",
+              "leftValue": "={{ $binary.file !== undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -720,
+        220
+      ],
+      "id": "c212478a-c891-4390-a9ea-0cda3a768f52",
+      "name": "Binary Exist?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba08d112-b9d7-4eaf-86ac-fcdc55ad64b2",
+              "leftValue": "={{ $binary.file === undefined && $json.body.path === undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -940,
+        120
+      ],
+      "id": "6f076819-a81d-4168-9581-5c14cf0286a3",
+      "name": "No Binary & No Path?"
+    },
+    {
+      "parameters": {
+        "command": "=node /data/mime_analyzer/file_analyzer.js {{$json.body.path}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        420
+      ],
+      "id": "049f8e07-4698-4397-addb-05c1d3c977f8",
+      "name": "Run DocMeta Analyzer with Path"
     }
   ],
   "pinData": {},
@@ -300,7 +333,7 @@
       "main": [
         [
           {
-            "node": "File Exist?",
+            "node": "No Binary & No Path?",
             "type": "main",
             "index": 0
           }
@@ -334,24 +367,6 @@
         [
           {
             "node": "Parsed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "File Exist?": {
-      "main": [
-        [
-          {
-            "node": "Respond 400 BadRequest (NO_BINARY_FILE)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Save Upload to Temp",
             "type": "main",
             "index": 0
           }
@@ -414,9 +429,50 @@
     },
     "Respond to DocMeta Webhook": {
       "main": [
+        []
+      ]
+    },
+    "Binary Exist?": {
+      "main": [
         [
           {
-            "node": "Delete Temp File",
+            "node": "Save Upload to Temp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run DocMeta Analyzer with Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Binary & No Path?": {
+      "main": [
+        [
+          {
+            "node": "Respond 400 BadRequest (NO_BINARY_FILE)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Binary Exist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run DocMeta Analyzer with Path": {
+      "main": [
+        [
+          {
+            "node": "Analyzed?",
             "type": "main",
             "index": 0
           }
@@ -424,11 +480,11 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "a3546ae9-5c77-4dea-a40c-7a14e9d5d683",
+  "versionId": "498d7139-e451-4abf-b305-a0f4a563ab7c",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },

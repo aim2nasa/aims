@@ -43,6 +43,24 @@
       ],
       "id": "e02dac84-9e75-4abe-aba6-7fc702d4b2fe",
       "name": "DocUpload Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nd.giize.com/webhook/docmeta",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"path\": \"{{$json.path}}\",\n  \"saved_name\": \"{{$json.saved_name}}\",\n  \"original\": \"{{$json.original}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "d48d9268-a291-4f6e-9114-886088a2837e",
+      "name": "DocMeta Request"
     }
   ],
   "pinData": {},
@@ -60,15 +78,21 @@
     },
     "DocUpload Request": {
       "main": [
-        []
+        [
+          {
+            "node": "DocMeta Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d014bee2-a01e-46cb-b51b-3ecdc294031f",
+  "versionId": "4430854c-19aa-4013-8b8c-c3dac8fe00fc",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
