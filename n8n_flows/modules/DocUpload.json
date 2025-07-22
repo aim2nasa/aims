@@ -37,7 +37,7 @@
     },
     {
       "parameters": {
-        "jsCode": "function randomToken(len = 8) {\n  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';\n  let out = '';\n  for (let i = 0; i < len; i++) {\n    out += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return out;\n}\n\n// 현재 시각\nconst now = new Date();\nconst yyyy = now.getFullYear();\nconst mm = ('0' + (now.getMonth() + 1)).slice(-2);\nconst dd = ('0' + now.getDate()).slice(-2);\nconst hh = ('0' + now.getHours()).slice(-2);\nconst min = ('0' + now.getMinutes()).slice(-2);\nconst ss = ('0' + now.getSeconds()).slice(-2);\n\n// YYMMDDhhmmss 타임스탬프\nconst timestamp = `${String(yyyy).slice(-2)}${mm}${dd}${hh}${min}${ss}`;\nconst token = randomToken(8);\n\n// 사용자가 업로드한 원본 파일명 (개행 제거)\nconst originalName = $binary.file?.fileName?.replace(/[\\n\\r]/g, '') || 'unknown';\n\n// 원본 파일명에서 확장자 추출 (있으면 유지, 없으면 빈 문자열)\nlet ext = '';\nconst extMatch = originalName.match(/\\.[0-9A-Za-z]+$/);\nif (extMatch) {\n  ext = extMatch[0]; // 예: \".jpeg\"\n}\n\n// 최종 저장 이름: YYMMDDhhmmss_random + 확장자(있으면)\nconst saveName = `${timestamp}_${token}${ext}`;\n\n// 최종 폴더 (/data/files/YYYY/MM)\nconst folder = `/data/files/${yyyy}/${mm}`;\n\n// 최종 경로\nconst destPath = `${folder}/${saveName}`;\n\nreturn [{\n  json: {\n    tmpPath: $json.filePath,  // 임시 저장 파일 경로\n    folder,                   // 최종 폴더\n    destPath,                 // 최종 경로\n    saveName,                 // 최종 파일명\n    originalName              // 원본 업로드 파일명\n  }\n}];\n"
+        "jsCode": "function generateSafePath() {\n  const now = new Date();\n  const yyyy = now.getFullYear();\n  const mm = ('0' + (now.getMonth() + 1)).slice(-2);\n  const dd = ('0' + now.getDate()).slice(-2);\n  const hh = ('0' + now.getHours()).slice(-2);\n  const min = ('0' + now.getMinutes()).slice(-2);\n  const ss = ('0' + now.getSeconds()).slice(-2);\n\n  const timestamp = `${String(yyyy).slice(-2)}${mm}${dd}${hh}${min}${ss}`;\n\n  // 랜덤 토큰\n  const token = Math.random().toString(36).slice(2, 10);\n\n  // 원본 파일명 (없으면 unknown)\n  const originalName = $binary.file?.fileName?.replace(/[\\n\\r]/g, '') || 'unknown';\n\n  // 확장자 파싱 실패 시 빈 문자열\n  let ext = '';\n  const extMatch = originalName.match(/\\.[0-9A-Za-z]+$/);\n  if (extMatch) ext = extMatch[0];\n\n  const saveName = `${timestamp}_${token}${ext}`;\n  const folder = `/data/files/${yyyy}/${mm}`;\n  const destPath = `${folder}/${saveName}`;\n\n  return { folder, destPath, saveName, originalName };\n}\n\nfunction safeGenerateFinalPath(maxRetry = 5) {\n  let lastError = null;\n\n  for (let i = 0; i < maxRetry; i++) {\n    try {\n      const pathData = generateSafePath();\n      // folder/destPath가 유효하면 성공\n      if (pathData.folder && pathData.destPath) {\n        return pathData;\n      }\n    } catch (e) {\n      lastError = e; // 실패하면 다음 재시도\n    }\n  }\n\n  // 모든 재시도 실패 → fallback 강제 생성\n  const fallbackName = `unknown_${Date.now()}`;\n  return {\n    folder: `/data/files/fallback`,\n    destPath: `/data/files/fallback/${fallbackName}`,\n    saveName: fallbackName,\n    originalName: 'unknown'\n  };\n}\n\n// 최종 반환 (항상 성공)\nreturn [ { json: safeGenerateFinalPath(5) } ];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -370,7 +370,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5ff221f1-dab5-468d-af97-3a0b64c7e83a",
+  "versionId": "eef1c5f6-b723-47ed-85be-55d493b696f8",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
