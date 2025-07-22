@@ -25,8 +25,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        860,
-        460
+        1080,
+        560
       ],
       "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
       "name": "Respond to Webhook"
@@ -64,7 +64,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return JSON.parse($json.stdout);"
+        "jsCode": "try {\n  return JSON.parse($json.stdout || '{}');\n} catch (err) {\n  return {\n    status: \"ERROR\",\n    error: \"INVALID_ANALYZER_OUTPUT\",\n    message: err.message,\n    raw: $json.stdout\n  };\n}\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -82,8 +82,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1080,
-        460
+        1300,
+        560
       ],
       "id": "e4673920-06d9-41f2-a884-ce6c99e0e63e",
       "name": "Delete Temp File"
@@ -192,6 +192,23 @@
     },
     {
       "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"ANALYZER_FAIL\",\n  \"message\": \"DocMeta Analyzer execution failed\",\n  \"stderr\": \"{{$json.stderr}}\"\n}\n",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        260
+      ],
+      "id": "673585ef-1f4b-45ea-ad9a-640ab93a8862",
+      "name": "Respond 500 AnalyzerFail"
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -222,12 +239,46 @@
         360
       ],
       "id": "60169b53-5c44-4dc1-ac04-04e6e6e70881",
-      "name": "If"
+      "name": "Analyzed?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a3405ef5-dcfa-4a20-9caf-6f39f0178a63",
+              "leftValue": "={{ $json.status==ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        860,
+        460
+      ],
+      "id": "1cbf717e-785b-4651-a709-d968ea328ff9",
+      "name": "Parsed?"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"ANALYZER_FAIL\",\n  \"message\": \"DocMeta Analyzer execution failed\",\n  \"stderr\": \"{{$json.stderr}}\"\n}\n",
+        "responseBody": "{\n  \"status\": \"ERROR\",\n  \"error\": \"INVALID_ANALYZER_OUTPUT\",\n  \"message\": \"Failed to parse analyzer output\",\n  \"raw\": \"{{$json.raw}}\"\n}",
         "options": {
           "responseCode": 500
         }
@@ -235,11 +286,11 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        640,
-        260
+        1080,
+        360
       ],
-      "id": "673585ef-1f4b-45ea-ad9a-640ab93a8862",
-      "name": "Respond 500 AnalyzerFail"
+      "id": "8da843f5-8c74-4a97-ac3a-b99749c38eef",
+      "name": "Respond 500 AnalyzerOutputFail"
     }
   ],
   "pinData": {},
@@ -270,7 +321,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Analyzed?",
             "type": "main",
             "index": 0
           }
@@ -281,7 +332,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Parsed?",
             "type": "main",
             "index": 0
           }
@@ -335,7 +386,7 @@
         ]
       ]
     },
-    "If": {
+    "Analyzed?": {
       "main": [
         [
           {
@@ -352,13 +403,31 @@
           }
         ]
       ]
+    },
+    "Parsed?": {
+      "main": [
+        [
+          {
+            "node": "Respond 500 AnalyzerOutputFail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5fd0aaeb-57a2-4861-8378-8f18d3079a8c",
+  "versionId": "7dd070c4-9212-40db-878a-aee46009f158",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
