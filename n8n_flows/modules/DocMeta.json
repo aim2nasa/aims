@@ -73,7 +73,8 @@
         560
       ],
       "id": "e4673920-06d9-41f2-a884-ce6c99e0e63e",
-      "name": "Delete Temp File"
+      "name": "Delete Temp File",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -427,7 +428,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "bc7b5d7a-fbfc-4ae5-9d84-4351906a3498",
+  "versionId": "a3546ae9-5c77-4dea-a40c-7a14e9d5d683",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
