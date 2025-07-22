@@ -20,19 +20,6 @@
     },
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        1080,
-        560
-      ],
-      "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
-      "name": "Respond to Webhook"
-    },
-    {
-      "parameters": {
         "operation": "write",
         "fileName": "=/data/tmp/{{$binary.file.fileName}}",
         "dataPropertyName": "file",
@@ -291,6 +278,19 @@
       ],
       "id": "8da843f5-8c74-4a97-ac3a-b99749c38eef",
       "name": "Respond 500 AnalyzerOutputFail"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1080,
+        560
+      ],
+      "id": "1cce1c0c-3603-43f2-819d-76e23c103584",
+      "name": "Respond to DocMeta Webhook"
     }
   ],
   "pinData": {},
@@ -333,17 +333,6 @@
         [
           {
             "node": "Parsed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond to Webhook": {
-      "main": [
-        [
-          {
-            "node": "Delete Temp File",
             "type": "main",
             "index": 0
           }
@@ -415,7 +404,18 @@
         ],
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Respond to DocMeta Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to DocMeta Webhook": {
+      "main": [
+        [
+          {
+            "node": "Delete Temp File",
             "type": "main",
             "index": 0
           }
@@ -427,7 +427,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7dd070c4-9212-40db-878a-aee46009f158",
+  "versionId": "f01109c9-b698-48f9-9fa6-e9a2db5338ed",
   "meta": {
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
