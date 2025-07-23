@@ -20,15 +20,69 @@
           "name": "Redis account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nd.giize.com/webhook/dococr",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"path\": \"={{ $json.file_path }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "74e25b25-7537-4dc3-986d-90fc4ecc2e63",
+      "name": "DocOCR Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Redis Trigger에서 받은 Raw JSON 문자열을 실제 JSON으로 변환\nconst rawMsg = $json.message;   // Redis Trigger message 필드\nconst parsed = JSON.parse(rawMsg); \n\nreturn [parsed];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "f89ce3ec-6886-4295-84d2-9caf27d59091",
+      "name": "Pasre"
     }
   ],
   "pinData": {},
-  "connections": {},
+  "connections": {
+    "Redis Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pasre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasre": {
+      "main": [
+        [
+          {
+            "node": "DocOCR Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ab6003d7-23ba-4837-ac5a-bdab731545f0",
+  "versionId": "9437d70e-b2bd-4639-a02f-bcc0dee4eee8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
