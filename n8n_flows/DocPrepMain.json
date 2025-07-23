@@ -99,6 +99,27 @@
           "name": "MongoDB account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "publish",
+        "channel": "ocr_queue",
+        "messageData": "={   \"file_id\": \"{{ $('Merge DocMeta for Update').item.json._id }}\",\n    \"file_path\": \"{{ $('DocUpload Request').item.json.path }}\",\n    \"doc_id\": \"{{ $('Merge DocMeta for Update').item.json._id }}\",\n    \"created_at\": \"={{ $now }}\"\n}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "8e136c72-5037-40fc-b53c-5568617a705a",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "EdzYllZ0Vum6Mxpx",
+          "name": "Redis account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -146,13 +167,24 @@
           }
         ]
       ]
+    },
+    "Update Meta in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "66df5953-cc29-47c0-83a1-1f97960c7b9e",
+  "versionId": "0b227794-7a66-40eb-af12-8addfd0fb7af",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
