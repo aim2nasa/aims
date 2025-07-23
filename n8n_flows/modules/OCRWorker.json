@@ -1,0 +1,38 @@
+{
+  "name": "OCRWorker",
+  "nodes": [
+    {
+      "parameters": {
+        "channels": "ocr_queue",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redisTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a05ddbe4-7b7e-47a8-8f63-e01af56170eb",
+      "name": "Redis Trigger",
+      "credentials": {
+        "redis": {
+          "id": "EdzYllZ0Vum6Mxpx",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ab6003d7-23ba-4837-ac5a-bdab731545f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+  },
+  "id": "Ms4ig5PY4Bk7fUfp",
+  "tags": []
+}
