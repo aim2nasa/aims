@@ -73,6 +73,76 @@
       ],
       "id": "c3f1f2f9-124b-4704-bb58-1ec933bbda56",
       "name": "Prepare OCR Binary"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "484031c3-2ada-40a5-a7a7-8ebcf774940d",
+      "name": "Update Ocr in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "iOJAgJOlMFh18tcD",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b38f46a9-101d-4a30-9c2c-eaaa3160256b",
+              "name": "ocr.confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "string"
+            },
+            {
+              "id": "f85a9d33-1ccf-4b91-9a3a-16a200de7ef5",
+              "name": "ocr.full_text",
+              "value": "={{ $json.full_text }}",
+              "type": "string"
+            },
+            {
+              "id": "930325d3-06c0-47be-a29c-34b87e4db4df",
+              "name": "ocr.summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "4bfd1590-ed9d-4055-a4a6-cfcf1de07c60",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "639ed159-cbad-45ba-a65d-2441e9b2c55d",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        0
+      ],
+      "id": "70c6b4ba-1c13-4cea-9a70-440719234a58",
+      "name": "Prepare OCR Fields"
     }
   ],
   "pinData": {},
@@ -109,13 +179,35 @@
           }
         ]
       ]
+    },
+    "DocOCR Request": {
+      "main": [
+        [
+          {
+            "node": "Prepare OCR Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare OCR Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Ocr in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e4e79097-e035-43a3-a1f9-4bd5f6e334f9",
+  "versionId": "f4ad1d60-377a-4c93-9daa-a61058d73425",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
