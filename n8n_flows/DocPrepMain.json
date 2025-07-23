@@ -61,6 +61,44 @@
       ],
       "id": "d48d9268-a291-4f6e-9114-886088a2837e",
       "name": "DocMeta Request"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Request').item.json._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.filename }}\",\n    \"extension\": \"{{ $json.extension }}\",\n    \"mime\": \"{{ $json.mime }}\",\n    \"size_bytes\": {{ $json.size_bytes }},\n    \"created_at\": \"{{ $json.created_at }}\",\n    \"meta_status\": \"{{ $json.status }}\",\n    \"exif\": {{ $json.exif }},\n    \"pdf_pages\": {{ $json.pdf_pages }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        0
+      ],
+      "id": "4b3cfcc1-28fb-4c66-b06a-a1e5c956b8a8",
+      "name": "Merge DocMeta for Update"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "meta",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        0
+      ],
+      "id": "c1de5005-212b-40cf-b043-b747ce308237",
+      "name": "Update Meta in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "iOJAgJOlMFh18tcD",
+          "name": "MongoDB account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -86,14 +124,37 @@
           }
         ]
       ]
+    },
+    "DocMeta Request": {
+      "main": [
+        [
+          {
+            "node": "Merge DocMeta for Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge DocMeta for Update": {
+      "main": [
+        [
+          {
+            "node": "Update Meta in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4430854c-19aa-4013-8b8c-c3dac8fe00fc",
+  "versionId": "66df5953-cc29-47c0-83a1-1f97960c7b9e",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
   },
   "id": "IxdVFdbMBedaNNfz",
