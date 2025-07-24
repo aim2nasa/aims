@@ -21,10 +21,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1220,
-        -100
+        380,
+        -20
       ],
-      "id": "74e25b25-7537-4dc3-986d-90fc4ecc2e63",
+      "id": "d3e0044d-581e-4b29-9dab-e96419b1d803",
       "name": "DocOCR Request"
     },
     {
@@ -34,10 +34,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        780,
-        -100
+        -60,
+        -20
       ],
-      "id": "f89ce3ec-6886-4295-84d2-9caf27d59091",
+      "id": "c48c5694-ed15-45bd-95a2-02cda0a90f5b",
       "name": "Pasre"
     },
     {
@@ -48,10 +48,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        1000,
-        -100
+        160,
+        -20
       ],
-      "id": "c3f1f2f9-124b-4704-bb58-1ec933bbda56",
+      "id": "4c62b793-aafb-4727-b51c-be3d8fd32e77",
       "name": "Prepare OCR Binary"
     },
     {
@@ -65,10 +65,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1660,
-        -100
+        820,
+        -20
       ],
-      "id": "484031c3-2ada-40a5-a7a7-8ebcf774940d",
+      "id": "4ea637b1-3a51-4ef9-a29c-439df98e93a3",
       "name": "Update Ocr in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -118,10 +118,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1440,
-        -100
+        600,
+        -20
       ],
-      "id": "70c6b4ba-1c13-4cea-9a70-440719234a58",
+      "id": "25f7c8ea-981c-48f8-8ac9-034afb86bd6b",
       "name": "Prepare OCR Fields"
     },
     {
@@ -131,10 +131,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        120,
-        -100
+        -720,
+        -20
       ],
-      "id": "bae47f0e-3bb0-418f-8758-9cdc71137719",
+      "id": "0bcd7b99-4360-4878-b746-0e315d35f358",
       "name": "Read Redis Stream",
       "alwaysOutputData": true
     },
@@ -145,10 +145,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        560,
-        -100
+        -280,
+        -20
       ],
-      "id": "cc95809b-58b8-4176-becd-9764ebd220f9",
+      "id": "8728fc51-a9f6-41e1-b30b-6aa54512a2fe",
       "name": "Parse Stream Message"
     },
     {
@@ -168,10 +168,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        340,
-        -100
+        -500,
+        -20
       ],
-      "id": "6cf7cc7e-612c-4f3c-b9b4-c1822d501e48",
+      "id": "5760f63b-3dc2-42df-a5b0-2d60b5a31179",
       "name": "Edit Fields"
     },
     {
@@ -188,31 +188,11 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -100,
-        -100
+        -940,
+        -20
       ],
-      "id": "ad794a14-030a-4961-acc6-92006e41d822",
+      "id": "8a5d9ec3-a29b-4824-818e-4f6ea42f8038",
       "name": "Schedule Trigger"
-    },
-    {
-      "parameters": {
-        "channels": "ocr_queue",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.redisTrigger",
-      "typeVersion": 1,
-      "position": [
-        -100,
-        -260
-      ],
-      "id": "804788ab-7391-4b10-9a0c-4b78d473402c",
-      "name": "Redis Trigger",
-      "credentials": {
-        "redis": {
-          "id": "EdzYllZ0Vum6Mxpx",
-          "name": "Redis account"
-        }
-      }
     }
   ],
   "pinData": {},
@@ -310,7 +290,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b5887712-7f47-403e-839d-2480e0fb39f7",
+  "versionId": "4547e204-8a37-4d08-be3c-bc264d51d028",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
