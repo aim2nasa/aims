@@ -3,26 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "channels": "ocr_queue",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.redisTrigger",
-      "typeVersion": 1,
-      "position": [
-        0,
-        0
-      ],
-      "id": "a05ddbe4-7b7e-47a8-8f63-e01af56170eb",
-      "name": "Redis Trigger",
-      "credentials": {
-        "redis": {
-          "id": "EdzYllZ0Vum6Mxpx",
-          "name": "Redis account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "https://n8nd.giize.com/webhook/dococr",
         "sendBody": true,
@@ -41,21 +21,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        660,
-        0
+        1220,
+        -100
       ],
       "id": "74e25b25-7537-4dc3-986d-90fc4ecc2e63",
       "name": "DocOCR Request"
     },
     {
       "parameters": {
-        "jsCode": "// Redis Trigger에서 받은 Raw JSON 문자열을 실제 JSON으로 변환\nconst rawMsg = $json.message;   // Redis Trigger message 필드\nconst parsed = JSON.parse(rawMsg); \n\nreturn [parsed];"
+        "jsCode": "// Parse Stream Message에서 온 값을 그대로 정리해서 반환\nreturn [\n  {\n    file_id: $json.file_id,\n    file_path: $json.file_path,\n    doc_id: $json.doc_id,\n    created_at: $json.created_at,\n    message_id: $json.message_id\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        0
+        780,
+        -100
       ],
       "id": "f89ce3ec-6886-4295-84d2-9caf27d59091",
       "name": "Pasre"
@@ -68,8 +48,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        440,
-        0
+        1000,
+        -100
       ],
       "id": "c3f1f2f9-124b-4704-bb58-1ec933bbda56",
       "name": "Prepare OCR Binary"
@@ -85,8 +65,8 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1100,
-        0
+        1660,
+        -100
       ],
       "id": "484031c3-2ada-40a5-a7a7-8ebcf774940d",
       "name": "Update Ocr in MongoDB",
@@ -138,26 +118,105 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        880,
-        0
+        1440,
+        -100
       ],
       "id": "70c6b4ba-1c13-4cea-9a70-440719234a58",
       "name": "Prepare OCR Fields"
+    },
+    {
+      "parameters": {
+        "command": "redis-cli XREADGROUP GROUP ocr_consumer_group worker-1 COUNT 1 BLOCK 5000 STREAMS ocr_stream \">\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -100
+      ],
+      "id": "bae47f0e-3bb0-418f-8758-9cdc71137719",
+      "name": "Read Redis Stream",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.raw_stdout;\n\n// stdout을 라인 단위로 분리\nconst lines = raw.split(\"\\n\").map(l => l.trim()).filter(l => l);\n\n// key-value 파싱\nlet data = {};\nfor (let i = 2; i < lines.length; i += 2) {\n  const key = lines[i];\n  const value = lines[i + 1];\n  if (key && value) {\n    data[key] = value;\n  }\n}\n\n// message_id 따로 추출\ndata[\"message_id\"] = lines[1] || \"\";\n\n// JSON 객체 반환\nreturn [ data ];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -100
+      ],
+      "id": "cc95809b-58b8-4176-becd-9764ebd220f9",
+      "name": "Parse Stream Message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d4792f95-f038-4b24-b00d-fdf5fa6afd59",
+              "name": "raw_stdout",
+              "value": "={{ $json.stdout }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        340,
+        -100
+      ],
+      "id": "6cf7cc7e-612c-4f3c-b9b4-c1822d501e48",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -100,
+        -100
+      ],
+      "id": "ad794a14-030a-4961-acc6-92006e41d822",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "channels": "ocr_queue",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redisTrigger",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        -260
+      ],
+      "id": "804788ab-7391-4b10-9a0c-4b78d473402c",
+      "name": "Redis Trigger",
+      "credentials": {
+        "redis": {
+          "id": "EdzYllZ0Vum6Mxpx",
+          "name": "Redis account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Redis Trigger": {
-      "main": [
-        [
-          {
-            "node": "Pasre",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Pasre": {
       "main": [
         [
@@ -201,13 +260,57 @@
           }
         ]
       ]
+    },
+    "Read Redis Stream": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Stream Message": {
+      "main": [
+        [
+          {
+            "node": "Pasre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Parse Stream Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Redis Stream",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f4ad1d60-377a-4c93-9daa-a61058d73425",
+  "versionId": "b5887712-7f47-403e-839d-2480e0fb39f7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"

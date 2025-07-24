@@ -12,7 +12,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        0
+        20
       ],
       "id": "477a7345-0167-4cad-910a-2cff9eb8caf4",
       "name": "DocPrepMain Webhook",
@@ -39,7 +39,7 @@
       "typeVersion": 4.2,
       "position": [
         220,
-        0
+        20
       ],
       "id": "e02dac84-9e75-4abe-aba6-7fc702d4b2fe",
       "name": "DocUpload Request"
@@ -57,7 +57,7 @@
       "typeVersion": 4.2,
       "position": [
         440,
-        0
+        20
       ],
       "id": "d48d9268-a291-4f6e-9114-886088a2837e",
       "name": "DocMeta Request"
@@ -72,7 +72,7 @@
       "typeVersion": 3.4,
       "position": [
         660,
-        0
+        20
       ],
       "id": "4b3cfcc1-28fb-4c66-b06a-a1e5c956b8a8",
       "name": "Merge DocMeta for Update"
@@ -89,7 +89,7 @@
       "typeVersion": 1.2,
       "position": [
         880,
-        0
+        20
       ],
       "id": "c1de5005-212b-40cf-b043-b747ce308237",
       "name": "Update Meta in MongoDB",
@@ -110,7 +110,7 @@
       "typeVersion": 1,
       "position": [
         1100,
-        0
+        -140
       ],
       "id": "8e136c72-5037-40fc-b53c-5568617a705a",
       "name": "Redis",
@@ -120,6 +120,19 @@
           "name": "Redis account"
         }
       }
+    },
+    {
+      "parameters": {
+        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        20
+      ],
+      "id": "3d6db348-3cef-4669-a527-ef14d8113ee0",
+      "name": "Execute Command"
     }
   ],
   "pinData": {},
@@ -172,7 +185,7 @@
       "main": [
         [
           {
-            "node": "Redis",
+            "node": "Execute Command",
             "type": "main",
             "index": 0
           }
@@ -184,7 +197,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0b227794-7a66-40eb-af12-8addfd0fb7af",
+  "versionId": "69e60e4f-b270-413b-9a98-2da42e7be5d6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
