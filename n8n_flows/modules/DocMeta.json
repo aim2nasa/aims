@@ -37,7 +37,7 @@
     },
     {
       "parameters": {
-        "command": "=node /data/mime_analyzer/file_analyzer.js /data/tmp/{{$binary.file.fileName}}"
+        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js /data/tmp/{{$binary.file.fileName}}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -315,7 +315,7 @@
     },
     {
       "parameters": {
-        "command": "=node /data/mime_analyzer/file_analyzer.js {{$json.body.path}}"
+        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js {{$json.body.path}}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
