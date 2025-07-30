@@ -123,7 +123,7 @@
     },
     {
       "parameters": {
-        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
+        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  file_ext {{ $json.meta.extension }}\\\n  file_mime {{ $json.meta.mime }}\\\n  file_size_bytes {{ $json.meta.size_bytes }}\\\n  pdf_total_pages {{ $json.meta.pdf_text_ratio.total_pages }}\\\n  pdf_text_pages {{ $json.meta.pdf_text_ratio.text_pages }}\\\n  pdf_text_ratio {{ $json.meta.pdf_text_ratio.text_ratio }}\\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
