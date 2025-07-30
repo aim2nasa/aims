@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "exif-parser": "^0.1.12",
+    "mime-types": "^3.0.1",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^2.14.305"
+  }
+}
