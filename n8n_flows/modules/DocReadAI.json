@@ -1,0 +1,845 @@
+{
+  "name": "DocReadAI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docreadai",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        192
+      ],
+      "id": "be3cf361-5b04-49d3-a8bb-52e99086f5aa",
+      "name": "DocReadAI Webhook",
+      "webhookId": "32139984-6d2d-439c-b0e9-2ead0ebf35bb"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.body.path }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        192
+      ],
+      "id": "c169fbb7-ce07-4a4a-b36d-18105544e5fd",
+      "name": "Load File for AI Input",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1648,
+        -368
+      ],
+      "id": "0c3dd756-af04-4895-82f2-643706705f22",
+      "name": "Create Assistant Thread",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "purpose",
+              "value": "assistants"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        192
+      ],
+      "id": "ff72ca06-ac04-4c32-a1d6-3c6161d3fe84",
+      "name": "Upload File to OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $json.thread_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"Please summarize the document.\",\n  \"attachments\": [\n    {\n      \"file_id\": \"{{ $json.id }}\",\n      \"tools\": [{ \"type\": \"file_search\" }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        -176
+      ],
+      "id": "586c6b80-d8d5-4a3a-9dd2-57a84783aa14",
+      "name": "Send Message to Thread",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $json.thread_id }}/runs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"assistant_id\": \"asst_CJs1gHIIVRD0epRh9nsR0Wgv\",\n  \"instructions\": \"Summarize the document.\",\n  \"tool_resources\": {\n    \"file_search\": {\n      \"vector_store_ids\": [\"vs_688a204d738481918e2d2f35cb8517a7\"]\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2096,
+        -176
+      ],
+      "id": "66c0afbf-aae1-4d33-a590-b18adf71b174",
+      "name": "Run Assistant",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $(\"Run Assistant\").first().json.thread_id }}/runs/{{ $(\"Run Assistant\").first().json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        -176
+      ],
+      "id": "01f9f89b-fbf6-4ebf-9be3-c5edd133f137",
+      "name": "Get Run Result",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $('Run Assistant').first().json.thread_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2768,
+        -296
+      ],
+      "id": "f8892508-e994-4fde-bbf9-c2eed003f4e2",
+      "name": "Get Final Response",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3216,
+        -296
+      ],
+      "id": "f8fddc0e-b38d-427e-b0d7-8dd10490e316",
+      "name": "Respond to DocReadAI Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f67ba7f-3437-4854-85df-7e2f1143fe7e",
+              "name": "summary",
+              "value": "={{ $json[\"data\"][0][\"content\"][0][\"text\"][\"value\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2992,
+        -296
+      ],
+      "id": "af8edb40-d56b-47f3-b4f8-0ed2ffa4fe98",
+      "name": "Prepare Summary JSON"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/vector_stores/vs_688a204d738481918e2d2f35cb8517a7/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file_id\": \"{{ $json.uploaded_file_id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        288
+      ],
+      "id": "cc722225-5cbc-4cc1-8c2f-5df3b304dbf7",
+      "name": "Attach File to VectorStore",
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        16
+      ],
+      "id": "2cab3e3c-071f-4d12-a06e-a28ee44a15b2",
+      "name": "Wait",
+      "webhookId": "b2cfee9d-6f02-43f8-b0fa-ba86eee5fc44"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/vector_stores/vs_688a204d738481918e2d2f35cb8517a7/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "OpenAI-Beta",
+              "value": "assistants=v2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        16
+      ],
+      "id": "56dc6c1c-4bf4-41f1-bd3c-d00b6dd59795",
+      "name": "Check File Indexing Status",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"uploaded_file_id\": \"{{ $json.id }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        192
+      ],
+      "id": "56207ed8-0918-4441-bdb5-09fce39f6821",
+      "name": "Save Uploaded File ID"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "uploaded_file_id",
+              "field2": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        -8
+      ],
+      "id": "04227e99-7722-4114-831a-ff96e94e7cd6",
+      "name": "Merge Uploaded ID with Index Status"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"retry\": 1\n}",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        192
+      ],
+      "id": "4e664e87-9a28-48d9-a3e6-cd201bcfcc4b",
+      "name": "Set Retry Counter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e2c8dc6b-d57f-4282-a9ae-061a69edf792",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        -176
+      ],
+      "id": "32c89808-f0b7-4f8c-b72b-9beeb6b55ebb",
+      "name": "Is Indexing Completed?"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"uploaded_file_id\": \"{{ $json.uploaded_file_id }}\",\n  \"retry\": 1\n}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        96
+      ],
+      "id": "e54295ab-3130-4450-8692-ded792af6cbc",
+      "name": "Keep uploaded_file_id"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        192
+      ],
+      "id": "6599deec-90b4-48da-b632-325b941f2fed",
+      "name": "Merge uploaded_file_id with Attach Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items[0].json.data.map(d => ({ json: d }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        88
+      ],
+      "id": "a5043eb2-6096-46c0-b8bc-4dfd18fca0e4",
+      "name": "Extract Indexed File Items"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "589d9fe3-07db-4c3c-bd62-9ff8debd2ab6",
+              "name": "thread_id",
+              "value": "={{ $('Create Assistant Thread').first().json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1648,
+        -176
+      ],
+      "id": "0134ad26-46e1-48c6-b5fa-941308a45a9e",
+      "name": "Set Thread ID"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f0c4386b-d2a9-435a-b756-80c350c3e02f",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2544,
+        -248
+      ],
+      "id": "397cbb87-d6cf-4714-a53d-a14667668030",
+      "name": "Is Run Completed?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2768,
+        -80
+      ],
+      "id": "495a371b-e97c-45c4-969a-64e55ed967be",
+      "name": "Wait Before Recheck Run",
+      "webhookId": "18614bd1-4ec9-447c-b63a-4734a887c493"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DocReadAI Webhook": {
+      "main": [
+        [
+          {
+            "node": "Load File for AI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load File for AI Input": {
+      "main": [
+        [
+          {
+            "node": "Upload File to OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Assistant Thread": {
+      "main": [
+        []
+      ]
+    },
+    "Upload File to OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Save Uploaded File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message to Thread": {
+      "main": [
+        [
+          {
+            "node": "Run Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Assistant": {
+      "main": [
+        [
+          {
+            "node": "Get Run Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Run Result": {
+      "main": [
+        [
+          {
+            "node": "Is Run Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Final Response": {
+      "main": [
+        [
+          {
+            "node": "Prepare Summary JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Summary JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond to DocReadAI Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach File to VectorStore": {
+      "main": [
+        [
+          {
+            "node": "Merge uploaded_file_id with Attach Response",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check File Indexing Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check File Indexing Status": {
+      "main": [
+        [
+          {
+            "node": "Extract Indexed File Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Uploaded File ID": {
+      "main": [
+        [
+          {
+            "node": "Set Retry Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Uploaded ID with Index Status": {
+      "main": [
+        [
+          {
+            "node": "Is Indexing Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Retry Counter": {
+      "main": [
+        [
+          {
+            "node": "Keep uploaded_file_id",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Attach File to VectorStore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Indexing Completed?": {
+      "main": [
+        [
+          {
+            "node": "Create Assistant Thread",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Thread ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep uploaded_file_id": {
+      "main": [
+        [
+          {
+            "node": "Merge uploaded_file_id with Attach Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge uploaded_file_id with Attach Response": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Uploaded ID with Index Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Indexed File Items": {
+      "main": [
+        [
+          {
+            "node": "Merge Uploaded ID with Index Status",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set Thread ID": {
+      "main": [
+        [
+          {
+            "node": "Send Message to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Run Completed?": {
+      "main": [
+        [
+          {
+            "node": "Get Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Before Recheck Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Recheck Run": {
+      "main": [
+        [
+          {
+            "node": "Get Run Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "b8b0e466-385c-4cf7-a66a-0db5b5d068c4",
+  "meta": {
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+  },
+  "id": "199Frc7wzvgtWS7N",
+  "tags": []
+}
