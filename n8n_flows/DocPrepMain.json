@@ -65,7 +65,7 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Request').item.json._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.filename }}\",\n    \"extension\": \"{{ $json.extension }}\",\n    \"mime\": \"{{ $json.mime }}\",\n    \"size_bytes\": {{ $json.size_bytes }},\n    \"created_at\": \"{{ $json.created_at }}\",\n    \"meta_status\": \"{{ $json.status }}\",\n    \"exif\": {{ $json.exif }},\n    \"pdf_pages\": {{ $json.pdf_pages }}\n  }\n}",
+        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Request').item.json._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.filename }}\",\n    \"extension\": \"{{ $json.extension }}\",\n    \"mime\": \"{{ $json.mime }}\",\n    \"size_bytes\": {{ $json.size_bytes }},\n    \"created_at\": \"{{ $json.created_at }}\",\n    \"meta_status\": \"{{ $json.status }}\",\n    \"exif\": {{ $json.exif }},\n    \"pdf_pages\": {{ $json.pdf_pages }},\n    \"pdf_text_ratio\": {{ $json.pdf_text_ratio }}\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
