@@ -257,29 +257,6 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "1f67ba7f-3437-4854-85df-7e2f1143fe7e",
-              "name": "summary",
-              "value": "={{ $json[\"data\"][0][\"content\"][0][\"text\"][\"value\"] }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        2992,
-        -296
-      ],
-      "id": "af8edb40-d56b-47f3-b4f8-0ed2ffa4fe98",
-      "name": "Prepare Summary JSON"
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "https://api.openai.com/v1/vector_stores/vs_688a204d738481918e2d2f35cb8517a7/files",
         "authentication": "predefinedCredentialType",
@@ -564,6 +541,63 @@
       "id": "495a371b-e97c-45c4-969a-64e55ed967be",
       "name": "Wait Before Recheck Run",
       "webhookId": "18614bd1-4ec9-447c-b63a-4734a887c493"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"_id\": \"{{ $json.body._id }}\"\n}",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -736
+      ],
+      "id": "8875d5e8-1eb9-4258-b215-da8b243e9910",
+      "name": "Keep _id"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3280,
+        -704
+      ],
+      "id": "5fd53691-3da8-42a2-885e-4be7da12a034",
+      "name": "Merge _id with AI Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json.data[0].content[0].text.value;\nconst parsed = JSON.parse(raw);\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        -480
+      ],
+      "id": "9883f911-9ea4-4b90-a3f7-689f16b838a9",
+      "name": "Extract AI Output JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {_id, full_text, summary} = $json;\nreturn [\n  {\n    json: {\n      _id,\n      ai: {\n        full_text: full_text.slice(0, 4000),\n        summary\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3488,
+        -704
+      ],
+      "id": "d2595ef8-3128-4f84-81c5-3cb64ad096c4",
+      "name": "Build Final Summary JSON"
     }
   ],
   "pinData": {},
@@ -572,7 +606,7 @@
       "main": [
         [
           {
-            "node": "Load File for AI Input",
+            "node": "Keep _id",
             "type": "main",
             "index": 0
           }
@@ -643,18 +677,7 @@
       "main": [
         [
           {
-            "node": "Prepare Summary JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Summary JSON": {
-      "main": [
-        [
-          {
-            "node": "Respond to DocReadAI Webhook",
+            "node": "Extract AI Output JSON",
             "type": "main",
             "index": 0
           }
@@ -827,6 +850,55 @@
         [
           {
             "node": "Get Run Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep _id": {
+      "main": [
+        [
+          {
+            "node": "Load File for AI Input",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge _id with AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge _id with AI Response": {
+      "main": [
+        [
+          {
+            "node": "Build Final Summary JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Output JSON": {
+      "main": [
+        [
+          {
+            "node": "Merge _id with AI Response",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Build Final Summary JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond to DocReadAI Webhook",
             "type": "main",
             "index": 0
           }
