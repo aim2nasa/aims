@@ -125,7 +125,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"다음 문서를 한국어로 요약해 주세요. 전문 용어나 보험 용어도 원어 그대로 유지하십시오.\",\n  \"attachments\": [\n    {\n      \"file_id\": \"{{ $json.id }}\",\n      \"tools\": [{ \"type\": \"file_search\" }]\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"이 문서를 한국어로 읽고 다음 두 가지를 생성해 주세요:\\n\\n1. full_text: 전체 문서 내용을 충실히 이해한 요약본 (너무 길지 않게 약 4000자 이내)\\n2. summary: 핵심 요약 (전체 요약에서 중요한 포인트만 압축)\\n\\n출력은 JSON 형식으로 다음과 같이 반환하세요:\\n\\n{\\n  \\\"full_text\\\": \\\"...\\\",\\n  \\\"summary\\\": \\\"...\\\"\\n}\",\n   \"attachments\": [\n    {\n      \"file_id\": \"{{ $json.id }}\",\n      \"tools\": [{ \"type\": \"file_search\" }]\n    }\n  ]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
