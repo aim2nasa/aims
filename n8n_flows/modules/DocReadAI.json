@@ -125,7 +125,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"Please summarize the document.\",\n  \"attachments\": [\n    {\n      \"file_id\": \"{{ $json.id }}\",\n      \"tools\": [{ \"type\": \"file_search\" }]\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"role\": \"user\",\n  \"content\": \"다음 문서를 한국어로 요약해 주세요. 전문 용어나 보험 용어도 원어 그대로 유지하십시오.\",\n  \"attachments\": [\n    {\n      \"file_id\": \"{{ $json.id }}\",\n      \"tools\": [{ \"type\": \"file_search\" }]\n    }\n  ]\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
