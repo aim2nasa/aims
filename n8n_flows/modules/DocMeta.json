@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "jsCode": "try {\n  return JSON.parse($json.stdout || '{}');\n} catch (err) {\n  return {\n    status: \"ERROR\",\n    error: \"INVALID_ANALYZER_OUTPUT\",\n    message: err.message,\n    raw: $json.stdout\n  };\n}\n"
+        "jsCode": "const lines = $json.stdout.split('\\n');\nconst jsonLine = lines.find(line => {\n  const trimmed = line.trim();\n  return trimmed.startsWith('{') && trimmed.endsWith('}');\n});\n\nif (!jsonLine) {\n  throw new Error(\"No valid JSON found in analyzer output.\");\n}\n\nreturn JSON.parse(jsonLine);"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
