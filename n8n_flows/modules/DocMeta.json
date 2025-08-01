@@ -37,7 +37,7 @@
     },
     {
       "parameters": {
-        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js /data/tmp/{{$binary.file.fileName}}"
+        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js /data/tmp/\"{{$binary.file.fileName}}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
