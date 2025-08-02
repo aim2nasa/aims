@@ -13,6 +13,12 @@ const pdfParse = require('pdf-parse');
 const exif = require('exif-parser');
 const { getDocument } = require('pdfjs-dist/legacy/build/pdf.js');
 
+//HWP 확장자만 매핑
+const EXTENSION_MIME_MAP = {
+    ".hwp": "application/x-hwp",
+    ".hwpx": "application/x-hwp"
+};
+
 async function analyzePdfTextRatio(pdfPath, minTextLengthPerPage = 50) {
   if (!fs.existsSync(pdfPath)) {
     return { total_pages: 0, text_pages: 0, text_ratio: 0.0 };
@@ -69,8 +75,13 @@ async function getFileMetadata(filePath) {
   meta.created_at = new Date(stat.ctimeMs).toISOString();
   meta.status = "ok";
 
-  const mimeType = mime.lookup(filePath);
-  meta.mime = mimeType || "unknown";
+  //확장자 기반 MIME 매핑(HWP만)
+  let mimeType = mime.lookup(filePath);
+  if (!mimeType || mimeType === "unknown") {
+    const ext = path.extname(filePath).toLowerCase();
+    mimeType = EXTENSION_MIME_MAP[ext] || "unknown";
+  }
+  meta.mime = mimeType;
 
   // PDF면 페이지 수 및 텍스트 비율 추출
   if (mimeType === "application/pdf") {
