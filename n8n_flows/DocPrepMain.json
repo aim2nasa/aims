@@ -5,14 +5,14 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "docprep-main",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         -1104,
-        160
+        128
       ],
       "id": "e29e01fc-76ee-4105-9242-75103a993ff0",
       "name": "DocPrepMain Webhook",
@@ -39,7 +39,7 @@
       "typeVersion": 4.2,
       "position": [
         -880,
-        160
+        128
       ],
       "id": "dff9dc5f-cad0-4927-bad8-4c598ebb7999",
       "name": "DocUpload Request"
@@ -57,7 +57,7 @@
       "typeVersion": 4.2,
       "position": [
         -656,
-        160
+        128
       ],
       "id": "9f8dfb27-d5f2-41d4-a9a9-985d4112d14a",
       "name": "DocMeta Request"
@@ -72,7 +72,7 @@
       "typeVersion": 3.4,
       "position": [
         -432,
-        160
+        128
       ],
       "id": "db7edae6-945b-4379-9623-95715e932cfa",
       "name": "Merge DocMeta for Update"
@@ -89,7 +89,7 @@
       "typeVersion": 1.2,
       "position": [
         -208,
-        160
+        128
       ],
       "id": "5a46296a-6072-431e-9149-8d776130f3c4",
       "name": "Update Meta in MongoDB",
@@ -109,8 +109,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        16,
-        160
+        240,
+        224
       ],
       "id": "8f5502b7-bd6b-493f-ad5b-d1244c1e61d8",
       "name": "Redis",
@@ -120,6 +120,69 @@
           "name": "Redis account"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9217ebc2-05be-4a33-82ae-174951a59420",
+              "leftValue": "={{ $json.meta.pdf_pages }}",
+              "rightValue": 30,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        128
+      ],
+      "id": "12af72d5-9e62-494c-b703-5ecf5f042e2b",
+      "name": "Over PDF Page Limit?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\":true,\n  \"status\":413,\n  \"userMessage\":\"❌ OCR 실패: 문서 페이지가 너무 많습니다. 30페이지 이하 문서만 지원됩니다.\"\n}",
+        "options": {
+          "responseCode": 413
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        32
+      ],
+      "id": "e751b41f-4977-4516-8171-36cd37a6761e",
+      "name": "Respond PDF Page Limit Exceeded"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        464,
+        224
+      ],
+      "id": "134ade83-2737-4052-8d31-f142c8a18715",
+      "name": "Respond to DocPrepMain Webhook"
     }
   ],
   "pinData": {},
@@ -172,7 +235,36 @@
       "main": [
         [
           {
+            "node": "Over PDF Page Limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Over PDF Page Limit?": {
+      "main": [
+        [
+          {
+            "node": "Respond PDF Page Limit Exceeded",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "Respond to DocPrepMain Webhook",
             "type": "main",
             "index": 0
           }
@@ -184,7 +276,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "bdffaa4a-89fd-4926-8db6-592534480405",
+  "versionId": "d32e9a7f-8efe-48e5-8b9a-4abdf33a4ad4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
