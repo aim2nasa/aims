@@ -12,10 +12,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
       "position": [
-        -1440,
-        260
+        240,
+        360
       ],
-      "id": "e1a44d4f-d181-4f0f-87ab-20ddf9153993",
+      "id": "97ff173a-5218-49b2-a783-63d2a44feddd",
       "name": "AI Agent"
     },
     {
@@ -31,15 +31,15 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -1360,
-        480
+        336,
+        584
       ],
-      "id": "368ffdbd-2fc4-4203-a0c5-ebfa064a305b",
+      "id": "c3689b2c-53ae-47e9-ae9f-7d49c74704ea",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
-          "id": "T3sQKJvrbzgpZfuT",
-          "name": "OpenAi account - lecture용"
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
         }
       }
     },
@@ -53,10 +53,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2540,
-        160
+        -880,
+        212
       ],
-      "id": "07379dbe-1d68-45a5-a20f-5b49a29bd4fb",
+      "id": "07639b98-b70c-4b58-a3eb-ea64f7cd4f30",
       "name": "Webhook",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
     },
@@ -67,10 +67,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2100,
-        160
+        -432,
+        212
       ],
-      "id": "159cbf2f-47e1-4cae-84f9-3e9870120cca",
+      "id": "c610eb72-b0ed-44bd-9692-6e7b122dada3",
       "name": "Check OCR Error"
     },
     {
@@ -80,10 +80,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1660,
-        260
+        16,
+        360
       ],
-      "id": "206112f6-e7af-47c9-8faa-a31c139bce63",
+      "id": "84b71d25-ca56-451d-b49a-2e1f01b8de30",
       "name": "Limit & Merge Pages"
     },
     {
@@ -123,10 +123,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -2320,
-        160
+        -656,
+        212
       ],
-      "id": "bb4fbc1e-7802-4166-a99f-aa5860191c5b",
+      "id": "7745d1d2-685e-4bd8-8728-1896d42541c8",
       "name": "Upstage OCR Request",
       "alwaysOutputData": true,
       "onError": "continueRegularOutput"
@@ -160,10 +160,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1880,
-        160
+        -208,
+        212
       ],
-      "id": "00857a91-b4fd-41a8-8009-431fdd97bb67",
+      "id": "375139c5-aaca-4904-b6fa-c1f7ee7d2d48",
       "name": "Is OCR Error?"
     },
     {
@@ -173,23 +173,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -1660,
-        60
+        864,
+        360
       ],
-      "id": "eb1e3303-f702-48bc-82a1-4aec46ff95a8",
-      "name": "OCR Error Return"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        -900,
-        260
-      ],
-      "id": "52d75aa2-0798-4dc2-85f0-2a30b6119f90",
+      "id": "fd8b9abb-b46c-466c-b89f-ddc6e9fe3884",
       "name": "OCR Return"
     },
     {
@@ -199,11 +186,54 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1100,
-        260
+        640,
+        360
       ],
-      "id": "6e2459db-13d1-431c-98a4-3d19d183a52a",
+      "id": "111b422c-ab01-4aa4-98e0-d8dff26a30e8",
       "name": "Merge with FullText"
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ JSON.stringify($json) }}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        640,
+        64
+      ],
+      "id": "28e6121c-2759-4357-9113-2e8b37f91254",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        64
+      ],
+      "id": "4e87ece2-fc61-4327-8bc5-cd3d31dfcd7c",
+      "name": "Set OCR Error Response"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 413
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        64
+      ],
+      "id": "a6ae3675-989c-449f-b966-bcb21c9cb3f1",
+      "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
@@ -278,7 +308,7 @@
       "main": [
         [
           {
-            "node": "OCR Error Return",
+            "node": "Set OCR Error Response",
             "type": "main",
             "index": 0
           }
@@ -302,17 +332,39 @@
           }
         ]
       ]
+    },
+    "Set OCR Error Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "12eb6e8d-5e81-4bfe-bf03-6dad2dd5db53",
+  "versionId": "a34c01f1-0dda-431b-8656-9b379de7db8d",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
-  "id": "NjpOxFx8s9HTDOqk",
+  "id": "SmTOn3mdK21O5WZt",
   "tags": []
 }
