@@ -21,23 +21,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        420,
-        20
+        1104,
+        -96
       ],
-      "id": "d3e0044d-581e-4b29-9dab-e96419b1d803",
+      "id": "cebe2f1b-e1c5-4063-9a89-ebf5817b5aec",
       "name": "DocOCR Request"
     },
     {
       "parameters": {
-        "jsCode": "// Parse Stream Message에서 온 값을 그대로 정리해서 반환\nreturn [\n  {\n    file_id: $json.file_id,\n    file_path: $json.file_path,\n    doc_id: $json.doc_id,\n    created_at: $json.created_at,\n    message_id: $json.message_id\n  }\n];\n"
+        "jsCode": "// Redis Trigger에서 받은 Raw JSON 문자열을 실제 JSON으로 변환\nconst rawMsg = $json.message;   // Redis Trigger message 필드\nconst parsed = JSON.parse(rawMsg); \n\nreturn [parsed];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -20,
-        20
+        656,
+        -96
       ],
-      "id": "c48c5694-ed15-45bd-95a2-02cda0a90f5b",
+      "id": "a218d95d-ab55-4d1c-8074-2e5dfe7c1055",
       "name": "Pasre"
     },
     {
@@ -48,10 +48,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        200,
-        20
+        880,
+        -96
       ],
-      "id": "4c62b793-aafb-4727-b51c-be3d8fd32e77",
+      "id": "19f7460f-16b3-47c2-98f3-ef08fa930a28",
       "name": "Prepare OCR Binary",
       "alwaysOutputData": true
     },
@@ -66,14 +66,14 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        860,
-        20
+        1552,
+        -96
       ],
-      "id": "4ea637b1-3a51-4ef9-a29c-439df98e93a3",
+      "id": "7c19f385-dcdc-4fc7-9504-4c9b7ac785b1",
       "name": "Update Ocr in MongoDB",
       "credentials": {
         "mongoDb": {
-          "id": "iOJAgJOlMFh18tcD",
+          "id": "RT7gatMve2ExTlAp",
           "name": "MongoDB account"
         }
       }
@@ -119,115 +119,31 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        640,
-        20
+        1328,
+        -96
       ],
-      "id": "25f7c8ea-981c-48f8-8ac9-034afb86bd6b",
+      "id": "0366c832-19c0-4f8a-9090-f6c5b0207481",
       "name": "Prepare OCR Fields"
     },
     {
       "parameters": {
-        "command": "redis-cli XREADGROUP GROUP ocr_consumer_group worker-1 COUNT 1 BLOCK 5000 STREAMS ocr_stream \">\""
+        "channels": "ocr_queue",
+        "options": {}
       },
-      "type": "n8n-nodes-base.executeCommand",
+      "type": "n8n-nodes-base.redisTrigger",
       "typeVersion": 1,
       "position": [
-        -900,
-        20
+        432,
+        -96
       ],
-      "id": "0bcd7b99-4360-4878-b746-0e315d35f358",
-      "name": "Read Redis Stream",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const raw = $json.raw_stdout;\n\n// stdout을 라인 단위로 분리\nconst lines = raw.split(\"\\n\").map(l => l.trim()).filter(l => l);\n\n// key-value 파싱\nlet data = {};\nfor (let i = 2; i < lines.length; i += 2) {\n  const key = lines[i];\n  const value = lines[i + 1];\n  if (key && value) {\n    data[key] = value;\n  }\n}\n\n// message_id 따로 추출\ndata[\"message_id\"] = lines[1] || \"\";\n\n// JSON 객체 반환\nreturn [ data ];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -240,
-        20
-      ],
-      "id": "8728fc51-a9f6-41e1-b30b-6aa54512a2fe",
-      "name": "Parse Stream Message"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "d4792f95-f038-4b24-b00d-fdf5fa6afd59",
-              "name": "raw_stdout",
-              "value": "={{ $json.stdout }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -460,
-        20
-      ],
-      "id": "5760f63b-3dc2-42df-a5b0-2d60b5a31179",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "seconds",
-              "secondsInterval": 5
-            }
-          ]
+      "id": "6c53c42e-976d-404e-bf98-8a94a7d087b2",
+      "name": "Redis Trigger",
+      "credentials": {
+        "redis": {
+          "id": "Y9hm9ZE7fU3LLwyk",
+          "name": "Redis account"
         }
-      },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        -1120,
-        20
-      ],
-      "id": "8a5d9ec3-a29b-4824-818e-4f6ea42f8038",
-      "name": "Schedule Trigger"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "8531a96f-3983-4fd7-9033-2d4fa7122020",
-              "leftValue": "={{ $json.stdout.trim().length }}\n\n",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -680,
-        20
-      ],
-      "id": "904aeffc-1073-4e53-8b75-3ca1e07660d2",
-      "name": "Redis Message Empty?"
+      }
     }
   ],
   "pinData": {},
@@ -276,18 +192,7 @@
         ]
       ]
     },
-    "Read Redis Stream": {
-      "main": [
-        [
-          {
-            "node": "Redis Message Empty?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Stream Message": {
+    "Redis Trigger": {
       "main": [
         [
           {
@@ -297,51 +202,17 @@
           }
         ]
       ]
-    },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Parse Stream Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schedule Trigger": {
-      "main": [
-        [
-          {
-            "node": "Read Redis Stream",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Redis Message Empty?": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "8b584082-fcd3-4a99-9230-766a5c86731a",
+  "versionId": "89e30d23-6544-4e90-aff1-502d2943c66d",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
-  "id": "Ms4ig5PY4Bk7fUfp",
+  "id": "sd77rWDAywE7D6k0",
   "tags": []
 }

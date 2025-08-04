@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        20
+        -1104,
+        160
       ],
-      "id": "477a7345-0167-4cad-910a-2cff9eb8caf4",
+      "id": "e29e01fc-76ee-4105-9242-75103a993ff0",
       "name": "DocPrepMain Webhook",
       "webhookId": "3be242b1-3628-4384-b151-cc43d91e3147"
     },
@@ -38,10 +38,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
-        20
+        -880,
+        160
       ],
-      "id": "e02dac84-9e75-4abe-aba6-7fc702d4b2fe",
+      "id": "dff9dc5f-cad0-4927-bad8-4c598ebb7999",
       "name": "DocUpload Request"
     },
     {
@@ -56,10 +56,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        440,
-        20
+        -656,
+        160
       ],
-      "id": "d48d9268-a291-4f6e-9114-886088a2837e",
+      "id": "9f8dfb27-d5f2-41d4-a9a9-985d4112d14a",
       "name": "DocMeta Request"
     },
     {
@@ -71,10 +71,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        660,
-        20
+        -432,
+        160
       ],
-      "id": "4b3cfcc1-28fb-4c66-b06a-a1e5c956b8a8",
+      "id": "db7edae6-945b-4379-9623-95715e932cfa",
       "name": "Merge DocMeta for Update"
     },
     {
@@ -88,14 +88,14 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        880,
-        20
+        -208,
+        160
       ],
-      "id": "c1de5005-212b-40cf-b043-b747ce308237",
+      "id": "5a46296a-6072-431e-9149-8d776130f3c4",
       "name": "Update Meta in MongoDB",
       "credentials": {
         "mongoDb": {
-          "id": "iOJAgJOlMFh18tcD",
+          "id": "RT7gatMve2ExTlAp",
           "name": "MongoDB account"
         }
       }
@@ -109,30 +109,17 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1100,
-        -140
+        16,
+        160
       ],
-      "id": "8e136c72-5037-40fc-b53c-5568617a705a",
+      "id": "8f5502b7-bd6b-493f-ad5b-d1244c1e61d8",
       "name": "Redis",
       "credentials": {
         "redis": {
-          "id": "EdzYllZ0Vum6Mxpx",
+          "id": "Y9hm9ZE7fU3LLwyk",
           "name": "Redis account"
         }
       }
-    },
-    {
-      "parameters": {
-        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  file_ext \"{{ $json.meta.extension }}\" \\\n  file_mime \"{{ $json.meta.mime }}\" \\\n  file_size_bytes {{ $json.meta.size_bytes || 0 }} \\\n  pdf_total_pages {{ $json.meta.pdf_text_ratio?.total_pages || 0 }} \\\n  pdf_text_pages {{ $json.meta.pdf_text_ratio?.text_pages || 0 }} \\\n  pdf_text_ratio {{ $json.meta.pdf_text_ratio?.text_ratio || 0 }} \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1100,
-        20
-      ],
-      "id": "3d6db348-3cef-4669-a527-ef14d8113ee0",
-      "name": "Execute Command"
     }
   ],
   "pinData": {},
@@ -185,7 +172,7 @@
       "main": [
         [
           {
-            "node": "Execute Command",
+            "node": "Redis",
             "type": "main",
             "index": 0
           }
@@ -197,11 +184,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "69e60e4f-b270-413b-9a98-2da42e7be5d6",
+  "versionId": "bdffaa4a-89fd-4926-8db6-592534480405",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0cc9a936009f7da06be7c1a1d682098212b5d24a0a2d110ca430428308720e"
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
-  "id": "IxdVFdbMBedaNNfz",
+  "id": "4J8PGGXFdPWtFaIH",
   "tags": []
 }
