@@ -156,23 +156,6 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\n  \"error\":true,\n  \"status\":413,\n  \"userMessage\":\"❌ OCR 실패: 문서 페이지가 너무 많습니다. 30페이지 이하 문서만 지원됩니다.\"\n}",
-        "options": {
-          "responseCode": 413
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        240,
-        32
-      ],
-      "id": "e751b41f-4977-4516-8171-36cd37a6761e",
-      "name": "Respond PDF Page Limit Exceeded"
-    },
-    {
-      "parameters": {
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -183,6 +166,83 @@
       ],
       "id": "134ade83-2737-4052-8d31-f142c8a18715",
       "name": "Respond to DocPrepMain Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2de5fe4f-7ef7-4bdf-aba1-ff4bd1f4d606",
+              "name": "warn",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "e5177902-811d-4607-9d5a-0937da47a41e",
+              "name": "status",
+              "value": 207,
+              "type": "number"
+            },
+            {
+              "id": "30f1814b-a01b-4a22-bd6d-478c7e4791cf",
+              "name": "userMessage",
+              "value": "⚠️ OCR 생략: 문서 페이지 수 초과",
+              "type": "string"
+            },
+            {
+              "id": "ca3ff755-0855-4d02-9fb2-35e729863467",
+              "name": "pages",
+              "value": "={{ $json.meta.pdf_pages }}",
+              "type": "number"
+            },
+            {
+              "id": "85e16480-1d99-4de7-b500-a422ce31b43b",
+              "name": "filename",
+              "value": "={{ $json.meta.filename }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        32
+      ],
+      "id": "e901bb79-54bc-49ba-8e64-e334367451d7",
+      "name": "Set PDF Limit Warning"
+    },
+    {
+      "parameters": {
+        "command": "=echo \"[OCR-WARN] Skipped OCR due to page limit: {{$json.filename}} ({{$json.pages}} pages)\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        464,
+        32
+      ],
+      "id": "499e27c2-bcaa-4e69-9521-35c56cdaa94f",
+      "name": "Log PDF Limit Warning"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 207
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        688,
+        32
+      ],
+      "id": "e751b41f-4977-4516-8171-36cd37a6761e",
+      "name": "Respond PDF Page Limit Warning"
     }
   ],
   "pinData": {},
@@ -246,7 +306,7 @@
       "main": [
         [
           {
-            "node": "Respond PDF Page Limit Exceeded",
+            "node": "Set PDF Limit Warning",
             "type": "main",
             "index": 0
           }
@@ -270,13 +330,35 @@
           }
         ]
       ]
+    },
+    "Set PDF Limit Warning": {
+      "main": [
+        [
+          {
+            "node": "Log PDF Limit Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log PDF Limit Warning": {
+      "main": [
+        [
+          {
+            "node": "Respond PDF Page Limit Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d32e9a7f-8efe-48e5-8b9a-4abdf33a4ad4",
+  "versionId": "6f0d8cf2-dd8a-4d65-84e5-6fa639d2fed5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
