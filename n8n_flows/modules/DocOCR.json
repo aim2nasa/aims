@@ -173,7 +173,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        864,
+        1088,
         360
       ],
       "id": "fd8b9abb-b46c-466c-b89f-ddc6e9fe3884",
@@ -229,11 +229,26 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        336,
+        328,
         64
       ],
       "id": "a6ae3675-989c-449f-b966-bcb21c9cb3f1",
       "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"status\": 200,\n  \"error\": false,\n  \"userMessage\": \"OCR 성공\",\n  \"confidence\": {{ $json.confidence }},\n  \"summary\": {{ JSON.stringify($json.summary) }},\n  \"full_text\": {{ JSON.stringify($json.full_text) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        360
+      ],
+      "id": "8633a0cb-a8e4-4c03-ab9c-2955dcf9001b",
+      "name": "Set OCR Success Response"
     }
   ],
   "pinData": {},
@@ -326,7 +341,7 @@
       "main": [
         [
           {
-            "node": "OCR Return",
+            "node": "Set OCR Success Response",
             "type": "main",
             "index": 0
           }
@@ -354,13 +369,24 @@
           }
         ]
       ]
+    },
+    "Set OCR Success Response": {
+      "main": [
+        [
+          {
+            "node": "OCR Return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "a34c01f1-0dda-431b-8656-9b379de7db8d",
+  "versionId": "d4f24be7-a3bb-457d-bc60-c5ae0ccb6282",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
