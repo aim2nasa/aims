@@ -21,7 +21,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1552,
+        1760,
         -544
       ],
       "id": "cebe2f1b-e1c5-4063-9a89-ebf5817b5aec",
@@ -42,13 +42,13 @@
     },
     {
       "parameters": {
-        "fileSelector": "={{ $json.file_path }}",
+        "fileSelector": "={{ $json.context.file_path }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        1104,
+        1312,
         -544
       ],
       "id": "19f7460f-16b3-47c2-98f3-ef08fa930a28",
@@ -66,7 +66,7 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        2224,
+        2432,
         -320
       ],
       "id": "7c19f385-dcdc-4fc7-9504-4c9b7ac785b1",
@@ -119,7 +119,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2000,
+        2208,
         -320
       ],
       "id": "0366c832-19c0-4f8a-9090-f6c5b0207481",
@@ -152,7 +152,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1328,
+        1536,
         -544
       ],
       "id": "d0c7c888-de09-4eb8-95c9-5cd0b7baa171",
@@ -210,7 +210,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1776,
+        1984,
         -544
       ],
       "id": "a16f3f51-fb59-4432-b147-b97a8bdf50bb",
@@ -265,7 +265,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2000,
+        2208,
         -640
       ],
       "id": "3b792fa1-38e1-4da7-8354-92093eb55017",
@@ -278,7 +278,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2224,
+        2432,
         -704
       ],
       "id": "a7ce5198-ae47-47bb-97ca-d3fd93b98c8d",
@@ -294,7 +294,7 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2896,
+        3104,
         -752
       ],
       "id": "2bbce255-7d00-4144-8364-93700b830c8a",
@@ -308,14 +308,28 @@
     },
     {
       "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"status\": 500,\n  \"error\": true,\n  \"retryCount\": {{ $json.retryCount }},\n  \"userMessage\": \"❌ OCR 최종 실패: 3회 재시도 후 실패하였습니다.\"\n}",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2d14fb94-e3db-4899-a60f-89af22c65370",
+              "name": "ocr.error",
+              "value": "={{ $json.userMessage }}",
+              "type": "string"
+            },
+            {
+              "id": "78b4709e-e01a-4592-8b8b-075845dff34e",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2896,
+        3104,
         -544
       ],
       "id": "3958f065-6a17-4176-a6aa-5436d544ad44",
@@ -323,12 +337,12 @@
     },
     {
       "parameters": {
-        "command": "=echo \"[OCR-FAIL] Final failure after 3 retries: {{$json.file_path}}\""
+        "command": "=echo \"[OCR-FAIL] failure {{ $('Pasre').item.json.file_path }}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        3344,
+        3552,
         -544
       ],
       "id": "426d67d8-a020-4331-891e-85fd544de5db",
@@ -338,14 +352,14 @@
       "parameters": {
         "operation": "findOneAndUpdate",
         "collection": "files",
-        "updateKey": "_id",
-        "fields": "={\n  \"$set\": {\n    \"ocr.retry_count\": {{ $json.retryCount }},\n    \"ocr.final_error\": \"{{ $json.userMessage }}\"\n  }\n}",
+        "updateKey": "=_id",
+        "fields": "=ocr",
         "options": {}
       },
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        3120,
+        3328,
         -544
       ],
       "id": "77a19339-af9e-4201-b695-2aebbe27aa93",
@@ -375,7 +389,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2448,
+        2656,
         -704
       ],
       "id": "032501bd-8176-4677-b971-833e58ad0972",
@@ -408,11 +422,26 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2672,
+        2880,
         -704
       ],
       "id": "7207b8d8-53ab-432e-bbc8-6953b80da8dc",
       "name": "Not Exceeded Retry Limit?"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"context\": {\n    \"retryCount\": {{ $('Init Retry Count').item.json.retryCount }},\n    \"file_id\": \"{{ $('Pasre').item.json.file_id }}\",\n    \"file_path\": \"{{ $('Pasre').item.json.file_path }}\",\n    \"doc_id\": \"{{ $('Pasre').item.json.doc_id }}\",\n    \"created_at\": \"{{ $('Pasre').item.json.created_at }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1088,
+        -544
+      ],
+      "id": "16ae4ffc-81b4-4f2b-9e86-8207de8c83fd",
+      "name": "Set Context Object"
     }
   ],
   "pinData": {},
@@ -487,7 +516,7 @@
       "main": [
         [
           {
-            "node": "Prepare OCR Binary",
+            "node": "Set Context Object",
             "type": "main",
             "index": 0
           }
@@ -591,13 +620,24 @@
           }
         ]
       ]
+    },
+    "Set Context Object": {
+      "main": [
+        [
+          {
+            "node": "Prepare OCR Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "381d6a52-8b3a-471c-8ede-09801614c372",
+  "versionId": "50d7a8d5-afdd-43bc-8142-d3862b41379a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
