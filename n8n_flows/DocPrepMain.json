@@ -12,7 +12,7 @@
       "typeVersion": 2,
       "position": [
         -1104,
-        80
+        -144
       ],
       "id": "e29e01fc-76ee-4105-9242-75103a993ff0",
       "name": "DocPrepMain Webhook",
@@ -39,7 +39,7 @@
       "typeVersion": 4.2,
       "position": [
         -880,
-        80
+        -144
       ],
       "id": "dff9dc5f-cad0-4927-bad8-4c598ebb7999",
       "name": "DocUpload Request"
@@ -57,7 +57,7 @@
       "typeVersion": 4.2,
       "position": [
         -656,
-        80
+        -144
       ],
       "id": "9f8dfb27-d5f2-41d4-a9a9-985d4112d14a",
       "name": "DocMeta Request"
@@ -72,7 +72,7 @@
       "typeVersion": 3.4,
       "position": [
         -432,
-        80
+        -144
       ],
       "id": "db7edae6-945b-4379-9623-95715e932cfa",
       "name": "Merge DocMeta for Update"
@@ -89,7 +89,7 @@
       "typeVersion": 1.2,
       "position": [
         -208,
-        80
+        -144
       ],
       "id": "5a46296a-6072-431e-9149-8d776130f3c4",
       "name": "Update Meta in MongoDB",
@@ -110,7 +110,7 @@
       "typeVersion": 1,
       "position": [
         464,
-        272
+        48
       ],
       "id": "8f5502b7-bd6b-493f-ad5b-d1244c1e61d8",
       "name": "Redis",
@@ -149,7 +149,7 @@
       "typeVersion": 2.2,
       "position": [
         240,
-        176
+        -48
       ],
       "id": "12af72d5-9e62-494c-b703-5ecf5f042e2b",
       "name": "Over PDF Page Limit?"
@@ -162,7 +162,7 @@
       "typeVersion": 1.4,
       "position": [
         688,
-        272
+        48
       ],
       "id": "134ade83-2737-4052-8d31-f142c8a18715",
       "name": "Respond to DocPrepMain Webhook"
@@ -209,7 +209,7 @@
       "typeVersion": 3.4,
       "position": [
         464,
-        80
+        -144
       ],
       "id": "e901bb79-54bc-49ba-8e64-e334367451d7",
       "name": "Set PDF Limit Warning"
@@ -222,7 +222,7 @@
       "typeVersion": 1,
       "position": [
         688,
-        80
+        -144
       ],
       "id": "499e27c2-bcaa-4e69-9521-35c56cdaa94f",
       "name": "Log PDF Limit Warning"
@@ -239,7 +239,7 @@
       "typeVersion": 1.4,
       "position": [
         912,
-        80
+        -144
       ],
       "id": "e751b41f-4977-4516-8171-36cd37a6761e",
       "name": "Respond PDF Page Limit Warning"
@@ -293,7 +293,7 @@
       "typeVersion": 2.2,
       "position": [
         16,
-        80
+        -144
       ],
       "id": "e8181ca7-3df0-4397-bf09-7430ecc152f9",
       "name": "Unsupported MIME Type?"
@@ -331,6 +331,18 @@
               "name": "filename",
               "value": "={{ $json.meta.filename }}",
               "type": "string"
+            },
+            {
+              "id": "f95fca2b-52be-450e-8d3e-56ed45b4729b",
+              "name": "ocr.warn",
+              "value": "Skipped OCR due to unsupported MIME type",
+              "type": "string"
+            },
+            {
+              "id": "07d60821-09c0-42a1-888e-31155fcc7687",
+              "name": "_id",
+              "value": "={{ $('Merge DocMeta for Update').item.json._id }}",
+              "type": "string"
             }
           ]
         },
@@ -340,20 +352,20 @@
       "typeVersion": 3.4,
       "position": [
         240,
-        -112
+        -336
       ],
       "id": "f6a73011-a26c-445d-b8d4-36abfc566b14",
       "name": "Set Unsupported MIME Warning"
     },
     {
       "parameters": {
-        "command": "=echo \"[OCR-WARN] Skipped OCR due to unsupported MIME type: {{$json.filename}} ({{$json.mime}})\""
+        "command": "=echo \"[OCR-WARN] {{ $json.ocr.warn }}: {{$json.filename}} ({{$json.mime}})\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        464,
-        -112
+        688,
+        -336
       ],
       "id": "1a9678b0-3d30-4f13-8bc2-42265dfcef29",
       "name": "Log Unsupported MIME Warning"
@@ -369,11 +381,34 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        688,
-        -112
+        912,
+        -336
       ],
       "id": "c866104d-8563-4978-b484-a32cd0d7e6c6",
       "name": "Respond Unsupported MIME Warning"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "=ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -336
+      ],
+      "id": "7213f677-8f6d-4504-afea-a30dbf9ec79c",
+      "name": "Update Unsupported MIME Warning in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -506,7 +541,7 @@
       "main": [
         [
           {
-            "node": "Log Unsupported MIME Warning",
+            "node": "Update Unsupported MIME Warning in MongoDB",
             "type": "main",
             "index": 0
           }
@@ -523,13 +558,24 @@
           }
         ]
       ]
+    },
+    "Update Unsupported MIME Warning in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Log Unsupported MIME Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ec1a4348-be7f-44e0-bd0a-dbf910e3cbc1",
+  "versionId": "86821a1d-b61e-4bd1-98af-20f147eae4b3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
