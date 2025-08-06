@@ -138,9 +138,9 @@
               "leftValue": "={{ $json.error }}",
               "rightValue": "true",
               "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "type": "boolean",
+                "operation": "notEmpty",
+                "singleValue": true
               }
             }
           ],
@@ -189,7 +189,7 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "{\n  \"status\": 413,\n  \"error\": true,\n  \"userMessage\": \"❌ OCR 실패: 문서 페이지 수 초과 (30페이지 이하만 지원)\",\n  \"confidence\": null,\n  \"summary\": null,\n  \"full_text\": null\n}",
+        "jsonOutput": "={\n  \"status\": {{ $json.status }},\n  \"error\": true,\n  \"userMessage\": {{ JSON.stringify($json.userMessage) }},\n  \"confidence\": null,\n  \"summary\": null,\n  \"full_text\": null\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -218,7 +218,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\n\n// Upstage 응답이 다양한 형태로 올 수 있으므로 status와 메시지를 안전하게 추출\nconst status = response.status || response.error?.status || 500;\nconst userMessage = response.error?.message || \"❌ OCR 처리 실패\";\n\nreturn [{\n  json: {\n    error: !!response.error,\n    status,\n    userMessage,\n    ...response\n  }\n}];"
+        "jsCode": "const response = $json;\n\n// Upstage 응답에서 status와 메시지를 안전하게 추출\nconst status = response.status ?? response.error?.status ?? 500;\nconst userMessage = response.error?.message ?? \"❌ OCR 처리 실패\";\n\nreturn [{\n  json: {\n    error: !!response.error,\n    status,\n    userMessage,\n    ...response\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -356,7 +356,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "46a6d3ad-a9e9-4bc9-ba38-5bfee850db7c",
+  "versionId": "a5033f69-3e52-4052-8838-c50985dcd44b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
