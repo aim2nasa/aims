@@ -571,9 +571,11 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "831643d2-e8ae-4a8a-a151-4cf7697824f8",
+  "versionId": "32160160-72ab-4381-a45f-3f31d79e26a4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
