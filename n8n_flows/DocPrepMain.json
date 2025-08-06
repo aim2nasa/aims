@@ -179,6 +179,18 @@
               "name": "filename",
               "value": "={{ $json.meta.filename }}",
               "type": "string"
+            },
+            {
+              "id": "5667ce45-6f22-463e-b7c4-8e647187f23b",
+              "name": "ocr.warn",
+              "value": "=Skipped OCR due to excessive number of pages, {{ $json.meta.pdf_pages }}>30",
+              "type": "string"
+            },
+            {
+              "id": "f74f0f28-b11c-495e-a66c-8980a4eff7d9",
+              "name": "=_id",
+              "value": "={{ $('Merge DocMeta for Update').item.json._id }}",
+              "type": "string"
             }
           ]
         },
@@ -200,7 +212,7 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -944,
+        -720,
         80
       ],
       "id": "f4c8b784-a561-41df-9050-ba8ec047b2a6",
@@ -217,7 +229,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -720,
+        -496,
         80
       ],
       "id": "add7d91e-c568-462e-92a1-01dde3c7bad9",
@@ -401,9 +413,57 @@
       ],
       "id": "edcb4f96-35fd-43b6-9c82-e02c4c69fe3f",
       "name": "Enqueue OCR Request (Redis XADD)"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "=ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        80
+      ],
+      "id": "60381ef3-8a8a-44ae-88fe-174c5ef6d4f9",
+      "name": "Update PDF Page Limit Warning in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "DocPrepMain Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8nd.giize.com",
+            "x-real-ip": "192.168.0.1",
+            "x-forwarded-for": "192.168.0.1",
+            "x-forwarded-proto": "https",
+            "content-length": "114145",
+            "user-agent": "curl/8.5.0",
+            "accept": "*/*",
+            "content-type": "multipart/form-data; boundary=------------------------130Z2COzUERtTNgfSs91zw"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "userId": "rossi.kwak@gmail.com"
+          },
+          "webhookUrl": "https://n8nd.giize.com/webhook/docprep-main",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
   "connections": {
     "DocPrepMain Webhook": {
       "main": [
@@ -482,7 +542,7 @@
       "main": [
         [
           {
-            "node": "Log PDF Limit Warning",
+            "node": "Update PDF Page Limit Warning in MongoDB",
             "type": "main",
             "index": 0
           }
@@ -561,6 +621,17 @@
           }
         ]
       ]
+    },
+    "Update PDF Page Limit Warning in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Log PDF Limit Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -569,7 +640,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "b057d3b0-cc66-4c25-924f-90f51b172793",
+  "versionId": "5bb262ed-37ca-49be-886c-8ff2ea025bb0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
