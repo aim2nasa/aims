@@ -227,7 +227,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\n\n// 기본값\nlet status = 200;\nlet userMessage = \"OCR 성공\";\n\n// 에러가 있으면 에러값으로 덮어씀\nif (response.error) {\n  status = response.error?.status ?? response.status ?? 500;\n  userMessage = response.error?.message ?? \"❌ OCR 처리 실패\";\n}\n\nreturn [{\n  json: {\n    error: !!response.error,\n    status,\n    userMessage,\n    ...response\n  }\n}];"
+        "jsCode": "const response = $json;\n\n// 기본값 (정상 기준)\nlet error = false;\nlet status = 200;\nlet userMessage = \"OCR 성공\";\nlet ocr_text = response.text ?? null;\nlet num_pages = response.numBilledPages ?? null;\n\n// 에러 구조가 들어온 경우\nif (response.error && response.error !== false) {\n  error = true;\n  // status, userMessage 등 에러 필드 파싱 (axios 에러 구조까지 대응)\n  status = response.status ?? response.error.status ?? 500;\n\n  // error.message가 JSON string일 때 실제 메시지 뽑기 (고급 보강)\n  let msg = response.error.message ?? response.userMessage ?? \"❌ OCR 처리 실패\";\n  try {\n    // JSON string 이중 인코딩 대응\n    const match = msg.match(/{.*}/);\n    if (match) {\n      const parsed = JSON.parse(match[0]);\n      if (parsed.error && parsed.error.message) {\n        msg = parsed.error.message;\n      }\n    }\n  } catch(e) {\n    // 파싱 실패시 원본 그대로 사용\n  }\n  userMessage = msg;\n\n  // 에러면 결과 데이터는 null\n  ocr_text = null;\n  num_pages = null;\n}\n\n// 결과 반환 (에러/정상 모두 동일 포맷)\nreturn [{\n  json: {\n    error,           // 반드시 boolean\n    status,          // int\n    userMessage,     // string\n    ocr_text,        // string|null\n    num_pages        // int|null\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -365,7 +365,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "ab084e36-8032-446e-b6ca-674a83b38880",
+  "versionId": "8d07e145-7128-41dc-941f-25ffcd6013de",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
