@@ -6,10 +6,10 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        -48
+        496,
+        112
       ],
-      "id": "00d1ee92-1caa-412d-a59e-0037202b89ed",
+      "id": "8289a0b9-c4d7-4972-a7ea-9c9b069b4414",
       "name": "Error Trigger"
     },
     {
@@ -32,7 +32,7 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Timestamp": "={{ $now.format('yyyy-MM-dd hh:mma') }}",
+            "Timestamp": "={{ $now.setZone('Asia/Seoul').toFormat('yyyy-MM-dd hh:mma') }}",
             "Workflow": "={{ $json.workflow.name }}",
             "URL": "={{ $json.execution.url }}",
             "Node": "={{ $json.execution.error.node.name }}",
@@ -101,10 +101,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.6,
       "position": [
-        224,
-        -144
+        720,
+        16
       ],
-      "id": "9d759eff-bbef-4ccb-b256-1ac611b816d7",
+      "id": "80f4f4f1-c9dc-4cc1-9cee-54cad8033242",
       "name": "Log Error",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -123,16 +123,16 @@
           "mode": "list",
           "cachedResultName": "aims"
         },
-        "text": "=Workflow Error: {{ $json.workflow.name }}\n\n{{ $json.execution.error.node.name }} errored at {{ $now.format('yyyy-MM-dd hh:mma') }}\n\nThe error message was: {{ $json.execution.error.message }}\n\nSee this execution here: {{ $json.execution.url }}",
+        "text": "=Workflow Error: {{ $json.workflow.name }}\n\n{{ $json.execution.error.node.name }} errored at {{ $now.setZone('Asia/Seoul').toFormat('yyyy-MM-dd hh:mma') }}\n\nThe error message was: {{ $json.execution.error.message }}\n\nSee this execution here: {{ $json.execution.url }}",
         "otherOptions": {}
       },
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        224,
-        48
+        720,
+        208
       ],
-      "id": "7fe3bbe4-3714-4e19-a736-8c210c4e2c46",
+      "id": "4c2da53f-7203-4919-adcf-83eb06ec4980",
       "name": "Send a message",
       "webhookId": "96aaa491-8f44-4683-973c-af781a8c9219",
       "credentials": {
@@ -162,13 +162,13 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "ac3387cb-7d4a-4b37-9a71-9288f9a7c52d",
+  "versionId": "7f8e6624-6dd0-4f6a-a603-3b70e3840eca",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
