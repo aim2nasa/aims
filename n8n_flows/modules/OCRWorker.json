@@ -22,7 +22,7 @@
       "typeVersion": 4.2,
       "position": [
         -1488,
-        -96
+        -112
       ],
       "id": "61596f08-960e-4bbe-91f6-7e4659c047a2",
       "name": "DocOCR Request"
@@ -36,7 +36,7 @@
       "typeVersion": 1,
       "position": [
         -1936,
-        -96
+        -112
       ],
       "id": "ff960edb-84ac-495f-9dfa-75219b964d2d",
       "name": "Prepare OCR Binary",
@@ -54,7 +54,7 @@
       "typeVersion": 1.2,
       "position": [
         -816,
-        128
+        48
       ],
       "id": "7a563340-6bab-4986-9913-07b1af4d410c",
       "name": "Update Ocr in MongoDB",
@@ -107,7 +107,7 @@
       "typeVersion": 3.4,
       "position": [
         -1040,
-        128
+        48
       ],
       "id": "8292456a-a16e-4688-a5f5-3fc7355d4306",
       "name": "Prepare OCR Fields"
@@ -120,7 +120,7 @@
       "typeVersion": 1.1,
       "position": [
         -1712,
-        -96
+        -112
       ],
       "id": "4b3cf9b3-9008-4464-84a7-72d441c381f9",
       "name": "Wait Before OCR",
@@ -145,7 +145,7 @@
       "typeVersion": 3.4,
       "position": [
         -2384,
-        -96
+        -112
       ],
       "id": "f26d483e-aab3-4050-a072-fbbd82085f27",
       "name": "Init Retry Count"
@@ -178,7 +178,7 @@
       "typeVersion": 2.2,
       "position": [
         -1264,
-        -96
+        -112
       ],
       "id": "912b034e-681c-42ad-8f60-18d92dfe2a9e",
       "name": "Is OCR Error?"
@@ -233,7 +233,7 @@
       "typeVersion": 2.2,
       "position": [
         -1040,
-        -192
+        -208
       ],
       "id": "5ddf087c-a9e6-4f0f-b8f0-ef19bef3fd10",
       "name": "Is Retryable OCR Error?"
@@ -245,8 +245,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -816,
-        -272
+        -832,
+        -368
       ],
       "id": "838583ee-5c51-42ab-b057-478d27c883ea",
       "name": "Wait Before Retry",
@@ -276,7 +276,7 @@
       "typeVersion": 3.4,
       "position": [
         -144,
-        -96
+        -208
       ],
       "id": "e1ffdb9c-b828-4ba3-aff9-3a7e1d2fa079",
       "name": "Set Final OCR Error Message"
@@ -289,7 +289,7 @@
       "typeVersion": 1,
       "position": [
         304,
-        -96
+        -208
       ],
       "id": "c6b4be4b-11c9-4660-bdb7-97b55ad6d849",
       "name": "Log Final OCR Failure"
@@ -306,7 +306,7 @@
       "typeVersion": 1.2,
       "position": [
         80,
-        -96
+        -208
       ],
       "id": "006935f9-f5b5-443d-899a-1736caede392",
       "name": "MongoDB",
@@ -335,8 +335,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -592,
-        -272
+        -608,
+        -368
       ],
       "id": "f08832ea-2a90-4e6a-989c-08dace66a1cd",
       "name": "Increase Retry Count"
@@ -368,8 +368,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -368,
-        -272
+        -352,
+        -368
       ],
       "id": "ab249156-b52d-4bcf-b980-9cf9a5557abe",
       "name": "Not Exceeded Retry Limit?"
@@ -384,7 +384,7 @@
       "typeVersion": 3.4,
       "position": [
         -2160,
-        -96
+        -112
       ],
       "id": "559b7478-c6f4-4add-b3d9-b33e38383940",
       "name": "Set Context Object"
@@ -397,7 +397,7 @@
       "typeVersion": 2,
       "position": [
         -2608,
-        -96
+        -112
       ],
       "id": "5d7d14d9-2696-4d78-bb81-5d90db811d8c",
       "name": "Pasre"
@@ -410,7 +410,7 @@
       "typeVersion": 1,
       "position": [
         -3504,
-        -96
+        -112
       ],
       "id": "071f19f9-77f6-41f5-a8bd-28aac6cc2232",
       "name": "Read Redis Stream",
@@ -424,7 +424,7 @@
       "typeVersion": 2,
       "position": [
         -2832,
-        -96
+        -112
       ],
       "id": "705ab81c-7baf-418a-93b1-75860ed89454",
       "name": "Parse Stream Message"
@@ -447,7 +447,7 @@
       "typeVersion": 3.4,
       "position": [
         -3056,
-        -96
+        -112
       ],
       "id": "bdade6c4-e53a-489b-82af-cbe74e9cf2f1",
       "name": "Edit Fields"
@@ -458,7 +458,7 @@
           "interval": [
             {
               "field": "seconds",
-              "secondsInterval": 15
+              "secondsInterval": 5
             }
           ]
         }
@@ -467,7 +467,7 @@
       "typeVersion": 1.2,
       "position": [
         -3728,
-        -96
+        -112
       ],
       "id": "26308551-f6f0-4c21-934d-253b84657768",
       "name": "Schedule Trigger"
@@ -501,7 +501,7 @@
       "typeVersion": 2.2,
       "position": [
         -3280,
-        -96
+        -112
       ],
       "id": "1fab8bf6-bc21-4e4b-94d0-26d19f10c0aa",
       "name": "Redis Message Empty?"
@@ -513,27 +513,27 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -608,
-        128
+        560,
+        32
       ],
       "id": "4d1b1bec-72f3-49ec-ab07-c47f36e2bf7b",
-      "name": "XACK Redis (Only After DB Success)"
+      "name": "Delete Redis Stream Message"
     }
   ],
   "pinData": {
     "Schedule Trigger": [
       {
         "json": {
-          "timestamp": "2025-08-06T01:43:55.001-04:00",
-          "Readable date": "August 6th 2025, 1:43:55 am",
-          "Readable time": "1:43:55 am",
+          "timestamp": "2025-08-06T17:09:30.001-04:00",
+          "Readable date": "August 6th 2025, 5:09:30 pm",
+          "Readable time": "5:09:30 pm",
           "Day of week": "Wednesday",
           "Year": "2025",
           "Month": "August",
           "Day of month": "06",
-          "Hour": "01",
-          "Minute": "43",
-          "Second": "55",
+          "Hour": "17",
+          "Minute": "09",
+          "Second": "30",
           "Timezone": "America/New_York (UTC-04:00)"
         }
       }
@@ -769,7 +769,18 @@
       "main": [
         [
           {
-            "node": "XACK Redis (Only After DB Success)",
+            "node": "Delete Redis Stream Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Final OCR Failure": {
+      "main": [
+        [
+          {
+            "node": "Delete Redis Stream Message",
             "type": "main",
             "index": 0
           }
@@ -783,7 +794,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "fc8ff682-0c49-4ea8-ba31-df23d827677a",
+  "versionId": "3b89e625-1426-4611-8075-760b50083555",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
