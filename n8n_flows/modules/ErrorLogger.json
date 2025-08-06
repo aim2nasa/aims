@@ -1,0 +1,178 @@
+{
+  "name": "ErrorLogger",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "00d1ee92-1caa-412d-a59e-0037202b89ed",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZkibKi2jYrlyxsyjIfhPgMvD9Msh8NJuwZWtb278H9s",
+          "mode": "list",
+          "cachedResultName": "n8n error",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZkibKi2jYrlyxsyjIfhPgMvD9Msh8NJuwZWtb278H9s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZkibKi2jYrlyxsyjIfhPgMvD9Msh8NJuwZWtb278H9s/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now.format('yyyy-MM-dd hh:mma') }}",
+            "Workflow": "={{ $json.workflow.name }}",
+            "URL": "={{ $json.execution.url }}",
+            "Node": "={{ $json.execution.error.node.name }}",
+            "Error Message": "={{ $json.execution.error.message }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        224,
+        -144
+      ],
+      "id": "9d759eff-bbef-4ccb-b256-1ac611b816d7",
+      "name": "Log Error",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dCdWUl5fCILmjTuu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0990JWV01H",
+          "mode": "list",
+          "cachedResultName": "aims"
+        },
+        "text": "=Workflow Error: {{ $json.workflow.name }}\n\n{{ $json.execution.error.node.name }} errored at {{ $now.format('yyyy-MM-dd hh:mma') }}\n\nThe error message was: {{ $json.execution.error.message }}\n\nSee this execution here: {{ $json.execution.url }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        48
+      ],
+      "id": "7fe3bbe4-3714-4e19-a736-8c210c4e2c46",
+      "name": "Send a message",
+      "webhookId": "96aaa491-8f44-4683-973c-af781a8c9219",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "5xEIz4iufbt5DwKx",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "pbOS7kBxmfv07Cb7"
+  },
+  "versionId": "ac3387cb-7d4a-4b37-9a71-9288f9a7c52d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+  },
+  "id": "pbOS7kBxmfv07Cb7",
+  "tags": []
+}
