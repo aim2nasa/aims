@@ -13,7 +13,7 @@
       "typeVersion": 2,
       "position": [
         240,
-        360
+        320
       ],
       "id": "97ff173a-5218-49b2-a783-63d2a44feddd",
       "name": "AI Agent"
@@ -32,7 +32,7 @@
       "typeVersion": 1.2,
       "position": [
         336,
-        584
+        544
       ],
       "id": "c3689b2c-53ae-47e9-ae9f-7d49c74704ea",
       "name": "OpenAI Chat Model",
@@ -54,24 +54,11 @@
       "typeVersion": 2,
       "position": [
         -880,
-        212
+        192
       ],
       "id": "07639b98-b70c-4b58-a3eb-ea64f7cd4f30",
       "name": "Webhook",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
-    },
-    {
-      "parameters": {
-        "jsCode": "const response = $json;\n\n// ✅ 429: 요청 제한 초과\nif (response.status === 429) {\n  return [{\n    json: {\n      error: true,\n      status: 429,\n      userMessage: \"❌ OCR 요청 제한 초과: 잠시 후 다시 시도하세요.\"\n    }\n  }];\n}\n\n// ✅ 413: 문서 페이지 초과\nif (response.status === 413 || response.error?.message?.includes('too many pages')) {\n  return [{\n    json: {\n      error: true,\n      status: 413,\n      userMessage: \"❌ OCR 실패: 문서 페이지가 너무 많습니다. 30페이지 이하 문서만 지원됩니다.\"\n    }\n  }];\n}\n\n// ✅ 그 외 에러 → Upstage 메시지 그대로 전달\nif (response.error) {\n  return [{\n    json: {\n      error: true,\n      status: response.status || 500,\n      userMessage: response.error.message || \"❌ OCR 처리 실패\"\n    }\n  }];\n}\n\n// ✅ 정상 응답\nreturn [{\n  json: {\n    error: false,\n    ...response\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -432,
-        212
-      ],
-      "id": "c610eb72-b0ed-44bd-9692-6e7b122dada3",
-      "name": "Check OCR Error"
     },
     {
       "parameters": {
@@ -81,7 +68,7 @@
       "typeVersion": 2,
       "position": [
         16,
-        360
+        320
       ],
       "id": "84b71d25-ca56-451d-b49a-2e1f01b8de30",
       "name": "Limit & Merge Pages"
@@ -124,7 +111,7 @@
       "typeVersion": 4.2,
       "position": [
         -656,
-        212
+        192
       ],
       "id": "7745d1d2-685e-4bd8-8728-1896d42541c8",
       "name": "Upstage OCR Request",
@@ -161,20 +148,22 @@
       "typeVersion": 2.2,
       "position": [
         -208,
-        212
+        192
       ],
       "id": "375139c5-aaca-4904-b6fa-c1f7ee7d2d48",
       "name": "Is OCR Error?"
     },
     {
       "parameters": {
-        "options": {}
+        "options": {
+          "responseCode": 200
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
         1088,
-        360
+        192
       ],
       "id": "fd8b9abb-b46c-466c-b89f-ddc6e9fe3884",
       "name": "OCR Return"
@@ -187,53 +176,25 @@
       "typeVersion": 2,
       "position": [
         640,
-        360
+        320
       ],
       "id": "111b422c-ab01-4aa4-98e0-d8dff26a30e8",
       "name": "Merge with FullText"
     },
     {
       "parameters": {
-        "errorMessage": "={{ JSON.stringify($json) }}"
-      },
-      "type": "n8n-nodes-base.stopAndError",
-      "typeVersion": 1,
-      "position": [
-        640,
-        64
-      ],
-      "id": "28e6121c-2759-4357-9113-2e8b37f91254",
-      "name": "Stop and Error"
-    },
-    {
-      "parameters": {
         "mode": "raw",
-        "jsonOutput": "={{ JSON.stringify($json) }}",
+        "jsonOutput": "{\n  \"status\": 413,\n  \"error\": true,\n  \"userMessage\": \"❌ OCR 실패: 문서 페이지 수 초과 (30페이지 이하만 지원)\",\n  \"confidence\": null,\n  \"summary\": null,\n  \"full_text\": null\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        16,
+        864,
         64
       ],
       "id": "4e87ece2-fc61-4327-8bc5-cd3d31dfcd7c",
       "name": "Set OCR Error Response"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": 413
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        328,
-        64
-      ],
-      "id": "a6ae3675-989c-449f-b966-bcb21c9cb3f1",
-      "name": "Respond to Webhook"
     },
     {
       "parameters": {
@@ -245,10 +206,23 @@
       "typeVersion": 3.4,
       "position": [
         864,
-        360
+        320
       ],
       "id": "8633a0cb-a8e4-4c03-ab9c-2955dcf9001b",
       "name": "Set OCR Success Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\n// Upstage 응답이 다양한 형태로 올 수 있으므로 status와 메시지를 안전하게 추출\nconst status = response.status || response.error?.status || 500;\nconst userMessage = response.error?.message || \"❌ OCR 처리 실패\";\n\nreturn [{\n  json: {\n    error: !!response.error,\n    status,\n    userMessage,\n    ...response\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        192
+      ],
+      "id": "c610eb72-b0ed-44bd-9692-6e7b122dada3",
+      "name": "Normalize DocOCR Response"
     }
   ],
   "pinData": {},
@@ -286,17 +260,6 @@
         ]
       ]
     },
-    "Check OCR Error": {
-      "main": [
-        [
-          {
-            "node": "Is OCR Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Limit & Merge Pages": {
       "main": [
         [
@@ -312,7 +275,7 @@
       "main": [
         [
           {
-            "node": "Check OCR Error",
+            "node": "Normalize DocOCR Response",
             "type": "main",
             "index": 0
           }
@@ -352,18 +315,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond to Webhook": {
-      "main": [
-        [
-          {
-            "node": "Stop and Error",
+            "node": "OCR Return",
             "type": "main",
             "index": 0
           }
@@ -380,13 +332,24 @@
           }
         ]
       ]
+    },
+    "Normalize DocOCR Response": {
+      "main": [
+        [
+          {
+            "node": "Is OCR Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d4f24be7-a3bb-457d-bc60-c5ae0ccb6282",
+  "versionId": "422785c1-dfb3-405a-8dec-aa06d4d125f3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
