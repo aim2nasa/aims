@@ -129,7 +129,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose",
+            "typeValidation": "strict",
             "version": 2
           },
           "conditions": [
@@ -139,14 +139,23 @@
               "rightValue": "true",
               "operator": {
                 "type": "boolean",
-                "operation": "notEmpty",
+                "operation": "true",
                 "singleValue": true
+              }
+            },
+            {
+              "id": "eeb1bdcf-7a30-47b4-9ddb-da48ec46e8f4",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
@@ -356,7 +365,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "bb0a3e50-968a-455e-b479-a78266c782d2",
+  "versionId": "ab084e36-8032-446e-b6ca-674a83b38880",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
