@@ -21,22 +21,22 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1488,
-        -112
+        -1696,
+        -48
       ],
       "id": "61596f08-960e-4bbe-91f6-7e4659c047a2",
       "name": "DocOCR Request"
     },
     {
       "parameters": {
-        "fileSelector": "={{ $json.context.file_path }}",
+        "fileSelector": "={{ $json.file_path }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -1936,
-        -112
+        -2144,
+        -48
       ],
       "id": "ff960edb-84ac-495f-9dfa-75219b964d2d",
       "name": "Prepare OCR Binary",
@@ -53,7 +53,7 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -816,
+        -800,
         48
       ],
       "id": "7a563340-6bab-4986-9913-07b1af4d410c",
@@ -106,7 +106,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1040,
+        -1024,
         48
       ],
       "id": "8292456a-a16e-4688-a5f5-3fc7355d4306",
@@ -119,8 +119,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -1712,
-        -112
+        -1920,
+        -48
       ],
       "id": "4b3cf9b3-9008-4464-84a7-72d441c381f9",
       "name": "Wait Before OCR",
@@ -144,8 +144,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2384,
-        -112
+        -2368,
+        -48
       ],
       "id": "f26d483e-aab3-4050-a072-fbbd82085f27",
       "name": "Init Retry Count"
@@ -177,80 +177,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1264,
-        -112
+        -1472,
+        -48
       ],
       "id": "912b034e-681c-42ad-8f60-18d92dfe2a9e",
       "name": "Is OCR Error?"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "1033a8ff-5e50-44f3-9f09-4d39dbd921f4",
-              "leftValue": "={{ $('DocOCR Request').item.json.status }}",
-              "rightValue": "=429",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            },
-            {
-              "id": "173436d5-fa05-4e6f-9355-79003db10b97",
-              "leftValue": "={{ $('DocOCR Request').item.json.status }}",
-              "rightValue": "500",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            },
-            {
-              "id": "d180d6b7-669d-4b80-a465-61c55d1c9a9f",
-              "leftValue": "={{ $('DocOCR Request').item.json.status }}",
-              "rightValue": "504",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            }
-          ],
-          "combinator": "or"
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -1040,
-        -208
-      ],
-      "id": "5ddf087c-a9e6-4f0f-b8f0-ef19bef3fd10",
-      "name": "Is Retryable OCR Error?"
-    },
-    {
-      "parameters": {
-        "amount": 2
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        -832,
-        -368
-      ],
-      "id": "838583ee-5c51-42ab-b057-478d27c883ea",
-      "name": "Wait Before Retry",
-      "webhookId": "b665cf8b-81ef-4022-8f11-f7e8917cf472"
     },
     {
       "parameters": {
@@ -275,8 +206,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -144,
-        -208
+        -1248,
+        -144
       ],
       "id": "e1ffdb9c-b828-4ba3-aff9-3a7e1d2fa079",
       "name": "Set Final OCR Error Message"
@@ -288,8 +219,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        304,
-        -208
+        -800,
+        -144
       ],
       "id": "c6b4be4b-11c9-4660-bdb7-97b55ad6d849",
       "name": "Log Final OCR Failure"
@@ -305,8 +236,8 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        80,
-        -208
+        -1024,
+        -144
       ],
       "id": "006935f9-f5b5-443d-899a-1736caede392",
       "name": "MongoDB",
@@ -319,85 +250,13 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "bb07ef3e-0aef-4df1-b2d4-71f09ee823a1",
-              "name": "retryCount",
-              "value": "={{ $json.retryCount + 1 }}",
-              "type": "number"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -608,
-        -368
-      ],
-      "id": "f08832ea-2a90-4e6a-989c-08dace66a1cd",
-      "name": "Increase Retry Count"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "e284373f-16a8-4282-b56e-d290031628da",
-              "leftValue": {},
-              "rightValue": 3,
-              "operator": {
-                "type": "number",
-                "operation": "lt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -352,
-        -368
-      ],
-      "id": "ab249156-b52d-4bcf-b980-9cf9a5557abe",
-      "name": "Not Exceeded Retry Limit?"
-    },
-    {
-      "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"context\": {\n    \"retryCount\": {{ $('Init Retry Count').item.json.retryCount }},\n    \"file_id\": \"{{ $('Pasre').item.json.file_id }}\",\n    \"file_path\": \"{{ $('Pasre').item.json.file_path }}\",\n    \"doc_id\": \"{{ $('Pasre').item.json.doc_id }}\",\n    \"created_at\": \"{{ $('Pasre').item.json.created_at }}\"\n  }\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -2160,
-        -112
-      ],
-      "id": "559b7478-c6f4-4add-b3d9-b33e38383940",
-      "name": "Set Context Object"
-    },
-    {
-      "parameters": {
         "jsCode": "// Parse Stream Message에서 온 값을 그대로 정리해서 반환\nreturn [\n  {\n    file_id: $json.file_id,\n    file_path: $json.file_path,\n    doc_id: $json.doc_id,\n    created_at: $json.created_at,\n    message_id: $json.message_id\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2608,
-        -112
+        -2592,
+        -48
       ],
       "id": "5d7d14d9-2696-4d78-bb81-5d90db811d8c",
       "name": "Pasre"
@@ -409,8 +268,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -3504,
-        -112
+        -3488,
+        -48
       ],
       "id": "071f19f9-77f6-41f5-a8bd-28aac6cc2232",
       "name": "Read Redis Stream",
@@ -423,8 +282,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2832,
-        -112
+        -2816,
+        -48
       ],
       "id": "705ab81c-7baf-418a-93b1-75860ed89454",
       "name": "Parse Stream Message"
@@ -446,8 +305,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -3056,
-        -112
+        -3040,
+        -48
       ],
       "id": "bdade6c4-e53a-489b-82af-cbe74e9cf2f1",
       "name": "Edit Fields"
@@ -466,8 +325,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -3728,
-        -112
+        -3712,
+        -48
       ],
       "id": "26308551-f6f0-4c21-934d-253b84657768",
       "name": "Schedule Trigger"
@@ -500,8 +359,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -3280,
-        -112
+        -3264,
+        -48
       ],
       "id": "1fab8bf6-bc21-4e4b-94d0-26d19f10c0aa",
       "name": "Redis Message Empty?"
@@ -513,8 +372,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        560,
-        32
+        -576,
+        -48
       ],
       "id": "4d1b1bec-72f3-49ec-ab07-c47f36e2bf7b",
       "name": "Delete Redis Stream Message"
@@ -524,16 +383,16 @@
     "Schedule Trigger": [
       {
         "json": {
-          "timestamp": "2025-08-06T17:09:30.001-04:00",
-          "Readable date": "August 6th 2025, 5:09:30 pm",
-          "Readable time": "5:09:30 pm",
+          "timestamp": "2025-08-06T20:00:20.453-04:00",
+          "Readable date": "August 6th 2025, 8:00:20 pm",
+          "Readable time": "8:00:20 pm",
           "Day of week": "Wednesday",
           "Year": "2025",
           "Month": "August",
           "Day of month": "06",
-          "Hour": "17",
-          "Minute": "09",
-          "Second": "30",
+          "Hour": "20",
+          "Minute": "00",
+          "Second": "20",
           "Timezone": "America/New_York (UTC-04:00)"
         }
       }
@@ -588,7 +447,7 @@
       "main": [
         [
           {
-            "node": "Set Context Object",
+            "node": "Prepare OCR Binary",
             "type": "main",
             "index": 0
           }
@@ -599,7 +458,7 @@
       "main": [
         [
           {
-            "node": "Is Retryable OCR Error?",
+            "node": "Set Final OCR Error Message",
             "type": "main",
             "index": 0
           }
@@ -607,35 +466,6 @@
         [
           {
             "node": "Prepare OCR Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Retryable OCR Error?": {
-      "main": [
-        [
-          {
-            "node": "Wait Before Retry",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Set Final OCR Error Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Before Retry": {
-      "main": [
-        [
-          {
-            "node": "Increase Retry Count",
             "type": "main",
             "index": 0
           }
@@ -658,40 +488,6 @@
         [
           {
             "node": "Log Final OCR Failure",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Increase Retry Count": {
-      "main": [
-        [
-          {
-            "node": "Not Exceeded Retry Limit?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Not Exceeded Retry Limit?": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Set Final OCR Error Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Context Object": {
-      "main": [
-        [
-          {
-            "node": "Prepare OCR Binary",
             "type": "main",
             "index": 0
           }
@@ -794,7 +590,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "3b89e625-1426-4611-8075-760b50083555",
+  "versionId": "7ce057ae-cd2f-4d54-b4e4-07a928ade007",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
