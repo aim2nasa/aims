@@ -367,7 +367,7 @@
     },
     {
       "parameters": {
-        "command": "=redis-cli XDEL ocr_stream {{ $('Pasre').item.json.message_id }}"
+        "command": "=redis-cli XACK ocr_stream ocr_consumer_group {{ $('Pasre').item.json.message_id }} && \\\nredis-cli XDEL ocr_stream {{ $('Pasre').item.json.message_id }}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -590,7 +590,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "pbOS7kBxmfv07Cb7"
   },
-  "versionId": "7ce057ae-cd2f-4d54-b4e4-07a928ade007",
+  "versionId": "8640ad0d-e641-4de0-9d59-1342647bde98",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
