@@ -172,6 +172,15 @@ class SmartSearchApp:
             canvas.create_image(0, 0, image=photo, anchor="nw")
             canvas.config(scrollregion=(0, 0, photo.width(), photo.height()))
 
+            # 마우스 휠로 스크롤
+            def _on_mousewheel(event):
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            def _on_shift_mousewheel(event):
+                canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            canvas.bind_all("<Shift-MouseWheel>", _on_shift_mousewheel)
+
         except Exception as e:
             messagebox.showerror("이미지 로드 실패", str(e))
 
