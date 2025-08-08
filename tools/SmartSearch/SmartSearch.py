@@ -24,6 +24,7 @@ class SmartSearchApp:
         tk.Label(self.query_frame, text="검색어:").pack(side=tk.LEFT)
         self.query_entry = tk.Entry(self.query_frame, width=40)
         self.query_entry.pack(side=tk.LEFT, padx=5)
+        self.query_entry.bind("<Return>", lambda event: self.search())
 
         # 검색 모드 선택 (OR/AND)
         tk.Label(self.query_frame, text="모드:").pack(side=tk.LEFT, padx=(10,0))
