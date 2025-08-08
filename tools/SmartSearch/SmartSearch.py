@@ -9,8 +9,8 @@ API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 class SmartSearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.1"
-        self.root.title(f"SmartSearch Viewer v{self.version}")  # 프로그램 제목
+        self.version = "0.1.2"
+        self.root.title(f"SmartSearch Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
         self.root.resizable(True, True)
@@ -20,9 +20,16 @@ class SmartSearchApp:
         self.query_frame.pack(fill=tk.X, pady=5, padx=5)
 
         tk.Label(self.query_frame, text="검색어:").pack(side=tk.LEFT)
-        self.query_entry = tk.Entry(self.query_frame, width=50)
+        self.query_entry = tk.Entry(self.query_frame, width=40)
         self.query_entry.pack(side=tk.LEFT, padx=5)
-        tk.Button(self.query_frame, text="검색", command=self.search).pack(side=tk.LEFT)
+
+        # 검색 모드 선택 (OR/AND)
+        tk.Label(self.query_frame, text="모드:").pack(side=tk.LEFT, padx=(10,0))
+        self.mode_var = tk.StringVar(value="OR")
+        tk.Radiobutton(self.query_frame, text="OR", variable=self.mode_var, value="OR").pack(side=tk.LEFT)
+        tk.Radiobutton(self.query_frame, text="AND", variable=self.mode_var, value="AND").pack(side=tk.LEFT)
+
+        tk.Button(self.query_frame, text="검색", command=self.search).pack(side=tk.LEFT, padx=(10,0))
         self.result_count_label = tk.Label(self.query_frame, text="")
         self.result_count_label.pack(side=tk.LEFT, padx=10)
 
@@ -55,7 +62,6 @@ class SmartSearchApp:
 
         # 하단 패널: 상세 텍스트 + 스크롤바
         self.detail_frame = tk.Frame(self.paned)
-        # Text 위젯과 스크롤바를 프레임에 배치
         self.detail_text = tk.Text(self.detail_frame, wrap=tk.WORD)
         self.detail_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -79,26 +85,16 @@ class SmartSearchApp:
             messagebox.showwarning("입력 오류", "검색어를 입력해주세요.")
             return
 
+        mode = self.mode_var.get().upper()
+        payload = {"query": query, "mode": mode}
+
         try:
-            response = requests.post(API_URL, json={"query": query})
+            response = requests.post(API_URL, json=payload)
             response.raise_for_status()
-        except Exception as e:
-            messagebox.showerror("오류", f"검색 요청 중 오류 발생: {e}")
-            return
-
-        # 서버 응답 처리
-        raw = response.text
-        if not raw:
-            messagebox.showerror("오류", "검색 결과가 없습니다. 서버에서 응답을 받지 못했습니다.")
-            return
-        try:
             self.data = response.json()
-        except json.JSONDecodeError:
-            messagebox.showerror("파싱 오류", f"응답 JSON 파싱 실패:
-{raw}")
-            return
-
-        self.populate_table()
+            self.populate_table()
+        except Exception as e:
+            messagebox.showerror("오류", f"검색 중 오류 발생: {e}")
 
     def populate_table(self):
         self.result_count_label.config(text=f"검색 결과: {len(self.data)}건")
