@@ -131,6 +131,14 @@ class SmartSearchApp:
         full_text = self.data[index].get("ocr", {}).get("full_text", "")
         self.detail_text.delete("1.0", tk.END)
         self.detail_text.insert(tk.END, full_text)
+        item = self.data[index]
+
+        # 이미지 파일 검사
+        mime = item.get("meta", {}).get("mime", "")
+        if mime.startswith("image/"):
+            # 이미지 팝업 띄우기
+            messagebox.showinfo("이미지 파일", "선택한 파일은 이미지 파일입니다.")
+            return
 
 if __name__ == "__main__":
     root = tk.Tk()
