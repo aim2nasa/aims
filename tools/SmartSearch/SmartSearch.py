@@ -3,13 +3,15 @@ import requests
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
+from io import BytesIO
 
 API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 
 class SmartSearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.3"
+        self.version = "0.1.4"
         self.root.title(f"SmartSearch Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -136,9 +138,29 @@ class SmartSearchApp:
         # 이미지 파일 검사
         mime = item.get("meta", {}).get("mime", "")
         if mime.startswith("image/"):
-            # 이미지 팝업 띄우기
-            messagebox.showinfo("이미지 파일", "선택한 파일은 이미지 파일입니다.")
-            return
+            dest_path = item.get("destPath", "")
+            if dest_path.startswith("/data/files/"):
+                relative_path = dest_path.replace("/data/files/", "")
+                image_url = f"https://tars.giize.com/files/{relative_path}"
+                self.show_image_window(image_url)
+
+    def show_image_window(self, url):
+        win = tk.Toplevel()
+        win.title("이미지 미리보기")
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            img_data = response.content
+            image = Image.open(BytesIO(img_data))
+            image.thumbnail((800, 600))
+            photo = ImageTk.PhotoImage(image)
+
+            label = tk.Label(win, image=photo)
+            label.image = photo  # 참조 유지
+            label.pack()
+        except Exception as e:
+            messagebox.showerror("이미지 로드 실패", str(e))
 
 if __name__ == "__main__":
     root = tk.Tk()
