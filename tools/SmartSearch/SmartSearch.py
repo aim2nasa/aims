@@ -41,6 +41,15 @@ class SmartSearchApp:
         self.result_count_label = tk.Label(self.query_frame, text="")
         self.result_count_label.pack(side=tk.LEFT, padx=10)
 
+        # 자동 미리보기 및 열기 (PDF/이미지/기타)
+        self.auto_open_enabled = tk.BooleanVar(value=True)
+        self.auto_open_checkbox = tk.Checkbutton(
+            self.query_frame,
+            text="자동 미리보기 및 열기 (PDF/이미지/기타)",
+            variable=self.auto_open_enabled
+        )
+        self.auto_open_checkbox.pack(side=tk.LEFT, padx=(10, 0))
+
         # 전체 분할창 (상단: 결과 테이블, 하단: 상세 텍스트)
         self.paned = tk.PanedWindow(self.root, orient=tk.VERTICAL, sashrelief=tk.RAISED, sashwidth=8)
         self.paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -144,6 +153,11 @@ class SmartSearchApp:
         # 이미지 파일 검사
         mime = item.get("meta", {}).get("mime", "")
         dest_path = item.get("destPath", "")  # ✅ 항상 정의되도록 이동
+
+        # ✅ 자동 열기 옵션이 꺼져 있으면 상세 텍스트만 표시하고 종료
+        if not self.auto_open_enabled.get():
+            return
+
         if mime.startswith("image/"):
             if dest_path.startswith("/data/files/"):
                 relative_path = dest_path.replace("/data/files/", "")
