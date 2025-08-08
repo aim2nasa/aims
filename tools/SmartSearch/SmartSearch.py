@@ -155,9 +155,21 @@ class SmartSearchApp:
             image = Image.open(BytesIO(img_data))
             photo = ImageTk.PhotoImage(image)
 
-            label = tk.Label(win, image=photo)
-            label.image = photo  # 참조 유지
-            label.pack()
+            # 스크롤 가능한 캔버스 생성
+            canvas = tk.Canvas(win, width=min(photo.width(), 1000), height=min(photo.height(), 800))
+            h_scroll = tk.Scrollbar(win, orient=tk.HORIZONTAL, command=canvas.xview)
+            v_scroll = tk.Scrollbar(win, orient=tk.VERTICAL, command=canvas.yview)
+            canvas.configure(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+
+            h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+            v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            # 이미지 추가
+            canvas.image = photo  # 참조 유지
+            canvas.create_image(0, 0, image=photo, anchor="nw")
+            canvas.config(scrollregion=(0, 0, photo.width(), photo.height()))
+
         except Exception as e:
             messagebox.showerror("이미지 로드 실패", str(e))
 
