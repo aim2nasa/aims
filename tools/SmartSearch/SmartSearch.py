@@ -5,6 +5,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 from io import BytesIO
+import os
+import subprocess
+import platform
+import webbrowser
 
 API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 
@@ -139,12 +143,15 @@ class SmartSearchApp:
 
         # 이미지 파일 검사
         mime = item.get("meta", {}).get("mime", "")
+        dest_path = item.get("destPath", "")  # ✅ 항상 정의되도록 이동
         if mime.startswith("image/"):
-            dest_path = item.get("destPath", "")
             if dest_path.startswith("/data/files/"):
                 relative_path = dest_path.replace("/data/files/", "")
                 image_url = f"https://tars.giize.com/files/{relative_path}"
                 self.show_image_window(image_url)
+
+        if mime == "application/pdf":
+            self.open_external_pdf(dest_path)
 
     def show_image_window(self, url):
         win = tk.Toplevel()
@@ -183,6 +190,17 @@ class SmartSearchApp:
 
         except Exception as e:
             messagebox.showerror("이미지 로드 실패", str(e))
+
+    def open_external_pdf(self, path):
+        try:
+            if path.startswith("/data/files/"):
+                relative_path = path.replace("/data/files/", "")
+                pdf_url = f"https://tars.giize.com/files/{relative_path}"
+                webbrowser.open(pdf_url)
+            else:
+                raise ValueError("유효하지 않은 파일 경로입니다.")
+        except Exception as e:
+            messagebox.showerror("PDF 열기 실패", str(e))
 
 if __name__ == "__main__":
     root = tk.Tk()
