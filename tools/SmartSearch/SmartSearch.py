@@ -153,7 +153,6 @@ class SmartSearchApp:
             response.raise_for_status()
             img_data = response.content
             image = Image.open(BytesIO(img_data))
-            image.thumbnail((800, 600))
             photo = ImageTk.PhotoImage(image)
 
             label = tk.Label(win, image=photo)
