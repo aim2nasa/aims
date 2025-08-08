@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const q = $json.body.query; // webhook body 안에 query가 들어 있음\n\nreturn [\n  {\n    json: {\n      $or: [\n        { originalName: { $regex: q, $options: \"i\" } },\n        { \"ocr.full_text\": { $regex: q, $options: \"i\" } },\n        { \"ocr.summary\": { $regex: q, $options: \"i\" } },\n        { \"meta.filename\": { $regex: q, $options: \"i\" } }\n      ]\n    }\n  }\n];\n"
+        "jsCode": "const query = $json.body.query || '';\nconst mode = ($json.body.mode || 'OR').toUpperCase(); // 기본 OR\n\nconst keywords = query\n  .split(' ')\n  .map(k => k.trim())\n  .filter(k => k.length > 0);\n\nif (keywords.length === 0) {\n  return [{ json: {} }];\n}\n\n// 검색 대상 필드 정의\nconst fields = [\n  'originalName',\n  'ocr.full_text',\n  'ocr.summary',\n  'meta.filename'\n];\n\n// 단일 키워드에 대해 $or 쿼리 조건 생성\nconst buildSingleKeywordQuery = (keyword) =>\n  fields.map(field => ({ [field]: { $regex: keyword, $options: 'i' } }));\n\nlet finalQuery = {};\n\nif (mode === 'AND') {\n  finalQuery = {\n    $and: keywords.map(kw => ({ $or: buildSingleKeywordQuery(kw) }))\n  };\n} else {\n  // OR 모드 (기본값)\n  finalQuery = {\n    $or: keywords.flatMap(kw => buildSingleKeywordQuery(kw))\n  };\n}\n\nreturn [{ json: finalQuery }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -129,11 +129,11 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "8c0bdfd2-9972-430b-8a60-8749070981c7",
+  "versionId": "deeda8f5-84df-43fc-839f-4a5463c10219",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
