@@ -9,7 +9,7 @@ API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 class SmartSearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.2"
+        self.version = "0.1.3"
         self.root.title(f"SmartSearch Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -97,21 +97,38 @@ class SmartSearchApp:
             messagebox.showerror("오류", f"검색 중 오류 발생: {e}")
 
     def populate_table(self):
-        self.result_count_label.config(text=f"검색 결과: {len(self.data)}건")
+        # API가 [{}]를 반환하면 '검색 결과 없음'으로 처리
+        if len(self.data) == 1 and isinstance(self.data[0], dict) and not self.data[0]:
+            self.result_count_label.config(text="검색 결과: 0건")
+            # 테이블 초기화
+            for row in self.result_tree.get_children():
+                self.result_tree.delete(row)
+            # 빈 행 하나 추가
+            self.result_tree.insert("", "end", values=("", ""))
+            # 상세 텍스트 창 비우기
+            self.detail_text.delete("1.0", tk.END)
+            return
+
+        count = len(self.data)
+        self.result_count_label.config(text=f"검색 결과: {count}건")
+        # 테이블 초기화
         for row in self.result_tree.get_children():
             self.result_tree.delete(row)
 
         for item in self.data:
-            filename = item.get("originalName", "(이름 없음)")
-            summary = item.get("ocr", {}).get("summary", "(요약 없음)")
+            filename = item.get("originalName", "")
+            summary = item.get("ocr", {}).get("summary", "")
             self.result_tree.insert("", "end", values=(filename, summary))
+
+        # 검색 후 상세창 클리어
+        self.detail_text.delete("1.0", tk.END)
 
     def show_details(self, event):
         selected = self.result_tree.selection()
         if not selected:
             return
         index = self.result_tree.index(selected[0])
-        full_text = self.data[index].get("ocr", {}).get("full_text", "(내용 없음)")
+        full_text = self.data[index].get("ocr", {}).get("full_text", "")
         self.detail_text.delete("1.0", tk.END)
         self.detail_text.insert(tk.END, full_text)
 
