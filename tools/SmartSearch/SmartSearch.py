@@ -25,6 +25,7 @@ class SmartSearchApp:
         self.query_entry = tk.Entry(self.query_frame, width=40)
         self.query_entry.pack(side=tk.LEFT, padx=5)
         self.query_entry.bind("<Return>", lambda event: self.search())
+        self.query_entry.focus_set()  # 실행 시 포커스 설정
 
         # 검색 모드 선택 (OR/AND)
         tk.Label(self.query_frame, text="모드:").pack(side=tk.LEFT, padx=(10,0))
