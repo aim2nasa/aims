@@ -150,8 +150,12 @@ class SmartSearchApp:
                 image_url = f"https://tars.giize.com/files/{relative_path}"
                 self.show_image_window(image_url)
 
-        if mime == "application/pdf":
+        elif mime == "application/pdf":
             self.open_external_pdf(dest_path)
+
+        # 기타 파일은 브라우저로 다운로드 링크 열기
+        else:
+            self.open_download_link(dest_path)
 
     def show_image_window(self, url):
         win = tk.Toplevel()
@@ -201,6 +205,17 @@ class SmartSearchApp:
                 raise ValueError("유효하지 않은 파일 경로입니다.")
         except Exception as e:
             messagebox.showerror("PDF 열기 실패", str(e))
+
+    def open_download_link(self, path):
+        try:
+            if path.startswith("/data/files/"):
+                relative_path = path.replace("/data/files/", "")
+                file_url = f"https://tars.giize.com/files/{relative_path}"
+                webbrowser.open(file_url)
+            else:
+                raise ValueError("유효하지 않은 파일 경로입니다.")
+        except Exception as e:
+            messagebox.showerror("파일 다운로드 실패", str(e))
 
 if __name__ == "__main__":
     root = tk.Tk()
