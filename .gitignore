@@ -2,3 +2,9 @@ __pycache__/
 *.py[cod]
 
 node_modules
+
+# Python virtual environment
+venv/
+
+# Log files
+scripts/*.log
