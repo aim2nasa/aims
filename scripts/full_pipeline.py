@@ -18,13 +18,9 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
         collection = db[collection_name]
 
         # docembed.status 필드가 없는 문서를 찾습니다.
-        documents_to_process = collection.find(
-            {'ocr.full_text': {'$exists': True}, 'docembed.status': {'$exists': False}}
-        )
-        
-        total_docs = collection.count_documents(
-            {'ocr.full_text': {'$exists': True}, 'docembed.status': {'$exists': False}}
-        )
+        query_filter = {'ocr.full_text': {'$exists': True}, 'docembed.status': {'$exists': False}}
+        documents_to_process = collection.find(query_filter)
+        total_docs = collection.count_documents(query_filter)
         
         print(f"총 {total_docs}개의 문서를 처리할 준비가 완료되었습니다.")
 
