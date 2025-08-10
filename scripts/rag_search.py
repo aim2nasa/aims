@@ -1,6 +1,6 @@
 # rag_search.py
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional, Any
 from openai import OpenAI
 from qdrant_client import QdrantClient, models
 # 💡 T11 변경 사항 시작
@@ -12,13 +12,17 @@ import json
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
-# 요청 바디 모델 정의
+# 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
     query: str
-    mode: str = "OR"  # 기존 SmartSearch의 mode 파라미터
-    search_mode: str = "semantic" # 새로운 검색 모드, 기본값은 semantic
+    mode: str = "OR"
+    search_mode: str = "semantic"
 
-# 기존 SmartSearch API URL
+class UnifiedSearchResponse(BaseModel):
+    search_mode: str
+    answer: Optional[str] = None
+    search_results: List[Dict[str, Any]]
+
 SMARTSEARCH_API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 # 💡 T11 변경 사항 끝
 
@@ -40,7 +44,7 @@ def embed_query(query_text: str) -> List[float]:
 def search_qdrant(query_vector: List[float], collection_name: str = "docembed", top_k: int = 5):
     if not query_vector:
         return []
-    client = QdrantClient(url="http://localhost:6333", check_compatibility=False)
+    client = QdrantClient(host="localhost", port=6333, check_compatibility=False)
     try:
         search_result = client.search(
             collection_name=collection_name,
@@ -82,8 +86,7 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
     except Exception as e:
         return f"❌ LLM 답변 생성 중 오류 발생: {e}"
 
-# 💡 T11 변경 사항 시작
-@app.post("/search")
+@app.post("/search", response_model=UnifiedSearchResponse)
 async def search_endpoint(request: SearchRequest):
     if request.search_mode == "keyword":
         # 키워드 검색 로직
@@ -91,7 +94,14 @@ async def search_endpoint(request: SearchRequest):
         try:
             response = requests.post(SMARTSEARCH_API_URL, json=payload)
             response.raise_for_status()
-            return response.json()
+
+            # 응답 구조를 통일된 형식으로 변경
+            raw_results = response.json()
+            return UnifiedSearchResponse(
+                search_mode="keyword",
+                answer=None,
+                search_results=raw_results
+            )
         except requests.RequestException as e:
             raise HTTPException(status_code=500, detail=f"SmartSearch API 호출 오류: {e}")
 
@@ -102,15 +112,16 @@ async def search_endpoint(request: SearchRequest):
             raise HTTPException(status_code=500, detail="쿼리 임베딩 실패.")
 
         search_results = search_qdrant(query_vector)
-
         final_answer = generate_answer_with_llm(request.query, search_results)
 
-        # FastAPI에서 클라이언트로 응답을 보낼 때, Qdrant 검색 결과와 LLM 답변을 함께 반환
-        return {"answer": final_answer, "search_results": [{"id": res.id, "score": res.score, "payload": res.payload} for res in search_results]}
-
+        # 응답 구조를 통일된 형식으로 변경
+        return UnifiedSearchResponse(
+            search_mode="semantic",
+            answer=final_answer,
+            search_results=[{"id": res.id, "score": res.score, "payload": res.payload} for res in search_results]
+        )
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
-# 💡 T11 변경 사항 끝
 
 # 4. 전체 실행 로직
 if __name__ == '__main__':
