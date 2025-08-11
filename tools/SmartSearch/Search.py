@@ -15,7 +15,7 @@ API_URL = "https://tars.giize.com/search_api"
 class SearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.2"  # 버전 업데이트
+        self.version = "0.1.3"  # 버전 업데이트
         self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -136,13 +136,11 @@ class SearchApp:
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, "[원문보기]\n", ("link", f"item_link_{i}"))
+                    self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{summary}\n\n")
 
-                    # '원문보기' 링크에 클릭 이벤트 바인딩
-                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.show_original_document(idx))
+                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
-                    # 항목 제목 클릭 시 상세 정보 표시
                     def make_callback(idx=i, name=original_name, summ=summary, full=full_text):
                         return lambda e: self.show_detail(idx, name, summ, full)
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
@@ -154,13 +152,11 @@ class SearchApp:
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f}) ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, "[원문보기]\n", ("link", f"item_link_{i}"))
+                    self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{preview}\n\n")
 
-                    # '원문보기' 링크에 클릭 이벤트 바인딩
-                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.show_original_document(idx))
+                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
-                    # 항목 제목 클릭 시 상세 정보 표시
                     def make_callback(idx=i, name=original_name, prev=preview, sc=score):
                         return lambda e: self.show_detail(idx, name, prev, None, sc)
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
@@ -170,10 +166,8 @@ class SearchApp:
         self.results_text.tag_config("doc_title", font=("Helvetica", 11, "bold"))
         self.results_text.tag_config("link", foreground="blue", underline=True)
 
-        # 상세 영역 초기화 메시지
         self.detail_text.delete(1.0, tk.END)
-        self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.\n원문보기 링크를 클릭하면 이미지가 팝업됩니다.")
-
+        self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.\n[다운로드 및 열기] 링크를 클릭하면 파일이 로컬에 저장되고 바로 열립니다.")
 
     def show_detail(self, idx, name, summary_or_preview, full_text=None, score=None):
         self.detail_text.delete(1.0, tk.END)
@@ -186,16 +180,15 @@ class SearchApp:
             lines.append("\n--- 전체 텍스트 ---\n" + str(full_text))
         self.detail_text.insert(tk.END, "\n".join(lines))
     
-    def show_original_document(self, index):
+    def download_and_open_file(self, index):
         if not self.data or index >= len(self.data):
             messagebox.showerror("오류", "유효하지 않은 검색 결과입니다.")
             return
             
         item = self.data[index]
         
-        # 파일 경로와 MIME 타입 추출
-        mime = item.get("meta", {}).get("mime", "")
         dest_path = item.get("destPath", "")
+        original_name = item.get("originalName", "downloaded_file")
 
         if not dest_path:
             messagebox.showerror("오류", "파일 경로가 유효하지 않습니다.")
@@ -205,44 +198,43 @@ class SearchApp:
             if dest_path.startswith("/data/files/"):
                 relative_path = dest_path.replace("/data/files/", "")
                 file_url = f"https://tars.giize.com/files/{relative_path}"
+                
+                # 파일 다운로드 및 로컬에 저장
+                response = requests.get(file_url, stream=True)
+                response.raise_for_status()
+                
+                # 임시 파일로 저장
+                temp_dir = "temp_downloads"
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir)
+                
+                # 파일명이 유효하지 않은 문자를 포함할 경우를 대비해 정리
+                safe_filename = "".join(c for c in original_name if c.isalnum() or c in (' ', '.', '_')).strip()
+                local_filepath = os.path.join(temp_dir, safe_filename)
 
-                if mime.startswith("image/"):
-                    self.show_image_window(file_url)
-                else:
-                    webbrowser.open(file_url)
+                with open(local_filepath, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                # 다운로드된 파일 열기
+                self.open_local_file(local_filepath)
+                
             else:
                 raise ValueError("유효하지 않은 파일 경로입니다.")
         except Exception as e:
-            messagebox.showerror("파일 열기 실패", str(e))
+            messagebox.showerror("파일 다운로드 및 열기 실패", str(e))
 
-    def show_image_window(self, url):
-        win = tk.Toplevel(self.root)
-        win.title("이미지 미리보기")
-
+    def open_local_file(self, filepath):
         try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            img_data = response.content
-            image = Image.open(BytesIO(img_data))
-            
-            # 이미지 크기 조절 (화면에 맞게)
-            max_width, max_height = 1000, 800
-            width, height = image.size
-            if width > max_width or height > max_height:
-                ratio = min(max_width / width, max_height / height)
-                image = image.resize((int(width * ratio), int(height * ratio)), Image.Resampling.LANCZOS)
-            
-            photo = ImageTk.PhotoImage(image)
-
-            canvas = tk.Canvas(win, width=photo.width(), height=photo.height())
-            canvas.pack(fill=tk.BOTH, expand=True)
-
-            canvas.image = photo
-            canvas.create_image(0, 0, image=photo, anchor="nw")
-
+            # 플랫폼에 따라 다른 명령어를 사용
+            if platform.system() == 'Windows':
+                os.startfile(filepath)
+            elif platform.system() == 'Darwin':  # macOS
+                subprocess.run(['open', filepath], check=True)
+            else:  # Linux
+                subprocess.run(['xdg-open', filepath], check=True)
         except Exception as e:
-            messagebox.showerror("이미지 로드 실패", str(e))
-            win.destroy()
+            messagebox.showerror("파일 열기 실패", f"파일을 여는 중 오류가 발생했습니다: {e}")
 
 if __name__ == "__main__":
     root = tk.Tk()
