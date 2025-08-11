@@ -15,7 +15,7 @@ API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 class SmartSearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.5"
+        self.version = "0.1.6"
         self.root.title(f"SmartSearch Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
