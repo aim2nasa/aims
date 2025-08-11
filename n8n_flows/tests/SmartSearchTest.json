@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        0
+        -64,
+        -112
       ],
-      "id": "9239eb26-d003-48dc-95ab-525aa7e088b5",
+      "id": "e16e75d3-bf0e-4c17-8cca-81b0995cd514",
       "name": "SmartSearch Webhook",
       "webhookId": "4c1d0839-8a20-40ea-bfd1-5575c65fa171"
     },
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        672,
-        0
+        608,
+        -112
       ],
-      "id": "7b3abf9e-e667-463a-80d4-87e8b6b32ecd",
+      "id": "82c3a3ee-f719-43a9-a20b-c410178be643",
       "name": "MongoDB",
       "alwaysOutputData": true,
       "credentials": {
@@ -50,36 +50,36 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        896,
-        0
+        832,
+        -112
       ],
-      "id": "b9ca25d2-635d-4bbb-9eb9-0a6c218c9345",
+      "id": "63dfa336-947b-4714-b367-9ee4d1fca7b0",
       "name": "Respond with Search Results"
     },
     {
       "parameters": {
-        "jsCode": "const query = $json.body.query || '';\nconst mode = ($json.body.mode || 'OR').toUpperCase(); // 기본 OR\n\nconst keywords = query\n  .split(' ')\n  .map(k => k.trim())\n  .filter(k => k.length > 0);\n\nif (keywords.length === 0) {\n  return [{ json: {} }];\n}\n\n// 검색 대상 필드 정의\nconst fields = [\n  'originalName',\n  'ocr.full_text',\n  'ocr.summary',\n  'meta.filename'\n];\n\n// 단일 키워드에 대해 $or 쿼리 조건 생성\nconst buildSingleKeywordQuery = (keyword) =>\n  fields.map(field => ({ [field]: { $regex: keyword, $options: 'i' } }));\n\nlet finalQuery = {};\n\nif (mode === 'AND') {\n  finalQuery = {\n    $and: keywords.map(kw => ({ $or: buildSingleKeywordQuery(kw) }))\n  };\n} else {\n  // OR 모드 (기본값)\n  finalQuery = {\n    $or: keywords.flatMap(kw => buildSingleKeywordQuery(kw))\n  };\n}\n\nreturn [{ json: finalQuery }];\n"
+        "jsCode": "const query = $json.body.query || '';\nconst id = $json.body.id || '';\nconst mode = ($json.body.mode || 'OR').toUpperCase();\n\nlet finalQuery = {};\nlet isIdSearch = false; // ID 검색 여부를 판단하는 플래그\n\n// 1. ID가 존재하는 경우\nif (id) {\n  // ID 검색 쿼리 객체 생성\n  // MongoDB Extended JSON 형식의 \"$oid\"를 사용\n  finalQuery = { _id: { \"$oid\": id } };\n  isIdSearch = true;\n} \n// 2. ID가 없고 키워드가 존재하는 경우 (기존 로직)\nelse if (query.trim().length > 0) {\n  const keywords = query\n    .split(' ')\n    .map(k => k.trim())\n    .filter(k => k.length > 0);\n\n  const fields = [\n    'originalName',\n    'ocr.full_text',\n    'ocr.summary',\n    'meta.filename'\n  ];\n\n  const buildSingleKeywordQuery = (keyword) =>\n    fields.map(field => ({ [field]: { $regex: keyword, $options: 'i' } }));\n\n  if (mode === 'AND') {\n    finalQuery = {\n      $and: keywords.map(kw => ({ $or: buildSingleKeywordQuery(kw) }))\n    };\n  } else {\n    finalQuery = {\n      $or: keywords.flatMap(kw => buildSingleKeywordQuery(kw))\n    };\n  }\n}\n// 3. ID도 없고 키워드도 없는 경우\nelse {\n  return [{ json: {} }];\n}\n\n\n// 다음 노드로 쿼리와 플래그를 함께 전달\nreturn [{\n  json: {\n    query: finalQuery,\n    isIdSearch: isIdSearch\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
-        0
+        160,
+        -112
       ],
-      "id": "a427e319-3e09-4da8-a457-ca827649881f",
+      "id": "24a75d1d-97a7-47e6-b3aa-ceee6185c086",
       "name": "Build Mongo Query"
     },
     {
       "parameters": {
-        "jsCode": "return [\n  {\n    json: {\n      mongoQuery: JSON.stringify($json)\n    }\n  }\n];"
+        "jsCode": "// Stringify Mongo Query 노드 수정 코드\nconst input = $json;\nconst mongoQuery = input.query;\nconst isIdSearch = input.isIdSearch;\n\nlet outputJson;\n\nif (isIdSearch) {\n  // ID 검색일 경우, _id 필드만 남기고 JSON 객체로 반환\n  outputJson = {\n    _id: mongoQuery._id[\"$oid\"]\n  };\n} else {\n  // 키워드 검색일 경우, 쿼리 객체 그대로 반환\n  outputJson = mongoQuery;\n}\n\nreturn [\n  {\n    json: {\n      mongoQuery: JSON.stringify(outputJson)\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        0
+        384,
+        -112
       ],
-      "id": "86b9bbbc-998e-4598-ac8f-99f806b37bdf",
+      "id": "fd8a5b97-856f-4522-b476-86e6d042fd2a",
       "name": "Stringify Mongo Query"
     }
   ],
@@ -134,7 +134,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "f7b35f7e-8d74-45df-bf5c-c233e5b1819e",
+  "versionId": "5ea0c54f-b177-4d13-99fa-25867d88bfa7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
