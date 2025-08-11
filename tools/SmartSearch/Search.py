@@ -1,4 +1,4 @@
-# SmartSearch Viewer - GUI 기반 검색 결과 시각화 도구
+# Search Viewer - GUI 기반 검색 결과 시각화 도구
 import requests
 import json
 import tkinter as tk
@@ -15,7 +15,7 @@ API_URL = "https://tars.giize.com/search_api"
 class SearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.1"
+        self.version = "0.1.2"  # 버전 업데이트
         self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -76,6 +76,7 @@ class SearchApp:
         # 분할창에 프레임 추가 및 초기 비율 설정
         self.results_container.add(self.top_frame, weight=1)
         self.results_container.add(self.bottom_frame, weight=1)
+        self.data = []  # 검색 결과를 저장할 리스트
 
     def toggle_keyword_mode_buttons(self, *args):
         if self.search_mode.get() == "keyword":
@@ -106,7 +107,7 @@ class SearchApp:
             response = requests.post(API_URL, json=payload, timeout=30)
             response.raise_for_status()
             result_data = response.json()
-
+            self.data = result_data.get("search_results", [])
             self.display_results(result_data)
 
         except requests.exceptions.RequestException as e:
@@ -134,23 +135,32 @@ class SearchApp:
                     original_name = doc.get("originalName", "이름 없음")
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "")
-                    self.results_text.insert(tk.END, f"[{i+1}] {original_name}\n", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, "[원문보기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{summary}\n\n")
 
-                    # 각 항목에 상세 보기용 바인딩(요약 클릭 시 detail_text로 풀텍스트/요약 표시)
-                    start_index = f"{float(self.results_text.index('end')) - 2.0} linestart"
-                    # 간단: 제목 라인 클릭 시 상세 표시
+                    # '원문보기' 링크에 클릭 이벤트 바인딩
+                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.show_original_document(idx))
+
+                    # 항목 제목 클릭 시 상세 정보 표시
                     def make_callback(idx=i, name=original_name, summ=summary, full=full_text):
                         return lambda e: self.show_detail(idx, name, summ, full)
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
+
             else:
                 for i, doc in enumerate(search_results):
                     payload = doc.get("payload", {})
                     original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
-                    self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f})\n", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f}) ", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, "[원문보기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{preview}\n\n")
+
+                    # '원문보기' 링크에 클릭 이벤트 바인딩
+                    self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.show_original_document(idx))
+
+                    # 항목 제목 클릭 시 상세 정보 표시
                     def make_callback(idx=i, name=original_name, prev=preview, sc=score):
                         return lambda e: self.show_detail(idx, name, prev, None, sc)
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
@@ -158,10 +168,12 @@ class SearchApp:
         self.results_text.tag_config("answer", foreground="blue", font=("Helvetica", 12, "bold"))
         self.results_text.tag_config("header", font=("Helvetica", 12, "bold"))
         self.results_text.tag_config("doc_title", font=("Helvetica", 11, "bold"))
+        self.results_text.tag_config("link", foreground="blue", underline=True)
 
         # 상세 영역 초기화 메시지
         self.detail_text.delete(1.0, tk.END)
-        self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.")
+        self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.\n원문보기 링크를 클릭하면 이미지가 팝업됩니다.")
+
 
     def show_detail(self, idx, name, summary_or_preview, full_text=None, score=None):
         self.detail_text.delete(1.0, tk.END)
@@ -173,6 +185,64 @@ class SearchApp:
         if full_text:
             lines.append("\n--- 전체 텍스트 ---\n" + str(full_text))
         self.detail_text.insert(tk.END, "\n".join(lines))
+    
+    def show_original_document(self, index):
+        if not self.data or index >= len(self.data):
+            messagebox.showerror("오류", "유효하지 않은 검색 결과입니다.")
+            return
+            
+        item = self.data[index]
+        
+        # 파일 경로와 MIME 타입 추출
+        mime = item.get("meta", {}).get("mime", "")
+        dest_path = item.get("destPath", "")
+
+        if not dest_path:
+            messagebox.showerror("오류", "파일 경로가 유효하지 않습니다.")
+            return
+
+        try:
+            if dest_path.startswith("/data/files/"):
+                relative_path = dest_path.replace("/data/files/", "")
+                file_url = f"https://tars.giize.com/files/{relative_path}"
+
+                if mime.startswith("image/"):
+                    self.show_image_window(file_url)
+                else:
+                    webbrowser.open(file_url)
+            else:
+                raise ValueError("유효하지 않은 파일 경로입니다.")
+        except Exception as e:
+            messagebox.showerror("파일 열기 실패", str(e))
+
+    def show_image_window(self, url):
+        win = tk.Toplevel(self.root)
+        win.title("이미지 미리보기")
+
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            img_data = response.content
+            image = Image.open(BytesIO(img_data))
+            
+            # 이미지 크기 조절 (화면에 맞게)
+            max_width, max_height = 1000, 800
+            width, height = image.size
+            if width > max_width or height > max_height:
+                ratio = min(max_width / width, max_height / height)
+                image = image.resize((int(width * ratio), int(height * ratio)), Image.Resampling.LANCZOS)
+            
+            photo = ImageTk.PhotoImage(image)
+
+            canvas = tk.Canvas(win, width=photo.width(), height=photo.height())
+            canvas.pack(fill=tk.BOTH, expand=True)
+
+            canvas.image = photo
+            canvas.create_image(0, 0, image=photo, anchor="nw")
+
+        except Exception as e:
+            messagebox.showerror("이미지 로드 실패", str(e))
+            win.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
