@@ -12,11 +12,11 @@ import webbrowser
 
 API_URL = "https://tars.giize.com/search_api"
 
-class SmartSearchApp:
+class SearchApp:
     def __init__(self, root):
         self.root = root
         self.version = "0.1.0"
-        self.root.title(f"SmartSearch Viewer v{self.version}")
+        self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
         self.root.resizable(True, True)
@@ -137,5 +137,5 @@ class SmartSearchApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SmartSearchApp(root)
+    app = SearchApp(root)
     root.mainloop()
