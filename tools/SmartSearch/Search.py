@@ -119,8 +119,9 @@ class SearchApp:
                 for i, doc in enumerate(search_results):
                     original_name = doc.get("originalName", "이름 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "내용 없음")
+                    summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name}\n", "doc_title")
-                    self.results_text.insert(tk.END, f"{full_text}\n\n")
+                    self.results_text.insert(tk.END, f"{summary}\n\n")
             else:
                 for i, doc in enumerate(search_results):
                     payload = doc.get("payload", {})
