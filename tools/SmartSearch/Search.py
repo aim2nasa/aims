@@ -174,8 +174,6 @@ class SearchApp:
         lines = [f"[{idx+1}] {name}"]
         if score is not None:
             lines.append(f"유사도 점수: {score:.4f}")
-        if summary_or_preview:
-            lines.append("\n--- 요약/미리보기 ---\n" + str(summary_or_preview))
         if full_text:
             lines.append("\n--- 전체 텍스트 ---\n" + str(full_text))
         self.detail_text.insert(tk.END, "\n".join(lines))
