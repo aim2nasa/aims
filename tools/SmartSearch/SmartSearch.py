@@ -25,17 +25,29 @@ class SmartSearchApp:
         self.query_frame = tk.Frame(root)
         self.query_frame.pack(fill=tk.X, pady=5, padx=5)
 
-        tk.Label(self.query_frame, text="검색어:").pack(side=tk.LEFT)
+        # 검색 방식 선택 (검색어/ID)
+        self.search_type_var = tk.StringVar(value="query")
+        self.search_type_frame = tk.Frame(self.query_frame)
+        self.search_type_frame.pack(side=tk.LEFT)
+        
+        tk.Radiobutton(self.search_type_frame, text="검색어", variable=self.search_type_var, value="query", command=self.update_ui).pack(side=tk.LEFT)
+        tk.Radiobutton(self.search_type_frame, text="ID", variable=self.search_type_var, value="id", command=self.update_ui).pack(side=tk.LEFT, padx=(10, 0))
+
+        self.query_label = tk.Label(self.query_frame, text="검색어:")
+        self.query_label.pack(side=tk.LEFT, padx=(10, 0))
+
         self.query_entry = tk.Entry(self.query_frame, width=40)
         self.query_entry.pack(side=tk.LEFT, padx=5)
         self.query_entry.bind("<Return>", lambda event: self.search())
-        self.query_entry.focus_set()  # 실행 시 포커스 설정
+        self.query_entry.focus_set()
 
         # 검색 모드 선택 (OR/AND)
-        tk.Label(self.query_frame, text="모드:").pack(side=tk.LEFT, padx=(10,0))
+        self.mode_frame = tk.Frame(self.query_frame)
+        self.mode_frame.pack(side=tk.LEFT)
+        tk.Label(self.mode_frame, text="모드:").pack(side=tk.LEFT, padx=(10,0))
         self.mode_var = tk.StringVar(value="OR")
-        tk.Radiobutton(self.query_frame, text="OR", variable=self.mode_var, value="OR").pack(side=tk.LEFT)
-        tk.Radiobutton(self.query_frame, text="AND", variable=self.mode_var, value="AND").pack(side=tk.LEFT)
+        tk.Radiobutton(self.mode_frame, text="OR", variable=self.mode_var, value="OR").pack(side=tk.LEFT)
+        tk.Radiobutton(self.mode_frame, text="AND", variable=self.mode_var, value="AND").pack(side=tk.LEFT)
 
         tk.Button(self.query_frame, text="검색", command=self.search).pack(side=tk.LEFT, padx=(10,0))
         self.result_count_label = tk.Label(self.query_frame, text="")
@@ -96,14 +108,30 @@ class SmartSearchApp:
         self.result_tree.bind("<Double-1>", self.show_details)
         self.data = []
 
+    def update_ui(self):
+        """라디오 버튼 선택에 따라 UI를 업데이트합니다."""
+        search_type = self.search_type_var.get()
+        if search_type == "query":
+            self.query_label.config(text="검색어:")
+            self.mode_frame.pack(side=tk.LEFT, padx=5)
+        else: # search_type == "id"
+            self.query_label.config(text="ID:")
+            self.mode_frame.pack_forget()
+
     def search(self):
-        query = self.query_entry.get().strip()
-        if not query:
+        query_input = self.query_entry.get().strip()
+        if not query_input:
             messagebox.showwarning("입력 오류", "검색어를 입력해주세요.")
             return
 
-        mode = self.mode_var.get().upper()
-        payload = {"query": query, "mode": mode}
+        search_type = self.search_type_var.get()
+        payload = {}
+
+        if search_type == "query":
+            mode = self.mode_var.get().upper()
+            payload = {"query": query_input, "mode": mode}
+        else: # search_type == "id"
+            payload = {"id": query_input}
 
         try:
             response = requests.post(API_URL, json=payload)
@@ -114,21 +142,16 @@ class SmartSearchApp:
             messagebox.showerror("오류", f"검색 중 오류 발생: {e}")
 
     def populate_table(self):
-        # API가 [{}]를 반환하면 '검색 결과 없음'으로 처리
         if len(self.data) == 1 and isinstance(self.data[0], dict) and not self.data[0]:
             self.result_count_label.config(text="검색 결과: 0건")
-            # 테이블 초기화
             for row in self.result_tree.get_children():
                 self.result_tree.delete(row)
-            # 빈 행 하나 추가
             self.result_tree.insert("", "end", values=("", ""))
-            # 상세 텍스트 창 비우기
             self.detail_text.delete("1.0", tk.END)
             return
 
         count = len(self.data)
         self.result_count_label.config(text=f"검색 결과: {count}건")
-        # 테이블 초기화
         for row in self.result_tree.get_children():
             self.result_tree.delete(row)
 
@@ -137,7 +160,6 @@ class SmartSearchApp:
             summary = item.get("ocr", {}).get("summary", "")
             self.result_tree.insert("", "end", values=(filename, summary))
 
-        # 검색 후 상세창 클리어
         self.detail_text.delete("1.0", tk.END)
 
     def show_details(self, event):
@@ -150,11 +172,9 @@ class SmartSearchApp:
         self.detail_text.insert(tk.END, full_text)
         item = self.data[index]
 
-        # 이미지 파일 검사
         mime = item.get("meta", {}).get("mime", "")
-        dest_path = item.get("destPath", "")  # ✅ 항상 정의되도록 이동
+        dest_path = item.get("destPath", "")
 
-        # ✅ 자동 열기 옵션이 꺼져 있으면 상세 텍스트만 표시하고 종료
         if not self.auto_open_enabled.get():
             return
 
@@ -167,7 +187,6 @@ class SmartSearchApp:
         elif mime == "application/pdf":
             self.open_external_pdf(dest_path)
 
-        # 기타 파일은 브라우저로 다운로드 링크 열기
         else:
             self.open_download_link(dest_path)
 
@@ -182,7 +201,6 @@ class SmartSearchApp:
             image = Image.open(BytesIO(img_data))
             photo = ImageTk.PhotoImage(image)
 
-            # 스크롤 가능한 캔버스 생성
             canvas = tk.Canvas(win, width=min(photo.width(), 1000), height=min(photo.height(), 800))
             h_scroll = tk.Scrollbar(win, orient=tk.HORIZONTAL, command=canvas.xview)
             v_scroll = tk.Scrollbar(win, orient=tk.VERTICAL, command=canvas.yview)
@@ -192,12 +210,10 @@ class SmartSearchApp:
             v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
             canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-            # 이미지 추가
-            canvas.image = photo  # 참조 유지
+            canvas.image = photo
             canvas.create_image(0, 0, image=photo, anchor="nw")
             canvas.config(scrollregion=(0, 0, photo.width(), photo.height()))
 
-            # 마우스 휠로 스크롤
             def _on_mousewheel(event):
                 canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
             def _on_shift_mousewheel(event):

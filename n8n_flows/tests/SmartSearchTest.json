@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -64,
-        -112
+        -208,
+        -128
       ],
-      "id": "e16e75d3-bf0e-4c17-8cca-81b0995cd514",
+      "id": "21a8cfdc-7de7-4d95-b1fb-9700148fb672",
       "name": "SmartSearch Webhook",
       "webhookId": "4c1d0839-8a20-40ea-bfd1-5575c65fa171"
     },
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        608,
-        -112
+        464,
+        -128
       ],
-      "id": "82c3a3ee-f719-43a9-a20b-c410178be643",
+      "id": "0c554b36-d257-41ae-a491-f1ddc14b9a1c",
       "name": "MongoDB",
       "alwaysOutputData": true,
       "credentials": {
@@ -50,10 +50,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        832,
-        -112
+        688,
+        -128
       ],
-      "id": "63dfa336-947b-4714-b367-9ee4d1fca7b0",
+      "id": "6dca2c34-86bb-40fa-a717-bfe24a61dd2a",
       "name": "Respond with Search Results"
     },
     {
@@ -63,10 +63,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        160,
-        -112
+        16,
+        -128
       ],
-      "id": "24a75d1d-97a7-47e6-b3aa-ceee6185c086",
+      "id": "fb7bdd48-2d55-4e89-9478-91415aaf40f3",
       "name": "Build Mongo Query"
     },
     {
@@ -76,10 +76,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        384,
-        -112
+        240,
+        -128
       ],
-      "id": "fd8a5b97-856f-4522-b476-86e6d042fd2a",
+      "id": "73103489-d4f5-4482-83fd-9bf771637cd4",
       "name": "Stringify Mongo Query"
     }
   ],
@@ -134,7 +134,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5ea0c54f-b177-4d13-99fa-25867d88bfa7",
+  "versionId": "fbc8ea0e-1438-4a2a-a4de-7719471a7c9b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
