@@ -15,7 +15,7 @@ API_URL = "https://tars.giize.com/search_api"
 class SearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.3"  # 버전 업데이트
+        self.version = "0.2.0"
         self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
