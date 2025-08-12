@@ -148,7 +148,7 @@ class SearchApp:
                     full_text = doc.get("ocr", {}).get("full_text", "")
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, f"({confidence}) ")
+                    self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"\n{summary}\n\n")
 
@@ -170,11 +170,13 @@ class SearchApp:
                 for i, doc in enumerate(search_results):
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "")
+                    confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
                     original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f}) ", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"\n{summary}\n\n")
 
