@@ -108,6 +108,17 @@ class SearchApp:
             response.raise_for_status()
             result_data = response.json()
             self.data = result_data.get("search_results", [])
+
+            # semantic 검색 시 상세 정보 보강
+            if self.search_mode.get() == "semantic" and self.data:
+                for item in self.data:
+                    doc_id = item.get("payload", {}).get("doc_id")
+                    if doc_id:
+                        detail_data = self.get_mongo_details(doc_id)
+                        if detail_data:
+                            # MongoDB 상세 정보를 기존 결과에 병합
+                            item.update(detail_data)
+
             self.display_results(result_data)
 
         except requests.exceptions.RequestException as e:
@@ -186,6 +197,27 @@ class SearchApp:
 
         self.detail_text.delete(1.0, tk.END)
         self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.\n[다운로드 및 열기] 링크를 클릭하면 파일이 로컬에 저장되고 바로 열립니다.")
+
+    def get_mongo_details(self,doc_id):
+        """
+        T12 유틸리티를 호출하여 MongoDB 상세 정보를 가져오는 함수.
+        """
+        smartsearch_api_url = "https://n8nd.giize.com/webhook/smartsearch"
+        payload = {"id": doc_id}
+        try:
+            response = requests.post(smartsearch_api_url, json=payload, timeout=10)
+            response.raise_for_status()
+            
+            # 결과가 비어있는지 확인
+            detail_data = response.json()
+            if detail_data and detail_data[0]:
+                return detail_data[0]
+            else:
+                return {}
+                
+        except requests.exceptions.RequestException as e:
+            print(f"상세 정보 조회 오류 (doc_id: {doc_id}): {e}")
+            return {}
 
     def on_enter_title(self, event, tag):
         # 커서를 손가락 모양으로 변경
