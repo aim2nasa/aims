@@ -137,13 +137,17 @@ class SearchApp:
                     full_text = doc.get("ocr", {}).get("full_text", "")
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, f"({confidence}) ")
+                    self.results_text.insert(tk.END, f"({confidence})\n")
                     self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{summary}\n\n")
 
                     # 마우스 커서 변경 기능 추가
                     self.results_text.tag_bind(f"item_{i}", "<Enter>", lambda e, tag=f"item_{i}": self.on_enter_title(e, tag))
                     self.results_text.tag_bind(f"item_{i}", "<Leave>", lambda e, tag=f"item_{i}": self.on_leave_title(e, tag))
+
+                    # [다운로드 및 열기] 링크 부분 마우스 커서 변경
+                    self.results_text.tag_bind(f"item_link_{i}", "<Enter>", lambda e, tag=f"item_link_{i}": self.on_enter_title(e, tag))
+                    self.results_text.tag_bind(f"item_link_{i}", "<Leave>", lambda e, tag=f"item_link_{i}": self.on_leave_title(e, tag))
 
                     self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
@@ -157,13 +161,17 @@ class SearchApp:
                     original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
-                    self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f}) ", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f})\n", ("doc_title", f"item_{i}"))
                     self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{preview}\n\n")
 
                     # 마우스 커서 변경 기능 추가
                     self.results_text.tag_bind(f"item_{i}", "<Enter>", lambda e, tag=f"item_{i}": self.on_enter_title(e, tag))
                     self.results_text.tag_bind(f"item_{i}", "<Leave>", lambda e, tag=f"item_{i}": self.on_leave_title(e, tag))
+
+                    # [다운로드 및 열기] 링크 부분 마우스 커서 변경
+                    self.results_text.tag_bind(f"item_link_{i}", "<Enter>", lambda e, tag=f"item_link_{i}": self.on_enter_title(e, tag))
+                    self.results_text.tag_bind(f"item_link_{i}", "<Leave>", lambda e, tag=f"item_link_{i}": self.on_leave_title(e, tag))
 
                     self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
