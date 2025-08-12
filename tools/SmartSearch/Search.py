@@ -135,7 +135,9 @@ class SearchApp:
                     original_name = doc.get("originalName", "이름 없음")
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "")
+                    confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
+                    self.results_text.insert(tk.END, f"({confidence}) ")
                     self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{summary}\n\n")
 
