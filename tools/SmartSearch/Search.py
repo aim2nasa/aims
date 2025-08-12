@@ -135,7 +135,7 @@ class SearchApp:
             self.results_text.insert(tk.END, f"AI 답변:\n{answer}\n\n", "answer")
 
         search_results = data.get("search_results", [])
-        self.results_text.insert(tk.END, f"총 {len(search_results)}건의 결과가 발견되었습니다.\n\n", "header")
+        self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
 
         if not search_results:
             self.results_text.insert(tk.END, "관련 문서를 찾을 수 없습니다.")
