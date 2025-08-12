@@ -169,6 +169,7 @@ class SearchApp:
             else:
                 for i, doc in enumerate(search_results):
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
+                    full_text = doc.get("ocr", {}).get("full_text", "")
                     payload = doc.get("payload", {})
                     original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
@@ -187,8 +188,8 @@ class SearchApp:
 
                     self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
-                    def make_callback(idx=i, name=original_name, prev=preview, sc=score):
-                        return lambda e: self.show_detail(idx, name, prev, None, sc)
+                    def make_callback(idx=i, name=original_name, summ=summary, full=full_text):
+                        return lambda e: self.show_detail(idx, name, summ, full)
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
 
         self.results_text.tag_config("answer", foreground="blue", font=("Helvetica", 12, "bold"))
@@ -231,10 +232,7 @@ class SearchApp:
     def show_detail(self, idx, name, summary_or_preview, full_text=None, score=None):
         self.detail_text.delete(1.0, tk.END)
         lines = [f"[{idx+1}] {name}"]
-        if score is not None:
-            lines.append(f"유사도 점수: {score:.4f}")
-        if full_text:
-            lines.append("\n--- 전체 텍스트 ---\n" + str(full_text))
+        lines.append("\n--- 전체 텍스트 ---\n" + str(full_text))
         self.detail_text.insert(tk.END, "\n".join(lines))
     
     def download_and_open_file(self, index):
