@@ -8,3 +8,5 @@ venv/
 
 # Log files
 scripts/*.log
+
+temp_downloads
