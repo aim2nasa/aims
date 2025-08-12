@@ -135,13 +135,13 @@ class SearchApp:
             self.results_text.insert(tk.END, f"AI 답변:\n{answer}\n\n", "answer")
 
         search_results = data.get("search_results", [])
-        self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
 
         if not search_results:
             self.results_text.insert(tk.END, "관련 문서를 찾을 수 없습니다.")
         else:
-            self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
             if data.get("search_mode") == "keyword":
+                self.results_text.insert(tk.END, f"총 {len(search_results)}건의 결과가 발견되었습니다.\n\n", "header")
+                self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
                 for i, doc in enumerate(search_results):
                     original_name = doc.get("originalName", "이름 없음")
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
@@ -167,6 +167,7 @@ class SearchApp:
                     self.results_text.tag_bind(f"item_{i}", "<Button-1>", make_callback())
 
             else:
+                self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     full_text = doc.get("ocr", {}).get("full_text", "")
