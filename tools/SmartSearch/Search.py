@@ -168,13 +168,14 @@ class SearchApp:
 
             else:
                 for i, doc in enumerate(search_results):
+                    summary = doc.get("ocr", {}).get("summary", "내용 없음")
                     payload = doc.get("payload", {})
                     original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} (유사도: {score:.4f}) ", ("doc_title", f"item_{i}"))
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
-                    self.results_text.insert(tk.END, f"\n{preview}\n\n")
+                    self.results_text.insert(tk.END, f"\n{summary}\n\n")
 
                     # 마우스 커서 변경 기능 추가
                     self.results_text.tag_bind(f"item_{i}", "<Enter>", lambda e, tag=f"item_{i}": self.on_enter_title(e, tag))
