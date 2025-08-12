@@ -141,6 +141,10 @@ class SearchApp:
                     self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{summary}\n\n")
 
+                    # 마우스 커서 변경 기능 추가
+                    self.results_text.tag_bind(f"item_{i}", "<Enter>", lambda e, tag=f"item_{i}": self.on_enter_title(e, tag))
+                    self.results_text.tag_bind(f"item_{i}", "<Leave>", lambda e, tag=f"item_{i}": self.on_leave_title(e, tag))
+
                     self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
                     def make_callback(idx=i, name=original_name, summ=summary, full=full_text):
@@ -157,6 +161,10 @@ class SearchApp:
                     self.results_text.insert(tk.END, "[다운로드 및 열기]\n", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"{preview}\n\n")
 
+                    # 마우스 커서 변경 기능 추가
+                    self.results_text.tag_bind(f"item_{i}", "<Enter>", lambda e, tag=f"item_{i}": self.on_enter_title(e, tag))
+                    self.results_text.tag_bind(f"item_{i}", "<Leave>", lambda e, tag=f"item_{i}": self.on_leave_title(e, tag))
+
                     self.results_text.tag_bind(f"item_link_{i}", "<Button-1>", lambda e, idx=i: self.download_and_open_file(idx))
 
                     def make_callback(idx=i, name=original_name, prev=preview, sc=score):
@@ -170,6 +178,14 @@ class SearchApp:
 
         self.detail_text.delete(1.0, tk.END)
         self.detail_text.insert(tk.END, "상세 영역: 항목 제목을 클릭하면 상세가 표시됩니다.\n[다운로드 및 열기] 링크를 클릭하면 파일이 로컬에 저장되고 바로 열립니다.")
+
+    def on_enter_title(self, event, tag):
+        # 커서를 손가락 모양으로 변경
+        self.results_text.config(cursor="hand2")
+
+    def on_leave_title(self, event, tag):
+        # 커서를 기본 모양으로 변경
+        self.results_text.config(cursor="")
 
     def show_detail(self, idx, name, summary_or_preview, full_text=None, score=None):
         self.detail_text.delete(1.0, tk.END)
