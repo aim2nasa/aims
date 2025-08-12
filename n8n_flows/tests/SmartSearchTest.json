@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -208,
-        -128
+        -64,
+        -176
       ],
-      "id": "21a8cfdc-7de7-4d95-b1fb-9700148fb672",
+      "id": "a2bdc337-7479-4590-9c26-b0d21b34815e",
       "name": "SmartSearch Webhook",
       "webhookId": "4c1d0839-8a20-40ea-bfd1-5575c65fa171"
     },
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        464,
-        -128
+        608,
+        -176
       ],
-      "id": "0c554b36-d257-41ae-a491-f1ddc14b9a1c",
+      "id": "d3ebf49b-ce5d-4ff6-ac8d-8e2743f480e7",
       "name": "MongoDB",
       "alwaysOutputData": true,
       "credentials": {
@@ -50,10 +50,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        688,
-        -128
+        1056,
+        -80
       ],
-      "id": "6dca2c34-86bb-40fa-a717-bfe24a61dd2a",
+      "id": "b36a1413-b66b-4d0c-9c6d-b633e2fdebc2",
       "name": "Respond with Search Results"
     },
     {
@@ -63,10 +63,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16,
-        -128
+        160,
+        -176
       ],
-      "id": "fb7bdd48-2d55-4e89-9478-91415aaf40f3",
+      "id": "b4a4a072-f47a-4e8d-879e-87c83127a3a5",
       "name": "Build Mongo Query"
     },
     {
@@ -76,11 +76,59 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
-        -128
+        384,
+        -176
       ],
-      "id": "73103489-d4f5-4482-83fd-9bf771637cd4",
+      "id": "7e4ee601-83fe-4af5-947d-3b32d0bb4da0",
       "name": "Stringify Mongo Query"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bb7c11da-cd77-4ce6-84c1-6d2f2a333855",
+              "leftValue": "={{$json.isEmpty()}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -176
+      ],
+      "id": "86bac602-340d-4024-a11c-5e231ee17caa",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "=[]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1056,
+        -272
+      ],
+      "id": "c6e0b494-6d5d-4cef-bbc1-8c2363670ae9",
+      "name": "Empty Result Response"
     }
   ],
   "pinData": {},
@@ -100,7 +148,7 @@
       "main": [
         [
           {
-            "node": "Respond with Search Results",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -128,13 +176,31 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Empty Result Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "fbc8ea0e-1438-4a2a-a4de-7719471a7c9b",
+  "versionId": "23ebbb05-ea1e-48ce-ba4a-5d2a1b533b1a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
