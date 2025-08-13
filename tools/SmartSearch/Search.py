@@ -127,6 +127,17 @@ class SearchApp:
             self.results_text.insert(tk.END, "API 호출 실패.")
             self.detail_text.delete(1.0, tk.END)
 
+    def display_ocr_confidence(self,doc):
+        confidence = doc.get("ocr", {}).get("confidence", "")
+        if confidence:
+            self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
+    
+    def get_full_text(self,doc):
+        full_text = doc.get("ocr", {}).get("full_text", "")
+        if full_text:
+            return full_text
+        return doc.get("text", {}).get("full_text", "")
+
     def display_results(self, data):
         self.results_text.delete(1.0, tk.END)
 
@@ -145,10 +156,10 @@ class SearchApp:
                 for i, doc in enumerate(search_results):
                     original_name = doc.get("originalName", "이름 없음")
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
-                    full_text = doc.get("ocr", {}).get("full_text", "")
+                    full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
+                    self.display_ocr_confidence(doc)
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"\n{summary}\n\n")
 
@@ -170,7 +181,7 @@ class SearchApp:
                 self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
                     summary = doc.get("ocr", {}).get("summary", "내용 없음")
-                    full_text = doc.get("ocr", {}).get("full_text", "")
+                    full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
                     original_name = payload.get("original_name", "이름 없음")
@@ -178,7 +189,7 @@ class SearchApp:
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
                     self.results_text.insert(tk.END, f"(유사도: {score:.4f},")
-                    self.results_text.insert(tk.END, f"문자 인식률:{confidence}) ")
+                    self.display_ocr_confidence(doc)
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"\n{summary}\n\n")
 
