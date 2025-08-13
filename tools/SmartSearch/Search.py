@@ -155,7 +155,7 @@ class SearchApp:
                 self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
                 for i, doc in enumerate(search_results):
                     original_name = doc.get("originalName", "이름 없음")
-                    summary = doc.get("ocr", {}).get("summary", "내용 없음")
+                    summary = doc.get("ocr", {}).get("summary", "요악 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
@@ -180,7 +180,7 @@ class SearchApp:
             else:
                 self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
-                    summary = doc.get("ocr", {}).get("summary", "내용 없음")
+                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
