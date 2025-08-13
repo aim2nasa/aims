@@ -8,8 +8,8 @@ const { Dragger } = Upload;
 const App = () => {
   const props = {
     name: 'file', // 서버에서 파일을 받을 때 사용할 이름
-    multiple: false, // 여러 파일 업로드 허용 여부 (false로 설정)
-    action: 'https://n8nd.giize.com/webhook/docupload', // 파일을 보낼 엔드포인트
+    multiple: true, // 여러 파일 업로드 허용 여부 (true로 설정)
+    action: 'https://n8nd.giize.com/webhook/docprep-main', // 파일을 보낼 엔드포인트
     onChange(info) {
       const { status } = info.file;
       if (status !== 'uploading') {
@@ -41,7 +41,7 @@ const App = () => {
         </p>
         <p className="ant-upload-text">여기로 파일을 드래그하거나 클릭하여 업로드하세요</p>
         <p className="ant-upload-hint">
-          단일 파일 업로드를 지원합니다.
+          여러 파일을 한 번에 업로드할 수 있습니다.
         </p>
       </Dragger>
     </div>
