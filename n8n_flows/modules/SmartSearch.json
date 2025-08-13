@@ -58,7 +58,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const query = $json.body.query || '';\nconst id = $json.body.id || '';\nconst mode = ($json.body.mode || 'OR').toUpperCase();\n\nlet finalQuery = {};\nlet isIdSearch = false; // ID 검색 여부를 판단하는 플래그\n\n// 1. ID가 존재하는 경우\nif (id) {\n  // ID 검색 쿼리 객체 생성\n  // MongoDB Extended JSON 형식의 \"$oid\"를 사용\n  finalQuery = { _id: { \"$oid\": id } };\n  isIdSearch = true;\n} \n// 2. ID가 없고 키워드가 존재하는 경우 (기존 로직)\nelse if (query.trim().length > 0) {\n  const keywords = query\n    .split(' ')\n    .map(k => k.trim())\n    .filter(k => k.length > 0);\n\n  const fields = [\n    'originalName',\n    'ocr.full_text',\n    'ocr.summary',\n    'meta.filename'\n  ];\n\n  const buildSingleKeywordQuery = (keyword) =>\n    fields.map(field => ({ [field]: { $regex: keyword, $options: 'i' } }));\n\n  if (mode === 'AND') {\n    finalQuery = {\n      $and: keywords.map(kw => ({ $or: buildSingleKeywordQuery(kw) }))\n    };\n  } else {\n    finalQuery = {\n      $or: keywords.flatMap(kw => buildSingleKeywordQuery(kw))\n    };\n  }\n}\n// 3. ID도 없고 키워드도 없는 경우\nelse {\n  return [{ json: {} }];\n}\n\n\n// 다음 노드로 쿼리와 플래그를 함께 전달\nreturn [{\n  json: {\n    query: finalQuery,\n    isIdSearch: isIdSearch\n  }\n}];"
+        "jsCode": "const query = $json.body.query || '';\nconst id = $json.body.id || '';\nconst mode = ($json.body.mode || 'OR').toUpperCase();\n\nlet finalQuery = {};\nlet isIdSearch = false; // ID 검색 여부를 판단하는 플래그\n\n// 1. ID가 존재하는 경우\nif (id) {\n  // ID 검색 쿼리 객체 생성\n  // MongoDB Extended JSON 형식의 \"$oid\"를 사용\n  finalQuery = { _id: { \"$oid\": id } };\n  isIdSearch = true;\n} \n// 2. ID가 없고 키워드가 존재하는 경우 (기존 로직)\nelse if (query.trim().length > 0) {\n  const keywords = query\n    .split(' ')\n    .map(k => k.trim())\n    .filter(k => k.length > 0);\n\n  const fields = [\n    'originalName',\n    'ocr.full_text',\n    'ocr.summary',\n    'meta.filename',\n    'text.full_text'\n  ];\n\n  const buildSingleKeywordQuery = (keyword) =>\n    fields.map(field => ({ [field]: { $regex: keyword, $options: 'i' } }));\n\n  if (mode === 'AND') {\n    finalQuery = {\n      $and: keywords.map(kw => ({ $or: buildSingleKeywordQuery(kw) }))\n    };\n  } else {\n    finalQuery = {\n      $or: keywords.flatMap(kw => buildSingleKeywordQuery(kw))\n    };\n  }\n}\n// 3. ID도 없고 키워드도 없는 경우\nelse {\n  return [{ json: {} }];\n}\n\n\n// 다음 노드로 쿼리와 플래그를 함께 전달\nreturn [{\n  json: {\n    query: finalQuery,\n    isIdSearch: isIdSearch\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -200,7 +200,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7ad57d28-7252-40a6-ad77-52d337f013c8",
+  "versionId": "da164d41-54c9-417c-aeb5-dc922d86faba",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
