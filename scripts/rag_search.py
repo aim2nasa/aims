@@ -81,7 +81,7 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
             model="gpt-3.5-turbo",  # 답변 생성에 적합한 모델 사용
             messages=messages,
             max_tokens=500,
-            temperature=0.2
+            temperature=0.1
         )
         return response.choices[0].message.content
     except Exception as e:
