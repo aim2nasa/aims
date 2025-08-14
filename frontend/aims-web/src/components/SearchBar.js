@@ -11,20 +11,33 @@ const { Option } = Select;
 const SearchBar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLogic, setSearchLogic] = useState('AND');
+  const [searchMode, setSearchMode] = useState('keyword'); // 'keyword' 또는 'semantic'
   const [keyword, setKeyword] = useState('');
   const [isSearched, setIsSearched] = useState(false);
+  const [aiAnswer, setAiAnswer] = useState(''); // AI 답변 상태 추가
 
   const onSearch = async () => {
     if (!keyword) return;
-
     setIsSearched(true);
+    setAiAnswer('');
+    setSearchResults([]);
 
     try {
-      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
-        query: keyword,
-        mode: searchLogic,
-      });
-      setSearchResults(response.data);
+      let response;
+      if (searchMode === 'keyword') {
+        response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+          query: keyword,
+          mode: searchLogic,
+        });
+        setSearchResults(response.data);
+      } else if (searchMode === 'semantic') {
+        response = await axios.post('https://tars.giize.com/search_api', {
+          query: keyword,
+          search_mode: 'semantic',
+        });
+        setSearchResults(response.data.search_results || []);
+        setAiAnswer(response.data.answer || '');
+      }
     } catch (e) {
       message.error('검색 중 오류가 발생했습니다.');
     }
@@ -37,11 +50,15 @@ const SearchBar = () => {
   const handleLogicChange = (value) => {
     setSearchLogic(value);
   };
+  
+  const handleModeChange = (value) => {
+    setSearchMode(value);
+  };
 
   // 모든 파일을 originalName으로 다운로드하는 함수
   const handleDownloadAndOpen = async (item) => {
-    let destPath = item.destPath;
-    const originalName = item.originalName;
+    let destPath = item.destPath || item.payload?.dest_path;
+    const originalName = item.originalName || item.payload?.original_name;
 
     if (!destPath || !originalName) {
       message.error('파일 경로가 유효하지 않습니다.');
@@ -54,24 +71,20 @@ const SearchBar = () => {
 
     // originalName으로 다운로드
     try {
-      // Blob 형태로 파일 다운로드
       const response = await axios({
         url: fileUrl,
         method: 'GET',
         responseType: 'blob',
       });
 
-      // Blob 데이터를 기반으로 가상 URL 생성
       const url = window.URL.createObjectURL(new Blob([response.data]));
       
-      // 가상 링크를 생성하여 다운로드 실행
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', originalName);
       document.body.appendChild(link);
       link.click();
       
-      // 사용 완료 후 가상 URL 해제 및 링크 제거
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -91,13 +104,23 @@ const SearchBar = () => {
           onPressEnter={onSearch}
         />
         <Select
-          defaultValue="AND"
-          style={{ width: 80 }}
-          onChange={handleLogicChange}
+          defaultValue="keyword"
+          style={{ width: 120 }}
+          onChange={handleModeChange}
         >
-          <Option value="AND">AND</Option>
-          <Option value="OR">OR</Option>
+          <Option value="keyword">키워드 검색</Option>
+          <Option value="semantic">시맨틱 검색</Option>
         </Select>
+        {searchMode === 'keyword' && (
+          <Select
+            defaultValue="AND"
+            style={{ width: 80 }}
+            onChange={handleLogicChange}
+          >
+            <Option value="AND">AND</Option>
+            <Option value="OR">OR</Option>
+          </Select>
+        )}
         <Button
           type="primary"
           icon={<SearchOutlined />}
@@ -111,6 +134,12 @@ const SearchBar = () => {
           <Typography.Text strong style={{ marginBottom: '10px' }}>
             총 {searchResults.length}건의 검색 결과가 발견되었습니다.
           </Typography.Text>
+          {aiAnswer && (
+            <div style={{ marginTop: '10px', padding: '15px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
+              <Typography.Text strong>AI 답변:</Typography.Text>
+              <Typography.Paragraph style={{ marginTop: '5px' }}>{aiAnswer}</Typography.Paragraph>
+            </div>
+          )}
           {searchResults.length > 0 && (
             <List
               bordered
@@ -118,18 +147,21 @@ const SearchBar = () => {
               renderItem={item => (
                 <List.Item>
                   <Space direction="vertical">
-                    {item.ocr ? (
+                    {item.ocr || item.payload ? (
                       <>
                         <Text 
                           strong 
                           style={{ cursor: 'pointer' }}
                           onClick={() => handleDownloadAndOpen(item)}
                         >
-                          {item.originalName}
+                          {item.originalName || item.payload?.original_name}
                         </Text>
-                        <Text type="secondary">{item.ocr.summary}</Text>
-                        {item.ocr.confidence && (
+                        <Text type="secondary">{item.ocr?.summary || item.payload?.summary}</Text>
+                        {item.ocr?.confidence && (
                           <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                        )}
+                        {item.score && (
+                           <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
                         )}
                       </>
                     ) : (
