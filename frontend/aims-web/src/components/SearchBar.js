@@ -4,7 +4,7 @@ import { Input, Button, List, Space, Tag, Typography, message, Select, Card } fr
 import { SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
-const { Search } = Input;
+const { TextArea } = Input; // TextArea 컴포넌트를 Import
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -123,13 +123,13 @@ const SearchBar = () => {
 
   return (
     <Card title="문서 검색" style={{ width: '100%', minHeight: '100%' }}>
-      <Space direction="horizontal" style={{ marginBottom: '20px', width: '100%' }}>
-        <Search
+      <Space.Compact block style={{ marginBottom: '20px' }}>
+        <TextArea
           placeholder="문서에서 키워드 검색 (예: 곽승철 p-47)"
           onChange={handleKeywordChange}
           value={keyword}
-          style={{ flex: 1 }}
-          onPressEnter={onSearch}
+          style={{ flex: 1, resize: 'none' }}
+          autoSize={{ minRows: 1, maxRows: 6 }} // 입력 내용에 따라 높이 자동 조절
         />
         <Select
           defaultValue="keyword"
@@ -157,7 +157,7 @@ const SearchBar = () => {
         >
           Search
         </Button>
-      </Space>
+      </Space.Compact>
       {isSearched && (
         <>
           {isLoading ? (
