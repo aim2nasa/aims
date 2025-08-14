@@ -15,12 +15,15 @@ const SearchBar = () => {
   const [keyword, setKeyword] = useState('');
   const [isSearched, setIsSearched] = useState(false);
   const [aiAnswer, setAiAnswer] = useState(''); // AI 답변 상태 추가
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const onSearch = async () => {
     if (!keyword) return;
+    
     setIsSearched(true);
     setAiAnswer('');
     setSearchResults([]);
+    setIsLoading(true); // 검색 시작 시 로딩 상태를 true로 설정
 
     try {
       let response;
@@ -40,6 +43,8 @@ const SearchBar = () => {
       }
     } catch (e) {
       message.error('검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false); // API 호출이 끝나면 로딩 상태를 false로 설정
     }
   };
 
@@ -125,62 +130,73 @@ const SearchBar = () => {
           type="primary"
           icon={<SearchOutlined />}
           onClick={onSearch}
+          loading={isLoading}
         >
           Search
         </Button>
       </Space>
       {isSearched && (
         <>
-          {aiAnswer && (
-            <div style={{ marginTop: '10px', padding: '15px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
-              <Typography.Text strong>AI 답변:</Typography.Text>
-              <Typography.Paragraph style={{ marginTop: '5px' }}>{aiAnswer}</Typography.Paragraph>
-            </div>
-          )}
-          {searchResults.length > 0 && (
-            <>
-              <Typography.Text strong style={{ marginBottom: '10px' }}>
-                총 {searchResults.length}건의 검색 결과가 발견되었습니다.
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Typography.Text type="secondary">
+                검색 결과를 불러오는 중입니다...
               </Typography.Text>
-              <List
-                bordered
-                dataSource={searchResults}
-                renderItem={item => (
-                  <List.Item>
-                    <Space direction="vertical">
-                      {item.ocr || item.payload ? (
-                        <>
-                          <Text 
-                            strong 
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => handleDownloadAndOpen(item)}
-                          >
-                            {item.originalName || item.payload?.original_name}
-                          </Text>
-                          <Text type="secondary">{item.ocr?.summary || item.payload?.summary}</Text>
-                          {item.ocr?.confidence && (
-                            <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+            </div>
+          ) : (
+            <>
+              {aiAnswer && (
+                <div style={{ marginTop: '10px', padding: '15px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
+                  <Typography.Text strong>AI 답변:</Typography.Text>
+                  <Typography.Paragraph style={{ marginTop: '5px' }}>{aiAnswer}</Typography.Paragraph>
+                </div>
+              )}
+              {searchResults.length > 0 && (
+                <>
+                  <Typography.Text strong style={{ marginBottom: '10px' }}>
+                    총 {searchResults.length}건의 검색 결과가 발견되었습니다.
+                  </Typography.Text>
+                  <List
+                    bordered
+                    dataSource={searchResults}
+                    renderItem={item => (
+                      <List.Item>
+                        <Space direction="vertical">
+                          {item.ocr || item.payload ? (
+                            <>
+                              <Text 
+                                strong 
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleDownloadAndOpen(item)}
+                              >
+                                {item.originalName || item.payload?.original_name}
+                              </Text>
+                              <Text type="secondary">{item.ocr?.summary || item.payload?.summary}</Text>
+                              {item.ocr?.confidence && (
+                                <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                              )}
+                              {item.score && (
+                                 <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <Text 
+                                strong 
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleDownloadAndOpen(item)}
+                              >
+                                {item.originalName}
+                              </Text>
+                              <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
+                            </>
                           )}
-                          {item.score && (
-                             <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <Text 
-                            strong 
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => handleDownloadAndOpen(item)}
-                          >
-                            {item.originalName}
-                          </Text>
-                          <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
-                        </>
-                      )}
-                    </Space>
-                  </List.Item>
-                )}
-              />
+                        </Space>
+                      </List.Item>
+                    )}
+                  />
+                </>
+              )}
             </>
           )}
         </>
