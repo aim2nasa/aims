@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { Card, Divider, message, Button } from 'antd';
 import 'antd/dist/reset.css'; // Ant Design의 기본 스타일시트
-import FileUploader from './components/FileUploader';
-import FileList from './components/FileList';
-import SearchBar from './components/SearchBar';
+import FileUploader from '../components/FileUploader';
+import FileList from '../components/FileList';
+import SearchBar from '../components/SearchBar';
 
 const MainPage = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
