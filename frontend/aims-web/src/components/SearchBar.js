@@ -12,9 +12,12 @@ const SearchBar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLogic, setSearchLogic] = useState('AND');
   const [keyword, setKeyword] = useState('');
+  const [isSearched, setIsSearched] = useState(false);
 
   const onSearch = async () => {
     if (!keyword) return;
+
+    setIsSearched(true);
 
     try {
       const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
@@ -55,7 +58,7 @@ const SearchBar = () => {
       const response = await axios({
         url: fileUrl,
         method: 'GET',
-        responseType: 'blob', // 응답 타입을 'blob'으로 설정
+        responseType: 'blob',
       });
 
       // Blob 데이터를 기반으로 가상 URL 생성
@@ -64,7 +67,7 @@ const SearchBar = () => {
       // 가상 링크를 생성하여 다운로드 실행
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', originalName); // originalName으로 다운로드 설정
+      link.setAttribute('download', originalName);
       document.body.appendChild(link);
       link.click();
       
@@ -103,43 +106,50 @@ const SearchBar = () => {
           Search
         </Button>
       </Space>
-      {searchResults.length > 0 && (
-        <List
-          bordered
-          dataSource={searchResults}
-          renderItem={item => (
-            <List.Item>
-              <Space direction="vertical">
-                {item.ocr ? (
-                  <>
-                    <Text 
-                      strong 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleDownloadAndOpen(item)}
-                    >
-                      {item.originalName}
-                    </Text>
-                    <Text type="secondary">{item.ocr.summary}</Text>
-                    {item.ocr.confidence && (
-                      <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+      {isSearched && (
+        <>
+          <Typography.Text strong style={{ marginBottom: '10px' }}>
+            총 {searchResults.length}건의 검색 결과가 발견되었습니다.
+          </Typography.Text>
+          {searchResults.length > 0 && (
+            <List
+              bordered
+              dataSource={searchResults}
+              renderItem={item => (
+                <List.Item>
+                  <Space direction="vertical">
+                    {item.ocr ? (
+                      <>
+                        <Text 
+                          strong 
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleDownloadAndOpen(item)}
+                        >
+                          {item.originalName}
+                        </Text>
+                        <Text type="secondary">{item.ocr.summary}</Text>
+                        {item.ocr.confidence && (
+                          <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Text 
+                          strong 
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleDownloadAndOpen(item)}
+                        >
+                          {item.originalName}
+                        </Text>
+                        <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
+                      </>
                     )}
-                  </>
-                ) : (
-                  <>
-                    <Text 
-                      strong 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleDownloadAndOpen(item)}
-                    >
-                      {item.originalName}
-                    </Text>
-                    <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
-                  </>
-                )}
-              </Space>
-            </List.Item>
+                  </Space>
+                </List.Item>
+              )}
+            />
           )}
-        />
+        </>
       )}
     </Card>
   );
