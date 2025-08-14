@@ -35,7 +35,7 @@ const SearchBar = () => {
     setSearchLogic(value);
   };
 
-  // 파일 확장자에 따라 동작을 다르게 하고, originalName으로 다운로드하는 함수
+  // 모든 파일을 originalName으로 다운로드하는 함수
   const handleDownloadAndOpen = async (item) => {
     let destPath = item.destPath;
     const originalName = item.originalName;
@@ -49,42 +49,31 @@ const SearchBar = () => {
     const correctedPath = destPath.startsWith('/data/files/') ? destPath.replace('/data', '') : destPath;
     const fileUrl = `https://tars.giize.com${correctedPath}`;
 
-    // 파일 확장자를 추출
-    const extension = originalName.split('.').pop().toLowerCase();
-    
-    // 브라우저에서 직접 열 수 있는 파일 확장자 목록
-    const displayableExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
+    // originalName으로 다운로드
+    try {
+      // Blob 형태로 파일 다운로드
+      const response = await axios({
+        url: fileUrl,
+        method: 'GET',
+        responseType: 'blob', // 응답 타입을 'blob'으로 설정
+      });
 
-    if (displayableExtensions.includes(extension)) {
-      // 새 탭에서 파일 열기
-      window.open(fileUrl, '_blank');
-    } else {
-      // 그 외 파일은 originalName으로 다운로드
-      try {
-        // Blob 형태로 파일 다운로드
-        const response = await axios({
-          url: fileUrl,
-          method: 'GET',
-          responseType: 'blob', // 응답 타입을 'blob'으로 설정
-        });
-
-        // Blob 데이터를 기반으로 가상 URL 생성
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        
-        // 가상 링크를 생성하여 다운로드 실행
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', originalName); // originalName으로 다운로드 설정
-        document.body.appendChild(link);
-        link.click();
-        
-        // 사용 완료 후 가상 URL 해제 및 링크 제거
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        message.error('파일 다운로드에 실패했습니다. CORS 설정을 확인해주세요.');
-        console.error('Download error:', error);
-      }
+      // Blob 데이터를 기반으로 가상 URL 생성
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // 가상 링크를 생성하여 다운로드 실행
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', originalName); // originalName으로 다운로드 설정
+      document.body.appendChild(link);
+      link.click();
+      
+      // 사용 완료 후 가상 URL 해제 및 링크 제거
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      message.error('파일 다운로드에 실패했습니다. CORS 설정을 확인해주세요.');
+      console.error('Download error:', error);
     }
   };
 
