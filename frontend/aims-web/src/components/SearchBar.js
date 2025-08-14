@@ -39,9 +39,12 @@ const SearchBar = () => {
           renderItem={item => (
             <List.Item>
               <Space direction="vertical">
-                <Text strong>{item.title}</Text>
-                <Text type="secondary">{item.snippet}</Text>
-                <Tag color="blue">Relevance: {item.score}</Tag>
+                <Text strong>{item.originalName}</Text>
+                <Text type="secondary">{item.ocr.summary}</Text>
+                {/* ocr.confidence가 존재할 경우에만 Tag를 표시합니다. */}
+                {item.ocr.confidence && (
+                  <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                )}
               </Space>
             </List.Item>
           )}
