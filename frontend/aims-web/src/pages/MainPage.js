@@ -6,7 +6,7 @@ import FileUploader from './components/FileUploader';
 import FileList from './components/FileList';
 import SearchBar from './components/SearchBar';
 
-const App = () => {
+const MainPage = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // FileUploader에서 업로드가 성공했을 때 호출될 함수
@@ -54,4 +54,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default MainPage;
