@@ -35,11 +35,12 @@ const SearchBar = () => {
     setSearchLogic(value);
   };
 
-  // <a> 태그를 사용한 다운로드 기능으로 되돌림 (download 속성 제거)
+  // 파일 확장자에 따라 동작을 다르게 하는 함수
   const handleDownloadAndOpen = (item) => {
     let destPath = item.destPath;
+    const originalName = item.originalName;
 
-    if (!destPath) {
+    if (!destPath || !originalName) {
       message.error('파일 경로가 유효하지 않습니다.');
       return;
     }
@@ -47,14 +48,25 @@ const SearchBar = () => {
     // URL에서 '/data' 부분을 제거
     const correctedPath = destPath.startsWith('/data/files/') ? destPath.replace('/data', '') : destPath;
     const fileUrl = `https://tars.giize.com${correctedPath}`;
+
+    // 파일 확장자를 추출
+    const extension = originalName.split('.').pop().toLowerCase();
     
-    // 가상 링크를 생성하여 다운로드 실행
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    // download 속성을 제거하여 서버가 제공하는 파일명 그대로 다운로드
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // 브라우저에서 직접 열 수 있는 파일 확장자 목록
+    const displayableExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
+
+    if (displayableExtensions.includes(extension)) {
+      // 새 탭에서 파일 열기
+      window.open(fileUrl, '_blank');
+    } else {
+      // 그 외 파일은 다운로드 실행
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      // download 속성을 제거하여 서버가 제공하는 파일명 그대로 다운로드
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
