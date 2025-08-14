@@ -38,7 +38,29 @@ const SearchBar = () => {
           query: keyword,
           search_mode: 'semantic',
         });
-        setSearchResults(response.data.search_results || []);
+        
+        // Semantic 검색 결과에 대해 doc_id를 사용하여 상세 정보(destPath) 보강
+        const semanticResults = response.data.search_results || [];
+        const enrichedResults = await Promise.all(
+          semanticResults.map(async (item) => {
+            const docId = item.payload?.doc_id;
+            if (docId) {
+              try {
+                const detailResponse = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+                  id: docId,
+                });
+                if (detailResponse.data && detailResponse.data[0]) {
+                  return { ...item, ...detailResponse.data[0] };
+                }
+              } catch (e) {
+                console.error(`상세 정보 조회 오류 (doc_id: ${docId}):`, e);
+              }
+            }
+            return item;
+          })
+        );
+        
+        setSearchResults(enrichedResults);
         setAiAnswer(response.data.answer || '');
       }
     } catch (e) {
@@ -62,7 +84,8 @@ const SearchBar = () => {
 
   // 모든 파일을 originalName으로 다운로드하는 함수
   const handleDownloadAndOpen = async (item) => {
-    let destPath = item.destPath || item.payload?.dest_path;
+    // Semantic 검색 결과의 경우 destPath가 보강된 데이터를 사용
+    const destPath = item.destPath || item.payload?.dest_path;
     const originalName = item.originalName || item.payload?.original_name;
 
     if (!destPath || !originalName) {
