@@ -65,6 +65,7 @@ const SearchBar = () => {
           onChange={handleKeywordChange}
           value={keyword}
           style={{ flex: 1 }}
+          onPressEnter={onSearch}
         />
         <Select
           defaultValue="AND"
