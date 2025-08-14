@@ -131,9 +131,6 @@ const SearchBar = () => {
       </Space>
       {isSearched && (
         <>
-          <Typography.Text strong style={{ marginBottom: '10px' }}>
-            총 {searchResults.length}건의 검색 결과가 발견되었습니다.
-          </Typography.Text>
           {aiAnswer && (
             <div style={{ marginTop: '10px', padding: '15px', border: '1px solid #e8e8e8', borderRadius: '4px' }}>
               <Typography.Text strong>AI 답변:</Typography.Text>
@@ -141,45 +138,50 @@ const SearchBar = () => {
             </div>
           )}
           {searchResults.length > 0 && (
-            <List
-              bordered
-              dataSource={searchResults}
-              renderItem={item => (
-                <List.Item>
-                  <Space direction="vertical">
-                    {item.ocr || item.payload ? (
-                      <>
-                        <Text 
-                          strong 
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => handleDownloadAndOpen(item)}
-                        >
-                          {item.originalName || item.payload?.original_name}
-                        </Text>
-                        <Text type="secondary">{item.ocr?.summary || item.payload?.summary}</Text>
-                        {item.ocr?.confidence && (
-                          <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
-                        )}
-                        {item.score && (
-                           <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Text 
-                          strong 
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => handleDownloadAndOpen(item)}
-                        >
-                          {item.originalName}
-                        </Text>
-                        <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
-                      </>
-                    )}
-                  </Space>
-                </List.Item>
-              )}
-            />
+            <>
+              <Typography.Text strong style={{ marginBottom: '10px' }}>
+                총 {searchResults.length}건의 검색 결과가 발견되었습니다.
+              </Typography.Text>
+              <List
+                bordered
+                dataSource={searchResults}
+                renderItem={item => (
+                  <List.Item>
+                    <Space direction="vertical">
+                      {item.ocr || item.payload ? (
+                        <>
+                          <Text 
+                            strong 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleDownloadAndOpen(item)}
+                          >
+                            {item.originalName || item.payload?.original_name}
+                          </Text>
+                          <Text type="secondary">{item.ocr?.summary || item.payload?.summary}</Text>
+                          {item.ocr?.confidence && (
+                            <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                          )}
+                          {item.score && (
+                             <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Text 
+                            strong 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleDownloadAndOpen(item)}
+                          >
+                            {item.originalName}
+                          </Text>
+                          <Text type="secondary">OCR 데이터가 존재하지 않는 문서입니다.</Text>
+                        </>
+                      )}
+                    </Space>
+                  </List.Item>
+                )}
+              />
+            </>
           )}
         </>
       )}
