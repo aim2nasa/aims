@@ -1,49 +1,55 @@
-import React from 'react';
-import { Upload, message } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
+// src/App.js
+import React, { useState } from 'react';
+import { Card, Divider, message, Button } from 'antd';
 import 'antd/dist/reset.css'; // Ant Design의 기본 스타일시트
-
-const { Dragger } = Upload;
+import FileUploader from './components/FileUploader';
+import FileList from './components/FileList';
+import SearchBar from './components/SearchBar';
 
 const App = () => {
-  const props = {
-    name: 'file', // 서버에서 파일을 받을 때 사용할 이름
-    multiple: true, // 여러 파일 업로드 허용 여부 (true로 설정)
-    action: 'https://n8nd.giize.com/webhook/docprep-main', // 파일을 보낼 엔드포인트
-    onChange(info) {
-      const { status } = info.file;
-      if (status !== 'uploading') {
-        console.log(info.file, info.fileList);
-      }
-      if (status === 'done') {
-        message.success(`${info.file.name} 파일 업로드가 성공적으로 완료되었습니다.`);
-      } else if (status === 'error') {
-        message.error(`${info.file.name} 파일 업로드에 실패했습니다.`);
-      }
-    },
-    beforeUpload(file) {
-      // 업로드 전 특정 파일 형식을 거부할 수 있습니다.
-      // const isPDF = file.type === 'application/pdf';
-      // if (!isPDF) {
-      //   message.error('PDF 파일만 업로드할 수 있습니다.');
-      // }
-      // return isPDF;
-      return true; // true를 반환하면 업로드가 진행됩니다.
-    },
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  // FileUploader에서 업로드가 성공했을 때 호출될 함수
+  const handleUploadSuccess = (file) => {
+    // 업로드된 파일 목록에 추가하고, 초기 상태를 'processing'으로 설정
+    setUploadedFiles(prevFiles => [
+      ...prevFiles,
+      {
+        uid: file.uid,
+        name: file.name,
+        status: 'processing', // 초기 상태: 처리 중
+      },
+    ]);
+    message.success(`${file.name} 파일 업로드가 시작되었습니다.`);
+    
+    // 이 부분은 추후에 WebSocket을 통해 실시간 상태 업데이트를 받도록 고도화됩니다.
+    // 임시로 5초 후 'completed' 상태로 변경하는 로직을 추가
+    setTimeout(() => {
+        setUploadedFiles(prevFiles => 
+            prevFiles.map(f => 
+                f.uid === file.uid ? { ...f, status: 'completed' } : f
+            )
+        );
+        message.success(`${file.name} 파일 처리가 완료되었습니다.`);
+    }, 5000); // 5초 후에 상태 변경 시뮬레이션
   };
 
   return (
-    <div style={{ padding: '50px' }}>
-      <h1>문서 업로드</h1>
-      <Dragger {...props}>
-        <p className="ant-upload-drag-icon">
-          <InboxOutlined />
-        </p>
-        <p className="ant-upload-text">여기로 파일을 드래그하거나 클릭하여 업로드하세요</p>
-        <p className="ant-upload-hint">
-          여러 파일을 한 번에 업로드할 수 있습니다.
-        </p>
-      </Dragger>
+    <div style={{ padding: '50px', maxWidth: '800px', margin: '0 auto' }}>
+      <h1>AIMS 문서 관리 시스템</h1>
+      <Card title="문서 업로드" style={{ marginBottom: '20px' }}>
+        <FileUploader onUploadSuccess={handleUploadSuccess} />
+      </Card>
+      
+      <Card title="업로드 파일 현황" style={{ marginBottom: '20px' }}>
+        <FileList files={uploadedFiles} />
+      </Card>
+      
+      <Divider />
+      
+      <Card title="문서 검색">
+        <SearchBar />
+      </Card>
     </div>
   );
 };
