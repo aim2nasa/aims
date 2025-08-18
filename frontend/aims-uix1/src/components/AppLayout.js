@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Input, Space, Button, Dropdown, Select } from 'antd';
+import { Layout, Menu, Input, Space, Button, Dropdown, Select, message } from 'antd';
 import {
   BellOutlined, UserOutlined, SearchOutlined,
   MenuUnfoldOutlined, MenuFoldOutlined,
@@ -7,7 +7,8 @@ import {
 import LeftPane from './LeftPane';
 import CenterPane from './CenterPane';
 import RightPane from './RightPane';
-import '../App.css'; 
+import axios from 'axios';
+import '../App.css';
 
 const { Header, Content, Sider } = Layout;
 const { Option } = Select;
@@ -16,6 +17,12 @@ const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [rightPaneVisible, setRightPaneVisible] = useState(false);
+  
+  // 검색 관련 상태
+  const [keyword, setKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLogic, setSearchLogic] = useState('and');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDocumentClick = (doc) => {
     setSelectedDocument(doc);
@@ -34,6 +41,37 @@ const AppLayout = () => {
       ]}
     />
   );
+  
+  const handleKeywordChange = (e) => {
+    setKeyword(e.target.value);
+  };
+
+  const handleLogicChange = (value) => {
+    setSearchLogic(value);
+  };
+  
+  const onSearch = async () => {
+    if (!keyword) {
+      message.warning('검색어를 입력해주세요.');
+      return;
+    }
+    
+    setIsLoading(true);
+    setSearchResults([]);
+
+    try {
+      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+        query: keyword,
+        mode: searchLogic,
+      });
+      setSearchResults(response.data);
+    } catch (e) {
+      message.error('검색 중 오류가 발생했습니다.');
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Layout>
@@ -53,12 +91,15 @@ const AppLayout = () => {
         </div>
         {/* 중앙 섹션 (검색창) */}
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
-          <Input.Group compact style={{ width: '100%' }}> {/* 이 부분을 100%로 수정했습니다. */}
+          <Input.Group compact style={{ flex: 1 }}>
             <Input
               placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
+              value={keyword}
+              onChange={handleKeywordChange}
+              onPressEnter={onSearch}
               style={{ width: 'calc(100% - 80px)' }}
             />
-            <Select defaultValue="and" style={{ width: 80 }}>
+            <Select defaultValue="and" style={{ width: 80 }} onChange={handleLogicChange}>
               <Option value="and">AND</Option>
               <Option value="or">OR</Option>
             </Select>
@@ -67,6 +108,8 @@ const AppLayout = () => {
             type="primary"
             icon={<SearchOutlined />}
             style={{ marginLeft: 8 }}
+            onClick={onSearch}
+            loading={isLoading}
           >
             Search
           </Button>
@@ -110,7 +153,11 @@ const AppLayout = () => {
           <Content style={{ display: 'flex', padding: 24, background: '#f5f5f5' }}>
             {/* Center Pane */}
             <div style={{ flex: 1, marginRight: rightPaneVisible ? 24 : 0 }}>
-              <CenterPane onDocumentClick={handleDocumentClick} />
+              <CenterPane 
+                onDocumentClick={handleDocumentClick}
+                searchResults={searchResults}
+                isLoading={isLoading}
+              />
             </div>
 
             {/* Right Pane */}

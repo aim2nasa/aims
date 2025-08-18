@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree } from 'antd';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin } from 'antd';
 import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+// 기존 Mock 데이터는 그대로 유지합니다.
 const mockTreeDocuments = [
   {
     title: '2025년 계약 문서',
@@ -53,8 +54,9 @@ const mockListDocuments = [
   { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', fileUrl: '/test.pdf' },
 ];
 
-const CenterPane = ({ onDocumentClick }) => {
+const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   const [viewMode, setViewMode] = React.useState('list');
+  const [activeDocuments, setActiveDocuments] = useState(mockListDocuments);
 
   const onTreeSelect = (selectedKeys, info) => {
     if (info.node.data) {
@@ -62,7 +64,87 @@ const CenterPane = ({ onDocumentClick }) => {
     }
   };
 
-  const filteredDocuments = mockListDocuments; // 필터링 로직 제거
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+            문서를 검색 중입니다...
+          </p>
+        </div>
+      );
+    }
+    
+    // 검색 결과가 있을 경우 searchResults를 사용하고, 없을 경우 mock 데이터를 사용
+    const documentsToShow = searchResults.length > 0 ? searchResults : mockListDocuments;
+    
+    if (documentsToShow.length === 0 && searchResults.length > 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+          <p style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
+            검색 결과가 없습니다.
+          </p>
+        </div>
+      );
+    }
+
+    if (viewMode === 'list') {
+      return (
+        <List
+          itemLayout="horizontal"
+          dataSource={documentsToShow}
+          renderItem={(item) => (
+            <List.Item
+              key={item.id || item.payload?.doc_id}
+              onClick={() => onDocumentClick(item)}
+              style={{ cursor: 'pointer', padding: '12px 0' }}
+            >
+              <List.Item.Meta
+                avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
+                title={
+                  <Space>
+                    {/* 검색 결과와 mock 데이터의 필드명이 다르므로 분기 처리 */}
+                    <Text>{item.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
+                    {item.type && (
+                       <Tag color="blue">{item.type}</Tag>
+                    )}
+                    {item.ocr?.confidence && (
+                      <Tag color="blue">OCR Confidence: {item.ocr.confidence}</Tag>
+                    )}
+                    {item.score && (
+                      <Tag color="green">유사도: {item.score.toFixed(4)}</Tag>
+                    )}
+                  </Space>
+                }
+                description={
+                  <Space size="middle">
+                    {/* 검색 결과와 mock 데이터의 필드명이 다르므로 분기 처리 */}
+                    <Text type="secondary">{item.date ? `업로드일: ${item.date}` : `요약 정보: ${item.ocr?.summary || item.payload?.summary || '없음'}`}</Text>
+                    {item.status && (
+                       <Text type="secondary">상태: {item.status}</Text>
+                    )}
+                  </Space>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      );
+    }
+    
+    if (viewMode === 'tree') {
+      return (
+        <Tree
+          showIcon
+          defaultExpandAll
+          onSelect={onTreeSelect}
+          treeData={mockTreeDocuments}
+          style={{ cursor: 'pointer' }}
+        />
+      );
+    }
+  };
 
   return (
     <Card
@@ -83,45 +165,7 @@ const CenterPane = ({ onDocumentClick }) => {
       }
       style={{ minHeight: '100%', borderRadius: 8 }}
     >
-      {viewMode === 'list' && (
-        <List
-          itemLayout="horizontal"
-          dataSource={filteredDocuments}
-          renderItem={(item) => (
-            <List.Item
-              key={item.id}
-              onClick={() => onDocumentClick(item)}
-              style={{ cursor: 'pointer', padding: '12px 0' }}
-            >
-              <List.Item.Meta
-                avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
-                title={
-                  <Space>
-                    <Text>{item.name}</Text>
-                    <Tag color="blue">{item.type}</Tag>
-                  </Space>
-                }
-                description={
-                  <Space size="middle">
-                    <Text type="secondary">업로드일: {item.date}</Text>
-                    <Text type="secondary">상태: {item.status}</Text>
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
-      )}
-      
-      {viewMode === 'tree' && (
-        <Tree
-          showIcon
-          defaultExpandAll
-          onSelect={onTreeSelect}
-          treeData={mockTreeDocuments}
-          style={{ cursor: 'pointer' }}
-        />
-      )}
+      {renderContent()}
     </Card>
   );
 };
