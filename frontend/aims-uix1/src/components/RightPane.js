@@ -72,16 +72,6 @@ const RightPane = ({ document, onClose }) => {
         )}
       </div>
 
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Title level={5}>문서 정보</Title>
-        <Paragraph>
-          <Text strong>문서 유형:</Text> {document.type}
-        </Paragraph>
-        <Paragraph>
-          <Text strong>업로드일:</Text> {document.date}
-        </Paragraph>
-      </Space>
-
       <Space style={{ marginTop: 16 }}>
         <Button onClick={handleDownload} icon={<DownloadOutlined />}>다운로드</Button>
       </Space>
