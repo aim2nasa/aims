@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Input, Space, Button, Dropdown } from 'antd';
+import { Layout, Menu, Input, Space, Button, Dropdown, Select } from 'antd';
 import {
   BellOutlined, UserOutlined, SearchOutlined,
   MenuUnfoldOutlined, MenuFoldOutlined,
@@ -7,8 +7,10 @@ import {
 import LeftPane from './LeftPane';
 import CenterPane from './CenterPane';
 import RightPane from './RightPane';
+import '../App.css'; 
 
 const { Header, Content, Sider } = Layout;
+const { Option } = Select;
 
 const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -36,21 +38,48 @@ const AppLayout = () => {
   return (
     <Layout>
       {/* 📐 Header: 상단 고정 */}
-      <Header className="site-layout-sub-header-background" style={{ padding: 0, background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Space style={{ padding: '0 24px' }}>
-          <h2 style={{ margin: 0 }}>AIMS-UIX1</h2>
-          <Input
-            placeholder="고객명·문서명 즉시 검색"
-            prefix={<SearchOutlined />}
-            style={{ width: 300, marginLeft: 20 }}
-          />
-        </Space>
-        <Space style={{ padding: '0 24px' }}>
-          <Button type="text" icon={<BellOutlined />} />
-          <Dropdown overlay={menu} placement="bottomRight" arrow>
-            <Button type="text" icon={<UserOutlined />} />
-          </Dropdown>
-        </Space>
+      <Header style={{ 
+        padding: '0 24px', 
+        background: '#fff', 
+        borderBottom: '1px solid #f0f0f0', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        height: '64px'
+      }}>
+        {/* 왼쪽 섹션 (AIMS-UIX1 글씨) */}
+        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-start' }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>AIMS-UIX1</h2>
+        </div>
+        {/* 중앙 섹션 (검색창) */}
+        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
+          <Input.Group compact style={{ width: '100%' }}> {/* 이 부분을 100%로 수정했습니다. */}
+            <Input
+              placeholder="문서에서 키워드 검색 (예: 곽승철 p-47)"
+              style={{ width: 'calc(100% - 80px)' }}
+            />
+            <Select defaultValue="and" style={{ width: 80 }}>
+              <Option value="and">AND</Option>
+              <Option value="or">OR</Option>
+            </Select>
+          </Input.Group>
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            style={{ marginLeft: 8 }}
+          >
+            Search
+          </Button>
+        </div>
+        {/* 오른쪽 섹션 (아이콘) */}
+        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-end' }}>
+          <Space>
+            <Button type="text" icon={<BellOutlined />} />
+            <Dropdown overlay={menu} placement="bottomRight" arrow>
+              <Button type="text" icon={<UserOutlined />} />
+            </Dropdown>
+          </Space>
+        </div>
       </Header>
       
       <Layout>
