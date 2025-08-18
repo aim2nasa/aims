@@ -10,7 +10,6 @@ import { LeftOutlined, RightOutlined, DownloadOutlined } from '@ant-design/icons
 const { Text } = Typography;
 
 // PDF.js 워커 설정
-// 경로를 public 폴더 바로 아래로 수정합니다.
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
 
 const PDFViewer = ({ file, onDownload }) => {
@@ -39,40 +38,40 @@ const PDFViewer = ({ file, onDownload }) => {
       >
         <Page pageNumber={pageNumber} renderTextLayer={false} renderAnnotationLayer={false} width={window.innerWidth * 0.3} />
       </Document>
-      <div style={{ marginTop: 16, width: '100%' }}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-            <Space>
-              <Button
-                size="small"
-                type="primary"
-                disabled={pageNumber <= 1}
-                onClick={previousPage}
-                icon={<LeftOutlined />}
-              >
-                <span style={{ fontSize: '10px' }}>이전</span>
-              </Button>
-              <Text style={{ margin: '0 8px', fontSize: '10px' }}>
-                페이지 {pageNumber} / {numPages || '--'}
-              </Text>
-              <Button
-                size="small"
-                type="primary"
-                disabled={pageNumber >= numPages}
-                onClick={nextPage}
-                icon={<RightOutlined />}
-              >
-                <span style={{ fontSize: '10px' }}>다음</span>
-              </Button>
-            </Space>
+      <div style={{ marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+          <Space>
             <Button
-                size="small"
-                type="primary"
-                onClick={onDownload}
-                icon={<DownloadOutlined />}
+              size="small"
+              type="primary"
+              disabled={pageNumber <= 1}
+              onClick={previousPage}
+              icon={<LeftOutlined />}
             >
-                <span style={{ fontSize: '10px' }}>다운로드</span>
+              <span style={{ fontSize: '10px' }}>이전</span>
             </Button>
-        </Space>
+            <Text style={{ margin: '0 8px', fontSize: '10px' }}>
+              페이지 {pageNumber} / {numPages || '--'}
+            </Text>
+            <Button
+              size="small"
+              type="primary"
+              disabled={pageNumber >= numPages}
+              onClick={nextPage}
+              icon={<RightOutlined />}
+            >
+              <span style={{ fontSize: '10px' }}>다음</span>
+            </Button>
+          </Space>
+        </div>
+        <Button
+          size="small"
+          type="primary"
+          onClick={onDownload}
+          icon={<DownloadOutlined />}
+        >
+          <span style={{ fontSize: '10px' }}>다운로드</span>
+        </Button>
       </div>
     </div>
   );
