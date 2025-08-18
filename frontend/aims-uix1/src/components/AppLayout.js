@@ -24,13 +24,52 @@ const AppLayout = () => {
   const [searchLogic, setSearchLogic] = useState('and');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleDocumentClick = (doc) => {
-    setSelectedDocument(doc);
-    setRightPaneVisible(true);
+  // 문서 상세 정보 조회 및 RightPane에 전달
+  const handleDocumentClick = async (doc) => {
+    // API 호출을 위한 ID 추출 (mock 데이터와 API 응답 필드명 분기)
+    const docId = doc._id || doc.id;
+
+    if (!docId) {
+      message.error('문서 ID가 없어 상세 정보를 불러올 수 없습니다.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+        id: docId
+      });
+
+      const fileData = response.data[0];
+      
+      // ✅ 수정된 부분: URL 경로 수정
+      let fileUrl = '';
+      if (fileData.destPath) {
+        // `destPath`에서 `/data`를 제거하고, 올바른 도메인과 경로를 조합
+        const correctPath = fileData.destPath.replace('/data', '');
+        fileUrl = `https://tars.giize.com${correctPath}`;
+      }
+
+      // `destPath`를 `fileUrl`로 매핑하여 저장
+      const updatedDoc = {
+        ...fileData,
+        fileUrl: fileUrl,
+      };
+
+      setSelectedDocument(updatedDoc);
+      setRightPaneVisible(true);
+      
+    } catch (e) {
+      message.error('파일 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRightPaneCollapse = () => {
     setRightPaneVisible(!rightPaneVisible);
+    setSelectedDocument(null);
   };
 
   const menu = (
