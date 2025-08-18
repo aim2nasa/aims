@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button, Space, Typography, message } from 'antd';
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons';
+import { CloseOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import axios from 'axios';
 
@@ -15,7 +15,6 @@ const RightPane = ({ document, onClose }) => {
   const isPdf = documentFileUrl && documentFileUrl.toLowerCase().endsWith('.pdf');
 
   const handleDownload = async () => {
-    // API 응답 필드명에 따라 destPath와 originalName을 추출
     const destPath = document.destPath || document.payload?.dest_path;
     const originalName = document.originalName || document.payload?.original_name;
 
@@ -24,7 +23,6 @@ const RightPane = ({ document, onClose }) => {
       return;
     }
 
-    // URL에서 '/data' 부분을 제거하고 올바른 URL을 생성
     const correctedPath = destPath.startsWith('/data/files/') ? destPath.replace('/data', '') : destPath;
     const fileUrl = `https://tars.giize.com${correctedPath}`;
 
@@ -35,7 +33,6 @@ const RightPane = ({ document, onClose }) => {
         responseType: 'blob',
       });
 
-      // ✅ 수정된 부분: document 객체 유효성 검사 추가
       if (typeof window !== 'undefined' && window.document) {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         
@@ -66,15 +63,11 @@ const RightPane = ({ document, onClose }) => {
     >
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
         {isPdf ? (
-          <PDFViewer file={documentFileUrl} />
+          <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : (
           <p>이 문서는 PDF가 아닙니다.</p>
         )}
       </div>
-
-      <Space style={{ marginTop: 16 }}>
-        <Button onClick={handleDownload} icon={<DownloadOutlined />}>다운로드</Button>
-      </Space>
     </Card>
   );
 };
