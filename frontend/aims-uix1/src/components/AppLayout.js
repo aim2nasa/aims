@@ -55,7 +55,7 @@ const AppLayout = () => {
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
           <Input.Group compact style={{ width: '100%' }}> {/* 이 부분을 100%로 수정했습니다. */}
             <Input
-              placeholder="문서에서 키워드 검색 (예: 곽승철 p-47)"
+              placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
               style={{ width: 'calc(100% - 80px)' }}
             />
             <Select defaultValue="and" style={{ width: 80 }}>
