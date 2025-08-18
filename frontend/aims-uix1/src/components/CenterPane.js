@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, List, Typography, Button, Space, Tag, Select, Tree } from 'antd';
 import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// 트리 뷰를 위한 목업 문서 데이터 (계층적 구조)
 const mockTreeDocuments = [
   {
     title: '2025년 계약 문서',
@@ -16,13 +15,13 @@ const mockTreeDocuments = [
         title: '2025년 보험 가입 설계서',
         key: '0-0-0',
         icon: <FileTextOutlined />,
-        data: { id: 1, name: '2025년 보험 가입 설계서', type: '계약서', date: '2025-08-15', status: '정상', content: '...내용1...' },
+        data: { id: 1, name: '2025년 보험 가입 설계서', type: '계약서', date: '2025-08-15', status: '정상', fileUrl: '/test.pdf' },
       },
       {
         title: '주택 화재 보험 계약서',
         key: '0-0-1',
         icon: <FileTextOutlined />,
-        data: { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', content: '...내용4...' },
+        data: { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', fileUrl: '/test.pdf' },
       },
     ],
   },
@@ -35,35 +34,35 @@ const mockTreeDocuments = [
         title: '치과 진료비 청구서',
         key: '0-1-0',
         icon: <FileTextOutlined />,
-        data: { id: 2, name: '치과 진료비 청구서', type: '청구서', date: '2025-08-10', status: '처리중', content: '...내용2...' },
+        data: { id: 2, name: '치과 진료비 청구서', type: '청구서', date: '2025-08-10', status: '처리중', fileUrl: '/test.pdf' },
       },
       {
         title: '자동차 보험증권',
         key: '0-1-1',
         icon: <FileTextOutlined />,
-        data: { id: 3, name: '자동차 보험증권', type: '보험증권', date: '2025-07-28', status: '정상', content: '...내용3...' },
+        data: { id: 3, name: '자동차 보험증권', type: '보험증권', date: '2025-07-28', status: '정상', fileUrl: '/test.pdf' },
       },
     ],
   },
 ];
 
-// 리스트 뷰를 위한 목업 문서 데이터
 const mockListDocuments = [
-  { id: 1, name: '2025년 보험 가입 설계서', type: '계약서', date: '2025-08-15', status: '정상', content: '...내용1...' },
-  { id: 2, name: '치과 진료비 청구서', type: '청구서', date: '2025-08-10', status: '처리중', content: '...내용2...' },
-  { id: 3, name: '자동차 보험증권', type: '보험증권', date: '2025-07-28', status: '정상', content: '...내용3...' },
-  { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', content: '...내용4...' },
+  { id: 1, name: '2025년 보험 가입 설계서', type: '계약서', date: '2025-08-15', status: '정상', fileUrl: '/test.pdf' },
+  { id: 2, name: '치과 진료비 청구서', type: '청구서', date: '2025-08-10', status: '처리중', fileUrl: '/test.pdf' },
+  { id: 3, name: '자동차 보험증권', type: '보험증권', date: '2025-07-28', status: '정상', fileUrl: '/test.pdf' },
+  { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', fileUrl: '/test.pdf' },
 ];
 
 const CenterPane = ({ onDocumentClick }) => {
   const [viewMode, setViewMode] = React.useState('list');
 
-  // 트리 노드를 클릭했을 때 문서 뷰어를 띄우는 함수
   const onTreeSelect = (selectedKeys, info) => {
     if (info.node.data) {
       onDocumentClick(info.node.data);
     }
   };
+
+  const filteredDocuments = mockListDocuments; // 필터링 로직 제거
 
   return (
     <Card
@@ -76,9 +75,9 @@ const CenterPane = ({ onDocumentClick }) => {
             <Option value="상태">상태</Option>
           </Select>
           <Button.Group>
-			<Button icon={<FileTextOutlined />} onClick={() => setViewMode('tree')} />
+            <Button icon={<FileTextOutlined />} onClick={() => setViewMode('tree')} />
             <Button icon={<UnorderedListOutlined />} onClick={() => setViewMode('list')} />
-            <Button icon={<AppstoreOutlined />} onClick={() => setViewMode('grid')} disabled /> {/* 그리드 뷰는 추후 구현 예정 */}
+            <Button icon={<AppstoreOutlined />} onClick={() => setViewMode('grid')} disabled />
           </Button.Group>
         </Space>
       }
@@ -87,7 +86,7 @@ const CenterPane = ({ onDocumentClick }) => {
       {viewMode === 'list' && (
         <List
           itemLayout="horizontal"
-          dataSource={mockListDocuments}
+          dataSource={filteredDocuments}
           renderItem={(item) => (
             <List.Item
               key={item.id}
