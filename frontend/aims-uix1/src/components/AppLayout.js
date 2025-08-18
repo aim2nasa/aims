@@ -201,7 +201,7 @@ const AppLayout = () => {
 
             {/* Right Pane */}
             {rightPaneVisible && (
-              <div style={{ width: '40%', minWidth: 400, background: '#fff', borderRadius: 8, padding: 24 }}>
+			  <div style={{ width: '40%', minWidth: 400, background: '#fff', borderRadius: 8 }}>
                 <RightPane
                   document={selectedDocument}
                   onClose={handleRightPaneCollapse}

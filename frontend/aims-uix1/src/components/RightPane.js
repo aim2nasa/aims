@@ -19,8 +19,11 @@ const RightPane = ({ document, onClose }) => {
       bordered={false}
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Title level={5}>문서 정보</Title>
+	  <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+        <PDFViewer file={documentFileUrl} />
+      </div>
+	  
+	  <Space direction="vertical" style={{ width: '100%' }}>
         <Paragraph>
           <Text strong>문서 유형:</Text> {document.type}
         </Paragraph>
@@ -28,10 +31,6 @@ const RightPane = ({ document, onClose }) => {
           <Text strong>업로드일:</Text> {document.date}
         </Paragraph>
       </Space>
-
-      <div style={{ flex: 1, overflowY: 'auto', marginTop: 24, padding: '0 8px' }}>
-        <PDFViewer file={documentFileUrl} />
-      </div>
 
       <Space style={{ marginTop: 16 }}>
         <Button type="primary">전체 문서 보기</Button>
