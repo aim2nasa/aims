@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Spin, Alert, Button, Space } from 'antd';
+import { Spin, Alert, Button, Space, Typography } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
 
 // PDF.js 워커 설정
 // 경로를 public 폴더 바로 아래로 수정합니다.
@@ -40,23 +42,25 @@ const PDFViewer = ({ file }) => {
       <div style={{ marginTop: 16 }}>
         <Space>
           <Button
+            size="small"
             type="primary"
             disabled={pageNumber <= 1}
             onClick={previousPage}
             icon={<LeftOutlined />}
           >
-            이전 페이지
+            <span style={{ fontSize: '10px' }}>이전</span>
           </Button>
-          <span style={{ margin: '0 8px' }}>
+          <Text style={{ margin: '0 8px', fontSize: '10px' }}>
             페이지 {pageNumber} / {numPages || '--'}
-          </span>
+          </Text>
           <Button
+            size="small"
             type="primary"
             disabled={pageNumber >= numPages}
             onClick={nextPage}
             icon={<RightOutlined />}
           >
-            다음 페이지
+            <span style={{ fontSize: '10px' }}>다음</span>
           </Button>
         </Space>
       </div>
