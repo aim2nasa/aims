@@ -607,6 +607,12 @@
               "type": "boolean"
             },
             {
+              "id": "a5412c65-91cd-4bd0-972a-eecac4b47487",
+              "name": "ocr.queue_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
               "id": "5aff779a-1dad-499f-9e00-34bdf53f74df",
               "name": "_id",
               "value": "={{ $('Merge DocMeta for Update').item.json._id }}",
@@ -888,7 +894,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "887237ea-3195-4099-92bf-3dbce7ab955f",
+  "versionId": "a87f40bc-8829-499d-b7a3-ca893c84ba3a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
