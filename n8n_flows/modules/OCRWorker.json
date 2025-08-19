@@ -21,10 +21,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1696,
-        -48
+        -1504,
+        -112
       ],
-      "id": "61596f08-960e-4bbe-91f6-7e4659c047a2",
+      "id": "d9d9b630-9614-4cb3-ada6-124179d0ce22",
       "name": "DocOCR Request"
     },
     {
@@ -35,10 +35,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -2144,
-        -48
+        -1952,
+        -112
       ],
-      "id": "ff960edb-84ac-495f-9dfa-75219b964d2d",
+      "id": "a211ba5e-9d89-428e-9d68-509b70345dad",
       "name": "Prepare OCR Binary",
       "alwaysOutputData": true
     },
@@ -53,10 +53,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -800,
-        48
+        -608,
+        -16
       ],
-      "id": "7a563340-6bab-4986-9913-07b1af4d410c",
+      "id": "49b4fce2-cf6f-494b-b0ef-7bc3eb029c19",
       "name": "Update Ocr in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -88,12 +88,6 @@
               "type": "string"
             },
             {
-              "id": "639ed159-cbad-45ba-a65d-2441e9b2c55d",
-              "name": "=ocr.retry_count",
-              "value": "={{ $json.retryCount }}",
-              "type": "number"
-            },
-            {
               "id": "4bfd1590-ed9d-4055-a4a6-cfcf1de07c60",
               "name": "_id",
               "value": "={{ $('Pasre').item.json.file_id }}",
@@ -106,10 +100,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1024,
-        48
+        -832,
+        -16
       ],
-      "id": "8292456a-a16e-4688-a5f5-3fc7355d4306",
+      "id": "eb9331d4-519c-402d-af51-50ae7396ffa5",
       "name": "Prepare OCR Fields"
     },
     {
@@ -119,36 +113,12 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -1920,
-        -48
+        -1728,
+        -112
       ],
-      "id": "4b3cf9b3-9008-4464-84a7-72d441c381f9",
+      "id": "73144d0a-6f85-4e09-97a9-33fbe6315041",
       "name": "Wait Before OCR",
       "webhookId": "35f2856f-c33d-4e9e-ab3b-500d24635cb0"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "896031b4-af44-4583-bd7c-c02d3bc3960d",
-              "name": "retryCount",
-              "value": 0,
-              "type": "number"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -2368,
-        -48
-      ],
-      "id": "f26d483e-aab3-4050-a072-fbbd82085f27",
-      "name": "Init Retry Count"
     },
     {
       "parameters": {
@@ -177,10 +147,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1472,
-        -48
+        -1280,
+        -112
       ],
-      "id": "912b034e-681c-42ad-8f60-18d92dfe2a9e",
+      "id": "a4f8efbe-ec36-4d99-9692-52420b8c0f1b",
       "name": "Is OCR Error?"
     },
     {
@@ -206,10 +176,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1248,
-        -144
+        -1056,
+        -208
       ],
-      "id": "e1ffdb9c-b828-4ba3-aff9-3a7e1d2fa079",
+      "id": "f5b0863b-74f9-4dee-837a-9141fe395a7d",
       "name": "Set Final OCR Error Message"
     },
     {
@@ -219,10 +189,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -800,
-        -144
+        -608,
+        -208
       ],
-      "id": "c6b4be4b-11c9-4660-bdb7-97b55ad6d849",
+      "id": "8cd9d65d-fea6-459e-8365-b41ffe4f5c2a",
       "name": "Log Final OCR Failure"
     },
     {
@@ -236,10 +206,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -1024,
-        -144
+        -832,
+        -208
       ],
-      "id": "006935f9-f5b5-443d-899a-1736caede392",
+      "id": "31993f50-ad58-426b-8325-5b35672b5da6",
       "name": "MongoDB",
       "credentials": {
         "mongoDb": {
@@ -255,10 +225,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2592,
-        -48
+        -2176,
+        -112
       ],
-      "id": "5d7d14d9-2696-4d78-bb81-5d90db811d8c",
+      "id": "fc5e0654-ff0c-4145-947d-95eeb51025f4",
       "name": "Pasre"
     },
     {
@@ -268,10 +238,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -3488,
-        -48
+        -3072,
+        -112
       ],
-      "id": "071f19f9-77f6-41f5-a8bd-28aac6cc2232",
+      "id": "f41f0c8c-ee9d-40cc-99ea-eb98e9d24ed5",
       "name": "Read Redis Stream",
       "alwaysOutputData": true
     },
@@ -282,10 +252,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2816,
-        -48
+        -2400,
+        -112
       ],
-      "id": "705ab81c-7baf-418a-93b1-75860ed89454",
+      "id": "dfc23070-efc0-4ab5-9a9a-4850617b9a09",
       "name": "Parse Stream Message"
     },
     {
@@ -305,10 +275,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -3040,
-        -48
+        -2624,
+        -112
       ],
-      "id": "bdade6c4-e53a-489b-82af-cbe74e9cf2f1",
+      "id": "2c0eca28-61df-468f-a8ec-389b01d2ae88",
       "name": "Edit Fields"
     },
     {
@@ -325,10 +295,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -3712,
-        -48
+        -3296,
+        -112
       ],
-      "id": "26308551-f6f0-4c21-934d-253b84657768",
+      "id": "401bcbbc-976f-49f9-a1d3-7ca570962c68",
       "name": "Schedule Trigger"
     },
     {
@@ -359,10 +329,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -3264,
-        -48
+        -2848,
+        -112
       ],
-      "id": "1fab8bf6-bc21-4e4b-94d0-26d19f10c0aa",
+      "id": "0251062d-b845-4903-98a4-f12e6e72a1db",
       "name": "Redis Message Empty?"
     },
     {
@@ -372,10 +342,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -576,
-        -48
+        -384,
+        -112
       ],
-      "id": "4d1b1bec-72f3-49ec-ab07-c47f36e2bf7b",
+      "id": "f504176d-4934-4d5f-933a-fc34095ec65e",
       "name": "Delete Redis Stream Message"
     }
   ],
@@ -437,17 +407,6 @@
         [
           {
             "node": "DocOCR Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Init Retry Count": {
-      "main": [
-        [
-          {
-            "node": "Prepare OCR Binary",
             "type": "main",
             "index": 0
           }
@@ -554,7 +513,7 @@
       "main": [
         [
           {
-            "node": "Init Retry Count",
+            "node": "Prepare OCR Binary",
             "type": "main",
             "index": 0
           }
@@ -588,9 +547,14 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "pbOS7kBxmfv07Cb7"
+    "errorWorkflow": "pbOS7kBxmfv07Cb7",
+    "timezone": "Asia/Seoul",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
   },
-  "versionId": "8640ad0d-e641-4de0-9d59-1342647bde98",
+  "versionId": "36bcb53c-bb46-4e95-81ad-337037bdad80",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
