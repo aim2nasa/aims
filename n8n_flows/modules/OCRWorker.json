@@ -21,7 +21,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1504,
+        -1728,
         -128
       ],
       "id": "d9d9b630-9614-4cb3-ada6-124179d0ce22",
@@ -41,20 +41,6 @@
       "id": "a211ba5e-9d89-428e-9d68-509b70345dad",
       "name": "Prepare OCR Binary",
       "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "amount": 1
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        -1728,
-        -128
-      ],
-      "id": "73144d0a-6f85-4e09-97a9-33fbe6315041",
-      "name": "Wait Before OCR",
-      "webhookId": "35f2856f-c33d-4e9e-ab3b-500d24635cb0"
     },
     {
       "parameters": {
@@ -83,7 +69,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1280,
+        -1504,
         -128
       ],
       "id": "a4f8efbe-ec36-4d99-9692-52420b8c0f1b",
@@ -96,7 +82,7 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -608,
+        -832,
         -224
       ],
       "id": "8cd9d65d-fea6-459e-8365-b41ffe4f5c2a",
@@ -226,7 +212,7 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -384,
+        -608,
         -128
       ],
       "id": "f504176d-4934-4d5f-933a-fc34095ec65e",
@@ -343,7 +329,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -832,
+        -1056,
         -32
       ],
       "id": "eb9331d4-519c-402d-af51-50ae7396ffa5",
@@ -360,7 +346,7 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -608,
+        -832,
         -32
       ],
       "id": "49b4fce2-cf6f-494b-b0ef-7bc3eb029c19",
@@ -407,7 +393,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1056,
+        -1280,
         -224
       ],
       "id": "f5b0863b-74f9-4dee-837a-9141fe395a7d",
@@ -424,7 +410,7 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -832,
+        -1056,
         -224
       ],
       "id": "31993f50-ad58-426b-8325-5b35672b5da6",
@@ -448,7 +434,7 @@
             "index": 0
           },
           {
-            "node": "Wait Before OCR",
+            "node": "DocOCR Request",
             "type": "main",
             "index": 0
           }
@@ -460,17 +446,6 @@
         [
           {
             "node": "Is OCR Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait Before OCR": {
-      "main": [
-        [
-          {
-            "node": "DocOCR Request",
             "type": "main",
             "index": 0
           }
@@ -645,7 +620,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "a326e7e0-2d69-4872-b7b5-1b903ef59b56",
+  "versionId": "353fb834-5ffe-484d-ae1a-3146bd369ad6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
