@@ -22,7 +22,7 @@
       "typeVersion": 4.2,
       "position": [
         -1504,
-        -112
+        -128
       ],
       "id": "d9d9b630-9614-4cb3-ada6-124179d0ce22",
       "name": "DocOCR Request"
@@ -36,75 +36,11 @@
       "typeVersion": 1,
       "position": [
         -1952,
-        -112
+        -224
       ],
       "id": "a211ba5e-9d89-428e-9d68-509b70345dad",
       "name": "Prepare OCR Binary",
       "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "operation": "findOneAndUpdate",
-        "collection": "files",
-        "updateKey": "=_id",
-        "fields": "ocr",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
-      "position": [
-        -608,
-        -16
-      ],
-      "id": "49b4fce2-cf6f-494b-b0ef-7bc3eb029c19",
-      "name": "Update Ocr in MongoDB",
-      "credentials": {
-        "mongoDb": {
-          "id": "RT7gatMve2ExTlAp",
-          "name": "MongoDB account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "b38f46a9-101d-4a30-9c2c-eaaa3160256b",
-              "name": "ocr.confidence",
-              "value": "={{ $json.confidence }}",
-              "type": "string"
-            },
-            {
-              "id": "f85a9d33-1ccf-4b91-9a3a-16a200de7ef5",
-              "name": "ocr.full_text",
-              "value": "={{ $json.full_text }}",
-              "type": "string"
-            },
-            {
-              "id": "930325d3-06c0-47be-a29c-34b87e4db4df",
-              "name": "ocr.summary",
-              "value": "={{ $json.summary }}",
-              "type": "string"
-            },
-            {
-              "id": "4bfd1590-ed9d-4055-a4a6-cfcf1de07c60",
-              "name": "_id",
-              "value": "={{ $('Pasre').item.json.file_id }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -832,
-        -16
-      ],
-      "id": "eb9331d4-519c-402d-af51-50ae7396ffa5",
-      "name": "Prepare OCR Fields"
     },
     {
       "parameters": {
@@ -114,7 +50,7 @@
       "typeVersion": 1.1,
       "position": [
         -1728,
-        -112
+        -128
       ],
       "id": "73144d0a-6f85-4e09-97a9-33fbe6315041",
       "name": "Wait Before OCR",
@@ -148,39 +84,10 @@
       "typeVersion": 2.2,
       "position": [
         -1280,
-        -112
+        -128
       ],
       "id": "a4f8efbe-ec36-4d99-9692-52420b8c0f1b",
       "name": "Is OCR Error?"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "2d14fb94-e3db-4899-a60f-89af22c65370",
-              "name": "ocr.error",
-              "value": "={{ $json.userMessage }}",
-              "type": "string"
-            },
-            {
-              "id": "78b4709e-e01a-4592-8b8b-075845dff34e",
-              "name": "_id",
-              "value": "={{ $('Pasre').item.json.file_id }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1056,
-        -208
-      ],
-      "id": "f5b0863b-74f9-4dee-837a-9141fe395a7d",
-      "name": "Set Final OCR Error Message"
     },
     {
       "parameters": {
@@ -190,33 +97,10 @@
       "typeVersion": 1,
       "position": [
         -608,
-        -208
+        -224
       ],
       "id": "8cd9d65d-fea6-459e-8365-b41ffe4f5c2a",
       "name": "Log Final OCR Failure"
-    },
-    {
-      "parameters": {
-        "operation": "findOneAndUpdate",
-        "collection": "files",
-        "updateKey": "=_id",
-        "fields": "=ocr",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
-      "position": [
-        -832,
-        -208
-      ],
-      "id": "31993f50-ad58-426b-8325-5b35672b5da6",
-      "name": "MongoDB",
-      "credentials": {
-        "mongoDb": {
-          "id": "RT7gatMve2ExTlAp",
-          "name": "MongoDB account"
-        }
-      }
     },
     {
       "parameters": {
@@ -226,7 +110,7 @@
       "typeVersion": 2,
       "position": [
         -2176,
-        -112
+        -224
       ],
       "id": "fc5e0654-ff0c-4145-947d-95eeb51025f4",
       "name": "Pasre"
@@ -239,7 +123,7 @@
       "typeVersion": 1,
       "position": [
         -3072,
-        -112
+        -224
       ],
       "id": "f41f0c8c-ee9d-40cc-99ea-eb98e9d24ed5",
       "name": "Read Redis Stream",
@@ -253,7 +137,7 @@
       "typeVersion": 2,
       "position": [
         -2400,
-        -112
+        -224
       ],
       "id": "dfc23070-efc0-4ab5-9a9a-4850617b9a09",
       "name": "Parse Stream Message"
@@ -276,7 +160,7 @@
       "typeVersion": 3.4,
       "position": [
         -2624,
-        -112
+        -224
       ],
       "id": "2c0eca28-61df-468f-a8ec-389b01d2ae88",
       "name": "Edit Fields"
@@ -296,7 +180,7 @@
       "typeVersion": 1.2,
       "position": [
         -3296,
-        -112
+        -224
       ],
       "id": "401bcbbc-976f-49f9-a1d3-7ca570962c68",
       "name": "Schedule Trigger"
@@ -330,7 +214,7 @@
       "typeVersion": 2.2,
       "position": [
         -2848,
-        -112
+        -224
       ],
       "id": "0251062d-b845-4903-98a4-f12e6e72a1db",
       "name": "Redis Message Empty?"
@@ -343,35 +227,226 @@
       "typeVersion": 1,
       "position": [
         -384,
-        -112
+        -128
       ],
       "id": "f504176d-4934-4d5f-933a-fc34095ec65e",
       "name": "Delete Redis Stream Message"
-    }
-  ],
-  "pinData": {
-    "Schedule Trigger": [
-      {
-        "json": {
-          "timestamp": "2025-08-06T20:00:20.453-04:00",
-          "Readable date": "August 6th 2025, 8:00:20 pm",
-          "Readable time": "8:00:20 pm",
-          "Day of week": "Wednesday",
-          "Year": "2025",
-          "Month": "August",
-          "Day of month": "06",
-          "Hour": "20",
-          "Minute": "00",
-          "Second": "20",
-          "Timezone": "America/New_York (UTC-04:00)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9374e668-976e-4279-bdd1-0fa52ba27a42",
+              "name": "ocr.status",
+              "value": "running",
+              "type": "string"
+            },
+            {
+              "id": "2a780eb2-d137-4cb6-b0ac-c6fb2fdbd680",
+              "name": "ocr.queue",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "afa13483-2b5d-464a-a9c1-3ae393f6e178",
+              "name": "ocr.started_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "d0289889-1899-4a15-86b9-0de18061004c",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1728,
+        -320
+      ],
+      "id": "47ce2fe6-f3f1-47cb-bf17-9b117be178eb",
+      "name": "Set OCR Running"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -1504,
+        -320
+      ],
+      "id": "93e90f93-d3ed-4083-b0af-de046bbf36c0",
+      "name": "Update OCR Running",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
         }
       }
-    ]
-  },
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d62459dc-d875-4578-8cf5-b788cc86111e",
+              "name": "ocr.status",
+              "value": "done",
+              "type": "string"
+            },
+            {
+              "id": "88e44d3b-517d-44bf-bd1a-28218737a30e",
+              "name": "ocr.done_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "b38f46a9-101d-4a30-9c2c-eaaa3160256b",
+              "name": "ocr.confidence",
+              "value": "={{ $json.confidence }}",
+              "type": "string"
+            },
+            {
+              "id": "f85a9d33-1ccf-4b91-9a3a-16a200de7ef5",
+              "name": "ocr.full_text",
+              "value": "={{ $json.full_text }}",
+              "type": "string"
+            },
+            {
+              "id": "930325d3-06c0-47be-a29c-34b87e4db4df",
+              "name": "ocr.summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "4bfd1590-ed9d-4055-a4a6-cfcf1de07c60",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -832,
+        -32
+      ],
+      "id": "eb9331d4-519c-402d-af51-50ae7396ffa5",
+      "name": "OCR Done"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        -32
+      ],
+      "id": "49b4fce2-cf6f-494b-b0ef-7bc3eb029c19",
+      "name": "Update OCR Done in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "30c7ccf1-90e9-4f3c-84fd-bdfb4abc9445",
+              "name": "ocr.status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "39303d0e-c253-40aa-8860-3a378d6cb60c",
+              "name": "ocr.failed_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "2d14fb94-e3db-4899-a60f-89af22c65370",
+              "name": "ocr.error",
+              "value": "={{ $json.userMessage }}",
+              "type": "string"
+            },
+            {
+              "id": "78b4709e-e01a-4592-8b8b-075845dff34e",
+              "name": "_id",
+              "value": "={{ $('Pasre').item.json.file_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1056,
+        -224
+      ],
+      "id": "f5b0863b-74f9-4dee-837a-9141fe395a7d",
+      "name": "Set OCR Error Message"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "=ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -832,
+        -224
+      ],
+      "id": "31993f50-ad58-426b-8325-5b35672b5da6",
+      "name": "Update OCR Error in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
   "connections": {
     "Prepare OCR Binary": {
       "main": [
         [
+          {
+            "node": "Set OCR Running",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Wait Before OCR",
             "type": "main",
@@ -385,17 +460,6 @@
         [
           {
             "node": "Is OCR Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare OCR Fields": {
-      "main": [
-        [
-          {
-            "node": "Update Ocr in MongoDB",
             "type": "main",
             "index": 0
           }
@@ -417,36 +481,14 @@
       "main": [
         [
           {
-            "node": "Set Final OCR Error Message",
+            "node": "Set OCR Error Message",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Prepare OCR Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Final OCR Error Message": {
-      "main": [
-        [
-          {
-            "node": "MongoDB",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "MongoDB": {
-      "main": [
-        [
-          {
-            "node": "Log Final OCR Failure",
+            "node": "OCR Done",
             "type": "main",
             "index": 0
           }
@@ -520,7 +562,7 @@
         ]
       ]
     },
-    "Update Ocr in MongoDB": {
+    "Log Final OCR Failure": {
       "main": [
         [
           {
@@ -531,11 +573,60 @@
         ]
       ]
     },
-    "Log Final OCR Failure": {
+    "Set OCR Running": {
+      "main": [
+        [
+          {
+            "node": "Update OCR Running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update OCR Running": {
+      "main": [
+        []
+      ]
+    },
+    "OCR Done": {
+      "main": [
+        [
+          {
+            "node": "Update OCR Done in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update OCR Done in MongoDB": {
       "main": [
         [
           {
             "node": "Delete Redis Stream Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set OCR Error Message": {
+      "main": [
+        [
+          {
+            "node": "Update OCR Error in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update OCR Error in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Log Final OCR Failure",
             "type": "main",
             "index": 0
           }
@@ -554,7 +645,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "36bcb53c-bb46-4e95-81ad-337037bdad80",
+  "versionId": "a326e7e0-2d69-4872-b7b5-1b903ef59b56",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
