@@ -407,7 +407,7 @@
     },
     {
       "parameters": {
-        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  file_ext \"{{ $json.meta.extension }}\" \\\n  file_mime \"{{ $json.meta.mime }}\" \\\n  file_size_bytes {{ $json.meta.size_bytes || 0 }} \\\n  pdf_total_pages {{ $json.meta.pdf_text_ratio?.total_pages || 0 }} \\\n  pdf_text_pages {{ $json.meta.pdf_text_ratio?.text_pages || 0 }} \\\n  pdf_text_ratio {{ $json.meta.pdf_text_ratio?.text_ratio || 0 }} \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
+        "command": "=redis-cli XADD ocr_stream \"*\" \\\n  file_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  file_path \"{{ $('DocUpload Request').item.json.path }}\" \\\n  file_ext \"{{ $('Merge DocMeta for Update').item.json.meta.extension }}\" \\\n  file_mime \"{{ $('Merge DocMeta for Update').item.json.meta.mime }}\" \\\n  file_size_bytes {{ $('Merge DocMeta for Update').item.json.meta.size_bytes }} \\\n  pdf_total_pages {{ $('Merge DocMeta for Update').item.json.meta.pdf_text_ratio.total_pages }} \\\n  pdf_text_pages {{ $('Merge DocMeta for Update').item.json.meta.pdf_text_ratio.text_pages }} \\\n  pdf_text_ratio {{ $('Merge DocMeta for Update').item.json.meta.pdf_text_ratio.text_ratio }} \\\n  doc_id \"{{ $('Merge DocMeta for Update').item.json._id }}\" \\\n  created_at \"{{ $now }}\"\n"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -888,7 +888,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "b0724a3c-f059-408a-b1ee-0894903f8d7d",
+  "versionId": "ef07779a-7c27-4ef5-b63a-2ef3659d4b42",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
