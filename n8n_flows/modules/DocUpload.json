@@ -12,7 +12,7 @@
       "typeVersion": 2,
       "position": [
         -1296,
-        160
+        -272
       ],
       "id": "e96adee4-5fe9-4f02-8be0-66d91c857df9",
       "name": "DocUpload Webhook",
@@ -29,7 +29,7 @@
       "typeVersion": 1,
       "position": [
         -624,
-        256
+        -176
       ],
       "id": "90d3def2-b446-45ba-bb5b-3803d17f6ac1",
       "name": "Save to Temp File",
@@ -43,7 +43,7 @@
       "typeVersion": 2,
       "position": [
         -176,
-        352
+        64
       ],
       "id": "a096c590-37bf-40d2-8316-762e25964873",
       "name": "Generate Final Path"
@@ -56,7 +56,7 @@
       "typeVersion": 1,
       "position": [
         48,
-        288
+        -8
       ],
       "id": "488f686f-2949-4d3b-b192-687f06b4a616",
       "name": "Exec mkdir",
@@ -70,7 +70,7 @@
       "typeVersion": 1,
       "position": [
         720,
-        448
+        160
       ],
       "id": "142bce2e-7f73-4da0-a959-b6e9e304a74b",
       "name": "Exec mv",
@@ -86,7 +86,7 @@
       "typeVersion": 1.4,
       "position": [
         1840,
-        640
+        88
       ],
       "id": "fbf57561-1317-49c8-812d-47e90be63b46",
       "name": "Respond to Webhook"
@@ -139,7 +139,7 @@
       "typeVersion": 3.4,
       "position": [
         1168,
-        544
+        -8
       ],
       "id": "71ba439a-aeb3-4df8-90df-5913b2c6445d",
       "name": "Edit Fields"
@@ -155,7 +155,7 @@
       "typeVersion": 1.2,
       "position": [
         1392,
-        544
+        -8
       ],
       "id": "6b9cc9b9-6835-4f62-92e2-78ecf3f5737f",
       "name": "Save File Metadata to DB",
@@ -175,7 +175,7 @@
       "typeVersion": 2,
       "position": [
         -1072,
-        160
+        -272
       ],
       "id": "320a86d0-1575-4d03-a2e6-186644006424",
       "name": "Check Binary File"
@@ -190,7 +190,7 @@
       "typeVersion": 1.4,
       "position": [
         -624,
-        64
+        -368
       ],
       "id": "e88f3b3b-7faa-4519-8dd8-5be8dc09b1f9",
       "name": "Respond 400 BadRequest"
@@ -205,7 +205,7 @@
       "typeVersion": 1.4,
       "position": [
         -176,
-        160
+        -176
       ],
       "id": "a0935d96-e9cc-45c4-9613-5ff9b6826c44",
       "name": "Respond 500 Temp Save Failed"
@@ -239,7 +239,7 @@
       "typeVersion": 2.2,
       "position": [
         -400,
-        256
+        -80
       ],
       "id": "7e130301-4a11-4c72-a448-404341d3a63e",
       "name": "Save Error?"
@@ -273,7 +273,7 @@
       "typeVersion": 2.2,
       "position": [
         -848,
-        160
+        -272
       ],
       "id": "4d599fdb-ec87-45d7-aaa8-71eb3d5134d4",
       "name": "File Exist?"
@@ -288,7 +288,7 @@
       "typeVersion": 1.4,
       "position": [
         720,
-        256
+        -32
       ],
       "id": "845ad764-27e1-447e-9201-10312bc3e232",
       "name": "Respond 500 MKDIR_FAILED"
@@ -322,7 +322,7 @@
       "typeVersion": 2.2,
       "position": [
         496,
-        352
+        64
       ],
       "id": "7789a34f-27f7-45fe-b5f2-42ba98d9c1c0",
       "name": "Mkdir Error?"
@@ -333,7 +333,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "loose",
+            "typeValidation": "strict",
             "version": 2
           },
           "conditions": [
@@ -343,20 +343,19 @@
               "rightValue": 0,
               "operator": {
                 "type": "number",
-                "operation": "notEquals"
+                "operation": "equals"
               }
             }
           ],
           "combinator": "and"
         },
-        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
         944,
-        448
+        -104
       ],
       "id": "bdce2347-6945-4a16-ad55-b57e1d061480",
       "name": "Mv Error?"
@@ -364,14 +363,14 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"MOVE_FAILED\",\n  \"message\": \"{{$json.stderr}}\"\n}\n",
+        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"MOVE_FAILED\",\n  \"message\": \"{{$json.stderr}} mv ({{$node[\"Temp+FinalPath\"].json[\"fileName\"]}}) to ({{$node[\"Temp+FinalPath\"].json[\"destPath\"]}})\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
         1168,
-        352
+        -200
       ],
       "id": "aeb4b2be-9b92-4de2-9d42-60b2a2b9faee",
       "name": "Respond 500 MOVE_FAILED"
@@ -405,7 +404,7 @@
       "typeVersion": 2.2,
       "position": [
         1616,
-        544
+        -8
       ],
       "id": "02da2bfb-f175-4d76-9ab3-49f54b61a1b1",
       "name": "DB Error?"
@@ -420,7 +419,7 @@
       "typeVersion": 1.4,
       "position": [
         1840,
-        448
+        -104
       ],
       "id": "4ddd7fa7-99d1-471f-83ac-cecc3ed5acbc",
       "name": "Respond 500 DB_INSERT_FAILED"
@@ -435,10 +434,25 @@
       "typeVersion": 3.2,
       "position": [
         272,
-        352
+        64
       ],
       "id": "a8152181-74fa-4a8a-a39f-0cb7b0987743",
-      "name": "Merge"
+      "name": "mkdir+Final Path"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        48,
+        -272
+      ],
+      "id": "89078cb8-6a57-4081-9995-549d7cb734eb",
+      "name": "Temp+FinalPath"
     }
   ],
   "pinData": {},
@@ -461,6 +475,11 @@
             "node": "Save Error?",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Temp+FinalPath",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -474,7 +493,12 @@
             "index": 0
           },
           {
-            "node": "Merge",
+            "node": "mkdir+Final Path",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Temp+FinalPath",
             "type": "main",
             "index": 1
           }
@@ -485,7 +509,7 @@
       "main": [
         [
           {
-            "node": "Merge",
+            "node": "mkdir+Final Path",
             "type": "main",
             "index": 0
           }
@@ -626,11 +650,22 @@
         ]
       ]
     },
-    "Merge": {
+    "mkdir+Final Path": {
       "main": [
         [
           {
             "node": "Mkdir Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Temp+FinalPath": {
+      "main": [
+        [
+          {
+            "node": "Mv Error?",
             "type": "main",
             "index": 0
           }
@@ -645,7 +680,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "3cb0b797-7655-4c8d-9a60-03a509b5d065",
+  "versionId": "e65d36c2-b686-41b1-87b2-6fa0eb77b008",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
