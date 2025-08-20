@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2880,
-        128
+        -1296,
+        160
       ],
-      "id": "7b8fadfd-a044-4cec-88d6-4aace87061a7",
+      "id": "e96adee4-5fe9-4f02-8be0-66d91c857df9",
       "name": "DocUpload Webhook",
       "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -2224,
-        224
+        -624,
+        256
       ],
-      "id": "8c61453b-507f-4e2f-854f-1a931ac06916",
+      "id": "90d3def2-b446-45ba-bb5b-3803d17f6ac1",
       "name": "Save to Temp File",
       "alwaysOutputData": true
     },
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1776,
-        320
+        -176,
+        352
       ],
-      "id": "fe08ad64-d6f1-4ce1-96cc-7957199c46f7",
+      "id": "a096c590-37bf-40d2-8316-762e25964873",
       "name": "Generate Final Path"
     },
     {
@@ -55,10 +55,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -1552,
-        320
+        48,
+        288
       ],
-      "id": "aa26fbe1-9e31-4562-8828-ff6879d7c11d",
+      "id": "488f686f-2949-4d3b-b192-687f06b4a616",
       "name": "Exec mkdir",
       "alwaysOutputData": true
     },
@@ -69,10 +69,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -1120,
-        416
+        720,
+        448
       ],
-      "id": "43ce51a2-870e-4f1b-b7d2-5bcb6529686f",
+      "id": "142bce2e-7f73-4da0-a959-b6e9e304a74b",
       "name": "Exec mv",
       "alwaysOutputData": true
     },
@@ -85,10 +85,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -16,
-        624
+        1840,
+        640
       ],
-      "id": "e362c93e-1c93-4086-aa9b-1096b5690da0",
+      "id": "fbf57561-1317-49c8-812d-47e90be63b46",
       "name": "Respond to Webhook"
     },
     {
@@ -138,10 +138,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -672,
-        528
+        1168,
+        544
       ],
-      "id": "c7ac75a3-bfc1-4847-9bf8-ae0eed3ca775",
+      "id": "71ba439a-aeb3-4df8-90df-5913b2c6445d",
       "name": "Edit Fields"
     },
     {
@@ -154,10 +154,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -464,
-        528
+        1392,
+        544
       ],
-      "id": "afccd11e-6f9f-4cbe-8198-58a903930191",
+      "id": "6b9cc9b9-6835-4f62-92e2-78ecf3f5737f",
       "name": "Save File Metadata to DB",
       "alwaysOutputData": true,
       "credentials": {
@@ -174,10 +174,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2672,
-        128
+        -1072,
+        160
       ],
-      "id": "171ea4fa-cf33-4ad8-90fd-9a7809c702a2",
+      "id": "320a86d0-1575-4d03-a2e6-186644006424",
       "name": "Check Binary File"
     },
     {
@@ -189,10 +189,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -2224,
-        16
+        -624,
+        64
       ],
-      "id": "2d0ca022-fa0b-4790-b3d2-612857406de9",
+      "id": "e88f3b3b-7faa-4519-8dd8-5be8dc09b1f9",
       "name": "Respond 400 BadRequest"
     },
     {
@@ -204,10 +204,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -1776,
-        128
+        -176,
+        160
       ],
-      "id": "8a066876-73a9-4c50-84dc-03335affab12",
+      "id": "a0935d96-e9cc-45c4-9613-5ff9b6826c44",
       "name": "Respond 500 Temp Save Failed"
     },
     {
@@ -238,10 +238,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -2000,
-        224
+        -400,
+        256
       ],
-      "id": "09d38c68-64b4-4066-972d-38bd016e89de",
+      "id": "7e130301-4a11-4c72-a448-404341d3a63e",
       "name": "Save Error?"
     },
     {
@@ -272,25 +272,25 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -2432,
-        128
+        -848,
+        160
       ],
-      "id": "bf3b6d06-7858-469e-abba-08714028985e",
+      "id": "4d599fdb-ec87-45d7-aaa8-71eb3d5134d4",
       "name": "File Exist?"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"result\": \"error\",\n  \"code\": \"MKDIR_FAILED\",\n  \"message\": \"{{$json.stderr}}\"\n}",
+        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"MKDIR_FAILED\",\n  \"message\": \"{{$json.stderr}} folder({{ $json.folder }})\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -1120,
-        224
+        720,
+        256
       ],
-      "id": "49b74255-6647-4eb9-be07-8bf3c31101b7",
+      "id": "845ad764-27e1-447e-9201-10312bc3e232",
       "name": "Respond 500 MKDIR_FAILED"
     },
     {
@@ -321,10 +321,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1344,
-        320
+        496,
+        352
       ],
-      "id": "6c18febc-62fa-4069-a05e-8675e052de2c",
+      "id": "7789a34f-27f7-45fe-b5f2-42ba98d9c1c0",
       "name": "Mkdir Error?"
     },
     {
@@ -355,10 +355,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -896,
-        416
+        944,
+        448
       ],
-      "id": "bbbf5e94-31b2-4fa5-8f40-1cdbc90e367b",
+      "id": "bdce2347-6945-4a16-ad55-b57e1d061480",
       "name": "Mv Error?"
     },
     {
@@ -370,10 +370,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -672,
-        320
+        1168,
+        352
       ],
-      "id": "dc2e5545-4ff1-4afb-b931-b3c453e1fc03",
+      "id": "aeb4b2be-9b92-4de2-9d42-60b2a2b9faee",
       "name": "Respond 500 MOVE_FAILED"
     },
     {
@@ -404,10 +404,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -240,
-        528
+        1616,
+        544
       ],
-      "id": "56c09002-143a-4636-a8b8-e23fe82a7506",
+      "id": "02da2bfb-f175-4d76-9ab3-49f54b61a1b1",
       "name": "DB Error?"
     },
     {
@@ -419,11 +419,26 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -16,
-        416
+        1840,
+        448
       ],
-      "id": "6b384c94-59df-4f78-a3ae-8b94198f5cdb",
+      "id": "4ddd7fa7-99d1-471f-83ac-cecc3ed5acbc",
       "name": "Respond 500 DB_INSERT_FAILED"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        272,
+        352
+      ],
+      "id": "a8152181-74fa-4a8a-a39f-0cb7b0987743",
+      "name": "Merge"
     }
   ],
   "pinData": {},
@@ -457,6 +472,11 @@
             "node": "Exec mkdir",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
@@ -465,7 +485,7 @@
       "main": [
         [
           {
-            "node": "Mkdir Error?",
+            "node": "Merge",
             "type": "main",
             "index": 0
           }
@@ -605,6 +625,17 @@
           }
         ]
       ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Mkdir Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -614,7 +645,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "8c3d408b-05ad-4324-9b7b-a8fb4ccb3587",
+  "versionId": "3cb0b797-7655-4c8d-9a60-03a509b5d065",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
