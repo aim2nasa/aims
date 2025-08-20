@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1072,
-        -336
+        -2880,
+        128
       ],
-      "id": "0199533d-e0cd-4031-8e1d-a6934fc8f782",
+      "id": "7b8fadfd-a044-4cec-88d6-4aace87061a7",
       "name": "DocUpload Webhook",
       "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -416,
-        -240
+        -2224,
+        224
       ],
-      "id": "06ef48b5-6c41-4ca8-b259-26365ee41de4",
+      "id": "8c61453b-507f-4e2f-854f-1a931ac06916",
       "name": "Save to Temp File",
       "alwaysOutputData": true
     },
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        32,
-        -144
+        -1776,
+        320
       ],
-      "id": "7721edce-ba45-462f-9bd6-ed36fa21aa70",
+      "id": "fe08ad64-d6f1-4ce1-96cc-7957199c46f7",
       "name": "Generate Final Path"
     },
     {
@@ -55,10 +55,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        256,
-        -144
+        -1552,
+        320
       ],
-      "id": "95296632-1b65-46d2-9b6f-c1a79fc4547a",
+      "id": "aa26fbe1-9e31-4562-8828-ff6879d7c11d",
       "name": "Exec mkdir",
       "alwaysOutputData": true
     },
@@ -69,10 +69,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        688,
-        -48
+        -1120,
+        416
       ],
-      "id": "a5fb4dd6-68bc-4f76-865d-8844917564e7",
+      "id": "43ce51a2-870e-4f1b-b7d2-5bcb6529686f",
       "name": "Exec mv",
       "alwaysOutputData": true
     },
@@ -85,10 +85,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1792,
-        160
+        -16,
+        624
       ],
-      "id": "002caf93-33bd-4bde-a5ee-78b158626058",
+      "id": "e362c93e-1c93-4086-aa9b-1096b5690da0",
       "name": "Respond to Webhook"
     },
     {
@@ -138,10 +138,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1136,
-        64
+        -672,
+        528
       ],
-      "id": "4598fce9-2b57-46aa-8b24-60b76f08bfdf",
+      "id": "c7ac75a3-bfc1-4847-9bf8-ae0eed3ca775",
       "name": "Edit Fields"
     },
     {
@@ -154,10 +154,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1344,
-        64
+        -464,
+        528
       ],
-      "id": "6336a252-ec7c-4654-a66e-9b805cd13c42",
+      "id": "afccd11e-6f9f-4cbe-8198-58a903930191",
       "name": "Save File Metadata to DB",
       "alwaysOutputData": true,
       "credentials": {
@@ -169,15 +169,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Validate uploaded file existence\nif (!$binary?.file) {\n  return [\n    {\n      json: {\n        error: true,\n        code: \"REQUEST_INVALID\",\n        message: \"No file received or parse error\"\n      }\n    }\n  ];\n}\n\n// 정상일 때 (테스트 모드라 실행 안 됨)\nreturn $input.all();\n"
+        "jsCode": "// Validate uploaded file existence\nconst fileName = $binary.file.fileName;\n\n// Validate uploaded file existence\nif (!$binary?.file) {\n  console.log(\"DEBUG fileName:\", fileName);\n  return [\n    {\n      json: {\n        error: true,\n        code: \"REQUEST_INVALID\",\n        message: \"No file received or parse error (fileName=\"+fileName+\")\"\n      }\n    }\n  ];\n}\n\n// 정상일 때 (테스트 모드라 실행 안 됨)\nreturn $input.all();\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -864,
-        -336
+        -2672,
+        128
       ],
-      "id": "5e633331-8340-439e-8b98-6842b8113c7f",
+      "id": "171ea4fa-cf33-4ad8-90fd-9a7809c702a2",
       "name": "Check Binary File"
     },
     {
@@ -189,10 +189,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -416,
-        -448
+        -2224,
+        16
       ],
-      "id": "238adbd7-c9db-4738-9efb-19f9cd6c9767",
+      "id": "2d0ca022-fa0b-4790-b3d2-612857406de9",
       "name": "Respond 400 BadRequest"
     },
     {
@@ -204,10 +204,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        32,
-        -336
+        -1776,
+        128
       ],
-      "id": "c774d04c-4a2e-4f38-8e61-bc4d51d86da7",
+      "id": "8a066876-73a9-4c50-84dc-03335affab12",
       "name": "Respond 500 Temp Save Failed"
     },
     {
@@ -238,10 +238,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -192,
-        -240
+        -2000,
+        224
       ],
-      "id": "a928663e-fe83-440f-a202-55ec0feb52ab",
+      "id": "09d38c68-64b4-4066-972d-38bd016e89de",
       "name": "Save Error?"
     },
     {
@@ -272,10 +272,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -624,
-        -336
+        -2432,
+        128
       ],
-      "id": "43690908-d02e-469d-b480-1443f848d0eb",
+      "id": "bf3b6d06-7858-469e-abba-08714028985e",
       "name": "File Exist?"
     },
     {
@@ -287,10 +287,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        688,
-        -240
+        -1120,
+        224
       ],
-      "id": "3326ae51-da3c-4c88-a318-4e6645afd7ea",
+      "id": "49b74255-6647-4eb9-be07-8bf3c31101b7",
       "name": "Respond 500 MKDIR_FAILED"
     },
     {
@@ -321,10 +321,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        464,
-        -144
+        -1344,
+        320
       ],
-      "id": "7a47df88-70e6-49de-90c9-a3f32193787f",
+      "id": "6c18febc-62fa-4069-a05e-8675e052de2c",
       "name": "Mkdir Error?"
     },
     {
@@ -355,10 +355,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        912,
-        -48
+        -896,
+        416
       ],
-      "id": "63b88d17-62ba-48e7-9134-878b00cf9d1c",
+      "id": "bbbf5e94-31b2-4fa5-8f40-1cdbc90e367b",
       "name": "Mv Error?"
     },
     {
@@ -370,10 +370,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1136,
-        -144
+        -672,
+        320
       ],
-      "id": "16a6c619-a3e6-412b-aadd-cc8c5b9d2c8c",
+      "id": "dc2e5545-4ff1-4afb-b931-b3c453e1fc03",
       "name": "Respond 500 MOVE_FAILED"
     },
     {
@@ -404,10 +404,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1568,
-        64
+        -240,
+        528
       ],
-      "id": "60ff7d41-6993-4f8c-9981-d6a1f8cca0ef",
+      "id": "56c09002-143a-4636-a8b8-e23fe82a7506",
       "name": "DB Error?"
     },
     {
@@ -419,10 +419,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1792,
-        -48
+        -16,
+        416
       ],
-      "id": "1eec8c64-7233-4525-816b-770d6074e2b7",
+      "id": "6b384c94-59df-4f78-a3ae-8b94198f5cdb",
       "name": "Respond 500 DB_INSERT_FAILED"
     }
   ],
@@ -614,7 +614,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "851d5c52-4e13-4055-9e0c-2f47df769074",
+  "versionId": "9eeeff12-3e74-4389-a887-fa050f8052e5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
