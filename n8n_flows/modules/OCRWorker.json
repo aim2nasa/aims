@@ -370,7 +370,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "30c7ccf1-90e9-4f3c-84fd-bdfb4abc9445",
+              "id": "08d14b73-8e27-4320-98e9-edce7160b32e",
               "name": "ocr.status",
               "value": "error",
               "type": "string"
@@ -382,9 +382,21 @@
               "type": "string"
             },
             {
+              "id": "30c7ccf1-90e9-4f3c-84fd-bdfb4abc9445",
+              "name": "ocr.statusCode",
+              "value": "={{ $json.statusCode }}",
+              "type": "string"
+            },
+            {
               "id": "2d14fb94-e3db-4899-a60f-89af22c65370",
-              "name": "ocr.error",
-              "value": "={{ $json.userMessage }}",
+              "name": "ocr.statusMessage",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "59061a2a-e47d-4c7e-959b-70ca9a76a9d4",
+              "name": "ocr.errorBody",
+              "value": "={{ $json.body }}",
               "type": "string"
             },
             {
@@ -627,7 +639,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "9b42359e-a331-466d-9091-b02d048cd713",
+  "versionId": "f0be3dc2-5439-4e24-a350-0ab76b3bd22f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
