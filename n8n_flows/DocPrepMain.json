@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2176,
-        96
+        -1696,
+        120
       ],
-      "id": "6e578eaa-1db4-4984-9746-e057a45e890c",
+      "id": "c7f54cc2-934b-4c2d-b89f-a409b1600776",
       "name": "DocPrepMain Webhook",
       "webhookId": "3be242b1-3628-4384-b151-cc43d91e3147"
     },
@@ -37,15 +37,22 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1952,
-        96
+        -1472,
+        120
       ],
-      "id": "935cc0b1-c305-4727-9a08-6ce66bda954f",
+      "id": "5ff8a944-bc12-4e26-89dd-52d44d67f36b",
       "name": "DocUpload Request"
     },
     {
@@ -54,31 +61,38 @@
         "url": "https://n8nd.giize.com/webhook/docmeta",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"path\": \"{{$json.path}}\",\n  \"saved_name\": \"{{$json.saved_name}}\",\n  \"original\": \"{{$json.original}}\"\n}",
-        "options": {}
+        "jsonBody": "={\n  \"path\": \"{{ $json.body.path }}\",\n  \"saved_name\": \"{{ $json.body.saved_name }}\",\n  \"original\": \"{{ $json.body.original }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1728,
-        96
+        -1024,
+        192
       ],
-      "id": "318c53c1-989b-48ce-9732-820e7e768468",
+      "id": "1876f800-405d-4075-a0c6-545c6810ee7b",
       "name": "DocMeta Request"
     },
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Request').item.json._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.filename }}\",\n    \"extension\": \"{{ $json.extension }}\",\n    \"mime\": \"{{ $json.mime }}\",\n    \"size_bytes\": {{ $json.size_bytes }},\n    \"created_at\": \"{{ $json.created_at }}\",\n    \"meta_status\": \"{{ $json.status }}\",\n    \"exif\": {{ $json.exif || {} }},\n    \"pdf_pages\": {{ $json.pdf_pages || 0 }},\n    \"pdf_text_ratio\": {{ $json.pdf_text_ratio || 0 }}\n  }\n}",
+        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Failed?').item.json.body._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.body.filename }}\",\n    \"extension\": \"{{ $json.body.extension }}\",\n    \"mime\": \"{{ $json.body.mime }}\",\n    \"size_bytes\": {{ $json.body.size_bytes }},\n    \"created_at\": \"{{ $json.body.created_at }}\",\n    \"meta_status\": \"{{ $json.body.status }}\",\n    \"exif\": {{ $json.body.exif || {} }},\n    \"pdf_pages\": {{ $json.body.pdf_pages || 0 }},\n    \"pdf_text_ratio\": {{ $json.body.pdf_text_ratio || 0 }}\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1504,
-        96
+        -576,
+        240
       ],
-      "id": "b3df922d-a407-486d-b1dd-a044d589029c",
+      "id": "6502338d-410f-463e-824f-0bb1bff5fead",
       "name": "Merge DocMeta for Update"
     },
     {
@@ -92,10 +106,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -1280,
-        96
+        -352,
+        240
       ],
-      "id": "f7e067e2-e272-4649-9f84-0a316db34673",
+      "id": "4f807857-decd-4382-b6df-b9113a9c6f44",
       "name": "Update Meta in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -131,10 +145,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -608,
-        288
+        320,
+        432
       ],
-      "id": "769019e7-e8ab-4641-b21a-45d4738ad255",
+      "id": "3db3c97b-625e-44ad-a54d-ddcda2698389",
       "name": "Over PDF Page Limit?"
     },
     {
@@ -144,10 +158,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        288,
-        384
+        1216,
+        528
       ],
-      "id": "9fb0a34a-f16d-48ec-9751-36180336bcc6",
+      "id": "32eff39f-3c16-4548-aa97-58d47b827afc",
       "name": "Respond to DocPrepMain Webhook"
     },
     {
@@ -203,10 +217,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -384,
-        192
+        544,
+        336
       ],
-      "id": "84d7266f-7648-4ed6-9599-717ba2879412",
+      "id": "b9552746-e43e-4e53-958a-9626f5c188e6",
       "name": "Set PDF Limit Warning"
     },
     {
@@ -216,10 +230,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        64,
-        192
+        992,
+        336
       ],
-      "id": "d0ed7e6e-d1bb-4de7-8da7-45f36103508d",
+      "id": "5ef53f95-dfa3-4ed0-a1b5-bda3167838a9",
       "name": "Log PDF Limit Warning"
     },
     {
@@ -233,10 +247,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        288,
-        192
+        1216,
+        336
       ],
-      "id": "c63b62db-156a-4a01-8647-6f5953471a65",
+      "id": "a0007cdf-9918-48eb-bff3-76f865f520d3",
       "name": "Respond PDF Page Limit Warning"
     },
     {
@@ -287,10 +301,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -832,
-        192
+        96,
+        336
       ],
-      "id": "dcd56db6-ca66-4266-bccb-5c1b01e3c38c",
+      "id": "75b11d3f-fb43-4e82-8d19-a42d991a8143",
       "name": "Unsupported MIME Type?"
     },
     {
@@ -346,10 +360,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -608,
-        0
+        320,
+        144
       ],
-      "id": "77098632-8744-4e26-865a-19f5afd7e363",
+      "id": "8125811e-c5b0-4307-9ac3-909b4f6ccdde",
       "name": "Set Unsupported MIME Warning"
     },
     {
@@ -359,10 +373,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -160,
-        0
+        768,
+        144
       ],
-      "id": "8c7d1c3e-c01e-4108-8a83-516d11989b20",
+      "id": "0f060096-fe31-46d5-b452-da98b4585a0d",
       "name": "Log Unsupported MIME Warning"
     },
     {
@@ -376,10 +390,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        64,
-        0
+        992,
+        144
       ],
-      "id": "bd53e362-554a-48ed-84cf-92397600bd02",
+      "id": "77cc737c-e3c7-423b-9419-f13cd9ba3646",
       "name": "Respond Unsupported MIME Warning"
     },
     {
@@ -393,10 +407,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -384,
-        0
+        544,
+        144
       ],
-      "id": "1748bcd6-5b35-49b4-a7e4-01a4642e07cd",
+      "id": "009f0085-b286-49d2-ad69-84425fe649f2",
       "name": "Update Unsupported MIME Warning in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -412,10 +426,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        64,
-        384
+        992,
+        528
       ],
-      "id": "ee8b2fce-6791-4076-bad2-8106bd4d5ebb",
+      "id": "6efde303-b398-4be5-9806-a488a5a44adf",
       "name": "Enqueue OCR Request (Redis XADD)"
     },
     {
@@ -429,10 +443,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -160,
-        192
+        768,
+        336
       ],
-      "id": "5b3f8707-2f6e-4c27-9375-fabe9c3adf43",
+      "id": "07846057-bbe9-4440-9358-1cac0a2d557b",
       "name": "Update PDF Page Limit Warning in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -468,10 +482,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1056,
-        96
+        -128,
+        240
       ],
-      "id": "8fdcfc81-8dfd-4f19-9818-d4961d2a0f12",
+      "id": "816326f6-9e00-4e90-a39a-7e392b3b83d7",
       "name": "text/plain?"
     },
     {
@@ -482,10 +496,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -832,
-        -192
+        96,
+        -48
       ],
-      "id": "1733545d-2643-493b-8b47-6237d4671340",
+      "id": "37ffc5ea-ce21-45ea-b059-07e467d24557",
       "name": "Read Plain/Text",
       "alwaysOutputData": true
     },
@@ -512,10 +526,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -384,
-        -192
+        544,
+        -48
       ],
-      "id": "4f7f2ece-6272-4604-8629-ebd88311f380",
+      "id": "77c94082-f047-4764-bdf4-bc0cdd443ea2",
       "name": "Set Text"
     },
     {
@@ -527,10 +541,10 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        -608,
-        -192
+        320,
+        -48
       ],
-      "id": "b3dbc5e3-f81d-42fd-a262-edf89af07579",
+      "id": "56863e82-99bb-411b-bd8a-88cdaaed2171",
       "name": "Extract from Text File"
     },
     {
@@ -544,10 +558,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -160,
-        -192
+        768,
+        -48
       ],
-      "id": "bd96817a-51ae-458a-840a-ad9d1582c879",
+      "id": "78e78d21-18d6-4876-a745-c11927438dbe",
       "name": "Update Text in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -567,10 +581,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        64,
-        -192
+        992,
+        -48
       ],
-      "id": "5ed6bd64-4d69-448e-aff8-dc61ba5f03ea",
+      "id": "a041e07c-d267-4633-9411-47522467fab2",
       "name": "Respond to Webhook"
     },
     {
@@ -584,10 +598,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -160,
-        384
+        768,
+        528
       ],
-      "id": "f3a0bc9c-2018-4a29-9535-096ad0c7039c",
+      "id": "d10fb168-37d2-46c8-91f2-0bb5ad98baee",
       "name": "Update OCR Queue in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -625,11 +639,151 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -384,
-        384
+        544,
+        528
       ],
-      "id": "59c11137-5eea-40e2-b6f9-297967fb2103",
+      "id": "c385bb52-db31-4cc6-8f76-03fd1768c19b",
       "name": "Set Queue for OCR"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "files",
+        "fields": "=error",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -352,
+        24
+      ],
+      "id": "f39891a1-acc2-48d4-bf45-6ad50905472c",
+      "name": "Insert Error Message in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.error.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -128,
+        24
+      ],
+      "id": "38216ec8-0d5e-40e1-a43f-04579406d371",
+      "name": "Upload Error Message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e46584dd-32a4-4919-bc3a-158517378d42",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1248,
+        120
+      ],
+      "id": "b55ae395-05dd-4e47-a6e7-265eacd02094",
+      "name": "DocUpload Failed?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c3bd1a0-e26b-4886-8147-8018a25b6c4b",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -800,
+        192
+      ],
+      "id": "972f03f9-3f57-4ade-a27e-29dc96bfca20",
+      "name": "DocMeta Failed?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "09f4cae4-3725-4159-9300-832e91861a9d",
+              "name": "error.statusCode",
+              "value": "={{ $json.statusCode }}",
+              "type": "string"
+            },
+            {
+              "id": "07d60821-09c0-42a1-888e-31155fcc7687",
+              "name": "error.statusMessage",
+              "value": "={{ $json.statusMessage }}",
+              "type": "string"
+            },
+            {
+              "id": "984ddb0c-b9ea-4ee3-84f8-d258a49a11bc",
+              "name": "error.body",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        24
+      ],
+      "id": "50bae563-89f8-4473-8f8e-b57d3560eace",
+      "name": "Set Error Message"
     }
   ],
   "pinData": {},
@@ -649,7 +803,7 @@
       "main": [
         [
           {
-            "node": "DocMeta Request",
+            "node": "DocUpload Failed?",
             "type": "main",
             "index": 0
           }
@@ -660,7 +814,7 @@
       "main": [
         [
           {
-            "node": "Merge DocMeta for Update",
+            "node": "DocMeta Failed?",
             "type": "main",
             "index": 0
           }
@@ -885,6 +1039,64 @@
           }
         ]
       ]
+    },
+    "Insert Error Message in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "Upload Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DocUpload Failed?": {
+      "main": [
+        [
+          {
+            "node": "Set Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DocMeta Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DocMeta Failed?": {
+      "main": [
+        [
+          {
+            "node": "Set Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge DocMeta for Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Error Message": {
+      "main": [
+        [
+          {
+            "node": "Insert Error Message in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -894,7 +1106,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "a87f40bc-8829-499d-b7a3-ca893c84ba3a",
+  "versionId": "ae428292-3fbe-4253-ac62-af9d8f00c396",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
