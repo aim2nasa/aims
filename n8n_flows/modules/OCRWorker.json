@@ -16,7 +16,14 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -54,11 +61,11 @@
           "conditions": [
             {
               "id": "83bfe59f-1079-4b5f-ab8c-b6240fa0cc7c",
-              "leftValue": "={{ $json.error }}",
-              "rightValue": true,
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
               "operator": {
-                "type": "boolean",
-                "operation": "equals"
+                "type": "number",
+                "operation": "notEquals"
               }
             }
           ],
@@ -301,19 +308,19 @@
             {
               "id": "b38f46a9-101d-4a30-9c2c-eaaa3160256b",
               "name": "ocr.confidence",
-              "value": "={{ $json.confidence }}",
+              "value": "={{ $json.body.confidence }}",
               "type": "string"
             },
             {
               "id": "f85a9d33-1ccf-4b91-9a3a-16a200de7ef5",
               "name": "ocr.full_text",
-              "value": "={{ $json.full_text }}",
+              "value": "={{ $json.body.full_text }}",
               "type": "string"
             },
             {
               "id": "930325d3-06c0-47be-a29c-34b87e4db4df",
               "name": "ocr.summary",
-              "value": "={{ $json.summary }}",
+              "value": "={{ $json.body.summary }}",
               "type": "string"
             },
             {
@@ -620,7 +627,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "353fb834-5ffe-484d-ae1a-3146bd369ad6",
+  "versionId": "9b42359e-a331-466d-9091-b02d048cd713",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
