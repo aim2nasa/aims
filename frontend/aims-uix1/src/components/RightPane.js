@@ -65,7 +65,12 @@ const RightPane = ({ document, onClose }) => {
         {isPdf ? (
           <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : (
-          <p>이 문서는 PDF가 아닙니다.</p>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <p>이 문서는 PDF 형식이 아니므로 미리보기는 불가합니다.</p>
+            <Button type="primary" onClick={handleDownload}>
+              {document.upload.originalName} 다운로드
+            </Button>
+          </div>
         )}
       </div>
     </Card>
