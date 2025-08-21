@@ -56,7 +56,7 @@
       "typeVersion": 1,
       "position": [
         48,
-        -8
+        -16
       ],
       "id": "488f686f-2949-4d3b-b192-687f06b4a616",
       "name": "Exec mkdir",
@@ -80,13 +80,15 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"success\",\n  \"_id\": \"{{$node['Save File Metadata to DB'].json['_id']}}\",\n  \"original\": \"{{$node['Generate Final Path'].json['originalName']}}\",\n  \"saved_name\": \"{{$node['Generate Final Path'].json['saveName']}}\",\n  \"path\": \"{{$node['Generate Final Path'].json['destPath']}}\"\n}\n",
-        "options": {}
+        "options": {
+          "responseCode": 200
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
         1840,
-        88
+        96
       ],
       "id": "fbf57561-1317-49c8-812d-47e90be63b46",
       "name": "Respond to Webhook"
@@ -139,7 +141,7 @@
       "typeVersion": 3.4,
       "position": [
         1168,
-        -8
+        -16
       ],
       "id": "71ba439a-aeb3-4df8-90df-5913b2c6445d",
       "name": "Edit Fields"
@@ -155,7 +157,7 @@
       "typeVersion": 1.2,
       "position": [
         1392,
-        -8
+        -16
       ],
       "id": "6b9cc9b9-6835-4f62-92e2-78ecf3f5737f",
       "name": "Save File Metadata to DB",
@@ -184,7 +186,9 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"{{$json.code}}\",\n  \"message\": \"{{$json.message}}\"\n}",
-        "options": {}
+        "options": {
+          "responseCode": 400
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
@@ -199,7 +203,9 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"TEMP_SAVE_FAILED\",\n  \"message\": \"Failed to save file({{$binary.file.fileName}}) to temp storage({{ $json.fileName }})\"\n}",
-        "options": {}
+        "options": {
+          "responseCode": 500
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
@@ -282,7 +288,9 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"MKDIR_FAILED\",\n  \"message\": \"{{$json.stderr}} folder({{ $json.folder }})\"\n}",
-        "options": {}
+        "options": {
+          "responseCode": 500
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
@@ -355,7 +363,7 @@
       "typeVersion": 2.2,
       "position": [
         944,
-        -104
+        -112
       ],
       "id": "bdce2347-6945-4a16-ad55-b57e1d061480",
       "name": "Mv Error?"
@@ -364,13 +372,15 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"MOVE_FAILED\",\n  \"message\": \"{{$json.stderr}} mv ({{$node[\"Temp+FinalPath\"].json[\"fileName\"]}}) to ({{$node[\"Temp+FinalPath\"].json[\"destPath\"]}})\"\n}",
-        "options": {}
+        "options": {
+          "responseCode": 500
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
         1168,
-        -200
+        -208
       ],
       "id": "aeb4b2be-9b92-4de2-9d42-60b2a2b9faee",
       "name": "Respond 500 MOVE_FAILED"
@@ -404,7 +414,7 @@
       "typeVersion": 2.2,
       "position": [
         1616,
-        -8
+        -16
       ],
       "id": "02da2bfb-f175-4d76-9ab3-49f54b61a1b1",
       "name": "DB Error?"
@@ -413,13 +423,15 @@
       "parameters": {
         "respondWith": "json",
         "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"DB_INSERT_FAILED\",\n  \"message\": \"{{$json.message || 'Failed to insert file metadata into DB'}} _id:{{ $node['Save File Metadata to DB'].json['_id'] }} originalName:{{ $node['Save File Metadata to DB'].json['originalName'] }}\"\n}",
-        "options": {}
+        "options": {
+          "responseCode": 500
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
         1840,
-        -104
+        -112
       ],
       "id": "4ddd7fa7-99d1-471f-83ac-cecc3ed5acbc",
       "name": "Respond 500 DB_INSERT_FAILED"
@@ -680,7 +692,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "36c8a19e-4cc8-44f1-bcc4-b1f1641c4f69",
+  "versionId": "13bd0091-bcfd-490f-a0df-5c1ba73ad372",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
