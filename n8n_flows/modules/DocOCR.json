@@ -12,10 +12,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
       "position": [
-        240,
-        320
+        -1312,
+        -128
       ],
-      "id": "97ff173a-5218-49b2-a783-63d2a44feddd",
+      "id": "0fd437b0-42c5-400e-a2bf-ff6ce7d284f3",
       "name": "AI Agent"
     },
     {
@@ -31,10 +31,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        336,
-        544
+        -1216,
+        96
       ],
-      "id": "c3689b2c-53ae-47e9-ae9f-7d49c74704ea",
+      "id": "f891edd1-e2a7-4d40-8a4c-ff7b8ec7cc4c",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -53,10 +53,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -880,
-        192
+        -2432,
+        -224
       ],
-      "id": "07639b98-b70c-4b58-a3eb-ea64f7cd4f30",
+      "id": "8d997ca1-0b07-425b-9eab-8269688add18",
       "name": "Webhook",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
     },
@@ -67,10 +67,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16,
-        320
+        -1536,
+        -128
       ],
-      "id": "84b71d25-ca56-451d-b49a-2e1f01b8de30",
+      "id": "f50929cd-49e9-4566-9e70-9be60fef83cb",
       "name": "Limit & Merge Pages"
     },
     {
@@ -109,19 +109,81 @@
           },
           "redirect": {
             "redirect": {}
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
           }
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -656,
-        192
+        -2208,
+        -224
       ],
-      "id": "7745d1d2-685e-4bd8-8728-1896d42541c8",
+      "id": "3b717849-76e0-4762-91c4-98f40fb4369d",
       "name": "Upstage OCR Request",
       "alwaysOutputData": true,
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -464,
+        -128
+      ],
+      "id": "d42608a6-ea03-44fd-9761-ee9174ae21b2",
+      "name": "OCR Return"
+    },
+    {
+      "parameters": {
+        "jsCode": "let aiOutput = $node[\"AI Agent\"].json.output;\n\n// ✅ output이 문자열이면 JSON 파싱 시도\nif (typeof aiOutput === \"string\") {\n  try {\n    aiOutput = JSON.parse(aiOutput);\n  } catch (e) {\n    // 파싱 실패하면 문자열 그대로 유지\n  }\n}\n\nreturn [{\n  json: {\n    confidence: $node[\"Limit & Merge Pages\"].json.confidence,    // OCR 신뢰도\n    full_text: $node[\"Limit & Merge Pages\"].json.full_text,      // DB 저장용 전체 텍스트\n    summary: aiOutput.summary || aiOutput                       // summary 있으면 출력, 없으면 전체 반환\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        -128
+      ],
+      "id": "7338a339-1e1f-47af-9fc2-ba6633265f42",
+      "name": "Merge with FullText"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"status\": 200,\n  \"error\": false,\n  \"userMessage\": \"OCR 성공\",\n  \"confidence\": {{ $json.confidence }},\n  \"summary\": {{ JSON.stringify($json.summary) }},\n  \"full_text\": {{ JSON.stringify($json.full_text) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -688,
+        -128
+      ],
+      "id": "08ba3303-7170-44d3-95b2-fc1482db2069",
+      "name": "Set OCR Success Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\n// 기본값 (정상 응답)\nlet error = false;\nlet status = 200;\nlet userMessage = \"OCR 성공\";\nlet confidence = response.body.confidence ?? null;\nlet summary = response.body.summary ?? null;\nlet full_text = response.body.text ?? null;\nlet num_pages = response.body.numBilledPages ?? null;\n\n// 에러 구조가 들어온 경우 (객체/true)\nif (response.error && response.error !== false) {\n  error = true;\n  status = response.status ?? response.error.status ?? 500;\n  let msg = response.error.message ?? response.userMessage ?? \"❌ OCR 처리 실패\";\n  try {\n    const match = msg.match(/{.*}/);\n    if (match) {\n      const parsed = JSON.parse(match[0]);\n      if (parsed.error && parsed.error.message) {\n        msg = parsed.error.message;\n      }\n    }\n  } catch(e) {}\n  userMessage = msg;\n\n  // 에러일 땐 데이터 필드만 null로 (정상값 절대 날리지 않음)\n  confidence = null;\n  summary = null;\n  full_text = null;\n  num_pages = null;\n}\n\nreturn [{\n  json: {\n    error,        // boolean\n    status,       // int\n    userMessage,  // string\n    confidence,   // float|null\n    summary,      // string|null\n    full_text,    // string|null\n    num_pages,    // int|null\n\n    // 반드시 pages 필드 포함!\n    pages: response.body.pages ?? (response.body.metadata?.pages ?? []),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        -128
+      ],
+      "id": "e5feccf6-4e16-47ba-a649-c9d539567fce",
+      "name": "Normalize DocOCR Response"
     },
     {
       "parameters": {
@@ -134,23 +196,12 @@
           },
           "conditions": [
             {
-              "id": "ce48dbbc-4cf0-4f5d-b6d4-bd1987096fbc",
-              "leftValue": "={{ $json.error }}",
-              "rightValue": "true",
+              "id": "fd0596c6-babe-4e04-bfc4-f40e118f2990",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            },
-            {
-              "id": "eeb1bdcf-7a30-47b4-9ddb-da48ec46e8f4",
-              "leftValue": "",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "type": "number",
+                "operation": "notEquals"
               }
             }
           ],
@@ -161,82 +212,26 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -208,
-        192
+        -1984,
+        -224
       ],
-      "id": "375139c5-aaca-4904-b6fa-c1f7ee7d2d48",
-      "name": "Is OCR Error?"
+      "id": "32268474-aa8c-4770-ab06-30515c17dd8c",
+      "name": "If"
     },
     {
       "parameters": {
         "options": {
-          "responseCode": 200
+          "responseCode": "={{ $json.statusCode }}"
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1088,
-        192
+        -1760,
+        -320
       ],
-      "id": "fd8b9abb-b46c-466c-b89f-ddc6e9fe3884",
-      "name": "OCR Return"
-    },
-    {
-      "parameters": {
-        "jsCode": "let aiOutput = $node[\"AI Agent\"].json.output;\n\n// ✅ output이 문자열이면 JSON 파싱 시도\nif (typeof aiOutput === \"string\") {\n  try {\n    aiOutput = JSON.parse(aiOutput);\n  } catch (e) {\n    // 파싱 실패하면 문자열 그대로 유지\n  }\n}\n\nreturn [{\n  json: {\n    confidence: $node[\"Limit & Merge Pages\"].json.confidence,    // OCR 신뢰도\n    full_text: $node[\"Limit & Merge Pages\"].json.full_text,      // DB 저장용 전체 텍스트\n    summary: aiOutput.summary || aiOutput                       // summary 있으면 출력, 없으면 전체 반환\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        640,
-        320
-      ],
-      "id": "111b422c-ab01-4aa4-98e0-d8dff26a30e8",
-      "name": "Merge with FullText"
-    },
-    {
-      "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"status\": {{ $json.status }},\n  \"error\": true,\n  \"userMessage\": {{ JSON.stringify($json.userMessage) }},\n  \"confidence\": null,\n  \"summary\": null,\n  \"full_text\": null\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        864,
-        64
-      ],
-      "id": "4e87ece2-fc61-4327-8bc5-cd3d31dfcd7c",
-      "name": "Set OCR Error Response"
-    },
-    {
-      "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"status\": 200,\n  \"error\": false,\n  \"userMessage\": \"OCR 성공\",\n  \"confidence\": {{ $json.confidence }},\n  \"summary\": {{ JSON.stringify($json.summary) }},\n  \"full_text\": {{ JSON.stringify($json.full_text) }}\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        864,
-        320
-      ],
-      "id": "8633a0cb-a8e4-4c03-ab9c-2955dcf9001b",
-      "name": "Set OCR Success Response"
-    },
-    {
-      "parameters": {
-        "jsCode": "const response = $json;\n\n// 기본값 (정상 응답)\nlet error = false;\nlet status = 200;\nlet userMessage = \"OCR 성공\";\nlet confidence = response.confidence ?? null;\nlet summary = response.summary ?? null;\nlet full_text = response.text ?? null;\nlet num_pages = response.numBilledPages ?? null;\n\n// 에러 구조가 들어온 경우 (객체/true)\nif (response.error && response.error !== false) {\n  error = true;\n  status = response.status ?? response.error.status ?? 500;\n  let msg = response.error.message ?? response.userMessage ?? \"❌ OCR 처리 실패\";\n  try {\n    const match = msg.match(/{.*}/);\n    if (match) {\n      const parsed = JSON.parse(match[0]);\n      if (parsed.error && parsed.error.message) {\n        msg = parsed.error.message;\n      }\n    }\n  } catch(e) {}\n  userMessage = msg;\n\n  // 에러일 땐 데이터 필드만 null로 (정상값 절대 날리지 않음)\n  confidence = null;\n  summary = null;\n  full_text = null;\n  num_pages = null;\n}\n\nreturn [{\n  json: {\n    error,        // boolean\n    status,       // int\n    userMessage,  // string\n    confidence,   // float|null\n    summary,      // string|null\n    full_text,    // string|null\n    num_pages,    // int|null\n\n    // 반드시 pages 필드 포함!\n    pages: response.pages ?? (response.metadata?.pages ?? []),\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -432,
-        192
-      ],
-      "id": "c610eb72-b0ed-44bd-9692-6e7b122dada3",
-      "name": "Normalize DocOCR Response"
+      "id": "5480bc1c-aafb-424f-967e-b23627948d68",
+      "name": "OCR Error Return"
     }
   ],
   "pinData": {},
@@ -289,25 +284,7 @@
       "main": [
         [
           {
-            "node": "Normalize DocOCR Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is OCR Error?": {
-      "main": [
-        [
-          {
-            "node": "Set OCR Error Response",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Limit & Merge Pages",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -319,17 +296,6 @@
         [
           {
             "node": "Set OCR Success Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set OCR Error Response": {
-      "main": [
-        [
-          {
-            "node": "OCR Return",
             "type": "main",
             "index": 0
           }
@@ -351,7 +317,25 @@
       "main": [
         [
           {
-            "node": "Is OCR Error?",
+            "node": "Limit & Merge Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "OCR Error Return",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize DocOCR Response",
             "type": "main",
             "index": 0
           }
@@ -363,9 +347,10 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "pbOS7kBxmfv07Cb7"
+    "errorWorkflow": "pbOS7kBxmfv07Cb7",
+    "timezone": "Asia/Seoul"
   },
-  "versionId": "8e0b2c92-b88f-4c63-b7f3-720bc3942c4e",
+  "versionId": "9ea0a9bb-74c8-487a-a019-5f6a03dc4581",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
