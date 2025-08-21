@@ -64,7 +64,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   const handleUploadSuccess = (file) => {
     // 파일 업로드 성공 시 목록에 추가
     setUploadedFiles(prevFiles => [...prevFiles, {
-      name: file.name,
+      upload: { originalName: file.name },
       status: 'processing', // 초기 상태는 '처리 중'으로 설정
     }]);
     setIsModalVisible(false);
@@ -119,7 +119,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
                 avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
                 title={
                   <Space>
-                    <Text>{item.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
+                    <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
                     {item.type && (
                        <Tag color="blue">{item.type}</Tag>
                     )}

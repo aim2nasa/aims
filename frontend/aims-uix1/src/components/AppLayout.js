@@ -44,9 +44,9 @@ const AppLayout = () => {
       
       // ✅ 수정된 부분: URL 경로 수정
       let fileUrl = '';
-      if (fileData.destPath) {
+      if (fileData.upload?.destPath) {
         // `destPath`에서 `/data`를 제거하고, 올바른 도메인과 경로를 조합
-        const correctPath = fileData.destPath.replace('/data', '');
+        const correctPath = fileData.upload.destPath.replace('/data', '');
         fileUrl = `https://tars.giize.com${correctPath}`;
       }
 

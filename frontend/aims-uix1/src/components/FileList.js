@@ -26,7 +26,7 @@ const FileList = ({ files }) => {
         <List.Item>
           <Space>
             <FilePdfOutlined />
-            <Text>{item.name}</Text>
+            <Text>{item.upload.originalName}</Text>
           </Space>
           <Space>
             <Text>{item.status === 'completed' ? '처리 완료' : '처리 중...'}</Text>

@@ -15,8 +15,8 @@ const RightPane = ({ document, onClose }) => {
   const isPdf = documentFileUrl && documentFileUrl.toLowerCase().endsWith('.pdf');
 
   const handleDownload = async () => {
-    const destPath = document.destPath || document.payload?.dest_path;
-    const originalName = document.originalName || document.payload?.original_name;
+    const destPath = document.upload.destPath || document.payload?.dest_path;
+    const originalName = document.upload.originalName || document.payload?.original_name;
 
     if (!destPath || !originalName) {
       message.error('파일 경로가 유효하지 않습니다.');
@@ -56,7 +56,7 @@ const RightPane = ({ document, onClose }) => {
 
   return (
     <Card
-      title={document.name}
+      title={document.upload.originalName}
       extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
       bordered={false}
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
