@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Empty } from 'antd';
-import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined } from '@ant-design/icons';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Empty, Modal } from 'antd';
+import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined } from '@ant-design/icons';
+import FileUploader from './FileUploader';
+import FileList from './FileList';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -56,6 +58,25 @@ const mockListDocuments = [
 
 const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   const [viewMode, setViewMode] = useState('list');
+  const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
+  const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
+  
+  const handleUploadSuccess = (file) => {
+    // 파일 업로드 성공 시 목록에 추가
+    setUploadedFiles(prevFiles => [...prevFiles, {
+      name: file.name,
+      status: 'processing', // 초기 상태는 '처리 중'으로 설정
+    }]);
+    setIsModalVisible(false);
+  };
+  
+  const showUploadModal = () => {
+    setIsModalVisible(true);
+  };
+  
+  const handleModalCancel = () => {
+    setIsModalVisible(false);
+  };
 
   const onTreeSelect = (selectedKeys, info) => {
     if (info.node.data) {
@@ -122,6 +143,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
         />
       );
     }
+	
+    // ✅ 업로드된 파일이 있을 경우 FileList를 렌더링
+    if (uploadedFiles.length > 0) {
+      return <FileList files={uploadedFiles} />;
+    }
 
     if (viewMode === 'tree') {
       return (
@@ -141,6 +167,8 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
       title={<Title level={4}>문서 목록</Title>}
       extra={
         <Space>
+          {/* ✅ 업로드 버튼 추가 */}
+          <Button icon={<UploadOutlined />} onClick={showUploadModal}>업로드</Button>
           <Select defaultValue="업로드일" style={{ width: 120 }}>
             <Option value="업로드일">업로드일</Option>
             <Option value="문서명">문서명</Option>
@@ -156,6 +184,17 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
       style={{ minHeight: '100%', borderRadius: 8 }}
     >
       {renderContent()}
+
+      {/* ✅ 업로드 모달 추가 */}
+      <Modal
+        title="문서 업로드"
+        visible={isModalVisible}
+        onCancel={handleModalCancel}
+        footer={null}
+        destroyOnClose={true} // 모달이 닫힐 때 내부 컴포넌트 초기화
+      >
+        <FileUploader onUploadSuccess={handleUploadSuccess} />
+      </Modal>
     </Card>
   );
 };
