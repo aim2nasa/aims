@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy } from "lucide-react";
 
 // API 서비스
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
@@ -71,7 +71,42 @@ const ProgressBar = ({ progress, status }) => {
   );
 };
 
-// 문서 카드 컴포넌트
+// ID 복사 컴포넌트
+const CopyableId = ({ id }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e) => {
+    e.stopPropagation(); // 카드 클릭 이벤트 방지
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-1 text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
+      <span className="truncate" title={id}>
+        {id}
+      </span>
+      <button
+        onClick={handleCopy}
+        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+        title="Copy ID"
+      >
+        {copied ? (
+          <CheckCircle className="w-3 h-3 text-green-500" />
+        ) : (
+          <Copy className="w-3 h-3" />
+        )}
+      </button>
+    </div>
+  );
+};
+
+// 문서 카드 컴포넌트 (수정됨)
 const DocumentCard = ({ document, onClick }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
@@ -97,9 +132,8 @@ const DocumentCard = ({ document, onClick }) => {
             <h3 className="font-semibold text-gray-900 truncate" title={document.filename}>
               {truncateFilename(document.filename)}
             </h3>
-            <p className="text-xs text-gray-500 font-mono">
-              ID: {document.id.slice(-8)}...
-            </p>
+            {/* 수정된 부분: 전체 ID 표시 및 복사 기능 */}
+            <CopyableId id={document.id} />
           </div>
         </div>
         <StatusBadge status={document.status} size="small" />
@@ -125,13 +159,13 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center space-x-3">
             <FileText className="w-6 h-6 text-blue-500" />
             <div>
               <h2 className="text-xl font-semibold">{document.filename || "Unknown File"}</h2>
-              <p className="text-sm text-gray-500">Document ID: {document.id}</p>
+              <CopyableId id={document.id} />
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -146,7 +180,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
               <ProgressBar progress={document.progress} status={document.status} />
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-600">Status:</span>
                 <div className="mt-1">
@@ -161,11 +195,30 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                 <span className="font-medium text-gray-600">Uploaded:</span>
                 <p className="text-gray-900">{new Date(document.uploaded_at).toLocaleString()}</p>
               </div>
-              <div>
-                <span className="font-medium text-gray-600">File ID:</span>
-                <p className="text-gray-900 font-mono text-xs">{document.id}</p>
+              <div className="md:col-span-2">
+                <span className="font-medium text-gray-600">Document ID:</span>
+                <div className="mt-1">
+                  <CopyableId id={document.id} />
+                </div>
               </div>
             </div>
+
+            {/* 추가 상세 정보가 있다면 표시 */}
+            {document.stages && (
+              <div className="mt-6">
+                <h3 className="font-medium text-gray-900 mb-3">Processing Stages</h3>
+                <div className="space-y-3">
+                  {Object.entries(document.stages).map(([stage, data]) => (
+                    <div key={stage} className="bg-gray-50 rounded p-3">
+                      <h4 className="font-medium text-gray-800 capitalize">{stage}</h4>
+                      <pre className="text-xs text-gray-600 mt-1 overflow-auto">
+                        {JSON.stringify(data, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
