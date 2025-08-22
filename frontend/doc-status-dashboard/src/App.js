@@ -273,8 +273,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* 헤더 - 고정 */}
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <div className="flex items-center space-x-3">
             <FileText className="w-6 h-6 text-blue-500" />
             <div>
@@ -290,7 +291,8 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto">
+        {/* 콘텐츠 영역 - 스크롤 가능 */}
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 mb-2">Processing Progress</h3>
@@ -339,7 +341,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                   {Object.entries(document.stages).map(([stage, data]) => (
                     <div key={stage} className="bg-gray-50 rounded p-3">
                       <h4 className="font-medium text-gray-800 capitalize">{stage}</h4>
-                      <pre className="text-xs text-gray-600 mt-1 overflow-auto">
+                      <pre className="text-xs text-gray-600 mt-1 overflow-auto whitespace-pre-wrap">
                         {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
@@ -350,7 +352,8 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
           </div>
         </div>
         
-        <div className="flex justify-end p-6 border-t bg-gray-50">
+        {/* 푸터 - 고정 */}
+        <div className="flex justify-end p-6 border-t bg-gray-50 flex-shrink-0">
           <button 
             onClick={onClose} 
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
