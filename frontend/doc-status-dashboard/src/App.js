@@ -22,7 +22,7 @@ const apiService = {
   }
 };
 
-// 파일명 추출 함수 (MongoDB 구조에 맞춤)
+// MongoDB 필드 추출 함수들
 const extractFilename = (document) => {
   // MongoDB 구조에서 originalName 우선 추출
   if (document.upload) {
@@ -99,7 +99,6 @@ const extractFilename = (document) => {
   return "Unknown File";
 };
 
-// saveName 추출 함수 (부가 정보용)
 const extractSaveName = (document) => {
   // MongoDB 구조에서 saveName 추출
   if (document.upload) {
@@ -128,6 +127,127 @@ const extractSaveName = (document) => {
   }
   
   return null;
+};
+
+const extractStatus = (document) => {
+  // 기본 status 필드
+  if (document.status) return document.status;
+  
+  // meta에서 status 찾기
+  if (document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.meta_status) {
+      return metaData.meta_status === 'ok' ? 'completed' : metaData.meta_status;
+    }
+  }
+  
+  // stages에서 status 찾기
+  if (document.stages) {
+    for (const [key, value] of Object.entries(document.stages)) {
+      let data = value;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          continue;
+        }
+      }
+      if (data && data.status) {
+        return data.status === 'completed' ? 'completed' : data.status;
+      }
+    }
+  }
+  
+  return 'pending';
+};
+
+const extractProgress = (document) => {
+  // 기본 progress 필드
+  if (document.progress) return document.progress;
+  
+  // 상태에 따른 추정 진행률
+  const status = extractStatus(document);
+  switch (status) {
+    case 'completed': return 100;
+    case 'processing': return 50;
+    case 'error': return 0;
+    case 'pending': return 0;
+    default: return 0;
+  }
+};
+
+const extractUploadedDate = (document) => {
+  let dateString = null;
+  
+  // upload.uploaded_at 우선
+  if (document.upload) {
+    let uploadData = document.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.uploaded_at) {
+      dateString = uploadData.uploaded_at;
+    }
+  }
+  
+  // stages.upload.uploaded_at
+  if (!dateString && document.stages && document.stages.upload) {
+    let uploadData = document.stages.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.uploaded_at) {
+      dateString = uploadData.uploaded_at;
+    }
+  }
+  
+  // meta.created_at
+  if (!dateString && document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.created_at) {
+      dateString = metaData.created_at;
+    }
+  }
+  
+  // stages.meta.created_at
+  if (!dateString && document.stages && document.stages.meta) {
+    let metaData = document.stages.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.created_at) {
+      dateString = metaData.created_at;
+    }
+  }
+  
+  // 기본 필드들
+  if (!dateString) {
+    dateString = document.uploaded_at || document.created_at || document.timestamp;
+  }
+  
+  // 날짜 문자열 정리 (xxx 제거 등)
+  if (dateString && typeof dateString === 'string') {
+    dateString = dateString.replace(/xxx$/, ''); // 끝의 xxx 제거
+    dateString = dateString.replace(/\.\d{3}xxx$/, ''); // .123xxx 패턴 제거
+  }
+  
+  return dateString;
 };
 
 // 상태 뱃지 컴포넌트
@@ -227,6 +347,9 @@ const DocumentCard = ({ document, onClick }) => {
   };
 
   const filename = extractFilename(document);
+  const status = extractStatus(document);
+  const progress = extractProgress(document);
+  const uploadedDate = extractUploadedDate(document);
 
   return (
     <div 
@@ -246,18 +369,18 @@ const DocumentCard = ({ document, onClick }) => {
           </div>
         </div>
         <div className="flex-shrink-0">
-          <StatusBadge status={document.status || 'pending'} size="small" />
+          <StatusBadge status={status} size="small" />
         </div>
       </div>
       
       <div className="mb-3">
-        <ProgressBar progress={document.progress || 0} status={document.status || 'pending'} />
+        <ProgressBar progress={progress} status={status} />
       </div>
       
       <div className="text-xs text-gray-500">
         <div className="flex items-center">
           <Clock className="w-3 h-3 mr-1" />
-          {formatDate(document.uploaded_at || document.created_at || document.timestamp)}
+          {formatDate(uploadedDate)}
         </div>
       </div>
     </div>
@@ -270,6 +393,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
   const filename = extractFilename(document);
   const saveName = extractSaveName(document);
+  const status = extractStatus(document);
+  const progress = extractProgress(document);
+  const uploadedDate = extractUploadedDate(document);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -296,19 +422,19 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 mb-2">Processing Progress</h3>
-              <ProgressBar progress={document.progress || 0} status={document.status || 'pending'} />
+              <ProgressBar progress={progress} status={status} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-600">Status:</span>
                 <div className="mt-1">
-                  <StatusBadge status={document.status || 'pending'} />
+                  <StatusBadge status={status} />
                 </div>
               </div>
               <div>
                 <span className="font-medium text-gray-600">Progress:</span>
-                <p className="text-gray-900">{document.progress || 0}%</p>
+                <p className="text-gray-900">{progress}%</p>
               </div>
               <div>
                 <span className="font-medium text-gray-600">Original Name:</span>
@@ -323,7 +449,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
               <div>
                 <span className="font-medium text-gray-600">Uploaded:</span>
                 <p className="text-gray-900">
-                  {document.uploaded_at ? new Date(document.uploaded_at).toLocaleString() : 'Unknown'}
+                  {uploadedDate ? new Date(uploadedDate).toLocaleString() : 'Unknown'}
                 </p>
               </div>
               <div className="md:col-span-2">
@@ -438,7 +564,7 @@ function App() {
     }
     
     if (statusFilter !== "all") {
-      filtered = filtered.filter(doc => (doc.status || 'pending') === statusFilter);
+      filtered = filtered.filter(doc => extractStatus(doc) === statusFilter);
     }
     
     setFilteredDocuments(filtered);
@@ -446,20 +572,31 @@ function App() {
 
   // 상태별 통계
   const statusCounts = documents.reduce((acc, doc) => {
-    const status = doc.status || 'pending';
+    const status = extractStatus(doc);
     acc[status] = (acc[status] || 0) + 1;
     return acc;
   }, {});
 
   const handleDocumentClick = async (document) => {
+    // 먼저 메인 리스트 데이터로 모달 열기 (일관성 보장)
+    setSelectedDocument(document);
+    setShowDetailModal(true);
+    
+    // 백그라운드에서 상세 데이터 로드하여 Processing Stages 등 추가 정보 제공
     try {
-      const detailData = await apiService.getDocumentStatus(document.id);
-      setSelectedDocument(detailData);
-      setShowDetailModal(true);
+      const detailData = await apiService.getDocumentStatus(document.id || document._id);
+      if (detailData) {
+        // 기본 정보는 메인 데이터 유지, 상세 정보(stages)만 병합
+        const mergedData = {
+          ...document, // 메인 데이터 우선 (일관성 보장)
+          stages: detailData.stages || document.stages, // 상세 stages 정보 추가
+          // 추가 상세 정보가 있다면 여기에 병합
+        };
+        setSelectedDocument(mergedData);
+      }
     } catch (err) {
       console.error("Failed to fetch document details:", err);
-      setSelectedDocument(document);
-      setShowDetailModal(true);
+      // 메인 데이터만으로도 모달이 정상 작동
     }
   };
 
