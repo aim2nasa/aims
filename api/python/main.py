@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Path
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -8,6 +9,16 @@ from datetime import datetime
 import os
 
 app = FastAPI(title="Document Status API", version="1.0.0")
+
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 도메인 허용 (개발용)
+    # allow_origins=["http://localhost:3000"],  # 특정 도메인만 허용 (프로덕션용)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # MongoDB 설정
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
