@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight } from "lucide-react";
 
 // API 서비스
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
@@ -334,7 +334,215 @@ const CopyableId = ({ id }) => {
   );
 };
 
-// 문서 카드 컴포넌트
+// 페이지네이션 컴포넌트
+const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange }) => {
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        {/* 페이지 정보 및 개수 설정 */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <span className="text-sm text-gray-700">
+            Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of <strong>{totalItems}</strong> documents
+          </span>
+          
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Show:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-600">per page</span>
+          </div>
+        </div>
+
+        {/* 페이지네이션 버튼 */}
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {getPageNumbers().map((page, index) => (
+              <React.Fragment key={index}>
+                {page === '...' ? (
+                  <span className="px-3 py-2 text-sm text-gray-500">...</span>
+                ) : (
+                  <button
+                    onClick={() => onPageChange(page)}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                      currentPage === page
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
+
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+const DocumentListView = ({ documents, onDocumentClick }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown";
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const truncateFilename = (filename, maxLength = 50) => {
+    if (!filename) return "Unknown File";
+    return filename.length <= maxLength ? filename : filename.substring(0, maxLength - 3) + "...";
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Document
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Progress
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Uploaded
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Document ID
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {documents.map((document) => {
+              const filename = extractFilename(document);
+              const status = extractStatus(document);
+              const progress = extractProgress(document);
+              const uploadedDate = extractUploadedDate(document);
+              
+              return (
+                <tr 
+                  key={document.id || document._id || Math.random()}
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => onDocumentClick(document)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <div className="bg-blue-50 p-2 rounded-lg mr-3">
+                        <FileText className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate" title={filename}>
+                          {truncateFilename(filename)}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={status} size="small" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="w-full max-w-xs">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                status === "completed" ? "bg-green-500" :
+                                status === "processing" ? "bg-blue-500" :
+                                status === "error" ? "bg-red-500" : "bg-gray-400"
+                              } ${status === "processing" ? "animate-pulse" : ""}`}
+                              style={{ width: `${Math.min(progress || 0, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500 font-medium min-w-[2.5rem]">
+                          {progress || 0}%
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500">
+                      {formatDate(uploadedDate)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-xs font-mono text-gray-400 max-w-[8rem]">
+                      <span className="truncate block" title={document.id || document._id || 'unknown-id'}>
+                        {(document.id || document._id || 'unknown-id').slice(0, 12)}...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 const DocumentCard = ({ document, onClick }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
@@ -496,6 +704,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 function App() {
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [paginatedDocuments, setPaginatedDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [apiHealth, setApiHealth] = useState(null);
@@ -505,13 +714,19 @@ function App() {
   const [isPollingEnabled, setIsPollingEnabled] = useState(true);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   // 문서 목록 가져오기
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.getRecentDocuments(20);
+      // 더 많은 문서를 가져와서 클라이언트 사이드 페이지네이션 지원
+      const data = await apiService.getRecentDocuments(1000);
       setDocuments(data.documents || []);
       setLastUpdated(new Date());
     } catch (err) {
@@ -568,9 +783,32 @@ function App() {
     }
     
     setFilteredDocuments(filtered);
+    setCurrentPage(1); // 필터 변경 시 첫 페이지로 리셋
   }, [documents, searchTerm, statusFilter]);
 
-  // 상태별 통계
+  // 페이지네이션 적용
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginated = filteredDocuments.slice(startIndex, endIndex);
+    setPaginatedDocuments(paginated);
+  }, [filteredDocuments, currentPage, itemsPerPage]);
+
+  // 페이지네이션 관련 계산
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // 페이지 변경 시 최상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // 개수 변경 시 첫 페이지로 리셋
+  };
+
+  // 상태별 통계 (전체 문서 기준)
   const statusCounts = documents.reduce((acc, doc) => {
     const status = extractStatus(doc);
     acc[status] = (acc[status] || 0) + 1;
@@ -713,6 +951,34 @@ function App() {
               </div>
               
               <div className="flex items-center space-x-3">
+                {/* 뷰 모드 전환 버튼 */}
+                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`px-3 py-2 flex items-center space-x-2 text-sm transition-colors ${
+                      viewMode === "grid" 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    title="Grid View"
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`px-3 py-2 flex items-center space-x-2 text-sm transition-colors ${
+                      viewMode === "list" 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    title="List View"
+                  >
+                    <List className="w-4 h-4" />
+                    <span className="hidden sm:inline">List</span>
+                  </button>
+                </div>
+                
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -729,7 +995,10 @@ function App() {
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 pt-4 border-t space-y-2 sm:space-y-0">
               <span className="text-sm text-gray-600">
-                Showing <strong>{filteredDocuments.length}</strong> of <strong>{documents.length}</strong> documents
+                Total <strong>{filteredDocuments.length}</strong> documents
+                <span className="ml-2 text-xs text-gray-400">
+                  ({viewMode === "grid" ? "Grid" : "List"} view)
+                </span>
               </span>
               {lastUpdated && (
                 <span className="text-sm text-gray-500">
@@ -746,36 +1015,61 @@ function App() {
             </div>
           )}
 
-          {/* 문서 그리드 */}
+          {/* 문서 표시 영역 */}
           {loading && documents.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="w-8 h-8 animate-spin text-blue-500 mr-3" />
               <span className="text-gray-600">Loading documents...</span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-              {filteredDocuments.map((document) => (
-                <DocumentCard 
-                  key={document.id || document._id || Math.random()} 
-                  document={document}
-                  onClick={handleDocumentClick}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* 빈 상태 */}
-          {!loading && filteredDocuments.length === 0 && !error && (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 lg:w-24 lg:h-24 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm || statusFilter !== "all" 
-                  ? "Try adjusting your search or filter criteria."
-                  : "No documents have been uploaded yet."
-                }
-              </p>
-            </div>
+            <>
+              {paginatedDocuments.length > 0 ? (
+                <>
+                  {viewMode === "grid" ? (
+                    /* 카드 뷰 */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
+                      {paginatedDocuments.map((document) => (
+                        <DocumentCard 
+                          key={document.id || document._id || Math.random()} 
+                          document={document}
+                          onClick={handleDocumentClick}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    /* 리스트 뷰 */
+                    <div className="mb-6">
+                      <DocumentListView 
+                        documents={paginatedDocuments}
+                        onDocumentClick={handleDocumentClick}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* 페이지네이션 */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={filteredDocuments.length}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                  />
+                </>
+              ) : (
+                /* 빈 상태 */
+                <div className={`text-center py-12 ${viewMode === "list" ? "bg-white rounded-lg shadow-sm" : ""}`}>
+                  <FileText className="w-16 h-16 lg:w-24 lg:h-24 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm || statusFilter !== "all" 
+                      ? "Try adjusting your search or filter criteria."
+                      : "No documents have been uploaded yet."
+                    }
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
