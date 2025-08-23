@@ -62,7 +62,7 @@ def get_overall_status(doc: Dict) -> tuple[str, int]:
     
     if ocr_status == 'error' or embed_status == 'failed':
         return 'error', progress
-    elif ocr_status == 'running' or embed_status == 'processing':
+    elif ocr_status in ['queued', 'running'] or embed_status == 'processing':
         return 'processing', progress
     elif completed_stages == total_stages:
         return 'completed', 100
@@ -130,7 +130,7 @@ def format_document_status(doc: Dict) -> DocumentStatus:
         'ocr': {
             'status': ocr_status,
             'confidence': ocr_info.get('confidence'),
-            'queue': ocr_info.get('queue'),
+            'queued_at': ocr_info.get('queued_at'),
             'started_at': ocr_info.get('started_at'),
             'done_at': ocr_info.get('done_at'),
             'failed_at': ocr_info.get('failed_at'),
