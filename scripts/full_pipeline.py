@@ -52,7 +52,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
                             'status': 'done',
                             'dims': 1536,
                             'chunks': len(embedded_chunks),
-                            'updated_at': doc_data.get('uploaded_at') # 필요시 현재 시간으로 변경 가능
+                            'updated_at': datetime.utcnow().isoformat()
                         }
                     }}
                 )
@@ -66,7 +66,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
                         'docembed': {
                             'status': 'failed',
                             'error_message': str(e),
-                            'updated_at': doc_data.get('uploaded_at')
+                            'failed_at': datetime.utcnow().isoformat()
                         }
                     }}
                 )
