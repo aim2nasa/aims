@@ -3,6 +3,7 @@ import os
 from typing import List, Dict
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from datetime import datetime
 from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
 from create_embeddings import create_embeddings_for_chunks
