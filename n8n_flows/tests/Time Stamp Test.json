@@ -1,0 +1,260 @@
+{
+  "name": "Time Stamp Test",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        -272
+      ],
+      "id": "dde19a07-f87f-4fc7-ad62-45e18e3834f0",
+      "name": "Update OCR Queue in MongoDB",
+      "alwaysOutputData": false,
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e2c218b-d876-4183-9ede-1fffe81f78d9",
+              "name": "ocr.status",
+              "value": "queued",
+              "type": "string"
+            },
+            {
+              "id": "a5412c65-91cd-4bd0-972a-eecac4b47487",
+              "name": "ocr.queued_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -272
+      ],
+      "id": "eadc2b12-c20e-45af-b7b1-24973c9ea535",
+      "name": "Set Queue for OCR"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        -272
+      ],
+      "id": "989404f8-69e6-47b5-b73f-ca88448c9384",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d62459dc-d875-4578-8cf5-b788cc86111e",
+              "name": "ocr.status",
+              "value": "done",
+              "type": "string"
+            },
+            {
+              "id": "88e44d3b-517d-44bf-bd1a-28218737a30e",
+              "name": "ocr.done_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "ea311199-87c8-467b-be4c-f2c38795571b",
+              "name": "_id",
+              "value": "={{ $('Set Queue for OCR').item.json._id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        -272
+      ],
+      "id": "7379c994-daf2-4091-b525-7176e81ee372",
+      "name": "OCR Done"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "files",
+        "updateKey": "=_id",
+        "fields": "ocr",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        352,
+        -272
+      ],
+      "id": "609db3ec-d162-405a-8a61-9e3c9f9c5088",
+      "name": "Update OCR Done in MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "898e43ac-5e25-426f-acb0-42d3f3ee515d",
+              "name": "=upload.originalName",
+              "value": "MyName",
+              "type": "string"
+            },
+            {
+              "id": "88a07c8b-7ce0-461c-9f89-c3a3746fe405",
+              "name": "upload.uploaded_at",
+              "value": "={{ $now.format('yyyy-MM-dd\\'T\\'HH:mm:ss.SSSxxx') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -768,
+        -272
+      ],
+      "id": "0cfae65b-57b4-4f24-8083-5676041ae049",
+      "name": "Upload File Info"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "files",
+        "fields": "=upload",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -544,
+        -272
+      ],
+      "id": "bf523ac7-9770-4719-ad30-24c53652e2ab",
+      "name": "Save File Info",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "RT7gatMve2ExTlAp",
+          "name": "MongoDB account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Queue for OCR": {
+      "main": [
+        [
+          {
+            "node": "Update OCR Queue in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Upload File Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR Done": {
+      "main": [
+        [
+          {
+            "node": "Update OCR Done in MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update OCR Queue in MongoDB": {
+      "main": [
+        [
+          {
+            "node": "OCR Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload File Info": {
+      "main": [
+        [
+          {
+            "node": "Save File Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save File Info": {
+      "main": [
+        [
+          {
+            "node": "Set Queue for OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "262f93df-8e15-4cd5-8b55-564fe5549107",
+  "meta": {
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+  },
+  "id": "dNplfCp8h5WiOtpB",
+  "tags": []
+}
