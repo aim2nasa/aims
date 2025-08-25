@@ -1,5 +1,53 @@
 ﻿const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
 
+// 통신 모드 관리
+class CommunicationManager {
+  constructor() {
+    this.mode = 'polling'; // 'polling' | 'websocket'
+    this.listeners = new Map();
+  }
+
+  setMode(mode) {
+    this.mode = mode;
+    this.emit('modeChanged', mode);
+  }
+
+  getMode() {
+    return this.mode;
+  }
+
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event).push(callback);
+  }
+
+  off(event, callback) {
+    if (this.listeners.has(event)) {
+      const callbacks = this.listeners.get(event);
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+  }
+
+  emit(event, data) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in communication event listener for ${event}:`, error);
+        }
+      });
+    }
+  }
+}
+
+export const communicationManager = new CommunicationManager();
+
 // fetch 기반 API 서비스 (CORS 대응)
 export const apiService = {
   // 헬스체크
@@ -85,6 +133,37 @@ export const apiService = {
       throw error;
     }
   },
+
+  // WebSocket 연결 상태 확인
+  async checkWebSocketHealth() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ws/stats`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "cors",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("WebSocket health check failed:", error);
+      throw error;
+    }
+  },
+
+  // WebSocket URL 생성
+  getWebSocketUrl() {
+    return API_BASE_URL.replace(/^http/, 'ws') + '/ws';
+  },
+
+  // 현재 API 베이스 URL 반환
+  getApiBaseUrl() {
+    return API_BASE_URL;
+  }
 };
 
 export default apiService;

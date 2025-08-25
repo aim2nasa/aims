@@ -1,26 +1,7 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight } from "lucide-react";
-
-// API 서비스
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
-
-const apiService = {
-  async checkHealth() {
-    const response = await fetch(`${API_BASE_URL}/health`, { mode: "cors" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  },
-  async getRecentDocuments(limit = 20) {
-    const response = await fetch(`${API_BASE_URL}/status?limit=${limit}`, { mode: "cors" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  },
-  async getDocumentStatus(documentId) {
-    const response = await fetch(`${API_BASE_URL}/status/${documentId}`, { mode: "cors" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  }
-};
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight, Radio, Zap } from "lucide-react";
+import websocketService from "./services/websocketService";
+import apiService, { communicationManager } from "./services/apiService";
 
 // MongoDB 필드 추출 함수들
 const extractFilename = (document) => {
@@ -716,6 +697,11 @@ function App() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
   
+  // 통신 관련 상태
+  const [communicationMode, setCommunicationMode] = useState('polling'); // 'polling' | 'websocket'
+  const [wsConnected, setWsConnected] = useState(false);
+  const [wsStats, setWsStats] = useState(null);
+  
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -747,15 +733,158 @@ function App() {
     }
   }, []);
 
+  // WebSocket 연결 설정
+  const setupWebSocket = useCallback(() => {
+    const wsUrl = apiService.getWebSocketUrl();
+    
+    // WebSocket 이벤트 리스너 설정
+    const handleConnected = () => {
+      console.log('WebSocket connected');
+      setWsConnected(true);
+      setError(null);
+    };
+
+    const handleDisconnected = () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
+    };
+
+    const handleError = (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+      setError('WebSocket 연결에 실패했습니다.');
+    };
+
+    const handleInitialData = (data) => {
+      console.log('Received initial data:', data);
+      setDocuments(data.documents || []);
+      setLastUpdated(new Date(data.timestamp));
+      setLoading(false);
+    };
+
+    const handleDocumentUpdate = (data) => {
+      console.log('WebSocket 업데이트 수신:', data.filename, data.id);
+      console.log('업데이트 데이터 전체:', data);
+      
+      setDocuments(prevDocs => {
+        console.log('현재 문서 수:', prevDocs.length);
+        const updatedDocs = [...prevDocs];
+        const index = updatedDocs.findIndex(doc => (doc.id || doc._id) === data.id);
+        console.log('문서 찾기 결과 - 인덱스:', index, '찾은 ID:', data.id);
+        
+        if (index >= 0) {
+          // 기존 문서 업데이트
+          console.log('기존 문서 업데이트');
+          updatedDocs[index] = {
+            ...updatedDocs[index],
+            ...data,
+            _id: data.id,
+            id: data.id
+          };
+        } else {
+          // 새 문서 추가
+          console.log('새 문서 추가:', data.filename);
+          updatedDocs.unshift({
+            ...data,
+            _id: data.id,
+            id: data.id
+          });
+        }
+        
+        console.log('업데이트 후 문서 수:', updatedDocs.length);
+        return updatedDocs;
+      });
+      setLastUpdated(new Date());
+    };
+
+    const handleDatabaseEmpty = (data) => {
+      console.log('Database is empty - received empty state:', data);
+      setDocuments([]); // 모든 문서 제거
+      setLastUpdated(new Date(data.timestamp));
+      setLoading(false);
+    };
+
+    const handleStatusUpdate = (data) => {
+      console.log('Status update received:', data);
+      // 전체 문서 목록으로 상태 업데이트
+      if (data.documents && Array.isArray(data.documents)) {
+        setDocuments(data.documents);
+        console.log(`Document count changed: ${data.previous_count} -> ${data.current_count}`);
+      }
+      setLastUpdated(new Date(data.timestamp));
+    };
+
+    // 이벤트 리스너 등록
+    websocketService.on('connected', handleConnected);
+    websocketService.on('disconnected', handleDisconnected);
+    websocketService.on('error', handleError);
+    websocketService.on('initial_data', handleInitialData);
+    websocketService.on('document_update', handleDocumentUpdate);
+    websocketService.on('database_empty', handleDatabaseEmpty);
+    websocketService.on('status_update', handleStatusUpdate);
+
+    // WebSocket 연결
+    websocketService.connect(wsUrl).catch(error => {
+      console.error('Failed to connect WebSocket:', error);
+      setError('WebSocket 연결에 실패했습니다.');
+    });
+
+    // 정리 함수 반환
+    return () => {
+      websocketService.off('connected', handleConnected);
+      websocketService.off('disconnected', handleDisconnected);
+      websocketService.off('error', handleError);
+      websocketService.off('initial_data', handleInitialData);
+      websocketService.off('document_update', handleDocumentUpdate);
+      websocketService.off('database_empty', handleDatabaseEmpty);
+      websocketService.off('status_update', handleStatusUpdate);
+    };
+  }, []);
+
+  // 통신 모드 전환
+  const switchCommunicationMode = useCallback((mode) => {
+    if (mode === communicationMode) return;
+
+    console.log(`Switching communication mode from ${communicationMode} to ${mode}`);
+    
+    if (mode === 'websocket') {
+      // 폴링 중지하고 WebSocket 연결
+      setIsPollingEnabled(false);
+      setLoading(true);
+      setupWebSocket();
+    } else {
+      // WebSocket 연결 해제하고 폴링 시작
+      websocketService.disconnect();
+      setWsConnected(false);
+      setIsPollingEnabled(true);
+      fetchDocuments();
+    }
+
+    setCommunicationMode(mode);
+    communicationManager.setMode(mode);
+  }, [communicationMode, setupWebSocket, fetchDocuments]);
+
+  // WebSocket 통계 조회
+  const fetchWebSocketStats = useCallback(async () => {
+    if (communicationMode === 'websocket') {
+      try {
+        const stats = await apiService.checkWebSocketHealth();
+        setWsStats(stats);
+      } catch (err) {
+        console.error('Failed to fetch WebSocket stats:', err);
+      }
+    }
+  }, [communicationMode]);
+
   // 초기 로드
   useEffect(() => {
     fetchDocuments();
     checkApiHealth();
   }, [fetchDocuments, checkApiHealth]);
 
-  // 실시간 폴링 (5초마다)
+  // 실시간 폴링 (5초마다) - 폴링 모드일 때만
   useEffect(() => {
-    if (!isPollingEnabled) return;
+    if (!isPollingEnabled || communicationMode !== 'polling') return;
     
     const interval = setInterval(() => {
       fetchDocuments();
@@ -763,7 +892,21 @@ function App() {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [isPollingEnabled, fetchDocuments, checkApiHealth]);
+  }, [isPollingEnabled, communicationMode, fetchDocuments, checkApiHealth]);
+
+  // WebSocket 통계 폴링 (10초마다)
+  useEffect(() => {
+    if (communicationMode !== 'websocket') return;
+    
+    const interval = setInterval(() => {
+      fetchWebSocketStats();
+    }, 10000);
+    
+    // 즉시 한 번 실행
+    fetchWebSocketStats();
+    
+    return () => clearInterval(interval);
+  }, [communicationMode, fetchWebSocketStats]);
 
   // 검색 및 필터링
   useEffect(() => {
@@ -855,34 +998,97 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* API 연결 상태 */}
+              {/* 통신 모드 선택 */}
               <div className="flex items-center space-x-2">
-                {apiHealth ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
-                <span className={`text-sm ${apiHealth ? "text-green-600" : "text-red-600"}`}>
-                  {apiHealth ? "Connected" : "Disconnected"}
-                </span>
+                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => switchCommunicationMode('polling')}
+                    className={`px-3 py-1 flex items-center space-x-2 text-sm transition-colors ${
+                      communicationMode === 'polling' 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    title="Polling Mode"
+                  >
+                    <Radio className="w-3 h-3" />
+                    <span className="hidden sm:inline">Polling</span>
+                  </button>
+                  <button
+                    onClick={() => switchCommunicationMode('websocket')}
+                    disabled={false}
+                    className={`px-3 py-1 flex items-center space-x-2 text-sm transition-colors ${
+                      communicationMode === 'websocket' 
+                        ? "bg-orange-500 text-white" 
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                    title="WebSocket Mode (실시간 - 2초 간격)"
+                  >
+                    <Zap className="w-3 h-3" />
+                    <span className="hidden sm:inline">WebSocket</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* API/WebSocket 연결 상태 */}
+              <div className="flex items-center space-x-2">
+                {communicationMode === 'polling' ? (
+                  <>
+                    {apiHealth ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
+                    <span className={`text-sm ${apiHealth ? "text-green-600" : "text-red-600"}`}>
+                      {apiHealth ? "API Connected" : "API Disconnected"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    {wsConnected ? <Zap className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
+                    <span className={`text-sm ${wsConnected ? "text-green-600" : "text-red-600"}`}>
+                      WS {wsConnected ? "Connected" : "Disconnected"}
+                      {wsStats && wsConnected && (
+                        <span className="ml-1 text-xs text-gray-500">
+                          ({wsStats.active_connections})
+                        </span>
+                      )}
+                    </span>
+                  </>
+                )}
               </div>
               
-              {/* 폴링 상태 */}
-              <button
-                onClick={() => setIsPollingEnabled(!isPollingEnabled)}
-                className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-sm transition-colors ${
-                  isPollingEnabled ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <div className={`w-2 h-2 rounded-full ${isPollingEnabled ? "bg-green-500 animate-pulse" : "bg-gray-500"}`} />
-                {isPollingEnabled ? "Live" : "Paused"}
-              </button>
+              {/* 폴링 상태 - 폴링 모드일 때만 표시 */}
+              {communicationMode === 'polling' && (
+                <button
+                  onClick={() => setIsPollingEnabled(!isPollingEnabled)}
+                  className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-sm transition-colors ${
+                    isPollingEnabled ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${isPollingEnabled ? "bg-green-500 animate-pulse" : "bg-gray-500"}`} />
+                  {isPollingEnabled ? "Live" : "Paused"}
+                </button>
+              )}
               
-              {/* 새로고침 버튼 */}
-              <button 
-                onClick={fetchDocuments} 
-                disabled={loading} 
-                className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                <span>Refresh</span>
-              </button>
+              {/* 새로고침 버튼 - 폴링 모드일 때만 표시 */}
+              {communicationMode === 'polling' && (
+                <button 
+                  onClick={fetchDocuments} 
+                  disabled={loading} 
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                  <span>Refresh</span>
+                </button>
+              )}
+
+              {/* WebSocket 재연결 버튼 - WebSocket 모드이고 연결이 끊어졌을 때만 표시 */}
+              {communicationMode === 'websocket' && !wsConnected && (
+                <button 
+                  onClick={() => switchCommunicationMode('websocket')} 
+                  disabled={loading}
+                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <Zap className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                  <span>Reconnect</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1080,9 +1286,16 @@ function App() {
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 space-y-2 sm:space-y-0">
             <div>
               Connected to: <code className="bg-gray-100 px-2 py-1 rounded text-xs">tars.giize.com:8080</code>
+              <span className="ml-2 text-xs">
+                ({communicationMode === 'polling' ? 'HTTP Polling' : 'WebSocket'})
+              </span>
             </div>
             <div>
-              Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}
+              {communicationMode === 'polling' ? (
+                <>Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}</>
+              ) : (
+                <>Real-time: {wsConnected ? "Connected" : "Disconnected"}</>
+              )}
             </div>
           </div>
         </div>

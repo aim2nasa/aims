@@ -1,12 +1,16 @@
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from bson import ObjectId
 from bson.errors import InvalidId
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from datetime import datetime
 import os
+import json
+import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 app = FastAPI(title="Document Status API", version="1.0.0")
 
@@ -29,6 +33,131 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "files")
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
+
+# WebSocket 연결 관리
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+        self.lock = threading.Lock()
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        with self.lock:
+            self.active_connections.append(websocket)
+        print(f"WebSocket connected. Total connections: {len(self.active_connections)}")
+    
+    def disconnect(self, websocket: WebSocket):
+        with self.lock:
+            if websocket in self.active_connections:
+                self.active_connections.remove(websocket)
+        print(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
+    
+    async def broadcast(self, message: dict):
+        if not self.active_connections:
+            return
+            
+        disconnected = []
+        with self.lock:
+            connections = self.active_connections.copy()
+        
+        for connection in connections:
+            try:
+                # WebSocket 상태 확인
+                if connection.client_state.name != 'CONNECTED':
+                    disconnected.append(connection)
+                    continue
+                    
+                await connection.send_text(json.dumps(message))
+            except Exception as e:
+                print(f"Error sending message to WebSocket: {e}")
+                disconnected.append(connection)
+        
+        # 연결이 끊어진 WebSocket 정리
+        if disconnected:
+            with self.lock:
+                for conn in disconnected:
+                    if conn in self.active_connections:
+                        self.active_connections.remove(conn)
+            print(f"Cleaned up {len(disconnected)} disconnected WebSocket(s). Active connections: {len(self.active_connections)}")
+
+manager = ConnectionManager()
+
+# MongoDB Change Stream 모니터링
+def start_change_stream_monitor():
+    """MongoDB Change Stream을 모니터링하는 백그라운드 스레드"""
+    def monitor():
+        try:
+            # MongoDB가 replica set인지 확인
+            server_status = db.command("serverStatus")
+            replica_set = server_status.get("repl", {}).get("setName")
+            
+            if not replica_set:
+                print("MongoDB is not running as replica set. Change Stream monitoring disabled.")
+                print("WebSocket will still work for real-time connections, but automatic document updates won't be broadcasted.")
+                return
+            
+            # Change Stream 설정 - 모든 변경사항 감지
+            pipeline = [
+                {
+                    '$match': {
+                        'operationType': {'$in': ['insert', 'update', 'replace']}
+                    }
+                }
+            ]
+            
+            print("Starting MongoDB Change Stream monitor...")
+            with collection.watch(pipeline) as stream:
+                for change in stream:
+                    try:
+                        # 변경된 문서 정보 추출
+                        operation_type = change['operationType']
+                        document_id = str(change['documentKey']['_id'])
+                        
+                        print(f"Document changed: {document_id} ({operation_type})")
+                        
+                        # 변경된 문서의 현재 상태 조회
+                        document = collection.find_one({"_id": ObjectId(document_id)})
+                        if document:
+                            overall_status, progress = get_overall_status(document)
+                            
+                            # WebSocket으로 브로드캐스트할 메시지
+                            message = {
+                                "type": "document_update",
+                                "data": {
+                                    "id": document_id,
+                                    "status": overall_status,
+                                    "progress": progress,
+                                    "filename": document.get('upload', {}).get('originalName') or 
+                                              document.get('originalName', 'Unknown File'),
+                                    "uploaded_at": document.get('upload', {}).get('uploaded_at') or 
+                                                  document.get('uploaded_at'),
+                                    "operation_type": operation_type,
+                                    "timestamp": datetime.utcnow().isoformat()
+                                }
+                            }
+                            
+                            # 비동기 브로드캐스트 실행
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            loop.run_until_complete(manager.broadcast(message))
+                            loop.close()
+                        
+                    except Exception as e:
+                        print(f"Error processing change event: {e}")
+                        
+        except Exception as e:
+            print(f"Change stream error: {e}")
+            # 에러 발생 시 5초 후 재시작
+            threading.Timer(5.0, start_change_stream_monitor).start()
+    
+    # 백그라운드 스레드에서 실행
+    thread = threading.Thread(target=monitor, daemon=True)
+    thread.start()
+
+# 앱 시작 시 Change Stream 모니터 시작
+@app.on_event("startup")
+async def startup_event():
+    start_change_stream_monitor()
 
 class DocumentStatus(BaseModel):
     """문서 상태 응답 모델"""
@@ -253,6 +382,191 @@ async def get_recent_documents(limit: int = 10):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket 엔드포인트 - 실시간 문서 상태 업데이트"""
+    await manager.connect(websocket)
+    
+    # 핑 타임아웃 방지를 위한 태스크
+    ping_task = None
+    update_task = None
+    
+    try:
+        # 연결 즉시 현재 상태 전송
+        try:
+            documents = collection.find().sort("_id", -1).limit(50)
+            results = []
+            for doc in documents:
+                overall_status, progress = get_overall_status(doc)
+                results.append({
+                    "id": str(doc['_id']),
+                    "status": overall_status,
+                    "progress": progress,
+                    "filename": doc.get('upload', {}).get('originalName') or doc.get('originalName', 'Unknown File'),
+                    "uploaded_at": doc.get('upload', {}).get('uploaded_at') or doc.get('uploaded_at')
+                })
+            
+            # 초기 데이터 전송
+            await websocket.send_text(json.dumps({
+                "type": "initial_data",
+                "data": {
+                    "documents": results,
+                    "total": len(results),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }))
+            
+            # 별도 태스크로 핑과 업데이트 체크 분리
+            async def ping_task_func():
+                while websocket.client_state.name == 'CONNECTED':
+                    try:
+                        await asyncio.sleep(15)  # 15초마다 핑 (더 자주)
+                        if websocket.client_state.name == 'CONNECTED':
+                            await websocket.send_text(json.dumps({
+                                "type": "ping",
+                                "timestamp": datetime.utcnow().isoformat()
+                            }))
+                    except Exception as e:
+                        print(f"Ping error: {e}")
+                        break
+            
+            async def update_task_func():
+                last_check_time = datetime.utcnow()
+                last_document_count = None  # 이전 문서 수 추적
+                
+                while websocket.client_state.name == 'CONNECTED':
+                    try:
+                        await asyncio.sleep(2)  # 2초마다 체크 (폴링보다 빠르게)
+                        
+                        if websocket.client_state.name != 'CONNECTED':
+                            break
+                            
+                        current_time = datetime.utcnow()
+                        
+                        # 전체 문서 수 확인 (빠른 카운트)
+                        total_documents = collection.count_documents({})
+                        
+                        # 데이터베이스가 비어있는 경우 처리
+                        if total_documents == 0:
+                            # 이전에 문서가 있었다면 빈 상태를 브로드캐스트
+                            if last_document_count is None or last_document_count > 0:
+                                empty_message = {
+                                    "type": "database_empty",
+                                    "data": {
+                                        "documents": [],
+                                        "total": 0,
+                                        "timestamp": current_time.isoformat(),
+                                        "message": "All documents have been deleted"
+                                    }
+                                }
+                                
+                                if websocket.client_state.name == 'CONNECTED':
+                                    await manager.broadcast(empty_message)
+                                    print("Broadcasted database empty state")
+                            
+                            last_document_count = 0
+                            last_check_time = current_time
+                            continue
+                        
+                        # 문서가 있는 경우 - 최근 문서들 체크
+                        recent_docs = collection.find().sort("_id", -1).limit(10)
+                        recent_docs_list = list(recent_docs)
+                        
+                        updates_found = 0
+                        current_documents = []
+                        
+                        for doc in recent_docs_list:
+                            try:
+                                doc_id = str(doc['_id'])
+                                overall_status, progress = get_overall_status(doc)
+                                
+                                doc_data = {
+                                    "id": doc_id,
+                                    "status": overall_status,
+                                    "progress": progress,
+                                    "filename": doc.get('upload', {}).get('originalName') or 
+                                              doc.get('originalName', 'Unknown File'),
+                                    "uploaded_at": doc.get('upload', {}).get('uploaded_at') or 
+                                                  doc.get('uploaded_at')
+                                }
+                                current_documents.append(doc_data)
+                                
+                                update_message = {
+                                    "type": "document_update",
+                                    "data": {
+                                        **doc_data,
+                                        "operation_type": "update",
+                                        "timestamp": current_time.isoformat()
+                                    }
+                                }
+                                
+                                if websocket.client_state.name == 'CONNECTED':
+                                    await manager.broadcast(update_message)
+                                    updates_found += 1
+                                
+                            except Exception as e:
+                                print(f"Error processing document update: {e}")
+                        
+                        # 문서 수 변화가 있었다면 전체 상태 업데이트 브로드캐스트
+                        if last_document_count is not None and last_document_count != total_documents:
+                            status_update_message = {
+                                "type": "status_update", 
+                                "data": {
+                                    "documents": current_documents,
+                                    "total": total_documents,
+                                    "timestamp": current_time.isoformat(),
+                                    "change": "document_count_changed",
+                                    "previous_count": last_document_count,
+                                    "current_count": total_documents
+                                }
+                            }
+                            
+                            if websocket.client_state.name == 'CONNECTED':
+                                await manager.broadcast(status_update_message)
+                                print(f"Broadcasted status update: {last_document_count} -> {total_documents} documents")
+                        
+                        if updates_found > 0:
+                            print(f"Found and broadcasted {updates_found} document updates")
+                        
+                        last_document_count = total_documents
+                        last_check_time = current_time
+                        
+                    except Exception as e:
+                        print(f"Update task error: {e}")
+                        break
+            
+            # 태스크 시작
+            ping_task = asyncio.create_task(ping_task_func())
+            update_task = asyncio.create_task(update_task_func())
+            
+            # 태스크가 완료될 때까지 대기
+            await asyncio.gather(ping_task, update_task)
+                
+        except Exception as e:
+            print(f"Error sending initial data: {e}")
+            return
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+    finally:
+        # 태스크 정리
+        if ping_task and not ping_task.done():
+            ping_task.cancel()
+        if update_task and not update_task.done():
+            update_task.cancel()
+        manager.disconnect(websocket)
+
+@app.get("/ws/stats")
+async def websocket_stats():
+    """WebSocket 연결 통계"""
+    return {
+        "active_connections": len(manager.active_connections),
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 if __name__ == "__main__":
     import uvicorn

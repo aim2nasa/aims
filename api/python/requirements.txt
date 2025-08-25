@@ -1,5 +1,6 @@
 fastapi==0.115.5
-uvicorn==0.24.0
+uvicorn[standard]==0.24.0
 pymongo==4.6.0
 pydantic==2.7.4
 python-multipart==0.0.6
+websockets==12.0
