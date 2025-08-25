@@ -1,6 +1,6 @@
 // src/components/PDFViewer.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -16,6 +16,7 @@ const PDFViewer = ({ file, onDownload }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0); // 이미지와 동일하게 1.0으로 시작
+  const [containerWidth, setContainerWidth] = useState(600);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -31,6 +32,32 @@ const PDFViewer = ({ file, onDownload }) => {
 
   const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));   // 최대 300%
   const zoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5)); // 최소 50%
+
+  // 컨테이너 크기 변경에 따른 PDF 너비 동적 조정
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      // RightPane의 현재 너비를 기준으로 PDF 너비 계산
+      const rightPane = document.querySelector('[data-testid="right-pane"]');
+      if (rightPane) {
+        const paneWidth = rightPane.offsetWidth;
+        const optimalWidth = Math.min(paneWidth * 0.8, 800);
+        setContainerWidth(optimalWidth);
+      }
+    };
+
+    updateContainerWidth();
+    
+    // ResizeObserver를 사용해서 크기 변화 감지
+    const rightPane = document.querySelector('[data-testid="right-pane"]');
+    if (rightPane) {
+      const resizeObserver = new ResizeObserver(updateContainerWidth);
+      resizeObserver.observe(rightPane);
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
 
   return (
     <div style={{ position: 'relative', overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#f5f5f5', padding: '10px' }}>
@@ -63,7 +90,7 @@ const PDFViewer = ({ file, onDownload }) => {
               renderTextLayer={false}
               renderAnnotationLayer={false}
               scale={scale}
-              width={Math.min(window.innerWidth * 0.6, 600)}
+              width={containerWidth}
             />
           </div>
         </Document>

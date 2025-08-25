@@ -1,6 +1,6 @@
 // src/components/ImageViewer.js
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button, Space, Typography, Spin, Alert } from 'antd';
 import { DownloadOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
@@ -10,10 +10,36 @@ const ImageViewer = ({ file, onDownload }) => {
   const [scale, setScale] = useState(1.0);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [maxImageWidth, setMaxImageWidth] = useState('65vw');
   const containerRef = useRef(null);
 
   const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));   // 최대 300%
   const zoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.2)); // 최소 20%까지 축소 허용
+
+  // 컨테이너 크기 변경에 따른 이미지 최대 너비 동적 조정
+  useEffect(() => {
+    const updateImageWidth = () => {
+      const rightPane = document.querySelector('[data-testid="right-pane"]');
+      if (rightPane) {
+        const paneWidth = rightPane.offsetWidth;
+        // RightPane 너비의 80%를 이미지 최대 너비로 설정
+        setMaxImageWidth(`${paneWidth * 0.8}px`);
+      }
+    };
+
+    updateImageWidth();
+    
+    // ResizeObserver를 사용해서 크기 변화 감지
+    const rightPane = document.querySelector('[data-testid="right-pane"]');
+    if (rightPane) {
+      const resizeObserver = new ResizeObserver(updateImageWidth);
+      resizeObserver.observe(rightPane);
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, []);
 
   const handleImageLoad = (event) => {
     setImageLoading(false);
@@ -70,7 +96,7 @@ const ImageViewer = ({ file, onDownload }) => {
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'center',
-              maxWidth: '65vw',
+              maxWidth: maxImageWidth,
               maxHeight: 'calc(100vh - 300px)',
               width: 'auto',
               height: 'auto',

@@ -26,6 +26,10 @@ const AppLayout = () => {
   
   // DSD 관련 상태
   const [showDashboard, setShowDashboard] = useState(false);
+  
+  // 리사이즈 관련 상태
+  const [rightPaneWidth, setRightPaneWidth] = useState(40); // 퍼센트로 관리
+  const [isResizing, setIsResizing] = useState(false);
 
   // 문서 상세 정보 조회 및 RightPane에 전달
   const handleDocumentClick = async (doc) => {
@@ -128,6 +132,56 @@ const AppLayout = () => {
     }
   };
 
+  // 리사이즈 핸들러
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  // 마우스 이벤트 리스너 등록
+  React.useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const contentElement = document.querySelector('[data-testid="content-container"]');
+      if (!contentElement) return;
+      
+      const containerRect = contentElement.getBoundingClientRect();
+      const mouseX = e.clientX - containerRect.left;
+      const containerWidth = containerRect.width;
+      
+      // 새로운 RightPane 너비를 퍼센트로 계산
+      const newRightPaneWidth = ((containerWidth - mouseX) / containerWidth) * 100;
+      
+      // 최소 20%, 최대 80% 제한
+      const clampedWidth = Math.max(20, Math.min(80, newRightPaneWidth));
+      setRightPaneWidth(clampedWidth);
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
+
   return (
     <Layout>
       {/* 📐 Header: 상단 고정 */}
@@ -205,9 +259,16 @@ const AppLayout = () => {
 
         {/* 📐 Center Pane & Right Pane 컨테이너 */}
         <Layout>
-          <Content style={{ display: 'flex', padding: 24, background: '#f5f5f5' }}>
+          <Content 
+            data-testid="content-container"
+            style={{ display: 'flex', padding: 24, background: '#f5f5f5', position: 'relative' }}
+          >
             {/* Center Pane */}
-            <div style={{ flex: 1, marginRight: rightPaneVisible ? 24 : 0 }}>
+            <div style={{ 
+              width: rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
+              marginRight: rightPaneVisible ? 12 : 0,
+              transition: isResizing ? 'none' : 'width 0.3s ease'
+            }}>
               <CenterPane 
                 onDocumentClick={handleDocumentClick}
                 searchResults={searchResults}
@@ -216,9 +277,63 @@ const AppLayout = () => {
               />
             </div>
 
+            {/* 리사이즈 핸들 */}
+            {rightPaneVisible && (
+              <div
+                onMouseDown={handleMouseDown}
+                style={{
+                  width: '4px',
+                  cursor: 'col-resize',
+                  background: isResizing ? '#1890ff' : 'transparent',
+                  borderRadius: '2px',
+                  margin: '0 6px',
+                  transition: 'background 0.2s ease',
+                  position: 'relative'
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '12px',
+                  height: '40px',
+                  background: '#d9d9d9',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    width: '2px',
+                    height: '20px',
+                    background: '#8c8c8c',
+                    borderRadius: '1px',
+                    margin: '0 1px'
+                  }}></div>
+                  <div style={{
+                    width: '2px',
+                    height: '20px',
+                    background: '#8c8c8c',
+                    borderRadius: '1px',
+                    margin: '0 1px'
+                  }}></div>
+                </div>
+              </div>
+            )}
+
             {/* Right Pane */}
             {rightPaneVisible && (
-			  <div style={{ width: '40%', minWidth: 400, background: '#fff', borderRadius: 8 }}>
+              <div 
+                data-testid="right-pane"
+                style={{ 
+                  width: `${rightPaneWidth}%`,
+                  minWidth: '300px',
+                  background: '#fff', 
+                  borderRadius: 8,
+                  transition: isResizing ? 'none' : 'width 0.3s ease'
+                }}
+              >
                 <RightPane
                   document={selectedDocument}
                   onClose={handleRightPaneCollapse}
