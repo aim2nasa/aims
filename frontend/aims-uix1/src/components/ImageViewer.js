@@ -11,6 +11,8 @@ const ImageViewer = ({ file, onDownload }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [maxImageWidth, setMaxImageWidth] = useState('65vw');
+  const [maxImageHeight, setMaxImageHeight] = useState('calc(100vh - 300px)');
+  const [containerHeight, setContainerHeight] = useState('calc(100vh - 250px)');
   const containerRef = useRef(null);
 
   const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));   // 최대 300%
@@ -18,21 +20,24 @@ const ImageViewer = ({ file, onDownload }) => {
 
   // 컨테이너 크기 변경에 따른 이미지 최대 너비 동적 조정
   useEffect(() => {
-    const updateImageWidth = () => {
+    const updateImageSize = () => {
       const rightPane = document.querySelector('[data-testid="right-pane"]');
       if (rightPane) {
         const paneWidth = rightPane.offsetWidth;
-        // RightPane 너비의 80%를 이미지 최대 너비로 설정
-        setMaxImageWidth(`${paneWidth * 0.8}px`);
+        const paneHeight = rightPane.offsetHeight;
+        // 폭이 넓어지면 이미지도 실제로 더 크게 표시되도록
+        setMaxImageWidth(`${paneWidth * 0.9}px`); // 90%로 더 크게
+        setMaxImageHeight(`${paneHeight * 2}px`); // 높이 제한을 크게 늘려서 스크롤 허용
+        setContainerHeight(`${paneHeight - 100}px`);
       }
     };
 
-    updateImageWidth();
+    updateImageSize();
     
     // ResizeObserver를 사용해서 크기 변화 감지
     const rightPane = document.querySelector('[data-testid="right-pane"]');
     if (rightPane) {
-      const resizeObserver = new ResizeObserver(updateImageWidth);
+      const resizeObserver = new ResizeObserver(updateImageSize);
       resizeObserver.observe(rightPane);
       
       return () => {
@@ -75,9 +80,9 @@ const ImageViewer = ({ file, onDownload }) => {
         flexShrink: 0,
         display: 'flex', 
         justifyContent: 'center', 
-        alignItems: 'center',
+        alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
         width: '100%',
-        height: 'calc(100vh - 250px)', // PDF와 동일한 높이로 맞춤
+        height: containerHeight, // 동적으로 계산된 높이 사용
         overflow: 'auto',
         padding: '10px'
       }}>
@@ -85,10 +90,10 @@ const ImageViewer = ({ file, onDownload }) => {
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           border: '1px solid #d9d9d9',
           borderRadius: '8px',
-          overflow: 'hidden',
           backgroundColor: '#ffffff',
           margin: '5px',
-          display: imageLoading ? 'none' : 'inline-block'
+          display: imageLoading ? 'none' : 'inline-block',
+          maxWidth: '100%'
         }}>
           <img
             src={file}
@@ -96,10 +101,8 @@ const ImageViewer = ({ file, onDownload }) => {
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'center',
-              maxWidth: maxImageWidth,
-              maxHeight: 'calc(100vh - 300px)',
-              width: 'auto',
-              height: 'auto',
+              width: maxImageWidth, // pane 크기에 비례한 실제 크기
+              height: 'auto', // 비율 유지
               display: 'block'
             }}
             onLoad={handleImageLoad}

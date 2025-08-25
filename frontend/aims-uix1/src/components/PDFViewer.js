@@ -40,7 +40,8 @@ const PDFViewer = ({ file, onDownload }) => {
       const rightPane = document.querySelector('[data-testid="right-pane"]');
       if (rightPane) {
         const paneWidth = rightPane.offsetWidth;
-        const optimalWidth = Math.min(paneWidth * 0.8, 800);
+        // 최대 제한 제거하고 pane 너비에 비례해서 동적 조정
+        const optimalWidth = paneWidth * 0.85; // 85%로 여유 공간 확보
         setContainerWidth(optimalWidth);
       }
     };
