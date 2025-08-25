@@ -416,7 +416,7 @@
             {
               "id": "2d14fb94-e3db-4899-a60f-89af22c65370",
               "name": "ocr.statusMessage",
-              "value": "={{ $json.body.message }}",
+              "value": "={{ $json.body.statusMessage }}",
               "type": "string"
             },
             {
@@ -469,25 +469,7 @@
       }
     }
   ],
-  "pinData": {
-    "Schedule Trigger": [
-      {
-        "json": {
-          "timestamp": "2025-08-25T07:55:50.001+09:00",
-          "Readable date": "August 25th 2025, 7:55:50 am",
-          "Readable time": "7:55:50 am",
-          "Day of week": "Monday",
-          "Year": "2025",
-          "Month": "August",
-          "Day of month": "25",
-          "Hour": "07",
-          "Minute": "55",
-          "Second": "50",
-          "Timezone": "Asia/Seoul (UTC+09:00)"
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Prepare OCR Binary": {
       "main": [
@@ -684,7 +666,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "73122445-3bac-4824-a933-02d35b1493aa",
+  "versionId": "d152a47e-5a5c-4d6c-88b5-299c46e4d3f4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
