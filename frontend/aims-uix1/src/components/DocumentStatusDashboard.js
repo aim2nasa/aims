@@ -1,0 +1,1948 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight, Radio, Zap } from "lucide-react";
+import websocketService from '../services/websocketService';
+import { apiService, communicationManager } from '../services/apiService';
+
+
+// MongoDB 필드 추출 함수들
+const extractFilename = (document) => {
+  // MongoDB 구조에서 originalName 우선 추출
+  if (document.upload) {
+    let uploadData = document.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.originalName) {
+      return uploadData.originalName;
+    }
+  }
+  
+  // stages.upload에서 originalName 찾기
+  if (document.stages && document.stages.upload) {
+    let uploadData = document.stages.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.originalName) {
+      return uploadData.originalName;
+    }
+  }
+  
+  // 기본 필드에서 찾기
+  let filename = document.filename || document.file_name || document.name || document.title;
+  if (filename) return filename;
+  
+  // Meta에서 filename 찾기 (saveName일 가능성)
+  if (document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.filename) {
+      return metaData.filename;
+    }
+  }
+  
+  if (document.stages && document.stages.meta) {
+    let metaData = document.stages.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.filename) {
+      return metaData.filename;
+    }
+  }
+  
+  // 모든 단계에서 찾기
+  if (document.stages) {
+    for (const [, value] of Object.entries(document.stages)) {
+      let data = value;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          continue;
+        }
+      }
+      if (data && (data.originalName || data.filename)) {
+        return data.originalName || data.filename;
+      }
+    }
+  }
+  
+  return "Unknown File";
+};
+
+const extractSaveName = (document) => {
+  // MongoDB 구조에서 saveName 추출
+  if (document.upload) {
+    let uploadData = document.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.saveName) {
+      return uploadData.saveName;
+    }
+  }
+  
+  // stages.upload에서 saveName 찾기
+  if (document.stages && document.stages.upload) {
+    let uploadData = document.stages.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.saveName) {
+      return uploadData.saveName;
+    }
+  }
+  
+  return null;
+};
+
+const extractStatus = (document) => {
+  // 기본 status 필드
+  if (document.status) return document.status;
+  
+  // meta에서 status 찾기
+  if (document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.meta_status) {
+      return metaData.meta_status === 'ok' ? 'completed' : metaData.meta_status;
+    }
+  }
+  
+  // stages에서 status 찾기
+  if (document.stages) {
+    for (const [, value] of Object.entries(document.stages)) {
+      let data = value;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          continue;
+        }
+      }
+      if (data && data.status) {
+        return data.status === 'completed' ? 'completed' : data.status;
+      }
+    }
+  }
+  
+  return 'pending';
+};
+
+const extractProgress = (document) => {
+  // 기본 progress 필드
+  if (document.progress) return document.progress;
+  
+  // 상태에 따른 추정 진행률
+  const status = extractStatus(document);
+  switch (status) {
+    case 'completed': return 100;
+    case 'processing': return 50;
+    case 'error': return 0;
+    case 'pending': return 0;
+    default: return 0;
+  }
+};
+
+const extractUploadedDate = (document) => {
+  let dateString = null;
+  
+  // upload.uploaded_at 우선
+  if (document.upload) {
+    let uploadData = document.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.uploaded_at) {
+      dateString = uploadData.uploaded_at;
+    }
+  }
+  
+  // stages.upload.uploaded_at
+  if (!dateString && document.stages && document.stages.upload) {
+    let uploadData = document.stages.upload;
+    if (typeof uploadData === 'string') {
+      try {
+        uploadData = JSON.parse(uploadData);
+      } catch (e) {}
+    }
+    if (uploadData && uploadData.uploaded_at) {
+      dateString = uploadData.uploaded_at;
+    }
+  }
+  
+  // meta.created_at
+  if (!dateString && document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.created_at) {
+      dateString = metaData.created_at;
+    }
+  }
+  
+  // stages.meta.created_at
+  if (!dateString && document.stages && document.stages.meta) {
+    let metaData = document.stages.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.created_at) {
+      dateString = metaData.created_at;
+    }
+  }
+  
+  // 기본 필드들
+  if (!dateString) {
+    dateString = document.uploaded_at || document.created_at || document.timestamp;
+  }
+  
+  // 날짜 문자열 정리 (xxx 제거 등)
+  if (dateString && typeof dateString === 'string') {
+    dateString = dateString.replace(/xxx$/, ''); // 끝의 xxx 제거
+    dateString = dateString.replace(/\.\d{3}xxx$/, ''); // .123xxx 패턴 제거
+  }
+  
+  return dateString;
+};
+
+// 상태 뱃지 컴포넌트
+const StatusBadge = ({ status, size = "medium" }) => {
+  const configs = {
+    completed: { icon: CheckCircle, label: "Completed", color: "#10b981", bgColor: "#dcfce7" },
+    processing: { icon: Clock, label: "Processing", color: "#3b82f6", bgColor: "#dbeafe" },
+    error: { icon: XCircle, label: "Error", color: "#ef4444", bgColor: "#fee2e2" },
+    pending: { icon: AlertCircle, label: "Pending", color: "#6b7280", bgColor: "#f3f4f6" }
+  };
+  
+  const config = configs[status] || configs.pending;
+  const Icon = config.icon;
+  const fontSize = size === "small" ? "12px" : "14px";
+  const padding = size === "small" ? "4px 8px" : "6px 12px";
+  const iconSize = size === "small" ? "12px" : "16px";
+  
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      borderRadius: '9999px',
+      fontWeight: '500',
+      fontSize,
+      padding,
+      backgroundColor: config.bgColor,
+      color: config.color
+    }}>
+      <Icon style={{ width: iconSize, height: iconSize, marginRight: '4px' }} />
+      {config.label}
+    </span>
+  );
+};
+
+// 진행률 바 컴포넌트
+const ProgressBar = ({ progress, status }) => {
+  const colorMap = {
+    completed: "#10b981",
+    processing: "#3b82f6", 
+    error: "#ef4444",
+    pending: "#9ca3af"
+  };
+  
+  return (
+    <div style={{ width: '100%' }}>
+      <div style={{ 
+        width: '100%', 
+        backgroundColor: '#e5e7eb', 
+        borderRadius: '4px', 
+        height: '8px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          height: '8px',
+          borderRadius: '4px',
+          transition: 'width 0.5s',
+          backgroundColor: colorMap[status] || colorMap.pending,
+          width: `${Math.min(progress || 0, 100)}%`,
+          animation: status === "processing" ? "pulse 2s infinite" : "none"
+        }} />
+      </div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        fontSize: '12px',
+        color: '#6b7280',
+        marginTop: '4px'
+      }}>
+        <span>{progress || 0}%</span>
+        <span style={{ textTransform: 'capitalize' }}>{status || 'pending'}</span>
+      </div>
+    </div>
+  );
+};
+
+// ID 복사 컴포넌트
+const CopyableId = ({ id }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
+      fontSize: '12px',
+      color: '#6b7280',
+      fontFamily: 'monospace',
+      backgroundColor: '#f9fafb',
+      padding: '4px 8px',
+      borderRadius: '4px'
+    }}>
+      <span style={{
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        maxWidth: '120px'
+      }} title={id}>
+        {id}
+      </span>
+      <button
+        onClick={handleCopy}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: copied ? '#10b981' : '#9ca3af',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0'
+        }}
+        title="Copy ID"
+      >
+        {copied ? (
+          <CheckCircle style={{ width: '12px', height: '12px' }} />
+        ) : (
+          <Copy style={{ width: '12px', height: '12px' }} />
+        )}
+      </button>
+    </div>
+  );
+};
+
+// 페이지네이션 컴포넌트
+const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange }) => {
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div style={{
+      background: 'white',
+      borderRadius: '8px',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      padding: '16px'
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        {/* 페이지 정보 및 개수 설정 */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <span style={{ fontSize: '14px', color: '#374151' }}>
+            Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of <strong>{totalItems}</strong> documents
+          </span>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', color: '#4b5563' }}>Show:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              style={{
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span style={{ fontSize: '14px', color: '#4b5563' }}>per page</span>
+          </div>
+        </div>
+
+        {/* 페이지네이션 버튼 */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 12px',
+                fontSize: '14px',
+                color: '#6b7280',
+                background: 'none',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <ChevronLeft style={{ width: '16px', height: '16px' }} />
+            </button>
+
+            {getPageNumbers().map((page, index) => (
+              <React.Fragment key={index}>
+                {page === '...' ? (
+                  <span style={{ 
+                    padding: '8px 12px', 
+                    fontSize: '14px', 
+                    color: '#6b7280' 
+                  }}>...</span>
+                ) : (
+                  <button
+                    onClick={() => onPageChange(page)}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: currentPage === page ? '#3b82f6' : 'white',
+                      color: currentPage === page ? 'white' : '#374151'
+                    }}
+                  >
+                    {page}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
+
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 12px',
+                fontSize: '14px',
+                color: '#6b7280',
+                background: 'none',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === totalPages ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <ChevronRight style={{ width: '16px', height: '16px' }} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DocumentListView = ({ documents, onDocumentClick }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown";
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const truncateFilename = (filename, maxLength = 50) => {
+    if (!filename) return "Unknown File";
+    return filename.length <= maxLength ? filename : filename.substring(0, maxLength - 3) + "...";
+  };
+
+  return (
+    <div style={{
+      background: 'white',
+      borderRadius: '8px',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      overflow: 'hidden'
+    }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+            <tr>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'left',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Document
+              </th>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'left',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Status
+              </th>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'left',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Progress
+              </th>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'left',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Uploaded
+              </th>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'left',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Document ID
+              </th>
+            </tr>
+          </thead>
+          <tbody style={{ background: 'white' }}>
+            {documents.map((document, index) => {
+              const filename = extractFilename(document);
+              const status = extractStatus(document);
+              const progress = extractProgress(document);
+              const uploadedDate = extractUploadedDate(document);
+              
+              return (
+                <tr 
+                  key={document.id || document._id || index}
+                  onClick={() => onDocumentClick(document)}
+                  style={{
+                    borderBottom: index < documents.length - 1 ? '1px solid #e5e7eb' : 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.closest('tr').style.backgroundColor = '#f9fafb'}
+                  onMouseLeave={(e) => e.target.closest('tr').style.backgroundColor = 'white'}
+                >
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{
+                        backgroundColor: '#eff6ff',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        marginRight: '12px'
+                      }}>
+                        <FileText style={{ width: '16px', height: '16px', color: '#3b82f6' }} />
+                      </div>
+                      <div style={{ minWidth: '0', flex: '1' }}>
+                        <p style={{
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          color: '#111827',
+                          margin: '0',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }} title={filename}>
+                          {truncateFilename(filename)}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <StatusBadge status={status} size="small" />
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ width: '100%', maxWidth: '200px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ flex: '1' }}>
+                          <div style={{
+                            width: '100%',
+                            backgroundColor: '#e5e7eb',
+                            borderRadius: '4px',
+                            height: '8px'
+                          }}>
+                            <div style={{
+                              height: '8px',
+                              borderRadius: '4px',
+                              transition: 'width 0.5s',
+                              backgroundColor: 
+                                status === "completed" ? "#10b981" :
+                                status === "processing" ? "#3b82f6" :
+                                status === "error" ? "#ef4444" : "#9ca3af",
+                              width: `${Math.min(progress || 0, 100)}%`,
+                              animation: status === "processing" ? "pulse 2s infinite" : "none"
+                            }} />
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          fontWeight: '500',
+                          minWidth: '40px',
+                          textAlign: 'right'
+                        }}>
+                          {progress || 0}%
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      {formatDate(uploadedDate)}
+                    </div>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontFamily: 'monospace',
+                      color: '#9ca3af',
+                      maxWidth: '128px'
+                    }}>
+                      <span style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'block'
+                      }} title={document.id || document._id || 'unknown-id'}>
+                        {(document.id || document._id || 'unknown-id').slice(0, 12)}...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const DocumentCard = ({ document, onClick }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown";
+    return new Date(dateString).toLocaleString();
+  };
+
+  const truncateFilename = (filename, maxLength = 30) => {
+    if (!filename) return "Unknown File";
+    return filename.length <= maxLength ? filename : filename.substring(0, maxLength - 3) + "...";
+  };
+
+  const filename = extractFilename(document);
+  const status = extractStatus(document);
+  const progress = extractProgress(document);
+  const uploadedDate = extractUploadedDate(document);
+
+  return (
+    <div 
+      onClick={() => onClick(document)}
+      style={{
+        background: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        padding: '16px',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        borderLeft: '4px solid #3b82f6'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+      }}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: '12px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          minWidth: '0',
+          flex: '1'
+        }}>
+          <div style={{
+            backgroundColor: '#eff6ff',
+            padding: '8px',
+            borderRadius: '8px',
+            flexShrink: '0'
+          }}>
+            <FileText style={{ width: '20px', height: '20px', color: '#3b82f6' }} />
+          </div>
+          <div style={{ minWidth: '0', flex: '1' }}>
+            <h3 style={{
+              fontWeight: '600',
+              color: '#111827',
+              fontSize: '14px',
+              lineHeight: '1.25',
+              marginBottom: '4px',
+              margin: '0 0 4px 0'
+            }} title={filename}>
+              {truncateFilename(filename)}
+            </h3>
+            <CopyableId id={document.id || document._id || 'unknown-id'} />
+          </div>
+        </div>
+        <div style={{ flexShrink: '0' }}>
+          <StatusBadge status={status} size="small" />
+        </div>
+      </div>
+      
+      <div style={{ marginBottom: '12px' }}>
+        <ProgressBar progress={progress} status={status} />
+      </div>
+      
+      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Clock style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          {formatDate(uploadedDate)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 상세 정보 모달
+const DocumentDetailModal = ({ document, isOpen, onClose }) => {
+  if (!isOpen || !document) return null;
+
+  const filename = extractFilename(document);
+  const saveName = extractSaveName(document);
+  const status = extractStatus(document);
+  const progress = extractProgress(document);
+  const uploadedDate = extractUploadedDate(document);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '1000',
+      padding: '16px'
+    }} onClick={onClose}>
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        maxWidth: '64rem',
+        width: '100%',
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }} onClick={e => e.stopPropagation()}>
+        {/* 헤더 - 고정 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '24px',
+          borderBottom: '1px solid #e5e7eb',
+          flexShrink: '0'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
+            <div>
+              <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0' }}>{filename}</h2>
+              {saveName && saveName !== filename && (
+                <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 0 0' }}>Server file: {saveName}</p>
+              )}
+              <div style={{ marginTop: '4px' }}>
+                <CopyableId id={document.id || document._id || 'unknown-id'} />
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#9ca3af'
+          }}>
+            <XCircle style={{ width: '24px', height: '24px' }} />
+          </button>
+        </div>
+        
+        {/* 콘텐츠 영역 - 스크롤 가능 */}
+        <div style={{ padding: '24px', overflowY: 'auto', flex: '1' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <h3 style={{ fontWeight: '500', color: '#111827', marginBottom: '8px' }}>Processing Progress</h3>
+              <ProgressBar progress={progress} status={status} />
+            </div>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              fontSize: '14px'
+            }}>
+              <div>
+                <span style={{ fontWeight: '500', color: '#4b5563' }}>Status:</span>
+                <div style={{ marginTop: '4px' }}>
+                  <StatusBadge status={status} />
+                </div>
+              </div>
+              <div>
+                <span style={{ fontWeight: '500', color: '#4b5563' }}>Progress:</span>
+                <p style={{ color: '#111827', margin: '4px 0 0 0' }}>{progress}%</p>
+              </div>
+              <div>
+                <span style={{ fontWeight: '500', color: '#4b5563' }}>Original Name:</span>
+                <p style={{ color: '#111827', margin: '4px 0 0 0', wordBreak: 'break-all' }}>{filename}</p>
+              </div>
+              {saveName && saveName !== filename && (
+                <div>
+                  <span style={{ fontWeight: '500', color: '#4b5563' }}>Server File:</span>
+                  <p style={{
+                    color: '#111827',
+                    margin: '4px 0 0 0',
+                    wordBreak: 'break-all',
+                    fontFamily: 'monospace',
+                    fontSize: '12px'
+                  }}>{saveName}</p>
+                </div>
+              )}
+              <div>
+                <span style={{ fontWeight: '500', color: '#4b5563' }}>Uploaded:</span>
+                <p style={{ color: '#111827', margin: '4px 0 0 0' }}>
+                  {uploadedDate ? new Date(uploadedDate).toLocaleString() : 'Unknown'}
+                </p>
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span style={{ fontWeight: '500', color: '#4b5563' }}>Document ID:</span>
+                <div style={{ marginTop: '4px' }}>
+                  <CopyableId id={document.id || document._id || 'unknown-id'} />
+                </div>
+              </div>
+            </div>
+
+            {document.stages && (
+              <div style={{ marginTop: '24px' }}>
+                <h3 style={{ fontWeight: '500', color: '#111827', marginBottom: '12px' }}>Processing Stages</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {Object.entries(document.stages).map(([stage, data]) => (
+                    <div key={stage} style={{
+                      backgroundColor: '#f9fafb',
+                      borderRadius: '8px',
+                      padding: '12px'
+                    }}>
+                      <h4 style={{
+                        fontWeight: '500',
+                        color: '#374151',
+                        textTransform: 'capitalize',
+                        margin: '0 0 4px 0'
+                      }}>{stage}</h4>
+                      <pre style={{
+                        fontSize: '12px',
+                        color: '#4b5563',
+                        margin: '0',
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'monospace'
+                      }}>
+                        {JSON.stringify(data, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* 푸터 - 고정 */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: '24px',
+          borderTop: '1px solid #e5e7eb',
+          backgroundColor: '#f9fafb',
+          flexShrink: '0'
+        }}>
+          <button 
+            onClick={onClose} 
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              padding: '8px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// 메인 대시보드 컴포넌트
+const DocumentStatusDashboard = ({ initialFiles = [] }) => {
+  const [documents, setDocuments] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [paginatedDocuments, setPaginatedDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [apiHealth, setApiHealth] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [isPollingEnabled, setIsPollingEnabled] = useState(true);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
+  
+  // 통신 관련 상태
+  const [communicationMode, setCommunicationMode] = useState('polling');
+  const [wsConnected, setWsConnected] = useState(false);
+  const [wsStats, setWsStats] = useState(null);
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  // 문서 목록 가져오기
+  const fetchDocuments = useCallback(async (isInitialLoad = false) => {
+    try {
+      if (isInitialLoad) {
+        setLoading(true);
+      }
+      setError(null);
+      // 더 많은 문서를 가져와서 클라이언트 사이드 페이지네이션 지원
+      const data = await apiService.getRecentDocuments(1000);
+      setDocuments(data.documents || []);
+      setLastUpdated(new Date());
+      console.log(`Fetched ${data.documents?.length || 0} documents`);
+    } catch (err) {
+      setError("문서 목록을 불러올 수 없습니다.");
+      console.error("Fetch documents error:", err);
+      // 초기 로드 실패 시에도 빈 배열로 설정하여 로딩 상태 해제
+      if (isInitialLoad) {
+        setDocuments([]);
+      }
+    } finally {
+      if (isInitialLoad) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  // API 헬스 체크
+  const checkApiHealth = useCallback(async () => {
+    try {
+      await apiService.checkHealth();
+      setApiHealth(true);
+    } catch (err) {
+      setApiHealth(false);
+    }
+  }, []);
+
+  // WebSocket 연결 설정
+  const setupWebSocket = useCallback(() => {
+    const wsUrl = apiService.getWebSocketUrl();
+    
+    // WebSocket 이벤트 리스너 설정
+    const handleConnected = () => {
+      console.log('WebSocket connected');
+      setWsConnected(true);
+      setError(null);
+    };
+
+    const handleDisconnected = () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
+    };
+
+    const handleError = (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+      setError('WebSocket 연결에 실패했습니다.');
+    };
+
+    const handleInitialData = (data) => {
+      console.log('Received initial data:', data);
+      setDocuments(data.documents || []);
+      setLastUpdated(new Date(data.timestamp));
+      setLoading(false);
+    };
+
+    const handleDocumentUpdate = (data) => {
+      console.log('WebSocket 업데이트 수신:', data.filename, data.id);
+      console.log('업데이트 데이터 전체:', data);
+      
+      setDocuments(prevDocs => {
+        console.log('현재 문서 수:', prevDocs.length);
+        const updatedDocs = [...prevDocs];
+        const index = updatedDocs.findIndex(doc => (doc.id || doc._id) === data.id);
+        console.log('문서 찾기 결과 - 인덱스:', index, '찾은 ID:', data.id);
+        
+        if (index >= 0) {
+          // 기존 문서 업데이트
+          console.log('기존 문서 업데이트');
+          updatedDocs[index] = {
+            ...updatedDocs[index],
+            ...data,
+            _id: data.id,
+            id: data.id
+          };
+        } else {
+          // 새 문서 추가
+          console.log('새 문서 추가:', data.filename);
+          updatedDocs.unshift({
+            ...data,
+            _id: data.id,
+            id: data.id
+          });
+        }
+        
+        console.log('업데이트 후 문서 수:', updatedDocs.length);
+        return updatedDocs;
+      });
+      setLastUpdated(new Date());
+    };
+
+    const handleDatabaseEmpty = (data) => {
+      console.log('Database is empty - received empty state:', data);
+      setDocuments([]); // 모든 문서 제거
+      setLastUpdated(new Date(data.timestamp));
+      setLoading(false);
+    };
+
+    const handleStatusUpdate = (data) => {
+      console.log('Status update received:', data);
+      // 전체 문서 목록으로 상태 업데이트 (문서 수 변화 시에만)
+      if (data.documents && Array.isArray(data.documents)) {
+        console.log(`Document count changed: ${data.previous_count} -> ${data.current_count}`);
+        console.log(`Updating with ${data.documents.length} documents for pagination`);
+        setDocuments(data.documents);
+      }
+      setLastUpdated(new Date(data.timestamp));
+    };
+
+    // 이벤트 리스너 등록
+    websocketService.on('connected', handleConnected);
+    websocketService.on('disconnected', handleDisconnected);
+    websocketService.on('error', handleError);
+    websocketService.on('initial_data', handleInitialData);
+    websocketService.on('document_update', handleDocumentUpdate);
+    websocketService.on('database_empty', handleDatabaseEmpty);
+    websocketService.on('status_update', handleStatusUpdate);
+
+    // WebSocket 연결
+    websocketService.connect(wsUrl).catch(error => {
+      console.error('Failed to connect WebSocket:', error);
+      setError('WebSocket 연결에 실패했습니다.');
+    });
+
+    // 정리 함수 반환
+    return () => {
+      websocketService.off('connected', handleConnected);
+      websocketService.off('disconnected', handleDisconnected);
+      websocketService.off('error', handleError);
+      websocketService.off('initial_data', handleInitialData);
+      websocketService.off('document_update', handleDocumentUpdate);
+      websocketService.off('database_empty', handleDatabaseEmpty);
+      websocketService.off('status_update', handleStatusUpdate);
+    };
+  }, []);
+
+  // 통신 모드 전환
+  const switchCommunicationMode = useCallback((mode) => {
+    if (mode === communicationMode) return;
+
+    console.log(`Switching communication mode from ${communicationMode} to ${mode}`);
+    
+    if (mode === 'websocket') {
+      // 폴링 중지하고 WebSocket 연결
+      setIsPollingEnabled(false);
+      setLoading(true);
+      setupWebSocket();
+    } else {
+      // WebSocket 연결 해제하고 폴링 시작
+      websocketService.disconnect();
+      setWsConnected(false);
+      setIsPollingEnabled(true);
+      fetchDocuments(true); // 모드 전환 시 초기 로드로 처리
+    }
+
+    setCommunicationMode(mode);
+    communicationManager.setMode(mode);
+  }, [communicationMode, setupWebSocket, fetchDocuments]);
+
+  // WebSocket 통계 조회
+  const fetchWebSocketStats = useCallback(async () => {
+    if (communicationMode === 'websocket') {
+      try {
+        const stats = await apiService.checkWebSocketHealth();
+        setWsStats(stats);
+      } catch (err) {
+        console.error('Failed to fetch WebSocket stats:', err);
+      }
+    }
+  }, [communicationMode]);
+
+  // 초기 로드
+  useEffect(() => {
+    console.log('Dashboard mounted - starting initial load...');
+    fetchDocuments(true); // isInitialLoad = true로 전달
+    checkApiHealth();
+  }, [fetchDocuments, checkApiHealth]);
+
+  // initialFiles가 변경되면 임시 문서 추가
+  useEffect(() => {
+    if (initialFiles.length > 0) {
+      console.log(`Adding ${initialFiles.length} initial files to dashboard`);
+      setDocuments(prevDocs => {
+        const existingIds = prevDocs.map(doc => doc.id);
+        const newFiles = initialFiles.filter(file => !existingIds.includes(file.id));
+        console.log(`Adding ${newFiles.length} new files (${existingIds.length} already exist)`);
+        return [...newFiles, ...prevDocs];
+      });
+      // initialFiles가 추가되면 로딩 상태 해제
+      if (loading) {
+        setLoading(false);
+      }
+    }
+  }, [initialFiles, loading]);
+
+  // 실시간 폴링 (5초마다) - 폴링 모드일 때만
+  useEffect(() => {
+    if (!isPollingEnabled || communicationMode !== 'polling') return;
+    
+    const interval = setInterval(() => {
+      fetchDocuments();
+      checkApiHealth();
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [isPollingEnabled, communicationMode, fetchDocuments, checkApiHealth]);
+
+  // WebSocket 통계 폴링 (10초마다)
+  useEffect(() => {
+    if (communicationMode !== 'websocket') return;
+    
+    const interval = setInterval(() => {
+      fetchWebSocketStats();
+    }, 10000);
+    
+    // 즉시 한 번 실행
+    fetchWebSocketStats();
+    
+    return () => clearInterval(interval);
+  }, [communicationMode, fetchWebSocketStats]);
+
+  // 실시간 처리 상태 시뮬레이션 (임시 문서용)
+  useEffect(() => {
+    if (documents.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setDocuments(prevDocs => {
+        let hasChanges = false;
+        const updated = prevDocs.map(doc => {
+          if (doc.status === 'processing' && doc.id && doc.id.startsWith('temp-')) {
+            const currentProgress = doc.progress || 10;
+            const increment = Math.random() * 15 + 5; // 5-20% 증가
+            const newProgress = Math.min(currentProgress + increment, 95);
+            
+            hasChanges = true;
+            
+            // 90% 이상이면 완료 상태로 변경할 확률 증가
+            if (newProgress >= 90 && Math.random() > 0.3) {
+              return {
+                ...doc,
+                status: 'completed',
+                progress: 100
+              };
+            }
+            
+            return {
+              ...doc,
+              progress: newProgress
+            };
+          }
+          return doc;
+        });
+        
+        if (hasChanges) {
+          setLastUpdated(new Date());
+        }
+        
+        return hasChanges ? updated : prevDocs;
+      });
+    }, 2000); // 2초마다 업데이트
+    
+    return () => clearInterval(interval);
+  }, [documents.length]);
+
+  // 검색 및 필터링
+  useEffect(() => {
+    let filtered = documents;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(doc => {
+        const filename = extractFilename(doc);
+        const id = doc.id || doc._id || '';
+        return filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               id.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    }
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(doc => extractStatus(doc) === statusFilter);
+    }
+    
+    setFilteredDocuments(filtered);
+  }, [documents, searchTerm, statusFilter]);
+
+  // 필터 조건 변경 시에만 페이지 리셋 (문서 업데이트는 제외)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // 페이지네이션 적용
+  useEffect(() => {
+    // 현재 페이지가 유효 범위를 벗어나면 조정
+    const maxPage = Math.ceil(filteredDocuments.length / itemsPerPage) || 1;
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+      return;
+    }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginated = filteredDocuments.slice(startIndex, endIndex);
+    setPaginatedDocuments(paginated);
+  }, [filteredDocuments, currentPage, itemsPerPage]);
+
+  // 페이지네이션 관련 계산
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // 페이지 변경 시 최상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // 개수 변경 시 첫 페이지로 리셋
+  };
+
+  // 상태별 통계 (전체 문서 기준)
+  const statusCounts = documents.reduce((acc, doc) => {
+    const status = extractStatus(doc);
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const handleDocumentClick = async (document) => {
+    // 먼저 메인 리스트 데이터로 모달 열기 (일관성 보장)
+    setSelectedDocument(document);
+    setShowDetailModal(true);
+    
+    // 백그라운드에서 상세 데이터 로드하여 Processing Stages 등 추가 정보 제공
+    try {
+      const detailData = await apiService.getDocumentStatus(document.id || document._id);
+      if (detailData) {
+        // 기본 정보는 메인 데이터 유지, 상세 정보(stages)만 병합
+        const mergedData = {
+          ...document, // 메인 데이터 우선 (일관성 보장)
+          stages: detailData.stages || document.stages, // 상세 stages 정보 추가
+          // 추가 상세 정보가 있다면 여기에 병합
+        };
+        setSelectedDocument(mergedData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch document details:", err);
+      // 메인 데이터만으로도 모달이 정상 작동
+    }
+  };
+
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+      {/* 헤더 */}
+      <header style={{ 
+        background: 'white', 
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
+        borderBottom: '1px solid #e5e7eb',
+        flexShrink: 0
+      }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            padding: '16px 0',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                backgroundColor: '#3b82f6',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <FileText style={{ width: '20px', height: '20px', color: 'white' }} />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0' }}>Document Status Dashboard</h1>
+                <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Real-time document processing monitor</p>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* 통신 모드 선택 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <button
+                    onClick={() => switchCommunicationMode('polling')}
+                    style={{
+                      padding: '4px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'colors 0.2s',
+                      backgroundColor: communicationMode === 'polling' ? '#3b82f6' : 'white',
+                      color: communicationMode === 'polling' ? 'white' : '#374151'
+                    }}
+                    title="Polling Mode"
+                  >
+                    <Radio style={{ width: '12px', height: '12px' }} />
+                    <span>Polling</span>
+                  </button>
+                  <button
+                    onClick={() => switchCommunicationMode('websocket')}
+                    style={{
+                      padding: '4px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'colors 0.2s',
+                      backgroundColor: communicationMode === 'websocket' ? '#f97316' : 'white',
+                      color: communicationMode === 'websocket' ? 'white' : '#374151'
+                    }}
+                    title="WebSocket Mode (실시간 - 2초 간격)"
+                  >
+                    <Zap style={{ width: '12px', height: '12px' }} />
+                    <span>WebSocket</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* API/WebSocket 연결 상태 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {communicationMode === 'polling' ? (
+                  <>
+                    {apiHealth ? <Wifi style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
+                    <span style={{ fontSize: '14px', color: apiHealth ? '#059669' : '#dc2626' }}>
+                      {apiHealth ? "API Connected" : "API Disconnected"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    {wsConnected ? <Zap style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
+                    <span style={{ fontSize: '14px', color: wsConnected ? '#059669' : '#dc2626' }}>
+                      WS {wsConnected ? "Connected" : "Disconnected"}
+                      {wsStats && wsConnected && (
+                        <span style={{ marginLeft: '4px', fontSize: '12px', color: '#6b7280' }}>
+                          ({wsStats.active_connections})
+                        </span>
+                      )}
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              {/* 폴링 상태 - 폴링 모드일 때만 표시 */}
+              {communicationMode === 'polling' && (
+                <button
+                  onClick={() => setIsPollingEnabled(!isPollingEnabled)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'colors 0.2s',
+                    backgroundColor: isPollingEnabled ? '#dcfce7' : '#f3f4f6',
+                    color: isPollingEnabled ? '#166534' : '#374151'
+                  }}
+                >
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: isPollingEnabled ? '#10b981' : '#6b7280',
+                    animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
+                  }} />
+                  {isPollingEnabled ? "Live" : "Paused"}
+                </button>
+              )}
+              
+              {/* 새로고침 버튼 - 폴링 모드일 때만 표시 */}
+              {communicationMode === 'polling' && (
+                <button 
+                  onClick={fetchDocuments} 
+                  disabled={loading} 
+                  style={{
+                    backgroundColor: loading ? '#93c5fd' : '#3b82f6',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) e.target.style.backgroundColor = '#2563eb';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) e.target.style.backgroundColor = '#3b82f6';
+                  }}
+                >
+                  <RefreshCw style={{
+                    width: '16px',
+                    height: '16px',
+                    animation: loading ? 'spin 1s linear infinite' : 'none'
+                  }} />
+                  <span>Refresh</span>
+                </button>
+              )}
+
+              {/* WebSocket 재연결 버튼 - WebSocket 모드이고 연결이 끊어졌을 때만 표시 */}
+              {communicationMode === 'websocket' && !wsConnected && (
+                <button 
+                  onClick={() => switchCommunicationMode('websocket')} 
+                  disabled={loading}
+                  style={{
+                    backgroundColor: loading ? '#fed7aa' : '#f97316',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) e.target.style.backgroundColor = '#ea580c';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) e.target.style.backgroundColor = '#f97316';
+                  }}
+                >
+                  <Zap style={{
+                    width: '16px',
+                    height: '16px',
+                    animation: loading ? 'spin 1s linear infinite' : 'none'
+                  }} />
+                  <span>Reconnect</span>
+                </button>
+              )}
+
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 메인 콘텐츠 */}
+      <main style={{ flex: '1', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px 24px 24px' }}>
+          {/* 통계 대시보드 */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Total</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '4px 0 0 0' }}>{documents.length}</p>
+                </div>
+                <FileText style={{ width: '32px', height: '32px', color: '#3b82f6' }} />
+              </div>
+            </div>
+            
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Completed</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669', margin: '4px 0 0 0' }}>{statusCounts.completed || 0}</p>
+                </div>
+                <CheckCircle style={{ width: '32px', height: '32px', color: '#10b981' }} />
+              </div>
+            </div>
+            
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Processing</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb', margin: '4px 0 0 0' }}>{statusCounts.processing || 0}</p>
+                </div>
+                <Clock style={{ width: '32px', height: '32px', color: '#3b82f6' }} />
+              </div>
+            </div>
+            
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Errors</p>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626', margin: '4px 0 0 0' }}>{statusCounts.error || 0}</p>
+                </div>
+                <XCircle style={{ width: '32px', height: '32px', color: '#ef4444' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* 검색 및 필터 */}
+          <div style={{
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            padding: '16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <div style={{ flex: '1', maxWidth: '400px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Search style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '16px',
+                      height: '16px',
+                      color: '#9ca3af'
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Search by filename or document ID..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                        width: '100%',
+                        paddingLeft: '40px',
+                        paddingRight: '16px',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#3b82f6';
+                        e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* 뷰 모드 전환 버튼 */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      style={{
+                        padding: '8px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'colors 0.2s',
+                        backgroundColor: viewMode === "grid" ? '#3b82f6' : 'white',
+                        color: viewMode === "grid" ? 'white' : '#374151'
+                      }}
+                      title="Grid View"
+                    >
+                      <Grid3X3 style={{ width: '16px', height: '16px' }} />
+                      <span>Grid</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      style={{
+                        padding: '8px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'colors 0.2s',
+                        backgroundColor: viewMode === "list" ? '#3b82f6' : 'white',
+                        color: viewMode === "list" ? 'white' : '#374151'
+                      }}
+                      title="List View"
+                    >
+                      <List style={{ width: '16px', height: '16px' }} />
+                      <span>List</span>
+                    </button>
+                  </div>
+                  
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#3b82f6';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="completed">Completed</option>
+                    <option value="error">Error</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginTop: '16px',
+                paddingTop: '16px',
+                borderTop: '1px solid #e5e7eb',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '14px', color: '#4b5563' }}>
+                  Total <strong>{filteredDocuments.length}</strong> documents
+                  <span style={{ marginLeft: '8px', fontSize: '12px', color: '#9ca3af' }}>
+                    ({viewMode === "grid" ? "Grid" : "List"} view)
+                  </span>
+                </span>
+                {lastUpdated && (
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 에러 표시 */}
+          {error && (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '24px'
+            }}>
+              <p style={{ color: '#b91c1c', fontSize: '14px', margin: '0' }}>{error}</p>
+            </div>
+          )}
+
+          {/* 문서 표시 영역 */}
+          {loading && documents.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+              <RefreshCw style={{
+                width: '32px',
+                height: '32px',
+                color: '#3b82f6',
+                marginRight: '12px',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <span style={{ color: '#4b5563' }}>Loading documents...</span>
+            </div>
+          ) : (
+            <>
+              {paginatedDocuments.length > 0 ? (
+                <>
+                  {viewMode === "grid" ? (
+                    /* 카드 뷰 */
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                      gap: '16px',
+                      marginBottom: '24px'
+                    }}>
+                      {paginatedDocuments.map((document) => (
+                        <DocumentCard 
+                          key={document.id || document._id || Math.random()} 
+                          document={document}
+                          onClick={handleDocumentClick}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    /* 리스트 뷰 */
+                    <div style={{ marginBottom: '24px' }}>
+                      <DocumentListView 
+                        documents={paginatedDocuments}
+                        onDocumentClick={handleDocumentClick}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* 페이지네이션 */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={filteredDocuments.length}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                  />
+                </>
+              ) : (
+                /* 빈 상태 */
+                <div style={{
+                  textAlign: 'center',
+                  padding: '48px 0',
+                  background: viewMode === "list" ? 'white' : 'transparent',
+                  borderRadius: viewMode === "list" ? '8px' : '0',
+                  boxShadow: viewMode === "list" ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
+                }}>
+                  <FileText style={{ width: '96px', height: '96px', color: '#d1d5db', margin: '0 auto 16px auto' }} />
+                  <h3 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>No documents found</h3>
+                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0' }}>
+                    {searchTerm || statusFilter !== "all" 
+                      ? "Try adjusting your search or filter criteria."
+                      : "No documents have been uploaded yet."
+                    }
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </main>
+
+      {/* 푸터 */}
+      <footer style={{
+        background: 'white',
+        borderTop: '1px solid #e5e7eb',
+        flexShrink: '0'
+      }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '14px',
+            color: '#6b7280',
+            gap: '8px',
+            padding: '16px 0'
+          }}>
+            <div>
+              Connected to: <code style={{
+                backgroundColor: '#f3f4f6',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '12px'
+              }}>tars.giize.com:8080</code>
+              <span style={{ marginLeft: '8px', fontSize: '12px' }}>
+                ({communicationMode === 'polling' ? 'HTTP Polling' : 'WebSocket'})
+              </span>
+            </div>
+            <div>
+              {communicationMode === 'polling' ? (
+                <>Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}</>
+              ) : (
+                <>Real-time: {wsConnected ? "Connected" : "Disconnected"}</>
+              )}
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* 상세 정보 모달 */}
+      <DocumentDetailModal 
+        document={selectedDocument}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+      />
+
+    </div>
+  );
+};
+
+export default DocumentStatusDashboard;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Empty, Modal } from 'antd';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal } from 'antd';
 import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
-import FileList from './FileList';
+import DocumentStatusDashboard from './DocumentStatusDashboard';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -49,12 +49,6 @@ const mockTreeDocuments = [
   },
 ];
 
-const mockListDocuments = [
-  { id: 1, name: '2025년 보험 가입 설계서', type: '계약서', date: '2025-08-15', status: '정상', fileUrl: '/test.pdf', ocr: { confidence: 0.95 } },
-  { id: 2, name: '치과 진료비 청구서', type: '청구서', date: '2025-08-10', status: '처리중', fileUrl: '/test.pdf', ocr: { confidence: 0.72 } },
-  { id: 3, name: '자동차 보험증권', type: '보험증권', date: '2025-07-28', status: '정상', fileUrl: '/test.pdf', ocr: { confidence: 0.99 } },
-  { id: 4, name: '주택 화재 보험 계약서', type: '계약서', date: '2025-07-20', status: '정상', fileUrl: '/test.pdf', ocr: { confidence: 0.88 } },
-];
 
 const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   const [viewMode, setViewMode] = useState('list');
@@ -62,12 +56,29 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
   
   const handleUploadSuccess = (file) => {
-    // 파일 업로드 성공 시 목록에 추가
-    setUploadedFiles(prevFiles => [...prevFiles, {
-      upload: { originalName: file.name },
-      status: 'processing', // 초기 상태는 '처리 중'으로 설정
-    }]);
+    // 파일 업로드 성공 시 즉시 Dashboard에 표시할 임시 문서 생성
+    const tempDocument = {
+      id: `temp-${Date.now()}-${Math.random()}`,
+      upload: { 
+        originalName: file.name,
+        uploaded_at: new Date().toISOString()
+      },
+      status: 'processing', // 처리 중 상태로 시작
+      progress: 10, // 업로드 완료로 10% 진행률
+      stages: {
+        upload: {
+          originalName: file.name,
+          uploaded_at: new Date().toISOString(),
+          status: 'completed'
+        }
+      }
+    };
+    
+    // 파일 목록에 즉시 추가하여 Dashboard 표시
+    setUploadedFiles(prevFiles => [...prevFiles, tempDocument]);
     setIsModalVisible(false);
+    
+    console.log('File uploaded, dashboard should show:', tempDocument);
   };
   
   const showUploadModal = () => {
@@ -85,6 +96,21 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   };
 
   const renderContent = () => {
+    // ✅ 항상 Dashboard를 표시하되, 업로드된 파일이 있으면 해당 파일들을 표시
+    // 업로드된 파일이 없고 검색 결과가 있으면 기존 로직 사용
+    const showDashboard = uploadedFiles.length > 0 || (searchResults.length === 0 && !isLoading);
+    
+    if (showDashboard) {
+      // Dashboard는 자체적으로 전체 화면을 관리하므로 return 전에 렌더링
+      return (
+        <div style={{ margin: '-24px', height: 'calc(100vh - 128px)' }}>
+          <div className="dashboard-container">
+            <DocumentStatusDashboard initialFiles={uploadedFiles} />
+          </div>
+        </div>
+      );
+    }
+
     if (isLoading) {
       return (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
@@ -92,14 +118,6 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
           <p style={{ marginTop: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
             문서를 검색 중입니다...
           </p>
-        </div>
-      );
-    }
-
-    if (searchResults.length === 0) {
-      return (
-        <div style={{ textAlign: 'center', padding: '50px 0' }}>
-          <Empty description="검색 결과가 없습니다." />
         </div>
       );
     }
@@ -142,11 +160,6 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
           )}
         />
       );
-    }
-	
-    // ✅ 업로드된 파일이 있을 경우 FileList를 렌더링
-    if (uploadedFiles.length > 0) {
-      return <FileList files={uploadedFiles} />;
     }
 
     if (viewMode === 'tree') {
