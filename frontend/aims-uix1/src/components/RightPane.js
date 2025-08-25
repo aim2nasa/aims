@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Button, Typography, message } from 'antd';
+import { Card, Button, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import ImageViewer from './ImageViewer';
