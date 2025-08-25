@@ -926,11 +926,22 @@ function App() {
     }
     
     setFilteredDocuments(filtered);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 리셋
   }, [documents, searchTerm, statusFilter]);
+
+  // 필터 조건 변경 시에만 페이지 리셋 (문서 업데이트는 제외)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   // 페이지네이션 적용
   useEffect(() => {
+    // 현재 페이지가 유효 범위를 벗어나면 조정
+    const maxPage = Math.ceil(filteredDocuments.length / itemsPerPage) || 1;
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+      return;
+    }
+    
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginated = filteredDocuments.slice(startIndex, endIndex);
