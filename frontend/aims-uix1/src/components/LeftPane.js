@@ -1,11 +1,11 @@
 import React from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined } from '@ant-design/icons';
+import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
 
-const LeftPane = () => {
+const LeftPane = ({ onMenuClick }) => {
   const onSelect = (selectedKeys, info) => {
     console.log('선택된 항목:', selectedKeys, info);
   };
@@ -41,6 +41,11 @@ const LeftPane = () => {
 
   const menuItems = [
     {
+      key: 'dsd',
+      icon: <DashboardOutlined />,
+      label: '문서 처리 현황',
+    },
+    {
       key: '1',
       icon: <FolderOutlined />,
       label: '보험증권',
@@ -72,7 +77,12 @@ const LeftPane = () => {
         treeData={treeData}
       />
       <Title level={4} style={{ marginTop: 24 }}>문서 유형별</Title>
-      <Menu items={menuItems} mode="inline" defaultSelectedKeys={['1']} />
+      <Menu 
+        items={menuItems} 
+        mode="inline" 
+        defaultSelectedKeys={['1']} 
+        onClick={({ key }) => onMenuClick && onMenuClick(key)}
+      />
     </div>
   );
 };

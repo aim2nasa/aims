@@ -50,7 +50,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
+const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -96,11 +96,14 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading }) => {
   };
 
   const renderContent = () => {
-    // ✅ 항상 Dashboard를 표시하되, 업로드된 파일이 있으면 해당 파일들을 표시
-    // 업로드된 파일이 없고 검색 결과가 있으면 기존 로직 사용
-    const showDashboard = uploadedFiles.length > 0 || (searchResults.length === 0 && !isLoading);
+    // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
+    // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
+    // 검색 결과가 없고 업로드된 파일이 있으면 DSD 표시
+    const hasSearchResults = searchResults.length > 0;
+    const hasUploadedFiles = uploadedFiles.length > 0;
+    const shouldShowDashboard = showDashboard || (!hasSearchResults && hasUploadedFiles && !isLoading);
     
-    if (showDashboard) {
+    if (shouldShowDashboard) {
       // Dashboard는 자체적으로 전체 화면을 관리하므로 return 전에 렌더링
       return (
         <div style={{ margin: '-24px', height: 'calc(100vh - 128px)' }}>

@@ -23,6 +23,9 @@ const AppLayout = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLogic, setSearchLogic] = useState('and');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // DSD 관련 상태
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // 문서 상세 정보 조회 및 RightPane에 전달
   const handleDocumentClick = async (doc) => {
@@ -95,6 +98,8 @@ const AppLayout = () => {
       return;
     }
     
+    // 검색 시 DSD 숨기고 검색 결과 표시
+    setShowDashboard(false);
     setIsLoading(true);
     setSearchResults([]);
 
@@ -109,6 +114,17 @@ const AppLayout = () => {
       console.error(e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // LeftPane에서 DSD 메뉴 클릭 처리
+  const handleLeftPaneMenuClick = (menuKey) => {
+    if (menuKey === 'dsd') {
+      setShowDashboard(true);
+      setSearchResults([]); // 검색 결과 초기화
+      setKeyword(''); // 검색어 초기화
+    } else {
+      setShowDashboard(false);
     }
   };
 
@@ -175,7 +191,7 @@ const AppLayout = () => {
           style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}
         >
           <div style={{ padding: 16 }}>
-            <LeftPane />
+            <LeftPane onMenuClick={handleLeftPaneMenuClick} />
           </div>
           <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid #f0f0f0' }}>
             <Button
@@ -196,6 +212,7 @@ const AppLayout = () => {
                 onDocumentClick={handleDocumentClick}
                 searchResults={searchResults}
                 isLoading={isLoading}
+                showDashboard={showDashboard}
               />
             </div>
 
