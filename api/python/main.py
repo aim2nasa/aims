@@ -393,9 +393,10 @@ async def websocket_endpoint(websocket: WebSocket):
     update_task = None
     
     try:
-        # 연결 즉시 현재 상태 전송
+        # 연결 즉시 현재 상태 전송 - 전체 문서 목록
         try:
-            documents = collection.find().sort("_id", -1).limit(50)
+            # 폴링 모드와 동일하게 1000개 문서까지 가져오기 (클라이언트에서 페이지네이션)
+            documents = collection.find().sort("_id", -1).limit(1000)
             results = []
             for doc in documents:
                 overall_status, progress = get_overall_status(doc)
@@ -416,6 +417,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "timestamp": datetime.utcnow().isoformat()
                 }
             }))
+            print(f"Sent initial data with {len(results)} documents")
             
             # 별도 태스크로 핑과 업데이트 체크 분리
             async def ping_task_func():
@@ -510,10 +512,25 @@ async def websocket_endpoint(websocket: WebSocket):
                         
                         # 문서 수 변화가 있었다면 전체 상태 업데이트 브로드캐스트
                         if last_document_count is not None and last_document_count != total_documents:
+                            # 전체 문서 목록 가져오기 (페이지네이션을 위해)
+                            all_docs = collection.find().sort("_id", -1).limit(1000)
+                            all_documents = []
+                            for doc in all_docs:
+                                overall_status, progress = get_overall_status(doc)
+                                all_documents.append({
+                                    "id": str(doc['_id']),
+                                    "status": overall_status,
+                                    "progress": progress,
+                                    "filename": doc.get('upload', {}).get('originalName') or 
+                                              doc.get('originalName', 'Unknown File'),
+                                    "uploaded_at": doc.get('upload', {}).get('uploaded_at') or 
+                                                  doc.get('uploaded_at')
+                                })
+                            
                             status_update_message = {
                                 "type": "status_update", 
                                 "data": {
-                                    "documents": current_documents,
+                                    "documents": all_documents,
                                     "total": total_documents,
                                     "timestamp": current_time.isoformat(),
                                     "change": "document_count_changed",
@@ -524,7 +541,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             
                             if websocket.client_state.name == 'CONNECTED':
                                 await manager.broadcast(status_update_message)
-                                print(f"Broadcasted status update: {last_document_count} -> {total_documents} documents")
+                                print(f"Broadcasted status update: {last_document_count} -> {total_documents} documents with full document list")
                         
                         if updates_found > 0:
                             print(f"Found and broadcasted {updates_found} document updates")

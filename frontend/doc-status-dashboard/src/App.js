@@ -806,10 +806,11 @@ function App() {
 
     const handleStatusUpdate = (data) => {
       console.log('Status update received:', data);
-      // 전체 문서 목록으로 상태 업데이트
+      // 전체 문서 목록으로 상태 업데이트 (문서 수 변화 시에만)
       if (data.documents && Array.isArray(data.documents)) {
-        setDocuments(data.documents);
         console.log(`Document count changed: ${data.previous_count} -> ${data.current_count}`);
+        console.log(`Updating with ${data.documents.length} documents for pagination`);
+        setDocuments(data.documents);
       }
       setLastUpdated(new Date(data.timestamp));
     };
