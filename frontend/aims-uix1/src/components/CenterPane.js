@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination } from 'antd';
-import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, message } from 'antd';
+import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined, ReadOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -59,6 +60,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showPageSizeModal, setShowPageSizeModal] = useState(false);
+  
+  // Full text 모달 관련 상태
+  const [showFullTextModal, setShowFullTextModal] = useState(false);
+  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState(null);
+  const [fullTextContent, setFullTextContent] = useState('');
   
   const handleUploadSuccess = (file) => {
     // 파일 업로드 성공 시 즉시 Dashboard에 표시할 임시 문서 생성
@@ -117,6 +123,42 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     setShowPageSizeModal(false);
   };
 
+  // Full text 조회 함수
+  const handleFullTextView = async (document) => {
+    const docId = document._id || document.id;
+    
+    if (!docId) {
+      message.error('문서 ID가 없어 전체 텍스트를 불러올 수 없습니다.');
+      return;
+    }
+
+    try {
+      setSelectedDocumentForFullText(document);
+      setFullTextContent('로딩 중...');
+      setShowFullTextModal(true);
+      
+      // OCR 전체 텍스트 조회 API 호출
+      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+        id: docId
+      });
+
+      const fileData = response.data[0];
+      // ocr.full_text 필드에서 전체 텍스트 추출
+      const fullText = fileData.ocr?.full_text || '전체 텍스트를 찾을 수 없습니다.';
+      setFullTextContent(fullText);
+      
+    } catch (e) {
+      setFullTextContent('전체 텍스트를 불러오는 중 오류가 발생했습니다.');
+      console.error('Full text fetch error:', e);
+    }
+  };
+
+  const handleFullTextModalClose = () => {
+    setShowFullTextModal(false);
+    setSelectedDocumentForFullText(null);
+    setFullTextContent('');
+  };
+
   // 현재 페이지에 표시할 데이터 계산
   const getPaginatedData = (data) => {
     if (!data || !Array.isArray(data)) return [];
@@ -172,6 +214,20 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
               renderItem={(item) => (
                 <List.Item
                   key={item.id || item.payload?.doc_id}
+                  actions={[
+                    <Button
+                      type="text"
+                      icon={<ReadOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFullTextView(item);
+                      }}
+                      title="전체 텍스트 보기"
+                      style={{ color: '#1890ff' }}
+                    >
+                      Full Text
+                    </Button>
+                  ]}
                   onClick={() => onDocumentClick(item)}
                   style={{ cursor: 'pointer', padding: '12px 0' }}
                 >
@@ -375,6 +431,44 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
               현재 설정: {pageSize}개씩 표시
             </Text>
           </Space>
+        </div>
+      </Modal>
+
+      {/* Full Text 모달 */}
+      <Modal
+        title={
+          <Space>
+            <ReadOutlined />
+            <Text>{selectedDocumentForFullText?.upload?.originalName || selectedDocumentForFullText?.payload?.original_name || '문서 전체 텍스트'}</Text>
+          </Space>
+        }
+        visible={showFullTextModal}
+        onCancel={handleFullTextModalClose}
+        footer={[
+          <Button key="close" onClick={handleFullTextModalClose}>
+            닫기
+          </Button>
+        ]}
+        width={800}
+        style={{ top: 20 }}
+      >
+        <div style={{ 
+          maxHeight: '60vh', 
+          overflowY: 'auto',
+          padding: '16px',
+          backgroundColor: '#fafafa',
+          border: '1px solid #f0f0f0',
+          borderRadius: '6px'
+        }}>
+          <pre style={{ 
+            whiteSpace: 'pre-wrap', 
+            wordBreak: 'break-word',
+            fontFamily: 'inherit',
+            margin: 0,
+            lineHeight: '1.6'
+          }}>
+            {fullTextContent}
+          </pre>
         </div>
       </Modal>
     </Card>
