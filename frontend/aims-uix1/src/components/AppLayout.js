@@ -28,7 +28,8 @@ const AppLayout = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   
   // 리사이즈 관련 상태
-  const [rightPaneWidth, setRightPaneWidth] = useState(40); // 퍼센트로 관리
+  const OPTIMAL_RIGHT_PANE_WIDTH = 50; // PDF/이미지 뷰어 최적 비율: 50%
+  const [rightPaneWidth, setRightPaneWidth] = useState(OPTIMAL_RIGHT_PANE_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
 
   // 문서 상세 정보 조회 및 RightPane에 전달
@@ -130,6 +131,11 @@ const AppLayout = () => {
     } else {
       setShowDashboard(false);
     }
+  };
+
+  // 최적 비율로 리셋하는 함수
+  const resetToOptimalRatio = () => {
+    setRightPaneWidth(OPTIMAL_RIGHT_PANE_WIDTH);
   };
 
   // 리사이즈 핸들러
@@ -337,6 +343,7 @@ const AppLayout = () => {
                 <RightPane
                   document={selectedDocument}
                   onClose={handleRightPaneCollapse}
+                  onResetRatio={resetToOptimalRatio}
                 />
               </div>
             )}

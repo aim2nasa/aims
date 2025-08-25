@@ -1,12 +1,12 @@
 import React from 'react';
-import { Card, Button, message } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
+import { Card, Button, message, Space } from 'antd';
+import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import ImageViewer from './ImageViewer';
 import axios from 'axios';
 
 
-const RightPane = ({ document, onClose }) => {
+const RightPane = ({ document, onClose, onResetRatio }) => {
   if (!document) {
     return null;
   }
@@ -58,7 +58,17 @@ const RightPane = ({ document, onClose }) => {
   return (
     <Card
       title={document.upload.originalName}
-      extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
+      extra={
+        <Space>
+          <Button 
+            type="text" 
+            icon={<ReloadOutlined />} 
+            onClick={onResetRatio}
+            title="최적 비율로 리셋"
+          />
+          <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
+        </Space>
+      }
       bordered={false}
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
