@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, InputNumber } from 'antd';
-import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination } from 'antd';
+import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
 
@@ -101,21 +101,25 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   };
 
   // 페이지네이션 핸들러
-  const handlePageChange = (page, size) => {
-    setCurrentPage(page);
-    if (size !== pageSize) {
-      setPageSize(size);
+  const handlePageChange = (page) => {
+    if (typeof page === 'number' && page > 0) {
+      setCurrentPage(page);
     }
   };
 
   const handlePageSizeChange = (value) => {
     setPageSize(value);
     setCurrentPage(1); // 페이지 크기 변경 시 첫 페이지로 이동
+    // 모달은 닫지 않음 - OK 버튼을 눌러야 닫힘
+  };
+
+  const handlePageSizeConfirm = () => {
     setShowPageSizeModal(false);
   };
 
   // 현재 페이지에 표시할 데이터 계산
   const getPaginatedData = (data) => {
+    if (!data || !Array.isArray(data)) return [];
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return data.slice(startIndex, endIndex);
@@ -125,8 +129,8 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
     // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
     // 검색 결과가 없고 업로드된 파일이 있으면 DSD 표시
-    const hasSearchResults = searchResults.length > 0;
-    const hasUploadedFiles = uploadedFiles.length > 0;
+    const hasSearchResults = searchResults && searchResults.length > 0;
+    const hasUploadedFiles = uploadedFiles && uploadedFiles.length > 0;
     const shouldShowDashboard = showDashboard || (!hasSearchResults && hasUploadedFiles && !isLoading);
     
     if (shouldShowDashboard) {
@@ -200,7 +204,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
           </div>
           
           {/* 페이지네이션 */}
-          {searchResults.length > 0 && (
+          {searchResults && searchResults.length > 0 && (
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -210,19 +214,17 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
             }}>
               <Space>
                 <Text type="secondary">
-                  총 {searchResults.length}개 문서 중 {Math.min(((currentPage - 1) * pageSize) + 1, searchResults.length)}-{Math.min(currentPage * pageSize, searchResults.length)}개 표시
+                  총 {searchResults?.length || 0}개 문서 중 {Math.min(((currentPage - 1) * pageSize) + 1, searchResults?.length || 0)}-{Math.min(currentPage * pageSize, searchResults?.length || 0)}개 표시
                 </Text>
               </Space>
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={searchResults.length}
+                total={searchResults?.length || 0}
                 onChange={handlePageChange}
-                showSizeChanger
-                showQuickJumper
                 showTotal={(total, range) => `${range[0]}-${range[1]} / ${total}`}
-                pageSizeOptions={['5', '10', '20', '50', '100']}
                 size="small"
+                simple={false}
               />
             </div>
           )}
@@ -288,23 +290,73 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
         title="페이지 설정"
         visible={showPageSizeModal}
         onCancel={() => setShowPageSizeModal(false)}
-        onOk={() => setShowPageSizeModal(false)}
+        onOk={handlePageSizeConfirm}
         width={400}
+        okText="확인"
+        cancelText="취소"
       >
         <div style={{ padding: '20px 0' }}>
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space direction="vertical" style={{ width: '100%' }} size="large">
             <div>
-              <Text style={{ marginRight: 12 }}>페이지당 문서 수:</Text>
-              <InputNumber
-                min={5}
-                max={100}
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                style={{ width: 100 }}
-              />
+              <Text style={{ marginBottom: 16, display: 'block' }}>페이지당 문서 수 선택:</Text>
+              <Space wrap>
+                {[5, 10, 20, 30, 50].map(size => (
+                  <Button
+                    key={size}
+                    type={pageSize === size ? "primary" : "default"}
+                    onClick={() => handlePageSizeChange(size)}
+                    style={{ minWidth: 50 }}
+                  >
+                    {size}개
+                  </Button>
+                ))}
+              </Space>
             </div>
+            
+            <div>
+              <Text style={{ marginBottom: 16, display: 'block' }}>또는 +/- 버튼으로 원하는 개수 설정:</Text>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                gap: '12px',
+                padding: '8px 0'
+              }}>
+                <Button 
+                  type="primary"
+                  shape="circle"
+                  icon={<MinusOutlined />}
+                  onClick={() => handlePageSizeChange(Math.max(5, pageSize - 1))}
+                  disabled={pageSize <= 5}
+                  size="small"
+                />
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '80px',
+                  height: '32px',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  backgroundColor: '#fafafa',
+                  fontSize: '16px',
+                  fontWeight: '500'
+                }}>
+                  {pageSize}개
+                </div>
+                <Button 
+                  type="primary"
+                  shape="circle"
+                  icon={<PlusOutlined />}
+                  onClick={() => handlePageSizeChange(Math.min(50, pageSize + 1))}
+                  disabled={pageSize >= 50}
+                  size="small"
+                />
+              </div>
+            </div>
+            
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              설정 가능한 범위: 5-100개 (현재: {pageSize}개)
+              현재 설정: {pageSize}개씩 표시
             </Text>
           </Space>
         </div>
