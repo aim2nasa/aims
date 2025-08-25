@@ -122,14 +122,20 @@ const AppLayout = () => {
     }
   };
 
-  // LeftPane에서 DSD 메뉴 클릭 처리
+  // LeftPane에서 메뉴 클릭 처리
   const handleLeftPaneMenuClick = (menuKey) => {
     if (menuKey === 'dsd') {
       setShowDashboard(true);
-      setSearchResults([]); // 검색 결과 초기화
-      setKeyword(''); // 검색어 초기화
+    } else if (menuKey === 'search-results') {
+      // 검색 결과로 돌아가기
+      setShowDashboard(false);
     } else {
       setShowDashboard(false);
+      // 다른 메뉴 클릭 시에는 검색 결과 초기화
+      if (menuKey !== 'search-results') {
+        setSearchResults([]);
+        setKeyword('');
+      }
     }
   };
 
@@ -251,7 +257,11 @@ const AppLayout = () => {
           style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}
         >
           <div style={{ padding: 16 }}>
-            <LeftPane onMenuClick={handleLeftPaneMenuClick} />
+            <LeftPane 
+              onMenuClick={handleLeftPaneMenuClick}
+              hasSearchResults={searchResults && searchResults.length > 0}
+              searchResultsCount={searchResults ? searchResults.length : 0}
+            />
           </div>
           <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid #f0f0f0' }}>
             <Button

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined } from '@ant-design/icons';
+import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
 
-const LeftPane = ({ onMenuClick }) => {
+const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
   const onSelect = (selectedKeys, info) => {
     console.log('선택된 항목:', selectedKeys, info);
   };
@@ -40,6 +40,12 @@ const LeftPane = ({ onMenuClick }) => {
   ];
 
   const menuItems = [
+    // 검색 결과가 있을 때만 "검색 결과" 메뉴 표시
+    ...(hasSearchResults ? [{
+      key: 'search-results',
+      icon: <SearchOutlined />,
+      label: `검색 결과 (${searchResultsCount || 0}개)`,
+    }] : []),
     {
       key: 'dsd',
       icon: <DashboardOutlined />,
