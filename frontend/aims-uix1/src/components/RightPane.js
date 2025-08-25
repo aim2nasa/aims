@@ -1,10 +1,10 @@
 import React from 'react';
-import { Card, Button, Space, Typography, message } from 'antd';
+import { Card, Button, Typography, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
+import ImageViewer from './ImageViewer';
 import axios from 'axios';
 
-const { Title, Paragraph, Text } = Typography;
 
 const RightPane = ({ document, onClose }) => {
   if (!document) {
@@ -13,6 +13,7 @@ const RightPane = ({ document, onClose }) => {
 
   const documentFileUrl = document.fileUrl;
   const isPdf = documentFileUrl && documentFileUrl.toLowerCase().endsWith('.pdf');
+  const isImage = documentFileUrl && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentFileUrl.toLowerCase());
 
   const handleDownload = async () => {
     const destPath = document.upload.destPath || document.payload?.dest_path;
@@ -64,9 +65,11 @@ const RightPane = ({ document, onClose }) => {
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
         {isPdf ? (
           <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
+        ) : isImage ? (
+          <ImageViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <p>이 문서는 PDF 형식이 아니므로 미리보기는 불가합니다.</p>
+            <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
             <Button type="primary" onClick={handleDownload}>
               {document.upload.originalName} 다운로드
             </Button>
