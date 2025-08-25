@@ -3,11 +3,14 @@ import os
 from typing import List, Dict
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone, timedelta   # ✅ timezone, timedelta 추가
 from extract_text_from_mongo import extract_text_from_mongo
 from split_text_into_chunks import split_text_into_chunks
 from create_embeddings import create_embeddings_for_chunks
 from save_to_qdrant import save_chunks_to_qdrant
+
+# ✅ KST 타임존 정의
+KST = timezone(timedelta(hours=9))
 
 def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: str = 'docupload', collection_name: str = 'files'):
     """
@@ -53,7 +56,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
                             'status': 'done',
                             'dims': 1536,
                             'chunks': len(embedded_chunks),
-                            'updated_at': datetime.utcnow().isoformat()
+                            'updated_at': datetime.now(KST).isoformat()
                         }
                     }}
                 )
@@ -67,7 +70,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
                         'docembed': {
                             'status': 'failed',
                             'error_message': str(e),
-                            'failed_at': datetime.utcnow().isoformat()
+                            'failed_at': datetime.now(KST).isoformat()
                         }
                     }}
                 )
