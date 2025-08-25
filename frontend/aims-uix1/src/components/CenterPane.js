@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal } from 'antd';
-import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined } from '@ant-design/icons';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, InputNumber } from 'antd';
+import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
 
@@ -55,6 +55,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
   
+  // 페이지네이션 관련 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [showPageSizeModal, setShowPageSizeModal] = useState(false);
+  
   const handleUploadSuccess = (file) => {
     // 파일 업로드 성공 시 즉시 Dashboard에 표시할 임시 문서 생성
     const tempDocument = {
@@ -95,6 +100,27 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     }
   };
 
+  // 페이지네이션 핸들러
+  const handlePageChange = (page, size) => {
+    setCurrentPage(page);
+    if (size !== pageSize) {
+      setPageSize(size);
+    }
+  };
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // 페이지 크기 변경 시 첫 페이지로 이동
+    setShowPageSizeModal(false);
+  };
+
+  // 현재 페이지에 표시할 데이터 계산
+  const getPaginatedData = (data) => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return data.slice(startIndex, endIndex);
+  };
+
   const renderContent = () => {
     // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
     // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
@@ -126,54 +152,98 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     }
 
     if (viewMode === 'list') {
+      const paginatedData = getPaginatedData(searchResults);
+      
       return (
-        <List
-          itemLayout="horizontal"
-          dataSource={searchResults}
-          renderItem={(item) => (
-            <List.Item
-              key={item.id || item.payload?.doc_id}
-              onClick={() => onDocumentClick(item)}
-              style={{ cursor: 'pointer', padding: '12px 0' }}
-            >
-              <List.Item.Meta
-                avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
-                title={
-                  <Space>
-                    <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
-                    {item.type && (
-                       <Tag color="blue">{item.type}</Tag>
-                    )}
-                    {/* ✅ 수정된 부분: Confidence를 제목 옆에 위치시키고 문구를 태그 안에 포함 */}
-                    {item.ocr?.confidence && (
-                        <Tag color="blue">Confidence: {item.ocr.confidence}</Tag>
-                    )}
-                  </Space>
-                }
-                description={
-                  <Space size="middle">
-                    <Text type="secondary">{item.ocr?.summary || item.payload?.summary || '요약 정보: 없음'}</Text>
-                    {item.score && (
-                       <Text type="secondary">유사도: <Tag color="green">{item.score.toFixed(4)}</Tag></Text>
-                    )}
-                  </Space>
-                }
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ 
+            flex: 1, 
+            overflow: 'auto',
+            maxHeight: 'calc(100vh - 400px)', // 페이지네이션과 헤더 공간 확보
+            marginBottom: '16px'
+          }}>
+            <List
+              itemLayout="horizontal"
+              dataSource={paginatedData}
+              renderItem={(item) => (
+                <List.Item
+                  key={item.id || item.payload?.doc_id}
+                  onClick={() => onDocumentClick(item)}
+                  style={{ cursor: 'pointer', padding: '12px 0' }}
+                >
+                  <List.Item.Meta
+                    avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
+                    title={
+                      <Space>
+                        <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
+                        {item.type && (
+                           <Tag color="blue">{item.type}</Tag>
+                        )}
+                        {/* ✅ 수정된 부분: Confidence를 제목 옆에 위치시키고 문구를 태그 안에 포함 */}
+                        {item.ocr?.confidence && (
+                            <Tag color="blue">Confidence: {item.ocr.confidence}</Tag>
+                        )}
+                      </Space>
+                    }
+                    description={
+                      <Space size="middle">
+                        <Text type="secondary">{item.ocr?.summary || item.payload?.summary || '요약 정보: 없음'}</Text>
+                        {item.score && (
+                           <Text type="secondary">유사도: <Tag color="green">{item.score.toFixed(4)}</Tag></Text>
+                        )}
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+          
+          {/* 페이지네이션 */}
+          {searchResults.length > 0 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '8px 0',
+              borderTop: '1px solid #f0f0f0'
+            }}>
+              <Space>
+                <Text type="secondary">
+                  총 {searchResults.length}개 문서 중 {Math.min(((currentPage - 1) * pageSize) + 1, searchResults.length)}-{Math.min(currentPage * pageSize, searchResults.length)}개 표시
+                </Text>
+              </Space>
+              <Pagination
+                current={currentPage}
+                pageSize={pageSize}
+                total={searchResults.length}
+                onChange={handlePageChange}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) => `${range[0]}-${range[1]} / ${total}`}
+                pageSizeOptions={['5', '10', '20', '50', '100']}
+                size="small"
               />
-            </List.Item>
+            </div>
           )}
-        />
+        </div>
       );
     }
 
     if (viewMode === 'tree') {
       return (
-        <Tree
-          showIcon
-          defaultExpandAll
-          onSelect={onTreeSelect}
-          treeData={mockTreeDocuments}
-          style={{ cursor: 'pointer' }}
-        />
+        <div style={{ 
+          height: 'calc(100vh - 400px)',
+          overflow: 'auto'
+        }}>
+          <Tree
+            showIcon
+            defaultExpandAll
+            onSelect={onTreeSelect}
+            treeData={mockTreeDocuments}
+            style={{ cursor: 'pointer' }}
+          />
+        </div>
       );
     }
   };
@@ -195,6 +265,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
             <Button icon={<UnorderedListOutlined />} onClick={() => setViewMode('list')} />
             <Button icon={<AppstoreOutlined />} onClick={() => setViewMode('grid')} disabled />
           </Button.Group>
+          <Button icon={<SettingOutlined />} onClick={() => setShowPageSizeModal(true)} />
         </Space>
       }
       style={{ minHeight: '100%', borderRadius: 8 }}
@@ -210,6 +281,33 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
         destroyOnClose={true} // 모달이 닫힐 때 내부 컴포넌트 초기화
       >
         <FileUploader onUploadSuccess={handleUploadSuccess} />
+      </Modal>
+
+      {/* 페이지 크기 설정 모달 */}
+      <Modal
+        title="페이지 설정"
+        visible={showPageSizeModal}
+        onCancel={() => setShowPageSizeModal(false)}
+        onOk={() => setShowPageSizeModal(false)}
+        width={400}
+      >
+        <div style={{ padding: '20px 0' }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <Text style={{ marginRight: 12 }}>페이지당 문서 수:</Text>
+              <InputNumber
+                min={5}
+                max={100}
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                style={{ width: 100 }}
+              />
+            </div>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              설정 가능한 범위: 5-100개 (현재: {pageSize}개)
+            </Text>
+          </Space>
+        </div>
       </Modal>
     </Card>
   );
