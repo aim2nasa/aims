@@ -250,9 +250,25 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     }
   };
 
+  // 카드 제목 동적 생성
+  const getCardTitle = () => {
+    const hasSearchResults = searchResults && searchResults.length > 0;
+    const hasUploadedFiles = uploadedFiles && uploadedFiles.length > 0;
+    
+    if (showDashboard) {
+      return <Title level={4}>문서 처리 현황</Title>;
+    } else if (hasSearchResults) {
+      return <Title level={4}>검색 결과 ({searchResults.length}개 문서)</Title>;
+    } else if (hasUploadedFiles && !isLoading) {
+      return <Title level={4}>업로드된 문서</Title>;
+    } else {
+      return <Title level={4}>문서 목록</Title>;
+    }
+  };
+
   return (
     <Card
-      title={<Title level={4}>문서 목록</Title>}
+      title={getCardTitle()}
       extra={
         <Space>
           {/* ✅ 업로드 버튼 추가 */}
