@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AIMS (Agent Intelligent Management System) is an intelligent document management system for insurance salespeople. It automates repetitive tasks like document upload, classification, OCR, tagging, and case grouping to help salespeople better understand and respond to customers.
 
+## Development Environment
+
+- **Backend Server**: tars (Linux server) - accessible at `tars.giize.com`
+- **Frontend Development**: WonderCastle (Windows 10 PC)
+- **Database**: MongoDB on `tars:27017`
+
 ## Architecture
 
 The system is organized into functional modules:

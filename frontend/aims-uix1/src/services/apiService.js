@@ -74,7 +74,7 @@ export const apiService = {
   // 최근 문서 목록 조회
   async getRecentDocuments(limit = 20) {
     try {
-      const response = await fetch(`http://localhost:3000/api/documents/status?limit=${limit}`, {
+      const response = await fetch(`${API_BASE_URL}/status?limit=${limit}`, {
         method: "GET", 
         headers: {
           "Content-Type": "application/json",

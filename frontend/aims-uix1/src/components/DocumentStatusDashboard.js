@@ -117,6 +117,9 @@ const extractStatus = (document) => {
     return document.overallStatus;
   }
   
+  // 기본 status 필드 확인 (fallback)
+  if (document.status) return document.status;
+  
   // 레거시: stages 구조 확인
   if (document.stages?.upload?.status === 'completed') {
     // embed/docembed가 완료되면 completed (OCR 상관없이)
@@ -206,6 +209,38 @@ const extractStatus = (document) => {
     default:
       return 'processing';
   }
+  
+  // 추가 fallback: meta와 stages에서 status 찾기
+  if (document.meta) {
+    let metaData = document.meta;
+    if (typeof metaData === 'string') {
+      try {
+        metaData = JSON.parse(metaData);
+      } catch (e) {}
+    }
+    if (metaData && metaData.meta_status) {
+      return metaData.meta_status === 'ok' ? 'processing' : metaData.meta_status;
+    }
+  }
+  
+  // stages에서 status 찾기
+  if (document.stages) {
+    for (const [key, value] of Object.entries(document.stages)) {
+      let data = value;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          continue;
+        }
+      }
+      if (data && data.status) {
+        return data.status === 'completed' ? 'completed' : data.status;
+      }
+    }
+  }
+  
+  return 'pending';
 };
 
 const extractProgress = (document) => {
