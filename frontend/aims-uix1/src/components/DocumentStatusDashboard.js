@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight, Radio, Zap } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight, Radio, Zap, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
 import websocketService from '../services/websocketService';
 import { apiService, communicationManager } from '../services/apiService';
 
@@ -115,52 +115,76 @@ const extractStatus = (document) => {
   // 기본 status 필드
   if (document.status) return document.status;
   
-  // meta에서 status 찾기
-  if (document.meta) {
-    let metaData = document.meta;
-    if (typeof metaData === 'string') {
-      try {
-        metaData = JSON.parse(metaData);
-      } catch (e) {}
-    }
-    if (metaData && metaData.meta_status) {
-      return metaData.meta_status === 'ok' ? 'completed' : metaData.meta_status;
-    }
+  const { pathType } = analyzeProcessingPath(document);
+  
+  // 1. Upload 체크
+  if (!document.upload) {
+    return 'pending';
   }
   
-  // stages에서 status 찾기
-  if (document.stages) {
-    for (const [, value] of Object.entries(document.stages)) {
-      let data = value;
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch (e) {
-          continue;
+  // 2. Meta 체크
+  if (!document.meta || document.meta.meta_status !== 'ok') {
+    if (document.meta && document.meta.meta_status === 'error') {
+      return 'error';
+    }
+    return 'processing';
+  }
+  
+  // 3. 경로별 상태 결정
+  switch (pathType) {
+    case 'unsupported':
+    case 'page_limit_exceeded':
+    case 'ocr_skipped':
+      return 'completed'; // 지원하지 않는 파일들은 Meta 완료 시 끝
+      
+    case 'meta_fulltext':
+      // Meta에서 full_text 추출 → DocEmbed로 바로 진행
+      if (document.docembed) {
+        if (document.docembed.status === 'done') return 'completed';
+        if (document.docembed.status === 'failed') return 'error';
+        return 'processing';
+      }
+      return 'processing'; // DocEmbed 대기 중
+      
+    case 'text_plain':
+      // text/plain 파일 → Text → DocEmbed
+      if (!document.text || !document.text.full_text) return 'processing';
+      if (document.docembed) {
+        if (document.docembed.status === 'done') return 'completed';
+        if (document.docembed.status === 'failed') return 'error';
+        return 'processing';
+      }
+      return 'processing'; // DocEmbed 대기 중
+      
+    case 'ocr_normal':
+      // 일반 OCR 처리 → OCR → DocEmbed
+      if (document.ocr) {
+        if (document.ocr.status === 'error') return 'error';
+        if (document.ocr.status === 'done') {
+          if (document.docembed) {
+            if (document.docembed.status === 'done') return 'completed';
+            if (document.docembed.status === 'failed') return 'error';
+            return 'processing';
+          }
+          return 'processing'; // DocEmbed 대기 중
         }
+        return 'processing'; // OCR 처리 중
       }
-      if (data && data.status) {
-        return data.status === 'completed' ? 'completed' : data.status;
-      }
-    }
+      return 'processing'; // OCR 대기 중
+      
+    default:
+      return 'processing';
   }
-  
-  return 'pending';
 };
 
 const extractProgress = (document) => {
-  // 기본 progress 필드
+  // 기본 progress 필드가 있으면 우선 사용
   if (document.progress) return document.progress;
   
-  // 상태에 따른 추정 진행률
-  const status = extractStatus(document);
-  switch (status) {
-    case 'completed': return 100;
-    case 'processing': return 50;
-    case 'error': return 0;
-    case 'pending': return 0;
-    default: return 0;
-  }
+  const { pathType, expectedStages } = analyzeProcessingPath(document);
+  
+  // 경로별 맞춤형 진도율 계산
+  return calculatePathSpecificProgress(document, pathType, expectedStages);
 };
 
 const extractUploadedDate = (document) => {
@@ -230,6 +254,199 @@ const extractUploadedDate = (document) => {
   }
   
   return dateString;
+};
+
+// 처리 경로 분석 및 뱃지 정보 추출
+const analyzeProcessingPath = (document) => {
+  const badges = [];
+  let pathType = 'unknown';
+  let expectedStages = [];
+  
+  // 1. Upload 단계 (모든 파일 공통)
+  if (document.upload) {
+    badges.push({ type: 'U', name: 'Upload', status: 'completed', icon: Upload });
+  }
+  
+  // 2. Meta 단계 (모든 파일 공통)
+  if (document.meta && document.meta.meta_status === 'ok') {
+    badges.push({ type: 'M', name: 'Meta', status: 'completed', icon: Database });
+    
+    // 지원하지 않는 MIME 타입 체크
+    const unsupportedMimes = [
+      'application/postscript',
+      'application/zip',
+      'application/octet-stream'
+    ];
+    
+    if (unsupportedMimes.includes(document.meta.mime)) {
+      pathType = 'unsupported';
+      expectedStages = ['U', 'M'];
+      return { badges, pathType, expectedStages };
+    }
+    
+    // PDF 페이지 수 초과 체크
+    if (document.meta.pdf_pages && parseInt(document.meta.pdf_pages) > 30) {
+      pathType = 'page_limit_exceeded';
+      expectedStages = ['U', 'M'];
+      return { badges, pathType, expectedStages };
+    }
+    
+    // DocMeta에서 full_text가 추출된 경우 (PDF, Office 문서 등)
+    if (document.meta.full_text && document.meta.full_text.trim().length > 0) {
+      pathType = 'meta_fulltext';
+      expectedStages = ['U', 'M', 'E'];
+    }
+  } else if (document.meta && document.meta.meta_status === 'error') {
+    badges.push({ type: 'M', name: 'Meta', status: 'error', icon: Database });
+  }
+  
+  // 3. Text 단계 (text/plain 파일)
+  if (document.text && document.text.full_text) {
+    badges.push({ type: 'T', name: 'Text', status: 'completed', icon: FileTextIcon });
+    pathType = 'text_plain';
+    expectedStages = ['U', 'M', 'T', 'E'];
+  }
+  
+  // 4. OCR 단계 (이미지, full_text가 없는 PDF 등)
+  if (document.ocr) {
+    if (document.ocr.warn) {
+      badges.push({ type: 'O', name: 'OCR', status: 'skipped', icon: Eye });
+      if (pathType === 'unknown') {
+        pathType = 'ocr_skipped';
+        expectedStages = ['U', 'M'];
+      }
+    } else if (document.ocr.status === 'done') {
+      badges.push({ type: 'O', name: 'OCR', status: 'completed', icon: Eye });
+      if (pathType === 'unknown') {
+        pathType = 'ocr_normal';
+        expectedStages = ['U', 'M', 'O', 'E'];
+      }
+    } else if (document.ocr.status === 'error') {
+      badges.push({ type: 'O', name: 'OCR', status: 'error', icon: Eye });
+    } else if (document.ocr.status === 'running') {
+      badges.push({ type: 'O', name: 'OCR', status: 'processing', icon: Eye });
+      if (pathType === 'unknown') {
+        pathType = 'ocr_normal';
+        expectedStages = ['U', 'M', 'O', 'E'];
+      }
+    } else if (document.ocr.queue) {
+      badges.push({ type: 'O', name: 'OCR', status: 'pending', icon: Eye });
+      if (pathType === 'unknown') {
+        pathType = 'ocr_normal';
+        expectedStages = ['U', 'M', 'O', 'E'];
+      }
+    }
+  }
+  
+  // 5. DocEmbed 단계
+  if (document.docembed) {
+    if (document.docembed.status === 'done') {
+      badges.push({ type: 'E', name: 'Embed', status: 'completed', icon: Package });
+    } else if (document.docembed.status === 'failed') {
+      badges.push({ type: 'E', name: 'Embed', status: 'error', icon: Package });
+    } else if (document.docembed.status === 'processing') {
+      badges.push({ type: 'E', name: 'Embed', status: 'processing', icon: Package });
+    }
+  }
+  
+  // 경로 타입이 결정되지 않은 경우 기본값 설정
+  if (pathType === 'unknown') {
+    if (document.meta && document.meta.meta_status === 'ok') {
+      pathType = 'ocr_normal';
+      expectedStages = ['U', 'M', 'O', 'E'];
+    } else {
+      pathType = 'processing';
+      expectedStages = ['U', 'M'];
+    }
+  }
+  
+  return { badges, pathType, expectedStages };
+};
+
+// 처리 경로별 맞춤형 진도율 계산
+const calculatePathSpecificProgress = (document, pathType, expectedStages) => {
+  const totalStages = expectedStages.length;
+  let completedStages = 0;
+  
+  switch (pathType) {
+    case 'meta_fulltext': // U, M, E 경로 (Meta에서 full_text 추출)
+      if (document.upload) completedStages++; // U: 25%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
+      if (document.meta && document.meta.full_text) completedStages += 0.5; // full_text 추출: 75%
+      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
+      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
+      return Math.round((completedStages / totalStages) * 100);
+      
+    case 'text_plain': // U, M, T, E 경로
+      if (document.upload) completedStages++; // U: 25%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
+      if (document.text && document.text.full_text) completedStages++; // T: 75%
+      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
+      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
+      return Math.round((completedStages / totalStages) * 100);
+      
+    case 'ocr_normal': // U, M, O, E 경로
+      if (document.upload) completedStages++; // U: 25%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
+      if (document.ocr) {
+        if (document.ocr.status === 'done') completedStages++; // O: 75%
+        else if (document.ocr.status === 'running') completedStages += 0.7; // O 처리중: 67.5%
+        else if (document.ocr.queue) completedStages += 0.3; // O 대기중: 57.5%
+      }
+      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
+      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
+      return Math.round((completedStages / totalStages) * 100);
+      
+    case 'unsupported':
+    case 'page_limit_exceeded':
+    case 'ocr_skipped':
+      // U, M만 있으면 완료
+      if (document.upload) completedStages++; // U: 50%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 100%
+      return Math.round((completedStages / totalStages) * 100);
+      
+    default:
+      // 기본 진도율 계산
+      if (document.upload) completedStages += 0.2;
+      if (document.meta && document.meta.meta_status === 'ok') completedStages += 0.4;
+      return Math.round(completedStages * 100);
+  }
+};
+
+// 뱃지 컴포넌트
+const ProcessingBadge = ({ badge, size = 'medium' }) => {
+  const statusColors = {
+    completed: { bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
+    processing: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+    pending: { bg: '#f3f4f6', color: '#374151', border: '#d1d5db' },
+    error: { bg: '#fee2e2', color: '#dc2626', border: '#fecaca' },
+    skipped: { bg: '#fef3c7', color: '#d97706', border: '#fde68a' }
+  };
+  
+  const colors = statusColors[badge.status] || statusColors.pending;
+  const Icon = badge.icon;
+  const iconSize = size === 'small' ? '12px' : '16px';
+  const padding = size === 'small' ? '2px 6px' : '4px 8px';
+  const fontSize = size === 'small' ? '10px' : '12px';
+  
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      backgroundColor: colors.bg,
+      color: colors.color,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '6px',
+      padding,
+      fontSize,
+      fontWeight: '600',
+      fontFamily: 'monospace'
+    }} title={`${badge.name} - ${badge.status}`}>
+      <Icon style={{ width: iconSize, height: iconSize }} />
+      {badge.type}
+    </div>
+  );
 };
 
 // 상태 뱃지 컴포넌트
@@ -603,6 +820,7 @@ const DocumentListView = ({ documents, onDocumentClick }) => {
               const status = extractStatus(document);
               const progress = extractProgress(document);
               const uploadedDate = extractUploadedDate(document);
+              const { badges } = analyzeProcessingPath(document);
               
               return (
                 <tr 
@@ -627,17 +845,24 @@ const DocumentListView = ({ documents, onDocumentClick }) => {
                         <FileText style={{ width: '16px', height: '16px', color: '#3b82f6' }} />
                       </div>
                       <div style={{ minWidth: '0', flex: '1' }}>
-                        <p style={{
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          color: '#111827',
-                          margin: '0',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }} title={filename}>
-                          {truncateFilename(filename)}
-                        </p>
+                        <div>
+                          <p style={{
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#111827',
+                            margin: '0 0 4px 0',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }} title={filename}>
+                            {truncateFilename(filename)}
+                          </p>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {badges.map((badge, index) => (
+                              <ProcessingBadge key={index} badge={badge} size="small" />
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -726,6 +951,7 @@ const DocumentCard = ({ document, onClick }) => {
   const status = extractStatus(document);
   const progress = extractProgress(document);
   const uploadedDate = extractUploadedDate(document);
+  const { badges } = analyzeProcessingPath(document);
 
   return (
     <div 
@@ -774,9 +1000,17 @@ const DocumentCard = ({ document, onClick }) => {
               fontSize: '14px',
               lineHeight: '1.25',
               marginBottom: '4px',
-              margin: '0 0 4px 0'
+              margin: '0 0 4px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }} title={filename}>
-              {truncateFilename(filename)}
+              <span>{truncateFilename(filename)}</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {badges.map((badge, index) => (
+                  <ProcessingBadge key={index} badge={badge} size="small" />
+                ))}
+              </div>
             </h3>
             <CopyableId id={document.id || document._id || 'unknown-id'} />
           </div>
@@ -1016,9 +1250,23 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
       setError(null);
       // 더 많은 문서를 가져와서 클라이언트 사이드 페이지네이션 지원
       const data = await apiService.getRecentDocuments(1000);
-      setDocuments(data.documents || []);
+      const realDocuments = data.documents || [];
+      
+      // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
+      setDocuments(prevDocs => {
+        const tempDocs = prevDocs.filter(doc => doc.id?.startsWith('temp-'));
+        const realDocFilenames = realDocuments.map(doc => extractFilename(doc).toLowerCase());
+        const uniqueTempDocs = tempDocs.filter(tempDoc => {
+          const tempFilename = extractFilename(tempDoc).toLowerCase();
+          return !realDocFilenames.includes(tempFilename);
+        });
+        
+        console.log(`Real docs: ${realDocuments.length}, Unique temp docs: ${uniqueTempDocs.length}`);
+        return [...realDocuments, ...uniqueTempDocs];
+      });
+      
       setLastUpdated(new Date());
-      console.log(`Fetched ${data.documents?.length || 0} documents`);
+      console.log(`Fetched ${realDocuments.length} documents`);
     } catch (err) {
       setError("문서 목록을 불러올 수 없습니다.");
       console.error("Fetch documents error:", err);
@@ -1078,31 +1326,44 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
       
       setDocuments(prevDocs => {
         console.log('현재 문서 수:', prevDocs.length);
-        const updatedDocs = [...prevDocs];
-        const index = updatedDocs.findIndex(doc => (doc.id || doc._id) === data.id);
+        
+        // 실제 DB 문서와 임시 문서 분리
+        const realDocs = prevDocs.filter(doc => !doc.id?.startsWith('temp-'));
+        const tempDocs = prevDocs.filter(doc => doc.id?.startsWith('temp-'));
+        
+        const updatedRealDocs = [...realDocs];
+        const index = updatedRealDocs.findIndex(doc => (doc.id || doc._id) === data.id);
         console.log('문서 찾기 결과 - 인덱스:', index, '찾은 ID:', data.id);
         
         if (index >= 0) {
-          // 기존 문서 업데이트
-          console.log('기존 문서 업데이트');
-          updatedDocs[index] = {
-            ...updatedDocs[index],
+          // 기존 실제 문서 업데이트
+          console.log('기존 실제 문서 업데이트');
+          updatedRealDocs[index] = {
+            ...updatedRealDocs[index],
             ...data,
             _id: data.id,
             id: data.id
           };
         } else {
-          // 새 문서 추가
-          console.log('새 문서 추가:', data.filename);
-          updatedDocs.unshift({
+          // 새 실제 문서 추가
+          console.log('새 실제 문서 추가:', data.filename);
+          updatedRealDocs.unshift({
             ...data,
             _id: data.id,
             id: data.id
           });
         }
         
-        console.log('업데이트 후 문서 수:', updatedDocs.length);
-        return updatedDocs;
+        // 새로 추가된 실제 문서와 파일명이 같은 임시 문서 제거
+        const newDocFilename = extractFilename(data).toLowerCase();
+        const filteredTempDocs = tempDocs.filter(tempDoc => {
+          const tempFilename = extractFilename(tempDoc).toLowerCase();
+          return tempFilename !== newDocFilename;
+        });
+        
+        const finalDocs = [...updatedRealDocs, ...filteredTempDocs];
+        console.log(`업데이트 후 - 실제 문서: ${updatedRealDocs.length}, 임시 문서: ${filteredTempDocs.length}, 총: ${finalDocs.length}`);
+        return finalDocs;
       });
       setLastUpdated(new Date());
     };
@@ -1194,16 +1455,27 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
     checkApiHealth();
   }, [fetchDocuments, checkApiHealth]);
 
-  // initialFiles가 변경되면 임시 문서 추가
+  // initialFiles가 변경되면 임시 문서 추가 (실제 DB 문서와 중복 방지)
   useEffect(() => {
     if (initialFiles.length > 0) {
-      console.log(`Adding ${initialFiles.length} initial files to dashboard`);
+      console.log(`Processing ${initialFiles.length} initial files`);
       setDocuments(prevDocs => {
-        const existingIds = prevDocs.map(doc => doc.id);
-        const newFiles = initialFiles.filter(file => !existingIds.includes(file.id));
-        console.log(`Adding ${newFiles.length} new files (${existingIds.length} already exist)`);
-        return [...newFiles, ...prevDocs];
+        // 기존 실제 DB 문서들 (temp-로 시작하지 않는 ID)
+        const realDocs = prevDocs.filter(doc => !doc.id?.startsWith('temp-'));
+        
+        // 새로운 임시 문서들만 추가 (실제 DB에 없는 파일명만)
+        const realDocFilenames = realDocs.map(doc => extractFilename(doc).toLowerCase());
+        const newTempFiles = initialFiles.filter(file => {
+          const tempFilename = extractFilename(file).toLowerCase();
+          return !realDocFilenames.includes(tempFilename);
+        });
+        
+        console.log(`Real docs: ${realDocs.length}, New temp files: ${newTempFiles.length}`);
+        
+        // 실제 문서들 + 새로운 임시 문서들
+        return [...realDocs, ...newTempFiles];
       });
+      
       // initialFiles가 추가되면 로딩 상태 해제
       if (loading) {
         setLoading(false);
