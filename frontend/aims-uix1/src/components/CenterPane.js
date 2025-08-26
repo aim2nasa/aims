@@ -143,8 +143,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       });
 
       const fileData = response.data[0];
-      // ocr.full_text 필드에서 전체 텍스트 추출
-      const fullText = fileData.ocr?.full_text || '전체 텍스트를 찾을 수 없습니다.';
+      // meta.full_text 우선, 없으면 ocr.full_text 사용
+      const fullText = fileData.meta?.full_text || 
+                       fileData.ocr?.full_text || 
+                       fileData.text?.full_text || 
+                       '전체 텍스트를 찾을 수 없습니다.';
       setFullTextContent(fullText);
       
     } catch (e) {
