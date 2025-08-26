@@ -12,7 +12,7 @@ from save_to_qdrant import save_chunks_to_qdrant
 # ✅ KST 타임존 정의
 KST = timezone(timedelta(hours=9))
 
-def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: str = 'docupload', collection_name: str = 'files'):
+def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = 'docupload', collection_name: str = 'files'):
     """
     MongoDB의 모든 문서를 대상으로 임베딩 파이프라인을 실행합니다.
     """
@@ -21,8 +21,16 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
         db = client[db_name]
         collection = db[collection_name]
 
-        # docembed.status 필드가 없는 문서를 찾습니다.
-        query_filter = {'ocr.full_text': {'$exists': True}, 'docembed.status': {'$exists': False}}
+        # docembed.status 필드가 없고 full_text가 있는 문서를 찾습니다.
+        # (meta.full_text, ocr.full_text, text.full_text 중 하나라도 있으면)
+        query_filter = {
+            '$or': [
+                {'meta.full_text': {'$exists': True}},
+                {'ocr.full_text': {'$exists': True}},
+                {'text.full_text': {'$exists': True}}
+            ],
+            'docembed.status': {'$exists': False}
+        }
         documents_to_process = collection.find(query_filter)
         total_docs = collection.count_documents(query_filter)
         
@@ -33,12 +41,33 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
             print(f"\n--- 문서 ID: {doc_id} 처리 시작 ---")
 
             try:
+                # full_text 추출 (우선순위: meta.full_text > ocr.full_text > text.full_text)
+                full_text = None
+                text_source = None
+                
+                if doc_data.get('meta', {}).get('full_text'):
+                    full_text = doc_data['meta']['full_text']
+                    text_source = 'meta'
+                elif doc_data.get('ocr', {}).get('full_text'):
+                    full_text = doc_data['ocr']['full_text']
+                    text_source = 'ocr'
+                elif doc_data.get('text', {}).get('full_text'):
+                    full_text = doc_data['text']['full_text']
+                    text_source = 'text'
+                
+                if not full_text:
+                    print(f"!!! 문서 ID: {doc_id}에서 full_text를 찾을 수 없습니다 !!!")
+                    continue
+                    
+                print(f"텍스트 소스: {text_source}.full_text (길이: {len(full_text)})")
+                
                 # 1단계: 로딩 및 청크 생성
-                chunks = split_text_into_chunks(doc_data['ocr']['full_text'], {
+                chunks = split_text_into_chunks(full_text, {
                     'doc_id': doc_id,
-                    'original_name': doc_data.get('originalName'),
-                    'uploaded_at': doc_data.get('uploaded_at'),
-                    'mime': doc_data.get('meta', {}).get('mime')
+                    'original_name': doc_data.get('upload', {}).get('originalName') or doc_data.get('originalName'),
+                    'uploaded_at': doc_data.get('upload', {}).get('uploaded_at') or doc_data.get('uploaded_at'),
+                    'mime': doc_data.get('meta', {}).get('mime'),
+                    'text_source': text_source  # 텍스트 소스 정보 추가
                 })
 
                 # 2단계: 임베딩 생성
@@ -56,6 +85,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://localhost:27017/', db_name: st
                             'status': 'done',
                             'dims': 1536,
                             'chunks': len(embedded_chunks),
+                            'text_source': text_source,  # 텍스트 소스 기록
                             'updated_at': datetime.now(KST).isoformat()
                         }
                     }}
