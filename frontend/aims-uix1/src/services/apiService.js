@@ -74,7 +74,7 @@ export const apiService = {
   // 최근 문서 목록 조회
   async getRecentDocuments(limit = 20) {
     try {
-      const response = await fetch(`${API_BASE_URL}/status?limit=${limit}`, {
+      const response = await fetch(`http://localhost:3000/api/documents/status?limit=${limit}`, {
         method: "GET", 
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +85,9 @@ export const apiService = {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      return await response.json();
+      const data = await response.json();
+      // API 응답에서 documents 배열 반환
+      return data.success ? data.data : data;
     } catch (error) {
       console.error("Get documents failed:", error);
       throw error;

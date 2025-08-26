@@ -32,8 +32,8 @@ const extractFilename = (document) => {
     }
   }
   
-  // 기본 필드에서 찾기
-  let filename = document.filename || document.file_name || document.name || document.title;
+  // 기본 필드에서 찾기 (originalName 우선)
+  let filename = document.originalName || document.filename || document.file_name || document.name || document.title;
   if (filename) return filename;
   
   // Meta에서 filename 찾기 (saveName일 가능성)
@@ -112,12 +112,39 @@ const extractSaveName = (document) => {
 };
 
 const extractStatus = (document) => {
-  // 기본 status 필드
-  if (document.status) return document.status;
+  // 서버에서 계산된 overallStatus를 우선 사용
+  if (document.overallStatus) {
+    return document.overallStatus;
+  }
+  
+  // 레거시: stages 구조 확인
+  if (document.stages?.upload?.status === 'completed') {
+    // embed/docembed가 완료되면 completed (OCR 상관없이)
+    if (document.stages?.embed?.status === 'completed' || 
+        document.stages?.docembed?.status === 'completed') {
+      return 'completed';
+    }
+    
+    // meta.full_text가 있고 OCR만 pending이면 completed
+    if ((document.stages?.meta?.full_text || document.meta?.full_text) &&
+        document.stages?.meta?.status === 'completed' &&
+        document.stages?.ocr?.status === 'pending') {
+      return 'completed';
+    }
+    
+    // 에러 체크
+    if (document.stages?.meta?.status === 'error' || 
+        document.stages?.embed?.status === 'error' ||
+        document.stages?.docembed?.status === 'error') {
+      return 'error';
+    }
+    
+    return 'processing';
+  }
   
   const { pathType } = analyzeProcessingPath(document);
   
-  // 1. Upload 체크
+  // 1. Upload 체크 (레거시)
   if (!document.upload) {
     return 'pending';
   }
@@ -143,6 +170,10 @@ const extractStatus = (document) => {
         if (document.docembed.status === 'done') return 'completed';
         if (document.docembed.status === 'failed') return 'error';
         return 'processing';
+      }
+      // DocEmbed가 없지만 meta.full_text가 있으면 완료로 처리
+      if (document.meta && document.meta.full_text) {
+        return 'completed';
       }
       return 'processing'; // DocEmbed 대기 중
       
@@ -178,13 +209,54 @@ const extractStatus = (document) => {
 };
 
 const extractProgress = (document) => {
-  // 기본 progress 필드가 있으면 우선 사용
-  if (document.progress) return document.progress;
+  const filename = extractFilename(document);
   
-  const { pathType, expectedStages } = analyzeProcessingPath(document);
+  // 서버에서 계산된 progress를 우선 사용 (단, OCR pending 때문에 75%면 100%로 수정)
+  if (document.progress !== undefined && document.progress !== null) {
+    // embed가 완료되었거나 meta.full_text가 있으면 100%
+    const embedCompleted = document.stages?.embed?.status === 'completed' || 
+                           document.stages?.docembed?.status === 'completed';
+    const metaFullTextExists = (document.stages?.meta?.full_text || document.meta?.full_text) &&
+                               document.stages?.meta?.status === 'completed';
+    
+    if (embedCompleted || metaFullTextExists) {
+        return 100;
+    }
+    return document.progress;
+  }
   
-  // 경로별 맞춤형 진도율 계산
-  return calculatePathSpecificProgress(document, pathType, expectedStages);
+  // Status가 completed면 무조건 100%
+  if (document.overallStatus === 'completed') {
+    return 100;
+  }
+  
+  // DocEmbed/Embed가 완료된 경우 무조건 100%
+  if ((document.docembed && document.docembed.status === 'done') ||
+      (document.embed && document.embed.status === 'completed') ||
+      (document.stages && document.stages.embed && document.stages.embed.status === 'completed')) {
+    return 100;
+  }
+  
+  // 서버 progress가 없으면 클라이언트에서 계산
+  if ((document.docembed && document.docembed.status === 'done') || 
+      (document.embed && document.embed.status === 'completed') ||
+      (document.stages && document.stages.embed && document.stages.embed.status === 'completed')) {
+    return 100;
+  }
+  
+  if (document.meta && document.meta.meta_status === 'ok' && document.meta.full_text) {
+    return 75;
+  }
+  
+  if (document.meta && document.meta.meta_status === 'ok') {
+    return 50;
+  }
+  
+  if (document.upload) {
+    return 25;
+  }
+  
+  return 0;
 };
 
 const extractUploadedDate = (document) => {
@@ -307,8 +379,8 @@ const analyzeProcessingPath = (document) => {
     expectedStages = ['U', 'M', 'T', 'E'];
   }
   
-  // 4. OCR 단계 (이미지, full_text가 없는 PDF 등)
-  if (document.ocr) {
+  // 4. OCR 단계 (이미지, full_text가 없는 PDF 등) - meta_fulltext 경로나 DocEmbed 완료 시 제외
+  if (document.ocr && pathType !== 'meta_fulltext' && !(document.docembed && document.docembed.status === 'done')) {
     if (document.ocr.warn) {
       badges.push({ type: 'O', name: 'OCR', status: 'skipped', icon: Eye });
       if (pathType === 'unknown') {
@@ -370,11 +442,10 @@ const calculatePathSpecificProgress = (document, pathType, expectedStages) => {
   
   switch (pathType) {
     case 'meta_fulltext': // U, M, E 경로 (Meta에서 full_text 추출)
-      if (document.upload) completedStages++; // U: 25%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
-      if (document.meta && document.meta.full_text) completedStages += 0.5; // full_text 추출: 75%
+      if (document.upload) completedStages++; // U: 33%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 67%
       if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
-      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
+      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 83%
       return Math.round((completedStages / totalStages) * 100);
       
     case 'text_plain': // U, M, T, E 경로
@@ -388,13 +459,19 @@ const calculatePathSpecificProgress = (document, pathType, expectedStages) => {
     case 'ocr_normal': // U, M, O, E 경로
       if (document.upload) completedStages++; // U: 25%
       if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
-      if (document.ocr) {
-        if (document.ocr.status === 'done') completedStages++; // O: 75%
-        else if (document.ocr.status === 'running') completedStages += 0.7; // O 처리중: 67.5%
-        else if (document.ocr.queue) completedStages += 0.3; // O 대기중: 57.5%
+      
+      // DocEmbed가 완료된 경우 OCR 상태와 관계없이 모든 단계 완료로 처리
+      if (document.docembed && document.docembed.status === 'done') {
+        completedStages = totalStages; // 모든 단계 완료: 100%
+      } else {
+        // DocEmbed가 미완료인 경우에만 OCR 상태 확인
+        if (document.ocr) {
+          if (document.ocr.status === 'done') completedStages++; // O: 75%
+          else if (document.ocr.status === 'running') completedStages += 0.7; // O 처리중: 67.5%
+          else if (document.ocr.queue) completedStages += 0.3; // O 대기중: 57.5%
+        }
+        if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
       }
-      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
-      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
       return Math.round((completedStages / totalStages) * 100);
       
     case 'unsupported':
@@ -405,11 +482,12 @@ const calculatePathSpecificProgress = (document, pathType, expectedStages) => {
       if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 100%
       return Math.round((completedStages / totalStages) * 100);
       
+    case 'processing':
     default:
       // 기본 진도율 계산
-      if (document.upload) completedStages += 0.2;
-      if (document.meta && document.meta.meta_status === 'ok') completedStages += 0.4;
-      return Math.round(completedStages * 100);
+      if (document.upload) completedStages++; // Upload 완료시 50%
+      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // Meta 완료시 100%
+      return Math.round((completedStages / Math.max(totalStages, 2)) * 100);
   }
 };
 
@@ -1154,7 +1232,23 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
               <div style={{ marginTop: '24px' }}>
                 <h3 style={{ fontWeight: '500', color: '#111827', marginBottom: '12px' }}>Processing Stages</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {Object.entries(document.stages).map(([stage, data]) => (
+                  {Object.entries(document.stages)
+                    .filter(([stage, data]) => {
+                      // meta에 full_text가 있거나 embed가 완료되면 OCR 단계는 숨김 
+                      if (stage.toLowerCase().includes('ocr')) {
+                        // meta.full_text 확인
+                        if (document.stages?.meta?.full_text || document.meta?.full_text) {
+                          return false;
+                        }
+                        // embed가 완료되면 OCR 불필요
+                        if (document.stages?.embed?.status === 'completed' || 
+                            document.stages?.docembed?.status === 'completed') {
+                          return false;
+                        }
+                      }
+                      return true;
+                    })
+                    .map(([stage, data]) => (
                     <div key={stage} style={{
                       backgroundColor: '#f9fafb',
                       borderRadius: '8px',
@@ -1233,7 +1327,7 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
   const [viewMode, setViewMode] = useState("grid");
   
   // 통신 관련 상태
-  const [communicationMode, setCommunicationMode] = useState('polling');
+  const [communicationMode, setCommunicationMode] = useState('polling'); // WebSocket 불안정하므로 Polling을 기본값으로 유지
   const [wsConnected, setWsConnected] = useState(false);
   const [wsStats, setWsStats] = useState(null);
   
@@ -1252,6 +1346,7 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
       const data = await apiService.getRecentDocuments(1000);
       const realDocuments = data.documents || [];
       
+      
       // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
       setDocuments(prevDocs => {
         const tempDocs = prevDocs.filter(doc => doc.id?.startsWith('temp-'));
@@ -1261,12 +1356,10 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
           return !realDocFilenames.includes(tempFilename);
         });
         
-        console.log(`Real docs: ${realDocuments.length}, Unique temp docs: ${uniqueTempDocs.length}`);
         return [...realDocuments, ...uniqueTempDocs];
       });
       
       setLastUpdated(new Date());
-      console.log(`Fetched ${realDocuments.length} documents`);
     } catch (err) {
       setError("문서 목록을 불러올 수 없습니다.");
       console.error("Fetch documents error:", err);
@@ -1297,13 +1390,11 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
     
     // WebSocket 이벤트 리스너 설정
     const handleConnected = () => {
-      console.log('WebSocket connected');
       setWsConnected(true);
       setError(null);
     };
 
     const handleDisconnected = () => {
-      console.log('WebSocket disconnected');
       setWsConnected(false);
     };
 
@@ -1314,18 +1405,28 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
     };
 
     const handleInitialData = (data) => {
-      console.log('Received initial data:', data);
-      setDocuments(data.documents || []);
+      
+      // 초기 데이터에도 클라이언트 로직 적용
+      const correctedDocuments = (data.documents || []).map(doc => {
+        if (doc.stages?.embed?.status === 'completed' || 
+            doc.stages?.docembed?.status === 'completed') {
+          return { ...doc, overallStatus: 'completed', progress: 100 };
+        } else if ((doc.stages?.meta?.full_text || doc.meta?.full_text) &&
+                   doc.stages?.meta?.status === 'completed' &&
+                   doc.stages?.ocr?.status === 'pending') {
+          return { ...doc, overallStatus: 'completed', progress: 100 };
+        }
+        return doc;
+      });
+      
+      setDocuments(correctedDocuments);
       setLastUpdated(new Date(data.timestamp));
       setLoading(false);
     };
 
     const handleDocumentUpdate = (data) => {
-      console.log('WebSocket 업데이트 수신:', data.filename, data.id);
-      console.log('업데이트 데이터 전체:', data);
       
       setDocuments(prevDocs => {
-        console.log('현재 문서 수:', prevDocs.length);
         
         // 실제 DB 문서와 임시 문서 분리
         const realDocs = prevDocs.filter(doc => !doc.id?.startsWith('temp-'));
@@ -1333,25 +1434,49 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
         
         const updatedRealDocs = [...realDocs];
         const index = updatedRealDocs.findIndex(doc => (doc.id || doc._id) === data.id);
-        console.log('문서 찾기 결과 - 인덱스:', index, '찾은 ID:', data.id);
         
         if (index >= 0) {
-          // 기존 실제 문서 업데이트
-          console.log('기존 실제 문서 업데이트');
-          updatedRealDocs[index] = {
-            ...updatedRealDocs[index],
+          // 기존 실제 문서 업데이트 - 클라이언트 로직 적용 (stages 정보 보존)
+          const existingDoc = updatedRealDocs[index];
+          const updatedDoc = {
+            ...existingDoc,  // 기존 stages 정보 보존
+            ...data,         // 새로운 데이터 적용
+            stages: existingDoc.stages || data.stages, // stages 정보 우선 보존
+            _id: data.id,
+            id: data.id
+          };
+          
+          // OCR pending 때문에 잘못된 상태/진행률 수정 - 정확한 조건으로만
+          const embedCompleted = updatedDoc.stages?.embed?.status === 'completed' || 
+                                 updatedDoc.stages?.docembed?.status === 'completed';
+          
+          if (embedCompleted) {
+            updatedDoc.overallStatus = 'completed';
+            updatedDoc.progress = 100;
+          }
+          
+          updatedRealDocs[index] = updatedDoc;
+        } else {
+          // 새 실제 문서 추가 - 클라이언트 로직 적용
+          const newDoc = {
             ...data,
             _id: data.id,
             id: data.id
           };
-        } else {
-          // 새 실제 문서 추가
-          console.log('새 실제 문서 추가:', data.filename);
-          updatedRealDocs.unshift({
-            ...data,
-            _id: data.id,
-            id: data.id
-          });
+          
+          // OCR pending 때문에 잘못된 상태/진행률 수정
+          if (newDoc.stages?.embed?.status === 'completed' || 
+              newDoc.stages?.docembed?.status === 'completed') {
+            newDoc.overallStatus = 'completed';
+            newDoc.progress = 100;
+          } else if ((newDoc.stages?.meta?.full_text || newDoc.meta?.full_text) &&
+                     newDoc.stages?.meta?.status === 'completed' &&
+                     newDoc.stages?.ocr?.status === 'pending') {
+            newDoc.overallStatus = 'completed';
+            newDoc.progress = 100;
+          }
+          
+          updatedRealDocs.unshift(newDoc);
         }
         
         // 새로 추가된 실제 문서와 파일명이 같은 임시 문서 제거
@@ -1362,26 +1487,35 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
         });
         
         const finalDocs = [...updatedRealDocs, ...filteredTempDocs];
-        console.log(`업데이트 후 - 실제 문서: ${updatedRealDocs.length}, 임시 문서: ${filteredTempDocs.length}, 총: ${finalDocs.length}`);
         return finalDocs;
       });
       setLastUpdated(new Date());
     };
 
     const handleDatabaseEmpty = (data) => {
-      console.log('Database is empty - received empty state:', data);
       setDocuments([]); // 모든 문서 제거
       setLastUpdated(new Date(data.timestamp));
       setLoading(false);
     };
 
     const handleStatusUpdate = (data) => {
-      console.log('Status update received:', data);
-      // 전체 문서 목록으로 상태 업데이트 (문서 수 변화 시에만)
+      // 전체 문서 목록으로 상태 업데이트 (문서 수 변화 시에만) - 클라이언트 로직 적용
       if (data.documents && Array.isArray(data.documents)) {
-        console.log(`Document count changed: ${data.previous_count} -> ${data.current_count}`);
-        console.log(`Updating with ${data.documents.length} documents for pagination`);
-        setDocuments(data.documents);
+        
+        // 각 문서에 클라이언트 로직 적용
+        const correctedDocuments = data.documents.map(doc => {
+          if (doc.stages?.embed?.status === 'completed' || 
+              doc.stages?.docembed?.status === 'completed') {
+            return { ...doc, overallStatus: 'completed', progress: 100 };
+          } else if ((doc.stages?.meta?.full_text || doc.meta?.full_text) &&
+                     doc.stages?.meta?.status === 'completed' &&
+                     doc.stages?.ocr?.status === 'pending') {
+            return { ...doc, overallStatus: 'completed', progress: 100 };
+          }
+          return doc;
+        });
+        
+        setDocuments(correctedDocuments);
       }
       setLastUpdated(new Date(data.timestamp));
     };
@@ -1417,7 +1551,6 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
   const switchCommunicationMode = useCallback((mode) => {
     if (mode === communicationMode) return;
 
-    console.log(`Switching communication mode from ${communicationMode} to ${mode}`);
     
     if (mode === 'websocket') {
       // 폴링 중지하고 WebSocket 연결
@@ -1450,7 +1583,6 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
 
   // 초기 로드
   useEffect(() => {
-    console.log('Dashboard mounted - starting initial load...');
     fetchDocuments(true); // isInitialLoad = true로 전달
     checkApiHealth();
   }, [fetchDocuments, checkApiHealth]);
@@ -1458,7 +1590,6 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
   // initialFiles가 변경되면 임시 문서 추가 (실제 DB 문서와 중복 방지)
   useEffect(() => {
     if (initialFiles.length > 0) {
-      console.log(`Processing ${initialFiles.length} initial files`);
       setDocuments(prevDocs => {
         // 기존 실제 DB 문서들 (temp-로 시작하지 않는 ID)
         const realDocs = prevDocs.filter(doc => !doc.id?.startsWith('temp-'));
@@ -1470,7 +1601,6 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
           return !realDocFilenames.includes(tempFilename);
         });
         
-        console.log(`Real docs: ${realDocs.length}, New temp files: ${newTempFiles.length}`);
         
         // 실제 문서들 + 새로운 임시 문서들
         return [...realDocs, ...newTempFiles];
@@ -1509,48 +1639,7 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
     return () => clearInterval(interval);
   }, [communicationMode, fetchWebSocketStats]);
 
-  // 실시간 처리 상태 시뮬레이션 (임시 문서용)
-  useEffect(() => {
-    if (documents.length === 0) return;
-    
-    const interval = setInterval(() => {
-      setDocuments(prevDocs => {
-        let hasChanges = false;
-        const updated = prevDocs.map(doc => {
-          if (doc.status === 'processing' && doc.id && doc.id.startsWith('temp-')) {
-            const currentProgress = doc.progress || 10;
-            const increment = Math.random() * 15 + 5; // 5-20% 증가
-            const newProgress = Math.min(currentProgress + increment, 95);
-            
-            hasChanges = true;
-            
-            // 90% 이상이면 완료 상태로 변경할 확률 증가
-            if (newProgress >= 90 && Math.random() > 0.3) {
-              return {
-                ...doc,
-                status: 'completed',
-                progress: 100
-              };
-            }
-            
-            return {
-              ...doc,
-              progress: newProgress
-            };
-          }
-          return doc;
-        });
-        
-        if (hasChanges) {
-          setLastUpdated(new Date());
-        }
-        
-        return hasChanges ? updated : prevDocs;
-      });
-    }, 2000); // 2초마다 업데이트
-    
-    return () => clearInterval(interval);
-  }, [documents.length]);
+  // 실시간 처리 상태 시뮬레이션 제거 (실제 데이터만 사용)
 
   // 검색 및 필터링
   useEffect(() => {
@@ -1560,8 +1649,24 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
       filtered = filtered.filter(doc => {
         const filename = extractFilename(doc);
         const id = doc.id || doc._id || '';
-        return filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               id.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchTermLower = searchTerm.toLowerCase();
+        
+        const matchesFilename = filename.toLowerCase().includes(searchTermLower);
+        const matchesId = id.toLowerCase().includes(searchTermLower);
+        
+        // Meta full_text 검색
+        const metaFullText = doc.meta?.full_text || '';
+        const matchesMetaText = metaFullText.toLowerCase().includes(searchTermLower);
+        
+        // OCR full_text 검색  
+        const ocrFullText = doc.ocr?.full_text || '';
+        const matchesOcrText = ocrFullText.toLowerCase().includes(searchTermLower);
+        
+        // Text full_text 검색 (text/plain 파일용)
+        const textFullText = doc.text?.full_text || '';
+        const matchesTextText = textFullText.toLowerCase().includes(searchTermLower);
+        
+        return matchesFilename || matchesId || matchesMetaText || matchesOcrText || matchesTextText;
       });
     }
     
