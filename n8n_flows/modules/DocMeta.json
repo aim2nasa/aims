@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -752,
-        -240
+        -544,
+        272
       ],
-      "id": "34dee762-9272-44f7-8f1f-cd4e4e1fe76d",
+      "id": "0a6f4074-fd20-4e11-8b49-ab269e02c94d",
       "name": "DocMeta Webhook",
       "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
     },
@@ -28,38 +28,38 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -96,
-        -240
+        112,
+        272
       ],
-      "id": "bf10112b-6024-4fa6-81c7-94ca1793be68",
+      "id": "b2c9ae84-ae7c-45b0-8d40-cf0607001208",
       "name": "Save Upload to Temp",
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js /data/tmp/\"{{$binary.file.fileName}}\""
+        "command": "=node /data/aims/tools/mime_type_analyzer/enhanced_file_analyzer.js /data/tmp/\"{{$binary.file.fileName}}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        352,
-        -128
+        560,
+        384
       ],
-      "id": "064e494b-6ee7-4c19-b8a9-10689d5cdd08",
+      "id": "e97eeb0b-d957-4f76-b0f5-56bfd93f295c",
       "name": "Run DocMeta Analyzer",
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "const lines = $json.stdout.split('\\n');\nconst jsonLine = lines.find(line => {\n  const trimmed = line.trim();\n  return trimmed.startsWith('{') && trimmed.endsWith('}');\n});\n\nif (!jsonLine) {\n  throw new Error(\"No valid JSON found in analyzer output.\");\n}\n\nreturn JSON.parse(jsonLine);"
+        "jsCode": "const output = JSON.parse($json.stdout);\nreturn output;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
-        96
+        1008,
+        608
       ],
-      "id": "01c559fc-9412-4eee-9fdd-9ee013a2978c",
+      "id": "fc2333ac-f9e8-4e74-a081-f5e6b6ab4f92",
       "name": "Parse Analyzer Output"
     },
     {
@@ -73,10 +73,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -304,
-        -336
+        -96,
+        176
       ],
-      "id": "0ab72d30-0ed8-4b50-bd44-dfec471968c6",
+      "id": "0090d127-9a4d-4ebf-b685-cd4498166551",
       "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
     },
     {
@@ -107,10 +107,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        128,
-        -240
+        336,
+        272
       ],
-      "id": "89b8b812-e22a-48e3-8f18-9f5c127f49a6",
+      "id": "979e967b-df4a-4aeb-8f53-f9c98acae8e1",
       "name": "Save Error?"
     },
     {
@@ -124,10 +124,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        352,
-        -336
+        560,
+        176
       ],
-      "id": "85c660e3-eb3a-4ea5-92df-91764d10115d",
+      "id": "bcbc91ee-1adf-4519-9398-e6254fb84e52",
       "name": "Respond 500 SaveFail"
     },
     {
@@ -141,10 +141,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        800,
-        -128
+        1008,
+        384
       ],
-      "id": "470e077c-53e4-4c19-8cf7-2942327b945d",
+      "id": "b59b6b36-1feb-4915-bd0d-6a6a5eb198f2",
       "name": "Respond 500 AnalyzerFail"
     },
     {
@@ -175,10 +175,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        576,
-        -32
+        784,
+        480
       ],
-      "id": "1f005713-da33-4ebb-a54c-31a0a4759d80",
+      "id": "c347fb05-f717-4e10-8f68-e8ba04a6000a",
       "name": "Analyzed?"
     },
     {
@@ -209,10 +209,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1024,
-        96
+        1232,
+        608
       ],
-      "id": "b59e5c4d-d72f-427c-b4ec-e43202307e5f",
+      "id": "f5a07bc6-3235-4945-9125-f6f715b5b110",
       "name": "Parsed?"
     },
     {
@@ -226,10 +226,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1232,
-        -32
+        1440,
+        480
       ],
-      "id": "ed943432-7fc8-41d5-8c18-5245706e58b9",
+      "id": "c8a0231e-6883-4005-9764-c562b488fb9f",
       "name": "Respond 500 AnalyzerOutputFail"
     },
     {
@@ -241,10 +241,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1232,
-        192
+        1440,
+        704
       ],
-      "id": "358bd3b0-d871-454c-b820-4a8dfe98f855",
+      "id": "d82ebd70-b338-4376-9341-894ea6c4efbd",
       "name": "Respond to DocMeta Webhook"
     },
     {
@@ -275,10 +275,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -304,
-        -128
+        -96,
+        384
       ],
-      "id": "468883d8-1bbb-4376-93cb-305289fa515d",
+      "id": "d28a973b-ba25-4131-bb90-7a956f0f539a",
       "name": "Binary Exist?"
     },
     {
@@ -309,23 +309,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -528,
-        -240
+        -320,
+        272
       ],
-      "id": "452bc6bf-fcda-449c-90cc-1f5d7dece9cc",
+      "id": "603e29fc-4379-4859-a65b-3fa737880e02",
       "name": "No Binary & No Path?"
     },
     {
       "parameters": {
-        "command": "=node /data/aims/tools/mime_type_analyzer/file_analyzer.js {{$json.body.path}}"
+        "command": "=node /data/aims/tools/mime_type_analyzer/enhanced_file_analyzer.js {{$json.body.path}}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        352,
-        96
+        560,
+        608
       ],
-      "id": "ff4b77e8-9f3a-4608-a386-274bbd064247",
+      "id": "5aa0f10e-fc7d-4282-a459-bf43ba0cd359",
       "name": "Run DocMeta Analyzer with Path"
     }
   ],
@@ -484,7 +484,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "24b0aef3-8acd-486e-9593-5e3ad0ee4915",
+  "versionId": "33f06905-7920-46da-b95a-128c832996ab",
   "meta": {
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
