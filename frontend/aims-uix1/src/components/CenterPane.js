@@ -441,10 +441,12 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       {/* Full Text 모달 */}
       <Modal
         title={
-          <Space>
-            <ReadOutlined />
-            <Text>{selectedDocumentForFullText?.upload?.originalName || selectedDocumentForFullText?.payload?.original_name || '문서 전체 텍스트'}</Text>
-          </Space>
+          <div style={{ cursor: 'move', width: '100%' }}>
+            <Space>
+              <ReadOutlined />
+              <Text>{selectedDocumentForFullText?.upload?.originalName || selectedDocumentForFullText?.payload?.original_name || '문서 전체 텍스트'}</Text>
+            </Space>
+          </div>
         }
         visible={showFullTextModal}
         onCancel={handleFullTextModalClose}
@@ -455,6 +457,32 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
         ]}
         width={800}
         style={{ top: 20 }}
+        draggable={true}
+        modalRender={(modal) => (
+          <div
+            onMouseDown={(e) => {
+              const modalElement = e.currentTarget;
+              const startX = e.clientX - modalElement.offsetLeft;
+              const startY = e.clientY - modalElement.offsetTop;
+
+              const handleMouseMove = (moveEvent) => {
+                modalElement.style.left = `${moveEvent.clientX - startX}px`;
+                modalElement.style.top = `${moveEvent.clientY - startY}px`;
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+            style={{ position: 'absolute' }}
+          >
+            {modal}
+          </div>
+        )}
       >
         <div style={{ 
           maxHeight: '60vh', 
