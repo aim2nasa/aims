@@ -68,7 +68,7 @@ const PDFViewer = ({ file, onDownload }) => {
         justifyContent: 'center', 
         alignItems: 'center',
         width: '100%',
-        height: 'calc(100vh - 250px)', // PDF 스크롤바 제거를 위해 약 5% 증가
+        height: 'calc(100vh - 260px)', // CenterPane 페이지네이션 위치에 정확히 맞춤
         overflow: 'auto',
         padding: '10px'
       }}>

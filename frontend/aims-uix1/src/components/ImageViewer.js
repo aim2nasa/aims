@@ -82,7 +82,7 @@ const ImageViewer = ({ file, onDownload }) => {
         justifyContent: 'center', 
         alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
         width: '100%',
-        height: containerHeight, // 동적으로 계산된 높이 사용
+        height: 'calc(100vh - 260px)', // CenterPane 페이지네이션 위치에 정확히 맞춤
         overflow: 'auto',
         padding: '10px'
       }}>

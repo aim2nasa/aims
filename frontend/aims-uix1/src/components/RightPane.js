@@ -70,7 +70,7 @@ const RightPane = ({ document, onClose, onResetRatio }) => {
         </Space>
       }
       bordered={false}
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column' }}
     >
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
         {isPdf ? (
