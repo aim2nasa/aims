@@ -201,11 +201,10 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       const paginatedData = getPaginatedData(searchResults);
       
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)' }}>
           <div style={{ 
             flex: 1, 
             overflow: 'auto',
-            maxHeight: 'calc(100vh - 400px)', // 페이지네이션과 헤더 공간 확보
             marginBottom: '16px'
           }}>
             <List
@@ -291,7 +290,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     if (viewMode === 'tree') {
       return (
         <div style={{ 
-          height: 'calc(100vh - 400px)',
+          height: '100%',
           overflow: 'auto'
         }}>
           <Tree
@@ -342,9 +341,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
           <Button icon={<SettingOutlined />} onClick={() => setShowPageSizeModal(true)} />
         </Space>
       }
-      style={{ minHeight: '100%', borderRadius: 8 }}
+      style={{ height: 'calc(100vh - 140px)', borderRadius: 8, display: 'flex', flexDirection: 'column' }}
     >
-      {renderContent()}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {renderContent()}
+      </div>
 
       {/* ✅ 업로드 모달 추가 */}
       <Modal
