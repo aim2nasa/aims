@@ -12,7 +12,7 @@
       "typeVersion": 2,
       "position": [
         -1648,
-        -152
+        -160
       ],
       "id": "4e9b7f15-8f3c-4cd8-9f38-6ea27e14830f",
       "name": "DocPrepMain Webhook",
@@ -50,7 +50,7 @@
       "typeVersion": 4.2,
       "position": [
         -1424,
-        -152
+        -160
       ],
       "id": "963c7aac-8059-4a08-beb5-d42737d9dfb1",
       "name": "DocUpload Request"
@@ -82,8 +82,76 @@
     },
     {
       "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"_id\": \"{{ $('DocUpload Failed?').item.json.body._id }}\",\n  \"meta\": {\n    \"filename\": \"{{ $json.body.filename }}\",\n    \"extension\": \"{{ $json.body.extension }}\",\n    \"mime\": \"{{ $json.body.mime }}\",\n    \"size_bytes\": {{ $json.body.size_bytes }},\n    \"created_at\": \"{{ $json.body.created_at }}\",\n    \"meta_status\": \"{{ $json.body.status }}\",\n    \"exif\": {{ $json.body.exif || {} }},\n    \"pdf_pages\": {{ $json.body.pdf_pages || 0 }},\n    \"pdf_text_ratio\": {{ $json.body.pdf_text_ratio || 0 }}\n  }\n}",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3f61ec5-e5f7-4ddb-aaa9-ee38000d5a41",
+              "name": "_id",
+              "value": "={{ $('DocUpload Failed?').item.json.body._id }}",
+              "type": "string"
+            },
+            {
+              "id": "29e689da-0683-4e2e-8788-74032426969d",
+              "name": "meta.filename",
+              "value": "={{ $json.body.filename }}",
+              "type": "string"
+            },
+            {
+              "id": "b3675d60-abef-4dde-9cf8-50ead21407de",
+              "name": "meta.extension",
+              "value": "={{ $json.body.extension }}",
+              "type": "string"
+            },
+            {
+              "id": "8a8113b2-1a64-49ce-8f67-911655a446e6",
+              "name": "meta.mime",
+              "value": "={{ $json.body.mime }}",
+              "type": "string"
+            },
+            {
+              "id": "9a3a28d5-f06f-4871-885b-a002367297d8",
+              "name": "meta.size_bytes",
+              "value": "={{ $json.body.size_bytes }}",
+              "type": "string"
+            },
+            {
+              "id": "9d33c43b-151f-4408-80e8-26364fa5b9fc",
+              "name": "meta.created_at",
+              "value": "={{ $json.body.created_at }}",
+              "type": "string"
+            },
+            {
+              "id": "4cfcb8ac-d7db-44dd-add7-fafe85117096",
+              "name": "meta.meta_status",
+              "value": "={{ $json.body.status }}",
+              "type": "string"
+            },
+            {
+              "id": "2436d2d6-635a-4937-bd11-4d569bd67697",
+              "name": "meta.exif",
+              "value": "={{ $json.body.exif }}",
+              "type": "string"
+            },
+            {
+              "id": "70772422-62bf-49ad-9f6d-065f1e1937e3",
+              "name": "meta.pdf_pages",
+              "value": "={{ $json.body.pdf_pages }}",
+              "type": "string"
+            },
+            {
+              "id": "121a1754-f28c-4f0e-b9ab-d7f0af5acb34",
+              "name": "meta.full_text",
+              "value": "={{ $json.body.extracted_text }}",
+              "type": "string"
+            },
+            {
+              "id": "b665281c-3eab-45ae-94c1-eaf8658df2d2",
+              "name": "meta.pdf_text_ratio",
+              "value": "={{ $json.body.pdf_text_ratio }}",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -120,138 +188,16 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "9217ebc2-05be-4a33-82ae-174951a59420",
-              "leftValue": "={{ $json.meta.pdf_pages }}",
-              "rightValue": 30,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        368,
-        160
-      ],
-      "id": "b18e5bda-247b-4ccc-b4bd-a2118f8cbd04",
-      "name": "Over PDF Page Limit?"
-    },
-    {
-      "parameters": {
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1488,
-        256
+        1504,
+        80
       ],
       "id": "4d51125f-4409-4305-aa81-fe83e7156c89",
       "name": "Respond to DocPrepMain Webhook"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "2de5fe4f-7ef7-4bdf-aba1-ff4bd1f4d606",
-              "name": "warn",
-              "value": true,
-              "type": "boolean"
-            },
-            {
-              "id": "e5177902-811d-4607-9d5a-0937da47a41e",
-              "name": "status",
-              "value": 207,
-              "type": "number"
-            },
-            {
-              "id": "30f1814b-a01b-4a22-bd6d-478c7e4791cf",
-              "name": "userMessage",
-              "value": "⚠️ OCR 생략: 문서 페이지 수 초과",
-              "type": "string"
-            },
-            {
-              "id": "ca3ff755-0855-4d02-9fb2-35e729863467",
-              "name": "pages",
-              "value": "={{ $json.meta.pdf_pages }}",
-              "type": "number"
-            },
-            {
-              "id": "85e16480-1d99-4de7-b500-a422ce31b43b",
-              "name": "filename",
-              "value": "={{ $json.meta.filename }}",
-              "type": "string"
-            },
-            {
-              "id": "5667ce45-6f22-463e-b7c4-8e647187f23b",
-              "name": "ocr.warn",
-              "value": "=Skipped OCR due to excessive number of pages, {{ $json.meta.pdf_pages }}>30",
-              "type": "string"
-            },
-            {
-              "id": "f74f0f28-b11c-495e-a66c-8980a4eff7d9",
-              "name": "=_id",
-              "value": "={{ $('Merge DocMeta for Update').item.json._id }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        592,
-        64
-      ],
-      "id": "1344eb86-b50d-4132-aeac-118009f5a153",
-      "name": "Set PDF Limit Warning"
-    },
-    {
-      "parameters": {
-        "command": "=echo \"[OCR-WARN] Skipped OCR due to page limit: {{$json.filename}} ({{$json.pages}} pages)\""
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1040,
-        64
-      ],
-      "id": "5a78ed17-8dab-4bbb-b8bc-7795ea06a507",
-      "name": "Log PDF Limit Warning"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {
-          "responseCode": 207
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        1264,
-        64
-      ],
-      "id": "2025587a-4fb7-4ceb-95c0-0b587c00fa4d",
-      "name": "Respond PDF Page Limit Warning"
     },
     {
       "parameters": {
@@ -426,34 +372,11 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        816,
-        256
+        832,
+        80
       ],
       "id": "25733571-d092-4b53-a366-4a915bb04dd1",
       "name": "Enqueue OCR Request (Redis XADD)"
-    },
-    {
-      "parameters": {
-        "operation": "findOneAndUpdate",
-        "collection": "files",
-        "updateKey": "=_id",
-        "fields": "=ocr",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
-      "position": [
-        816,
-        64
-      ],
-      "id": "0004af74-6fd9-4257-817b-f28003d7c45d",
-      "name": "Update PDF Page Limit Warning in MongoDB",
-      "credentials": {
-        "mongoDb": {
-          "id": "RT7gatMve2ExTlAp",
-          "name": "MongoDB account"
-        }
-      }
     },
     {
       "parameters": {
@@ -598,8 +521,8 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        1264,
-        256
+        1280,
+        80
       ],
       "id": "3aab1fd2-f758-404d-91a9-228eae217546",
       "name": "Update OCR Queue in MongoDB",
@@ -640,8 +563,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1040,
-        256
+        1056,
+        80
       ],
       "id": "dcafa4a6-5506-4fa4-b68c-118e76de5dae",
       "name": "Set Queue for OCR"
@@ -657,7 +580,7 @@
       "typeVersion": 1.2,
       "position": [
         -304,
-        -248
+        -256
       ],
       "id": "89640565-86bc-4f1d-a6bc-df55371403a2",
       "name": "Insert Error Message in MongoDB",
@@ -680,7 +603,7 @@
       "typeVersion": 1.4,
       "position": [
         -80,
-        -248
+        -256
       ],
       "id": "d168e5a9-cc69-4684-82da-0845c3528c39",
       "name": "Upload Error Message"
@@ -713,7 +636,7 @@
       "typeVersion": 2.2,
       "position": [
         -1200,
-        -152
+        -160
       ],
       "id": "b2d2fd51-fabe-4631-a85b-07cb54da7229",
       "name": "DocUpload Failed?"
@@ -781,7 +704,7 @@
       "typeVersion": 3.4,
       "position": [
         -528,
-        -248
+        -256
       ],
       "id": "dd00f596-f2ee-4cfa-9bc5-b11664cc2f15",
       "name": "Set Error Message"
@@ -803,11 +726,60 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        592,
-        256
+        608,
+        80
       ],
       "id": "ab66255b-b148-492e-aa02-916e94e11c8f",
       "name": "Queue Time Stamp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9bab8c50-d883-465a-b08d-ce59c2de8ad8",
+              "leftValue": "={{$json.meta.full_text}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        160
+      ],
+      "id": "62cf4de3-fd88-4e86-933c-19ed172e171b",
+      "name": "empty full_text?"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        608,
+        240
+      ],
+      "id": "8bc7cb0e-28ef-4ce7-acf3-11b2de30bf4e",
+      "name": "Respond Done"
     }
   ],
   "pinData": {},
@@ -867,46 +839,6 @@
         ]
       ]
     },
-    "Over PDF Page Limit?": {
-      "main": [
-        [
-          {
-            "node": "Set PDF Limit Warning",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Queue Time Stamp",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set PDF Limit Warning": {
-      "main": [
-        [
-          {
-            "node": "Update PDF Page Limit Warning in MongoDB",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log PDF Limit Warning": {
-      "main": [
-        [
-          {
-            "node": "Respond PDF Page Limit Warning",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Unsupported MIME Type?": {
       "main": [
         [
@@ -918,7 +850,7 @@
         ],
         [
           {
-            "node": "Over PDF Page Limit?",
+            "node": "empty full_text?",
             "type": "main",
             "index": 0
           }
@@ -963,17 +895,6 @@
         [
           {
             "node": "Set Queue for OCR",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update PDF Page Limit Warning in MongoDB": {
-      "main": [
-        [
-          {
-            "node": "Log PDF Limit Warning",
             "type": "main",
             "index": 0
           }
@@ -1132,6 +1053,24 @@
           }
         ]
       ]
+    },
+    "empty full_text?": {
+      "main": [
+        [
+          {
+            "node": "Queue Time Stamp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1141,7 +1080,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "61231898-d367-437b-825e-4aa75076f492",
+  "versionId": "9c5546e3-d15e-45b7-85eb-94335510c344",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
