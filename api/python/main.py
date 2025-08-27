@@ -173,32 +173,91 @@ class DocumentStatus(BaseModel):
     last_updated: Optional[str] = None
 
 def get_overall_status(doc: Dict) -> tuple[str, int]:
-    """전체 처리 상태와 진행률을 계산"""
-    stages = {
-        'upload': doc.get('upload') is not None,
-        'meta': doc.get('meta') is not None,
-        'ocr': doc.get('ocr', {}).get('status') == 'done',
-        'embed': doc.get('embed', {}).get('status') == 'done' or doc.get('docembed', {}).get('status') == 'done'
-    }
+    """새로운 상태 코드 기준에 따른 전체 처리 상태와 진행률 계산"""
     
-    completed_stages = sum(stages.values())
-    total_stages = len(stages)
-    progress = int((completed_stages / total_stages) * 100)
+    # 기본 정보 추출
+    upload_info = doc.get('upload', {})
+    meta_info = doc.get('meta', {})
+    ocr_info = doc.get('ocr', {})
+    embed_info = doc.get('embed', {}) or doc.get('docembed', {})
     
-    # OCR나 임베딩이 실패한 경우
-    ocr_status = doc.get('ocr', {}).get('status')
-    embed_status = doc.get('embed', {}).get('status') or doc.get('docembed', {}).get('status')
-    
-    if ocr_status == 'error' or embed_status == 'failed':
-        return 'error', progress
-    elif ocr_status in ['queued', 'running'] or embed_status == 'processing':
-        return 'processing', progress
-    elif completed_stages == total_stages:
-        return 'completed', 100
-    elif completed_stages > 0:
-        return 'processing', progress
-    else:
+    # [U] Upload 체크
+    if not upload_info:
         return 'pending', 0
+    
+    # [M] Meta 체크  
+    if not meta_info or meta_info.get('meta_status') != 'ok':
+        return 'processing', 25  # Upload만 완료
+    
+    # Meta에서 full_text 확인
+    full_text = meta_info.get('full_text')
+    has_meaningful_text = full_text and full_text.strip()
+    
+    if has_meaningful_text:
+        # [Mt] -> [Mts] -> [E] 경로
+        summary = meta_info.get('summary')
+        if not summary:
+            return 'processing', 50  # Meta 완료, Summary 대기
+            
+        # [Mts] 완료, Embed 체크
+        embed_status = embed_info.get('status')
+        if embed_status == 'done':
+            return 'completed', 100  # [U][Mts][E] 완료
+        elif embed_status == 'failed':
+            return 'error', 100     # [U][Mts][Ef] 완료 (실패)
+        else:
+            return 'processing', 75  # Embed 진행중
+    else:
+        # [Mx] full_text 비어있음 - MIME 타입 체크
+        mime_type = meta_info.get('mime', '')
+        
+        # 지원하지 않는 MIME 타입들 (OCR 불가)
+        unsupported_mimes = [
+            'text/plain', 'text/csv', 'text/markdown',
+            'application/json', 'application/xml',
+            'audio/', 'video/', 'application/zip',
+            'application/x-rar-compressed'
+        ]
+        
+        is_unsupported = any(mime_type.startswith(unsupported) for unsupported in unsupported_mimes)
+        
+        if is_unsupported:
+            return 'completed', 100  # [U][Mx] MIME 미지원으로 완료
+        
+        # OCR 지원 MIME - OCR 상태 체크
+        ocr_status = ocr_info.get('status', 'pending')
+        
+        if ocr_status == 'pending':
+            return 'processing', 50  # [U][Mx] OCR 대기
+        elif ocr_status == 'queued':
+            return 'processing', 60  # [U][Mx][Oq] OCR 큐 대기
+        elif ocr_status == 'running':
+            return 'processing', 70  # [U][Mx][Or] OCR 실행중
+        elif ocr_status == 'error':
+            return 'error', 100      # [U][Mx][Oe] OCR 오류로 완료
+        elif ocr_status == 'done':
+            # OCR 완료 - OCR 결과 텍스트 확인
+            ocr_full_text = ocr_info.get('full_text')
+            has_ocr_text = ocr_full_text and ocr_full_text.strip()
+            
+            if not has_ocr_text:
+                return 'completed', 100  # [U][Mx][Ox] OCR 텍스트 없음으로 완료
+            
+            # [Ot] OCR 텍스트 존재 - Summary 체크
+            ocr_summary = ocr_info.get('summary')
+            if not ocr_summary:
+                return 'processing', 80  # OCR Summary 대기
+            
+            # [Ots] OCR Summary 완료 - Embed 체크  
+            embed_status = embed_info.get('status')
+            if embed_status == 'done':
+                return 'completed', 100  # [U][Mx][Ots][E] 완료
+            elif embed_status == 'failed':
+                return 'error', 100     # [U][Mx][Ots][Ef] 완료 (실패)
+            else:
+                return 'processing', 90  # Embed 진행중
+        else:
+            return 'processing', 50   # 기타 상태
 
 def format_document_status(doc: Dict) -> DocumentStatus:
     """MongoDB 문서를 API 응답 형식으로 변환"""
