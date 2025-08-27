@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1296,
-        -304
+        -2976,
+        -208
       ],
-      "id": "ee36e9e1-3316-4306-8a24-aaaea0858432",
+      "id": "388a648e-49a0-4dc1-80e2-53d66ccd84e0",
       "name": "DocUpload Webhook",
       "webhookId": "50122c31-3902-422e-8008-c1f4996aba74"
     },
@@ -28,24 +28,24 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -624,
-        -208
+        -2304,
+        -112
       ],
-      "id": "988683cc-1340-44ec-bf6e-ff4dd89b577d",
+      "id": "fa65ea55-779e-469f-972f-b1d335412219",
       "name": "Save to Temp File",
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "function generateSafePath() {\n  const now = new Date();\n  const yyyy = now.getFullYear();\n  const mm = ('0' + (now.getMonth() + 1)).slice(-2);\n  const dd = ('0' + now.getDate()).slice(-2);\n  const hh = ('0' + now.getHours()).slice(-2);\n  const min = ('0' + now.getMinutes()).slice(-2);\n  const ss = ('0' + now.getSeconds()).slice(-2);\n\n  const timestamp = `${String(yyyy).slice(-2)}${mm}${dd}${hh}${min}${ss}`;\n\n  // 랜덤 토큰\n  const token = Math.random().toString(36).slice(2, 10);\n\n  // 원본 파일명 (없으면 unknown)\n  const originalName = items[0].binary.file?.fileName?.replace(/[\\n\\r]/g, '') || 'unknown';\n\n  const sourcePath = $('File Exist?').first().json.body.source_path;\n\n  // 확장자 파싱 실패 시 빈 문자열\n  let ext = '';\n  const extMatch = originalName.match(/\\.[0-9A-Za-z]+$/);\n  if (extMatch) ext = extMatch[0];\n\n  const saveName = `${timestamp}_${token}${ext}`;\n  const folder = `/data/files/${yyyy}/${mm}`;\n  const destPath = `${folder}/${saveName}`;\n\n  return { folder, destPath, saveName, originalName, sourcePath };\n}\n\nfunction safeGenerateFinalPath(maxRetry = 5) {\n  let lastError = null;\n\n  for (let i = 0; i < maxRetry; i++) {\n    try {\n      const pathData = generateSafePath();\n      // folder/destPath가 유효하면 성공\n      if (pathData.folder && pathData.destPath) {\n        return pathData;\n      }\n    } catch (e) {\n      lastError = e; // 실패하면 다음 재시도\n    }\n  }\n\n  // 모든 재시도 실패 → fallback 강제 생성\n  const fallbackName = `unknown_${Date.now()}`;\n  return {\n    folder: `/data/files/fallback`,\n    destPath: `/data/files/fallback/${fallbackName}`,\n    saveName: fallbackName,\n    originalName: 'unknown',\n    sourcePath: 'unknown'\n  };\n}\n\n// 최종 반환 (항상 성공)\nreturn [ { json: safeGenerateFinalPath(5) } ];\n"
+        "jsCode": "function generateSafePath() {\n  const now = new Date();\n  const yyyy = now.getFullYear();\n  const mm = ('0' + (now.getMonth() + 1)).slice(-2);\n  const dd = ('0' + now.getDate()).slice(-2);\n  const hh = ('0' + now.getHours()).slice(-2);\n  const min = ('0' + now.getMinutes()).slice(-2);\n  const ss = ('0' + now.getSeconds()).slice(-2);\n\n  const timestamp = `${String(yyyy).slice(-2)}${mm}${dd}${hh}${min}${ss}`;\n\n  // 랜덤 토큰\n  const token = Math.random().toString(36).slice(2, 10);\n\n  // 원본 파일명 (없으면 unknown)\n  const originalName = items[0].binary.file?.fileName?.replace(/[\\n\\r]/g, '') || 'unknown';\n  \n  const sourcePath = $('File Exist?').first().json.body.source_path;\n\n  // 확장자 파싱 실패 시 빈 문자열\n  let ext = '';\n  const extMatch = originalName.match(/\\.[0-9A-Za-z]+$/);\n  if (extMatch) ext = extMatch[0];\n\n  const saveName = `${timestamp}_${token}${ext}`;\n  const folder = `/data/files/${yyyy}/${mm}`;\n  const destPath = `${folder}/${saveName}`;\n\n  return { folder, destPath, saveName, sourcePath, originalName };\n}\n\nfunction safeGenerateFinalPath(maxRetry = 5) {\n  let lastError = null;\n\n  for (let i = 0; i < maxRetry; i++) {\n    try {\n      const pathData = generateSafePath();\n      // folder/destPath가 유효하면 성공\n      if (pathData.folder && pathData.destPath) {\n        return pathData;\n      }\n    } catch (e) {\n      lastError = e; // 실패하면 다음 재시도\n    }\n  }\n\n  // 모든 재시도 실패 → fallback 강제 생성\n  const fallbackName = `unknown_${Date.now()}`;\n  return {\n    folder: `/data/files/fallback`,\n    destPath: `/data/files/fallback/${fallbackName}`,\n    saveName: fallbackName,\n    sourcePath: 'unknown',\n    originalName: 'unknown'\n  };\n}\n\n// 최종 반환 (항상 성공)\nreturn [ { json: safeGenerateFinalPath(5) } ];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
-        32
+        -1856,
+        -16
       ],
-      "id": "3685264c-f253-43c1-a066-3adec3d13e02",
+      "id": "f5ef35ed-1053-4653-8500-bdc1b42758a8",
       "name": "Generate Final Path"
     },
     {
@@ -55,10 +55,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        48,
-        -48
+        -1632,
+        -88
       ],
-      "id": "19b8fe70-2b72-472b-af9e-1392dcfb6ec4",
+      "id": "12a16ae9-8fe5-4b97-9249-aff9f6d710ae",
       "name": "Exec mkdir",
       "alwaysOutputData": true
     },
@@ -69,17 +69,17 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        720,
-        128
+        -960,
+        80
       ],
-      "id": "5e1511ad-7900-4b3b-b82e-0b9098dc7a69",
+      "id": "8a5b40ed-a35f-48dc-886e-41eb70bb149c",
       "name": "Exec mv",
       "alwaysOutputData": true
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"result\": \"success\",\n  \"_id\": \"{{$node['Save File Info'].json['_id']}}\",\n  \"original\": \"{{$node['Generate Final Path'].json['originalName']}}\",\n  \"saved_name\": \"{{$node['Generate Final Path'].json['saveName']}}\",\n  \"path\": \"{{$node['Generate Final Path'].json['destPath']}}\"\n}\n",
+        "responseBody": "={\n  \"result\": \"success\",\n  \"original\": \"{{$node['Generate Final Path'].json['originalName']}}\",\n  \"sourcePath\":\"{{$node[\"Generate Final Path\"].json[\"sourcePath\"]  || \"\"}}\",\n  \"saved_name\": \"{{$node['Generate Final Path'].json['saveName']}}\",\n  \"path\": \"{{$node['Generate Final Path'].json['destPath']}}\"\n}\n",
         "options": {
           "responseCode": 200
         }
@@ -87,10 +87,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1840,
-        64
+        -512,
+        176
       ],
-      "id": "b9564e63-8158-45fa-9b5c-1a52c0c7e749",
+      "id": "8cf951d1-2701-4d6f-89e9-20d991a25c45",
       "name": "Respond to Webhook"
     },
     {
@@ -100,10 +100,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1072,
-        -304
+        -2752,
+        -208
       ],
-      "id": "aa954186-5d55-4763-8a1c-ad2cc11ddce3",
+      "id": "a6e840b8-8cef-4a61-9cb3-d256c94772a8",
       "name": "Check Binary File"
     },
     {
@@ -117,10 +117,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -624,
-        -400
+        -2304,
+        -304
       ],
-      "id": "d48df1c0-541f-4982-a3f9-36979979bd61",
+      "id": "23131c80-084b-452a-9d7d-dc1bd8e725e4",
       "name": "Respond 400 BadRequest"
     },
     {
@@ -134,10 +134,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -176,
+        -1856,
         -208
       ],
-      "id": "e69ef992-a84c-4e36-a33e-011fa2aa7c50",
+      "id": "75ca485a-021d-4113-ad20-e374f5b55a1c",
       "name": "Respond 500 Temp Save Failed"
     },
     {
@@ -168,10 +168,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -400,
+        -2080,
         -112
       ],
-      "id": "6ea1fd90-2d96-4335-8072-8ea574e2e001",
+      "id": "59a80632-e659-4ead-a384-f217ac01e022",
       "name": "Save Error?"
     },
     {
@@ -202,10 +202,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -848,
-        -304
+        -2528,
+        -208
       ],
-      "id": "91136dba-a6d9-4e29-ad1c-e7cda736355d",
+      "id": "3e494838-b39a-4767-9469-a9153a708f87",
       "name": "File Exist?"
     },
     {
@@ -219,10 +219,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        720,
-        -64
+        -960,
+        -112
       ],
-      "id": "0ffe81b5-94fa-410a-be00-c07a2302cf72",
+      "id": "48d57e21-2094-44c0-ac04-edb701ef5bd8",
       "name": "Respond 500 MKDIR_FAILED"
     },
     {
@@ -253,10 +253,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        496,
-        32
+        -1184,
+        -16
       ],
-      "id": "24a069d9-1792-48eb-90c7-d8f7f98b48fe",
+      "id": "68858798-22e4-4f06-a8f9-5393696d571c",
       "name": "Mkdir Error?"
     },
     {
@@ -275,7 +275,7 @@
               "rightValue": 0,
               "operator": {
                 "type": "number",
-                "operation": "equals"
+                "operation": "notEquals"
               }
             }
           ],
@@ -286,10 +286,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        944,
-        -144
+        -736,
+        80
       ],
-      "id": "e3395104-0aa2-4a17-bc43-4da66c46cf1e",
+      "id": "5594dbbe-645a-4b58-89d1-f83a14a17533",
       "name": "Mv Error?"
     },
     {
@@ -303,65 +303,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1168,
-        -240
+        -512,
+        -16
       ],
-      "id": "40d9873e-f322-47c7-b2fe-3692ce2bf042",
+      "id": "26036b95-3292-4e1d-80cd-63ed1387a2e4",
       "name": "Respond 500 MOVE_FAILED"
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "7d84d670-777d-4d7e-b7d3-89e62a75d446",
-              "leftValue": "={{$json.error}}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1616,
-        -48
-      ],
-      "id": "401b2145-e17b-418f-ad1c-d1aaf973ee17",
-      "name": "DB Error?"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\n  \"result\": \"error\",\n  \"code\": \"DB_INSERT_FAILED\",\n  \"message\": \"{{$json.message || 'Failed to insert file metadata into DB'}} _id:{{ $node['Save File Info'].json['_id'] }} originalName:{{ $node['Save File Info'].json['originalName'] }}\"\n}",
-        "options": {
-          "responseCode": 500
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        1840,
-        -144
-      ],
-      "id": "bd3e8035-d7cd-4f26-8067-2fc45c6bc956",
-      "name": "Respond 500 DB_INSERT_FAILED"
-    },
-    {
-      "parameters": {
         "mode": "combine",
         "combineBy": "combineByPosition",
         "options": {}
@@ -369,102 +318,11 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        272,
-        32
+        -1408,
+        -16
       ],
-      "id": "6cc5d0ef-b636-48f6-ad39-5099e2f44b92",
+      "id": "2b15d83c-7b63-40a3-8b4b-6901241d1e3e",
       "name": "mkdir+Final Path"
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineByPosition",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        48,
-        -304
-      ],
-      "id": "e70091b3-baa5-4630-802c-a0322fd6075a",
-      "name": "Temp+FinalPath"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "898e43ac-5e25-426f-acb0-42d3f3ee515d",
-              "name": "=upload.originalName",
-              "value": "={{ $node[\"Generate Final Path\"].json[\"originalName\"] || \"\" }}",
-              "type": "string"
-            },
-            {
-              "id": "fdb8c3db-ef68-4d2a-aecb-2182b174d95a",
-              "name": "upload.saveName",
-              "value": "={{$node[\"Generate Final Path\"].json[\"saveName\"] }}",
-              "type": "string"
-            },
-            {
-              "id": "eae64e30-603d-47a4-aed8-299b9e3bdc9f",
-              "name": "upload.destPath",
-              "value": "={{$node[\"Generate Final Path\"].json[\"destPath\"] }}",
-              "type": "string"
-            },
-            {
-              "id": "54129948-cb6b-46f1-9e4f-b4ce952cf5f3",
-              "name": "upload.folder",
-              "value": "={{$node[\"Generate Final Path\"].json[\"folder\"] }}",
-              "type": "string"
-            },
-            {
-              "id": "88a07c8b-7ce0-461c-9f89-c3a3746fe405",
-              "name": "upload.uploaded_at",
-              "value": "={{ $now.format('yyyy-MM-dd\\'T\\'HH:mm:ss.SSSxxx') }}",
-              "type": "string"
-            },
-            {
-              "id": "84520425-5b99-4efc-abb4-d8394feb6852",
-              "name": "upload.sourcePath",
-              "value": "={{ $node[\"Generate Final Path\"].json[\"sourcePath\"]  || \"\" }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1168,
-        -48
-      ],
-      "id": "83d13553-5b0c-471b-92ed-c0d59cd98d65",
-      "name": "Upload File Info"
-    },
-    {
-      "parameters": {
-        "operation": "insert",
-        "collection": "files",
-        "fields": "=upload",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.mongoDb",
-      "typeVersion": 1.2,
-      "position": [
-        1392,
-        -48
-      ],
-      "id": "e54c0105-c225-401c-9f52-cffe2415e749",
-      "name": "Save File Info",
-      "alwaysOutputData": true,
-      "credentials": {
-        "mongoDb": {
-          "id": "RT7gatMve2ExTlAp",
-          "name": "MongoDB account"
-        }
-      }
     }
   ],
   "pinData": {},
@@ -487,11 +345,6 @@
             "node": "Save Error?",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Temp+FinalPath",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -506,11 +359,6 @@
           },
           {
             "node": "mkdir+Final Path",
-            "type": "main",
-            "index": 1
-          },
-          {
-            "node": "Temp+FinalPath",
             "type": "main",
             "index": 1
           }
@@ -615,24 +463,6 @@
         ],
         [
           {
-            "node": "Upload File Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DB Error?": {
-      "main": [
-        [
-          {
-            "node": "Respond 500 DB_INSERT_FAILED",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "Respond to Webhook",
             "type": "main",
             "index": 0
@@ -650,39 +480,6 @@
           }
         ]
       ]
-    },
-    "Temp+FinalPath": {
-      "main": [
-        [
-          {
-            "node": "Mv Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upload File Info": {
-      "main": [
-        [
-          {
-            "node": "Save File Info",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save File Info": {
-      "main": [
-        [
-          {
-            "node": "DB Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": true,
@@ -692,7 +489,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "ef80e7cd-7254-418c-80bb-8e854761fd45",
+  "versionId": "b8a3525d-d923-425a-b702-665dbfe29a63",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
