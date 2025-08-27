@@ -3,48 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={\n  \"ocr_confidence\": \"{{ $json.confidence }}\",\n  \"ocr_text\": \"{{ $json.limitedText }}\"\n}",
-        "options": {
-          "systemMessage": "=당신은 OCR 후처리 AI입니다.\n\n입력은 JSON 형식으로 두 가지가 제공됩니다:\n- ocr_confidence: OCR API가 반환한 신뢰도 값\n- ocr_text: OCR로 인식된 원문\n\n이 두 가지를 아래 JSON 형식으로 그대로 반환하세요.\n\n{\n  \"confidence\": \"<ocr_confidence 그대로 넣기, 수정/추론 금지>\",\n  \"summary\": \"<ocr_text 내용을 3~5줄로 요약>\"\n}\n\n⚠️ 절대 문서 내용을 confidence에 넣지 마세요.\n⚠️ confidence는 입력 ocr_confidence 값 그대로 복사하세요.\n⚠️ summary에는 ocr_text 요약만 넣으세요."
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2,
-      "position": [
-        -1312,
-        -128
-      ],
-      "id": "0fd437b0-42c5-400e-a2bf-ff6ce7d284f3",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "gpt-4.1-mini",
-          "mode": "list",
-          "cachedResultName": "gpt-4.1-mini"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        -1216,
-        96
-      ],
-      "id": "f891edd1-e2a7-4d40-8a4c-ff7b8ec7cc4c",
-      "name": "OpenAI Chat Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "yC6LpoMbPIyu7vwv",
-          "name": "OpenAi account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "httpMethod": "POST",
         "path": "dococr",
         "responseMode": "responseNode",
@@ -53,25 +11,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2432,
-        -224
+        -1296,
+        272
       ],
-      "id": "8d997ca1-0b07-425b-9eab-8269688add18",
+      "id": "c22a1de1-fd92-4ef9-8795-609e4809c091",
       "name": "Webhook",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
-    },
-    {
-      "parameters": {
-        "jsCode": "const pages = $json.pages || [];\n\n// ✅ 전체 텍스트(full_text)\nlet fullText = \"\";\nfor (const page of pages) {\n  fullText += (page.text || \"\") + \"\\n\\n\";\n}\n\n// ✅ 요약에만 사용할 제한 텍스트(limitedText)\nlet limitedText = \"\";\nfor (const page of pages.slice(0, 5)) {\n  limitedText += (page.text || \"\") + \"\\n\\n\";\n}\n\nreturn [{\n  json: {\n    confidence: $input.first().json.confidence,\n    full_text: fullText.trim(),      // ✅ DB 저장용 전체 텍스트\n    limitedText: limitedText.trim()  // ✅ 요약용 5p 제한 텍스트\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1536,
-        -128
-      ],
-      "id": "f50929cd-49e9-4566-9e70-9be60fef83cb",
-      "name": "Limit & Merge Pages"
     },
     {
       "parameters": {
@@ -121,10 +66,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -2208,
-        -224
+        -1072,
+        272
       ],
-      "id": "3b717849-76e0-4762-91c4-98f40fb4369d",
+      "id": "06dbafb2-b901-44d4-b9b5-2e28146a79de",
       "name": "Upstage OCR Request",
       "alwaysOutputData": true,
       "onError": "continueRegularOutput"
@@ -138,38 +83,63 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -464,
-        -128
+        272,
+        464
       ],
-      "id": "d42608a6-ea03-44fd-9761-ee9174ae21b2",
+      "id": "0297ac78-cf53-455c-8108-b6c973a888c6",
       "name": "OCR Return"
     },
     {
       "parameters": {
-        "jsCode": "let aiOutput = $node[\"AI Agent\"].json.output;\n\n// ✅ output이 문자열이면 JSON 파싱 시도\nif (typeof aiOutput === \"string\") {\n  try {\n    aiOutput = JSON.parse(aiOutput);\n  } catch (e) {\n    // 파싱 실패하면 문자열 그대로 유지\n  }\n}\n\nreturn [{\n  json: {\n    confidence: $node[\"Limit & Merge Pages\"].json.confidence,    // OCR 신뢰도\n    full_text: $node[\"Limit & Merge Pages\"].json.full_text,      // DB 저장용 전체 텍스트\n    summary: aiOutput.summary || aiOutput                       // summary 있으면 출력, 없으면 전체 반환\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -912,
-        -128
-      ],
-      "id": "7338a339-1e1f-47af-9fc2-ba6633265f42",
-      "name": "Merge with FullText"
-    },
-    {
-      "parameters": {
-        "mode": "raw",
-        "jsonOutput": "={\n  \"status\": 200,\n  \"error\": false,\n  \"userMessage\": \"OCR 성공\",\n  \"confidence\": {{ $json.confidence }},\n  \"summary\": {{ JSON.stringify($json.summary) }},\n  \"full_text\": {{ JSON.stringify($json.full_text) }}\n}",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06f9dac1-41cb-431c-82d2-89442ea95d2f",
+              "name": "status",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "190663a3-c22e-4898-adc5-ffeec967f1c3",
+              "name": "error",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "e56ad864-a5c5-47e5-9cc7-273a1efc535a",
+              "name": "userMessage",
+              "value": "OCR 성공",
+              "type": "string"
+            },
+            {
+              "id": "d559f40e-b6ea-4130-a0fd-08162593a608",
+              "name": "confidence",
+              "value": "={{ $('Normalize DocOCR Response').item.json.confidence }}",
+              "type": "string"
+            },
+            {
+              "id": "0011e81a-1325-4aec-bb16-92a5a4339713",
+              "name": "summary",
+              "value": "={{ $json.body.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "036c0855-0625-4fc1-b215-829de0cca462",
+              "name": "full_text",
+              "value": "={{ $('Normalize DocOCR Response').item.json.full_text }}",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -688,
-        -128
+        48,
+        464
       ],
-      "id": "08ba3303-7170-44d3-95b2-fc1482db2069",
+      "id": "3027223b-cc42-4f42-9ee9-f4b27b6a27a9",
       "name": "Set OCR Success Response"
     },
     {
@@ -179,10 +149,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1760,
-        -128
+        -624,
+        368
       ],
-      "id": "e5feccf6-4e16-47ba-a649-c9d539567fce",
+      "id": "099c606d-b1ad-4d09-b947-0863a21d0c71",
       "name": "Normalize DocOCR Response"
     },
     {
@@ -212,10 +182,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1984,
-        -224
+        -848,
+        272
       ],
-      "id": "32268474-aa8c-4770-ab06-30515c17dd8c",
+      "id": "c5bb316b-0cec-4588-bc18-0391c0f7c270",
       "name": "If"
     },
     {
@@ -227,26 +197,94 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -1760,
-        -320
+        -624,
+        176
       ],
-      "id": "5480bc1c-aafb-424f-967e-b23627948d68",
+      "id": "5e679b41-6191-482f-bf6f-5e77e0fd7fc2",
       "name": "OCR Error Return"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8nd.giize.com/webhook/docsummary",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "full_text",
+              "value": "={{ $json.full_text }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        368
+      ],
+      "id": "80a850d1-9245-4e5c-a44b-0fddd7d97850",
+      "name": "Summary Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "472a7bdd-40c0-4a38-a5b8-5faede965535",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        368
+      ],
+      "id": "9bfccff4-b99d-495f-b4f4-4449e9322adf",
+      "name": "Summary Failed?"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        48,
+        272
+      ],
+      "id": "5196a942-a85f-499d-90ba-5a85f0b7d4f2",
+      "name": "Summary Error"
     }
   ],
   "pinData": {},
   "connections": {
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook": {
       "main": [
         [
@@ -258,44 +296,11 @@
         ]
       ]
     },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Merge with FullText",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Limit & Merge Pages": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Upstage OCR Request": {
       "main": [
         [
           {
             "node": "If",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge with FullText": {
-      "main": [
-        [
-          {
-            "node": "Set OCR Success Response",
             "type": "main",
             "index": 0
           }
@@ -317,7 +322,7 @@
       "main": [
         [
           {
-            "node": "Limit & Merge Pages",
+            "node": "Summary Request",
             "type": "main",
             "index": 0
           }
@@ -341,6 +346,35 @@
           }
         ]
       ]
+    },
+    "Summary Request": {
+      "main": [
+        [
+          {
+            "node": "Summary Failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Failed?": {
+      "main": [
+        [
+          {
+            "node": "Summary Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set OCR Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -350,7 +384,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "9ea0a9bb-74c8-487a-a019-5f6a03dc4581",
+  "versionId": "dadfede5-9665-408d-bd23-f1019b6e5090",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
