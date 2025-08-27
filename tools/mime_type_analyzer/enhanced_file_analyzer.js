@@ -69,9 +69,16 @@ async function extractPdfText(filePath) {
   try {
     const dataBuffer = fs.readFileSync(filePath);
     const pdfData = await pdfParse(dataBuffer);
+    
+    // 의미 있는 텍스트가 있는지 확인 (공백, 개행 문자만 있는 경우 null 반환)
+    const cleanedText = pdfData.text.trim();
+    if (cleanedText.length === 0) {
+      return null;
+    }
+    
     return pdfData.text;
   } catch (error) {
-    return `PDF 텍스트 추출 오류: ${error.message}`;
+    throw new Error(`PDF 텍스트 추출 오류: ${error.message}`);
   }
 }
 
@@ -83,7 +90,7 @@ async function extractDocxText(filePath) {
     const result = await mammoth.extractRawText({path: filePath});
     return result.value;
   } catch (error) {
-    return `DOCX 텍스트 추출 오류: ${error.message}`;
+    throw new Error(`DOCX 텍스트 추출 오류: ${error.message}`);
   }
 }
 
@@ -115,9 +122,15 @@ function extractXlsxText(filePath) {
       }
     });
     
+    // 의미 있는 텍스트가 있는지 확인 (시트 헤더만 있고 실제 내용이 없는 경우 null 반환)
+    const cleanedText = allText.replace(/\n--- 시트: .+ ---\n/g, '').trim();
+    if (cleanedText.length === 0) {
+      return null;
+    }
+    
     return allText;
   } catch (error) {
-    return `Excel 텍스트 추출 오류: ${error.message}`;
+    throw new Error(`Excel 텍스트 추출 오류: ${error.message}`);
   }
 }
 
@@ -165,7 +178,7 @@ async function extractPptxText(filePath) {
     
     yauzl.open(filePath, {lazyEntries: true}, (err, zipfile) => {
       if (err) {
-        resolve(`PPTX 파일 열기 오류: ${err.message}`);
+        reject(new Error(`PPTX 파일 열기 오류: ${err.message}`));
         return;
       }
 
@@ -226,9 +239,15 @@ async function extractPptxText(filePath) {
             allText += "\n";
           });
 
-          resolve(allText || "PPTX에서 텍스트를 찾을 수 없습니다.");
+          // 의미 있는 텍스트가 있는지 확인 (슬라이드 헤더만 있고 실제 내용이 없는 경우 null 반환)
+          const cleanedText = allText.replace(/\n--- 슬라이드 \d+ ---\n/g, '').trim();
+          if (cleanedText.length === 0) {
+            resolve(null);
+          } else {
+            resolve(allText);
+          }
         } else if (totalSlides === 0) {
-          resolve("PPTX 파일에 슬라이드가 없습니다.");
+          resolve(null);
         }
       }
     });
@@ -239,14 +258,10 @@ async function extractPptxText(filePath) {
  * HWP에서 텍스트 추출 (향후 확장 가능)
  */
 function extractHwpText(filePath) {
-  try {
-    // HWP는 복잡한 바이너리 형식이므로 현재는 기본 안내만 제공
-    // 향후 hwp-parser 같은 라이브러리나 외부 도구 연동 가능
-    
-    const stat = fs.statSync(filePath);
-    const fileSize = (stat.size / 1024).toFixed(2);
-    
-    return `HWP 파일 정보:
+  const stat = fs.statSync(filePath);
+  const fileSize = (stat.size / 1024).toFixed(2);
+  
+  throw new Error(`HWP 파일 정보:
 - 파일 크기: ${fileSize} KB
 - HWP 텍스트 추출은 현재 개발 중입니다.
 
@@ -255,11 +270,7 @@ function extractHwpText(filePath) {
 2. 온라인 HWP 변환 도구 사용
 3. hwp2txt 같은 외부 도구 활용
 
-향후 업데이트에서 지원 예정입니다.`;
-    
-  } catch (error) {
-    return `HWP 파일 처리 오류: ${error.message}`;
-  }
+향후 업데이트에서 지원 예정입니다.`);
 }
 
 /**
@@ -288,7 +299,7 @@ async function extractTextFromFile(filePath, mimeType) {
       try {
         return fs.readFileSync(filePath, 'utf8');
       } catch (error) {
-        return `텍스트 파일 읽기 오류: ${error.message}`;
+        throw new Error(`텍스트 파일 읽기 오류: ${error.message}`);
       }
       
     default:
@@ -297,10 +308,10 @@ async function extractTextFromFile(filePath, mimeType) {
         try {
           return fs.readFileSync(filePath, 'utf8');
         } catch (error) {
-          return `파일 읽기 오류: ${error.message}`;
+          throw new Error(`파일 읽기 오류: ${error.message}`);
         }
       }
-      return `지원하지 않는 파일 형식입니다: ${mimeType}`;
+      throw new Error(`지원하지 않는 파일 형식입니다: ${mimeType}`);
   }
 }
 
@@ -317,7 +328,8 @@ async function getFileMetadata(filePath, extractText = true) {
     status: "not_found",
     exif: {},
     pdf_pages: null,
-    extracted_text: null
+    extracted_text: null,
+    error: null
   };
 
   // 파일 존재 확인
@@ -367,7 +379,8 @@ async function getFileMetadata(filePath, extractText = true) {
     try {
       meta.extracted_text = await extractTextFromFile(filePath, mimeType);
     } catch (error) {
-      meta.extracted_text = `텍스트 추출 중 오류 발생: ${error.message}`;
+      meta.error = error.message;
+      meta.extracted_text = null;
     }
   }
 
