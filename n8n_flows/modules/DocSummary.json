@@ -1,0 +1,177 @@
+{
+  "name": "DocSummary",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"summary\": \"{{ $json.limitedText }}\"\n}",
+        "options": {
+          "systemMessage": "=당신은 Text 요약처리 AI입니다.\n\n입력은 JSON 형식으로 4가지가 제공됩니다:\n- full_text: 원문\n- limitedText: 제한된 글자수 원문 (앞 5000자만 잘라서 요약에 사용)\n- length : limitedText의 크기\n- truncated: 5000자로 제한할때 원문이 잘렸는지 여부\n\n아래 JSON 형식으로 반환하세요.\n\n{\n  \"summary\": \"<limitedText 내용을 3~5줄로 요약>\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -128
+      ],
+      "id": "13a8c285-a901-459f-99e5-4baa906dab55",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        96
+      ],
+      "id": "c1be6402-7543-4042-ac72-04c6dd869f7a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "yC6LpoMbPIyu7vwv",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.body.full_text || '';\n\n// 길이 확인\nconst length = text.length;\n\n// 앞 5000자만 잘라서 요약에 사용\nconst limitedText = text.substring(0, 5000);\n\nreturn [{\n  json: {\n    full_text: text,\n    limitedText,\n    length,\n    truncated: text.length > 5000\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -128
+      ],
+      "id": "860f264c-7ccd-442a-b9bb-5f3c0c81cbea",
+      "name": "LimitText"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1344,
+        -128
+      ],
+      "id": "b3257167-2a7c-4119-95a9-dbf49ca7cb4a",
+      "name": "Summary Return"
+    },
+    {
+      "parameters": {
+        "jsCode": "let aiOutput = $json.output;\n\n// 1. output이 문자열이면 파싱 시도\nif (typeof aiOutput === \"string\") {\n  try {\n    aiOutput = JSON.parse(aiOutput);\n  } catch (e) {\n    // 파싱 실패하면 그대로 둠\n  }\n}\n\n// 2. summary 텍스트 결정\nlet summary = \"\";\nif (typeof aiOutput === \"object\" && aiOutput !== null && aiOutput.summary) {\n  summary = aiOutput.summary;     // JSON 객체 안에 summary 키가 있는 경우\n} else {\n  summary = String(aiOutput);     // 그냥 문자열인 경우\n}\n\n// 3. summary와 length를 리턴\nreturn [{\n  json: {\n    summary,\n    length: summary.length,\n    truncated: $('LimitText').first().json.truncated\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -128
+      ],
+      "id": "87a32bfb-0c2c-48a6-93d4-f770697c5001",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "docsummary",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -128
+      ],
+      "id": "6e4e0439-a180-4db9-98df-b401bc57e47e",
+      "name": "Summary Request",
+      "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LimitText": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Summary Return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Request": {
+      "main": [
+        [
+          {
+            "node": "LimitText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "pbOS7kBxmfv07Cb7",
+    "timezone": "Asia/Seoul"
+  },
+  "versionId": "2aa89513-9894-4dcf-b872-b523a5a5048f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
+  },
+  "id": "SmTOn3mdK21O5WZt",
+  "tags": []
+}
