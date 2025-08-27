@@ -210,7 +210,7 @@
       "typeVersion": 2.2,
       "position": [
         1248,
-        496
+        488
       ],
       "id": "f5a07bc6-3235-4945-9125-f6f715b5b110",
       "name": "Parsed?"
@@ -227,7 +227,7 @@
       "typeVersion": 1.4,
       "position": [
         1472,
-        400
+        392
       ],
       "id": "c8a0231e-6883-4005-9764-c562b488fb9f",
       "name": "Respond 500 AnalyzerOutputFail"
@@ -241,8 +241,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2368,
-        752
+        2592,
+        656
       ],
       "id": "d82ebd70-b338-4376-9341-894ea6c4efbd",
       "name": "Respond to DocMeta Webhook"
@@ -353,8 +353,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1472,
-        592
+        1696,
+        656
       ],
       "id": "e7fb7d66-9cff-41ae-940f-0fa9ec6d0a92",
       "name": "Summary Request"
@@ -386,8 +386,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1696,
-        592
+        1920,
+        656
       ],
       "id": "6bdfb973-cc21-4ff5-9849-65319f95ffad",
       "name": "Summary Failed?"
@@ -401,8 +401,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1920,
-        544
+        2144,
+        608
       ],
       "id": "89bc0b73-acc5-4597-bc6b-62478ea8451d",
       "name": "Summary Error"
@@ -416,8 +416,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1920,
-        752
+        2144,
+        824
       ],
       "id": "cbfddd81-23d9-4e5a-8041-a7bffa62678f",
       "name": "Merge"
@@ -503,6 +503,12 @@
               "name": "truncated",
               "value": "={{ $json.body.truncated }}",
               "type": "boolean"
+            },
+            {
+              "id": "e0e5fdab-2cb6-42bf-abd4-b2a880ffcb3f",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
             }
           ]
         },
@@ -511,11 +517,146 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2144,
-        752
+        2368,
+        824
       ],
       "id": "33ec96de-b851-48b8-84fb-a8a4fc73aef5",
       "name": "Response Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "58691e6f-3f1c-4c10-a4a8-81e2703f3d92",
+              "leftValue": "={{ $json.extracted_text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        584
+      ],
+      "id": "e524909e-29d6-4cdb-b429-c6e269356270",
+      "name": "extracted_text Empty?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "590f8dcd-1783-41ed-bc70-8d8567dbd281",
+              "name": "filename",
+              "value": "={{ $json.filename }}",
+              "type": "string"
+            },
+            {
+              "id": "b1e0f002-bfad-47f5-b717-bb1317fa0cbd",
+              "name": "extension",
+              "value": "={{ $json.extension }}",
+              "type": "string"
+            },
+            {
+              "id": "9a6bb378-1cf7-49e7-b29e-1b54b97fd974",
+              "name": "mime",
+              "value": "={{ $json.mime }}",
+              "type": "string"
+            },
+            {
+              "id": "f2d44bdc-2ed6-4dae-8d54-4a708161ad20",
+              "name": "size_bytes",
+              "value": "={{ $json.size_bytes }}",
+              "type": "number"
+            },
+            {
+              "id": "a34a6166-6e21-4cf6-9bb6-8f1b9a1eace1",
+              "name": "created_at",
+              "value": "={{ $json.created_at }}",
+              "type": "string"
+            },
+            {
+              "id": "2baf1193-c33d-48c7-9eb8-8b035d9797ec",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "91c2775b-7537-4cb3-a608-ddff6ae3dc7d",
+              "name": "exif",
+              "value": "={{ $json.exif }}",
+              "type": "object"
+            },
+            {
+              "id": "63af33ae-ee4e-4ffe-bbaf-905845d5505e",
+              "name": "pdf_pages",
+              "value": "={{ $json.pdf_pages }}",
+              "type": "number"
+            },
+            {
+              "id": "623a35af-1a71-44b6-901c-ec2dd8170d63",
+              "name": "extracted_text",
+              "value": "={{ $json.extracted_text }}",
+              "type": "string"
+            },
+            {
+              "id": "84086ce8-65e1-47f5-adbb-ba7481168fcf",
+              "name": "pdf_text_ratio",
+              "value": "={{ $json.pdf_text_ratio }}",
+              "type": "object"
+            },
+            {
+              "id": "23e1dd54-af90-4a9a-8ad2-b3fa697b58c4",
+              "name": "summary",
+              "value": "=null",
+              "type": "string"
+            },
+            {
+              "id": "1e8b0177-f8e2-466e-a599-455db39ed1e9",
+              "name": "length",
+              "value": "=0",
+              "type": "number"
+            },
+            {
+              "id": "a7322fd2-ef0f-4958-b380-67ad0619d837",
+              "name": "truncated",
+              "value": "=false",
+              "type": "boolean"
+            },
+            {
+              "id": "c70762fb-9980-4693-b176-2e816619da23",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2368,
+        464
+      ],
+      "id": "6a2f2041-ed10-446b-a1e6-937ef3191885",
+      "name": "Empty extracted_text Response Data"
     }
   ],
   "pinData": {},
@@ -616,7 +757,7 @@
         ],
         [
           {
-            "node": "Summary Request",
+            "node": "extracted_text Empty?",
             "type": "main",
             "index": 0
           }
@@ -720,6 +861,35 @@
           }
         ]
       ]
+    },
+    "extracted_text Empty?": {
+      "main": [
+        [
+          {
+            "node": "Empty extracted_text Response Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Summary Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty extracted_text Response Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to DocMeta Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -729,7 +899,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "643001c4-144b-4a79-97ef-480539b001c1",
+  "versionId": "c1776603-be36-4e1a-9665-19861ae2379c",
   "meta": {
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
