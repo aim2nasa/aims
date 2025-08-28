@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from bson import ObjectId
+from bson import ObjectId, json_util
 from bson.errors import InvalidId
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
@@ -354,6 +354,7 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "status": "/status/{document_id}",
+            "document": "/document/{document_id}",
             "health": "/health"
         }
     }
@@ -419,6 +420,35 @@ async def get_simple_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/document/{document_id}", response_model=Dict[str, Any])
+async def get_full_document(
+    document_id: str = Path(..., description="Document ObjectId")
+):
+    """문서 ID로 원본 MongoDB 문서를 조회합니다."""
+    try:
+        # ObjectId 유효성 검사
+        try:
+            obj_id = ObjectId(document_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid document ID format")
+        
+        # MongoDB에서 문서 조회
+        document = collection.find_one({"_id": obj_id})
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # BSON을 JSON으로 직렬화 가능한 dict로 변환
+        # json_util.dumps가 BSON을 JSON 문자열로 만들고, json.loads가 이를 다시 Python dict로 변환
+        return json.loads(json_util.dumps(document))
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @app.get("/status")
 async def get_recent_documents(limit: int = 10):
