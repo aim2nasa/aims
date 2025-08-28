@@ -1743,26 +1743,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
             flexDirection: 'column',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            padding: '16px 0',
+            padding: '8px 0',
             gap: '16px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: '#3b82f6',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <FileText style={{ width: '20px', height: '20px', color: 'white' }} />
-              </div>
-              <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0' }}>Document Status Dashboard</h1>
-                <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Real-time document processing monitor</p>
-              </div>
-            </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               {/* 통신 모드 선택 */}
