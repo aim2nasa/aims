@@ -1929,66 +1929,66 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
+            gap: '12px',
+            marginBottom: '16px'
           }}>
             <div style={{
               background: 'white',
-              padding: '16px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '6px',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Total</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '4px 0 0 0' }}>{documents.length}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '0' }}>Total</p>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '2px 0 0 0' }}>{documents.length}</p>
                 </div>
-                <FileText style={{ width: '32px', height: '32px', color: '#3b82f6' }} />
+                <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
               </div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '16px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '6px',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Completed</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669', margin: '4px 0 0 0' }}>{statusCounts.completed || 0}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '0' }}>Completed</p>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#059669', margin: '2px 0 0 0' }}>{statusCounts.completed || 0}</p>
                 </div>
-                <CheckCircle style={{ width: '32px', height: '32px', color: '#10b981' }} />
+                <CheckCircle style={{ width: '24px', height: '24px', color: '#10b981' }} />
               </div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '16px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '6px',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Processing</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb', margin: '4px 0 0 0' }}>{statusCounts.processing || 0}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '0' }}>Processing</p>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#2563eb', margin: '2px 0 0 0' }}>{statusCounts.processing || 0}</p>
                 </div>
-                <Clock style={{ width: '32px', height: '32px', color: '#3b82f6' }} />
+                <Clock style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
               </div>
             </div>
             
             <div style={{
               background: 'white',
-              padding: '16px',
-              borderRadius: '8px',
+              padding: '12px',
+              borderRadius: '6px',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', margin: '0' }}>Errors</p>
-                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626', margin: '4px 0 0 0' }}>{statusCounts.error || 0}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '0' }}>Errors</p>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#dc2626', margin: '2px 0 0 0' }}>{statusCounts.error || 0}</p>
                 </div>
-                <XCircle style={{ width: '32px', height: '32px', color: '#ef4444' }} />
+                <XCircle style={{ width: '24px', height: '24px', color: '#ef4444' }} />
               </div>
             </div>
           </div>
