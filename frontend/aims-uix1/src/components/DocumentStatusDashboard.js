@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Grid3X3, List, ChevronLeft, ChevronRight, Radio, Zap, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, ChevronLeft, ChevronRight, Radio, Zap, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
 import websocketService from '../services/websocketService';
 import { apiService, communicationManager } from '../services/apiService';
 
@@ -1098,103 +1098,6 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
   );
 };
 
-const DocumentCard = ({ document, onClick }) => {
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown";
-    return new Date(dateString).toLocaleString();
-  };
-
-  const truncateFilename = (filename, maxLength = 30) => {
-    if (!filename) return "Unknown File";
-    return filename.length <= maxLength ? filename : filename.substring(0, maxLength - 3) + "...";
-  };
-
-  const filename = extractFilename(document);
-  const status = extractStatus(document);
-  const progress = extractProgress(document);
-  const uploadedDate = extractUploadedDate(document);
-  const { badges } = analyzeProcessingPath(document);
-
-  return (
-    <div 
-      onClick={() => onClick(document)}
-      style={{
-        background: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        padding: '16px',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        borderLeft: '4px solid #3b82f6'
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-      }}
-    >
-      <div style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        marginBottom: '12px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          minWidth: '0',
-          flex: '1'
-        }}>
-          <div style={{
-            backgroundColor: '#eff6ff',
-            padding: '8px',
-            borderRadius: '8px',
-            flexShrink: '0'
-          }}>
-            <FileText style={{ width: '20px', height: '20px', color: '#3b82f6' }} />
-          </div>
-          <div style={{ minWidth: '0', flex: '1' }}>
-            <h3 style={{
-              fontWeight: '600',
-              color: '#111827',
-              fontSize: '14px',
-              lineHeight: '1.25',
-              marginBottom: '4px',
-              margin: '0 0 4px 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }} title={filename}>
-              <span>{truncateFilename(filename)}</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {badges.map((badge, index) => (
-                  <ProcessingBadge key={index} badge={badge} size="small" />
-                ))}
-              </div>
-            </h3>
-            <CopyableId id={document.id || document._id || 'unknown-id'} />
-          </div>
-        </div>
-        <div style={{ flexShrink: '0' }}>
-          <StatusBadge status={status} size="small" />
-        </div>
-      </div>
-      
-      <div style={{ marginBottom: '12px' }}>
-        <ProgressBar progress={progress} status={status} />
-      </div>
-      
-      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Clock style={{ width: '12px', height: '12px', marginRight: '4px' }} />
-          {formatDate(uploadedDate)}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // 상세 정보 모달
 const DocumentDetailModal = ({ document, isOpen, onClose }) => {
@@ -1408,7 +1311,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
   const [isPollingEnabled, setIsPollingEnabled] = useState(true);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
   
   // 통신 관련 상태
   const [communicationMode, setCommunicationMode] = useState('polling'); // WebSocket 불안정하므로 Polling을 기본값으로 유지
@@ -2166,53 +2068,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {/* 뷰 모드 전환 버튼 */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      onClick={() => setViewMode("grid")}
-                      style={{
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '14px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'colors 0.2s',
-                        backgroundColor: viewMode === "grid" ? '#3b82f6' : 'white',
-                        color: viewMode === "grid" ? 'white' : '#374151'
-                      }}
-                      title="Grid View"
-                    >
-                      <Grid3X3 style={{ width: '16px', height: '16px' }} />
-                      <span>Grid</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode("list")}
-                      style={{
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '14px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'colors 0.2s',
-                        backgroundColor: viewMode === "list" ? '#3b82f6' : 'white',
-                        color: viewMode === "list" ? 'white' : '#374151'
-                      }}
-                      title="List View"
-                    >
-                      <List style={{ width: '16px', height: '16px' }} />
-                      <span>List</span>
-                    </button>
-                  </div>
                   
                   <select
                     value={statusFilter}
@@ -2254,9 +2109,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
               }}>
                 <span style={{ fontSize: '14px', color: '#4b5563' }}>
                   Total <strong>{filteredDocuments.length}</strong> documents
-                  <span style={{ marginLeft: '8px', fontSize: '12px', color: '#9ca3af' }}>
-                    ({viewMode === "grid" ? "Grid" : "List"} view)
-                  </span>
                 </span>
                 {lastUpdated && (
                   <span style={{ fontSize: '14px', color: '#6b7280' }}>
@@ -2296,32 +2148,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
             <>
               {paginatedDocuments.length > 0 ? (
                 <>
-                  {viewMode === "grid" ? (
-                    /* 카드 뷰 */
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                      gap: '16px',
-                      marginBottom: '24px'
-                    }}>
-                      {paginatedDocuments.map((document) => (
-                        <DocumentCard 
-                          key={document.id || document._id || Math.random()} 
-                          document={document}
-                          onClick={onDocumentClick || (() => {})}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    /* 리스트 뷰 */
-                    <div style={{ marginBottom: '24px' }}>
-                      <DocumentListView 
-                        documents={paginatedDocuments}
-                        onDocumentClick={onDocumentClick || (() => {})}
-                        onDetailClick={handleDocumentClick}
-                      />
-                    </div>
-                  )}
+                  <div style={{ marginBottom: '24px' }}>
+                    <DocumentListView 
+                      documents={paginatedDocuments}
+                      onDocumentClick={onDocumentClick || (() => {})}
+                      onDetailClick={handleDocumentClick}
+                    />
+                  </div>
                   
                   {/* 페이지네이션 */}
                   <Pagination
@@ -2338,9 +2171,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                 <div style={{
                   textAlign: 'center',
                   padding: '48px 0',
-                  background: viewMode === "list" ? 'white' : 'transparent',
-                  borderRadius: viewMode === "list" ? '8px' : '0',
-                  boxShadow: viewMode === "list" ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
+                  background: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
                 }}>
                   <FileText style={{ width: '96px', height: '96px', color: '#d1d5db', margin: '0 auto 16px auto' }} />
                   <h3 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>No documents found</h3>
