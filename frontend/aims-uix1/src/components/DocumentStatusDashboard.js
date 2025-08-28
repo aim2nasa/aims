@@ -2025,8 +2025,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
             }}>
               <div style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
+                flexDirection: 'row',
+                gap: '16px',
+                alignItems: 'center'
               }}>
                 <div style={{ flex: '1', maxWidth: '400px' }}>
                   <div style={{ position: 'relative' }}>
@@ -2067,9 +2068,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  
-                  <select
+                <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     style={{
@@ -2094,7 +2093,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                     <option value="completed">Completed</option>
                     <option value="error">Error</option>
                   </select>
-                </div>
               </div>
               
               <div style={{
