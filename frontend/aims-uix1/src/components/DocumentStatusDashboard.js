@@ -2010,32 +2010,61 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '16px',
-                alignItems: 'center'
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}>
-                <div style={{ flex: '1', maxWidth: '400px' }}>
-                  <div style={{ position: 'relative' }}>
-                    <Search style={{
-                      position: 'absolute',
-                      left: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '16px',
-                      height: '16px',
-                      color: '#9ca3af'
-                    }} />
-                    <input
-                      type="text"
-                      placeholder="Search by filename or document ID..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: '16px',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ flex: '1', maxWidth: '400px' }}>
+                    <div style={{ position: 'relative' }}>
+                      <Search style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '16px',
+                        height: '16px',
+                        color: '#9ca3af'
+                      }} />
+                      <input
+                        type="text"
+                        placeholder="Search by filename or document ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                          width: '100%',
+                          paddingLeft: '40px',
+                          paddingRight: '16px',
+                          paddingTop: '8px',
+                          paddingBottom: '8px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          outline: 'none'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#3b82f6';
+                          e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
                       style={{
-                        width: '100%',
-                        paddingLeft: '40px',
-                        paddingRight: '16px',
-                        paddingTop: '8px',
-                        paddingBottom: '8px',
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
+                        padding: '8px 12px',
                         fontSize: '14px',
                         outline: 'none'
                       }}
@@ -2047,55 +2076,30 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                         e.target.style.borderColor = '#d1d5db';
                         e.target.style.boxShadow = 'none';
                       }}
-                    />
-                  </div>
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="completed">Completed</option>
+                      <option value="error">Error</option>
+                    </select>
                 </div>
                 
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#3b82f6';
-                      e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#d1d5db';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="completed">Completed</option>
-                    <option value="error">Error</option>
-                  </select>
-              </div>
-              
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginTop: '16px',
-                paddingTop: '16px',
-                borderTop: '1px solid #e5e7eb',
-                gap: '8px'
-              }}>
-                <span style={{ fontSize: '14px', color: '#4b5563' }}>
-                  Total <strong>{filteredDocuments.length}</strong> documents
-                </span>
-                {lastUpdated && (
-                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                    Last updated: {lastUpdated.toLocaleTimeString()}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: '4px'
+                }}>
+                  <span style={{ fontSize: '14px', color: '#4b5563' }}>
+                    Total <strong>{filteredDocuments.length}</strong> documents
                   </span>
-                )}
+                  {lastUpdated && (
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                      Last updated: {lastUpdated.toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
