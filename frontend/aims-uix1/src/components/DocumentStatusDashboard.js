@@ -959,13 +959,13 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                 <tr 
                   key={document.id || document._id || index}
                   onClick={() => {
-                    if (onDetailClick) {
-                      onDetailClick(document);
+                    if (status === 'completed' && onDocumentClick) {
+                      onDocumentClick(document);
                     }
                   }}
                   style={{
                     borderBottom: index < documents.length - 1 ? '1px solid #e5e7eb' : 'none',
-                    cursor: 'pointer',
+                    cursor: status === 'completed' ? 'pointer' : 'default',
                     transition: 'background-color 0.2s'
                   }}
                   onMouseEnter={(e) => e.target.closest('tr').style.backgroundColor = '#f9fafb'}
@@ -1010,37 +1010,31 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (status === 'completed' && onDocumentClick) {
-                          onDocumentClick(document);
+                        if (onDetailClick) {
+                          onDetailClick(document);
                         }
                       }}
-                      disabled={status !== 'completed'}
                       style={{
                         padding: '4px 8px',
                         fontSize: '11px',
                         fontWeight: '500',
-                        color: status === 'completed' ? '#059669' : '#9ca3af',
-                        backgroundColor: status === 'completed' ? '#ecfdf5' : '#f9fafb',
-                        border: status === 'completed' ? '1px solid #d1fae5' : '1px solid #e5e7eb',
+                        color: '#059669',
+                        backgroundColor: '#ecfdf5',
+                        border: '1px solid #d1fae5',
                         borderRadius: '4px',
-                        cursor: status === 'completed' ? 'pointer' : 'not-allowed',
+                        cursor: 'pointer',
                         transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '2px',
-                        opacity: status === 'completed' ? 1 : 0.6
+                        gap: '2px'
                       }}
                       onMouseEnter={(e) => {
-                        if (status === 'completed') {
-                          e.target.style.backgroundColor = '#d1fae5';
-                          e.target.style.borderColor = '#a7f3d0';
-                        }
+                        e.target.style.backgroundColor = '#d1fae5';
+                        e.target.style.borderColor = '#a7f3d0';
                       }}
                       onMouseLeave={(e) => {
-                        if (status === 'completed') {
-                          e.target.style.backgroundColor = '#ecfdf5';
-                          e.target.style.borderColor = '#d1fae5';
-                        }
+                        e.target.style.backgroundColor = '#ecfdf5';
+                        e.target.style.borderColor = '#d1fae5';
                       }}
                     >
                       <Eye style={{ width: '12px', height: '12px' }} />
