@@ -842,13 +842,24 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
 const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now - date;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    if (diffDays === 0) {
+      // 오늘: 날짜와 시간 모두 표시
+      return `${month}/${day} ${hours}:${minutes}`;
+    } else {
+      // 오늘이 아닌 경우: 날짜만 표시
+      return `${year}/${month}/${day}`;
+    }
   };
 
   const truncateFilename = (filename, maxLength = 50) => {
@@ -891,6 +902,17 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
               </th>
               <th style={{
                 padding: '12px 24px',
+                textAlign: 'center',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Actions
+              </th>
+              <th style={{
+                padding: '12px 24px',
                 textAlign: 'left',
                 fontSize: '12px',
                 fontWeight: '500',
@@ -901,13 +923,14 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                 Progress
               </th>
               <th style={{
-                padding: '12px 24px',
-                textAlign: 'left',
-                fontSize: '12px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                fontSize: '10px',
                 fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em'
+                letterSpacing: '0.05em',
+                minWidth: '90px'
               }}>
                 Uploaded
               </th>
@@ -921,17 +944,6 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                 letterSpacing: '0.05em'
               }}>
                 Document ID
-              </th>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'center',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Actions
               </th>
             </tr>
           </thead>
@@ -994,6 +1006,47 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                   <td style={{ padding: '16px 24px' }}>
                     <StatusBadge status={status} size="small" />
                   </td>
+                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (status === 'completed' && onDocumentClick) {
+                          onDocumentClick(document);
+                        }
+                      }}
+                      disabled={status !== 'completed'}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        color: status === 'completed' ? '#059669' : '#9ca3af',
+                        backgroundColor: status === 'completed' ? '#ecfdf5' : '#f9fafb',
+                        border: status === 'completed' ? '1px solid #d1fae5' : '1px solid #e5e7eb',
+                        borderRadius: '4px',
+                        cursor: status === 'completed' ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        opacity: status === 'completed' ? 1 : 0.6
+                      }}
+                      onMouseEnter={(e) => {
+                        if (status === 'completed') {
+                          e.target.style.backgroundColor = '#d1fae5';
+                          e.target.style.borderColor = '#a7f3d0';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (status === 'completed') {
+                          e.target.style.backgroundColor = '#ecfdf5';
+                          e.target.style.borderColor = '#d1fae5';
+                        }
+                      }}
+                    >
+                      <Eye style={{ width: '12px', height: '12px' }} />
+                      View
+                    </button>
+                  </td>
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ width: '100%', maxWidth: '200px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1029,8 +1082,15 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                  <td style={{ padding: '16px 8px' }}>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      color: '#6b7280',
+                      fontFamily: 'monospace',
+                      textAlign: 'center',
+                      minWidth: '75px',
+                      lineHeight: '1.2'
+                    }}>
                       {formatDate(uploadedDate)}
                     </div>
                   </td>
@@ -1038,7 +1098,7 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                     <div style={{
                       fontSize: '12px',
                       fontFamily: 'monospace',
-                      color: '#9ca3af',
+                      color: '#6b7280',
                       maxWidth: '200px'
                     }}>
                       <span style={{
@@ -1050,43 +1110,6 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                         {document.id || document._id || 'unknown-id'}
                       </span>
                     </div>
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                    {status === 'completed' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onDocumentClick) {
-                            onDocumentClick(document);
-                          }
-                        }}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          color: '#059669',
-                          backgroundColor: '#ecfdf5',
-                          border: '1px solid #d1fae5',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#d1fae5';
-                          e.target.style.borderColor = '#a7f3d0';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = '#ecfdf5';
-                          e.target.style.borderColor = '#d1fae5';
-                        }}
-                      >
-                        <Eye style={{ width: '12px', height: '12px' }} />
-                        미리보기
-                      </button>
-                    )}
                   </td>
                 </tr>
               );
