@@ -663,10 +663,7 @@ const CopyableId = ({ id }) => {
       borderRadius: '4px'
     }}>
       <span style={{
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        maxWidth: '120px'
+        fontSize: '11px'
       }} title={id}>
         {id}
       </span>
@@ -1042,7 +1039,7 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                       fontSize: '12px',
                       fontFamily: 'monospace',
                       color: '#9ca3af',
-                      maxWidth: '128px'
+                      maxWidth: '200px'
                     }}>
                       <span style={{
                         overflow: 'hidden',
@@ -1050,7 +1047,7 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                         whiteSpace: 'nowrap',
                         display: 'block'
                       }} title={document.id || document._id || 'unknown-id'}>
-                        {(document.id || document._id || 'unknown-id').slice(0, 12)}...
+                        {document.id || document._id || 'unknown-id'}
                       </span>
                     </div>
                   </td>
