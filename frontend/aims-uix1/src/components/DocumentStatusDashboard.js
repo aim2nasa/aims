@@ -925,7 +925,7 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
               <th style={{
                 padding: '12px 8px',
                 textAlign: 'center',
-                fontSize: '10px',
+                fontSize: '12px',
                 fontWeight: '500',
                 color: '#6b7280',
                 textTransform: 'uppercase',
@@ -1084,7 +1084,7 @@ const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
                   </td>
                   <td style={{ padding: '16px 8px' }}>
                     <div style={{ 
-                      fontSize: '10px', 
+                      fontSize: '12px', 
                       color: '#6b7280',
                       fontFamily: 'monospace',
                       textAlign: 'center',
