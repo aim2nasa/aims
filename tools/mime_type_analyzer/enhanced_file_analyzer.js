@@ -287,6 +287,7 @@ async function extractTextFromFile(filePath, mimeType) {
       return await extractDocxText(filePath);
       
     case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    case 'application/vnd.ms-excel':
       return extractXlsxText(filePath);
       
     case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
