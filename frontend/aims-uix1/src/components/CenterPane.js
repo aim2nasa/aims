@@ -249,7 +249,71 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
                     }
                     description={
                       <Space size="middle">
-                        <Text type="secondary">{item.ocr?.summary || item.payload?.summary || '요약 정보: 없음'}</Text>
+                        <Text type="secondary">{
+                          (() => {
+                            // meta에서 full_text 확인
+                            const metaFullText = item.meta?.full_text || 
+                              (typeof item.meta === 'string' ? (() => {
+                                try { 
+                                  const parsed = JSON.parse(item.meta);
+                                  return parsed.full_text;
+                                } catch { return null; }
+                              })() : null);
+                            
+                            // meta에 full_text가 있는 경우 - meta summary 사용
+                            if (metaFullText && metaFullText.trim()) {
+                              const metaSummary = item.meta?.summary || 
+                                (typeof item.meta === 'string' ? (() => {
+                                  try { 
+                                    const parsed = JSON.parse(item.meta);
+                                    return parsed.summary;
+                                  } catch { return null; }
+                                })() : null);
+                              
+                              if (metaSummary && metaSummary !== 'null') {
+                                return metaSummary;
+                              }
+                              
+                              // meta summary가 없으면 meta full_text의 앞부분 사용
+                              const cleanText = metaFullText.trim();
+                              return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                            }
+                            
+                            // meta에 full_text가 없는 경우 - ocr summary 사용
+                            const ocrSummary = item.ocr?.summary || 
+                              (typeof item.ocr === 'string' ? (() => {
+                                try { 
+                                  const parsed = JSON.parse(item.ocr);
+                                  return parsed.summary;
+                                } catch { return null; }
+                              })() : null);
+                            
+                            if (ocrSummary && ocrSummary !== 'null') {
+                              return ocrSummary;
+                            }
+                            
+                            // ocr summary가 없으면 ocr full_text의 앞부분 사용
+                            const ocrFullText = item.ocr?.full_text || 
+                              (typeof item.ocr === 'string' ? (() => {
+                                try { 
+                                  const parsed = JSON.parse(item.ocr);
+                                  return parsed.full_text;
+                                } catch { return null; }
+                              })() : null);
+                            
+                            if (ocrFullText && ocrFullText.trim()) {
+                              const cleanText = ocrFullText.trim();
+                              return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                            }
+                            
+                            // 마지막으로 payload.summary 시도
+                            if (item.payload?.summary) {
+                              return item.payload.summary;
+                            }
+                            
+                            return '요약 정보: 없음';
+                          })()
+                        }</Text>
                         {item.score && (
                            <Text type="secondary">유사도: <Tag color="green">{item.score.toFixed(4)}</Tag></Text>
                         )}
