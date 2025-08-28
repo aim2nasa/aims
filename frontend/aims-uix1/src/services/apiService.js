@@ -1,9 +1,9 @@
 ﻿const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
 
-// 통신 모드 관리
+// 통신 모드 관리 - Polling만 지원
 class CommunicationManager {
   constructor() {
-    this.mode = 'polling'; // 'polling' | 'websocket'
+    this.mode = 'polling';
     this.listeners = new Map();
   }
 
@@ -136,31 +136,6 @@ export const apiService = {
     }
   },
 
-  // WebSocket 연결 상태 확인
-  async checkWebSocketHealth() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/ws/stats`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "cors",
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("WebSocket health check failed:", error);
-      throw error;
-    }
-  },
-
-  // WebSocket URL 생성
-  getWebSocketUrl() {
-    return API_BASE_URL.replace(/^http/, 'ws') + '/ws';
-  },
 
   // 현재 API 베이스 URL 반환
   getApiBaseUrl() {

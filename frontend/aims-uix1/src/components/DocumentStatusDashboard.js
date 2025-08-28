@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, ChevronLeft, ChevronRight, Radio, Zap, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
-import websocketService from '../services/websocketService';
-import { apiService, communicationManager } from '../services/apiService';
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, ChevronLeft, ChevronRight, Radio, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
+import { apiService } from '../services/apiService';
 
 
 // MongoDB 필드 추출 함수들
@@ -1329,10 +1328,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   
-  // 통신 관련 상태
-  const [communicationMode, setCommunicationMode] = useState('polling'); // WebSocket 불안정하므로 Polling을 기본값으로 유지
-  const [wsConnected, setWsConnected] = useState(false);
-  const [wsStats, setWsStats] = useState(null);
+  // 통신 관련 상태 - Polling만 사용
+  const communicationMode = 'polling';
   
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -1387,202 +1384,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
     }
   }, []);
 
-  // WebSocket 연결 설정
-  const setupWebSocket = useCallback(() => {
-    const wsUrl = apiService.getWebSocketUrl();
-    
-    // WebSocket 이벤트 리스너 설정
-    const handleConnected = () => {
-      setWsConnected(true);
-      setError(null);
-    };
 
-    const handleDisconnected = () => {
-      setWsConnected(false);
-    };
-
-    const handleError = (error) => {
-      console.error('WebSocket error:', error);
-      setWsConnected(false);
-      setError('WebSocket 연결에 실패했습니다.');
-    };
-
-    const handleInitialData = (data) => {
-      
-      // 초기 데이터에도 클라이언트 로직 적용
-      const correctedDocuments = (data.documents || []).map(doc => {
-        if (doc.stages?.embed?.status === 'completed' || 
-            doc.stages?.docembed?.status === 'completed') {
-          return { ...doc, overallStatus: 'completed', progress: 100 };
-        } else if ((doc.stages?.meta?.full_text || doc.meta?.full_text) &&
-                   doc.stages?.meta?.status === 'completed' &&
-                   doc.stages?.ocr?.status === 'pending') {
-          return { ...doc, overallStatus: 'completed', progress: 100 };
-        }
-        return doc;
-      });
-      
-      setDocuments(correctedDocuments);
-      setLastUpdated(new Date(data.timestamp));
-      setLoading(false);
-    };
-
-    const handleDocumentUpdate = (data) => {
-      
-      setDocuments(prevDocs => {
-        
-        // 실제 DB 문서와 임시 문서 분리
-        const realDocs = prevDocs.filter(doc => !doc.id?.startsWith('temp-'));
-        const tempDocs = prevDocs.filter(doc => doc.id?.startsWith('temp-'));
-        
-        const updatedRealDocs = [...realDocs];
-        const index = updatedRealDocs.findIndex(doc => (doc.id || doc._id) === data.id);
-        
-        if (index >= 0) {
-          // 기존 실제 문서 업데이트 - 클라이언트 로직 적용 (stages 정보 보존)
-          const existingDoc = updatedRealDocs[index];
-          const updatedDoc = {
-            ...existingDoc,  // 기존 stages 정보 보존
-            ...data,         // 새로운 데이터 적용
-            stages: existingDoc.stages || data.stages, // stages 정보 우선 보존
-            _id: data.id,
-            id: data.id
-          };
-          
-          // OCR pending 때문에 잘못된 상태/진행률 수정 - 정확한 조건으로만
-          const embedCompleted = updatedDoc.stages?.embed?.status === 'completed' || 
-                                 updatedDoc.stages?.docembed?.status === 'completed';
-          
-          if (embedCompleted) {
-            updatedDoc.overallStatus = 'completed';
-            updatedDoc.progress = 100;
-          }
-          
-          updatedRealDocs[index] = updatedDoc;
-        } else {
-          // 새 실제 문서 추가 - 클라이언트 로직 적용
-          const newDoc = {
-            ...data,
-            _id: data.id,
-            id: data.id
-          };
-          
-          // OCR pending 때문에 잘못된 상태/진행률 수정
-          if (newDoc.stages?.embed?.status === 'completed' || 
-              newDoc.stages?.docembed?.status === 'completed') {
-            newDoc.overallStatus = 'completed';
-            newDoc.progress = 100;
-          } else if ((newDoc.stages?.meta?.full_text || newDoc.meta?.full_text) &&
-                     newDoc.stages?.meta?.status === 'completed' &&
-                     newDoc.stages?.ocr?.status === 'pending') {
-            newDoc.overallStatus = 'completed';
-            newDoc.progress = 100;
-          }
-          
-          updatedRealDocs.unshift(newDoc);
-        }
-        
-        // 새로 추가된 실제 문서와 파일명이 같은 임시 문서 제거
-        const newDocFilename = extractFilename(data).toLowerCase();
-        const filteredTempDocs = tempDocs.filter(tempDoc => {
-          const tempFilename = extractFilename(tempDoc).toLowerCase();
-          return tempFilename !== newDocFilename;
-        });
-        
-        const finalDocs = [...updatedRealDocs, ...filteredTempDocs];
-        return finalDocs;
-      });
-      setLastUpdated(new Date());
-    };
-
-    const handleDatabaseEmpty = (data) => {
-      setDocuments([]); // 모든 문서 제거
-      setLastUpdated(new Date(data.timestamp));
-      setLoading(false);
-    };
-
-    const handleStatusUpdate = (data) => {
-      // 전체 문서 목록으로 상태 업데이트 (문서 수 변화 시에만) - 클라이언트 로직 적용
-      if (data.documents && Array.isArray(data.documents)) {
-        
-        // 각 문서에 클라이언트 로직 적용
-        const correctedDocuments = data.documents.map(doc => {
-          if (doc.stages?.embed?.status === 'completed' || 
-              doc.stages?.docembed?.status === 'completed') {
-            return { ...doc, overallStatus: 'completed', progress: 100 };
-          } else if ((doc.stages?.meta?.full_text || doc.meta?.full_text) &&
-                     doc.stages?.meta?.status === 'completed' &&
-                     doc.stages?.ocr?.status === 'pending') {
-            return { ...doc, overallStatus: 'completed', progress: 100 };
-          }
-          return doc;
-        });
-        
-        setDocuments(correctedDocuments);
-      }
-      setLastUpdated(new Date(data.timestamp));
-    };
-
-    // 이벤트 리스너 등록
-    websocketService.on('connected', handleConnected);
-    websocketService.on('disconnected', handleDisconnected);
-    websocketService.on('error', handleError);
-    websocketService.on('initial_data', handleInitialData);
-    websocketService.on('document_update', handleDocumentUpdate);
-    websocketService.on('database_empty', handleDatabaseEmpty);
-    websocketService.on('status_update', handleStatusUpdate);
-
-    // WebSocket 연결
-    websocketService.connect(wsUrl).catch(error => {
-      console.error('Failed to connect WebSocket:', error);
-      setError('WebSocket 연결에 실패했습니다.');
-    });
-
-    // 정리 함수 반환
-    return () => {
-      websocketService.off('connected', handleConnected);
-      websocketService.off('disconnected', handleDisconnected);
-      websocketService.off('error', handleError);
-      websocketService.off('initial_data', handleInitialData);
-      websocketService.off('document_update', handleDocumentUpdate);
-      websocketService.off('database_empty', handleDatabaseEmpty);
-      websocketService.off('status_update', handleStatusUpdate);
-    };
-  }, []);
-
-  // 통신 모드 전환
-  const switchCommunicationMode = useCallback((mode) => {
-    if (mode === communicationMode) return;
-
-    
-    if (mode === 'websocket') {
-      // 폴링 중지하고 WebSocket 연결
-      setIsPollingEnabled(false);
-      setLoading(true);
-      setupWebSocket();
-    } else {
-      // WebSocket 연결 해제하고 폴링 시작
-      websocketService.disconnect();
-      setWsConnected(false);
-      setIsPollingEnabled(true);
-      fetchDocuments(true); // 모드 전환 시 초기 로드로 처리
-    }
-
-    setCommunicationMode(mode);
-    communicationManager.setMode(mode);
-  }, [communicationMode, setupWebSocket, fetchDocuments]);
-
-  // WebSocket 통계 조회
-  const fetchWebSocketStats = useCallback(async () => {
-    if (communicationMode === 'websocket') {
-      try {
-        const stats = await apiService.checkWebSocketHealth();
-        setWsStats(stats);
-      } catch (err) {
-        console.error('Failed to fetch WebSocket stats:', err);
-      }
-    }
-  }, [communicationMode]);
 
   // 초기 로드
   useEffect(() => {
@@ -1628,19 +1430,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
     return () => clearInterval(interval);
   }, [isPollingEnabled, communicationMode, fetchDocuments, checkApiHealth]);
 
-  // WebSocket 통계 폴링 (10초마다)
-  useEffect(() => {
-    if (communicationMode !== 'websocket') return;
-    
-    const interval = setInterval(() => {
-      fetchWebSocketStats();
-    }, 10000);
-    
-    // 즉시 한 번 실행
-    fetchWebSocketStats();
-    
-    return () => clearInterval(interval);
-  }, [communicationMode, fetchWebSocketStats]);
 
   // 실시간 처리 상태 시뮬레이션 제거 (실제 데이터만 사용)
 
@@ -1775,7 +1564,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   overflow: 'hidden'
                 }}>
                   <button
-                    onClick={() => switchCommunicationMode('polling')}
+                    onClick={() => {}}
                     style={{
                       padding: '4px 12px',
                       display: 'flex',
@@ -1793,54 +1582,18 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                     <Radio style={{ width: '12px', height: '12px' }} />
                     <span>Polling</span>
                   </button>
-                  <button
-                    onClick={() => switchCommunicationMode('websocket')}
-                    style={{
-                      padding: '4px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '14px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'colors 0.2s',
-                      backgroundColor: communicationMode === 'websocket' ? '#f97316' : 'white',
-                      color: communicationMode === 'websocket' ? 'white' : '#374151'
-                    }}
-                    title="WebSocket Mode (실시간 - 2초 간격)"
-                  >
-                    <Zap style={{ width: '12px', height: '12px' }} />
-                    <span>WebSocket</span>
-                  </button>
                 </div>
               </div>
 
-              {/* API/WebSocket 연결 상태 */}
+              {/* API 연결 상태 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {communicationMode === 'polling' ? (
-                  <>
-                    {apiHealth ? <Wifi style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
-                    <span style={{ fontSize: '14px', color: apiHealth ? '#059669' : '#dc2626' }}>
-                      {apiHealth ? "API Connected" : "API Disconnected"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {wsConnected ? <Zap style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
-                    <span style={{ fontSize: '14px', color: wsConnected ? '#059669' : '#dc2626' }}>
-                      WS {wsConnected ? "Connected" : "Disconnected"}
-                      {wsStats && wsConnected && (
-                        <span style={{ marginLeft: '4px', fontSize: '12px', color: '#6b7280' }}>
-                          ({wsStats.active_connections})
-                        </span>
-                      )}
-                    </span>
-                  </>
-                )}
+                {apiHealth ? <Wifi style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
+                <span style={{ fontSize: '14px', color: apiHealth ? '#059669' : '#dc2626' }}>
+                  {apiHealth ? "API Connected" : "API Disconnected"}
+                </span>
               </div>
               
-              {/* 폴링 상태 - 폴링 모드일 때만 표시 */}
-              {communicationMode === 'polling' && (
+              {/* 폴링 상태 */}
                 <button
                   onClick={() => setIsPollingEnabled(!isPollingEnabled)}
                   style={{
@@ -1866,10 +1619,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   }} />
                   {isPollingEnabled ? "Live" : "Paused"}
                 </button>
-              )}
               
-              {/* 새로고침 버튼 - 폴링 모드일 때만 표시 */}
-              {communicationMode === 'polling' && (
+              {/* 새로고침 버튼 */}
                 <button 
                   onClick={fetchDocuments} 
                   disabled={loading} 
@@ -1899,40 +1650,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   }} />
                   <span>Refresh</span>
                 </button>
-              )}
 
-              {/* WebSocket 재연결 버튼 - WebSocket 모드이고 연결이 끊어졌을 때만 표시 */}
-              {communicationMode === 'websocket' && !wsConnected && (
-                <button 
-                  onClick={() => switchCommunicationMode('websocket')} 
-                  disabled={loading}
-                  style={{
-                    backgroundColor: loading ? '#fed7aa' : '#f97316',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading) e.target.style.backgroundColor = '#ea580c';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!loading) e.target.style.backgroundColor = '#f97316';
-                  }}
-                >
-                  <Zap style={{
-                    width: '16px',
-                    height: '16px',
-                    animation: loading ? 'spin 1s linear infinite' : 'none'
-                  }} />
-                  <span>Reconnect</span>
-                </button>
-              )}
 
             </div>
           </div>
@@ -2217,15 +1935,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                 fontSize: '12px'
               }}>tars.giize.com:8080</code>
               <span style={{ marginLeft: '8px', fontSize: '12px' }}>
-                ({communicationMode === 'polling' ? 'HTTP Polling' : 'WebSocket'})
+                (HTTP Polling)
               </span>
             </div>
             <div>
-              {communicationMode === 'polling' ? (
-                <>Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}</>
-              ) : (
-                <>Real-time: {wsConnected ? "Connected" : "Disconnected"}</>
-              )}
+              Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}
             </div>
           </div>
         </div>
