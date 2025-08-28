@@ -56,6 +56,10 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
   
+  // 스크롤 위치 보존을 위한 ref와 상태
+  const scrollContainerRef = React.useRef(null);
+  const [savedScrollPosition, setSavedScrollPosition] = React.useState(0);
+  
   // 페이지네이션 관련 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -65,6 +69,53 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const [showFullTextModal, setShowFullTextModal] = useState(false);
   const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState(null);
   const [fullTextContent, setFullTextContent] = useState('');
+  
+  // 문서 클릭 시 스크롤 위치를 저장하는 핸들러
+  const handleDocumentClickWithScrollSave = (doc) => {
+    // 현재 스크롤 위치 저장
+    if (scrollContainerRef.current) {
+      const currentScrollTop = scrollContainerRef.current.scrollTop;
+      setSavedScrollPosition(currentScrollTop);
+    }
+    
+    // 원래 문서 클릭 핸들러 호출
+    if (onDocumentClick) {
+      onDocumentClick(doc);
+    }
+  };
+  
+  // DOM 변경 즉시 스크롤 위치 복원 (layoutEffect 사용)
+  React.useLayoutEffect(() => {
+    if (scrollContainerRef.current && savedScrollPosition > 0) {
+      scrollContainerRef.current.scrollTop = savedScrollPosition;
+    }
+  });
+
+  // 추가적인 복원 시점들 - RightPane 너비 변경 감지
+  React.useEffect(() => {
+    if (scrollContainerRef.current && savedScrollPosition > 0) {
+      const restoreScroll = () => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = savedScrollPosition;
+        }
+      };
+      
+      // 즉시 복원
+      restoreScroll();
+      
+      // 여러 시점에서 복원 시도
+      const timeouts = [
+        setTimeout(restoreScroll, 0),
+        setTimeout(restoreScroll, 10),
+        setTimeout(restoreScroll, 50),
+        setTimeout(restoreScroll, 100)
+      ];
+      
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
+    }
+  }, [savedScrollPosition]);
   
   const handleUploadSuccess = (file) => {
     // 파일 업로드 성공 시 즉시 Dashboard에 표시할 임시 문서 생성
@@ -183,7 +234,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       return (
         <div style={{ margin: '-24px', height: 'calc(100vh - 128px)' }}>
           <div className="dashboard-container">
-            <DocumentStatusDashboard initialFiles={uploadedFiles} onDocumentClick={onDocumentClick} />
+            <DocumentStatusDashboard initialFiles={uploadedFiles} onDocumentClick={handleDocumentClickWithScrollSave} />
           </div>
         </div>
       );
@@ -205,11 +256,14 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)' }}>
-          <div style={{ 
-            flex: 1, 
-            overflow: 'auto',
-            marginBottom: '16px'
-          }}>
+          <div 
+            ref={scrollContainerRef}
+            style={{ 
+              flex: 1, 
+              overflow: 'auto',
+              marginBottom: '16px'
+            }}
+          >
             <List
               itemLayout="horizontal"
               dataSource={paginatedData}
@@ -230,7 +284,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
                       Full Text
                     </Button>
                   ]}
-                  onClick={() => onDocumentClick(item)}
+                  onClick={() => handleDocumentClickWithScrollSave(item)}
                   style={{ cursor: 'pointer', padding: '12px 0' }}
                 >
                   <List.Item.Meta
