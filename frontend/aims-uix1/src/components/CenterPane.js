@@ -60,6 +60,9 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const scrollContainerRef = React.useRef(null);
   const [savedScrollPosition, setSavedScrollPosition] = React.useState(0);
   
+  // 선택된 문서 상태
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null);
+  
   // 페이지네이션 관련 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -77,6 +80,10 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       const currentScrollTop = scrollContainerRef.current.scrollTop;
       setSavedScrollPosition(currentScrollTop);
     }
+    
+    // 선택된 문서 ID 저장 (다양한 ID 필드 지원)
+    const docId = doc._id || doc.id || doc.payload?.doc_id;
+    setSelectedDocumentId(docId);
     
     // 원래 문서 클릭 핸들러 호출
     if (onDocumentClick) {
@@ -267,115 +274,128 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
             <List
               itemLayout="horizontal"
               dataSource={paginatedData}
-              renderItem={(item) => (
-                <List.Item
-                  key={item.id || item.payload?.doc_id}
-                  actions={[
-                    <Button
-                      type="text"
-                      icon={<ReadOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFullTextView(item);
-                      }}
-                      title="전체 텍스트 보기"
-                      style={{ color: '#1890ff' }}
-                    >
-                      Full Text
-                    </Button>
-                  ]}
-                  onClick={() => handleDocumentClickWithScrollSave(item)}
-                  style={{ cursor: 'pointer', padding: '12px 0' }}
-                >
-                  <List.Item.Meta
-                    avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
-                    title={
-                      <Space>
-                        <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
-                        {item.type && (
-                           <Tag color="blue">{item.type}</Tag>
-                        )}
-                        {/* ✅ 수정된 부분: Confidence를 제목 옆에 위치시키고 문구를 태그 안에 포함 */}
-                        {item.ocr?.confidence && (
-                            <Tag color="blue">Confidence: {item.ocr.confidence}</Tag>
-                        )}
-                      </Space>
-                    }
-                    description={
-                      <Space size="middle">
-                        <Text type="secondary">{
-                          (() => {
-                            // meta에서 full_text 확인
-                            const metaFullText = item.meta?.full_text || 
-                              (typeof item.meta === 'string' ? (() => {
-                                try { 
-                                  const parsed = JSON.parse(item.meta);
-                                  return parsed.full_text;
-                                } catch { return null; }
-                              })() : null);
-                            
-                            // meta에 full_text가 있는 경우 - meta summary 사용
-                            if (metaFullText && metaFullText.trim()) {
-                              const metaSummary = item.meta?.summary || 
+              renderItem={(item) => {
+                // 현재 아이템이 선택된 문서인지 확인
+                const itemId = item._id || item.id || item.payload?.doc_id;
+                const isSelected = selectedDocumentId === itemId;
+                
+                return (
+                  <List.Item
+                    key={itemId}
+                    actions={[
+                      <Button
+                        type="text"
+                        icon={<ReadOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFullTextView(item);
+                        }}
+                        title="전체 텍스트 보기"
+                        style={{ color: '#1890ff' }}
+                      >
+                        Full Text
+                      </Button>
+                    ]}
+                    onClick={() => handleDocumentClickWithScrollSave(item)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      padding: '12px 0',
+                      backgroundColor: isSelected ? '#e6f7ff' : 'transparent',
+                      borderRadius: '8px',
+                      margin: '4px 0',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <List.Item.Meta
+                      avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
+                      title={
+                        <Space>
+                          <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
+                          {item.type && (
+                             <Tag color="blue">{item.type}</Tag>
+                          )}
+                          {/* ✅ 수정된 부분: Confidence를 제목 옆에 위치시키고 문구를 태그 안에 포함 */}
+                          {item.ocr?.confidence && (
+                              <Tag color="blue">Confidence: {item.ocr.confidence}</Tag>
+                          )}
+                        </Space>
+                      }
+                      description={
+                        <Space size="middle">
+                          <Text type="secondary">{
+                            (() => {
+                              // meta에서 full_text 확인
+                              const metaFullText = item.meta?.full_text || 
                                 (typeof item.meta === 'string' ? (() => {
                                   try { 
                                     const parsed = JSON.parse(item.meta);
+                                    return parsed.full_text;
+                                  } catch { return null; }
+                                })() : null);
+                              
+                              // meta에 full_text가 있는 경우 - meta summary 사용
+                              if (metaFullText && metaFullText.trim()) {
+                                const metaSummary = item.meta?.summary || 
+                                  (typeof item.meta === 'string' ? (() => {
+                                    try { 
+                                      const parsed = JSON.parse(item.meta);
+                                      return parsed.summary;
+                                    } catch { return null; }
+                                  })() : null);
+                                
+                                if (metaSummary && metaSummary !== 'null') {
+                                  return metaSummary;
+                                }
+                                
+                                // meta summary가 없으면 meta full_text의 앞부분 사용
+                                const cleanText = metaFullText.trim();
+                                return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                              }
+                              
+                              // meta에 full_text가 없는 경우 - ocr summary 사용
+                              const ocrSummary = item.ocr?.summary || 
+                                (typeof item.ocr === 'string' ? (() => {
+                                  try { 
+                                    const parsed = JSON.parse(item.ocr);
                                     return parsed.summary;
                                   } catch { return null; }
                                 })() : null);
                               
-                              if (metaSummary && metaSummary !== 'null') {
-                                return metaSummary;
+                              if (ocrSummary && ocrSummary !== 'null') {
+                                return ocrSummary;
                               }
                               
-                              // meta summary가 없으면 meta full_text의 앞부분 사용
-                              const cleanText = metaFullText.trim();
-                              return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
-                            }
-                            
-                            // meta에 full_text가 없는 경우 - ocr summary 사용
-                            const ocrSummary = item.ocr?.summary || 
-                              (typeof item.ocr === 'string' ? (() => {
-                                try { 
-                                  const parsed = JSON.parse(item.ocr);
-                                  return parsed.summary;
-                                } catch { return null; }
-                              })() : null);
-                            
-                            if (ocrSummary && ocrSummary !== 'null') {
-                              return ocrSummary;
-                            }
-                            
-                            // ocr summary가 없으면 ocr full_text의 앞부분 사용
-                            const ocrFullText = item.ocr?.full_text || 
-                              (typeof item.ocr === 'string' ? (() => {
-                                try { 
-                                  const parsed = JSON.parse(item.ocr);
-                                  return parsed.full_text;
-                                } catch { return null; }
-                              })() : null);
-                            
-                            if (ocrFullText && ocrFullText.trim()) {
-                              const cleanText = ocrFullText.trim();
-                              return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
-                            }
-                            
-                            // 마지막으로 payload.summary 시도
-                            if (item.payload?.summary) {
-                              return item.payload.summary;
-                            }
-                            
-                            return '요약 정보: 없음';
-                          })()
-                        }</Text>
-                        {item.score && (
-                           <Text type="secondary">유사도: <Tag color="green">{item.score.toFixed(4)}</Tag></Text>
-                        )}
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
+                              // ocr summary가 없으면 ocr full_text의 앞부분 사용
+                              const ocrFullText = item.ocr?.full_text || 
+                                (typeof item.ocr === 'string' ? (() => {
+                                  try { 
+                                    const parsed = JSON.parse(item.ocr);
+                                    return parsed.full_text;
+                                  } catch { return null; }
+                                })() : null);
+                              
+                              if (ocrFullText && ocrFullText.trim()) {
+                                const cleanText = ocrFullText.trim();
+                                return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                              }
+                              
+                              // 마지막으로 payload.summary 시도
+                              if (item.payload?.summary) {
+                                return item.payload.summary;
+                              }
+                              
+                              return '요약 정보: 없음';
+                            })()
+                          }</Text>
+                          {item.score && (
+                             <Text type="secondary">유사도: <Tag color="green">{item.score.toFixed(4)}</Tag></Text>
+                          )}
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                );
+              }}
             />
           </div>
           
