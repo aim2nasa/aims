@@ -842,7 +842,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
   );
 };
 
-const DocumentListView = ({ documents, onDocumentClick }) => {
+const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -925,6 +925,17 @@ const DocumentListView = ({ documents, onDocumentClick }) => {
               }}>
                 Document ID
               </th>
+              <th style={{
+                padding: '12px 24px',
+                textAlign: 'center',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody style={{ background: 'white' }}>
@@ -938,7 +949,11 @@ const DocumentListView = ({ documents, onDocumentClick }) => {
               return (
                 <tr 
                   key={document.id || document._id || index}
-                  onClick={() => onDocumentClick(document)}
+                  onClick={() => {
+                    if (onDetailClick) {
+                      onDetailClick(document);
+                    }
+                  }}
                   style={{
                     borderBottom: index < documents.length - 1 ? '1px solid #e5e7eb' : 'none',
                     cursor: 'pointer',
@@ -1038,6 +1053,43 @@ const DocumentListView = ({ documents, onDocumentClick }) => {
                         {(document.id || document._id || 'unknown-id').slice(0, 12)}...
                       </span>
                     </div>
+                  </td>
+                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                    {status === 'completed' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onDocumentClick) {
+                            onDocumentClick(document);
+                          }
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          color: '#059669',
+                          backgroundColor: '#ecfdf5',
+                          border: '1px solid #d1fae5',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#d1fae5';
+                          e.target.style.borderColor = '#a7f3d0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = '#ecfdf5';
+                          e.target.style.borderColor = '#d1fae5';
+                        }}
+                      >
+                        <Eye style={{ width: '12px', height: '12px' }} />
+                        미리보기
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -1346,7 +1398,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
 
 // 메인 대시보드 컴포넌트
-const DocumentStatusDashboard = ({ initialFiles = [] }) => {
+const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [paginatedDocuments, setPaginatedDocuments] = useState([]);
@@ -2259,7 +2311,7 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
                         <DocumentCard 
                           key={document.id || document._id || Math.random()} 
                           document={document}
-                          onClick={handleDocumentClick}
+                          onClick={onDocumentClick || (() => {})}
                         />
                       ))}
                     </div>
@@ -2268,7 +2320,8 @@ const DocumentStatusDashboard = ({ initialFiles = [] }) => {
                     <div style={{ marginBottom: '24px' }}>
                       <DocumentListView 
                         documents={paginatedDocuments}
-                        onDocumentClick={handleDocumentClick}
+                        onDocumentClick={onDocumentClick || (() => {})}
+                        onDetailClick={handleDocumentClick}
                       />
                     </div>
                   )}

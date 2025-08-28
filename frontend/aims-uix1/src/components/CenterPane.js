@@ -183,7 +183,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       return (
         <div style={{ margin: '-24px', height: 'calc(100vh - 128px)' }}>
           <div className="dashboard-container">
-            <DocumentStatusDashboard initialFiles={uploadedFiles} />
+            <DocumentStatusDashboard initialFiles={uploadedFiles} onDocumentClick={onDocumentClick} />
           </div>
         </div>
       );
