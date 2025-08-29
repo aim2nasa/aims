@@ -17,6 +17,7 @@ const RightPane = ({ contentType, document, customer, onClose, onResetRatio }) =
     return (
       <CustomerDetailPanel
         customerId={customer._id}
+        customer={customer}
         onClose={onClose}
         onResetRatio={onResetRatio}
       />

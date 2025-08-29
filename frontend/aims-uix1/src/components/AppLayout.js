@@ -106,6 +106,20 @@ const AppLayout = () => {
     }
   };
 
+  // 고객 정보 새로고침 (문서 연결 후 호출)
+  const refreshSelectedCustomer = async () => {
+    if (selectedCustomer && selectedCustomer._id) {
+      try {
+        const response = await axios.get(`http://tars.giize.com:3010/api/customers/${selectedCustomer._id}`);
+        if (response.data.success) {
+          setSelectedCustomer(response.data.data);
+        }
+      } catch (error) {
+        console.error('고객 정보 새로고침 실패:', error);
+      }
+    }
+  };
+
   const handleRightPaneCollapse = () => {
     setRightPaneVisible(false);
     setSelectedDocument(null);
@@ -332,6 +346,7 @@ const AppLayout = () => {
                 isLoading={isLoading}
                 showDashboard={showDashboard}
                 showCustomerManagement={showCustomerManagement}
+                onDocumentLinked={refreshSelectedCustomer}
               />
             </div>
 

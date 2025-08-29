@@ -53,7 +53,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement }) => {
+const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, onDocumentLinked }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -238,8 +238,11 @@ const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading
   };
 
   const handleLinkSuccess = () => {
-    // 연결 성공 후 필요한 경우 문서 목록 새로고침
+    // 연결 성공 후 우측 패널의 고객 정보 새로고침
     message.success('문서가 고객에게 성공적으로 연결되었습니다.');
+    if (onDocumentLinked) {
+      onDocumentLinked();
+    }
   };
 
   // 현재 페이지에 표시할 데이터 계산

@@ -16,7 +16,7 @@ import DocumentPreviewModal from './DocumentPreviewModal';
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
-const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
+const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, onResetRatio }) => {
   const [customer, setCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,13 +28,27 @@ const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
 
   useEffect(() => {
     if (customerId) {
-      fetchCustomerDetail();
+      // initialCustomer가 있으면 사용하고, 없으면 API로 조회
+      if (initialCustomer) {
+        setCustomer(initialCustomer);
+      } else {
+        fetchCustomerDetail();
+      }
       fetchCustomerDocuments();
     } else {
       setCustomer(null);
       setCustomerDocuments([]);
     }
-  }, [customerId]);
+  }, [customerId, initialCustomer]);
+
+  // initialCustomer가 변경될 때마다 customer 상태 업데이트 및 문서 목록 새로고침
+  useEffect(() => {
+    if (initialCustomer && customerId === initialCustomer._id) {
+      setCustomer(initialCustomer);
+      // 고객 정보가 업데이트되면 문서 목록도 새로고침
+      fetchCustomerDocuments();
+    }
+  }, [initialCustomer]);
 
   const fetchCustomerDetail = async () => {
     setLoading(true);
