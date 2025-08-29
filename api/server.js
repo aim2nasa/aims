@@ -924,6 +924,73 @@ app.post('/api/customers/:id/documents', async (req, res) => {
 });
 
 /**
+ * 고객에서 문서 연결 해제 API
+ */
+app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
+  try {
+    const { id, document_id } = req.params;
+
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 ID입니다.'
+      });
+    }
+
+    // 고객 존재 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 문서 존재 확인
+    const document = await db.collection(COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(document_id) });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: '문서를 찾을 수 없습니다.'
+      });
+    }
+
+    // 고객에서 문서 연결 제거
+    await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $pull: { documents: { document_id: new ObjectId(document_id) } },
+        $set: { 'meta.updated_at': new Date() }
+      }
+    );
+
+    // 문서에서 고객 연결 정보 제거
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(document_id) },
+      {
+        $unset: { customer_relation: "" }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: '문서 연결이 성공적으로 해제되었습니다.'
+    });
+  } catch (error) {
+    console.error('문서 연결 해제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '문서 연결 해제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 고객 관련 문서 목록 조회 API
  */
 app.get('/api/customers/:id/documents', async (req, res) => {

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, Descriptions, Card, Tag, Space, Typography, Avatar, 
-  Button, message, Table, Empty, Divider, Tooltip
+  Button, message, Table, Empty, Divider, Tooltip, Modal, Popconfirm
 } from 'antd';
 import { 
   UserOutlined, PhoneOutlined, MailOutlined, 
   FileTextOutlined, CalendarOutlined, HomeOutlined,
   DollarOutlined, SafetyOutlined, LinkOutlined,
-  EditOutlined, HistoryOutlined, CloseOutlined
+  EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -115,6 +115,22 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
     setSelectedDocument(null);
   };
 
+  // 문서 연결 해제 함수
+  const handleUnlinkDocument = async (documentId) => {
+    try {
+      const response = await axios.delete(`http://tars.giize.com:3010/api/customers/${customerId}/documents/${documentId}`);
+      
+      if (response.data.success) {
+        message.success('문서 연결이 해제되었습니다.');
+        // 문서 목록 새로고침
+        fetchCustomerDocuments();
+      }
+    } catch (error) {
+      message.error('문서 연결 해제에 실패했습니다.');
+      console.error('Document unlink error:', error);
+    }
+  };
+
   const documentColumns = [
     {
       title: '파일명',
@@ -167,6 +183,30 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         const config = statusConfig[status] || { color: 'default', text: status };
         return <Tag color={config.color} style={{ fontSize: '10px' }}>{config.text}</Tag>;
       }
+    },
+    {
+      title: '작업',
+      key: 'action',
+      width: 60,
+      render: (_, record) => (
+        <Popconfirm
+          title="문서 연결 해제"
+          description="이 문서와 고객의 연결을 해제하시겠습니까?"
+          onConfirm={() => handleUnlinkDocument(record._id)}
+          okText="해제"
+          cancelText="취소"
+          placement="topRight"
+        >
+          <Button 
+            type="text" 
+            size="small"
+            icon={<DeleteOutlined />}
+            danger
+            style={{ fontSize: '12px' }}
+            title="문서 연결 해제"
+          />
+        </Popconfirm>
+      )
     }
   ];
 
@@ -333,7 +373,13 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                   pagination={{ pageSize: 5 }}
                   size="small"
                   onRow={(record) => ({
-                    onClick: () => handleDocumentClick(record),
+                    onClick: (e) => {
+                      // 작업 버튼 클릭 시에는 문서 클릭 이벤트 방지
+                      if (e.target.closest('.ant-popover-trigger')) {
+                        return;
+                      }
+                      handleDocumentClick(record);
+                    },
                     style: { cursor: 'pointer' }
                   })}
                 />
