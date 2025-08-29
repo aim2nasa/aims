@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
+const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet }) => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,6 +33,20 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
   useEffect(() => {
     fetchCustomers();
   }, [pagination.current, pagination.pageSize, searchText]);
+
+  // 컴포넌트 마운트 시 새로고침 콜백 등록
+  useEffect(() => {
+    if (onRefreshCustomerListSet) {
+      onRefreshCustomerListSet(() => fetchCustomers);
+    }
+    
+    // 컴포넌트 언마운트 시 콜백 해제
+    return () => {
+      if (onRefreshCustomerListSet) {
+        onRefreshCustomerListSet(null);
+      }
+    };
+  }, [onRefreshCustomerListSet]);
 
   // 외부 수정 모달이 열릴 때 폼 필드 설정
   useEffect(() => {

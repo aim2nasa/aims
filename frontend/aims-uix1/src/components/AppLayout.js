@@ -130,6 +130,9 @@ const AppLayout = () => {
     setEditModalVisible(true);
   };
 
+  // 고객 목록 새로고침 콜백 상태
+  const [refreshCustomerList, setRefreshCustomerList] = useState(null);
+
   // 고객 삭제 함수
   const handleDeleteCustomer = async (customerId) => {
     try {
@@ -139,6 +142,10 @@ const AppLayout = () => {
         // 삭제된 고객이 현재 선택된 고객이면 우측 패널 닫기
         if (selectedCustomer && selectedCustomer._id === customerId) {
           handleRightPaneCollapse();
+        }
+        // 고객 목록 새로고침
+        if (refreshCustomerList) {
+          refreshCustomerList();
         }
       }
     } catch (error) {
@@ -385,6 +392,7 @@ const AppLayout = () => {
                   setEditModalVisible(false);
                   setEditingCustomer(null);
                 }}
+                onRefreshCustomerListSet={setRefreshCustomerList}
               />
             </div>
 
