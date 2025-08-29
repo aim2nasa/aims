@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import CustomerDetailModal from './CustomerDetailModal';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -23,6 +24,10 @@ const CustomerManagement = () => {
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  
+  // 고객 상세 모달 관련 상태
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedCustomerIdForDetail, setSelectedCustomerIdForDetail] = useState(null);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -163,6 +168,17 @@ const CustomerManagement = () => {
     }
   };
 
+  // 고객 상세 모달 핸들러
+  const handleCustomerNameClick = (customerId) => {
+    setSelectedCustomerIdForDetail(customerId);
+    setShowDetailModal(true);
+  };
+
+  const handleDetailModalClose = () => {
+    setShowDetailModal(false);
+    setSelectedCustomerIdForDetail(null);
+  };
+
   const columns = [
     {
       title: '고객명',
@@ -171,7 +187,17 @@ const CustomerManagement = () => {
       render: (name, record) => (
         <Space>
           <UserOutlined />
-          <span style={{ fontWeight: 'bold' }}>{name}</span>
+          <span 
+            style={{ 
+              fontWeight: 'bold', 
+              color: '#1890ff', 
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+            onClick={() => handleCustomerNameClick(record._id)}
+          >
+            {name}
+          </span>
           {record.insurance_info?.risk_level === '고위험' && 
             <Tag color="red">고위험</Tag>
           }
@@ -464,6 +490,13 @@ const CustomerManagement = () => {
           size="small"
         />
       </Drawer>
+
+      {/* 고객 상세 정보 모달 */}
+      <CustomerDetailModal
+        visible={showDetailModal}
+        onCancel={handleDetailModalClose}
+        customerId={selectedCustomerIdForDetail}
+      />
     </div>
   );
 };
