@@ -115,20 +115,53 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
     setSelectedDocument(null);
   };
 
-  // 문서 연결 해제 함수
-  const handleUnlinkDocument = async (documentId) => {
+  // 문서 해제 확인 Popconfirm 상태
+  const [popconfirmOpen, setPopconfirmOpen] = useState(false);
+  const [unlinkTargetDocument, setUnlinkTargetDocument] = useState(null);
+
+  // 삭제 버튼 클릭 시 문서 프리뷰 먼저 열기
+  const handleDeleteButtonClick = async (record) => {
+    // 먼저 해당 문서의 프리뷰 모달 열기
+    await handleDocumentClick(record);
+    // 연결 해제 확인 Popconfirm 표시
+    setUnlinkTargetDocument(record);
+    setPopconfirmOpen(true);
+  };
+
+  // 문서 연결 해제 확인
+  const handleConfirmUnlink = async () => {
+    if (!unlinkTargetDocument) return;
+    
     try {
-      const response = await axios.delete(`http://tars.giize.com:3010/api/customers/${customerId}/documents/${documentId}`);
+      const response = await axios.delete(`http://tars.giize.com:3010/api/customers/${customerId}/documents/${unlinkTargetDocument._id}`);
       
       if (response.data.success) {
         message.success('문서 연결이 해제되었습니다.');
-        // 문서 목록 새로고침
-        fetchCustomerDocuments();
+        
+        // 문서 목록에서 해제된 문서 제거 (즉시 UI 업데이트)
+        setCustomerDocuments(prev => prev.filter(doc => doc._id !== unlinkTargetDocument._id));
+        
+        // 해제된 문서가 현재 프리뷰 중인 문서라면 프리뷰 모달 닫기 (성공 후에)
+        if (selectedDocument && selectedDocument._id === unlinkTargetDocument._id) {
+          // 약간의 지연을 두고 모달 닫기 (사용자가 해제 완료를 인지할 수 있도록)
+          setTimeout(() => {
+            handleCloseDocumentPreview();
+          }, 1000);
+        }
       }
     } catch (error) {
       message.error('문서 연결 해제에 실패했습니다.');
       console.error('Document unlink error:', error);
+    } finally {
+      setPopconfirmOpen(false);
+      setUnlinkTargetDocument(null);
     }
+  };
+
+  // 문서 연결 해제 취소
+  const handleCancelUnlink = () => {
+    setPopconfirmOpen(false);
+    setUnlinkTargetDocument(null);
   };
 
   const documentColumns = [
@@ -192,7 +225,9 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         <Popconfirm
           title="문서 연결 해제"
           description="이 문서와 고객의 연결을 해제하시겠습니까?"
-          onConfirm={() => handleUnlinkDocument(record._id)}
+          open={popconfirmOpen && unlinkTargetDocument?._id === record._id}
+          onConfirm={handleConfirmUnlink}
+          onCancel={handleCancelUnlink}
           okText="해제"
           cancelText="취소"
           placement="topRight"
@@ -204,6 +239,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
             danger
             style={{ fontSize: '12px' }}
             title="문서 연결 해제"
+            onClick={() => handleDeleteButtonClick(record)}
           />
         </Popconfirm>
       )
@@ -374,11 +410,10 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                   size="small"
                   onRow={(record) => ({
                     onClick: (e) => {
-                      // 작업 버튼 클릭 시에는 문서 클릭 이벤트 방지
-                      if (e.target.closest('.ant-popover-trigger')) {
-                        return;
+                      // 삭제 버튼 자체 클릭이 아닌 경우에만 문서 프리뷰 열기
+                      if (!e.target.closest('.ant-btn[title="문서 연결 해제"]')) {
+                        handleDocumentClick(record);
                       }
-                      handleDocumentClick(record);
                     },
                     style: { cursor: 'pointer' }
                   })}
@@ -436,6 +471,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         document={selectedDocument}
         onClose={handleCloseDocumentPreview}
       />
+
     </div>
   );
 };

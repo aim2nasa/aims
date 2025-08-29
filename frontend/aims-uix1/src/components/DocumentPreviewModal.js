@@ -21,6 +21,17 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
+  // 모달이 닫힐 때 상태 초기화
+  useEffect(() => {
+    if (!visible) {
+      setNumPages(null);
+      setPageNumber(1);
+      setScale(1.0);
+      setImageLoading(true);
+      setImageError(false);
+    }
+  }, [visible]);
+
   if (!document) {
     return null;
   }
@@ -100,7 +111,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
   return (
     <Modal
       title={documentName}
-      visible={visible}
+      open={visible}
       onCancel={onClose}
       footer={[
         // PDF 컨트롤
