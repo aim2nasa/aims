@@ -7,7 +7,7 @@ import {
   UserOutlined, PhoneOutlined, MailOutlined, 
   FileTextOutlined, CalendarOutlined, HomeOutlined,
   DollarOutlined, SafetyOutlined, LinkOutlined,
-  EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined
+  EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -331,15 +331,14 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
             </Popconfirm>
           )}
           {onResetRatio && (
-            <Tooltip title="패널 크기 초기화">
+            <Tooltip title="패널 크기 복원">
               <Button 
                 type="text" 
                 size="small" 
+                icon={<ReloadOutlined />}
                 onClick={onResetRatio}
                 style={{ fontSize: '10px' }}
-              >
-                초기화
-              </Button>
+              />
             </Tooltip>
           )}
           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />

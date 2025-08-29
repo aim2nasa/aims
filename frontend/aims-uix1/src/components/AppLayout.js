@@ -40,6 +40,7 @@ const AppLayout = () => {
   
   // 리사이즈 관련 상태
   const OPTIMAL_RIGHT_PANE_WIDTH = 50; // PDF/이미지 뷰어 최적 비율: 50%
+  const MIN_CENTER_PANE_WIDTH = 620; // 문서수 칼럼 숫자가 완전히 보이도록 CenterPane 최소 너비 (px)
   const [rightPaneWidth, setRightPaneWidth] = useState(OPTIMAL_RIGHT_PANE_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -253,8 +254,12 @@ const AppLayout = () => {
       // 새로운 RightPane 너비를 퍼센트로 계산
       const newRightPaneWidth = ((containerWidth - mouseX) / containerWidth) * 100;
       
-      // 최소 20%, 최대 80% 제한
-      const clampedWidth = Math.max(20, Math.min(80, newRightPaneWidth));
+      // CenterPane의 최소 너비 계산 (고객명 칼럼 보호)
+      const minCenterPanePercent = (MIN_CENTER_PANE_WIDTH / containerWidth) * 100;
+      const maxRightPaneWidth = Math.max(20, 100 - minCenterPanePercent);
+      
+      // 최소 20%, 동적 최대값 제한 (고객명 칼럼 보호)
+      const clampedWidth = Math.max(20, Math.min(maxRightPaneWidth, newRightPaneWidth));
       setRightPaneWidth(clampedWidth);
     };
 
@@ -371,7 +376,8 @@ const AppLayout = () => {
             <div style={{ 
               width: rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
               marginRight: rightPaneVisible ? 12 : 0,
-              transition: isResizing ? 'none' : 'width 0.3s ease'
+              transition: isResizing ? 'none' : 'width 0.3s ease',
+              overflow: 'hidden' // 칼럼이 잘리도록 설정
             }}>
               <CenterPane 
                 onDocumentClick={handleDocumentClick}

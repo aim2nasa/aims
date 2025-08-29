@@ -213,6 +213,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '고객명',
       dataIndex: ['personal_info', 'name'],
       key: 'name',
+      width: 200, // 고정 너비
       render: (name, record) => (
         <Space>
           <UserOutlined />
@@ -237,6 +238,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '연락처',
       dataIndex: ['personal_info', 'phone'],
       key: 'phone',
+      width: 150, // 고정 너비
       render: phone => phone && (
         <Space>
           <PhoneOutlined />
@@ -245,31 +247,16 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       )
     },
     {
-      title: '이메일',
-      dataIndex: ['personal_info', 'email'],
-      key: 'email',
-      render: email => email && (
-        <Space>
-          <MailOutlined />
-          <span>{email}</span>
-        </Space>
-      )
-    },
-    {
       title: '고객 유형',
       dataIndex: ['insurance_info', 'customer_type'],
       key: 'customer_type',
+      width: 100, // 고정 너비
       render: type => type && <Tag color={type === '법인' ? 'blue' : 'green'}>{type}</Tag>
-    },
-    {
-      title: '연간 보험료',
-      dataIndex: ['insurance_info', 'annual_premium'],
-      key: 'annual_premium',
-      render: premium => premium && `₩${premium.toLocaleString()}`
     },
     {
       title: '문서 수',
       key: 'documents_count',
+      width: 100, // 고정 너비
       render: (_, record) => (
         <Button 
           type="link" 
@@ -284,6 +271,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '상태',
       dataIndex: ['meta', 'status'],
       key: 'status',
+      width: 80, // 고정 너비
       render: status => {
         const color = status === 'active' ? 'green' : 'red';
         const text = status === 'active' ? '활성' : '비활성';
@@ -294,6 +282,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '등록일',
       dataIndex: ['meta', 'created_at'],
       key: 'created_at',
+      width: 120, // 고정 너비
       render: date => date && dayjs(date).format('YYYY-MM-DD')
     },
   ];
@@ -367,6 +356,8 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
           dataSource={customers}
           rowKey="_id"
           loading={loading}
+          scroll={{ x: false }} // 가로 스크롤 비활성화
+          tableLayout="fixed" // 고정 레이아웃
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
