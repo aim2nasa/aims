@@ -683,20 +683,72 @@ app.get('/api/customers', async (req, res) => {
 });
 
 /**
+ * 윈도우식 중복명 처리를 위한 고유한 고객명 생성 함수
+ */
+async function generateUniqueCustomerName(originalName) {
+  // 원본 이름으로 먼저 검색
+  const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
+    .findOne({ 'personal_info.name': originalName });
+  
+  // 중복이 없으면 원본 이름 반환
+  if (!existingCustomer) {
+    return originalName;
+  }
+  
+  // 중복이 있으면 (1), (2), ... 형태로 번호 붙이기
+  let counter = 1;
+  let uniqueName;
+  
+  while (true) {
+    uniqueName = `${originalName} (${counter})`;
+    
+    const duplicateCheck = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ 'personal_info.name': uniqueName });
+    
+    if (!duplicateCheck) {
+      return uniqueName;
+    }
+    
+    counter++;
+    
+    // 무한 루프 방지 (최대 100개까지)
+    if (counter > 100) {
+      return `${originalName} (${Date.now()})`;
+    }
+  }
+}
+
+/**
  * 새 고객 등록 API
  */
 app.post('/api/customers', async (req, res) => {
   try {
     const customerData = req.body;
     
+    // 원본 고객명을 기준으로 유니크한 이름 생성
+    const originalName = customerData.personal_info?.name;
+    if (!originalName) {
+      return res.status(400).json({
+        success: false,
+        error: '고객명은 필수 입력 항목입니다.'
+      });
+    }
+    
+    const uniqueName = await generateUniqueCustomerName(originalName);
+    
     const newCustomer = {
       ...customerData,
+      personal_info: {
+        ...customerData.personal_info,
+        name: uniqueName
+      },
       meta: {
         created_at: new Date(),
         updated_at: new Date(),
         created_by: customerData.created_by || null,
         last_modified_by: customerData.created_by || null,
-        status: 'active'
+        status: 'active',
+        original_name: originalName !== uniqueName ? originalName : undefined
       }
     };
 
@@ -706,7 +758,12 @@ app.post('/api/customers', async (req, res) => {
       success: true,
       data: {
         customer_id: result.insertedId,
-        message: '고객이 성공적으로 등록되었습니다.'
+        customer_name: uniqueName,
+        was_renamed: originalName !== uniqueName,
+        original_name: originalName !== uniqueName ? originalName : undefined,
+        message: originalName !== uniqueName 
+          ? `고객이 성공적으로 등록되었습니다. (이름이 "${originalName}"에서 "${uniqueName}"으로 변경됨)`
+          : '고객이 성공적으로 등록되었습니다.'
       }
     });
   } catch (error) {

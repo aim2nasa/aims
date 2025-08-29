@@ -125,7 +125,12 @@ const CustomerManagement = ({ onCustomerClick }) => {
       }
 
       if (response.data.success) {
-        message.success(editingCustomer ? '고객 정보가 수정되었습니다.' : '고객이 등록되었습니다.');
+        // 새 고객 등록 시 이름 변경 알림 처리
+        if (!editingCustomer && response.data.data.was_renamed) {
+          message.warning(response.data.data.message, 5);
+        } else {
+          message.success(editingCustomer ? '고객 정보가 수정되었습니다.' : '고객이 등록되었습니다.');
+        }
         setModalVisible(false);
         fetchCustomers();
       }
