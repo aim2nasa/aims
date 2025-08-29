@@ -34,6 +34,10 @@ const AppLayout = () => {
   // 고객 관리 관련 상태
   const [showCustomerManagement, setShowCustomerManagement] = useState(false);
   
+  // 고객 수정 모달 관련 상태
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  
   // 리사이즈 관련 상태
   const OPTIMAL_RIGHT_PANE_WIDTH = 50; // PDF/이미지 뷰어 최적 비율: 50%
   const [rightPaneWidth, setRightPaneWidth] = useState(OPTIMAL_RIGHT_PANE_WIDTH);
@@ -117,6 +121,29 @@ const AppLayout = () => {
       } catch (error) {
         console.error('고객 정보 새로고침 실패:', error);
       }
+    }
+  };
+
+  // 고객 수정 함수
+  const handleEditCustomer = (customer) => {
+    setEditingCustomer(customer);
+    setEditModalVisible(true);
+  };
+
+  // 고객 삭제 함수
+  const handleDeleteCustomer = async (customerId) => {
+    try {
+      const response = await axios.delete(`http://tars.giize.com:3010/api/customers/${customerId}`);
+      if (response.data.success) {
+        message.success('고객이 삭제되었습니다.');
+        // 삭제된 고객이 현재 선택된 고객이면 우측 패널 닫기
+        if (selectedCustomer && selectedCustomer._id === customerId) {
+          handleRightPaneCollapse();
+        }
+      }
+    } catch (error) {
+      message.error('고객 삭제에 실패했습니다.');
+      console.error(error);
     }
   };
 
@@ -347,6 +374,17 @@ const AppLayout = () => {
                 showDashboard={showDashboard}
                 showCustomerManagement={showCustomerManagement}
                 onDocumentLinked={refreshSelectedCustomer}
+                editModalVisible={editModalVisible}
+                editingCustomer={editingCustomer}
+                onEditModalClose={() => {
+                  setEditModalVisible(false);
+                  setEditingCustomer(null);
+                }}
+                onCustomerUpdated={() => {
+                  refreshSelectedCustomer();
+                  setEditModalVisible(false);
+                  setEditingCustomer(null);
+                }}
               />
             </div>
 
@@ -413,6 +451,8 @@ const AppLayout = () => {
                   customer={selectedCustomer}
                   onClose={handleRightPaneCollapse}
                   onResetRatio={resetToOptimalRatio}
+                  onEditCustomer={handleEditCustomer}
+                  onDeleteCustomer={handleDeleteCustomer}
                 />
               </div>
             )}

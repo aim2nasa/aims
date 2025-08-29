@@ -16,7 +16,7 @@ import DocumentPreviewModal from './DocumentPreviewModal';
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
-const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, onResetRatio }) => {
+const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, onResetRatio, onEdit, onDelete }) => {
   const [customer, setCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -300,6 +300,36 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           </Space>
         </Space>
         <Space>
+          {onEdit && (
+            <Button 
+              type="primary" 
+              size="small" 
+              icon={<EditOutlined />}
+              onClick={() => onEdit(customer)}
+              style={{ fontSize: '11px' }}
+            >
+              수정
+            </Button>
+          )}
+          {onDelete && (
+            <Popconfirm
+              title="고객 삭제"
+              description="정말로 이 고객을 삭제하시겠습니까?"
+              onConfirm={() => onDelete(customer._id)}
+              okText="삭제"
+              cancelText="취소"
+              okType="danger"
+            >
+              <Button 
+                danger 
+                size="small" 
+                icon={<DeleteOutlined />}
+                style={{ fontSize: '11px' }}
+              >
+                삭제
+              </Button>
+            </Popconfirm>
+          )}
           {onResetRatio && (
             <Tooltip title="패널 크기 초기화">
               <Button 

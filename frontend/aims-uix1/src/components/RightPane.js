@@ -7,7 +7,7 @@ import CustomerDetailPanel from './CustomerDetailPanel';
 import axios from 'axios';
 
 
-const RightPane = ({ contentType, document, customer, onClose, onResetRatio }) => {
+const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onEditCustomer, onDeleteCustomer }) => {
   if (!contentType || (!document && !customer)) {
     return null;
   }
@@ -20,6 +20,8 @@ const RightPane = ({ contentType, document, customer, onClose, onResetRatio }) =
         customer={customer}
         onClose={onClose}
         onResetRatio={onResetRatio}
+        onEdit={onEditCustomer}
+        onDelete={onDeleteCustomer}
       />
     );
   }

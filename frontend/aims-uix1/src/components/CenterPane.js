@@ -53,7 +53,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, onDocumentLinked }) => {
+const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, onDocumentLinked, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -261,7 +261,13 @@ const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading
       // 검색 결과 표시 (리스트 모드로)
     } else if (showCustomerManagement) {
       // 검색 결과가 없을 때만 고객 관리 화면 표시
-      return <CustomerManagement onCustomerClick={onCustomerClick} />;
+      return <CustomerManagement 
+        onCustomerClick={onCustomerClick} 
+        editModalVisible={editModalVisible}
+        editingCustomer={editingCustomer}
+        onEditModalClose={onEditModalClose}
+        onCustomerUpdated={onCustomerUpdated}
+      />;
     }
     
     // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
@@ -513,7 +519,13 @@ const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading
 
   // 고객 관리 화면인 경우 Card 없이 직접 렌더링
   if (showCustomerManagement) {
-    return <CustomerManagement onCustomerClick={onCustomerClick} />;
+    return <CustomerManagement 
+      onCustomerClick={onCustomerClick}
+      editModalVisible={editModalVisible}
+      editingCustomer={editingCustomer}
+      onEditModalClose={onEditModalClose}
+      onCustomerUpdated={onCustomerUpdated}
+    />;
   }
 
   return (

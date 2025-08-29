@@ -15,11 +15,10 @@ import dayjs from 'dayjs';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = ({ onCustomerClick }) => {
+const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
   
@@ -34,6 +33,23 @@ const CustomerManagement = ({ onCustomerClick }) => {
   useEffect(() => {
     fetchCustomers();
   }, [pagination.current, pagination.pageSize, searchText]);
+
+  // 외부 수정 모달이 열릴 때 폼 필드 설정
+  useEffect(() => {
+    if (editModalVisible && editingCustomer) {
+      form.setFieldsValue({
+        ...editingCustomer.personal_info,
+        birth_date: editingCustomer.personal_info.birth_date ? dayjs(editingCustomer.personal_info.birth_date) : null,
+        postal_code: editingCustomer.personal_info.address?.postal_code,
+        address1: editingCustomer.personal_info.address?.address1,
+        address2: editingCustomer.personal_info.address?.address2,
+        customer_type: editingCustomer.insurance_info?.customer_type,
+        risk_level: editingCustomer.insurance_info?.risk_level,
+        annual_premium: editingCustomer.insurance_info?.annual_premium,
+        total_coverage: editingCustomer.insurance_info?.total_coverage
+      });
+    }
+  }, [editModalVisible, editingCustomer, form]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -70,22 +86,12 @@ const CustomerManagement = ({ onCustomerClick }) => {
   };
 
   const showModal = (customer = null) => {
-    setEditingCustomer(customer);
-    setModalVisible(true);
-    
     if (customer) {
-      form.setFieldsValue({
-        ...customer.personal_info,
-        birth_date: customer.personal_info.birth_date ? dayjs(customer.personal_info.birth_date) : null,
-        postal_code: customer.personal_info.address?.postal_code,
-        address1: customer.personal_info.address?.address1,
-        address2: customer.personal_info.address?.address2,
-        customer_type: customer.insurance_info?.customer_type,
-        risk_level: customer.insurance_info?.risk_level,
-        annual_premium: customer.insurance_info?.annual_premium,
-        total_coverage: customer.insurance_info?.total_coverage
-      });
+      // 외부에서 관리하는 수정 모달을 사용 (이 경우는 발생하지 않아야 함)
+      console.warn('showModal with customer should not be called when using external modal');
     } else {
+      // 새 고객 등록만 내부 모달 사용
+      setModalVisible(true);
       form.resetFields();
     }
   };
@@ -131,7 +137,14 @@ const CustomerManagement = ({ onCustomerClick }) => {
         } else {
           message.success(editingCustomer ? '고객 정보가 수정되었습니다.' : '고객이 등록되었습니다.');
         }
-        setModalVisible(false);
+        
+        if (editingCustomer) {
+          // 외부 수정 모달 닫기 및 고객 업데이트 알림
+          onCustomerUpdated && onCustomerUpdated();
+        } else {
+          // 내부 등록 모달 닫기
+          setModalVisible(false);
+        }
         fetchCustomers();
       }
     } catch (error) {
@@ -269,36 +282,6 @@ const CustomerManagement = ({ onCustomerClick }) => {
       key: 'created_at',
       render: date => date && dayjs(date).format('YYYY-MM-DD')
     },
-    {
-      title: '작업',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button 
-            type="primary" 
-            icon={<EditOutlined />} 
-            size="small"
-            onClick={() => showModal(record)}
-          >
-            수정
-          </Button>
-          <Popconfirm
-            title="고객을 삭제하시겠습니까?"
-            onConfirm={() => deleteCustomer(record._id)}
-            okText="예"
-            cancelText="아니요"
-          >
-            <Button 
-              danger 
-              icon={<DeleteOutlined />} 
-              size="small"
-            >
-              삭제
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
-    }
   ];
 
   const documentColumns = [
@@ -388,9 +371,9 @@ const CustomerManagement = ({ onCustomerClick }) => {
         />
       </Card>
 
-      {/* 고객 등록/수정 모달 */}
+      {/* 새 고객 등록 모달 (내부 상태) */}
       <Modal
-        title={editingCustomer ? '고객 정보 수정' : '새 고객 등록'}
+        title="새 고객 등록"
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -474,9 +457,99 @@ const CustomerManagement = ({ onCustomerClick }) => {
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
               <Button onClick={() => setModalVisible(false)}>취소</Button>
-              <Button type="primary" htmlType="submit">
-                {editingCustomer ? '수정' : '등록'}
-              </Button>
+              <Button type="primary" htmlType="submit">등록</Button>
+            </Space>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* 고객 수정 모달 (외부 상태) */}
+      <Modal
+        title="고객 정보 수정"
+        open={editModalVisible}
+        onCancel={onEditModalClose}
+        footer={null}
+        width={800}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+        >
+          <Tabs defaultActiveKey="personal">
+            <TabPane tab="기본 정보" key="personal">
+              <Form.Item label="고객명" name="name" rules={[{ required: true, message: '고객명을 입력해주세요' }]}>
+                <Input />
+              </Form.Item>
+              
+              <Form.Item label="영문명" name="name_en">
+                <Input />
+              </Form.Item>
+              
+              <Form.Item label="생년월일" name="birth_date">
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+              
+              <Form.Item label="성별" name="gender">
+                <Select>
+                  <Option value="M">남성</Option>
+                  <Option value="F">여성</Option>
+                </Select>
+              </Form.Item>
+              
+              <Form.Item label="휴대폰번호" name="phone">
+                <Input />
+              </Form.Item>
+              
+              <Form.Item label="이메일" name="email">
+                <Input type="email" />
+              </Form.Item>
+            </TabPane>
+            
+            <TabPane tab="주소 정보" key="address">
+              <Form.Item label="우편번호" name="postal_code">
+                <Input />
+              </Form.Item>
+              
+              <Form.Item label="기본주소" name="address1">
+                <Input />
+              </Form.Item>
+              
+              <Form.Item label="상세주소" name="address2">
+                <Input />
+              </Form.Item>
+            </TabPane>
+            
+            <TabPane tab="보험 정보" key="insurance">
+              <Form.Item label="고객 유형" name="customer_type">
+                <Select>
+                  <Option value="개인">개인</Option>
+                  <Option value="법인">법인</Option>
+                </Select>
+              </Form.Item>
+              
+              <Form.Item label="위험도" name="risk_level">
+                <Select>
+                  <Option value="저위험">저위험</Option>
+                  <Option value="중위험">중위험</Option>
+                  <Option value="고위험">고위험</Option>
+                </Select>
+              </Form.Item>
+              
+              <Form.Item label="연간 보험료" name="annual_premium">
+                <Input type="number" addonAfter="원" />
+              </Form.Item>
+              
+              <Form.Item label="총 보장금액" name="total_coverage">
+                <Input type="number" addonAfter="원" />
+              </Form.Item>
+            </TabPane>
+          </Tabs>
+          
+          <div style={{ textAlign: 'right', marginTop: 24 }}>
+            <Space>
+              <Button onClick={onEditModalClose}>취소</Button>
+              <Button type="primary" htmlType="submit">수정</Button>
             </Space>
           </div>
         </Form>
