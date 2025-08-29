@@ -3,7 +3,7 @@ import {
   Modal, Form, Select, Input, Button, 
   Table, Space, message, Tag, Divider 
 } from 'antd';
-import { LinkOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons';
+import { LinkOutlined, UserOutlined, FileTextOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Option } = Select;
@@ -19,6 +19,7 @@ const DocumentLinkModal = ({
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -46,6 +47,19 @@ const DocumentLinkModal = ({
 
   const handleSubmit = async (values) => {
     try {
+      // 먼저 해당 고객의 문서 목록을 확인하여 중복 연결 체크
+      const checkResponse = await axios.get(`http://tars.giize.com:3010/api/customers/${values.customer_id}/documents`);
+      
+      if (checkResponse.data.success) {
+        const existingDocuments = checkResponse.data.data.documents || [];
+        const isAlreadyLinked = existingDocuments.some(doc => doc._id === documentId);
+        
+        if (isAlreadyLinked) {
+          setShowDuplicateAlert(true);
+          return;
+        }
+      }
+
       const response = await axios.post(`http://tars.giize.com:3010/api/customers/${values.customer_id}/documents`, {
         document_id: documentId,
         relationship_type: values.relationship_type,
@@ -58,7 +72,12 @@ const DocumentLinkModal = ({
         handleCancel();
       }
     } catch (error) {
-      message.error('문서 연결에 실패했습니다.');
+      // 서버에서 중복 연결 오류가 발생한 경우도 처리
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('이미 연결')) {
+        message.warning('이 문서는 이미 선택한 고객과 연결되어 있습니다.');
+      } else {
+        message.error('문서 연결에 실패했습니다.');
+      }
       console.error(error);
     }
   };
@@ -76,6 +95,29 @@ const DocumentLinkModal = ({
     { value: 'medical', label: '의료서류', color: 'red' },
     { value: 'general', label: '일반문서', color: 'default' }
   ];
+
+  // 고객 선택 시 중복 체크
+  const handleCustomerSelect = async (customerId) => {
+    try {
+      const checkResponse = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}/documents`);
+      
+      if (checkResponse.data.success) {
+        const existingDocuments = checkResponse.data.data.documents || [];
+        const isAlreadyLinked = existingDocuments.some(doc => doc._id === documentId);
+        
+        if (isAlreadyLinked) {
+          setShowDuplicateAlert(true);
+          return;
+        }
+      }
+      
+      form.setFieldsValue({ customer_id: customerId });
+    } catch (error) {
+      console.error('고객 문서 확인 실패:', error);
+      // 에러가 발생해도 선택은 가능하도록
+      form.setFieldsValue({ customer_id: customerId });
+    }
+  };
 
   const customerColumns = [
     {
@@ -107,9 +149,7 @@ const DocumentLinkModal = ({
         <Button 
           type="primary" 
           size="small"
-          onClick={() => {
-            form.setFieldsValue({ customer_id: record._id });
-          }}
+          onClick={() => handleCustomerSelect(record._id)}
         >
           선택
         </Button>
@@ -213,6 +253,29 @@ const DocumentLinkModal = ({
         }}
         style={{ marginTop: 16 }}
       />
+
+      {/* 중복 연결 알림 모달 */}
+      <Modal
+        open={showDuplicateAlert}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '18px' }} />
+            <span>중복 연결</span>
+          </div>
+        }
+        onCancel={() => setShowDuplicateAlert(false)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setShowDuplicateAlert(false)}>
+            확인
+          </Button>
+        ]}
+        centered
+        width={400}
+      >
+        <div style={{ padding: '16px 0', fontSize: '14px' }}>
+          이 문서는 이미 선택한 고객과 연결되어 있습니다.
+        </div>
+      </Modal>
     </Modal>
   );
 };
