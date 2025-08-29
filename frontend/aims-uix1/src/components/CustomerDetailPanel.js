@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import DocumentPreviewModal from './DocumentPreviewModal';
 
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
@@ -20,6 +21,10 @@ const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
+  
+  // 문서 프리뷰 모달 상태
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   useEffect(() => {
     if (customerId) {
@@ -57,15 +62,63 @@ const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
     }
   };
 
+  // 문서 클릭 시 상세 정보 조회 및 프리뷰 모달 표시
+  const handleDocumentClick = async (documentRecord) => {
+    try {
+      setLoading(true);
+      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+        id: documentRecord._id
+      });
+
+      const fileData = response.data[0];
+      
+      // URL 경로 수정
+      let fileUrl = '';
+      if (fileData.upload?.destPath) {
+        const correctPath = fileData.upload.destPath.replace('/data', '');
+        fileUrl = `https://tars.giize.com${correctPath}`;
+      }
+
+      // 프리뷰용 문서 객체 생성
+      const documentForPreview = {
+        ...fileData,
+        fileUrl: fileUrl,
+      };
+
+      setSelectedDocument(documentForPreview);
+      setShowDocumentPreview(true);
+      
+    } catch (error) {
+      message.error('문서 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error('Document fetch error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseDocumentPreview = () => {
+    setShowDocumentPreview(false);
+    setSelectedDocument(null);
+  };
+
   const documentColumns = [
     {
       title: '파일명',
       dataIndex: 'originalName',
       key: 'originalName',
-      render: (name) => (
+      render: (name, record) => (
         <Space>
           <FileTextOutlined style={{ color: '#1890ff' }} />
-          <span style={{ fontSize: '12px' }}>{name}</span>
+          <span 
+            style={{ 
+              fontSize: '12px', 
+              cursor: 'pointer', 
+              color: '#1890ff'
+            }}
+            onClick={() => handleDocumentClick(record)}
+          >
+            {name}
+          </span>
         </Space>
       )
     },
@@ -265,6 +318,10 @@ const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
                   rowKey="_id"
                   pagination={{ pageSize: 5 }}
                   size="small"
+                  onRow={(record) => ({
+                    onClick: () => handleDocumentClick(record),
+                    style: { cursor: 'pointer' }
+                  })}
                 />
               ) : (
                 <Empty 
@@ -312,6 +369,13 @@ const CustomerDetailPanel = ({ customerId, onClose, onResetRatio }) => {
         등록일: {customer.meta?.created_at && dayjs(customer.meta.created_at).format('YYYY-MM-DD HH:mm')} | 
         최종 수정: {customer.meta?.updated_at && dayjs(customer.meta.updated_at).format('YYYY-MM-DD HH:mm')}
       </div>
+
+      {/* 문서 프리뷰 모달 */}
+      <DocumentPreviewModal
+        visible={showDocumentPreview}
+        document={selectedDocument}
+        onClose={handleCloseDocumentPreview}
+      />
     </div>
   );
 };
