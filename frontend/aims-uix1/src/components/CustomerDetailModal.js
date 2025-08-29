@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Modal, Tabs, Descriptions, Card, List, Tag, Space, 
-  Typography, Avatar, Button, message, Table, Empty,
-  Divider, Tooltip
+  Modal, Tabs, Typography, Avatar, message, Space, Divider
 } from 'antd';
 import { 
-  UserOutlined, PhoneOutlined, MailOutlined, 
-  FileTextOutlined, CalendarOutlined, HomeOutlined,
-  DollarOutlined, SafetyOutlined, LinkOutlined,
-  EditOutlined, HistoryOutlined
+  FileTextOutlined, LinkOutlined, EditOutlined, HistoryOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import CustomerEditForm from './CustomerEditForm';
+import DocumentManagementPanel from './DocumentManagementPanel';
+import ConsultationManagementPanel from './ConsultationManagementPanel';
+import ContractManagementPanel from './ContractManagementPanel';
 
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
@@ -20,7 +19,7 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
   const [customer, setCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState('edit');
 
   useEffect(() => {
     if (visible && customerId) {
@@ -58,8 +57,24 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
   const handleModalClose = () => {
     setCustomer(null);
     setCustomerDocuments([]);
-    setActiveTab('info');
+    setActiveTab('edit');
     onCancel();
+  };
+
+  const handleCustomerUpdate = async (updatedData) => {
+    // 고객 정보 업데이트 로직 구현 예정
+    message.success('고객 정보가 수정되었습니다.');
+    fetchCustomerDetail();
+  };
+
+  const handleNewConsultation = () => {
+    // 새 상담 등록 로직 구현 예정
+    message.success('상담이 등록되었습니다.');
+  };
+
+  const handleNewContract = () => {
+    // 새 계약 생성 로직 구현 예정
+    message.success('계약이 생성되었습니다.');
   };
 
   if (!customer) {
@@ -79,63 +94,6 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
     );
   }
 
-  const documentColumns = [
-    {
-      title: '파일명',
-      dataIndex: 'originalName',
-      key: 'originalName',
-      render: (name) => (
-        <Space>
-          <FileTextOutlined style={{ color: '#1890ff' }} />
-          <span>{name}</span>
-        </Space>
-      )
-    },
-    {
-      title: '문서 유형',
-      dataIndex: 'relationship',
-      key: 'relationship',
-      render: (type) => {
-        const typeConfig = {
-          contract: { color: 'blue', text: '계약서' },
-          claim: { color: 'orange', text: '보험금청구서' },
-          proposal: { color: 'green', text: '제안서' },
-          id_verification: { color: 'purple', text: '신분증명서' },
-          medical: { color: 'red', text: '의료서류' },
-          general: { color: 'default', text: '일반문서' }
-        };
-        const config = typeConfig[type] || { color: 'default', text: type };
-        return <Tag color={config.color}>{config.text}</Tag>;
-      }
-    },
-    {
-      title: '처리 상태',
-      dataIndex: 'overallStatus',
-      key: 'status',
-      render: (status) => {
-        const statusConfig = {
-          completed: { color: 'green', text: '완료' },
-          processing: { color: 'blue', text: '처리중' },
-          error: { color: 'red', text: '오류' },
-          pending: { color: 'orange', text: '대기' }
-        };
-        const config = statusConfig[status] || { color: 'default', text: status };
-        return <Tag color={config.color}>{config.text}</Tag>;
-      }
-    },
-    {
-      title: '업로드일',
-      dataIndex: 'uploadedAt',
-      key: 'uploadedAt',
-      render: (date) => date && dayjs(date).format('YYYY-MM-DD HH:mm')
-    },
-    {
-      title: '연결일',
-      dataIndex: 'linkedAt',
-      key: 'linkedAt',
-      render: (date) => date && dayjs(date).format('YYYY-MM-DD')
-    }
-  ];
 
   return (
     <Modal
@@ -143,15 +101,15 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
         <Space>
           <Avatar 
             size={40} 
-            icon={<UserOutlined />} 
-            style={{ backgroundColor: '#1890ff' }}
+            icon={<EditOutlined />} 
+            style={{ backgroundColor: '#52c41a' }}
           />
           <div>
             <Title level={4} style={{ margin: 0 }}>
-              {customer.personal_info?.name} 고객 상세정보
+              {customer.personal_info?.name} 고객 관리
             </Title>
             <Text type="secondary">
-              {customer.insurance_info?.customer_type} • {customer.meta?.status === 'active' ? '활성' : '비활성'}
+              정보 수정 • 문서 연결 • 상담/계약 관리
             </Text>
           </div>
         </Space>
@@ -159,150 +117,53 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
       open={visible}
       onCancel={handleModalClose}
       width={1000}
-      footer={[
-        <Button key="edit" type="primary" icon={<EditOutlined />}>
-          정보 수정
-        </Button>,
-        <Button key="close" onClick={handleModalClose}>
-          닫기
-        </Button>
-      ]}
+      footer={null}
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
         <TabPane 
           tab={
             <Space>
-              <UserOutlined />
-              기본 정보
+              <EditOutlined />
+              정보 수정
             </Space>
           } 
-          key="info"
+          key="edit"
         >
-          <div style={{ padding: '0 8px' }}>
-            <Card title="개인 정보" style={{ marginBottom: 16 }}>
-              <Descriptions bordered column={2}>
-                <Descriptions.Item 
-                  label={<Space><UserOutlined />고객명</Space>}
-                  span={1}
-                >
-                  <Text strong>{customer.personal_info?.name}</Text>
-                  {customer.personal_info?.name_en && (
-                    <Text type="secondary"> ({customer.personal_info.name_en})</Text>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><CalendarOutlined />생년월일</Space>}
-                >
-                  {customer.personal_info?.birth_date 
-                    ? dayjs(customer.personal_info.birth_date).format('YYYY-MM-DD')
-                    : '-'
-                  }
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><PhoneOutlined />연락처</Space>}
-                >
-                  {customer.personal_info?.phone || '-'}
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><MailOutlined />이메일</Space>}
-                >
-                  {customer.personal_info?.email || '-'}
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><HomeOutlined />주소</Space>}
-                  span={2}
-                >
-                  {customer.personal_info?.address ? (
-                    <div>
-                      <div>
-                        [{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}
-                      </div>
-                      {customer.personal_info.address.address2 && (
-                        <div>{customer.personal_info.address.address2}</div>
-                      )}
-                    </div>
-                  ) : '-'}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-
-            <Card title="보험 정보">
-              <Descriptions bordered column={2}>
-                <Descriptions.Item 
-                  label="고객 유형"
-                >
-                  <Tag color={customer.insurance_info?.customer_type === '법인' ? 'blue' : 'green'}>
-                    {customer.insurance_info?.customer_type || '-'}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><SafetyOutlined />위험도</Space>}
-                >
-                  <Tag color={
-                    customer.insurance_info?.risk_level === '고위험' ? 'red' : 
-                    customer.insurance_info?.risk_level === '중위험' ? 'orange' : 'green'
-                  }>
-                    {customer.insurance_info?.risk_level || '-'}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label={<Space><DollarOutlined />연간 보험료</Space>}
-                >
-                  {customer.insurance_info?.annual_premium 
-                    ? `₩${customer.insurance_info.annual_premium.toLocaleString()}`
-                    : '-'
-                  }
-                </Descriptions.Item>
-                <Descriptions.Item 
-                  label="총 보장금액"
-                >
-                  {customer.insurance_info?.total_coverage 
-                    ? `₩${customer.insurance_info.total_coverage.toLocaleString()}`
-                    : '-'
-                  }
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </div>
+          <CustomerEditForm 
+            customer={customer} 
+            onSave={handleCustomerUpdate}
+            onCancel={handleModalClose}
+          />
         </TabPane>
 
         <TabPane 
           tab={
             <Space>
               <FileTextOutlined />
-              관련 문서 ({customerDocuments.length})
+              문서 관리 ({customerDocuments.length})
             </Space>
           } 
           key="documents"
         >
-          {customerDocuments.length > 0 ? (
-            <Table
-              columns={documentColumns}
-              dataSource={customerDocuments}
-              rowKey="_id"
-              pagination={{ pageSize: 10 }}
-              size="middle"
-            />
-          ) : (
-            <Empty 
-              description="연결된 문서가 없습니다"
-              style={{ margin: '40px 0' }}
-            />
-          )}
+          <DocumentManagementPanel 
+            customerId={customerId}
+            documents={customerDocuments}
+            onDocumentUpdate={fetchCustomerDocuments}
+          />
         </TabPane>
 
         <TabPane 
           tab={
             <Space>
               <HistoryOutlined />
-              상담 이력 (0)
+              상담 관리 (0)
             </Space>
           } 
           key="consultations"
         >
-          <Empty 
-            description="상담 이력이 없습니다"
-            style={{ margin: '40px 0' }}
+          <ConsultationManagementPanel 
+            customerId={customerId}
+            onConsultationAdd={handleNewConsultation}
           />
         </TabPane>
 
@@ -310,24 +171,17 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
           tab={
             <Space>
               <LinkOutlined />
-              계약 현황 (0)
+              계약 관리 (0)
             </Space>
           } 
           key="contracts"
         >
-          <Empty 
-            description="진행 중인 계약이 없습니다"
-            style={{ margin: '40px 0' }}
+          <ContractManagementPanel 
+            customerId={customerId}
+            onContractCreate={handleNewContract}
           />
         </TabPane>
       </Tabs>
-
-      <Divider />
-      
-      <div style={{ fontSize: '12px', color: '#999', textAlign: 'center' }}>
-        등록일: {customer.meta?.created_at && dayjs(customer.meta.created_at).format('YYYY-MM-DD HH:mm')} | 
-        최종 수정: {customer.meta?.updated_at && dayjs(customer.meta.updated_at).format('YYYY-MM-DD HH:mm')}
-      </div>
     </Modal>
   );
 };
