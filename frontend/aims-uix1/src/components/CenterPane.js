@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, message } from 'antd';
-import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined, ReadOutlined } from '@ant-design/icons';
+import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined, ReadOutlined, LinkOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
+import CustomerManagement from './CustomerManagement';
+import DocumentLinkModal from './DocumentLinkModal';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
@@ -51,7 +53,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }) => {
+const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard, showCustomerManagement }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -72,6 +74,10 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   const [showFullTextModal, setShowFullTextModal] = useState(false);
   const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState(null);
   const [fullTextContent, setFullTextContent] = useState('');
+  
+  // 문서 연결 모달 관련 상태
+  const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
   
   // 문서 클릭 시 스크롤 위치를 저장하는 핸들러
   const handleDocumentClickWithScrollSave = (doc) => {
@@ -220,6 +226,22 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
     setFullTextContent('');
   };
 
+  // 문서 연결 모달 핸들러
+  const handleDocumentLink = (document) => {
+    setSelectedDocumentForLink(document);
+    setShowDocumentLinkModal(true);
+  };
+
+  const handleDocumentLinkModalClose = () => {
+    setShowDocumentLinkModal(false);
+    setSelectedDocumentForLink(null);
+  };
+
+  const handleLinkSuccess = () => {
+    // 연결 성공 후 필요한 경우 문서 목록 새로고침
+    message.success('문서가 고객에게 성공적으로 연결되었습니다.');
+  };
+
   // 현재 페이지에 표시할 데이터 계산
   const getPaginatedData = (data) => {
     if (!data || !Array.isArray(data)) return [];
@@ -229,6 +251,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
   };
 
   const renderContent = () => {
+    // 고객 관리 화면 표시
+    if (showCustomerManagement) {
+      return <CustomerManagement />;
+    }
+    
     // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
     // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
     // 검색 결과가 없고 업로드된 파일이 있으면 DSD 표시
@@ -283,6 +310,18 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
                   <List.Item
                     key={itemId}
                     actions={[
+                      <Button
+                        type="text"
+                        icon={<LinkOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDocumentLink(item);
+                        }}
+                        title="고객에게 연결"
+                        style={{ color: '#52c41a' }}
+                      >
+                        고객연결
+                      </Button>,
                       <Button
                         type="text"
                         icon={<ReadOutlined />}
@@ -448,6 +487,10 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
 
   // 카드 제목 동적 생성
   const getCardTitle = () => {
+    if (showCustomerManagement) {
+      return null; // CustomerManagement 컴포넌트 자체에서 제목 관리
+    }
+    
     const hasSearchResults = searchResults && searchResults.length > 0;
     const hasUploadedFiles = uploadedFiles && uploadedFiles.length > 0;
     
@@ -461,6 +504,11 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
       return <Title level={4}>문서 목록</Title>;
     }
   };
+
+  // 고객 관리 화면인 경우 Card 없이 직접 렌더링
+  if (showCustomerManagement) {
+    return <CustomerManagement />;
+  }
 
   return (
     <Card
@@ -641,6 +689,15 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard }
           </pre>
         </div>
       </Modal>
+
+      {/* 문서 연결 모달 */}
+      <DocumentLinkModal
+        visible={showDocumentLinkModal}
+        onCancel={handleDocumentLinkModalClose}
+        documentId={selectedDocumentForLink?._id || selectedDocumentForLink?.id}
+        documentName={selectedDocumentForLink?.upload?.originalName || selectedDocumentForLink?.name}
+        onLinkSuccess={handleLinkSuccess}
+      />
     </Card>
   );
 };

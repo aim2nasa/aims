@@ -27,6 +27,9 @@ const AppLayout = () => {
   // DSD 관련 상태
   const [showDashboard, setShowDashboard] = useState(false);
   
+  // 고객 관리 관련 상태
+  const [showCustomerManagement, setShowCustomerManagement] = useState(false);
+  
   // 리사이즈 관련 상태
   const OPTIMAL_RIGHT_PANE_WIDTH = 50; // PDF/이미지 뷰어 최적 비율: 50%
   const [rightPaneWidth, setRightPaneWidth] = useState(OPTIMAL_RIGHT_PANE_WIDTH);
@@ -124,13 +127,19 @@ const AppLayout = () => {
 
   // LeftPane에서 메뉴 클릭 처리
   const handleLeftPaneMenuClick = (menuKey) => {
-    if (menuKey === 'dsd') {
+    if (menuKey === 'customers') {
+      setShowCustomerManagement(true);
+      setShowDashboard(false);
+    } else if (menuKey === 'dsd') {
       setShowDashboard(true);
+      setShowCustomerManagement(false);
     } else if (menuKey === 'search-results') {
       // 검색 결과로 돌아가기
       setShowDashboard(false);
+      setShowCustomerManagement(false);
     } else {
       setShowDashboard(false);
+      setShowCustomerManagement(false);
       // 다른 메뉴 클릭 시에는 검색 결과 초기화
       if (menuKey !== 'search-results') {
         setSearchResults([]);
@@ -290,6 +299,7 @@ const AppLayout = () => {
                 searchResults={searchResults}
                 isLoading={isLoading}
                 showDashboard={showDashboard}
+                showCustomerManagement={showCustomerManagement}
               />
             </div>
 

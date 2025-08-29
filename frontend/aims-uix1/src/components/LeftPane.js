@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined } from '@ant-design/icons';
+import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -46,6 +46,11 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       icon: <SearchOutlined />,
       label: `검색 결과 (${searchResultsCount || 0}개)`,
     }] : []),
+    {
+      key: 'customers',
+      icon: <UserOutlined />,
+      label: '고객 관리',
+    },
     {
       key: 'dsd',
       icon: <DashboardOutlined />,

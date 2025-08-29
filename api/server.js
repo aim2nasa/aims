@@ -6,11 +6,15 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // MongoDB 연결 설정
 const MONGO_URI = 'mongodb://tars:27017/';
 const DB_NAME = 'docupload';
 const COLLECTION_NAME = 'files';
+const CUSTOMERS_COLLECTION = 'customers';
+const AGENTS_COLLECTION = 'agents';
+const CASES_COLLECTION = 'cases';
 
 let db;
 
@@ -607,6 +611,396 @@ app.listen(PORT, () => {
   console.log(`  GET  /api/documents/status/live - 실시간 상태 (폴링용)`);
   console.log(`  DELETE /api/documents/:id - 문서 삭제`);
   console.log(`  GET  /api/health - 헬스체크`);
+  console.log(`Customer Management APIs:`);
+  console.log(`  GET  /api/customers - 고객 목록 조회`);
+  console.log(`  POST /api/customers - 새 고객 등록`);
+  console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
+  console.log(`  PUT  /api/customers/:id - 고객 정보 수정`);
+  console.log(`  DELETE /api/customers/:id - 고객 삭제`);
+  console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
+  console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
+});
+
+// ==================== 고객 관리 API ====================
+
+/**
+ * 고객 목록 조회 API
+ */
+app.get('/api/customers', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, status } = req.query;
+    const skip = (page - 1) * limit;
+
+    let filter = {};
+    if (search) {
+      // URL 디코딩 처리 (이미 디코딩된 경우 그대로 사용)
+      let decodedSearch;
+      try {
+        decodedSearch = decodeURIComponent(search);
+      } catch (e) {
+        decodedSearch = search; // 디코딩 실패 시 원본 사용
+      }
+      
+      filter.$or = [
+        { 'personal_info.name': { $regex: decodedSearch, $options: 'i' } },
+        { 'personal_info.phone': { $regex: decodedSearch, $options: 'i' } },
+        { 'personal_info.email': { $regex: decodedSearch, $options: 'i' } }
+      ];
+    }
+    if (status) {
+      filter['meta.status'] = status;
+    }
+
+    const customers = await db.collection(CUSTOMERS_COLLECTION)
+      .find(filter)
+      .sort({ 'meta.created_at': -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .toArray();
+
+    const totalCount = await db.collection(CUSTOMERS_COLLECTION).countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        customers,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          limit: parseInt(limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('고객 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 목록 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 새 고객 등록 API
+ */
+app.post('/api/customers', async (req, res) => {
+  try {
+    const customerData = req.body;
+    
+    const newCustomer = {
+      ...customerData,
+      meta: {
+        created_at: new Date(),
+        updated_at: new Date(),
+        created_by: customerData.created_by || null,
+        last_modified_by: customerData.created_by || null,
+        status: 'active'
+      }
+    };
+
+    const result = await db.collection(CUSTOMERS_COLLECTION).insertOne(newCustomer);
+
+    res.json({
+      success: true,
+      data: {
+        customer_id: result.insertedId,
+        message: '고객이 성공적으로 등록되었습니다.'
+      }
+    });
+  } catch (error) {
+    console.error('고객 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 고객 상세 정보 조회 API
+ */
+app.get('/api/customers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: customer
+    });
+  } catch (error) {
+    console.error('고객 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 고객 정보 수정 API
+ */
+app.put('/api/customers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    const updateFields = {
+      ...updateData,
+      'meta.updated_at': new Date(),
+      'meta.last_modified_by': updateData.modified_by || null
+    };
+
+    const result = await db.collection(CUSTOMERS_COLLECTION)
+      .updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '고객 정보가 성공적으로 수정되었습니다.'
+    });
+  } catch (error) {
+    console.error('고객 수정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 정보 수정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 고객 삭제 API
+ */
+app.delete('/api/customers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    const result = await db.collection(CUSTOMERS_COLLECTION)
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '고객이 성공적으로 삭제되었습니다.'
+    });
+  } catch (error) {
+    console.error('고객 삭제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 고객에 문서 연결 API
+ */
+app.post('/api/customers/:id/documents', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { document_id, relationship_type, notes, assigned_by } = req.body;
+
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 ID입니다.'
+      });
+    }
+
+    // 고객 존재 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 문서 존재 확인
+    const document = await db.collection(COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(document_id) });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: '문서를 찾을 수 없습니다.'
+      });
+    }
+
+    // 고객에 문서 연결 추가
+    const documentLink = {
+      document_id: new ObjectId(document_id),
+      relationship: relationship_type || 'general',
+      upload_date: new Date(),
+      notes: notes || ''
+    };
+
+    await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $push: { documents: documentLink },
+        $set: { 'meta.updated_at': new Date() }
+      }
+    );
+
+    // 문서에도 고객 연결 정보 추가
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(document_id) },
+      {
+        $set: {
+          customer_relation: {
+            customer_id: new ObjectId(id),
+            relationship_type: relationship_type || 'general',
+            assigned_by: assigned_by ? new ObjectId(assigned_by) : null,
+            assigned_at: new Date(),
+            notes: notes || ''
+          }
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: '문서가 고객에게 성공적으로 연결되었습니다.'
+    });
+  } catch (error) {
+    console.error('문서 연결 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '문서 연결에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 고객 관련 문서 목록 조회 API
+ */
+app.get('/api/customers/:id/documents', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    // 고객 정보 조회
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 고객에 연결된 문서들 조회
+    const documentIds = customer.documents?.map(doc => doc.document_id) || [];
+    
+    if (documentIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          customer_id: id,
+          documents: [],
+          total: 0
+        }
+      });
+    }
+
+    const documents = await db.collection(COLLECTION_NAME)
+      .find({ _id: { $in: documentIds } })
+      .toArray();
+
+    // 문서에 상태 정보 추가
+    const documentsWithStatus = documents.map(doc => {
+      const statusInfo = analyzeDocumentStatus(doc);
+      const customerDoc = customer.documents.find(d => d.document_id.equals(doc._id));
+      
+      return {
+        _id: doc._id,
+        originalName: doc.upload?.originalName || 'Unknown File',
+        uploadedAt: doc.upload?.uploaded_at,
+        fileSize: doc.meta?.size_bytes,
+        mimeType: doc.meta?.mime,
+        relationship: customerDoc?.relationship,
+        notes: customerDoc?.notes,
+        linkedAt: customerDoc?.upload_date,
+        ...statusInfo
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        customer_id: id,
+        customer_name: customer.personal_info?.name,
+        documents: documentsWithStatus,
+        total: documentsWithStatus.length
+      }
+    });
+  } catch (error) {
+    console.error('고객 문서 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 문서 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
 });
 
 module.exports = app;
