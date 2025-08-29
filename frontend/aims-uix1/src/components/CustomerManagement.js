@@ -11,33 +11,18 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import CustomerDetailModal from './CustomerDetailModal';
-import CustomerDetailPanel from './CustomerDetailPanel';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = () => {
+const CustomerManagement = ({ onCustomerClick }) => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   
-  // 고객 상세 모달 관련 상태
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedCustomerIdForDetail, setSelectedCustomerIdForDetail] = useState(null);
-  
-  // 고객 선택 관련 상태 (3-pane layout)
-  const [selectedCustomerForPanel, setSelectedCustomerForPanel] = useState(null);
-  const [showCustomerPanel, setShowCustomerPanel] = useState(false);
-  
-  // 리사이즈 관련 상태
-  const OPTIMAL_CUSTOMER_PANEL_WIDTH = 40;
-  const [customerPanelWidth, setCustomerPanelWidth] = useState(OPTIMAL_CUSTOMER_PANEL_WIDTH);
-  const [isResizing, setIsResizing] = useState(false);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -45,47 +30,6 @@ const CustomerManagement = () => {
     total: 0
   });
   const [searchText, setSearchText] = useState('');
-  
-  // 리사이즈 마우스 이벤트 리스너 등록
-  useEffect(() => {
-    const handleGlobalMouseMove = (e) => {
-      if (!isResizing) return;
-      
-      const containerElement = document.querySelector('[data-testid="customer-container"]');
-      if (!containerElement) return;
-      
-      const containerRect = containerElement.getBoundingClientRect();
-      const mouseX = e.clientX - containerRect.left;
-      const containerWidth = containerRect.width;
-      
-      const newCustomerPanelWidth = ((containerWidth - mouseX) / containerWidth) * 100;
-      const clampedWidth = Math.max(25, Math.min(70, newCustomerPanelWidth));
-      setCustomerPanelWidth(clampedWidth);
-    };
-
-    const handleGlobalMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    } else {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isResizing]);
 
   useEffect(() => {
     fetchCustomers();
@@ -206,7 +150,6 @@ const CustomerManagement = () => {
 
   const showCustomerDocuments = async (customerId) => {
     try {
-      setSelectedCustomerId(customerId);
       setDocumentsDrawerVisible(true);
       
       const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}/documents`);
@@ -219,38 +162,18 @@ const CustomerManagement = () => {
     }
   };
 
-  // 고객 상세 모달 핸들러
+  // 고객 상세 핸들러 - Right 패널에 표시
   const handleCustomerNameClick = (customerId) => {
-    setSelectedCustomerIdForDetail(customerId);
-    setShowDetailModal(true);
+    if (onCustomerClick) {
+      onCustomerClick(customerId);
+    }
   };
 
-  const handleDetailModalClose = () => {
-    setShowDetailModal(false);
-    setSelectedCustomerIdForDetail(null);
-  };
-  
-  // 고객 행 클릭 핸들러 (3-pane layout)
+  // 고객 행 클릭 핸들러 - Right 패널에 표시
   const handleCustomerRowSelect = (customer) => {
-    setSelectedCustomerForPanel(customer._id);
-    setShowCustomerPanel(true);
-  };
-  
-  // 고객 패널 닫기
-  const handleCustomerPanelClose = () => {
-    setSelectedCustomerForPanel(null);
-    setShowCustomerPanel(false);
-  };
-  
-  // 최적 비율로 리셋
-  const resetToOptimalRatio = () => {
-    setCustomerPanelWidth(OPTIMAL_CUSTOMER_PANEL_WIDTH);
-  };
-  
-  // 리사이즈 핸들러
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    setIsResizing(true);
+    if (onCustomerClick) {
+      onCustomerClick(customer._id);
+    }
   };
 
   const columns = [
@@ -409,136 +332,56 @@ const CustomerManagement = () => {
   ];
 
   return (
-    <>
-      <div 
-        data-testid="customer-container"
-        style={{ height: '100%', display: 'flex', position: 'relative' }}
+    <div>
+      <Card
+        title={
+          <Space>
+            <UserOutlined />
+            고객 관리
+          </Space>
+        }
+        extra={
+          <Space>
+            <Input
+              placeholder="고객명, 전화번호, 이메일 검색"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={fetchCustomers}
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+            />
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => showModal()}
+            >
+              새 고객 등록
+            </Button>
+          </Space>
+        }
       >
-        {/* Left Section - Customer Table */}
-        <div style={{ 
-          width: showCustomerPanel ? `${100 - customerPanelWidth}%` : '100%',
-          marginRight: showCustomerPanel ? 12 : 0,
-          transition: isResizing ? 'none' : 'width 0.3s ease'
-        }}>
-          <Card
-            title={
-              <Space>
-                <UserOutlined />
-                고객 관리
-              </Space>
+        <Table
+          columns={columns}
+          dataSource={customers}
+          rowKey="_id"
+          loading={loading}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            onChange: handleTableChange,
+            onShowSizeChange: handleTableChange
+          }}
+          onRow={(record) => ({
+            onClick: () => handleCustomerRowSelect(record),
+            style: {
+              cursor: 'pointer'
             }
-            extra={
-              <Space>
-                <Input
-                  placeholder="고객명, 전화번호, 이메일 검색"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onPressEnter={fetchCustomers}
-                  style={{ width: 250 }}
-                  prefix={<SearchOutlined />}
-                />
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  onClick={() => showModal()}
-                >
-                  새 고객 등록
-                </Button>
-              </Space>
-            }
-            style={{ height: '100%' }}
-            bodyStyle={{ height: 'calc(100% - 65px)', overflow: 'auto' }}
-          >
-            <Table
-              columns={columns}
-              dataSource={customers}
-              rowKey="_id"
-              loading={loading}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: pagination.total,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                onChange: handleTableChange,
-                onShowSizeChange: handleTableChange
-              }}
-              onRow={(record) => ({
-                onClick: () => handleCustomerRowSelect(record),
-                style: {
-                  cursor: 'pointer',
-                  backgroundColor: selectedCustomerForPanel === record._id ? '#e6f7ff' : 'transparent'
-                }
-              })}
-              rowClassName={(record) => 
-                selectedCustomerForPanel === record._id ? 'ant-table-row-selected' : ''
-              }
-            />
-          </Card>
-        </div>
-
-        {/* Resize Handle */}
-        {showCustomerPanel && (
-          <div
-            onMouseDown={handleMouseDown}
-            style={{
-              width: '4px',
-              cursor: 'col-resize',
-              background: isResizing ? '#1890ff' : 'transparent',
-              borderRadius: '2px',
-              margin: '0 6px',
-              transition: 'background 0.2s ease',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <div style={{
-              width: '12px',
-              height: '40px',
-              background: '#d9d9d9',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{
-                width: '2px',
-                height: '20px',
-                background: '#8c8c8c',
-                borderRadius: '1px',
-                margin: '0 1px'
-              }}></div>
-              <div style={{
-                width: '2px',
-                height: '20px',
-                background: '#8c8c8c',
-                borderRadius: '1px',
-                margin: '0 1px'
-              }}></div>
-            </div>
-          </div>
-        )}
-
-        {/* Right Section - Customer Detail Panel */}
-        {showCustomerPanel && (
-          <div style={{ 
-            width: `${customerPanelWidth}%`,
-            minWidth: '350px',
-            background: '#fff',
-            borderRadius: 8,
-            border: '1px solid #f0f0f0',
-            transition: isResizing ? 'none' : 'width 0.3s ease'
-          }}>
-            <CustomerDetailPanel
-              customerId={selectedCustomerForPanel}
-              onClose={handleCustomerPanelClose}
-              onResetRatio={resetToOptimalRatio}
-            />
-          </div>
-        )}
-      </div>
+          })}
+        />
+      </Card>
 
       {/* 고객 등록/수정 모달 */}
       <Modal
@@ -651,13 +494,7 @@ const CustomerManagement = () => {
         />
       </Drawer>
 
-      {/* 고객 상세 정보 모달 */}
-      <CustomerDetailModal
-        visible={showDetailModal}
-        onCancel={handleDetailModalClose}
-        customerId={selectedCustomerIdForDetail}
-      />
-    </>
+    </div>
   );
 };
 

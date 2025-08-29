@@ -3,10 +3,35 @@ import { Card, Button, message, Space } from 'antd';
 import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import ImageViewer from './ImageViewer';
+import CustomerDetailPanel from './CustomerDetailPanel';
 import axios from 'axios';
 
 
-const RightPane = ({ document, onClose, onResetRatio }) => {
+const RightPane = ({ contentType, document, customer, onClose, onResetRatio }) => {
+  if (!contentType || (!document && !customer)) {
+    return null;
+  }
+
+  // 고객 정보 표시
+  if (contentType === 'customer' && customer) {
+    return (
+      <CustomerDetailPanel
+        customerId={customer._id}
+        onClose={onClose}
+        onResetRatio={onResetRatio}
+      />
+    );
+  }
+
+  // 문서 정보 표시 (기존 로직)
+  if (contentType === 'document' && document) {
+    return <DocumentViewer document={document} onClose={onClose} onResetRatio={onResetRatio} />;
+  }
+
+  return null;
+};
+
+const DocumentViewer = ({ document, onClose, onResetRatio }) => {
   if (!document) {
     return null;
   }

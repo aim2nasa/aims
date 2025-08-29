@@ -53,7 +53,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard, showCustomerManagement }) => {
+const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -253,7 +253,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard, 
   const renderContent = () => {
     // 고객 관리 화면 표시
     if (showCustomerManagement) {
-      return <CustomerManagement />;
+      return <CustomerManagement onCustomerClick={onCustomerClick} />;
     }
     
     // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
@@ -507,7 +507,7 @@ const CenterPane = ({ onDocumentClick, searchResults, isLoading, showDashboard, 
 
   // 고객 관리 화면인 경우 Card 없이 직접 렌더링
   if (showCustomerManagement) {
-    return <CustomerManagement />;
+    return <CustomerManagement onCustomerClick={onCustomerClick} />;
   }
 
   return (

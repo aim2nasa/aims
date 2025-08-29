@@ -15,7 +15,11 @@ const { Option } = Select;
 
 const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  
+  // Right 패널 통합 상태 관리
+  const [rightPaneContent, setRightPaneContent] = useState(null); // 'document' | 'customer' | null
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [rightPaneVisible, setRightPaneVisible] = useState(false);
   
   // 검색 관련 상태
@@ -67,7 +71,10 @@ const AppLayout = () => {
         fileUrl: fileUrl,
       };
 
+      // Right 패널을 문서 모드로 설정
       setSelectedDocument(updatedDoc);
+      setSelectedCustomer(null);
+      setRightPaneContent('document');
       setRightPaneVisible(true);
       
     } catch (e) {
@@ -78,9 +85,32 @@ const AppLayout = () => {
     }
   };
 
+  // 고객 상세 정보 조회 및 RightPane에 전달
+  const handleCustomerClick = async (customerId) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}`);
+      
+      if (response.data.success) {
+        // Right 패널을 고객 모드로 설정
+        setSelectedCustomer(response.data.data);
+        setSelectedDocument(null);
+        setRightPaneContent('customer');
+        setRightPaneVisible(true);
+      }
+    } catch (error) {
+      message.error('고객 정보를 불러오는데 실패했습니다.');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRightPaneCollapse = () => {
-    setRightPaneVisible(!rightPaneVisible);
+    setRightPaneVisible(false);
     setSelectedDocument(null);
+    setSelectedCustomer(null);
+    setRightPaneContent(null);
   };
 
   const menu = (
@@ -296,6 +326,7 @@ const AppLayout = () => {
             }}>
               <CenterPane 
                 onDocumentClick={handleDocumentClick}
+                onCustomerClick={handleCustomerClick}
                 searchResults={searchResults}
                 isLoading={isLoading}
                 showDashboard={showDashboard}
@@ -361,7 +392,9 @@ const AppLayout = () => {
                 }}
               >
                 <RightPane
+                  contentType={rightPaneContent}
                   document={selectedDocument}
+                  customer={selectedCustomer}
                   onClose={handleRightPaneCollapse}
                   onResetRatio={resetToOptimalRatio}
                 />
