@@ -136,8 +136,9 @@ const AppLayout = () => {
       return;
     }
     
-    // 검색 시 DSD 숨기고 검색 결과 표시
+    // 검색 시 DSD와 고객관리 화면 모두 숨기고 검색 결과 표시
     setShowDashboard(false);
+    setShowCustomerManagement(false);
     setIsLoading(true);
     setSearchResults([]);
 

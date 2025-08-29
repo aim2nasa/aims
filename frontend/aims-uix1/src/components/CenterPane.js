@@ -251,15 +251,18 @@ const CenterPane = ({ onDocumentClick, onCustomerClick, searchResults, isLoading
   };
 
   const renderContent = () => {
-    // 고객 관리 화면 표시
-    if (showCustomerManagement) {
+    const hasSearchResults = searchResults && searchResults.length > 0;
+    
+    // 검색 결과가 있으면 검색 결과를 최우선으로 표시
+    if (hasSearchResults) {
+      // 검색 결과 표시 (리스트 모드로)
+    } else if (showCustomerManagement) {
+      // 검색 결과가 없을 때만 고객 관리 화면 표시
       return <CustomerManagement onCustomerClick={onCustomerClick} />;
     }
     
-    // ✅ 검색 결과가 있으면 검색 결과 우선 표시 (기존 기능 보존)
     // showDashboard가 true이거나 (좌측 메뉴에서 DSD 선택)
     // 검색 결과가 없고 업로드된 파일이 있으면 DSD 표시
-    const hasSearchResults = searchResults && searchResults.length > 0;
     const hasUploadedFiles = uploadedFiles && uploadedFiles.length > 0;
     const shouldShowDashboard = showDashboard || (!hasSearchResults && hasUploadedFiles && !isLoading);
     
