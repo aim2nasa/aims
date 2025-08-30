@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
-  Space, message, Tag, Card,
+  Space, Tag, Card,
   Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
   SearchOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
+import CustomerService from '../services/customerService';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -56,28 +56,20 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
 
   const fetchCustomers = async () => {
     setLoading(true);
-    try {
-      const response = await axios.get(`http://tars.giize.com:3010/api/customers`, {
-        params: {
-          page: pagination.current,
-          limit: pagination.pageSize,
-          search: searchText
-        }
-      });
-
-      if (response.data.success) {
-        setCustomers(response.data.data.customers);
-        setPagination(prev => ({
-          ...prev,
-          total: response.data.data.pagination.totalCount
-        }));
-      }
-    } catch (error) {
-      message.error('고객 목록 조회에 실패했습니다.');
-      console.error(error);
-    } finally {
-      setLoading(false);
+    const result = await CustomerService.getCustomers({
+      page: pagination.current,
+      limit: pagination.pageSize,
+      search: searchText
+    });
+    
+    if (result.success) {
+      setCustomers(result.data.customers);
+      setPagination(prev => ({
+        ...prev,
+        total: result.data.pagination.totalCount
+      }));
     }
+    setLoading(false);
   };
 
   const handleTableChange = (page, pageSize) => {
@@ -152,55 +144,37 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
         consultations: []
       };
 
-      let response;
+      let result;
       if (editingCustomer) {
         // 수정
-        response = await axios.put(`http://tars.giize.com:3010/api/customers/${editingCustomer._id}`, customerData);
+        result = await CustomerService.updateCustomer(editingCustomer._id, customerData);
       } else {
         // 새 등록
-        response = await axios.post('http://tars.giize.com:3010/api/customers', customerData);
+        result = await CustomerService.createCustomer(customerData);
       }
 
-      if (response.data.success) {
-        if (!editingCustomer && response.data.data.was_renamed) {
-          message.warning(response.data.data.message, 5);
-        } else {
-          message.success(editingCustomer ? '고객 정보가 수정되었습니다.' : '고객이 등록되었습니다.');
-        }
-        
+      if (result.success) {
         closeCustomerModal();
         fetchCustomers();
       }
     } catch (error) {
-      message.error('고객 정보 저장에 실패했습니다.');
-      console.error(error);
+      console.error('CustomerManagement.handleSubmit:', error);
     }
   };
 
   const deleteCustomer = async (id) => {
-    try {
-      const response = await axios.delete(`http://tars.giize.com:3010/api/customers/${id}`);
-      if (response.data.success) {
-        message.success('고객이 삭제되었습니다.');
-        fetchCustomers();
-      }
-    } catch (error) {
-      message.error('고객 삭제에 실패했습니다.');
-      console.error(error);
+    const result = await CustomerService.deleteCustomer(id);
+    if (result.success) {
+      fetchCustomers();
     }
   };
 
   const showCustomerDocuments = async (customerId) => {
-    try {
-      setDocumentsDrawerVisible(true);
-      
-      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}/documents`);
-      if (response.data.success) {
-        setCustomerDocuments(response.data.data.documents);
-      }
-    } catch (error) {
-      message.error('고객 문서 조회에 실패했습니다.');
-      console.error(error);
+    setDocumentsDrawerVisible(true);
+    
+    const result = await CustomerService.getCustomerDocuments(customerId);
+    if (result.success) {
+      setCustomerDocuments(result.data);
     }
   };
 

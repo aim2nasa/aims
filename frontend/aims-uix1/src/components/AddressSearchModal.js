@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Space, Modal, List, message, Row, Col } from 'antd';
+import { Input, Button, Space, Modal, List, Row, Col } from 'antd';
 import { SearchOutlined, HomeOutlined } from '@ant-design/icons';
+import AddressService from '../services/addressService';
 
 const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -16,48 +17,33 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
 
   // 도로명주소 API 검색
   const searchAddress = async (keyword, page = 1, append = false) => {
-    if (!keyword.trim()) {
-      message.warning('검색어를 입력해주세요.');
-      return;
-    }
-
     setLoading(true);
-    try {
-      const response = await fetch(`http://tars.giize.com:3010/api/address/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=30`);
-      const data = await response.json();
-
-      if (data.success) {
-        const newResults = data.data.results || [];
-        
-        if (append) {
-          setSearchResults(prev => [...prev, ...newResults]);
-        } else {
-          setSearchResults(newResults);
-        }
-        
-        setTotalCount(data.data.total || newResults.length);
-        setCurrentPage(page);
-        setIsEnd(data.data.is_end || newResults.length < 30);
-        
-        if (!append && newResults.length > 0) {
-          setSelectedIndex(0);
-        }
+    
+    const result = await AddressService.searchAddress(keyword, page, 30);
+    
+    if (result.success) {
+      const newResults = result.data.results;
+      
+      if (append) {
+        setSearchResults(prev => [...prev, ...newResults]);
       } else {
-        message.error(data.error || '주소 검색에 실패했습니다.');
-        if (!append) {
-          setSearchResults([]);
-        }
+        setSearchResults(newResults);
       }
       
-    } catch (error) {
-      console.error('주소 검색 오류:', error);
-      message.error('주소 검색 중 오류가 발생했습니다.');
+      setTotalCount(result.data.total);
+      setCurrentPage(result.data.page);
+      setIsEnd(result.data.isEnd);
+      
+      if (!append && newResults.length > 0) {
+        setSelectedIndex(0);
+      }
+    } else {
       if (!append) {
         setSearchResults([]);
       }
-    } finally {
-      setLoading(false);
     }
+    
+    setLoading(false);
   };
 
   // 더 많은 결과 로드하기
@@ -69,12 +55,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
 
   // 주소 선택 핸들러
   const handleAddressSelect = (addressData) => {
-    const newAddress = {
-      postal_code: addressData.zipNo || '',
-      address1: addressData.roadAddrPart1 || addressData.roadAddr || '',
-      address2: ''
-    };
-    
+    const newAddress = AddressService.formatAddressForForm(addressData);
     onAddressSelect(newAddress);
     onClose();
   };
