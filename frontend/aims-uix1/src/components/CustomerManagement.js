@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
   Space, Tag, Card, message,
-  Tabs, Drawer, Row, Col
+  Tabs, Drawer, Row, Col, Switch
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined, EditOutlined, DeleteOutlined
+  SearchOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
+import CustomerRegionalTreeView from './CustomerRegionalTreeView';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -25,6 +26,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
     total: 0
   });
   const [searchText, setSearchText] = useState('');
+  const [showRegionalView, setShowRegionalView] = useState(false);
 
   // 통합 모달 관리 - 외부 props 우선
   const [internalModalVisible, setInternalModalVisible] = useState(false);
@@ -397,6 +399,15 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
         }
         extra={
           <Space>
+            <Space>
+              <EnvironmentOutlined />
+              <span>지역별 보기</span>
+              <Switch 
+                checked={showRegionalView}
+                onChange={setShowRegionalView}
+                size="small"
+              />
+            </Space>
             <Input
               placeholder="고객명, 전화번호, 이메일 검색"
               value={searchText}
@@ -404,6 +415,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
               style={{ width: 300 }}
               prefix={<SearchOutlined />}
               allowClear
+              disabled={showRegionalView}
             />
             <Button 
               type="primary" 
@@ -415,29 +427,36 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
           </Space>
         }
       >
-        <Table
-          columns={columns}
-          dataSource={customers}
-          rowKey="_id"
-          loading={loading}
-          scroll={{ x: false }}
-          tableLayout="fixed"
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            onChange: handleTableChange,
-            onShowSizeChange: handleTableChange
-          }}
-          onRow={(record) => ({
-            onClick: () => handleCustomerRowSelect(record),
-            style: {
-              cursor: 'pointer'
-            }
-          })}
-        />
+        {showRegionalView ? (
+          <CustomerRegionalTreeView 
+            onCustomerSelect={handleCustomerNameClick}
+            selectedCustomerId={null}
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={customers}
+            rowKey="_id"
+            loading={loading}
+            scroll={{ x: false }}
+            tableLayout="fixed"
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              onChange: handleTableChange,
+              onShowSizeChange: handleTableChange
+            }}
+            onRow={(record) => ({
+              onClick: () => handleCustomerRowSelect(record),
+              style: {
+                cursor: 'pointer'
+              }
+            })}
+          />
+        )}
       </Card>
 
       {/* 통합 고객 모달 */}
