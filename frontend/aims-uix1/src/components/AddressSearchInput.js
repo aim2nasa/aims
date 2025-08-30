@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Space, Modal, List, message, Row, Col } from 'antd';
 import { SearchOutlined, HomeOutlined } from '@ant-design/icons';
 
@@ -21,6 +21,7 @@ const AddressSearchInput = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isEnd, setIsEnd] = useState(false);
+  const searchInputRef = useRef(null);
   
   // Form의 값을 실시간으로 가져오기
   const currentAddress = form ? {
@@ -124,6 +125,15 @@ const AddressSearchInput = ({
     setIsEnd(false);
   };
 
+  // 모달이 열릴 때 검색창에 자동 포커스
+  useEffect(() => {
+    if (modalVisible && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current.focus();
+      }, 100);
+    }
+  }, [modalVisible]);
+
   // 상세주소 변경 핸들러
   const handleAddress2Change = (e) => {
     const newValue = e.target.value;
@@ -205,12 +215,20 @@ const AddressSearchInput = ({
         footer={null}
         width={700}
         destroyOnClose
+        afterOpenChange={(open) => {
+          if (open && searchInputRef.current) {
+            setTimeout(() => {
+              searchInputRef.current.focus();
+            }, 100);
+          }
+        }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           {/* 검색 입력 */}
           <Row gutter={8}>
             <Col span={18}>
               <Input
+                ref={searchInputRef}
                 placeholder="도로명주소 또는 지번주소를 입력하세요 (예: 테헤란로 123 또는 역삼동 123-45)"
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
