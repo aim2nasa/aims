@@ -415,7 +415,52 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
 
       {/* 통합 고객 모달 */}
       <Modal
-        title={currentEditingCustomer ? "고객 정보 수정" : "새 고객 등록"}
+        title={
+          <div 
+            style={{ cursor: 'move' }}
+            onMouseDown={(e) => {
+              const modal = e.target.closest('.ant-modal');
+              if (!modal) return;
+              
+              e.preventDefault();
+              
+              // 마우스 클릭 지점과 모달 좌상단 간의 오프셋 계산
+              const rect = modal.getBoundingClientRect();
+              const offsetX = e.clientX - rect.left;
+              const offsetY = e.clientY - rect.top;
+              
+              const handleMouseMove = (moveEvent) => {
+                // 마우스 위치에서 오프셋을 빼서 모달의 새로운 좌상단 위치 계산
+                const newX = moveEvent.clientX - offsetX;
+                const newY = moveEvent.clientY - offsetY;
+                
+                // 화면 경계 체크
+                const maxX = window.innerWidth - modal.offsetWidth;
+                const maxY = window.innerHeight - modal.offsetHeight;
+                
+                const clampedX = Math.max(0, Math.min(newX, maxX));
+                const clampedY = Math.max(0, Math.min(newY, maxY));
+                
+                modal.style.left = `${clampedX}px`;
+                modal.style.top = `${clampedY}px`;
+                modal.style.transform = 'none';
+                modal.style.position = 'fixed';
+              };
+              
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                document.body.style.userSelect = '';
+              };
+              
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              document.body.style.userSelect = 'none';
+            }}
+          >
+            {currentEditingCustomer ? "고객 정보 수정" : "새 고객 등록"}
+          </div>
+        }
         open={modalVisible}
         onCancel={closeCustomerModal}
         footer={null}
