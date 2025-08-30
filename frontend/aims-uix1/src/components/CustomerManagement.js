@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
   Space, message, Popconfirm, Tag, Card,
-  Tabs, Drawer
+  Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, 
@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import AddressSearchInput from './AddressSearchInput';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -29,6 +30,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
     total: 0
   });
   const [searchText, setSearchText] = useState('');
+  const [addressSearchVisible, setAddressSearchVisible] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -420,17 +422,94 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
             </TabPane>
             
             <TabPane tab="주소 정보" key="address">
-              <Form.Item label="우편번호" name="postal_code">
-                <Input />
+              <Form.Item label="주소">
+                <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '16px', backgroundColor: '#fafafa' }}>
+                  {/* 주소 검색 영역 */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>📍 주소 검색</div>
+                    <Row gutter={8}>
+                      <Col span={18}>
+                        <Input
+                          placeholder="도로명 또는 지번 주소를 검색하세요 (예: 테헤란로 123)"
+                          onClick={() => {
+                            setAddressSearchVisible(true);
+                          }}
+                          onFocus={(e) => {
+                            e.target.blur(); // 포커스 해제로 키보드 입력 방지
+                            setAddressSearchVisible(true);
+                          }}
+                          readOnly
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </Col>
+                      <Col span={6}>
+                        <Button 
+                          type="primary" 
+                          icon={<SearchOutlined />}
+                          onClick={() => {
+                            setAddressSearchVisible(true);
+                          }}
+                          block
+                        >
+                          검색
+                        </Button>
+                      </Col>
+                    </Row>
+                  </div>
+                  
+                  {/* 검색 결과 표시 영역 */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>🏠 검색된 주소</div>
+                    <Row gutter={8}>
+                      <Col span={8}>
+                        <Form.Item name="postal_code" style={{ marginBottom: 0 }}>
+                          <Input 
+                            placeholder="우편번호"
+                            readOnly
+                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={16}>
+                        <Form.Item name="address1" style={{ marginBottom: 0 }}>
+                          <Input 
+                            placeholder="주소를 검색하면 자동으로 채워집니다"
+                            readOnly
+                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                  
+                  {/* 상세주소 입력 영역 */}
+                  <div>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
+                    <Form.Item name="address2" style={{ marginBottom: 0 }}>
+                      <Input 
+                        placeholder="상세주소를 입력하세요 (동/호수, 건물명 등)"
+                        style={{ backgroundColor: '#fff', border: '2px solid #1890ff', borderRadius: '6px' }}
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
               </Form.Item>
               
-              <Form.Item label="기본주소" name="address1">
-                <Input />
-              </Form.Item>
-              
-              <Form.Item label="상세주소" name="address2">
-                <Input />
-              </Form.Item>
+              {/* AddressSearchInput 숨김 컴포넌트 */}
+              <div style={{ display: 'none' }}>
+                <AddressSearchInput 
+                  form={form} 
+                  modalVisible={addressSearchVisible}
+                  onModalVisibleChange={setAddressSearchVisible}
+                  onChange={(addressData) => {
+                    form.setFieldsValue({
+                      postal_code: addressData.postal_code,
+                      address1: addressData.address1,
+                      address2: addressData.address2
+                    });
+                  }}
+                />
+              </div>
             </TabPane>
             
             <TabPane tab="보험 정보" key="insurance">
@@ -512,17 +591,94 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
             </TabPane>
             
             <TabPane tab="주소 정보" key="address">
-              <Form.Item label="우편번호" name="postal_code">
-                <Input />
+              <Form.Item label="주소">
+                <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '16px', backgroundColor: '#fafafa' }}>
+                  {/* 주소 검색 영역 */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>📍 주소 검색</div>
+                    <Row gutter={8}>
+                      <Col span={18}>
+                        <Input
+                          placeholder="도로명 또는 지번 주소를 검색하세요 (예: 테헤란로 123)"
+                          onClick={() => {
+                            setAddressSearchVisible(true);
+                          }}
+                          onFocus={(e) => {
+                            e.target.blur(); // 포커스 해제로 키보드 입력 방지
+                            setAddressSearchVisible(true);
+                          }}
+                          readOnly
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </Col>
+                      <Col span={6}>
+                        <Button 
+                          type="primary" 
+                          icon={<SearchOutlined />}
+                          onClick={() => {
+                            setAddressSearchVisible(true);
+                          }}
+                          block
+                        >
+                          검색
+                        </Button>
+                      </Col>
+                    </Row>
+                  </div>
+                  
+                  {/* 검색 결과 표시 영역 */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>🏠 검색된 주소</div>
+                    <Row gutter={8}>
+                      <Col span={8}>
+                        <Form.Item name="postal_code" style={{ marginBottom: 0 }}>
+                          <Input 
+                            placeholder="우편번호"
+                            readOnly
+                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={16}>
+                        <Form.Item name="address1" style={{ marginBottom: 0 }}>
+                          <Input 
+                            placeholder="주소를 검색하면 자동으로 채워집니다"
+                            readOnly
+                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                  
+                  {/* 상세주소 입력 영역 */}
+                  <div>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
+                    <Form.Item name="address2" style={{ marginBottom: 0 }}>
+                      <Input 
+                        placeholder="상세주소를 입력하세요 (동/호수, 건물명 등)"
+                        style={{ backgroundColor: '#fff', border: '2px solid #1890ff', borderRadius: '6px' }}
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
               </Form.Item>
               
-              <Form.Item label="기본주소" name="address1">
-                <Input />
-              </Form.Item>
-              
-              <Form.Item label="상세주소" name="address2">
-                <Input />
-              </Form.Item>
+              {/* AddressSearchInput 숨김 컴포넌트 */}
+              <div style={{ display: 'none' }}>
+                <AddressSearchInput 
+                  form={form} 
+                  modalVisible={addressSearchVisible}
+                  onModalVisibleChange={setAddressSearchVisible}
+                  onChange={(addressData) => {
+                    form.setFieldsValue({
+                      postal_code: addressData.postal_code,
+                      address1: addressData.address1,
+                      address2: addressData.address2
+                    });
+                  }}
+                />
+              </div>
             </TabPane>
             
             <TabPane tab="보험 정보" key="insurance">

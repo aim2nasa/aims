@@ -2,11 +2,55 @@
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+  
+  console.log(`\n======================================`);
+  console.log(`📥 [${timestamp}] ${req.method} ${req.url}`);
+  console.log(`🌍 클라이언트 IP:`, clientIP);
+  console.log(`📋 쿼리 파라미터:`, JSON.stringify(req.query, null, 2));
+  console.log(`📦 요청 헤더:`, JSON.stringify(req.headers, null, 2));
+  
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`📄 요청 바디:`, JSON.stringify(req.body, null, 2));
+  }
+  
+  console.log(`======================================\n`);
+  next();
+});
+
+// 🔍 응답 디버깅 미들웨어
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  res.send = function(data) {
+    console.log(`📤 [응답] ${req.method} ${req.url} - Status: ${res.statusCode}`);
+    if (typeof data === 'string' && data.length < 500) {
+      console.log(`📤 응답 데이터:`, data);
+    } else if (typeof data === 'object') {
+      console.log(`📤 응답 JSON:`, JSON.stringify(data, null, 2));
+    }
+    return originalSend.call(this, data);
+  };
+  
+  res.json = function(data) {
+    console.log(`📤 [JSON 응답] ${req.method} ${req.url} - Status: ${res.statusCode}`);
+    console.log(`📤 응답 JSON:`, JSON.stringify(data, null, 2));
+    return originalJson.call(this, data);
+  };
+  
+  next();
+});
 
 // MongoDB 연결 설정
 const MONGO_URI = 'mongodb://tars:27017/';
@@ -599,19 +643,25 @@ app.use((error, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
-  console.log(`API 엔드포인트:`);
+const PORT = process.env.PORT || 3010;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n🚀🚀🚀 ================================');
+  console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
+  console.log(`🚀 서버 시간: ${new Date().toISOString()}`);
+  console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
+  console.log('🚀🚀🚀 ================================\n');
+  
+  console.log(`📋 API 엔드포인트:`);
   console.log(`  GET  /api/documents/status - 문서 목록 및 상태 조회`);
   console.log(`  GET  /api/documents/:id/status - 특정 문서 상세 상태`);
-  console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회 (당신이 원했던 엔드포인트)`);
+  console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회`);
   console.log(`  GET  /api/documents/statistics - 처리 상태 통계`);
   console.log(`  POST /api/documents/:id/retry - 문서 재처리`);
   console.log(`  GET  /api/documents/status/live - 실시간 상태 (폴링용)`);
   console.log(`  DELETE /api/documents/:id - 문서 삭제`);
   console.log(`  GET  /api/health - 헬스체크`);
-  console.log(`Customer Management APIs:`);
+  
+  console.log(`\n👥 Customer Management APIs:`);
   console.log(`  GET  /api/customers - 고객 목록 조회`);
   console.log(`  POST /api/customers - 새 고객 등록`);
   console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
@@ -619,6 +669,12 @@ app.listen(PORT, () => {
   console.log(`  DELETE /api/customers/:id - 고객 삭제`);
   console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
   console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
+  
+  console.log(`\n🏠 Address Search API:`);
+  console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
+  
+  console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
+  console.log(`=============================================\n`);
 });
 
 // ==================== 고객 관리 API ====================
@@ -1123,6 +1179,160 @@ app.get('/api/customers/:id/documents', async (req, res) => {
       success: false,
       error: '고객 문서 조회에 실패했습니다.',
       details: error.message
+    });
+  }
+});
+
+/**
+ * 테스트용 간단한 주소 검색 엔드포인트
+ */
+app.get('/api/address/test', async (req, res) => {
+  console.log('\n🧪🧪🧪 === 테스트 엔드포인트 진입!!! ===');
+  console.log('🧪 URL:', req.url);
+  console.log('🧪 METHOD:', req.method);
+  console.log('🧪 요청 파라미터:', JSON.stringify(req.query, null, 2));
+  console.log('🧪🧪🧪 ========================\n');
+  
+  res.json({
+    success: true,
+    message: '테스트 엔드포인트가 정상적으로 작동합니다!',
+    query: req.query,
+    timestamp: new Date().toISOString()
+  });
+});
+
+/**
+ * 카카오 주소 검색 API 프록시 - 즉시 사용 가능, 고품질
+ */
+app.get('/api/address/search', async (req, res) => {
+  console.log('\n🎯🎯🎯 === 카카오 주소 검색 API 진입!!! ===');
+  console.log('🎯 URL:', req.url);
+  console.log('🎯 METHOD:', req.method);
+  console.log('🎯 요청 파라미터:', JSON.stringify(req.query, null, 2));
+  console.log('🎯🎯🎯 ========================\n');
+  
+  try {
+    const { keyword, page = 1, size = 10 } = req.query;
+    
+    console.log(`📝 파싱된 값 - keyword: "${keyword}", page: ${page}, size: ${size}`);
+    
+    if (!keyword || keyword.trim() === '') {
+      console.log('❌ 키워드 없음 - 400 에러 반환');
+      return res.status(400).json({
+        success: false,
+        error: '검색어를 입력해주세요.'
+      });
+    }
+
+    console.log(`🔍 카카오 API 호출 시작: "${keyword}"`);
+    
+    // 카카오 Local API (주소 검색)
+    // REST API 키 (카카오 개발자센터에서 발급)
+    const kakaoApiKey = 'KakaoAK 0e0db455dcbf09ba1309daad71af4174'; // 실제 키로 교체 필요
+    const apiUrl = 'https://dapi.kakao.com/v2/local/search/address.json';
+    
+    const response = await axios.get(apiUrl, {
+      params: {
+        query: keyword.trim(),
+        page: page,
+        size: size,
+        analyze_type: 'similar' // similar: 유사도순, exact: 정확도순
+      },
+      headers: {
+        'Authorization': kakaoApiKey,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      timeout: 10000
+    });
+    
+    console.log(`📡 카카오 API 응답 상태: ${response.status}`);
+    console.log(`📄 카카오 API 응답:`, JSON.stringify(response.data, null, 2));
+    
+    if (response.data && response.data.documents) {
+      const documents = response.data.documents;
+      const meta = response.data.meta || {};
+      
+      console.log(`✅ 검색 결과: ${documents.length}건`);
+      console.log(`📊 전체 건수: ${meta.total_count || documents.length}건`);
+      
+      // 카카오 API 응답을 프론트엔드 형식에 맞게 변환
+      const transformedResults = documents.map(item => {
+        const address = item.address || {};
+        const roadAddress = item.road_address || {};
+        
+        // 우편번호 다양한 필드에서 찾기
+        const zipCode = roadAddress.zone_no || 
+                       address.zip_code || 
+                       roadAddress.postal_code || 
+                       address.postal_code ||
+                       roadAddress.zipcode ||
+                       address.zipcode || '';
+
+        return {
+          roadAddr: roadAddress.address_name || address.address_name || '',
+          roadAddrPart1: roadAddress.address_name || address.address_name || '',
+          jibunAddr: address.address_name || '',
+          zipNo: zipCode, // 개선된 우편번호 매핑
+          siNm: roadAddress.region_1depth_name || address.region_1depth_name || '',
+          sggNm: roadAddress.region_2depth_name || address.region_2depth_name || '',
+          emdNm: roadAddress.region_3depth_name || address.region_3depth_name || '',
+          rn: roadAddress.road_name || '',
+          bdNm: roadAddress.building_name || '',
+          // 추가 정보
+          building_name: roadAddress.building_name || address.building_name || '',
+          main_building_no: roadAddress.main_building_no || address.main_address_no || '',
+          sub_building_no: roadAddress.sub_building_no || address.sub_address_no || '',
+          x: roadAddress.x || address.x || '', // 경도
+          y: roadAddress.y || address.y || ''  // 위도
+        };
+      });
+      
+      res.json({
+        success: true,
+        data: {
+          results: transformedResults,
+          total: meta.total_count || documents.length,
+          page: parseInt(page),
+          size: parseInt(size),
+          totalPages: Math.ceil((meta.total_count || documents.length) / parseInt(size)),
+          kakao_api: true, // 카카오 API 사용 표시
+          is_end: meta.is_end || false // 마지막 페이지 여부
+        }
+      });
+      
+    } else {
+      console.log('❌ 카카오 API 응답에 documents가 없음');
+      res.json({
+        success: true,
+        data: {
+          results: [],
+          total: 0,
+          page: parseInt(page),
+          size: parseInt(size),
+          totalPages: 0,
+          message: '검색 결과가 없습니다.',
+          kakao_api: true
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('🚨 카카오 주소 검색 API 오류:', error.message);
+    console.error('🚨 오류 세부사항:', error.response?.data || error);
+    
+    // 카카오 API 오류인 경우 더 자세한 정보 제공
+    if (error.response?.status === 401) {
+      console.error('🚨 인증 실패: API 키를 확인해주세요');
+    } else if (error.response?.status === 400) {
+      console.error('🚨 요청 파라미터 오류');
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: '주소 검색 중 오류가 발생했습니다.',
+      details: error.message,
+      api_error: true,
+      kakao_error: error.response?.data || null
     });
   }
 });
