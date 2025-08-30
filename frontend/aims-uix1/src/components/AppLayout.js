@@ -125,7 +125,7 @@ const AppLayout = () => {
     }
   };
 
-  // 고객 수정 함수
+  // 고객 수정 함수 - CustomerManagement의 openCustomerModal을 호출하도록 함
   const handleEditCustomer = (customer) => {
     setEditingCustomer(customer);
     setEditModalVisible(true);

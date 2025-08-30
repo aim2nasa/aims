@@ -6,6 +6,7 @@ import {
   FileTextOutlined, LinkOutlined, EditOutlined, HistoryOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
+import CustomerService from '../services/customerService';
 import dayjs from 'dayjs';
 import CustomerEditForm from './CustomerEditForm';
 import DocumentManagementPanel from './DocumentManagementPanel';
@@ -62,9 +63,19 @@ const CustomerDetailModal = ({ visible, onCancel, customerId }) => {
   };
 
   const handleCustomerUpdate = async (updatedData) => {
-    // 고객 정보 업데이트 로직 구현 예정
-    message.success('고객 정보가 수정되었습니다.');
-    fetchCustomerDetail();
+    try {
+      const result = await CustomerService.updateCustomer(customerId, updatedData);
+      
+      if (result.success) {
+        message.success('고객 정보가 수정되었습니다.');
+        fetchCustomerDetail();
+      } else {
+        message.error(result.error || '고객 정보 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Customer update error:', error);
+      message.error('고객 정보 수정 중 오류가 발생했습니다.');
+    }
   };
 
   const handleNewConsultation = () => {

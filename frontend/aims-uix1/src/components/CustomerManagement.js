@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
-  Space, Tag, Card,
+  Space, Tag, Card, message,
   Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined
+  SearchOutlined, EditOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
@@ -15,7 +15,7 @@ import CustomerService from '../services/customerService';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
+const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
   // 고객 목록 관리
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,9 +26,13 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
   });
   const [searchText, setSearchText] = useState('');
 
-  // 통합 모달 관리
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null); // null이면 새 등록, 데이터 있으면 수정
+  // 통합 모달 관리 - 외부 props 우선
+  const [internalModalVisible, setInternalModalVisible] = useState(false);
+  const [internalEditingCustomer, setInternalEditingCustomer] = useState(null);
+  
+  // 외부에서 제어되는 경우 외부 props 사용, 그렇지 않으면 내부 상태 사용
+  const modalVisible = editModalVisible !== undefined ? editModalVisible : internalModalVisible;
+  const currentEditingCustomer = editingCustomer !== undefined ? editingCustomer : internalEditingCustomer;
   const [currentAddress1, setCurrentAddress1] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
   
@@ -53,6 +57,30 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
       }
     };
   }, [onRefreshCustomerListSet]);
+
+  // 외부에서 모달을 열 때 폼 데이터 설정
+  useEffect(() => {
+    if (editModalVisible && editingCustomer) {
+      const address1 = editingCustomer.personal_info?.address?.address1 || '';
+      setCurrentAddress1(address1);
+      
+      form.setFieldsValue({
+        name: editingCustomer.personal_info?.name,
+        name_en: editingCustomer.personal_info?.name_en,
+        birth_date: editingCustomer.personal_info?.birth_date ? dayjs(editingCustomer.personal_info.birth_date) : null,
+        gender: editingCustomer.personal_info?.gender,
+        phone: editingCustomer.personal_info?.phone,
+        email: editingCustomer.personal_info?.email,
+        postal_code: editingCustomer.personal_info?.address?.postal_code,
+        address1: address1,
+        address2: editingCustomer.personal_info?.address?.address2,
+        customer_type: editingCustomer.insurance_info?.customer_type,
+        risk_level: editingCustomer.insurance_info?.risk_level,
+        annual_premium: editingCustomer.insurance_info?.annual_premium,
+        total_coverage: editingCustomer.insurance_info?.total_coverage
+      });
+    }
+  }, [editModalVisible, editingCustomer, form]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -82,8 +110,12 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
 
   // 통합 모달 열기 함수
   const openCustomerModal = (customer = null) => {
-    setEditingCustomer(customer);
-    setModalVisible(true);
+    if (editModalVisible !== undefined) {
+      // 외부에서 제어되는 경우 - 외부 상태는 외부에서 관리
+      return;
+    }
+    setInternalEditingCustomer(customer);
+    setInternalModalVisible(true);
     
     if (customer) {
       // 수정 모드: 기존 데이터 로드
@@ -110,8 +142,14 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
 
   // 통합 모달 닫기 함수
   const closeCustomerModal = () => {
-    setModalVisible(false);
-    setEditingCustomer(null);
+    if (onEditModalClose) {
+      // 외부에서 제어되는 경우 외부 콜백 호출
+      onEditModalClose();
+    } else {
+      // 내부에서 제어되는 경우
+      setInternalModalVisible(false);
+      setInternalEditingCustomer(null);
+    }
     setCurrentAddress1('');
     form.resetFields();
   };
@@ -145,9 +183,9 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
       };
 
       let result;
-      if (editingCustomer) {
+      if (currentEditingCustomer) {
         // 수정
-        result = await CustomerService.updateCustomer(editingCustomer._id, customerData);
+        result = await CustomerService.updateCustomer(currentEditingCustomer._id, customerData);
       } else {
         // 새 등록
         result = await CustomerService.createCustomer(customerData);
@@ -156,17 +194,34 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
       if (result.success) {
         closeCustomerModal();
         fetchCustomers();
+        
+        // 외부 콜백 호출 (고객 정보 업데이트 알림)
+        if (onCustomerUpdated) {
+          onCustomerUpdated();
+        }
       }
     } catch (error) {
       console.error('CustomerManagement.handleSubmit:', error);
     }
   };
 
-  const deleteCustomer = async (id) => {
-    const result = await CustomerService.deleteCustomer(id);
-    if (result.success) {
-      fetchCustomers();
-    }
+  const handleDeleteCustomer = async (id) => {
+    Modal.confirm({
+      title: '고객 삭제 확인',
+      content: '정말로 이 고객을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+      okText: '삭제',
+      cancelText: '취소',
+      okType: 'danger',
+      onOk: async () => {
+        const result = await CustomerService.deleteCustomer(id);
+        if (result.success) {
+          message.success('고객이 삭제되었습니다.');
+          fetchCustomers();
+        } else {
+          message.error(result.error || '고객 삭제에 실패했습니다.');
+        }
+      }
+    });
   };
 
   const showCustomerDocuments = async (customerId) => {
@@ -360,7 +415,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
 
       {/* 통합 고객 모달 */}
       <Modal
-        title={editingCustomer ? "고객 정보 수정" : "새 고객 등록"}
+        title={currentEditingCustomer ? "고객 정보 수정" : "새 고객 등록"}
         open={modalVisible}
         onCancel={closeCustomerModal}
         footer={null}
@@ -526,7 +581,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
             <Space>
               <Button onClick={closeCustomerModal}>취소</Button>
               <Button type="primary" htmlType="submit">
-                {editingCustomer ? '수정' : '등록'}
+                {currentEditingCustomer ? '수정' : '등록'}
               </Button>
             </Space>
           </div>
