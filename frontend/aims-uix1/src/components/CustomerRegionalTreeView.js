@@ -88,12 +88,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         key: 'no-address',
         icon: <QuestionCircleOutlined />,
         children: noAddressCustomers.map(customer => ({
-          title: (
-            <Space>
-              <UserOutlined />
-              <Text>{customer.personal_info?.name || '이름 없음'}</Text>
-            </Space>
-          ),
+          title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
           key: `customer-${customer._id}`,
           icon: <UserOutlined />,
           isLeaf: true,
@@ -133,12 +128,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
               children: customers
                 .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || ''))
                 .map(customer => ({
-                  title: (
-                    <Space>
-                      <UserOutlined />
-                      <Text>{customer.personal_info?.name || '이름 없음'}</Text>
-                    </Space>
-                  ),
+                  title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
                   key: `customer-${customer._id}`,
                   icon: <UserOutlined />,
                   isLeaf: true,
