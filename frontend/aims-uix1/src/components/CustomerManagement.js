@@ -43,7 +43,24 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
 
   useEffect(() => {
     fetchCustomers();
-  }, [pagination.current, pagination.pageSize, searchText]);
+  }, [pagination.current, pagination.pageSize]);
+
+  // 실시간 검색을 위한 debounce 효과
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      // 검색어가 변경되면 첫 페이지로 돌아가서 검색
+      if (pagination.current !== 1) {
+        setPagination(prev => ({
+          ...prev,
+          current: 1
+        }));
+      } else {
+        fetchCustomers();
+      }
+    }, 300); // 300ms 후에 검색 실행
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchText]);
 
   // 컴포넌트 마운트 시 새로고침 콜백 등록
   useEffect(() => {
@@ -366,6 +383,16 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
           <Space>
             <UserOutlined />
             고객 관리
+            {searchText && (
+              <span style={{ color: '#1890ff', fontSize: '14px' }}>
+                - "{searchText}" 검색결과 ({customers.length}건)
+              </span>
+            )}
+            {!searchText && (
+              <span style={{ color: '#999', fontSize: '14px' }}>
+                ({pagination.total}건)
+              </span>
+            )}
           </Space>
         }
         extra={
@@ -374,9 +401,9 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
               placeholder="고객명, 전화번호, 이메일 검색"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={fetchCustomers}
               style={{ width: 300 }}
               prefix={<SearchOutlined />}
+              allowClear
             />
             <Button 
               type="primary" 
