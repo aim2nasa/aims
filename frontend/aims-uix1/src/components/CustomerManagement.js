@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
-  Space, message, Popconfirm, Tag, Card,
+  Space, message, Tag, Card,
   Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
-  PlusOutlined, EditOutlined, DeleteOutlined, 
-  UserOutlined, FileTextOutlined, PhoneOutlined,
-  MailOutlined, SearchOutlined
+  PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -16,23 +15,27 @@ import AddressSearchInput from './AddressSearchInput';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet }) => {
+const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet }) => {
+  // 고객 목록 관리
   const [customers, setCustomers] = useState([]);
-  const [currentAddress1, setCurrentAddress1] = useState('');
-  const [editCurrentAddress1, setEditCurrentAddress1] = useState('');
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [customerDocuments, setCustomerDocuments] = useState([]);
-  const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
-  
-  const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0
   });
   const [searchText, setSearchText] = useState('');
+
+  // 통합 모달 관리
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null); // null이면 새 등록, 데이터 있으면 수정
+  const [currentAddress1, setCurrentAddress1] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
+  
+  // 기타
+  const [customerDocuments, setCustomerDocuments] = useState([]);
+  const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
+  const [form] = Form.useForm();
 
   useEffect(() => {
     fetchCustomers();
@@ -44,35 +47,12 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       onRefreshCustomerListSet(() => fetchCustomers);
     }
     
-    // 컴포넌트 언마운트 시 콜백 해제
     return () => {
       if (onRefreshCustomerListSet) {
         onRefreshCustomerListSet(null);
       }
     };
   }, [onRefreshCustomerListSet]);
-
-  // 외부 수정 모달이 열릴 때 폼 필드 설정
-  useEffect(() => {
-    if (editModalVisible && editingCustomer) {
-      const address1 = editingCustomer.personal_info?.address?.address1 || '';
-      setEditCurrentAddress1(address1); // 기존 주소 상태 설정
-      
-      form.setFieldsValue({
-        ...editingCustomer.personal_info,
-        birth_date: editingCustomer.personal_info.birth_date ? dayjs(editingCustomer.personal_info.birth_date) : null,
-        postal_code: editingCustomer.personal_info?.address?.postal_code,
-        address1: address1,
-        address2: editingCustomer.personal_info?.address?.address2,
-        customer_type: editingCustomer.insurance_info?.customer_type,
-        risk_level: editingCustomer.insurance_info?.risk_level,
-        annual_premium: editingCustomer.insurance_info?.annual_premium,
-        total_coverage: editingCustomer.insurance_info?.total_coverage
-      });
-    } else {
-      setEditCurrentAddress1(''); // 모달이 닫히면 초기화
-    }
-  }, [editModalVisible, editingCustomer, form]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -108,18 +88,43 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
     });
   };
 
-  const showModal = (customer = null) => {
+  // 통합 모달 열기 함수
+  const openCustomerModal = (customer = null) => {
+    setEditingCustomer(customer);
+    setModalVisible(true);
+    
     if (customer) {
-      // 외부에서 관리하는 수정 모달을 사용 (이 경우는 발생하지 않아야 함)
-      console.warn('showModal with customer should not be called when using external modal');
+      // 수정 모드: 기존 데이터 로드
+      const address1 = customer.personal_info?.address?.address1 || '';
+      setCurrentAddress1(address1);
+      
+      form.setFieldsValue({
+        ...customer.personal_info,
+        birth_date: customer.personal_info.birth_date ? dayjs(customer.personal_info.birth_date) : null,
+        postal_code: customer.personal_info?.address?.postal_code,
+        address1: address1,
+        address2: customer.personal_info?.address?.address2,
+        customer_type: customer.insurance_info?.customer_type,
+        risk_level: customer.insurance_info?.risk_level,
+        annual_premium: customer.insurance_info?.annual_premium,
+        total_coverage: customer.insurance_info?.total_coverage
+      });
     } else {
-      // 새 고객 등록만 내부 모달 사용
-      setModalVisible(true);
+      // 새 등록 모드: 폼 초기화
       form.resetFields();
-      setCurrentAddress1(''); // 주소 상태 초기화
+      setCurrentAddress1('');
     }
   };
 
+  // 통합 모달 닫기 함수
+  const closeCustomerModal = () => {
+    setModalVisible(false);
+    setEditingCustomer(null);
+    setCurrentAddress1('');
+    form.resetFields();
+  };
+
+  // 통합 제출 함수
   const handleSubmit = async (values) => {
     try {
       const customerData = {
@@ -149,26 +154,21 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
 
       let response;
       if (editingCustomer) {
+        // 수정
         response = await axios.put(`http://tars.giize.com:3010/api/customers/${editingCustomer._id}`, customerData);
       } else {
+        // 새 등록
         response = await axios.post('http://tars.giize.com:3010/api/customers', customerData);
       }
 
       if (response.data.success) {
-        // 새 고객 등록 시 이름 변경 알림 처리
         if (!editingCustomer && response.data.data.was_renamed) {
           message.warning(response.data.data.message, 5);
         } else {
           message.success(editingCustomer ? '고객 정보가 수정되었습니다.' : '고객이 등록되었습니다.');
         }
         
-        if (editingCustomer) {
-          // 외부 수정 모달 닫기 및 고객 업데이트 알림
-          onCustomerUpdated && onCustomerUpdated();
-        } else {
-          // 내부 등록 모달 닫기
-          setModalVisible(false);
-        }
+        closeCustomerModal();
         fetchCustomers();
       }
     } catch (error) {
@@ -204,14 +204,12 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
     }
   };
 
-  // 고객 상세 핸들러 - Right 패널에 표시
   const handleCustomerNameClick = (customerId) => {
     if (onCustomerClick) {
       onCustomerClick(customerId);
     }
   };
 
-  // 고객 행 클릭 핸들러 - Right 패널에 표시
   const handleCustomerRowSelect = (customer) => {
     if (onCustomerClick) {
       onCustomerClick(customer._id);
@@ -223,7 +221,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '고객명',
       dataIndex: ['personal_info', 'name'],
       key: 'name',
-      width: 200, // 고정 너비
+      width: 200,
       render: (name, record) => (
         <Space>
           <UserOutlined />
@@ -248,7 +246,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '연락처',
       dataIndex: ['personal_info', 'phone'],
       key: 'phone',
-      width: 150, // 고정 너비
+      width: 150,
       render: phone => phone && (
         <Space>
           <PhoneOutlined />
@@ -260,13 +258,13 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '고객 유형',
       dataIndex: ['insurance_info', 'customer_type'],
       key: 'customer_type',
-      width: 100, // 고정 너비
+      width: 100,
       render: type => type && <Tag color={type === '법인' ? 'blue' : 'green'}>{type}</Tag>
     },
     {
       title: '문서 수',
       key: 'documents_count',
-      width: 100, // 고정 너비
+      width: 100,
       render: (_, record) => (
         <Button 
           type="link" 
@@ -281,7 +279,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '상태',
       dataIndex: ['meta', 'status'],
       key: 'status',
-      width: 80, // 고정 너비
+      width: 80,
       render: status => {
         const color = status === 'active' ? 'green' : 'red';
         const text = status === 'active' ? '활성' : '비활성';
@@ -292,9 +290,9 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       title: '등록일',
       dataIndex: ['meta', 'created_at'],
       key: 'created_at',
-      width: 120, // 고정 너비
+      width: 120,
       render: date => date && dayjs(date).format('YYYY-MM-DD')
-    },
+    }
   ];
 
   const documentColumns = [
@@ -354,7 +352,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
             <Button 
               type="primary" 
               icon={<PlusOutlined />}
-              onClick={() => showModal()}
+              onClick={() => openCustomerModal()}
             >
               새 고객 등록
             </Button>
@@ -366,8 +364,8 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
           dataSource={customers}
           rowKey="_id"
           loading={loading}
-          scroll={{ x: false }} // 가로 스크롤 비활성화
-          tableLayout="fixed" // 고정 레이아웃
+          scroll={{ x: false }}
+          tableLayout="fixed"
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -386,14 +384,11 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
         />
       </Card>
 
-      {/* 새 고객 등록 모달 (내부 상태) */}
+      {/* 통합 고객 모달 */}
       <Modal
-        title="새 고객 등록"
+        title={editingCustomer ? "고객 정보 수정" : "새 고객 등록"}
         open={modalVisible}
-        onCancel={() => {
-          setModalVisible(false);
-          setCurrentAddress1(''); // 주소 상태 초기화
-        }}
+        onCancel={closeCustomerModal}
         footer={null}
         width={800}
       >
@@ -442,11 +437,9 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
                       <Col span={18}>
                         <Input
                           placeholder="도로명 또는 지번 주소를 검색하세요 (예: 테헤란로 123)"
-                          onClick={() => {
-                            setAddressSearchVisible(true);
-                          }}
+                          onClick={() => setAddressSearchVisible(true)}
                           onFocus={(e) => {
-                            e.target.blur(); // 포커스 해제로 키보드 입력 방지
+                            e.target.blur();
                             setAddressSearchVisible(true);
                           }}
                           readOnly
@@ -457,9 +450,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
                         <Button 
                           type="primary" 
                           icon={<SearchOutlined />}
-                          onClick={() => {
-                            setAddressSearchVisible(true);
-                          }}
+                          onClick={() => setAddressSearchVisible(true)}
                           block
                         >
                           검색
@@ -559,188 +550,10 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
           
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
-              <Button onClick={() => {
-                setModalVisible(false);
-                setCurrentAddress1(''); // 주소 상태 초기화
-              }}>취소</Button>
-              <Button type="primary" htmlType="submit">등록</Button>
-            </Space>
-          </div>
-        </Form>
-      </Modal>
-
-      {/* 고객 수정 모달 (외부 상태) */}
-      <Modal
-        title="고객 정보 수정"
-        open={editModalVisible}
-        onCancel={onEditModalClose}
-        footer={null}
-        width={800}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Tabs defaultActiveKey="personal">
-            <TabPane tab="기본 정보" key="personal">
-              <Form.Item label="고객명" name="name" rules={[{ required: true, message: '고객명을 입력해주세요' }]}>
-                <Input />
-              </Form.Item>
-              
-              <Form.Item label="영문명" name="name_en">
-                <Input />
-              </Form.Item>
-              
-              <Form.Item label="생년월일" name="birth_date">
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-              
-              <Form.Item label="성별" name="gender">
-                <Select>
-                  <Option value="M">남성</Option>
-                  <Option value="F">여성</Option>
-                </Select>
-              </Form.Item>
-              
-              <Form.Item label="휴대폰번호" name="phone">
-                <Input />
-              </Form.Item>
-              
-              <Form.Item label="이메일" name="email">
-                <Input type="email" />
-              </Form.Item>
-            </TabPane>
-            
-            <TabPane tab="주소 정보" key="address">
-              <Form.Item label="주소">
-                <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '16px', backgroundColor: '#fafafa' }}>
-                  {/* 주소 검색 영역 */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>📍 주소 검색</div>
-                    <Row gutter={8}>
-                      <Col span={18}>
-                        <Input
-                          placeholder="도로명 또는 지번 주소를 검색하세요 (예: 테헤란로 123)"
-                          onClick={() => {
-                            setAddressSearchVisible(true);
-                          }}
-                          onFocus={(e) => {
-                            e.target.blur(); // 포커스 해제로 키보드 입력 방지
-                            setAddressSearchVisible(true);
-                          }}
-                          readOnly
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </Col>
-                      <Col span={6}>
-                        <Button 
-                          type="primary" 
-                          icon={<SearchOutlined />}
-                          onClick={() => {
-                            setAddressSearchVisible(true);
-                          }}
-                          block
-                        >
-                          검색
-                        </Button>
-                      </Col>
-                    </Row>
-                  </div>
-                  
-                  {/* 검색 결과 표시 영역 */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>🏠 검색된 주소</div>
-                    <Row gutter={8}>
-                      <Col span={8}>
-                        <Form.Item name="postal_code" style={{ marginBottom: 0 }}>
-                          <Input 
-                            placeholder="우편번호"
-                            readOnly
-                            style={{ backgroundColor: '#fff', color: '#595959' }}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={16}>
-                        <Form.Item name="address1" style={{ marginBottom: 0 }}>
-                          <Input 
-                            placeholder="주소를 검색하면 자동으로 채워집니다"
-                            readOnly
-                            style={{ backgroundColor: '#fff', color: '#595959' }}
-                          />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                  </div>
-                  
-                  {/* 상세주소 입력 영역 */}
-                  <div>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
-                    <Form.Item name="address2" style={{ marginBottom: 0 }}>
-                      <Input 
-                        placeholder={editCurrentAddress1 ? "상세주소를 입력하세요 (동/호수, 건물명 등)" : "❌ 주소검색을 먼저 해주세요"}
-                        style={{ 
-                          backgroundColor: editCurrentAddress1 ? '#fff' : '#f5f5f5',
-                          border: editCurrentAddress1 ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                          borderRadius: '6px',
-                          color: editCurrentAddress1 ? '#000' : '#999'
-                        }}
-                        disabled={!editCurrentAddress1}
-                        readOnly={!editCurrentAddress1}
-                      />
-                    </Form.Item>
-                  </div>
-                </div>
-              </Form.Item>
-              
-              {/* AddressSearchInput 숨김 컴포넌트 */}
-              <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
-                <AddressSearchInput 
-                  form={form} 
-                  modalVisible={addressSearchVisible}
-                  onModalVisibleChange={setAddressSearchVisible}
-                  onChange={(address) => {
-                    setEditCurrentAddress1(address.address1 || '');
-                    form.setFieldsValue({
-                      postal_code: address.postal_code,
-                      address1: address.address1,
-                      address2: address.address2
-                    });
-                  }}
-                />
-              </div>
-            </TabPane>
-            
-            <TabPane tab="보험 정보" key="insurance">
-              <Form.Item label="고객 유형" name="customer_type">
-                <Select>
-                  <Option value="개인">개인</Option>
-                  <Option value="법인">법인</Option>
-                </Select>
-              </Form.Item>
-              
-              <Form.Item label="위험도" name="risk_level">
-                <Select>
-                  <Option value="저위험">저위험</Option>
-                  <Option value="중위험">중위험</Option>
-                  <Option value="고위험">고위험</Option>
-                </Select>
-              </Form.Item>
-              
-              <Form.Item label="연간 보험료" name="annual_premium">
-                <Input type="number" addonAfter="원" />
-              </Form.Item>
-              
-              <Form.Item label="총 보장금액" name="total_coverage">
-                <Input type="number" addonAfter="원" />
-              </Form.Item>
-            </TabPane>
-          </Tabs>
-          
-          <div style={{ textAlign: 'right', marginTop: 24 }}>
-            <Space>
-              <Button onClick={onEditModalClose}>취소</Button>
-              <Button type="primary" htmlType="submit">수정</Button>
+              <Button onClick={closeCustomerModal}>취소</Button>
+              <Button type="primary" htmlType="submit">
+                {editingCustomer ? '수정' : '등록'}
+              </Button>
             </Space>
           </div>
         </Form>
@@ -762,7 +575,6 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
           size="small"
         />
       </Drawer>
-
     </div>
   );
 };
