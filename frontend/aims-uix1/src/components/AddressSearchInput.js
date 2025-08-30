@@ -25,6 +25,7 @@ const AddressSearchInput = ({
   } : (value || {});
   
   const { postal_code = '', address1 = '', address2 = '' } = currentAddress;
+  
 
   // 주소 선택 핸들러
   const handleAddressSelect = (newAddress) => {
@@ -101,12 +102,33 @@ const AddressSearchInput = ({
         />
         
         {/* 상세주소 */}
-        <Input 
-          value={address2}
-          onChange={handleAddress2Change}
-          placeholder="상세주소를 입력하세요"
-          style={{ width: '100%' }}
-        />
+        {address1 && address1.length > 0 ? (
+          <Input 
+            key="address2-enabled"
+            value={address2}
+            onChange={handleAddress2Change}
+            placeholder="상세주소를 입력하세요"
+            style={{ width: '100%' }}
+          />
+        ) : (
+          <div 
+            key="address2-disabled"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #d9d9d9',
+              borderRadius: '6px',
+              color: '#999',
+              cursor: 'not-allowed',
+              minHeight: '32px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            ❌ 주소검색을 먼저 해주세요
+          </div>
+        )}
       </Space>
 
       {/* 주소 검색 모달 */}

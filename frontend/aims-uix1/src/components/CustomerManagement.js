@@ -18,6 +18,8 @@ const { TabPane } = Tabs;
 
 const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet }) => {
   const [customers, setCustomers] = useState([]);
+  const [currentAddress1, setCurrentAddress1] = useState('');
+  const [editCurrentAddress1, setEditCurrentAddress1] = useState('');
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [customerDocuments, setCustomerDocuments] = useState([]);
@@ -53,17 +55,22 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
   // 외부 수정 모달이 열릴 때 폼 필드 설정
   useEffect(() => {
     if (editModalVisible && editingCustomer) {
+      const address1 = editingCustomer.personal_info?.address?.address1 || '';
+      setEditCurrentAddress1(address1); // 기존 주소 상태 설정
+      
       form.setFieldsValue({
         ...editingCustomer.personal_info,
         birth_date: editingCustomer.personal_info.birth_date ? dayjs(editingCustomer.personal_info.birth_date) : null,
-        postal_code: editingCustomer.personal_info.address?.postal_code,
-        address1: editingCustomer.personal_info.address?.address1,
-        address2: editingCustomer.personal_info.address?.address2,
+        postal_code: editingCustomer.personal_info?.address?.postal_code,
+        address1: address1,
+        address2: editingCustomer.personal_info?.address?.address2,
         customer_type: editingCustomer.insurance_info?.customer_type,
         risk_level: editingCustomer.insurance_info?.risk_level,
         annual_premium: editingCustomer.insurance_info?.annual_premium,
         total_coverage: editingCustomer.insurance_info?.total_coverage
       });
+    } else {
+      setEditCurrentAddress1(''); // 모달이 닫히면 초기화
     }
   }, [editModalVisible, editingCustomer, form]);
 
@@ -109,6 +116,7 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       // 새 고객 등록만 내부 모달 사용
       setModalVisible(true);
       form.resetFields();
+      setCurrentAddress1(''); // 주소 상태 초기화
     }
   };
 
@@ -382,7 +390,10 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
       <Modal
         title="새 고객 등록"
         open={modalVisible}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => {
+          setModalVisible(false);
+          setCurrentAddress1(''); // 주소 상태 초기화
+        }}
         footer={null}
         width={800}
       >
@@ -487,8 +498,15 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
                     <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
                     <Form.Item name="address2" style={{ marginBottom: 0 }}>
                       <Input 
-                        placeholder="상세주소를 입력하세요 (동/호수, 건물명 등)"
-                        style={{ backgroundColor: '#fff', border: '2px solid #1890ff', borderRadius: '6px' }}
+                        placeholder={currentAddress1 ? "상세주소를 입력하세요 (동/호수, 건물명 등)" : "❌ 주소검색을 먼저 해주세요"}
+                        style={{ 
+                          backgroundColor: currentAddress1 ? '#fff' : '#f5f5f5',
+                          border: currentAddress1 ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                          borderRadius: '6px',
+                          color: currentAddress1 ? '#000' : '#999'
+                        }}
+                        disabled={!currentAddress1}
+                        readOnly={!currentAddress1}
                       />
                     </Form.Item>
                   </div>
@@ -496,16 +514,17 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
               </Form.Item>
               
               {/* AddressSearchInput 숨김 컴포넌트 */}
-              <div style={{ display: 'none' }}>
+              <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
                 <AddressSearchInput 
                   form={form} 
                   modalVisible={addressSearchVisible}
                   onModalVisibleChange={setAddressSearchVisible}
-                  onChange={(addressData) => {
+                  onChange={(address) => {
+                    setCurrentAddress1(address.address1 || '');
                     form.setFieldsValue({
-                      postal_code: addressData.postal_code,
-                      address1: addressData.address1,
-                      address2: addressData.address2
+                      postal_code: address.postal_code,
+                      address1: address.address1,
+                      address2: address.address2
                     });
                   }}
                 />
@@ -540,7 +559,10 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
           
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
-              <Button onClick={() => setModalVisible(false)}>취소</Button>
+              <Button onClick={() => {
+                setModalVisible(false);
+                setCurrentAddress1(''); // 주소 상태 초기화
+              }}>취소</Button>
               <Button type="primary" htmlType="submit">등록</Button>
             </Space>
           </div>
@@ -656,8 +678,15 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
                     <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
                     <Form.Item name="address2" style={{ marginBottom: 0 }}>
                       <Input 
-                        placeholder="상세주소를 입력하세요 (동/호수, 건물명 등)"
-                        style={{ backgroundColor: '#fff', border: '2px solid #1890ff', borderRadius: '6px' }}
+                        placeholder={editCurrentAddress1 ? "상세주소를 입력하세요 (동/호수, 건물명 등)" : "❌ 주소검색을 먼저 해주세요"}
+                        style={{ 
+                          backgroundColor: editCurrentAddress1 ? '#fff' : '#f5f5f5',
+                          border: editCurrentAddress1 ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                          borderRadius: '6px',
+                          color: editCurrentAddress1 ? '#000' : '#999'
+                        }}
+                        disabled={!editCurrentAddress1}
+                        readOnly={!editCurrentAddress1}
                       />
                     </Form.Item>
                   </div>
@@ -665,16 +694,17 @@ const CustomerManagement = ({ onCustomerClick, editModalVisible, editingCustomer
               </Form.Item>
               
               {/* AddressSearchInput 숨김 컴포넌트 */}
-              <div style={{ display: 'none' }}>
+              <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
                 <AddressSearchInput 
                   form={form} 
                   modalVisible={addressSearchVisible}
                   onModalVisibleChange={setAddressSearchVisible}
-                  onChange={(addressData) => {
+                  onChange={(address) => {
+                    setEditCurrentAddress1(address.address1 || '');
                     form.setFieldsValue({
-                      postal_code: addressData.postal_code,
-                      address1: addressData.address1,
-                      address2: addressData.address2
+                      postal_code: address.postal_code,
+                      address1: address.address1,
+                      address2: address.address2
                     });
                   }}
                 />

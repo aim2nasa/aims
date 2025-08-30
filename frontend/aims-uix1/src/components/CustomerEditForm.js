@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Input, Select, DatePicker, Button, Space, Row, Col, Divider } from 'antd';
 import { SaveOutlined, UndoOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import AddressSearchInput from './AddressSearchInput';
 
 const { Option } = Select;
 
@@ -100,21 +101,8 @@ const CustomerEditForm = ({ customer, onSave, onCancel }) => {
 
       <Divider orientation="left">주소 정보</Divider>
       
-      <Row gutter={16}>
-        <Col span={8}>
-          <Form.Item label="우편번호" name="postal_code">
-            <Input />
-          </Form.Item>
-        </Col>
-        <Col span={16}>
-          <Form.Item label="기본주소" name="address1">
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Form.Item label="상세주소" name="address2">
-        <Input />
+      <Form.Item label="주소">
+        <AddressSearchInput form={form} />
       </Form.Item>
 
       <Divider orientation="left">보험 정보</Divider>
