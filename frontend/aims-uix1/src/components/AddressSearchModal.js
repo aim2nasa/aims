@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, Space, Modal, List, message, Row, Col } from 'antd';
 import { SearchOutlined, HomeOutlined } from '@ant-design/icons';
 
@@ -11,6 +11,8 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
   const [isEnd, setIsEnd] = useState(false);
   const searchInputRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const listRef = useRef(null);
+  const keyIntervalRef = useRef(null);
 
   // 도로명주소 API 검색
   const searchAddress = async (keyword, page = 1, append = false) => {
@@ -77,6 +79,32 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
     onClose();
   };
 
+  // 키보드 네비게이션 시 선택된 항목으로 자동 스크롤
+  useEffect(() => {
+    if (selectedIndex >= 0 && listRef.current) {
+      const listElement = listRef.current.querySelector('.ant-list-items');
+      if (listElement) {
+        const selectedElement = listElement.children[selectedIndex];
+        if (selectedElement) {
+          selectedElement.scrollIntoView({
+            behavior: 'auto',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }
+    }
+  }, [selectedIndex]);
+
+  // 컴포넌트 언마운트 시 interval 정리
+  useEffect(() => {
+    return () => {
+      if (keyIntervalRef.current) {
+        clearInterval(keyIntervalRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Modal
       title={
@@ -115,14 +143,39 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
                     setSelectedIndex(prev => 
                       prev < searchResults.length - 1 ? prev + 1 : 0
                     );
+                    // 키 반복을 위한 interval 설정 (더 빠르게)
+                    if (!keyIntervalRef.current) {
+                      keyIntervalRef.current = setInterval(() => {
+                        setSelectedIndex(prev => 
+                          prev < searchResults.length - 1 ? prev + 1 : 0
+                        );
+                      }, 150);
+                    }
                   } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     setSelectedIndex(prev => 
                       prev > 0 ? prev - 1 : searchResults.length - 1
                     );
+                    // 키 반복을 위한 interval 설정 (더 빠르게)
+                    if (!keyIntervalRef.current) {
+                      keyIntervalRef.current = setInterval(() => {
+                        setSelectedIndex(prev => 
+                          prev > 0 ? prev - 1 : searchResults.length - 1
+                        );
+                      }, 150);
+                    }
                   } else if (e.key === 'Enter' && selectedIndex >= 0) {
                     e.preventDefault();
                     handleAddressSelect(searchResults[selectedIndex]);
+                  }
+                }
+              }}
+              onKeyUp={(e) => {
+                // 키를 떼면 interval 정리
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                  if (keyIntervalRef.current) {
+                    clearInterval(keyIntervalRef.current);
+                    keyIntervalRef.current = null;
                   }
                 }
               }}
@@ -161,6 +214,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               )}
             </div>
             <List
+              ref={listRef}
               size="small"
               bordered
               dataSource={searchResults}
