@@ -22,6 +22,7 @@ const AddressSearchInput = ({
   const [totalCount, setTotalCount] = useState(0);
   const [isEnd, setIsEnd] = useState(false);
   const searchInputRef = useRef(null);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   
   // Form의 값을 실시간으로 가져오기
   const currentAddress = form ? {
@@ -59,6 +60,11 @@ const AddressSearchInput = ({
         setTotalCount(data.data.total || newResults.length);
         setCurrentPage(page);
         setIsEnd(data.data.is_end || newResults.length < 30);
+        
+        // 새 검색 시 첫 번째 항목 선택
+        if (!append && newResults.length > 0) {
+          setSelectedIndex(0);
+        }
       } else {
         message.error(data.error || '주소 검색에 실패했습니다.');
         if (!append) {
@@ -113,6 +119,7 @@ const AddressSearchInput = ({
     setCurrentPage(1);
     setTotalCount(0);
     setIsEnd(false);
+    setSelectedIndex(-1);
   };
 
   // 주소 검색 버튼 클릭
@@ -123,6 +130,7 @@ const AddressSearchInput = ({
     setCurrentPage(1);
     setTotalCount(0);
     setIsEnd(false);
+    setSelectedIndex(-1);
   };
 
   // 모달이 열릴 때 검색창에 자동 포커스
@@ -211,6 +219,7 @@ const AddressSearchInput = ({
           setCurrentPage(1);
           setTotalCount(0);
           setIsEnd(false);
+          setSelectedIndex(-1);
         }}
         footer={null}
         width={700}
@@ -233,6 +242,24 @@ const AddressSearchInput = ({
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 onPressEnter={() => searchAddress(searchKeyword)}
+                onKeyDown={(e) => {
+                  if (searchResults.length > 0) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => 
+                        prev < searchResults.length - 1 ? prev + 1 : 0
+                      );
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedIndex(prev => 
+                        prev > 0 ? prev - 1 : searchResults.length - 1
+                      );
+                    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                      e.preventDefault();
+                      handleAddressSelect(searchResults[selectedIndex]);
+                    }
+                  }
+                }}
                 size="large"
               />
             </Col>
@@ -285,7 +312,9 @@ const AddressSearchInput = ({
                       cursor: 'pointer',
                       transition: 'background-color 0.2s',
                       margin: 0,
-                      padding: '12px 16px'
+                      padding: '12px 16px',
+                      backgroundColor: selectedIndex === index ? '#e6f7ff' : 'transparent',
+                      border: selectedIndex === index ? '1px solid #1890ff' : '1px solid transparent'
                     }}
                     className="address-search-item"
                   >
