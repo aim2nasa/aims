@@ -7,16 +7,18 @@ import {
   UserOutlined, PhoneOutlined, MailOutlined, 
   FileTextOutlined, CalendarOutlined, HomeOutlined,
   DollarOutlined, SafetyOutlined, LinkOutlined,
-  EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined
+  EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import DocumentPreviewModal from './DocumentPreviewModal';
+import CustomerRelationshipDetail from './CustomerRelationshipDetail';
 
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
-const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, onResetRatio, onEdit, onDelete }) => {
+const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, onResetRatio, onEdit, onDelete, onCustomerSelect }) => {
   const [customer, setCustomer] = useState(null);
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -454,6 +456,16 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                 />
               )}
             </div>
+          </TabPane>
+
+          <TabPane 
+            tab={<Space><TeamOutlined />관계</Space>}
+            key="relationships"
+          >
+            <CustomerRelationshipDetail 
+              customerId={customerId} 
+              onCustomerSelect={onCustomerSelect}
+            />
           </TabPane>
 
           <TabPane 

@@ -132,37 +132,55 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     }
   };
 
-  // 관계별로 고객들을 그룹화
+  // 관계별로 고객들을 그룹화 (1:N 관계 지원)
   const relationshipGroups = useMemo(() => {
     const groups = {};
     const customersWithRelationships = new Set();
     const customersWithoutRelationships = [];
     
-    // 관계가 있는 고객들을 관계별로 그룹화
+    // 1:N 관계를 위한 그룹화
+    const customerRelationshipMap = new Map();
+    
     relationships.forEach(relationship => {
       const category = relationship.relationship_info.relationship_category;
       const type = relationship.relationship_info.relationship_type;
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
       
+      // 기본 그룹 구조 생성
       if (!groups[category]) {
         groups[category] = {};
       }
-      
       if (!groups[category][type]) {
-        groups[category][type] = [];
+        groups[category][type] = new Map();
       }
       
-      groups[category][type].push({
-        fromCustomer,
-        toCustomer,
-        relationshipData: relationship
-      });
+      // from 고객을 키로 하여 관련 고객들 그룹화
+      const fromCustomerKey = `${fromCustomer._id}-${fromCustomer.personal_info?.name}`;
+      
+      if (!groups[category][type].has(fromCustomerKey)) {
+        groups[category][type].set(fromCustomerKey, {
+          fromCustomer,
+          relatedCustomers: [],
+          relationships: []
+        });
+      }
+      
+      const group = groups[category][type].get(fromCustomerKey);
+      group.relatedCustomers.push(toCustomer);
+      group.relationships.push(relationship);
       
       customersWithRelationships.add(fromCustomer._id);
       if (toCustomer) {
         customersWithRelationships.add(toCustomer._id);
       }
+    });
+    
+    // Map을 배열로 변환
+    Object.keys(groups).forEach(category => {
+      Object.keys(groups[category]).forEach(type => {
+        groups[category][type] = Array.from(groups[category][type].values());
+      });
     });
     
     // 관계가 없는 고객들 찾기
@@ -213,7 +231,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         };
         
         const categoryCustomerCount = Object.values(types).reduce(
-          (sum, relationships) => sum + relationships.length, 0
+          (sum, customerGroups) => sum + customerGroups.length, 0
         );
         
         const categoryNode = {
@@ -228,7 +246,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
           icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
           children: Object.entries(types)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([type, relationshipList]) => {
+            .map(([type, customerGroups]) => {
               const typeLabel = config.types?.[type] || type;
               
               return {
@@ -236,24 +254,26 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   <Space>
                     <TeamOutlined style={{ color: config.color, opacity: 0.7 }} />
                     <Text>{typeLabel}</Text>
-                    <Badge count={relationshipList.length} style={{ backgroundColor: config.color, opacity: 0.8 }} />
+                    <Badge count={customerGroups.length} style={{ backgroundColor: config.color, opacity: 0.8 }} />
                   </Space>
                 ),
                 key: `type-${category}-${type}`,
                 icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-                children: relationshipList
+                children: customerGroups
                   .sort((a, b) => 
                     (a.fromCustomer.personal_info?.name || '').localeCompare(
                       b.fromCustomer.personal_info?.name || ''
                     )
                   )
-                  .map((relationship, index) => {
-                    const fromCustomer = relationship.fromCustomer;
-                    const toCustomer = relationship.toCustomer;
+                  .map((customerGroup, groupIndex) => {
+                    const fromCustomer = customerGroup.fromCustomer;
+                    const relatedCustomers = customerGroup.relatedCustomers;
+                    const relationships = customerGroup.relationships;
                     
-                    return {
-                      title: (
-                        <Space direction="vertical" size={4}>
+                    // 1:N 관계인 경우
+                    if (relatedCustomers.length > 1) {
+                      return {
+                        title: (
                           <Space>
                             <Text 
                               strong 
@@ -271,49 +291,131 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                             >
                               {fromCustomer.personal_info?.name || '이름 없음'}
                             </Text>
-                            <Text type="secondary">→</Text>
-                            <Text 
-                              style={{ 
-                                color: '#1890ff', 
-                                cursor: 'pointer',
-                                textDecoration: 'underline'
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (toCustomer && onCustomerSelect) {
-                                  onCustomerSelect(toCustomer._id);
+                            <Badge count={relatedCustomers.length} style={{ backgroundColor: config.color }} />
+                          </Space>
+                        ),
+                        key: `customer-group-${category}-${type}-${fromCustomer._id}`,
+                        icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
+                        children: relatedCustomers.map((toCustomer, relIndex) => {
+                          const relationship = relationships[relIndex];
+                          
+                          return {
+                            title: (
+                              <Space direction="vertical" size={4}>
+                                <Space>
+                                  <Text 
+                                    style={{ 
+                                      color: '#1890ff', 
+                                      cursor: 'pointer',
+                                      textDecoration: 'underline'
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (toCustomer && onCustomerSelect) {
+                                        onCustomerSelect(toCustomer._id);
+                                      }
+                                    }}
+                                  >
+                                    {toCustomer?.personal_info?.name || '이름 없음'}
+                                  </Text>
+                                </Space>
+                                <Space size={4}>
+                                  <Tag 
+                                    size="small" 
+                                    color={
+                                      relationship.relationship_info.strength === 'strong' ? 'red' :
+                                      relationship.relationship_info.strength === 'medium' ? 'orange' : 'blue'
+                                    }
+                                  >
+                                    {relationship.relationship_info.strength === 'strong' ? '강함' :
+                                     relationship.relationship_info.strength === 'medium' ? '보통' : '약함'}
+                                  </Tag>
+                                  {relationship.insurance_relevance.is_beneficiary && (
+                                    <Tag size="small" color="green">수익자</Tag>
+                                  )}
+                                  {relationship.insurance_relevance.cross_selling_opportunity && (
+                                    <Tag size="small" color="purple">교차판매</Tag>
+                                  )}
+                                </Space>
+                              </Space>
+                            ),
+                            key: `related-customer-${category}-${type}-${fromCustomer._id}-${relIndex}`,
+                            icon: <UserOutlined />,
+                            isLeaf: true,
+                            customerData: toCustomer,
+                            relationshipData: relationship
+                          };
+                        })
+                      };
+                    } else {
+                      // 1:1 관계인 경우 (기존 방식 유지)
+                      const toCustomer = relatedCustomers[0];
+                      const relationship = relationships[0];
+                      
+                      return {
+                        title: (
+                          <Space direction="vertical" size={4}>
+                            <Space>
+                              <Text 
+                                strong 
+                                style={{ 
+                                  color: '#1890ff', 
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onCustomerSelect) {
+                                    onCustomerSelect(fromCustomer._id);
+                                  }
+                                }}
+                              >
+                                {fromCustomer.personal_info?.name || '이름 없음'}
+                              </Text>
+                              <Text type="secondary">→</Text>
+                              <Text 
+                                style={{ 
+                                  color: '#1890ff', 
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (toCustomer && onCustomerSelect) {
+                                    onCustomerSelect(toCustomer._id);
+                                  }
+                                }}
+                              >
+                                {toCustomer?.personal_info?.name || '이름 없음'}
+                              </Text>
+                            </Space>
+                            <Space size={4}>
+                              <Tag 
+                                size="small" 
+                                color={
+                                  relationship.relationship_info.strength === 'strong' ? 'red' :
+                                  relationship.relationship_info.strength === 'medium' ? 'orange' : 'blue'
                                 }
-                              }}
-                            >
-                              {toCustomer?.personal_info?.name || '이름 없음'}
-                            </Text>
+                              >
+                                {relationship.relationship_info.strength === 'strong' ? '강함' :
+                                 relationship.relationship_info.strength === 'medium' ? '보통' : '약함'}
+                              </Tag>
+                              {relationship.insurance_relevance.is_beneficiary && (
+                                <Tag size="small" color="green">수익자</Tag>
+                              )}
+                              {relationship.insurance_relevance.cross_selling_opportunity && (
+                                <Tag size="small" color="purple">교차판매</Tag>
+                              )}
+                            </Space>
                           </Space>
-                          <Space size={4}>
-                            <Tag 
-                              size="small" 
-                              color={
-                                relationship.relationshipData.relationship_info.strength === 'strong' ? 'red' :
-                                relationship.relationshipData.relationship_info.strength === 'medium' ? 'orange' : 'blue'
-                              }
-                            >
-                              {relationship.relationshipData.relationship_info.strength === 'strong' ? '강함' :
-                               relationship.relationshipData.relationship_info.strength === 'medium' ? '보통' : '약함'}
-                            </Tag>
-                            {relationship.relationshipData.insurance_relevance.is_beneficiary && (
-                              <Tag size="small" color="green">수익자</Tag>
-                            )}
-                            {relationship.relationshipData.insurance_relevance.cross_selling_opportunity && (
-                              <Tag size="small" color="purple">교차판매</Tag>
-                            )}
-                          </Space>
-                        </Space>
-                      ),
-                      key: `relationship-${category}-${type}-${fromCustomer._id}-${index}`,
-                      icon: <UserOutlined />,
-                      isLeaf: true,
-                      customerData: fromCustomer,
-                      relationshipData: relationship.relationshipData
-                    };
+                        ),
+                        key: `relationship-${category}-${type}-${fromCustomer._id}-${groupIndex}`,
+                        icon: <UserOutlined />,
+                        isLeaf: true,
+                        customerData: fromCustomer,
+                        relationshipData: relationship
+                      };
+                    }
                   })
               };
             })
