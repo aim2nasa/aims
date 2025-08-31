@@ -6,12 +6,13 @@ import {
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined
+  SearchOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, TeamOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
 import CustomerRegionalTreeView from './CustomerRegionalTreeView';
+import CustomerRelationshipTreeView from './CustomerRelationshipTreeView';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -27,6 +28,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
   });
   const [searchText, setSearchText] = useState('');
   const [showRegionalView, setShowRegionalView] = useState(false);
+  const [showRelationshipView, setShowRelationshipView] = useState(false);
 
   // 통합 모달 관리 - 외부 props 우선
   const [internalModalVisible, setInternalModalVisible] = useState(false);
@@ -404,7 +406,22 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
               <span>지역별 보기</span>
               <Switch 
                 checked={showRegionalView}
-                onChange={setShowRegionalView}
+                onChange={(checked) => {
+                  setShowRegionalView(checked);
+                  if (checked) setShowRelationshipView(false);
+                }}
+                size="small"
+              />
+            </Space>
+            <Space>
+              <TeamOutlined />
+              <span>관계별 보기</span>
+              <Switch 
+                checked={showRelationshipView}
+                onChange={(checked) => {
+                  setShowRelationshipView(checked);
+                  if (checked) setShowRegionalView(false);
+                }}
                 size="small"
               />
             </Space>
@@ -415,7 +432,7 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
               style={{ width: 300 }}
               prefix={<SearchOutlined />}
               allowClear
-              disabled={showRegionalView}
+              disabled={showRegionalView || showRelationshipView}
             />
             <Button 
               type="primary" 
@@ -429,6 +446,11 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
       >
         {showRegionalView ? (
           <CustomerRegionalTreeView 
+            onCustomerSelect={handleCustomerNameClick}
+            selectedCustomerId={null}
+          />
+        ) : showRelationshipView ? (
+          <CustomerRelationshipTreeView 
             onCustomerSelect={handleCustomerNameClick}
             selectedCustomerId={null}
           />
