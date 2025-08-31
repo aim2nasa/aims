@@ -7,7 +7,7 @@ import {
   HomeOutlined,
   BankOutlined,
   HeartOutlined,
-  SwapOutlined
+  EditOutlined
 } from '@ant-design/icons';
 import CustomerService from '../services/customerService';
 
@@ -326,7 +326,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return result;
-  }, [relationships, customers, familyRepresentatives]);
+  }, [relationships, customers, familyRepresentatives, selectFamilyRepresentative]);
 
   // 새로운 구조에 맞는 Tree 데이터 생성
   const treeData = useMemo(() => {
@@ -372,16 +372,14 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   <Button
                     type="text"
                     size="small"
-                    icon={<SwapOutlined />}
-                    style={{ color: '#1890ff', fontSize: '12px' }}
+                    icon={<EditOutlined />}
+                    style={{ color: '#1890ff', fontSize: '14px' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openRepresentativeModal(groupKey, representative._id, members);
                     }}
                     title="대표자 변경"
-                  >
-                    변경
-                  </Button>
+                  />
                   <Badge count={members.length} style={{ backgroundColor: '#52c41a', opacity: 0.8 }} />
                 </Space>
               ),
