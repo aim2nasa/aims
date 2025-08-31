@@ -4,6 +4,7 @@ import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import ImageViewer from './ImageViewer';
 import CustomerDetailPanel from './CustomerDetailPanel';
+import { RelationshipProvider } from '../contexts/RelationshipContext';
 import axios from 'axios';
 
 const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onEditCustomer, onDeleteCustomer, onCustomerSelect }) => {
@@ -14,15 +15,17 @@ const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onE
   // 고객 정보 표시
   if (contentType === 'customer' && customer) {
     return (
-      <CustomerDetailPanel
-        customerId={customer._id}
-        customer={customer}
-        onClose={onClose}
-        onResetRatio={onResetRatio}
-        onEdit={onEditCustomer}
-        onDelete={onDeleteCustomer}
-        onCustomerSelect={onCustomerSelect}
-      />
+      <RelationshipProvider>
+        <CustomerDetailPanel
+          customerId={customer._id}
+          customer={customer}
+          onClose={onClose}
+          onResetRatio={onResetRatio}
+          onEdit={onEditCustomer}
+          onDelete={onDeleteCustomer}
+          onCustomerSelect={onCustomerSelect}
+        />
+      </RelationshipProvider>
     );
   }
 

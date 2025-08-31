@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tree, Card, Space, Typography, Badge, Spin, Tag, Button, Modal, Select } from 'antd';
 import { 
   FolderOutlined, 
@@ -9,71 +9,34 @@ import {
   HeartOutlined,
   EditOutlined
 } from '@ant-design/icons';
-import CustomerService from '../services/customerService';
+import { useRelationship } from '../contexts/RelationshipContext';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
-  const [customers, setCustomers] = useState([]);
-  const [relationships, setRelationships] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    loading,
+    allRelationshipsData,
+    familyRepresentatives,
+    loadAllRelationshipsData,
+    setFamilyRepresentative
+  } = useRelationship();
+  
   const [expandedKeys, setExpandedKeys] = useState(['customers', 'family', 'corporate']);
   
-  // 대표자 변경 관련 상태
+  // 대표자 변경 관련 상태 (로컬 UI 상태만)
   const [representativeModal, setRepresentativeModal] = useState({
     visible: false,
     familyGroupKey: null,
     currentRepId: null,
     members: []
   });
-  const [familyRepresentatives, setFamilyRepresentatives] = useState({}); // 사용자가 수동 설정한 대표자들
 
+  // 컴포넌트 마운트 시 모든 관계 데이터 로드
   useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  const fetchAllData = async () => {
-    setLoading(true);
-    try {
-      // 모든 고객 조회
-      const customersResult = await CustomerService.getCustomers({ 
-        page: 1, 
-        limit: 1000 
-      });
-      
-      if (customersResult.success) {
-        const customersData = customersResult.data.customers;
-        setCustomers(customersData);
-        
-        // 각 고객의 관계 정보 조회
-        const allRelationships = [];
-        for (const customer of customersData) {
-          try {
-            const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/relationships?include_details=true`);
-            const relationshipResult = await response.json();
-            
-            if (relationshipResult.success) {
-              relationshipResult.data.relationships.forEach(rel => {
-                allRelationships.push({
-                  ...rel,
-                  from_customer: customer
-                });
-              });
-            }
-          } catch (error) {
-            console.warn(`고객 ${customer.personal_info?.name}의 관계 조회 실패:`, error);
-          }
-        }
-        
-        setRelationships(allRelationships);
-      }
-    } catch (error) {
-      console.error('데이터 조회 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadAllRelationshipsData();
+  }, [loadAllRelationshipsData]);
 
   // 대표자 변경 모달 열기
   const openRepresentativeModal = (familyGroupKey, currentRepId, members) => {
@@ -85,15 +48,11 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
   };
 
-  // 대표자 변경 처리
+  // 대표자 변경 처리 (Context를 통해)
   const handleRepresentativeChange = (newRepId) => {
     const { familyGroupKey } = representativeModal;
     
-    setFamilyRepresentatives(prev => ({
-      ...prev,
-      [familyGroupKey]: newRepId
-    }));
-    
+    setFamilyRepresentative(familyGroupKey, newRepId);
     closeRepresentativeModal();
   };
 
@@ -150,8 +109,14 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     })[0];
   };
 
-  // 새로운 구조로 데이터 그룹화
+  // Context에서 받은 데이터 구조화
   const structuredData = useMemo(() => {
+    const { customers, relationships } = allRelationshipsData;
+    
+    if (!customers.length || !relationships.length) {
+      return { 가족그룹: {}, 법인: {} };
+    }
+    
     const result = {
       가족그룹: {},  // 가족 그룹별 데이터
       법인: {}
@@ -312,7 +277,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return result;
-  }, [relationships, customers, familyRepresentatives, selectFamilyRepresentative]);
+  }, [allRelationshipsData, familyRepresentatives, selectFamilyRepresentative]);
 
   // 새로운 구조에 맞는 Tree 데이터 생성
   const treeData = useMemo(() => {
@@ -456,7 +421,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   onClick={(e) => {
                     e.stopPropagation();
                     // 회사 이름으로 찾아서 선택
-                    const company = customers.find(c => c.personal_info?.name === companyName);
+                    const company = allRelationshipsData.customers.find(c => c.personal_info?.name === companyName);
                     if (company && onCustomerSelect) {
                       onCustomerSelect(company._id);
                     }
@@ -482,7 +447,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     onClick={(e) => {
                       e.stopPropagation();
                       // 직원 이름으로 찾아서 선택
-                      const employee = customers.find(c => c.personal_info?.name === employeeName);
+                      const employee = allRelationshipsData.customers.find(c => c.personal_info?.name === employeeName);
                       if (employee && onCustomerSelect) {
                         onCustomerSelect(employee._id);
                       }
@@ -502,7 +467,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     }
     
     return treeNodes;
-  }, [structuredData, customers, onCustomerSelect]);
+  }, [structuredData, allRelationshipsData.customers, onCustomerSelect]);
 
   const handleSelect = (selectedKeys, { node }) => {
     if (node.customerData && onCustomerSelect) {

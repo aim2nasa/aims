@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { 
   Card, Table, Tag, Space, Typography, Empty, Spin, Button, 
-  message, Popconfirm 
+  Popconfirm 
 } from 'antd';
 import { 
   TeamOutlined, DeleteOutlined,
   HomeOutlined, BankOutlined, CoffeeOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useRelationship } from '../contexts/RelationshipContext';
 
 const { Title, Text } = Typography;
 
@@ -21,67 +22,34 @@ const CATEGORY_ICONS = {
 };
 
 const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
-  const [relationships, setRelationships] = useState([]);
-  const [relationshipTypes, setRelationshipTypes] = useState({});
-  const [loading, setLoading] = useState(false);
+  const {
+    loading,
+    relationshipTypes,
+    customerRelationships,
+    loadCustomerRelationships,
+    deleteRelationship
+  } = useRelationship();
 
+  // 현재 고객의 관계 데이터 가져오기
+  const relationships = useMemo(() => {
+    if (!customerId) return [];
+    const cached = customerRelationships.get(customerId);
+    return cached?.relationships || [];
+  }, [customerId, customerRelationships]);
+
+  // 고객 ID가 변경되면 해당 고객의 관계 데이터 로드
   useEffect(() => {
     if (customerId) {
-      fetchRelationships();
-      fetchRelationshipTypes();
+      loadCustomerRelationships(customerId);
     }
-  }, [customerId]);
+  }, [customerId, loadCustomerRelationships]);
 
-  const fetchRelationships = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}/relationships?include_details=true`);
-      const result = await response.json();
-      
-      
-      if (result.success) {
-        setRelationships(result.data.relationships || []);
-      }
-    } catch (error) {
-      console.error('관계 조회 실패:', error);
-      message.error('관계 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchRelationshipTypes = async () => {
-    try {
-      const response = await fetch('http://tars.giize.com:3010/api/relationship-types');
-      const result = await response.json();
-      
-      if (result.success) {
-        setRelationshipTypes(result.data);
-      }
-    } catch (error) {
-      console.error('관계 유형 조회 실패:', error);
-    }
-  };
-
-
-
-
+  // 관계 삭제 처리 (Context를 통해)
   const handleDeleteRelationship = async (relationshipId) => {
-    try {
-      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}/relationships/${relationshipId}`, {
-        method: 'DELETE'
-      });
-      const result = await response.json();
-      
-      if (result.success) {
-        message.success('관계가 삭제되었습니다.');
-        fetchRelationships();
-      } else {
-        message.error(result.error || '관계 삭제에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('관계 삭제 실패:', error);
-      message.error('관계 삭제 중 오류가 발생했습니다.');
+    const success = await deleteRelationship(customerId, relationshipId);
+    if (success) {
+      // 삭제 후 해당 고객의 관계 데이터 자동 새로고침
+      loadCustomerRelationships(customerId);
     }
   };
 

@@ -13,6 +13,7 @@ import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
 import CustomerRegionalTreeView from './CustomerRegionalTreeView';
 import CustomerRelationshipTreeView from './CustomerRelationshipTreeView';
+import { RelationshipProvider } from '../contexts/RelationshipContext';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -432,10 +433,12 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
             selectedCustomerId={null}
           />
         ) : showRelationshipView ? (
-          <CustomerRelationshipTreeView 
-            onCustomerSelect={handleCustomerNameClick}
-            selectedCustomerId={null}
-          />
+          <RelationshipProvider>
+            <CustomerRelationshipTreeView 
+              onCustomerSelect={handleCustomerNameClick}
+              selectedCustomerId={null}
+            />
+          </RelationshipProvider>
         ) : (
           <Table
             columns={columns}
