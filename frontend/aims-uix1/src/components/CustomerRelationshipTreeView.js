@@ -255,9 +255,38 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                       title: (
                         <Space direction="vertical" size={4}>
                           <Space>
-                            <Text strong>{fromCustomer.personal_info?.name || '이름 없음'}</Text>
+                            <Text 
+                              strong 
+                              style={{ 
+                                color: '#1890ff', 
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onCustomerSelect) {
+                                  onCustomerSelect(fromCustomer._id);
+                                }
+                              }}
+                            >
+                              {fromCustomer.personal_info?.name || '이름 없음'}
+                            </Text>
                             <Text type="secondary">→</Text>
-                            <Text>{toCustomer?.personal_info?.name || '이름 없음'}</Text>
+                            <Text 
+                              style={{ 
+                                color: '#1890ff', 
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (toCustomer && onCustomerSelect) {
+                                  onCustomerSelect(toCustomer._id);
+                                }
+                              }}
+                            >
+                              {toCustomer?.personal_info?.name || '이름 없음'}
+                            </Text>
                           </Space>
                           <Space size={4}>
                             <Tag 
