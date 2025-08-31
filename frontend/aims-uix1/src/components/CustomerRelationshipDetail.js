@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Card, Table, Tag, Space, Typography, Empty, Spin, Button, Modal, 
-  Form, Select, Input, Switch, message, Popconfirm 
+  Card, Table, Tag, Space, Typography, Empty, Spin, Button, 
+  message, Popconfirm 
 } from 'antd';
 import { 
-  TeamOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
+  TeamOutlined, DeleteOutlined,
   HomeOutlined, BankOutlined, CoffeeOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 // 관계 카테고리 아이콘 매핑
 const CATEGORY_ICONS = {
@@ -25,16 +24,11 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
   const [relationships, setRelationships] = useState([]);
   const [relationshipTypes, setRelationshipTypes] = useState({});
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingRelationship, setEditingRelationship] = useState(null);
-  const [customers, setCustomers] = useState([]);
-  const [form] = Form.useForm();
 
   useEffect(() => {
     if (customerId) {
       fetchRelationships();
       fetchRelationshipTypes();
-      fetchAllCustomers();
     }
   }, [customerId]);
 
@@ -69,40 +63,8 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
     }
   };
 
-  const fetchAllCustomers = async () => {
-    try {
-      const response = await fetch('http://tars.giize.com:3010/api/customers?limit=1000');
-      const result = await response.json();
-      
-      if (result.success) {
-        setCustomers(result.data.data.customers.filter(customer => customer._id !== customerId));
-      }
-    } catch (error) {
-      console.error('고객 목록 조회 실패:', error);
-    }
-  };
 
-  const handleAddRelationship = () => {
-    setEditingRelationship(null);
-    form.resetFields();
-    setModalVisible(true);
-  };
 
-  const handleEditRelationship = (relationship) => {
-    setEditingRelationship(relationship);
-    form.setFieldsValue({
-      to_customer_id: relationship.relationship_info.to_customer_id,
-      relationship_type: relationship.relationship_info.relationship_type,
-      strength: relationship.relationship_info.strength,
-      description: relationship.relationship_details.description,
-      contact_frequency: relationship.relationship_details.contact_frequency,
-      influence_level: relationship.relationship_details.influence_level,
-      is_beneficiary: relationship.insurance_relevance.is_beneficiary,
-      cross_selling_opportunity: relationship.insurance_relevance.cross_selling_opportunity,
-      referral_potential: relationship.insurance_relevance.referral_potential
-    });
-    setModalVisible(true);
-  };
 
   const handleDeleteRelationship = async (relationshipId) => {
     try {
@@ -123,52 +85,6 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
     }
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      const url = editingRelationship 
-        ? `http://tars.giize.com:3010/api/customers/${customerId}/relationships/${editingRelationship._id}`
-        : `http://tars.giize.com:3010/api/customers/${customerId}/relationships`;
-      
-      const method = editingRelationship ? 'PUT' : 'POST';
-      
-      const data = {
-        to_customer_id: values.to_customer_id,
-        relationship_type: values.relationship_type,
-        strength: values.strength,
-        relationship_details: {
-          description: values.description,
-          contact_frequency: values.contact_frequency,
-          influence_level: values.influence_level
-        },
-        insurance_relevance: {
-          is_beneficiary: values.is_beneficiary || false,
-          cross_selling_opportunity: values.cross_selling_opportunity || false,
-          referral_potential: values.referral_potential || 'medium'
-        }
-      };
-
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        message.success(editingRelationship ? '관계가 수정되었습니다.' : '관계가 추가되었습니다.');
-        setModalVisible(false);
-        fetchRelationships();
-      } else {
-        message.error(result.error || '관계 저장에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('관계 저장 실패:', error);
-      message.error('관계 저장 중 오류가 발생했습니다.');
-    }
-  };
 
   const columns = [
     {
@@ -254,13 +170,6 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
       width: 100,
       render: (_, record) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => handleEditRelationship(record)}
-            title="관계 수정"
-          />
           <Popconfirm
             title="관계 삭제"
             description="정말로 이 관계를 삭제하시겠습니까?"
@@ -290,16 +199,6 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
             <Title level={5} style={{ margin: 0 }}>고객 관계</Title>
           </Space>
         }
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            size="small"
-            onClick={handleAddRelationship}
-          >
-            관계 추가
-          </Button>
-        }
         size="small"
       >
         {loading ? (
@@ -323,114 +222,6 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
         )}
       </Card>
 
-      {/* 관계 추가/수정 모달 */}
-      <Modal
-        title={editingRelationship ? "관계 수정" : "관계 추가"}
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            label="관련 고객"
-            name="to_customer_id"
-            rules={[{ required: true, message: '관련 고객을 선택해주세요' }]}
-          >
-            <Select
-              showSearch
-              placeholder="관련 고객 선택"
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {customers.map(customer => (
-                <Option key={customer._id} value={customer._id}>
-                  {customer.personal_info?.name} ({customer.insurance_info?.customer_type})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="관계 유형"
-            name="relationship_type"
-            rules={[{ required: true, message: '관계 유형을 선택해주세요' }]}
-          >
-            <Select placeholder="관계 유형 선택">
-              {Object.entries(relationshipTypes.all_types || {}).map(([type, config]) => (
-                <Option key={type} value={type}>
-                  {config.label} ({config.category})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="관계 강도"
-            name="strength"
-            initialValue="medium"
-          >
-            <Select>
-              <Option value="strong">강함</Option>
-              <Option value="medium">보통</Option>
-              <Option value="weak">약함</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="설명" name="description">
-            <Input.TextArea rows={3} placeholder="관계에 대한 상세 설명" />
-          </Form.Item>
-
-          <Form.Item label="연락 빈도" name="contact_frequency" initialValue="monthly">
-            <Select>
-              <Option value="daily">매일</Option>
-              <Option value="weekly">주간</Option>
-              <Option value="monthly">월간</Option>
-              <Option value="rarely">드물게</Option>
-              <Option value="never">없음</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="영향력 수준" name="influence_level" initialValue="medium">
-            <Select>
-              <Option value="high">높음</Option>
-              <Option value="medium">보통</Option>
-              <Option value="low">낮음</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="추천 잠재력" name="referral_potential" initialValue="medium">
-            <Select>
-              <Option value="high">높음</Option>
-              <Option value="medium">보통</Option>
-              <Option value="low">낮음</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="is_beneficiary" valuePropName="checked">
-            <Switch /> <span style={{ marginLeft: 8 }}>수익자 관계</span>
-          </Form.Item>
-
-          <Form.Item name="cross_selling_opportunity" valuePropName="checked">
-            <Switch /> <span style={{ marginLeft: 8 }}>교차판매 기회</span>
-          </Form.Item>
-
-          <div style={{ textAlign: 'right', marginTop: 24 }}>
-            <Space>
-              <Button onClick={() => setModalVisible(false)}>취소</Button>
-              <Button type="primary" htmlType="submit">
-                {editingRelationship ? '수정' : '추가'}
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Modal>
     </div>
   );
 };
