@@ -216,6 +216,17 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         });
       }
 
+      // 현재 고객 정보 조회하여 법인/개인 구분
+      const currentCustomer = await db.collection('customers').findOne({ _id: new ObjectId(id) });
+      if (!currentCustomer) {
+        return res.status(404).json({
+          success: false,
+          error: '고객을 찾을 수 없습니다.'
+        });
+      }
+
+      const isCompany = currentCustomer.insurance_info?.customer_type === '법인';
+
       // 양방향 관계 조회: 현재 고객이 from_customer이거나 to_customer인 모든 관계
       let baseFilter = {
         $or: [
@@ -224,6 +235,11 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         ],
         'relationship_info.status': 'active'
       };
+
+      // 법인 고객인 경우 모든 corporate 관계 조회 (직원, 이사, 임원 등)
+      if (isCompany) {
+        baseFilter['relationship_info.relationship_category'] = 'corporate';
+      }
 
       if (category) {
         baseFilter['relationship_info.relationship_category'] = category;
@@ -253,8 +269,15 @@ const setupCustomerRelationshipRoutes = (app, db) => {
           }
         });
 
+        let relatedCustomersFilter = { _id: { $in: relatedCustomerIds } };
+        
+        // 법인 고객인 경우 관련 고객은 개인만 조회
+        if (isCompany) {
+          relatedCustomersFilter['insurance_info.customer_type'] = '개인';
+        }
+
         const relatedCustomers = await db.collection('customers')
-          .find({ _id: { $in: relatedCustomerIds } })
+          .find(relatedCustomersFilter)
           .toArray();
 
         const customerMap = {};

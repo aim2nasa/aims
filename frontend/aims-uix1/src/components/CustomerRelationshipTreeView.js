@@ -50,7 +50,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         const allRelationships = [];
         for (const customer of customersData) {
           try {
-            const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/relationships`);
+            const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/relationships?include_details=true`);
             const relationshipResult = await response.json();
             
             if (relationshipResult.success) {
