@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
-import { Menu, Typography } from 'antd';
+import React from 'react';
+import { Menu } from 'antd';
 import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
-
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
-  const [customerManagementExpanded, setCustomerManagementExpanded] = useState(false);
-
   const menuItems = [
     // 검색 결과 (동적으로 표시)
     ...(hasSearchResults ? [{
@@ -15,19 +11,12 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       label: `검색 결과 (${searchResultsCount || 0}개)`,
     }] : []),
     
-    // 고객 관리 (접을 수 있는 메뉴)
+    // 고객 관리 (항상 펼쳐진 메뉴)
     {
       key: 'customers',
       icon: <UserOutlined />,
-      label: (
-        <span onClick={(e) => {
-          e.stopPropagation();
-          setCustomerManagementExpanded(!customerManagementExpanded);
-        }}>
-          고객 관리
-        </span>
-      ),
-      children: customerManagementExpanded ? [
+      label: '고객 관리',
+      children: [
         {
           key: 'customers-all',
           icon: <UnorderedListOutlined />,
@@ -43,7 +32,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
           icon: <TeamOutlined />,
           label: '관계별 보기',
         }
-      ] : undefined,
+      ],
     },
     
     // 문서 처리 현황
@@ -60,7 +49,10 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
         items={menuItems} 
         mode="inline" 
         defaultSelectedKeys={['dsd']} 
+        openKeys={['customers']}
+        onOpenChange={() => {}}
         onClick={({ key }) => onMenuClick && onMenuClick(key)}
+        expandIcon={() => null}
       />
     </div>
   );
