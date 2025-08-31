@@ -208,42 +208,9 @@ const extractStatus = (document) => {
     default:
       return 'processing';
   }
-  
-  // 추가 fallback: meta와 stages에서 status 찾기
-  if (document.meta) {
-    let metaData = document.meta;
-    if (typeof metaData === 'string') {
-      try {
-        metaData = JSON.parse(metaData);
-      } catch (e) {}
-    }
-    if (metaData && metaData.meta_status) {
-      return metaData.meta_status === 'ok' ? 'processing' : metaData.meta_status;
-    }
-  }
-  
-  // stages에서 status 찾기
-  if (document.stages) {
-    for (const [key, value] of Object.entries(document.stages)) {
-      let data = value;
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch (e) {
-          continue;
-        }
-      }
-      if (data && data.status) {
-        return data.status === 'completed' ? 'completed' : data.status;
-      }
-    }
-  }
-  
-  return 'pending';
 };
 
 const extractProgress = (document) => {
-  const filename = extractFilename(document);
   
   // 서버에서 계산된 progress를 우선 사용 (단, OCR pending 때문에 75%면 100%로 수정)
   if (document.progress !== undefined && document.progress !== null) {
@@ -469,97 +436,7 @@ const analyzeProcessingPath = (document) => {
   return { badges, pathType, expectedStages };
 };
 
-// 처리 경로별 맞춤형 진도율 계산
-const calculatePathSpecificProgress = (document, pathType, expectedStages) => {
-  const totalStages = expectedStages.length;
-  let completedStages = 0;
-  
-  switch (pathType) {
-    case 'meta_fulltext': // U, M, E 경로 (Meta에서 full_text 추출)
-      if (document.upload) completedStages++; // U: 33%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 67%
-      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
-      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 83%
-      return Math.round((completedStages / totalStages) * 100);
-      
-    case 'text_plain': // U, M, T, E 경로
-      if (document.upload) completedStages++; // U: 25%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
-      if (document.text && document.text.full_text) completedStages++; // T: 75%
-      if (document.docembed && document.docembed.status === 'done') completedStages++; // E: 100%
-      else if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
-      return Math.round((completedStages / totalStages) * 100);
-      
-    case 'ocr_normal': // U, M, O, E 경로
-      if (document.upload) completedStages++; // U: 25%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 50%
-      
-      // DocEmbed가 완료된 경우 OCR 상태와 관계없이 모든 단계 완료로 처리
-      if (document.docembed && document.docembed.status === 'done') {
-        completedStages = totalStages; // 모든 단계 완료: 100%
-      } else {
-        // DocEmbed가 미완료인 경우에만 OCR 상태 확인
-        if (document.ocr) {
-          if (document.ocr.status === 'done') completedStages++; // O: 75%
-          else if (document.ocr.status === 'running') completedStages += 0.7; // O 처리중: 67.5%
-          else if (document.ocr.queue) completedStages += 0.3; // O 대기중: 57.5%
-        }
-        if (document.docembed && document.docembed.status === 'processing') completedStages += 0.5; // E 처리중: 87.5%
-      }
-      return Math.round((completedStages / totalStages) * 100);
-      
-    case 'unsupported':
-    case 'page_limit_exceeded':
-    case 'ocr_skipped':
-      // U, M만 있으면 완료
-      if (document.upload) completedStages++; // U: 50%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // M: 100%
-      return Math.round((completedStages / totalStages) * 100);
-      
-    case 'processing':
-    default:
-      // 기본 진도율 계산
-      if (document.upload) completedStages++; // Upload 완료시 50%
-      if (document.meta && document.meta.meta_status === 'ok') completedStages++; // Meta 완료시 100%
-      return Math.round((completedStages / Math.max(totalStages, 2)) * 100);
-  }
-};
 
-// 뱃지 컴포넌트
-const ProcessingBadge = ({ badge, size = 'medium' }) => {
-  const statusColors = {
-    completed: { bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
-    processing: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-    pending: { bg: '#f3f4f6', color: '#374151', border: '#d1d5db' },
-    error: { bg: '#fee2e2', color: '#dc2626', border: '#fecaca' },
-    skipped: { bg: '#fef3c7', color: '#d97706', border: '#fde68a' }
-  };
-  
-  const colors = statusColors[badge.status] || statusColors.pending;
-  const Icon = badge.icon;
-  const iconSize = size === 'small' ? '12px' : '16px';
-  const padding = size === 'small' ? '2px 6px' : '4px 8px';
-  const fontSize = size === 'small' ? '10px' : '12px';
-  
-  return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '4px',
-      backgroundColor: colors.bg,
-      color: colors.color,
-      border: `1px solid ${colors.border}`,
-      borderRadius: '6px',
-      padding,
-      fontSize,
-      fontWeight: '600',
-      fontFamily: 'monospace'
-    }} title={`${badge.name} - ${badge.status}`}>
-      <Icon style={{ width: iconSize, height: iconSize }} />
-      {badge.type}
-    </div>
-  );
-};
 
 // 상태 뱃지 컴포넌트
 const StatusBadge = ({ status, size = "medium" }) => {
@@ -783,281 +660,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
   );
 };
 
-const DocumentListView = ({ documents, onDocumentClick, onDetailClick }) => {
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = now - date;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    if (diffDays === 0) {
-      // 오늘: 날짜와 시간 모두 표시
-      return `${month}/${day} ${hours}:${minutes}`;
-    } else {
-      // 오늘이 아닌 경우: 날짜만 표시
-      return `${year}/${month}/${day}`;
-    }
-  };
 
-  const truncateFilename = (filename, maxLength = 50) => {
-    if (!filename) return "Unknown File";
-    return filename.length <= maxLength ? filename : filename.substring(0, maxLength - 3) + "...";
-  };
-
-  return (
-    <div style={{
-      background: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-      overflow: 'hidden'
-    }}>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-            <tr>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'left',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Document
-              </th>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'left',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Status
-              </th>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'center',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Actions
-              </th>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'left',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Progress
-              </th>
-              <th style={{
-                padding: '12px 8px',
-                textAlign: 'center',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                minWidth: '90px'
-              }}>
-                Uploaded
-              </th>
-              <th style={{
-                padding: '12px 24px',
-                textAlign: 'left',
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Document ID
-              </th>
-            </tr>
-          </thead>
-          <tbody style={{ background: 'white' }}>
-            {documents.map((document, index) => {
-              const filename = extractFilename(document);
-              const status = extractStatus(document);
-              const progress = extractProgress(document);
-              const uploadedDate = extractUploadedDate(document);
-              const { badges } = analyzeProcessingPath(document);
-              
-              return (
-                <tr 
-                  key={document.id || document._id || index}
-                  onClick={() => {
-                    if (status === 'completed' && onDocumentClick) {
-                      onDocumentClick(document);
-                    }
-                  }}
-                  style={{
-                    borderBottom: index < documents.length - 1 ? '1px solid #e5e7eb' : 'none',
-                    cursor: status === 'completed' ? 'pointer' : 'default',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.closest('tr').style.backgroundColor = '#f9fafb'}
-                  onMouseLeave={(e) => e.target.closest('tr').style.backgroundColor = 'white'}
-                >
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <div style={{
-                        backgroundColor: '#eff6ff',
-                        padding: '8px',
-                        borderRadius: '8px',
-                        marginRight: '12px'
-                      }}>
-                        <FileText style={{ width: '16px', height: '16px', color: '#3b82f6' }} />
-                      </div>
-                      <div style={{ minWidth: '0', flex: '1' }}>
-                        <div>
-                          <p style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            color: '#111827',
-                            margin: '0 0 4px 0',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }} title={filename}>
-                            {truncateFilename(filename)}
-                          </p>
-                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            {badges.map((badge, index) => (
-                              <ProcessingBadge key={index} badge={badge} size="small" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <StatusBadge status={status} size="small" />
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onDetailClick) {
-                          onDetailClick(document);
-                        }
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        fontWeight: '500',
-                        color: '#059669',
-                        backgroundColor: '#ecfdf5',
-                        border: '1px solid #d1fae5',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#d1fae5';
-                        e.target.style.borderColor = '#a7f3d0';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = '#ecfdf5';
-                        e.target.style.borderColor = '#d1fae5';
-                      }}
-                    >
-                      <Eye style={{ width: '12px', height: '12px' }} />
-                      View
-                    </button>
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ width: '100%', maxWidth: '200px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ flex: '1' }}>
-                          <div style={{
-                            width: '100%',
-                            backgroundColor: '#e5e7eb',
-                            borderRadius: '4px',
-                            height: '8px'
-                          }}>
-                            <div style={{
-                              height: '8px',
-                              borderRadius: '4px',
-                              transition: 'width 0.5s',
-                              backgroundColor: 
-                                status === "completed" ? "#10b981" :
-                                status === "processing" ? "#3b82f6" :
-                                status === "error" ? "#ef4444" : "#9ca3af",
-                              width: `${Math.min(progress || 0, 100)}%`,
-                              animation: status === "processing" ? "pulse 2s infinite" : "none"
-                            }} />
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: '12px',
-                          color: '#6b7280',
-                          fontWeight: '500',
-                          minWidth: '40px',
-                          textAlign: 'right'
-                        }}>
-                          {progress || 0}%
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 8px' }}>
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: '#6b7280',
-                      fontFamily: 'monospace',
-                      textAlign: 'center',
-                      minWidth: '75px',
-                      lineHeight: '1.2'
-                    }}>
-                      {formatDate(uploadedDate)}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{
-                      fontSize: '12px',
-                      fontFamily: 'monospace',
-                      color: '#6b7280',
-                      maxWidth: '200px'
-                    }}>
-                      <span style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        display: 'block'
-                      }} title={document.id || document._id || 'unknown-id'}>
-                        {document.id || document._id || 'unknown-id'}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
 
 
 // 상세 정보 모달
@@ -1259,7 +862,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
 
 // 메인 대시보드 컴포넌트
-const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
+const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumentPreview }) => {
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [paginatedDocuments, setPaginatedDocuments] = useState([]);
@@ -1899,7 +1502,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                               {paginatedDocuments.map((document, index) => {
                                 const filename = extractFilename(document);
                                 const status = extractStatus(document);
-                                const progress = extractProgress(document);
                                 const uploadedDate = extractUploadedDate(document);
                                 
                                 const formatDate = (dateString) => {
@@ -1913,6 +1515,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                                 return (
                                   <tr 
                                     key={document.id || document._id || index}
+                                    onClick={() => {
+                                      if (status === 'completed' && onDocumentPreview) {
+                                        onDocumentPreview(document);
+                                      }
+                                    }}
                                     style={{
                                       borderBottom: index < paginatedDocuments.length - 1 ? '1px solid #e5e7eb' : 'none',
                                       cursor: status === 'completed' ? 'pointer' : 'default'
@@ -1929,16 +1536,27 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                                           <FileText style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
                                         </div>
                                         <div>
-                                          <p style={{
-                                            fontSize: '12px',
-                                            fontWeight: '500',
-                                            color: '#111827',
-                                            margin: '0',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            maxWidth: '250px'
-                                          }} title={filename}>
+                                          <p 
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (status === 'completed' && onDocumentPreview) {
+                                                onDocumentPreview(document);
+                                              }
+                                            }}
+                                            style={{
+                                              fontSize: '12px',
+                                              fontWeight: '500',
+                                              color: status === 'completed' ? '#3b82f6' : '#111827',
+                                              margin: '0',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                              whiteSpace: 'nowrap',
+                                              maxWidth: '250px',
+                                              cursor: status === 'completed' ? 'pointer' : 'default',
+                                              textDecoration: status === 'completed' ? 'underline' : 'none'
+                                            }} 
+                                            title={filename}
+                                          >
                                             {filename}
                                           </p>
                                         </div>
@@ -1960,16 +1578,22 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                                       </span>
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <button style={{
-                                        padding: '2px 6px',
-                                        fontSize: '10px',
-                                        fontWeight: '500',
-                                        color: '#059669',
-                                        backgroundColor: '#ecfdf5',
-                                        border: '1px solid #d1fae5',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                      }}>
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDocumentClick(document);
+                                        }}
+                                        style={{
+                                          padding: '2px 6px',
+                                          fontSize: '10px',
+                                          fontWeight: '500',
+                                          color: '#059669',
+                                          backgroundColor: '#ecfdf5',
+                                          border: '1px solid #d1fae5',
+                                          borderRadius: '4px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
                                         <Eye style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
                                         View
                                       </button>
@@ -2106,6 +1730,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
       />
+
 
     </div>
   );

@@ -91,6 +91,51 @@ const AppLayout = () => {
     }
   };
 
+  // 문서 프리뷰 (파일명 클릭 시)
+  const handleDocumentPreview = async (doc) => {
+    // API 호출을 위한 ID 추출 (mock 데이터와 API 응답 필드명 분기)
+    const docId = doc._id || doc.id;
+
+    if (!docId) {
+      message.error('문서 ID가 없어 프리뷰를 불러올 수 없습니다.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post('https://n8nd.giize.com/webhook/smartsearch', {
+        id: docId
+      });
+
+      const fileData = response.data[0];
+      
+      // URL 경로 수정
+      let fileUrl = '';
+      if (fileData.upload?.destPath) {
+        const correctPath = fileData.upload.destPath.replace('/data', '');
+        fileUrl = `https://tars.giize.com${correctPath}`;
+      }
+
+      // `destPath`를 `fileUrl`로 매핑하여 저장
+      const updatedDoc = {
+        ...fileData,
+        fileUrl: fileUrl,
+      };
+
+      // Right 패널을 문서 모드로 설정 (프리뷰)
+      setSelectedDocument(updatedDoc);
+      setSelectedCustomer(null);
+      setRightPaneContent('document');
+      setRightPaneVisible(true);
+      
+    } catch (e) {
+      message.error('파일 프리뷰를 불러오는 중 오류가 발생했습니다.');
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // 고객 상세 정보 조회 및 RightPane에 전달
   const handleCustomerClick = async (customerId) => {
     try {
@@ -386,6 +431,7 @@ const AppLayout = () => {
             }}>
               <CenterPane 
                 onDocumentClick={handleDocumentClick}
+                onDocumentPreview={handleDocumentPreview}
                 onCustomerClick={handleCustomerClick}
                 searchResults={searchResults}
                 isLoading={isLoading}
