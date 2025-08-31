@@ -77,8 +77,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
 
   // 대표자 변경 모달 열기
   const openRepresentativeModal = (familyGroupKey, currentRepId, members) => {
-    console.log('모달 열기:', { familyGroupKey, currentRepId, members: members.map(m => m.personal_info?.name) });
-    
     setRepresentativeModal({
       visible: true,
       familyGroupKey: familyGroupKey,
@@ -164,7 +162,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     const processed = new Set(); // 이미 처리된 고객 ID들
     
     // 1단계: 가족 관계 매핑 구축 (개인-개인만)
-    console.log('전체 관계 수:', relationships.length);
     let validFamilyRelations = 0;
     
     relationships.forEach(relationship => {
@@ -178,8 +175,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
           toCustomer?.insurance_info?.customer_type === '개인') {
         
         validFamilyRelations++;
-        console.log(`유효한 가족 관계 ${validFamilyRelations}:`, 
-          fromCustomer.personal_info?.name, '→', toCustomer.personal_info?.name);
         
         const fromId = fromCustomer._id;
         const toId = toCustomer._id;
@@ -197,8 +192,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       }
     });
     
-    console.log('총 유효한 가족 관계:', validFamilyRelations);
-    console.log('가족 네트워크 수:', familyNetworks.size);
     
     // 2단계: 가족 그룹별로 구성원 수집 및 대표자 선정
     familyNetworks.forEach((connections, customerId) => {
@@ -232,8 +225,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       
       if (familyMembers.length === 0) return;
       
-      // 디버깅: 가족 그룹 로그
-      console.log('가족 그룹:', familyMembers.map(m => m.personal_info?.name));
       
       // 대표자 선정 (그룹 키 생성)
       const groupKey = Array.from(familyGroup).sort().join('-');
@@ -392,24 +383,21 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
                   .map((member, index) => ({
                     title: (
-                      <Space>
-                        <UserOutlined style={{ color: '#722ed1' }} />
-                        <Text 
-                          style={{ 
-                            color: '#1890ff', 
-                            cursor: 'pointer',
-                            textDecoration: 'underline'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onCustomerSelect) {
-                              onCustomerSelect(member._id);
-                            }
-                          }}
-                        >
-                          {member.personal_info?.name || '이름없음'}
-                        </Text>
-                      </Space>
+                      <Text 
+                        style={{ 
+                          color: '#1890ff', 
+                          cursor: 'pointer',
+                          textDecoration: 'underline'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onCustomerSelect) {
+                            onCustomerSelect(member._id);
+                          }
+                        }}
+                      >
+                        {member.personal_info?.name || '이름없음'}
+                      </Text>
                     ),
                     key: `family-member-${repName}-${index}`,
                     icon: <UserOutlined />,

@@ -44,8 +44,9 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
       const response = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}/relationships?include_details=true`);
       const result = await response.json();
       
+      
       if (result.success) {
-        setRelationships(result.data.relationships);
+        setRelationships(result.data.relationships || []);
       }
     } catch (error) {
       console.error('관계 조회 실패:', error);
