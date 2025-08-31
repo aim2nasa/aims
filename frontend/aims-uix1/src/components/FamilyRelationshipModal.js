@@ -11,24 +11,14 @@ import { useRelationship } from '../contexts/RelationshipContext';
 const { Option } = Select;
 const { Text } = Typography;
 
-// 가족 관계 유형 정의
+// 가족 관계 유형 정의 (API 서버와 동기화)
 const FAMILY_RELATIONSHIP_TYPES = {
   spouse: { label: '배우자', icon: '💑' },
   parent: { label: '부모', icon: '👨‍👩‍👧‍👦' },
   child: { label: '자녀', icon: '👶' },
-  son: { label: '아들', icon: '👦' },
-  daughter: { label: '딸', icon: '👧' },
   sibling: { label: '형제자매', icon: '👫' },
-  brother: { label: '형/동생', icon: '👨‍👦' },
-  sister: { label: '누나/언니/여동생', icon: '👩‍👧' },
   grandparent: { label: '조부모', icon: '👴👵' },
   grandchild: { label: '손자/손녀', icon: '👶' },
-  cousin: { label: '사촌', icon: '👨‍👩‍👧‍👦' },
-  parents_in_law: { label: '시부모', icon: '👴👵' },
-  father_in_law: { label: '장인', icon: '👨' },
-  mother_in_law: { label: '장모', icon: '👩' },
-  daughter_in_law: { label: '며느리', icon: '👩' },
-  son_in_law: { label: '사위', icon: '👨' },
   other: { label: '기타', icon: '👥' }
 };
 
@@ -89,6 +79,23 @@ const FamilyRelationshipModal = ({
 
   const handleSubmit = async (values) => {
     try {
+      // 폼 검증 확인
+      if (!values.to_customer_id) {
+        message.error('가족 구성원을 선택해주세요');
+        return;
+      }
+      
+      if (!values.relationship_type) {
+        message.error('가족 관계를 선택해주세요');
+        return;
+      }
+      
+      // 자기 자신과의 관계 방지
+      if (customerId === values.to_customer_id) {
+        message.error('자기 자신과는 관계를 설정할 수 없습니다');
+        return;
+      }
+
       // 기타 관계일 때 사용자 입력값 사용, 아니면 미리 정의된 값 사용
       const relationshipTypeValue = values.relationship_type === 'other' 
         ? values.custom_relationship_type 
@@ -97,6 +104,12 @@ const FamilyRelationshipModal = ({
       const relationshipLabel = values.relationship_type === 'other'
         ? values.custom_relationship_type
         : FAMILY_RELATIONSHIP_TYPES[values.relationship_type]?.label;
+        
+      // 기타 관계인데 custom_relationship_type이 없는 경우
+      if (values.relationship_type === 'other' && !values.custom_relationship_type?.trim()) {
+        message.error('기타 관계명을 입력해주세요');
+        return;
+      }
 
       const relationshipData = {
         relationship_type: relationshipTypeValue,
@@ -121,8 +134,19 @@ const FamilyRelationshipModal = ({
       onSuccess?.();
       onCancel();
     } catch (error) {
-      console.error('가족 관계 추가 실패:', error);
-      // createRelationship에서 이미 에러 메시지가 표시됨
+      
+      // 더 상세하고 사용자 친화적인 에러 메시지 제공
+      if (error.message.includes('유효하지 않은 관계 유형')) {
+        message.error('선택한 관계 유형이 지원되지 않습니다. 다른 관계를 선택해주세요.');
+      } else if (error.message.includes('이미 존재하는 관계')) {
+        message.error('이미 설정된 관계입니다. 기존 관계를 삭제한 후 다시 시도해주세요.');
+      } else if (error.message.includes('자기 자신')) {
+        message.error('자기 자신과는 관계를 설정할 수 없습니다.');
+      } else if (error.message) {
+        message.error(`관계 추가 실패: ${error.message}`);
+      } else {
+        message.error('가족 관계 추가 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
     }
   };
 
@@ -149,6 +173,9 @@ const FamilyRelationshipModal = ({
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        onFinishFailed={(errorInfo) => {
+          message.error('입력 값을 확인해주세요');
+        }}
       >
         {/* Hidden form field for customer ID */}
         <Form.Item
