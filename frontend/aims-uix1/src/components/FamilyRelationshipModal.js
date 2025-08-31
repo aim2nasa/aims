@@ -22,6 +22,12 @@ const FAMILY_RELATIONSHIP_TYPES = {
   sister: { label: '누나/언니/여동생', icon: '👩‍👧' },
   grandparent: { label: '조부모', icon: '👴👵' },
   grandchild: { label: '손자/손녀', icon: '👶' },
+  cousin: { label: '사촌', icon: '👨‍👩‍👧‍👦' },
+  parents_in_law: { label: '시부모', icon: '👴👵' },
+  father_in_law: { label: '장인', icon: '👨' },
+  mother_in_law: { label: '장모', icon: '👩' },
+  daughter_in_law: { label: '며느리', icon: '👩' },
+  son_in_law: { label: '사위', icon: '👨' },
   other: { label: '기타', icon: '👥' }
 };
 
@@ -236,6 +242,9 @@ const FamilyRelationshipModal = ({
             placeholder="가족 관계를 선택하세요" 
             size="large"
             onChange={(value) => setSelectedRelationType(value)}
+            listHeight={600}
+            showSearch
+            optionFilterProp="children"
           >
             {Object.entries(FAMILY_RELATIONSHIP_TYPES).map(([type, config]) => (
               <Option key={type} value={type}>
@@ -264,7 +273,7 @@ const FamilyRelationshipModal = ({
             ]}
           >
             <Input 
-              placeholder="예: 사촌, 시부모, 장인/장모, 며느리, 사위 등" 
+              placeholder="예: 고모, 이모, 외삼촌, 처남, 동서 등" 
               size="large"
               maxLength={20}
             />
