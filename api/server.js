@@ -60,6 +60,9 @@ const CUSTOMERS_COLLECTION = 'customers';
 const AGENTS_COLLECTION = 'agents';
 const CASES_COLLECTION = 'cases';
 
+// 고객 관계 관리 라우트 import
+const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
+
 let db;
 
 // MongoDB 연결
@@ -642,6 +645,17 @@ app.use((error, req, res, next) => {
     details: process.env.NODE_ENV === 'development' ? error.message : undefined
   });
 });
+
+// 고객 관계 관리 라우트 설정
+MongoClient.connect(MONGO_URI)
+  .then(client => {
+    console.log('MongoDB 연결 성공');
+    db = client.db(DB_NAME);
+    
+    // 고객 관계 라우트 설정
+    setupCustomerRelationshipRoutes(app, db);
+  })
+  .catch(error => console.error('MongoDB 연결 실패:', error));
 
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', () => {
