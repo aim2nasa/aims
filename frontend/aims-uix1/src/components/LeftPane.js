@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { SolutionOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -9,7 +9,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
   const [customerManagementExpanded, setCustomerManagementExpanded] = useState(false);
   
   const onSelect = (selectedKeys, info) => {
-    console.log('선택된 항목:', selectedKeys, info);
+    // Tree 항목 선택 처리
   };
 
   const treeData = [
@@ -18,8 +18,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       key: 'favorites',
       icon: <StarOutlined />,
       children: [
-        { title: '김민준 고객', key: 'kim-min-jun' },
-        { title: '박서준 고객', key: 'park-seo-jun' },
+        // 실제 데이터는 props나 API를 통해 받아올 예정
       ],
     },
     {
@@ -27,7 +26,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       key: 'recent',
       icon: <HistoryOutlined />,
       children: [
-        { title: '최유리 고객', key: 'choi-yoo-ri' },
+        // 실제 데이터는 props나 API를 통해 받아올 예정
       ],
     },
     {
@@ -35,19 +34,20 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       key: 'all',
       icon: <SolutionOutlined />,
       children: [
-        { title: '이재원 고객', key: 'lee-jae-won' },
-        { title: '한지아 고객', key: 'han-ji-a' },
+        // 실제 데이터는 props나 API를 통해 받아올 예정
       ],
     },
   ];
 
   const menuItems = [
-    // 검색 결과가 있을 때만 "검색 결과" 메뉴 표시
+    // 검색 결과 (동적으로 표시)
     ...(hasSearchResults ? [{
       key: 'search-results',
       icon: <SearchOutlined />,
       label: `검색 결과 (${searchResultsCount || 0}개)`,
     }] : []),
+    
+    // 고객 관리 (접을 수 있는 메뉴)
     {
       key: 'customers',
       icon: <UserOutlined />,
@@ -77,25 +77,12 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
         }
       ] : undefined,
     },
+    
+    // 문서 처리 현황
     {
       key: 'dsd',
       icon: <DashboardOutlined />,
       label: '문서 처리 현황',
-    },
-    {
-      key: '1',
-      icon: <FolderOutlined />,
-      label: '보험증권',
-    },
-    {
-      key: '2',
-      icon: <FolderOutlined />,
-      label: '계약서',
-    },
-    {
-      key: '3',
-      icon: <FolderOutlined />,
-      label: '청구서',
     },
   ];
 
@@ -105,7 +92,9 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       <Search
         placeholder="고객 검색"
         style={{ marginBottom: 16 }}
-        onSearch={(value) => console.log('고객 검색:', value)}
+        onSearch={(value) => {
+          // 고객 검색 처리
+        }}
       />
       <Tree
         showIcon
@@ -117,7 +106,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
       <Menu 
         items={menuItems} 
         mode="inline" 
-        defaultSelectedKeys={['1']} 
+        defaultSelectedKeys={['dsd']} 
         onClick={({ key }) => onMenuClick && onMenuClick(key)}
       />
     </div>
