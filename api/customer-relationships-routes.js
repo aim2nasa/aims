@@ -216,27 +216,43 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         });
       }
 
-      let filter = {
-        'relationship_info.from_customer_id': new ObjectId(id),
+      // 양방향 관계 조회: 현재 고객이 from_customer이거나 to_customer인 모든 관계
+      let baseFilter = {
+        $or: [
+          { 'relationship_info.from_customer_id': new ObjectId(id) },
+          { 'relationship_info.to_customer_id': new ObjectId(id) }
+        ],
         'relationship_info.status': 'active'
       };
 
       if (category) {
-        filter['relationship_info.relationship_category'] = category;
+        baseFilter['relationship_info.relationship_category'] = category;
       }
 
       if (type) {
-        filter['relationship_info.relationship_type'] = type;
+        baseFilter['relationship_info.relationship_type'] = type;
       }
 
       const relationships = await db.collection('customer_relationships')
-        .find(filter)
+        .find(baseFilter)
         .sort({ 'meta.created_at': -1 })
         .toArray();
 
       // 관련 고객 정보 포함 여부
       if (include_details === 'true' && relationships.length > 0) {
-        const relatedCustomerIds = relationships.map(rel => rel.relationship_info.to_customer_id);
+        const relatedCustomerIds = [];
+        
+        relationships.forEach(rel => {
+          // 현재 고객이 from_customer인 경우 to_customer_id를 수집
+          if (rel.relationship_info.from_customer_id.toString() === id) {
+            relatedCustomerIds.push(rel.relationship_info.to_customer_id);
+          }
+          // 현재 고객이 to_customer인 경우 from_customer_id를 수집
+          else if (rel.relationship_info.to_customer_id.toString() === id) {
+            relatedCustomerIds.push(rel.relationship_info.from_customer_id);
+          }
+        });
+
         const relatedCustomers = await db.collection('customers')
           .find({ _id: { $in: relatedCustomerIds } })
           .toArray();
@@ -246,9 +262,41 @@ const setupCustomerRelationshipRoutes = (app, db) => {
           customerMap[customer._id.toString()] = customer;
         });
 
+        // 각 관계에 관련 고객 정보 추가
         relationships.forEach(rel => {
-          const customerId = rel.relationship_info.to_customer_id.toString();
-          rel.related_customer = customerMap[customerId] || null;
+          let relatedCustomerId;
+          let isReversed = false;
+          
+          if (rel.relationship_info.from_customer_id.toString() === id) {
+            // 현재 고객이 from_customer → to_customer가 관련 고객
+            relatedCustomerId = rel.relationship_info.to_customer_id.toString();
+          } else {
+            // 현재 고객이 to_customer → from_customer가 관련 고객 (역방향)
+            relatedCustomerId = rel.relationship_info.from_customer_id.toString();
+            isReversed = true;
+          }
+          
+          rel.related_customer = customerMap[relatedCustomerId] || null;
+          rel.is_reversed = isReversed;
+          
+          // 역방향 관계인 경우 관계 유형을 현재 고객 관점으로 변환
+          if (isReversed) {
+            const allTypes = getAllRelationshipTypes();
+            const originalType = rel.relationship_info.relationship_type;
+            const reverseType = allTypes[originalType]?.reverse;
+            
+            if (reverseType) {
+              rel.display_relationship_type = reverseType;
+              rel.display_relationship_label = allTypes[reverseType]?.label || reverseType;
+            } else {
+              // 역방향 관계가 정의되지 않은 경우 원본 유지
+              rel.display_relationship_type = originalType;
+              rel.display_relationship_label = allTypes[originalType]?.label || originalType;
+            }
+          } else {
+            rel.display_relationship_type = rel.relationship_info.relationship_type;
+            rel.display_relationship_label = getAllRelationshipTypes()[rel.relationship_info.relationship_type]?.label || rel.relationship_info.relationship_type;
+          }
         });
       }
 

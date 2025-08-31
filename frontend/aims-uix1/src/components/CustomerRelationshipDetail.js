@@ -179,7 +179,12 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
       render: (category, record) => (
         <Space>
           {CATEGORY_ICONS[category]}
-          <Text>{relationshipTypes.all_types?.[record.relationship_info.relationship_type]?.label || record.relationship_info.relationship_type}</Text>
+          <Text>
+            {record.display_relationship_label || 
+             relationshipTypes.all_types?.[record.relationship_info.relationship_type]?.label || 
+             record.relationship_info.relationship_type}
+            {record.is_reversed && <Text type="secondary" style={{ fontSize: '12px', marginLeft: '4px' }}>(역방향)</Text>}
+          </Text>
         </Space>
       )
     },
