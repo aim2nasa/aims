@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
 
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
+  const [customerManagementExpanded, setCustomerManagementExpanded] = useState(false);
+  
   const onSelect = (selectedKeys, info) => {
     console.log('선택된 항목:', selectedKeys, info);
   };
@@ -49,7 +51,21 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
     {
       key: 'customers',
       icon: <UserOutlined />,
-      label: '고객 관리',
+      label: (
+        <span onClick={(e) => {
+          e.stopPropagation();
+          setCustomerManagementExpanded(!customerManagementExpanded);
+        }}>
+          고객 관리
+        </span>
+      ),
+      children: customerManagementExpanded ? [
+        {
+          key: 'customers-all',
+          icon: <UnorderedListOutlined />,
+          label: '전체보기',
+        }
+      ] : undefined,
     },
     {
       key: 'dsd',

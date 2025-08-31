@@ -207,7 +207,7 @@ const AppLayout = () => {
 
   // LeftPane에서 메뉴 클릭 처리
   const handleLeftPaneMenuClick = (menuKey) => {
-    if (menuKey === 'customers') {
+    if (menuKey === 'customers' || menuKey === 'customers-all') {
       setShowCustomerManagement(true);
       setShowDashboard(false);
     } else if (menuKey === 'dsd') {
