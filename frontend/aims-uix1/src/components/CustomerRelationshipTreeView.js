@@ -162,8 +162,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     const processed = new Set(); // 이미 처리된 고객 ID들
     
     // 1단계: 가족 관계 매핑 구축 (개인-개인만)
-    let validFamilyRelations = 0;
-    
     relationships.forEach(relationship => {
       const category = relationship.relationship_info.relationship_category;
       const fromCustomer = relationship.from_customer;
@@ -173,8 +171,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       if (category === 'family' && 
           fromCustomer?.insurance_info?.customer_type === '개인' && 
           toCustomer?.insurance_info?.customer_type === '개인') {
-        
-        validFamilyRelations++;
         
         const fromId = fromCustomer._id;
         const toId = toCustomer._id;
@@ -191,7 +187,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         familyNetworks.get(toId).add(fromId);
       }
     });
-    
     
     // 2단계: 가족 그룹별로 구성원 수집 및 대표자 선정
     familyNetworks.forEach((connections, customerId) => {
@@ -223,8 +218,8 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         customers.find(c => c._id === id)
       ).filter(Boolean);
       
-      if (familyMembers.length === 0) return;
-      
+      // 2명 이상의 가족 구성원이 있는 경우만 처리
+      if (familyMembers.length < 2) return;
       
       // 대표자 선정 (그룹 키 생성)
       const groupKey = Array.from(familyGroup).sort().join('-');
@@ -323,15 +318,15 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   const treeData = useMemo(() => {
     const treeNodes = [];
     
-    // 가족 관계 노드 (대표자 중심)
+    // 가족 관계 노드 (대표자 중심) - 항상 표시
     const familyGroups = Object.entries(structuredData.가족그룹);
-    if (familyGroups.length > 0) {
-      const familyNode = {
+    
+    const familyNode = {
         title: (
           <Space>
             <HomeOutlined style={{ color: '#ff4d4f' }} />
             <Text strong style={{ color: '#ff4d4f' }}>가족</Text>
-            <Badge count={familyGroups.length} style={{ backgroundColor: '#ff4d4f' }} />
+            <Badge count={familyGroups.length} showZero style={{ backgroundColor: '#ff4d4f' }} />
           </Space>
         ),
         key: 'family',
@@ -404,7 +399,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     isLeaf: true
                   })),
                 // 관계 정보들
-                ...relations.map((relation, index) => ({
+                ...(relations.length > 0 ? relations.map((relation, index) => ({
                   title: (
                     <Space>
                       <Tag size="small" color="red">{relation.relationLabel}</Tag>
@@ -416,14 +411,22 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   key: `family-relation-${repName}-${index}`,
                   icon: <HeartOutlined style={{ color: '#ff4d4f' }} />,
                   isLeaf: true
-                }))
+                })) : [{
+                  title: (
+                    <Text style={{ color: '#999', fontStyle: 'italic' }}>
+                      가족 관계 없음 (0)
+                    </Text>
+                  ),
+                  key: `family-no-relation-${repName}`,
+                  icon: <HeartOutlined style={{ color: '#ccc' }} />,
+                  isLeaf: true
+                }])
               ]
             };
           })
       };
-      
-      treeNodes.push(familyNode);
-    }
+    
+    treeNodes.push(familyNode);
     
     // 법인 관계 노드
     const corporateEntries = Object.entries(structuredData.법인);
