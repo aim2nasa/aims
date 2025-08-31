@@ -11,7 +11,8 @@ const RELATIONSHIP_TYPES = {
     child: { reverse: 'parent', bidirectional: false, label: '자녀' },
     sibling: { reverse: 'sibling', bidirectional: true, label: '형제자매' },
     grandparent: { reverse: 'grandchild', bidirectional: false, label: '조부모' },
-    grandchild: { reverse: 'grandparent', bidirectional: false, label: '손자녀' }
+    grandchild: { reverse: 'grandparent', bidirectional: false, label: '손자녀' },
+    other: { reverse: 'other', bidirectional: false, label: '기타' }
   },
   
   // 친척 관계  

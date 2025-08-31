@@ -96,34 +96,22 @@ const FamilyRelationshipModal = ({
         return;
       }
 
-      // 기타 관계일 때 사용자 입력값 사용, 아니면 미리 정의된 값 사용
-      const relationshipTypeValue = values.relationship_type === 'other' 
-        ? values.custom_relationship_type 
-        : values.relationship_type;
-
-      const relationshipLabel = values.relationship_type === 'other'
-        ? values.custom_relationship_type
-        : FAMILY_RELATIONSHIP_TYPES[values.relationship_type]?.label;
-        
-      // 기타 관계인데 custom_relationship_type이 없는 경우
-      if (values.relationship_type === 'other' && !values.custom_relationship_type?.trim()) {
-        message.error('기타 관계명을 입력해주세요');
-        return;
-      }
+      const relationshipTypeValue = values.relationship_type;
+      const relationshipLabel = FAMILY_RELATIONSHIP_TYPES[values.relationship_type]?.label;
 
       const relationshipData = {
         relationship_type: relationshipTypeValue,
-        relationship_category: 'family', // 가족 관계로 카테고리 설정
-        strength: 'strong', // 가족 관계는 기본적으로 강한 관계
+        relationship_category: 'family', // 가족 관계 모달이므로 family로 통일
+        strength: 'strong',
         relationship_details: {
           description: `가족 관계 - ${relationshipLabel}`,
-          contact_frequency: 'weekly', // 가족은 주간 연락으로 기본 설정
-          influence_level: 'high' // 가족은 높은 영향력으로 기본 설정
+          contact_frequency: 'weekly',
+          influence_level: 'high'
         },
         insurance_relevance: {
           is_beneficiary: false,
-          cross_selling_opportunity: true, // 가족은 교차판매 기회로 설정
-          referral_potential: 'high' // 가족은 높은 추천 잠재력
+          cross_selling_opportunity: true,
+          referral_potential: 'high'
         }
       };
 
@@ -272,28 +260,6 @@ const FamilyRelationshipModal = ({
           </Select>
         </Form.Item>
 
-        {/* 기타 관계 선택시 직접 입력 필드 */}
-        {selectedRelationType === 'other' && (
-          <Form.Item
-            label={
-              <Space>
-                <HeartOutlined />
-                <Text>기타 가족 관계 입력</Text>
-              </Space>
-            }
-            name="custom_relationship_type"
-            rules={[
-              { required: true, message: '가족 관계를 입력해주세요' },
-              { max: 20, message: '관계명은 20자 이내로 입력해주세요' }
-            ]}
-          >
-            <Input 
-              placeholder="예: 고모, 이모, 외삼촌, 처남, 동서 등" 
-              size="large"
-              maxLength={20}
-            />
-          </Form.Item>
-        )}
 
         <div style={{ 
           backgroundColor: '#f6ffed', 
