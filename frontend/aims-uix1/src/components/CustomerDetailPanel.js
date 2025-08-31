@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Tabs, Descriptions, Card, Tag, Space, Typography, Avatar, 
-  Button, message, Table, Empty, Divider, Tooltip, Modal, Popconfirm
+  Button, message, Table, Empty, Divider, Tooltip, Popconfirm
 } from 'antd';
 import { 
-  UserOutlined, PhoneOutlined, MailOutlined, 
-  FileTextOutlined, CalendarOutlined, HomeOutlined,
-  DollarOutlined, SafetyOutlined, LinkOutlined,
+  UserOutlined, FileTextOutlined, LinkOutlined,
   EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined,
   TeamOutlined
 } from '@ant-design/icons';
@@ -14,6 +12,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import CustomerRelationshipDetail from './CustomerRelationshipDetail';
+import FamilyRelationshipModal from './FamilyRelationshipModal';
 
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
@@ -27,6 +26,9 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   // 문서 프리뷰 모달 상태
   const [showDocumentPreview, setShowDocumentPreview] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  
+  // 가족 관계 모달 상태
+  const [showFamilyRelationshipModal, setShowFamilyRelationshipModal] = useState(false);
 
   useEffect(() => {
     if (customerId) {
@@ -115,6 +117,20 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   const handleCloseDocumentPreview = () => {
     setShowDocumentPreview(false);
     setSelectedDocument(null);
+  };
+
+  // 가족 관계 모달 관련 핸들러
+  const handleOpenFamilyRelationshipModal = () => {
+    setShowFamilyRelationshipModal(true);
+  };
+
+  const handleCloseFamilyRelationshipModal = () => {
+    setShowFamilyRelationshipModal(false);
+  };
+
+  const handleFamilyRelationshipSuccess = () => {
+    // 가족 관계 추가 성공 시 관계 탭으로 자동 전환
+    setActiveTab('relationships');
   };
 
   // 문서 해제 확인 Popconfirm 상태
@@ -302,6 +318,17 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           </Space>
         </Space>
         <Space>
+          {customer.insurance_info?.customer_type === '개인' && (
+            <Button 
+              type="primary" 
+              size="small" 
+              icon={<TeamOutlined />}
+              onClick={handleOpenFamilyRelationshipModal}
+              style={{ fontSize: '11px', backgroundColor: '#ff4d4f', borderColor: '#ff4d4f' }}
+            >
+              가족 관계
+            </Button>
+          )}
           {onEdit && (
             <Button 
               type="primary" 
@@ -511,6 +538,14 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         visible={showDocumentPreview}
         document={selectedDocument}
         onClose={handleCloseDocumentPreview}
+      />
+
+      {/* 가족 관계 추가 모달 */}
+      <FamilyRelationshipModal
+        visible={showFamilyRelationshipModal}
+        onCancel={handleCloseFamilyRelationshipModal}
+        customerId={customerId}
+        onSuccess={handleFamilyRelationshipSuccess}
       />
 
     </div>
