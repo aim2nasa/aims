@@ -44,13 +44,10 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
     }
   }, [customerId, loadCustomerRelationships]);
 
-  // 관계 삭제 처리 (Context를 통해)
+  // 관계 삭제 처리 (Context를 통해 - 자동 새로고침)
   const handleDeleteRelationship = async (relationshipId) => {
-    const success = await deleteRelationship(customerId, relationshipId);
-    if (success) {
-      // 삭제 후 해당 고객의 관계 데이터 자동 새로고침
-      loadCustomerRelationships(customerId);
-    }
+    await deleteRelationship(customerId, relationshipId);
+    // Context에서 자동으로 관련 고객들의 데이터를 새로고침하므로 추가 호출 불필요
   };
 
 

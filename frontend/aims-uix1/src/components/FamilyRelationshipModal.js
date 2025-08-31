@@ -6,6 +6,7 @@ import {
   HomeOutlined, UserOutlined, HeartOutlined, SearchOutlined 
 } from '@ant-design/icons';
 import CustomerService from '../services/customerService';
+import { useRelationship } from '../contexts/RelationshipContext';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -38,11 +39,13 @@ const FamilyRelationshipModal = ({
   onSuccess 
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [selectedRelationType, setSelectedRelationType] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Context에서 관계 생성 기능 사용
+  const { loading, createRelationship } = useRelationship();
 
   // 고객 검색 (고객 관리와 동일한 방식)
   const searchCustomers = useCallback(async (searchValue = '') => {
@@ -86,8 +89,6 @@ const FamilyRelationshipModal = ({
 
   const handleSubmit = async (values) => {
     try {
-      setLoading(true);
-      
       // 기타 관계일 때 사용자 입력값 사용, 아니면 미리 정의된 값 사용
       const relationshipTypeValue = values.relationship_type === 'other' 
         ? values.custom_relationship_type 
@@ -97,9 +98,9 @@ const FamilyRelationshipModal = ({
         ? values.custom_relationship_type
         : FAMILY_RELATIONSHIP_TYPES[values.relationship_type]?.label;
 
-      const data = {
-        to_customer_id: values.to_customer_id,
+      const relationshipData = {
         relationship_type: relationshipTypeValue,
+        relationship_category: 'family', // 가족 관계로 카테고리 설정
         strength: 'strong', // 가족 관계는 기본적으로 강한 관계
         relationship_details: {
           description: `가족 관계 - ${relationshipLabel}`,
@@ -113,28 +114,15 @@ const FamilyRelationshipModal = ({
         }
       };
 
-      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}/relationships`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
+      // Context를 통해 관계 생성 (자동으로 구독자 알림됨)
+      await createRelationship(customerId, values.to_customer_id, relationshipData);
       
-      if (result.success) {
-        message.success('가족 관계가 추가되었습니다.');
-        onSuccess?.();
-        onCancel();
-      } else {
-        message.error(result.error || '가족 관계 추가에 실패했습니다.');
-      }
+      // 성공 시 콜백 호출 및 모달 닫기
+      onSuccess?.();
+      onCancel();
     } catch (error) {
       console.error('가족 관계 추가 실패:', error);
-      message.error('가족 관계 추가 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+      // createRelationship에서 이미 에러 메시지가 표시됨
     }
   };
 

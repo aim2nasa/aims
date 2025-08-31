@@ -268,18 +268,26 @@ export const RelationshipProvider = ({ children }) => {
 
   // RelationshipService 이벤트 구독
   useEffect(() => {
-    const unsubscribe = RelationshipService.subscribe((eventType, data) => {
+    const unsubscribe = RelationshipService.subscribe(async (eventType, data) => {
       switch (eventType) {
         case 'relationship-created':
         case 'relationship-deleted':
         case 'relationship-updated':
           // 관련 고객 데이터 캐시 무효화
           const newCustomerRelationships = new Map(state.customerRelationships);
+          const affectedCustomerIds = [];
+          
           if (data.fromCustomerId) {
             newCustomerRelationships.delete(data.fromCustomerId);
+            affectedCustomerIds.push(data.fromCustomerId);
           }
           if (data.customerId) {
             newCustomerRelationships.delete(data.customerId);
+            affectedCustomerIds.push(data.customerId);
+          }
+          if (data.toCustomerId) {
+            newCustomerRelationships.delete(data.toCustomerId);
+            affectedCustomerIds.push(data.toCustomerId);
           }
           
           // 전체 데이터 캐시도 무효화
@@ -287,6 +295,27 @@ export const RelationshipProvider = ({ children }) => {
             type: ActionTypes.SET_ALL_RELATIONSHIPS_DATA, 
             payload: { customers: [], relationships: [], timestamp: null } 
           });
+          
+          // 자동으로 전체 데이터 새로고침 (트리뷰 업데이트용)
+          try {
+            await loadAllRelationshipsData(true); // 강제 새로고침
+            
+            // 영향 받은 고객들의 관계 데이터도 새로고침
+            const uniqueCustomerIds = [...new Set(affectedCustomerIds)];
+            for (const customerId of uniqueCustomerIds) {
+              try {
+                const relationships = await RelationshipService.getCustomerRelationships(customerId);
+                dispatch({
+                  type: ActionTypes.SET_CUSTOMER_RELATIONSHIPS,
+                  payload: { customerId, relationships }
+                });
+              } catch (error) {
+                console.warn(`고객 ${customerId} 관계 새로고침 실패:`, error);
+              }
+            }
+          } catch (error) {
+            console.error('자동 새로고침 실패:', error);
+          }
           break;
 
         case 'cache-refreshed':
@@ -299,7 +328,7 @@ export const RelationshipProvider = ({ children }) => {
     });
 
     return unsubscribe;
-  }, [state.customerRelationships]);
+  }, [state.customerRelationships, loadAllRelationshipsData]);
 
   // 초기 데이터 로드
   useEffect(() => {
