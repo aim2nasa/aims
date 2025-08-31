@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Modal, Form, Select, Button, message, Space, Typography, Avatar, Tag, Input 
+  Modal, Form, Select, Button, message, Space, Typography, Avatar, Tag, Input, AutoComplete, Spin 
 } from 'antd';
 import { 
-  HomeOutlined, UserOutlined, HeartOutlined 
+  HomeOutlined, UserOutlined, HeartOutlined, SearchOutlined 
 } from '@ant-design/icons';
+import CustomerService from '../services/customerService';
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -34,34 +35,48 @@ const FamilyRelationshipModal = ({
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [selectedRelationType, setSelectedRelationType] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  // 개인 고객만 가져오기
-  const fetchIndividualCustomers = useCallback(async () => {
+  // 고객 검색 (고객 관리와 동일한 방식)
+  const searchCustomers = useCallback(async (searchValue = '') => {
+    if (!searchValue.trim() && searchValue !== '') {
+      setCustomers([]);
+      return;
+    }
+    
     try {
-      const response = await fetch('http://tars.giize.com:3010/api/customers?limit=1000');
-      const result = await response.json();
+      setSearchLoading(true);
+      const result = await CustomerService.getCustomers({
+        page: 1,
+        limit: 50, // 검색 결과는 50개로 제한
+        search: searchValue
+      });
       
       if (result.success) {
         // 개인 고객만 필터링하고 현재 고객 제외
-        const individualCustomers = result.data.data.customers.filter(customer => 
+        const individualCustomers = result.data.customers.filter(customer => 
           customer._id !== customerId && 
           customer.insurance_info?.customer_type === '개인'
         );
         setCustomers(individualCustomers);
       }
     } catch (error) {
-      console.error('개인 고객 목록 조회 실패:', error);
-      message.error('고객 목록을 불러오는데 실패했습니다.');
+      console.error('개인 고객 검색 실패:', error);
+      message.error('고객 검색에 실패했습니다.');
+    } finally {
+      setSearchLoading(false);
     }
   }, [customerId]);
 
   useEffect(() => {
     if (visible) {
-      fetchIndividualCustomers();
       form.resetFields();
       setSelectedRelationType(null);
+      setSearchText('');
+      setCustomers([]);
     }
-  }, [visible, form, fetchIndividualCustomers]);
+  }, [visible, form]);
 
   const handleSubmit = async (values) => {
     try {
@@ -141,25 +156,50 @@ const FamilyRelationshipModal = ({
         layout="vertical"
         onFinish={handleSubmit}
       >
+        {/* Hidden form field for customer ID */}
         <Form.Item
-          label={
+          name="to_customer_id"
+          rules={[{ required: true, message: '가족 구성원을 선택해주세요' }]}
+          style={{ display: 'none' }}
+        >
+          <Input />
+        </Form.Item>
+
+        {/* Visible AutoComplete field */}
+        <div>
+          <div style={{ marginBottom: 8 }}>
             <Space>
               <UserOutlined />
               <Text>가족 구성원 선택</Text>
             </Space>
-          }
-          name="to_customer_id"
-          rules={[{ required: true, message: '가족 구성원을 선택해주세요' }]}
-        >
-          <Select
-            showSearch
-            placeholder="개인 고객 중에서 가족 구성원을 선택하세요"
-            optionFilterProp="children"
-            filterOption={(input, option) => {
-              const customer = customers.find(c => c._id === option.value);
-              return customer?.personal_info?.name?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+          </div>
+          <AutoComplete
+            value={searchText}
+            onChange={(value) => {
+              setSearchText(value);
+              if (!value.trim()) {
+                setCustomers([]);
+                form.setFieldValue('to_customer_id', undefined);
+              } else {
+                searchCustomers(value);
+              }
             }}
+            onSelect={(value, option) => {
+              const customer = customers.find(c => c._id === value);
+              setSearchText(customer?.personal_info?.name || '');
+              form.setFieldValue('to_customer_id', value);
+            }}
+            placeholder="고객 이름을 입력하여 검색하세요"
             size="large"
+            style={{ width: '100%' }}
+            allowClear
+            onClear={() => {
+              setSearchText('');
+              setCustomers([]);
+              form.setFieldValue('to_customer_id', undefined);
+            }}
+            suffixIcon={<SearchOutlined />}
+            notFoundContent={searchLoading ? <Spin size="small" /> : searchText ? '검색 결과가 없습니다' : '고객 이름을 입력하세요'}
           >
             {customers.map(customer => (
               <Option key={customer._id} value={customer._id}>
@@ -179,8 +219,8 @@ const FamilyRelationshipModal = ({
                 </Space>
               </Option>
             ))}
-          </Select>
-        </Form.Item>
+          </AutoComplete>
+        </div>
 
         <Form.Item
           label={

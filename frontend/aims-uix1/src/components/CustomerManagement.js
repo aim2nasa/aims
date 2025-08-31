@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, TeamOutlined
+  SearchOutlined, EnvironmentOutlined, TeamOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
@@ -226,24 +226,6 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
     }
   };
 
-  const handleDeleteCustomer = async (id) => {
-    Modal.confirm({
-      title: '고객 삭제 확인',
-      content: '정말로 이 고객을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
-      okText: '삭제',
-      cancelText: '취소',
-      okType: 'danger',
-      onOk: async () => {
-        const result = await CustomerService.deleteCustomer(id);
-        if (result.success) {
-          message.success('고객이 삭제되었습니다.');
-          fetchCustomers();
-        } else {
-          message.error(result.error || '고객 삭제에 실패했습니다.');
-        }
-      }
-    });
-  };
 
   const showCustomerDocuments = async (customerId) => {
     setDocumentsDrawerVisible(true);
