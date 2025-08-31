@@ -33,6 +33,7 @@ const AppLayout = () => {
   
   // 고객 관리 관련 상태
   const [showCustomerManagement, setShowCustomerManagement] = useState(false);
+  const [selectedMenuKey, setSelectedMenuKey] = useState(null);
   
   // 고객 수정 모달 관련 상태
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -207,19 +208,23 @@ const AppLayout = () => {
 
   // LeftPane에서 메뉴 클릭 처리
   const handleLeftPaneMenuClick = (menuKey) => {
-    if (menuKey === 'customers' || menuKey === 'customers-all') {
+    if (menuKey === 'customers' || menuKey === 'customers-all' || menuKey === 'customers-relationship') {
       setShowCustomerManagement(true);
       setShowDashboard(false);
+      setSelectedMenuKey(menuKey);
     } else if (menuKey === 'dsd') {
       setShowDashboard(true);
       setShowCustomerManagement(false);
+      setSelectedMenuKey(null);
     } else if (menuKey === 'search-results') {
       // 검색 결과로 돌아가기
       setShowDashboard(false);
       setShowCustomerManagement(false);
+      setSelectedMenuKey(null);
     } else {
       setShowDashboard(false);
       setShowCustomerManagement(false);
+      setSelectedMenuKey(null);
       // 다른 메뉴 클릭 시에는 검색 결과 초기화
       if (menuKey !== 'search-results') {
         setSearchResults([]);
@@ -386,6 +391,7 @@ const AppLayout = () => {
                 isLoading={isLoading}
                 showDashboard={showDashboard}
                 showCustomerManagement={showCustomerManagement}
+                selectedMenuKey={selectedMenuKey}
                 onDocumentLinked={refreshSelectedCustomer}
                 editModalVisible={editModalVisible}
                 editingCustomer={editingCustomer}

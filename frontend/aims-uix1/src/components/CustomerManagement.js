@@ -18,7 +18,7 @@ import { RelationshipProvider } from '../contexts/RelationshipContext';
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
+const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustomerListSet, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
   // 고객 목록 관리
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,6 +49,17 @@ const CustomerManagement = ({ onCustomerClick, onRefreshCustomerListSet, editMod
   useEffect(() => {
     fetchCustomers();
   }, [pagination.current, pagination.pageSize]);
+
+  // selectedMenuKey 변경 시 관계별 보기 자동 활성화
+  useEffect(() => {
+    if (selectedMenuKey === 'customers-relationship') {
+      setShowRelationshipView(true);
+      setShowRegionalView(false);
+    } else if (selectedMenuKey === 'customers-all') {
+      setShowRelationshipView(false);
+      setShowRegionalView(false);
+    }
+  }, [selectedMenuKey]);
 
   // 실시간 검색을 위한 debounce 효과
   useEffect(() => {
