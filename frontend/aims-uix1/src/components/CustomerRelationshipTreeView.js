@@ -1,21 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Tree, Card, Space, Typography, Badge, Spin, Tag } from 'antd';
+import { Tree, Card, Space, Typography, Badge, Spin, Tag, Button, Modal, Select } from 'antd';
 import { 
   FolderOutlined, 
   FolderOpenOutlined, 
   UserOutlined,
   HomeOutlined,
-  BankOutlined
+  BankOutlined,
+  HeartOutlined,
+  SwapOutlined
 } from '@ant-design/icons';
 import CustomerService from '../services/customerService';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
   const [customers, setCustomers] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState(['customers', 'family', 'work']);
+  
+  // 대표자 변경 관련 상태
+  const [representativeModal, setRepresentativeModal] = useState({
+    visible: false,
+    familyGroupKey: null,
+    currentRepId: null,
+    members: []
+  });
+  const [familyRepresentatives, setFamilyRepresentatives] = useState({}); // 사용자가 수동 설정한 대표자들
 
   useEffect(() => {
     fetchAllData();
@@ -63,47 +75,185 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     }
   };
 
+  // 대표자 변경 모달 열기
+  const openRepresentativeModal = (familyGroupKey, currentRepId, members) => {
+    console.log('모달 열기:', { familyGroupKey, currentRepId, members: members.map(m => m.personal_info?.name) });
+    
+    setRepresentativeModal({
+      visible: true,
+      familyGroupKey: familyGroupKey,
+      currentRepId: currentRepId,
+      members: [...members] // 배열 복사로 참조 문제 방지
+    });
+  };
+
+  // 대표자 변경 처리
+  const handleRepresentativeChange = (newRepId) => {
+    const { familyGroupKey } = representativeModal;
+    
+    setFamilyRepresentatives(prev => ({
+      ...prev,
+      [familyGroupKey]: newRepId
+    }));
+    
+    closeRepresentativeModal();
+  };
+
+  // 모달 닫기
+  const closeRepresentativeModal = () => {
+    setRepresentativeModal({
+      visible: false,
+      familyGroupKey: null,
+      currentRepId: null,
+      members: []
+    });
+  };
+
+  // 가족 대표자 선정 함수 (사용자 설정 우선)
+  const selectFamilyRepresentative = (familyMembers, groupKey) => {
+    // 사용자가 수동으로 설정한 대표자가 있으면 우선 사용
+    const userSetRepId = familyRepresentatives[groupKey];
+    if (userSetRepId) {
+      const userSetRep = familyMembers.find(member => member._id === userSetRepId);
+      if (userSetRep) return userSetRep;
+    }
+    
+    // 기본 알고리즘으로 대표자 선정
+    return familyMembers.sort((a, b) => {
+      // 1순위: 나이 (생년월일 있으면 - 오래된 날짜가 나이 많음)
+      const aBirthDate = a.personal_info?.birth_date;
+      const bBirthDate = b.personal_info?.birth_date;
+      
+      if (aBirthDate && bBirthDate) {
+        return new Date(aBirthDate) - new Date(bBirthDate);
+      }
+      
+      // 생년월일 중 하나라도 없으면 있는 사람이 우선
+      if (aBirthDate && !bBirthDate) return -1;
+      if (!aBirthDate && bBirthDate) return 1;
+      
+      // 2순위: 이름 가나다순 (한글 우선)
+      const aName = a.personal_info?.name || '';
+      const bName = b.personal_info?.name || '';
+      
+      if (aName !== bName) {
+        return aName.localeCompare(bName, 'ko');
+      }
+      
+      // 3순위: 등록 순서 (먼저 등록된 사람이 우선)
+      const aCreated = a.meta?.created_at;
+      const bCreated = b.meta?.created_at;
+      
+      if (aCreated && bCreated) {
+        return new Date(aCreated) - new Date(bCreated);
+      }
+      
+      return 0;
+    })[0];
+  };
+
   // 새로운 구조로 데이터 그룹화
   const structuredData = useMemo(() => {
     const result = {
-      고객: {
-        개인고객: [],
-        법인고객: []
-      },
-      가족: {},
+      가족그룹: {},  // 가족 그룹별 데이터
       직장: {}
     };
     
-    // 모든 고객을 개인/법인으로 분류
-    customers.forEach(customer => {
-      const customerType = customer.insurance_info?.customer_type;
-      if (customerType === '법인') {
-        result.고객.법인고객.push(customer);
-      } else {
-        result.고객.개인고객.push(customer);
-      }
-    });
+    // 가족 관계 네트워크 구축
+    const familyNetworks = new Map(); // customerId -> Set(연결된 가족 구성원들)
+    const processed = new Set(); // 이미 처리된 고객 ID들
     
-    // 관계 정보 처리
+    // 1단계: 가족 관계 매핑 구축 (개인-개인만)
+    console.log('전체 관계 수:', relationships.length);
+    let validFamilyRelations = 0;
+    
     relationships.forEach(relationship => {
       const category = relationship.relationship_info.relationship_category;
-      const relationshipType = relationship.relationship_info.relationship_type;
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
       
-      // 가족 관계 처리 (개인-개인만)
-      if (category === 'family') {
-        // 가족 관계는 개인 간의 관계만 허용
-        if (fromCustomer.insurance_info?.customer_type === '개인' && 
+      // 가족 관계이고 둘 다 개인인 경우만 처리
+      if (category === 'family' && 
+          fromCustomer?.insurance_info?.customer_type === '개인' && 
+          toCustomer?.insurance_info?.customer_type === '개인') {
+        
+        validFamilyRelations++;
+        console.log(`유효한 가족 관계 ${validFamilyRelations}:`, 
+          fromCustomer.personal_info?.name, '→', toCustomer.personal_info?.name);
+        
+        const fromId = fromCustomer._id;
+        const toId = toCustomer._id;
+        
+        // 양방향 관계 설정
+        if (!familyNetworks.has(fromId)) {
+          familyNetworks.set(fromId, new Set());
+        }
+        if (!familyNetworks.has(toId)) {
+          familyNetworks.set(toId, new Set());
+        }
+        
+        familyNetworks.get(fromId).add(toId);
+        familyNetworks.get(toId).add(fromId);
+      }
+    });
+    
+    console.log('총 유효한 가족 관계:', validFamilyRelations);
+    console.log('가족 네트워크 수:', familyNetworks.size);
+    
+    // 2단계: 가족 그룹별로 구성원 수집 및 대표자 선정
+    familyNetworks.forEach((connections, customerId) => {
+      if (processed.has(customerId)) return;
+      
+      // 이 가족 그룹의 모든 구성원 수집 (DFS)
+      const familyGroup = new Set();
+      const stack = [customerId];
+      
+      while (stack.length > 0) {
+        const currentId = stack.pop();
+        if (familyGroup.has(currentId)) continue;
+        
+        familyGroup.add(currentId);
+        processed.add(currentId);
+        
+        const currentConnections = familyNetworks.get(currentId);
+        if (currentConnections) {
+          currentConnections.forEach(connectedId => {
+            if (!familyGroup.has(connectedId)) {
+              stack.push(connectedId);
+            }
+          });
+        }
+      }
+      
+      // 가족 구성원 객체들 수집
+      const familyMembers = Array.from(familyGroup).map(id => 
+        customers.find(c => c._id === id)
+      ).filter(Boolean);
+      
+      if (familyMembers.length === 0) return;
+      
+      // 디버깅: 가족 그룹 로그
+      console.log('가족 그룹:', familyMembers.map(m => m.personal_info?.name));
+      
+      // 대표자 선정 (그룹 키 생성)
+      const groupKey = Array.from(familyGroup).sort().join('-');
+      const representative = selectFamilyRepresentative(familyMembers, groupKey);
+      const repName = representative.personal_info?.name || '이름없음';
+      
+      // 대표자의 모든 관계 수집
+      const familyRelations = [];
+      
+      relationships.forEach(relationship => {
+        const category = relationship.relationship_info.relationship_category;
+        const relationshipType = relationship.relationship_info.relationship_type;
+        const fromCustomer = relationship.from_customer;
+        const toCustomer = relationship.related_customer;
+        
+        if (category === 'family' && 
+            familyGroup.has(fromCustomer._id) && familyGroup.has(toCustomer._id) &&
+            fromCustomer?.insurance_info?.customer_type === '개인' && 
             toCustomer?.insurance_info?.customer_type === '개인') {
-          
-          const fromName = fromCustomer.personal_info?.name || '이름없음';
-          
-          if (!result.가족[fromName]) {
-            result.가족[fromName] = [];
-          }
-          
-          // 관계 유형에 따른 라벨 매핑
+          // 관계 유형 라벨 매핑
           const typeLabels = {
             spouse: '배우자',
             parent: '부모', 
@@ -112,23 +262,47 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
             daughter: '딸',
             sibling: '형제자매',
             brother: '형/동생',
-            sister: '누나/언니/여동생'
+            sister: '누나/언니/여동생',
+            grandparent: '조부모',
+            grandchild: '손자/손녀'
           };
           
           const relationLabel = typeLabels[relationshipType] || relationshipType;
-          const toName = toCustomer?.personal_info?.name || '이름없음';
+          const fromName = fromCustomer.personal_info?.name || '이름없음';
+          const toName = toCustomer.personal_info?.name || '이름없음';
           
-          const relationObj = {};
-          relationObj[relationLabel] = toName;
-          result.가족[fromName].push(relationObj);
+          // 중복 방지를 위한 체크
+          const relationKey = `${fromName}-${toName}-${relationLabel}`;
+          if (!familyRelations.some(r => r.key === relationKey)) {
+            familyRelations.push({
+              key: relationKey,
+              fromName,
+              toName,
+              relationLabel,
+              fromCustomer,
+              toCustomer
+            });
+          }
         }
-      }
+      });
       
-      // 직장 관계 처리 (법인 중심, 개인 직원만)
-      else if (category === 'professional' || category === 'corporate') {
+      result.가족그룹[repName] = {
+        groupKey,
+        representative,
+        members: familyMembers,
+        relations: familyRelations
+      };
+    });
+    
+    // 직장 관계 처리 (기존 로직 유지)
+    relationships.forEach(relationship => {
+      const category = relationship.relationship_info.relationship_category;
+      const fromCustomer = relationship.from_customer;
+      const toCustomer = relationship.related_customer;
+      
+      if (category === 'professional' || category === 'corporate') {
         let companyName, employeeName;
         
-        // 법인-개인 관계만 처리
         if (fromCustomer.insurance_info?.customer_type === '법인' && 
             toCustomer?.insurance_info?.customer_type === '개인') {
           companyName = fromCustomer.personal_info?.name || '회사명없음';
@@ -139,13 +313,11 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
           employeeName = fromCustomer.personal_info?.name || '직원명없음';
         }
         
-        // 유효한 법인-개인 관계일 때만 추가
         if (companyName && employeeName) {
           if (!result.직장[companyName]) {
             result.직장[companyName] = [];
           }
           
-          // 중복 체크 후 추가
           if (!result.직장[companyName].includes(employeeName)) {
             result.직장[companyName].push(employeeName);
           }
@@ -154,86 +326,114 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return result;
-  }, [relationships, customers]);
+  }, [relationships, customers, familyRepresentatives]);
 
   // 새로운 구조에 맞는 Tree 데이터 생성
   const treeData = useMemo(() => {
     const treeNodes = [];
     
-    // 가족 관계 노드
-    const familyEntries = Object.entries(structuredData.가족);
-    if (familyEntries.length > 0) {
+    // 가족 관계 노드 (대표자 중심)
+    const familyGroups = Object.entries(structuredData.가족그룹);
+    if (familyGroups.length > 0) {
       const familyNode = {
         title: (
           <Space>
             <HomeOutlined style={{ color: '#ff4d4f' }} />
             <Text strong style={{ color: '#ff4d4f' }}>가족</Text>
-            <Badge count={familyEntries.length} style={{ backgroundColor: '#ff4d4f' }} />
+            <Badge count={familyGroups.length} style={{ backgroundColor: '#ff4d4f' }} />
           </Space>
         ),
         key: 'family',
         icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-        children: familyEntries
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([personName, relations]) => ({
-            title: (
-              <Space>
-                <Text 
-                  strong
-                  style={{ 
-                    color: '#1890ff', 
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // 고객 이름으로 찾아서 선택
-                    const customer = customers.find(c => c.personal_info?.name === personName);
-                    if (customer && onCustomerSelect) {
-                      onCustomerSelect(customer._id);
-                    }
-                  }}
-                >
-                  {personName}
-                </Text>
-                <Badge count={relations.length} style={{ backgroundColor: '#ff4d4f', opacity: 0.8 }} />
-              </Space>
-            ),
-            key: `family-${personName}`,
-            icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-            children: relations.map((relation, index) => {
-              const relationKey = Object.keys(relation)[0];
-              const relationValue = relation[relationKey];
-              
-              return {
-                title: (
-                  <Space>
-                    <Tag size="small" color="red">{relationKey}</Tag>
-                    <Text 
-                      style={{ 
-                        color: '#1890ff', 
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 관련 고객 이름으로 찾아서 선택
-                        const customer = customers.find(c => c.personal_info?.name === relationValue);
-                        if (customer && onCustomerSelect) {
-                          onCustomerSelect(customer._id);
-                        }
-                      }}
-                    >
-                      {relationValue}
-                    </Text>
-                  </Space>
-                ),
-                key: `family-${personName}-${index}`,
-                icon: <UserOutlined />,
-                isLeaf: true
-              };
-            })
-          }))
+        children: familyGroups
+          .sort(([a], [b]) => a.localeCompare(b, 'ko'))
+          .map(([repName, groupData]) => {
+            const { groupKey, representative, members, relations } = groupData;
+            
+            return {
+              title: (
+                <Space>
+                  <Text 
+                    strong
+                    style={{ 
+                      color: '#1890ff', 
+                      cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (representative && onCustomerSelect) {
+                        onCustomerSelect(representative._id);
+                      }
+                    }}
+                  >
+                    👑 {repName} (대표)
+                  </Text>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<SwapOutlined />}
+                    style={{ color: '#1890ff', fontSize: '12px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRepresentativeModal(groupKey, representative._id, members);
+                    }}
+                    title="대표자 변경"
+                  >
+                    변경
+                  </Button>
+                  <Badge count={members.length} style={{ backgroundColor: '#52c41a', opacity: 0.8 }} />
+                </Space>
+              ),
+              key: `family-group-${repName}`,
+              icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
+              children: [
+                // 가족 구성원들
+                ...members
+                  .filter(member => member._id !== representative._id) // 대표자 제외
+                  .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
+                  .map((member, index) => ({
+                    title: (
+                      <Space>
+                        <UserOutlined style={{ color: '#722ed1' }} />
+                        <Text 
+                          style={{ 
+                            color: '#1890ff', 
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onCustomerSelect) {
+                              onCustomerSelect(member._id);
+                            }
+                          }}
+                        >
+                          {member.personal_info?.name || '이름없음'}
+                        </Text>
+                      </Space>
+                    ),
+                    key: `family-member-${repName}-${index}`,
+                    icon: <UserOutlined />,
+                    isLeaf: true
+                  })),
+                // 관계 정보들
+                ...relations.map((relation, index) => ({
+                  title: (
+                    <Space>
+                      <Tag size="small" color="red">{relation.relationLabel}</Tag>
+                      <Text style={{ color: '#666' }}>
+                        {relation.fromName} → {relation.toName}
+                      </Text>
+                    </Space>
+                  ),
+                  key: `family-relation-${repName}-${index}`,
+                  icon: <HeartOutlined style={{ color: '#ff4d4f' }} />,
+                  isLeaf: true
+                }))
+              ]
+            };
+          })
       };
       
       treeNodes.push(familyNode);
@@ -359,6 +559,48 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
           style={{ marginTop: '16px' }}
         />
       )}
+
+      {/* 대표자 변경 모달 */}
+      <Modal
+        title="가족 대표자 변경"
+        open={representativeModal.visible}
+        onCancel={closeRepresentativeModal}
+        footer={null}
+        width={400}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Text>이 가족 그룹의 새로운 대표자를 선택해주세요:</Text>
+        </div>
+        
+        <Select
+          key={`${representativeModal.familyGroupKey}-${representativeModal.visible}`} // 모달 열림 상태까지 포함해서 완전히 새로운 키 생성
+          style={{ width: '100%' }}
+          placeholder="대표자 선택"
+          defaultValue={representativeModal.currentRepId} // defaultValue 사용으로 변경
+          onChange={handleRepresentativeChange}
+        >
+          {representativeModal.members.map(member => (
+            <Option key={member._id} value={member._id}>
+              <Space>
+                <UserOutlined />
+                <Text>{member.personal_info?.name || '이름없음'}</Text>
+                {member.personal_info?.birth_date && (
+                  <Text type="secondary">
+                    ({new Date(member.personal_info.birth_date).getFullYear()}년생)
+                  </Text>
+                )}
+                {member._id === representativeModal.currentRepId && (
+                  <Tag size="small" color="blue">현재 대표</Tag>
+                )}
+              </Space>
+            </Option>
+          ))}
+        </Select>
+        
+        <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
+          💡 대표자는 나이, 이름 순서로 자동 선택되지만 필요시 직접 변경할 수 있습니다.
+        </div>
+      </Modal>
     </Card>
   );
 };
