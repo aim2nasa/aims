@@ -1,43 +1,11 @@
 import React, { useState } from 'react';
-import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { Menu, Typography } from 'antd';
+import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
-const { Search } = Input;
 
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
   const [customerManagementExpanded, setCustomerManagementExpanded] = useState(false);
-  
-  const onSelect = (selectedKeys, info) => {
-    // Tree 항목 선택 처리
-  };
-
-  const treeData = [
-    {
-      title: '즐겨찾기 고객',
-      key: 'favorites',
-      icon: <StarOutlined />,
-      children: [
-        // 실제 데이터는 props나 API를 통해 받아올 예정
-      ],
-    },
-    {
-      title: '최근 고객',
-      key: 'recent',
-      icon: <HistoryOutlined />,
-      children: [
-        // 실제 데이터는 props나 API를 통해 받아올 예정
-      ],
-    },
-    {
-      title: '전체 고객',
-      key: 'all',
-      icon: <SolutionOutlined />,
-      children: [
-        // 실제 데이터는 props나 API를 통해 받아올 예정
-      ],
-    },
-  ];
 
   const menuItems = [
     // 검색 결과 (동적으로 표시)
@@ -88,20 +56,6 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
 
   return (
     <div>
-      <Title level={4}>고객 탐색</Title>
-      <Search
-        placeholder="고객 검색"
-        style={{ marginBottom: 16 }}
-        onSearch={(value) => {
-          // 고객 검색 처리
-        }}
-      />
-      <Tree
-        showIcon
-        defaultExpandAll
-        onSelect={onSelect}
-        treeData={treeData}
-      />
       <Title level={4} style={{ marginTop: 24 }}>문서 유형별</Title>
       <Menu 
         items={menuItems} 
