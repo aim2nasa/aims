@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Input, Tree, Menu, Typography } from 'antd';
-import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined } from '@ant-design/icons';
+import { SolutionOutlined, FolderOutlined, StarOutlined, HistoryOutlined, DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -64,6 +64,11 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
           key: 'customers-all',
           icon: <UnorderedListOutlined />,
           label: '전체보기',
+        },
+        {
+          key: 'customers-regional',
+          icon: <EnvironmentOutlined />,
+          label: '지역별 보기',
         },
         {
           key: 'customers-relationship',

@@ -50,11 +50,14 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     fetchCustomers();
   }, [pagination.current, pagination.pageSize]);
 
-  // selectedMenuKey 변경 시 관계별 보기 자동 활성화
+  // selectedMenuKey 변경 시 뷰 모드 자동 활성화
   useEffect(() => {
     if (selectedMenuKey === 'customers-relationship') {
       setShowRelationshipView(true);
       setShowRegionalView(false);
+    } else if (selectedMenuKey === 'customers-regional') {
+      setShowRegionalView(true);
+      setShowRelationshipView(false);
     } else if (selectedMenuKey === 'customers-all') {
       setShowRelationshipView(false);
       setShowRegionalView(false);
