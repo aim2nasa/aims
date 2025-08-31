@@ -56,7 +56,6 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
 
   return (
     <div>
-      <Title level={4} style={{ marginTop: 24 }}>문서 유형별</Title>
       <Menu 
         items={menuItems} 
         mode="inline" 
