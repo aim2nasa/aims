@@ -18,7 +18,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   const [customers, setCustomers] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [expandedKeys, setExpandedKeys] = useState(['customers', 'family', 'work']);
+  const [expandedKeys, setExpandedKeys] = useState(['customers', 'family', 'corporate']);
   
   // 대표자 변경 관련 상태
   const [representativeModal, setRepresentativeModal] = useState({
@@ -154,7 +154,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   const structuredData = useMemo(() => {
     const result = {
       가족그룹: {},  // 가족 그룹별 데이터
-      직장: {}
+      법인: {}
     };
     
     // 가족 관계 네트워크 구축
@@ -285,7 +285,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       };
     });
     
-    // 직장 관계 처리 (기존 로직 유지)
+    // 법인 관계 처리 (기존 로직 유지)
     relationships.forEach(relationship => {
       const category = relationship.relationship_info.relationship_category;
       const fromCustomer = relationship.from_customer;
@@ -305,12 +305,12 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         }
         
         if (companyName && employeeName) {
-          if (!result.직장[companyName]) {
-            result.직장[companyName] = [];
+          if (!result.법인[companyName]) {
+            result.법인[companyName] = [];
           }
           
-          if (!result.직장[companyName].includes(employeeName)) {
-            result.직장[companyName].push(employeeName);
+          if (!result.법인[companyName].includes(employeeName)) {
+            result.법인[companyName].push(employeeName);
           }
         }
       }
@@ -425,20 +425,20 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       treeNodes.push(familyNode);
     }
     
-    // 직장 관계 노드
-    const workEntries = Object.entries(structuredData.직장);
-    if (workEntries.length > 0) {
-      const workNode = {
+    // 법인 관계 노드
+    const corporateEntries = Object.entries(structuredData.법인);
+    if (corporateEntries.length > 0) {
+      const corporateNode = {
         title: (
           <Space>
             <BankOutlined style={{ color: '#1890ff' }} />
-            <Text strong style={{ color: '#1890ff' }}>직장</Text>
-            <Badge count={workEntries.length} style={{ backgroundColor: '#1890ff' }} />
+            <Text strong style={{ color: '#1890ff' }}>법인</Text>
+            <Badge count={corporateEntries.length} style={{ backgroundColor: '#1890ff' }} />
           </Space>
         ),
-        key: 'work',
+        key: 'corporate',
         icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
-        children: workEntries
+        children: corporateEntries
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([companyName, employees]) => ({
             title: (
@@ -464,7 +464,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                 <Badge count={employees.length} style={{ backgroundColor: '#1890ff', opacity: 0.8 }} />
               </Space>
             ),
-            key: `work-${companyName}`,
+            key: `corporate-${companyName}`,
             icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
             children: employees
               .sort((a, b) => a.localeCompare(b))
@@ -488,14 +488,14 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     {employeeName}
                   </Text>
                 ),
-                key: `work-${companyName}-${index}`,
+                key: `corporate-${companyName}-${index}`,
                 icon: <UserOutlined />,
                 isLeaf: true
               }))
           }))
       };
       
-      treeNodes.push(workNode);
+      treeNodes.push(corporateNode);
     }
     
     return treeNodes;
