@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, ChevronLeft, ChevronRight, Radio, Upload, Database, FileTextIcon, Eye, Package } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio } from "lucide-react";
 import { apiService } from '../services/apiService';
 
 
@@ -691,32 +691,6 @@ const CopyableId = ({ id }) => {
 
 // 페이지네이션 컴포넌트
 const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange }) => {
-  const getPageNumbers = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-      range.push(i);
-    }
-
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
-    } else {
-      rangeWithDots.push(1);
-    }
-
-    rangeWithDots.push(...range);
-
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
-    } else if (totalPages > 1) {
-      rangeWithDots.push(totalPages);
-    }
-
-    return rangeWithDots;
-  };
-
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -764,75 +738,46 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
           </div>
         </div>
 
-        {/* 페이지네이션 버튼 */}
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={{
-                padding: '8px 12px',
-                fontSize: '14px',
-                color: '#6b7280',
-                background: 'none',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                opacity: currentPage === 1 ? 0.5 : 1,
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <ChevronLeft style={{ width: '16px', height: '16px' }} />
-            </button>
+        {/* 페이지네이션 버튼 - 간단한 버전 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            style={{
+              padding: '8px 12px',
+              fontSize: '14px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1
+            }}
+          >
+            이전
+          </button>
 
-            {getPageNumbers().map((page, index) => (
-              <React.Fragment key={index}>
-                {page === '...' ? (
-                  <span style={{ 
-                    padding: '8px 12px', 
-                    fontSize: '14px', 
-                    color: '#6b7280' 
-                  }}>...</span>
-                ) : (
-                  <button
-                    onClick={() => onPageChange(page)}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      backgroundColor: currentPage === page ? '#3b82f6' : 'white',
-                      color: currentPage === page ? 'white' : '#374151'
-                    }}
-                  >
-                    {page}
-                  </button>
-                )}
-              </React.Fragment>
-            ))}
+          <span style={{ padding: '8px 12px', fontSize: '14px' }}>
+            {currentPage} / {totalPages}
+          </span>
 
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={{
-                padding: '8px 12px',
-                fontSize: '14px',
-                color: '#6b7280',
-                background: 'none',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                opacity: currentPage === totalPages ? 0.5 : 1,
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <ChevronRight style={{ width: '16px', height: '16px' }} />
-            </button>
-          </div>
-        )}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '8px 12px',
+              fontSize: '14px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1
+            }}
+          >
+            다음
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1333,7 +1278,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
   
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // 문서 목록 가져오기
   const fetchDocuments = useCallback(async (isInitialLoad = false) => {
@@ -1852,6 +1797,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
             </div>
           )}
 
+
           {/* 문서 표시 영역 */}
           {loading && documents.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
@@ -1865,18 +1811,226 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
               <span style={{ color: '#4b5563' }}>Loading documents...</span>
             </div>
           ) : (
-            <>
+            <div>
               {paginatedDocuments.length > 0 ? (
                 <>
-                  <div style={{ marginBottom: '24px' }}>
-                    <DocumentListView 
-                      documents={paginatedDocuments}
-                      onDocumentClick={onDocumentClick || (() => {})}
-                      onDetailClick={handleDocumentClick}
-                    />
+                  {/* 문서 목록 테이블 */}
+                  <div style={{
+                    marginBottom: '24px',
+                    background: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                              <tr>
+                                <th style={{
+                                  padding: '6px 12px',
+                                  textAlign: 'left',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  Document
+                                </th>
+                                <th style={{
+                                  padding: '6px 12px',
+                                  textAlign: 'left',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  Status
+                                </th>
+                                <th style={{
+                                  padding: '6px 12px',
+                                  textAlign: 'center',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  Actions
+                                </th>
+                                <th style={{
+                                  padding: '6px 12px',
+                                  textAlign: 'left',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  Progress
+                                </th>
+                                <th style={{
+                                  padding: '6px 6px',
+                                  textAlign: 'center',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  minWidth: '60px'
+                                }}>
+                                  Uploaded
+                                </th>
+                                <th style={{
+                                  padding: '6px 12px',
+                                  textAlign: 'left',
+                                  fontSize: '10px',
+                                  fontWeight: '500',
+                                  color: '#6b7280',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  Document ID
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ background: 'white' }}>
+                              {paginatedDocuments.map((document, index) => {
+                                const filename = extractFilename(document);
+                                const status = extractStatus(document);
+                                const progress = extractProgress(document);
+                                const uploadedDate = extractUploadedDate(document);
+                                
+                                const formatDate = (dateString) => {
+                                  if (!dateString) return "Unknown";
+                                  const date = new Date(dateString);
+                                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                                  const day = String(date.getDate()).padStart(2, '0');
+                                  return `${month}/${day}`;
+                                };
+                                
+                                return (
+                                  <tr 
+                                    key={document.id || document._id || index}
+                                    style={{
+                                      borderBottom: index < paginatedDocuments.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                      cursor: status === 'completed' ? 'pointer' : 'default'
+                                    }}
+                                  >
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <div style={{
+                                          backgroundColor: '#eff6ff',
+                                          padding: '4px',
+                                          borderRadius: '4px',
+                                          marginRight: '8px'
+                                        }}>
+                                          <FileText style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
+                                        </div>
+                                        <div>
+                                          <p style={{
+                                            fontSize: '12px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            margin: '0',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            maxWidth: '250px'
+                                          }} title={filename}>
+                                            {filename}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        borderRadius: '9999px',
+                                        fontWeight: '500',
+                                        fontSize: '10px',
+                                        padding: '2px 6px',
+                                        backgroundColor: '#dcfce7',
+                                        color: '#166534'
+                                      }}>
+                                        <CheckCircle style={{ width: '10px', height: '10px', marginRight: '2px' }} />
+                                        Completed
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                                      <button style={{
+                                        padding: '2px 6px',
+                                        fontSize: '10px',
+                                        fontWeight: '500',
+                                        color: '#059669',
+                                        backgroundColor: '#ecfdf5',
+                                        border: '1px solid #d1fae5',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                      }}>
+                                        <Eye style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
+                                        View
+                                      </button>
+                                    </td>
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ flex: '1' }}>
+                                          <div style={{
+                                            width: '100%',
+                                            backgroundColor: '#e5e7eb',
+                                            borderRadius: '3px',
+                                            height: '6px'
+                                          }}>
+                                            <div style={{
+                                              height: '6px',
+                                              borderRadius: '3px',
+                                              backgroundColor: '#10b981',
+                                              width: '100%'
+                                            }} />
+                                          </div>
+                                        </div>
+                                        <span style={{
+                                          fontSize: '10px',
+                                          color: '#6b7280',
+                                          fontWeight: '500',
+                                          minWidth: '30px'
+                                        }}>
+                                          100%
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                                      <div style={{ 
+                                        fontSize: '10px', 
+                                        color: '#6b7280',
+                                        fontFamily: 'monospace'
+                                      }}>
+                                        {formatDate(uploadedDate)}
+                                      </div>
+                                    </td>
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <div style={{
+                                        fontSize: '10px',
+                                        fontFamily: 'monospace',
+                                        color: '#6b7280',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        maxWidth: '120px'
+                                      }} title={document.id || document._id || 'unknown-id'}>
+                                        {document.id || document._id || 'unknown-id'}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                    </div>
                   </div>
                   
-                  {/* 페이지네이션 */}
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -1893,7 +2047,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   padding: '48px 0',
                   background: 'white',
                   borderRadius: '8px',
-                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                  marginBottom: '24px'
                 }}>
                   <FileText style={{ width: '96px', height: '96px', color: '#d1d5db', margin: '0 auto 16px auto' }} />
                   <h3 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>No documents found</h3>
@@ -1905,7 +2060,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick }) => {
                   </p>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </main>
