@@ -467,6 +467,7 @@ const AppLayout = () => {
                   onResetRatio={resetToOptimalRatio}
                   onEditCustomer={handleEditCustomer}
                   onDeleteCustomer={handleDeleteCustomer}
+                  onCustomerSelect={handleCustomerClick}
                 />
               </div>
             )}

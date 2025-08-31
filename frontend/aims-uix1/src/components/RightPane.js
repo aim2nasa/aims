@@ -6,8 +6,7 @@ import ImageViewer from './ImageViewer';
 import CustomerDetailPanel from './CustomerDetailPanel';
 import axios from 'axios';
 
-
-const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onEditCustomer, onDeleteCustomer }) => {
+const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onEditCustomer, onDeleteCustomer, onCustomerSelect }) => {
   if (!contentType || (!document && !customer)) {
     return null;
   }
@@ -22,6 +21,7 @@ const RightPane = ({ contentType, document, customer, onClose, onResetRatio, onE
         onResetRatio={onResetRatio}
         onEdit={onEditCustomer}
         onDelete={onDeleteCustomer}
+        onCustomerSelect={onCustomerSelect}
       />
     );
   }
