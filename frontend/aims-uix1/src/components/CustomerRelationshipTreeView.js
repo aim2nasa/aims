@@ -91,47 +91,55 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
       
-      // 가족 관계 처리
+      // 가족 관계 처리 (개인-개인만)
       if (category === 'family') {
-        const fromName = fromCustomer.personal_info?.name || '이름없음';
-        
-        if (!result.가족[fromName]) {
-          result.가족[fromName] = [];
+        // 가족 관계는 개인 간의 관계만 허용
+        if (fromCustomer.insurance_info?.customer_type === '개인' && 
+            toCustomer?.insurance_info?.customer_type === '개인') {
+          
+          const fromName = fromCustomer.personal_info?.name || '이름없음';
+          
+          if (!result.가족[fromName]) {
+            result.가족[fromName] = [];
+          }
+          
+          // 관계 유형에 따른 라벨 매핑
+          const typeLabels = {
+            spouse: '배우자',
+            parent: '부모', 
+            child: '자녀',
+            son: '아들',
+            daughter: '딸',
+            sibling: '형제자매',
+            brother: '형/동생',
+            sister: '누나/언니/여동생'
+          };
+          
+          const relationLabel = typeLabels[relationshipType] || relationshipType;
+          const toName = toCustomer?.personal_info?.name || '이름없음';
+          
+          const relationObj = {};
+          relationObj[relationLabel] = toName;
+          result.가족[fromName].push(relationObj);
         }
-        
-        // 관계 유형에 따른 라벨 매핑
-        const typeLabels = {
-          spouse: '배우자',
-          parent: '부모', 
-          child: '자녀',
-          son: '아들',
-          daughter: '딸',
-          sibling: '형제자매',
-          brother: '형/동생',
-          sister: '누나/언니/여동생'
-        };
-        
-        const relationLabel = typeLabels[relationshipType] || relationshipType;
-        const toName = toCustomer?.personal_info?.name || '이름없음';
-        
-        const relationObj = {};
-        relationObj[relationLabel] = toName;
-        result.가족[fromName].push(relationObj);
       }
       
-      // 직장 관계 처리 (법인 중심)
+      // 직장 관계 처리 (법인 중심, 개인 직원만)
       else if (category === 'professional' || category === 'corporate') {
-        // 법인 고객을 찾아서 직장 관계 설정
         let companyName, employeeName;
         
-        if (fromCustomer.insurance_info?.customer_type === '법인') {
+        // 법인-개인 관계만 처리
+        if (fromCustomer.insurance_info?.customer_type === '법인' && 
+            toCustomer?.insurance_info?.customer_type === '개인') {
           companyName = fromCustomer.personal_info?.name || '회사명없음';
           employeeName = toCustomer?.personal_info?.name || '직원명없음';
-        } else if (toCustomer?.insurance_info?.customer_type === '법인') {
+        } else if (fromCustomer.insurance_info?.customer_type === '개인' && 
+                   toCustomer?.insurance_info?.customer_type === '법인') {
           companyName = toCustomer.personal_info?.name || '회사명없음';
           employeeName = fromCustomer.personal_info?.name || '직원명없음';
         }
         
+        // 유효한 법인-개인 관계일 때만 추가
         if (companyName && employeeName) {
           if (!result.직장[companyName]) {
             result.직장[companyName] = [];

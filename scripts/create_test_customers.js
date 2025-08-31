@@ -167,6 +167,38 @@ const emailDomains = ['gmail.com', 'naver.com', 'daum.net', 'nate.com', 'hotmail
 const customerTypes = ['개인', '법인'];
 const riskLevels = ['저위험', '중위험', '고위험'];
 
+// 법인명 풀 (한글/영문 혼용)
+const corporateNames = [
+  // 한국 회사명
+  '삼성전자', '현대자동차', 'LG전자', 'SK텔레콤', '포스코', '롯데그룹', '한화시스템',
+  '대우건설', '한진그룹', '대한항공', '아시아나항공', 'CJ그룹', '신세계그룹', 
+  '한국전력공사', '한국가스공사', '한국철도공사', '농협은행', '국민은행', 
+  '부산항만공사', '인천공항공사', '한국투자증권', '미래에셋', '교보생명',
+  '서울시설공단', '인천도시공사', '경기도시공사', '부산도시공사', '대구도시공사',
+  '대전테크놀로지', '울산화학공업', '포항제철공업', '창원기계공업', '안산화학단지',
+  '성남IT센터', '수원전자부품', '고양건설', '부천제조업체', '안양정밀공업',
+  '목포해운', '여수석유화학', '순천농업협동조합', '광주자동차부품', '전주식품가공',
+  '춘천농업협동조합', '강릉관광공사', '제주관광개발공사', '경주관광개발공사', '진주교육재단',
+  '청주첨단산업단지', '천안자동차부품', '충주건설', '서산석유화학', '아산디스플레이',
+  '대구산업개발', '경주상업개발', '포항산업단지', '창원정밀기계', '김해항공산업',
+  '울산조선해양', '부산물류센터', '인천물류센터', '대전과학기술원', '광주과학기술원',
+  '강동IT서비스', '서초금융센터', '마포문화산업', '강남의료센터', '송파물류센터',
+  '화성신도시개발', '용인반도체', '성남판교테크노', '분당바이오', '일산신도시개발',
+  
+  // 영문 회사명
+  'Seoul Tech Solutions', 'Busan Marine Corp', 'Korea Digital Inc',
+  'Incheon Science Park', 'Daegu Innovation Hub', 'Gwangju Tech Valley',
+  'Daejeon R&D Center', 'Ulsan Industrial Co', 'Pohang Steel Works',
+  'Changwon Precision Ltd', 'Jeju Tourism Development', 'Gyeongju Heritage Co',
+  'KimHae Aerospace', 'JinJu Education Foundation', 'CheonAn Auto Parts',
+  'Asan Display Technologies', 'Seosan Petrochemical', 'ChungJu Construction',
+  'Cheonan Automotive', 'Suwon Electronics', 'Goyang Development',
+  'Bucheon Manufacturing', 'Ansan Chemical Complex', 'Anyang Precision',
+  'Mokpo Shipping Co', 'Yeosu Petrochemical', 'Suncheon Agro Coop',
+  'Gwangju Auto Parts', 'Jeonju Food Processing', 'Chuncheon Agriculture',
+  'Gangneung Tourism', 'Cheongju Advanced Industrial', 'Chungju Engineering'
+];
+
 // 랜덤 선택 함수
 function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -230,10 +262,20 @@ function generateAddress() {
 
 // 고객 데이터 생성
 function generateCustomer() {
-  const gender = randomChoice(['M', 'F']);
-  const surname = randomChoice(koreanSurnames);
-  const firstName = gender === 'M' ? randomChoice(koreanMaleNames) : randomChoice(koreanFemaleNames);
-  const name = surname + firstName;
+  const customerType = randomChoice(customerTypes);
+  let name, gender;
+  
+  if (customerType === '법인') {
+    // 법인 고객인 경우 회사명 사용
+    name = randomChoice(corporateNames);
+    gender = 'M'; // 법인은 성별 의미 없지만 기본값
+  } else {
+    // 개인 고객인 경우 사람 이름 사용
+    gender = randomChoice(['M', 'F']);
+    const surname = randomChoice(koreanSurnames);
+    const firstName = gender === 'M' ? randomChoice(koreanMaleNames) : randomChoice(koreanFemaleNames);
+    name = surname + firstName;
+  }
   
   const birthDate = randomBirthDate();
   const createdDate = randomPastDate(3); // 최근 3년 내 등록
@@ -250,7 +292,7 @@ function generateCustomer() {
       address: generateAddress()
     },
     insurance_info: {
-      customer_type: randomChoice(customerTypes),
+      customer_type: customerType,
       risk_level: randomChoice(riskLevels),
       annual_premium: randomNumber(500000, 5000000), // 50만~500만원
       total_coverage: randomNumber(10000000, 100000000) // 1천만~1억원
