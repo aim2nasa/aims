@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
   Space, Tag, Card, message,
-  Tabs, Drawer, Row, Col, Switch
+  Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined, EnvironmentOutlined, TeamOutlined
+  SearchOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
@@ -398,30 +398,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         }
         extra={
           <Space>
-            <Space>
-              <EnvironmentOutlined />
-              <span>지역별 보기</span>
-              <Switch 
-                checked={showRegionalView}
-                onChange={(checked) => {
-                  setShowRegionalView(checked);
-                  if (checked) setShowRelationshipView(false);
-                }}
-                size="small"
-              />
-            </Space>
-            <Space>
-              <TeamOutlined />
-              <span>관계별 보기</span>
-              <Switch 
-                checked={showRelationshipView}
-                onChange={(checked) => {
-                  setShowRelationshipView(checked);
-                  if (checked) setShowRegionalView(false);
-                }}
-                size="small"
-              />
-            </Space>
             <Input
               placeholder="고객명, 전화번호, 이메일 검색"
               value={searchText}
