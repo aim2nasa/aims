@@ -152,8 +152,6 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
     // 파일 목록에 즉시 추가하여 Dashboard 표시
     setUploadedFiles(prevFiles => [...prevFiles, tempDocument]);
     setIsModalVisible(false);
-    
-    console.log('File uploaded, dashboard should show:', tempDocument);
   };
   
   const showUploadModal = () => {
