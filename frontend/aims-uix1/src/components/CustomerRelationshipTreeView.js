@@ -351,24 +351,21 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     
                     return {
                       title: (
-                        <Space>
-                          <Icon style={{ color }} />
-                          <Text 
-                            style={{ 
-                              color: '#1890ff', 
-                              cursor: 'pointer',
-                              textDecoration: 'underline'
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onCustomerSelect) {
-                                onCustomerSelect(member._id);
-                              }
-                            }}
-                          >
-                            {member.personal_info?.name || '이름없음'}
-                          </Text>
-                        </Space>
+                        <Text 
+                          style={{ 
+                            color: '#1890ff', 
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onCustomerSelect) {
+                              onCustomerSelect(member._id);
+                            }
+                          }}
+                        >
+                          {member.personal_info?.name || '이름없음'}
+                        </Text>
                       ),
                       key: `family-member-${repName}-${index}`,
                       icon: <Icon style={{ color }} />,
@@ -454,24 +451,21 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                 
                 return {
                   title: (
-                    <Space>
-                      <Icon style={{ color }} />
-                      <Text 
-                        style={{ 
-                          color: '#1890ff', 
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (employee && onCustomerSelect) {
-                            onCustomerSelect(employee._id);
-                          }
-                        }}
-                      >
-                        {employeeName}
-                      </Text>
-                    </Space>
+                    <Text 
+                      style={{ 
+                        color: '#1890ff', 
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (employee && onCustomerSelect) {
+                          onCustomerSelect(employee._id);
+                        }
+                      }}
+                    >
+                      {employeeName}
+                    </Text>
                   ),
                   key: `corporate-${companyName}-${index}`,
                   icon: <Icon style={{ color }} />,
