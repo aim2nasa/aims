@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Tabs, Descriptions, Card, Tag, Space, Typography, Avatar, 
   Button, message, Table, Empty, Divider, Tooltip, Popconfirm
@@ -31,6 +31,32 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   // 가족 관계 모달 상태
   const [showFamilyRelationshipModal, setShowFamilyRelationshipModal] = useState(false);
 
+  const fetchCustomerDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}`);
+      if (response.data.success) {
+        setCustomer(response.data.data);
+      }
+    } catch (error) {
+      message.error('고객 정보를 불러오는데 실패했습니다.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [customerId]);
+
+  const fetchCustomerDocuments = useCallback(async () => {
+    try {
+      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}/documents`);
+      if (response.data.success) {
+        setCustomerDocuments(response.data.data.documents);
+      }
+    } catch (error) {
+      console.error('고객 문서 조회 실패:', error);
+    }
+  }, [customerId]);
+
   useEffect(() => {
     if (customerId) {
       // initialCustomer가 있으면 사용하고, 없으면 API로 조회
@@ -44,7 +70,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       setCustomer(null);
       setCustomerDocuments([]);
     }
-  }, [customerId, initialCustomer]);
+  }, [customerId, initialCustomer, fetchCustomerDetail, fetchCustomerDocuments]);
 
   // initialCustomer가 변경될 때마다 customer 상태 업데이트 및 문서 목록 새로고침
   useEffect(() => {
@@ -53,33 +79,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       // 고객 정보가 업데이트되면 문서 목록도 새로고침
       fetchCustomerDocuments();
     }
-  }, [initialCustomer]);
-
-  const fetchCustomerDetail = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}`);
-      if (response.data.success) {
-        setCustomer(response.data.data);
-      }
-    } catch (error) {
-      message.error('고객 정보를 불러오는데 실패했습니다.');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCustomerDocuments = async () => {
-    try {
-      const response = await axios.get(`http://tars.giize.com:3010/api/customers/${customerId}/documents`);
-      if (response.data.success) {
-        setCustomerDocuments(response.data.data.documents);
-      }
-    } catch (error) {
-      console.error('고객 문서 조회 실패:', error);
-    }
-  };
+  }, [initialCustomer, customerId, fetchCustomerDocuments]);
 
   // 문서 클릭 시 상세 정보 조회 및 프리뷰 모달 표시
   const handleDocumentClick = async (documentRecord) => {

@@ -97,6 +97,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     return () => window.removeEventListener('resize', handleResize);
   }, [isResponsive, calculateItemsPerPage]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     
@@ -124,6 +125,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       }));
     }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.current, pagination.pageSize, searchText, searchFilters]);
 
   useEffect(() => {
@@ -159,7 +161,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     }, 300); // 300ms 후에 검색 실행
 
     return () => clearTimeout(delayedSearch);
-  }, [searchText, fetchCustomers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText, fetchCustomers, pagination.current, pagination.pageSize]);
 
   // 컴포넌트 마운트 시 새로고침 콜백 등록
   useEffect(() => {

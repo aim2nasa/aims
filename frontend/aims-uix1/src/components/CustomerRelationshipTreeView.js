@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Tree, Card, Space, Typography, Badge, Spin, Tag, Modal, Select } from 'antd';
 import { Button } from './common';
 import { 
@@ -69,7 +69,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   };
 
   // 가족 대표자 선정 함수 (사용자 설정 우선)
-  const selectFamilyRepresentative = (familyMembers, groupKey) => {
+  const selectFamilyRepresentative = useCallback((familyMembers, groupKey) => {
     // 사용자가 수동으로 설정한 대표자가 있으면 우선 사용
     const userSetRepId = familyRepresentatives[groupKey];
     if (userSetRepId) {
@@ -109,7 +109,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       
       return 0;
     })[0];
-  };
+  }, [familyRepresentatives]);
 
   // Context에서 받은 데이터 구조화
   const structuredData = useMemo(() => {

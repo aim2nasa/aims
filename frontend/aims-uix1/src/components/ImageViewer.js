@@ -12,8 +12,6 @@ const ImageViewer = ({ file, onDownload }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [maxImageWidth, setMaxImageWidth] = useState('65vw');
-  const [maxImageHeight, setMaxImageHeight] = useState('calc(100vh - 300px)');
-  const [containerHeight, setContainerHeight] = useState('calc(100vh - 250px)');
   const containerRef = useRef(null);
 
   const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));   // 최대 300%
@@ -25,11 +23,8 @@ const ImageViewer = ({ file, onDownload }) => {
       const rightPane = document.querySelector('[data-testid="right-pane"]');
       if (rightPane) {
         const paneWidth = rightPane.offsetWidth;
-        const paneHeight = rightPane.offsetHeight;
         // 폭이 넓어지면 이미지도 실제로 더 크게 표시되도록
         setMaxImageWidth(`${paneWidth * 0.9}px`); // 90%로 더 크게
-        setMaxImageHeight(`${paneHeight * 2}px`); // 높이 제한을 크게 늘려서 스크롤 허용
-        setContainerHeight(`${paneHeight - 100}px`);
       }
     };
 
