@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Space, message, Spin, Alert, Typography } from 'antd';
+import { Modal, Space, message, Spin, Alert, Typography } from 'antd';
 import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { Button } from './common';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -118,19 +119,45 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         isPdf && (
           <div key="pdf-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Space>
-              <Button size="small" disabled={pageNumber <= 1} onClick={previousPage} icon={<LeftOutlined />}>
+              <Button 
+                size="small" 
+                variant="secondary"
+                disabled={pageNumber <= 1} 
+                onClick={previousPage} 
+                icon={<LeftOutlined />}
+              >
                 이전
               </Button>
               <Text>페이지 {pageNumber} / {numPages || '--'}</Text>
-              <Button size="small" disabled={pageNumber >= numPages} onClick={nextPage} icon={<RightOutlined />}>
+              <Button 
+                size="small" 
+                variant="secondary"
+                disabled={pageNumber >= numPages} 
+                onClick={nextPage} 
+                icon={<RightOutlined />}
+              >
                 다음
               </Button>
             </Space>
             <Space>
-              <Button size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+              <Button 
+                size="small" 
+                variant="ghost"
+                onClick={zoomOut} 
+                icon={<MinusOutlined />} 
+              />
               <Text>{Math.round(scale * 100)}%</Text>
-              <Button size="small" onClick={zoomIn} icon={<PlusOutlined />} />
-              <Button type="primary" onClick={handleDownload} icon={<DownloadOutlined />}>
+              <Button 
+                size="small" 
+                variant="ghost"
+                onClick={zoomIn} 
+                icon={<PlusOutlined />} 
+              />
+              <Button 
+                variant="primary" 
+                onClick={handleDownload} 
+                icon={<DownloadOutlined />}
+              >
                 다운로드
               </Button>
             </Space>
@@ -141,10 +168,24 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
           <div key="image-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <div></div>
             <Space>
-              <Button size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+              <Button 
+                size="small" 
+                variant="ghost"
+                onClick={zoomOut} 
+                icon={<MinusOutlined />} 
+              />
               <Text>{Math.round(scale * 100)}%</Text>
-              <Button size="small" onClick={zoomIn} icon={<PlusOutlined />} />
-              <Button type="primary" onClick={handleDownload} icon={<DownloadOutlined />}>
+              <Button 
+                size="small" 
+                variant="ghost"
+                onClick={zoomIn} 
+                icon={<PlusOutlined />} 
+              />
+              <Button 
+                variant="primary" 
+                onClick={handleDownload} 
+                icon={<DownloadOutlined />}
+              >
                 다운로드
               </Button>
             </Space>
@@ -152,7 +193,11 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         ),
         // 기타 파일 컨트롤
         !isPdf && !isImage && (
-          <Button key="close" onClick={onClose}>
+          <Button 
+            key="close" 
+            variant="secondary"
+            onClick={onClose}
+          >
             닫기
           </Button>
         )
@@ -224,7 +269,11 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
           alignItems: 'center'
         }}>
           <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
-          <Button type="primary" onClick={handleDownload}>
+          <Button 
+            variant="primary" 
+            onClick={handleDownload}
+            icon={<DownloadOutlined />}
+          >
             {documentName} 다운로드
           </Button>
         </div>

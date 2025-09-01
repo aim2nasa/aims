@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Modal, Form, Select, Button, message, Space, Typography, Avatar, Tag, Input, AutoComplete, Spin 
+  Modal, Form, Select, message, Space, Typography, Avatar, Tag, Input, AutoComplete, Spin 
 } from 'antd';
 import { 
   HomeOutlined, UserOutlined, HeartOutlined, SearchOutlined 
 } from '@ant-design/icons';
+import { Button } from './common';
 import CustomerService from '../services/customerService';
 import { useRelationship } from '../contexts/RelationshipContext';
 
@@ -285,12 +286,16 @@ const FamilyRelationshipModal = ({
 
         <div style={{ textAlign: 'right', marginTop: 24 }}>
           <Space>
-            <Button onClick={onCancel} disabled={loading}>
+            <Button 
+              variant="secondary" 
+              onClick={onCancel} 
+              disabled={loading}
+            >
               취소
             </Button>
             <Button 
-              type="primary" 
-              htmlType="submit" 
+              variant="primary"
+              onClick={() => form.submit()}
               loading={loading}
               disabled={!isFormValid}
               icon={<HomeOutlined />}
