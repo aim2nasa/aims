@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Spin, Alert, Button, Space, Typography } from 'antd';
+import { Spin, Alert, Space, Typography } from 'antd';
+import { Button } from './common';
 import { LeftOutlined, RightOutlined, DownloadOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -104,7 +105,7 @@ const PDFViewer = ({ file, onDownload }) => {
           <Space>
             <Button
               size="small"
-              type="primary"
+              variant="secondary"
               disabled={pageNumber <= 1}
               onClick={previousPage}
               icon={<LeftOutlined />}
@@ -116,7 +117,7 @@ const PDFViewer = ({ file, onDownload }) => {
             </Text>
             <Button
               size="small"
-              type="primary"
+              variant="secondary"
               disabled={pageNumber >= numPages}
               onClick={nextPage}
               icon={<RightOutlined />}
@@ -128,15 +129,15 @@ const PDFViewer = ({ file, onDownload }) => {
 
         {/* 확대/축소 */}
         <Space style={{ marginLeft: 16 }}>
-          <Button size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+          <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
           <Text style={{ fontSize: '10px' }}>{Math.round(scale * 100)}%</Text>
-          <Button size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+          <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
         </Space>
 
         {/* 다운로드 */}
         <Button
           size="small"
-          type="primary"
+          variant="primary"
           onClick={onDownload}
           icon={<DownloadOutlined />}
         >

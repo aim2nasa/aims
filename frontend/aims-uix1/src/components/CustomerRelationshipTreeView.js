@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Tree, Card, Space, Typography, Badge, Spin, Tag, Button, Modal, Select } from 'antd';
+import { Tree, Card, Space, Typography, Badge, Spin, Tag, Modal, Select } from 'antd';
+import { Button } from './common';
 import { 
   FolderOutlined, 
   FolderOpenOutlined, 
@@ -326,7 +327,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     👑 {repName} (대표)
                   </Text>
                   <Button
-                    type="text"
+                    variant="ghost"
                     size="small"
                     icon={<EditOutlined />}
                     style={{ color: '#1890ff', fontSize: '14px' }}

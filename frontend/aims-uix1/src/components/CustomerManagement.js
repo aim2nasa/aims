@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Table, Button, Modal, Form, Input, Select, DatePicker, 
+  Table, Modal, Form, Input, Select, DatePicker, 
   Space, Tag, Card,
   Tabs, Drawer, Row, Col
 } from 'antd';
+import { Button } from './common';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
   SearchOutlined
@@ -406,7 +407,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       width: 100,
       render: (_, record) => (
         <Button 
-          type="link" 
+          variant="link" 
           icon={<FileTextOutlined />}
           onClick={() => showCustomerDocuments(record._id)}
         >
@@ -499,7 +500,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         extra={
           <Space>
             <Button 
-              type="primary" 
+              variant="primary" 
               icon={<PlusOutlined />}
               onClick={() => openCustomerModal()}
             >
@@ -701,7 +702,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                       </Col>
                       <Col span={6}>
                         <Button 
-                          type="primary" 
+                          variant="primary" 
                           icon={<SearchOutlined />}
                           onClick={() => setAddressSearchVisible(true)}
                           block
@@ -803,8 +804,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
-              <Button onClick={closeCustomerModal}>취소</Button>
-              <Button type="primary" htmlType="submit">
+              <Button variant="secondary" onClick={closeCustomerModal}>취소</Button>
+              <Button variant="primary" htmlType="submit">
                 {currentEditingCustomer ? '수정' : '등록'}
               </Button>
             </Space>

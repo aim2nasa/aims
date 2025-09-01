@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Input, Button, Space, Row, Col } from 'antd';
+import { Input, Space, Row, Col } from 'antd';
+import { Button } from './common';
 import { SearchOutlined } from '@ant-design/icons';
 import AddressSearchModal from './AddressSearchModal';
 
@@ -85,7 +86,7 @@ const AddressSearchInput = ({
             <Button 
               icon={<SearchOutlined />}
               onClick={handleAddressSearch}
-              type="default"
+              variant="secondary"
               block
             >
               주소검색

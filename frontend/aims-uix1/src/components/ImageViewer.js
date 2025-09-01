@@ -1,7 +1,8 @@
 // src/components/ImageViewer.js
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Space, Typography, Spin, Alert } from 'antd';
+import { Space, Typography, Spin, Alert } from 'antd';
+import { Button } from './common';
 import { DownloadOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -118,15 +119,15 @@ const ImageViewer = ({ file, onDownload }) => {
 
         {/* 확대/축소 */}
         <Space style={{ marginLeft: 16 }}>
-          <Button size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+          <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
           <Text style={{ fontSize: '10px' }}>{Math.round(scale * 100)}%</Text>
-          <Button size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+          <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
         </Space>
 
         {/* 다운로드 */}
         <Button
           size="small"
-          type="primary"
+          variant="primary"
           onClick={onDownload}
           icon={<DownloadOutlined />}
         >

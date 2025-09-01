@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Button, message, Space } from 'antd';
+import { Card, message, Space } from 'antd';
+import { Button } from './common';
 import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
 import ImageViewer from './ImageViewer';
@@ -92,12 +93,12 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
       extra={
         <Space>
           <Button 
-            type="text" 
+            variant="ghost" 
             icon={<ReloadOutlined />} 
             onClick={onResetRatio}
             title="최적 비율로 리셋"
           />
-          <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
+          <Button variant="ghost" icon={<CloseOutlined />} onClick={onClose} />
         </Space>
       }
       bordered={false}
@@ -111,7 +112,7 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
-            <Button type="primary" onClick={handleDownload}>
+            <Button variant="primary" onClick={handleDownload}>
               {document.upload.originalName} 다운로드
             </Button>
           </div>
