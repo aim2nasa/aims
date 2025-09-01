@@ -1961,7 +1961,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : canShowStatusText ? '130px' : '60px'
+                                  width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '50px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
