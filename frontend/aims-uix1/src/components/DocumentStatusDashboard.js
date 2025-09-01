@@ -2088,7 +2088,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         </div>
                                       </div>
                                     </td>
-                                    <td style={{ padding: '8px 12px' }}>
+                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                       <StatusBadge status={status} size="small" isCompact={isCompactMode} />
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
