@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
   Space, Tag, Card,
@@ -28,6 +28,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     pageSize: 10,
     total: 0
   });
+  const [isResponsive, setIsResponsive] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [showRegionalView, setShowRegionalView] = useState(false);
   const [showRelationshipView, setShowRelationshipView] = useState(false);
@@ -46,6 +47,51 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
   const [form] = Form.useForm();
+
+  // 브라우저 크기에 따른 아이템 수 계산
+  const calculateItemsPerPage = useCallback(() => {
+    if (!isResponsive) return pagination.pageSize;
+    
+    // 헤더(약 80px) + 카드헤더(약 80px) + 테이블헤더(약 55px) + 여유공간(약 100px) = 약 315px
+    const fixedElementsHeight = 315;
+    
+    // 각 테이블 행 높이 약 60px (Ant Design Table)
+    const rowHeight = 60;
+    
+    // 페이지네이션 공간 (약 60px)
+    const paginationHeight = 60;
+    
+    const availableHeight = window.innerHeight - fixedElementsHeight - paginationHeight;
+    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
+    
+    // 최소 5개, 최대 50개로 제한
+    return Math.max(5, Math.min(maxItemsPerPage, 50));
+  }, [isResponsive, pagination.pageSize]);
+
+  // 브라우저 크기 변경 시 pageSize 업데이트
+  useEffect(() => {
+    const handleResize = () => {
+      if (isResponsive) {
+        const newPageSize = calculateItemsPerPage();
+        setPagination(prev => ({
+          ...prev,
+          pageSize: newPageSize
+        }));
+      }
+    };
+
+    // 초기 설정
+    if (isResponsive) {
+      const initialPageSize = calculateItemsPerPage();
+      setPagination(prev => ({
+        ...prev,
+        pageSize: initialPageSize
+      }));
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isResponsive, calculateItemsPerPage]);
 
   useEffect(() => {
     fetchCustomers();
@@ -138,11 +184,24 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   };
 
   const handleTableChange = (page, pageSize) => {
+    setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
     setPagination({
       current: page,
       pageSize: pageSize,
       total: pagination.total
     });
+  };
+
+  const handleResponsiveModeChange = (responsive) => {
+    setIsResponsive(responsive);
+    if (responsive) {
+      const newPageSize = calculateItemsPerPage();
+      setPagination(prev => ({
+        ...prev,
+        pageSize: newPageSize,
+        current: 1
+      }));
+    }
   };
 
   // 통합 모달 열기 함수
@@ -446,10 +505,55 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
-              showSizeChanger: true,
+              showSizeChanger: !isResponsive,
               showQuickJumper: true,
-              onChange: handleTableChange,
-              onShowSizeChange: handleTableChange
+              onChange: (page, pageSize) => {
+                setPagination(prev => ({
+                  ...prev,
+                  current: page
+                }));
+              },
+              onShowSizeChange: handleTableChange,
+              showTotal: (total, range) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                  <span>
+                    {range[0]}-{range[1]} of {total} customers
+                  </span>
+                  
+                  {/* 반응형 모드 토글 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px',
+                      color: '#666',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isResponsive}
+                        onChange={(e) => handleResponsiveModeChange(e.target.checked)}
+                        style={{
+                          cursor: 'pointer',
+                          accentColor: '#1890ff'
+                        }}
+                      />
+                      Auto-fit to screen
+                    </label>
+                  </div>
+                  
+                  {/* 반응형 모드일 때 현재 아이템 수 표시 */}
+                  {isResponsive && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '13px', color: '#1890ff', fontWeight: '500' }}>
+                        📱 {pagination.pageSize} per page (auto)
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
             }}
             onRow={(record) => ({
               onClick: () => handleCustomerRowSelect(record),
