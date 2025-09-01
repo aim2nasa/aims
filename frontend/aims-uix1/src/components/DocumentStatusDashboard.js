@@ -567,7 +567,7 @@ const CopyableId = ({ id }) => {
 };
 
 // 페이지네이션 컴포넌트
-const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange }) => {
+const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange, isResponsive, onResponsiveModeChange }) => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -593,25 +593,62 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
             Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of <strong>{totalItems}</strong> documents
           </span>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', color: '#4b5563' }}>Show:</label>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              style={{
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                padding: '4px 8px',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* 반응형 모드 토글 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
                 fontSize: '14px',
-                outline: 'none'
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span style={{ fontSize: '14px', color: '#4b5563' }}>per page</span>
+                color: '#4b5563',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isResponsive}
+                  onChange={(e) => onResponsiveModeChange(e.target.checked)}
+                  style={{
+                    cursor: 'pointer',
+                    accentColor: '#3b82f6'
+                  }}
+                />
+                Auto-fit to screen
+              </label>
+            </div>
+            
+            {/* 수동 개수 설정 */}
+            {!isResponsive && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '14px', color: '#4b5563' }}>Show:</label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+                  style={{
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <span style={{ fontSize: '14px', color: '#4b5563' }}>per page</span>
+              </div>
+            )}
+            
+            {/* 반응형 모드일 때 현재 아이템 수 표시 */}
+            {isResponsive && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '14px', color: '#10b981', fontWeight: '500' }}>
+                  📱 {itemsPerPage} per page (auto)
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -882,6 +919,46 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isResponsive, setIsResponsive] = useState(true);
+
+  // 브라우저 크기에 따른 아이템 수 계산
+  const calculateItemsPerPage = useCallback(() => {
+    if (!isResponsive) return itemsPerPage;
+    
+    // 헤더(약 120px) + 통계(약 150px) + 검색필터(약 120px) + 테이블헤더(약 40px) + 푸터(약 80px) = 약 510px
+    const fixedElementsHeight = 510;
+    
+    // 각 테이블 행 높이 약 50px
+    const rowHeight = 50;
+    
+    // 페이지네이션 공간 (약 80px) + 여유공간 (약 50px)
+    const paginationAndMargin = 130;
+    
+    const availableHeight = window.innerHeight - fixedElementsHeight - paginationAndMargin;
+    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
+    
+    // 최소 5개, 최대 50개로 제한
+    return Math.max(5, Math.min(maxItemsPerPage, 50));
+  }, [isResponsive, itemsPerPage]);
+
+  // 브라우저 크기 변경 시 itemsPerPage 업데이트
+  useEffect(() => {
+    const handleResize = () => {
+      if (isResponsive) {
+        const newItemsPerPage = calculateItemsPerPage();
+        setItemsPerPage(newItemsPerPage);
+      }
+    };
+
+    // 초기 설정
+    if (isResponsive) {
+      const initialItemsPerPage = calculateItemsPerPage();
+      setItemsPerPage(initialItemsPerPage);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isResponsive, calculateItemsPerPage]);
 
   // 문서 목록 가져오기
   const fetchDocuments = useCallback(async (isInitialLoad = false) => {
@@ -1047,8 +1124,18 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   };
 
   const handleItemsPerPageChange = (newItemsPerPage) => {
+    setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1); // 개수 변경 시 첫 페이지로 리셋
+  };
+
+  const handleResponsiveModeChange = (responsive) => {
+    setIsResponsive(responsive);
+    if (responsive) {
+      const newItemsPerPage = calculateItemsPerPage();
+      setItemsPerPage(newItemsPerPage);
+      setCurrentPage(1);
+    }
   };
 
   // 상태별 통계 (전체 문서 기준)
@@ -1662,6 +1749,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     totalItems={filteredDocuments.length}
                     onPageChange={handlePageChange}
                     onItemsPerPageChange={handleItemsPerPageChange}
+                    isResponsive={isResponsive}
+                    onResponsiveModeChange={handleResponsiveModeChange}
                   />
                 </>
               ) : (
