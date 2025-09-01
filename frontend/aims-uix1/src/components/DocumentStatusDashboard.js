@@ -1607,12 +1607,31 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             gap: '8px',
             marginBottom: '12px'
           }}>
-            <div style={{
-              background: 'white',
-              padding: '8px 10px',
-              borderRadius: '4px',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}>
+            <div 
+              onClick={() => {
+                setStatusFilter('all');
+                setCurrentPage(1);
+              }}
+              style={{
+                background: statusFilter === 'all' ? 
+                  'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' : 'white',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                border: statusFilter === 'all' ? '2px solid #6b7280' : '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+              }}
+              title="클릭하여 전체 문서 보기"
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Total</p>
@@ -1622,12 +1641,37 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               </div>
             </div>
             
-            <div style={{
-              background: 'white',
-              padding: '8px 10px',
-              borderRadius: '4px',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}>
+            <div 
+              onClick={() => {
+                if (statusCounts.completed > 0) {
+                  setStatusFilter('completed');
+                  setCurrentPage(1);
+                }
+              }}
+              style={{
+                background: statusCounts.completed > 0 && statusFilter === 'completed' ? 
+                  'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' : 'white',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                cursor: statusCounts.completed > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease',
+                border: statusFilter === 'completed' ? '2px solid #10b981' : '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (statusCounts.completed > 0) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (statusCounts.completed > 0) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+                }
+              }}
+              title={statusCounts.completed > 0 ? '클릭하여 완료된 문서만 보기' : ''}
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Completed</p>
@@ -1637,12 +1681,37 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               </div>
             </div>
             
-            <div style={{
-              background: 'white',
-              padding: '8px 10px',
-              borderRadius: '4px',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}>
+            <div 
+              onClick={() => {
+                if (statusCounts.processing > 0) {
+                  setStatusFilter('processing');
+                  setCurrentPage(1);
+                }
+              }}
+              style={{
+                background: statusCounts.processing > 0 && statusFilter === 'processing' ? 
+                  'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' : 'white',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                cursor: statusCounts.processing > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease',
+                border: statusFilter === 'processing' ? '2px solid #3b82f6' : '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (statusCounts.processing > 0) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (statusCounts.processing > 0) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+                }
+              }}
+              title={statusCounts.processing > 0 ? '클릭하여 처리 중인 문서만 보기' : ''}
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Processing</p>
@@ -1652,12 +1721,37 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               </div>
             </div>
             
-            <div style={{
-              background: 'white',
-              padding: '8px 10px',
-              borderRadius: '4px',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}>
+            <div 
+              onClick={() => {
+                if (statusCounts.error > 0) {
+                  setStatusFilter('error');
+                  setCurrentPage(1);
+                }
+              }}
+              style={{
+                background: statusCounts.error > 0 && statusFilter === 'error' ? 
+                  'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 'white',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                cursor: statusCounts.error > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease',
+                border: statusFilter === 'error' ? '2px solid #ef4444' : '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (statusCounts.error > 0) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (statusCounts.error > 0) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+                }
+              }}
+              title={statusCounts.error > 0 ? '클릭하여 오류 문서만 보기' : ''}
+            >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Errors</p>
