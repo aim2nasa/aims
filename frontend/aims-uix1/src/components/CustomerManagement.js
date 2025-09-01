@@ -206,10 +206,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   // 통합 모달 열기 함수
   const openCustomerModal = (customer = null) => {
-    if (editModalVisible !== undefined) {
-      // 외부에서 제어되는 경우 - 외부 상태는 외부에서 관리
-      return;
-    }
     setInternalEditingCustomer(customer);
     setInternalModalVisible(true);
     
@@ -230,8 +226,11 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         total_coverage: customer.insurance_info?.total_coverage
       });
     } else {
-      // 새 등록 모드: 폼 초기화
+      // 새 등록 모드: 폼 초기화 후 기본값 설정
       form.resetFields();
+      form.setFieldsValue({
+        customer_type: '개인'
+      });
       setCurrentAddress1('');
     }
   };
@@ -241,11 +240,10 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     if (onEditModalClose) {
       // 외부에서 제어되는 경우 외부 콜백 호출
       onEditModalClose();
-    } else {
-      // 내부에서 제어되는 경우
-      setInternalModalVisible(false);
-      setInternalEditingCustomer(null);
     }
+    // 내부 상태도 항상 초기화
+    setInternalModalVisible(false);
+    setInternalEditingCustomer(null);
     setCurrentAddress1('');
     form.resetFields();
   };

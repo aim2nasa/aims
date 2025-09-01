@@ -56,6 +56,9 @@ const CustomerEditForm = ({ customer, onSave, onCancel }) => {
       layout="vertical"
       onFinish={handleSubmit}
       style={{ padding: '16px 0' }}
+      initialValues={{
+        customer_type: '개인'
+      }}
     >
       <Row gutter={16}>
         <Col span={12}>
