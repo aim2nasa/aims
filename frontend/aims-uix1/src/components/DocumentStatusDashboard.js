@@ -2241,7 +2241,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         {formatDate(uploadedDate)}
                                       </div>
                                     </td>
-                                    <td style={{ padding: '8px 12px' }}>
+                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                       <div style={{
                                         fontSize: '10px',
                                         fontFamily: 'monospace',
