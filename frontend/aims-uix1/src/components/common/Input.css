@@ -1,0 +1,135 @@
+/**
+ * AIMS Design System - Input Styles
+ * CSS Variables 기반 입력 필드 스타일
+ */
+
+/* Wrapper */
+.aims-input-wrapper {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--spacing-md);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-default);
+  transition: all var(--transition-default) var(--transition-easing-smooth);
+}
+
+/* Size Variants */
+.aims-input-small {
+  height: var(--input-height-sm);
+  font-size: var(--font-size-sm);
+}
+
+.aims-input-default {
+  height: var(--input-height-default);
+  font-size: var(--font-size-base);
+}
+
+.aims-input-large {
+  height: var(--input-height-lg);
+  font-size: var(--font-size-lg);
+}
+
+/* Input Element */
+.aims-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family-base);
+  font-size: inherit;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.aims-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Prefix & Suffix */
+.aims-input-prefix,
+.aims-input-suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-size: inherit;
+}
+
+.aims-input-prefix {
+  margin-right: var(--spacing-xs);
+}
+
+.aims-input-suffix {
+  margin-left: var(--spacing-xs);
+}
+
+/* Clear Button */
+.aims-input-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-left: var(--spacing-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+  outline: none;
+}
+
+.aims-input-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+/* States */
+.aims-input-wrapper:hover:not(.aims-input-disabled) {
+  border-color: var(--color-primary);
+}
+
+.aims-input-focused {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.aims-input-disabled {
+  background-color: var(--color-bg-tertiary);
+  cursor: not-allowed;
+}
+
+.aims-input-disabled .aims-input {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Status Variants */
+.aims-input-error {
+  border-color: var(--color-error);
+}
+
+.aims-input-error.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.aims-input-warning {
+  border-color: var(--color-warning);
+}
+
+.aims-input-warning.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+}
+
+.aims-input-success {
+  border-color: var(--color-success);
+}
+
+.aims-input-success.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
