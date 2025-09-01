@@ -921,6 +921,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isResponsive, setIsResponsive] = useState(true);
 
+  // 문서 요약 모달 상태
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState(null);
+  const [summaryContent, setSummaryContent] = useState('');
+
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return itemsPerPage;
@@ -1136,6 +1141,153 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       setItemsPerPage(newItemsPerPage);
       setCurrentPage(1);
     }
+  };
+
+  // 문서 요약 조회 함수 (CenterPane.js 참고)
+  const handleDocumentSummary = async (document) => {
+    const docId = document.id || document._id || null;
+    
+    if (!docId) {
+      console.error('Document ID not found for summary');
+      return;
+    }
+
+    try {
+      setSelectedDocumentForSummary(document);
+      setSummaryContent('로딩 중...');
+      setShowSummaryModal(true);
+
+      // 디버깅: 문서 데이터 구조 확인
+      console.log('Document data for summary:', document);
+      console.log('Document meta:', document.meta);
+      console.log('Document ocr:', document.ocr);
+      console.log('Document payload:', document.payload);
+
+      // 문서 요약 추출 로직 (CenterPane의 382-444 라인 참고)
+      const getSummaryFromDocument = (doc) => {
+        console.log('Getting summary from document...');
+        
+        // meta에서 full_text 확인
+        const metaFullText = doc.meta?.full_text || 
+          (typeof doc.meta === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.meta);
+              return parsed.full_text;
+            } catch { return null; }
+          })() : null);
+        
+        console.log('Meta full text:', metaFullText);
+        
+        // meta에 full_text가 있는 경우 - meta summary 사용
+        if (metaFullText && metaFullText.trim()) {
+          const metaSummary = doc.meta?.summary || 
+            (typeof doc.meta === 'string' ? (() => {
+              try { 
+                const parsed = JSON.parse(doc.meta);
+                return parsed.summary;
+              } catch { return null; }
+            })() : null);
+          
+          console.log('Meta summary:', metaSummary);
+          
+          if (metaSummary && metaSummary !== 'null') {
+            return metaSummary;
+          }
+          
+          // meta summary가 없으면 meta full_text의 앞부분 사용
+          const cleanText = metaFullText.trim();
+          const result = cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
+          console.log('Using meta full_text excerpt:', result);
+          return result;
+        }
+        
+        // meta에 full_text가 없는 경우 - ocr summary 사용
+        const ocrSummary = doc.ocr?.summary || 
+          (typeof doc.ocr === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.ocr);
+              return parsed.summary;
+            } catch { return null; }
+          })() : null);
+        
+        console.log('OCR summary:', ocrSummary);
+        
+        if (ocrSummary && ocrSummary !== 'null') {
+          return ocrSummary;
+        }
+        
+        // ocr summary가 없으면 ocr full_text의 앞부분 사용
+        const ocrFullText = doc.ocr?.full_text || 
+          (typeof doc.ocr === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.ocr);
+              return parsed.full_text;
+            } catch { return null; }
+          })() : null);
+        
+        console.log('OCR full text:', ocrFullText);
+        
+        if (ocrFullText && ocrFullText.trim()) {
+          const cleanText = ocrFullText.trim();
+          const result = cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
+          console.log('Using OCR full_text excerpt:', result);
+          return result;
+        }
+        
+        // 마지막으로 payload.summary 시도
+        console.log('Payload summary:', doc.payload?.summary);
+        if (doc.payload?.summary) {
+          return doc.payload.summary;
+        }
+        
+        console.log('No summary found, returning default message');
+        return '문서 요약을 찾을 수 없습니다.';
+      };
+
+      // API를 통해 상세 문서 데이터 가져오기 (CenterPane.js 참고)
+      try {
+        const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: docId
+          })
+        });
+
+        const responseData = await response.json();
+        console.log('API response data:', responseData);
+        
+        const fileData = responseData[0];
+        if (fileData) {
+          console.log('File data from API:', fileData);
+          
+          // API에서 가져온 데이터로 요약 추출
+          const summary = getSummaryFromDocument(fileData);
+          console.log('Final summary result from API:', summary);
+          setSummaryContent(summary);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('API fetch failed, trying local data:', apiError);
+      }
+
+      // API 호출이 실패하면 로컬 데이터로 폴백
+      const summary = getSummaryFromDocument(document);
+      console.log('Final summary result from local data:', summary);
+      setSummaryContent(summary);
+      
+    } catch (error) {
+      setSummaryContent('문서 요약을 불러오는 중 오류가 발생했습니다.');
+      console.error('Document summary error:', error);
+    }
+  };
+
+  const handleSummaryModalClose = () => {
+    setShowSummaryModal(false);
+    setSelectedDocumentForSummary(null);
+    setSummaryContent('');
   };
 
   // 상태별 통계 (전체 문서 기준)
@@ -1665,25 +1817,46 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       </span>
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDocumentClick(document);
-                                        }}
-                                        style={{
-                                          padding: '2px 6px',
-                                          fontSize: '10px',
-                                          fontWeight: '500',
-                                          color: '#059669',
-                                          backgroundColor: '#ecfdf5',
-                                          border: '1px solid #d1fae5',
-                                          borderRadius: '4px',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        <Eye style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
-                                        View
-                                      </button>
+                                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDocumentClick(document);
+                                          }}
+                                          style={{
+                                            padding: '2px 6px',
+                                            fontSize: '10px',
+                                            fontWeight: '500',
+                                            color: '#059669',
+                                            backgroundColor: '#ecfdf5',
+                                            border: '1px solid #d1fae5',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          <Eye style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
+                                          View
+                                        </button>
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDocumentSummary(document);
+                                          }}
+                                          style={{
+                                            padding: '2px 6px',
+                                            fontSize: '10px',
+                                            fontWeight: '500',
+                                            color: '#2563eb',
+                                            backgroundColor: '#dbeafe',
+                                            border: '1px solid #bfdbfe',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
+                                          Summary
+                                        </button>
+                                      </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1820,6 +1993,124 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         onClose={() => setShowDetailModal(false)}
       />
 
+      {/* 문서 요약 모달 */}
+      {showSummaryModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={handleSummaryModalClose}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '70vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '20px',
+              paddingBottom: '16px',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText style={{ width: '20px', height: '20px', color: '#2563eb' }} />
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                  문서 요약
+                </h3>
+              </div>
+              <button
+                onClick={handleSummaryModalClose}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 문서 제목 */}
+            <div style={{ marginBottom: '16px' }}>
+              <h4 style={{ 
+                margin: '0 0 8px 0', 
+                fontSize: '16px', 
+                fontWeight: '500', 
+                color: '#374151' 
+              }}>
+                {extractFilename(selectedDocumentForSummary) || '문서명 없음'}
+              </h4>
+            </div>
+
+            {/* 요약 내용 */}
+            <div style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              padding: '16px',
+              minHeight: '200px'
+            }}>
+              <div style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontFamily: 'inherit',
+                lineHeight: '1.6',
+                color: '#374151'
+              }}>
+                {summaryContent}
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end',
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <button
+                onClick={handleSummaryModalClose}
+                style={{
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
