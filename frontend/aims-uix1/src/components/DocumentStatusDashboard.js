@@ -926,6 +926,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState(null);
   const [summaryContent, setSummaryContent] = useState('');
 
+  // 문서 전체 텍스트 모달 상태
+  const [showFullTextModal, setShowFullTextModal] = useState(false);
+  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState(null);
+  const [fullTextContent, setFullTextContent] = useState('');
+
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return itemsPerPage;
@@ -1288,6 +1293,108 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     setShowSummaryModal(false);
     setSelectedDocumentForSummary(null);
     setSummaryContent('');
+  };
+
+  // 문서 전체 텍스트 조회 함수
+  const handleDocumentFullText = async (document) => {
+    const docId = document.id || document._id || null;
+    
+    if (!docId) {
+      console.error('Document ID not found for full text');
+      return;
+    }
+
+    try {
+      setSelectedDocumentForFullText(document);
+      setFullTextContent('로딩 중...');
+      setShowFullTextModal(true);
+
+      // 문서 전체 텍스트 추출 로직
+      const getFullTextFromDocument = (doc) => {
+        // meta에서 full_text 확인 (최우선)
+        const metaFullText = doc.meta?.full_text || 
+          (typeof doc.meta === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.meta);
+              return parsed.full_text;
+            } catch { return null; }
+          })() : null);
+        
+        if (metaFullText && metaFullText.trim()) {
+          return metaFullText;
+        }
+        
+        // text에서 full_text 확인 (text/plain 파일용)
+        const textFullText = doc.text?.full_text || 
+          (typeof doc.text === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.text);
+              return parsed.full_text;
+            } catch { return null; }
+          })() : null);
+        
+        if (textFullText && textFullText.trim()) {
+          return textFullText;
+        }
+        
+        // ocr에서 full_text 확인
+        const ocrFullText = doc.ocr?.full_text || 
+          (typeof doc.ocr === 'string' ? (() => {
+            try { 
+              const parsed = JSON.parse(doc.ocr);
+              return parsed.full_text;
+            } catch { return null; }
+          })() : null);
+        
+        if (ocrFullText && ocrFullText.trim()) {
+          return ocrFullText;
+        }
+        
+        // 마지막으로 payload에서 확인
+        if (doc.payload?.full_text) {
+          return doc.payload.full_text;
+        }
+        
+        return '문서의 전체 텍스트를 찾을 수 없습니다.';
+      };
+
+      // API를 통해 상세 문서 데이터 가져오기
+      try {
+        const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: docId
+          })
+        });
+
+        const responseData = await response.json();
+        const fileData = responseData[0];
+        if (fileData) {
+          const fullText = getFullTextFromDocument(fileData);
+          setFullTextContent(fullText);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('API fetch failed, trying local data:', apiError);
+      }
+
+      // API 호출이 실패하면 로컬 데이터로 폴백
+      const fullText = getFullTextFromDocument(document);
+      setFullTextContent(fullText);
+      
+    } catch (error) {
+      setFullTextContent('문서의 전체 텍스트를 불러오는 중 오류가 발생했습니다.');
+      console.error('Document full text error:', error);
+    }
+  };
+
+  const handleFullTextModalClose = () => {
+    setShowFullTextModal(false);
+    setSelectedDocumentForFullText(null);
+    setFullTextContent('');
   };
 
   // 상태별 통계 (전체 문서 기준)
@@ -1856,6 +1963,25 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
                                           Summary
                                         </button>
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDocumentFullText(document);
+                                          }}
+                                          style={{
+                                            padding: '2px 6px',
+                                            fontSize: '10px',
+                                            fontWeight: '500',
+                                            color: '#7c3aed',
+                                            backgroundColor: '#f3e8ff',
+                                            border: '1px solid #d8b4fe',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
+                                          Full Text
+                                        </button>
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
@@ -2094,6 +2220,128 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             }}>
               <button
                 onClick={handleSummaryModalClose}
+                style={{
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 문서 전체 텍스트 모달 */}
+      {showFullTextModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={handleFullTextModalClose}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 모달 헤더 */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '20px',
+              paddingBottom: '16px',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText style={{ width: '20px', height: '20px', color: '#7c3aed' }} />
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                  문서 전체 텍스트
+                </h3>
+              </div>
+              <button
+                onClick={handleFullTextModalClose}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 문서 제목 */}
+            <div style={{ marginBottom: '16px' }}>
+              <h4 style={{ 
+                margin: '0 0 8px 0', 
+                fontSize: '16px', 
+                fontWeight: '500', 
+                color: '#374151' 
+              }}>
+                {extractFilename(selectedDocumentForFullText) || '문서명 없음'}
+              </h4>
+            </div>
+
+            {/* 전체 텍스트 내용 */}
+            <div style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              padding: '16px',
+              minHeight: '300px',
+              maxHeight: '50vh',
+              overflow: 'auto'
+            }}>
+              <div style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                lineHeight: '1.5',
+                color: '#374151'
+              }}>
+                {fullTextContent}
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end',
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <button
+                onClick={handleFullTextModalClose}
                 style={{
                   backgroundColor: '#6b7280',
                   color: 'white',
