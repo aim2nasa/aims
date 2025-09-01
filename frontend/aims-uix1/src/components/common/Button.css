@@ -104,6 +104,35 @@
   color: var(--color-text-white);
 }
 
+.aims-btn-link {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: none;
+  padding: 0;
+  height: auto;
+  font-weight: var(--font-weight-normal);
+  text-decoration: underline;
+}
+
+.aims-btn-link:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+  background-color: transparent;
+  text-decoration: none;
+}
+
+.aims-btn-dashed {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border-dark);
+}
+
+.aims-btn-dashed:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  border-style: dashed;
+}
+
 /* Block Button */
 .aims-btn-block {
   width: 100%;

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Space, Modal, List, Row, Col } from 'antd';
+import { Input, Space, Modal, List, Row, Col } from 'antd';
+import { Button } from './common';
 import { SearchOutlined, HomeOutlined } from '@ant-design/icons';
 import AddressService from '../services/addressService';
 
@@ -165,7 +166,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
           </Col>
           <Col span={6}>
             <Button 
-              type="primary" 
+              variant="primary" 
               icon={<SearchOutlined />}
               onClick={() => searchAddress(searchKeyword)}
               loading={loading}
@@ -184,7 +185,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               <span>검색 결과 ({searchResults.length}건{totalCount > searchResults.length ? ` / 총 ${totalCount}건` : ''})</span>
               {!isEnd && (
                 <Button 
-                  type="link" 
+                  variant="link" 
                   size="small"
                   onClick={loadMoreResults}
                   loading={loading}
@@ -242,7 +243,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
             {!isEnd && (
               <div style={{ textAlign: 'center', marginTop: '12px' }}>
                 <Button 
-                  type="dashed"
+                  variant="dashed"
                   onClick={loadMoreResults}
                   loading={loading}
                   block
