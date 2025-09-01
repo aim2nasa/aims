@@ -6,10 +6,11 @@ import {
   UserOutlined,
   HomeOutlined,
   BankOutlined,
+  IdcardOutlined,
   HeartOutlined,
-  EditOutlined,
-  IdcardOutlined
+  EditOutlined
 } from '@ant-design/icons';
+import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import { useRelationship } from '../contexts/RelationshipContext';
 
 const { Title, Text } = Typography;
@@ -305,12 +306,9 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
             return {
               title: (
                 <Space>
-                  {(() => {
-                    const isIndividual = representative.insurance_info?.customer_type === '개인';
-                    const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-                    const iconColor = isIndividual ? '#52c41a' : '#1890ff';
-                    return <CustomerIcon style={{ color: iconColor }} />;
-                  })()}
+                  {React.createElement(getCustomerTypeIconWithColor(representative).Icon, {
+                    style: { color: getCustomerTypeIconWithColor(representative).color }
+                  })}
                   <Text 
                     strong
                     style={{ 
@@ -349,14 +347,12 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   .filter(member => member._id !== representative._id) // 대표자 제외
                   .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
                   .map((member, index) => {
-                    const isIndividual = member.insurance_info?.customer_type === '개인';
-                    const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-                    const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                    const { Icon, color } = getCustomerTypeIconWithColor(member);
                     
                     return {
                       title: (
                         <Space>
-                          <CustomerIcon style={{ color: iconColor }} />
+                          <Icon style={{ color }} />
                           <Text 
                             style={{ 
                               color: '#1890ff', 
@@ -375,7 +371,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                         </Space>
                       ),
                       key: `family-member-${repName}-${index}`,
-                      icon: <CustomerIcon style={{ color: iconColor }} />,
+                      icon: <Icon style={{ color }} />,
                       isLeaf: true
                     };
                   }),
@@ -454,14 +450,12 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
               .sort((a, b) => a.localeCompare(b))
               .map((employeeName, index) => {
                 const employee = allRelationshipsData.customers.find(c => c.personal_info?.name === employeeName);
-                const isIndividual = employee?.insurance_info?.customer_type === '개인';
-                const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-                const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                const { Icon, color } = getCustomerTypeIconWithColor(employee);
                 
                 return {
                   title: (
                     <Space>
-                      <CustomerIcon style={{ color: iconColor }} />
+                      <Icon style={{ color }} />
                       <Text 
                         style={{ 
                           color: '#1890ff', 
@@ -480,7 +474,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     </Space>
                   ),
                   key: `corporate-${companyName}-${index}`,
-                  icon: <CustomerIcon style={{ color: iconColor }} />,
+                  icon: <Icon style={{ color }} />,
                   isLeaf: true
                 };
               })

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Select, DatePicker, 
-  Space, Tag, Card, message,
+  Space, Tag, Card,
   Tabs, Drawer, Row, Col
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined, BankOutlined, IdcardOutlined
+  SearchOutlined
 } from '@ant-design/icons';
+import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
@@ -270,13 +271,11 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       key: 'name',
       width: 200,
       render: (name, record) => {
-        const isIndividual = record.insurance_info?.customer_type === '개인';
-        const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-        const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+        const { Icon, color } = getCustomerTypeIconWithColor(record);
         
         return (
           <Space>
-            <CustomerIcon style={{ color: iconColor }} />
+            <Icon style={{ color }} />
             <span 
               style={{ 
                 fontWeight: 'bold', 

@@ -4,10 +4,9 @@ import {
   FolderOutlined, 
   FolderOpenOutlined, 
   EnvironmentOutlined,
-  QuestionCircleOutlined,
-  BankOutlined,
-  IdcardOutlined
+  QuestionCircleOutlined
 } from '@ant-design/icons';
+import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import CustomerService from '../services/customerService';
 
 const { Title, Text } = Typography;
@@ -89,19 +88,17 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         key: 'no-address',
         icon: <QuestionCircleOutlined />,
         children: noAddressCustomers.map(customer => {
-          const isIndividual = customer.insurance_info?.customer_type === '개인';
-          const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-          const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+          const { Icon, color } = getCustomerTypeIconWithColor(customer);
           
           return {
             title: (
               <Space>
-                <CustomerIcon style={{ color: iconColor }} />
+                <Icon style={{ color }} />
                 <Text>{customer.personal_info?.name || '이름 없음'}</Text>
               </Space>
             ),
             key: `customer-${customer._id}`,
-            icon: <CustomerIcon style={{ color: iconColor }} />,
+            icon: <Icon style={{ color }} />,
             isLeaf: true,
             customerData: customer
           };
@@ -140,19 +137,17 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
               children: customers
                 .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || ''))
                 .map(customer => {
-                  const isIndividual = customer.insurance_info?.customer_type === '개인';
-                  const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
-                  const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                  const { Icon, color } = getCustomerTypeIconWithColor(customer);
                   
                   return {
                     title: (
                       <Space>
-                        <CustomerIcon style={{ color: iconColor }} />
+                        <Icon style={{ color }} />
                         <Text>{customer.personal_info?.name || '이름 없음'}</Text>
                       </Space>
                     ),
                     key: `customer-${customer._id}`,
-                    icon: <CustomerIcon style={{ color: iconColor }} />,
+                    icon: <Icon style={{ color }} />,
                     isLeaf: true,
                     customerData: customer
                   };

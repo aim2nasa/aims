@@ -6,8 +6,9 @@ import {
 import { 
   UserOutlined, FileTextOutlined, LinkOutlined,
   EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined,
-  TeamOutlined, BankOutlined, IdcardOutlined
+  TeamOutlined
 } from '@ant-design/icons';
+import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import DocumentPreviewModal from './DocumentPreviewModal';
@@ -304,13 +305,8 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           <Space>
             <Avatar 
               size={32} 
-              icon={(() => {
-                const isIndividual = customer.insurance_info?.customer_type === '개인';
-                return isIndividual ? <IdcardOutlined /> : <BankOutlined />;
-              })()} 
-              style={{ 
-                backgroundColor: customer.insurance_info?.customer_type === '개인' ? '#52c41a' : '#1890ff'
-              }}
+              icon={React.createElement(getCustomerTypeIconWithColor(customer).Icon)} 
+              style={{ backgroundColor: getCustomerTypeIconWithColor(customer).color }}
             />
             <div>
               <Title level={5} style={{ margin: 0, lineHeight: 1.2 }}>
