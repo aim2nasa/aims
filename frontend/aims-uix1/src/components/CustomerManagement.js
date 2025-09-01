@@ -38,8 +38,9 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [internalEditingCustomer, setInternalEditingCustomer] = useState(null);
   
   // 외부에서 제어되는 경우 외부 props 사용, 그렇지 않으면 내부 상태 사용
-  const modalVisible = editModalVisible !== undefined ? editModalVisible : internalModalVisible;
-  const currentEditingCustomer = editingCustomer !== undefined ? editingCustomer : internalEditingCustomer;
+  // 내부 상태가 활성화되면 내부 상태 우선 (새고객등록용)
+  const modalVisible = internalModalVisible || editModalVisible;
+  const currentEditingCustomer = internalEditingCustomer || editingCustomer;
   const [currentAddress1, setCurrentAddress1] = useState('');
   const [addressSearchVisible, setAddressSearchVisible] = useState(false);
   
@@ -93,9 +94,27 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     return () => window.removeEventListener('resize', handleResize);
   }, [isResponsive, calculateItemsPerPage]);
 
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true);
+    const result = await CustomerService.getCustomers({
+      page: pagination.current,
+      limit: pagination.pageSize,
+      search: searchText
+    });
+    
+    if (result.success) {
+      setCustomers(result.data.customers);
+      setPagination(prev => ({
+        ...prev,
+        total: result.data.pagination.totalCount
+      }));
+    }
+    setLoading(false);
+  }, [pagination.current, pagination.pageSize, searchText]);
+
   useEffect(() => {
     fetchCustomers();
-  }, [pagination.current, pagination.pageSize]);
+  }, [fetchCustomers]);
 
   // selectedMenuKey 변경 시 뷰 모드 자동 활성화
   useEffect(() => {
@@ -126,7 +145,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     }, 300); // 300ms 후에 검색 실행
 
     return () => clearTimeout(delayedSearch);
-  }, [searchText]);
+  }, [searchText, fetchCustomers]);
 
   // 컴포넌트 마운트 시 새로고침 콜백 등록
   useEffect(() => {
@@ -139,7 +158,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         onRefreshCustomerListSet(null);
       }
     };
-  }, [onRefreshCustomerListSet]);
+  }, [onRefreshCustomerListSet, fetchCustomers]);
 
   // 외부에서 모달을 열 때 폼 데이터 설정
   useEffect(() => {
@@ -164,24 +183,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       });
     }
   }, [editModalVisible, editingCustomer, form]);
-
-  const fetchCustomers = async () => {
-    setLoading(true);
-    const result = await CustomerService.getCustomers({
-      page: pagination.current,
-      limit: pagination.pageSize,
-      search: searchText
-    });
-    
-    if (result.success) {
-      setCustomers(result.data.customers);
-      setPagination(prev => ({
-        ...prev,
-        total: result.data.pagination.totalCount
-      }));
-    }
-    setLoading(false);
-  };
 
   const handleTableChange = (page, pageSize) => {
     setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
@@ -237,13 +238,15 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   // 통합 모달 닫기 함수
   const closeCustomerModal = () => {
-    if (onEditModalClose) {
-      // 외부에서 제어되는 경우 외부 콜백 호출
+    // 내부 상태가 활성화된 경우
+    if (internalModalVisible) {
+      setInternalModalVisible(false);
+      setInternalEditingCustomer(null);
+    } 
+    // 외부 상태가 활성화된 경우
+    else if (onEditModalClose) {
       onEditModalClose();
     }
-    // 내부 상태도 항상 초기화
-    setInternalModalVisible(false);
-    setInternalEditingCustomer(null);
     setCurrentAddress1('');
     form.resetFields();
   };
