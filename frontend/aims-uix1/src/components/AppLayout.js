@@ -4,6 +4,7 @@ import {
   BellOutlined, UserOutlined, SearchOutlined,
   MenuUnfoldOutlined, MenuFoldOutlined,
 } from '@ant-design/icons';
+import ThemeToggle from './ThemeToggle';
 import LeftPane from './LeftPane';
 import CenterPane from './CenterPane';
 import RightPane from './RightPane';
@@ -359,6 +360,7 @@ const AppLayout = () => {
             <Dropdown overlay={menu} placement="bottomRight" arrow>
               <Button type="text" icon={<UserOutlined />} />
             </Dropdown>
+            <ThemeToggle />
           </Space>
         </div>
       </Header>

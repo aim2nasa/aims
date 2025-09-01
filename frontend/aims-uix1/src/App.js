@@ -1,7 +1,10 @@
 import React from 'react';
 import AppLayout from './components/AppLayout';
 import ComponentShowcase from './components/ComponentShowcase';
+import { ThemeProvider } from './contexts/ThemeContext';
 import 'antd/dist/reset.css'; // Ant Design 최신 스타일시트 경로
+import './styles/themes.css';
+import './styles/layout.css';
 import './index.css';
 
 function App() {
@@ -10,10 +13,18 @@ function App() {
   const showComponentTest = window.location.search.includes('test=components');
   
   if (showComponentTest) {
-    return <ComponentShowcase />;
+    return (
+      <ThemeProvider>
+        <ComponentShowcase />
+      </ThemeProvider>
+    );
   }
   
-  return <AppLayout />;
+  return (
+    <ThemeProvider>
+      <AppLayout />
+    </ThemeProvider>
+  );
 }
 
 export default App;
