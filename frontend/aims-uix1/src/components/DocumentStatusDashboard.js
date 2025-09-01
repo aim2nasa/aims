@@ -1871,6 +1871,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                 const filename = extractFilename(document);
                                 const status = extractStatus(document);
                                 const uploadedDate = extractUploadedDate(document);
+                                const isCompleted = status === 'completed';
                                 
                                 const formatDate = (dateString) => {
                                   if (!dateString) return "Unknown";
@@ -1969,17 +1970,21 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDocumentSummary(document);
+                                            if (isCompleted) {
+                                              handleDocumentSummary(document);
+                                            }
                                           }}
+                                          disabled={!isCompleted}
                                           style={{
                                             padding: '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
-                                            color: '#2563eb',
-                                            backgroundColor: '#dbeafe',
-                                            border: '1px solid #bfdbfe',
+                                            color: isCompleted ? '#2563eb' : '#9ca3af',
+                                            backgroundColor: isCompleted ? '#dbeafe' : '#f3f4f6',
+                                            border: isCompleted ? '1px solid #bfdbfe' : '1px solid #d1d5db',
                                             borderRadius: '4px',
-                                            cursor: 'pointer'
+                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
+                                            opacity: isCompleted ? 1 : 0.6
                                           }}
                                         >
                                           <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
@@ -1988,17 +1993,21 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDocumentFullText(document);
+                                            if (isCompleted) {
+                                              handleDocumentFullText(document);
+                                            }
                                           }}
+                                          disabled={!isCompleted}
                                           style={{
                                             padding: '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
-                                            color: '#7c3aed',
-                                            backgroundColor: '#f3e8ff',
-                                            border: '1px solid #d8b4fe',
+                                            color: isCompleted ? '#7c3aed' : '#9ca3af',
+                                            backgroundColor: isCompleted ? '#f3e8ff' : '#f3f4f6',
+                                            border: isCompleted ? '1px solid #d8b4fe' : '1px solid #d1d5db',
                                             borderRadius: '4px',
-                                            cursor: 'pointer'
+                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
+                                            opacity: isCompleted ? 1 : 0.6
                                           }}
                                         >
                                           <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
@@ -2007,17 +2016,21 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDocumentLink(document);
+                                            if (isCompleted) {
+                                              handleDocumentLink(document);
+                                            }
                                           }}
+                                          disabled={!isCompleted}
                                           style={{
                                             padding: '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
-                                            color: '#52c41a',
-                                            backgroundColor: '#f6ffed',
-                                            border: '1px solid #b7eb8f',
+                                            color: isCompleted ? '#52c41a' : '#9ca3af',
+                                            backgroundColor: isCompleted ? '#f6ffed' : '#f3f4f6',
+                                            border: isCompleted ? '1px solid #b7eb8f' : '1px solid #d1d5db',
                                             borderRadius: '4px',
-                                            cursor: 'pointer'
+                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
+                                            opacity: isCompleted ? 1 : 0.6
                                           }}
                                         >
                                           <Link style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
