@@ -1931,7 +1931,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '120px' : 'auto'
+                                  width: isCompactMode ? '30px' : 'auto',
+                                  minWidth: isCompactMode ? '30px' : '200px',
+                                  maxWidth: isCompactMode ? '30px' : '300px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1947,7 +1949,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '70px' : 'auto'
+                                  width: isCompactMode ? '30px' : '90px',
+                                  minWidth: isCompactMode ? '30px' : '90px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1963,7 +1966,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '120px' : 'auto'
+                                  width: isCompactMode ? '30px' : '180px',
+                                  minWidth: isCompactMode ? '30px' : '180px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
@@ -1979,7 +1983,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '40px' : 'auto'
+                                  width: isCompactMode ? '30px' : '100px',
+                                  minWidth: isCompactMode ? '30px' : '100px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1995,7 +2000,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '50px' : '60px'
+                                  width: isCompactMode ? '30px' : '70px',
+                                  minWidth: isCompactMode ? '30px' : '70px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2011,7 +2017,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: isCompactMode ? '40px' : 'auto'
+                                  width: isCompactMode ? '30px' : '160px',
+                                  minWidth: isCompactMode ? '30px' : '160px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2238,12 +2245,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       <div style={{
                                         fontSize: '10px',
                                         fontFamily: 'monospace',
-                                        color: '#6b7280',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        maxWidth: isCompactMode ? '60px' : '120px'
-                                      }} title={document.id || document._id || 'unknown-id'}>
+                                        color: '#6b7280'
+                                      }}>
                                         {document.id || document._id || 'unknown-id'}
                                       </div>
                                     </td>
