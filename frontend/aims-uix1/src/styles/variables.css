@@ -1,0 +1,214 @@
+/**
+ * AIMS Design System Variables
+ * 기반: DESIGN_GUIDE.md
+ * 생성일: 2025-09-01
+ * 
+ * 모든 디자인 토큰을 CSS Variables로 정의
+ * 하드코딩된 값 대신 이 변수들을 사용하세요
+ */
+
+:root {
+  /* ===========================
+     1. COLOR SYSTEM
+     =========================== */
+  
+  /* Primary Colors */
+  --color-primary: #3b82f6;        /* 메인 브랜드 색상 */
+  --color-primary-hover: #2563eb;  /* Primary 호버 상태 */
+  --color-primary-active: #1d4ed8; /* Primary 클릭 상태 */
+  --color-secondary: #0ea5e9;      /* 보조 브랜드 색상 */
+  --color-ant-blue: #1890ff;       /* Ant Design 기본 파란색 */
+  
+  /* Text Colors */
+  --color-text-primary: #111827;   /* 제목, 중요한 텍스트 */
+  --color-text-secondary: #4b5563; /* 일반 텍스트 */
+  --color-text-tertiary: #6b7280;  /* 보조 텍스트, 설명 */
+  --color-text-disabled: #9ca3af;  /* 비활성, 연한 텍스트 */
+  --color-text-white: #ffffff;     /* 흰색 텍스트 */
+  
+  /* Status Colors */
+  --color-success: #10b981;        /* 성공, 완료 */
+  --color-success-bg: #dcfce7;     /* 성공 배경 */
+  --color-warning: #f59e0b;        /* 경고, 대기 */
+  --color-warning-bg: #fef3c7;     /* 경고 배경 */
+  --color-error: #ef4444;          /* 에러, 실패 */
+  --color-error-bg: #fee2e2;       /* 에러 배경 */
+  --color-info: #3b82f6;           /* 정보, 처리중 */
+  --color-info-bg: #dbeafe;        /* 정보 배경 */
+  
+  /* Background Colors */
+  --color-bg-primary: #ffffff;     /* 메인 배경 */
+  --color-bg-secondary: #f9fafb;   /* 카드, 패널 배경 */
+  --color-bg-tertiary: #f5f5f5;    /* 입력 필드, 비활성 영역 */
+  --color-bg-hover: #f3f4f6;       /* 호버 배경 */
+  --color-bg-selected: #eff6ff;    /* 선택된 항목 배경 */
+  
+  /* Border Colors */
+  --color-border-light: #f0f0f0;   /* 연한 테두리 */
+  --color-border-medium: #e5e7eb;  /* 일반 테두리 */
+  --color-border-dark: #d9d9d9;    /* 진한 테두리 */
+  --color-border-focus: #3b82f6;   /* 포커스 테두리 */
+  
+  /* Shadow Colors */
+  --color-shadow-sm: rgba(0, 0, 0, 0.05);
+  --color-shadow-md: rgba(0, 0, 0, 0.1);
+  --color-shadow-lg: rgba(0, 0, 0, 0.15);
+  
+  /* ===========================
+     2. TYPOGRAPHY
+     =========================== */
+  
+  /* Font Family */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+  
+  /* Font Sizes */
+  --font-size-xs: 10px;   /* 버튼 라벨, 보조 정보 */
+  --font-size-sm: 12px;   /* 캡션, 메타 정보 */
+  --font-size-base: 14px; /* 기본 텍스트 - 기본값 */
+  --font-size-lg: 16px;   /* 중요한 텍스트, 숫자 */
+  --font-size-xl: 18px;   /* 소제목 */
+  --font-size-xxl: 20px;  /* 페이지 제목 */
+  --font-size-xxxl: 24px; /* 대제목 */
+  
+  /* Font Weights */
+  --font-weight-normal: 400;   /* 기본 텍스트 */
+  --font-weight-medium: 500;   /* 중요도 중간 */
+  --font-weight-semibold: 600; /* 소제목, 버튼 */
+  --font-weight-bold: 700;     /* 제목, 강조 */
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;  /* 제목용 */
+  --line-height-normal: 1.4; /* 일반 텍스트 */
+  --line-height-loose: 1.6;  /* 긴 텍스트 */
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.05em;
+  
+  /* ===========================
+     3. SPACING SYSTEM (4px 기준)
+     =========================== */
+  
+  --spacing-xxs: 2px;   /* 극소 여백 */
+  --spacing-xs: 4px;    /* 아이콘 간격, 최소 여백 */
+  --spacing-sm: 8px;    /* 버튼 패딩, 작은 여백 */
+  --spacing-md: 12px;   /* 테이블 셀, 일반 패딩 */
+  --spacing-lg: 16px;   /* 카드 패딩, 섹션 여백 */
+  --spacing-xl: 24px;   /* 컨테이너 패딩, 큰 섹션 간격 */
+  --spacing-xxl: 32px;  /* 페이지 레벨 여백 */
+  --spacing-xxxl: 48px; /* 특대 여백 */
+  
+  /* ===========================
+     4. SIZES
+     =========================== */
+  
+  /* Button Heights */
+  --button-height-sm: 24px;
+  --button-height-default: 32px;
+  --button-height-lg: 40px;
+  
+  /* Input Heights */
+  --input-height-sm: 24px;
+  --input-height-default: 32px;
+  --input-height-lg: 40px;
+  
+  /* Border Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-default: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  
+  /* ===========================
+     5. LAYOUT
+     =========================== */
+  
+  /* Container */
+  --container-max-width: 1200px;
+  --container-padding: 24px;
+  
+  /* Grid */
+  --grid-columns: 12;
+  --grid-gutter: 16px;
+  
+  /* Z-Index Layers */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  
+  /* ===========================
+     6. TRANSITIONS
+     =========================== */
+  
+  /* Duration */
+  --transition-fast: 150ms;   /* 호버 효과 */
+  --transition-default: 250ms; /* 기본 전환 */
+  --transition-slow: 350ms;   /* 복잡한 애니메이션 */
+  
+  /* Easing */
+  --transition-easing-default: ease-out;
+  --transition-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* ===========================
+     7. BREAKPOINTS
+     =========================== */
+  
+  --breakpoint-mobile: 768px;   /* < 768px: Mobile */
+  --breakpoint-tablet: 1024px;  /* 768px - 1024px: Tablet */
+  --breakpoint-desktop: 1024px; /* > 1024px: Desktop */
+  --breakpoint-compact: 1200px; /* Compact mode */
+  --breakpoint-wide: 1300px;    /* Text show/hide */
+}
+
+/* ===========================
+   DARK MODE SUPPORT (미래 대비)
+   =========================== */
+@media (prefers-color-scheme: dark) {
+  :root.dark-mode {
+    /* 다크 모드 색상은 추후 정의 */
+    /* --color-text-primary: #f9fafb; */
+    /* --color-bg-primary: #111827; */
+  }
+}
+
+/* ===========================
+   UTILITY CLASSES
+   =========================== */
+
+/* Spacing utilities */
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
+
+/* Text utilities */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+
+/* Color utilities */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+.text-disabled { color: var(--color-text-disabled); }
+
+.bg-primary { background-color: var(--color-bg-primary); }
+.bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-tertiary { background-color: var(--color-bg-tertiary); }
