@@ -404,6 +404,7 @@ const AppLayout = () => {
               onMenuClick={handleLeftPaneMenuClick}
               hasSearchResults={searchResults && searchResults.length > 0}
               searchResultsCount={searchResults ? searchResults.length : 0}
+              collapsed={collapsed}
             />
           </div>
           <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid #f0f0f0' }}>

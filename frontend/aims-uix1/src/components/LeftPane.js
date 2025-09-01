@@ -2,16 +2,58 @@ import React from 'react';
 import { Menu } from 'antd';
 import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
-const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
-  const menuItems = [
-    // 검색 결과 (동적으로 표시)
+const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed }) => {
+  // collapsed 상태에 따라 다른 메뉴 구조
+  const menuItems = collapsed ? [
+    // collapsed 상태일 때의 메뉴 구조
+    ...(hasSearchResults ? [{
+      key: 'search-results',
+      icon: <SearchOutlined />,
+      label: ``,
+      title: `검색 결과 (${searchResultsCount || 0}개)`,
+    }] : []),
+    
+    {
+      key: 'customers',
+      icon: <UserOutlined />,
+      label: '',
+      title: '고객 관리',
+    },
+    {
+      key: 'customers-all',
+      icon: <UnorderedListOutlined />,
+      label: '',
+      title: '전체보기',
+      style: { paddingLeft: '12px' }
+    },
+    {
+      key: 'customers-regional',
+      icon: <EnvironmentOutlined />,
+      label: '',
+      title: '지역별 보기',
+      style: { paddingLeft: '12px' }
+    },
+    {
+      key: 'customers-relationship',
+      icon: <TeamOutlined />,
+      label: '',
+      title: '관계별 보기',
+      style: { paddingLeft: '12px' }
+    },
+    {
+      key: 'dsd',
+      icon: <DashboardOutlined />,
+      label: '',
+      title: '문서 처리 현황',
+    },
+  ] : [
+    // 펼쳐진 상태일 때의 메뉴 구조
     ...(hasSearchResults ? [{
       key: 'search-results',
       icon: <SearchOutlined />,
       label: `검색 결과 (${searchResultsCount || 0}개)`,
     }] : []),
     
-    // 고객 관리 (항상 펼쳐진 메뉴)
     {
       key: 'customers',
       icon: <UserOutlined />,
@@ -34,8 +76,6 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
         }
       ],
     },
-    
-    // 문서 처리 현황
     {
       key: 'dsd',
       icon: <DashboardOutlined />,
@@ -49,7 +89,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount }) => {
         items={menuItems} 
         mode="inline" 
         defaultSelectedKeys={['dsd']} 
-        openKeys={['customers']}
+        openKeys={collapsed ? [] : ['customers']}
         onOpenChange={() => {}}
         onClick={({ key }) => onMenuClick && onMenuClick(key)}
         expandIcon={() => null}
