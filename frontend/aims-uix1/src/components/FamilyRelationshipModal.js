@@ -31,6 +31,7 @@ const FamilyRelationshipModal = ({
   const [form] = Form.useForm();
   const [customers, setCustomers] = useState([]);
   const [selectedRelationType, setSelectedRelationType] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   
@@ -72,10 +73,14 @@ const FamilyRelationshipModal = ({
     if (visible) {
       form.resetFields();
       setSelectedRelationType(null);
+      setSelectedCustomer(null);
       setSearchText('');
       setCustomers([]);
     }
   }, [visible, form]);
+
+  // 가족구성원과 가족관계가 모두 선택되었는지 확인
+  const isFormValid = selectedCustomer && selectedRelationType;
 
   const handleSubmit = async (values) => {
     try {
@@ -161,7 +166,7 @@ const FamilyRelationshipModal = ({
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        onFinishFailed={(errorInfo) => {
+        onFinishFailed={() => {
           message.error('입력 값을 확인해주세요');
         }}
       >
@@ -188,13 +193,15 @@ const FamilyRelationshipModal = ({
               setSearchText(value);
               if (!value.trim()) {
                 setCustomers([]);
+                setSelectedCustomer(null);
                 form.setFieldValue('to_customer_id', undefined);
               } else {
                 searchCustomers(value);
               }
             }}
-            onSelect={(value, option) => {
+            onSelect={(value) => {
               const customer = customers.find(c => c._id === value);
+              setSelectedCustomer(customer);
               setSearchText(customer?.personal_info?.name || '');
               form.setFieldValue('to_customer_id', value);
             }}
@@ -205,6 +212,7 @@ const FamilyRelationshipModal = ({
             onClear={() => {
               setSearchText('');
               setCustomers([]);
+              setSelectedCustomer(null);
               form.setFieldValue('to_customer_id', undefined);
             }}
             suffixIcon={<SearchOutlined />}
@@ -242,12 +250,13 @@ const FamilyRelationshipModal = ({
           rules={[{ required: true, message: '가족 관계를 선택해주세요' }]}
         >
           <Select 
-            placeholder="가족 관계를 선택하세요" 
+            placeholder={selectedCustomer ? "가족 관계를 선택하세요" : "먼저 가족 구성원을 선택해주세요"}
             size="large"
             onChange={(value) => setSelectedRelationType(value)}
             listHeight={600}
             showSearch
             optionFilterProp="children"
+            disabled={!selectedCustomer}
           >
             {Object.entries(FAMILY_RELATIONSHIP_TYPES).map(([type, config]) => (
               <Option key={type} value={type}>
@@ -283,6 +292,7 @@ const FamilyRelationshipModal = ({
               type="primary" 
               htmlType="submit" 
               loading={loading}
+              disabled={!isFormValid}
               icon={<HomeOutlined />}
             >
               가족 관계 추가
