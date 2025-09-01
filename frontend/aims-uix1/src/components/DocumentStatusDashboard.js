@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, BarChart3, Calendar, Hash } from "lucide-react";
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
 
@@ -440,7 +440,7 @@ const analyzeProcessingPath = (document) => {
 
 
 // 상태 뱃지 컴포넌트
-const StatusBadge = ({ status, size = "medium" }) => {
+const StatusBadge = ({ status, size = "medium", isCompact = false }) => {
   const configs = {
     completed: { icon: CheckCircle, label: "Completed", color: "#10b981", bgColor: "#dcfce7" },
     processing: { icon: Clock, label: "Processing", color: "#3b82f6", bgColor: "#dbeafe" },
@@ -451,13 +451,14 @@ const StatusBadge = ({ status, size = "medium" }) => {
   const config = configs[status] || configs.pending;
   const Icon = config.icon;
   const fontSize = size === "small" ? "12px" : "14px";
-  const padding = size === "small" ? "4px 8px" : "6px 12px";
+  const padding = isCompact ? "4px" : (size === "small" ? "4px 8px" : "6px 12px");
   const iconSize = size === "small" ? "12px" : "16px";
   
   return (
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: '9999px',
       fontWeight: '500',
       fontSize,
@@ -465,8 +466,8 @@ const StatusBadge = ({ status, size = "medium" }) => {
       backgroundColor: config.bgColor,
       color: config.color
     }}>
-      <Icon style={{ width: iconSize, height: iconSize, marginRight: '4px' }} />
-      {config.label}
+      <Icon style={{ width: iconSize, height: iconSize, marginRight: isCompact ? '0' : '4px' }} />
+      {!isCompact && config.label}
     </span>
   );
 };
@@ -936,6 +937,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
 
+  // 반응형 화면 크기 상태
+  const [screenSize, setScreenSize] = useState(window.innerWidth);
+  const isCompactMode = screenSize < 1200; // 1200px 이하에서 컴팩트 모드
+
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return itemsPerPage;
@@ -956,9 +961,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     return Math.max(5, Math.min(maxItemsPerPage, 50));
   }, [isResponsive, itemsPerPage]);
 
-  // 브라우저 크기 변경 시 itemsPerPage 업데이트
+  // 브라우저 크기 변경 감지
   useEffect(() => {
     const handleResize = () => {
+      const newScreenSize = window.innerWidth;
+      setScreenSize(newScreenSize);
+      
       if (isResponsive) {
         const newItemsPerPage = calculateItemsPerPage();
         setItemsPerPage(newItemsPerPage);
@@ -1922,9 +1930,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
+                                  letterSpacing: '0.05em',
+                                  minWidth: isCompactMode ? '120px' : 'auto'
                                 }}>
-                                  Document
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <FileText style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Document'}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1933,9 +1946,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
+                                  letterSpacing: '0.05em',
+                                  minWidth: isCompactMode ? '70px' : 'auto'
                                 }}>
-                                  Status
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <AlertCircle style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Status'}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1944,9 +1962,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
+                                  letterSpacing: '0.05em',
+                                  minWidth: isCompactMode ? '120px' : 'auto'
                                 }}>
-                                  Actions
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                                      <Eye style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Actions'}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1955,9 +1978,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
+                                  letterSpacing: '0.05em',
+                                  minWidth: isCompactMode ? '40px' : 'auto'
                                 }}>
-                                  Progress
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <BarChart3 style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Progress'}
                                 </th>
                                 <th style={{
                                   padding: '6px 6px',
@@ -1967,9 +1995,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  minWidth: '60px'
+                                  minWidth: isCompactMode ? '50px' : '60px'
                                 }}>
-                                  Uploaded
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <Calendar style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Uploaded'}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1978,9 +2010,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.05em'
+                                  letterSpacing: '0.05em',
+                                  minWidth: isCompactMode ? '40px' : 'auto'
                                 }}>
-                                  Document ID
+                                  {isCompactMode ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <Hash style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                  ) : 'Document ID'}
                                 </th>
                               </tr>
                             </thead>
@@ -2040,7 +2077,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                               overflow: 'hidden',
                                               textOverflow: 'ellipsis',
                                               whiteSpace: 'nowrap',
-                                              maxWidth: '250px',
+                                              maxWidth: isCompactMode ? '150px' : '250px',
                                               cursor: status === 'completed' ? 'pointer' : 'default',
                                               textDecoration: status === 'completed' ? 'underline' : 'none'
                                             }} 
@@ -2052,7 +2089,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
-                                      <StatusBadge status={status} size="small" />
+                                      <StatusBadge status={status} size="small" isCompact={isCompactMode} />
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -2072,8 +2109,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             cursor: 'pointer'
                                           }}
                                         >
-                                          <Eye style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
-                                          View
+                                          <Eye style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
+                                          {!isCompactMode && 'View'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2094,9 +2131,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6
                                           }}
+                                          title={isCompactMode ? "Summary" : ""}
                                         >
-                                          <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
-                                          Summary
+                                          <FileText style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
+                                          {!isCompactMode && 'Summary'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2117,9 +2155,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6
                                           }}
+                                          title={isCompactMode ? "Full Text" : ""}
                                         >
-                                          <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
-                                          Full Text
+                                          <FileTextIcon style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
+                                          {!isCompactMode && 'Full Text'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2140,38 +2179,51 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6
                                           }}
+                                          title={isCompactMode ? "고객연결" : ""}
                                         >
-                                          <Link style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
-                                          고객연결
+                                          <Link style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
+                                          {!isCompactMode && '고객연결'}
                                         </button>
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ flex: '1' }}>
-                                          <div style={{
-                                            width: '100%',
-                                            backgroundColor: '#e5e7eb',
-                                            borderRadius: '3px',
-                                            height: '6px'
+                                      {isCompactMode ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                          <span style={{
+                                            fontSize: '10px',
+                                            color: '#6b7280',
+                                            fontWeight: '500'
                                           }}>
-                                            <div style={{
-                                              height: '6px',
-                                              borderRadius: '3px',
-                                              backgroundColor: '#10b981',
-                                              width: '100%'
-                                            }} />
-                                          </div>
+                                            {Math.round(extractProgress(document))}%
+                                          </span>
                                         </div>
-                                        <span style={{
-                                          fontSize: '10px',
-                                          color: '#6b7280',
-                                          fontWeight: '500',
-                                          minWidth: '30px'
-                                        }}>
-                                          100%
-                                        </span>
-                                      </div>
+                                      ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <div style={{ flex: '1' }}>
+                                            <div style={{
+                                              width: '100%',
+                                              backgroundColor: '#e5e7eb',
+                                              borderRadius: '3px',
+                                              height: '6px'
+                                            }}>
+                                              <div style={{
+                                                height: '6px',
+                                                borderRadius: '3px',
+                                                backgroundColor: '#10b981',
+                                                width: '100%'
+                                              }} />
+                                            </div>
+                                          </div>
+                                          <span style={{
+                                            fontSize: '10px',
+                                            color: '#6b7280',
+                                            fontWeight: '500',
+                                            minWidth: '30px'
+                                          }}>
+                                            100%
+                                          </span>
+                                        </div>
+                                      )}
                                     </td>
                                     <td style={{ padding: '8px 6px', textAlign: 'center' }}>
                                       <div style={{ 
@@ -2190,7 +2242,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        maxWidth: '120px'
+                                        maxWidth: isCompactMode ? '60px' : '120px'
                                       }} title={document.id || document._id || 'unknown-id'}>
                                         {document.id || document._id || 'unknown-id'}
                                       </div>
