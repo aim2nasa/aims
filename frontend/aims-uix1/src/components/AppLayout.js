@@ -8,6 +8,7 @@ import LeftPane from './LeftPane';
 import CenterPane from './CenterPane';
 import RightPane from './RightPane';
 import axios from 'axios';
+import { extractDocumentId, createDocumentObject } from '../utils/documentHelper';
 import '../App.css';
 
 const { Header, Content, Sider } = Layout;
@@ -47,8 +48,7 @@ const AppLayout = () => {
 
   // 문서 상세 정보 조회 및 RightPane에 전달
   const handleDocumentClick = async (doc) => {
-    // API 호출을 위한 ID 추출 (mock 데이터와 API 응답 필드명 분기)
-    const docId = doc._id || doc.id;
+    const docId = extractDocumentId(doc);
 
     if (!docId) {
       message.error('문서 ID가 없어 상세 정보를 불러올 수 없습니다.');
@@ -62,20 +62,7 @@ const AppLayout = () => {
       });
 
       const fileData = response.data[0];
-      
-      // ✅ 수정된 부분: URL 경로 수정
-      let fileUrl = '';
-      if (fileData.upload?.destPath) {
-        // `destPath`에서 `/data`를 제거하고, 올바른 도메인과 경로를 조합
-        const correctPath = fileData.upload.destPath.replace('/data', '');
-        fileUrl = `https://tars.giize.com${correctPath}`;
-      }
-
-      // `destPath`를 `fileUrl`로 매핑하여 저장
-      const updatedDoc = {
-        ...fileData,
-        fileUrl: fileUrl,
-      };
+      const updatedDoc = createDocumentObject(fileData);
 
       // Right 패널을 문서 모드로 설정
       setSelectedDocument(updatedDoc);
@@ -93,8 +80,7 @@ const AppLayout = () => {
 
   // 문서 프리뷰 (파일명 클릭 시)
   const handleDocumentPreview = async (doc) => {
-    // API 호출을 위한 ID 추출 (mock 데이터와 API 응답 필드명 분기)
-    const docId = doc._id || doc.id;
+    const docId = extractDocumentId(doc);
 
     if (!docId) {
       message.error('문서 ID가 없어 프리뷰를 불러올 수 없습니다.');
@@ -108,19 +94,7 @@ const AppLayout = () => {
       });
 
       const fileData = response.data[0];
-      
-      // URL 경로 수정
-      let fileUrl = '';
-      if (fileData.upload?.destPath) {
-        const correctPath = fileData.upload.destPath.replace('/data', '');
-        fileUrl = `https://tars.giize.com${correctPath}`;
-      }
-
-      // `destPath`를 `fileUrl`로 매핑하여 저장
-      const updatedDoc = {
-        ...fileData,
-        fileUrl: fileUrl,
-      };
+      const updatedDoc = createDocumentObject(fileData);
 
       // Right 패널을 문서 모드로 설정 (프리뷰)
       setSelectedDocument(updatedDoc);

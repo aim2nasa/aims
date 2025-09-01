@@ -5,6 +5,7 @@ import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
 import CustomerManagement from './CustomerManagement';
 import DocumentLinkModal from './DocumentLinkModal';
+import { extractDocumentId } from '../utils/documentHelper';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
@@ -87,8 +88,8 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
       setSavedScrollPosition(currentScrollTop);
     }
     
-    // 선택된 문서 ID 저장 (다양한 ID 필드 지원)
-    const docId = doc._id || doc.id || doc.payload?.doc_id;
+    // 선택된 문서 ID 저장
+    const docId = extractDocumentId(doc);
     setSelectedDocumentId(docId);
     
     // 원래 문서 클릭 핸들러 호출
@@ -187,7 +188,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
 
   // Full text 조회 함수
   const handleFullTextView = async (document) => {
-    const docId = document._id || document.id;
+    const docId = extractDocumentId(document);
     
     if (!docId) {
       message.error('문서 ID가 없어 전체 텍스트를 불러올 수 없습니다.');
@@ -319,7 +320,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
               dataSource={paginatedData}
               renderItem={(item) => {
                 // 현재 아이템이 선택된 문서인지 확인
-                const itemId = item._id || item.id || item.payload?.doc_id;
+                const itemId = extractDocumentId(item);
                 const isSelected = selectedDocumentId === itemId;
                 
                 return (
