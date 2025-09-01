@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
 
 // 통신 모드 관리 - Polling만 지원
 class CommunicationManager {

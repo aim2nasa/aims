@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Modal, Form, Select, Input, 
-  Table, Space, message, Tag, Divider, List, Avatar, Spin
+  Space, message, Tag, Divider, List, Avatar, Spin
 } from 'antd';
 import { Button } from './common';
 import { LinkOutlined, UserOutlined, FileTextOutlined, ExclamationCircleOutlined, SearchOutlined } from '@ant-design/icons';
@@ -18,7 +18,6 @@ const DocumentLinkModal = ({
   onLinkSuccess 
 }) => {
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
@@ -36,9 +35,8 @@ const DocumentLinkModal = ({
     }
   }, [visible]);
 
-  // 디바운스된 검색 함수
-  const debouncedSearch = useCallback(
-    debounce(async (searchValue, page = 1) => {
+  // 검색 함수
+  const performSearch = useCallback(async (searchValue, page = 1) => {
       if (!searchValue.trim()) {
         setCustomers([]);
         setPagination({ current: 1, pageSize: 20, total: 0 });
@@ -69,26 +67,12 @@ const DocumentLinkModal = ({
       } finally {
         setSearchLoading(false);
       }
-    }, 300),
-    []
-  );
+  }, []);
 
-  // 디바운스 헬퍼 함수
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    debouncedSearch(value, 1);
+    performSearch(value, 1);
   };
 
   const handleSubmit = async (values) => {
@@ -179,7 +163,7 @@ const DocumentLinkModal = ({
 
   // 페이지네이션 변경
   const handlePageChange = (page) => {
-    debouncedSearch(searchTerm, page);
+    performSearch(searchTerm, page);
   };
 
   // 선택된 고객 정보 찾기

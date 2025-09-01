@@ -63,11 +63,6 @@ const CustomerSearchBar = ({
     });
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
 
   return (
     <Card className="customer-search-bar">

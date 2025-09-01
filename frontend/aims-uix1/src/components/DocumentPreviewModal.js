@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Space, message, Spin, Alert, Typography } from 'antd';
-import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { DownloadOutlined, LeftOutlined, RightOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import { Button } from './common';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';

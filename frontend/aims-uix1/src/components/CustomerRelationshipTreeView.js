@@ -7,7 +7,6 @@ import {
   UserOutlined,
   HomeOutlined,
   BankOutlined,
-  IdcardOutlined,
   HeartOutlined,
   EditOutlined
 } from '@ant-design/icons';
@@ -280,7 +279,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return result;
-  }, [allRelationshipsData, familyRepresentatives, selectFamilyRepresentative]);
+  }, [allRelationshipsData, selectFamilyRepresentative]);
 
   // 새로운 구조에 맞는 Tree 데이터 생성
   const treeData = useMemo(() => {
