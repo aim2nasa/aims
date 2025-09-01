@@ -2099,7 +2099,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       <StatusBadge status={status} size="small" isCompact={isCompactMode} />
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'nowrap' }}>
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
