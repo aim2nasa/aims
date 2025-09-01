@@ -14,6 +14,7 @@ import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
 import CustomerRegionalTreeView from './CustomerRegionalTreeView';
 import CustomerRelationshipTreeView from './CustomerRelationshipTreeView';
+import CustomerSearchBar from './CustomerSearchBar';
 import { RelationshipProvider } from '../contexts/RelationshipContext';
 
 const { Option } = Select;
@@ -30,6 +31,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   });
   const [isResponsive, setIsResponsive] = useState(true);
   const [searchText, setSearchText] = useState('');
+  const [searchFilters, setSearchFilters] = useState({});
   const [showRegionalView, setShowRegionalView] = useState(false);
   const [showRelationshipView, setShowRelationshipView] = useState(false);
 
@@ -96,11 +98,22 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
-    const result = await CustomerService.getCustomers({
+    
+    const queryParams = {
       page: pagination.current,
       limit: pagination.pageSize,
-      search: searchText
-    });
+      search: searchText,
+      ...searchFilters
+    };
+
+    // 날짜 범위 처리
+    if (searchFilters.dateRange && searchFilters.dateRange.length === 2) {
+      queryParams.startDate = searchFilters.dateRange[0].format('YYYY-MM-DD');
+      queryParams.endDate = searchFilters.dateRange[1].format('YYYY-MM-DD');
+      delete queryParams.dateRange; // API에 dateRange 직접 전달 방지
+    }
+    
+    const result = await CustomerService.getCustomers(queryParams);
     
     if (result.success) {
       setCustomers(result.data.customers);
@@ -110,7 +123,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       }));
     }
     setLoading(false);
-  }, [pagination.current, pagination.pageSize, searchText]);
+  }, [pagination.current, pagination.pageSize, searchText, searchFilters]);
 
   useEffect(() => {
     fetchCustomers();
@@ -324,6 +337,20 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     }
   };
 
+  // 새로운 검색 핸들러
+  const handleAdvancedSearch = (searchValue, filters) => {
+    setSearchText(searchValue);
+    setSearchFilters(filters);
+    setPagination(prev => ({
+      ...prev,
+      current: 1 // 검색 시 첫 페이지로 이동
+    }));
+  };
+
+  const handleFilterChange = (filters) => {
+    setSearchFilters(filters);
+  };
+
   const columns = [
     {
       title: '고객명',
@@ -444,6 +471,14 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   return (
     <div>
+      {!showRegionalView && !showRelationshipView && (
+        <CustomerSearchBar
+          onSearch={handleAdvancedSearch}
+          onFilterChange={handleFilterChange}
+          loading={loading}
+        />
+      )}
+      
       <Card
         title={
           <Space>
@@ -463,15 +498,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         }
         extra={
           <Space>
-            <Input
-              placeholder="고객명, 전화번호, 이메일 검색"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300 }}
-              prefix={<SearchOutlined />}
-              allowClear
-              disabled={showRegionalView || showRelationshipView}
-            />
             <Button 
               type="primary" 
               icon={<PlusOutlined />}

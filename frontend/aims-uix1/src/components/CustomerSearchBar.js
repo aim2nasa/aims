@@ -1,0 +1,229 @@
+/**
+ * AIMS Customer 고급 검색 바
+ * 새 디자인 시스템 활용한 검색 기능
+ */
+
+import React, { useState, useEffect } from 'react';
+import { SearchOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
+import { Select, DatePicker, Space } from 'antd';
+import { Input, Button, Card, Badge } from './common';
+import './CustomerSearchBar.css';
+
+const { RangePicker } = DatePicker;
+const { Option } = Select;
+
+const CustomerSearchBar = ({
+  onSearch,
+  onFilterChange,
+  loading = false
+}) => {
+  const [searchValue, setSearchValue] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [filters, setFilters] = useState({
+    customerType: '',
+    region: '',
+    dateRange: null,
+    hasDocuments: ''
+  });
+
+  const [activeFilterCount, setActiveFilterCount] = useState(0);
+
+  // 활성 필터 개수 계산
+  useEffect(() => {
+    const count = Object.values(filters).filter(value => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== '' && value !== null;
+    }).length;
+    setActiveFilterCount(count);
+  }, [filters]);
+
+  const handleSearch = () => {
+    onSearch?.(searchValue, filters);
+  };
+
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilterChange?.(newFilters);
+  };
+
+  const handleClearAll = () => {
+    setSearchValue('');
+    setFilters({
+      customerType: '',
+      region: '',
+      dateRange: null,
+      hasDocuments: ''
+    });
+    onSearch?.('', {
+      customerType: '',
+      region: '',
+      dateRange: null,
+      hasDocuments: ''
+    });
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  return (
+    <Card className="customer-search-bar">
+      <div className="search-main">
+        <div className="search-input-group">
+          <Input
+            placeholder="고객명, 전화번호, 주소로 검색..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onPressEnter={handleSearch}
+            prefix={<SearchOutlined style={{ color: 'var(--color-text-tertiary)' }} />}
+            suffix={
+              searchValue && (
+                <Button
+                  size="small"
+                  variant="ghost"
+                  icon={<ClearOutlined />}
+                  onClick={() => setSearchValue('')}
+                  style={{ marginRight: '-8px' }}
+                />
+              )
+            }
+            allowClear
+            size="large"
+            className="search-input"
+          />
+        </div>
+        
+        <div className="search-actions">
+          <Button
+            variant="primary"
+            size="large"
+            onClick={handleSearch}
+            loading={loading}
+            icon={<SearchOutlined />}
+          >
+            검색
+          </Button>
+          
+          <Badge count={activeFilterCount} size="small">
+            <Button
+              variant={showAdvanced ? "primary" : "secondary"}
+              size="large"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              icon={<FilterOutlined />}
+            >
+              필터
+            </Button>
+          </Badge>
+          
+          {(searchValue || activeFilterCount > 0) && (
+            <Button
+              variant="ghost"
+              size="large"
+              onClick={handleClearAll}
+              icon={<ClearOutlined />}
+            >
+              초기화
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {showAdvanced && (
+        <div className="search-advanced">
+          <div className="advanced-title">
+            <FilterOutlined style={{ marginRight: '8px' }} />
+            고급 검색 옵션
+          </div>
+          
+          <div className="filter-grid">
+            <div className="filter-item">
+              <label>고객 유형</label>
+              <Select
+                placeholder="유형 선택"
+                value={filters.customerType}
+                onChange={(value) => handleFilterChange('customerType', value)}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value="individual">개인</Option>
+                <Option value="corporate">기업</Option>
+                <Option value="family">가족</Option>
+                <Option value="group">그룹</Option>
+              </Select>
+            </div>
+
+            <div className="filter-item">
+              <label>지역</label>
+              <Select
+                placeholder="지역 선택"
+                value={filters.region}
+                onChange={(value) => handleFilterChange('region', value)}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value="서울">서울</Option>
+                <Option value="부산">부산</Option>
+                <Option value="대구">대구</Option>
+                <Option value="인천">인천</Option>
+                <Option value="광주">광주</Option>
+                <Option value="대전">대전</Option>
+                <Option value="울산">울산</Option>
+                <Option value="세종">세종</Option>
+                <Option value="경기">경기</Option>
+                <Option value="강원">강원</Option>
+                <Option value="충북">충북</Option>
+                <Option value="충남">충남</Option>
+                <Option value="전북">전북</Option>
+                <Option value="전남">전남</Option>
+                <Option value="경북">경북</Option>
+                <Option value="경남">경남</Option>
+                <Option value="제주">제주</Option>
+              </Select>
+            </div>
+
+            <div className="filter-item">
+              <label>등록일</label>
+              <RangePicker
+                placeholder={['시작일', '종료일']}
+                value={filters.dateRange}
+                onChange={(dates) => handleFilterChange('dateRange', dates)}
+                style={{ width: '100%' }}
+                format="YYYY-MM-DD"
+              />
+            </div>
+
+            <div className="filter-item">
+              <label>문서 보유</label>
+              <Select
+                placeholder="문서 보유 여부"
+                value={filters.hasDocuments}
+                onChange={(value) => handleFilterChange('hasDocuments', value)}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value="true">문서 있음</Option>
+                <Option value="false">문서 없음</Option>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="advanced-actions">
+            <Space>
+              <Button onClick={handleSearch} variant="primary">
+                필터 적용
+              </Button>
+              <Button onClick={() => setShowAdvanced(false)} variant="secondary">
+                접기
+              </Button>
+            </Space>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+export default CustomerSearchBar;
