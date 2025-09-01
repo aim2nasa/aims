@@ -1,5 +1,6 @@
 import React from 'react';
-import { Form, Input, Select, DatePicker, Button, Space, Row, Col, Divider } from 'antd';
+import { Form, Input, Select, DatePicker, Space, Row, Col, Divider } from 'antd';
+import { Button } from './common';
 import { SaveOutlined, UndoOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
@@ -145,10 +146,10 @@ const CustomerEditForm = ({ customer, onSave, onCancel }) => {
 
       <div style={{ textAlign: 'right', marginTop: 24, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
         <Space>
-          <Button onClick={onCancel} icon={<UndoOutlined />}>
+          <Button onClick={onCancel} variant="secondary" icon={<UndoOutlined />}>
             취소
           </Button>
-          <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+          <Button variant="primary" htmlType="submit" icon={<SaveOutlined />}>
             저장
           </Button>
         </Space>

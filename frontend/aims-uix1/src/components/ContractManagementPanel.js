@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Form, Input, DatePicker, Select, Space, Modal, Tag, Empty, InputNumber } from 'antd';
+import { Table, Form, Input, DatePicker, Select, Space, Modal, Tag, Empty, InputNumber } from 'antd';
+import { Button } from './common';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -64,7 +65,7 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <span>계약 현황 관리</span>
         <Button 
-          type="primary" 
+          variant="primary" 
           icon={<PlusOutlined />} 
           onClick={handleCreateContract}
           size="small"
@@ -142,8 +143,8 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
           
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
-              <Button onClick={() => setShowCreateModal(false)}>취소</Button>
-              <Button type="primary" htmlType="submit">계약 생성</Button>
+              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>취소</Button>
+              <Button variant="primary" htmlType="submit">계약 생성</Button>
             </Space>
           </div>
         </Form>

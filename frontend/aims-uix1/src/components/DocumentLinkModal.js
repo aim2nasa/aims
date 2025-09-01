@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Modal, Form, Select, Input, Button, 
+  Modal, Form, Select, Input, 
   Table, Space, message, Tag, Divider, List, Avatar, Spin
 } from 'antd';
+import { Button } from './common';
 import { LinkOutlined, UserOutlined, FileTextOutlined, ExclamationCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -268,7 +269,7 @@ const DocumentLinkModal = ({
               </Space>
               <Button 
                 size="small" 
-                type="text" 
+                variant="ghost" 
                 onClick={() => {
                   setSelectedCustomerId(null);
                   form.setFieldsValue({ customer_id: null });
@@ -342,25 +343,27 @@ const DocumentLinkModal = ({
                 <div style={{ fontSize: '12px', color: '#666' }}>
                   {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} / {pagination.total}명
                 </div>
-                <Button.Group>
+                <Space>
                   <Button 
                     size="small"
+                    variant="secondary"
                     disabled={pagination.current <= 1}
                     onClick={() => handlePageChange(pagination.current - 1)}
                   >
                     이전
                   </Button>
-                  <Button size="small" disabled style={{ minWidth: '60px' }}>
+                  <Button size="small" variant="ghost" disabled style={{ minWidth: '60px' }}>
                     {pagination.current} / {Math.ceil(pagination.total / pagination.pageSize)}
                   </Button>
                   <Button 
                     size="small"
+                    variant="secondary"
                     disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
                     onClick={() => handlePageChange(pagination.current + 1)}
                   >
                     다음
                   </Button>
-                </Button.Group>
+                </Space>
               </div>
             )}
           </div>
@@ -417,9 +420,9 @@ const DocumentLinkModal = ({
 
         <div style={{ textAlign: 'right', marginTop: 24 }}>
           <Space>
-            <Button onClick={handleCancel} size="large">취소</Button>
+            <Button onClick={handleCancel} variant="secondary" size="large">취소</Button>
             <Button 
-              type="primary" 
+              variant="primary" 
               htmlType="submit" 
               size="large"
               disabled={!selectedCustomerId}
@@ -441,7 +444,7 @@ const DocumentLinkModal = ({
         }
         onCancel={() => setShowDuplicateAlert(false)}
         footer={[
-          <Button key="ok" type="primary" onClick={() => setShowDuplicateAlert(false)}>
+          <Button key="ok" variant="primary" onClick={() => setShowDuplicateAlert(false)}>
             확인
           </Button>
         ]}

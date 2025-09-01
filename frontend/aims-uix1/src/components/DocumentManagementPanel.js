@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Upload, Space, Tag, Modal, Select, message, Empty } from 'antd';
+import { Table, Upload, Space, Tag, Modal, Select, message, Empty } from 'antd';
+import { Button } from './common';
 import { 
   UploadOutlined, LinkOutlined, FileTextOutlined, 
   PlusOutlined, DeleteOutlined 
@@ -80,7 +81,7 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
       key: 'actions',
       render: (_, record) => (
         <Button 
-          danger 
+          variant="danger" 
           size="small" 
           icon={<DeleteOutlined />}
           onClick={() => handleDocumentUnlink(record._id)}
@@ -112,11 +113,12 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
             onChange={handleUpload}
             showUploadList={false}
           >
-            <Button icon={<UploadOutlined />} size="small">
+            <Button variant="secondary" icon={<UploadOutlined />} size="small">
               문서 업로드
             </Button>
           </Upload>
           <Button 
+            variant="secondary"
             icon={<LinkOutlined />} 
             onClick={handleDocumentLink}
             size="small"

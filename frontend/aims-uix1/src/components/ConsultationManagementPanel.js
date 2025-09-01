@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Form, Input, DatePicker, Select, Space, Modal, Tag, Empty } from 'antd';
+import { Table, Form, Input, DatePicker, Select, Space, Modal, Tag, Empty } from 'antd';
+import { Button } from './common';
 import { PlusOutlined, CalendarOutlined, CommentOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -59,7 +60,7 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <span>상담 이력 관리</span>
         <Button 
-          type="primary" 
+          variant="primary" 
           icon={<PlusOutlined />} 
           onClick={handleAddConsultation}
           size="small"
@@ -123,8 +124,8 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
           
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
-              <Button onClick={() => setShowAddModal(false)}>취소</Button>
-              <Button type="primary" htmlType="submit">등록</Button>
+              <Button variant="secondary" onClick={() => setShowAddModal(false)}>취소</Button>
+              <Button variant="primary" htmlType="submit">등록</Button>
             </Space>
           </div>
         </Form>
