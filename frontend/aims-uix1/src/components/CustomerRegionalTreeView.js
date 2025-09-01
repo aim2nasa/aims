@@ -3,9 +3,10 @@ import { Tree, Card, Space, Typography, Badge, Spin } from 'antd';
 import { 
   FolderOutlined, 
   FolderOpenOutlined, 
-  UserOutlined,
   EnvironmentOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  BankOutlined,
+  IdcardOutlined
 } from '@ant-design/icons';
 import CustomerService from '../services/customerService';
 
@@ -87,13 +88,24 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         ),
         key: 'no-address',
         icon: <QuestionCircleOutlined />,
-        children: noAddressCustomers.map(customer => ({
-          title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
-          key: `customer-${customer._id}`,
-          icon: <UserOutlined />,
-          isLeaf: true,
-          customerData: customer
-        }))
+        children: noAddressCustomers.map(customer => {
+          const isIndividual = customer.insurance_info?.customer_type === '개인';
+          const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+          const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+          
+          return {
+            title: (
+              <Space>
+                <CustomerIcon style={{ color: iconColor }} />
+                <Text>{customer.personal_info?.name || '이름 없음'}</Text>
+              </Space>
+            ),
+            key: `customer-${customer._id}`,
+            icon: <CustomerIcon style={{ color: iconColor }} />,
+            isLeaf: true,
+            customerData: customer
+          };
+        })
       });
     }
     
@@ -127,13 +139,24 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
               icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
               children: customers
                 .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || ''))
-                .map(customer => ({
-                  title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
-                  key: `customer-${customer._id}`,
-                  icon: <UserOutlined />,
-                  isLeaf: true,
-                  customerData: customer
-                }))
+                .map(customer => {
+                  const isIndividual = customer.insurance_info?.customer_type === '개인';
+                  const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+                  const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                  
+                  return {
+                    title: (
+                      <Space>
+                        <CustomerIcon style={{ color: iconColor }} />
+                        <Text>{customer.personal_info?.name || '이름 없음'}</Text>
+                      </Space>
+                    ),
+                    key: `customer-${customer._id}`,
+                    icon: <CustomerIcon style={{ color: iconColor }} />,
+                    isLeaf: true,
+                    customerData: customer
+                  };
+                })
             }))
         };
         

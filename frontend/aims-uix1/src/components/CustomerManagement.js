@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
-  SearchOutlined
+  SearchOutlined, BankOutlined, IdcardOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AddressSearchInput from './AddressSearchInput';
@@ -269,25 +269,31 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       dataIndex: ['personal_info', 'name'],
       key: 'name',
       width: 200,
-      render: (name, record) => (
-        <Space>
-          <UserOutlined />
-          <span 
-            style={{ 
-              fontWeight: 'bold', 
-              color: '#1890ff', 
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
-            onClick={() => handleCustomerNameClick(record._id)}
-          >
-            {name}
-          </span>
-          {record.insurance_info?.risk_level === '고위험' && 
-            <Tag color="red">고위험</Tag>
-          }
-        </Space>
-      )
+      render: (name, record) => {
+        const isIndividual = record.insurance_info?.customer_type === '개인';
+        const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+        const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+        
+        return (
+          <Space>
+            <CustomerIcon style={{ color: iconColor }} />
+            <span 
+              style={{ 
+                fontWeight: 'bold', 
+                color: '#1890ff', 
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+              onClick={() => handleCustomerNameClick(record._id)}
+            >
+              {name}
+            </span>
+            {record.insurance_info?.risk_level === '고위험' && 
+              <Tag color="red">고위험</Tag>
+            }
+          </Space>
+        );
+      }
     },
     {
       title: '연락처',

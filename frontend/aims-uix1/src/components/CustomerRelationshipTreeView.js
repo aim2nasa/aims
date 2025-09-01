@@ -7,7 +7,8 @@ import {
   HomeOutlined,
   BankOutlined,
   HeartOutlined,
-  EditOutlined
+  EditOutlined,
+  IdcardOutlined
 } from '@ant-design/icons';
 import { useRelationship } from '../contexts/RelationshipContext';
 
@@ -304,6 +305,12 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
             return {
               title: (
                 <Space>
+                  {(() => {
+                    const isIndividual = representative.insurance_info?.customer_type === '개인';
+                    const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+                    const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                    return <CustomerIcon style={{ color: iconColor }} />;
+                  })()}
                   <Text 
                     strong
                     style={{ 
@@ -341,28 +348,37 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                 ...members
                   .filter(member => member._id !== representative._id) // 대표자 제외
                   .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
-                  .map((member, index) => ({
-                    title: (
-                      <Text 
-                        style={{ 
-                          color: '#1890ff', 
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onCustomerSelect) {
-                            onCustomerSelect(member._id);
-                          }
-                        }}
-                      >
-                        {member.personal_info?.name || '이름없음'}
-                      </Text>
-                    ),
-                    key: `family-member-${repName}-${index}`,
-                    icon: <UserOutlined />,
-                    isLeaf: true
-                  })),
+                  .map((member, index) => {
+                    const isIndividual = member.insurance_info?.customer_type === '개인';
+                    const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+                    const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                    
+                    return {
+                      title: (
+                        <Space>
+                          <CustomerIcon style={{ color: iconColor }} />
+                          <Text 
+                            style={{ 
+                              color: '#1890ff', 
+                              cursor: 'pointer',
+                              textDecoration: 'underline'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onCustomerSelect) {
+                                onCustomerSelect(member._id);
+                              }
+                            }}
+                          >
+                            {member.personal_info?.name || '이름없음'}
+                          </Text>
+                        </Space>
+                      ),
+                      key: `family-member-${repName}-${index}`,
+                      icon: <CustomerIcon style={{ color: iconColor }} />,
+                      isLeaf: true
+                    };
+                  }),
                 // 관계 정보들
                 ...(relations.length > 0 ? relations.map((relation, index) => ({
                   title: (
@@ -436,30 +452,38 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
             icon: ({ expanded }) => expanded ? <FolderOpenOutlined /> : <FolderOutlined />,
             children: employees
               .sort((a, b) => a.localeCompare(b))
-              .map((employeeName, index) => ({
-                title: (
-                  <Text 
-                    style={{ 
-                      color: '#1890ff', 
-                      cursor: 'pointer',
-                      textDecoration: 'underline'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // 직원 이름으로 찾아서 선택
-                      const employee = allRelationshipsData.customers.find(c => c.personal_info?.name === employeeName);
-                      if (employee && onCustomerSelect) {
-                        onCustomerSelect(employee._id);
-                      }
-                    }}
-                  >
-                    {employeeName}
-                  </Text>
-                ),
-                key: `corporate-${companyName}-${index}`,
-                icon: <UserOutlined />,
-                isLeaf: true
-              }))
+              .map((employeeName, index) => {
+                const employee = allRelationshipsData.customers.find(c => c.personal_info?.name === employeeName);
+                const isIndividual = employee?.insurance_info?.customer_type === '개인';
+                const CustomerIcon = isIndividual ? IdcardOutlined : BankOutlined;
+                const iconColor = isIndividual ? '#52c41a' : '#1890ff';
+                
+                return {
+                  title: (
+                    <Space>
+                      <CustomerIcon style={{ color: iconColor }} />
+                      <Text 
+                        style={{ 
+                          color: '#1890ff', 
+                          cursor: 'pointer',
+                          textDecoration: 'underline'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (employee && onCustomerSelect) {
+                            onCustomerSelect(employee._id);
+                          }
+                        }}
+                      >
+                        {employeeName}
+                      </Text>
+                    </Space>
+                  ),
+                  key: `corporate-${companyName}-${index}`,
+                  icon: <CustomerIcon style={{ color: iconColor }} />,
+                  isLeaf: true
+                };
+              })
           }))
       };
       

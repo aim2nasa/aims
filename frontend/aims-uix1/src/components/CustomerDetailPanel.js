@@ -6,7 +6,7 @@ import {
 import { 
   UserOutlined, FileTextOutlined, LinkOutlined,
   EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined,
-  TeamOutlined
+  TeamOutlined, BankOutlined, IdcardOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -304,8 +304,13 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           <Space>
             <Avatar 
               size={32} 
-              icon={<UserOutlined />} 
-              style={{ backgroundColor: '#1890ff' }}
+              icon={(() => {
+                const isIndividual = customer.insurance_info?.customer_type === '개인';
+                return isIndividual ? <IdcardOutlined /> : <BankOutlined />;
+              })()} 
+              style={{ 
+                backgroundColor: customer.insurance_info?.customer_type === '개인' ? '#52c41a' : '#1890ff'
+              }}
             />
             <div>
               <Title level={5} style={{ margin: 0, lineHeight: 1.2 }}>
