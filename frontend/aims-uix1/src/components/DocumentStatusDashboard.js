@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link } from "lucide-react";
 import { apiService } from '../services/apiService';
+import DocumentLinkModal from './DocumentLinkModal';
 
 
 // MongoDB 필드 추출 함수들
@@ -931,6 +932,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState(null);
   const [fullTextContent, setFullTextContent] = useState('');
 
+  // 문서 고객연결 모달 상태
+  const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
+
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return itemsPerPage;
@@ -1395,6 +1400,23 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     setShowFullTextModal(false);
     setSelectedDocumentForFullText(null);
     setFullTextContent('');
+  };
+
+  // 문서 고객연결 핸들러 함수들 (CenterPane.js와 동일)
+  const handleDocumentLink = (document) => {
+    setSelectedDocumentForLink(document);
+    setShowDocumentLinkModal(true);
+  };
+
+  const handleDocumentLinkModalClose = () => {
+    setShowDocumentLinkModal(false);
+    setSelectedDocumentForLink(null);
+  };
+
+  const handleLinkSuccess = () => {
+    // 연결 성공 후 처리 (필요시 문서 목록 새로고침 등)
+    console.log('문서가 고객에게 성공적으로 연결되었습니다.');
+    // 추가로 필요한 처리가 있다면 여기에 구현
   };
 
   // 상태별 통계 (전체 문서 기준)
@@ -1982,6 +2004,25 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           <FileText style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
                                           Full Text
                                         </button>
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDocumentLink(document);
+                                          }}
+                                          style={{
+                                            padding: '2px 6px',
+                                            fontSize: '10px',
+                                            fontWeight: '500',
+                                            color: '#52c41a',
+                                            backgroundColor: '#f6ffed',
+                                            border: '1px solid #b7eb8f',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          <Link style={{ width: '10px', height: '10px', marginRight: '2px', display: 'inline' }} />
+                                          고객연결
+                                        </button>
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
@@ -2359,6 +2400,15 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           </div>
         </div>
       )}
+
+      {/* 문서 고객연결 모달 */}
+      <DocumentLinkModal
+        visible={showDocumentLinkModal}
+        onCancel={handleDocumentLinkModalClose}
+        documentId={selectedDocumentForLink?.id || selectedDocumentForLink?._id}
+        documentName={selectedDocumentForLink ? extractFilename(selectedDocumentForLink) : ''}
+        onLinkSuccess={handleLinkSuccess}
+      />
 
     </div>
   );
