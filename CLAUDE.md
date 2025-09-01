@@ -136,3 +136,46 @@ python scripts/rag_search.py
 - Frontend: Jest and React Testing Library (`npm test`)
 - Python: pytest with `make test` or manual pytest commands
 - Sample files available in `samples/` for testing different document types
+
+## Code Quality and Cleanup Guidelines
+
+### 정리 요청 시 필수 검사 항목
+
+사용자가 "정리" 또는 "코드 정리"를 요청할 때는 다음 모든 항목을 철저히 검사하고 개선해야 합니다:
+
+1. **중복 코드 제거 (Duplicate Code Removal)**
+   - 동일하거나 유사한 기능을 수행하는 코드 찾기
+   - 공통 함수나 컴포넌트로 추출하여 재사용성 향상
+   - 중복된 import문과 종속성 정리
+
+2. **사용하지 않는 코드 제거 (Dead Code Elimination)**
+   - 참조되지 않는 함수, 변수, 컴포넌트 찾기
+   - 사용하지 않는 import문 제거
+   - 도달할 수 없는 코드 블록 제거
+   - 주석 처리된 오래된 코드 제거
+
+3. **컴파일 오류 수정 (Compilation Error Fix)**
+   - TypeScript/JavaScript 타입 오류 수정
+   - 문법 오류와 런타임 오류 해결
+   - 빌드 프로세스에서 발생하는 모든 경고 해결
+
+4. **코드 품질 향상 (Code Quality Improvement)**
+   - 일관된 코딩 스타일 적용
+   - 변수명과 함수명 개선
+   - 복잡한 함수를 작은 단위로 분리
+   - 적절한 에러 처리 추가
+
+5. **성능 최적화 (Performance Optimization)**
+   - 불필요한 리렌더링 방지
+   - 메모리 누수 방지
+   - 비효율적인 알고리즘 개선
+
+### 정리 작업 순서
+
+1. **전체 코드베이스 스캔**: 모든 파일을 검토하여 문제점 파악
+2. **우선순위 설정**: 컴파일 오류 → 중복 코드 → 미사용 코드 → 품질 개선 순서
+3. **단계별 수정**: 한 번에 하나씩 문제를 해결하여 안정성 확보
+4. **테스트 검증**: 각 수정 후 관련 기능이 정상 작동하는지 확인
+5. **최종 빌드 테스트**: 전체 시스템이 오류 없이 빌드되는지 확인
+
+**중요**: 정리 요청은 단순한 포맷팅이 아닌, 코드 품질과 유지보수성을 근본적으로 개선하는 작업입니다.
