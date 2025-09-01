@@ -940,6 +940,20 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 반응형 화면 크기 상태
   const [screenSize, setScreenSize] = useState(window.innerWidth);
   const isCompactMode = screenSize < 1200; // 1200px 이하에서 컴팩트 모드
+  const canShowStatusText = screenSize >= 1000; // 1000px 이상에서 STATUS 텍스트 표시
+  const canShowActionsText = screenSize >= 1300; // 1300px 이상에서 ACTIONS 텍스트 표시
+  
+  // Actions 레이아웃 모드 결정
+  const getActionsLayout = (screenWidth) => {
+    if (screenWidth >= 1400) return 'xl-row'; // 매우 넓은 화면: 더 넓은 버튼
+    if (screenWidth >= 1200) return 'l-row'; // 큰 화면: 넓은 버튼
+    if (screenWidth >= 900) return '1-row'; // 1줄 유지
+    if (screenWidth >= 700) return '2-row'; // 2줄로 표시 (2x2)
+    if (screenWidth >= 500) return '3-row'; // 3줄로 표시 (2+1+1)
+    return '4-row'; // 4줄로 표시 (1x4)
+  };
+  
+  const actionsLayout = getActionsLayout(screenSize);
 
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
@@ -1920,7 +1934,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     overflow: 'hidden'
                   }}>
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                             <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                               <tr>
                                 <th style={{
@@ -1931,9 +1945,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : 'auto',
-                                  minWidth: isCompactMode ? '30px' : '200px',
-                                  maxWidth: isCompactMode ? '30px' : '300px'
+                                  width: isCompactMode ? '30px' : 'auto'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1943,14 +1955,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
-                                  textAlign: 'left',
+                                  textAlign: 'center',
                                   fontSize: '10px',
                                   fontWeight: '500',
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '90px',
-                                  minWidth: isCompactMode ? '30px' : '90px'
+                                  width: isCompactMode ? '30px' : canShowStatusText ? '130px' : '60px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1966,8 +1977,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '180px',
-                                  minWidth: isCompactMode ? '30px' : '180px'
+                                  width: isCompactMode ? '30px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
@@ -2096,28 +2106,44 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <StatusBadge status={status} size="small" isCompact={isCompactMode} />
+                                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                        <StatusBadge status={status} size="small" isCompact={!canShowStatusText} />
+                                      </div>
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'nowrap' }}>
+                                      <div style={{ 
+                                        display: 'flex', 
+                                        gap: actionsLayout === 'xl-row' ? '6px' : actionsLayout === 'l-row' ? '4px' : '2px',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        flexWrap: actionsLayout === '1-row' || actionsLayout === 'l-row' || actionsLayout === 'xl-row' ? 'nowrap' : 'wrap',
+                                        width: '100%',
+                                        minHeight: '24px',
+                                        maxHeight: '48px'
+                                      }}>
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleDocumentClick(document);
                                           }}
                                           style={{
-                                            padding: '2px 6px',
+                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: '#059669',
                                             backgroundColor: '#ecfdf5',
                                             border: '1px solid #d1fae5',
                                             borderRadius: '4px',
-                                            cursor: 'pointer'
+                                            cursor: 'pointer',
+                                            height: '20px',
+                                            minHeight: '20px',
+                                            maxHeight: '20px',
+                                            minWidth: canShowActionsText ? '60px' : '20px',
+                                            whiteSpace: 'nowrap'
                                           }}
                                         >
-                                          <Eye style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
-                                          {!isCompactMode && 'View'}
+                                          <Eye style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
+                                          {canShowActionsText && 'View'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2128,7 +2154,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           }}
                                           disabled={!isCompleted}
                                           style={{
-                                            padding: '2px 6px',
+                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? '#2563eb' : '#9ca3af',
@@ -2136,12 +2162,17 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             border: isCompleted ? '1px solid #bfdbfe' : '1px solid #d1d5db',
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6
+                                            opacity: isCompleted ? 1 : 0.6,
+                                            height: '20px',
+                                            minHeight: '20px',
+                                            maxHeight: '20px',
+                                            minWidth: canShowActionsText ? '60px' : '20px',
+                                            whiteSpace: 'nowrap'
                                           }}
-                                          title={isCompactMode ? "Summary" : ""}
+                                          title={!canShowActionsText ? "Summary" : ""}
                                         >
-                                          <FileText style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
-                                          {!isCompactMode && 'Summary'}
+                                          <FileText style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
+                                          {canShowActionsText && 'Summary'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2152,7 +2183,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           }}
                                           disabled={!isCompleted}
                                           style={{
-                                            padding: '2px 6px',
+                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? '#7c3aed' : '#9ca3af',
@@ -2160,12 +2191,17 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             border: isCompleted ? '1px solid #d8b4fe' : '1px solid #d1d5db',
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6
+                                            opacity: isCompleted ? 1 : 0.6,
+                                            height: '20px',
+                                            minHeight: '20px',
+                                            maxHeight: '20px',
+                                            minWidth: canShowActionsText ? '60px' : '20px',
+                                            whiteSpace: 'nowrap'
                                           }}
-                                          title={isCompactMode ? "Full Text" : ""}
+                                          title={!canShowActionsText ? "Full Text" : ""}
                                         >
-                                          <FileTextIcon style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
-                                          {!isCompactMode && 'Full Text'}
+                                          <FileTextIcon style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
+                                          {canShowActionsText && 'Full Text'}
                                         </button>
                                         <button 
                                           onClick={(e) => {
@@ -2176,7 +2212,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           }}
                                           disabled={!isCompleted}
                                           style={{
-                                            padding: '2px 6px',
+                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? '#52c41a' : '#9ca3af',
@@ -2184,12 +2220,17 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             border: isCompleted ? '1px solid #b7eb8f' : '1px solid #d1d5db',
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6
+                                            opacity: isCompleted ? 1 : 0.6,
+                                            height: '20px',
+                                            minHeight: '20px',
+                                            maxHeight: '20px',
+                                            minWidth: canShowActionsText ? '60px' : '20px',
+                                            whiteSpace: 'nowrap'
                                           }}
-                                          title={isCompactMode ? "고객연결" : ""}
+                                          title={!canShowActionsText ? "고객연결" : ""}
                                         >
-                                          <Link style={{ width: '10px', height: '10px', marginRight: isCompactMode ? '0' : '2px', display: 'inline' }} />
-                                          {!isCompactMode && '고객연결'}
+                                          <Link style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
+                                          {canShowActionsText && '고객연결'}
                                         </button>
                                       </div>
                                     </td>
