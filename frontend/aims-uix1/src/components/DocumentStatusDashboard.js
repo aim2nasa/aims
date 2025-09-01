@@ -1126,7 +1126,31 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginated = filteredDocuments.slice(startIndex, endIndex);
-    setPaginatedDocuments(paginated);
+    
+    // View 모달과 동일한 status를 위해 상세 데이터로 문서 업데이트
+    Promise.all(paginated.map(async (document) => {
+      try {
+        const docId = document.id || document._id;
+        const detailData = await apiService.getDocumentStatus(docId);
+        if (detailData) {
+          const merged = {
+            ...document,
+            ...detailData,
+            // snake_case를 camelCase로 변환
+            overallStatus: detailData.overall_status || detailData.overallStatus,
+            filename: document.filename || detailData.filename,
+            originalName: document.originalName || detailData.originalName,
+            uploadDate: document.uploadDate || detailData.uploadDate,
+          };
+          return merged;
+        }
+      } catch (error) {
+        console.error('상세 데이터 로드 실패:', document.id || document._id, error);
+      }
+      return document;
+    })).then(enhancedPaginated => {
+      setPaginatedDocuments(enhancedPaginated);
+    });
   }, [filteredDocuments, currentPage, itemsPerPage]);
 
   // 페이지네이션 관련 계산
@@ -1870,6 +1894,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                               {paginatedDocuments.map((document, index) => {
                                 const filename = extractFilename(document);
                                 const status = extractStatus(document);
+                                
+                                
                                 const uploadedDate = extractUploadedDate(document);
                                 const isCompleted = status === 'completed';
                                 
@@ -1932,19 +1958,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px' }}>
-                                      <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        borderRadius: '9999px',
-                                        fontWeight: '500',
-                                        fontSize: '10px',
-                                        padding: '2px 6px',
-                                        backgroundColor: '#dcfce7',
-                                        color: '#166534'
-                                      }}>
-                                        <CheckCircle style={{ width: '10px', height: '10px', marginRight: '2px' }} />
-                                        Completed
-                                      </span>
+                                      <StatusBadge status={status} size="small" />
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
