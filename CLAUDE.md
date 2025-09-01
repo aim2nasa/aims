@@ -2,6 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL RULES - 반드시 준수해야 할 규칙 ⚠️
+
+### Git Commit 규칙 - 절대 위반 금지!
+
+**절대로 사용자의 명시적 허락 없이 커밋하지 마세요!**
+
+1. **코드 구현 완료 후 반드시:**
+   - 구현 내용을 먼저 설명
+   - 다음과 같이 질문: "구현이 완료되었습니다. 확인해보시고 문제없으면 커밋해도 될까요?"
+   - 사용자가 "커밋해" 또는 유사한 승인을 할 때까지 대기
+
+2. **절대 금지사항:**
+   - 구현 후 자동으로 커밋하기
+   - 사용자 검토 없이 커밋하기
+   - 커밋 준비 상태를 임의로 판단하기
+
+3. **이것이 중요한 이유:**
+   - 사용자가 구현이 올바르게 작동하는지 확인해야 함
+   - 문제있는 코드가 커밋되는 것을 방지
+   - 커밋 전 문제 수정 기회 제공
+
+**기억하세요: 사용자가 반드시 검사하고 승인한 후에만 커밋!**
+
+---
+
 ## System Overview
 
 AIMS (Agent Intelligent Management System) is an intelligent document management system for insurance salespeople. It automates repetitive tasks like document upload, classification, OCR, tagging, and case grouping to help salespeople better understand and respond to customers.
