@@ -940,7 +940,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 반응형 화면 크기 상태
   const [screenSize, setScreenSize] = useState(window.innerWidth);
   const isCompactMode = screenSize < 1200; // 1200px 이하에서 컴팩트 모드
-  const canShowStatusText = screenSize >= 1000; // 1000px 이상에서 STATUS 텍스트 표시
+  const canShowStatusText = screenSize >= 1300; // 1300px 이상에서 STATUS 텍스트 표시 (ACTIONS와 동기화)
   const canShowActionsText = screenSize >= 1300; // 1300px 이상에서 ACTIONS 텍스트 표시
   
   // Actions 레이아웃 모드 결정
@@ -1961,7 +1961,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '50px'
+                                  width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '45px'
                                 }}>
                                   {isCompactMode ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
