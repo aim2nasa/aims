@@ -1947,11 +1947,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : 'auto'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <FileText style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Document'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <FileText style={{ width: '14px', height: '14px' }} />
+                                      <span>Document</span>
+                                    </div>
+                                  )}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1963,11 +1968,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '45px'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <AlertCircle style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Status'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <AlertCircle style={{ width: '14px', height: '14px' }} />
+                                      <span>Status</span>
+                                    </div>
+                                  )}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1979,11 +1989,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
                                       <Eye style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Actions'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <Eye style={{ width: '14px', height: '14px' }} />
+                                      <span>Actions</span>
+                                    </div>
+                                  )}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -1996,11 +2011,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   width: isCompactMode ? '30px' : '100px',
                                   minWidth: isCompactMode ? '30px' : '100px'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <BarChart3 style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Progress'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <BarChart3 style={{ width: '14px', height: '14px' }} />
+                                      <span>Progress</span>
+                                    </div>
+                                  )}
                                 </th>
                                 <th style={{
                                   padding: '6px 6px',
@@ -2010,14 +2030,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: '#6b7280',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '70px',
-                                  minWidth: isCompactMode ? '30px' : '70px'
+                                  width: isCompactMode ? '30px' : '100px',
+                                  minWidth: isCompactMode ? '30px' : '100px'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <Calendar style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Uploaded'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <Calendar style={{ width: '14px', height: '14px' }} />
+                                      <span>Uploaded</span>
+                                    </div>
+                                  )}
                                 </th>
                                 <th style={{
                                   padding: '6px 12px',
@@ -2030,11 +2055,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   width: isCompactMode ? '30px' : '160px',
                                   minWidth: isCompactMode ? '30px' : '160px'
                                 }}>
-                                  {isCompactMode ? (
+                                  {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <Hash style={{ width: '14px', height: '14px' }} />
                                     </div>
-                                  ) : 'Document ID'}
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                      <Hash style={{ width: '14px', height: '14px' }} />
+                                      <span>Document ID</span>
+                                    </div>
+                                  )}
                                 </th>
                               </tr>
                             </thead>
