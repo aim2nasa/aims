@@ -2067,12 +2067,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                     <td style={{ padding: '8px 12px' }}>
                                       <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <div style={{
-                                          backgroundColor: '#eff6ff',
+                                          backgroundColor: 'var(--color-primary-bg)',
                                           padding: '4px',
                                           borderRadius: '4px',
                                           marginRight: '8px'
                                         }}>
-                                          <FileText style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
+                                          <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
                                         </div>
                                         <div>
                                           <p 
