@@ -1781,7 +1781,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                         transform: 'translateY(-50%)',
                         width: '16px',
                         height: '16px',
-                        color: '#9ca3af'
+                        color: 'var(--color-text-tertiary)'
                       }} />
                       <input
                         type="text"
@@ -1794,17 +1794,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                           paddingRight: '16px',
                           paddingTop: '8px',
                           paddingBottom: '8px',
-                          border: '1px solid #d1d5db',
+                          border: '1px solid var(--color-border)',
                           borderRadius: '8px',
                           fontSize: '14px',
-                          outline: 'none'
+                          outline: 'none',
+                          backgroundColor: 'var(--color-bg-primary)',
+                          color: 'var(--color-text-primary)'
                         }}
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#3b82f6';
-                          e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                          e.target.style.borderColor = 'var(--color-primary)';
+                          e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
                         }}
                         onBlur={(e) => {
-                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.borderColor = 'var(--color-border)';
                           e.target.style.boxShadow = 'none';
                         }}
                       />
