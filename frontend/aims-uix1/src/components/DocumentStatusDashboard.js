@@ -1616,19 +1616,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             background: 'var(--color-surface-1)',
             borderRadius: '8px',
             boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-            padding: '8px',
+            padding: '5px',
             marginBottom: '24px'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
               flexWrap: 'wrap'
             }}>
               {/* 상태 카드들 */}
               <div style={{
                 display: 'flex',
-                gap: '6px',
+                gap: '4px',
                 flex: '0 0 auto',
                 minWidth: '480px'
               }}>
@@ -1658,7 +1658,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 전체 문서 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
                 <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Total</p>
@@ -1699,7 +1699,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.completed > 0 ? '클릭하여 완료된 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <CheckCircle style={{ width: '12px', height: '12px', color: '#10b981' }} />
                 <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Completed</p>
@@ -1740,7 +1740,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.processing > 0 ? '클릭하여 처리 중인 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <Clock style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
                 <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Processing</p>
@@ -1781,7 +1781,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.error > 0 ? '클릭하여 오류 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <XCircle style={{ width: '12px', height: '12px', color: '#ef4444' }} />
                 <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Errors</p>
@@ -1803,7 +1803,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
               flex: '0 1 auto'
             }}>
               {/* 검색 입력 */}
@@ -1880,8 +1880,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-end',
-                gap: '2px',
-                marginLeft: '8px',
+                gap: '1px',
+                marginLeft: '6px',
                 flex: '0 0 auto'
               }}>
                 <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>

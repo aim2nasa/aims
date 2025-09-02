@@ -254,7 +254,7 @@ html[data-theme="dark"] .dsd-footer {
 /* Stats Card */
 .dsd-stats-card {
   background: var(--color-surface-1);
-  padding: 3px 6px;
+  padding: 2px 4px;
   border-radius: 6px;
   box-shadow: 0 1px 2px 0 var(--color-shadow-sm);
   cursor: pointer;
