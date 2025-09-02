@@ -1669,35 +1669,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             
             <div 
               onClick={() => {
-                if (statusCounts.completed > 0) {
-                  setStatusFilter('completed');
-                  setCurrentPage(1);
-                }
+                setStatusFilter('completed');
+                setCurrentPage(1);
               }}
-              className={`dsd-stats-card completed ${statusCounts.completed > 0 && statusFilter === 'completed' ? 'active' : ''}`}
+              className={`dsd-stats-card completed ${statusFilter === 'completed' ? 'active' : ''}`}
               style={{
-                background: statusCounts.completed > 0 && statusFilter === 'completed' ? 
+                background: statusFilter === 'completed' ? 
                   'linear-gradient(135deg, var(--color-success-bg) 0%, #a7f3d0 100%)' : 
                   'var(--color-surface-1)',
                 border: 'none',
-                cursor: statusCounts.completed > 0 ? 'pointer' : 'default',
+                cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 minWidth: '110px',
                 flex: '1'
               }}
               onMouseEnter={(e) => {
-                if (statusCounts.completed > 0) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-                }
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
               }}
               onMouseLeave={(e) => {
-                if (statusCounts.completed > 0) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-                }
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
               }}
-              title={statusCounts.completed > 0 ? '클릭하여 완료된 문서만 보기' : ''}
+              title="클릭하여 완료된 문서만 보기"
             >
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <CheckCircle style={{ width: '12px', height: '12px', color: '#10b981' }} />
@@ -1710,35 +1704,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             
             <div 
               onClick={() => {
-                if (statusCounts.processing > 0) {
-                  setStatusFilter('processing');
-                  setCurrentPage(1);
-                }
+                setStatusFilter('processing');
+                setCurrentPage(1);
               }}
-              className={`dsd-stats-card processing ${statusCounts.processing > 0 && statusFilter === 'processing' ? 'active' : ''}`}
+              className={`dsd-stats-card processing ${statusFilter === 'processing' ? 'active' : ''}`}
               style={{
-                background: statusCounts.processing > 0 && statusFilter === 'processing' ? 
+                background: statusFilter === 'processing' ? 
                   'linear-gradient(135deg, var(--color-info-bg) 0%, #bfdbfe 100%)' : 
                   'var(--color-surface-1)',
                 border: 'none',
-                cursor: statusCounts.processing > 0 ? 'pointer' : 'default',
+                cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 minWidth: '110px',
                 flex: '1'
               }}
               onMouseEnter={(e) => {
-                if (statusCounts.processing > 0) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-                }
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
               }}
               onMouseLeave={(e) => {
-                if (statusCounts.processing > 0) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-                }
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
               }}
-              title={statusCounts.processing > 0 ? '클릭하여 처리 중인 문서만 보기' : ''}
+              title="클릭하여 처리 중인 문서만 보기"
             >
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <Clock style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
@@ -1751,35 +1739,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             
             <div 
               onClick={() => {
-                if (statusCounts.error > 0) {
-                  setStatusFilter('error');
-                  setCurrentPage(1);
-                }
+                setStatusFilter('error');
+                setCurrentPage(1);
               }}
-              className={`dsd-stats-card error ${statusCounts.error > 0 && statusFilter === 'error' ? 'active' : ''}`}
+              className={`dsd-stats-card error ${statusFilter === 'error' ? 'active' : ''}`}
               style={{
-                background: statusCounts.error > 0 && statusFilter === 'error' ? 
+                background: statusFilter === 'error' ? 
                   'linear-gradient(135deg, var(--color-error-bg) 0%, #fecaca 100%)' : 
                   'var(--color-surface-1)',
                 border: 'none',
-                cursor: statusCounts.error > 0 ? 'pointer' : 'default',
+                cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 minWidth: '110px',
                 flex: '1'
               }}
               onMouseEnter={(e) => {
-                if (statusCounts.error > 0) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-                }
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
               }}
               onMouseLeave={(e) => {
-                if (statusCounts.error > 0) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-                }
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
               }}
-              title={statusCounts.error > 0 ? '클릭하여 오류 문서만 보기' : ''}
+              title="클릭하여 오류 문서만 보기"
             >
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
                 <XCircle style={{ width: '12px', height: '12px', color: '#ef4444' }} />
