@@ -1624,6 +1624,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 setCurrentPage(1);
               }}
               className={`dsd-stats-card all ${statusFilter === 'all' ? 'active' : ''}`}
+              style={{
+                background: statusFilter === 'all' ? 
+                  'linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-border-light) 100%)' : 
+                  'var(--color-surface-1)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
@@ -1652,7 +1660,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               className={`dsd-stats-card completed ${statusCounts.completed > 0 && statusFilter === 'completed' ? 'active' : ''}`}
               style={{
-                cursor: statusCounts.completed > 0 ? 'pointer' : 'default'
+                background: statusCounts.completed > 0 && statusFilter === 'completed' ? 
+                  'linear-gradient(135deg, var(--color-success-bg) 0%, #a7f3d0 100%)' : 
+                  'var(--color-surface-1)',
+                border: 'none',
+                cursor: statusCounts.completed > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.completed > 0) {
@@ -1686,7 +1699,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               className={`dsd-stats-card processing ${statusCounts.processing > 0 && statusFilter === 'processing' ? 'active' : ''}`}
               style={{
-                cursor: statusCounts.processing > 0 ? 'pointer' : 'default'
+                background: statusCounts.processing > 0 && statusFilter === 'processing' ? 
+                  'linear-gradient(135deg, var(--color-info-bg) 0%, #bfdbfe 100%)' : 
+                  'var(--color-surface-1)',
+                border: 'none',
+                cursor: statusCounts.processing > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.processing > 0) {
@@ -1720,7 +1738,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               className={`dsd-stats-card error ${statusCounts.error > 0 && statusFilter === 'error' ? 'active' : ''}`}
               style={{
-                cursor: statusCounts.error > 0 ? 'pointer' : 'default'
+                background: statusCounts.error > 0 && statusFilter === 'error' ? 
+                  'linear-gradient(135deg, var(--color-error-bg) 0%, #fecaca 100%)' : 
+                  'var(--color-surface-1)',
+                border: 'none',
+                cursor: statusCounts.error > 0 ? 'pointer' : 'default',
+                transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.error > 0) {
