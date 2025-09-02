@@ -3,6 +3,12 @@
  * 테마 시스템과 연동되는 레이아웃 스타일
  */
 
+/* Global Body Style for Theme */
+body {
+  background: var(--color-bg-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
 /* Layout Container */
 .ant-layout {
   background: var(--color-bg-primary) !important;

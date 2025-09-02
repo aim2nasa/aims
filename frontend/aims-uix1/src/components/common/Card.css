@@ -6,7 +6,7 @@
 /* Base Card */
 .aims-card {
   position: relative;
-  background: var(--color-bg-primary);
+  background: var(--color-surface-1);
   border-radius: var(--radius-lg);
   transition: all var(--transition-default) var(--transition-easing-smooth);
 }

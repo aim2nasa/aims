@@ -455,16 +455,10 @@ const StatusBadge = ({ status, size = "medium", isCompact = false }) => {
   const iconSize = size === "small" ? "12px" : "16px";
   
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: '9999px',
-      fontWeight: '500',
+    <span className={`dsd-status-badge ${status}`} style={{
       fontSize,
       padding,
-      backgroundColor: config.bgColor,
-      color: config.color
+      gap: '4px'
     }}>
       <Icon style={{ width: iconSize, height: iconSize, marginRight: isCompact ? '0' : '4px' }} />
       {!isCompact && config.label}
@@ -536,7 +530,7 @@ const CopyableId = ({ id }) => {
       fontSize: '12px',
       color: '#6b7280',
       fontFamily: 'monospace',
-      backgroundColor: '#f9fafb',
+      backgroundColor: 'var(--color-bg-tertiary)',
       padding: '4px 8px',
       borderRadius: '4px'
     }}>
@@ -575,9 +569,9 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
 
   return (
     <div style={{
-      background: 'white',
+      background: 'var(--color-surface-1)',
       borderRadius: '8px',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
       padding: '16px'
     }}>
       <div style={{
@@ -724,9 +718,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
       padding: '16px'
     }} onClick={onClose}>
       <div style={{
-        background: 'white',
+        background: 'var(--color-surface-1)',
         borderRadius: '8px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 20px 25px -5px var(--color-shadow-lg)',
         maxWidth: '64rem',
         width: '100%',
         maxHeight: '90vh',
@@ -840,7 +834,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                     })
                     .map(([stage, data]) => (
                     <div key={stage} style={{
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: 'var(--color-bg-tertiary)',
                       borderRadius: '8px',
                       padding: '12px'
                     }}>
@@ -874,7 +868,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
           justifyContent: 'flex-end',
           padding: '24px',
           borderTop: '1px solid #e5e7eb',
-          backgroundColor: '#f9fafb',
+          backgroundColor: 'var(--color-bg-tertiary)',
           flexShrink: '0'
         }}>
           <button 
@@ -1497,14 +1491,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
+    <div className="dsd-container">
       {/* 헤더 */}
-      <header style={{ 
-        background: 'white', 
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
-        borderBottom: '1px solid #e5e7eb',
-        flexShrink: 0
-      }}>
+      <header className="dsd-header">
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
           <div style={{
             display: 'flex',
@@ -1536,8 +1525,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       border: 'none',
                       cursor: 'pointer',
                       transition: 'colors 0.2s',
-                      backgroundColor: communicationMode === 'polling' ? '#3b82f6' : 'white',
-                      color: communicationMode === 'polling' ? 'white' : '#374151'
+                      backgroundColor: communicationMode === 'polling' ? 'var(--color-primary)' : 'var(--color-surface-1)',
+                      color: communicationMode === 'polling' ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
                     }}
                     title="Polling Mode"
                   >
@@ -1786,9 +1775,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
           {/* 검색 및 필터 */}
           <div style={{
-            background: 'white',
+            background: 'var(--color-surface-1)',
             borderRadius: '8px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
             padding: '16px',
             marginBottom: '24px'
           }}>
@@ -1898,8 +1887,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           {/* 에러 표시 */}
           {error && (
             <div style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
+              backgroundColor: 'var(--color-error-bg)',
+              border: '1px solid var(--color-error-border)',
               borderRadius: '8px',
               padding: '16px',
               marginBottom: '24px'
@@ -1928,14 +1917,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   {/* 문서 목록 테이블 */}
                   <div style={{
                     marginBottom: '24px',
-                    background: 'white',
+                    background: 'var(--color-surface-1)',
                     borderRadius: '8px',
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
                     overflow: 'hidden'
                   }}>
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                            <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                            <thead style={{ backgroundColor: 'var(--color-bg-tertiary)', borderBottom: '1px solid var(--color-border-light)' }}>
                               <tr>
                                 <th style={{
                                   padding: '6px 12px',
@@ -2068,7 +2057,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                 </th>
                               </tr>
                             </thead>
-                            <tbody style={{ background: 'white' }}>
+                            <tbody style={{ background: 'var(--color-surface-1)' }}>
                               {paginatedDocuments.map((document, index) => {
                                 const filename = extractFilename(document);
                                 const status = extractStatus(document);
@@ -2345,7 +2334,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 <div style={{
                   textAlign: 'center',
                   padding: '48px 0',
-                  background: 'white',
+                  background: 'var(--color-surface-1)',
                   borderRadius: '8px',
                   boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
                   marginBottom: '24px'
@@ -2384,7 +2373,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           }}>
             <div>
               Connected to: <code style={{
-                backgroundColor: '#f3f4f6',
+                backgroundColor: 'var(--color-bg-tertiary)',
                 padding: '2px 8px',
                 borderRadius: '4px',
                 fontSize: '12px'
@@ -2426,7 +2415,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-surface-1)',
               borderRadius: '8px',
               padding: '24px',
               maxWidth: '600px',
@@ -2481,7 +2470,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
             {/* 요약 내용 */}
             <div style={{
-              backgroundColor: '#f9fafb',
+              backgroundColor: 'var(--color-bg-tertiary)',
               border: '1px solid #e5e7eb',
               borderRadius: '6px',
               padding: '16px',
@@ -2545,7 +2534,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-surface-1)',
               borderRadius: '8px',
               padding: '24px',
               maxWidth: '800px',
@@ -2600,7 +2589,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
             {/* 전체 텍스트 내용 */}
             <div style={{
-              backgroundColor: '#f9fafb',
+              backgroundColor: 'var(--color-bg-tertiary)',
               border: '1px solid #e5e7eb',
               borderRadius: '6px',
               padding: '16px',

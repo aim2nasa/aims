@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Switch, Tooltip } from 'antd';
 import { SunOutlined, MoonOutlined } from '@ant-design/icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -6,6 +6,11 @@ import { useTheme } from '../contexts/ThemeContext';
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
+  
+  useEffect(() => {
+    console.log('Current theme:', theme);
+    console.log('Document attribute:', document.documentElement.getAttribute('data-theme'));
+  }, [theme]);
 
   return (
     <Tooltip title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}>

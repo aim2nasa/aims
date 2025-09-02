@@ -217,12 +217,12 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
     >
       {/* 통계 정보 */}
       <div style={{ 
-        backgroundColor: '#f0f2f5', 
+        backgroundColor: 'var(--color-bg-tertiary)', 
         padding: '12px', 
         borderRadius: '6px', 
         marginBottom: '16px' 
       }}>
-        <Space split={<span style={{ color: '#d9d9d9' }}>|</span>}>
+        <Space split={<span style={{ color: 'var(--color-border-dark)' }}>|</span>}>
           <Text>
             <strong>전체 고객:</strong> {stats.totalCustomers}명
           </Text>
@@ -251,10 +251,10 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         treeData={treeData}
         height={600}
         style={{
-          backgroundColor: '#fafafa',
+          backgroundColor: 'var(--color-bg-tertiary)',
           padding: '8px',
           borderRadius: '6px',
-          border: '1px solid #e8e8e8'
+          border: '1px solid var(--color-border-light)'
         }}
       />
     </Card>
