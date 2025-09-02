@@ -1817,18 +1817,20 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
                       style={{
-                        border: '1px solid #d1d5db',
+                        border: '1px solid var(--color-border)',
                         borderRadius: '8px',
                         padding: '8px 12px',
                         fontSize: '14px',
-                        outline: 'none'
+                        outline: 'none',
+                        backgroundColor: 'var(--color-bg-primary)',
+                        color: 'var(--color-text-primary)'
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = '#3b82f6';
-                        e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                        e.target.style.borderColor = 'var(--color-primary)';
+                        e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderColor = 'var(--color-border)';
                         e.target.style.boxShadow = 'none';
                       }}
                     >
