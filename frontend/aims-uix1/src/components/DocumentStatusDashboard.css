@@ -3,6 +3,20 @@
  * 테마 시스템과 연동되는 스타일
  */
 
+/* Dark Theme for Total Card */
+html[data-theme="dark"] .dsd-stats-card.all {
+  background: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+html[data-theme="dark"] .dsd-stats-label {
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .dsd-stats-value.all {
+  color: #f9fafb !important;
+}
+
 /* Container */
 .dsd-container {
   min-height: 100vh;

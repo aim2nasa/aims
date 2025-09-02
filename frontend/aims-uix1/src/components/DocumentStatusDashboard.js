@@ -1623,16 +1623,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 setStatusFilter('all');
                 setCurrentPage(1);
               }}
-              style={{
-                background: statusFilter === 'all' ? 
-                  'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' : 'white',
-                padding: '8px 10px',
-                borderRadius: '4px',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                border: statusFilter === 'all' ? '2px solid #6b7280' : '2px solid transparent'
-              }}
+              className={`dsd-stats-card all ${statusFilter === 'all' ? 'active' : ''}`}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
@@ -1645,8 +1636,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Total</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#111827', margin: '1px 0 0 0' }}>{documents.length}</p>
+                  <p className="dsd-stats-label">Total</p>
+                  <p className="dsd-stats-value all">{documents.length}</p>
                 </div>
                 <FileText style={{ width: '18px', height: '18px', color: '#3b82f6' }} />
               </div>
