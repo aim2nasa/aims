@@ -1611,13 +1611,27 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       {/* 메인 콘텐츠 */}
       <main style={{ flex: '1', overflowY: 'auto' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px 24px 24px' }}>
-          {/* 통계 대시보드 */}
+          {/* 상태 카드, 검색 및 필터 - 한 줄 레이아웃 */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '8px',
-            marginBottom: '12px'
+            background: 'var(--color-surface-1)',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
+            padding: '8px',
+            marginBottom: '24px'
           }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'wrap'
+            }}>
+              {/* 상태 카드들 */}
+              <div style={{
+                display: 'flex',
+                gap: '6px',
+                flex: '0 0 auto',
+                minWidth: '480px'
+              }}>
             <div 
               onClick={() => {
                 setStatusFilter('all');
@@ -1630,7 +1644,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   'var(--color-surface-1)',
                 border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                minWidth: '110px',
+                flex: '1'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1642,12 +1658,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 전체 문서 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
+                <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Total</p>
                   <p className="dsd-stats-value all">{documents.length}</p>
                 </div>
-                <FileText style={{ width: '18px', height: '18px', color: '#3b82f6' }} />
               </div>
             </div>
             
@@ -1665,7 +1681,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   'var(--color-surface-1)',
                 border: 'none',
                 cursor: statusCounts.completed > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                minWidth: '110px',
+                flex: '1'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.completed > 0) {
@@ -1681,12 +1699,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.completed > 0 ? '클릭하여 완료된 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                <CheckCircle style={{ width: '12px', height: '12px', color: '#10b981' }} />
+                <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Completed</p>
                   <p className="dsd-stats-value completed">{statusCounts.completed || 0}</p>
                 </div>
-                <CheckCircle style={{ width: '18px', height: '18px', color: '#10b981' }} />
               </div>
             </div>
             
@@ -1704,7 +1722,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   'var(--color-surface-1)',
                 border: 'none',
                 cursor: statusCounts.processing > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                minWidth: '110px',
+                flex: '1'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.processing > 0) {
@@ -1720,12 +1740,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.processing > 0 ? '클릭하여 처리 중인 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                <Clock style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
+                <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Processing</p>
                   <p className="dsd-stats-value processing">{statusCounts.processing || 0}</p>
                 </div>
-                <Clock style={{ width: '18px', height: '18px', color: '#3b82f6' }} />
               </div>
             </div>
             
@@ -1743,7 +1763,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   'var(--color-surface-1)',
                 border: 'none',
                 cursor: statusCounts.error > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                minWidth: '110px',
+                flex: '1'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.error > 0) {
@@ -1759,130 +1781,122 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title={statusCounts.error > 0 ? '클릭하여 오류 문서만 보기' : ''}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                <XCircle style={{ width: '12px', height: '12px', color: '#ef4444' }} />
+                <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Errors</p>
                   <p className="dsd-stats-value error">{statusCounts.error || 0}</p>
                 </div>
-                <XCircle style={{ width: '18px', height: '18px', color: '#ef4444' }} />
               </div>
             </div>
-          </div>
+            </div>
 
-          {/* 검색 및 필터 */}
-          <div style={{
-            background: 'var(--color-surface-1)',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-            padding: '16px',
-            marginBottom: '24px'
-          }}>
+            {/* 구분선 */}
+            <div style={{
+              height: '40px',
+              width: '1px',
+              backgroundColor: 'var(--color-border)',
+              flex: '0 0 auto'
+            }}></div>
+
+            {/* 검색 및 필터 */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
+              alignItems: 'center',
+              gap: '8px',
+              flex: '0 1 auto'
             }}>
+              {/* 검색 입력 */}
+              <div style={{ position: 'relative', width: '280px' }}>
+                <Search style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '16px',
+                  height: '16px',
+                  color: 'var(--color-text-tertiary)'
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search by filename or document ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    paddingLeft: '40px',
+                    paddingRight: '16px',
+                    paddingTop: '8px',
+                    paddingBottom: '8px',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    backgroundColor: 'var(--color-bg-primary)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--color-primary)';
+                    e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--color-border)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+
+              {/* 상태 필터 */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  backgroundColor: 'var(--color-bg-primary)',
+                  color: 'var(--color-text-primary)'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--color-primary)';
+                  e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--color-border)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="error">Error</option>
+              </select>
+
+              {/* 문서 정보 */}
               <div style={{
                 display: 'flex',
-                flexDirection: 'row',
-                gap: '16px',
-                alignItems: 'center',
-                justifyContent: 'space-between'
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '2px',
+                marginLeft: '8px',
+                flex: '0 0 auto'
               }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  gap: '16px',
-                  alignItems: 'center'
-                }}>
-                  <div style={{ flex: '1', maxWidth: '400px' }}>
-                    <div style={{ position: 'relative' }}>
-                      <Search style={{
-                        position: 'absolute',
-                        left: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: '16px',
-                        height: '16px',
-                        color: 'var(--color-text-tertiary)'
-                      }} />
-                      <input
-                        type="text"
-                        placeholder="Search by filename or document ID..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                          width: '100%',
-                          paddingLeft: '40px',
-                          paddingRight: '16px',
-                          paddingTop: '8px',
-                          paddingBottom: '8px',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          outline: 'none',
-                          backgroundColor: 'var(--color-bg-primary)',
-                          color: 'var(--color-text-primary)'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = 'var(--color-primary)';
-                          e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = 'var(--color-border)';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      style={{
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '8px',
-                        padding: '8px 12px',
-                        fontSize: '14px',
-                        outline: 'none',
-                        backgroundColor: 'var(--color-bg-primary)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = 'var(--color-primary)';
-                        e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = 'var(--color-border)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="completed">Completed</option>
-                      <option value="error">Error</option>
-                    </select>
-                </div>
-                
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end',
-                  gap: '4px'
-                }}>
-                  <span style={{ fontSize: '14px', color: '#4b5563' }}>
-                    Total <strong>{filteredDocuments.length}</strong> documents
+                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+                  Total <strong>{filteredDocuments.length}</strong> documents
+                </span>
+                {lastUpdated && (
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                    Last updated: {lastUpdated.toLocaleTimeString()}
                   </span>
-                  {lastUpdated && (
-                    <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                      Last updated: {lastUpdated.toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
+        </div>
+
 
           {/* 에러 표시 */}
           {error && (

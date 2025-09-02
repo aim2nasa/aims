@@ -254,9 +254,9 @@ html[data-theme="dark"] .dsd-footer {
 /* Stats Card */
 .dsd-stats-card {
   background: var(--color-surface-1);
-  padding: 8px 10px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 var(--color-shadow-sm);
+  padding: 3px 6px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 var(--color-shadow-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 2px solid transparent;
@@ -288,15 +288,17 @@ html[data-theme="dark"] .dsd-footer {
 }
 
 .dsd-stats-label {
-  font-size: 11px;
+  font-size: 8px;
   color: var(--color-text-tertiary);
   margin: 0;
+  line-height: 1;
 }
 
 .dsd-stats-value {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 12px;
+  font-weight: 600;
   margin: 1px 0 0 0;
+  line-height: 1;
 }
 
 .dsd-stats-value.all {
