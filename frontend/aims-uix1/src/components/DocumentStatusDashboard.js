@@ -1650,15 +1650,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   setCurrentPage(1);
                 }
               }}
+              className={`dsd-stats-card completed ${statusCounts.completed > 0 && statusFilter === 'completed' ? 'active' : ''}`}
               style={{
-                background: statusCounts.completed > 0 && statusFilter === 'completed' ? 
-                  'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' : 'white',
-                padding: '8px 10px',
-                borderRadius: '4px',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                cursor: statusCounts.completed > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease',
-                border: statusFilter === 'completed' ? '2px solid #10b981' : '2px solid transparent'
+                cursor: statusCounts.completed > 0 ? 'pointer' : 'default'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.completed > 0) {
@@ -1676,8 +1670,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Completed</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#059669', margin: '1px 0 0 0' }}>{statusCounts.completed || 0}</p>
+                  <p className="dsd-stats-label">Completed</p>
+                  <p className="dsd-stats-value completed">{statusCounts.completed || 0}</p>
                 </div>
                 <CheckCircle style={{ width: '18px', height: '18px', color: '#10b981' }} />
               </div>
@@ -1690,15 +1684,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   setCurrentPage(1);
                 }
               }}
+              className={`dsd-stats-card processing ${statusCounts.processing > 0 && statusFilter === 'processing' ? 'active' : ''}`}
               style={{
-                background: statusCounts.processing > 0 && statusFilter === 'processing' ? 
-                  'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' : 'white',
-                padding: '8px 10px',
-                borderRadius: '4px',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                cursor: statusCounts.processing > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease',
-                border: statusFilter === 'processing' ? '2px solid #3b82f6' : '2px solid transparent'
+                cursor: statusCounts.processing > 0 ? 'pointer' : 'default'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.processing > 0) {
@@ -1716,8 +1704,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Processing</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#2563eb', margin: '1px 0 0 0' }}>{statusCounts.processing || 0}</p>
+                  <p className="dsd-stats-label">Processing</p>
+                  <p className="dsd-stats-value processing">{statusCounts.processing || 0}</p>
                 </div>
                 <Clock style={{ width: '18px', height: '18px', color: '#3b82f6' }} />
               </div>
@@ -1730,15 +1718,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   setCurrentPage(1);
                 }
               }}
+              className={`dsd-stats-card error ${statusCounts.error > 0 && statusFilter === 'error' ? 'active' : ''}`}
               style={{
-                background: statusCounts.error > 0 && statusFilter === 'error' ? 
-                  'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 'white',
-                padding: '8px 10px',
-                borderRadius: '4px',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                cursor: statusCounts.error > 0 ? 'pointer' : 'default',
-                transition: 'all 0.2s ease',
-                border: statusFilter === 'error' ? '2px solid #ef4444' : '2px solid transparent'
+                cursor: statusCounts.error > 0 ? 'pointer' : 'default'
               }}
               onMouseEnter={(e) => {
                 if (statusCounts.error > 0) {
@@ -1756,8 +1738,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0' }}>Errors</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#dc2626', margin: '1px 0 0 0' }}>{statusCounts.error || 0}</p>
+                  <p className="dsd-stats-label">Errors</p>
+                  <p className="dsd-stats-value error">{statusCounts.error || 0}</p>
                 </div>
                 <XCircle style={{ width: '18px', height: '18px', color: '#ef4444' }} />
               </div>
@@ -2346,11 +2328,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       </main>
 
       {/* 푸터 */}
-      <footer style={{
-        background: 'white',
-        borderTop: '1px solid #e5e7eb',
-        flexShrink: '0'
-      }}>
+      <footer className="dsd-footer">
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
           <div style={{
             display: 'flex',
@@ -2358,7 +2336,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             justifyContent: 'space-between',
             alignItems: 'center',
             fontSize: '14px',
-            color: '#6b7280',
             gap: '8px',
             padding: '16px 0'
           }}>
