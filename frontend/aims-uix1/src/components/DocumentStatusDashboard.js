@@ -747,9 +747,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0' }}>{filename}</h2>
+              <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0', color: 'var(--color-text-primary)' }}>{filename}</h2>
               {saveName && saveName !== filename && (
-                <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 0 0' }}>Server file: {saveName}</p>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-tertiary)', margin: '4px 0 0 0' }}>Server file: {saveName}</p>
               )}
               <div style={{ marginTop: '4px' }}>
                 <CopyableId id={document.id || document._id || 'unknown-id'} />
@@ -760,7 +760,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#9ca3af'
+            color: 'var(--color-text-tertiary)'
           }}>
             <XCircle style={{ width: '24px', height: '24px' }} />
           </button>
@@ -770,7 +770,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
         <div style={{ padding: '24px', overflowY: 'auto', flex: '1' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <h3 style={{ fontWeight: '500', color: '#111827', marginBottom: '8px' }}>Processing Progress</h3>
+              <h3 style={{ fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Processing Progress</h3>
               <ProgressBar progress={progress} status={status} />
             </div>
             
@@ -781,24 +781,24 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
               fontSize: '14px'
             }}>
               <div>
-                <span style={{ fontWeight: '500', color: '#4b5563' }}>Status:</span>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Status:</span>
                 <div style={{ marginTop: '4px' }}>
                   <StatusBadge status={status} />
                 </div>
               </div>
               <div>
-                <span style={{ fontWeight: '500', color: '#4b5563' }}>Progress:</span>
-                <p style={{ color: '#111827', margin: '4px 0 0 0' }}>{progress}%</p>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Progress:</span>
+                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0' }}>{progress}%</p>
               </div>
               <div>
-                <span style={{ fontWeight: '500', color: '#4b5563' }}>Original Name:</span>
-                <p style={{ color: '#111827', margin: '4px 0 0 0', wordBreak: 'break-all' }}>{filename}</p>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Original Name:</span>
+                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0', wordBreak: 'break-all' }}>{filename}</p>
               </div>
               {saveName && saveName !== filename && (
                 <div>
-                  <span style={{ fontWeight: '500', color: '#4b5563' }}>Server File:</span>
+                  <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Server File:</span>
                   <p style={{
-                    color: '#111827',
+                    color: 'var(--color-text-primary)',
                     margin: '4px 0 0 0',
                     wordBreak: 'break-all',
                     fontFamily: 'monospace',
@@ -807,13 +807,13 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                 </div>
               )}
               <div>
-                <span style={{ fontWeight: '500', color: '#4b5563' }}>Uploaded:</span>
-                <p style={{ color: '#111827', margin: '4px 0 0 0' }}>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Uploaded:</span>
+                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0' }}>
                   {uploadedDate ? new Date(uploadedDate).toLocaleString() : 'Unknown'}
                 </p>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <span style={{ fontWeight: '500', color: '#4b5563' }}>Document ID:</span>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Document ID:</span>
                 <div style={{ marginTop: '4px' }}>
                   <CopyableId id={document.id || document._id || 'unknown-id'} />
                 </div>
@@ -822,7 +822,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
             {document.stages && (
               <div style={{ marginTop: '24px' }}>
-                <h3 style={{ fontWeight: '500', color: '#111827', marginBottom: '12px' }}>Processing Stages</h3>
+                <h3 style={{ fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Processing Stages</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {Object.entries(document.stages)
                     .filter(([stage, data]) => {
@@ -854,7 +854,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                       }}>{stage}</h4>
                       <pre style={{
                         fontSize: '12px',
-                        color: '#4b5563',
+                        color: 'var(--color-text-secondary)',
                         margin: '0',
                         overflow: 'auto',
                         whiteSpace: 'pre-wrap',
