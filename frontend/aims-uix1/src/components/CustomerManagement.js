@@ -686,10 +686,10 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             
             <TabPane tab="주소 정보" key="address">
               <Form.Item label="주소">
-                <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '16px', backgroundColor: '#fafafa' }}>
+                <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', padding: '16px', backgroundColor: 'var(--color-bg-tertiary)' }}>
                   {/* 주소 검색 영역 */}
                   <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>📍 주소 검색</div>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>📍 주소 검색</div>
                     <Row gutter={8}>
                       <Col span={18}>
                         <Input
@@ -700,7 +700,11 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                             setAddressSearchVisible(true);
                           }}
                           readOnly
-                          style={{ cursor: 'pointer' }}
+                          style={{ 
+                            cursor: 'pointer',
+                            backgroundColor: 'var(--color-bg-primary)',
+                            color: 'var(--color-text-primary)'
+                          }}
                         />
                       </Col>
                       <Col span={6}>
@@ -718,14 +722,14 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   
                   {/* 검색 결과 표시 영역 */}
                   <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>🏠 검색된 주소</div>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>🏠 검색된 주소</div>
                     <Row gutter={8}>
                       <Col span={8}>
                         <Form.Item name="postal_code" style={{ marginBottom: 0 }}>
                           <Input 
                             placeholder="우편번호"
                             readOnly
-                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                            style={{ backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}
                           />
                         </Form.Item>
                       </Col>
@@ -734,7 +738,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                           <Input 
                             placeholder="주소를 검색하면 자동으로 채워집니다"
                             readOnly
-                            style={{ backgroundColor: '#fff', color: '#595959' }}
+                            style={{ backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}
                           />
                         </Form.Item>
                       </Col>
@@ -743,15 +747,15 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   
                   {/* 상세주소 입력 영역 */}
                   <div>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: '#262626' }}>✏️ 상세주소 입력</div>
+                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>✏️ 상세주소 입력</div>
                     <Form.Item name="address2" style={{ marginBottom: 0 }}>
                       <Input 
                         placeholder={currentAddress1 ? "상세주소를 입력하세요 (동/호수, 건물명 등)" : "❌ 주소검색을 먼저 해주세요"}
                         style={{ 
-                          backgroundColor: currentAddress1 ? '#fff' : '#f5f5f5',
-                          border: currentAddress1 ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                          backgroundColor: currentAddress1 ? 'var(--color-bg-primary)' : 'var(--color-bg-tertiary)',
+                          border: currentAddress1 ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                           borderRadius: '6px',
-                          color: currentAddress1 ? '#000' : '#999'
+                          color: currentAddress1 ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
                         }}
                         disabled={!currentAddress1}
                         readOnly={!currentAddress1}
