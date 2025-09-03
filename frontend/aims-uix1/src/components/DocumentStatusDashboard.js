@@ -152,10 +152,18 @@ const extractStatus = (document) => {
     return 'pending';
   }
   
+  // Upload 후 아직 Meta가 시작되지 않았으면 pending
+  if (!document.meta) {
+    return 'pending';
+  }
+  
   // 2. Meta 체크
-  if (!document.meta || document.meta.meta_status !== 'ok') {
-    if (document.meta && document.meta.meta_status === 'error') {
+  if (document.meta.meta_status !== 'ok') {
+    if (document.meta.meta_status === 'error') {
       return 'error';
+    }
+    if (document.meta.meta_status === 'pending' || !document.meta.meta_status) {
+      return 'pending';
     }
     return 'processing';
   }
@@ -178,7 +186,7 @@ const extractStatus = (document) => {
       if (document.meta && document.meta.full_text) {
         return 'completed';
       }
-      return 'processing'; // DocEmbed 대기 중
+      return 'pending'; // DocEmbed 대기 중
       
     case 'text_plain':
       // text/plain 파일 → Text → DocEmbed
@@ -188,7 +196,7 @@ const extractStatus = (document) => {
         if (document.docembed.status === 'failed') return 'error';
         return 'processing';
       }
-      return 'processing'; // DocEmbed 대기 중
+      return 'pending'; // DocEmbed 대기 중
       
     case 'ocr_normal':
       // 일반 OCR 처리 → OCR → DocEmbed
@@ -200,11 +208,11 @@ const extractStatus = (document) => {
             if (document.docembed.status === 'failed') return 'error';
             return 'processing';
           }
-          return 'processing'; // DocEmbed 대기 중
+          return 'pending'; // DocEmbed 대기 중
         }
         return 'processing'; // OCR 처리 중
       }
-      return 'processing'; // OCR 대기 중
+      return 'pending'; // OCR 대기 중
       
     default:
       return 'processing';
@@ -1733,6 +1741,41 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 <div style={{ textAlign: 'center' }}>
                   <p className="dsd-stats-label">Processing</p>
                   <p className="dsd-stats-value processing">{statusCounts.processing || 0}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              onClick={() => {
+                setStatusFilter('pending');
+                setCurrentPage(1);
+              }}
+              className={`dsd-stats-card pending ${statusFilter === 'pending' ? 'active' : ''}`}
+              style={{
+                background: statusFilter === 'pending' ? 
+                  'linear-gradient(135deg, var(--color-warning-bg) 0%, #fde68a 100%)' : 
+                  'var(--color-surface-1)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                minWidth: '110px',
+                flex: '1'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+              }}
+              title="클릭하여 대기 중인 문서만 보기"
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
+                <AlertCircle style={{ width: '12px', height: '12px', color: '#f59e0b' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <p className="dsd-stats-label">Pending</p>
+                  <p className="dsd-stats-value pending">{statusCounts.pending || 0}</p>
                 </div>
               </div>
             </div>
