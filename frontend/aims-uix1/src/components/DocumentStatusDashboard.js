@@ -1518,7 +1518,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  border: '1px solid #d1d5db',
+                  border: 'none',
                   borderRadius: '8px',
                   overflow: 'hidden'
                 }}>
