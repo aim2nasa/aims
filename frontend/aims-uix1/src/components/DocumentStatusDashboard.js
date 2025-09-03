@@ -648,7 +648,12 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
             {/* 반응형 모드일 때 현재 아이템 수 표시 */}
             {isResponsive && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#10b981', fontWeight: '500' }}>
+                <span style={{ 
+                  fontSize: '14px', 
+                  color: '#4b5563',
+                  fontWeight: 'normal',
+                  textDecoration: 'none'
+                }}>
                   📱 {itemsPerPage} per page (auto)
                 </span>
               </div>
