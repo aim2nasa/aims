@@ -62,7 +62,7 @@ const PDFViewer = ({ file, onDownload }) => {
   }, []);
 
   return (
-    <div style={{ position: 'relative', overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#f5f5f5', padding: '10px' }}>
+    <div style={{ position: 'relative', overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'var(--color-bg-secondary)', padding: '10px' }}>
       <div style={{ 
         flexShrink: 0,
         display: 'flex', 
@@ -81,10 +81,10 @@ const PDFViewer = ({ file, onDownload }) => {
         >
           <div style={{
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #d9d9d9',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             overflow: 'hidden',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--color-bg-primary)',
             margin: '5px'
           }}>
             <Page
@@ -99,7 +99,7 @@ const PDFViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-bg-primary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
         {/* 페이지 이동 */}
         <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
           <Space>
@@ -112,7 +112,7 @@ const PDFViewer = ({ file, onDownload }) => {
             >
               <span style={{ fontSize: '10px' }}>이전</span>
             </Button>
-            <Text style={{ margin: '0 8px', fontSize: '10px' }}>
+            <Text style={{ margin: '0 8px', fontSize: '10px', color: 'var(--color-text-primary)' }}>
               페이지 {pageNumber} / {numPages || '--'}
             </Text>
             <Button
@@ -130,7 +130,7 @@ const PDFViewer = ({ file, onDownload }) => {
         {/* 확대/축소 */}
         <Space style={{ marginLeft: 16 }}>
           <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
-          <Text style={{ fontSize: '10px' }}>{Math.round(scale * 100)}%</Text>
+          <Text style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>{Math.round(scale * 100)}%</Text>
           <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
         </Space>
 
