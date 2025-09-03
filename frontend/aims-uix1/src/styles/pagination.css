@@ -11,13 +11,14 @@ body {
 
 .fixed-bottom-pagination {
   position: fixed !important;
-  bottom: 0 !important;
+  bottom: -40px !important;
   left: 0 !important;
   right: 0 !important;
   z-index: 1000 !important;
   background: var(--color-surface-2) !important;
   border-top: 1px solid var(--color-border-light) !important;
-  padding: 16px 24px !important;
+  padding: 4px 24px 44px 24px !important;
+  height: 88px !important;
 }
 
 /* 고객 관리 테이블 행 높이 축소 */

@@ -488,7 +488,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column',
-        height: '100%',
+        height: 'calc(100vh - 100px)',
         minHeight: 0,
         background: 'var(--color-surface-1)',
         borderRadius: '8px',
@@ -530,8 +530,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         <div style={{ 
           flex: 1,
           overflowY: 'auto',
-          maxHeight: 'calc(100vh - 280px)',
-          paddingBottom: '80px'
+          minHeight: 0,
+          paddingBottom: '50px'
         }}>
         {showRegionalView ? (
           <CustomerRegionalTreeView 
