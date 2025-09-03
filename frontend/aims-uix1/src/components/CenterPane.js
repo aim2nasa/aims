@@ -54,7 +54,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, selectedMenuKey, onDocumentLinked, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet }) => {
+const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, selectedMenuKey, onDocumentLinked, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet, rightPaneVisible }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -285,6 +285,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
               initialFiles={uploadedFiles} 
               onDocumentClick={handleDocumentClickWithScrollSave}
               onDocumentPreview={onDocumentPreview}
+              rightPaneVisible={rightPaneVisible}
             />
           </div>
         </div>

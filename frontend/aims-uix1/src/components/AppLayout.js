@@ -428,6 +428,7 @@ const AppLayout = () => {
                   setEditingCustomer(null);
                 }}
                 onRefreshCustomerListSet={setRefreshCustomerList}
+                rightPaneVisible={rightPaneVisible}
               />
             </div>
 

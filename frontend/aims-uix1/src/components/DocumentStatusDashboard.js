@@ -448,7 +448,7 @@ const analyzeProcessingPath = (document) => {
 
 
 // 상태 뱃지 컴포넌트
-const StatusBadge = ({ status, size = "medium", isCompact = false }) => {
+const StatusBadge = ({ status, size = "medium", isCompact = false, rightPaneVisible = false }) => {
   const configs = {
     completed: { icon: CheckCircle, label: "Completed", color: "#10b981", bgColor: "#dcfce7" },
     processing: { icon: Clock, label: "Processing", color: "#3b82f6", bgColor: "#dbeafe" },
@@ -468,8 +468,8 @@ const StatusBadge = ({ status, size = "medium", isCompact = false }) => {
       padding,
       gap: '4px'
     }}>
-      <Icon style={{ width: iconSize, height: iconSize, marginRight: isCompact ? '0' : '4px' }} />
-      {!isCompact && config.label}
+      <Icon style={{ width: iconSize, height: iconSize, marginRight: (isCompact || rightPaneVisible) ? '0' : '4px' }} />
+      {!isCompact && !rightPaneVisible && config.label}
     </span>
   );
 };
@@ -705,7 +705,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
 
 
 // 상세 정보 모달
-const DocumentDetailModal = ({ document, isOpen, onClose }) => {
+const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = false }) => {
   if (!isOpen || !document) return null;
 
   const filename = extractFilename(document);
@@ -783,7 +783,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
               <div>
                 <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Status:</span>
                 <div style={{ marginTop: '4px' }}>
-                  <StatusBadge status={status} />
+                  <StatusBadge status={status} rightPaneVisible={rightPaneVisible} />
                 </div>
               </div>
               <div>
@@ -903,7 +903,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
 
 
 // 메인 대시보드 컴포넌트
-const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumentPreview }) => {
+const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumentPreview, rightPaneVisible = false }) => {
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [paginatedDocuments, setPaginatedDocuments] = useState([]);
@@ -942,8 +942,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 반응형 화면 크기 상태
   const [screenSize, setScreenSize] = useState(window.innerWidth);
   const isCompactMode = screenSize < 1200; // 1200px 이하에서 컴팩트 모드
-  const canShowStatusText = screenSize >= 1300; // 1300px 이상에서 STATUS 텍스트 표시 (ACTIONS와 동기화)
-  const canShowActionsText = screenSize >= 1300; // 1300px 이상에서 ACTIONS 텍스트 표시
+  const canShowStatusText = screenSize >= 1300 && !rightPaneVisible; // 1300px 이상이고 RightPane이 숨김일 때만 STATUS 텍스트 표시
+  const canShowActionsText = screenSize >= 1300 && !rightPaneVisible; // 1300px 이상이고 RightPane이 숨김일 때만 ACTIONS 텍스트 표시
   
   // Actions 레이아웃 모드 결정
   const getActionsLayout = (screenWidth) => {
@@ -2136,7 +2136,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                        <StatusBadge status={status} size="small" isCompact={!canShowStatusText} />
+                                        <StatusBadge status={status} size="small" isCompact={!canShowStatusText} rightPaneVisible={rightPaneVisible} />
                                       </div>
                                     </td>
                                     <td style={{ padding: '8px 12px', textAlign: 'center' }}>
@@ -2399,6 +2399,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         document={selectedDocument}
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
+        rightPaneVisible={rightPaneVisible}
       />
 
       {/* 문서 요약 모달 */}
