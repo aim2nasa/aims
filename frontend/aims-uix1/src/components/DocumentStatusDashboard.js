@@ -848,7 +848,7 @@ const DocumentDetailModal = ({ document, isOpen, onClose }) => {
                     }}>
                       <h4 style={{
                         fontWeight: '500',
-                        color: '#374151',
+                        color: 'var(--color-text-primary)',
                         textTransform: 'capitalize',
                         margin: '0 0 4px 0'
                       }}>{stage}</h4>
@@ -1585,7 +1585,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   disabled={loading} 
                   style={{
                     backgroundColor: loading ? '#93c5fd' : '#3b82f6',
-                    color: 'white',
+                    color: 'var(--color-text-white)',
                     padding: '8px 16px',
                     borderRadius: '8px',
                     border: 'none',
@@ -1941,7 +1941,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'left',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : 'auto'
@@ -1962,7 +1962,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'center',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '45px'
@@ -1983,7 +1983,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'center',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
@@ -2004,7 +2004,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'left',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : '100px',
@@ -2026,7 +2026,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'center',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : '100px',
@@ -2048,7 +2048,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   textAlign: 'left',
                                   fontSize: '10px',
                                   fontWeight: '500',
-                                  color: '#6b7280',
+                                  color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
                                   width: isCompactMode ? '30px' : '160px',
@@ -2268,7 +2268,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                           <span style={{
                                             fontSize: '10px',
-                                            color: '#6b7280',
+                                            color: 'var(--color-text-tertiary)',
                                             fontWeight: '500'
                                           }}>
                                             {Math.round(extractProgress(document))}%
@@ -2293,7 +2293,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                           </div>
                                           <span style={{
                                             fontSize: '10px',
-                                            color: '#6b7280',
+                                            color: 'var(--color-text-tertiary)',
                                             fontWeight: '500',
                                             minWidth: '30px'
                                           }}>
@@ -2305,7 +2305,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                     <td style={{ padding: '8px 6px', textAlign: 'center' }}>
                                       <div style={{ 
                                         fontSize: '10px', 
-                                        color: '#6b7280',
+                                        color: 'var(--color-text-tertiary)',
                                         fontFamily: 'monospace'
                                       }}>
                                         {formatDate(uploadedDate)}
@@ -2438,11 +2438,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               justifyContent: 'space-between',
               marginBottom: '20px',
               paddingBottom: '16px',
-              borderBottom: '1px solid #e5e7eb'
+              borderBottom: '1px solid var(--color-border)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText style={{ width: '20px', height: '20px', color: '#2563eb' }} />
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                <FileText style={{ width: '20px', height: '20px', color: 'var(--color-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                   문서 요약
                 </h3>
               </div>
@@ -2453,7 +2453,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   border: 'none',
                   fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#6b7280',
+                  color: 'var(--color-text-tertiary)',
                   padding: '4px'
                 }}
               >
@@ -2467,7 +2467,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 margin: '0 0 8px 0', 
                 fontSize: '16px', 
                 fontWeight: '500', 
-                color: '#374151' 
+                color: 'var(--color-text-primary)' 
               }}>
                 {extractFilename(selectedDocumentForSummary) || '문서명 없음'}
               </h4>
@@ -2476,7 +2476,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             {/* 요약 내용 */}
             <div style={{
               backgroundColor: 'var(--color-bg-tertiary)',
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--color-border)',
               borderRadius: '6px',
               padding: '16px',
               minHeight: '200px'
@@ -2486,7 +2486,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 wordBreak: 'break-word',
                 fontFamily: 'inherit',
                 lineHeight: '1.6',
-                color: '#374151'
+                color: 'var(--color-text-primary)'
               }}>
                 {summaryContent}
               </div>
@@ -2498,13 +2498,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               justifyContent: 'flex-end',
               marginTop: '20px',
               paddingTop: '16px',
-              borderTop: '1px solid #e5e7eb'
+              borderTop: '1px solid var(--color-border)'
             }}>
               <button
                 onClick={handleSummaryModalClose}
                 style={{
-                  backgroundColor: '#6b7280',
-                  color: 'white',
+                  backgroundColor: 'var(--color-text-tertiary)',
+                  color: 'var(--color-text-white)',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
@@ -2557,11 +2557,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               justifyContent: 'space-between',
               marginBottom: '20px',
               paddingBottom: '16px',
-              borderBottom: '1px solid #e5e7eb'
+              borderBottom: '1px solid var(--color-border)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText style={{ width: '20px', height: '20px', color: '#7c3aed' }} />
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                <FileText style={{ width: '20px', height: '20px', color: 'var(--color-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                   문서 전체 텍스트
                 </h3>
               </div>
@@ -2572,7 +2572,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   border: 'none',
                   fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#6b7280',
+                  color: 'var(--color-text-tertiary)',
                   padding: '4px'
                 }}
               >
@@ -2586,7 +2586,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 margin: '0 0 8px 0', 
                 fontSize: '16px', 
                 fontWeight: '500', 
-                color: '#374151' 
+                color: 'var(--color-text-primary)' 
               }}>
                 {extractFilename(selectedDocumentForFullText) || '문서명 없음'}
               </h4>
@@ -2595,7 +2595,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             {/* 전체 텍스트 내용 */}
             <div style={{
               backgroundColor: 'var(--color-bg-tertiary)',
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--color-border)',
               borderRadius: '6px',
               padding: '16px',
               minHeight: '300px',
@@ -2608,7 +2608,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 fontFamily: 'monospace',
                 fontSize: '12px',
                 lineHeight: '1.5',
-                color: '#374151'
+                color: 'var(--color-text-primary)'
               }}>
                 {fullTextContent}
               </div>
@@ -2620,13 +2620,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               justifyContent: 'flex-end',
               marginTop: '20px',
               paddingTop: '16px',
-              borderTop: '1px solid #e5e7eb'
+              borderTop: '1px solid var(--color-border)'
             }}>
               <button
                 onClick={handleFullTextModalClose}
                 style={{
-                  backgroundColor: '#6b7280',
-                  color: 'white',
+                  backgroundColor: 'var(--color-text-tertiary)',
+                  color: 'var(--color-text-white)',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
