@@ -272,13 +272,13 @@ const FamilyRelationshipModal = ({
 
 
         <div style={{ 
-          backgroundColor: '#f6ffed', 
-          border: '1px solid #b7eb8f', 
+          backgroundColor: 'var(--color-success-bg)', 
+          border: '1px solid var(--color-success)', 
           borderRadius: '6px',
           padding: '12px',
           marginBottom: '16px'
         }}>
-          <Text style={{ fontSize: '12px', color: '#389e0d' }}>
+          <Text style={{ fontSize: '12px', color: 'var(--color-success)' }}>
             💡 <strong>자동 설정:</strong> 가족 관계는 강한 관계 강도, 주간 연락 빈도, 높은 영향력으로 자동 설정되며, 
             교차판매 기회와 높은 추천 잠재력이 활성화됩니다.
           </Text>
