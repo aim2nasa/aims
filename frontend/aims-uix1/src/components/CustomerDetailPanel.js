@@ -267,13 +267,14 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
 
   if (!customer) {
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-primary)' }}>
         <div style={{ 
           padding: '16px', 
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid var(--color-border)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          backgroundColor: 'var(--color-bg-primary)'
         }}>
           <Title level={4} style={{ margin: 0 }}>고객 상세 정보</Title>
           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
@@ -283,7 +284,8 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          color: '#999' 
+          color: 'var(--color-text-tertiary)',
+          backgroundColor: 'var(--color-bg-primary)'
         }}>
           {loading ? '로딩 중...' : '고객을 선택해주세요'}
         </div>
@@ -292,14 +294,15 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-primary)' }}>
       {/* Header */}
       <div style={{ 
         padding: '16px', 
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: '1px solid var(--color-border)',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start'
+        alignItems: 'flex-start',
+        backgroundColor: 'var(--color-bg-primary)'
       }}>
         <Space direction="vertical" size={4} style={{ flex: 1 }}>
           <Space>
@@ -376,7 +379,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'auto', backgroundColor: 'var(--color-bg-primary)' }}>
         <Tabs 
           activeKey={activeTab} 
           onChange={setActiveTab}
