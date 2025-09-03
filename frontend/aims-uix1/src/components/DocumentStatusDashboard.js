@@ -1871,35 +1871,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 />
               </div>
 
-              {/* 상태 필터 */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  backgroundColor: 'var(--color-bg-primary)',
-                  color: 'var(--color-text-primary)'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = 'var(--color-primary)';
-                  e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'var(--color-border)';
-                  e.target.style.boxShadow = 'none';
-                }}
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="completed">Completed</option>
-                <option value="error">Error</option>
-              </select>
-
               {/* 문서 정보 */}
               <div style={{
                 display: 'flex',
