@@ -1880,9 +1880,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 marginLeft: '6px',
                 flex: '0 0 auto'
               }}>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  Total <strong>{filteredDocuments.length}</strong> documents
-                </span>
                 {lastUpdated && (
                   <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
                     Last updated: {lastUpdated.toLocaleTimeString()}
