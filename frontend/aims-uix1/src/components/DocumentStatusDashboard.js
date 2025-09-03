@@ -1622,7 +1622,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main style={{ flex: '1', overflowY: 'auto' }}>
+      <main style={{ flex: '1' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px 24px 24px' }}>
           {/* 상태 카드, 검색 및 필터 - 한 줄 레이아웃 */}
           <div style={{
@@ -1937,9 +1937,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     background: 'var(--color-surface-1)',
                     borderRadius: '8px',
                     boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    maxHeight: '70vh'
                   }}>
-                    <div style={{ overflowX: 'auto' }}>
+                    <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '70vh' }}>
                       <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                             <thead style={{ backgroundColor: 'var(--color-bg-tertiary)', borderBottom: '1px solid var(--color-border-light)' }}>
                               <tr>
@@ -2332,21 +2333,33 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                               })}
                             </tbody>
                           </table>
+                      
+                      {/* 페이지네이션을 스크롤 컨테이너 안으로 이동 */}
+                      <div style={{ 
+                        borderTop: '1px solid var(--color-border-light)', 
+                        backgroundColor: 'var(--color-surface-1)',
+                        padding: '16px',
+                        position: 'sticky',
+                        bottom: 0,
+                        zIndex: 10
+                      }}>
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          itemsPerPage={itemsPerPage}
+                          totalItems={filteredDocuments.length}
+                          onPageChange={handlePageChange}
+                          onItemsPerPageChange={handleItemsPerPageChange}
+                          isResponsive={isResponsive}
+                          onResponsiveModeChange={handleResponsiveModeChange}
+                        />
+                      </div>
                     </div>
                   </div>
-                  
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    itemsPerPage={itemsPerPage}
-                    totalItems={filteredDocuments.length}
-                    onPageChange={handlePageChange}
-                    onItemsPerPageChange={handleItemsPerPageChange}
-                    isResponsive={isResponsive}
-                    onResponsiveModeChange={handleResponsiveModeChange}
-                  />
                 </>
               ) : (
+                <>
+                  {/* 빈 상태 */}
                 /* 빈 상태 */
                 <div style={{
                   textAlign: 'center',
@@ -2365,6 +2378,18 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     }
                   </p>
                 </div>
+                
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredDocuments.length}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  isResponsive={isResponsive}
+                  onResponsiveModeChange={handleResponsiveModeChange}
+                />
+                </>
               )}
             </div>
           )}
