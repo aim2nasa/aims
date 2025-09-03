@@ -812,7 +812,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
               <Button variant="secondary" onClick={closeCustomerModal}>취소</Button>
-              <Button variant="primary" htmlType="submit">
+              <Button variant="primary" type="submit">
                 {currentEditingCustomer ? '수정' : '등록'}
               </Button>
             </Space>
