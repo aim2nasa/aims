@@ -128,16 +128,26 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return pagination.pageSize;
     
-    // 헤더(약 80px) + 카드헤더(약 80px) + 테이블헤더(약 55px) + 여유공간(약 100px) = 약 315px
-    const fixedElementsHeight = 315;
+    // 실제 DOM에서 높이 측정
+    const header = document.querySelector('.ant-layout-header');
+    const searchBar = document.querySelector('.ant-card'); 
+    const tableHeader = document.querySelector('.ant-table-thead');
+    const paginationBar = document.querySelector('.fixed-bottom-pagination');
     
-    // 각 테이블 행 높이 약 60px (Ant Design Table)
-    const rowHeight = 60;
+    // 측정된 높이 또는 기본값 사용
+    const headerHeight = header?.offsetHeight || 64;
+    const searchBarHeight = searchBar?.offsetHeight || 80;
+    const tableHeaderHeight = tableHeader?.offsetHeight || 38;
+    const paginationHeight = 88; // fixed-bottom-pagination의 CSS height
+    const bufferSpace = 20; // 여유 공간
     
-    // 페이지네이션 공간 (약 60px)
-    const paginationHeight = 60;
+    const fixedElementsHeight = headerHeight + searchBarHeight + tableHeaderHeight + paginationHeight + bufferSpace;
     
-    const availableHeight = window.innerHeight - fixedElementsHeight - paginationHeight;
+    // 실제 테이블 행 높이 측정 (줄어든 행 높이 반영)
+    const tableRow = document.querySelector('.ant-table-tbody > tr');
+    const rowHeight = tableRow?.offsetHeight || 32; // CSS에서 min-height: 32px
+    
+    const availableHeight = window.innerHeight - fixedElementsHeight;
     const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
     
     // 최소 5개, 최대 50개로 제한
@@ -146,27 +156,42 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   // 브라우저 크기 변경 시 pageSize 업데이트
   useEffect(() => {
+    let resizeTimer;
+    
     const handleResize = () => {
-      if (isResponsive) {
-        const newPageSize = calculateItemsPerPage();
-        setPagination(prev => ({
-          ...prev,
-          pageSize: newPageSize
-        }));
-      }
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (isResponsive) {
+          const newPageSize = calculateItemsPerPage();
+          setPagination(prev => {
+            // 같은 값이면 업데이트하지 않음
+            if (prev.pageSize === newPageSize) return prev;
+            return {
+              ...prev,
+              pageSize: newPageSize,
+              current: 1 // 페이지 크기 변경시 첫 페이지로
+            };
+          });
+        }
+      }, 300); // 300ms 디바운싱
     };
 
-    // 초기 설정
+    // 초기 설정 (DOM이 완전히 로드된 후)
     if (isResponsive) {
-      const initialPageSize = calculateItemsPerPage();
-      setPagination(prev => ({
-        ...prev,
-        pageSize: initialPageSize
-      }));
+      setTimeout(() => {
+        const initialPageSize = calculateItemsPerPage();
+        setPagination(prev => ({
+          ...prev,
+          pageSize: initialPageSize
+        }));
+      }, 100);
     }
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
   }, [isResponsive, calculateItemsPerPage]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -286,10 +311,20 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const handleResponsiveModeChange = (responsive) => {
     setIsResponsive(responsive);
     if (responsive) {
-      const newPageSize = calculateItemsPerPage();
+      // DOM 업데이트 후 계산하도록 지연
+      setTimeout(() => {
+        const newPageSize = calculateItemsPerPage();
+        setPagination(prev => ({
+          ...prev,
+          pageSize: newPageSize,
+          current: 1
+        }));
+      }, 50);
+    } else {
+      // Auto-fit 해제시 기본값으로 복귀
       setPagination(prev => ({
         ...prev,
-        pageSize: newPageSize,
+        pageSize: 10,
         current: 1
       }));
     }
