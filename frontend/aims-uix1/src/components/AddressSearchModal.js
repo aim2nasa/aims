@@ -118,6 +118,11 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               onPressEnter={() => searchAddress(searchKeyword)}
+              style={{
+                backgroundColor: 'var(--color-bg-primary)',
+                color: 'var(--color-text-primary)',
+                borderColor: 'var(--color-border)'
+              }}
               onKeyDown={(e) => {
                 if (searchResults.length > 0) {
                   if (e.key === 'ArrowDown') {
@@ -203,8 +208,9 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               style={{
                 maxHeight: '400px',
                 overflowY: 'auto',
-                border: '1px solid #d9d9d9',
-                borderRadius: '6px'
+                border: '1px solid var(--color-border)',
+                borderRadius: '6px',
+                backgroundColor: 'var(--color-bg-primary)'
               }}
               renderItem={(item, index) => (
                 <List.Item 
@@ -215,22 +221,22 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
                     transition: 'background-color 0.2s',
                     margin: 0,
                     padding: '12px 16px',
-                    backgroundColor: selectedIndex === index ? '#e6f7ff' : 'transparent',
-                    border: selectedIndex === index ? '1px solid #1890ff' : '1px solid transparent'
+                    backgroundColor: selectedIndex === index ? 'var(--color-primary-alpha-10)' : 'var(--color-bg-primary)',
+                    border: selectedIndex === index ? '1px solid var(--color-primary)' : '1px solid transparent'
                   }}
                   className="address-search-item"
                 >
                   <div style={{ width: '100%' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: 4, fontSize: '14px' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: 4, fontSize: '14px', color: 'var(--color-text-primary)' }}>
                       📮 {item.zipNo ? `${item.zipNo} | ` : ''}{item.roadAddrPart1}
                     </div>
                     {item.jibunAddr && item.jibunAddr !== item.roadAddrPart1 && (
-                      <div style={{ color: '#666', fontSize: '12px', marginBottom: '2px' }}>
+                      <div style={{ color: 'var(--color-text-secondary)', fontSize: '12px', marginBottom: '2px' }}>
                         지번: {item.jibunAddr}
                       </div>
                     )}
                     {item.building_name && (
-                      <div style={{ color: '#1890ff', fontSize: '11px' }}>
+                      <div style={{ color: 'var(--color-primary)', fontSize: '11px' }}>
                         🏢 {item.building_name}
                       </div>
                     )}
@@ -256,7 +262,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
             
             {/* 전체 결과 로드 완료 */}
             {isEnd && totalCount > searchResults.length && (
-              <div style={{ textAlign: 'center', marginTop: '8px', color: '#999', fontSize: '12px' }}>
+              <div style={{ textAlign: 'center', marginTop: '8px', color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
                 전체 {totalCount}건 중 {searchResults.length}건 표시됨
               </div>
             )}
@@ -268,9 +274,9 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
           <div style={{ 
             textAlign: 'center', 
             padding: '40px 20px', 
-            color: '#666' 
+            color: 'var(--color-text-secondary)' 
           }}>
-            <HomeOutlined style={{ fontSize: '24px', marginBottom: '12px' }} />
+            <HomeOutlined style={{ fontSize: '24px', marginBottom: '12px', color: 'var(--color-text-tertiary)' }} />
             <div>도로명주소 또는 지번주소를 입력하여 검색해주세요.</div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
               예시: 테헤란로 123, 역삼동 123-45
@@ -283,7 +289,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
           <div style={{ 
             textAlign: 'center', 
             padding: '40px 20px', 
-            color: '#666' 
+            color: 'var(--color-text-secondary)' 
           }}>
             <div>검색 결과가 없습니다.</div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
@@ -295,7 +301,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
 
       <style jsx>{`
         .address-search-item:hover {
-          background-color: #f5f5f5 !important;
+          background-color: var(--color-bg-tertiary) !important;
         }
       `}</style>
     </Modal>
