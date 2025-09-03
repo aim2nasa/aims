@@ -578,7 +578,12 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   {/* 반응형 모드일 때 현재 아이템 수 표시 */}
                   {isResponsive && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '13px', color: '#1890ff', fontWeight: '500' }}>
+                      <span style={{ 
+                        fontSize: '13px', 
+                        color: '#4b5563',
+                        fontWeight: 'normal',
+                        textDecoration: 'none'
+                      }}>
                         📱 {pagination.pageSize} per page (auto)
                       </span>
                     </div>
