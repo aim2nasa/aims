@@ -483,35 +483,53 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         />
       )}
       
-      <Card
-        title={
-          <Space>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        background: 'var(--color-surface-1)',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px 0 var(--color-shadow-sm)'
+      }}>
+        {/* 헤더 */}
+        <div style={{
+          borderBottom: '1px solid var(--color-border-light)',
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <UserOutlined />
-            고객 관리
+            <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text-primary)' }}>고객 관리</span>
             {searchText && (
-              <span style={{ color: '#1890ff', fontSize: '14px' }}>
+              <span style={{ color: 'var(--color-primary)', fontSize: '14px' }}>
                 - "{searchText}" 검색결과 ({customers.length}건)
               </span>
             )}
             {!searchText && (
-              <span style={{ color: '#999', fontSize: '14px' }}>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
                 ({pagination.total}건)
               </span>
             )}
-          </Space>
-        }
-        extra={
-          <Space>
-            <Button 
-              variant="primary" 
-              icon={<PlusOutlined />}
-              onClick={() => openCustomerModal()}
-            >
-              새 고객 등록
-            </Button>
-          </Space>
-        }
-      >
+          </div>
+          <Button 
+            variant="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => openCustomerModal()}
+          >
+            새 고객 등록
+          </Button>
+        </div>
+
+        {/* 컨텐츠 영역 */}
+        <div style={{ 
+          flex: 1,
+          overflowY: 'auto',
+          maxHeight: '70vh'
+        }}>
         {showRegionalView ? (
           <CustomerRegionalTreeView 
             onCustomerSelect={handleCustomerNameClick}
@@ -558,7 +576,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                       alignItems: 'center',
                       gap: '6px',
                       fontSize: '13px',
-                      color: '#666',
+                      color: 'var(--color-text-secondary)',
                       cursor: 'pointer',
                       userSelect: 'none'
                     }}>
@@ -568,7 +586,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                         onChange={(e) => handleResponsiveModeChange(e.target.checked)}
                         style={{
                           cursor: 'pointer',
-                          accentColor: '#1890ff'
+                          accentColor: 'var(--color-primary)'
                         }}
                       />
                       Auto-fit to screen
@@ -580,7 +598,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span style={{ 
                         fontSize: '13px', 
-                        color: '#4b5563',
+                        color: 'var(--color-text-secondary)',
                         fontWeight: 'normal',
                         textDecoration: 'none'
                       }}>
@@ -599,7 +617,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             })}
           />
         )}
-      </Card>
+        </div>
+      </div>
 
       {/* 통합 고객 모달 */}
       <Modal
