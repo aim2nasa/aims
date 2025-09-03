@@ -605,7 +605,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '14px',
-                color: '#4b5563',
+                color: 'var(--color-text-secondary)',
                 cursor: 'pointer'
               }}>
                 <input
@@ -614,7 +614,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
                   onChange={(e) => onResponsiveModeChange(e.target.checked)}
                   style={{
                     cursor: 'pointer',
-                    accentColor: '#3b82f6'
+                    accentColor: 'var(--color-primary)'
                   }}
                 />
                 Auto-fit to screen
@@ -624,16 +624,18 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
             {/* 수동 개수 설정 */}
             {!isResponsive && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '14px', color: '#4b5563' }}>Show:</label>
+                <label style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>Show:</label>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
                   style={{
-                    border: '1px solid #d1d5db',
+                    border: '1px solid var(--color-border-medium)',
                     borderRadius: '4px',
                     padding: '4px 8px',
                     fontSize: '14px',
-                    outline: 'none'
+                    outline: 'none',
+                    backgroundColor: 'var(--color-input-bg)',
+                    color: 'var(--color-text-primary)'
                   }}
                 >
                   <option value={5}>5</option>
@@ -641,7 +643,7 @@ const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageC
                   <option value={20}>20</option>
                   <option value={50}>50</option>
                 </select>
-                <span style={{ fontSize: '14px', color: '#4b5563' }}>per page</span>
+                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>per page</span>
               </div>
             )}
             
