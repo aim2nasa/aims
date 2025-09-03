@@ -1965,7 +1965,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : canShowStatusText ? '100px' : '45px'
+                                  width: isCompactMode ? '30px' : rightPaneVisible ? '35px' : canShowStatusText ? '100px' : '45px'
                                 }}>
                                   {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1986,7 +1986,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
+                                  width: isCompactMode ? '30px' : rightPaneVisible ? '90px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
                                 }}>
                                   {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
@@ -2007,8 +2007,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '100px',
-                                  minWidth: isCompactMode ? '30px' : '100px'
+                                  width: isCompactMode ? '30px' : rightPaneVisible ? '60px' : '100px',
+                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '60px' : '100px'
                                 }}>
                                   {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2029,8 +2029,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '100px',
-                                  minWidth: isCompactMode ? '30px' : '100px'
+                                  width: isCompactMode ? '30px' : rightPaneVisible ? '70px' : '100px',
+                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '70px' : '100px'
                                 }}>
                                   {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2051,8 +2051,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                   color: 'var(--color-text-tertiary)',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : '160px',
-                                  minWidth: isCompactMode ? '30px' : '160px'
+                                  width: isCompactMode ? '30px' : rightPaneVisible ? '120px' : '160px',
+                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '120px' : '160px'
                                 }}>
                                   {!canShowStatusText ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2123,7 +2123,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                               overflow: 'hidden',
                                               textOverflow: 'ellipsis',
                                               whiteSpace: 'nowrap',
-                                              maxWidth: isCompactMode ? '150px' : '250px',
+                                              maxWidth: isCompactMode ? '150px' : rightPaneVisible ? '200px' : '250px',
                                               cursor: status === 'completed' ? 'pointer' : 'default',
                                               textDecoration: status === 'completed' ? 'underline' : 'none'
                                             }} 
