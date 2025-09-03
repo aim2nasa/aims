@@ -283,11 +283,15 @@ html[data-theme="dark"] .dsd-footer {
 .dsd-stats-card {
   background: var(--color-surface-1);
   padding: 2px 4px;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px 0 var(--color-shadow-sm);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px 0 var(--color-shadow-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
-  border: 2px solid transparent;
+  border: 1px solid transparent;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dsd-stats-card:hover {
@@ -320,17 +324,20 @@ html[data-theme="dark"] .dsd-footer {
 }
 
 .dsd-stats-label {
-  font-size: 8px;
+  font-size: 4px;
   color: var(--color-text-tertiary);
   margin: 0;
-  line-height: 1;
+  line-height: 0.5;
+  letter-spacing: -0.2px;
+  padding: 0;
 }
 
 .dsd-stats-value {
-  font-size: 12px;
+  font-size: 5px;
   font-weight: 600;
-  margin: 1px 0 0 0;
-  line-height: 1;
+  margin: -2px 0 0 0;
+  line-height: 0.5;
+  padding: 0;
 }
 
 .dsd-stats-value.all {

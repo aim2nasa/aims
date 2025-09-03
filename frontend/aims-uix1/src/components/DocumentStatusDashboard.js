@@ -1629,21 +1629,21 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             background: 'var(--color-surface-1)',
             borderRadius: '8px',
             boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-            padding: '5px',
-            marginBottom: '24px'
+            padding: '2px',
+            marginBottom: '12px'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              flexWrap: 'wrap'
+              gap: '4px',
+              flexWrap: 'nowrap'
             }}>
               {/* 상태 카드들 */}
               <div style={{
                 display: 'flex',
-                gap: '4px',
+                gap: '2px',
                 flex: '0 0 auto',
-                minWidth: '480px'
+                minWidth: '400px'
               }}>
             <div 
               onClick={() => {
@@ -1658,8 +1658,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                minWidth: '110px',
-                flex: '1'
+                minWidth: '80px',
+                flex: '1',
+                height: '34px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1671,11 +1672,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 전체 문서 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
-                <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <p className="dsd-stats-label">Total</p>
-                  <p className="dsd-stats-value all">{documents.length}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
+                <FileText style={{ width: '10px', height: '10px', color: 'var(--color-primary)', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Total</p>
+                  <p className="dsd-stats-value all" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{documents.length}</p>
                 </div>
               </div>
             </div>
@@ -1693,8 +1694,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                minWidth: '110px',
-                flex: '1'
+                minWidth: '80px',
+                flex: '1',
+                height: '34px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1706,11 +1708,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 완료된 문서만 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
-                <CheckCircle style={{ width: '12px', height: '12px', color: '#10b981' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <p className="dsd-stats-label">Completed</p>
-                  <p className="dsd-stats-value completed">{statusCounts.completed || 0}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
+                <CheckCircle style={{ width: '10px', height: '10px', color: '#10b981', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Completed</p>
+                  <p className="dsd-stats-value completed" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.completed || 0}</p>
                 </div>
               </div>
             </div>
@@ -1728,8 +1730,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                minWidth: '110px',
-                flex: '1'
+                minWidth: '80px',
+                flex: '1',
+                height: '34px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1741,11 +1744,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 처리 중인 문서만 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
-                <Clock style={{ width: '12px', height: '12px', color: '#3b82f6' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <p className="dsd-stats-label">Processing</p>
-                  <p className="dsd-stats-value processing">{statusCounts.processing || 0}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
+                <Clock style={{ width: '10px', height: '10px', color: '#3b82f6', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Processing</p>
+                  <p className="dsd-stats-value processing" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.processing || 0}</p>
                 </div>
               </div>
             </div>
@@ -1763,8 +1766,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                minWidth: '110px',
-                flex: '1'
+                minWidth: '80px',
+                flex: '1',
+                height: '34px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1776,11 +1780,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 대기 중인 문서만 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
-                <AlertCircle style={{ width: '12px', height: '12px', color: '#f59e0b' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <p className="dsd-stats-label">Pending</p>
-                  <p className="dsd-stats-value pending">{statusCounts.pending || 0}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
+                <AlertCircle style={{ width: '10px', height: '10px', color: '#f59e0b', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Pending</p>
+                  <p className="dsd-stats-value pending" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.pending || 0}</p>
                 </div>
               </div>
             </div>
@@ -1798,8 +1802,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                minWidth: '110px',
-                flex: '1'
+                minWidth: '80px',
+                flex: '1',
+                height: '34px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1811,11 +1816,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               title="클릭하여 오류 문서만 보기"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px' }}>
-                <XCircle style={{ width: '12px', height: '12px', color: '#ef4444' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <p className="dsd-stats-label">Errors</p>
-                  <p className="dsd-stats-value error">{statusCounts.error || 0}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
+                <XCircle style={{ width: '10px', height: '10px', color: '#ef4444', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Errors</p>
+                  <p className="dsd-stats-value error" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.error || 0}</p>
                 </div>
               </div>
             </div>
@@ -1840,11 +1845,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <div style={{ position: 'relative', width: '280px' }}>
                 <Search style={{
                   position: 'absolute',
-                  left: '12px',
+                  left: '8px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  width: '16px',
-                  height: '16px',
+                  width: '14px',
+                  height: '14px',
                   color: 'var(--color-text-tertiary)'
                 }} />
                 <input
@@ -1854,13 +1859,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
                     width: '100%',
-                    paddingLeft: '40px',
-                    paddingRight: '16px',
-                    paddingTop: '8px',
-                    paddingBottom: '8px',
+                    paddingLeft: '32px',
+                    paddingRight: '8px',
+                    paddingTop: '4px',
+                    paddingBottom: '4px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: '8px',
-                    fontSize: '14px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
                     outline: 'none',
                     backgroundColor: 'var(--color-bg-primary)',
                     color: 'var(--color-text-primary)'
@@ -1886,7 +1891,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 flex: '0 0 auto'
               }}>
                 {lastUpdated && (
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)' }}>
                     Last updated: {lastUpdated.toLocaleTimeString()}
                   </span>
                 )}
