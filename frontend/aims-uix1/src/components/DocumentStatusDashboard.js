@@ -2361,8 +2361,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 </>
               ) : (
                 <>
-                  {/* 빈 상태 */}
-                /* 빈 상태 */
                 <div style={{
                   textAlign: 'center',
                   padding: '48px 0',
