@@ -164,7 +164,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
     return () => clearTimeout(delayedSearch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchText, fetchCustomers, pagination.current, pagination.pageSize]);
+  }, [searchText, searchFilters]);
 
   // 컴포넌트 마운트 시 새로고침 콜백 등록
   useEffect(() => {
