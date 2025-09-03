@@ -463,10 +463,10 @@ const StatusBadge = ({ status, size = "medium", isCompact = false, rightPaneVisi
   const iconSize = size === "small" ? "12px" : "16px";
   
   return (
-    <span className={`dsd-status-badge ${status}`} style={{
+    <span className={`dsd-status-badge ${status} ${rightPaneVisible ? 'icon-only' : ''}`} style={{
       fontSize,
-      padding,
-      gap: '4px'
+      padding: rightPaneVisible ? '0' : padding,
+      gap: rightPaneVisible ? '0' : '4px'
     }}>
       <Icon style={{ width: iconSize, height: iconSize, marginRight: (isCompact || rightPaneVisible) ? '0' : '4px' }} />
       {!isCompact && !rightPaneVisible && config.label}
@@ -2160,8 +2160,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: 'var(--color-success)',
-                                            backgroundColor: 'var(--color-success-bg)',
-                                            border: '1px solid var(--color-success-border)',
+                                            backgroundColor: rightPaneVisible ? 'transparent' : 'var(--color-success-bg)',
+                                            border: rightPaneVisible ? 'none' : '1px solid var(--color-success-border)',
                                             borderRadius: '4px',
                                             cursor: 'pointer',
                                             height: '20px',
@@ -2187,8 +2187,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: isCompleted ? 'var(--color-primary-bg)' : 'var(--color-bg-secondary)',
-                                            border: isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)',
+                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-primary-bg)' : 'var(--color-bg-secondary)'),
+                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)'),
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6,
@@ -2216,8 +2216,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: isCompleted ? 'var(--color-purple-bg)' : 'var(--color-bg-secondary)',
-                                            border: isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)',
+                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-purple-bg)' : 'var(--color-bg-secondary)'),
+                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)'),
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6,
@@ -2245,8 +2245,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                                             fontSize: '10px',
                                             fontWeight: '500',
                                             color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg-secondary)',
-                                            border: isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)',
+                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg-secondary)'),
+                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)'),
                                             borderRadius: '4px',
                                             cursor: isCompleted ? 'pointer' : 'not-allowed',
                                             opacity: isCompleted ? 1 : 0.6,

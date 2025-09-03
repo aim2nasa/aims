@@ -87,6 +87,29 @@ html[data-theme="dark"] .dsd-footer {
   color: var(--color-text-tertiary);
 }
 
+/* Status Badge - 아이콘만 표시할 때 배경 제거 */
+.dsd-status-badge.icon-only {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.dsd-status-badge.icon-only.completed {
+  color: var(--color-success);
+}
+
+.dsd-status-badge.icon-only.processing {
+  color: var(--color-info);
+}
+
+.dsd-status-badge.icon-only.error {
+  color: var(--color-error);
+}
+
+.dsd-status-badge.icon-only.pending {
+  color: var(--color-text-tertiary);
+}
+
 /* Progress Bar */
 .dsd-progress-bar {
   width: 100%;
