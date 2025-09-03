@@ -53,6 +53,82 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
   const [form] = Form.useForm();
 
+  // 페이지네이션에 Select 드롭다운 추가
+  useEffect(() => {
+    const addSelectDropdown = () => {
+      // 페이지네이션 컨테이너 찾기
+      const paginationContainer = document.querySelector('.fixed-bottom-pagination');
+      if (paginationContainer && pagination.total > 0) {
+        // 이미 select가 있으면 제거
+        const existingContainer = paginationContainer.querySelector('.custom-page-select-container');
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        
+        // 새로운 select container 생성
+        const selectContainer = document.createElement('div');
+        selectContainer.className = 'custom-page-select-container';
+        selectContainer.style.cssText = `
+          position: absolute;
+          right: 24px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          z-index: 1001;
+        `;
+        
+        const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+        selectContainer.innerHTML = `
+          <span style="font-size: 13px; color: var(--color-text-secondary)">Go to</span>
+          <select id="page-jumper-select" style="
+            padding: 2px 6px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            font-size: 13px;
+            min-width: 50px;
+            height: 24px;
+          ">
+            ${Array.from({ length: totalPages }, (_, i) => `
+              <option value="${i + 1}" ${pagination.current === i + 1 ? 'selected' : ''}>${i + 1}</option>
+            `).join('')}
+          </select>
+          <span style="font-size: 13px; color: var(--color-text-secondary)">Page</span>
+        `;
+        
+        // 페이지네이션 컨테이너에 추가
+        paginationContainer.appendChild(selectContainer);
+        
+        // select 이벤트 리스너 추가
+        const select = selectContainer.querySelector('#page-jumper-select');
+        if (select) {
+          select.addEventListener('change', (e) => {
+            const targetPage = Number(e.target.value);
+            setPagination(prev => ({
+              ...prev,
+              current: targetPage
+            }));
+          });
+        }
+      }
+    };
+    
+    // 페이지네이션이 렌더링된 후 실행
+    setTimeout(addSelectDropdown, 200);
+    
+    // cleanup
+    return () => {
+      const selectContainer = document.querySelector('.custom-page-select-container');
+      if (selectContainer) {
+        selectContainer.remove();
+      }
+    };
+  }, [pagination.current, pagination.total, pagination.pageSize]);
+
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return pagination.pageSize;
