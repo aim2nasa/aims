@@ -1586,7 +1586,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   style={{
                     backgroundColor: loading ? '#93c5fd' : '#3b82f6',
                     color: 'var(--color-text-white)',
-                    padding: '8px 16px',
+                    padding: '4px 12px',
                     borderRadius: '8px',
                     border: 'none',
                     cursor: loading ? 'not-allowed' : 'pointer',
