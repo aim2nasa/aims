@@ -91,12 +91,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
           const { Icon, color } = getCustomerTypeIconWithColor(customer);
           
           return {
-            title: (
-              <Space>
-                <Icon style={{ color }} />
-                <Text>{customer.personal_info?.name || '이름 없음'}</Text>
-              </Space>
-            ),
+            title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
             key: `customer-${customer._id}`,
             icon: <Icon style={{ color }} />,
             isLeaf: true,
@@ -140,12 +135,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
                   const { Icon, color } = getCustomerTypeIconWithColor(customer);
                   
                   return {
-                    title: (
-                      <Space>
-                        <Icon style={{ color }} />
-                        <Text>{customer.personal_info?.name || '이름 없음'}</Text>
-                      </Space>
-                    ),
+                    title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
                     key: `customer-${customer._id}`,
                     icon: <Icon style={{ color }} />,
                     isLeaf: true,
