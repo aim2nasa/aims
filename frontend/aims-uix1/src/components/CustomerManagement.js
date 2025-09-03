@@ -56,27 +56,22 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   // 페이지네이션에 Select 드롭다운 추가
   useEffect(() => {
     const addSelectDropdown = () => {
-      // 페이지네이션 컨테이너 찾기
-      const paginationContainer = document.querySelector('.fixed-bottom-pagination');
-      if (paginationContainer && pagination.total > 0) {
+      // 페이지네이션 리스트 찾기 (페이지 번호가 있는 ul 요소)
+      const paginationList = document.querySelector('.ant-pagination');
+      if (paginationList && pagination.total > 0) {
         // 이미 select가 있으면 제거
-        const existingContainer = paginationContainer.querySelector('.custom-page-select-container');
+        const existingContainer = paginationList.querySelector('.custom-page-select-container');
         if (existingContainer) {
           existingContainer.remove();
         }
         
-        // 새로운 select container 생성
-        const selectContainer = document.createElement('div');
+        // 새로운 select container 생성 (li 요소로)
+        const selectContainer = document.createElement('li');
         selectContainer.className = 'custom-page-select-container';
         selectContainer.style.cssText = `
-          position: absolute;
-          right: 24px;
-          top: 50%;
-          transform: translateY(-50%);
           display: flex;
           align-items: center;
           gap: 6px;
-          z-index: 1001;
         `;
         
         const totalPages = Math.ceil(pagination.total / pagination.pageSize);
@@ -100,8 +95,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           <span style="font-size: 13px; color: var(--color-text-secondary)">Page</span>
         `;
         
-        // 페이지네이션 컨테이너에 추가
-        paginationContainer.appendChild(selectContainer);
+        // 페이지네이션 리스트의 끝에 추가
+        paginationList.appendChild(selectContainer);
         
         // select 이벤트 리스너 추가
         const select = selectContainer.querySelector('#page-jumper-select');
@@ -634,7 +629,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               pageSize: pagination.pageSize,
               total: pagination.total,
               showSizeChanger: !isResponsive,
-              showQuickJumper: true,
+              showQuickJumper: false,
               onChange: (page, pageSize) => {
                 setPagination(prev => ({
                   ...prev,

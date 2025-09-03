@@ -52,3 +52,14 @@ body {
   font-size: 12px !important;
 }
 
+/* 페이지네이션을 flex 컨테이너로 만들어 Go to 드롭다운이 같은 줄에 오도록 */
+.fixed-bottom-pagination .ant-pagination {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+.custom-page-select-container {
+  margin-left: 16px !important;
+}
+
