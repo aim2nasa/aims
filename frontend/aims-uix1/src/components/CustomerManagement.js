@@ -140,7 +140,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     } else if (selectedMenuKey === 'customers-regional') {
       setShowRegionalView(true);
       setShowRelationshipView(false);
-    } else if (selectedMenuKey === 'customers-all') {
+    } else if (selectedMenuKey === 'customers-all' || selectedMenuKey === 'customers') {
+      // "고객관리" 메뉴 클릭 시 "전체보기"와 동일한 동작
       setShowRelationshipView(false);
       setShowRegionalView(false);
     }

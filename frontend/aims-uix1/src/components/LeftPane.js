@@ -58,6 +58,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'customers',
       icon: <UserOutlined />,
       label: '고객 관리',
+      onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
       children: [
         {
           key: 'customers-all',
