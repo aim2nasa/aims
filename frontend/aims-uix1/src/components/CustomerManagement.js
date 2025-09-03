@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import dayjs from 'dayjs';
+import '../styles/pagination.css';
 import AddressSearchInput from './AddressSearchInput';
 import CustomerService from '../services/customerService';
 import CustomerRegionalTreeView from './CustomerRegionalTreeView';
@@ -608,7 +609,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                     </div>
                   )}
                 </div>
-              )
+              ),
+              className: 'fixed-bottom-pagination'
             }}
             onRow={(record) => ({
               onClick: () => handleCustomerRowSelect(record),
