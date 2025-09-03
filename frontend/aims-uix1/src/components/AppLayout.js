@@ -317,8 +317,8 @@ const AppLayout = () => {
       {/* 📐 Header: 상단 고정 */}
       <Header style={{ 
         padding: '0 24px', 
-        background: '#fff', 
-        borderBottom: '1px solid #f0f0f0', 
+        background: 'var(--color-bg-primary)', 
+        borderBottom: '1px solid var(--color-border)', 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
@@ -326,7 +326,7 @@ const AppLayout = () => {
       }}>
         {/* 왼쪽 섹션 (AIMS-UIX1 글씨) */}
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-start' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>AIMS-UIX1</h2>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>AIMS-UIX1</h2>
         </div>
         {/* 중앙 섹션 (검색창) */}
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
@@ -373,7 +373,7 @@ const AppLayout = () => {
           onCollapse={(value) => setCollapsed(value)}
           width={280}
           trigger={null}
-          style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}
+          style={{ background: 'var(--color-bg-primary)', borderRight: '1px solid var(--color-border)' }}
         >
           <div style={{ padding: 16 }}>
             <LeftPane 
@@ -383,7 +383,7 @@ const AppLayout = () => {
               collapsed={collapsed}
             />
           </div>
-          <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid #f0f0f0' }}>
+          <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid var(--color-border)' }}>
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -483,7 +483,7 @@ const AppLayout = () => {
                 style={{ 
                   width: `${rightPaneWidth}%`,
                   minWidth: '300px',
-                  background: '#fff', 
+                  background: 'var(--color-bg-primary)', 
                   borderRadius: 8,
                   transition: isResizing ? 'none' : 'width 0.3s ease'
                 }}
