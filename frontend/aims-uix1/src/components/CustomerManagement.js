@@ -128,32 +128,22 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const calculateItemsPerPage = useCallback(() => {
     if (!isResponsive) return pagination.pageSize;
     
-    // 실제 DOM에서 높이 측정
-    const header = document.querySelector('.ant-layout-header');
-    const searchBar = document.querySelector('.ant-card'); 
-    const tableHeader = document.querySelector('.ant-table-thead');
-    const paginationBar = document.querySelector('.ant-pagination');
+    const appHeader = 64;
+    const customerHeader = 80;
+    const searchBarHeight = showRegionalView || showRelationshipView ? 0 : 120;
+    const tableHeaderHeight = 55;
+    const paginationHeight = 60;
     
-    // 측정된 높이 또는 기본값 사용
-    const headerHeight = header?.offsetHeight || 64;
-    const searchBarHeight = searchBar?.offsetHeight || 80;
-    const tableHeaderHeight = tableHeader?.offsetHeight || 55;
-    const paginationHeight = paginationBar?.offsetHeight || 32;
-    const tableContainerPadding = 32; // 테이블 컨테이너의 상하 패딩
-    const bufferSpace = 40; // 여유 공간
+    const fixedElementsHeight = appHeader + customerHeader + searchBarHeight + tableHeaderHeight + paginationHeight;
     
-    const fixedElementsHeight = headerHeight + searchBarHeight + tableHeaderHeight + paginationHeight + tableContainerPadding + bufferSpace;
-    
-    // 실제 테이블 행 높이 측정
     const tableRow = document.querySelector('.ant-table-tbody > tr');
-    const rowHeight = tableRow?.offsetHeight || 47; // 실제 측정된 행 높이
+    const rowHeight = tableRow?.offsetHeight || 47;
     
     const availableHeight = window.innerHeight - fixedElementsHeight;
     const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
     
-    // 최소 5개, 최대 50개로 제한
-    return Math.max(5, Math.min(maxItemsPerPage, 50));
-  }, [isResponsive, pagination.pageSize]);
+    return Math.max(10, Math.min(maxItemsPerPage, 100));
+  }, [isResponsive, pagination.pageSize, showRegionalView, showRelationshipView]);
 
   // 브라우저 크기 변경 시 pageSize 업데이트
   useEffect(() => {
