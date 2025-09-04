@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Table, Modal, Form, Input, Select, DatePicker, 
-  Space, Tag, Card,
+  Space, Tag,
   Tabs, Drawer, Row, Col
 } from 'antd';
 import { Button } from './common';
@@ -579,6 +579,15 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           onSearch={handleAdvancedSearch}
           onFilterChange={handleFilterChange}
           loading={loading}
+          rightActions={
+            <Button 
+              variant="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => openCustomerModal()}
+            >
+              새 고객 등록
+            </Button>
+          }
         />
       )}
       
@@ -614,13 +623,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               </span>
             )}
           </div>
-          <Button 
-            variant="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => openCustomerModal()}
-          >
-            새 고객 등록
-          </Button>
         </div>
 
         {/* 컨텐츠 영역 */}

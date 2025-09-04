@@ -15,7 +15,8 @@ const { Option } = Select;
 const CustomerSearchBar = ({
   onSearch,
   onFilterChange,
-  loading = false
+  loading = false,
+  rightActions
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -123,6 +124,8 @@ const CustomerSearchBar = ({
               초기화
             </Button>
           )}
+          
+          {rightActions && rightActions}
         </div>
       </div>
 
