@@ -649,7 +649,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             loading={loading}
             scroll={{ 
               x: false,
-              y: 'calc(100vh - 280px)' // 헤더, 검색바, 페이지네이션을 제외한 높이
+              y: 'calc(100vh - 340px)' // 적절한 여백으로 조정
             }}
             tableLayout="fixed"
             pagination={{
