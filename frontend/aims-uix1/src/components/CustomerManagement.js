@@ -356,11 +356,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         total_coverage: customer.insurance_info?.total_coverage
       });
     } else {
-      // 새 등록 모드: 폼 초기화 후 기본값 설정
+      // 새 등록 모드: 폼 초기화
       form.resetFields();
-      form.setFieldsValue({
-        customer_type: '개인'
-      });
       setCurrentAddress1('');
     }
   };
@@ -924,8 +921,13 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             </TabPane>
             
             <TabPane tab="보험 정보" key="insurance">
-              <Form.Item label="고객 유형" name="customer_type">
-                <Select>
+              <Form.Item 
+                label="고객 유형" 
+                name="customer_type"
+                rules={[{ required: true, message: '고객 유형을 선택해주세요' }]}
+                initialValue="개인"
+              >
+                <Select placeholder="고객 유형을 선택하세요">
                   <Option value="개인">개인</Option>
                   <Option value="법인">법인</Option>
                 </Select>
