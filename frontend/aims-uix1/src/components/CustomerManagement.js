@@ -28,7 +28,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 20,
     total: 0
   });
   const [isResponsive, setIsResponsive] = useState(true);
@@ -132,20 +132,21 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     const header = document.querySelector('.ant-layout-header');
     const searchBar = document.querySelector('.ant-card'); 
     const tableHeader = document.querySelector('.ant-table-thead');
-    const paginationBar = document.querySelector('.fixed-bottom-pagination');
+    const paginationBar = document.querySelector('.ant-pagination');
     
     // 측정된 높이 또는 기본값 사용
     const headerHeight = header?.offsetHeight || 64;
     const searchBarHeight = searchBar?.offsetHeight || 80;
-    const tableHeaderHeight = tableHeader?.offsetHeight || 38;
-    const paginationHeight = 88; // fixed-bottom-pagination의 CSS height
-    const bufferSpace = 20; // 여유 공간
+    const tableHeaderHeight = tableHeader?.offsetHeight || 55;
+    const paginationHeight = paginationBar?.offsetHeight || 32;
+    const tableContainerPadding = 32; // 테이블 컨테이너의 상하 패딩
+    const bufferSpace = 40; // 여유 공간
     
-    const fixedElementsHeight = headerHeight + searchBarHeight + tableHeaderHeight + paginationHeight + bufferSpace;
+    const fixedElementsHeight = headerHeight + searchBarHeight + tableHeaderHeight + paginationHeight + tableContainerPadding + bufferSpace;
     
-    // 실제 테이블 행 높이 측정 (줄어든 행 높이 반영)
+    // 실제 테이블 행 높이 측정
     const tableRow = document.querySelector('.ant-table-tbody > tr');
-    const rowHeight = tableRow?.offsetHeight || 32; // CSS에서 min-height: 32px
+    const rowHeight = tableRow?.offsetHeight || 47; // 실제 측정된 행 높이
     
     const availableHeight = window.innerHeight - fixedElementsHeight;
     const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
@@ -657,7 +658,10 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             dataSource={customers}
             rowKey="_id"
             loading={loading}
-            scroll={{ x: false }}
+            scroll={{ 
+              x: false,
+              y: 'calc(100vh - 280px)' // 헤더, 검색바, 페이지네이션을 제외한 높이
+            }}
             tableLayout="fixed"
             pagination={{
               current: pagination.current,
