@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Table, Modal, Form, Input, Select, DatePicker, 
   Space, Tag,
@@ -52,6 +52,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [documentsDrawerVisible, setDocumentsDrawerVisible] = useState(false);
   const [form] = Form.useForm();
+  const customerNameInputRef = useRef(null);
 
   // 페이지네이션에 Select 드롭다운 추가
   useEffect(() => {
@@ -289,6 +290,18 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       });
     }
   }, [editModalVisible, editingCustomer, form]);
+
+  // 모달이 열릴 때 고객명 필드에 자동 포커스
+  useEffect(() => {
+    if (modalVisible) {
+      // 모달 애니메이션 완료 후 포커스 설정
+      setTimeout(() => {
+        if (customerNameInputRef.current) {
+          customerNameInputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [modalVisible]);
 
   const handleTableChange = (page, pageSize) => {
     setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
@@ -784,7 +797,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           <Tabs defaultActiveKey="personal">
             <TabPane tab="기본 정보" key="personal">
               <Form.Item label="고객명" name="name" rules={[{ required: true, message: '고객명을 입력해주세요' }]}>
-                <Input />
+                <Input ref={customerNameInputRef} />
               </Form.Item>
               
               <Form.Item label="영문명" name="name_en">
