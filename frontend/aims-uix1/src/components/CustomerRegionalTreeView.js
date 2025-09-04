@@ -197,7 +197,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
 
   return (
     <div style={{ 
-      height: '100%',
+      height: 'calc(100vh - 160px)', // 브라우저 뷰포트 기준으로 높이 계산
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden'
@@ -211,7 +211,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         }
         size="small"
         bodyStyle={{
-          height: 'calc(100% - 57px)', // Card header 높이 제외
+          height: 'calc(100vh - 217px)', // 뷰포트에서 헤더들 높이 제외
           display: 'flex',
           flexDirection: 'column',
           padding: '16px',
