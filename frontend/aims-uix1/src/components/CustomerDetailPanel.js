@@ -274,7 +274,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: 'var(--color-bg-primary)'
+          backgroundColor: 'var(--color-bg-secondary)'
         }}>
           <Title level={4} style={{ margin: 0 }}>고객 상세 정보</Title>
           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
@@ -285,7 +285,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           alignItems: 'center', 
           justifyContent: 'center',
           color: 'var(--color-text-tertiary)',
-          backgroundColor: 'var(--color-bg-primary)'
+          backgroundColor: 'var(--color-bg-secondary)'
         }}>
           {loading ? '로딩 중...' : '고객을 선택해주세요'}
         </div>
@@ -302,7 +302,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        backgroundColor: 'var(--color-bg-primary)'
+        backgroundColor: 'var(--color-bg-secondary)'
       }}>
         <Space direction="vertical" size={4} style={{ flex: 1 }}>
           <Space>
