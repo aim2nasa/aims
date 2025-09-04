@@ -267,7 +267,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
 
   if (!customer) {
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-primary)' }}>
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-secondary)' }}>
         <div style={{ 
           padding: '16px', 
           borderBottom: '1px solid var(--color-border)',
@@ -294,7 +294,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-primary)' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-secondary)' }}>
       {/* Header */}
       <div style={{ 
         padding: '16px', 
@@ -379,7 +379,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', backgroundColor: 'var(--color-bg-primary)' }}>
+      <div style={{ flex: 1, overflow: 'auto', backgroundColor: 'var(--color-bg-secondary)' }}>
         <Tabs 
           activeKey={activeTab} 
           onChange={setActiveTab}
