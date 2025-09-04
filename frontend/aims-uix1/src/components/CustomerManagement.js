@@ -574,6 +574,27 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
 
   return (
     <div>
+      {/* 고객 관리 제목 */}
+      <div style={{ 
+        padding: '16px 0 16px 0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <UserOutlined />
+        <span style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-text-primary)' }}>고객 관리</span>
+        {searchText && (
+          <span style={{ color: 'var(--color-primary)', fontSize: '16px' }}>
+            - "{searchText}" 검색결과 ({customers.length}건)
+          </span>
+        )}
+        {!searchText && (
+          <span style={{ color: 'var(--color-text-tertiary)', fontSize: '16px' }}>
+            ({pagination.total}건)
+          </span>
+        )}
+      </div>
+
       {!showRegionalView && !showRelationshipView && (
         <CustomerSearchBar
           onSearch={handleAdvancedSearch}
@@ -600,30 +621,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         borderRadius: '8px',
         boxShadow: '0 1px 3px 0 var(--color-shadow-sm)'
       }}>
-        {/* 헤더 */}
-        <div style={{
-          borderBottom: '1px solid var(--color-border-light)',
-          padding: '16px 24px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexShrink: 0
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <UserOutlined />
-            <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text-primary)' }}>고객 관리</span>
-            {searchText && (
-              <span style={{ color: 'var(--color-primary)', fontSize: '14px' }}>
-                - "{searchText}" 검색결과 ({customers.length}건)
-              </span>
-            )}
-            {!searchText && (
-              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
-                ({pagination.total}건)
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* 컨텐츠 영역 */}
         <div style={{ 
