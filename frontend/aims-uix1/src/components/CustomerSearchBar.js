@@ -72,7 +72,12 @@ const CustomerSearchBar = ({
           <Input
             placeholder="고객명, 전화번호, 주소로 검색..."
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              setSearchValue(newValue);
+              // 실시간 검색을 위해 onChange 시 onSearch 호출
+              onSearch?.(newValue, filters);
+            }}
             onPressEnter={handleSearch}
             prefix={<SearchOutlined style={{ color: 'var(--color-text-tertiary)' }} />}
             suffix={
@@ -81,7 +86,11 @@ const CustomerSearchBar = ({
                   size="small"
                   variant="ghost"
                   icon={<ClearOutlined />}
-                  onClick={() => setSearchValue('')}
+                  onClick={() => {
+                    setSearchValue('');
+                    // 검색어 초기화 시에도 실시간 검색 실행
+                    onSearch?.('', filters);
+                  }}
                   style={{ marginRight: '-8px' }}
                 />
               )

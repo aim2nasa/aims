@@ -38,10 +38,13 @@ const Input = forwardRef(({
 
   const handleChange = (e) => {
     const newValue = e.target.value;
+    // controlled 모드일 때는 onChange만 호출, uncontrolled일 때만 localValue 업데이트
     if (value === undefined) {
       setLocalValue(newValue);
     }
-    onChange?.(e);
+    if (onChange) {
+      onChange(e);
+    }
   };
 
   const handleClear = () => {
@@ -74,7 +77,7 @@ const Input = forwardRef(({
         ref={ref}
         type={type}
         className="aims-input"
-        value={localValue}
+        value={value !== undefined ? value : localValue}
         onChange={handleChange}
         onFocus={(e) => {
           setFocused(true);
