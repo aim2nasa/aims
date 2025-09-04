@@ -636,7 +636,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         {/* 컨텐츠 영역 */}
         <div style={{ 
           flex: 1,
-          overflowY: 'auto',
+          overflowY: showRegionalView ? 'hidden' : 'auto', // 지역별 뷰에서는 스크롤 비활성화
           minHeight: 0,
           paddingBottom: '50px'
         }}>

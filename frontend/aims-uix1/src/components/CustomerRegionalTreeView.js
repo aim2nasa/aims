@@ -197,7 +197,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
 
   return (
     <div style={{ 
-      height: 'calc(100vh - 120px)', // 더 많은 공간 활용
+      height: 'calc(100vh - 120px)',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden'
@@ -211,7 +211,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         }
         size="small"
         bodyStyle={{
-          height: 'calc(100vh - 177px)', // 최대한 아래까지 확장
+          height: 'calc(100vh - 177px)',
           display: 'flex',
           flexDirection: 'column',
           padding: '16px',
@@ -248,7 +248,8 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         {/* 트리 뷰 */}
         <div style={{ 
           flex: '1 1 auto', 
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           backgroundColor: 'var(--color-bg-tertiary)',
           padding: '8px',
           borderRadius: '6px',
