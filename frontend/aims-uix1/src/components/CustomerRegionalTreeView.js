@@ -196,22 +196,37 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
   }
 
   return (
-    <Card
-      title={
-        <Space>
-          <EnvironmentOutlined />
-          <Title level={4} style={{ margin: 0 }}>지역별 고객 분류</Title>
-        </Space>
-      }
-      size="small"
-    >
-      {/* 통계 정보 */}
-      <div style={{ 
-        backgroundColor: 'var(--color-bg-tertiary)', 
-        padding: '12px', 
-        borderRadius: '6px', 
-        marginBottom: '16px' 
-      }}>
+    <div style={{ 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
+      <Card
+        title={
+          <Space>
+            <EnvironmentOutlined />
+            <Title level={4} style={{ margin: 0 }}>지역별 고객 분류</Title>
+          </Space>
+        }
+        size="small"
+        bodyStyle={{
+          height: 'calc(100% - 57px)', // Card header 높이 제외
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '16px',
+          overflow: 'hidden'
+        }}
+        style={{ height: '100%' }}
+      >
+        {/* 통계 정보 */}
+        <div style={{ 
+          backgroundColor: 'var(--color-bg-tertiary)', 
+          padding: '12px', 
+          borderRadius: '6px', 
+          marginBottom: '16px',
+          flex: '0 0 auto'
+        }}>
         <Space split={<span style={{ color: 'var(--color-border-dark)' }}>|</span>}>
           <Text>
             <strong>전체 고객:</strong> {stats.totalCustomers}명
@@ -228,26 +243,32 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
             </Text>
           )}
         </Space>
-      </div>
-      
-      {/* 트리 뷰 */}
-      <Tree
-        showLine
-        showIcon
-        expandedKeys={expandedKeys}
-        selectedKeys={selectedKeys}
-        onSelect={handleSelect}
-        onExpand={handleExpand}
-        treeData={treeData}
-        height={600}
-        style={{
+        </div>
+        
+        {/* 트리 뷰 */}
+        <div style={{ 
+          flex: '1 1 auto', 
+          overflow: 'auto',
           backgroundColor: 'var(--color-bg-tertiary)',
           padding: '8px',
           borderRadius: '6px',
           border: '1px solid var(--color-border-light)'
-        }}
-      />
-    </Card>
+        }}>
+          <Tree
+            showLine
+            showIcon
+            expandedKeys={expandedKeys}
+            selectedKeys={selectedKeys}
+            onSelect={handleSelect}
+            onExpand={handleExpand}
+            treeData={treeData}
+            style={{
+              minHeight: '100%'
+            }}
+          />
+        </div>
+      </Card>
+    </div>
   );
 };
 

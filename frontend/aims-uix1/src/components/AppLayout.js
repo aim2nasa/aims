@@ -373,9 +373,19 @@ const AppLayout = () => {
           onCollapse={(value) => setCollapsed(value)}
           width={280}
           trigger={null}
-          style={{ background: 'var(--color-bg-primary)', borderRight: '1px solid var(--color-border)' }}
+          style={{ 
+            background: 'var(--color-bg-primary)', 
+            borderRight: '1px solid var(--color-border)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
         >
-          <div style={{ padding: 16 }}>
+          <div style={{ 
+            flex: '1 1 auto',
+            overflow: 'auto',
+            padding: 16
+          }}>
             <LeftPane 
               onMenuClick={handleLeftPaneMenuClick}
               hasSearchResults={searchResults && searchResults.length > 0}
@@ -383,7 +393,12 @@ const AppLayout = () => {
               collapsed={collapsed}
             />
           </div>
-          <div style={{ padding: '0 16px', textAlign: 'right', borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ 
+            flex: '0 0 auto',
+            padding: '0 16px', 
+            textAlign: 'right', 
+            borderTop: '1px solid var(--color-border)' 
+          }}>
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
