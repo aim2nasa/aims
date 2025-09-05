@@ -123,6 +123,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         selectContainer.remove();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.current, pagination.total, pagination.pageSize]);
 
   // 브라우저 크기에 따른 아이템 수 계산
