@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import CustomerRelationshipDetail from './CustomerRelationshipDetail';
 import FamilyRelationshipModal from './FamilyRelationshipModal';
+import { useRelationship } from '../contexts/RelationshipContext';
 
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
@@ -23,6 +24,10 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   const [customerDocuments, setCustomerDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
+  const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
+  
+  // Context에서 관계 데이터 사용
+  const { allRelationshipsData, loadAllRelationshipsData } = useRelationship();
   
   // 문서 프리뷰 모달 상태
   const [showDocumentPreview, setShowDocumentPreview] = useState(false);
@@ -66,11 +71,12 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         fetchCustomerDetail();
       }
       fetchCustomerDocuments();
+      loadAllRelationshipsData(); // 관계 데이터 로드
     } else {
       setCustomer(null);
       setCustomerDocuments([]);
     }
-  }, [customerId, initialCustomer, fetchCustomerDetail, fetchCustomerDocuments]);
+  }, [customerId, initialCustomer, fetchCustomerDetail, fetchCustomerDocuments, loadAllRelationshipsData]);
 
   // initialCustomer가 변경될 때마다 customer 상태 업데이트 및 문서 목록 새로고침
   useEffect(() => {
@@ -80,6 +86,140 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       fetchCustomerDocuments();
     }
   }, [initialCustomer, customerId, fetchCustomerDocuments]);
+
+  // 가족관계 추가 가능 여부 확인
+  useEffect(() => {
+    if (customerId && allRelationshipsData.customers.length > 0) {
+      const { customers, relationships } = allRelationshipsData;
+      
+      // 개인 고객이 아니면 가족관계 불가능
+      const currentCustomer = customers.find(c => c._id === customerId);
+      if (!currentCustomer || currentCustomer.insurance_info?.customer_type !== '개인') {
+        setCanAddFamilyRelation(false);
+        return;
+      }
+      
+      // 가족 관계 네트워크 구축
+      const familyNetworks = new Map();
+      
+      // 가족 관계만 필터링 (개인-개인만)
+      relationships.forEach(relationship => {
+        const category = relationship.relationship_info.relationship_category;
+        const fromCustomer = relationship.from_customer;
+        const toCustomer = relationship.related_customer;
+        
+        if (category === 'family' && 
+            fromCustomer?.insurance_info?.customer_type === '개인' && 
+            toCustomer?.insurance_info?.customer_type === '개인') {
+          
+          const fromId = fromCustomer._id;
+          const toId = toCustomer._id;
+          
+          // 양방향 관계 설정
+          if (!familyNetworks.has(fromId)) {
+            familyNetworks.set(fromId, new Set());
+          }
+          if (!familyNetworks.has(toId)) {
+            familyNetworks.set(toId, new Set());
+          }
+          
+          familyNetworks.get(fromId).add(toId);
+          familyNetworks.get(toId).add(fromId);
+        }
+      });
+      
+      // 현재 고객이 가족이 없는 경우 → 가족관계 추가 가능 (첫 가족대표가 됨)
+      if (!familyNetworks.has(customerId)) {
+        setCanAddFamilyRelation(true);
+        return;
+      }
+      
+      // 현재 고객이 가족이 있는 경우, 가족대표인지 확인
+      const myFamilyMembers = new Set();
+      const stack = [customerId];
+      const visited = new Set();
+      
+      // DFS로 연결된 모든 가족 구성원 찾기
+      while (stack.length > 0) {
+        const currentId = stack.pop();
+        if (visited.has(currentId)) continue;
+        
+        visited.add(currentId);
+        myFamilyMembers.add(currentId);
+        
+        const connections = familyNetworks.get(currentId);
+        if (connections) {
+          connections.forEach(connectedId => {
+            if (!visited.has(connectedId)) {
+              stack.push(connectedId);
+            }
+          });
+        }
+      }
+      
+      // 이 가족의 관계들 수집하여 가족대표 찾기
+      const familyRelationships = relationships.filter(rel => {
+        const fromId = rel.from_customer?._id || rel.from_customer;
+        const toId = rel.related_customer?._id || rel.related_customer;
+        return myFamilyMembers.has(fromId) && myFamilyMembers.has(toId);
+      });
+      
+      // 가족대표 찾기 (CustomerRelationshipTreeView와 동일한 로직 사용)
+      let familyRepId = null;
+      
+      // 모든 관계에서 from_customer로 등장하는 횟수를 계산
+      const fromCount = {};
+      
+      familyRelationships.forEach(rel => {
+        const fromId = rel.from_customer?._id || rel.from_customer;
+        const fromCustomer = customers.find(c => c._id === fromId);
+        
+        if (fromCustomer) {
+          if (!fromCount[fromId]) {
+            fromCount[fromId] = {
+              customer: fromCustomer,
+              count: 0,
+              earliestDate: null
+            };
+          }
+          fromCount[fromId].count++;
+          
+          const createdAt = rel.meta?.created_at;
+          if (createdAt) {
+            const relDate = new Date(createdAt);
+            if (!fromCount[fromId].earliestDate || relDate < fromCount[fromId].earliestDate) {
+              fromCount[fromId].earliestDate = relDate;
+            }
+          }
+        }
+      });
+      
+      // 가장 먼저 관계를 설정한 사람 찾기
+      let representative = null;
+      let repEarliestDate = null;
+      
+      Object.values(fromCount).forEach(item => {
+        if (!repEarliestDate || (item.earliestDate && item.earliestDate < repEarliestDate)) {
+          repEarliestDate = item.earliestDate;
+          representative = item.customer;
+        } else if (item.earliestDate && item.earliestDate.getTime() === repEarliestDate.getTime()) {
+          // 시간이 같으면 고객 등록 순서로 비교
+          const currentCreated = new Date(representative.meta?.created_at || 0);
+          const itemCreated = new Date(item.customer.meta?.created_at || 0);
+          if (itemCreated < currentCreated) {
+            representative = item.customer;
+          }
+        }
+      });
+      
+      familyRepId = representative?._id;
+      
+      // 현재 고객이 가족대표인 경우에만 가족관계 추가 가능
+      setCanAddFamilyRelation(familyRepId === customerId);
+    } else {
+      setCanAddFamilyRelation(false);
+    }
+  }, [customerId, allRelationshipsData]);
 
   // 문서 클릭 시 상세 정보 조회 및 프리뷰 모달 표시
   const handleDocumentClick = async (documentRecord) => {
@@ -322,7 +462,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           </Space>
         </Space>
         <Space>
-          {customer.insurance_info?.customer_type === '개인' && (
+          {canAddFamilyRelation && (
             <Button 
               type="primary" 
               size="small" 
