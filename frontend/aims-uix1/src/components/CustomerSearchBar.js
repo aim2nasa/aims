@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SearchOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
-import { Select, DatePicker, Space } from 'antd';
+import { Select, DatePicker } from 'antd';
 import { Input, Button, Card, Badge } from './common';
 import './CustomerSearchBar.css';
 
@@ -139,20 +139,21 @@ const CustomerSearchBar = ({
       </div>
 
       {showAdvanced && (
-        <div className="search-advanced">
-          <div className="advanced-title">
-            <FilterOutlined style={{ marginRight: '8px' }} />
-            고급 검색 옵션
+        <div className="search-advanced-inline">
+          <div className="advanced-header">
+            <FilterOutlined style={{ marginRight: '4px', fontSize: '14px' }} />
+            <span>고급 검색 옵션</span>
           </div>
           
-          <div className="filter-grid">
-            <div className="filter-item filter-item-small">
+          <div className="filter-inline-container">
+            <div className="filter-inline-group">
               <label>고객 유형</label>
               <Select
                 placeholder="유형 선택"
                 value={filters.customerType}
                 onChange={(value) => handleFilterChange('customerType', value)}
                 allowClear
+                size="small"
                 style={{ width: '120px' }}
               >
                 <Option value="개인">개인</Option>
@@ -160,13 +161,14 @@ const CustomerSearchBar = ({
               </Select>
             </div>
 
-            <div className="filter-item filter-item-small">
+            <div className="filter-inline-group">
               <label>지역</label>
               <Select
                 placeholder="지역 선택"
                 value={filters.region}
                 onChange={(value) => handleFilterChange('region', value)}
                 allowClear
+                size="small"
                 style={{ width: '120px' }}
               >
                 <Option value="서울">서울</Option>
@@ -190,41 +192,41 @@ const CustomerSearchBar = ({
               </Select>
             </div>
 
-            <div className="filter-item">
+            <div className="filter-inline-group">
               <label>등록일</label>
               <RangePicker
                 placeholder={['시작일', '종료일']}
                 value={filters.dateRange}
                 onChange={(dates) => handleFilterChange('dateRange', dates)}
-                style={{ width: '280px' }}
+                size="small"
+                style={{ width: '240px' }}
                 format="YYYY-MM-DD"
               />
             </div>
 
-            <div className="filter-item filter-item-small">
+            <div className="filter-inline-group">
               <label>문서 보유</label>
               <Select
-                placeholder="문서 보유 여부"
+                placeholder="문서 보유"
                 value={filters.hasDocuments}
                 onChange={(value) => handleFilterChange('hasDocuments', value)}
                 allowClear
-                style={{ width: '140px' }}
+                size="small"
+                style={{ width: '100px' }}
               >
-                <Option value="true">문서 있음</Option>
-                <Option value="false">문서 없음</Option>
+                <Option value="true">있음</Option>
+                <Option value="false">없음</Option>
               </Select>
             </div>
-          </div>
-          
-          <div className="advanced-actions">
-            <Space>
-              <Button onClick={handleSearch} variant="primary">
+            
+            <div className="filter-inline-actions">
+              <Button onClick={handleSearch} variant="primary" size="small">
                 필터 적용
               </Button>
-              <Button onClick={() => setShowAdvanced(false)} variant="secondary">
+              <Button onClick={() => setShowAdvanced(false)} variant="ghost" size="small">
                 접기
               </Button>
-            </Space>
+            </div>
           </div>
         </div>
       )}
