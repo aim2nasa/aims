@@ -357,8 +357,11 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         total_coverage: customer.insurance_info?.total_coverage
       });
     } else {
-      // 새 등록 모드: 폼 초기화
+      // 새 등록 모드: 폼 초기화 후 기본값 설정
       form.resetFields();
+      form.setFieldsValue({
+        customer_type: '개인'  // 새 고객 등록 시 기본값을 "개인"으로 설정
+      });
       setCurrentAddress1('');
     }
   };
@@ -396,7 +399,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           }
         },
         insurance_info: {
-          customer_type: values.customer_type,
+          customer_type: values.customer_type || '개인',  // 값이 없으면 기본값 "개인" 적용
           risk_level: values.risk_level,
           annual_premium: values.annual_premium,
           total_coverage: values.total_coverage
