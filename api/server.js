@@ -698,10 +698,22 @@ app.listen(PORT, '0.0.0.0', () => {
  */
 app.get('/api/customers', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, status } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      status, 
+      customerType, 
+      region, 
+      startDate, 
+      endDate, 
+      hasDocuments 
+    } = req.query;
     const skip = (page - 1) * limit;
 
     let filter = {};
+    
+    // 기본 검색 (이름, 전화번호, 이메일)
     if (search) {
       // URL 디코딩 처리 (이미 디코딩된 경우 그대로 사용)
       let decodedSearch;
@@ -717,8 +729,67 @@ app.get('/api/customers', async (req, res) => {
         { 'personal_info.email': { $regex: decodedSearch, $options: 'i' } }
       ];
     }
+    
+    // 기존 상태 필터
     if (status) {
       filter['meta.status'] = status;
+    }
+    
+    // 고급 검색 필터들
+    if (customerType) {
+      filter['insurance_info.customer_type'] = customerType;
+    }
+    
+    if (region) {
+      if (region === '기타') {
+        // 17개 시도가 아닌 모든 경우
+        const koreanRegions = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', 
+                              '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+        filter['personal_info.address.address1'] = { 
+          $not: { $regex: `^(${koreanRegions.join('|')})`, $options: 'i' }
+        };
+      } else {
+        filter['personal_info.address.address1'] = { $regex: `^${region}`, $options: 'i' };
+      }
+    }
+    
+    // 날짜 범위 필터 (등록일 기준)
+    if (startDate || endDate) {
+      const dateFilter = {};
+      if (startDate) {
+        dateFilter.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999); // 해당 일의 마지막 시간
+        dateFilter.$lte = endDateTime;
+      }
+      filter['meta.created_at'] = dateFilter;
+    }
+    
+    // 문서 보유 여부 필터
+    if (hasDocuments === 'true') {
+      filter['documents'] = { $exists: true, $not: { $size: 0 } };
+    } else if (hasDocuments === 'false') {
+      // 기존 $or가 있으면 $and로 감싸서 조건 추가
+      if (filter.$or) {
+        filter = {
+          $and: [
+            filter,
+            {
+              $or: [
+                { 'documents': { $exists: false } },
+                { 'documents': { $size: 0 } }
+              ]
+            }
+          ]
+        };
+      } else {
+        filter.$or = [
+          { 'documents': { $exists: false } },
+          { 'documents': { $size: 0 } }
+        ];
+      }
     }
 
     const customers = await db.collection(CUSTOMERS_COLLECTION)

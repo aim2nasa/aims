@@ -5,10 +5,22 @@ const BASE_URL = 'http://tars.giize.com:3010/api';
 
 class CustomerService {
   // 고객 목록 조회
-  static async getCustomers({ page = 1, limit = 10, search = '' } = {}) {
+  static async getCustomers(params = {}) {
     try {
+      const { page = 1, limit = 10, search = '', ...filters } = params;
+      
+      // 필터 파라미터 정리
+      const queryParams = { page, limit, search };
+      
+      // 고급 검색 필터 추가
+      if (filters.customerType) queryParams.customerType = filters.customerType;
+      if (filters.region) queryParams.region = filters.region;
+      if (filters.startDate) queryParams.startDate = filters.startDate;
+      if (filters.endDate) queryParams.endDate = filters.endDate;
+      if (filters.hasDocuments) queryParams.hasDocuments = filters.hasDocuments;
+      
       const response = await axios.get(`${BASE_URL}/customers`, {
-        params: { page, limit, search }
+        params: queryParams
       });
       
       if (response.data.success) {
