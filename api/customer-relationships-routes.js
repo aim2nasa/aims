@@ -493,7 +493,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
     }
   });
 
-  // 5. 관계 삭제
+  // 5. 관계 삭제 - HARD DELETE로 수정됨
   app.delete('/api/customers/:id/relationships/:relationshipId', async (req, res) => {
     try {
       const { id, relationshipId } = req.params;
@@ -518,32 +518,18 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         });
       }
 
-      // 관계 삭제 (soft delete)
-      await db.collection('customer_relationships').updateOne(
-        { _id: new ObjectId(relationshipId) },
-        { 
-          $set: { 
-            'relationship_info.status': 'ended',
-            'relationship_details.ended_date': new Date(),
-            'meta.updated_at': new Date()
-          }
-        }
+      // 관계 삭제 (hard delete)
+      await db.collection('customer_relationships').deleteOne(
+        { _id: new ObjectId(relationshipId) }
       );
 
-      // 양방향 관계인 경우 역방향 관계도 삭제
-      if (relationship.relationship_info.is_bidirectional) {
-        await db.collection('customer_relationships').updateMany(
+      // 양방향 관계이거나 family 관계인 경우 역방향 관계도 삭제
+      if (relationship.relationship_info.is_bidirectional || relationship.relationship_info.relationship_category === 'family') {
+        await db.collection('customer_relationships').deleteMany(
           {
             'relationship_info.from_customer_id': relationship.relationship_info.to_customer_id,
             'relationship_info.to_customer_id': relationship.relationship_info.from_customer_id,
             'relationship_info.status': 'active'
-          },
-          { 
-            $set: { 
-              'relationship_info.status': 'ended',
-              'relationship_details.ended_date': new Date(),
-              'meta.updated_at': new Date()
-            }
           }
         );
       }
