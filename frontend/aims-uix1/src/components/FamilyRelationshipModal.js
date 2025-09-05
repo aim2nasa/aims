@@ -38,7 +38,7 @@ const FamilyRelationshipModal = ({
 
   // 고객 검색 (고객 관리와 동일한 방식)
   const searchCustomers = useCallback(async (searchValue = '') => {
-    if (!searchValue.trim() && searchValue !== '') {
+    if ((!searchValue || !searchValue.trim()) && searchValue !== '') {
       setCustomers([]);
       return;
     }
@@ -233,7 +233,7 @@ const FamilyRelationshipModal = ({
             value={searchText}
             onChange={(value) => {
               setSearchText(value);
-              if (!value.trim()) {
+              if (!value || !value.trim()) {
                 setCustomers([]);
                 setSelectedCustomer(null);
                 form.setFieldValue('to_customer_id', undefined);
