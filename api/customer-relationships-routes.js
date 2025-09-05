@@ -168,20 +168,29 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       // 관계 저장
       const result = await db.collection('customer_relationships').insertOne(relationshipData);
 
-      // 양방향 관계인 경우 역방향 관계도 생성
-      if (typeConfig.bidirectional) {
-        const reverseRelationshipData = {
-          ...relationshipData,
-          _id: undefined, // 새로운 _id 생성
-          relationship_info: {
-            ...relationshipData.relationship_info,
-            from_customer_id: new ObjectId(to_customer_id),
-            to_customer_id: new ObjectId(id),
-            relationship_type: typeConfig.reverse
-          }
-        };
-        
-        await db.collection('customer_relationships').insertOne(reverseRelationshipData);
+      // 양방향 관계이거나 family 관계인 경우 역방향 관계도 생성
+      if (typeConfig.bidirectional || typeConfig.category === 'family') {
+        // 역방향 관계 중복 체크
+        const existingReverseRelation = await db.collection('customer_relationships').findOne({
+          'relationship_info.from_customer_id': new ObjectId(to_customer_id),
+          'relationship_info.to_customer_id': new ObjectId(id),
+          'relationship_info.status': 'active'
+        });
+
+        if (!existingReverseRelation) {
+          const reverseRelationshipData = {
+            ...relationshipData,
+            _id: undefined, // 새로운 _id 생성
+            relationship_info: {
+              ...relationshipData.relationship_info,
+              from_customer_id: new ObjectId(to_customer_id),
+              to_customer_id: new ObjectId(id),
+              relationship_type: typeConfig.reverse
+            }
+          };
+          
+          await db.collection('customer_relationships').insertOne(reverseRelationshipData);
+        }
       }
 
       res.json({
