@@ -186,6 +186,7 @@ const CustomerSearchBar = ({
                 <Option value="경북">경북</Option>
                 <Option value="경남">경남</Option>
                 <Option value="제주">제주</Option>
+                <Option value="기타">기타</Option>
               </Select>
             </div>
 
