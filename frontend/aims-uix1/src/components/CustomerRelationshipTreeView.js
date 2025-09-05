@@ -207,17 +207,11 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
             fromCustomer?.insurance_info?.customer_type === '개인' && 
             toCustomer?.insurance_info?.customer_type === '개인') {
           // 관계 유형 라벨 매핑
+          // 가족관계등록부 범위 내 관계 유형만 허용
           const typeLabels = {
             spouse: '배우자',
             parent: '부모', 
-            child: '자녀',
-            son: '아들',
-            daughter: '딸',
-            sibling: '형제자매',
-            brother: '형/동생',
-            sister: '누나/언니/여동생',
-            grandparent: '조부모',
-            grandchild: '손자/손녀'
+            child: '자녀'
           };
           
           const relationLabel = typeLabels[relationshipType] || relationshipType;

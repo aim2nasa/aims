@@ -5,14 +5,11 @@ const { ObjectId } = require('mongodb');
 // 관계 유형 정의
 const RELATIONSHIP_TYPES = {
   // 가족 관계
+  // 가족관계등록부 범위 내 관계 유형만 허용
   family: {
     spouse: { reverse: 'spouse', bidirectional: true, label: '배우자' },
     parent: { reverse: 'child', bidirectional: false, label: '부모' },
-    child: { reverse: 'parent', bidirectional: false, label: '자녀' },
-    sibling: { reverse: 'sibling', bidirectional: true, label: '형제자매' },
-    grandparent: { reverse: 'grandchild', bidirectional: false, label: '조부모' },
-    grandchild: { reverse: 'grandparent', bidirectional: false, label: '손자녀' },
-    other: { reverse: 'other', bidirectional: false, label: '기타' }
+    child: { reverse: 'parent', bidirectional: false, label: '자녀' }
   },
   
   // 친척 관계  

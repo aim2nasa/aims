@@ -12,15 +12,11 @@ import { useRelationship } from '../contexts/RelationshipContext';
 const { Option } = Select;
 const { Text } = Typography;
 
-// 가족 관계 유형 정의 (API 서버와 동기화)
+// 가족관계등록부 범위 내 관계 유형만 허용
 const FAMILY_RELATIONSHIP_TYPES = {
   spouse: { label: '배우자', icon: '💑' },
   parent: { label: '부모', icon: '👨‍👩‍👧‍👦' },
-  child: { label: '자녀', icon: '👶' },
-  sibling: { label: '형제자매', icon: '👫' },
-  grandparent: { label: '조부모', icon: '👴👵' },
-  grandchild: { label: '손자/손녀', icon: '👶' },
-  other: { label: '기타', icon: '👥' }
+  child: { label: '자녀', icon: '👶' }
 };
 
 const FamilyRelationshipModal = ({ 
