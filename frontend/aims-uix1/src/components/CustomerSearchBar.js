@@ -146,28 +146,28 @@ const CustomerSearchBar = ({
           </div>
           
           <div className="filter-grid">
-            <div className="filter-item">
+            <div className="filter-item filter-item-small">
               <label>고객 유형</label>
               <Select
                 placeholder="유형 선택"
                 value={filters.customerType}
                 onChange={(value) => handleFilterChange('customerType', value)}
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: '120px' }}
               >
                 <Option value="개인">개인</Option>
                 <Option value="법인">법인</Option>
               </Select>
             </div>
 
-            <div className="filter-item">
+            <div className="filter-item filter-item-small">
               <label>지역</label>
               <Select
                 placeholder="지역 선택"
                 value={filters.region}
                 onChange={(value) => handleFilterChange('region', value)}
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: '120px' }}
               >
                 <Option value="서울">서울</Option>
                 <Option value="부산">부산</Option>
@@ -196,19 +196,19 @@ const CustomerSearchBar = ({
                 placeholder={['시작일', '종료일']}
                 value={filters.dateRange}
                 onChange={(dates) => handleFilterChange('dateRange', dates)}
-                style={{ width: '100%' }}
+                style={{ width: '280px' }}
                 format="YYYY-MM-DD"
               />
             </div>
 
-            <div className="filter-item">
+            <div className="filter-item filter-item-small">
               <label>문서 보유</label>
               <Select
                 placeholder="문서 보유 여부"
                 value={filters.hasDocuments}
                 onChange={(value) => handleFilterChange('hasDocuments', value)}
                 allowClear
-                style={{ width: '100%' }}
+                style={{ width: '140px' }}
               >
                 <Option value="true">문서 있음</Option>
                 <Option value="false">문서 없음</Option>
