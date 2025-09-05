@@ -155,10 +155,8 @@ const CustomerSearchBar = ({
                 allowClear
                 style={{ width: '100%' }}
               >
-                <Option value="individual">개인</Option>
-                <Option value="corporate">기업</Option>
-                <Option value="family">가족</Option>
-                <Option value="group">그룹</Option>
+                <Option value="개인">개인</Option>
+                <Option value="법인">법인</Option>
               </Select>
             </div>
 
