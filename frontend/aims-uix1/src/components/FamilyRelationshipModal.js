@@ -31,9 +31,10 @@ const FamilyRelationshipModal = ({
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
+  const [alreadyFamiliedCustomers, setAlreadyFamiliedCustomers] = useState(new Set());
   
-  // Context에서 관계 생성 기능 사용
-  const { loading, createRelationship } = useRelationship();
+  // Context에서 관계 생성 기능 및 관계 데이터 사용
+  const { loading, createRelationship, allRelationshipsData } = useRelationship();
 
   // 고객 검색 (고객 관리와 동일한 방식)
   const searchCustomers = useCallback(async (searchValue = '') => {
@@ -51,10 +52,11 @@ const FamilyRelationshipModal = ({
       });
       
       if (result.success) {
-        // 개인 고객만 필터링하고 현재 고객 제외
+        // 개인 고객만 필터링하고 현재 고객 제외, 그리고 이미 가족이 있는 고객 제외
         const individualCustomers = result.data.customers.filter(customer => 
           customer._id !== customerId && 
-          customer.insurance_info?.customer_type === '개인'
+          customer.insurance_info?.customer_type === '개인' &&
+          !alreadyFamiliedCustomers.has(customer._id)
         );
         
         setCustomers(individualCustomers);
@@ -65,21 +67,51 @@ const FamilyRelationshipModal = ({
     } finally {
       setSearchLoading(false);
     }
-  }, [customerId]);
+  }, [customerId, alreadyFamiliedCustomers]);
 
-  const resetForm = () => {
+  // 이미 가족이 있는 고객들을 식별하는 함수
+  const identifyFamiliedCustomers = useCallback(() => {
+    if (!allRelationshipsData.customers.length) return;
+
+    const { relationships } = allRelationshipsData;
+    const familiedCustomers = new Set();
+    
+    // 가족 관계만 필터링 (개인-개인만)
+    relationships.forEach(relationship => {
+      const category = relationship.relationship_info.relationship_category;
+      const fromCustomer = relationship.from_customer;
+      const toCustomer = relationship.related_customer;
+      
+      if (category === 'family' && 
+          fromCustomer?.insurance_info?.customer_type === '개인' && 
+          toCustomer?.insurance_info?.customer_type === '개인') {
+        
+        familiedCustomers.add(fromCustomer._id);
+        familiedCustomers.add(toCustomer._id);
+      }
+    });
+    
+    // 현재 고객이 가족이 없는 경우에만 다른 사람을 가족으로 추가할 수 있음
+    // 현재 고객은 제외 (자기 자신은 가족 대표자인 경우 추가 가능)
+    familiedCustomers.delete(customerId);
+    
+    setAlreadyFamiliedCustomers(familiedCustomers);
+  }, [allRelationshipsData, customerId]);
+
+  const resetForm = useCallback(() => {
     form.resetFields();
     setSelectedRelationType(null);
     setSelectedCustomer(null);
     setSearchText('');
     setCustomers([]);
-  };
+  }, [form]);
 
   useEffect(() => {
     if (visible) {
       resetForm();
+      identifyFamiliedCustomers();
     }
-  }, [visible, customerId]);
+  }, [visible, customerId, identifyFamiliedCustomers, resetForm]);
 
   // 가족구성원과 가족관계가 모두 선택되었는지 확인
   const isFormValid = selectedCustomer && selectedRelationType;
@@ -100,6 +132,12 @@ const FamilyRelationshipModal = ({
       // 자기 자신과의 관계 방지
       if (customerId === values.to_customer_id) {
         message.error('자기 자신과는 관계를 설정할 수 없습니다');
+        return;
+      }
+
+      // 이미 가족이 있는 고객과의 관계 방지
+      if (alreadyFamiliedCustomers.has(values.to_customer_id)) {
+        message.error('선택한 고객은 이미 다른 가족에 속해 있습니다. 가족이 없는 고객만 선택할 수 있습니다.');
         return;
       }
 
@@ -137,6 +175,8 @@ const FamilyRelationshipModal = ({
         message.error('이미 설정된 관계입니다. 기존 관계를 삭제한 후 다시 시도해주세요.');
       } else if (error.message.includes('자기 자신')) {
         message.error('자기 자신과는 관계를 설정할 수 없습니다.');
+      } else if (error.message.includes('이미 가족') || error.message.includes('다른 가족')) {
+        message.error('선택한 고객은 이미 다른 가족에 속해 있습니다. 가족이 없는 고객만 선택할 수 있습니다.');
       } else if (error.message) {
         message.error(`관계 추가 실패: ${error.message}`);
       } else {
@@ -160,7 +200,7 @@ const FamilyRelationshipModal = ({
     >
       <div style={{ marginBottom: 16 }}>
         <Text type="secondary" style={{ fontSize: '14px' }}>
-          개인 고객과의 가족 관계를 설정할 수 있습니다. 법인 고객은 선택할 수 없습니다.
+          개인 고객과의 가족 관계를 설정할 수 있습니다. 법인 고객이나 이미 다른 가족에 속한 고객은 선택할 수 없습니다.
         </Text>
       </div>
 
