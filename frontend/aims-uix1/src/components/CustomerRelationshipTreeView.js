@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Tree, Card, Space, Typography, Badge, Spin, Tag, Modal, Select } from 'antd';
-import { Button } from './common';
+import { Tree, Card, Space, Typography, Badge, Spin, Tag } from 'antd';
 import { 
   FolderOutlined, 
   FolderOpenOutlined, 
@@ -8,74 +7,29 @@ import {
   HomeOutlined,
   BankOutlined,
   HeartOutlined,
-  EditOutlined
 } from '@ant-design/icons';
 import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import { useRelationship } from '../contexts/RelationshipContext';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
   const {
     loading,
     allRelationshipsData,
-    familyRepresentatives,
-    loadAllRelationshipsData,
-    setFamilyRepresentative
+    loadAllRelationshipsData
   } = useRelationship();
   
   const [expandedKeys, setExpandedKeys] = useState(['customers', 'family', 'corporate']);
-  
-  // 대표자 변경 관련 상태 (로컬 UI 상태만)
-  const [representativeModal, setRepresentativeModal] = useState({
-    visible: false,
-    familyGroupKey: null,
-    currentRepId: null,
-    members: []
-  });
 
   // 컴포넌트 마운트 시 모든 관계 데이터 로드
   useEffect(() => {
     loadAllRelationshipsData();
   }, [loadAllRelationshipsData]);
 
-  // 대표자 변경 모달 열기
-  const openRepresentativeModal = (familyGroupKey, currentRepId, members) => {
-    setRepresentativeModal({
-      visible: true,
-      familyGroupKey: familyGroupKey,
-      currentRepId: currentRepId,
-      members: [...members] // 배열 복사로 참조 문제 방지
-    });
-  };
 
-  // 대표자 변경 처리 (Context를 통해)
-  const handleRepresentativeChange = (newRepId) => {
-    const { familyGroupKey } = representativeModal;
-    
-    setFamilyRepresentative(familyGroupKey, newRepId);
-    closeRepresentativeModal();
-  };
-
-  // 모달 닫기
-  const closeRepresentativeModal = () => {
-    setRepresentativeModal({
-      visible: false,
-      familyGroupKey: null,
-      currentRepId: null,
-      members: []
-    });
-  };
-
-  // 가족 대표자 선정 함수 (사용자 설정 우선, 없으면 첫 관계 설정자)
-  const selectFamilyRepresentative = useCallback((familyMembers, groupKey, relationships) => {
-    // 사용자가 수동으로 설정한 대표자가 있으면 우선 사용
-    const userSetRepId = familyRepresentatives[groupKey];
-    if (userSetRepId) {
-      const userSetRep = familyMembers.find(member => member._id === userSetRepId);
-      if (userSetRep) return userSetRep;
-    }
+  // 가족 대표자 선정 함수 (첫 관계 설정자)
+  const selectFamilyRepresentative = useCallback((familyMembers, relationships) => {
     
     // 가족 관계가 있으면, 가장 먼저 "from"으로 등장한 사람을 대표로 선정
     // 양방향 관계에서 동시에 생성되더라도, 처음 설정을 시작한 사람이 from이 됨
@@ -140,7 +94,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return sortedByCreation[0] || familyMembers[0];
-  }, [familyRepresentatives]);
+  }, []);
 
   // Context에서 받은 데이터 구조화
   const structuredData = useMemo(() => {
@@ -226,9 +180,8 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         return familyGroup.has(fromId) && familyGroup.has(toId);
       });
       
-      // 대표자 선정 (그룹 키 생성)
-      const groupKey = Array.from(familyGroup).sort().join('-');
-      const representative = selectFamilyRepresentative(familyMembers, groupKey, groupRelationships);
+      // 대표자 선정
+      const representative = selectFamilyRepresentative(familyMembers, groupRelationships);
       const repName = representative.personal_info?.name || '이름없음';
       
       // 대표자의 모든 관계 수집
@@ -272,7 +225,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       });
       
       result.가족그룹[repName] = {
-        groupKey,
         representative,
         members: familyMembers,
         relations: familyRelations
@@ -333,7 +285,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         children: familyGroups
           .sort(([a], [b]) => a.localeCompare(b, 'ko'))
           .map(([repName, groupData]) => {
-            const { groupKey, representative, members, relations } = groupData;
+            const { representative, members, relations } = groupData;
             
             return {
               title: (
@@ -357,17 +309,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   >
                     👑 {repName} (대표)
                   </Text>
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    icon={<EditOutlined />}
-                    style={{ color: '#1890ff', fontSize: '14px' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRepresentativeModal(groupKey, representative._id, members);
-                    }}
-                    title="대표자 변경"
-                  />
                   <Badge count={members.length} style={{ backgroundColor: '#52c41a', opacity: 0.8 }} />
                 </Space>
               ),
@@ -558,47 +499,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         />
       )}
 
-      {/* 대표자 변경 모달 */}
-      <Modal
-        title="가족 대표자 변경"
-        open={representativeModal.visible}
-        onCancel={closeRepresentativeModal}
-        footer={null}
-        width={400}
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Text>이 가족 그룹의 새로운 대표자를 선택해주세요:</Text>
-        </div>
-        
-        <Select
-          key={`${representativeModal.familyGroupKey}-${representativeModal.visible}`} // 모달 열림 상태까지 포함해서 완전히 새로운 키 생성
-          style={{ width: '100%' }}
-          placeholder="대표자 선택"
-          defaultValue={representativeModal.currentRepId} // defaultValue 사용으로 변경
-          onChange={handleRepresentativeChange}
-        >
-          {representativeModal.members.map(member => (
-            <Option key={member._id} value={member._id}>
-              <Space>
-                <UserOutlined />
-                <Text>{member.personal_info?.name || '이름없음'}</Text>
-                {member.personal_info?.birth_date && (
-                  <Text type="secondary">
-                    ({new Date(member.personal_info.birth_date).getFullYear()}년생)
-                  </Text>
-                )}
-                {member._id === representativeModal.currentRepId && (
-                  <Tag size="small" color="blue">현재 대표</Tag>
-                )}
-              </Space>
-            </Option>
-          ))}
-        </Select>
-        
-        <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
-          💡 가족대표는 첫 번째로 가족관계를 설정한 사람이 되며, 필요시 직접 변경할 수 있습니다.
-        </div>
-      </Modal>
     </Card>
   );
 };

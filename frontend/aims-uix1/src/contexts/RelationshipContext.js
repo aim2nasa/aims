@@ -18,7 +18,6 @@ const ActionTypes = {
   SET_RELATIONSHIP_TYPES: 'SET_RELATIONSHIP_TYPES',
   SET_CUSTOMER_RELATIONSHIPS: 'SET_CUSTOMER_RELATIONSHIPS',
   SET_ALL_RELATIONSHIPS_DATA: 'SET_ALL_RELATIONSHIPS_DATA',
-  SET_FAMILY_REPRESENTATIVES: 'SET_FAMILY_REPRESENTATIVES',
   CLEAR_ERROR: 'CLEAR_ERROR'
 };
 
@@ -40,8 +39,6 @@ const initialState = {
     timestamp: null
   },
   
-  // 가족 대표자 설정 (사용자 수동 설정)
-  familyRepresentatives: {}
 };
 
 // 리듀서
@@ -89,14 +86,6 @@ const relationshipReducer = (state, action) => {
         allRelationshipsData: action.payload
       };
 
-    case ActionTypes.SET_FAMILY_REPRESENTATIVES:
-      return {
-        ...state,
-        familyRepresentatives: {
-          ...state.familyRepresentatives,
-          ...action.payload
-        }
-      };
 
     default:
       return state;
@@ -238,13 +227,6 @@ export const RelationshipProvider = ({ children }) => {
     }
   }, [handleError, setLoading]);
 
-  // 가족 대표자 설정
-  const setFamilyRepresentative = useCallback((familyGroupKey, representativeId) => {
-    dispatch({ 
-      type: ActionTypes.SET_FAMILY_REPRESENTATIVES, 
-      payload: { [familyGroupKey]: representativeId } 
-    });
-  }, []);
 
   // 캐시 강제 새로고침
   const refreshData = useCallback(async () => {
@@ -343,7 +325,6 @@ export const RelationshipProvider = ({ children }) => {
     relationshipTypes: state.relationshipTypes,
     customerRelationships: state.customerRelationships,
     allRelationshipsData: state.allRelationshipsData,
-    familyRepresentatives: state.familyRepresentatives,
     
     // Actions
     loadCustomerRelationships,
@@ -351,7 +332,6 @@ export const RelationshipProvider = ({ children }) => {
     deleteRelationship,
     createRelationship,
     createBidirectionalRelationship,
-    setFamilyRepresentative,
     refreshData,
     clearError
   }), [
@@ -361,7 +341,6 @@ export const RelationshipProvider = ({ children }) => {
     deleteRelationship,
     createRelationship,
     createBidirectionalRelationship,
-    setFamilyRepresentative,
     refreshData,
     clearError
   ]);
