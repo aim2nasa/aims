@@ -68,8 +68,8 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
   };
 
-  // 가족 대표자 선정 함수 (사용자 설정 우선)
-  const selectFamilyRepresentative = useCallback((familyMembers, groupKey) => {
+  // 가족 대표자 선정 함수 (사용자 설정 우선, 없으면 첫 관계 설정자)
+  const selectFamilyRepresentative = useCallback((familyMembers, groupKey, relationships) => {
     // 사용자가 수동으로 설정한 대표자가 있으면 우선 사용
     const userSetRepId = familyRepresentatives[groupKey];
     if (userSetRepId) {
@@ -77,38 +77,69 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       if (userSetRep) return userSetRep;
     }
     
-    // 기본 알고리즘으로 대표자 선정
-    return familyMembers.sort((a, b) => {
-      // 1순위: 나이 (생년월일 있으면 - 오래된 날짜가 나이 많음)
-      const aBirthDate = a.personal_info?.birth_date;
-      const bBirthDate = b.personal_info?.birth_date;
+    // 가족 관계가 있으면, 가장 먼저 "from"으로 등장한 사람을 대표로 선정
+    // 양방향 관계에서 동시에 생성되더라도, 처음 설정을 시작한 사람이 from이 됨
+    if (relationships && relationships.length > 0) {
+      // 모든 관계에서 from_customer로 등장하는 횟수를 계산
+      const fromCount = {};
       
-      if (aBirthDate && bBirthDate) {
-        return new Date(aBirthDate) - new Date(bBirthDate);
+      relationships.forEach(rel => {
+        const fromId = rel.from_customer?._id || rel.from_customer;
+        const fromCustomer = familyMembers.find(m => m._id === fromId);
+        
+        if (fromCustomer) {
+          if (!fromCount[fromId]) {
+            fromCount[fromId] = {
+              customer: fromCustomer,
+              count: 0,
+              earliestDate: null
+            };
+          }
+          fromCount[fromId].count++;
+          
+          const createdAt = rel.meta?.created_at;
+          if (createdAt) {
+            const relDate = new Date(createdAt);
+            if (!fromCount[fromId].earliestDate || relDate < fromCount[fromId].earliestDate) {
+              fromCount[fromId].earliestDate = relDate;
+            }
+          }
+        }
+      });
+      
+      // 가장 먼저 관계를 설정한 사람 찾기
+      // 1. 생성 시간이 가장 이른 관계의 from_customer
+      // 2. 시간이 같으면 고객 등록이 먼저인 사람
+      let representative = null;
+      let earliestDate = null;
+      
+      Object.values(fromCount).forEach(item => {
+        if (!earliestDate || (item.earliestDate && item.earliestDate < earliestDate)) {
+          earliestDate = item.earliestDate;
+          representative = item.customer;
+        } else if (item.earliestDate && item.earliestDate.getTime() === earliestDate.getTime()) {
+          // 시간이 같으면 고객 등록 순서로 비교
+          const currentCreated = new Date(representative.meta?.created_at || 0);
+          const itemCreated = new Date(item.customer.meta?.created_at || 0);
+          if (itemCreated < currentCreated) {
+            representative = item.customer;
+          }
+        }
+      });
+      
+      if (representative) {
+        return representative;
       }
-      
-      // 생년월일 중 하나라도 없으면 있는 사람이 우선
-      if (aBirthDate && !bBirthDate) return -1;
-      if (!aBirthDate && bBirthDate) return 1;
-      
-      // 2순위: 이름 가나다순 (한글 우선)
-      const aName = a.personal_info?.name || '';
-      const bName = b.personal_info?.name || '';
-      
-      if (aName !== bName) {
-        return aName.localeCompare(bName, 'ko');
-      }
-      
-      // 3순위: 등록 순서 (먼저 등록된 사람이 우선)
-      const aCreated = a.meta?.created_at;
-      const bCreated = b.meta?.created_at;
-      
-      if (aCreated && bCreated) {
-        return new Date(aCreated) - new Date(bCreated);
-      }
-      
-      return 0;
-    })[0];
+    }
+    
+    // 관계 정보가 없거나 찾을 수 없으면 가장 먼저 등록된 멤버를 대표로
+    const sortedByCreation = [...familyMembers].sort((a, b) => {
+      const aCreated = new Date(a.meta?.created_at || 0);
+      const bCreated = new Date(b.meta?.created_at || 0);
+      return aCreated - bCreated;
+    });
+    
+    return sortedByCreation[0] || familyMembers[0];
   }, [familyRepresentatives]);
 
   // Context에서 받은 데이터 구조화
@@ -188,9 +219,16 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       // 2명 이상의 가족 구성원이 있는 경우만 처리
       if (familyMembers.length < 2) return;
       
+      // 이 가족 그룹의 관계들 수집 (대표자 선정에 필요)
+      const groupRelationships = relationships.filter(rel => {
+        const fromId = rel.from_customer?._id || rel.from_customer;
+        const toId = rel.related_customer?._id || rel.related_customer;
+        return familyGroup.has(fromId) && familyGroup.has(toId);
+      });
+      
       // 대표자 선정 (그룹 키 생성)
       const groupKey = Array.from(familyGroup).sort().join('-');
-      const representative = selectFamilyRepresentative(familyMembers, groupKey);
+      const representative = selectFamilyRepresentative(familyMembers, groupKey, groupRelationships);
       const repName = representative.personal_info?.name || '이름없음';
       
       // 대표자의 모든 관계 수집
@@ -558,7 +596,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         </Select>
         
         <div style={{ marginTop: 16, color: '#666', fontSize: '12px' }}>
-          💡 대표자는 나이, 이름 순서로 자동 선택되지만 필요시 직접 변경할 수 있습니다.
+          💡 가족대표는 첫 번째로 가족관계를 설정한 사람이 되며, 필요시 직접 변경할 수 있습니다.
         </div>
       </Modal>
     </Card>

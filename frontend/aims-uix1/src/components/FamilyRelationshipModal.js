@@ -31,9 +31,10 @@ const FamilyRelationshipModal = ({
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
+  const [familyMemberIds, setFamilyMemberIds] = useState(new Set());
   
-  // Context에서 관계 생성 기능 사용
-  const { loading, createRelationship } = useRelationship();
+  // Context에서 관계 생성 기능 및 전체 관계 데이터 사용
+  const { loading, createRelationship, loadAllRelationshipsData } = useRelationship();
 
   // 고객 검색 (고객 관리와 동일한 방식)
   const searchCustomers = useCallback(async (searchValue = '') => {
@@ -56,6 +57,8 @@ const FamilyRelationshipModal = ({
           customer._id !== customerId && 
           customer.insurance_info?.customer_type === '개인'
         );
+        
+        // 이미 다른 가족에 속한 고객 표시를 위해 전체 리스트 저장
         setCustomers(individualCustomers);
       }
     } catch (error) {
@@ -73,8 +76,79 @@ const FamilyRelationshipModal = ({
       setSelectedCustomer(null);
       setSearchText('');
       setCustomers([]);
+      
+      // 전체 관계 데이터 로드하여 이미 가족에 속한 고객 파악
+      loadAllRelationshipsData().then(data => {
+        const { relationships } = data;
+        
+        // 가족 관계 네트워크 구축
+        const familyNetworks = new Map();
+        const alreadyInFamily = new Set();
+        
+        // 가족 관계만 필터링 (개인-개인만)
+        relationships.forEach(relationship => {
+          const category = relationship.relationship_info.relationship_category;
+          const fromCustomer = relationship.from_customer;
+          const toCustomer = relationship.related_customer;
+          
+          if (category === 'family' && 
+              fromCustomer?.insurance_info?.customer_type === '개인' && 
+              toCustomer?.insurance_info?.customer_type === '개인') {
+            
+            const fromId = fromCustomer._id;
+            const toId = toCustomer._id;
+            
+            // 양방향 관계 설정
+            if (!familyNetworks.has(fromId)) {
+              familyNetworks.set(fromId, new Set());
+            }
+            if (!familyNetworks.has(toId)) {
+              familyNetworks.set(toId, new Set());
+            }
+            
+            familyNetworks.get(fromId).add(toId);
+            familyNetworks.get(toId).add(fromId);
+            
+            // 이미 가족 관계가 있는 고객들 표시
+            alreadyInFamily.add(fromId);
+            alreadyInFamily.add(toId);
+          }
+        });
+        
+        // 현재 고객이 이미 가족에 속해있는 경우, 그 가족 구성원들 찾기
+        if (familyNetworks.has(customerId)) {
+          const myFamilyMembers = new Set();
+          const stack = [customerId];
+          const visited = new Set();
+          
+          // DFS로 연결된 모든 가족 구성원 찾기
+          while (stack.length > 0) {
+            const currentId = stack.pop();
+            if (visited.has(currentId)) continue;
+            
+            visited.add(currentId);
+            myFamilyMembers.add(currentId);
+            
+            const connections = familyNetworks.get(currentId);
+            if (connections) {
+              connections.forEach(connectedId => {
+                if (!visited.has(connectedId)) {
+                  stack.push(connectedId);
+                }
+              });
+            }
+          }
+          
+          // 내 가족 구성원 제외한 나머지 이미 가족이 있는 고객들
+          const othersWithFamily = new Set([...alreadyInFamily].filter(id => !myFamilyMembers.has(id)));
+          setFamilyMemberIds(othersWithFamily);
+        } else {
+          // 현재 고객이 가족이 없는 경우, 이미 가족이 있는 모든 고객들
+          setFamilyMemberIds(alreadyInFamily);
+        }
+      });
     }
-  }, [visible, form]);
+  }, [visible, form, customerId, loadAllRelationshipsData]);
 
   // 가족구성원과 가족관계가 모두 선택되었는지 확인
   const isFormValid = selectedCustomer && selectedRelationType;
@@ -215,24 +289,40 @@ const FamilyRelationshipModal = ({
             suffixIcon={<SearchOutlined />}
             notFoundContent={searchLoading ? <Spin size="small" /> : searchText ? '검색 결과가 없습니다' : '고객 이름을 입력하세요'}
           >
-            {customers.map(customer => (
-              <Option key={customer._id} value={customer._id}>
-                <Space>
-                  <Avatar 
-                    size={24} 
-                    icon={<UserOutlined />} 
-                    style={{ backgroundColor: '#52c41a' }}
-                  />
-                  <Text>{customer.personal_info?.name}</Text>
-                  <Tag color="green" size="small">개인</Tag>
-                  {customer.personal_info?.birth_date && (
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      ({new Date(customer.personal_info.birth_date).getFullYear()}년생)
+            {customers.map(customer => {
+              const isAlreadyInFamily = familyMemberIds.has(customer._id);
+              return (
+                <Option 
+                  key={customer._id} 
+                  value={customer._id}
+                  disabled={isAlreadyInFamily}
+                >
+                  <Space>
+                    <Avatar 
+                      size={24} 
+                      icon={<UserOutlined />} 
+                      style={{ 
+                        backgroundColor: isAlreadyInFamily ? '#d9d9d9' : '#52c41a',
+                        opacity: isAlreadyInFamily ? 0.6 : 1
+                      }}
+                    />
+                    <Text style={{ opacity: isAlreadyInFamily ? 0.6 : 1 }}>
+                      {customer.personal_info?.name}
                     </Text>
-                  )}
-                </Space>
-              </Option>
-            ))}
+                    {isAlreadyInFamily ? (
+                      <Tag color="red" size="small">다른 가족</Tag>
+                    ) : (
+                      <Tag color="green" size="small">개인</Tag>
+                    )}
+                    {customer.personal_info?.birth_date && (
+                      <Text type="secondary" style={{ fontSize: '12px', opacity: isAlreadyInFamily ? 0.6 : 1 }}>
+                        ({new Date(customer.personal_info.birth_date).getFullYear()}년생)
+                      </Text>
+                    )}
+                  </Space>
+                </Option>
+              );
+            })}
           </AutoComplete>
         </div>
 
