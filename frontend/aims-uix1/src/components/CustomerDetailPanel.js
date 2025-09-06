@@ -89,12 +89,33 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
 
   // 가족관계 추가 가능 여부 확인
   useEffect(() => {
-    if (customerId && allRelationshipsData.customers.length > 0) {
+    if (!customerId) {
+      setCanAddFamilyRelation(false);
+      return;
+    }
+
+    // 새로 생성된 개인 고객의 경우 allRelationshipsData에 아직 없을 수 있음
+    // 이런 경우 customer prop을 직접 확인
+    if (customer && customer._id === customerId) {
+      if (customer.insurance_info?.customer_type === '개인') {
+        // allRelationshipsData가 아직 로드되지 않았거나 고객이 없는 경우
+        if (!allRelationshipsData.customers.length || !allRelationshipsData.customers.find(c => c._id === customerId)) {
+          setCanAddFamilyRelation(true); // 새로운 개인 고객은 가족관계 추가 가능
+          return;
+        }
+      } else {
+        setCanAddFamilyRelation(false); // 법인 고객은 불가능
+        return;
+      }
+    }
+
+    if (allRelationshipsData.customers.length > 0) {
       const { customers, relationships } = allRelationshipsData;
       
-      // 개인 고객이 아니면 가족관계 불가능
+      // allRelationshipsData에서 현재 고객 찾기 (이미 위에서 개인 고객임을 확인함)
       const currentCustomer = customers.find(c => c._id === customerId);
-      if (!currentCustomer || currentCustomer.insurance_info?.customer_type !== '개인') {
+      if (!currentCustomer) {
+        // 데이터 불일치 - 새로운 고객이거나 데이터 로딩 중일 수 있음
         setCanAddFamilyRelation(false);
         return;
       }
@@ -219,7 +240,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
     } else {
       setCanAddFamilyRelation(false);
     }
-  }, [customerId, allRelationshipsData]);
+  }, [customerId, allRelationshipsData, customer]);
 
   // 문서 클릭 시 상세 정보 조회 및 프리뷰 모달 표시
   const handleDocumentClick = async (documentRecord) => {
