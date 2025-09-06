@@ -681,6 +681,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
   console.log(`  PUT  /api/customers/:id - 고객 정보 수정`);
   console.log(`  DELETE /api/customers/:id - 고객 삭제`);
+  console.log(`  GET /api/admin/orphaned-relationships - Orphaned relationships 조회`);
+  console.log(`  DELETE /api/admin/orphaned-relationships - Orphaned relationships 정리`);
   console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
   console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
   
@@ -1014,25 +1016,162 @@ app.delete('/api/customers/:id', async (req, res) => {
       });
     }
 
-    const result = await db.collection(CUSTOMERS_COLLECTION)
-      .deleteOne({ _id: new ObjectId(id) });
+    // 먼저 삭제할 고객이 존재하는지 확인
+    const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
 
-    if (result.deletedCount === 0) {
+    if (!existingCustomer) {
       return res.status(404).json({
         success: false,
         error: '고객을 찾을 수 없습니다.'
       });
     }
 
+    // 1. 해당 고객과 관련된 모든 관계 레코드 삭제 (Cascading Delete)
+    const relationshipsDeleteResult = await db.collection('customer_relationships').deleteMany({
+      $or: [
+        { from_customer: new ObjectId(id) },
+        { related_customer: new ObjectId(id) }
+      ]
+    });
+
+    console.log(`🗑️ 고객 ${id}과 관련된 관계 레코드 ${relationshipsDeleteResult.deletedCount}개 삭제됨`);
+
+    // 2. 고객 삭제
+    const result = await db.collection(CUSTOMERS_COLLECTION)
+      .deleteOne({ _id: new ObjectId(id) });
+
     res.json({
       success: true,
-      message: '고객이 성공적으로 삭제되었습니다.'
+      message: '고객이 성공적으로 삭제되었습니다.',
+      deletedRelationships: relationshipsDeleteResult.deletedCount
     });
   } catch (error) {
     console.error('고객 삭제 오류:', error);
     res.status(500).json({
       success: false,
       error: '고객 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Orphaned Relationships 조회 API (관리용)
+ */
+app.get('/api/admin/orphaned-relationships', async (req, res) => {
+  try {
+    console.log('🔍 Orphaned relationships 조회 시작...');
+    
+    // 모든 관계 레코드 조회
+    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    console.log(`📊 총 관계 레코드 수: ${relationships.length}`);
+    
+    // 모든 고객 ID 조회
+    const allCustomerIds = new Set(
+      (await db.collection(CUSTOMERS_COLLECTION).find({}, { _id: 1 }).toArray())
+        .map(customer => customer._id.toString())
+    );
+    console.log(`👥 총 고객 수: ${allCustomerIds.size}`);
+    
+    const orphanedRelationships = [];
+    
+    for (const relationship of relationships) {
+      const fromCustomerId = relationship.from_customer?.toString();
+      const relatedCustomerId = relationship.related_customer?.toString();
+      
+      const fromCustomerExists = allCustomerIds.has(fromCustomerId);
+      const relatedCustomerExists = allCustomerIds.has(relatedCustomerId);
+      
+      if (!fromCustomerExists || !relatedCustomerExists) {
+        orphanedRelationships.push({
+          relationshipId: relationship._id,
+          fromCustomer: fromCustomerId,
+          relatedCustomer: relatedCustomerId,
+          fromCustomerExists,
+          relatedCustomerExists,
+          relationshipType: relationship.relationship_info?.relationship_type || 'Unknown',
+          createdAt: relationship.meta?.created_at
+        });
+      }
+    }
+    
+    console.log(`🚨 발견된 orphaned relationships: ${orphanedRelationships.length}`);
+    
+    res.json({
+      success: true,
+      data: {
+        totalRelationships: relationships.length,
+        totalCustomers: allCustomerIds.size,
+        orphanedRelationships: orphanedRelationships,
+        orphanedCount: orphanedRelationships.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('Orphaned relationships 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Orphaned relationships 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Orphaned Relationships 정리 API (관리용)
+ */
+app.delete('/api/admin/orphaned-relationships', async (req, res) => {
+  try {
+    console.log('🗑️ Orphaned relationships 정리 시작...');
+    
+    // 먼저 orphaned relationships 조회
+    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const allCustomerIds = new Set(
+      (await db.collection(CUSTOMERS_COLLECTION).find({}, { _id: 1 }).toArray())
+        .map(customer => customer._id.toString())
+    );
+    
+    const orphanedIds = [];
+    
+    for (const relationship of relationships) {
+      const fromCustomerId = relationship.from_customer?.toString();
+      const relatedCustomerId = relationship.related_customer?.toString();
+      
+      const fromCustomerExists = allCustomerIds.has(fromCustomerId);
+      const relatedCustomerExists = allCustomerIds.has(relatedCustomerId);
+      
+      if (!fromCustomerExists || !relatedCustomerExists) {
+        orphanedIds.push(relationship._id);
+      }
+    }
+    
+    if (orphanedIds.length === 0) {
+      return res.json({
+        success: true,
+        message: '정리할 orphaned relationships가 없습니다.',
+        deletedCount: 0
+      });
+    }
+    
+    // Orphaned relationships 삭제
+    const deleteResult = await db.collection('customer_relationships').deleteMany({
+      _id: { $in: orphanedIds }
+    });
+    
+    console.log(`✅ ${deleteResult.deletedCount}개의 orphaned relationship 레코드가 삭제되었습니다.`);
+    
+    res.json({
+      success: true,
+      message: `${deleteResult.deletedCount}개의 orphaned relationship 레코드가 정리되었습니다.`,
+      deletedCount: deleteResult.deletedCount
+    });
+    
+  } catch (error) {
+    console.error('Orphaned relationships 정리 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Orphaned relationships 정리에 실패했습니다.',
       details: error.message
     });
   }
