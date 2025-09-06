@@ -165,10 +165,13 @@ const AppLayout = () => {
         if (selectedCustomer && selectedCustomer._id === customerId) {
           handleRightPaneCollapse();
         }
-        // 고객 목록 새로고침
+        // 고객 목록 및 관계 트리 새로고침
         if (refreshCustomerList) {
           refreshCustomerList();
         }
+        // 관계 트리 새로고침
+        console.log('AppLayout: dispatching customerDeleted event');
+        window.dispatchEvent(new CustomEvent('customerDeleted'));
       }
     } catch (error) {
       message.error('고객 삭제에 실패했습니다.');

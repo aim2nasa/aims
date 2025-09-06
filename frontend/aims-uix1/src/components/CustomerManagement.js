@@ -17,10 +17,44 @@ import CustomerService from '../services/customerService';
 import CustomerRegionalTreeView from './CustomerRegionalTreeView';
 import CustomerRelationshipTreeView from './CustomerRelationshipTreeView';
 import CustomerSearchBar from './CustomerSearchBar';
-import { RelationshipProvider } from '../contexts/RelationshipContext';
+import { RelationshipProvider, useRelationship } from '../contexts/RelationshipContext';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
+
+// RelationshipProvider 내부에서 고객 삭제 이벤트를 처리하는 컴포넌트
+const RelationshipViewWithRefresh = ({ onCustomerSelect }) => {
+  const { loadAllRelationshipsData, refreshData } = useRelationship();
+  
+  // 고객 삭제 이벤트 리스너
+  useEffect(() => {
+    const handleCustomerDeleted = async () => {
+      console.log('RelationshipViewWithRefresh: customerDeleted event received, refreshing data');
+      // 캐시 완전 무효화 후 새로고침
+      try {
+        await refreshData();
+        await loadAllRelationshipsData(true);
+      } catch (error) {
+        console.error('Error refreshing relationship data:', error);
+      }
+    };
+    
+    console.log('RelationshipViewWithRefresh: adding customerDeleted event listener');
+    window.addEventListener('customerDeleted', handleCustomerDeleted);
+    
+    return () => {
+      console.log('RelationshipViewWithRefresh: removing customerDeleted event listener');
+      window.removeEventListener('customerDeleted', handleCustomerDeleted);
+    };
+  }, [loadAllRelationshipsData, refreshData]);
+  
+  return (
+    <CustomerRelationshipTreeView 
+      onCustomerSelect={onCustomerSelect}
+      selectedCustomerId={null}
+    />
+  );
+};
 
 const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustomerListSet, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated }) => {
   // 고객 목록 관리
@@ -650,9 +684,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           />
         ) : showRelationshipView ? (
           <RelationshipProvider>
-            <CustomerRelationshipTreeView 
+            <RelationshipViewWithRefresh 
               onCustomerSelect={handleCustomerNameClick}
-              selectedCustomerId={null}
             />
           </RelationshipProvider>
         ) : (
