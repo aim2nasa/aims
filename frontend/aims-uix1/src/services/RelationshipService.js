@@ -167,6 +167,10 @@ class RelationshipService {
           relationship: result.data
         });
         
+        // 모든 뷰 동기화를 위한 전역 이벤트 발생
+        console.log('RelationshipService: dispatching relationshipChanged event');
+        window.dispatchEvent(new CustomEvent('relationshipChanged'));
+        
         return result.data;
       } else {
         throw new Error(result.error || '관계 생성 실패');
@@ -195,6 +199,10 @@ class RelationshipService {
           customerId,
           relationshipId
         });
+        
+        // 모든 뷰 동기화를 위한 전역 이벤트 발생
+        console.log('RelationshipService: dispatching relationshipChanged event');
+        window.dispatchEvent(new CustomEvent('relationshipChanged'));
         
         return true;
       } else {
@@ -229,6 +237,10 @@ class RelationshipService {
           relationshipId,
           relationship: result.data
         });
+        
+        // 모든 뷰 동기화를 위한 전역 이벤트 발생
+        console.log('RelationshipService: dispatching relationshipChanged event');
+        window.dispatchEvent(new CustomEvent('relationshipChanged'));
         
         return result.data;
       } else {

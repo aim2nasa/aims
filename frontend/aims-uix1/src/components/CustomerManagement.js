@@ -22,42 +22,41 @@ import { RelationshipProvider, useRelationship } from '../contexts/RelationshipC
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-// RelationshipProvider 내부에서 관계 데이터 새로고침하는 컴포넌트
-const RelationshipViewWithRefresh = ({ onCustomerSelect, refreshTrigger }) => {
+// RelationshipProvider 내부에서 고객 삭제 이벤트를 처리하는 컴포넌트
+const RelationshipViewWithRefresh = ({ onCustomerSelect }) => {
   const { loadAllRelationshipsData, refreshData } = useRelationship();
   
-  // refreshTrigger 변경 시 새로고침
+  // 고객 삭제 및 관계 변경 이벤트 리스너
   useEffect(() => {
-    if (refreshTrigger > 0) {
-      console.log('RelationshipViewWithRefresh: refreshTrigger changed, refreshing data');
-      const refreshRelationshipData = async () => {
-        try {
-          await refreshData();
-          await loadAllRelationshipsData(true);
-        } catch (error) {
-          console.error('Error refreshing relationship data:', error);
-        }
-      };
-      refreshRelationshipData();
-    }
-  }, [refreshTrigger, loadAllRelationshipsData, refreshData]);
+    const handleDataChanged = async (eventType) => {
+      console.log(`RelationshipViewWithRefresh: ${eventType} event received, refreshing data`);
+      // 캐시 완전 무효화 후 새로고침
+      try {
+        await refreshData();
+        await loadAllRelationshipsData(true);
+      } catch (error) {
+        console.error('Error refreshing relationship data:', error);
+      }
+    };
+    
+    const handleCustomerDeleted = () => handleDataChanged('customerDeleted');
+    const handleRelationshipChanged = () => handleDataChanged('relationshipChanged');
+    
+    console.log('RelationshipViewWithRefresh: adding event listeners (customerDeleted, relationshipChanged)');
+    window.addEventListener('customerDeleted', handleCustomerDeleted);
+    window.addEventListener('relationshipChanged', handleRelationshipChanged);
+    
+    return () => {
+      console.log('RelationshipViewWithRefresh: removing event listeners');
+      window.removeEventListener('customerDeleted', handleCustomerDeleted);
+      window.removeEventListener('relationshipChanged', handleRelationshipChanged);
+    };
+  }, [loadAllRelationshipsData, refreshData]);
   
   return (
     <CustomerRelationshipTreeView 
       onCustomerSelect={onCustomerSelect}
       selectedCustomerId={null}
-      key={refreshTrigger} // key 변경으로 추가 보장
-    />
-  );
-};
-
-// 지역별 보기 컴포넌트 (트리거 기반)
-const RegionalViewWithRefresh = ({ onCustomerSelect, refreshTrigger }) => {
-  return (
-    <CustomerRegionalTreeView 
-      onCustomerSelect={onCustomerSelect}
-      selectedCustomerId={null}
-      key={refreshTrigger} // key 변경으로 컴포넌트 재렌더링 강제
     />
   );
 };
@@ -76,10 +75,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [searchFilters, setSearchFilters] = useState({});
   const [showRegionalView, setShowRegionalView] = useState(false);
   const [showRelationshipView, setShowRelationshipView] = useState(false);
-
-  // 모든 뷰 강제 새로고침을 위한 트리거들
-  const [regionalRefreshTrigger, setRegionalRefreshTrigger] = useState(0);
-  const [relationshipRefreshTrigger, setRelationshipRefreshTrigger] = useState(0);
 
   // 통합 모달 관리 - 외부 props 우선
   const [internalModalVisible, setInternalModalVisible] = useState(false);
@@ -335,32 +330,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       });
     }
   }, [editModalVisible, editingCustomer, form]);
-
-  // 고객 삭제 이벤트 리스너 - 모든 뷰 동시 새로고침 (모델-뷰 아키텍처 데이터 정합성 보장)
-  useEffect(() => {
-    const handleCustomerDeleted = () => {
-      console.log('CustomerManagement: customerDeleted event received, refreshing ALL views');
-      
-      // 1. 전체보기 새로고침
-      fetchCustomers(searchText, searchFilters);
-      
-      // 2. 지역별보기 새로고침 
-      setRegionalRefreshTrigger(prev => prev + 1);
-      
-      // 3. 관계별보기 새로고침
-      setRelationshipRefreshTrigger(prev => prev + 1);
-      
-      console.log('CustomerManagement: All views refresh triggered');
-    };
-    
-    console.log('CustomerManagement: adding customerDeleted event listener');
-    window.addEventListener('customerDeleted', handleCustomerDeleted);
-    
-    return () => {
-      console.log('CustomerManagement: removing customerDeleted event listener');
-      window.removeEventListener('customerDeleted', handleCustomerDeleted);
-    };
-  }, [searchText, searchFilters, fetchCustomers]);
 
   // 모달이 열릴 때 고객명 필드에 자동 포커스
   useEffect(() => {
@@ -714,15 +683,14 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           paddingBottom: '50px'
         }}>
         {showRegionalView ? (
-          <RegionalViewWithRefresh 
+          <CustomerRegionalTreeView 
             onCustomerSelect={handleCustomerNameClick}
-            refreshTrigger={regionalRefreshTrigger}
+            selectedCustomerId={null}
           />
         ) : showRelationshipView ? (
           <RelationshipProvider>
             <RelationshipViewWithRefresh 
               onCustomerSelect={handleCustomerNameClick}
-              refreshTrigger={relationshipRefreshTrigger}
             />
           </RelationshipProvider>
         ) : (
