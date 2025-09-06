@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tree, Card, Space, Typography, Badge, Spin, Tag } from 'antd';
 import { 
   FolderOutlined, 
@@ -28,73 +28,6 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   }, [loadAllRelationshipsData]);
 
 
-  // 가족 대표자 선정 함수 (첫 관계 설정자)
-  const selectFamilyRepresentative = useCallback((familyMembers, relationships) => {
-    
-    // 가족 관계가 있으면, 가장 먼저 "from"으로 등장한 사람을 대표로 선정
-    // 양방향 관계에서 동시에 생성되더라도, 처음 설정을 시작한 사람이 from이 됨
-    if (relationships && relationships.length > 0) {
-      // 모든 관계에서 from_customer로 등장하는 횟수를 계산
-      const fromCount = {};
-      
-      relationships.forEach(rel => {
-        const fromId = rel.from_customer?._id || rel.from_customer;
-        const fromCustomer = familyMembers.find(m => m._id === fromId);
-        
-        if (fromCustomer) {
-          if (!fromCount[fromId]) {
-            fromCount[fromId] = {
-              customer: fromCustomer,
-              count: 0,
-              earliestDate: null
-            };
-          }
-          fromCount[fromId].count++;
-          
-          const createdAt = rel.meta?.created_at;
-          if (createdAt) {
-            const relDate = new Date(createdAt);
-            if (!fromCount[fromId].earliestDate || relDate < fromCount[fromId].earliestDate) {
-              fromCount[fromId].earliestDate = relDate;
-            }
-          }
-        }
-      });
-      
-      // 가장 먼저 관계를 설정한 사람 찾기
-      // 1. 생성 시간이 가장 이른 관계의 from_customer
-      // 2. 시간이 같으면 고객 등록이 먼저인 사람
-      let representative = null;
-      let earliestDate = null;
-      
-      Object.values(fromCount).forEach(item => {
-        if (!earliestDate || (item.earliestDate && item.earliestDate < earliestDate)) {
-          earliestDate = item.earliestDate;
-          representative = item.customer;
-        } else if (item.earliestDate && item.earliestDate.getTime() === earliestDate.getTime()) {
-          // 시간이 같으면 고객 등록 순서로 비교
-          const currentCreated = new Date(representative.meta?.created_at || 0);
-          const itemCreated = new Date(item.customer.meta?.created_at || 0);
-          if (itemCreated < currentCreated) {
-            representative = item.customer;
-          }
-        }
-      });
-      
-      if (representative) {
-        return representative;
-      }
-    }
-    
-    // 관계 정보가 없거나 찾을 수 없으면 가장 먼저 등록된 멤버를 대표로
-    const sortedByCreation = [...familyMembers].sort((a, b) => {
-      const aCreated = new Date(a.meta?.created_at || 0);
-      const bCreated = new Date(b.meta?.created_at || 0);
-      return aCreated - bCreated;
-    });
-    
-    return sortedByCreation[0] || familyMembers[0];
-  }, []);
 
   // Context에서 받은 데이터 구조화
   const structuredData = useMemo(() => {
@@ -180,8 +113,23 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
         return familyGroup.has(fromId) && familyGroup.has(toId);
       });
       
-      // 대표자 선정
-      const representative = selectFamilyRepresentative(familyMembers, groupRelationships);
+      // 대표자 선정: DB에 저장된 family_representative 사용
+      let representative = null;
+      
+      // DB에서 family_representative 찾기
+      if (groupRelationships.length > 0) {
+        const relationshipWithRep = groupRelationships.find(rel => rel.family_representative);
+        if (relationshipWithRep) {
+          const repId = relationshipWithRep.family_representative._id || relationshipWithRep.family_representative;
+          representative = familyMembers.find(member => member._id === repId);
+        }
+      }
+      
+      // fallback: DB에 family_representative가 없으면 첫 번째 멤버를 대표로
+      if (!representative) {
+        representative = familyMembers[0];
+      }
+      
       const repName = representative.personal_info?.name || '이름없음';
       
       // 대표자의 모든 관계 수집
@@ -263,7 +211,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     });
     
     return result;
-  }, [allRelationshipsData, selectFamilyRepresentative]);
+  }, [allRelationshipsData]);
 
   // 새로운 구조에 맞는 Tree 데이터 생성
   const treeData = useMemo(() => {

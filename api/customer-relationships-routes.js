@@ -131,6 +131,9 @@ const setupCustomerRelationshipRoutes = (app, db) => {
 
       // 관계 데이터 생성
       const relationshipData = {
+        from_customer: new ObjectId(id),        // RightPane의 고객 (가족 대표)
+        related_customer: new ObjectId(to_customer_id),  // 선택된 상대방
+        family_representative: new ObjectId(id), // 가족 대표 명시적 저장
         relationship_info: {
           from_customer_id: new ObjectId(id),
           to_customer_id: new ObjectId(to_customer_id),
@@ -181,6 +184,9 @@ const setupCustomerRelationshipRoutes = (app, db) => {
           const reverseRelationshipData = {
             ...relationshipData,
             _id: undefined, // 새로운 _id 생성
+            from_customer: new ObjectId(to_customer_id),  // 역방향: 상대방이 from_customer
+            related_customer: new ObjectId(id),           // 역방향: 원래 고객이 related_customer
+            family_representative: new ObjectId(id),      // 가족 대표는 동일 (최초 관계 생성자)
             relationship_info: {
               ...relationshipData.relationship_info,
               from_customer_id: new ObjectId(to_customer_id),
