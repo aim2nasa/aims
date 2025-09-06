@@ -89,6 +89,12 @@ AIMS (Agent Intelligent Management System) is an intelligent document management
 - **Frontend Development**: WonderCastle (Windows 10 PC)
 - **Database**: MongoDB on `tars:27017`
 
+### ⚠️ 중요: 백엔드 수정 규칙
+- **백엔드 API 서버는 tars Linux 서버에서 운영 중**
+- **Claude는 백엔드 코드를 직접 수정할 수 없음**
+- **백엔드 수정이 필요한 경우 반드시 사용자에게 수정 요청**
+- **프론트엔드(WonderCastle)만 직접 수정 가능**
+
 ## Architecture
 
 The system is organized into functional modules:
