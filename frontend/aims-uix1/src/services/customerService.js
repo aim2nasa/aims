@@ -100,6 +100,13 @@ class CustomerService {
       
       if (response.data.success) {
         message.success('고객 정보가 수정되었습니다.');
+        
+        // 모든 뷰 동기화를 위한 전역 이벤트 발생
+        console.log('CustomerService: dispatching customerUpdated event');
+        window.dispatchEvent(new CustomEvent('customerUpdated', {
+          detail: { customerId, updatedData: customerData }
+        }));
+        
         return {
           success: true,
           data: response.data.data

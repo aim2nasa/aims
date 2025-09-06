@@ -20,6 +20,22 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
     fetchAllCustomers();
   }, []);
 
+  // 고객 정보 수정 이벤트 리스너 - 지역별 뷰 자동 새로고침
+  useEffect(() => {
+    const handleCustomerUpdated = (event) => {
+      console.log('CustomerRegionalTreeView: customerUpdated event received, reloading data');
+      fetchAllCustomers(); // 고객 데이터 다시 로드
+    };
+
+    console.log('CustomerRegionalTreeView: adding customerUpdated event listener');
+    window.addEventListener('customerUpdated', handleCustomerUpdated);
+    
+    return () => {
+      console.log('CustomerRegionalTreeView: removing customerUpdated event listener');
+      window.removeEventListener('customerUpdated', handleCustomerUpdated);
+    };
+  }, []);
+
   const fetchAllCustomers = async () => {
     setLoading(true);
     try {
