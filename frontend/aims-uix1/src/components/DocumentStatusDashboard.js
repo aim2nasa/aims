@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, BarChart3, Calendar, Hash } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link } from "lucide-react";
+import { Table, Space, Tag } from 'antd';
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
 
@@ -570,143 +571,6 @@ const CopyableId = ({ id }) => {
   );
 };
 
-// 페이지네이션 컴포넌트
-const Pagination = ({ currentPage, totalPages, itemsPerPage, totalItems, onPageChange, onItemsPerPageChange, isResponsive, onResponsiveModeChange }) => {
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
-  return (
-    <div style={{
-      background: 'var(--color-surface-1)',
-      borderRadius: '8px',
-      boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-      padding: '16px'
-    }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
-        {/* 페이지 정보 및 개수 설정 */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '14px', color: '#374151' }}>
-            Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of <strong>{totalItems}</strong> documents
-          </span>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* 반응형 모드 토글 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={isResponsive}
-                  onChange={(e) => onResponsiveModeChange(e.target.checked)}
-                  style={{
-                    cursor: 'pointer',
-                    accentColor: 'var(--color-primary)'
-                  }}
-                />
-                Auto-fit to screen
-              </label>
-            </div>
-            
-            {/* 수동 개수 설정 */}
-            {!isResponsive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>Show:</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-                  style={{
-                    border: '1px solid var(--color-border-medium)',
-                    borderRadius: '4px',
-                    padding: '4px 8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    backgroundColor: 'var(--color-input-bg)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>per page</span>
-              </div>
-            )}
-            
-            {/* 반응형 모드일 때 현재 아이템 수 표시 */}
-            {isResponsive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ 
-                  fontSize: '14px', 
-                  color: '#4b5563',
-                  fontWeight: 'normal',
-                  textDecoration: 'none'
-                }}>
-                  📱 {itemsPerPage} per page (auto)
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 페이지네이션 버튼 - 간단한 버전 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            style={{
-              padding: '8px 12px',
-              fontSize: '14px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-              opacity: currentPage === 1 ? 0.5 : 1
-            }}
-          >
-            이전
-          </button>
-
-          <span style={{ padding: '8px 12px', fontSize: '14px' }}>
-            {currentPage} / {totalPages}
-          </span>
-
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            style={{
-              padding: '8px 12px',
-              fontSize: '14px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-              opacity: currentPage === totalPages ? 0.5 : 1
-            }}
-          >
-            다음
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 
 
@@ -913,7 +777,6 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
 const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumentPreview, rightPaneVisible = false }) => {
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
-  const [paginatedDocuments, setPaginatedDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [apiHealth, setApiHealth] = useState(null);
@@ -927,10 +790,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 통신 관련 상태 - Polling만 사용
   const communicationMode = 'polling';
   
-  // 페이지네이션 상태
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isResponsive, setIsResponsive] = useState(true);
 
   // 문서 요약 모달 상태
   const [showSummaryModal, setShowSummaryModal] = useState(false);
@@ -946,65 +805,184 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
 
-  // 반응형 화면 크기 상태
-  const [screenSize, setScreenSize] = useState(window.innerWidth);
-  const isCompactMode = screenSize < 1200; // 1200px 이하에서 컴팩트 모드
-  const canShowStatusText = screenSize >= 1300 && !rightPaneVisible; // 1300px 이상이고 RightPane이 숨김일 때만 STATUS 텍스트 표시
-  const canShowActionsText = screenSize >= 1300 && !rightPaneVisible; // 1300px 이상이고 RightPane이 숨김일 때만 ACTIONS 텍스트 표시
-  
-  // Actions 레이아웃 모드 결정
-  const getActionsLayout = (screenWidth) => {
-    if (screenWidth >= 1400) return 'xl-row'; // 매우 넓은 화면: 더 넓은 버튼
-    if (screenWidth >= 1200) return 'l-row'; // 큰 화면: 넓은 버튼
-    if (screenWidth >= 900) return '1-row'; // 1줄 유지
-    if (screenWidth >= 700) return '2-row'; // 2줄로 표시 (2x2)
-    if (screenWidth >= 500) return '3-row'; // 3줄로 표시 (2+1+1)
-    return '4-row'; // 4줄로 표시 (1x4)
-  };
-  
-  const actionsLayout = getActionsLayout(screenSize);
-
-  // 브라우저 크기에 따른 아이템 수 계산
-  const calculateItemsPerPage = useCallback(() => {
-    if (!isResponsive) return itemsPerPage;
-    
-    // 헤더(약 120px) + 통계(약 150px) + 검색필터(약 120px) + 테이블헤더(약 40px) + 푸터(약 80px) = 약 510px
-    const fixedElementsHeight = 510;
-    
-    // 각 테이블 행 높이 약 50px
-    const rowHeight = 50;
-    
-    // 페이지네이션 공간 (약 80px) + 여유공간 (약 50px)
-    const paginationAndMargin = 130;
-    
-    const availableHeight = window.innerHeight - fixedElementsHeight - paginationAndMargin;
-    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
-    
-    // 최소 5개, 최대 50개로 제한
-    return Math.max(5, Math.min(maxItemsPerPage, 50));
-  }, [isResponsive, itemsPerPage]);
-
-  // 브라우저 크기 변경 감지
-  useEffect(() => {
-    const handleResize = () => {
-      const newScreenSize = window.innerWidth;
-      setScreenSize(newScreenSize);
-      
-      if (isResponsive) {
-        const newItemsPerPage = calculateItemsPerPage();
-        setItemsPerPage(newItemsPerPage);
+  // Ant Design Table 컬럼 정의
+  const columns = [
+    {
+      title: '문서명',
+      key: 'filename',
+      width: 300,
+      render: (_, document) => {
+        const filename = extractFilename(document);
+        const status = extractStatus(document);
+        const isCompleted = status === 'completed';
+        
+        return (
+          <Space>
+            <div style={{
+              backgroundColor: 'var(--color-primary-bg)',
+              padding: '4px',
+              borderRadius: '4px'
+            }}>
+              <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
+            </div>
+            <span 
+              style={{ 
+                fontWeight: 'bold', 
+                color: isCompleted ? '#1890ff' : '#111827',
+                cursor: isCompleted ? 'pointer' : 'default',
+                textDecoration: isCompleted ? 'underline' : 'none'
+              }}
+              onClick={() => {
+                if (isCompleted && onDocumentPreview) {
+                  onDocumentPreview(document);
+                }
+              }}
+              title={filename}
+            >
+              {filename}
+            </span>
+          </Space>
+        );
       }
-    };
-
-    // 초기 설정
-    if (isResponsive) {
-      const initialItemsPerPage = calculateItemsPerPage();
-      setItemsPerPage(initialItemsPerPage);
+    },
+    {
+      title: '상태',
+      key: 'status',
+      width: 120,
+      render: (_, document) => {
+        const status = extractStatus(document);
+        const statusConfig = {
+          completed: { color: 'green', text: '완료' },
+          processing: { color: 'blue', text: '처리중' },
+          error: { color: 'red', text: '오류' },
+          pending: { color: 'orange', text: '대기' }
+        };
+        const config = statusConfig[status] || { color: 'default', text: status };
+        return <Tag color={config.color}>{config.text}</Tag>;
+      }
+    },
+    {
+      title: '작업',
+      key: 'actions',
+      width: 280,
+      render: (_, document) => {
+        const status = extractStatus(document);
+        const isCompleted = status === 'completed';
+        
+        return (
+          <Space size="small">
+            <button 
+              onClick={() => handleDocumentClick(document)}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '500',
+                color: 'var(--color-success)',
+                backgroundColor: 'var(--color-success-bg)',
+                border: '1px solid var(--color-success-border)',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              <Eye style={{ width: '10px', height: '10px', marginRight: '2px' }} />
+              View
+            </button>
+            <button 
+              onClick={() => {
+                if (isCompleted) {
+                  handleDocumentSummary(document);
+                }
+              }}
+              disabled={!isCompleted}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '500',
+                color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-primary-bg)' : 'var(--color-bg-secondary)',
+                border: isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)',
+                borderRadius: '4px',
+                cursor: isCompleted ? 'pointer' : 'not-allowed',
+                opacity: isCompleted ? 1 : 0.6
+              }}
+            >
+              <FileText style={{ width: '10px', height: '10px', marginRight: '2px' }} />
+              Summary
+            </button>
+            <button 
+              onClick={() => {
+                if (isCompleted) {
+                  handleDocumentFullText(document);
+                }
+              }}
+              disabled={!isCompleted}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '500',
+                color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-purple-bg)' : 'var(--color-bg-secondary)',
+                border: isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)',
+                borderRadius: '4px',
+                cursor: isCompleted ? 'pointer' : 'not-allowed',
+                opacity: isCompleted ? 1 : 0.6
+              }}
+            >
+              <FileTextIcon style={{ width: '10px', height: '10px', marginRight: '2px' }} />
+              Full Text
+            </button>
+            <button 
+              onClick={() => {
+                if (isCompleted) {
+                  handleDocumentLink(document);
+                }
+              }}
+              disabled={!isCompleted}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: '500',
+                color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg-secondary)',
+                border: isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)',
+                borderRadius: '4px',
+                cursor: isCompleted ? 'pointer' : 'not-allowed',
+                opacity: isCompleted ? 1 : 0.6
+              }}
+            >
+              <Link style={{ width: '10px', height: '10px', marginRight: '2px' }} />
+              고객연결
+            </button>
+          </Space>
+        );
+      }
+    },
+    {
+      title: '진행률',
+      key: 'progress',
+      width: 100,
+      render: (_, document) => {
+        const progress = extractProgress(document);
+        return `${Math.round(progress)}%`;
+      }
+    },
+    {
+      title: '업로드일',
+      key: 'uploadDate',
+      width: 120,
+      render: (_, document) => {
+        const uploadedDate = extractUploadedDate(document);
+        if (!uploadedDate) return "Unknown";
+        const date = new Date(uploadedDate);
+        return date.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric'
+        });
+      }
     }
+  ];
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isResponsive, calculateItemsPerPage]);
 
   // 문서 목록 가져오기
   const fetchDocuments = useCallback(async (isInitialLoad = false) => {
@@ -1140,73 +1118,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     setFilteredDocuments(filtered);
   }, [documents, searchTerm, statusFilter]);
 
-  // 필터 조건 변경 시에만 페이지 리셋 (문서 업데이트는 제외)
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
 
-  // 페이지네이션 적용
-  useEffect(() => {
-    // 현재 페이지가 유효 범위를 벗어나면 조정
-    const maxPage = Math.ceil(filteredDocuments.length / itemsPerPage) || 1;
-    if (currentPage > maxPage) {
-      setCurrentPage(maxPage);
-      return;
-    }
-    
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginated = filteredDocuments.slice(startIndex, endIndex);
-    
-    // View 모달과 동일한 status를 위해 상세 데이터로 문서 업데이트
-    Promise.all(paginated.map(async (document) => {
-      try {
-        const docId = document.id || document._id;
-        const detailData = await apiService.getDocumentStatus(docId);
-        if (detailData) {
-          const merged = {
-            ...document,
-            ...detailData,
-            // snake_case를 camelCase로 변환
-            overallStatus: detailData.overall_status || detailData.overallStatus,
-            filename: document.filename || detailData.filename,
-            originalName: document.originalName || detailData.originalName,
-            uploadDate: document.uploadDate || detailData.uploadDate,
-          };
-          return merged;
-        }
-      } catch (error) {
-        console.error('상세 데이터 로드 실패:', document.id || document._id, error);
-      }
-      return document;
-    })).then(enhancedPaginated => {
-      setPaginatedDocuments(enhancedPaginated);
-    });
-  }, [filteredDocuments, currentPage, itemsPerPage]);
 
-  // 페이지네이션 관련 계산
-  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    // 페이지 변경 시 최상단으로 스크롤
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleItemsPerPageChange = (newItemsPerPage) => {
-    setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // 개수 변경 시 첫 페이지로 리셋
-  };
-
-  const handleResponsiveModeChange = (responsive) => {
-    setIsResponsive(responsive);
-    if (responsive) {
-      const newItemsPerPage = calculateItemsPerPage();
-      setItemsPerPage(newItemsPerPage);
-      setCurrentPage(1);
-    }
-  };
 
   // 문서 요약 조회 함수 (CenterPane.js 참고)
   const handleDocumentSummary = async (document) => {
@@ -1650,7 +1563,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div 
               onClick={() => {
                 setStatusFilter('all');
-                setCurrentPage(1);
               }}
               className={`dsd-stats-card all ${statusFilter === 'all' ? 'active' : ''}`}
               style={{
@@ -1686,7 +1598,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div 
               onClick={() => {
                 setStatusFilter('completed');
-                setCurrentPage(1);
               }}
               className={`dsd-stats-card completed ${statusFilter === 'completed' ? 'active' : ''}`}
               style={{
@@ -1722,7 +1633,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div 
               onClick={() => {
                 setStatusFilter('processing');
-                setCurrentPage(1);
               }}
               className={`dsd-stats-card processing ${statusFilter === 'processing' ? 'active' : ''}`}
               style={{
@@ -1758,7 +1668,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div 
               onClick={() => {
                 setStatusFilter('pending');
-                setCurrentPage(1);
               }}
               className={`dsd-stats-card pending ${statusFilter === 'pending' ? 'active' : ''}`}
               style={{
@@ -1794,7 +1703,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <div 
               onClick={() => {
                 setStatusFilter('error');
-                setCurrentPage(1);
               }}
               className={`dsd-stats-card error ${statusFilter === 'error' ? 'active' : ''}`}
               style={{
@@ -1931,433 +1839,32 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             </div>
           ) : (
             <div>
-              {paginatedDocuments.length > 0 ? (
+              {filteredDocuments.length > 0 ? (
                 <>
-                  {/* 문서 목록 테이블 */}
-                  <div style={{
-                    marginBottom: '24px',
-                    background: 'var(--color-surface-1)',
-                    borderRadius: '8px',
-                    boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-                    overflow: 'hidden',
-                    maxHeight: '70vh'
-                  }}>
-                    <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '70vh' }}>
-                      <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                            <thead style={{ backgroundColor: 'var(--color-bg-tertiary)', borderBottom: '1px solid var(--color-border-light)' }}>
-                              <tr>
-                                <th style={{
-                                  padding: '6px 12px',
-                                  textAlign: 'left',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : 'auto'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <FileText style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <FileText style={{ width: '14px', height: '14px' }} />
-                                      <span>Document</span>
-                                    </div>
-                                  )}
-                                </th>
-                                <th style={{
-                                  padding: '6px 12px',
-                                  textAlign: 'center',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : rightPaneVisible ? '35px' : canShowStatusText ? '100px' : '45px'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <AlertCircle style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <AlertCircle style={{ width: '14px', height: '14px' }} />
-                                      <span>Status</span>
-                                    </div>
-                                  )}
-                                </th>
-                                <th style={{
-                                  padding: '6px 12px',
-                                  textAlign: 'center',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : rightPaneVisible ? '90px' : actionsLayout === '4-row' ? '35px' : actionsLayout === '3-row' ? '70px' : actionsLayout === '2-row' ? '90px' : actionsLayout === 'l-row' ? '300px' : actionsLayout === 'xl-row' ? '380px' : '240px'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                                      <Eye style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <Eye style={{ width: '14px', height: '14px' }} />
-                                      <span>Actions</span>
-                                    </div>
-                                  )}
-                                </th>
-                                <th style={{
-                                  padding: '6px 12px',
-                                  textAlign: 'left',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : rightPaneVisible ? '60px' : '100px',
-                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '60px' : '100px'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <BarChart3 style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <BarChart3 style={{ width: '14px', height: '14px' }} />
-                                      <span>Progress</span>
-                                    </div>
-                                  )}
-                                </th>
-                                <th style={{
-                                  padding: '6px 6px',
-                                  textAlign: 'center',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : rightPaneVisible ? '70px' : '100px',
-                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '70px' : '100px'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <Calendar style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <Calendar style={{ width: '14px', height: '14px' }} />
-                                      <span>Uploaded</span>
-                                    </div>
-                                  )}
-                                </th>
-                                <th style={{
-                                  padding: '6px 12px',
-                                  textAlign: 'left',
-                                  fontSize: '10px',
-                                  fontWeight: '500',
-                                  color: 'var(--color-text-tertiary)',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  width: isCompactMode ? '30px' : rightPaneVisible ? '120px' : '160px',
-                                  minWidth: isCompactMode ? '30px' : rightPaneVisible ? '120px' : '160px'
-                                }}>
-                                  {!canShowStatusText ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <Hash style={{ width: '14px', height: '14px' }} />
-                                    </div>
-                                  ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                      <Hash style={{ width: '14px', height: '14px' }} />
-                                      <span>Document ID</span>
-                                    </div>
-                                  )}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody style={{ background: 'var(--color-surface-1)' }}>
-                              {paginatedDocuments.map((document, index) => {
-                                const filename = extractFilename(document);
-                                const status = extractStatus(document);
-                                
-                                
-                                const uploadedDate = extractUploadedDate(document);
-                                const isCompleted = status === 'completed';
-                                
-                                const formatDate = (dateString) => {
-                                  if (!dateString) return "Unknown";
-                                  const date = new Date(dateString);
-                                  const month = String(date.getMonth() + 1).padStart(2, '0');
-                                  const day = String(date.getDate()).padStart(2, '0');
-                                  return `${month}/${day}`;
-                                };
-                                
-                                return (
-                                  <tr 
-                                    key={document.id || document._id || index}
-                                    onClick={() => {
-                                      if (status === 'completed' && onDocumentPreview) {
-                                        onDocumentPreview(document);
-                                      }
-                                    }}
-                                    style={{
-                                      borderBottom: index < paginatedDocuments.length - 1 ? '1px solid #e5e7eb' : 'none',
-                                      cursor: status === 'completed' ? 'pointer' : 'default'
-                                    }}
-                                  >
-                                    <td style={{ padding: '8px 12px' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <div style={{
-                                          backgroundColor: 'var(--color-primary-bg)',
-                                          padding: '4px',
-                                          borderRadius: '4px',
-                                          marginRight: '8px'
-                                        }}>
-                                          <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
-                                        </div>
-                                        <div>
-                                          <p 
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (status === 'completed' && onDocumentPreview) {
-                                                onDocumentPreview(document);
-                                              }
-                                            }}
-                                            style={{
-                                              fontSize: '12px',
-                                              fontWeight: '500',
-                                              color: status === 'completed' ? '#3b82f6' : '#111827',
-                                              margin: '0',
-                                              overflow: 'hidden',
-                                              textOverflow: 'ellipsis',
-                                              whiteSpace: 'nowrap',
-                                              maxWidth: isCompactMode ? '150px' : rightPaneVisible ? '200px' : '250px',
-                                              cursor: status === 'completed' ? 'pointer' : 'default',
-                                              textDecoration: status === 'completed' ? 'underline' : 'none'
-                                            }} 
-                                            title={filename}
-                                          >
-                                            {filename}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                        <StatusBadge status={status} size="small" isCompact={!canShowStatusText} rightPaneVisible={rightPaneVisible} />
-                                      </div>
-                                    </td>
-                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <div style={{ 
-                                        display: 'flex', 
-                                        gap: actionsLayout === 'xl-row' ? '6px' : actionsLayout === 'l-row' ? '4px' : '2px',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        flexWrap: actionsLayout === '1-row' || actionsLayout === 'l-row' || actionsLayout === 'xl-row' ? 'nowrap' : 'wrap',
-                                        width: '100%',
-                                        minHeight: '24px',
-                                        maxHeight: '48px'
-                                      }}>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDocumentClick(document);
-                                          }}
-                                          style={{
-                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
-                                            fontSize: '10px',
-                                            fontWeight: '500',
-                                            color: 'var(--color-success)',
-                                            backgroundColor: rightPaneVisible ? 'transparent' : 'var(--color-success-bg)',
-                                            border: rightPaneVisible ? 'none' : '1px solid var(--color-success-border)',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            height: '20px',
-                                            minHeight: '20px',
-                                            maxHeight: '20px',
-                                            minWidth: canShowActionsText ? '60px' : '20px',
-                                            whiteSpace: 'nowrap'
-                                          }}
-                                        >
-                                          <Eye style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
-                                          {canShowActionsText && 'View'}
-                                        </button>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (isCompleted) {
-                                              handleDocumentSummary(document);
-                                            }
-                                          }}
-                                          disabled={!isCompleted}
-                                          style={{
-                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
-                                            fontSize: '10px',
-                                            fontWeight: '500',
-                                            color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-primary-bg)' : 'var(--color-bg-secondary)'),
-                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)'),
-                                            borderRadius: '4px',
-                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6,
-                                            height: '20px',
-                                            minHeight: '20px',
-                                            maxHeight: '20px',
-                                            minWidth: canShowActionsText ? '60px' : '20px',
-                                            whiteSpace: 'nowrap'
-                                          }}
-                                          title={!canShowActionsText ? "Summary" : ""}
-                                        >
-                                          <FileText style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
-                                          {canShowActionsText && 'Summary'}
-                                        </button>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (isCompleted) {
-                                              handleDocumentFullText(document);
-                                            }
-                                          }}
-                                          disabled={!isCompleted}
-                                          style={{
-                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
-                                            fontSize: '10px',
-                                            fontWeight: '500',
-                                            color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-purple-bg)' : 'var(--color-bg-secondary)'),
-                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)'),
-                                            borderRadius: '4px',
-                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6,
-                                            height: '20px',
-                                            minHeight: '20px',
-                                            maxHeight: '20px',
-                                            minWidth: canShowActionsText ? '60px' : '20px',
-                                            whiteSpace: 'nowrap'
-                                          }}
-                                          title={!canShowActionsText ? "Full Text" : ""}
-                                        >
-                                          <FileTextIcon style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
-                                          {canShowActionsText && 'Full Text'}
-                                        </button>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (isCompleted) {
-                                              handleDocumentLink(document);
-                                            }
-                                          }}
-                                          disabled={!isCompleted}
-                                          style={{
-                                            padding: actionsLayout === 'xl-row' ? '3px 10px' : actionsLayout === 'l-row' ? '3px 8px' : '2px 6px',
-                                            fontSize: '10px',
-                                            fontWeight: '500',
-                                            color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-                                            backgroundColor: rightPaneVisible ? 'transparent' : (isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg-secondary)'),
-                                            border: rightPaneVisible ? 'none' : (isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)'),
-                                            borderRadius: '4px',
-                                            cursor: isCompleted ? 'pointer' : 'not-allowed',
-                                            opacity: isCompleted ? 1 : 0.6,
-                                            height: '20px',
-                                            minHeight: '20px',
-                                            maxHeight: '20px',
-                                            minWidth: canShowActionsText ? '60px' : '20px',
-                                            whiteSpace: 'nowrap'
-                                          }}
-                                          title={!canShowActionsText ? "고객연결" : ""}
-                                        >
-                                          <Link style={{ width: '10px', height: '10px', marginRight: canShowActionsText ? '2px' : '0', display: 'inline' }} />
-                                          {canShowActionsText && '고객연결'}
-                                        </button>
-                                      </div>
-                                    </td>
-                                    <td style={{ padding: '8px 12px' }}>
-                                      {isCompactMode ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                          <span style={{
-                                            fontSize: '10px',
-                                            color: 'var(--color-text-tertiary)',
-                                            fontWeight: '500'
-                                          }}>
-                                            {Math.round(extractProgress(document))}%
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                          <div style={{ flex: '1' }}>
-                                            <div style={{
-                                              width: '100%',
-                                              backgroundColor: '#e5e7eb',
-                                              borderRadius: '3px',
-                                              height: '6px'
-                                            }}>
-                                              <div style={{
-                                                height: '6px',
-                                                borderRadius: '3px',
-                                                backgroundColor: '#10b981',
-                                                width: '100%'
-                                              }} />
-                                            </div>
-                                          </div>
-                                          <span style={{
-                                            fontSize: '10px',
-                                            color: 'var(--color-text-tertiary)',
-                                            fontWeight: '500',
-                                            minWidth: '30px'
-                                          }}>
-                                            100%
-                                          </span>
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td style={{ padding: '8px 6px', textAlign: 'center' }}>
-                                      <div style={{ 
-                                        fontSize: '10px', 
-                                        color: 'var(--color-text-tertiary)',
-                                        fontFamily: 'monospace'
-                                      }}>
-                                        {formatDate(uploadedDate)}
-                                      </div>
-                                    </td>
-                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                      <div style={{
-                                        fontSize: '10px',
-                                        fontFamily: 'monospace',
-                                        color: '#6b7280'
-                                      }}>
-                                        {document.id || document._id || 'unknown-id'}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                      
-                      {/* 페이지네이션을 스크롤 컨테이너 안으로 이동 */}
-                      <div style={{ 
-                        borderTop: '1px solid var(--color-border-light)', 
-                        backgroundColor: 'var(--color-surface-1)',
-                        padding: '16px',
-                        position: 'sticky',
-                        bottom: 0,
-                        zIndex: 10
-                      }}>
-                        <Pagination
-                          currentPage={currentPage}
-                          totalPages={totalPages}
-                          itemsPerPage={itemsPerPage}
-                          totalItems={filteredDocuments.length}
-                          onPageChange={handlePageChange}
-                          onItemsPerPageChange={handleItemsPerPageChange}
-                          isResponsive={isResponsive}
-                          onResponsiveModeChange={handleResponsiveModeChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Ant Design Table */}
+                  <Table
+                    columns={columns}
+                    dataSource={filteredDocuments}
+                    rowKey={(record) => record.id || record._id}
+                    loading={loading}
+                    scroll={{ 
+                      x: 800,
+                      y: 'calc(70vh - 200px)'
+                    }}
+                    tableLayout="fixed"
+                    onRow={(document) => ({
+                      onClick: () => {
+                        const status = extractStatus(document);
+                        if (status === 'completed' && onDocumentPreview) {
+                          onDocumentPreview(document);
+                        }
+                      },
+                      style: {
+                        cursor: extractStatus(document) === 'completed' ? 'pointer' : 'default'
+                      }
+                    })}
+                    pagination={false}
+                  />
                 </>
               ) : (
                 <>
@@ -2379,16 +1886,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   </p>
                 </div>
                 
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={filteredDocuments.length}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  isResponsive={isResponsive}
-                  onResponsiveModeChange={handleResponsiveModeChange}
-                />
                 </>
               )}
             </div>
