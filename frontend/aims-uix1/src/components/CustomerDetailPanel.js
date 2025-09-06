@@ -6,7 +6,7 @@ import {
 import { 
   UserOutlined, FileTextOutlined, LinkOutlined,
   EditOutlined, HistoryOutlined, CloseOutlined, DeleteOutlined, ReloadOutlined,
-  TeamOutlined
+  TeamOutlined, MobileOutlined, PhoneOutlined, BankOutlined
 } from '@ant-design/icons';
 import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import axios from 'axios';
@@ -533,7 +533,46 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                     }
                   </Descriptions.Item>
                   <Descriptions.Item label="연락처">
-                    {customer.personal_info?.phone || '-'}
+                    {(() => {
+                      const mobilePhone = customer.personal_info?.mobile_phone || customer.personal_info?.phone; // 호환성
+                      const homePhone = customer.personal_info?.home_phone;
+                      const workPhone = customer.personal_info?.work_phone;
+                      
+                      const contacts = [];
+                      
+                      if (mobilePhone) {
+                        contacts.push(
+                          <div key="mobile" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                            <MobileOutlined style={{ color: '#52c41a', marginRight: '6px' }} />
+                            <span>{mobilePhone}</span>
+                          </div>
+                        );
+                      }
+                      
+                      if (homePhone) {
+                        contacts.push(
+                          <div key="home" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                            <PhoneOutlined style={{ color: '#fa8c16', marginRight: '6px' }} />
+                            <span>{homePhone}</span>
+                          </div>
+                        );
+                      }
+                      
+                      if (workPhone) {
+                        contacts.push(
+                          <div key="work" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                            <BankOutlined style={{ color: '#722ed1', marginRight: '6px' }} />
+                            <span>{workPhone}</span>
+                          </div>
+                        );
+                      }
+                      
+                      return contacts.length > 0 ? (
+                        <div>
+                          {contacts}
+                        </div>
+                      ) : '-';
+                    })()}
                   </Descriptions.Item>
                   <Descriptions.Item label="이메일">
                     {customer.personal_info?.email || '-'}

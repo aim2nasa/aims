@@ -7,7 +7,7 @@ import {
 import { Button } from './common';
 import { 
   PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined, MailOutlined, MobileOutlined,
-  SearchOutlined
+  SearchOutlined, BankOutlined
 } from '@ant-design/icons';
 import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
 import dayjs from 'dayjs';
@@ -318,7 +318,9 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         name_en: editingCustomer.personal_info?.name_en,
         birth_date: editingCustomer.personal_info?.birth_date ? dayjs(editingCustomer.personal_info.birth_date) : null,
         gender: editingCustomer.personal_info?.gender,
-        phone: editingCustomer.personal_info?.phone,
+        mobile_phone: editingCustomer.personal_info?.mobile_phone || editingCustomer.personal_info?.phone, // 호환성을 위해
+        home_phone: editingCustomer.personal_info?.home_phone,
+        work_phone: editingCustomer.personal_info?.work_phone,
         email: editingCustomer.personal_info?.email,
         postal_code: editingCustomer.personal_info?.address?.postal_code,
         address1: address1,
@@ -429,7 +431,9 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           name_en: values.name_en,
           birth_date: values.birth_date ? values.birth_date.toDate() : null,
           gender: values.gender,
-          phone: values.phone,
+          mobile_phone: values.mobile_phone,
+          home_phone: values.home_phone,
+          work_phone: values.work_phone,
           email: values.email,
           address: {
             postal_code: values.postal_code,
@@ -540,52 +544,78 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     {
       title: '연락처',
       key: 'contact',
-      width: 120,
+      width: 140,
       render: (_, record) => {
-        const phone = record.personal_info?.phone;
+        const mobilePhone = record.personal_info?.mobile_phone || record.personal_info?.phone; // 호환성
+        const homePhone = record.personal_info?.home_phone;
+        const workPhone = record.personal_info?.work_phone;
         const email = record.personal_info?.email;
         
-        // 휴대폰번호 판별 함수 (010, 011, 016, 017, 018, 019로 시작하는 번호)
-        const isMobilePhone = (phoneNumber) => {
-          if (!phoneNumber) return false;
-          const cleanNumber = phoneNumber.replace(/[-\s]/g, '');
-          return /^01[016789]/.test(cleanNumber);
-        };
+        const contacts = [];
+        
+        // 휴대폰
+        if (mobilePhone) {
+          contacts.push(
+            <MobileOutlined 
+              key="mobile"
+              style={{ 
+                color: '#52c41a', 
+                fontSize: '18px',
+                cursor: 'pointer'
+              }}
+              title={`휴대폰: ${mobilePhone}`}
+            />
+          );
+        }
+        
+        // 집전화
+        if (homePhone) {
+          contacts.push(
+            <PhoneOutlined 
+              key="home"
+              style={{ 
+                color: '#fa8c16', 
+                fontSize: '18px',
+                cursor: 'pointer'
+              }}
+              title={`집전화: ${homePhone}`}
+            />
+          );
+        }
+        
+        // 직장번호
+        if (workPhone) {
+          contacts.push(
+            <BankOutlined 
+              key="work"
+              style={{ 
+                color: '#722ed1', 
+                fontSize: '18px',
+                cursor: 'pointer'
+              }}
+              title={`직장번호: ${workPhone}`}
+            />
+          );
+        }
+        
+        // 이메일
+        if (email) {
+          contacts.push(
+            <MailOutlined 
+              key="email"
+              style={{ 
+                color: '#1890ff', 
+                fontSize: '18px',
+                cursor: 'pointer'
+              }}
+              title={`이메일: ${email}`}
+            />
+          );
+        }
         
         return (
-          <Space size="middle">
-            {phone && (
-              isMobilePhone(phone) ? (
-                <MobileOutlined 
-                  style={{ 
-                    color: '#52c41a', 
-                    fontSize: '18px',
-                    cursor: 'pointer'
-                  }}
-                  title={`휴대폰: ${phone}`}
-                />
-              ) : (
-                <PhoneOutlined 
-                  style={{ 
-                    color: '#fa8c16', 
-                    fontSize: '18px',
-                    cursor: 'pointer'
-                  }}
-                  title={`전화: ${phone}`}
-                />
-              )
-            )}
-            {email && (
-              <MailOutlined 
-                style={{ 
-                  color: '#1890ff', 
-                  fontSize: '18px',
-                  cursor: 'pointer'
-                }}
-                title={`이메일: ${email}`}
-              />
-            )}
-            {!phone && !email && (
+          <Space size="small">
+            {contacts.length > 0 ? contacts : (
               <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>-</span>
             )}
           </Space>
@@ -897,9 +927,23 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                 </Select>
               </Form.Item>
               
-              <Form.Item label="휴대폰번호" name="phone">
-                <Input />
-              </Form.Item>
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item label="휴대폰번호" name="mobile_phone">
+                    <Input placeholder="010-1234-5678" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="집전화" name="home_phone">
+                    <Input placeholder="02-123-4567" />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="직장번호" name="work_phone">
+                    <Input placeholder="02-987-6543" />
+                  </Form.Item>
+                </Col>
+              </Row>
               
               <Form.Item label="이메일" name="email">
                 <Input type="email" />
