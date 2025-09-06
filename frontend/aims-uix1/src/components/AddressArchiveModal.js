@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Timeline, Empty, Spin, Tag, Typography, Space } from 'antd';
-import { HomeOutlined, HistoryOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { Modal, Empty, Spin, Tag, Typography, Space } from 'antd';
+import { HomeOutlined, HistoryOutlined } from '@ant-design/icons';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => {
   const [addressHistory, setAddressHistory] = useState([]);
@@ -119,46 +119,66 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
               </Text>
             </div>
 
-            <Timeline
-              mode="left"
-              items={addressHistory.map((item, index) => {
+            <div>
+              {addressHistory.map((item, index) => {
                 const isFirst = index === 0;
                 const changes = index < addressHistory.length - 1 
                   ? getAddressChanges(item.address, addressHistory[index + 1].address)
                   : [];
 
-                return {
-                  key: item._id || index,
-                  color: isFirst ? 'green' : 'blue',
-                  dot: isFirst ? <HomeOutlined style={{ color: 'green' }} /> : <HistoryOutlined />,
-                  label: (
-                    <div style={{ width: '120px', textAlign: 'right' }}>
-                      <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                        <CalendarOutlined /> {new Date(item.changed_at).toLocaleDateString('ko-KR')}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-                        {new Date(item.changed_at).toLocaleTimeString('ko-KR')}
+                return (
+                  <div key={item._id || index} style={{ display: 'flex', marginBottom: '20px' }}>
+                    {/* 날짜/시간 */}
+                    <div style={{ width: '140px', textAlign: 'right', fontSize: '11px', paddingRight: '20px', paddingTop: '4px', flexShrink: 0 }}>
+                      <div style={{ color: 'var(--color-text-secondary)' }}>
+                        {new Date(item.changed_at).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'numeric', 
+                          day: 'numeric'
+                        })} {new Date(item.changed_at).toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </div>
                     </div>
-                  ),
-                  children: (
-                    <div style={{ paddingBottom: '16px' }}>
+
+                    {/* 아이콘 */}
+                    <div style={{ 
+                      width: '24px', 
+                      height: '24px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      backgroundColor: isFirst ? 'green' : '#1890ff',
+                      borderRadius: '50%',
+                      color: 'white',
+                      fontSize: '12px',
+                      marginRight: '16px',
+                      flexShrink: 0,
+                      marginTop: '2px'
+                    }}>
+                      {isFirst ? <HomeOutlined /> : <HistoryOutlined />}
+                    </div>
+
+                    {/* 주소 내용 */}
+                    <div style={{ flex: 1 }}>
                       {isFirst && (
-                        <Tag color="green" style={{ marginBottom: '8px' }}>현재 주소</Tag>
+                        <Tag color="green" style={{ marginBottom: '8px', fontSize: '11px' }}>현재 주소</Tag>
                       )}
                       
                       <div style={{ 
                         fontWeight: 'bold', 
                         fontSize: '14px',
                         color: 'var(--color-text-primary)',
-                        marginBottom: '8px'
+                        marginBottom: '6px',
+                        lineHeight: '1.4'
                       }}>
                         📍 {formatAddress(item.address)}
                       </div>
                       
-                      {item.reason && (
+                      {item.reason && item.reason !== '현재 주소' && (
                         <div style={{ marginBottom: '6px' }}>
-                          <Tag color={getReasonTagColor(item.reason)}>
+                          <Tag color={getReasonTagColor(item.reason)} style={{ fontSize: '11px' }}>
                             {item.reason}
                           </Tag>
                         </div>
@@ -169,12 +189,6 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
                           <Text type="secondary" style={{ fontSize: '12px' }}>
                             변경사항: {changes.join(', ')}
                           </Text>
-                        </div>
-                      )}
-                      
-                      {item.changed_by && (
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>
-                          <UserOutlined /> {item.changed_by}에 의해 변경됨
                         </div>
                       )}
                       
@@ -189,13 +203,14 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
                         </div>
                       )}
                     </div>
-                  )
-                };
+                  </div>
+                );
               })}
-            />
+            </div>
           </div>
         )}
       </div>
+
     </Modal>
   );
 };
