@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { Button } from './common';
 import { 
-  PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined,
+  PlusOutlined, UserOutlined, FileTextOutlined, PhoneOutlined, MailOutlined, MobileOutlined,
   SearchOutlined
 } from '@ant-design/icons';
 import { getCustomerTypeIconWithColor } from '../utils/customerUtils';
@@ -539,15 +539,58 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     },
     {
       title: '연락처',
-      dataIndex: ['personal_info', 'phone'],
-      key: 'phone',
-      width: 150,
-      render: phone => phone && (
-        <Space>
-          <PhoneOutlined />
-          <span>{phone}</span>
-        </Space>
-      )
+      key: 'contact',
+      width: 120,
+      render: (_, record) => {
+        const phone = record.personal_info?.phone;
+        const email = record.personal_info?.email;
+        
+        // 휴대폰번호 판별 함수 (010, 011, 016, 017, 018, 019로 시작하는 번호)
+        const isMobilePhone = (phoneNumber) => {
+          if (!phoneNumber) return false;
+          const cleanNumber = phoneNumber.replace(/[-\s]/g, '');
+          return /^01[016789]/.test(cleanNumber);
+        };
+        
+        return (
+          <Space size="middle">
+            {phone && (
+              isMobilePhone(phone) ? (
+                <MobileOutlined 
+                  style={{ 
+                    color: '#52c41a', 
+                    fontSize: '18px',
+                    cursor: 'pointer'
+                  }}
+                  title={`휴대폰: ${phone}`}
+                />
+              ) : (
+                <PhoneOutlined 
+                  style={{ 
+                    color: '#fa8c16', 
+                    fontSize: '18px',
+                    cursor: 'pointer'
+                  }}
+                  title={`전화: ${phone}`}
+                />
+              )
+            )}
+            {email && (
+              <MailOutlined 
+                style={{ 
+                  color: '#1890ff', 
+                  fontSize: '18px',
+                  cursor: 'pointer'
+                }}
+                title={`이메일: ${email}`}
+              />
+            )}
+            {!phone && !email && (
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>-</span>
+            )}
+          </Space>
+        );
+      }
     },
     {
       title: '고객 유형',
