@@ -188,52 +188,14 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       // 가족대표 찾기 (CustomerRelationshipTreeView와 동일한 로직 사용)
       let familyRepId = null;
       
-      // 모든 관계에서 from_customer로 등장하는 횟수를 계산
-      const fromCount = {};
-      
-      familyRelationships.forEach(rel => {
-        const fromId = rel.from_customer?._id || rel.from_customer;
-        const fromCustomer = customers.find(c => c._id === fromId);
-        
-        if (fromCustomer) {
-          if (!fromCount[fromId]) {
-            fromCount[fromId] = {
-              customer: fromCustomer,
-              count: 0,
-              earliestDate: null
-            };
-          }
-          fromCount[fromId].count++;
-          
-          const createdAt = rel.meta?.created_at;
-          if (createdAt) {
-            const relDate = new Date(createdAt);
-            if (!fromCount[fromId].earliestDate || relDate < fromCount[fromId].earliestDate) {
-              fromCount[fromId].earliestDate = relDate;
-            }
-          }
+      // DB에서 family_representative 찾기
+      if (familyRelationships.length > 0) {
+        const relationshipWithRep = familyRelationships.find(rel => rel.family_representative);
+        if (relationshipWithRep) {
+          const repId = relationshipWithRep.family_representative._id || relationshipWithRep.family_representative;
+          familyRepId = repId;
         }
-      });
-      
-      // 가장 먼저 관계를 설정한 사람 찾기
-      let representative = null;
-      let repEarliestDate = null;
-      
-      Object.values(fromCount).forEach(item => {
-        if (!repEarliestDate || (item.earliestDate && item.earliestDate < repEarliestDate)) {
-          repEarliestDate = item.earliestDate;
-          representative = item.customer;
-        } else if (item.earliestDate && item.earliestDate.getTime() === repEarliestDate.getTime()) {
-          // 시간이 같으면 고객 등록 순서로 비교
-          const currentCreated = new Date(representative.meta?.created_at || 0);
-          const itemCreated = new Date(item.customer.meta?.created_at || 0);
-          if (itemCreated < currentCreated) {
-            representative = item.customer;
-          }
-        }
-      });
-      
-      familyRepId = representative?._id;
+      }
       
       // 현재 고객이 가족대표인 경우에만 가족관계 추가 가능
       setCanAddFamilyRelation(familyRepId === customerId);
