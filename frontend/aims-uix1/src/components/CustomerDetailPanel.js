@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import CustomerRelationshipDetail from './CustomerRelationshipDetail';
 import FamilyRelationshipModal from './FamilyRelationshipModal';
+import AddressArchiveModal from './AddressArchiveModal';
 import { useRelationship } from '../contexts/RelationshipContext';
 
 const { TabPane } = Tabs;
@@ -35,6 +36,9 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   
   // 가족 관계 모달 상태
   const [showFamilyRelationshipModal, setShowFamilyRelationshipModal] = useState(false);
+
+  // 주소 보관소 모달 상태
+  const [addressArchiveVisible, setAddressArchiveVisible] = useState(false);
 
   const fetchCustomerDetail = useCallback(async () => {
     setLoading(true);
@@ -536,13 +540,29 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                   </Descriptions.Item>
                   <Descriptions.Item label="주소">
                     {customer.personal_info?.address ? (
-                      <div>
-                        <div style={{ fontSize: '12px' }}>
-                          [{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '12px' }}>
+                            [{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}
+                          </div>
+                          {customer.personal_info.address.address2 && (
+                            <div style={{ fontSize: '12px' }}>{customer.personal_info.address.address2}</div>
+                          )}
                         </div>
-                        {customer.personal_info.address.address2 && (
-                          <div style={{ fontSize: '12px' }}>{customer.personal_info.address.address2}</div>
-                        )}
+                        <Button 
+                          variant="link"
+                          size="small"
+                          icon={<HistoryOutlined />}
+                          onClick={() => setAddressArchiveVisible(true)}
+                          style={{ 
+                            padding: '2px 6px',
+                            fontSize: '11px',
+                            height: 'auto',
+                            marginLeft: '8px'
+                          }}
+                        >
+                          보관소
+                        </Button>
                       </div>
                     ) : '-'}
                   </Descriptions.Item>
@@ -673,6 +693,14 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         onCancel={handleCloseFamilyRelationshipModal}
         customerId={customerId}
         onSuccess={handleFamilyRelationshipSuccess}
+      />
+
+      {/* 주소 보관소 모달 */}
+      <AddressArchiveModal
+        visible={addressArchiveVisible}
+        onClose={() => setAddressArchiveVisible(false)}
+        customerId={customerId}
+        customerName={customer?.personal_info?.name}
       />
 
     </div>

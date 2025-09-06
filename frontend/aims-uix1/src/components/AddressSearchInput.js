@@ -43,6 +43,9 @@ const AddressSearchInput = ({
     if (onChange) {
       onChange(newAddress);
     }
+    
+    // 모달 닫기
+    setModalVisible(false);
   };
 
   // 주소 검색 버튼 클릭

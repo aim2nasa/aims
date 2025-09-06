@@ -972,11 +972,56 @@ app.put('/api/customers/:id', async (req, res) => {
       });
     }
 
+    // 기존 고객 정보 조회 (주소 변경 이력 저장을 위해)
+    const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!existingCustomer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 주소 변경 여부 확인 및 이력 저장
+    const newAddress = updateData.personal_info?.address;
+    const oldAddress = existingCustomer.personal_info?.address;
+    
+    let addressChanged = false;
+    if (newAddress && oldAddress) {
+      // 주소 변경 여부 체크
+      addressChanged = (
+        newAddress.postal_code !== oldAddress.postal_code ||
+        newAddress.address1 !== oldAddress.address1 ||
+        newAddress.address2 !== oldAddress.address2
+      );
+
+      // 주소가 변경된 경우 이전 주소를 이력에 저장
+      if (addressChanged && oldAddress) {
+        const historyRecord = {
+          customer_id: new ObjectId(id),
+          address: oldAddress,
+          changed_at: new Date(),
+          reason: updateData.address_change_reason || '고객 요청',
+          changed_by: updateData.modified_by || '시스템',
+          notes: updateData.address_change_notes || ''
+        };
+
+        await db.collection('address_history').insertOne(historyRecord);
+        console.log(`✅ 고객 ${id}의 이전 주소가 보관소에 저장됨`);
+      }
+    }
+
+    // 기존 고객 정보 업데이트 로직
     const updateFields = {
       ...updateData,
       'meta.updated_at': new Date(),
       'meta.last_modified_by': updateData.modified_by || null
     };
+
+    // 주소 변경 관련 임시 필드 제거 (DB에 저장하지 않음)
+    delete updateFields.address_change_reason;
+    delete updateFields.address_change_notes;
 
     const result = await db.collection(CUSTOMERS_COLLECTION)
       .updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
@@ -990,7 +1035,8 @@ app.put('/api/customers/:id', async (req, res) => {
 
     res.json({
       success: true,
-      message: '고객 정보가 성공적으로 수정되었습니다.'
+      message: '고객 정보가 성공적으로 수정되었습니다.',
+      address_archived: addressChanged
     });
   } catch (error) {
     console.error('고객 수정 오류:', error);
@@ -1560,5 +1606,131 @@ app.get('/api/address/search', async (req, res) => {
     });
   }
 });
+
+// ==================== 주소 보관소 관리 API ====================
+
+/**
+ * 고객 주소 이력 조회 API
+ */
+app.get('/api/customers/:id/address-history', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    // 고객 존재 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 주소 이력 조회 (현재 주소 + 이력)
+    const addressHistory = [];
+    
+    // 1. 현재 주소 추가
+    if (customer.personal_info?.address) {
+      addressHistory.push({
+        _id: 'current',
+        address: customer.personal_info.address,
+        changed_at: customer.meta?.updated_at || customer.meta?.created_at,
+        reason: '현재 주소',
+        changed_by: '시스템',
+        is_current: true
+      });
+    }
+
+    // 2. 이력 주소들 추가 (address_history 컬렉션에서 조회)
+    const historyRecords = await db.collection('address_history')
+      .find({ customer_id: new ObjectId(id) })
+      .sort({ changed_at: -1 })
+      .toArray();
+
+    historyRecords.forEach(record => {
+      addressHistory.push({
+        _id: record._id,
+        address: record.address,
+        changed_at: record.changed_at,
+        reason: record.reason || '주소 변경',
+        changed_by: record.changed_by || '시스템',
+        notes: record.notes,
+        is_current: false
+      });
+    });
+
+    res.json({
+      success: true,
+      data: addressHistory
+    });
+
+  } catch (error) {
+    console.error('주소 이력 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '주소 이력 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 주소 이력 저장 API (내부 사용)
+ */
+app.post('/api/customers/:id/address-history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { previous_address, reason, changed_by, notes } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 고객 ID입니다.'
+      });
+    }
+
+    if (!previous_address) {
+      return res.status(400).json({
+        success: false,
+        error: '이전 주소 정보가 필요합니다.'
+      });
+    }
+
+    // 주소 이력 저장
+    const historyRecord = {
+      customer_id: new ObjectId(id),
+      address: previous_address,
+      changed_at: new Date(),
+      reason: reason || '주소 변경',
+      changed_by: changed_by || '시스템',
+      notes: notes || ''
+    };
+
+    await db.collection('address_history').insertOne(historyRecord);
+
+    res.json({
+      success: true,
+      message: '주소 이력이 저장되었습니다.',
+      history_id: historyRecord._id
+    });
+
+  } catch (error) {
+    console.error('주소 이력 저장 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '주소 이력 저장에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
 
 module.exports = app;
