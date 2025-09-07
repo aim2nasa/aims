@@ -878,10 +878,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 fontSize: '10px',
                 fontWeight: '500',
                 color: 'var(--color-success)',
-                backgroundColor: 'var(--color-success-bg)',
+                backgroundColor: 'transparent',
                 border: '1px solid var(--color-success-border)',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = 'none';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
               <Eye style={{ width: '10px', height: '10px', marginRight: '2px' }} />
@@ -899,11 +908,24 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-primary-bg)' : 'var(--color-bg-secondary)',
+                backgroundColor: 'transparent',
                 border: isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)',
                 borderRadius: '4px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6
+                opacity: isCompleted ? 1 : 0.6,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.2)';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
               <FileText style={{ width: '10px', height: '10px', marginRight: '2px' }} />
@@ -921,11 +943,24 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-purple-bg)' : 'var(--color-bg-secondary)',
+                backgroundColor: 'transparent',
                 border: isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)',
                 borderRadius: '4px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6
+                opacity: isCompleted ? 1 : 0.6,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.2)';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
               <FileTextIcon style={{ width: '10px', height: '10px', marginRight: '2px' }} />
@@ -943,11 +978,24 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-success-bg)' : 'var(--color-bg-secondary)',
+                backgroundColor: 'transparent',
                 border: isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)',
                 borderRadius: '4px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6
+                opacity: isCompleted ? 1 : 0.6,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isCompleted) {
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
               <Link style={{ width: '10px', height: '10px', marginRight: '2px' }} />
