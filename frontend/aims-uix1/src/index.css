@@ -1,5 +1,6 @@
 /* CSS Variables 임포트 - 디자인 시스템 기반 */
 @import './styles/variables.css';
+@import './styles/themes.css';
 
 body {
   margin: 0;
