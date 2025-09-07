@@ -819,7 +819,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         return (
           <Space>
             <div style={{
-              backgroundColor: 'var(--color-primary-bg)',
+              backgroundColor: 'transparent',
               padding: '4px',
               borderRadius: '4px'
             }}>
