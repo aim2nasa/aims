@@ -815,75 +815,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
   const [showControls, setShowControls] = useState(false);
 
-  // 페이지네이션에 Select 드롭다운 추가
-  useEffect(() => {
-    const addSelectDropdown = () => {
-      // 페이지네이션 리스트 찾기 (페이지 번호가 있는 ul 요소)
-      const paginationList = document.querySelector('.ant-pagination');
-      if (paginationList && pagination.total > 0) {
-        // 이미 select가 있으면 제거
-        const existingContainer = paginationList.querySelector('.custom-page-select-container');
-        if (existingContainer) {
-          existingContainer.remove();
-        }
-        
-        // 새로운 select container 생성 (li 요소로)
-        const selectContainer = document.createElement('div');
-        selectContainer.className = 'custom-page-select-container';
-        selectContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        `;
-        
-        const totalPages = Math.ceil(pagination.total / pagination.pageSize);
-        selectContainer.innerHTML = `
-          <span style="font-size: 13px; color: var(--color-text-secondary)">Go to</span>
-          <select id="page-jumper-select" style="
-            padding: 2px 6px;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            font-size: 13px;
-            min-width: 50px;
-            height: 24px;
-          ">
-            ${Array.from({ length: totalPages }, (_, i) => `
-              <option value="${i + 1}" ${pagination.current === i + 1 ? 'selected' : ''}>${i + 1}</option>
-            `).join('')}
-          </select>
-          <span style="font-size: 13px; color: var(--color-text-secondary)">Page</span>
-        `;
-        
-        // 페이지네이션 리스트의 끝에 추가
-        paginationList.appendChild(selectContainer);
-        
-        // select 이벤트 리스너 추가
-        const select = selectContainer.querySelector('#page-jumper-select');
-        if (select) {
-          select.addEventListener('change', (e) => {
-            const newPage = parseInt(e.target.value);
-            setPagination(prev => ({
-              ...prev,
-              current: newPage
-            }));
-          });
-        }
-      }
-    };
-
-    const timer = setTimeout(addSelectDropdown, 100);
-    return () => {
-      clearTimeout(timer);
-      // cleanup
-      const selectContainer = document.querySelector('.custom-page-select-container');
-      if (selectContainer) {
-        selectContainer.remove();
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.current, pagination.total, pagination.pageSize]);
 
   // 브라우저 크기에 따른 아이템 수 계산
   const calculateItemsPerPage = useCallback(() => {
@@ -2074,16 +2005,15 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       }
                     })}
                     pagination={{
-                      ...pagination,
-                      showSizeChanger: true,
-                      pageSizeOptions: ['10', '20', '50', '100', '200'],
-                      showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
-                      className: 'fixed-bottom-pagination',
+                      current: pagination.current,
+                      pageSize: pagination.pageSize,
+                      total: pagination.total,
+                      showSizeChanger: !isResponsive,
+                      showQuickJumper: false,
                       onChange: (page, pageSize) => {
                         setPagination(prev => ({
                           ...prev,
-                          current: page,
-                          pageSize: pageSize
+                          current: page
                         }));
                       },
                       onShowSizeChange: (current, size) => {
@@ -2093,12 +2023,64 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                           pageSize: size
                         }));
                       },
-                      itemRender: (current, type, originalElement) => {
-                        if (type === 'page') {
-                          return <span style={{ fontSize: '12px' }}>{current}</span>;
-                        }
-                        return originalElement;
-                      }
+                      showTotal: (total, range) => (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                          <span>
+                            {range[0]}-{range[1]} of {total} documents
+                          </span>
+                          
+                          {/* 반응형 모드 토글 */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <label style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '13px',
+                              color: 'var(--color-text-secondary)',
+                              cursor: 'pointer',
+                              userSelect: 'none'
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={isResponsive}
+                                onChange={(e) => {
+                                  const newResponsive = e.target.checked;
+                                  setIsResponsive(newResponsive);
+                                  
+                                  if (newResponsive) {
+                                    const newPageSize = calculateItemsPerPage();
+                                    setPagination(prev => ({
+                                      ...prev,
+                                      pageSize: newPageSize,
+                                      current: 1
+                                    }));
+                                  }
+                                }}
+                                style={{
+                                  cursor: 'pointer',
+                                  accentColor: 'var(--color-primary)'
+                                }}
+                              />
+                              Auto-fit to screen
+                            </label>
+                          </div>
+                          
+                          {/* 반응형 모드일 때 현재 아이템 수 표시 */}
+                          {isResponsive && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ 
+                                fontSize: '13px', 
+                                color: 'var(--color-text-secondary)',
+                                fontWeight: 'normal',
+                                textDecoration: 'none'
+                              }}>
+                                📱 {pagination.pageSize} per page (auto)
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ),
+                      className: 'fixed-bottom-pagination'
                     }}
                   />
                 </>
