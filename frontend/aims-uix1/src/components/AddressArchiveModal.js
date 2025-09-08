@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Empty, Spin, Tag, Typography, Space } from 'antd';
 import { HomeOutlined, HistoryOutlined } from '@ant-design/icons';
 
@@ -9,7 +9,7 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
   const [loading, setLoading] = useState(false);
 
   // 주소 이력 조회
-  const fetchAddressHistory = async () => {
+  const fetchAddressHistory = useCallback(async () => {
     if (!customerId) return;
     
     setLoading(true);
@@ -25,13 +25,13 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId]);
 
   useEffect(() => {
     if (visible && customerId) {
       fetchAddressHistory();
     }
-  }, [visible, customerId]);
+  }, [visible, customerId, fetchAddressHistory]);
 
   // 주소 포맷팅
   const formatAddress = (address) => {
