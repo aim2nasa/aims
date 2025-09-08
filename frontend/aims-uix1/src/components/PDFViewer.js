@@ -143,7 +143,7 @@ const PDFViewer = ({ file, onDownload }) => {
         >
           <div style={{
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            border: '1px solid var(--color-border)',
+            border: '1px solid var(--color-border-light)',
             borderRadius: '8px',
             overflow: 'hidden',
             backgroundColor: '#ffffff',

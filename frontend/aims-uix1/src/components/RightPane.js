@@ -129,8 +129,7 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
       <div style={{ 
         flex: 1, 
         overflowY: 'auto', 
-        padding: '0 8px',
-        backgroundColor: 'var(--color-surface-2)'
+        padding: '0 8px'
       }}>
         {isPdf ? (
           <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
