@@ -1,6 +1,6 @@
 // src/components/PDFViewer.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -10,30 +10,73 @@ import { LeftOutlined, RightOutlined, DownloadOutlined, PlusOutlined, MinusOutli
 
 const { Text } = Typography;
 
-// PDF.js 워커 설정 - CDN에서 로드
-// react-pdf v10.x와 호환되는 pdfjs 3.11.174 버전 사용
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// PDF.js 워커 설정 - 로컬 파일 사용으로 안정성과 성능 향상
+// CDN 의존성 제거하여 오프라인 지원 및 즉시 로딩 가능
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.mjs`;
 
 const PDFViewer = ({ file, onDownload }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0); // 이미지와 동일하게 1.0으로 시작
   const [containerWidth, setContainerWidth] = useState(600);
+  const [error, setError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  const onDocumentLoadSuccess = ({ numPages }) => {
+  const onDocumentLoadSuccess = useCallback(({ numPages }) => {
+    console.log('PDF loaded successfully, pages:', numPages);
     setNumPages(numPages);
     setPageNumber(1);
-  };
+    setError(null);
+    setIsRetrying(false);
+  }, []);
 
-  const changePage = (offset) => {
+  const handleWorkerFallback = useCallback(async () => {
+    setIsRetrying(true);
+    console.log('Trying CDN fallback for worker...');
+    
+    try {
+      // CDN으로 워커 재설정
+      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      
+      // 약간의 지연 후 재시도 알림
+      setTimeout(() => {
+        setError(null);
+      }, 1000);
+      
+    } catch (fallbackError) {
+      console.error('CDN fallback also failed:', fallbackError);
+      setError('PDF 워커를 불러올 수 없습니다. 네트워크 연결을 확인해주세요.');
+      setIsRetrying(false);
+    }
+  }, []);
+
+  const onDocumentLoadError = useCallback((error) => {
+    console.error('PDF load error:', error);
+    setError(error.message || 'PDF 파일을 불러오는 데 실패했습니다.');
+    
+    // Worker 관련 오류인 경우 CDN fallback 시도
+    if (error.message?.includes('worker') && !isRetrying) {
+      handleWorkerFallback();
+    }
+  }, [isRetrying, handleWorkerFallback]);
+
+  // 수동 재시도 함수
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setIsRetrying(false);
+    // 페이지를 다시 렌더링하도록 강제
+    setPageNumber(prev => prev);
+  }, []);
+
+  const changePage = useCallback((offset) => {
     setPageNumber(prevPageNumber => prevPageNumber + offset);
-  };
+  }, []);
 
-  const previousPage = () => changePage(-1);
-  const nextPage = () => changePage(1);
+  const previousPage = useCallback(() => changePage(-1), [changePage]);
+  const nextPage = useCallback(() => changePage(1), [changePage]);
 
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));   // 최대 300%
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5)); // 최소 50%
+  const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), []);   // 최대 300%
+  const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.5)), []); // 최소 50%
 
   // 컨테이너 크기 변경에 따른 PDF 너비 동적 조정
   useEffect(() => {
@@ -77,8 +120,37 @@ const PDFViewer = ({ file, onDownload }) => {
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
-          loading={<Spin tip="문서를 불러오는 중입니다..." style={{ marginTop: '50px' }} />}
-          error={<Alert message="문서 로딩 오류" description="PDF 파일을 불러오는 데 실패했습니다." type="error" showIcon />}
+          onLoadError={onDocumentLoadError}
+          loading={
+            <div style={{ textAlign: 'center', padding: '50px 0' }}>
+              <Spin size="large" tip={isRetrying ? "CDN으로 재시도 중입니다..." : "문서를 불러오는 중입니다..."} />
+            </div>
+          }
+          error={
+            <Alert 
+              message={isRetrying ? "재시도 중입니다" : "문서 로딩 오류"} 
+              description={
+                <div>
+                  <p>{error || "PDF 파일을 불러오는 데 실패했습니다."}</p>
+                  {!isRetrying && (
+                    <div style={{ marginTop: '10px' }}>
+                      <Button variant="primary" size="small" onClick={handleRetry}>
+                        다시 시도
+                      </Button>
+                    </div>
+                  )}
+                  <details style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                    <summary>기술 정보</summary>
+                    <p>파일 URL: {file}</p>
+                    <p>Worker: {pdfjs.GlobalWorkerOptions.workerSrc}</p>
+                    <p>PDF.js 버전: {pdfjs.version}</p>
+                  </details>
+                </div>
+              } 
+              type={isRetrying ? "info" : "error"} 
+              showIcon 
+            />
+          }
         >
           <div style={{
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -149,4 +221,5 @@ const PDFViewer = ({ file, onDownload }) => {
   );
 };
 
-export default PDFViewer;
+// React.memo로 불필요한 리렌더링 방지
+export default memo(PDFViewer);
