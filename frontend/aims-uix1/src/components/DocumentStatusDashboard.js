@@ -864,7 +864,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '작업',
       key: 'actions',
-      width: 280,
+      width: rightPaneVisible ? 120 : 280,
       render: (_, document) => {
         const status = extractStatus(document);
         const isCompleted = status === 'completed';
