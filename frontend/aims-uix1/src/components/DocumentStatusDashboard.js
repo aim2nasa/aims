@@ -977,22 +977,25 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <button 
               onClick={() => handleDocumentClick(document)}
               style={{
-                padding: rightPaneVisible ? '3px' : '3px 8px',
+                padding: rightPaneVisible ? '4px' : '4px 10px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: 'var(--color-success)',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 border: '1px solid var(--color-success-border)',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
-                e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
-                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+                e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                e.target.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                 e.target.style.transform = 'translateY(0)';
               }}
             >
@@ -1007,26 +1010,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '3px' : '3px 8px',
+                padding: rightPaneVisible ? '4px' : '4px 10px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                backgroundColor: 'transparent',
+                backgroundColor: isCompleted ? 'rgba(59, 130, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)',
                 border: isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.6,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.2)';
-                  e.target.style.transform = 'translateY(-1px)';
+                  e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                  e.target.style.transform = 'translateY(-2px)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
@@ -1042,26 +1048,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '3px' : '3px 8px',
+                padding: rightPaneVisible ? '4px' : '4px 10px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
-                backgroundColor: 'transparent',
+                backgroundColor: isCompleted ? 'rgba(139, 92, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)',
                 border: isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.6,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.2)';
-                  e.target.style.transform = 'translateY(-1px)';
+                  e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                  e.target.style.transform = 'translateY(-2px)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
@@ -1077,26 +1086,29 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '3px' : '3px 8px',
+                padding: rightPaneVisible ? '4px' : '4px 10px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-                backgroundColor: 'transparent',
+                backgroundColor: isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
                 border: isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.6,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
-                  e.target.style.transform = 'translateY(-1px)';
+                  e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                  e.target.style.transform = 'translateY(-2px)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
