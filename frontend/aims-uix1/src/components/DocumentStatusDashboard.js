@@ -1757,13 +1757,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             </div>
             </div>
 
-            {/* 구분선 */}
-            <div style={{
-              height: '40px',
-              width: '1px',
-              backgroundColor: 'var(--color-border)',
-              flex: '0 0 auto'
-            }}></div>
 
             {/* 검색 및 필터 */}
             <div style={{
