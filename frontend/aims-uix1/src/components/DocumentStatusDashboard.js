@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, Settings } from "lucide-react";
 import { Table, Space } from 'antd';
 import { apiService } from '../services/apiService';
@@ -802,7 +802,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     pageSize: 20,
     total: 0
   });
-  const [isResponsive, setIsResponsive] = useState(true);
   const [summaryContent, setSummaryContent] = useState('');
 
   // 문서 전체 텍스트 모달 상태
@@ -815,98 +814,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
   const [showControls, setShowControls] = useState(false);
   
-  // 테이블 컨테이너 높이 관리
-  const [tableHeight, setTableHeight] = useState('calc(100vh - 400px)');
-  const tableContainerRef = useRef(null);
 
 
-  // 브라우저 크기에 따른 아이템 수 계산
-  const calculateItemsPerPage = useCallback(() => {
-    if (!isResponsive) return pagination.pageSize;
-    
-    const appHeader = 64;
-    const customerHeader = 80;
-    const searchBarHeight = 120;
-    const tableHeaderHeight = 55;
-    const paginationHeight = 60;
-    
-    const fixedElementsHeight = appHeader + customerHeader + searchBarHeight + tableHeaderHeight + paginationHeight;
-    
-    const tableRow = document.querySelector('.ant-table-tbody > tr');
-    const rowHeight = tableRow?.offsetHeight || 47;
-    
-    const availableHeight = window.innerHeight - fixedElementsHeight;
-    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
-    
-    return Math.max(10, Math.min(maxItemsPerPage, 100));
-  }, [isResponsive, pagination.pageSize]);
 
-  // 테이블 높이 동적 계산
-  useEffect(() => {
-    const calculateTableHeight = () => {
-      if (!tableContainerRef.current) return;
-      
-      const rect = tableContainerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const tableTop = rect.top;
-      const footerHeight = 60; // 페이지네이션 높이
-      const bottomPadding = 50; // 하단 여백 (마지막 줄이 잘리지 않도록 충분히 확보)
-      
-      const availableHeight = windowHeight - tableTop - footerHeight - bottomPadding;
-      const newHeight = `${Math.max(400, availableHeight)}px`;
-      
-      setTableHeight(newHeight);
-    };
-    
-    // 초기 계산
-    setTimeout(calculateTableHeight, 100);
-    
-    // 리사이즈 이벤트 처리
-    const handleResize = () => {
-      calculateTableHeight();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
   
-  // 브라우저 크기 변경 시 pageSize 업데이트
-  useEffect(() => {
-    let resizeTimer;
-    
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (isResponsive) {
-          const newPageSize = calculateItemsPerPage();
-          if (newPageSize !== pagination.pageSize) {
-            setPagination(prev => ({
-              ...prev,
-              pageSize: newPageSize,
-              current: 1 // 페이지 크기가 변경되면 첫 페이지로
-            }));
-          }
-        }
-      }, 300);
-    };
-
-    if (isResponsive) {
-      window.addEventListener('resize', handleResize);
-      // 초기 계산
-      const initialPageSize = calculateItemsPerPage();
-      if (initialPageSize !== pagination.pageSize) {
-        setPagination(prev => ({
-          ...prev,
-          pageSize: initialPageSize
-        }));
-      }
-    }
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimer);
-    };
-  }, [calculateItemsPerPage, isResponsive, pagination.pageSize]);
 
   // Ant Design Table 컬럼 정의
   const columns = [
@@ -2057,8 +1968,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <span style={{ color: '#4b5563' }}>Loading documents...</span>
             </div>
           ) : (
-            <div ref={tableContainerRef} style={{
-              height: tableHeight,
+            <div style={{
+              height: 'calc(100vh - 300px)',
               display: 'flex',
               flexDirection: 'column'
             }}>
@@ -2072,7 +1983,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     loading={loading}
                     scroll={{ 
                       x: 800,
-                      y: tableHeight
+                      y: 'calc(100vh - 450px)'
                     }}
                     tableLayout="fixed"
                     style={{
@@ -2082,7 +1993,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       current: pagination.current,
                       pageSize: pagination.pageSize,
                       total: pagination.total,
-                      showSizeChanger: !isResponsive,
+                      showSizeChanger: true,
                       showQuickJumper: false,
                       onChange: (page, pageSize) => {
                         setPagination(prev => ({
@@ -2104,54 +2015,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                           </span>
                           
                           {/* 반응형 모드 토글 */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <label style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '13px',
-                              color: 'var(--color-text-secondary)',
-                              cursor: 'pointer',
-                              userSelect: 'none'
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={isResponsive}
-                                onChange={(e) => {
-                                  const newResponsive = e.target.checked;
-                                  setIsResponsive(newResponsive);
-                                  
-                                  if (newResponsive) {
-                                    const newPageSize = calculateItemsPerPage();
-                                    setPagination(prev => ({
-                                      ...prev,
-                                      pageSize: newPageSize,
-                                      current: 1
-                                    }));
-                                  }
-                                }}
-                                style={{
-                                  cursor: 'pointer',
-                                  accentColor: 'var(--color-primary)'
-                                }}
-                              />
-                              Auto-fit to screen
-                            </label>
-                          </div>
-                          
-                          {/* 반응형 모드일 때 현재 아이템 수 표시 */}
-                          {isResponsive && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ 
-                                fontSize: '13px', 
-                                color: 'var(--color-text-secondary)',
-                                fontWeight: 'normal',
-                                textDecoration: 'none'
-                              }}>
-                                📱 {pagination.pageSize} per page (auto)
-                              </span>
-                            </div>
-                          )}
                         </div>
                       ),
                       className: 'fixed-bottom-pagination'
