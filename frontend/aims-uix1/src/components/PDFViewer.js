@@ -10,8 +10,9 @@ import { LeftOutlined, RightOutlined, DownloadOutlined, PlusOutlined, MinusOutli
 
 const { Text } = Typography;
 
-// PDF.js 워커 설정
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.js`;
+// PDF.js 워커 설정 - CDN에서 로드
+// react-pdf v10.x와 호환되는 pdfjs 3.11.174 버전 사용
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const PDFViewer = ({ file, onDownload }) => {
   const [numPages, setNumPages] = useState(null);
