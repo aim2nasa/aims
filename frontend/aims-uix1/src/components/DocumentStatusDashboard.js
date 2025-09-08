@@ -977,26 +977,26 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <button 
               onClick={() => handleDocumentClick(document)}
               style={{
-                padding: rightPaneVisible ? '4px' : '4px 10px',
+                padding: rightPaneVisible ? '5px' : '6px 12px',
                 fontSize: '10px',
-                fontWeight: '500',
-                color: 'var(--color-success)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid var(--color-success-border)',
-                borderRadius: '6px',
+                fontWeight: '600',
+                color: 'white',
+                backgroundColor: 'var(--color-success)',
+                border: 'none',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-                e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
-                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.backgroundColor = '#0d9488';
+                e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+                e.target.style.transform = 'translateY(-3px) scale(1.05)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-                e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                e.target.style.transform = 'translateY(0)';
+                e.target.style.backgroundColor = 'var(--color-success)';
+                e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+                e.target.style.transform = 'translateY(0) scale(1)';
               }}
             >
               <Eye style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
@@ -1010,30 +1010,30 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '4px' : '4px 10px',
+                padding: rightPaneVisible ? '5px' : '6px 12px',
                 fontSize: '10px',
-                fontWeight: '500',
-                color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'rgba(59, 130, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                border: isCompleted ? '1px solid var(--color-primary-border)' : '1px solid var(--color-border)',
-                borderRadius: '6px',
+                fontWeight: '600',
+                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-primary)' : 'rgba(107, 114, 128, 0.2)',
+                border: 'none',
+                borderRadius: '8px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6,
+                opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.backgroundColor = '#2563eb';
+                  e.target.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.backgroundColor = 'var(--color-primary)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)';
+                  e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}
             >
@@ -1048,30 +1048,30 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '4px' : '4px 10px',
+                padding: rightPaneVisible ? '5px' : '6px 12px',
                 fontSize: '10px',
-                fontWeight: '500',
-                color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'rgba(139, 92, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                border: isCompleted ? '1px solid var(--color-purple-border)' : '1px solid var(--color-border)',
-                borderRadius: '6px',
+                fontWeight: '600',
+                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-purple)' : 'rgba(107, 114, 128, 0.2)',
+                border: 'none',
+                borderRadius: '8px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6,
+                opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px rgba(139, 92, 246, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
-                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.backgroundColor = '#7c3aed';
+                  e.target.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.4)';
+                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
-                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.backgroundColor = 'var(--color-purple)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)';
+                  e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}
             >
@@ -1086,30 +1086,30 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: rightPaneVisible ? '4px' : '4px 10px',
+                padding: rightPaneVisible ? '5px' : '6px 12px',
                 fontSize: '10px',
-                fontWeight: '500',
-                color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                border: isCompleted ? '1px solid var(--color-success-border)' : '1px solid var(--color-border)',
-                borderRadius: '6px',
+                fontWeight: '600',
+                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted ? 'var(--color-success)' : 'rgba(107, 114, 128, 0.2)',
+                border: 'none',
+                borderRadius: '8px',
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.6,
+                opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px rgba(16, 185, 129, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
-                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.backgroundColor = '#0d9488';
+                  e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-                  e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.backgroundColor = 'var(--color-success)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+                  e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}
             >
