@@ -146,7 +146,7 @@ const PDFViewer = ({ file, onDownload }) => {
             border: '1px solid var(--color-border)',
             borderRadius: '8px',
             overflow: 'hidden',
-            backgroundColor: 'var(--color-bg-primary)',
+            backgroundColor: '#ffffff',
             margin: '5px'
           }}>
             <Page
@@ -161,7 +161,7 @@ const PDFViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-bg-primary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border-light)' }}>
         {/* 페이지 이동 */}
         <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
           <Space>

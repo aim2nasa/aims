@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, message, Space } from 'antd';
+import { message, Space } from 'antd';
 import { Button } from './common';
 import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
@@ -88,9 +88,32 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
   };
 
   return (
-    <Card
-      title={document.upload.originalName}
-      extra={
+    <div style={{ 
+      minHeight: 'calc(100vh - 140px)', 
+      display: 'flex', 
+      flexDirection: 'column',
+      backgroundColor: 'var(--color-surface-1)',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border-light)',
+      boxShadow: '0 1px 3px 0 var(--color-shadow-sm)'
+    }}>
+      {/* Header */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '16px 20px',
+        borderBottom: '1px solid var(--color-border-light)',
+        flexShrink: 0
+      }}>
+        <h4 style={{ 
+          margin: 0, 
+          fontSize: '16px', 
+          fontWeight: 600,
+          color: 'var(--color-text-primary)'
+        }}>
+          {document.upload.originalName}
+        </h4>
         <Space>
           <Button 
             variant="ghost" 
@@ -100,25 +123,42 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
           />
           <Button variant="ghost" icon={<CloseOutlined />} onClick={onClose} />
         </Space>
-      }
-      bordered={false}
-      style={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column' }}
-    >
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+      </div>
+      
+      {/* Content */}
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: '0 8px',
+        backgroundColor: 'var(--color-surface-2)'
+      }}>
         {isPdf ? (
           <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : isImage ? (
           <ImageViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px 20px',
+            backgroundColor: 'var(--color-surface-1)',
+            borderRadius: '8px',
+            margin: '20px',
+            border: '1px solid var(--color-border-light)'
+          }}>
+            <p style={{ 
+              margin: '0 0 16px 0', 
+              color: 'var(--color-text-secondary)',
+              fontSize: '14px'
+            }}>
+              이 문서는 미리보기를 지원하지 않는 형식입니다.
+            </p>
             <Button variant="primary" onClick={handleDownload}>
               {document.upload.originalName} 다운로드
             </Button>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
 

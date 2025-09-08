@@ -415,7 +415,7 @@ const AppLayout = () => {
         <Layout>
           <Content 
             data-testid="content-container"
-            style={{ display: 'flex', padding: 24, background: '#f5f5f5', position: 'relative' }}
+            style={{ display: 'flex', padding: 24, background: 'var(--color-bg-secondary)', position: 'relative' }}
           >
             {/* Center Pane */}
             <div style={{ 
@@ -502,7 +502,7 @@ const AppLayout = () => {
                 style={{ 
                   width: `${rightPaneWidth}%`,
                   minWidth: '300px',
-                  background: 'var(--color-bg-primary)', 
+                  background: 'transparent', 
                   borderRadius: 8,
                   transition: isResizing ? 'none' : 'width 0.3s ease'
                 }}
