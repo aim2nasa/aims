@@ -1637,7 +1637,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
                 <FileText style={{ width: '10px', height: '10px', color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Total</p>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>전체</p>
                   <p className="dsd-stats-value all" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{documents.length}</p>
                 </div>
               </div>
@@ -1670,9 +1670,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               title="클릭하여 완료된 문서만 보기"
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <CheckCircle style={{ width: '10px', height: '10px', color: '#10b981', flexShrink: 0 }} />
+                <CheckCircle style={{ width: '10px', height: '10px', color: 'var(--color-success)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Completed</p>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>완료</p>
                   <p className="dsd-stats-value completed" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.completed || 0}</p>
                 </div>
               </div>
@@ -1705,9 +1705,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               title="클릭하여 처리 중인 문서만 보기"
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <Clock style={{ width: '10px', height: '10px', color: '#3b82f6', flexShrink: 0 }} />
+                <Clock style={{ width: '10px', height: '10px', color: 'var(--color-primary)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Processing</p>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>처리중</p>
                   <p className="dsd-stats-value processing" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.processing || 0}</p>
                 </div>
               </div>
@@ -1740,9 +1740,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               title="클릭하여 대기 중인 문서만 보기"
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <AlertCircle style={{ width: '10px', height: '10px', color: '#f59e0b', flexShrink: 0 }} />
+                <AlertCircle style={{ width: '10px', height: '10px', color: 'var(--color-warning)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Pending</p>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>대기</p>
                   <p className="dsd-stats-value pending" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.pending || 0}</p>
                 </div>
               </div>
@@ -1775,9 +1775,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               title="클릭하여 오류 문서만 보기"
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <XCircle style={{ width: '10px', height: '10px', color: '#ef4444', flexShrink: 0 }} />
+                <XCircle style={{ width: '10px', height: '10px', color: 'var(--color-error)', flexShrink: 0 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>Errors</p>
+                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>오류</p>
                   <p className="dsd-stats-value error" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.error || 0}</p>
                 </div>
               </div>
