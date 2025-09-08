@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link } from "lucide-react";
+import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, Settings } from "lucide-react";
 import { Table, Space, Tag } from 'antd';
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
@@ -804,6 +804,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 문서 고객연결 모달 상태
   const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
+  const [showControls, setShowControls] = useState(false);
 
   // Ant Design Table 컬럼 정의
   const columns = [
@@ -1458,102 +1459,129 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              {/* 통신 모드 선택 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
+              {/* 설정 토글 버튼 */}
+              <button
+                onClick={() => setShowControls(!showControls)}
+                style={{
                   display: 'flex',
                   alignItems: 'center',
-                  border: 'none',
+                  gap: '8px',
+                  padding: '6px 12px',
                   borderRadius: '8px',
-                  overflow: 'hidden'
-                }}>
+                  fontSize: '14px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  backgroundColor: showControls ? 'var(--color-primary)' : 'var(--color-surface-1)',
+                  color: showControls ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
+                }}
+                title="Toggle Controls"
+              >
+                <Settings style={{ width: '16px', height: '16px' }} />
+                <span>Controls</span>
+              </button>
+
+              {/* 컨트롤 버튼들 - 조건부 렌더링 */}
+              {showControls && (
+                <>
+                  {/* 통신 모드 선택 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      border: 'none',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}>
+                      <button
+                        onClick={() => {}}
+                        style={{
+                          padding: '4px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '14px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'colors 0.2s',
+                          backgroundColor: communicationMode === 'polling' ? 'var(--color-primary)' : 'var(--color-surface-1)',
+                          color: communicationMode === 'polling' ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
+                        }}
+                        title="Polling Mode"
+                      >
+                        <Radio style={{ width: '12px', height: '12px' }} />
+                        <span>Polling</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* API 연결 상태 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {apiHealth ? <Wifi style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
+                    <span style={{ fontSize: '14px', color: apiHealth ? '#059669' : '#dc2626' }}>
+                      {apiHealth ? "API Connected" : "API Disconnected"}
+                    </span>
+                  </div>
+                  
+                  {/* 폴링 상태 */}
                   <button
-                    onClick={() => {}}
+                    onClick={() => setIsPollingEnabled(!isPollingEnabled)}
                     style={{
-                      padding: '4px 12px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
+                      padding: '4px 12px',
+                      borderRadius: '8px',
                       fontSize: '14px',
                       border: 'none',
                       cursor: 'pointer',
                       transition: 'colors 0.2s',
-                      backgroundColor: communicationMode === 'polling' ? 'var(--color-primary)' : 'var(--color-surface-1)',
-                      color: communicationMode === 'polling' ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
+                      backgroundColor: isPollingEnabled ? '#dcfce7' : '#f3f4f6',
+                      color: isPollingEnabled ? '#166534' : '#374151'
                     }}
-                    title="Polling Mode"
                   >
-                    <Radio style={{ width: '12px', height: '12px' }} />
-                    <span>Polling</span>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: isPollingEnabled ? '#10b981' : '#6b7280',
+                      animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
+                    }} />
+                    {isPollingEnabled ? "Live" : "Paused"}
                   </button>
-                </div>
-              </div>
-
-              {/* API 연결 상태 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {apiHealth ? <Wifi style={{ width: '16px', height: '16px', color: '#10b981' }} /> : <WifiOff style={{ width: '16px', height: '16px', color: '#ef4444' }} />}
-                <span style={{ fontSize: '14px', color: apiHealth ? '#059669' : '#dc2626' }}>
-                  {apiHealth ? "API Connected" : "API Disconnected"}
-                </span>
-              </div>
-              
-              {/* 폴링 상태 */}
-                <button
-                  onClick={() => setIsPollingEnabled(!isPollingEnabled)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '4px 12px',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'colors 0.2s',
-                    backgroundColor: isPollingEnabled ? '#dcfce7' : '#f3f4f6',
-                    color: isPollingEnabled ? '#166534' : '#374151'
-                  }}
-                >
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: isPollingEnabled ? '#10b981' : '#6b7280',
-                    animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
-                  }} />
-                  {isPollingEnabled ? "Live" : "Paused"}
-                </button>
-              
-              {/* 새로고침 버튼 */}
-                <button 
-                  onClick={fetchDocuments} 
-                  disabled={loading} 
-                  style={{
-                    backgroundColor: loading ? '#93c5fd' : '#3b82f6',
-                    color: 'var(--color-text-white)',
-                    padding: '4px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading) e.target.style.backgroundColor = '#2563eb';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!loading) e.target.style.backgroundColor = '#3b82f6';
-                  }}
-                >
-                  <RefreshCw style={{
-                    width: '16px',
-                    height: '16px',
-                    animation: loading ? 'spin 1s linear infinite' : 'none'
-                  }} />
-                  <span>Refresh</span>
-                </button>
+                  
+                  {/* 새로고침 버튼 */}
+                  <button 
+                    onClick={fetchDocuments} 
+                    disabled={loading} 
+                    style={{
+                      backgroundColor: loading ? '#93c5fd' : '#3b82f6',
+                      color: 'var(--color-text-white)',
+                      padding: '4px 12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading) e.target.style.backgroundColor = '#2563eb';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loading) e.target.style.backgroundColor = '#3b82f6';
+                    }}
+                  >
+                    <RefreshCw style={{
+                      width: '16px',
+                      height: '16px',
+                      animation: loading ? 'spin 1s linear infinite' : 'none'
+                    }} />
+                    <span>Refresh</span>
+                  </button>
+                </>
+              )}
 
 
             </div>
