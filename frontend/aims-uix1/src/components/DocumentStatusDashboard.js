@@ -1726,6 +1726,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 {lastUpdated && (
                   <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)' }}>
                     Last updated: {lastUpdated.toLocaleTimeString()}
+                    {showControls && (
+                      <span style={{ marginLeft: '8px' }}>
+                        | Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}
+                      </span>
+                    )}
                   </span>
                 )}
                 
@@ -1966,9 +1971,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <span style={{ marginLeft: '8px', fontSize: '12px' }}>
                 (HTTP Polling)
               </span>
-            </div>
-            <div>
-              Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}
             </div>
           </div>
         </div>
