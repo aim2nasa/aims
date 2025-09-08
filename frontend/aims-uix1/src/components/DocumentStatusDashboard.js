@@ -849,7 +849,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '상태',
       key: 'status',
-      width: 80,
+      width: 60,
       render: (_, document) => {
         const status = extractStatus(document);
         const statusConfig = {
