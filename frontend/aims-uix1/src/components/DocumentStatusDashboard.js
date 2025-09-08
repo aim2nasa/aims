@@ -1017,15 +1017,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '업로드일',
       key: 'uploadDate',
-      width: 120,
+      width: 160,
       render: (_, document) => {
         const uploadedDate = extractUploadedDate(document);
         if (!uploadedDate) return "Unknown";
         const date = new Date(uploadedDate);
-        return date.toLocaleDateString('ko-KR', {
+        return date.toLocaleString('ko-KR', {
           year: 'numeric',
-          month: 'numeric',
-          day: 'numeric'
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
         });
       }
     }
