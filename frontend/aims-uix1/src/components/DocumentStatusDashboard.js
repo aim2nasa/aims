@@ -848,7 +848,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '상태',
       key: 'status',
-      width: 120,
+      width: 80,
       render: (_, document) => {
         const status = extractStatus(document);
         const statusConfig = {
@@ -1008,7 +1008,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '진행률',
       key: 'progress',
-      width: 100,
+      width: 70,
       render: (_, document) => {
         const progress = extractProgress(document);
         return `${Math.round(progress)}%`;
