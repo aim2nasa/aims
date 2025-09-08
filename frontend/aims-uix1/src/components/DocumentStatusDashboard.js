@@ -880,7 +880,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '문서명',
       key: 'filename',
-      width: 300,
+      width: 280,
       render: (_, document) => {
         const filename = extractFilename(document);
         const status = extractStatus(document);
@@ -898,7 +898,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <span 
               style={{ 
                 fontWeight: 'bold', 
-                color: isCompleted ? '#1890ff' : '#111827',
+                color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-primary)',
                 cursor: isCompleted ? 'pointer' : 'default',
                 textDecoration: isCompleted ? 'underline' : 'none'
               }}
@@ -918,17 +918,50 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     {
       title: '상태',
       key: 'status',
-      width: 60,
+      width: 80,
       render: (_, document) => {
         const status = extractStatus(document);
         const statusConfig = {
-          completed: { color: 'green', text: '완료' },
-          processing: { color: 'blue', text: '처리중' },
-          error: { color: 'red', text: '오류' },
-          pending: { color: 'orange', text: '대기' }
+          completed: { 
+            text: '완료',
+            color: 'var(--color-success)',
+            icon: <CheckCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          },
+          processing: { 
+            text: '처리중',
+            color: 'var(--color-primary)',
+            icon: <Clock style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          },
+          error: { 
+            text: '오류',
+            color: 'var(--color-error)',
+            icon: <XCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          },
+          pending: { 
+            text: '대기',
+            color: 'var(--color-warning)',
+            icon: <AlertCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          }
         };
-        const config = statusConfig[status] || { color: 'default', text: status };
-        return <Tag color={config.color}>{config.text}</Tag>;
+        const config = statusConfig[status] || { 
+          text: status,
+          color: 'var(--color-text-secondary)',
+          icon: null 
+        };
+        return (
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              color: config.color,
+              fontSize: '12px',
+              fontWeight: 500
+            }}
+          >
+            {config.icon}
+            {config.text}
+          </div>
+        );
       }
     },
     {
