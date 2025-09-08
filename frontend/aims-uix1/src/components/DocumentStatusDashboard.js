@@ -1696,19 +1696,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     paddingRight: '8px',
                     paddingTop: '4px',
                     paddingBottom: '4px',
-                    border: '1px solid var(--color-border)',
+                    border: '1px solid var(--color-input-border)',
                     borderRadius: '6px',
                     fontSize: '12px',
                     outline: 'none',
-                    backgroundColor: 'var(--color-bg-primary)',
+                    backgroundColor: 'var(--color-input-bg)',
                     color: 'var(--color-text-primary)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--color-primary)';
-                    e.target.style.boxShadow = '0 0 0 2px var(--color-primary-alpha-10)';
+                    e.target.style.borderColor = 'var(--color-input-focus-border)';
+                    e.target.style.boxShadow = '0 0 0 2px rgba(96, 165, 250, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--color-border)';
+                    e.target.style.borderColor = 'var(--color-input-border)';
                     e.target.style.boxShadow = 'none';
                   }}
                 />
