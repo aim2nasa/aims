@@ -1961,17 +1961,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             gap: '8px',
             padding: '16px 0'
           }}>
-            <div>
-              Connected to: <code style={{
-                backgroundColor: 'var(--color-bg-tertiary)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '12px'
-              }}>tars.giize.com:8080</code>
-              <span style={{ marginLeft: '8px', fontSize: '12px' }}>
-                (HTTP Polling)
-              </span>
-            </div>
           </div>
         </div>
       </footer>
