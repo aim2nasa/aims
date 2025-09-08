@@ -874,7 +874,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             <button 
               onClick={() => handleDocumentClick(document)}
               style={{
-                padding: '3px 8px',
+                padding: rightPaneVisible ? '3px' : '3px 8px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: 'var(--color-success)',
@@ -893,8 +893,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 e.target.style.transform = 'translateY(0)';
               }}
             >
-              <Eye style={{ width: '10px', height: '10px', marginRight: '2px' }} />
-              View
+              <Eye style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              {!rightPaneVisible && 'View'}
             </button>
             <button 
               onClick={() => {
@@ -904,7 +904,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: '3px 8px',
+                padding: rightPaneVisible ? '3px' : '3px 8px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
@@ -928,8 +928,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
             >
-              <FileText style={{ width: '10px', height: '10px', marginRight: '2px' }} />
-              Summary
+              <FileText style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              {!rightPaneVisible && 'Summary'}
             </button>
             <button 
               onClick={() => {
@@ -939,7 +939,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: '3px 8px',
+                padding: rightPaneVisible ? '3px' : '3px 8px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-purple)' : 'var(--color-text-tertiary)',
@@ -963,8 +963,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
             >
-              <FileTextIcon style={{ width: '10px', height: '10px', marginRight: '2px' }} />
-              Full Text
+              <FileTextIcon style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              {!rightPaneVisible && 'Full Text'}
             </button>
             <button 
               onClick={() => {
@@ -974,7 +974,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               }}
               disabled={!isCompleted}
               style={{
-                padding: '3px 8px',
+                padding: rightPaneVisible ? '3px' : '3px 8px',
                 fontSize: '10px',
                 fontWeight: '500',
                 color: isCompleted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
@@ -998,8 +998,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
             >
-              <Link style={{ width: '10px', height: '10px', marginRight: '2px' }} />
-              고객연결
+              <Link style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              {!rightPaneVisible && '고객연결'}
             </button>
           </Space>
         );
