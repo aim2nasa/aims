@@ -1993,17 +1993,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       y: 'calc(70vh - 200px)'
                     }}
                     tableLayout="fixed"
-                    onRow={(document) => ({
-                      onClick: () => {
-                        const status = extractStatus(document);
-                        if (status === 'completed' && onDocumentPreview) {
-                          onDocumentPreview(document);
-                        }
-                      },
-                      style: {
-                        cursor: extractStatus(document) === 'completed' ? 'pointer' : 'default'
-                      }
-                    })}
                     pagination={{
                       current: pagination.current,
                       pageSize: pagination.pageSize,
