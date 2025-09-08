@@ -23,7 +23,6 @@ const PDFViewer = ({ file, onDownload }) => {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }) => {
-    console.log('PDF loaded successfully, pages:', numPages);
     setNumPages(numPages);
     setPageNumber(1);
     setError(null);
@@ -32,26 +31,18 @@ const PDFViewer = ({ file, onDownload }) => {
 
   const handleWorkerFallback = useCallback(async () => {
     setIsRetrying(true);
-    console.log('Trying CDN fallback for worker...');
     
     try {
       // CDN으로 워커 재설정
       pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-      
-      // 약간의 지연 후 재시도 알림
-      setTimeout(() => {
-        setError(null);
-      }, 1000);
-      
+      setError(null);
     } catch (fallbackError) {
-      console.error('CDN fallback also failed:', fallbackError);
       setError('PDF 워커를 불러올 수 없습니다. 네트워크 연결을 확인해주세요.');
       setIsRetrying(false);
     }
   }, []);
 
   const onDocumentLoadError = useCallback((error) => {
-    console.error('PDF load error:', error);
     setError(error.message || 'PDF 파일을 불러오는 데 실패했습니다.');
     
     // Worker 관련 오류인 경우 CDN fallback 시도
@@ -64,16 +55,14 @@ const PDFViewer = ({ file, onDownload }) => {
   const handleRetry = useCallback(() => {
     setError(null);
     setIsRetrying(false);
-    // 페이지를 다시 렌더링하도록 강제
-    setPageNumber(prev => prev);
   }, []);
 
   const changePage = useCallback((offset) => {
     setPageNumber(prevPageNumber => prevPageNumber + offset);
   }, []);
 
-  const previousPage = useCallback(() => changePage(-1), [changePage]);
-  const nextPage = useCallback(() => changePage(1), [changePage]);
+  const previousPage = () => changePage(-1);
+  const nextPage = () => changePage(1);
 
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), []);   // 최대 300%
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.5)), []); // 최소 50%
