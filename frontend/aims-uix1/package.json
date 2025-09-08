@@ -26,6 +26,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "dev": "GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 npm start",
+    "dev:clean": "rm -rf node_modules/.cache .parcel-cache build && GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 npm start",
+    "cache:clear": "rm -rf node_modules/.cache .parcel-cache build",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
