@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, Settings } from "lucide-react";
-import { Table, Space, Tag } from 'antd';
+import { Table, Space } from 'antd';
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
 import '../styles/pagination.css';
@@ -814,6 +814,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
   const [showControls, setShowControls] = useState(false);
+  
+  // 테이블 컨테이너 높이 관리
+  const [tableHeight, setTableHeight] = useState('calc(100vh - 400px)');
+  const tableContainerRef = useRef(null);
 
 
   // 브라우저 크기에 따른 아이템 수 계산
@@ -837,6 +841,35 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     return Math.max(10, Math.min(maxItemsPerPage, 100));
   }, [isResponsive, pagination.pageSize]);
 
+  // 테이블 높이 동적 계산
+  useEffect(() => {
+    const calculateTableHeight = () => {
+      if (!tableContainerRef.current) return;
+      
+      const rect = tableContainerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const tableTop = rect.top;
+      const footerHeight = 60; // 페이지네이션 높이
+      const bottomPadding = 50; // 하단 여백 (마지막 줄이 잘리지 않도록 충분히 확보)
+      
+      const availableHeight = windowHeight - tableTop - footerHeight - bottomPadding;
+      const newHeight = `${Math.max(400, availableHeight)}px`;
+      
+      setTableHeight(newHeight);
+    };
+    
+    // 초기 계산
+    setTimeout(calculateTableHeight, 100);
+    
+    // 리사이즈 이벤트 처리
+    const handleResize = () => {
+      calculateTableHeight();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   // 브라우저 크기 변경 시 pageSize 업데이트
   useEffect(() => {
     let resizeTimer;
@@ -2024,7 +2057,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <span style={{ color: '#4b5563' }}>Loading documents...</span>
             </div>
           ) : (
-            <div>
+            <div ref={tableContainerRef} style={{
+              height: tableHeight,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               {filteredDocuments.length > 0 ? (
                 <>
                   {/* Ant Design Table */}
@@ -2035,9 +2072,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     loading={loading}
                     scroll={{ 
                       x: 800,
-                      y: 'calc(70vh - 200px)'
+                      y: tableHeight
                     }}
                     tableLayout="fixed"
+                    style={{
+                      height: '100%'
+                    }}
                     pagination={{
                       current: pagination.current,
                       pageSize: pagination.pageSize,
