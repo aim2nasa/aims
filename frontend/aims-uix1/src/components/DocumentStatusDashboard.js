@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCircle, XCircle, Copy, Eye, Upload, Database, FileTextIcon, Package, Radio, Link, Settings } from "lucide-react";
 import { Table, Space, Tag } from 'antd';
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
+import '../styles/pagination.css';
 
 
 // MongoDB 필드 추출 함수들
@@ -794,6 +795,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   // 문서 요약 모달 상태
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState(null);
+  
+  // 페이지네이션 상태 관리
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0
+  });
+  const [isResponsive, setIsResponsive] = useState(true);
   const [summaryContent, setSummaryContent] = useState('');
 
   // 문서 전체 텍스트 모달 상태
@@ -805,6 +814,135 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   const [showDocumentLinkModal, setShowDocumentLinkModal] = useState(false);
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState(null);
   const [showControls, setShowControls] = useState(false);
+
+  // 페이지네이션에 Select 드롭다운 추가
+  useEffect(() => {
+    const addSelectDropdown = () => {
+      // 페이지네이션 리스트 찾기 (페이지 번호가 있는 ul 요소)
+      const paginationList = document.querySelector('.ant-pagination');
+      if (paginationList && pagination.total > 0) {
+        // 이미 select가 있으면 제거
+        const existingContainer = paginationList.querySelector('.custom-page-select-container');
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        
+        // 새로운 select container 생성 (li 요소로)
+        const selectContainer = document.createElement('div');
+        selectContainer.className = 'custom-page-select-container';
+        selectContainer.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        `;
+        
+        const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+        selectContainer.innerHTML = `
+          <span style="font-size: 13px; color: var(--color-text-secondary)">Go to</span>
+          <select id="page-jumper-select" style="
+            padding: 2px 6px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            font-size: 13px;
+            min-width: 50px;
+            height: 24px;
+          ">
+            ${Array.from({ length: totalPages }, (_, i) => `
+              <option value="${i + 1}" ${pagination.current === i + 1 ? 'selected' : ''}>${i + 1}</option>
+            `).join('')}
+          </select>
+          <span style="font-size: 13px; color: var(--color-text-secondary)">Page</span>
+        `;
+        
+        // 페이지네이션 리스트의 끝에 추가
+        paginationList.appendChild(selectContainer);
+        
+        // select 이벤트 리스너 추가
+        const select = selectContainer.querySelector('#page-jumper-select');
+        if (select) {
+          select.addEventListener('change', (e) => {
+            const newPage = parseInt(e.target.value);
+            setPagination(prev => ({
+              ...prev,
+              current: newPage
+            }));
+          });
+        }
+      }
+    };
+
+    const timer = setTimeout(addSelectDropdown, 100);
+    return () => {
+      clearTimeout(timer);
+      // cleanup
+      const selectContainer = document.querySelector('.custom-page-select-container');
+      if (selectContainer) {
+        selectContainer.remove();
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.current, pagination.total, pagination.pageSize]);
+
+  // 브라우저 크기에 따른 아이템 수 계산
+  const calculateItemsPerPage = useCallback(() => {
+    if (!isResponsive) return pagination.pageSize;
+    
+    const appHeader = 64;
+    const customerHeader = 80;
+    const searchBarHeight = 120;
+    const tableHeaderHeight = 55;
+    const paginationHeight = 60;
+    
+    const fixedElementsHeight = appHeader + customerHeader + searchBarHeight + tableHeaderHeight + paginationHeight;
+    
+    const tableRow = document.querySelector('.ant-table-tbody > tr');
+    const rowHeight = tableRow?.offsetHeight || 47;
+    
+    const availableHeight = window.innerHeight - fixedElementsHeight;
+    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
+    
+    return Math.max(10, Math.min(maxItemsPerPage, 100));
+  }, [isResponsive, pagination.pageSize]);
+
+  // 브라우저 크기 변경 시 pageSize 업데이트
+  useEffect(() => {
+    let resizeTimer;
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (isResponsive) {
+          const newPageSize = calculateItemsPerPage();
+          if (newPageSize !== pagination.pageSize) {
+            setPagination(prev => ({
+              ...prev,
+              pageSize: newPageSize,
+              current: 1 // 페이지 크기가 변경되면 첫 페이지로
+            }));
+          }
+        }
+      }, 300);
+    };
+
+    if (isResponsive) {
+      window.addEventListener('resize', handleResize);
+      // 초기 계산
+      const initialPageSize = calculateItemsPerPage();
+      if (initialPageSize !== pagination.pageSize) {
+        setPagination(prev => ({
+          ...prev,
+          pageSize: initialPageSize
+        }));
+      }
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
+  }, [calculateItemsPerPage, isResponsive, pagination.pageSize]);
 
   // Ant Design Table 컬럼 정의
   const columns = [
@@ -1420,6 +1558,22 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     return acc;
   }, {});
 
+  // 페이지네이션을 위한 데이터 처리 - 기존 filteredDocuments state 활용
+  // 페이지네이션 총 개수 업데이트
+  useEffect(() => {
+    setPagination(prev => ({
+      ...prev,
+      total: filteredDocuments.length
+    }));
+  }, [filteredDocuments.length]);
+
+  // 현재 페이지에 표시할 데이터 계산
+  const currentPageDocuments = useMemo(() => {
+    const startIndex = (pagination.current - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    return filteredDocuments.slice(startIndex, endIndex);
+  }, [filteredDocuments, pagination.current, pagination.pageSize]);
+
   const handleDocumentClick = async (document) => {
     // 먼저 메인 리스트 데이터로 모달 열기 (일관성 보장)
     setSelectedDocument(document);
@@ -1900,7 +2054,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   {/* Ant Design Table */}
                   <Table
                     columns={columns}
-                    dataSource={filteredDocuments}
+                    dataSource={currentPageDocuments}
                     rowKey={(record) => record.id || record._id}
                     loading={loading}
                     scroll={{ 
@@ -1919,7 +2073,33 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                         cursor: extractStatus(document) === 'completed' ? 'pointer' : 'default'
                       }
                     })}
-                    pagination={false}
+                    pagination={{
+                      ...pagination,
+                      showSizeChanger: true,
+                      pageSizeOptions: ['10', '20', '50', '100', '200'],
+                      showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+                      className: 'fixed-bottom-pagination',
+                      onChange: (page, pageSize) => {
+                        setPagination(prev => ({
+                          ...prev,
+                          current: page,
+                          pageSize: pageSize
+                        }));
+                      },
+                      onShowSizeChange: (current, size) => {
+                        setPagination(prev => ({
+                          ...prev,
+                          current: 1,
+                          pageSize: size
+                        }));
+                      },
+                      itemRender: (current, type, originalElement) => {
+                        if (type === 'page') {
+                          return <span style={{ fontSize: '12px' }}>{current}</span>;
+                        }
+                        return originalElement;
+                      }
+                    }}
                   />
                 </>
               ) : (
