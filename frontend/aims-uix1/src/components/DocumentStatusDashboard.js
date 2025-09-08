@@ -1183,15 +1183,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       setSummaryContent('로딩 중...');
       setShowSummaryModal(true);
 
-      // 디버깅: 문서 데이터 구조 확인
-      console.log('Document data for summary:', document);
-      console.log('Document meta:', document.meta);
-      console.log('Document ocr:', document.ocr);
-      console.log('Document payload:', document.payload);
 
       // 문서 요약 추출 로직 (CenterPane의 382-444 라인 참고)
       const getSummaryFromDocument = (doc) => {
-        console.log('Getting summary from document...');
         
         // meta에서 full_text 확인
         const metaFullText = doc.meta?.full_text || 
@@ -1201,8 +1195,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               return parsed.full_text;
             } catch { return null; }
           })() : null);
-        
-        console.log('Meta full text:', metaFullText);
         
         // meta에 full_text가 있는 경우 - meta summary 사용
         if (metaFullText && metaFullText.trim()) {
@@ -1214,17 +1206,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               } catch { return null; }
             })() : null);
           
-          console.log('Meta summary:', metaSummary);
-          
           if (metaSummary && metaSummary !== 'null') {
             return metaSummary;
           }
           
           // meta summary가 없으면 meta full_text의 앞부분 사용
           const cleanText = metaFullText.trim();
-          const result = cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
-          console.log('Using meta full_text excerpt:', result);
-          return result;
+          return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
         }
         
         // meta에 full_text가 없는 경우 - ocr summary 사용
@@ -1235,8 +1223,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               return parsed.summary;
             } catch { return null; }
           })() : null);
-        
-        console.log('OCR summary:', ocrSummary);
         
         if (ocrSummary && ocrSummary !== 'null') {
           return ocrSummary;
@@ -1251,22 +1237,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             } catch { return null; }
           })() : null);
         
-        console.log('OCR full text:', ocrFullText);
-        
         if (ocrFullText && ocrFullText.trim()) {
           const cleanText = ocrFullText.trim();
-          const result = cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
-          console.log('Using OCR full_text excerpt:', result);
-          return result;
+          return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText;
         }
         
         // 마지막으로 payload.summary 시도
-        console.log('Payload summary:', doc.payload?.summary);
         if (doc.payload?.summary) {
           return doc.payload.summary;
         }
         
-        console.log('No summary found, returning default message');
         return '문서 요약을 찾을 수 없습니다.';
       };
 
@@ -1283,30 +1263,24 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         });
 
         const responseData = await response.json();
-        console.log('API response data:', responseData);
         
         const fileData = responseData[0];
         if (fileData) {
-          console.log('File data from API:', fileData);
-          
           // API에서 가져온 데이터로 요약 추출
           const summary = getSummaryFromDocument(fileData);
-          console.log('Final summary result from API:', summary);
           setSummaryContent(summary);
           return;
         }
       } catch (apiError) {
-        console.warn('API fetch failed, trying local data:', apiError);
+        // API fetch failed, falling back to local data
       }
 
       // API 호출이 실패하면 로컬 데이터로 폴백
       const summary = getSummaryFromDocument(document);
-      console.log('Final summary result from local data:', summary);
       setSummaryContent(summary);
       
     } catch (error) {
       setSummaryContent('문서 요약을 불러오는 중 오류가 발생했습니다.');
-      console.error('Document summary error:', error);
     }
   };
 
@@ -1431,7 +1405,6 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
   const handleLinkSuccess = () => {
     // 연결 성공 후 처리 (필요시 문서 목록 새로고침 등)
-    console.log('문서가 고객에게 성공적으로 연결되었습니다.');
     // 추가로 필요한 처리가 있다면 여기에 구현
   };
 

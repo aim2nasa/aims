@@ -29,7 +29,6 @@ const RelationshipViewWithRefresh = ({ onCustomerSelect }) => {
   // 고객 삭제 및 관계 변경 이벤트 리스너
   useEffect(() => {
     const handleDataChanged = async (eventType) => {
-      console.log(`RelationshipViewWithRefresh: ${eventType} event received, refreshing data`);
       // 캐시 완전 무효화 후 새로고침
       try {
         await refreshData();
@@ -42,12 +41,10 @@ const RelationshipViewWithRefresh = ({ onCustomerSelect }) => {
     const handleCustomerDeleted = () => handleDataChanged('customerDeleted');
     const handleRelationshipChanged = () => handleDataChanged('relationshipChanged');
     
-    console.log('RelationshipViewWithRefresh: adding event listeners (customerDeleted, relationshipChanged)');
     window.addEventListener('customerDeleted', handleCustomerDeleted);
     window.addEventListener('relationshipChanged', handleRelationshipChanged);
     
     return () => {
-      console.log('RelationshipViewWithRefresh: removing event listeners');
       window.removeEventListener('customerDeleted', handleCustomerDeleted);
       window.removeEventListener('relationshipChanged', handleRelationshipChanged);
     };
