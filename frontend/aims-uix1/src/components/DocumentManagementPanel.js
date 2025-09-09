@@ -92,13 +92,31 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
     }
   ];
 
-  const handleDocumentUnlink = (documentId) => {
+  const handleDocumentUnlink = async (documentId) => {
     Modal.confirm({
       title: '문서 연결을 해제하시겠습니까?',
       content: '고객과 문서의 연결만 해제되며, 문서 자체는 삭제되지 않습니다.',
-      onOk: () => {
-        message.success('문서 연결이 해제되었습니다.');
-        onDocumentUpdate();
+      onOk: async () => {
+        try {
+          const response = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}/documents/${documentId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            message.success('문서 연결이 해제되었습니다.');
+            onDocumentUpdate();
+            
+            // 검색 결과에 반영되도록 전역 함수 호출
+            if (window.handleDocumentUnlinked) {
+              window.handleDocumentUnlinked(documentId);
+            }
+          } else {
+            throw new Error('문서 연결 해제 실패');
+          }
+        } catch (error) {
+          message.error('문서 연결 해제에 실패했습니다.');
+          console.error('Document unlink error:', error);
+        }
       }
     });
   };

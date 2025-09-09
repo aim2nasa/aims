@@ -1535,6 +1535,35 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     }));
   }, [filteredDocuments.length]);
 
+  // 문서 연결 해제 전역 함수 등록
+  useEffect(() => {
+    const handleDocumentUnlinkedForDashboard = (documentId) => {
+      // documents 상태에서 해당 문서의 customer_relation 제거
+      setDocuments(prevDocs => {
+        return prevDocs.map(doc => {
+          const docId = doc._id || doc.id;
+          if (docId === documentId) {
+            return { ...doc, customer_relation: undefined };
+          }
+          return doc;
+        });
+      });
+    };
+
+    // 기존 전역 함수가 있다면 확장, 없다면 새로 생성
+    const originalHandler = window.handleDocumentUnlinked;
+    window.handleDocumentUnlinked = (documentId) => {
+      if (originalHandler) {
+        originalHandler(documentId);
+      }
+      handleDocumentUnlinkedForDashboard(documentId);
+    };
+    
+    return () => {
+      window.handleDocumentUnlinked = originalHandler;
+    };
+  }, []);
+
   // 현재 페이지에 표시할 데이터 계산
   const currentPageDocuments = useMemo(() => {
     const startIndex = (pagination.current - 1) * pagination.pageSize;

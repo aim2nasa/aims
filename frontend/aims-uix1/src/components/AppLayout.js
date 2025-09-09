@@ -283,6 +283,33 @@ const AppLayout = () => {
     setIsResizing(true);
   };
 
+  // 문서 연결 해제 전역 함수 등록
+  React.useEffect(() => {
+    const handleDocumentUnlinked = (documentId) => {
+      // 검색 결과에서 해당 문서의 customer_relation 제거
+      setSearchResults(prevResults => {
+        if (!prevResults || prevResults.length === 0) {
+          return prevResults;
+        }
+        
+        return prevResults.map(doc => {
+          const docId = doc._id || doc.id;
+          if (docId === documentId) {
+            return { ...doc, customer_relation: undefined };
+          }
+          return doc;
+        });
+      });
+    };
+
+    // 전역 함수로 등록
+    window.handleDocumentUnlinked = handleDocumentUnlinked;
+    
+    return () => {
+      window.handleDocumentUnlinked = null;
+    };
+  }, []);
+
   // 마우스 이벤트 리스너 등록
   React.useEffect(() => {
     const handleGlobalMouseMove = (e) => {
