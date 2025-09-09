@@ -160,16 +160,21 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText, searchFilters]);
 
-  // 컴포넌트 마운트 시 새로고침 콜백 등록
+  // 컴포넌트 마운트 시 새로고침 콜백 등록 및 전역 함수 등록
   useEffect(() => {
+    // 1. 기존 시스템을 위한 콜백 등록 (고객 삭제 시 사용)
     if (onRefreshCustomerListSet) {
       onRefreshCustomerListSet(() => fetchCustomers);
     }
+    
+    // 2. 문서 해제 시 사용할 전역 함수 등록
+    window.refreshCustomerList = fetchCustomers;
     
     return () => {
       if (onRefreshCustomerListSet) {
         onRefreshCustomerListSet(null);
       }
+      delete window.refreshCustomerList;
     };
   }, [onRefreshCustomerListSet, fetchCustomers]);
 

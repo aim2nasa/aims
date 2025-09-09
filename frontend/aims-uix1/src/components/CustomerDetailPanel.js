@@ -287,6 +287,18 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
         // 문서 목록에서 해제된 문서 제거 (즉시 UI 업데이트)
         setCustomerDocuments(prev => prev.filter(doc => doc._id !== unlinkTargetDocument._id));
         
+        // 검색 결과에 반영되도록 전역 함수 호출
+        if (window.handleDocumentUnlinked) {
+          window.handleDocumentUnlinked(unlinkTargetDocument._id);
+        }
+        
+        // 고객 리스트 새로고침 (문서 개수 업데이트)
+        if (window.refreshCustomerList) {
+          setTimeout(() => {
+            window.refreshCustomerList();
+          }, 100);
+        }
+        
         // 해제된 문서가 현재 프리뷰 중인 문서라면 프리뷰 모달 닫기 (성공 후에)
         if (selectedDocument && selectedDocument._id === unlinkTargetDocument._id) {
           // 약간의 지연을 두고 모달 닫기 (사용자가 해제 완료를 인지할 수 있도록)
