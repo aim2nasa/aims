@@ -406,6 +406,7 @@ const DocumentLinkModal = ({
           <Space>
             <Button onClick={handleCancel} variant="secondary" size="large">취소</Button>
             <Button 
+              type="submit"
               variant="primary" 
               htmlType="submit" 
               size="large"
