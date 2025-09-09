@@ -161,9 +161,9 @@ const PDFViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--color-border-light)' }}>
-        {/* 페이지 이동 */}
-        <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--color-border-light)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          {/* 페이지 이동 */}
           <Space>
             <Button
               size="small"
@@ -187,24 +187,24 @@ const PDFViewer = ({ file, onDownload }) => {
               <span style={{ fontSize: '10px' }}>다음</span>
             </Button>
           </Space>
+
+          {/* 확대/축소 */}
+          <Space>
+            <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+            <Text style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>{Math.round(scale * 100)}%</Text>
+            <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+          </Space>
+
+          {/* 다운로드 */}
+          <Button
+            size="small"
+            variant="primary"
+            onClick={onDownload}
+            icon={<DownloadOutlined />}
+          >
+            <span style={{ fontSize: '10px' }}>다운로드</span>
+          </Button>
         </div>
-
-        {/* 확대/축소 */}
-        <Space style={{ marginLeft: 16 }}>
-          <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
-          <Text style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>{Math.round(scale * 100)}%</Text>
-          <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
-        </Space>
-
-        {/* 다운로드 */}
-        <Button
-          size="small"
-          variant="primary"
-          onClick={onDownload}
-          icon={<DownloadOutlined />}
-        >
-          <span style={{ fontSize: '10px' }}>다운로드</span>
-        </Button>
       </div>
     </div>
   );
