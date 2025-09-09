@@ -963,16 +963,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                boxShadow: '0 2px 8px var(--color-success-shadow)'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#0d9488';
-                e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+                e.target.style.backgroundColor = 'var(--color-success-hover)';
+                e.target.style.boxShadow = '0 6px 16px var(--color-success-shadow-hover)';
                 e.target.style.transform = 'translateY(-3px) scale(1.05)';
               }}
               onMouseLeave={(e) => {
                 e.target.style.backgroundColor = 'var(--color-success)';
-                e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+                e.target.style.boxShadow = '0 2px 8px var(--color-success-shadow)';
                 e.target.style.transform = 'translateY(0) scale(1)';
               }}
             >
@@ -997,19 +997,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px var(--color-primary-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = '#2563eb';
-                  e.target.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                  e.target.style.backgroundColor = 'var(--color-primary-hover)';
+                  e.target.style.boxShadow = '0 6px 16px var(--color-primary-shadow-hover)';
                   e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
                   e.target.style.backgroundColor = 'var(--color-primary)';
-                  e.target.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)';
+                  e.target.style.boxShadow = '0 2px 8px var(--color-primary-shadow)';
                   e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}
@@ -1035,19 +1035,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px rgba(139, 92, 246, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px var(--color-purple-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = '#7c3aed';
-                  e.target.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.4)';
+                  e.target.style.backgroundColor = 'var(--color-purple-hover)';
+                  e.target.style.boxShadow = '0 6px 16px var(--color-purple-shadow-hover)';
                   e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
                   e.target.style.backgroundColor = 'var(--color-purple)';
-                  e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)';
+                  e.target.style.boxShadow = '0 2px 8px var(--color-purple-shadow)';
                   e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}
@@ -1073,19 +1073,19 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 cursor: isCompleted ? 'pointer' : 'not-allowed',
                 opacity: isCompleted ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px rgba(16, 185, 129, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted ? '0 2px 8px var(--color-success-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (isCompleted) {
-                  e.target.style.backgroundColor = '#0d9488';
-                  e.target.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+                  e.target.style.backgroundColor = 'var(--color-success-hover)';
+                  e.target.style.boxShadow = '0 6px 16px var(--color-success-shadow-hover)';
                   e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (isCompleted) {
                   e.target.style.backgroundColor = 'var(--color-success)';
-                  e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+                  e.target.style.boxShadow = '0 2px 8px var(--color-success-shadow)';
                   e.target.style.transform = 'translateY(0) scale(1)';
                 }
               }}

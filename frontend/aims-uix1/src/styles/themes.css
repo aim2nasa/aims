@@ -14,8 +14,14 @@
   --color-primary-hover: #2563eb;
   --color-primary-active: #1d4ed8;
   --color-primary-light: #dbeafe;
+  --color-primary-shadow: rgba(59, 130, 246, 0.3);
+  --color-primary-shadow-hover: rgba(59, 130, 246, 0.4);
   --color-secondary: #0ea5e9;
   --color-secondary-light: #e0f2fe;
+  --color-purple: #8b5cf6;
+  --color-purple-hover: #7c3aed;
+  --color-purple-shadow: rgba(139, 92, 246, 0.3);
+  --color-purple-shadow-hover: rgba(139, 92, 246, 0.4);
   
   /* Text Colors */
   --color-text-primary: #111827;
@@ -27,8 +33,11 @@
   
   /* Status Colors */
   --color-success: #10b981;
+  --color-success-hover: #0d9488;
   --color-success-bg: #dcfce7;
   --color-success-border: #86efac;
+  --color-success-shadow: rgba(16, 185, 129, 0.3);
+  --color-success-shadow-hover: rgba(16, 185, 129, 0.4);
   --color-warning: #f59e0b;
   --color-warning-bg: #fef3c7;
   --color-warning-border: #fde047;
@@ -93,8 +102,14 @@
   --color-primary-hover: #93c5fd;
   --color-primary-active: #3b82f6;
   --color-primary-light: #1e3a8a;
+  --color-primary-shadow: rgba(96, 165, 250, 0.3);
+  --color-primary-shadow-hover: rgba(96, 165, 250, 0.4);
   --color-secondary: #38bdf8;
   --color-secondary-light: #164e63;
+  --color-purple: #a78bfa;
+  --color-purple-hover: #8b5cf6;
+  --color-purple-shadow: rgba(167, 139, 250, 0.3);
+  --color-purple-shadow-hover: rgba(167, 139, 250, 0.4);
   
   /* Text Colors */
   --color-text-primary: #f9fafb;
@@ -106,8 +121,11 @@
   
   /* Status Colors */
   --color-success: #34d399;
+  --color-success-hover: #10b981;
   --color-success-bg: #064e3b;
   --color-success-border: #10b981;
+  --color-success-shadow: rgba(52, 211, 153, 0.3);
+  --color-success-shadow-hover: rgba(52, 211, 153, 0.4);
   --color-warning: #fbbf24;
   --color-warning-bg: #713f12;
   --color-warning-border: #f59e0b;
