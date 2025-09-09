@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu } from 'antd';
-import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed }) => {
   // collapsed 상태에 따라 다른 메뉴 구조
@@ -41,10 +41,17 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       style: { paddingLeft: '12px' }
     },
     {
+      key: 'documents',
+      icon: <FileTextOutlined />,
+      label: '',
+      title: '문서 관리',
+    },
+    {
       key: 'dsd',
       icon: <DashboardOutlined />,
       label: '',
       title: '문서 처리 현황',
+      style: { paddingLeft: '12px' }
     },
   ] : [
     // 펼쳐진 상태일 때의 메뉴 구조
@@ -78,9 +85,17 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       ],
     },
     {
-      key: 'dsd',
-      icon: <DashboardOutlined />,
-      label: '문서 처리 현황',
+      key: 'documents',
+      icon: <FileTextOutlined />,
+      label: '문서 관리',
+      onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
+      children: [
+        {
+          key: 'dsd',
+          icon: <DashboardOutlined />,
+          label: '문서 처리 현황',
+        }
+      ],
     },
   ];
 
@@ -90,7 +105,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
         items={menuItems} 
         mode="inline" 
         defaultSelectedKeys={['dsd']} 
-        openKeys={collapsed ? [] : ['customers']}
+        openKeys={collapsed ? [] : ['customers', 'documents']}
         onOpenChange={() => {}}
         onClick={({ key }) => onMenuClick && onMenuClick(key)}
         expandIcon={() => null}
