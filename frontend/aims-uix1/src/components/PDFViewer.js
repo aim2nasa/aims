@@ -19,6 +19,7 @@ const PDFViewer = ({ file, onDownload }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0); // 이미지와 동일하게 1.0으로 시작
   const [containerWidth, setContainerWidth] = useState(600);
+  const [isCompact, setIsCompact] = useState(false);
   const [error, setError] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -67,7 +68,7 @@ const PDFViewer = ({ file, onDownload }) => {
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), []);   // 최대 300%
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.5)), []); // 최소 50%
 
-  // 컨테이너 크기 변경에 따른 PDF 너비 동적 조정
+  // 컨테이너 크기 변경에 따른 PDF 너비 동적 조정 및 컴팩트 모드 설정
   useEffect(() => {
     const updateContainerWidth = () => {
       // RightPane의 현재 너비를 기준으로 PDF 너비 계산
@@ -77,6 +78,8 @@ const PDFViewer = ({ file, onDownload }) => {
         // 최대 제한 제거하고 pane 너비에 비례해서 동적 조정
         const optimalWidth = paneWidth * 0.85; // 85%로 여유 공간 확보
         setContainerWidth(optimalWidth);
+        // 프리뷰창이 좁으면 컴팩트 모드 활성화 (500px 이하)
+        setIsCompact(paneWidth < 500);
       }
     };
 
@@ -162,7 +165,7 @@ const PDFViewer = ({ file, onDownload }) => {
 
       {/* 컨트롤 패널 */}
       <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isCompact ? '12px' : '24px' }}>
           {/* 페이지 이동 */}
           <Space>
             <Button
@@ -172,10 +175,10 @@ const PDFViewer = ({ file, onDownload }) => {
               onClick={previousPage}
               icon={<LeftOutlined />}
             >
-              <span style={{ fontSize: '10px' }}>이전</span>
+              {!isCompact && <span style={{ fontSize: '10px' }}>이전</span>}
             </Button>
             <Text style={{ margin: '0 8px', fontSize: '10px', color: 'var(--color-text-primary)' }}>
-              페이지 {pageNumber} / {numPages || '--'}
+              {isCompact ? `${pageNumber}/${numPages || '--'}` : `페이지 ${pageNumber} / ${numPages || '--'}`}
             </Text>
             <Button
               size="small"
@@ -184,7 +187,7 @@ const PDFViewer = ({ file, onDownload }) => {
               onClick={nextPage}
               icon={<RightOutlined />}
             >
-              <span style={{ fontSize: '10px' }}>다음</span>
+              {!isCompact && <span style={{ fontSize: '10px' }}>다음</span>}
             </Button>
           </Space>
 
@@ -202,7 +205,7 @@ const PDFViewer = ({ file, onDownload }) => {
             onClick={onDownload}
             icon={<DownloadOutlined />}
           >
-            <span style={{ fontSize: '10px' }}>다운로드</span>
+            {!isCompact && <span style={{ fontSize: '10px' }}>다운로드</span>}
           </Button>
         </div>
       </div>
