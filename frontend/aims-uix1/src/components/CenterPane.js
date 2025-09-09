@@ -236,11 +236,11 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
     setSelectedDocumentForLink(null);
   };
 
-  const handleLinkSuccess = () => {
+  const handleLinkSuccess = (linkedDocumentId, customerInfo) => {
     // 연결 성공 후 우측 패널의 고객 정보 새로고침
     message.success('문서가 고객에게 성공적으로 연결되었습니다.');
     if (onDocumentLinked) {
-      onDocumentLinked();
+      onDocumentLinked(linkedDocumentId, customerInfo);
     }
   };
 

@@ -1540,7 +1540,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     const startIndex = (pagination.current - 1) * pagination.pageSize;
     const endIndex = startIndex + pagination.pageSize;
     return filteredDocuments.slice(startIndex, endIndex);
-  }, [filteredDocuments, pagination.current, pagination.pageSize]);
+  }, [filteredDocuments, pagination]);
 
   const handleDocumentClick = async (document) => {
     // 먼저 메인 리스트 데이터로 모달 열기 (일관성 보장)

@@ -105,7 +105,17 @@ const DocumentLinkModal = ({
 
       if (response.data.success) {
         message.success('문서가 고객에게 성공적으로 연결되었습니다.');
-        onLinkSuccess && onLinkSuccess();
+        
+        // 연결된 고객 정보 구성
+        const customerInfo = {
+          customer_id: customerId,
+          relationship_type: values.relationship_type,
+          assigned_by: null,
+          assigned_at: new Date().toISOString(),
+          notes: values.notes || ""
+        };
+        
+        onLinkSuccess && onLinkSuccess(documentId, customerInfo);
         handleCancel();
       }
     } catch (error) {

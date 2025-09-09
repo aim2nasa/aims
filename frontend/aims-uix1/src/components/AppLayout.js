@@ -146,6 +146,23 @@ const AppLayout = () => {
     }
   };
 
+  // 문서 연결 후 검색 결과 업데이트
+  const handleDocumentLinked = async (linkedDocumentId, customerInfo) => {
+    // 우측 패널 고객 정보 새로고침
+    await refreshSelectedCustomer();
+    
+    // 검색 결과에서 연결된 문서의 customer_relation 상태 업데이트
+    if (searchResults && searchResults.length > 0) {
+      setSearchResults(prevResults => 
+        prevResults.map(doc => 
+          doc._id === linkedDocumentId || doc.id === linkedDocumentId
+            ? { ...doc, customer_relation: customerInfo }
+            : doc
+        )
+      );
+    }
+  };
+
   // 고객 수정 함수 - CustomerManagement의 openCustomerModal을 호출하도록 함
   const handleEditCustomer = (customer) => {
     setEditingCustomer(customer);
@@ -170,7 +187,6 @@ const AppLayout = () => {
           refreshCustomerList();
         }
         // 관계 트리 새로고침
-        console.log('AppLayout: dispatching customerDeleted event');
         window.dispatchEvent(new CustomEvent('customerDeleted'));
       }
     } catch (error) {
@@ -433,7 +449,7 @@ const AppLayout = () => {
                 showDashboard={showDashboard}
                 showCustomerManagement={showCustomerManagement}
                 selectedMenuKey={selectedMenuKey}
-                onDocumentLinked={refreshSelectedCustomer}
+                onDocumentLinked={handleDocumentLinked}
                 editModalVisible={editModalVisible}
                 editingCustomer={editingCustomer}
                 onEditModalClose={() => {
