@@ -333,10 +333,16 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                         icon={<LinkOutlined />}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDocumentLink(item);
+                          if (!item.customer_relation) {
+                            handleDocumentLink(item);
+                          }
                         }}
-                        title="고객에게 연결"
-                        style={{ color: '#52c41a' }}
+                        disabled={item.customer_relation}
+                        title={item.customer_relation ? "이미 고객과 연결됨" : "고객에게 연결"}
+                        style={{ 
+                          color: item.customer_relation ? '#d9d9d9' : '#52c41a',
+                          cursor: item.customer_relation ? 'not-allowed' : 'pointer'
+                        }}
                       >
                         고객연결
                       </Button>,

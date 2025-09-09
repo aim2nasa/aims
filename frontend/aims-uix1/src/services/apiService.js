@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:8080";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tars.giize.com:3010";
 
 // 통신 모드 관리 - Polling만 지원
 class CommunicationManager {
@@ -53,7 +53,7 @@ export const apiService = {
   // 헬스체크
   async checkHealth() {
     try {
-      const response = await fetch(`${API_BASE_URL}/health`, {
+      const response = await fetch(`${API_BASE_URL}/api/health`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +74,7 @@ export const apiService = {
   // 최근 문서 목록 조회
   async getRecentDocuments(limit = 20) {
     try {
-      const response = await fetch(`${API_BASE_URL}/status?limit=${limit}`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents/status?limit=${limit}`, {
         method: "GET", 
         headers: {
           "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export const apiService = {
   // 특정 문서 상태 조회
   async getDocumentStatus(documentId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/status/${documentId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/status`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

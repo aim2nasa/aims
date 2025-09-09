@@ -1057,33 +1057,33 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             </button>
             <button 
               onClick={() => {
-                if (isCompleted) {
+                if (isCompleted && !document.customer_relation) {
                   handleDocumentLink(document);
                 }
               }}
-              disabled={!isCompleted}
+              disabled={!isCompleted || document.customer_relation}
               style={{
                 padding: rightPaneVisible ? '5px' : '6px 12px',
                 fontSize: '10px',
                 fontWeight: '600',
-                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-success)' : 'rgba(107, 114, 128, 0.2)',
+                color: isCompleted && !document.customer_relation ? 'white' : 'var(--color-text-tertiary)',
+                backgroundColor: isCompleted && !document.customer_relation ? 'var(--color-success)' : 'rgba(107, 114, 128, 0.3)',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.5,
+                cursor: isCompleted && !document.customer_relation ? 'pointer' : 'not-allowed',
+                opacity: isCompleted && !document.customer_relation ? 1 : 0.5,
                 transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px var(--color-success-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                boxShadow: isCompleted && !document.customer_relation ? '0 2px 8px var(--color-success-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
-                if (isCompleted) {
+                if (isCompleted && !document.customer_relation) {
                   e.target.style.backgroundColor = 'var(--color-success-hover)';
                   e.target.style.boxShadow = '0 6px 16px var(--color-success-shadow-hover)';
                   e.target.style.transform = 'translateY(-3px) scale(1.05)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (isCompleted) {
+                if (isCompleted && !document.customer_relation) {
                   e.target.style.backgroundColor = 'var(--color-success)';
                   e.target.style.boxShadow = '0 2px 8px var(--color-success-shadow)';
                   e.target.style.transform = 'translateY(0) scale(1)';
@@ -1139,17 +1139,32 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       const data = await apiService.getRecentDocuments(1000);
       const realDocuments = data.documents || [];
       
+      // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
+      const documentsWithCustomerRelation = await Promise.all(
+        realDocuments.map(async (doc) => {
+          try {
+            const detailedDoc = await apiService.getDocumentStatus(doc._id);
+            return {
+              ...doc,
+              customer_relation: detailedDoc.data?.rawDocument?.customer_relation
+            };
+          } catch (error) {
+            console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
+            return { ...doc, customer_relation: undefined };
+          }
+        })
+      );
       
       // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
       setDocuments(prevDocs => {
         const tempDocs = prevDocs.filter(doc => doc.id?.startsWith('temp-'));
-        const realDocFilenames = realDocuments.map(doc => extractFilename(doc).toLowerCase());
+        const realDocFilenames = documentsWithCustomerRelation.map(doc => extractFilename(doc).toLowerCase());
         const uniqueTempDocs = tempDocs.filter(tempDoc => {
           const tempFilename = extractFilename(tempDoc).toLowerCase();
           return !realDocFilenames.includes(tempFilename);
         });
         
-        return [...realDocuments, ...uniqueTempDocs];
+        return [...documentsWithCustomerRelation, ...uniqueTempDocs];
       });
       
       setLastUpdated(new Date());
@@ -1500,8 +1515,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
   };
 
   const handleLinkSuccess = () => {
-    // 연결 성공 후 처리 (필요시 문서 목록 새로고침 등)
-    // 추가로 필요한 처리가 있다면 여기에 구현
+    // 연결 성공 후 문서 목록 새로고침하여 연결 상태 반영
+    fetchDocuments();
   };
 
   // 상태별 통계 (전체 문서 기준)
