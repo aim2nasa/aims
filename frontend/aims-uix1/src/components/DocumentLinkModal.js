@@ -216,15 +216,16 @@ const DocumentLinkModal = ({
           <div style={{ 
             marginBottom: 12, 
             padding: '8px 12px', 
-            backgroundColor: '#f6ffed', 
-            border: '1px solid #b7eb8f',
+            backgroundColor: 'var(--color-success-bg)', 
+            border: '1px solid var(--color-success-border)',
             borderRadius: '4px',
-            fontSize: '12px'
+            fontSize: '12px',
+            color: 'var(--color-text-primary)'
           }}>
             <Space>
               <span>검색 결과: <strong>{pagination.total}명</strong></span>
               {pagination.total > 100 && (
-                <span style={{ color: '#fa8c16' }}>
+                <span style={{ color: 'var(--color-warning)' }}>
                   • 결과가 많습니다. 더 구체적인 검색어를 사용해보세요
                 </span>
               )}
@@ -268,10 +269,11 @@ const DocumentLinkModal = ({
         {/* 검색 결과 리스트 */}
         {searchTerm && (
           <div style={{ 
-            border: '1px solid #d9d9d9', 
+            border: '1px solid var(--color-border)', 
             borderRadius: '6px',
             maxHeight: '280px',
-            overflow: 'auto'
+            overflow: 'auto',
+            backgroundColor: 'var(--color-bg-primary)'
           }}>
             <Spin spinning={searchLoading}>
               {customers.length > 0 ? (
@@ -282,15 +284,16 @@ const DocumentLinkModal = ({
                       key={customer._id}
                       style={{ 
                         cursor: 'pointer',
-                        backgroundColor: selectedCustomerId === customer._id ? '#e6f7ff' : 'white',
-                        padding: '12px 16px'
+                        backgroundColor: selectedCustomerId === customer._id ? 'var(--color-primary-bg)' : 'var(--color-bg-primary)',
+                        padding: '12px 16px',
+                        color: 'var(--color-text-primary)'
                       }}
                       onClick={() => handleCustomerSelect(customer)}
                     >
                       <List.Item.Meta
                         avatar={<Avatar icon={<UserOutlined />} size="small" />}
                         title={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--color-text-primary)' }}>
                             <span>{customer.personal_info?.name}</span>
                             {selectedCustomerId === customer._id && (
                               <Tag color="blue" size="small">선택됨</Tag>
@@ -298,9 +301,9 @@ const DocumentLinkModal = ({
                           </div>
                         }
                         description={
-                          <Space split={<span>•</span>}>
-                            <span>{customer.personal_info?.phone || '연락처 없음'}</span>
-                            <span>{customer.insurance_info?.customer_type || '유형 없음'}</span>
+                          <Space split={<span style={{ color: 'var(--color-text-secondary)' }}>•</span>}>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>{customer.personal_info?.phone || '연락처 없음'}</span>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>{customer.insurance_info?.customer_type || '유형 없음'}</span>
                           </Space>
                         }
                       />
@@ -308,7 +311,7 @@ const DocumentLinkModal = ({
                   )}
                 />
               ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
                   {searchLoading ? '검색 중...' : '검색 결과가 없습니다.'}
                 </div>
               )}

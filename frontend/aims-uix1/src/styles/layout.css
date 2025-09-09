@@ -212,6 +212,35 @@ body {
   background-color: var(--color-bg-overlay) !important;
 }
 
+/* Modal 내부 Input 필드 다크 테마 */
+.ant-modal-content .ant-input,
+.ant-modal-content .ant-input-search input,
+.ant-modal-content .ant-input-affix-wrapper,
+.ant-modal-content .ant-select-selector,
+.ant-modal-content textarea.ant-input {
+  background-color: var(--color-bg-primary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+.ant-modal-content .ant-input::placeholder,
+.ant-modal-content .ant-input-search input::placeholder,
+.ant-modal-content .ant-input-affix-wrapper input::placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+.ant-modal-content .ant-input:focus,
+.ant-modal-content .ant-input-search input:focus,
+.ant-modal-content .ant-input-affix-wrapper:focus,
+.ant-modal-content .ant-input-affix-wrapper-focused {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-opacity) !important;
+}
+
+.ant-modal-content .ant-select-dropdown {
+  background-color: var(--color-surface-2) !important;
+}
+
 /* Dropdown */
 .ant-dropdown-menu {
   background: var(--color-surface-1) !important;
