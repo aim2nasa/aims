@@ -619,6 +619,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               pageSize: pagination.pageSize,
               total: pagination.total,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '30', '40', '50', '100'],
               showQuickJumper: false,
               onChange: (page, pageSize) => {
                 setPagination(prev => ({
