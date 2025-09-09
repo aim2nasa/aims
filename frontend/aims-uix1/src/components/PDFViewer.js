@@ -161,7 +161,7 @@ const PDFViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--color-border-light)' }}>
+      <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {/* 페이지 이동 */}
           <Space>
