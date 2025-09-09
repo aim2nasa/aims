@@ -67,7 +67,6 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     pageSize: 20,
     total: 0
   });
-  const [isResponsive, setIsResponsive] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [searchFilters, setSearchFilters] = useState({});
   const [showRegionalView, setShowRegionalView] = useState(false);
@@ -90,138 +89,8 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   const [form] = Form.useForm();
   const customerNameInputRef = useRef(null);
 
-  // 페이지네이션에 Select 드롭다운 추가
-  useEffect(() => {
-    const addSelectDropdown = () => {
-      // 페이지네이션 리스트 찾기 (페이지 번호가 있는 ul 요소)
-      const paginationList = document.querySelector('.ant-pagination');
-      if (paginationList && pagination.total > 0) {
-        // 이미 select가 있으면 제거
-        const existingContainer = paginationList.querySelector('.custom-page-select-container');
-        if (existingContainer) {
-          existingContainer.remove();
-        }
-        
-        // 새로운 select container 생성 (li 요소로)
-        const selectContainer = document.createElement('li');
-        selectContainer.className = 'custom-page-select-container';
-        selectContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        `;
-        
-        const totalPages = Math.ceil(pagination.total / pagination.pageSize);
-        selectContainer.innerHTML = `
-          <span style="font-size: 13px; color: var(--color-text-secondary)">Go to</span>
-          <select id="page-jumper-select" style="
-            padding: 2px 6px;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            background-color: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            cursor: pointer;
-            font-size: 13px;
-            min-width: 50px;
-            height: 24px;
-          ">
-            ${Array.from({ length: totalPages }, (_, i) => `
-              <option value="${i + 1}" ${pagination.current === i + 1 ? 'selected' : ''}>${i + 1}</option>
-            `).join('')}
-          </select>
-          <span style="font-size: 13px; color: var(--color-text-secondary)">Page</span>
-        `;
-        
-        // 페이지네이션 리스트의 끝에 추가
-        paginationList.appendChild(selectContainer);
-        
-        // select 이벤트 리스너 추가
-        const select = selectContainer.querySelector('#page-jumper-select');
-        if (select) {
-          select.addEventListener('change', (e) => {
-            const targetPage = Number(e.target.value);
-            setPagination(prev => ({
-              ...prev,
-              current: targetPage
-            }));
-          });
-        }
-      }
-    };
-    
-    // 페이지네이션이 렌더링된 후 실행
-    setTimeout(addSelectDropdown, 200);
-    
-    // cleanup
-    return () => {
-      const selectContainer = document.querySelector('.custom-page-select-container');
-      if (selectContainer) {
-        selectContainer.remove();
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.current, pagination.total, pagination.pageSize]);
 
-  // 브라우저 크기에 따른 아이템 수 계산
-  const calculateItemsPerPage = useCallback(() => {
-    if (!isResponsive) return pagination.pageSize;
-    
-    const appHeader = 64;
-    const customerHeader = 80;
-    const searchBarHeight = showRegionalView || showRelationshipView ? 0 : 120;
-    const tableHeaderHeight = 55;
-    const paginationHeight = 60;
-    
-    const fixedElementsHeight = appHeader + customerHeader + searchBarHeight + tableHeaderHeight + paginationHeight;
-    
-    const tableRow = document.querySelector('.ant-table-tbody > tr');
-    const rowHeight = tableRow?.offsetHeight || 47;
-    
-    const availableHeight = window.innerHeight - fixedElementsHeight;
-    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
-    
-    return Math.max(10, Math.min(maxItemsPerPage, 100));
-  }, [isResponsive, pagination.pageSize, showRegionalView, showRelationshipView]);
 
-  // 브라우저 크기 변경 시 pageSize 업데이트
-  useEffect(() => {
-    let resizeTimer;
-    
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (isResponsive) {
-          const newPageSize = calculateItemsPerPage();
-          setPagination(prev => {
-            // 같은 값이면 업데이트하지 않음
-            if (prev.pageSize === newPageSize) return prev;
-            return {
-              ...prev,
-              pageSize: newPageSize,
-              current: 1 // 페이지 크기 변경시 첫 페이지로
-            };
-          });
-        }
-      }, 300); // 300ms 디바운싱
-    };
-
-    // 초기 설정 (DOM이 완전히 로드된 후)
-    if (isResponsive) {
-      setTimeout(() => {
-        const initialPageSize = calculateItemsPerPage();
-        setPagination(prev => ({
-          ...prev,
-          pageSize: initialPageSize
-        }));
-      }, 100);
-    }
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimer);
-    };
-  }, [isResponsive, calculateItemsPerPage]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchCustomers = useCallback(async () => {
@@ -342,36 +211,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     }
   }, [modalVisible]);
 
-  const handleTableChange = (page, pageSize) => {
-    setIsResponsive(false); // 수동 설정 시 반응형 모드 비활성화
-    setPagination({
-      current: page,
-      pageSize: pageSize,
-      total: pagination.total
-    });
-  };
 
-  const handleResponsiveModeChange = (responsive) => {
-    setIsResponsive(responsive);
-    if (responsive) {
-      // DOM 업데이트 후 계산하도록 지연
-      setTimeout(() => {
-        const newPageSize = calculateItemsPerPage();
-        setPagination(prev => ({
-          ...prev,
-          pageSize: newPageSize,
-          current: 1
-        }));
-      }, 50);
-    } else {
-      // Auto-fit 해제시 기본값으로 복귀
-      setPagination(prev => ({
-        ...prev,
-        pageSize: 10,
-        current: 1
-      }));
-    }
-  };
 
   // 통합 모달 열기 함수
   const openCustomerModal = (customer = null) => {
@@ -778,7 +618,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
-              showSizeChanger: !isResponsive,
+              showSizeChanger: true,
               showQuickJumper: false,
               onChange: (page, pageSize) => {
                 setPagination(prev => ({
@@ -786,50 +626,18 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   current: page
                 }));
               },
-              onShowSizeChange: handleTableChange,
+              onShowSizeChange: (current, size) => {
+                setPagination(prev => ({
+                  ...prev,
+                  current: 1,
+                  pageSize: size
+                }));
+              },
               showTotal: (total, range) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                   <span>
                     {range[0]}-{range[1]} of {total} customers
                   </span>
-                  
-                  {/* 반응형 모드 토글 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '13px',
-                      color: 'var(--color-text-secondary)',
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={isResponsive}
-                        onChange={(e) => handleResponsiveModeChange(e.target.checked)}
-                        style={{
-                          cursor: 'pointer',
-                          accentColor: 'var(--color-primary)'
-                        }}
-                      />
-                      Auto-fit to screen
-                    </label>
-                  </div>
-                  
-                  {/* 반응형 모드일 때 현재 아이템 수 표시 */}
-                  {isResponsive && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: 'var(--color-text-secondary)',
-                        fontWeight: 'normal',
-                        textDecoration: 'none'
-                      }}>
-                        📱 {pagination.pageSize} per page (auto)
-                      </span>
-                    </div>
-                  )}
                 </div>
               ),
               className: 'fixed-bottom-pagination'
