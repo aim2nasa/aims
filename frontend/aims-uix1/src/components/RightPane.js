@@ -89,8 +89,8 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
 
   return (
     <div style={{ 
-      minHeight: 'calc(100vh - 188px)', 
-      maxHeight: 'calc(100vh - 188px)',
+      minHeight: 'calc(100vh - 120px)', 
+      maxHeight: 'calc(100vh - 120px)',
       display: 'flex', 
       flexDirection: 'column',
       backgroundColor: 'var(--color-surface-1)',

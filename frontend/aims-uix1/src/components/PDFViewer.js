@@ -102,7 +102,7 @@ const PDFViewer = ({ file, onDownload }) => {
         justifyContent: 'center', 
         alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
         width: '100%',
-        height: 'calc(100vh - 260px)', // CenterPane 페이지네이션 위치에 정확히 맞춤
+        height: 'calc(100vh - 120px)', // 빨간색 선까지 확장하여 최대 활용
         overflow: 'auto',
         padding: '10px'
       }}>
