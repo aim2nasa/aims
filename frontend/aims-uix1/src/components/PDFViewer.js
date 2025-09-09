@@ -95,14 +95,14 @@ const PDFViewer = ({ file, onDownload }) => {
   }, []);
 
   return (
-    <div style={{ position: 'relative', overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'var(--color-bg-secondary)', padding: '10px' }}>
+    <div style={{ position: 'relative', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'var(--color-bg-secondary)', padding: '10px' }}>
       <div style={{ 
         flexShrink: 0,
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
         width: '100%',
-        height: 'calc(100vh - 120px)', // 빨간색 선까지 확장하여 최대 활용
+        height: 'calc(100vh - 255px)', // 컨트롤 패널을 15px 더 아래로 이동
         overflow: 'auto',
         padding: '10px'
       }}>
@@ -161,7 +161,7 @@ const PDFViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border-light)' }}>
+      <div style={{ flexShrink: 0, marginTop: 8, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-1)', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--color-border-light)' }}>
         {/* 페이지 이동 */}
         <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
           <Space>

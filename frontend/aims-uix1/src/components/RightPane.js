@@ -129,7 +129,6 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
       {/* Content */}
       <div style={{ 
         flex: 1, 
-        overflowY: 'auto', 
         padding: '0 8px'
       }}>
         {isPdf ? (
