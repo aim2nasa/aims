@@ -133,3 +133,28 @@
 .aims-input-success.aims-input-focused {
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
 }
+
+/* No Border Search Input */
+.no-border-search .ant-input-search {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.no-border-search .ant-input-search:hover,
+.no-border-search .ant-input-search:focus,
+.no-border-search .ant-input-search-focused {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.no-border-search .ant-input {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.no-border-search .ant-input:hover,
+.no-border-search .ant-input:focus,
+.no-border-search .ant-input:focus-within {
+  border: none !important;
+  box-shadow: none !important;
+}

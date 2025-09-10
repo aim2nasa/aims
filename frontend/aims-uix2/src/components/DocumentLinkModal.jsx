@@ -6,6 +6,7 @@ import {
 import { Button } from './common';
 import { LinkOutlined, UserOutlined, FileTextOutlined, ExclamationCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import './common/Input.css';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -219,6 +220,7 @@ const DocumentLinkModal = ({
           size="large"
           prefix={<SearchOutlined />}
           loading={searchLoading}
+          className="no-border-search"
         />
         
         {/* 검색 결과 수 및 안내 */}
