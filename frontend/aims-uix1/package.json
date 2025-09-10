@@ -25,11 +25,14 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "dev": "GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 npm start",
-    "dev:clean": "rm -rf node_modules/.cache .parcel-cache build && GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 npm start",
+    "start": "PORT=3005 react-scripts start",
+    "start:clean": "rm -rf node_modules/.cache && PORT=3005 react-scripts start",
+    "dev": "GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 react-scripts start",
+    "dev:clean": "rm -rf node_modules/.cache .parcel-cache build && GENERATE_SOURCEMAP=false FAST_REFRESH=false PORT=3005 react-scripts start",
     "cache:clear": "rm -rf node_modules/.cache .parcel-cache build",
+    "cache:full-clear": "rm -rf node_modules/.cache .parcel-cache build && npm start",
     "build": "react-scripts build",
+    "build:clean": "rm -rf build && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

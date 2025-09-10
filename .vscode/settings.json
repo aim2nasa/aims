@@ -1,0 +1,45 @@
+{
+  // React 개발 최적화 설정
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+  "javascript.preferences.includePackageJsonAutoImports": "off",
+  
+  // 파일 감시 최적화 (캐시 문제 방지)
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/.cache/**": true,
+    "**/.parcel-cache/**": true,
+    "**/build/**": true,
+    "**/*.log": true
+  },
+  
+  // 자동 저장 최적화
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  
+  // Git 최적화
+  "git.autofetch": false,
+  "git.enableSmartCommit": false,
+  
+  // 성능 최적화
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/.cache": true
+  },
+  
+  // React/JSX 설정
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  
+  // ESLint 설정
+  "eslint.workingDirectories": [
+    "frontend/aims-uix1"
+  ],
+  
+  // 터미널 설정
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.cwd": "frontend/aims-uix1"
+}
