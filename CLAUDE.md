@@ -77,6 +77,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **기억하라**: 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!
 
+### React 개발 문제 해결 규칙 - 철칙! ⚠️
+
+**React Real-time Refreshing 문제 시 절대 준수 사항**
+
+1. **문제 발생 징후:**
+   - 코드 변경 후 브라우저에 반영되지 않음
+   - Ctrl+Shift+R (하드 리프레시)해도 화면이 변하지 않음
+   - 메뉴 구조나 컴포넌트 변경사항이 보이지 않음
+   - Hot Module Replacement(HMR)가 작동하지 않음
+
+2. **절대 금지사항:**
+   - **코드를 먼저 건드리지 말 것!**
+   - 문제 원인을 코드에서 찾으려 하지 말 것
+   - 추가 수정을 통해 해결하려 하지 말 것
+
+3. **반드시 따라야 할 해결 순서:**
+   ```bash
+   # 1단계: 모든 React 프로세스 종료
+   pkill -f "react-scripts"
+   
+   # 2단계: React 캐시 완전 삭제
+   rm -rf node_modules/.cache
+   
+   # 3단계: 새 서버 시작
+   PORT=3005 npm start
+   
+   # 4단계: 컴파일 완료 대기
+   # "Compiled successfully!" 메시지 확인
+   
+   # 5단계: 브라우저에서 하드 리프레시
+   # Ctrl+Shift+R 또는 F5
+   ```
+
+4. **이 규칙이 중요한 이유:**
+   - React 캐시 문제는 코드 변경과 무관하게 발생
+   - 코드를 건드리면 문제가 더 복잡해짐
+   - 캐시 삭제가 가장 빠르고 확실한 해결책
+   - 불필요한 코드 변경으로 인한 부작용 방지
+
+**기억하세요: React 화면 업데이트 문제 = 캐시 삭제 + 서버 재시작!**
+
 ---
 
 ## System Overview
