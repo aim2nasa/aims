@@ -9,6 +9,7 @@ import DocumentManagementMain from './DocumentManagementMain';
 import DocumentLinkModal from './DocumentLinkModal';
 import { extractDocumentId } from '../utils/documentHelper';
 import axios from 'axios';
+import '../styles/themes.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -329,6 +330,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                 return (
                   <List.Item
                     key={itemId}
+                    className={isSelected ? 'selected-document-item' : ''}
                     actions={[
                       <Button
                         type="text"
@@ -365,7 +367,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                     style={{ 
                       cursor: 'pointer', 
                       padding: '12px 0',
-                      backgroundColor: isSelected ? '#e6f7ff' : 'transparent',
+                      backgroundColor: isSelected ? 'var(--color-primary-bg)' : 'transparent',
                       borderRadius: '8px',
                       margin: '4px 0',
                       transition: 'all 0.3s ease'

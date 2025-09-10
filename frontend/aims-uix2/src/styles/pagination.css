@@ -72,4 +72,40 @@ body {
   padding: 0 4px !important;
 }
 
+/* 페이지네이션 활성 항목 텍스트 색상 수정 */
+.fixed-bottom-pagination .ant-pagination-item-active {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.fixed-bottom-pagination .ant-pagination-item-active a {
+  color: white !important;
+}
+
+/* 다크 테마에서 페이지네이션 텍스트 색상 */
+html[data-theme="dark"] .fixed-bottom-pagination .ant-pagination-item a {
+  color: var(--color-text-primary) !important;
+}
+
+html[data-theme="dark"] .fixed-bottom-pagination .ant-pagination-item-active a {
+  color: white !important;
+}
+
+/* hover 상태에서도 텍스트 색상 유지 */
+.fixed-bottom-pagination .ant-pagination-item:hover a {
+  color: var(--color-primary) !important;
+}
+
+.fixed-bottom-pagination .ant-pagination-item-active:hover a {
+  color: white !important;
+}
+
+html[data-theme="dark"] .fixed-bottom-pagination .ant-pagination-item:hover a {
+  color: var(--color-primary) !important;
+}
+
+html[data-theme="dark"] .fixed-bottom-pagination .ant-pagination-item-active:hover a {
+  color: white !important;
+}
+
 

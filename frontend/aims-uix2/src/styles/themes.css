@@ -241,3 +241,27 @@ textarea {
   background-color: var(--color-primary-light);
   color: var(--color-text-primary);
 }
+
+/* ===========================
+   DOCUMENT LIST SELECTION
+   =========================== */
+.selected-document-item {
+  background-color: var(--color-primary-bg) !important;
+}
+
+.selected-document-item .ant-list-item-meta-title {
+  color: var(--color-text-primary) !important;
+}
+
+.selected-document-item .ant-list-item-meta-description {
+  color: var(--color-text-secondary) !important;
+}
+
+/* 다크 테마에서 선택된 문서 항목 텍스트 색상 */
+[data-theme="dark"] .selected-document-item .ant-list-item-meta-title {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .selected-document-item .ant-list-item-meta-description {
+  color: var(--color-text-secondary) !important;
+}
