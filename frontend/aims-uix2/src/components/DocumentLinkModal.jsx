@@ -213,7 +213,7 @@ const DocumentLinkModal = ({
           </span>
         </div>
         <Input.Search
-          placeholder="예: '김철수', '010-1234', '김철' 등 (최소 2글자)"
+          placeholder="예: '김철수', '010-1234', '김' 등 (최소 1글자)"
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
           style={{ marginBottom: 16 }}
