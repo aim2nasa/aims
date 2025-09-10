@@ -9,11 +9,22 @@ export default defineConfig({
     include: "**/*.{jsx,js}",
   })],
   
-  // 서버 설정
+  // 서버 설정 - WSL2 HMR 최적화
   server: {
     port: 3006,
     host: true,
-    open: false
+    open: false,
+    // WSL2 환경에서 파일 감시 최적화
+    watch: {
+      usePolling: true,
+      interval: 100,
+      binaryInterval: 300
+    },
+    hmr: {
+      overlay: true,
+      port: 3006,
+      host: 'localhost'
+    }
   },
   
   // 빌드 설정

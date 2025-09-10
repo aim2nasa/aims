@@ -35,6 +35,7 @@
     "eslint-plugin-react-refresh": "^0.4.16",
     "node-fetch": "^3.3.2",
     "vite": "^6.0.7",
+    "vite-plugin-restart": "^1.0.0",
     "vitest": "^2.1.8",
     "which": "^5.0.0"
   }
