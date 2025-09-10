@@ -38,6 +38,9 @@ const AppLayout = () => {
   const [showCustomerManagementMain, setShowCustomerManagementMain] = useState(false);
   const [selectedMenuKey, setSelectedMenuKey] = useState(null);
   
+  // 문서 관리 관련 상태
+  const [showDocumentManagementMain, setShowDocumentManagementMain] = useState(false);
+  
   // 고객 수정 모달 관련 상태
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
@@ -226,10 +229,11 @@ const AppLayout = () => {
       return;
     }
     
-    // 검색 시 DSD와 고객관리 화면 모두 숨기고 검색 결과 표시
+    // 검색 시 DSD와 고객관리, 문서관리 화면 모두 숨기고 검색 결과 표시
     setShowDashboard(false);
     setShowCustomerManagement(false);
     setShowCustomerManagementMain(false);
+    setShowDocumentManagementMain(false);
     setIsLoading(true);
     setSearchResults([]);
 
@@ -253,16 +257,19 @@ const AppLayout = () => {
       // "고객 관리" 메뉴 클릭 시 - 전용 페이지 표시
       setShowCustomerManagementMain(true);
       setShowCustomerManagement(false);
+      setShowDocumentManagementMain(false);
       setShowDashboard(false);
       setSelectedMenuKey(menuKey);
     } else if (menuKey === 'customers-all' || menuKey === 'customers-regional' || menuKey === 'customers-relationship') {
       // 실제 고객 관리 기능들
       setShowCustomerManagement(true);
       setShowCustomerManagementMain(false);
+      setShowDocumentManagementMain(false);
       setShowDashboard(false);
       setSelectedMenuKey(menuKey);
     } else if (menuKey === 'documents') {
-      // "문서 관리" 메뉴 클릭 시 - 빈 화면 표시 (필요시)
+      // "문서 관리" 메뉴 클릭 시 - 전용 페이지 표시
+      setShowDocumentManagementMain(true);
       setShowDashboard(false);
       setShowCustomerManagement(false);
       setShowCustomerManagementMain(false);
@@ -271,17 +278,20 @@ const AppLayout = () => {
       setShowDashboard(true);
       setShowCustomerManagement(false);
       setShowCustomerManagementMain(false);
+      setShowDocumentManagementMain(false);
       setSelectedMenuKey(null);
     } else if (menuKey === 'search-results') {
       // 검색 결과로 돌아가기
       setShowDashboard(false);
       setShowCustomerManagement(false);
       setShowCustomerManagementMain(false);
+      setShowDocumentManagementMain(false);
       setSelectedMenuKey(null);
     } else {
       setShowDashboard(false);
       setShowCustomerManagement(false);
       setShowCustomerManagementMain(false);
+      setShowDocumentManagementMain(false);
       setSelectedMenuKey(null);
       // 다른 메뉴 클릭 시에는 검색 결과 초기화
       if (menuKey !== 'search-results') {
@@ -495,6 +505,7 @@ const AppLayout = () => {
                 showDashboard={showDashboard}
                 showCustomerManagement={showCustomerManagement}
                 showCustomerManagementMain={showCustomerManagementMain}
+                showDocumentManagementMain={showDocumentManagementMain}
                 selectedMenuKey={selectedMenuKey}
                 onDocumentLinked={handleDocumentLinked}
                 editModalVisible={editModalVisible}

@@ -5,6 +5,7 @@ import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
 import CustomerManagement from './CustomerManagement';
 import CustomerManagementMain from './CustomerManagementMain';
+import DocumentManagementMain from './DocumentManagementMain';
 import DocumentLinkModal from './DocumentLinkModal';
 import { extractDocumentId } from '../utils/documentHelper';
 import axios from 'axios';
@@ -55,7 +56,7 @@ const mockTreeDocuments = [
 ];
 
 
-const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, showCustomerManagementMain, selectedMenuKey, onDocumentLinked, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet, rightPaneVisible }) => {
+const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searchResults, isLoading, showDashboard, showCustomerManagement, showCustomerManagementMain, showDocumentManagementMain, selectedMenuKey, onDocumentLinked, editModalVisible, editingCustomer, onEditModalClose, onCustomerUpdated, onRefreshCustomerListSet, rightPaneVisible }) => {
   const [viewMode, setViewMode] = useState('list');
   const [uploadedFiles, setUploadedFiles] = useState([]); // 업로드된 파일 목록 상태 추가
   const [isModalVisible, setIsModalVisible] = useState(false); // 모달 가시성 상태 추가
@@ -533,6 +534,11 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
   // 고객 관리 메인 화면인 경우 전용 컴포넌트 렌더링
   if (showCustomerManagementMain) {
     return <CustomerManagementMain />;
+  }
+
+  // 문서 관리 메인 화면인 경우 전용 컴포넌트 렌더링
+  if (showDocumentManagementMain) {
+    return <DocumentManagementMain />;
   }
 
   // 고객 관리 화면인 경우 Card 없이 직접 렌더링
