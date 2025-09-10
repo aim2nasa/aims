@@ -274,7 +274,7 @@ const extractProgress = (document) => {
 const extractUploadedDate = (document) => {
   let dateString = null;
   
-  // upload.uploaded_at 우선
+  // upload.timestamp 우선 (새로운 구조)
   if (document.upload) {
     let uploadData = document.upload;
     if (typeof uploadData === 'string') {
@@ -282,12 +282,17 @@ const extractUploadedDate = (document) => {
         uploadData = JSON.parse(uploadData);
       } catch (e) {}
     }
-    if (uploadData && uploadData.uploaded_at) {
+    // timestamp 필드 확인
+    if (uploadData && uploadData.timestamp) {
+      dateString = uploadData.timestamp;
+    }
+    // 기존 uploaded_at 필드도 확인
+    else if (uploadData && uploadData.uploaded_at) {
       dateString = uploadData.uploaded_at;
     }
   }
   
-  // stages.upload.uploaded_at
+  // stages.upload.timestamp 및 uploaded_at
   if (!dateString && document.stages && document.stages.upload) {
     let uploadData = document.stages.upload;
     if (typeof uploadData === 'string') {
@@ -295,7 +300,12 @@ const extractUploadedDate = (document) => {
         uploadData = JSON.parse(uploadData);
       } catch (e) {}
     }
-    if (uploadData && uploadData.uploaded_at) {
+    // timestamp 필드 우선 확인
+    if (uploadData && uploadData.timestamp) {
+      dateString = uploadData.timestamp;
+    }
+    // 기존 uploaded_at 필드도 확인
+    else if (uploadData && uploadData.uploaded_at) {
       dateString = uploadData.uploaded_at;
     }
   }
