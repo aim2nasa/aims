@@ -399,9 +399,9 @@ const AppLayout = () => {
         alignItems: 'center',
         height: '64px'
       }}>
-        {/* 왼쪽 섹션 (AIMS-UIX1 글씨) */}
+        {/* 왼쪽 섹션 (AIMS-UIX2 글씨) */}
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-start' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>AIMS-UIX1</h2>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>AIMS-UIX2</h2>
         </div>
         {/* 중앙 섹션 (검색창) */}
         <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
