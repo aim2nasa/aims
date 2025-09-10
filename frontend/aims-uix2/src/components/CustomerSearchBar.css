@@ -1,0 +1,140 @@
+/**
+ * CustomerSearchBar 스타일
+ * AIMS 디자인 시스템 활용
+ */
+
+.customer-search-bar {
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 2px 8px var(--color-shadow-sm);
+}
+
+.search-main {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.search-input-group {
+  flex: 1;
+  min-width: 150px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+
+.search-advanced-inline {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  animation: slideDown var(--transition-default) var(--transition-easing-smooth);
+}
+
+.advanced-header {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.filter-inline-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.filter-inline-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.filter-inline-group label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.filter-inline-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .search-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input-group {
+    min-width: unset;
+  }
+  
+  .search-actions {
+    justify-content: center;
+  }
+  
+  .filter-inline-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-inline-group {
+    width: 100%;
+  }
+  
+  .filter-inline-group select,
+  .filter-inline-group .ant-picker {
+    width: 100% !important;
+  }
+  
+  .filter-inline-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .search-actions > * {
+    width: 100%;
+  }
+}
+
+/* 애니메이션 */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
