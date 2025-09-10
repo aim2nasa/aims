@@ -91,9 +91,11 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
       setSavedScrollPosition(currentScrollTop);
     }
     
-    // 선택된 문서 ID 저장
+    // 선택된 문서 ID 저장 - 같은 문서를 다시 클릭해도 선택 상태 유지
     const docId = extractDocumentId(doc);
-    setSelectedDocumentId(docId);
+    if (docId !== selectedDocumentId) {
+      setSelectedDocumentId(docId);
+    }
     
     // 원래 문서 클릭 핸들러 호출
     if (onDocumentClick) {
@@ -172,10 +174,11 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
     }
   };
 
-  // 페이지네이션 핸들러
+  // 페이지네이션 핸들러 - 선택 상태 유지
   const handlePageChange = (page) => {
     if (typeof page === 'number' && page > 0) {
       setCurrentPage(page);
+      // 선택된 문서 ID는 유지됨 (초기화하지 않음)
     }
   };
 

@@ -246,22 +246,53 @@ textarea {
    DOCUMENT LIST SELECTION
    =========================== */
 .selected-document-item {
-  background-color: var(--color-primary-bg) !important;
+  background-color: #87ceeb !important;
+  box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3) !important;
 }
 
+/* 선택된 항목에 hover 효과 */
+.selected-document-item:hover {
+  background-color: #5fb3d3 !important;
+  box-shadow: 0 4px 12px rgba(95, 179, 211, 0.4) !important;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* 라이트 테마에서 선택된 문서 항목 텍스트 색상 - 하늘색 배경에 어두운 텍스트 */
+[data-theme="light"] .selected-document-item .ant-list-item-meta-title,
 .selected-document-item .ant-list-item-meta-title {
-  color: var(--color-text-primary) !important;
+  color: #1e40af !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
+[data-theme="light"] .selected-document-item .ant-list-item-meta-description,
 .selected-document-item .ant-list-item-meta-description {
-  color: var(--color-text-secondary) !important;
+  color: #1e3a8a !important;
+  font-weight: var(--font-weight-medium) !important;
 }
 
 /* 다크 테마에서 선택된 문서 항목 텍스트 색상 */
 [data-theme="dark"] .selected-document-item .ant-list-item-meta-title {
   color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-semibold) !important;
 }
 
 [data-theme="dark"] .selected-document-item .ant-list-item-meta-description {
   color: var(--color-text-secondary) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+/* ===========================
+   DOCUMENT LIST HOVER EFFECTS
+   =========================== */
+/* 일반 항목(선택되지 않은 항목)의 hover 효과 */
+.ant-list-item:not(.selected-document-item):hover {
+  background-color: var(--color-bg-hover) !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* 다크 테마에서 일반 항목 hover 효과 */
+[data-theme="dark"] .ant-list-item:not(.selected-document-item):hover {
+  background-color: var(--color-bg-hover) !important;
 }
