@@ -29,7 +29,7 @@ body {
 /* 다크 테마에서 헤더 강화 */
 html[data-theme="dark"] .ant-layout-header {
   background-color: #1f2937 !important;
-  border-bottom-color: var(--color-border-light) !important;
+  border-bottom: 1px solid #4b5563 !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -40,7 +40,7 @@ html[data-theme="dark"] .app-title {
 /* Sider */
 .ant-layout-sider {
   background: var(--color-surface-2) !important;
-  border-right: 1px solid var(--color-border-light) !important;
+  border-right: 1px solid var(--color-border-medium) !important;
 }
 
 .ant-layout-sider-trigger {
@@ -52,7 +52,7 @@ html[data-theme="dark"] .app-title {
 /* 다크 테마에서 사이드바 강화 */
 html[data-theme="dark"] .ant-layout-sider {
   background-color: #1f2937 !important;
-  border-right-color: var(--color-border-light) !important;
+  border-right: 1px solid #4b5563 !important;
 }
 
 html[data-theme="dark"] .ant-layout-sider-trigger {
