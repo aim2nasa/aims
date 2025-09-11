@@ -61,11 +61,11 @@ const CustomerManagementMain = () => {
           gap: '24px',
           marginBottom: '40px'
         }}>
-          <div style={{
+          <div className="feature-card" style={{
             padding: '24px',
             backgroundColor: 'var(--color-bg-secondary)',
             borderRadius: '8px',
-            border: '1px solid var(--color-border)'
+            border: '1px solid var(--color-border-medium)'
           }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -84,11 +84,11 @@ const CustomerManagementMain = () => {
               전체 고객 데이터를 한눈에 보고, 검색과 필터를 통해 원하는 고객을 빠르게 찾을 수 있습니다.
             </p>
           </div>
-          <div style={{
+          <div className="feature-card" style={{
             padding: '24px',
             backgroundColor: 'var(--color-bg-secondary)',
             borderRadius: '8px',
-            border: '1px solid var(--color-border)'
+            border: '1px solid var(--color-border-medium)'
           }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -107,11 +107,11 @@ const CustomerManagementMain = () => {
               지역별로 고객을 분류하고 관리하여, 지역 맞춤형 마케팅 전략을 수립할 수 있습니다.
             </p>
           </div>
-          <div style={{
+          <div className="feature-card" style={{
             padding: '24px',
             backgroundColor: 'var(--color-bg-secondary)',
             borderRadius: '8px',
-            border: '1px solid var(--color-border)'
+            border: '1px solid var(--color-border-medium)'
           }}>
             <h3 style={{ 
               fontSize: '18px', 
@@ -133,12 +133,12 @@ const CustomerManagementMain = () => {
         </div>
 
         {/* 안내 메시지 */}
-        <div style={{
+        <div className="info-panel" style={{
           textAlign: 'center',
           padding: '24px',
           backgroundColor: 'var(--color-bg-tertiary)',
           borderRadius: '8px',
-          border: '1px solid var(--color-border)'
+          border: '1px solid var(--color-border-medium)'
         }}>
           <h4 style={{
             fontSize: '16px',

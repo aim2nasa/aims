@@ -26,6 +26,21 @@ body {
   box-shadow: 0 2px 8px var(--color-shadow-sm);
 }
 
+/* 다크 테마에서 헤더 강화 */
+html[data-theme="dark"] .ant-layout-header {
+  background-color: #111827 !important;
+  border-bottom-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-layout-header * {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .app-title {
+  color: #f9fafb !important;
+}
+
 /* Sider */
 .ant-layout-sider {
   background: var(--color-surface-2) !important;
@@ -38,6 +53,18 @@ body {
   color: var(--color-text-primary) !important;
 }
 
+/* 다크 테마에서 사이드바 강화 */
+html[data-theme="dark"] .ant-layout-sider {
+  background-color: #1f2937 !important;
+  border-right-color: #374151 !important;
+}
+
+html[data-theme="dark"] .ant-layout-sider-trigger {
+  background-color: var(--color-surface-2) !important;
+  border-top-color: var(--color-border-medium) !important;
+  color: var(--color-text-primary) !important;
+}
+
 /* Content */
 .ant-layout-content {
   background: var(--color-bg-secondary) !important;
@@ -45,15 +72,25 @@ body {
   min-height: calc(100vh - 64px);
 }
 
-/* Menu */
+/* 다크 테마에서 콘텐츠 영역 강화 */
+html[data-theme="dark"] .ant-layout-content {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* Menu - 다크 테마 강화 스타일 */
 .ant-menu {
   background: transparent !important;
   color: var(--color-text-primary) !important;
+  border-right: none !important;
 }
 
 .ant-menu-item {
   color: var(--color-text-secondary) !important;
   transition: all var(--transition-fast) !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  margin: 4px 8px !important;
 }
 
 .ant-menu-item:hover {
@@ -64,13 +101,58 @@ body {
 .ant-menu-item-selected {
   background: var(--color-bg-selected) !important;
   color: var(--color-primary) !important;
+  font-weight: 600 !important;
 }
 
 .ant-menu-item-selected::after {
   border-right-color: var(--color-primary) !important;
 }
 
-/* Cards & Panels */
+/* 다크 테마 Menu 스타일 - 통합 정리 */
+html[data-theme="dark"] .ant-layout-sider .ant-menu-item {
+  background-color: transparent !important;
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .ant-layout-sider .ant-menu-item:hover {
+  background-color: #374151 !important;
+  color: #60a5fa !important;
+}
+
+html[data-theme="dark"] .ant-layout-sider .ant-menu-item-selected {
+  background-color: #1e3a8a !important;
+  color: #60a5fa !important;
+}
+
+/* 메뉴 아이콘 및 텍스트 색상 */
+html[data-theme="dark"] .ant-menu .anticon {
+  color: inherit !important;
+}
+
+html[data-theme="dark"] .ant-layout-sider * {
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .ant-layout-sider .ant-menu-item-selected * {
+  color: #60a5fa !important;
+}
+
+/* LeftPane 메뉴 전용 스타일 정리 */
+html[data-theme="dark"] .leftpane-menu.ant-menu {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+html[data-theme="dark"] .leftpane-menu.ant-menu .ant-menu-item {
+  margin: 2px 8px !important;
+  border-radius: 6px !important;
+}
+
+html[data-theme="dark"] .leftpane-menu.ant-menu .ant-menu-item-selected {
+  font-weight: 600 !important;
+}
+
+/* Cards & Panels - 다크 테마 강화 */
 .ant-card {
   background: var(--color-surface-1) !important;
   border: 1px solid var(--color-border-light) !important;
@@ -86,6 +168,83 @@ body {
 
 .ant-card-body {
   color: var(--color-text-secondary) !important;
+}
+
+/* 다크 테마에서 Card 강제 적용 */
+html[data-theme="dark"] .ant-card {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-card-head {
+  background-color: #374151 !important;
+  border-bottom-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-card-body {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .ant-card * {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-card-body * {
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .feature-card * {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .info-panel * {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .info-panel h4 {
+  color: #f9fafb !important;
+}
+
+/* CustomerManagementMain 전용 다크 테마 스타일 - 강화된 선택자 */
+html[data-theme="dark"] .feature-card,
+html[data-theme="dark"] div.feature-card {
+  background-color: #1f2937 !important;
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  border: 1px solid #374151 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .feature-card h3,
+html[data-theme="dark"] div.feature-card h3 {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .feature-card p,
+html[data-theme="dark"] div.feature-card p {
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .info-panel,
+html[data-theme="dark"] div.info-panel {
+  background-color: #374151 !important;
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  border: 1px solid #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .info-panel h4,
+html[data-theme="dark"] div.info-panel h4 {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .info-panel p,
+html[data-theme="dark"] div.info-panel p {
+  color: #d1d5db !important;
 }
 
 /* Tables */
@@ -220,7 +379,7 @@ body {
 .ant-modal-content textarea.ant-input {
   background-color: var(--color-bg-primary) !important;
   color: var(--color-text-primary) !important;
-  border-color: var(--color-border) !important;
+  border-color: var(--color-border-medium) !important;
 }
 
 .ant-modal-content .ant-input::placeholder,
@@ -234,7 +393,7 @@ body {
 .ant-modal-content .ant-input-affix-wrapper:focus,
 .ant-modal-content .ant-input-affix-wrapper-focused {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 2px var(--color-primary-opacity) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-light) !important;
 }
 
 .ant-modal-content .ant-select-dropdown {

@@ -9,9 +9,9 @@ export default defineConfig({
     include: "**/*.{jsx,js}",
   })],
   
-  // 서버 설정 - WSL2 HMR 최적화
+  // 서버 설정 - WSL2 HMR 최적화 & CSS 캐시 문제 해결
   server: {
-    port: 3006,
+    port: 3007,
     host: true,
     open: false,
     // WSL2 환경에서 파일 감시 최적화
@@ -22,8 +22,13 @@ export default defineConfig({
     },
     hmr: {
       overlay: true,
-      port: 3006,
+      port: 3007,
       host: 'localhost'
+    },
+    // CSS 강제 새로고침을 위한 설정
+    middlewareMode: false,
+    fs: {
+      strict: false
     }
   },
   
@@ -60,9 +65,16 @@ export default defineConfig({
     }
   },
   
-  // CSS 설정
+  // CSS 설정 - 캐시 문제 해결을 위한 강화 설정
   css: {
-    postcss: './postcss.config.js'
+    postcss: './postcss.config.js',
+    devSourcemap: true,
+    // CSS 모듈 및 변수 강제 업데이트
+    preprocessorOptions: {
+      css: {
+        charset: false
+      }
+    }
   },
   
   // 환경변수 접두사

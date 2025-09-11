@@ -109,6 +109,11 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
         onOpenChange={() => {}}
         onClick={({ key }) => onMenuClick && onMenuClick(key)}
         expandIcon={() => null}
+        className="leftpane-menu"
+        style={{
+          backgroundColor: 'transparent',
+          border: 'none'
+        }}
       />
     </div>
   );
