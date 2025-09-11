@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import { SearchOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
 import { Select, DatePicker } from 'antd';
 import { Input, Button, Card, Badge } from './common';
-import './CustomerSearchBar.css';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;

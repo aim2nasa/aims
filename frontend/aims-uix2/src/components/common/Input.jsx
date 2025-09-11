@@ -5,7 +5,6 @@
 
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
-import './Input.css';
 
 const Input = forwardRef(({
   type = 'text',

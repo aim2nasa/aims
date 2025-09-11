@@ -6,7 +6,6 @@ import {
 import { Button } from './common';
 import { LinkOutlined, UserOutlined, FileTextOutlined, ExclamationCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import './common/Input.css';
 
 const { Option } = Select;
 const { TextArea } = Input;

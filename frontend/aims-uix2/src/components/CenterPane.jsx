@@ -9,7 +9,6 @@ import DocumentManagementMain from './DocumentManagementMain';
 import DocumentLinkModal from './DocumentLinkModal';
 import { extractDocumentId } from '../utils/documentHelper';
 import axios from 'axios';
-import '../styles/themes.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

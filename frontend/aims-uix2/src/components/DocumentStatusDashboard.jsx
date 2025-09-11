@@ -3,7 +3,6 @@ import { RefreshCw, Search, Wifi, WifiOff, FileText, Clock, CheckCircle, AlertCi
 import { Table, Space } from 'antd';
 import { apiService } from '../services/apiService';
 import DocumentLinkModal from './DocumentLinkModal';
-import '../styles/pagination.css';
 
 
 // MongoDB 필드 추출 함수들

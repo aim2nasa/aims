@@ -10,7 +10,6 @@ import CenterPane from './CenterPane';
 import RightPane from './RightPane';
 import axios from 'axios';
 import { extractDocumentId, createDocumentObject } from '../utils/documentHelper';
-import '../App.css';
 
 const { Header, Content, Sider } = Layout;
 const { Option } = Select;
