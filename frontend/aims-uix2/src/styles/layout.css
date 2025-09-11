@@ -178,7 +178,14 @@ html[data-theme="dark"] .ant-card-body {
   color: #d1d5db !important;
 }
 
-/* 다크 테마에서 전역 텍스트 색상은 각 컴포넌트에서 개별 관리 */
+/* CustomerManagementMain 페이지의 메인 텍스트 다크 테마 */
+html[data-theme="dark"] .ant-card h2 {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-card p {
+  color: #d1d5db !important;
+}
 
 /* CustomerManagementMain 전용 다크 테마 스타일 - 강화된 선택자 */
 html[data-theme="dark"] .feature-card {
