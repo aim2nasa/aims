@@ -569,3 +569,136 @@ html[data-theme="dark"] .info-panel p {
   box-shadow: 0 4px 12px var(--color-shadow-md) !important;
   color: var(--color-text-primary) !important;
 }
+
+/* ===========================
+   검색창 다크 테마 강제 적용
+   =========================== */
+
+/* 검색창 카드 배경 */
+html[data-theme="dark"] .customer-search-bar.ant-card {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .customer-search-bar .ant-card-body {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* 검색 입력창 강제 적용 */
+html[data-theme="dark"] .search-input .ant-input,
+html[data-theme="dark"] .search-input input,
+html[data-theme="dark"] .customer-search-bar .ant-input,
+html[data-theme="dark"] .customer-search-bar input {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .search-input .ant-input::placeholder,
+html[data-theme="dark"] .search-input input::placeholder,
+html[data-theme="dark"] .customer-search-bar .ant-input::placeholder,
+html[data-theme="dark"] .customer-search-bar input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* 검색 입력창 포커스 상태 */
+html[data-theme="dark"] .search-input .ant-input:focus,
+html[data-theme="dark"] .search-input input:focus,
+html[data-theme="dark"] .customer-search-bar .ant-input:focus,
+html[data-theme="dark"] .customer-search-bar input:focus {
+  background-color: #374151 !important;
+  border-color: #60a5fa !important;
+  color: #f9fafb !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* 고급 검색 영역 */
+html[data-theme="dark"] .search-advanced-inline {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+html[data-theme="dark"] .advanced-header {
+  color: #d1d5db !important;
+}
+
+html[data-theme="dark"] .filter-inline-group label {
+  color: #d1d5db !important;
+}
+
+/* Select 드롭다운 강제 적용 */
+html[data-theme="dark"] .customer-search-bar .ant-select-selector,
+html[data-theme="dark"] .filter-inline-group .ant-select-selector {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .customer-search-bar .ant-select-selection-placeholder,
+html[data-theme="dark"] .filter-inline-group .ant-select-selection-placeholder {
+  color: #9ca3af !important;
+}
+
+/* DatePicker 강제 적용 */
+html[data-theme="dark"] .customer-search-bar .ant-picker,
+html[data-theme="dark"] .filter-inline-group .ant-picker {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .customer-search-bar .ant-picker input,
+html[data-theme="dark"] .filter-inline-group .ant-picker input {
+  background-color: transparent !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .customer-search-bar .ant-picker input::placeholder,
+html[data-theme="dark"] .filter-inline-group .ant-picker input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* ===========================
+   헤더 검색창 다크 테마 강제 적용
+   =========================== */
+
+/* 헤더 검색창 Input 강제 적용 */
+html[data-theme="dark"] .ant-layout-header .ant-input,
+html[data-theme="dark"] .ant-layout-header input {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-layout-header .ant-input::placeholder,
+html[data-theme="dark"] .ant-layout-header input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* 헤더 검색창 포커스 상태 */
+html[data-theme="dark"] .ant-layout-header .ant-input:focus,
+html[data-theme="dark"] .ant-layout-header input:focus {
+  background-color: #374151 !important;
+  border-color: #60a5fa !important;
+  color: #f9fafb !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* 헤더 Select 드롭다운 강제 적용 */
+html[data-theme="dark"] .ant-layout-header .ant-select-selector {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .ant-layout-header .ant-select-selection-item {
+  color: #f9fafb !important;
+}
+
+/* 헤더 Select 포커스 상태 */
+html[data-theme="dark"] .ant-layout-header .ant-select:hover .ant-select-selector,
+html[data-theme="dark"] .ant-layout-header .ant-select-focused .ant-select-selector {
+  border-color: #60a5fa !important;
+}
