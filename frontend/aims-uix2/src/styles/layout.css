@@ -28,13 +28,9 @@ body {
 
 /* 다크 테마에서 헤더 강화 */
 html[data-theme="dark"] .ant-layout-header {
-  background-color: #111827 !important;
-  border-bottom-color: #374151 !important;
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .ant-layout-header * {
-  color: #f9fafb !important;
+  background-color: #1f2937 !important;
+  border-bottom-color: var(--color-border-light) !important;
+  color: var(--color-text-primary) !important;
 }
 
 html[data-theme="dark"] .app-title {
@@ -56,7 +52,7 @@ html[data-theme="dark"] .app-title {
 /* 다크 테마에서 사이드바 강화 */
 html[data-theme="dark"] .ant-layout-sider {
   background-color: #1f2937 !important;
-  border-right-color: #374151 !important;
+  border-right-color: var(--color-border-light) !important;
 }
 
 html[data-theme="dark"] .ant-layout-sider-trigger {
@@ -75,7 +71,7 @@ html[data-theme="dark"] .ant-layout-sider-trigger {
 /* 다크 테마에서 콘텐츠 영역 강화 */
 html[data-theme="dark"] .ant-layout-content {
   background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Menu - 다크 테마 강화 스타일 */
@@ -129,13 +125,7 @@ html[data-theme="dark"] .ant-menu .anticon {
   color: inherit !important;
 }
 
-html[data-theme="dark"] .ant-layout-sider * {
-  color: #d1d5db !important;
-}
-
-html[data-theme="dark"] .ant-layout-sider .ant-menu-item-selected * {
-  color: #60a5fa !important;
-}
+/* 메뉴 텍스트 색상은 개별 항목에서 관리 */
 
 /* LeftPane 메뉴 전용 스타일 정리 */
 html[data-theme="dark"] .leftpane-menu.ant-menu {
@@ -188,19 +178,26 @@ html[data-theme="dark"] .ant-card-body {
   color: #d1d5db !important;
 }
 
-html[data-theme="dark"] .ant-card * {
+/* 다크 테마에서 전역 텍스트 색상은 각 컴포넌트에서 개별 관리 */
+
+/* CustomerManagementMain 전용 다크 테마 스타일 - 강화된 선택자 */
+html[data-theme="dark"] .feature-card {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
   color: #f9fafb !important;
 }
 
-html[data-theme="dark"] .ant-card-body * {
+html[data-theme="dark"] .feature-card h3 {
+  color: #f9fafb !important;
+}
+
+html[data-theme="dark"] .feature-card p {
   color: #d1d5db !important;
 }
 
-html[data-theme="dark"] .feature-card * {
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .info-panel * {
+html[data-theme="dark"] .info-panel {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
   color: #f9fafb !important;
 }
 
@@ -208,42 +205,7 @@ html[data-theme="dark"] .info-panel h4 {
   color: #f9fafb !important;
 }
 
-/* CustomerManagementMain 전용 다크 테마 스타일 - 강화된 선택자 */
-html[data-theme="dark"] .feature-card,
-html[data-theme="dark"] div.feature-card {
-  background-color: #1f2937 !important;
-  background: #1f2937 !important;
-  border-color: #374151 !important;
-  border: 1px solid #374151 !important;
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .feature-card h3,
-html[data-theme="dark"] div.feature-card h3 {
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .feature-card p,
-html[data-theme="dark"] div.feature-card p {
-  color: #d1d5db !important;
-}
-
-html[data-theme="dark"] .info-panel,
-html[data-theme="dark"] div.info-panel {
-  background-color: #374151 !important;
-  background: #374151 !important;
-  border-color: #4b5563 !important;
-  border: 1px solid #4b5563 !important;
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .info-panel h4,
-html[data-theme="dark"] div.info-panel h4 {
-  color: #f9fafb !important;
-}
-
-html[data-theme="dark"] .info-panel p,
-html[data-theme="dark"] div.info-panel p {
+html[data-theme="dark"] .info-panel p {
   color: #d1d5db !important;
 }
 
