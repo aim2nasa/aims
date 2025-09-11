@@ -187,6 +187,12 @@ html[data-theme="dark"] .ant-card p {
   color: #d1d5db !important;
 }
 
+/* Card 제목 영역 다크 테마 (CenterPane의 "고객 관리" 등) */
+html[data-theme="dark"] .ant-card-head-title,
+html[data-theme="dark"] .ant-card-head-title * {
+  color: #f9fafb !important;
+}
+
 /* CustomerManagementMain 전용 다크 테마 스타일 - 강화된 선택자 */
 html[data-theme="dark"] .feature-card {
   background-color: #1f2937 !important;
