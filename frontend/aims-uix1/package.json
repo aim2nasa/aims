@@ -21,6 +21,7 @@
     "react-dom": "^19.1.1",
     "react-pdf": "^10.1.0",
     "react-scripts": "5.0.1",
+    "source-map-loader": "^5.0.0",
     "tailwindcss": "^4.1.12",
     "web-vitals": "^2.1.4"
   },
