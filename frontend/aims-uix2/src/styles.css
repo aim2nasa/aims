@@ -1369,11 +1369,18 @@ button, a, input, select, textarea {
   color: var(--color-text-primary) !important;
 }
 
+.ant-table {
+  background: var(--color-surface-1) !important;
+  color: var(--color-text-primary) !important;
+}
+
 .ant-table-thead > tr > th {
   background: var(--color-surface-2) !important;
   color: var(--color-text-primary) !important;
   border-bottom: 1px solid var(--color-border-medium) !important;
   font-weight: var(--font-weight-semibold);
+  height: 24px !important;
+  padding: 4px 8px !important;
 }
 
 .ant-table-tbody > tr > td {
