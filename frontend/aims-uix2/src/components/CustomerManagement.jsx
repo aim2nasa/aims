@@ -542,21 +542,16 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
   return (
     <div>
       {/* 고객 관리 제목 */}
-      <div style={{ 
-        padding: '16px 0 16px 0',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}>
+      <div className="py-lg flex-center gap-sm">
         <UserOutlined />
-        <span style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-text-primary)' }}>고객 관리</span>
+        <span className="text-xl font-semibold text-primary">고객 관리</span>
         {searchText && (
-          <span style={{ color: 'var(--color-primary)', fontSize: '16px' }}>
+          <span className="text-primary text-lg">
             - "{searchText}" 검색결과 ({customers.length}건)
           </span>
         )}
         {!searchText && (
-          <span style={{ color: 'var(--color-text-tertiary)', fontSize: '16px' }}>
+          <span className="text-tertiary text-lg">
             ({pagination.total}건)
           </span>
         )}

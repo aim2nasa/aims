@@ -89,17 +89,17 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
     >
       <div style={{ padding: '8px 0' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div className="loading-container">
             <Spin size="large" />
-            <div style={{ marginTop: '16px' }}>주소 이력을 불러오는 중...</div>
+            <div className="loading-text">주소 이력을 불러오는 중...</div>
           </div>
         ) : addressHistory.length === 0 ? (
           <Empty
-            image={<HomeOutlined style={{ fontSize: '48px', color: 'var(--color-text-tertiary)' }} />}
+            image={<HomeOutlined className="empty-state-icon" />}
             description={
               <div>
                 <div>주소 변경 이력이 없습니다.</div>
-                <div style={{ fontSize: '12px', marginTop: '4px', color: 'var(--color-text-tertiary)' }}>
+                <div className="text-xs mt-xs text-tertiary">
                   고객 주소를 변경하면 이전 주소가 여기에 보관됩니다.
                 </div>
               </div>

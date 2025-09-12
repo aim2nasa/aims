@@ -117,18 +117,8 @@ const AddressSearchInput = ({
         ) : (
           <div 
             key="address2-disabled"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d9d9d9',
-              borderRadius: '6px',
-              color: '#999',
-              cursor: 'not-allowed',
-              minHeight: '32px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className="w-full px-sm py-sm bg-tertiary border border-medium rounded text-tertiary cursor-not-allowed flex-center"
+            style={{ minHeight: '32px' }}
           >
             ❌ 주소검색을 먼저 해주세요
           </div>

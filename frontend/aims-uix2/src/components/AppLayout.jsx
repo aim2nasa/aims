@@ -529,7 +529,7 @@ const AppLayout = () => {
                 style={{
                   width: '4px',
                   cursor: 'col-resize',
-                  background: isResizing ? '#1890ff' : 'transparent',
+                  background: isResizing ? 'var(--color-primary)' : 'transparent',
                   borderRadius: '2px',
                   margin: '0 6px',
                   transition: 'background 0.2s ease',

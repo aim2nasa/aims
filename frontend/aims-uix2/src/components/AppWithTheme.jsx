@@ -11,18 +11,19 @@ const AppWithTheme = () => {
   const antdTheme = {
     algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
     token: {
-      colorPrimary: isDark ? '#60a5fa' : '#3b82f6',
-      colorBgContainer: isDark ? '#1f2937' : '#ffffff',
-      colorBgElevated: isDark ? '#374151' : '#ffffff',
-      colorBgLayout: isDark ? '#111827' : '#f9fafb',
-      colorText: isDark ? '#f9fafb' : '#111827',
-      colorTextSecondary: isDark ? '#d1d5db' : '#4b5563',
-      colorBorder: isDark ? '#4b5563' : '#e5e7eb',
-      colorBorderSecondary: isDark ? '#374151' : '#f0f0f0',
-      colorSuccess: isDark ? '#34d399' : '#10b981',
-      colorWarning: isDark ? '#fbbf24' : '#f59e0b',
-      colorError: isDark ? '#f87171' : '#ef4444',
-      colorInfo: isDark ? '#60a5fa' : '#3b82f6',
+      // CSS 변수를 통해 동적 테마 값 참조 - 하드코딩 제거
+      colorPrimary: 'var(--color-primary)',
+      colorBgContainer: 'var(--color-bg-primary)',
+      colorBgElevated: 'var(--color-surface-1)',
+      colorBgLayout: 'var(--color-bg-secondary)',
+      colorText: 'var(--color-text-primary)',
+      colorTextSecondary: 'var(--color-text-secondary)',
+      colorBorder: 'var(--color-border-medium)',
+      colorBorderSecondary: 'var(--color-border-light)',
+      colorSuccess: 'var(--color-success)',
+      colorWarning: 'var(--color-warning)',
+      colorError: 'var(--color-error)',
+      colorInfo: 'var(--color-info)',
     },
   };
   
