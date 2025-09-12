@@ -1638,7 +1638,7 @@ button, a, input, select, textarea {
   left: 280px !important; /* Sider 너비 280px과 동기화 */
   right: 0 !important;
   background: var(--color-surface-2) !important; /* LeftPane과 동일한 배경색 */
-  padding: var(--spacing-md) !important;
+  padding: 8px 16px !important; /* 패딩 절반으로 축소: 16px -> 8px */
   z-index: 9999 !important; /* z-index 높임 */
   margin: 0 !important;
   box-shadow: 0 -2px 8px var(--color-shadow-sm) !important;
@@ -1647,6 +1647,7 @@ button, a, input, select, textarea {
   align-items: center !important;
   transform: none !important; /* transform 초기화 */
   transition: left 0.2s ease !important; /* LeftPane collapse 애니메이션과 동기화 */
+  height: 40px !important; /* 높이 명시적으로 40px로 설정 */
 }
 
 /* Dark theme pagination override */
@@ -1656,16 +1657,64 @@ button, a, input, select, textarea {
 
 /* Ensure content is not hidden behind fixed pagination */
 .ant-layout-content {
-  padding-bottom: 60px; /* 공백 줄임 - 페이지네이션 높이에 맞춤 */
+  padding-bottom: 40px; /* 페이지네이션 높이에 맞춰 축소: 60px -> 40px */
 }
 
 /* Fixed pagination specific styles for better visibility */
 .fixed-bottom-pagination .ant-pagination {
   margin: 0;
+  font-size: 12px !important; /* 폰트 크기 축소 */
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
 }
 
 .fixed-bottom-pagination .ant-pagination-options {
-  margin-left: var(--spacing-md);
+  margin-left: var(--spacing-sm);
+  font-size: 12px !important; /* 옵션 폰트 크기 축소 */
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+}
+
+/* Pagination elements size reduction */
+.fixed-bottom-pagination .ant-pagination-item,
+.fixed-bottom-pagination .ant-pagination-prev,
+.fixed-bottom-pagination .ant-pagination-next,
+.fixed-bottom-pagination .ant-pagination-jump-prev,
+.fixed-bottom-pagination .ant-pagination-jump-next {
+  min-width: 24px !important; /* 기본 32px에서 24px로 축소 */
+  height: 24px !important; /* 높이도 24px로 축소 */
+  line-height: 22px !important; /* 라인 높이 조정 */
+  font-size: 12px !important; /* 폰트 크기 축소 */
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+  justify-content: center !important; /* 수평 중앙 정렬 */
+}
+
+/* Pagination options (page size selector) */
+.fixed-bottom-pagination .ant-select {
+  font-size: 12px !important;
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+}
+
+.fixed-bottom-pagination .ant-select-selector {
+  height: 24px !important; /* 셀렉터 높이 축소 */
+  padding: 0 8px !important; /* 패딩 축소 */
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+}
+
+.fixed-bottom-pagination .ant-select-selection-item {
+  line-height: 22px !important; /* 라인 높이 조정 */
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+}
+
+/* 페이지네이션 총 개수 표시 텍스트 중앙 정렬 */
+.fixed-bottom-pagination .ant-pagination-total-text {
+  display: flex !important;
+  align-items: center !important; /* 수직 중앙 정렬 */
+  font-size: 12px !important;
 }
 
 /* Responsive pagination for collapsed sidebar */
