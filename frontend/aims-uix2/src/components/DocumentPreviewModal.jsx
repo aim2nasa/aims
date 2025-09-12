@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Space, message, Spin, Alert, Typography } from 'antd';
 import { DownloadOutlined, LeftOutlined, RightOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import { Button } from './common';
@@ -9,7 +9,7 @@ import axios from 'axios';
 
 const { Text } = Typography;
 
-// PDF.js 워커 설정 - 로컬 파일 우선, CDN fallback
+// PDF.js 워커 설정 - 로컬 파일 사용으로 안정성과 성능 향상
 pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
 const DocumentPreviewModal = ({ visible, document, onClose }) => {
@@ -45,8 +45,15 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
   const isPdf = documentFileUrl && documentFileUrl.toLowerCase().endsWith('.pdf');
   const isImage = documentFileUrl && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentFileUrl.toLowerCase());
 
-  // PDF fallback 메커니즘
-  const handleWorkerFallback = useCallback(async () => {
+  // PDF 관련 함수들
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+    setPdfError(null);
+    setIsRetrying(false);
+  };
+
+  const handleWorkerFallback = async () => {
     setIsRetrying(true);
     
     try {
@@ -57,24 +64,22 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       setPdfError('PDF 워커를 불러올 수 없습니다. 네트워크 연결을 확인해주세요.');
       setIsRetrying(false);
     }
-  }, []);
+  };
 
-  // PDF 관련 함수들
-  const onDocumentLoadSuccess = useCallback(({ numPages }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
-    setPdfError(null);
-    setIsRetrying(false);
-  }, []);
-
-  const onDocumentLoadError = useCallback((error) => {
+  const onDocumentLoadError = (error) => {
     setPdfError(error.message || 'PDF 파일을 불러오는 데 실패했습니다.');
     
     // Worker 관련 오류인 경우 CDN fallback 시도
     if (error.message?.includes('worker') && !isRetrying) {
       handleWorkerFallback();
     }
-  }, [isRetrying, handleWorkerFallback]);
+  };
+
+  // 수동 재시도 함수
+  const handleRetry = () => {
+    setPdfError(null);
+    setIsRetrying(false);
+  };
 
   const changePage = (offset) => {
     setPageNumber(prevPageNumber => prevPageNumber + offset);
@@ -146,7 +151,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       footer={[
         // PDF 컨트롤
         isPdf && (
-          <div key="pdf-controls" className="controls-container">
+          <div key="pdf-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Space>
               <Button 
                 size="small" 
@@ -194,7 +199,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         ),
         // 이미지 컨트롤
         isImage && (
-          <div key="image-controls" className="controls-container">
+          <div key="image-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <div></div>
             <Space>
               <Button 
@@ -232,7 +237,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         )
       ]}
       width="40%"
-      className="modal-top-20"
+      style={{ top: 20 }}
       destroyOnClose={true}
       bodyStyle={{ 
         padding: 0, 
@@ -245,50 +250,53 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       }}
     >
       {isPdf ? (
-        <div className="preview-container">
-          {pdfError ? (
-            <Alert
-              message="PDF 로딩 실패"
-              description={
-                <div>
-                  <p>{pdfError}</p>
-                  {!isRetrying && (
-                    <div style={{ marginTop: '8px' }}>
-                      <Button size="small" onClick={handleWorkerFallback}>
-                        다시 시도
-                      </Button>
-                      <details style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                        <summary>기술 정보</summary>
-                        <p>파일 URL: {documentFileUrl}</p>
-                        <p>Worker: {pdfjs.GlobalWorkerOptions.workerSrc}</p>
-                        <p>PDF.js 버전: {pdfjs.version}</p>
-                      </details>
-                    </div>
-                  )}
-                </div>
-              }
-              type="error"
-              showIcon
-            />
-          ) : (
-            <Document
-              file={documentFileUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              loading={<Spin tip={isRetrying ? "재시도 중입니다..." : "문서를 불러오는 중입니다..."} />}
-            >
-              <Page
-                pageNumber={pageNumber}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                scale={scale}
-                width={Math.min(window.innerWidth * 0.36, 550)}
+        <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+          <Document
+            file={documentFileUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            loading={
+              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                <Spin size="large" tip={isRetrying ? "CDN으로 재시도 중입니다..." : "문서를 불러오는 중입니다..."} />
+              </div>
+            }
+            error={
+              <Alert 
+                message={isRetrying ? "재시도 중입니다" : "문서 로딩 오류"} 
+                description={
+                  <div>
+                    <p>{pdfError || "PDF 파일을 불러오는 데 실패했습니다."}</p>
+                    {!isRetrying && (
+                      <div style={{ marginTop: '10px' }}>
+                        <Button variant="primary" size="small" onClick={handleRetry}>
+                          다시 시도
+                        </Button>
+                      </div>
+                    )}
+                    <details style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                      <summary>기술 정보</summary>
+                      <p>파일 URL: {documentFileUrl}</p>
+                      <p>Worker: {pdfjs.GlobalWorkerOptions.workerSrc}</p>
+                      <p>PDF.js 버전: {pdfjs.version}</p>
+                    </details>
+                  </div>
+                } 
+                type={isRetrying ? "info" : "error"} 
+                showIcon 
               />
-            </Document>
-          )}
+            }
+          >
+            <Page
+              pageNumber={pageNumber}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              scale={scale}
+              width={Math.min(window.innerWidth * 0.36, 550)}
+            />
+          </Document>
         </div>
       ) : isImage ? (
-        <div className="preview-container">
+        <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
           {imageLoading && <Spin tip="이미지를 불러오는 중입니다..." />}
           {imageError && (
             <Alert 
@@ -301,18 +309,28 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
           <img
             src={documentFileUrl}
             alt="Preview"
-            className={`image-transform max-w-full max-h-full object-contain ${
-              imageLoading || imageError ? 'hidden' : 'block'
-            }`}
             style={{
-              '--image-transform': `scale(${scale})`
+              transform: `scale(${scale})`,
+              transformOrigin: 'center',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              display: imageLoading || imageError ? 'none' : 'block'
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
         </div>
       ) : (
-        <div className="no-preview-full">
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px 0',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
           <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
           <Button 
             variant="primary" 
