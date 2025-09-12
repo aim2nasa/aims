@@ -1648,6 +1648,7 @@ button, a, input, select, textarea {
   justify-content: center !important;
   align-items: center !important;
   transform: none !important; /* transform 초기화 */
+  transition: left 0.2s ease !important; /* LeftPane collapse 애니메이션과 동기화 */
 }
 
 /* Dark theme pagination override */
@@ -1681,6 +1682,7 @@ button, a, input, select, textarea {
 .ant-layout-sider-collapsed ~ .ant-layout .fixed-bottom-pagination,
 .sidebar-collapsed .fixed-bottom-pagination {
   left: 80px !important; /* 축소된 사이드바 너비 */
+  transition: left 0.2s ease !important; /* 매끄러운 애니메이션 */
 }
 
 /* ===== SPIN ===== */
