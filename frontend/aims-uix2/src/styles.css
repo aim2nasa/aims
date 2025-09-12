@@ -1638,7 +1638,7 @@ button, a, input, select, textarea {
   bottom: 0 !important;
   left: 280px !important; /* Sider 너비 280px과 동기화 */
   right: 0 !important;
-  background: var(--color-bg-primary) !important;
+  background: var(--color-surface-2) !important; /* LeftPane과 동일한 배경색 */
   padding: var(--spacing-md) !important;
   border-top: 1px solid var(--color-border-light) !important;
   z-index: 9999 !important; /* z-index 높임 */
@@ -1653,7 +1653,7 @@ button, a, input, select, textarea {
 
 /* Dark theme pagination override */
 [data-theme="dark"] .fixed-bottom-pagination {
-  background: var(--color-bg-primary) !important;
+  background: var(--color-surface-2) !important; /* LeftPane과 동일한 배경색 */
   border-top-color: var(--color-border-medium) !important;
 }
 
