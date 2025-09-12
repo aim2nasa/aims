@@ -2167,9 +2167,10 @@ button, a, input, select, textarea {
 .bg-secondary { background-color: var(--color-bg-secondary); }
 .bg-tertiary { background-color: var(--color-bg-tertiary); }
 
-/* ===== HIDE MAIN PAGE SCROLLBAR ONLY ===== */
-/* 전체 페이지 스크롤바만 제거하고, 내부 컴포넌트 스크롤바는 유지 */
+/* ===== DISABLE MAIN PAGE SCROLLING ===== */
+/* 전체 페이지 스크롤 완전 비활성화, 내부 컴포넌트 스크롤만 허용 */
 html, body {
+  overflow: hidden; /* 스크롤 완전 비활성화 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
