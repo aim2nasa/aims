@@ -1634,12 +1634,53 @@ button, a, input, select, textarea {
 
 /* Fixed bottom pagination */
 .fixed-bottom-pagination {
-  position: sticky;
-  bottom: 0;
-  background: var(--color-bg-primary);
-  padding: var(--spacing-md) 0;
-  border-top: 1px solid var(--color-border-light);
-  z-index: 10;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 280px !important; /* Sider 너비 280px과 동기화 */
+  right: 0 !important;
+  background: var(--color-bg-primary) !important;
+  padding: var(--spacing-md) !important;
+  border-top: 1px solid var(--color-border-light) !important;
+  z-index: 9999 !important; /* z-index 높임 */
+  margin: 0 !important;
+  box-shadow: 0 -2px 8px var(--color-shadow-sm) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transform: none !important; /* transform 초기화 */
+}
+
+/* Dark theme pagination override */
+[data-theme="dark"] .fixed-bottom-pagination {
+  background: var(--color-bg-primary) !important;
+  border-top-color: var(--color-border-medium) !important;
+}
+
+/* Ensure content is not hidden behind fixed pagination */
+.ant-layout-content {
+  padding-bottom: 60px; /* 공백 줄임 - 페이지네이션 높이에 맞춤 */
+}
+
+/* Fixed pagination specific styles for better visibility */
+.fixed-bottom-pagination .ant-pagination {
+  margin: 0;
+}
+
+.fixed-bottom-pagination .ant-pagination-options {
+  margin-left: var(--spacing-md);
+}
+
+/* Responsive pagination for collapsed sidebar */
+@media (max-width: 768px) {
+  .fixed-bottom-pagination {
+    left: 0; /* 모바일에서는 전체 너비 사용 */
+  }
+}
+
+/* Collapsed sidebar state - Ant Design 기본 collapsed width 80px */
+.ant-layout-sider-collapsed ~ .ant-layout .fixed-bottom-pagination,
+.sidebar-collapsed .fixed-bottom-pagination {
+  left: 80px !important; /* 축소된 사이드바 너비 */
 }
 
 /* ===== SPIN ===== */
