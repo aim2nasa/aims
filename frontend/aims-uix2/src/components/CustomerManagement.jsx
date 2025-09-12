@@ -613,6 +613,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             dataSource={customers}
             rowKey="_id"
             loading={loading}
+            size="small"
             scroll={{ 
               x: false,
               y: 'calc(100vh - 340px)' // 적절한 여백으로 조정

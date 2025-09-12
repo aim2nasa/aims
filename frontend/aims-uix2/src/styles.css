@@ -1388,6 +1388,11 @@ button, a, input, select, textarea {
   color: var(--color-text-secondary) !important;
 }
 
+/* 높이 0인 숨겨진 행 제거 */
+.ant-table-tbody > tr > td[style*="height: 0px"] {
+  display: none !important;
+}
+
 .ant-table-tbody > tr:hover > td {
   background: var(--color-bg-hover) !important;
 }
