@@ -449,7 +449,6 @@ const AppLayout = () => {
           trigger={null}
           style={{ 
             background: 'var(--color-bg-primary)', 
-            borderRight: '1px solid var(--color-border)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column'
