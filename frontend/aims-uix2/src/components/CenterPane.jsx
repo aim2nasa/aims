@@ -328,7 +328,6 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                 return (
                   <List.Item
                     key={itemId}
-                    className={isSelected ? 'selected-document-item' : ''}
                     actions={[
                       <Button
                         type="text"
@@ -359,7 +358,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                       </Button>
                     ]}
                     onClick={() => handleDocumentClickWithScrollSave(item)}
-className={`cursor-pointer py-md rounded-lg my-1 transition-all ${isSelected ? 'bg-primary' : ''}`}
+                    className={`cursor-pointer py-md rounded-lg my-1 transition-all ${isSelected ? 'selected-document-item bg-primary' : ''}`}
                   >
                     <List.Item.Meta
                       avatar={<FileTextOutlined className="text-2xl text-primary" />}

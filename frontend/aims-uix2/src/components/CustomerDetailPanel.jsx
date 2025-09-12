@@ -423,7 +423,8 @@ className="text-sm"
             <Avatar 
               size={32} 
               icon={React.createElement(getCustomerTypeIconWithColor(customer).Icon)} 
-              style={{ backgroundColor: getCustomerTypeIconWithColor(customer).color }}
+              className="customer-type-icon"
+              style={{ '--customer-type-color': getCustomerTypeIconWithColor(customer).color }}
             />
             <div>
               <Title level={5} className="m-0 leading-tight">
@@ -504,7 +505,7 @@ className="text-2xs"
             tab={<Space><UserOutlined />기본 정보</Space>}
             key="info"
           >
-            <div style={{ padding: '16px' }}>
+            <div className="panel-padding">
               <Card size="small" title="개인 정보" className="mb-sm">
                 <Descriptions size="small" column={1}>
                   <Descriptions.Item label="고객명">
@@ -626,7 +627,7 @@ className="text-2xs"
             tab={<Space><FileTextOutlined />문서 ({customerDocuments.length})</Space>}
             key="documents"
           >
-            <div style={{ padding: '16px' }}>
+            <div className="panel-padding">
               {customerDocuments.length > 0 ? (
                 <Table
                   columns={documentColumns}
@@ -667,10 +668,10 @@ className="my-lg"
             tab={<Space><HistoryOutlined />상담 이력 (0)</Space>}
             key="consultations"
           >
-            <div style={{ padding: '16px' }}>
+            <div className="panel-padding">
               <Empty 
                 description="상담 이력이 없습니다"
-                style={{ margin: '20px 0' }}
+                className="section-margin"
               />
             </div>
           </TabPane>
@@ -679,10 +680,10 @@ className="my-lg"
             tab={<Space><LinkOutlined />계약 (0)</Space>}
             key="contracts"
           >
-            <div style={{ padding: '16px' }}>
+            <div className="panel-padding">
               <Empty 
                 description="진행 중인 계약이 없습니다"
-                style={{ margin: '20px 0' }}
+                className="section-margin"
               />
             </div>
           </TabPane>
@@ -690,13 +691,8 @@ className="my-lg"
       </div>
 
       {/* Footer */}
-      <Divider style={{ margin: '12px 0 8px 0' }} />
-      <div style={{ 
-        padding: '0 16px 12px 16px', 
-        fontSize: '10px', 
-        color: '#999', 
-        textAlign: 'center' 
-      }}>
+      <Divider className="divider-margin" />
+      <div className="panel-footer">
         등록일: {customer.meta?.created_at && dayjs(customer.meta.created_at).format('YYYY-MM-DD HH:mm')} | 
         최종 수정: {customer.meta?.updated_at && dayjs(customer.meta.updated_at).format('YYYY-MM-DD HH:mm')}
       </div>

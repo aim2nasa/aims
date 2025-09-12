@@ -493,7 +493,7 @@ const ProgressBar = ({ progress, status }) => {
       <div className="progress-bar h-2">
         <div 
           className={`progress-bar-fill ${status} h-2`}
-          style={{ width: `${Math.min(progress || 0, 100)}%` }} 
+          style={{ '--progress-width': `${Math.min(progress || 0, 100)}%` }} 
         />
       </div>
       <div className="flex-between text-xs text-tertiary mt-xs">
@@ -762,8 +762,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               <FileText className="w-3 h-3 text-primary" />
             </div>
             <span 
-              className={`font-bold ${isCompleted ? 'text-primary' : 'text-primary'}`}
-              className={`${isCompleted ? 'cursor-pointer underline' : 'cursor-default no-underline'}`}
+              className={`font-bold text-primary ${isCompleted ? 'cursor-pointer underline' : 'cursor-default no-underline'}`}
               onClick={() => {
                 if (isCompleted && onDocumentPreview) {
                   onDocumentPreview(document);
@@ -1520,8 +1519,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   {/* 설정 토글 버튼 */}
                   <button
                     onClick={() => setShowControls(!showControls)}
-                    className="flex items-center gap-1 px-1_5 py-0_5 rounded-md text-3xs border-none cursor-pointer transition-all"
-                    className={showControls ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}
+                    className={`flex items-center gap-1 px-1_5 py-0_5 rounded-md text-3xs border-none cursor-pointer transition-all ${showControls ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}`}
                     title="Toggle Controls"
                   >
                     <Settings className="btn-icon-xs" />
@@ -1536,8 +1534,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                         <div className="flex items-center border-none rounded overflow-hidden">
                           <button
                             onClick={() => {}}
-                            className="px-1_5 py-0_5 flex items-center gap-1 text-3xs border-none cursor-pointer transition-colors"
-                            className={communicationMode === 'polling' ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}
+                            className={`px-1_5 py-0_5 flex items-center gap-1 text-3xs border-none cursor-pointer transition-colors ${communicationMode === 'polling' ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}`}
                             title="Polling Mode"
                           >
                             <Radio className="btn-icon-xs" />
@@ -1563,11 +1560,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       >
                         <div 
                           className={`polling-dot ${
-                            isPollingEnabled ? 'polling-dot-enabled' : 'polling-dot-disabled'
+                            isPollingEnabled ? 'polling-dot-enabled animate-pulse' : 'polling-dot-disabled animate-none'
                           }`}
-                          style={{
-                            animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
-                          }}
                         />
                         {isPollingEnabled ? "Live" : "Paused"}
                       </button>
@@ -1576,8 +1570,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       <button 
                         onClick={fetchDocuments} 
                         disabled={loading} 
-                        className="text-white px-1_5 py-0_5 rounded border-none flex items-center gap-1 text-3xs transition-colors"
-                        className={loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 cursor-pointer'}
+                        className={`text-white px-1_5 py-0_5 rounded border-none flex items-center gap-1 text-3xs transition-colors ${loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 cursor-pointer'}`}
                         onMouseEnter={(e) => {
                           if (!loading) e.target.style.backgroundColor = '#2563eb';
                         }}
@@ -1585,8 +1578,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                           if (!loading) e.target.style.backgroundColor = '#3b82f6';
                         }}
                       >
-                        <RefreshCw className="w-2_5 h-2_5"
-                                   className={loading ? 'animate-spin' : ''} />
+                        <RefreshCw className={`w-2_5 h-2_5 ${loading ? 'animate-spin' : ''}`} />
                         <span>Refresh</span>
                       </button>
                     </>
@@ -1609,14 +1601,13 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           {/* 문서 표시 영역 */}
           {loading && documents.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-8 h-8 text-blue-500 mr-3"
-                         className="animate-spin" />
+              <RefreshCw className="w-8 h-8 text-blue-500 mr-3 animate-spin" />
               <span className="text-gray-600">Loading documents...</span>
             </div>
           ) : (
             <div 
               ref={tableContainerRef} 
-              className="flex flex-col h-table"
+              className="flex flex-col table-variable-height"
               style={{ '--table-height': tableHeight }}
             >
               {filteredDocuments.length > 0 ? (
@@ -1706,21 +1697,11 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       {/* 문서 요약 모달 */}
       {showSummaryModal && (
         <div 
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          className="fixed inset-0 flex items-center justify-center z-50 modal-overlay"
           onClick={handleSummaryModalClose}
         >
           <div 
-            style={{
-              backgroundColor: 'var(--color-surface-1)',
-              borderRadius: '8px',
-              padding: '24px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '70vh',
-              overflow: 'auto',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-            }}
+            className="modal-content"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 모달 헤더 */}

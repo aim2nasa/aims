@@ -69,7 +69,7 @@ const ComponentShowcase = () => {
       </Card>
 
       {/* Card 테스트 */}
-      <div className="grid grid-cols-auto-fit gap-lg mb-xl" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <div className="grid grid-cols-auto-fit gap-lg mb-xl showcase-grid">
         <Card title="기본 카드">
           <p>기본 카드 내용입니다.</p>
         </Card>
@@ -110,67 +110,35 @@ const ComponentShowcase = () => {
             <h4>카운트 배지:</h4>
             <div className="flex gap-xl align-center flex-wrap">
               <Badge count={count}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  backgroundColor: '#f0f0f0', 
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="badge-demo-icon">
                   📧
                 </div>
               </Badge>
               
               <Badge count={99}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  backgroundColor: '#f0f0f0', 
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="badge-demo-icon">
                   🔔
                 </div>
               </Badge>
 
               <Badge count={1000} overflowCount={999}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  backgroundColor: '#f0f0f0', 
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="badge-demo-icon">
                   💬
                 </div>
               </Badge>
 
               <Badge dot>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  backgroundColor: '#f0f0f0', 
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="badge-demo-icon">
                   🎯
                 </div>
               </Badge>
             </div>
 
-            <div style={{ marginTop: '12px' }}>
+            <div className="counter-controls">
               <Button size="small" onClick={() => setCount(Math.max(0, count - 1))}>
                 -
               </Button>
-              <span style={{ margin: '0 8px' }}>Count: {count}</span>
+              <span className="counter-display">Count: {count}</span>
               <Button size="small" onClick={() => setCount(count + 1)}>
                 +
               </Button>
@@ -180,8 +148,8 @@ const ComponentShowcase = () => {
       </Card>
 
       {/* 검증 체크리스트 */}
-      <Card title="✅ Phase 2 검증 체크리스트" style={{ marginTop: '24px', backgroundColor: '#f9fafb' }}>
-        <ul style={{ lineHeight: '1.6' }}>
+      <Card title="✅ Phase 2 검증 체크리스트" className="checklist-card">
+        <ul className="checklist-content">
           <li>✅ Button: 5가지 variant가 모두 다른 색상으로 표시됨</li>
           <li>✅ Button: 3가지 size가 크기 차이 있음</li>
           <li>✅ Button: Loading 상태에서 스피너가 돔</li>

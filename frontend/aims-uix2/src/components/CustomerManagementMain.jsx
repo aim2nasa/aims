@@ -28,7 +28,7 @@ const CustomerManagementMain = () => {
 
         {/* 주요 기능 */}
         <div className="grid grid-cols-auto-fit gap-xl mb-xl">
-          <div className="feature-card" className="p-xl bg-secondary rounded-lg border border-medium">
+          <div className="feature-card p-xl bg-secondary rounded-lg border border-medium">
             <h3 className="text-lg font-semibold text-primary mb-md">
               📊 전체 고객 보기
             </h3>
@@ -36,7 +36,7 @@ const CustomerManagementMain = () => {
               전체 고객 데이터를 한눈에 보고, 검색과 필터를 통해 원하는 고객을 빠르게 찾을 수 있습니다.
             </p>
           </div>
-          <div className="feature-card" className="p-xl bg-secondary rounded-lg border border-medium">
+          <div className="feature-card p-xl bg-secondary rounded-lg border border-medium">
             <h3 className="text-lg font-semibold text-primary mb-md">
               🌏 지역별 고객 관리
             </h3>
@@ -44,7 +44,7 @@ const CustomerManagementMain = () => {
               지역별로 고객을 분류하고 관리하여, 지역 맞춤형 마케팅 전략을 수립할 수 있습니다.
             </p>
           </div>
-          <div className="feature-card" className="p-xl bg-secondary rounded-lg border border-medium">
+          <div className="feature-card p-xl bg-secondary rounded-lg border border-medium">
             <h3 className="text-lg font-semibold text-primary mb-md">
               👥 관계별 네트워크 분석
             </h3>

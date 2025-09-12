@@ -10,28 +10,21 @@ const ThemeToggle = () => {
 
   return (
     <Tooltip title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px',
-        padding: '0 16px',
-        borderLeft: '1px solid var(--color-border-light)'
-      }}>
-        <SunOutlined style={{ 
-          fontSize: '16px', 
-          color: !isDark ? 'var(--color-warning)' : 'var(--color-text-tertiary)' 
-        }} />
+      <div className="theme-toggle-container">
+        <SunOutlined 
+          className="theme-icon theme-icon-sun"
+          style={{ '--sun-color': !isDark ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }}
+        />
         <Switch
           checked={isDark}
           onChange={toggleTheme}
-          style={{
-            backgroundColor: isDark ? 'var(--color-primary)' : 'var(--color-text-tertiary)'
-          }}
+          className="theme-switch"
+          style={{ '--switch-bg-color': isDark ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
         />
-        <MoonOutlined style={{ 
-          fontSize: '16px', 
-          color: isDark ? 'var(--color-primary)' : 'var(--color-text-tertiary)' 
-        }} />
+        <MoonOutlined 
+          className="theme-icon theme-icon-moon"
+          style={{ '--moon-color': isDark ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
+        />
       </div>
     </Tooltip>
   );

@@ -78,7 +78,7 @@ const CustomerSearchBar = ({
               onSearch?.(newValue, filters);
             }}
             onPressEnter={handleSearch}
-            prefix={<SearchOutlined style={{ color: 'var(--color-text-tertiary)' }} />}
+            prefix={<SearchOutlined className="search-icon" />}
             suffix={
               searchValue && (
                 <Button
@@ -90,7 +90,7 @@ const CustomerSearchBar = ({
                     // 검색어 초기화 시에도 실시간 검색 실행
                     onSearch?.('', filters);
                   }}
-                  style={{ marginRight: '-8px' }}
+                  className="clear-btn"
                 />
               )
             }
@@ -140,7 +140,7 @@ const CustomerSearchBar = ({
       {showAdvanced && (
         <div className="search-advanced-inline">
           <div className="advanced-header">
-            <FilterOutlined style={{ marginRight: '4px', fontSize: '14px' }} />
+            <FilterOutlined className="filter-icon" />
             <span>고급 검색 옵션</span>
           </div>
           
@@ -153,7 +153,7 @@ const CustomerSearchBar = ({
                 onChange={(value) => handleFilterChange('customerType', value)}
                 allowClear
                 size="small"
-                style={{ width: '120px' }}
+                className="select-120"
               >
                 <Option value="개인">개인</Option>
                 <Option value="법인">법인</Option>
@@ -168,7 +168,7 @@ const CustomerSearchBar = ({
                 onChange={(value) => handleFilterChange('region', value)}
                 allowClear
                 size="small"
-                style={{ width: '120px' }}
+                className="select-120"
               >
                 <Option value="서울">서울</Option>
                 <Option value="부산">부산</Option>
@@ -198,7 +198,7 @@ const CustomerSearchBar = ({
                 value={filters.dateRange}
                 onChange={(dates) => handleFilterChange('dateRange', dates)}
                 size="small"
-                style={{ width: '240px' }}
+                className="select-240"
                 format="YYYY-MM-DD"
               />
             </div>
@@ -211,7 +211,7 @@ const CustomerSearchBar = ({
                 onChange={(value) => handleFilterChange('hasDocuments', value)}
                 allowClear
                 size="small"
-                style={{ width: '100px' }}
+                className="select-100"
               >
                 <Option value="true">있음</Option>
                 <Option value="false">없음</Option>

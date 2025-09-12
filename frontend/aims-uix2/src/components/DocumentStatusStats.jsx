@@ -78,7 +78,7 @@ const DocumentStatusStats = ({ documents, isConnected }) => {
         <div className="progress-bar">
           <div 
             className="progress-bar-fill completed" 
-            style={{ width: `${stats.completionRate}%` }}
+            style={{ '--progress-width': `${stats.completionRate}%` }}
           />
         </div>
       </div>

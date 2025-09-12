@@ -72,17 +72,14 @@ const ImageViewer = ({ file, onDownload }) => {
         <Spin tip="이미지를 불러오는 중입니다..." className="mt-12_5" />
       )}
       
-      <div className="flex-shrink-0 flex justify-center items-start w-full overflow-auto p-2_5"
-           className="h-screen-260">
+      <div className="flex-shrink-0 flex justify-center items-start w-full overflow-auto p-2_5 h-screen-260">
         <div 
-          className="border border-gray-300 rounded-lg bg-white m-1_25 max-w-full"
-          className={imageLoading ? 'image-display-hidden shadow-xl' : 'image-display-block shadow-xl'}
+          className={`border border-gray-300 rounded-lg bg-white m-1_25 max-w-full ${imageLoading ? 'image-display-hidden shadow-xl' : 'image-display-block shadow-xl'}`}
           >
           <img
             src={file}
             alt="Preview"
-            className="block h-auto"
-            className="image-transform"
+            className="block h-auto image-transform"
             style={{
               '--image-transform': `scale(${scale})`,
               width: maxImageWidth

@@ -206,12 +206,11 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
                 <List.Item 
                   key={`${item.roadAddr}-${index}`}
                   onClick={() => handleAddressSelect(item)}
-                  className={`cursor-pointer transition-colors m-0 p-md ${
+                  className={`cursor-pointer transition-colors m-0 p-md address-search-item ${
                     selectedIndex === index 
                       ? 'bg-primary-alpha-10 border border-primary' 
                       : 'bg-primary border border-transparent'
                   }`}
-                  className="address-search-item"
                 >
                   <div className="w-full">
                     <div className="font-bold mb-xs text-sm text-primary">

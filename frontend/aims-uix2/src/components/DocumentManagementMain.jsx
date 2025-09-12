@@ -11,8 +11,7 @@ const DocumentManagementMain = () => {
           <span className="text-xl font-semibold text-primary">문서 관리</span>
         </div>
       }
-      className="h-screen-140"
-      className="rounded"
+      className="h-screen-140 rounded"
     >
       <div className="p-2xl max-w-800 mx-auto">
         {/* 제목 및 설명 */}

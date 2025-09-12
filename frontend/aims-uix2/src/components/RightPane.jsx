@@ -88,9 +88,8 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
   };
 
   return (
-    <div className="flex flex-col bg-surface-1 rounded-lg border border-light shadow-sm"
+    <div className="flex flex-col bg-surface-1 rounded-lg border border-light shadow-sm right-pane-min-height"
          style={{ 
-           minHeight: 'calc(100vh - 120px)', 
            maxHeight: 'calc(100vh - 120px)'
          }}>
       {/* Header */}

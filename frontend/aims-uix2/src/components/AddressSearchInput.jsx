@@ -75,7 +75,7 @@ const AddressSearchInput = ({
 
   return (
     <div style={style}>
-      <Space direction="vertical" style={{ width: '100%' }}>
+      <Space direction="vertical" className="space-full">
         {/* 우편번호 + 주소검색 버튼 */}
         <Row gutter={8}>
           <Col span={8}>
@@ -102,7 +102,7 @@ const AddressSearchInput = ({
           value={address1}
           placeholder="기본주소 (주소검색 버튼을 클릭하세요)"
           readOnly
-          style={{ width: '100%' }}
+          className="input-full"
         />
         
         {/* 상세주소 */}
@@ -112,13 +112,12 @@ const AddressSearchInput = ({
             value={address2}
             onChange={handleAddress2Change}
             placeholder="상세주소를 입력하세요"
-            style={{ width: '100%' }}
+            className="input-full"
           />
         ) : (
           <div 
             key="address2-disabled"
-            className="w-full px-sm py-sm bg-tertiary border border-medium rounded text-tertiary cursor-not-allowed flex-center"
-            style={{ minHeight: '32px' }}
+            className="w-full px-sm py-sm bg-tertiary border border-medium rounded text-tertiary cursor-not-allowed flex-center min-h-8"
           >
             ❌ 주소검색을 먼저 해주세요
           </div>

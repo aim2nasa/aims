@@ -249,7 +249,7 @@ className="hidden"
             }}
             placeholder="고객 이름을 입력하여 검색하세요"
             size="large"
-            style={{ width: '100%' }}
+            className="w-full"
             allowClear
             onClear={() => {
               setSearchText('');

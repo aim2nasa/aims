@@ -109,7 +109,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
           return {
             title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
             key: `customer-${customer._id}`,
-            icon: <Icon style={{ color }} />,
+            icon: <Icon className="tree-icon" style={{ '--icon-color': color }} />,
             isLeaf: true,
             customerData: customer
           };
@@ -153,7 +153,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
                   return {
                     title: <Text>{customer.personal_info?.name || '이름 없음'}</Text>,
                     key: `customer-${customer._id}`,
-                    icon: <Icon style={{ color }} />,
+                    icon: <Icon className="tree-icon" style={{ '--icon-color': color }} />,
                     isLeaf: true,
                     customerData: customer
                   };
@@ -231,14 +231,8 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         className="h-full"
       >
         {/* 통계 정보 */}
-        <div style={{ 
-          backgroundColor: 'var(--color-bg-tertiary)', 
-          padding: '12px', 
-          borderRadius: '6px', 
-          marginBottom: '16px',
-          flex: '0 0 auto'
-        }}>
-        <Space split={<span style={{ color: 'var(--color-border-dark)' }}>|</span>}>
+        <div className="summary-stats summary-stats-flex">
+        <Space split={<span className="divider-pipe">|</span>}>
           <Text>
             <strong>전체 고객:</strong> {stats.totalCustomers}명
           </Text>
@@ -274,9 +268,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
             onSelect={handleSelect}
             onExpand={handleExpand}
             treeData={treeData}
-            style={{
-              minHeight: '100%'
-            }}
+            className="tree-full-height"
           />
         </div>
       </Card>

@@ -215,11 +215,10 @@ const DocumentLinkModal = ({
           placeholder="예: '김철수', '010-1234', '김' 등 (최소 1글자)"
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
-className="mb-lg"
+className="mb-lg no-border-search"
           size="large"
           prefix={<SearchOutlined />}
           loading={searchLoading}
-          className="no-border-search"
         />
         
         {/* 검색 결과 수 및 안내 */}

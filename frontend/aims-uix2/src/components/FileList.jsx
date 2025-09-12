@@ -9,7 +9,7 @@ const FileList = ({ files }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'processing':
-        return <SyncOutlined spin style={{ color: '#1890ff' }} />;
+        return <SyncOutlined spin className="processing-icon" />;
       case 'completed':
         return <CheckCircleTwoTone twoToneColor="#52c41a" />;
       default:
@@ -19,7 +19,7 @@ const FileList = ({ files }) => {
 
   return (
     <List
-      header={<div style={{ fontWeight: 'bold' }}>업로드된 파일 목록</div>}
+      header={<div className="file-header">업로드된 파일 목록</div>}
       bordered
       dataSource={files}
       renderItem={item => (

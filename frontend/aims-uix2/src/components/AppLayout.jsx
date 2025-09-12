@@ -467,8 +467,7 @@ className="ml-xs"
           >
             {/* Center Pane */}
             <div 
-              className="overflow-hidden"
-              className="content-with-dynamic-width"
+              className="overflow-hidden content-with-dynamic-width"
               style={{
                 '--content-width': rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
                 '--content-margin-right': rightPaneVisible ? '12px' : '0',
@@ -506,15 +505,13 @@ className="ml-xs"
             {rightPaneVisible && (
               <div
                 onMouseDown={handleMouseDown}
-                className="cursor-col-resize rounded-xs mx-sm relative transition-all"
-                className="resize-handle"
+                className="cursor-col-resize rounded-xs mx-sm relative transition-all resize-handle"
                 style={{
                   '--resize-bg': isResizing ? 'var(--color-primary)' : 'transparent'
                 }}
               >
                 <div 
-                  className="absolute top-1/2 left-1/2 transform-center flex items-center justify-center"
-                  className="resize-grip">
+                  className="absolute top-1/2 left-1/2 transform-center flex items-center justify-center resize-grip">
                   <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
                   <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
                 </div>
@@ -525,8 +522,7 @@ className="ml-xs"
             {rightPaneVisible && (
               <div 
                 data-testid="right-pane"
-                className="bg-transparent rounded-lg transition-all"
-                className="right-pane-container"
+                className="bg-transparent rounded-lg transition-all right-pane-container"
                 style={{
                   '--right-pane-width': `${rightPaneWidth}%`,
                   '--right-pane-transition': isResizing ? 'none' : 'width 0.3s ease'
