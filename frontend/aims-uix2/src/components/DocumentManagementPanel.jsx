@@ -33,7 +33,7 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
       key: 'originalName',
       render: (name) => (
         <Space>
-          <FileTextOutlined style={{ color: '#1890ff' }} />
+          <FileTextOutlined className="text-blue-500" />
           <span>{name}</span>
         </Space>
       )
@@ -122,8 +122,8 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
   };
 
   return (
-    <div style={{ padding: '16px 0' }}>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+    <div className="py-lg">
+      <Space className="mb-lg w-full justify-between">
         <span>고객 문서 관리</span>
         <Space>
           <Upload
@@ -157,7 +157,7 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
       ) : (
         <Empty 
           description="연결된 문서가 없습니다"
-          style={{ margin: '40px 0' }}
+          className="my-xl"
         />
       )}
 
@@ -168,7 +168,7 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
         footer={null}
         width={600}
       >
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+        <div className="text-center py-xl text-gray-400">
           기존 문서 연결 기능 구현 예정
         </div>
       </Modal>

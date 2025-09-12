@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Space, message, Spin, Alert, Typography } from 'antd';
 import { DownloadOutlined, LeftOutlined, RightOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import { Button } from './common';
@@ -9,14 +9,16 @@ import axios from 'axios';
 
 const { Text } = Typography;
 
-// PDF.js 워커 설정
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.js`;
+// PDF.js 워커 설정 - 로컬 파일 우선, CDN fallback
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
 const DocumentPreviewModal = ({ visible, document, onClose }) => {
   // PDF 관련 상태
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
+  const [pdfError, setPdfError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   // 이미지 관련 상태  
   const [imageLoading, setImageLoading] = useState(true);
@@ -28,6 +30,8 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       setNumPages(null);
       setPageNumber(1);
       setScale(1.0);
+      setPdfError(null);
+      setIsRetrying(false);
       setImageLoading(true);
       setImageError(false);
     }
@@ -41,11 +45,36 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
   const isPdf = documentFileUrl && documentFileUrl.toLowerCase().endsWith('.pdf');
   const isImage = documentFileUrl && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentFileUrl.toLowerCase());
 
+  // PDF fallback 메커니즘
+  const handleWorkerFallback = useCallback(async () => {
+    setIsRetrying(true);
+    
+    try {
+      // CDN으로 워커 재설정
+      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      setPdfError(null);
+    } catch (fallbackError) {
+      setPdfError('PDF 워커를 불러올 수 없습니다. 네트워크 연결을 확인해주세요.');
+      setIsRetrying(false);
+    }
+  }, []);
+
   // PDF 관련 함수들
-  const onDocumentLoadSuccess = ({ numPages }) => {
+  const onDocumentLoadSuccess = useCallback(({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
-  };
+    setPdfError(null);
+    setIsRetrying(false);
+  }, []);
+
+  const onDocumentLoadError = useCallback((error) => {
+    setPdfError(error.message || 'PDF 파일을 불러오는 데 실패했습니다.');
+    
+    // Worker 관련 오류인 경우 CDN fallback 시도
+    if (error.message?.includes('worker') && !isRetrying) {
+      handleWorkerFallback();
+    }
+  }, [isRetrying, handleWorkerFallback]);
 
   const changePage = (offset) => {
     setPageNumber(prevPageNumber => prevPageNumber + offset);
@@ -117,7 +146,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       footer={[
         // PDF 컨트롤
         isPdf && (
-          <div key="pdf-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <div key="pdf-controls" className="controls-container">
             <Space>
               <Button 
                 size="small" 
@@ -165,7 +194,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         ),
         // 이미지 컨트롤
         isImage && (
-          <div key="image-controls" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <div key="image-controls" className="controls-container">
             <div></div>
             <Space>
               <Button 
@@ -203,7 +232,7 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
         )
       ]}
       width="40%"
-      style={{ top: 20 }}
+      className="modal-top-20"
       destroyOnClose={true}
       bodyStyle={{ 
         padding: 0, 
@@ -216,24 +245,50 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
       }}
     >
       {isPdf ? (
-        <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-          <Document
-            file={documentFileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={<Spin tip="문서를 불러오는 중입니다..." />}
-            error={<Alert message="문서 로딩 오류" description="PDF 파일을 불러오는 데 실패했습니다." type="error" showIcon />}
-          >
-            <Page
-              pageNumber={pageNumber}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              scale={scale}
-              width={Math.min(window.innerWidth * 0.36, 550)}
+        <div className="preview-container">
+          {pdfError ? (
+            <Alert
+              message="PDF 로딩 실패"
+              description={
+                <div>
+                  <p>{pdfError}</p>
+                  {!isRetrying && (
+                    <div style={{ marginTop: '8px' }}>
+                      <Button size="small" onClick={handleWorkerFallback}>
+                        다시 시도
+                      </Button>
+                      <details style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                        <summary>기술 정보</summary>
+                        <p>파일 URL: {documentFileUrl}</p>
+                        <p>Worker: {pdfjs.GlobalWorkerOptions.workerSrc}</p>
+                        <p>PDF.js 버전: {pdfjs.version}</p>
+                      </details>
+                    </div>
+                  )}
+                </div>
+              }
+              type="error"
+              showIcon
             />
-          </Document>
+          ) : (
+            <Document
+              file={documentFileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<Spin tip={isRetrying ? "재시도 중입니다..." : "문서를 불러오는 중입니다..."} />}
+            >
+              <Page
+                pageNumber={pageNumber}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                scale={scale}
+                width={Math.min(window.innerWidth * 0.36, 550)}
+              />
+            </Document>
+          )}
         </div>
       ) : isImage ? (
-        <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+        <div className="preview-container">
           {imageLoading && <Spin tip="이미지를 불러오는 중입니다..." />}
           {imageError && (
             <Alert 
@@ -246,28 +301,18 @@ const DocumentPreviewModal = ({ visible, document, onClose }) => {
           <img
             src={documentFileUrl}
             alt="Preview"
+            className={`image-transform max-w-full max-h-full object-contain ${
+              imageLoading || imageError ? 'hidden' : 'block'
+            }`}
             style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'center',
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-              display: imageLoading || imageError ? 'none' : 'block'
+              '--image-transform': `scale(${scale})`
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
         </div>
       ) : (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '40px 0',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
+        <div className="no-preview-full">
           <p>이 문서는 미리보기를 지원하지 않는 형식입니다.</p>
           <Button 
             variant="primary" 

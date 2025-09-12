@@ -108,7 +108,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
         }
       }}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space direction="vertical" className="w-full" size="middle">
         {/* 검색 입력 */}
         <Row gutter={8}>
           <Col span={18}>
@@ -118,11 +118,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               onPressEnter={() => searchAddress(searchKeyword)}
-              style={{
-                backgroundColor: 'var(--color-bg-primary)',
-                color: 'var(--color-text-primary)',
-                borderColor: 'var(--color-border)'
-              }}
+              className="input-themed"
               onKeyDown={(e) => {
                 if (searchResults.length > 0) {
                   if (e.key === 'ArrowDown') {
@@ -186,7 +182,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
         {/* 검색 결과 */}
         {searchResults.length > 0 && (
           <div>
-            <div style={{ marginBottom: 8, fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="mb-xs font-bold flex justify-between align-center">
               <span>검색 결과 ({searchResults.length}건{totalCount > searchResults.length ? ` / 총 ${totalCount}건` : ''})</span>
               {!isEnd && (
                 <Button 
@@ -194,7 +190,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
                   size="small"
                   onClick={loadMoreResults}
                   loading={loading}
-                  style={{ padding: 0, height: 'auto' }}
+                  className="p-0-auto"
                 >
                   더보기 +
                 </Button>
@@ -205,38 +201,29 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
               size="small"
               bordered
               dataSource={searchResults}
-              style={{
-                maxHeight: '400px',
-                overflowY: 'auto',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                backgroundColor: 'var(--color-bg-primary)'
-              }}
+              className="max-h-400 overflow-y-auto border border-color rounded-md bg-primary"
               renderItem={(item, index) => (
                 <List.Item 
                   key={`${item.roadAddr}-${index}`}
                   onClick={() => handleAddressSelect(item)}
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    margin: 0,
-                    padding: '12px 16px',
-                    backgroundColor: selectedIndex === index ? 'var(--color-primary-alpha-10)' : 'var(--color-bg-primary)',
-                    border: selectedIndex === index ? '1px solid var(--color-primary)' : '1px solid transparent'
-                  }}
+                  className={`cursor-pointer transition-colors m-0 p-md ${
+                    selectedIndex === index 
+                      ? 'bg-primary-alpha-10 border border-primary' 
+                      : 'bg-primary border border-transparent'
+                  }`}
                   className="address-search-item"
                 >
-                  <div style={{ width: '100%' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: 4, fontSize: '14px', color: 'var(--color-text-primary)' }}>
+                  <div className="w-full">
+                    <div className="font-bold mb-xs text-sm text-primary">
                       📮 {item.zipNo ? `${item.zipNo} | ` : ''}{item.roadAddrPart1}
                     </div>
                     {item.jibunAddr && item.jibunAddr !== item.roadAddrPart1 && (
-                      <div style={{ color: 'var(--color-text-secondary)', fontSize: '12px', marginBottom: '2px' }}>
+                      <div className="text-secondary text-xs mb-1">
                         지번: {item.jibunAddr}
                       </div>
                     )}
                     {item.building_name && (
-                      <div style={{ color: 'var(--color-primary)', fontSize: '11px' }}>
+                      <div className="text-primary text-xs">
                         🏢 {item.building_name}
                       </div>
                     )}
@@ -247,13 +234,13 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
             
             {/* 하단 더보기 버튼 */}
             {!isEnd && (
-              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              <div className="text-center mt-md">
                 <Button 
                   variant="dashed"
                   onClick={loadMoreResults}
                   loading={loading}
                   block
-                  style={{ height: '36px' }}
+                  className="h-36"
                 >
                   {loading ? '로딩 중...' : `더 많은 결과 보기 (${totalCount - searchResults.length}건 더 있음)`}
                 </Button>
@@ -262,7 +249,7 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
             
             {/* 전체 결과 로드 완료 */}
             {isEnd && totalCount > searchResults.length && (
-              <div style={{ textAlign: 'center', marginTop: '8px', color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
+              <div className="text-center mt-sm text-tertiary text-xs">
                 전체 {totalCount}건 중 {searchResults.length}건 표시됨
               </div>
             )}
@@ -271,14 +258,10 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
 
         {/* 검색 가이드 */}
         {searchResults.length === 0 && searchKeyword === '' && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px 20px', 
-            color: 'var(--color-text-secondary)' 
-          }}>
-            <HomeOutlined style={{ fontSize: '24px', marginBottom: '12px', color: 'var(--color-text-tertiary)' }} />
+          <div className="text-center p-xl text-secondary">
+            <HomeOutlined className="text-2xl mb-md text-tertiary" />
             <div>도로명주소 또는 지번주소를 입력하여 검색해주세요.</div>
-            <div style={{ fontSize: '12px', marginTop: '8px' }}>
+            <div className="text-xs mt-sm">
               예시: 테헤란로 123, 역삼동 123-45
             </div>
           </div>
@@ -286,13 +269,9 @@ const AddressSearchModal = ({ visible, onClose, onAddressSelect }) => {
 
         {/* 검색 결과 없음 */}
         {searchResults.length === 0 && searchKeyword !== '' && !loading && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px 20px', 
-            color: 'var(--color-text-secondary)' 
-          }}>
+          <div className="address-empty-state">
             <div>검색 결과가 없습니다.</div>
-            <div style={{ fontSize: '12px', marginTop: '8px' }}>
+            <div className="text-xs mt-2">
               다른 검색어로 다시 시도해보세요.
             </div>
           </div>

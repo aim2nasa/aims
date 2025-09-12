@@ -14,11 +14,11 @@ const { Title, Text } = Typography;
 
 // 관계 카테고리 아이콘 매핑
 const CATEGORY_ICONS = {
-  family: <HomeOutlined style={{ color: '#ff4d4f' }} />,
-  relative: <TeamOutlined style={{ color: '#fa8c16' }} />,
-  social: <CoffeeOutlined style={{ color: '#52c41a' }} />,
-  professional: <BankOutlined style={{ color: '#1890ff' }} />,
-  corporate: <BankOutlined style={{ color: '#722ed1' }} />
+  family: <HomeOutlined className="text-red-500" />,
+  relative: <TeamOutlined className="text-orange-500" />,
+  social: <CoffeeOutlined className="text-green-500" />,
+  professional: <BankOutlined className="text-blue-500" />,
+  corporate: <BankOutlined className="text-purple-500" />
 };
 
 const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
@@ -64,7 +64,7 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
             {record.display_relationship_label || 
              relationshipTypes.all_types?.[record.relationship_info.relationship_type]?.label || 
              record.relationship_info.relationship_type}
-            {record.is_reversed && <Text type="secondary" style={{ fontSize: '12px', marginLeft: '4px' }}>(역방향)</Text>}
+            {record.is_reversed && <Text type="secondary" className="text-xs ml-1">(역방향)</Text>}
           </Text>
         </Space>
       )
@@ -76,11 +76,7 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
       render: (relatedCustomer, record) => (
         <Space>
           <Text 
-            style={{ 
-              color: '#1890ff', 
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
+            className="text-blue-500 cursor-pointer underline"
             onClick={() => onCustomerSelect?.(relatedCustomer?._id)}
           >
             {relatedCustomer?.personal_info?.name || '이름 없음'}
@@ -156,18 +152,18 @@ const CustomerRelationshipDetail = ({ customerId, onCustomerSelect }) => {
   ];
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div className="p-md">
       <Card
         title={
           <Space>
             <TeamOutlined />
-            <Title level={5} style={{ margin: 0 }}>고객 관계</Title>
+            <Title level={5} className="m-0">고객 관계</Title>
           </Space>
         }
         size="small"
       >
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <div className="text-center py-10">
             <Spin size="large" />
           </div>
         ) : relationships.length === 0 ? (

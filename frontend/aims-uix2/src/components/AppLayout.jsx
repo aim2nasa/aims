@@ -389,30 +389,22 @@ const AppLayout = () => {
   return (
     <Layout>
       {/* 📐 Header: 상단 고정 */}
-      <Header style={{ 
-        padding: '0 24px', 
-        background: 'var(--color-bg-primary)', 
-        borderBottom: '1px solid var(--color-border)', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        height: '64px'
-      }}>
+      <Header className="px-lg bg-primary border-b flex justify-between items-center header-64">
         {/* 왼쪽 섹션 (AIMS-UIX2 글씨) */}
-        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-start' }}>
-            <h2 className="app-title" style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>AIMS-UIX2</h2>
+        <div className="flex align-center flex-grow justify-start">
+            <h2 className="app-title m-0 text-xl font-bold text-primary">AIMS-UIX2</h2>
         </div>
         {/* 중앙 섹션 (검색창) */}
-        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 2, justifyContent: 'center' }}>
-          <Input.Group compact style={{ flex: 1 }}>
+        <div className="flex align-center justify-center flex-grow-2">
+          <Input.Group compact className="flex-1">
             <Input
               placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
               value={keyword}
               onChange={handleKeywordChange}
               onPressEnter={onSearch}
-              style={{ width: 'calc(100% - 80px)' }}
+              className="w-calc-100-80"
             />
-            <Select defaultValue="and" style={{ width: 80 }} onChange={handleLogicChange}>
+            <Select defaultValue="and" className="w-20" onChange={handleLogicChange}>
               <Option value="and">AND</Option>
               <Option value="or">OR</Option>
             </Select>
@@ -420,7 +412,7 @@ const AppLayout = () => {
           <Button
             type="primary"
             icon={<SearchOutlined />}
-            style={{ marginLeft: 8 }}
+className="ml-xs"
             onClick={onSearch}
             loading={isLoading}
           >
@@ -428,7 +420,7 @@ const AppLayout = () => {
           </Button>
         </div>
         {/* 오른쪽 섹션 (아이콘) */}
-        <div style={{ display: 'flex', alignItems: 'center', flexGrow: 1, justifyContent: 'flex-end' }}>
+        <div className="flex align-center flex-grow justify-end">
           <Space>
             <Button type="text" icon={<BellOutlined />} />
             <Dropdown overlay={menu} placement="bottomRight" arrow>
@@ -447,18 +439,9 @@ const AppLayout = () => {
           onCollapse={(value) => setCollapsed(value)}
           width={280}
           trigger={null}
-          style={{ 
-            background: 'var(--color-bg-primary)', 
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
+          className="bg-primary overflow-hidden flex-column"
         >
-          <div style={{ 
-            flex: '1 1 auto',
-            overflow: 'auto',
-            padding: 16
-          }}>
+          <div className="flex-auto overflow-auto p-lg">
             <LeftPane 
               onMenuClick={handleLeftPaneMenuClick}
               hasSearchResults={searchResults && searchResults.length > 0}
@@ -466,17 +449,12 @@ const AppLayout = () => {
               collapsed={collapsed}
             />
           </div>
-          <div style={{ 
-            flex: '0 0 auto',
-            padding: '0 16px', 
-            textAlign: 'right', 
-            borderTop: '1px solid var(--color-border)' 
-          }}>
+          <div className="flex-none px-lg text-right border-t">
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
-              style={{ padding: '4px', margin: '4px 0' }}
+              className="p-1 my-1"
             />
           </div>
         </Sider>
@@ -485,15 +463,17 @@ const AppLayout = () => {
         <Layout>
           <Content 
             data-testid="content-container"
-            style={{ display: 'flex', padding: 24, background: 'var(--color-bg-secondary)', position: 'relative' }}
+            className="flex p-lg bg-secondary relative"
           >
             {/* Center Pane */}
-            <div style={{ 
-              width: rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
-              marginRight: rightPaneVisible ? 12 : 0,
-              transition: isResizing ? 'none' : 'width 0.3s ease',
-              overflow: 'hidden' // 칼럼이 잘리도록 설정
-            }}>
+            <div 
+              className="overflow-hidden"
+              className="content-with-dynamic-width"
+              style={{
+                '--content-width': rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
+                '--content-margin-right': rightPaneVisible ? '12px' : '0',
+                '--content-transition': isResizing ? 'none' : 'width 0.3s ease'
+              }}>
               <CenterPane 
                 onDocumentClick={handleDocumentClick}
                 onDocumentPreview={handleDocumentPreview}
@@ -526,43 +506,17 @@ const AppLayout = () => {
             {rightPaneVisible && (
               <div
                 onMouseDown={handleMouseDown}
+                className="cursor-col-resize rounded-xs mx-sm relative transition-all"
+                className="resize-handle"
                 style={{
-                  width: '4px',
-                  cursor: 'col-resize',
-                  background: isResizing ? 'var(--color-primary)' : 'transparent',
-                  borderRadius: '2px',
-                  margin: '0 6px',
-                  transition: 'background 0.2s ease',
-                  position: 'relative'
+                  '--resize-bg': isResizing ? 'var(--color-primary)' : 'transparent'
                 }}
               >
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '12px',
-                  height: '40px',
-                  background: '#d9d9d9',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <div style={{
-                    width: '2px',
-                    height: '20px',
-                    background: '#8c8c8c',
-                    borderRadius: '1px',
-                    margin: '0 1px'
-                  }}></div>
-                  <div style={{
-                    width: '2px',
-                    height: '20px',
-                    background: '#8c8c8c',
-                    borderRadius: '1px',
-                    margin: '0 1px'
-                  }}></div>
+                <div 
+                  className="absolute top-1/2 left-1/2 transform-center flex items-center justify-center"
+                  className="resize-grip">
+                  <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
+                  <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
                 </div>
               </div>
             )}
@@ -571,12 +525,11 @@ const AppLayout = () => {
             {rightPaneVisible && (
               <div 
                 data-testid="right-pane"
-                style={{ 
-                  width: `${rightPaneWidth}%`,
-                  minWidth: '300px',
-                  background: 'transparent', 
-                  borderRadius: 8,
-                  transition: isResizing ? 'none' : 'width 0.3s ease'
+                className="bg-transparent rounded-lg transition-all"
+                className="right-pane-container"
+                style={{
+                  '--right-pane-width': `${rightPaneWidth}%`,
+                  '--right-pane-transition': isResizing ? 'none' : 'width 0.3s ease'
                 }}
               >
                 <RightPane

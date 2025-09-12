@@ -284,7 +284,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
     if (shouldShowDashboard) {
       // Dashboard는 자체적으로 전체 화면을 관리하므로 return 전에 렌더링
       return (
-        <div style={{ margin: '-24px', height: 'calc(100vh - 128px)' }}>
+        <div className="-m-xl h-screen-128">
           <div className="dashboard-container">
             <DocumentStatusDashboard 
               initialFiles={uploadedFiles} 
@@ -299,9 +299,9 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
 
     if (isLoading) {
       return (
-        <div style={{ textAlign: 'center', padding: '50px 0' }}>
+        <div className="text-center py-xl">
           <Spin size="large" />
-          <p style={{ marginTop: '20px', color: 'rgba(0, 0, 0, 0.45)' }}>
+          <p className="mt-lg text-tertiary">
             문서를 검색 중입니다...
           </p>
         </div>
@@ -312,14 +312,10 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
       const paginatedData = getPaginatedData(searchResults);
       
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)' }}>
+        <div className="flex-column h-screen-200">
           <div 
             ref={scrollContainerRef}
-            style={{ 
-              flex: 1, 
-              overflow: 'auto',
-              marginBottom: '16px'
-            }}
+            className="flex-1 overflow-auto mb-lg"
           >
             <List
               itemLayout="horizontal"
@@ -345,10 +341,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                         }}
                         disabled={item.customer_relation}
                         title={item.customer_relation ? "이미 고객과 연결됨" : "고객에게 연결"}
-                        style={{ 
-                          color: item.customer_relation ? '#d9d9d9' : '#52c41a',
-                          cursor: item.customer_relation ? 'not-allowed' : 'pointer'
-                        }}
+                        className={item.customer_relation ? 'text-disabled cursor-not-allowed' : 'text-success cursor-pointer'}
                       >
                         고객연결
                       </Button>,
@@ -360,23 +353,16 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                           handleFullTextView(item);
                         }}
                         title="전체 텍스트 보기"
-                        style={{ color: '#1890ff' }}
+                        className="text-primary"
                       >
                         Full Text
                       </Button>
                     ]}
                     onClick={() => handleDocumentClickWithScrollSave(item)}
-                    style={{ 
-                      cursor: 'pointer', 
-                      padding: '12px 0',
-                      backgroundColor: isSelected ? 'var(--color-primary-bg)' : 'transparent',
-                      borderRadius: '8px',
-                      margin: '4px 0',
-                      transition: 'all 0.3s ease'
-                    }}
+className={`cursor-pointer py-md rounded-lg my-1 transition-all ${isSelected ? 'bg-primary' : ''}`}
                   >
                     <List.Item.Meta
-                      avatar={<FileTextOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
+                      avatar={<FileTextOutlined className="text-2xl text-primary" />}
                       title={
                         <Space>
                           <Text>{item.upload.originalName || item.payload?.original_name || item.name || '이름 없음'}</Text>
@@ -470,13 +456,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
           
           {/* 페이지네이션 */}
           {searchResults && searchResults.length > 0 && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              padding: '8px 0',
-              borderTop: '1px solid #f0f0f0'
-            }}>
+            <div className="flex justify-between align-center py-sm border-t border-light">
               <Space>
                 <Text type="secondary">
                   총 {searchResults?.length || 0}개 문서 중 {Math.min(((currentPage - 1) * pageSize) + 1, searchResults?.length || 0)}-{Math.min(currentPage * pageSize, searchResults?.length || 0)}개 표시
@@ -499,16 +479,13 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
 
     if (viewMode === 'tree') {
       return (
-        <div style={{ 
-          height: '100%',
-          overflow: 'auto'
-        }}>
+        <div className="h-full overflow-auto">
           <Tree
             showIcon
             defaultExpandAll
             onSelect={onTreeSelect}
             treeData={mockTreeDocuments}
-            style={{ cursor: 'pointer' }}
+            className="cursor-pointer"
           />
         </div>
       );
@@ -565,7 +542,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
         <Space>
           {/* ✅ 업로드 버튼 추가 */}
           <Button icon={<UploadOutlined />} onClick={showUploadModal}>업로드</Button>
-          <Select defaultValue="업로드일" style={{ width: 120 }}>
+          <Select defaultValue="업로드일" className="w-30">
             <Option value="업로드일">업로드일</Option>
             <Option value="문서명">문서명</Option>
             <Option value="상태">상태</Option>
@@ -578,9 +555,9 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
           <Button icon={<SettingOutlined />} onClick={() => setShowPageSizeModal(true)} />
         </Space>
       }
-      style={{ height: 'calc(100vh - 140px)', borderRadius: 8, display: 'flex', flexDirection: 'column' }}
+      className="h-screen-140 rounded-lg flex flex-col"
     >
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="flex-1 flex flex-col">
         {renderContent()}
       </div>
 
@@ -605,17 +582,17 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
         okText="확인"
         cancelText="취소"
       >
-        <div style={{ padding: '20px 0' }}>
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <div className="py-5">
+          <Space direction="vertical" className="w-full" size="large">
             <div>
-              <Text style={{ marginBottom: 16, display: 'block' }}>페이지당 문서 수 선택:</Text>
+              <Text className="mb-lg block">페이지당 문서 수 선택:</Text>
               <Space wrap>
                 {[5, 10, 20, 30, 50].map(size => (
                   <Button
                     key={size}
                     type={pageSize === size ? "primary" : "default"}
                     onClick={() => handlePageSizeChange(size)}
-                    style={{ minWidth: 50 }}
+                    className="min-w-12"
                   >
                     {size}개
                   </Button>
@@ -624,14 +601,8 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
             </div>
             
             <div>
-              <Text style={{ marginBottom: 16, display: 'block' }}>또는 +/- 버튼으로 원하는 개수 설정:</Text>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '8px 0'
-              }}>
+              <Text className="mb-lg block">또는 +/- 버튼으로 원하는 개수 설정:</Text>
+              <div className="page-size-controls">
                 <Button 
                   type="primary"
                   shape="circle"
@@ -640,18 +611,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                   disabled={pageSize <= 5}
                   size="small"
                 />
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minWidth: '80px',
-                  height: '32px',
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '6px',
-                  backgroundColor: '#fafafa',
-                  fontSize: '16px',
-                  fontWeight: '500'
-                }}>
+                <div className="page-size-display">
                   {pageSize}개
                 </div>
                 <Button 
@@ -665,7 +625,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
               </div>
             </div>
             
-            <Text type="secondary" style={{ fontSize: '12px' }}>
+            <Text type="secondary" className="text-xs">
               현재 설정: {pageSize}개씩 표시
             </Text>
           </Space>
@@ -675,7 +635,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
       {/* Full Text 모달 */}
       <Modal
         title={
-          <div style={{ cursor: 'move', width: '100%' }}>
+          <div className="cursor-move w-full">
             <Space>
               <ReadOutlined />
               <Text>{selectedDocumentForFullText?.upload?.originalName || selectedDocumentForFullText?.payload?.original_name || '문서 전체 텍스트'}</Text>
@@ -690,7 +650,7 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
           </Button>
         ]}
         width={800}
-        style={{ top: 20 }}
+        className="modal-top-20"
         draggable={true}
         modalRender={(modal) => (
           <div
@@ -712,27 +672,14 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
               document.addEventListener('mousemove', handleMouseMove);
               document.addEventListener('mouseup', handleMouseUp);
             }}
-            style={{ position: 'absolute' }}
+            className="absolute"
           >
             {modal}
           </div>
         )}
       >
-        <div style={{ 
-          maxHeight: '60vh', 
-          overflowY: 'auto',
-          padding: '16px',
-          backgroundColor: '#fafafa',
-          border: '1px solid #f0f0f0',
-          borderRadius: '6px'
-        }}>
-          <pre style={{ 
-            whiteSpace: 'pre-wrap', 
-            wordBreak: 'break-word',
-            fontFamily: 'inherit',
-            margin: 0,
-            lineHeight: '1.6'
-          }}>
+        <div className="modal-debug-container">
+          <pre className="modal-debug-pre">
             {fullTextContent}
           </pre>
         </div>

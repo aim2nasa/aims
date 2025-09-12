@@ -17,13 +17,13 @@ const ComponentShowcase = () => {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="p-xl max-w-6xl mx-auto">
       <h1>AIMS 공통 컴포넌트 테스트</h1>
       <p>Phase 2에서 구축한 공통 컴포넌트들을 테스트합니다.</p>
 
       {/* Button 테스트 */}
-      <Card title="Button 컴포넌트" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+      <Card title="Button 컴포넌트" className="mb-xl">
+        <div className="flex gap-md flex-wrap mb-lg">
           <Button variant="primary">Primary</Button>
           <Button variant="secondary">Secondary</Button>
           <Button variant="success">Success</Button>
@@ -31,13 +31,13 @@ const ComponentShowcase = () => {
           <Button variant="ghost">Ghost</Button>
         </div>
         
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        <div className="flex gap-md flex-wrap mb-lg">
           <Button size="small">Small</Button>
           <Button size="default">Default</Button>
           <Button size="large">Large</Button>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex gap-md flex-wrap">
           <Button loading={loading} onClick={handleLoadingDemo}>
             {loading ? 'Loading...' : 'Click me!'}
           </Button>
@@ -46,8 +46,8 @@ const ComponentShowcase = () => {
       </Card>
 
       {/* Input 테스트 */}
-      <Card title="Input 컴포넌트" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Card title="Input 컴포넌트" className="mb-xl">
+        <div className="flex-column gap-lg">
           <Input 
             placeholder="기본 입력" 
             value={inputValue}
@@ -69,7 +69,7 @@ const ComponentShowcase = () => {
       </Card>
 
       {/* Card 테스트 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-auto-fit gap-lg mb-xl" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         <Card title="기본 카드">
           <p>기본 카드 내용입니다.</p>
         </Card>
@@ -92,11 +92,11 @@ const ComponentShowcase = () => {
 
       {/* Badge 테스트 */}
       <Card title="Badge 컴포넌트">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex-column gap-xl">
           {/* 상태 배지 */}
           <div>
             <h4>상태 배지:</h4>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="flex gap-lg flex-wrap">
               <Badge status="success" text="완료" />
               <Badge status="processing" text="처리중" />
               <Badge status="error" text="오류" />
@@ -108,7 +108,7 @@ const ComponentShowcase = () => {
           {/* 카운트 배지 */}
           <div>
             <h4>카운트 배지:</h4>
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="flex gap-xl align-center flex-wrap">
               <Badge count={count}>
                 <div style={{ 
                   width: '40px', 

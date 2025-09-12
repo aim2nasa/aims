@@ -96,9 +96,9 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
       treeNodes.push({
         title: (
           <Space>
-            <QuestionCircleOutlined style={{ color: '#ff4d4f' }} />
+            <QuestionCircleOutlined className="text-error" />
             <Text>주소 미등록</Text>
-            <Badge count={noAddressCustomers.length} style={{ backgroundColor: '#ff4d4f' }} />
+            <Badge count={noAddressCustomers.length} className="bg-error" />
           </Space>
         ),
         key: 'no-address',
@@ -126,9 +126,9 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
         const cityNode = {
           title: (
             <Space>
-              <EnvironmentOutlined style={{ color: '#1890ff' }} />
+              <EnvironmentOutlined className="text-primary" />
               <Text strong>{city}</Text>
-              <Badge count={cityCustomerCount} style={{ backgroundColor: '#1890ff' }} />
+              <Badge count={cityCustomerCount} className="bg-primary" />
             </Space>
           ),
           key: `city-${city}`,
@@ -138,9 +138,9 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
             .map(([district, customers]) => ({
               title: (
                 <Space>
-                  <EnvironmentOutlined style={{ color: '#52c41a' }} />
+                  <EnvironmentOutlined className="text-success" />
                   <Text>{district}</Text>
-                  <Badge count={customers.length} style={{ backgroundColor: '#52c41a' }} />
+                  <Badge count={customers.length} className="bg-success" />
                 </Space>
               ),
               key: `district-${city}-${district}`,
@@ -201,9 +201,9 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
   if (loading) {
     return (
       <Card>
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div className="text-center py-xl">
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>
+          <div className="mt-lg">
             <Text>고객 데이터를 불러오는 중...</Text>
           </div>
         </div>
@@ -212,17 +212,12 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
   }
 
   return (
-    <div style={{ 
-      height: 'calc(100vh - 120px)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
+    <div className="h-screen-120 flex flex-col overflow-hidden">
       <Card
         title={
           <Space>
             <EnvironmentOutlined />
-            <Title level={4} style={{ margin: 0 }}>지역별 고객 분류</Title>
+            <Title level={4} className="m-0">지역별 고객 분류</Title>
           </Space>
         }
         size="small"
@@ -233,7 +228,7 @@ const CustomerRegionalTreeView = ({ onCustomerSelect, selectedCustomerId }) => {
           padding: '16px',
           overflow: 'hidden'
         }}
-        style={{ height: '100%' }}
+        className="h-full"
       >
         {/* 통계 정보 */}
         <div style={{ 

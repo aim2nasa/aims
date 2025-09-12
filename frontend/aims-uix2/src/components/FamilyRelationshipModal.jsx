@@ -189,7 +189,7 @@ const FamilyRelationshipModal = ({
     <Modal
       title={
         <Space>
-          <HomeOutlined style={{ color: '#ff4d4f' }} />
+          <HomeOutlined className="text-error" />
           <Text>가족 관계 추가</Text>
         </Space>
       }
@@ -198,8 +198,8 @@ const FamilyRelationshipModal = ({
       footer={null}
       width={500}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: '14px' }}>
+      <div className="mb-md">
+        <Text type="secondary" className="text-sm">
           개인 고객과의 가족 관계를 설정할 수 있습니다. 법인 고객이나 이미 다른 가족에 속한 고객은 선택할 수 없습니다.
         </Text>
       </div>
@@ -216,14 +216,14 @@ const FamilyRelationshipModal = ({
         <Form.Item
           name="to_customer_id"
           rules={[{ required: true, message: '가족 구성원을 선택해주세요' }]}
-          style={{ display: 'none' }}
+className="hidden"
         >
           <Input />
         </Form.Item>
 
         {/* Visible AutoComplete field */}
         <div>
-          <div style={{ marginBottom: 8 }}>
+          <div className="mb-xs">
             <Space>
               <UserOutlined />
               <Text>가족 구성원 선택</Text>
@@ -269,14 +269,14 @@ const FamilyRelationshipModal = ({
                   <Avatar 
                     size={24} 
                     icon={<UserOutlined />} 
-                    style={{ backgroundColor: '#52c41a' }}
+className="bg-success"
                   />
                   <Text>
                     {customer.personal_info?.name}
                   </Text>
                   <Tag color="green" size="small">개인</Tag>
                   {customer.personal_info?.birth_date && (
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text type="secondary" className="text-xs">
                       ({new Date(customer.personal_info.birth_date).getFullYear()}년생)
                     </Text>
                   )}
@@ -308,7 +308,7 @@ const FamilyRelationshipModal = ({
             {Object.entries(FAMILY_RELATIONSHIP_TYPES).map(([type, config]) => (
               <Option key={type} value={type}>
                 <Space>
-                  <span style={{ fontSize: '16px' }}>{config.icon}</span>
+                  <span className="text-base">{config.icon}</span>
                   <Text>{config.label}</Text>
                 </Space>
               </Option>
@@ -316,20 +316,14 @@ const FamilyRelationshipModal = ({
           </Select>
         </Form.Item>
 
-        <div style={{ 
-          backgroundColor: 'var(--color-success-bg)', 
-          border: '1px solid var(--color-success)', 
-          borderRadius: '6px',
-          padding: '12px',
-          marginBottom: '16px'
-        }}>
-          <Text style={{ fontSize: '12px', color: 'var(--color-success)' }}>
+        <div className="bg-success-bg border border-success rounded p-sm mb-md">
+          <Text className="text-xs text-success">
             💡 <strong>자동 설정:</strong> 가족 관계는 강한 관계 강도, 주간 연락 빈도, 높은 영향력으로 자동 설정되며, 
             교차판매 기회와 높은 추천 잠재력이 활성화됩니다.
           </Text>
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 24 }}>
+        <div className="text-right mt-lg">
           <Space>
             <Button 
               variant="secondary" 

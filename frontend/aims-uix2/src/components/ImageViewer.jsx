@@ -66,40 +66,26 @@ const ImageViewer = ({ file, onDownload }) => {
   return (
     <div 
       ref={containerRef}
-      style={{ position: 'relative', overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#f5f5f5', padding: '10px' }}
+      className="relative overflow-auto h-full flex flex-col items-center bg-gray-100 p-2_5"
     >
       {imageLoading && (
-        <Spin tip="이미지를 불러오는 중입니다..." style={{ marginTop: '50px' }} />
+        <Spin tip="이미지를 불러오는 중입니다..." className="mt-12_5" />
       )}
       
-      <div style={{ 
-        flexShrink: 0,
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
-        width: '100%',
-        height: 'calc(100vh - 260px)', // CenterPane 페이지네이션 위치에 정확히 맞춤
-        overflow: 'auto',
-        padding: '10px'
-      }}>
-        <div style={{
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          border: '1px solid #d9d9d9',
-          borderRadius: '8px',
-          backgroundColor: '#ffffff',
-          margin: '5px',
-          display: imageLoading ? 'none' : 'inline-block',
-          maxWidth: '100%'
-        }}>
+      <div className="flex-shrink-0 flex justify-center items-start w-full overflow-auto p-2_5"
+           className="h-screen-260">
+        <div 
+          className="border border-gray-300 rounded-lg bg-white m-1_25 max-w-full"
+          className={imageLoading ? 'image-display-hidden shadow-xl' : 'image-display-block shadow-xl'}
+          >
           <img
             src={file}
             alt="Preview"
+            className="block h-auto"
+            className="image-transform"
             style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'center',
-              width: maxImageWidth, // pane 크기에 비례한 실제 크기
-              height: 'auto', // 비율 유지
-              display: 'block'
+              '--image-transform': `scale(${scale})`,
+              width: maxImageWidth
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
@@ -108,14 +94,14 @@ const ImageViewer = ({ file, onDownload }) => {
       </div>
 
       {/* 컨트롤 패널 */}
-      <div style={{ flexShrink: 0, marginTop: 16, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex-shrink-0 mt-lg w-full flex justify-between items-center">
         {/* 빈 공간 (PDF의 페이지 네비게이션과 균형 맞추기 위함) */}
-        <div style={{ flexGrow: 1 }}></div>
+        <div className="flex-grow"></div>
 
         {/* 확대/축소 */}
-        <Space style={{ marginLeft: 16 }}>
+        <Space className="ml-md">
           <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
-          <Text style={{ fontSize: '10px' }}>{Math.round(scale * 100)}%</Text>
+          <Text className="zoom-text">{Math.round(scale * 100)}%</Text>
           <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
         </Space>
 
@@ -126,7 +112,7 @@ const ImageViewer = ({ file, onDownload }) => {
           onClick={onDownload}
           icon={<DownloadOutlined />}
         >
-          <span style={{ fontSize: '10px' }}>다운로드</span>
+          <span className="download-text">다운로드</span>
         </Button>
       </div>
     </div>

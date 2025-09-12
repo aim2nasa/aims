@@ -461,66 +461,44 @@ const analyzeProcessingPath = (document) => {
 // 상태 뱃지 컴포넌트
 const StatusBadge = ({ status, size = "medium", isCompact = false, rightPaneVisible = false }) => {
   const configs = {
-    completed: { icon: CheckCircle, label: "Completed", color: "#10b981", bgColor: "#dcfce7" },
-    processing: { icon: Clock, label: "Processing", color: "#3b82f6", bgColor: "#dbeafe" },
-    error: { icon: XCircle, label: "Error", color: "#ef4444", bgColor: "#fee2e2" },
-    pending: { icon: AlertCircle, label: "Pending", color: "#6b7280", bgColor: "#f3f4f6" }
+    completed: { icon: CheckCircle, label: "Completed" },
+    processing: { icon: Clock, label: "Processing" },
+    error: { icon: XCircle, label: "Error" },
+    pending: { icon: AlertCircle, label: "Pending" }
   };
   
   const config = configs[status] || configs.pending;
   const Icon = config.icon;
-  const fontSize = size === "small" ? "12px" : "14px";
-  const padding = isCompact ? "4px" : (size === "small" ? "4px 8px" : "6px 12px");
-  const iconSize = size === "small" ? "12px" : "16px";
+  
+  const sizeClass = size === "small" ? "small" : size === "large" ? "large" : "";
+  const statusClass = `status-${status}`;
+  const iconSizeClass = size === "small" ? "icon-sm" : "icon-md";
+  
+  if (rightPaneVisible) {
+    return <Icon className={iconSizeClass} />;
+  }
   
   return (
-    <span className={`dsd-status-badge ${status} ${rightPaneVisible ? 'icon-only' : ''}`} style={{
-      fontSize,
-      padding: rightPaneVisible ? '0' : padding,
-      gap: rightPaneVisible ? '0' : '4px'
-    }}>
-      <Icon style={{ width: iconSize, height: iconSize, marginRight: (isCompact || rightPaneVisible) ? '0' : '4px' }} />
-      {!isCompact && !rightPaneVisible && config.label}
+    <span className={`status-badge ${statusClass} ${sizeClass}`}>
+      <Icon className={iconSizeClass} />
+      {!isCompact && config.label}
     </span>
   );
 };
 
 // 진행률 바 컴포넌트
 const ProgressBar = ({ progress, status }) => {
-  const colorMap = {
-    completed: "#10b981",
-    processing: "#3b82f6", 
-    error: "#ef4444",
-    pending: "#9ca3af"
-  };
-  
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ 
-        width: '100%', 
-        backgroundColor: '#e5e7eb', 
-        borderRadius: '4px', 
-        height: '8px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          height: '8px',
-          borderRadius: '4px',
-          transition: 'width 0.5s',
-          backgroundColor: colorMap[status] || colorMap.pending,
-          width: `${Math.min(progress || 0, 100)}%`,
-          animation: status === "processing" ? "pulse 2s infinite" : "none"
-        }} />
+    <div>
+      <div className="progress-bar h-2">
+        <div 
+          className={`progress-bar-fill ${status} h-2`}
+          style={{ width: `${Math.min(progress || 0, 100)}%` }} 
+        />
       </div>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '12px',
-        color: '#6b7280',
-        marginTop: '4px'
-      }}>
+      <div className="flex-between text-xs text-tertiary mt-xs">
         <span>{progress || 0}%</span>
-        <span style={{ textTransform: 'capitalize' }}>{status || 'pending'}</span>
+        <span className="capitalize">{status || 'pending'}</span>
       </div>
     </div>
   );
@@ -542,39 +520,19 @@ const CopyableId = ({ id }) => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-      fontSize: '12px',
-      color: '#6b7280',
-      fontFamily: 'monospace',
-      backgroundColor: 'var(--color-bg-tertiary)',
-      padding: '4px 8px',
-      borderRadius: '4px'
-    }}>
-      <span style={{
-        fontSize: '11px'
-      }} title={id}>
+    <div className="flex items-center gap-xs text-xs text-tertiary font-mono bg-tertiary px-sm py-xs rounded">
+      <span className="text-xs" title={id}>
         {id}
       </span>
       <button
         onClick={handleCopy}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: copied ? '#10b981' : '#9ca3af',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0'
-        }}
+        className={`bg-transparent border-0 cursor-pointer flex items-center p-0 ${copied ? 'text-success' : 'text-disabled'}`}
         title="Copy ID"
       >
         {copied ? (
-          <CheckCircle style={{ width: '12px', height: '12px' }} />
+          <CheckCircle className="w-3 h-3" />
         ) : (
-          <Copy style={{ width: '12px', height: '12px' }} />
+          <Copy className="w-3 h-3" />
         )}
       </button>
     </div>
@@ -596,115 +554,74 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
   const uploadedDate = extractUploadedDate(document);
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: '0',
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: '1000',
-      padding: '16px'
-    }} onClick={onClose}>
-      <div style={{
-        background: 'var(--color-surface-1)',
-        borderRadius: '8px',
-        boxShadow: '0 20px 25px -5px var(--color-shadow-lg)',
-        maxWidth: '64rem',
-        width: '100%',
-        maxHeight: '90vh',
-        display: 'flex',
-        flexDirection: 'column'
-      }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-lg" onClick={onClose}>
+      <div className="modal-container max-w-4xl shadow-xl" onClick={e => e.stopPropagation()}>
         {/* 헤더 - 고정 */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '24px',
-          borderBottom: '1px solid #e5e7eb',
-          flexShrink: '0'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
+        <div className="flex items-center justify-between p-xl border-b flex-shrink-0 border-border-primary">
+          <div className="flex items-center gap-md">
+            <FileText className="icon-xl text-primary" />
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0', color: 'var(--color-text-primary)' }}>{filename}</h2>
+              <h2 className="text-xl font-semibold m-0 text-primary">{filename}</h2>
               {saveName && saveName !== filename && (
-                <p style={{ fontSize: '14px', color: 'var(--color-text-tertiary)', margin: '4px 0 0 0' }}>Server file: {saveName}</p>
+                <p className="text-base text-tertiary mt-xs">Server file: {saveName}</p>
               )}
-              <div style={{ marginTop: '4px' }}>
+              <div className="mt-xs">
                 <CopyableId id={document.id || document._id || 'unknown-id'} />
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--color-text-tertiary)'
-          }}>
-            <XCircle style={{ width: '24px', height: '24px' }} />
+          <button onClick={onClose} className="bg-transparent border-0 cursor-pointer text-tertiary">
+            <XCircle className="w-6 h-6" />
           </button>
         </div>
         
         {/* 콘텐츠 영역 - 스크롤 가능 */}
-        <div style={{ padding: '24px', overflowY: 'auto', flex: '1' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="p-xl overflow-y-auto flex-1">
+          <div className="flex flex-col gap-lg">
             <div>
-              <h3 style={{ fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Processing Progress</h3>
+              <h3 className="font-medium text-primary mb-sm">Processing Progress</h3>
               <ProgressBar progress={progress} status={status} />
             </div>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              fontSize: '14px'
-            }}>
+            <div className="grid grid-cols-auto-fit-200 gap-lg text-base">
               <div>
-                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Status:</span>
-                <div style={{ marginTop: '4px' }}>
+                <span className="font-medium text-secondary">Status:</span>
+                <div className="mt-xs">
                   <StatusBadge status={status} rightPaneVisible={rightPaneVisible} />
                 </div>
               </div>
               <div>
-                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Progress:</span>
-                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0' }}>{progress}%</p>
+                <span className="font-medium text-secondary">Progress:</span>
+                <p className="text-primary mt-xs m-0">{progress}%</p>
               </div>
               <div>
-                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Original Name:</span>
-                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0', wordBreak: 'break-all' }}>{filename}</p>
+                <span className="font-medium text-secondary">Original Name:</span>
+                <p className="text-primary mt-xs m-0 break-all">{filename}</p>
               </div>
               {saveName && saveName !== filename && (
                 <div>
-                  <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Server File:</span>
-                  <p style={{
-                    color: 'var(--color-text-primary)',
-                    margin: '4px 0 0 0',
-                    wordBreak: 'break-all',
-                    fontFamily: 'monospace',
-                    fontSize: '12px'
-                  }}>{saveName}</p>
+                  <span className="font-medium text-secondary">Server File:</span>
+                  <p className="text-primary mt-xs break-all font-mono text-xs">{saveName}</p>
                 </div>
               )}
               <div>
-                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Uploaded:</span>
-                <p style={{ color: 'var(--color-text-primary)', margin: '4px 0 0 0' }}>
+                <span className="font-medium text-secondary">Uploaded:</span>
+                <p className="text-primary mt-xs m-0">
                   {uploadedDate ? new Date(uploadedDate).toLocaleString() : 'Unknown'}
                 </p>
               </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <span style={{ fontWeight: '500', color: 'var(--color-text-secondary)' }}>Document ID:</span>
-                <div style={{ marginTop: '4px' }}>
+              <div className="col-span-full">
+                <span className="font-medium text-secondary">Document ID:</span>
+                <div className="mt-xs">
                   <CopyableId id={document.id || document._id || 'unknown-id'} />
                 </div>
               </div>
             </div>
 
             {document.stages && (
-              <div style={{ marginTop: '24px' }}>
-                <h3 style={{ fontWeight: '500', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Processing Stages</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="mt-xl">
+                <h3 className="font-medium text-primary mb-md">Processing Stages</h3>
+                <div className="flex flex-col gap-md">
                   {Object.entries(document.stages)
                     .filter(([stage, data]) => {
                       // meta에 full_text가 있거나 embed가 완료되면 OCR 단계는 숨김 
@@ -722,25 +639,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
                       return true;
                     })
                     .map(([stage, data]) => (
-                    <div key={stage} style={{
-                      backgroundColor: 'var(--color-bg-tertiary)',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}>
-                      <h4 style={{
-                        fontWeight: '500',
-                        color: 'var(--color-text-primary)',
-                        textTransform: 'capitalize',
-                        margin: '0 0 4px 0'
-                      }}>{stage}</h4>
-                      <pre style={{
-                        fontSize: '12px',
-                        color: 'var(--color-text-secondary)',
-                        margin: '0',
-                        overflow: 'auto',
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: 'monospace'
-                      }}>
+                    <div key={stage} className="bg-tertiary rounded-lg p-md">
+                      <h4 className="font-medium text-primary capitalize m-0 mb-xs">{stage}</h4>
+                      <pre className="text-xs text-secondary m-0 overflow-auto whitespace-pre-wrap font-mono">
                         {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
@@ -752,27 +653,10 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
         </div>
         
         {/* 푸터 - 고정 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '24px',
-          borderTop: '1px solid #e5e7eb',
-          backgroundColor: 'var(--color-bg-tertiary)',
-          flexShrink: '0'
-        }}>
+        <div className="modal-footer bg-tertiary">
           <button 
             onClick={onClose} 
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              padding: '8px 24px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            className="aims-btn aims-btn-primary aims-btn-default"
           >
             Close
           </button>
@@ -874,20 +758,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         
         return (
           <Space>
-            <div style={{
-              backgroundColor: 'transparent',
-              padding: '4px',
-              borderRadius: '4px'
-            }}>
-              <FileText style={{ width: '12px', height: '12px', color: 'var(--color-primary)' }} />
+            <div className="p-xs rounded-4px">
+              <FileText className="w-3 h-3 text-primary" />
             </div>
             <span 
-              style={{ 
-                fontWeight: 'bold', 
-                color: isCompleted ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                cursor: isCompleted ? 'pointer' : 'default',
-                textDecoration: isCompleted ? 'underline' : 'none'
-              }}
+              className={`font-bold ${isCompleted ? 'text-primary' : 'text-primary'}`}
+              className={`${isCompleted ? 'cursor-pointer underline' : 'cursor-default no-underline'}`}
               onClick={() => {
                 if (isCompleted && onDocumentPreview) {
                   onDocumentPreview(document);
@@ -911,22 +787,22 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           completed: { 
             text: '완료',
             color: 'var(--color-success)',
-            icon: <CheckCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+            icon: <CheckCircle className="w-3 h-3 mr-xs" />
           },
           processing: { 
             text: '처리중',
             color: 'var(--color-primary)',
-            icon: <Clock style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+            icon: <Clock className="w-3 h-3 mr-xs" />
           },
           error: { 
             text: '오류',
             color: 'var(--color-error)',
-            icon: <XCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+            icon: <XCircle className="w-3 h-3 mr-xs" />
           },
           pending: { 
             text: '대기',
             color: 'var(--color-warning)',
-            icon: <AlertCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+            icon: <AlertCircle className="w-3 h-3 mr-xs" />
           }
         };
         const config = statusConfig[status] || { 
@@ -936,13 +812,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
         };
         return (
           <div 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              color: config.color,
-              fontSize: '12px',
-              fontWeight: 500
-            }}
+            className="flex items-center text-xs font-medium text-primary"
           >
             {config.icon}
             {config.text}
@@ -962,30 +832,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
           <Space size="small">
             <button 
               onClick={() => handleDocumentClick(document)}
-              style={{
-                padding: rightPaneVisible ? '5px' : '6px 12px',
-                fontSize: '10px',
-                fontWeight: '600',
-                color: 'white',
-                backgroundColor: 'var(--color-success)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px var(--color-success-shadow)'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'var(--color-success-hover)';
-                e.target.style.boxShadow = '0 6px 16px var(--color-success-shadow-hover)';
-                e.target.style.transform = 'translateY(-3px) scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'var(--color-success)';
-                e.target.style.boxShadow = '0 2px 8px var(--color-success-shadow)';
-                e.target.style.transform = 'translateY(0) scale(1)';
-              }}
+              className={`aims-btn aims-btn-success btn-xs ${rightPaneVisible ? 'p-xs' : 'px-md py-xs'}`}
             >
-              <Eye style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              <Eye className={`w-2.5 h-2.5 ${rightPaneVisible ? 'mr-0' : 'mr-0.5'}`} />
               {!rightPaneVisible && 'View'}
             </button>
             <button 
@@ -995,35 +844,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
               disabled={!isCompleted}
-              style={{
-                padding: rightPaneVisible ? '5px' : '6px 12px',
-                fontSize: '10px',
-                fontWeight: '600',
-                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-primary)' : 'rgba(107, 114, 128, 0.2)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.5,
-                transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px var(--color-primary-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (isCompleted) {
-                  e.target.style.backgroundColor = 'var(--color-primary-hover)';
-                  e.target.style.boxShadow = '0 6px 16px var(--color-primary-shadow-hover)';
-                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isCompleted) {
-                  e.target.style.backgroundColor = 'var(--color-primary)';
-                  e.target.style.boxShadow = '0 2px 8px var(--color-primary-shadow)';
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                }
-              }}
+              className={`aims-btn btn-xs ${rightPaneVisible ? 'p-xs' : 'px-md py-xs'} ${isCompleted ? 'aims-btn-primary' : 'aims-btn-secondary'}`}
             >
-              <FileText style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              <FileText className={`w-2.5 h-2.5 ${rightPaneVisible ? 'mr-0' : 'mr-0.5'}`} />
               {!rightPaneVisible && 'Summary'}
             </button>
             <button 
@@ -1033,35 +856,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
               disabled={!isCompleted}
-              style={{
-                padding: rightPaneVisible ? '5px' : '6px 12px',
-                fontSize: '10px',
-                fontWeight: '600',
-                color: isCompleted ? 'white' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted ? 'var(--color-purple)' : 'rgba(107, 114, 128, 0.2)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: isCompleted ? 'pointer' : 'not-allowed',
-                opacity: isCompleted ? 1 : 0.5,
-                transition: 'all 0.2s ease',
-                boxShadow: isCompleted ? '0 2px 8px var(--color-purple-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (isCompleted) {
-                  e.target.style.backgroundColor = 'var(--color-purple-hover)';
-                  e.target.style.boxShadow = '0 6px 16px var(--color-purple-shadow-hover)';
-                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isCompleted) {
-                  e.target.style.backgroundColor = 'var(--color-purple)';
-                  e.target.style.boxShadow = '0 2px 8px var(--color-purple-shadow)';
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                }
-              }}
+              className={`aims-btn btn-xs ${rightPaneVisible ? 'p-xs' : 'px-md py-xs'} ${isCompleted ? 'aims-btn-ghost' : 'aims-btn-secondary'}`}
             >
-              <FileTextIcon style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              <FileTextIcon className={`w-2.5 h-2.5 ${rightPaneVisible ? 'mr-0' : 'mr-0.5'}`} />
               {!rightPaneVisible && 'Full Text'}
             </button>
             <button 
@@ -1071,35 +868,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 }
               }}
               disabled={!isCompleted || document.customer_relation}
-              style={{
-                padding: rightPaneVisible ? '5px' : '6px 12px',
-                fontSize: '10px',
-                fontWeight: '600',
-                color: isCompleted && !document.customer_relation ? 'white' : 'var(--color-text-tertiary)',
-                backgroundColor: isCompleted && !document.customer_relation ? 'var(--color-success)' : 'rgba(107, 114, 128, 0.3)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: isCompleted && !document.customer_relation ? 'pointer' : 'not-allowed',
-                opacity: isCompleted && !document.customer_relation ? 1 : 0.5,
-                transition: 'all 0.2s ease',
-                boxShadow: isCompleted && !document.customer_relation ? '0 2px 8px var(--color-success-shadow)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (isCompleted && !document.customer_relation) {
-                  e.target.style.backgroundColor = 'var(--color-success-hover)';
-                  e.target.style.boxShadow = '0 6px 16px var(--color-success-shadow-hover)';
-                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isCompleted && !document.customer_relation) {
-                  e.target.style.backgroundColor = 'var(--color-success)';
-                  e.target.style.boxShadow = '0 2px 8px var(--color-success-shadow)';
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                }
-              }}
+              className={`aims-btn btn-xs ${rightPaneVisible ? 'p-xs' : 'px-md py-xs'} ${(isCompleted && !document.customer_relation) ? 'aims-btn-primary' : 'aims-btn-secondary'}`}
             >
-              <Link style={{ width: '10px', height: '10px', marginRight: rightPaneVisible ? '0' : '2px' }} />
+              <Link className={`w-2.5 h-2.5 ${rightPaneVisible ? 'mr-0' : 'mr-0.5'}`} />
               {!rightPaneVisible && '고객연결'}
             </button>
           </Space>
@@ -1608,17 +1379,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
     <div className="dsd-container">
       {/* 헤더 */}
       <header className="dsd-header">
-        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            padding: '8px 0',
-            gap: '16px'
-          }}>
+        <div className="max-w-5xl mx-auto px-xl">
+          <div className="flex-column justify-between align-start py-sm gap-lg">
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="flex items-center gap-lg">
 
 
             </div>
@@ -1627,60 +1391,25 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main style={{ flex: '1' }}>
-        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px 24px 24px' }}>
+      <main className="flex-1">
+        <div className="max-w-5xl mx-auto px-xl pb-xl">
           {/* 상태 카드, 검색 및 필터 - 한 줄 레이아웃 */}
-          <div style={{
-            background: 'var(--color-surface-1)',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px 0 var(--color-shadow-sm)',
-            padding: '2px',
-            marginBottom: '12px'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexWrap: 'nowrap'
-            }}>
+          <div className="bg-surface-1 rounded-lg shadow-sm p-xs mb-md">
+            <div className="flex align-center gap-xs flex-nowrap">
               {/* 상태 카드들 */}
-              <div style={{
-                display: 'flex',
-                gap: '2px',
-                flex: '0 0 auto',
-                minWidth: '400px'
-              }}>
+              <div className="flex gap-xs flex-none min-w-xl">
             <div 
               onClick={() => {
                 setStatusFilter('all');
               }}
-              className={`dsd-stats-card all ${statusFilter === 'all' ? 'active' : ''}`}
-              style={{
-                background: statusFilter === 'all' ? 
-                  'linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-border-light) 100%)' : 
-                  'var(--color-surface-1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                minWidth: '80px',
-                flex: '1',
-                height: '34px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-              }}
+              className={`dsd-stats-card all ${statusFilter === 'all' ? 'active gradient-all' : ''}`}
               title="클릭하여 전체 문서 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <FileText style={{ width: '10px', height: '10px', color: 'var(--color-primary)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>전체</p>
-                  <p className="dsd-stats-value all" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{documents.length}</p>
+              <div className="flex items-center justify-center gap-1 w-full h-full px-0.5">
+                <FileText className="btn-icon-xs text-primary flex-shrink-0" />
+                <div className="flex flex-col items-center justify-center gap-0 m-0 p-0">
+                  <p className="dsd-stats-label text-xs m-0 p-0">전체</p>
+                  <p className="dsd-stats-value all text-xs m-0 p-0 font-bold">{documents.length}</p>
                 </div>
               </div>
             </div>
@@ -1689,33 +1418,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               onClick={() => {
                 setStatusFilter('completed');
               }}
-              className={`dsd-stats-card completed ${statusFilter === 'completed' ? 'active' : ''}`}
-              style={{
-                background: statusFilter === 'completed' ? 
-                  'linear-gradient(135deg, var(--color-success-bg) 0%, #a7f3d0 100%)' : 
-                  'var(--color-surface-1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                minWidth: '80px',
-                flex: '1',
-                height: '34px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-              }}
+              className={`dsd-stats-card completed ${statusFilter === 'completed' ? 'active gradient-completed' : ''}`}
               title="클릭하여 완료된 문서만 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <CheckCircle style={{ width: '10px', height: '10px', color: 'var(--color-success)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>완료</p>
-                  <p className="dsd-stats-value completed" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.completed || 0}</p>
+              <div className="flex items-center justify-center gap-1 w-full h-full px-0.5">
+                <CheckCircle className="btn-icon-xs text-success flex-shrink-0" />
+                <div className="flex flex-col items-center justify-center gap-0 m-0 p-0">
+                  <p className="dsd-stats-label text-xs m-0 p-0">완료</p>
+                  <p className="dsd-stats-value completed text-xs m-0 p-0 font-bold">{statusCounts.completed || 0}</p>
                 </div>
               </div>
             </div>
@@ -1724,33 +1434,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               onClick={() => {
                 setStatusFilter('processing');
               }}
-              className={`dsd-stats-card processing ${statusFilter === 'processing' ? 'active' : ''}`}
-              style={{
-                background: statusFilter === 'processing' ? 
-                  'linear-gradient(135deg, var(--color-info-bg) 0%, #bfdbfe 100%)' : 
-                  'var(--color-surface-1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                minWidth: '80px',
-                flex: '1',
-                height: '34px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-              }}
+              className={`dsd-stats-card processing ${statusFilter === 'processing' ? 'active gradient-processing' : ''}`}
               title="클릭하여 처리 중인 문서만 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <Clock style={{ width: '10px', height: '10px', color: 'var(--color-primary)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>처리중</p>
-                  <p className="dsd-stats-value processing" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.processing || 0}</p>
+              <div className="flex items-center justify-center gap-1 w-full h-full px-0.5">
+                <Clock className="btn-icon-xs text-primary flex-shrink-0" />
+                <div className="flex flex-col items-center justify-center gap-0 m-0 p-0">
+                  <p className="dsd-stats-label text-xs m-0 p-0">처리중</p>
+                  <p className="dsd-stats-value processing text-xs m-0 p-0 font-bold">{statusCounts.processing || 0}</p>
                 </div>
               </div>
             </div>
@@ -1759,33 +1450,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               onClick={() => {
                 setStatusFilter('pending');
               }}
-              className={`dsd-stats-card pending ${statusFilter === 'pending' ? 'active' : ''}`}
-              style={{
-                background: statusFilter === 'pending' ? 
-                  'linear-gradient(135deg, var(--color-warning-bg) 0%, #fde68a 100%)' : 
-                  'var(--color-surface-1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                minWidth: '80px',
-                flex: '1',
-                height: '34px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-              }}
+              className={`dsd-stats-card pending ${statusFilter === 'pending' ? 'active gradient-pending' : ''}`}
               title="클릭하여 대기 중인 문서만 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <AlertCircle style={{ width: '10px', height: '10px', color: 'var(--color-warning)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>대기</p>
-                  <p className="dsd-stats-value pending" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.pending || 0}</p>
+              <div className="flex items-center justify-center gap-1 w-full h-full px-0.5">
+                <AlertCircle className="btn-icon-xs text-warning flex-shrink-0" />
+                <div className="flex flex-col items-center justify-center gap-0 m-0 p-0">
+                  <p className="dsd-stats-label text-xs m-0 p-0">대기</p>
+                  <p className="dsd-stats-value pending text-xs m-0 p-0 font-bold">{statusCounts.pending || 0}</p>
                 </div>
               </div>
             </div>
@@ -1794,33 +1466,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               onClick={() => {
                 setStatusFilter('error');
               }}
-              className={`dsd-stats-card error ${statusFilter === 'error' ? 'active' : ''}`}
-              style={{
-                background: statusFilter === 'error' ? 
-                  'linear-gradient(135deg, var(--color-error-bg) 0%, #fecaca 100%)' : 
-                  'var(--color-surface-1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                minWidth: '80px',
-                flex: '1',
-                height: '34px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px 0 rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-              }}
+              className={`dsd-stats-card error ${statusFilter === 'error' ? 'active gradient-error' : ''}`}
               title="클릭하여 오류 문서만 보기"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', width: '100%', height: '100%', padding: '0 2px' }}>
-                <XCircle style={{ width: '10px', height: '10px', color: 'var(--color-error)', flexShrink: 0 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0', margin: '0', padding: '0' }}>
-                  <p className="dsd-stats-label" style={{ fontSize: '8px', margin: 0, padding: 0 }}>오류</p>
-                  <p className="dsd-stats-value error" style={{ fontSize: '10px', margin: 0, padding: 0, fontWeight: 'bold' }}>{statusCounts.error || 0}</p>
+              <div className="flex items-center justify-center gap-1 w-full h-full px-0.5">
+                <XCircle className="btn-icon-xs text-error flex-shrink-0" />
+                <div className="flex flex-col items-center justify-center gap-0 m-0 p-0">
+                  <p className="dsd-stats-label text-xs m-0 p-0">오류</p>
+                  <p className="dsd-stats-value error text-xs m-0 p-0 font-bold">{statusCounts.error || 0}</p>
                 </div>
               </div>
             </div>
@@ -1828,41 +1481,16 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
 
             {/* 검색 및 필터 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flex: '0 1 auto'
-            }}>
+            <div className="flex items-center gap-xs flex-0-1-auto">
               {/* 검색 입력 */}
-              <div style={{ position: 'relative', width: '280px' }}>
-                <Search style={{
-                  position: 'absolute',
-                  left: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '14px',
-                  height: '14px',
-                  color: 'var(--color-text-tertiary)'
-                }} />
+              <div className="search-container">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3_5 h-3_5 text-tertiary" />
                 <input
                   type="text"
                   placeholder="Search by filename or document ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    paddingLeft: '32px',
-                    paddingRight: '8px',
-                    paddingTop: '4px',
-                    paddingBottom: '4px',
-                    border: '1px solid var(--color-input-border)',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    outline: 'none',
-                    backgroundColor: 'var(--color-input-bg)',
-                    color: 'var(--color-text-primary)'
-                  }}
+                  className="w-full pl-lg pr-sm py-xs border border-input rounded-lg text-xs outline-none bg-input text-primary"
                   onFocus={(e) => {
                     e.target.style.borderColor = 'var(--color-input-focus-border)';
                     e.target.style.boxShadow = '0 0 0 2px rgba(96, 165, 250, 0.1)';
@@ -1875,19 +1503,12 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               </div>
 
               {/* 문서 정보 및 Controls */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                gap: '4px',
-                marginLeft: '6px',
-                flex: '0 0 auto'
-              }}>
+              <div className="flex flex-col items-end gap-1 ml-1_5 flex-0-0-auto">
                 {lastUpdated && (
-                  <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)' }}>
+                  <span className="text-xs text-tertiary">
                     Last updated: {lastUpdated.toLocaleTimeString()}
                     {showControls && (
-                      <span style={{ marginLeft: '8px' }}>
+                      <span className="ml-sm">
                         | Auto-refresh: {isPollingEnabled ? "Enabled (5s)" : "Disabled"}
                       </span>
                     )}
@@ -1895,26 +1516,15 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 )}
                 
                 {/* Controls 버튼 영역 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div className="controls-panel">
                   {/* 설정 토글 버튼 */}
                   <button
                     onClick={() => setShowControls(!showControls)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '3px 6px',
-                      borderRadius: '6px',
-                      fontSize: '10px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      backgroundColor: showControls ? 'var(--color-primary)' : 'var(--color-surface-1)',
-                      color: showControls ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
-                    }}
+                    className="flex items-center gap-1 px-1_5 py-0_5 rounded-md text-3xs border-none cursor-pointer transition-all"
+                    className={showControls ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}
                     title="Toggle Controls"
                   >
-                    <Settings style={{ width: '10px', height: '10px' }} />
+                    <Settings className="btn-icon-xs" />
                     <span>Controls</span>
                   </button>
 
@@ -1922,40 +1532,24 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                   {showControls && (
                     <>
                       {/* 통신 모드 선택 */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          border: 'none',
-                          borderRadius: '4px',
-                          overflow: 'hidden'
-                        }}>
+                      <div className="flex items-center gap-xs">
+                        <div className="flex items-center border-none rounded overflow-hidden">
                           <button
                             onClick={() => {}}
-                            style={{
-                              padding: '2px 6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '10px',
-                              border: 'none',
-                              cursor: 'pointer',
-                              transition: 'colors 0.2s',
-                              backgroundColor: communicationMode === 'polling' ? 'var(--color-primary)' : 'var(--color-surface-1)',
-                              color: communicationMode === 'polling' ? 'var(--color-text-white)' : 'var(--color-text-secondary)'
-                            }}
+                            className="px-1_5 py-0_5 flex items-center gap-1 text-3xs border-none cursor-pointer transition-colors"
+                            className={communicationMode === 'polling' ? 'bg-primary text-white' : 'bg-surface-1 text-secondary'}
                             title="Polling Mode"
                           >
-                            <Radio style={{ width: '8px', height: '8px' }} />
+                            <Radio className="btn-icon-xs" />
                             <span>Polling</span>
                           </button>
                         </div>
                       </div>
 
                       {/* API 연결 상태 */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {apiHealth ? <Wifi style={{ width: '10px', height: '10px', color: '#10b981' }} /> : <WifiOff style={{ width: '10px', height: '10px', color: '#ef4444' }} />}
-                        <span style={{ fontSize: '8px', color: apiHealth ? '#059669' : '#dc2626' }}>
+                      <div className="flex items-center gap-xs">
+                        {apiHealth ? <Wifi className="w-2_5 h-2_5 text-green-500" /> : <WifiOff className="w-2_5 h-2_5 text-red-500" />}
+                        <span className={`text-2xs ${apiHealth ? 'text-green-600' : 'text-red-600'}`}>
                           {apiHealth ? "API Connected" : "API Disconnected"}
                         </span>
                       </div>
@@ -1963,27 +1557,18 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       {/* 폴링 상태 */}
                       <button
                         onClick={() => setIsPollingEnabled(!isPollingEnabled)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '10px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'colors 0.2s',
-                          backgroundColor: isPollingEnabled ? '#dcfce7' : '#f3f4f6',
-                          color: isPollingEnabled ? '#166534' : '#374151'
-                        }}
+                        className={`polling-btn ${
+                          isPollingEnabled ? 'polling-enabled' : 'polling-disabled'
+                        }`}
                       >
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          backgroundColor: isPollingEnabled ? '#10b981' : '#6b7280',
-                          animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
-                        }} />
+                        <div 
+                          className={`polling-dot ${
+                            isPollingEnabled ? 'polling-dot-enabled' : 'polling-dot-disabled'
+                          }`}
+                          style={{
+                            animation: isPollingEnabled ? 'pulse 2s infinite' : 'none'
+                          }}
+                        />
                         {isPollingEnabled ? "Live" : "Paused"}
                       </button>
                       
@@ -1991,19 +1576,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       <button 
                         onClick={fetchDocuments} 
                         disabled={loading} 
-                        style={{
-                          backgroundColor: loading ? '#93c5fd' : '#3b82f6',
-                          color: 'var(--color-text-white)',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          border: 'none',
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '10px',
-                          transition: 'background-color 0.2s'
-                        }}
+                        className="text-white px-1_5 py-0_5 rounded border-none flex items-center gap-1 text-3xs transition-colors"
+                        className={loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 cursor-pointer'}
                         onMouseEnter={(e) => {
                           if (!loading) e.target.style.backgroundColor = '#2563eb';
                         }}
@@ -2011,11 +1585,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                           if (!loading) e.target.style.backgroundColor = '#3b82f6';
                         }}
                       >
-                        <RefreshCw style={{
-                          width: '10px',
-                          height: '10px',
-                          animation: loading ? 'spin 1s linear infinite' : 'none'
-                        }} />
+                        <RefreshCw className="w-2_5 h-2_5"
+                                   className={loading ? 'animate-spin' : ''} />
                         <span>Refresh</span>
                       </button>
                     </>
@@ -2029,36 +1600,25 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
           {/* 에러 표시 */}
           {error && (
-            <div style={{
-              backgroundColor: 'var(--color-error-bg)',
-              border: '1px solid var(--color-error-border)',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '24px'
-            }}>
-              <p style={{ color: '#b91c1c', fontSize: '14px', margin: '0' }}>{error}</p>
+            <div className="bg-error-bg border border-error-border rounded-lg p-lg mb-xl">
+              <p className="text-error text-base m-0">{error}</p>
             </div>
           )}
 
 
           {/* 문서 표시 영역 */}
           {loading && documents.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
-              <RefreshCw style={{
-                width: '32px',
-                height: '32px',
-                color: '#3b82f6',
-                marginRight: '12px',
-                animation: 'spin 1s linear infinite'
-              }} />
-              <span style={{ color: '#4b5563' }}>Loading documents...</span>
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="w-8 h-8 text-blue-500 mr-3"
+                         className="animate-spin" />
+              <span className="text-gray-600">Loading documents...</span>
             </div>
           ) : (
-            <div ref={tableContainerRef} style={{
-              height: tableHeight,
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
+            <div 
+              ref={tableContainerRef} 
+              className="flex flex-col h-table"
+              style={{ '--table-height': tableHeight }}
+            >
               {filteredDocuments.length > 0 ? (
                 <>
                   {/* Ant Design Table */}
@@ -2073,9 +1633,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                       y: tableHeight
                     }}
                     tableLayout="fixed"
-                    style={{
-                      height: '100%'
-                    }}
+                    className="h-full"
                     pagination={{
                       current: pagination.current,
                       pageSize: pagination.pageSize,
@@ -2097,7 +1655,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                         }));
                       },
                       showTotal: (total, range) => (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                        <div className="flex items-center gap-16px flex-wrap">
                           <span>
                             {range[0]}-{range[1]} of {total} documents
                           </span>
@@ -2111,17 +1669,10 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                 </>
               ) : (
                 <>
-                <div style={{
-                  textAlign: 'center',
-                  padding: '48px 0',
-                  background: 'var(--color-surface-1)',
-                  borderRadius: '8px',
-                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                  marginBottom: '24px'
-                }}>
-                  <FileText style={{ width: '96px', height: '96px', color: '#d1d5db', margin: '0 auto 16px auto' }} />
-                  <h3 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>No documents found</h3>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0' }}>
+                <div className="empty-state">
+                  <FileText className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-dark mb-sm">No documents found</h3>
+                  <p className="text-tertiary text-base m-0">
                     {searchTerm || statusFilter !== "all" 
                       ? "Try adjusting your search or filter criteria."
                       : "No documents have been uploaded yet."
@@ -2138,16 +1689,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
 
       {/* 푸터 */}
       <footer className="dsd-footer">
-        <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px' }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '14px',
-            gap: '8px',
-            padding: '16px 0'
-          }}>
+        <div className="max-w-5xl mx-auto px-xl">
+          <div className="footer-container">
           </div>
         </div>
       </footer>
@@ -2163,18 +1706,8 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
       {/* 문서 요약 모달 */}
       {showSummaryModal && (
         <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
           onClick={handleSummaryModalClose}
         >
           <div 
@@ -2199,9 +1732,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               paddingBottom: '16px',
               borderBottom: '1px solid var(--color-border)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText style={{ width: '20px', height: '20px', color: 'var(--color-primary)' }} />
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+              <div className="flex items-center gap-8px">
+                <FileText className="w-5 h-5 text-primary" />
+                <h3 className="m-0 text-lg font-semibold text-primary">
                   문서 요약
                 </h3>
               </div>
@@ -2221,7 +1754,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             </div>
 
             {/* 문서 제목 */}
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mb-md">
               <h4 style={{ 
                 margin: '0 0 8px 0', 
                 fontSize: '16px', 
@@ -2261,15 +1794,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             }}>
               <button
                 onClick={handleSummaryModalClose}
+                className="text-base font-medium"
                 style={{
                   backgroundColor: 'var(--color-text-tertiary)',
                   color: 'var(--color-text-white)',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
+                  cursor: 'pointer'
                 }}
               >
                 닫기
@@ -2318,9 +1850,9 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               paddingBottom: '16px',
               borderBottom: '1px solid var(--color-border)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText style={{ width: '20px', height: '20px', color: 'var(--color-primary)' }} />
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+              <div className="flex items-center gap-8px">
+                <FileText className="w-5 h-5 text-primary" />
+                <h3 className="m-0 text-lg font-semibold text-primary">
                   문서 전체 텍스트
                 </h3>
               </div>
@@ -2340,7 +1872,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             </div>
 
             {/* 문서 제목 */}
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mb-md">
               <h4 style={{ 
                 margin: '0 0 8px 0', 
                 fontSize: '16px', 
@@ -2361,14 +1893,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
               maxHeight: '50vh',
               overflow: 'auto'
             }}>
-              <div style={{
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'monospace',
-                fontSize: '12px',
-                lineHeight: '1.5',
-                color: 'var(--color-text-primary)'
-              }}>
+              <div className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-primary">
                 {fullTextContent}
               </div>
             </div>
@@ -2383,15 +1908,14 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
             }}>
               <button
                 onClick={handleFullTextModalClose}
+                className="text-base font-medium"
                 style={{
                   backgroundColor: 'var(--color-text-tertiary)',
                   color: 'var(--color-text-white)',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
+                  cursor: 'pointer'
                 }}
               >
                 닫기

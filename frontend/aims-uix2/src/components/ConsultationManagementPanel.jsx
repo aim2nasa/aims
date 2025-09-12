@@ -56,8 +56,8 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
   ];
 
   return (
-    <div style={{ padding: '16px 0' }}>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+    <div className="py-lg">
+      <Space className="mb-lg w-full justify-between">
         <span>상담 이력 관리</span>
         <Button 
           variant="primary" 
@@ -80,7 +80,7 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
       ) : (
         <Empty 
           description="상담 이력이 없습니다"
-          style={{ margin: '40px 0' }}
+          className="my-xl"
         />
       )}
 
@@ -95,10 +95,10 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          style={{ marginTop: 16 }}
+          className="mt-lg"
         >
           <Form.Item label="상담일" name="consultationDate" rules={[{ required: true }]}>
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker className="w-full" />
           </Form.Item>
           
           <Form.Item label="상담 유형" name="type" rules={[{ required: true }]}>
@@ -122,7 +122,7 @@ const ConsultationManagementPanel = ({ customerId, onConsultationAdd }) => {
             <Input />
           </Form.Item>
           
-          <div style={{ textAlign: 'right', marginTop: 24 }}>
+          <div className="text-right mt-xl">
             <Space>
               <Button variant="secondary" onClick={() => setShowAddModal(false)}>취소</Button>
               <Button variant="primary" htmlType="submit">등록</Button>

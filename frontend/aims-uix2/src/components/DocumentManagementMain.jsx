@@ -6,176 +6,69 @@ const DocumentManagementMain = () => {
   return (
     <Card
       title={
-        <div style={{ 
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
+        <div className="flex-items-center gap-sm">
           <FileTextOutlined />
-          <span style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-text-primary)' }}>문서 관리</span>
+          <span className="text-xl font-semibold text-primary">문서 관리</span>
         </div>
       }
-      style={{ 
-        height: 'calc(100vh - 140px)', 
-        borderRadius: 8 
-      }}
+      className="h-screen-140"
+      className="rounded"
     >
-      <div style={{
-        padding: '40px',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
+      <div className="p-2xl max-w-800 mx-auto">
         {/* 제목 및 설명 */}
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '40px' 
-        }}>
-          <FileTextOutlined style={{ 
-            fontSize: '64px', 
-            color: 'var(--color-primary)',
-            marginBottom: '24px' 
-          }} />
-          <h2 style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: 'var(--color-text-primary)',
-            marginBottom: '16px'
-          }}>
+        <div className="text-center mb-2xl">
+          <FileTextOutlined className="mb-lg text-4xl text-primary" />
+          <h2 className="text-3xl font-bold text-primary mb-md">
             AI 기반 지능형 문서 관리 시스템
           </h2>
-          <p style={{
-            fontSize: '18px',
-            color: 'var(--color-text-secondary)',
-            lineHeight: '1.6',
-            marginBottom: '0'
-          }}>
+          <p className="text-lg text-secondary m-0 line-height-1_6">
             보험 문서의 자동 분류, OCR 처리, 태깅 및 케이스 그룹화를 통해<br/>
             반복적인 사무 업무를 자동화하고 업무 효율성을 극대화하세요.
           </p>
         </div>
 
         {/* 주요 기능 */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '24px',
-          marginBottom: '40px'
-        }}>
-          <div style={{
-            padding: '24px',
-            backgroundColor: 'var(--color-bg-secondary)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600',
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px'
-            }}>
+        <div className="grid mb-2xl gap-lg grid-auto-fit-250">
+          <div className="p-lg bg-secondary rounded border">
+            <h3 className="text-lg font-semibold text-primary mb-sm">
               📄 자동 문서 분류
             </h3>
-            <p style={{ 
-              color: 'var(--color-text-secondary)', 
-              fontSize: '14px',
-              lineHeight: '1.5',
-              margin: '0'
-            }}>
+            <p className="text-secondary text-sm m-0 line-height-1_5">
               AI가 업로드된 문서를 자동으로 분석하여 보험청구서, 진단서 등으로 자동 분류합니다.
             </p>
           </div>
-          <div style={{
-            padding: '24px',
-            backgroundColor: 'var(--color-bg-secondary)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600',
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px'
-            }}>
+          <div className="p-lg bg-secondary rounded border">
+            <h3 className="text-lg font-semibold text-primary mb-sm">
               🔍 OCR 텍스트 추출
             </h3>
-            <p style={{ 
-              color: 'var(--color-text-secondary)', 
-              fontSize: '14px',
-              lineHeight: '1.5',
-              margin: '0'
-            }}>
+            <p className="text-secondary text-sm m-0 line-height-1_5">
               이미지와 PDF 문서에서 텍스트를 자동 추출하여 검색 가능한 데이터로 변환합니다.
             </p>
           </div>
-          <div style={{
-            padding: '24px',
-            backgroundColor: 'var(--color-bg-secondary)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600',
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px'
-            }}>
+          <div className="p-lg bg-secondary rounded border">
+            <h3 className="text-lg font-semibold text-primary mb-sm">
               🏷️ 스마트 태깅
             </h3>
-            <p style={{ 
-              color: 'var(--color-text-secondary)', 
-              fontSize: '14px',
-              lineHeight: '1.5',
-              margin: '0'
-            }}>
+            <p className="text-secondary text-sm m-0 line-height-1_5">
               문서 내용을 분석하여 관련 태그를 자동 생성하고, 빠른 검색과 분류를 지원합니다.
             </p>
           </div>
-          <div style={{
-            padding: '24px',
-            backgroundColor: 'var(--color-bg-secondary)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600',
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px'
-            }}>
+          <div className="p-lg bg-secondary rounded border">
+            <h3 className="text-lg font-semibold text-primary mb-sm">
               📁 케이스 그룹화
             </h3>
-            <p style={{ 
-              color: 'var(--color-text-secondary)', 
-              fontSize: '14px',
-              lineHeight: '1.5',
-              margin: '0'
-            }}>
+            <p className="text-secondary text-sm m-0 line-height-1_5">
               관련된 문서들을 사건별로 자동 그룹화하여 케이스 관리를 체계적으로 지원합니다.
             </p>
           </div>
         </div>
 
         {/* 안내 메시지 */}
-        <div style={{
-          textAlign: 'center',
-          padding: '24px',
-          backgroundColor: 'var(--color-bg-tertiary)',
-          borderRadius: '8px',
-          border: '1px solid var(--color-border)'
-        }}>
-          <h4 style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: 'var(--color-text-primary)',
-            marginBottom: '8px'
-          }}>
+        <div className="text-center p-lg bg-tertiary rounded border">
+          <h4 className="text-base font-semibold text-primary mb-xs">
             문서 처리 현황을 확인하려면
           </h4>
-          <p style={{
-            fontSize: '14px',
-            color: 'var(--color-text-secondary)',
-            margin: '0'
-          }}>
+          <p className="text-sm text-secondary m-0">
             좌측 메뉴에서 '문서 처리 현황'을 클릭하여 실시간 문서 처리 상태를 모니터링하세요.
           </p>
         </div>

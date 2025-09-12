@@ -223,9 +223,9 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
     const familyNode = {
         title: (
           <Space>
-            <HomeOutlined style={{ color: '#ff4d4f' }} />
-            <Text strong style={{ color: '#ff4d4f' }}>가족</Text>
-            <Badge count={familyGroups.length} showZero style={{ backgroundColor: '#ff4d4f' }} />
+            <HomeOutlined className="text-error" />
+            <Text strong className="text-error">가족</Text>
+            <Badge count={familyGroups.length} showZero className="bg-error" />
           </Space>
         ),
         key: 'family',
@@ -243,11 +243,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   })}
                   <Text 
                     strong
-                    style={{ 
-                      color: '#1890ff', 
-                      cursor: 'pointer',
-                      textDecoration: 'underline'
-                    }}
+                    className="text-primary cursor-pointer underline"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (representative && onCustomerSelect) {
@@ -257,7 +253,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   >
                     👑 {repName} (대표)
                   </Text>
-                  <Badge count={members.length} style={{ backgroundColor: '#52c41a', opacity: 0.8 }} />
+                  <Badge count={members.length} className="bg-success opacity-80" />
                 </Space>
               ),
               key: `family-group-${repName}`,
@@ -273,11 +269,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                     return {
                       title: (
                         <Text 
-                          style={{ 
-                            color: '#1890ff', 
-                            cursor: 'pointer',
-                            textDecoration: 'underline'
-                          }}
+                          className="text-blue-500 cursor-pointer underline"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (onCustomerSelect) {
@@ -298,22 +290,22 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                   title: (
                     <Space>
                       <Tag size="small" color="red">{relation.relationLabel}</Tag>
-                      <Text style={{ color: '#666' }}>
+                      <Text className="text-secondary">
                         {relation.fromName} → {relation.toName}
                       </Text>
                     </Space>
                   ),
                   key: `family-relation-${repName}-${index}`,
-                  icon: <HeartOutlined style={{ color: '#ff4d4f' }} />,
+                  icon: <HeartOutlined className="text-error" />,
                   isLeaf: true
                 })) : [{
                   title: (
-                    <Text style={{ color: '#999', fontStyle: 'italic' }}>
+                    <Text className="text-tertiary italic">
                       가족 관계 없음 (0)
                     </Text>
                   ),
                   key: `family-no-relation-${repName}`,
-                  icon: <HeartOutlined style={{ color: '#ccc' }} />,
+                  icon: <HeartOutlined className="text-disabled" />,
                   isLeaf: true
                 }])
               ]
@@ -329,9 +321,9 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       const corporateNode = {
         title: (
           <Space>
-            <BankOutlined style={{ color: '#1890ff' }} />
-            <Text strong style={{ color: '#1890ff' }}>법인</Text>
-            <Badge count={corporateEntries.length} style={{ backgroundColor: '#1890ff' }} />
+            <BankOutlined className="text-primary" />
+            <Text strong className="text-primary">법인</Text>
+            <Badge count={corporateEntries.length} className="bg-primary" />
           </Space>
         ),
         key: 'corporate',
@@ -343,11 +335,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
               <Space>
                 <Text 
                   strong
-                  style={{ 
-                    color: '#1890ff', 
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
+                  className="text-blue-500 cursor-pointer underline"
                   onClick={(e) => {
                     e.stopPropagation();
                     // 회사 이름으로 찾아서 선택
@@ -359,7 +347,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                 >
                   {companyName}
                 </Text>
-                <Badge count={employees.length} style={{ backgroundColor: '#1890ff', opacity: 0.8 }} />
+                <Badge count={employees.length} className="bg-blue-500 opacity-80" />
               </Space>
             ),
             key: `corporate-${companyName}`,
@@ -373,11 +361,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
                 return {
                   title: (
                     <Text 
-                      style={{ 
-                        color: '#1890ff', 
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
+                      className="text-blue-500 cursor-pointer underline"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (employee && onCustomerSelect) {
@@ -411,9 +395,9 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
   if (loading) {
     return (
       <Card>
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div className="text-center py-xl">
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>
+          <div className="tree-container">
             <Text>고객 관계 데이터를 불러오는 중...</Text>
           </div>
         </div>
@@ -426,14 +410,14 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
       title={
         <Space>
           <UserOutlined />
-          <Title level={4} style={{ margin: 0 }}>관계별 고객 분류</Title>
+          <Title level={4} className="m-0">관계별 고객 분류</Title>
         </Space>
       }
       size="small"
     >
       {treeData.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-          <UserOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
+        <div className="tree-empty-state">
+          <UserOutlined className="tree-empty-icon" />
           <div>등록된 고객이 없습니다</div>
         </div>
       ) : (
@@ -443,7 +427,7 @@ const CustomerRelationshipTreeView = ({ onCustomerSelect, selectedCustomerId }) 
           expandedKeys={expandedKeys}
           onExpand={setExpandedKeys}
           showIcon
-          style={{ marginTop: '16px' }}
+          className="tree-reload-btn"
         />
       )}
 

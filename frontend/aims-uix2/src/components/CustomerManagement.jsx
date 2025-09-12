@@ -365,12 +365,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           <Space>
             <Icon style={{ color }} />
             <span 
-              style={{ 
-                fontWeight: 'bold', 
-                color: '#1890ff', 
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
+              className="font-bold text-primary cursor-pointer underline"
               onClick={() => handleCustomerNameClick(record._id)}
             >
               {name}
@@ -399,11 +394,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           contacts.push(
             <MobileOutlined 
               key="mobile"
-              style={{ 
-                color: '#52c41a', 
-                fontSize: '18px',
-                cursor: 'pointer'
-              }}
+className="text-success text-lg cursor-pointer"
               title={`휴대폰: ${mobilePhone}`}
             />
           );
@@ -414,11 +405,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           contacts.push(
             <PhoneOutlined 
               key="home"
-              style={{ 
-                color: '#fa8c16', 
-                fontSize: '18px',
-                cursor: 'pointer'
-              }}
+className="text-warning text-lg cursor-pointer"
               title={`집전화: ${homePhone}`}
             />
           );
@@ -429,11 +416,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           contacts.push(
             <BankOutlined 
               key="work"
-              style={{ 
-                color: '#722ed1', 
-                fontSize: '18px',
-                cursor: 'pointer'
-              }}
+className="text-purple text-lg cursor-pointer"
               title={`직장번호: ${workPhone}`}
             />
           );
@@ -444,11 +427,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           contacts.push(
             <MailOutlined 
               key="email"
-              style={{ 
-                color: '#1890ff', 
-                fontSize: '18px',
-                cursor: 'pointer'
-              }}
+className="text-primary text-lg cursor-pointer"
               title={`이메일: ${email}`}
             />
           );
@@ -457,7 +436,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         return (
           <Space size="small">
             {contacts.length > 0 ? contacts : (
-              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>-</span>
+              <span className="text-tertiary text-xs">-</span>
             )}
           </Space>
         );
@@ -574,23 +553,13 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
         />
       )}
       
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        height: 'calc(100vh - 100px)',
-        minHeight: 0,
-        background: 'var(--color-surface-1)',
-        borderRadius: '8px',
-        boxShadow: '0 1px 3px 0 var(--color-shadow-sm)'
-      }}>
+      <div className="flex flex-column min-h-0 bg-surface-1 rounded shadow-sm h-screen-100">
 
         {/* 컨텐츠 영역 */}
-        <div style={{ 
-          flex: 1,
-          overflowY: showRegionalView ? 'hidden' : 'auto', // 지역별 뷰에서는 스크롤 비활성화
-          minHeight: 0,
-          paddingBottom: '50px'
-        }}>
+        <div 
+          className="flex-1 min-h-0 content-area"
+          style={{ '--content-overflow': showRegionalView ? 'hidden' : 'auto' }}
+        >
         {showRegionalView ? (
           <CustomerRegionalTreeView 
             onCustomerSelect={handleCustomerNameClick}
@@ -635,7 +604,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                 }));
               },
               showTotal: (total, range) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div className="form-controls">
                   <span>
                     {range[0]}-{range[1]} of {total} customers
                   </span>
@@ -645,9 +614,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             }}
             onRow={(record) => ({
               onClick: () => handleCustomerRowSelect(record),
-              style: {
-                cursor: 'pointer'
-              }
+              className: 'cursor-pointer'
             })}
           />
         )}
@@ -658,7 +625,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       <Modal
         title={
           <div 
-            style={{ cursor: 'move' }}
+className="cursor-move"
             onMouseDown={(e) => {
               const modal = e.target.closest('.ant-modal');
               if (!modal) return;
@@ -723,7 +690,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               </Form.Item>
               
               <Form.Item label="생년월일" name="birth_date">
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker className="w-full" />
               </Form.Item>
               
               <Form.Item label="성별" name="gender">
@@ -758,10 +725,10 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             
             <TabPane tab="주소 정보" key="address">
               <Form.Item label="주소">
-                <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', padding: '16px', backgroundColor: 'var(--color-bg-tertiary)' }}>
+                <div className="address-container">
                   {/* 주소 검색 영역 */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>📍 주소 검색</div>
+                  <div className="mb-sm">
+                    <div className="mb-xs font-medium text-primary">📍 주소 검색</div>
                     <Row gutter={8}>
                       <Col span={18}>
                         <Input
@@ -772,11 +739,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                             setAddressSearchVisible(true);
                           }}
                           readOnly
-                          style={{ 
-                            cursor: 'pointer',
-                            backgroundColor: 'var(--color-bg-primary)',
-                            color: 'var(--color-text-primary)'
-                          }}
+                          className="address-readonly-input"
                         />
                       </Col>
                       <Col span={6}>
@@ -793,24 +756,24 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   </div>
                   
                   {/* 검색 결과 표시 영역 */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>🏠 검색된 주소</div>
+                  <div className="mb-sm">
+                    <div className="mb-xs font-medium text-primary">🏠 검색된 주소</div>
                     <Row gutter={8}>
                       <Col span={8}>
-                        <Form.Item name="postal_code" style={{ marginBottom: 0 }}>
+                        <Form.Item name="postal_code" className="m-0">
                           <Input 
                             placeholder="우편번호"
                             readOnly
-                            style={{ backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}
+className="bg-primary text-secondary"
                           />
                         </Form.Item>
                       </Col>
                       <Col span={16}>
-                        <Form.Item name="address1" style={{ marginBottom: 0 }}>
+                        <Form.Item name="address1" className="m-0">
                           <Input 
                             placeholder="주소를 검색하면 자동으로 채워집니다"
                             readOnly
-                            style={{ backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-secondary)' }}
+className="bg-primary text-secondary"
                           />
                         </Form.Item>
                       </Col>
@@ -819,16 +782,11 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
                   
                   {/* 상세주소 입력 영역 */}
                   <div>
-                    <div style={{ marginBottom: '8px', fontWeight: '500', color: 'var(--color-text-primary)' }}>✏️ 상세주소 입력</div>
-                    <Form.Item name="address2" style={{ marginBottom: 0 }}>
+                    <div className="address-label">✏️ 상세주소 입력</div>
+                    <Form.Item name="address2" className="m-0">
                       <Input 
                         placeholder={currentAddress1 ? "상세주소를 입력하세요 (동/호수, 건물명 등)" : "❌ 주소검색을 먼저 해주세요"}
-                        style={{ 
-                          backgroundColor: currentAddress1 ? 'var(--color-bg-primary)' : 'var(--color-bg-tertiary)',
-                          border: currentAddress1 ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                          borderRadius: '6px',
-                          color: currentAddress1 ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
-                        }}
+                        className={currentAddress1 ? 'address2-input-enabled' : 'address2-input-disabled'}
                         disabled={!currentAddress1}
                         readOnly={!currentAddress1}
                       />
@@ -838,7 +796,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
               </Form.Item>
               
               {/* AddressSearchInput 숨김 컴포넌트 */}
-              <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
+              <div className="hidden-absolute">
                 <AddressSearchInput 
                   form={form} 
                   modalVisible={addressSearchVisible}
@@ -886,7 +844,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
             </TabPane>
           </Tabs>
           
-          <div style={{ textAlign: 'right', marginTop: 24 }}>
+          <div className="text-right mt-lg">
             <Space>
               <Button variant="secondary" onClick={closeCustomerModal}>취소</Button>
               <Button variant="primary" type="submit">

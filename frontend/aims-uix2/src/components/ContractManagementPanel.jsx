@@ -61,8 +61,8 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
   ];
 
   return (
-    <div style={{ padding: '16px 0' }}>
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+    <div className="py-lg">
+      <Space className="mb-lg w-full justify-between">
         <span>계약 현황 관리</span>
         <Button 
           variant="primary" 
@@ -85,7 +85,7 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
       ) : (
         <Empty 
           description="진행 중인 계약이 없습니다"
-          style={{ margin: '40px 0' }}
+          className="my-xl"
         />
       )}
 
@@ -100,7 +100,7 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          style={{ marginTop: 16 }}
+          className="mt-lg"
         >
           <Form.Item label="계약번호" name="contractNumber" rules={[{ required: true }]}>
             <Input placeholder="자동 생성되는 계약번호" />
@@ -116,12 +116,12 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
           </Form.Item>
           
           <Form.Item label="계약일" name="contractDate" rules={[{ required: true }]}>
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker className="w-full" />
           </Form.Item>
           
           <Form.Item label="연간 보험료" name="premium" rules={[{ required: true }]}>
             <InputNumber 
-              style={{ width: '100%' }}
+              className="w-full"
               formatter={value => `₩ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => value.replace(/₩\s?|(,*)/g, '')}
               placeholder="0"
@@ -130,7 +130,7 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
           
           <Form.Item label="보장금액" name="coverageAmount">
             <InputNumber 
-              style={{ width: '100%' }}
+              className="w-full"
               formatter={value => `₩ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => value.replace(/₩\s?|(,*)/g, '')}
               placeholder="0"
@@ -141,7 +141,7 @@ const ContractManagementPanel = ({ customerId, onContractCreate }) => {
             <Input.TextArea rows={3} placeholder="계약 관련 특이사항이나 메모" />
           </Form.Item>
           
-          <div style={{ textAlign: 'right', marginTop: 24 }}>
+          <div className="text-right mt-xl">
             <Space>
               <Button variant="secondary" onClick={() => setShowCreateModal(false)}>취소</Button>
               <Button variant="primary" htmlType="submit">계약 생성</Button>

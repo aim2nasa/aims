@@ -98,7 +98,7 @@ const PDFViewer = ({ file, onDownload }) => {
   }, []);
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'var(--color-bg-secondary)', padding: '10px' }}>
+    <div className="relative overflow-hidden h-full flex flex-column items-center bg-secondary p-sm">
       <div style={{ 
         flexShrink: 0,
         display: 'flex', 
@@ -114,7 +114,7 @@ const PDFViewer = ({ file, onDownload }) => {
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           loading={
-            <div style={{ textAlign: 'center', padding: '50px 0' }}>
+            <div className="text-center py-xl">
               <Spin size="large" tip={isRetrying ? "CDN으로 재시도 중입니다..." : "문서를 불러오는 중입니다..."} />
             </div>
           }
@@ -125,13 +125,13 @@ const PDFViewer = ({ file, onDownload }) => {
                 <div>
                   <p>{error || "PDF 파일을 불러오는 데 실패했습니다."}</p>
                   {!isRetrying && (
-                    <div style={{ marginTop: '10px' }}>
+                    <div className="mt-sm">
                       <Button variant="primary" size="small" onClick={handleRetry}>
                         다시 시도
                       </Button>
                     </div>
                   )}
-                  <details style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                  <details className="mt-sm text-xs" style={{ color: '#666' }}>
                     <summary>기술 정보</summary>
                     <p>파일 URL: {file}</p>
                     <p>Worker: {pdfjs.GlobalWorkerOptions.workerSrc}</p>
@@ -175,9 +175,9 @@ const PDFViewer = ({ file, onDownload }) => {
               onClick={previousPage}
               icon={<LeftOutlined />}
             >
-              {!isCompact && <span style={{ fontSize: '10px' }}>이전</span>}
+              {!isCompact && <span className="text-xs">이전</span>}
             </Button>
-            <Text style={{ margin: '0 8px', fontSize: '10px', color: 'var(--color-text-primary)' }}>
+            <Text className="mx-xs text-xs text-primary">
               {isCompact ? `${pageNumber}/${numPages || '--'}` : `페이지 ${pageNumber} / ${numPages || '--'}`}
             </Text>
             <Button
@@ -187,14 +187,14 @@ const PDFViewer = ({ file, onDownload }) => {
               onClick={nextPage}
               icon={<RightOutlined />}
             >
-              {!isCompact && <span style={{ fontSize: '10px' }}>다음</span>}
+              {!isCompact && <span className="text-xs">다음</span>}
             </Button>
           </Space>
 
           {/* 확대/축소 */}
           <Space>
             <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
-            <Text style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>{Math.round(scale * 100)}%</Text>
+            <Text className="text-xs text-primary">{Math.round(scale * 100)}%</Text>
             <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
           </Space>
 
@@ -205,7 +205,7 @@ const PDFViewer = ({ file, onDownload }) => {
             onClick={onDownload}
             icon={<DownloadOutlined />}
           >
-            {!isCompact && <span style={{ fontSize: '10px' }}>다운로드</span>}
+            {!isCompact && <span className="text-xs">다운로드</span>}
           </Button>
         </div>
       </div>

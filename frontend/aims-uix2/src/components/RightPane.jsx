@@ -88,31 +88,14 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
   };
 
   return (
-    <div style={{ 
-      minHeight: 'calc(100vh - 120px)', 
-      maxHeight: 'calc(100vh - 120px)',
-      display: 'flex', 
-      flexDirection: 'column',
-      backgroundColor: 'var(--color-surface-1)',
-      borderRadius: '8px',
-      border: '1px solid var(--color-border-light)',
-      boxShadow: '0 1px 3px 0 var(--color-shadow-sm)'
-    }}>
+    <div className="flex flex-col bg-surface-1 rounded-lg border border-light shadow-sm"
+         style={{ 
+           minHeight: 'calc(100vh - 120px)', 
+           maxHeight: 'calc(100vh - 120px)'
+         }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '16px 20px',
-        borderBottom: '1px solid var(--color-border-light)',
-        flexShrink: 0
-      }}>
-        <h4 style={{ 
-          margin: 0, 
-          fontSize: '16px', 
-          fontWeight: 600,
-          color: 'var(--color-text-primary)'
-        }}>
+      <div className="flex justify-between items-center p-lg border-b border-light flex-shrink-0">
+        <h4 className="m-0 text-lg font-semibold text-primary">
           {document.upload.originalName}
         </h4>
         <Space>
@@ -127,16 +110,13 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
       </div>
       
       {/* Content */}
-      <div style={{ 
-        flex: 1, 
-        padding: '0 8px'
-      }}>
+      <div className="flex-1 px-sm">
         {isPdf ? (
           <PDFViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : isImage ? (
           <ImageViewer file={documentFileUrl} onDownload={handleDownload} />
         ) : (
-          <div style={{ 
+          <div className="flex flex-col items-center justify-center h-full text-gray-400" style={{ 
             textAlign: 'center', 
             padding: '40px 20px',
             backgroundColor: 'var(--color-surface-1)',

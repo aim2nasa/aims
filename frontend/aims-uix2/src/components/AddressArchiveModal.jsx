@@ -87,7 +87,7 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
       width={700}
       destroyOnClose={true}
     >
-      <div style={{ padding: '8px 0' }}>
+      <div className="py-xs">
         {loading ? (
           <div className="loading-container">
             <Spin size="large" />
@@ -107,14 +107,8 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
           />
         ) : (
           <div>
-            <div style={{ 
-              marginBottom: '16px', 
-              padding: '8px 12px', 
-              backgroundColor: 'var(--color-bg-secondary)', 
-              borderRadius: '6px',
-              border: '1px solid var(--color-border)'
-            }}>
-              <Text type="secondary" style={{ fontSize: '13px' }}>
+            <div className="mb-md p-sm bg-secondary rounded border">
+              <Text type="secondary" className="text-xs">
                 <HistoryOutlined /> 총 {addressHistory.length}건의 주소 변경 이력이 있습니다.
               </Text>
             </div>
@@ -127,10 +121,10 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
                   : [];
 
                 return (
-                  <div key={item._id || index} style={{ display: 'flex', marginBottom: '20px' }}>
+                  <div key={item._id || index} className="flex mb-lg">
                     {/* 날짜/시간 */}
-                    <div style={{ width: '140px', textAlign: 'right', fontSize: '11px', paddingRight: '20px', paddingTop: '4px', flexShrink: 0 }}>
-                      <div style={{ color: 'var(--color-text-secondary)' }}>
+                    <div className="text-right text-xs pr-lg pt-xs flex-shrink-0 w-140">
+                      <div className="text-secondary">
                         {new Date(item.changed_at).toLocaleDateString('ko-KR', {
                           year: 'numeric',
                           month: 'numeric', 
@@ -143,62 +137,40 @@ const AddressArchiveModal = ({ visible, onClose, customerId, customerName }) => 
                     </div>
 
                     {/* 아이콘 */}
-                    <div style={{ 
-                      width: '24px', 
-                      height: '24px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      backgroundColor: isFirst ? 'green' : '#1890ff',
-                      borderRadius: '50%',
-                      color: 'white',
-                      fontSize: '12px',
-                      marginRight: '16px',
-                      flexShrink: 0,
-                      marginTop: '2px'
-                    }}>
+                    <div className={`address-icon ${
+                      isFirst ? 'address-icon-current' : 'address-icon-history'
+                    }`}>
                       {isFirst ? <HomeOutlined /> : <HistoryOutlined />}
                     </div>
 
                     {/* 주소 내용 */}
-                    <div style={{ flex: 1 }}>
+                    <div className="flex-1">
                       {isFirst && (
-                        <Tag color="green" style={{ marginBottom: '8px', fontSize: '11px' }}>현재 주소</Tag>
+                        <Tag color="green" className="mb-xs text-xs">현재 주소</Tag>
                       )}
                       
-                      <div style={{ 
-                        fontWeight: 'bold', 
-                        fontSize: '14px',
-                        color: 'var(--color-text-primary)',
-                        marginBottom: '6px',
-                        lineHeight: '1.4'
-                      }}>
+                      <div className="font-bold text-sm text-primary mb-1_5 leading-tight">
                         📍 {formatAddress(item.address)}
                       </div>
                       
                       {item.reason && item.reason !== '현재 주소' && (
-                        <div style={{ marginBottom: '6px' }}>
-                          <Tag color={getReasonTagColor(item.reason)} style={{ fontSize: '11px' }}>
+                        <div className="mb-xs">
+                          <Tag color={getReasonTagColor(item.reason)} className="text-3xs">
                             {item.reason}
                           </Tag>
                         </div>
                       )}
                       
                       {changes.length > 0 && !isFirst && (
-                        <div style={{ marginBottom: '6px' }}>
-                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                        <div className="mb-xs">
+                          <Text type="secondary" className="text-2xs">
                             변경사항: {changes.join(', ')}
                           </Text>
                         </div>
                       )}
                       
                       {item.notes && (
-                        <div style={{ 
-                          fontSize: '12px', 
-                          color: 'var(--color-text-secondary)',
-                          marginTop: '4px',
-                          fontStyle: 'italic'
-                        }}>
+                        <div className="text-2xs text-secondary mt-1 italic">
                           메모: {item.notes}
                         </div>
                       )}

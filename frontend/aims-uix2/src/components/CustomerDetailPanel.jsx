@@ -329,13 +329,9 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       key: 'originalName',
       render: (name, record) => (
         <Space>
-          <FileTextOutlined style={{ color: '#1890ff' }} />
+          <FileTextOutlined className="text-primary" />
           <span 
-            style={{ 
-              fontSize: '12px', 
-              cursor: 'pointer', 
-              color: '#1890ff'
-            }}
+            className="text-xs cursor-pointer text-primary"
             onClick={() => handleDocumentClick(record)}
           >
             {name}
@@ -357,7 +353,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           general: { color: 'default', text: '일반' }
         };
         const config = typeConfig[type] || { color: 'default', text: type };
-        return <Tag color={config.color} style={{ fontSize: '10px' }}>{config.text}</Tag>;
+        return <Tag color={config.color} className="text-xs">{config.text}</Tag>;
       }
     },
     {
@@ -372,7 +368,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
           pending: { color: 'orange', text: '대기' }
         };
         const config = statusConfig[status] || { color: 'default', text: status };
-        return <Tag color={config.color} style={{ fontSize: '10px' }}>{config.text}</Tag>;
+        return <Tag color={config.color} className="text-xs">{config.text}</Tag>;
       }
     },
     {
@@ -395,7 +391,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
             size="small"
             icon={<DeleteOutlined />}
             danger
-            style={{ fontSize: '12px' }}
+className="text-sm"
             title="문서 연결 해제"
             onClick={() => handleDeleteButtonClick(record)}
           />
@@ -406,26 +402,12 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
 
   if (!customer) {
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-secondary)' }}>
-        <div style={{ 
-          padding: '16px', 
-          borderBottom: '1px solid var(--color-border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: 'var(--color-bg-secondary)'
-        }}>
-          <Title level={4} style={{ margin: 0 }}>고객 상세 정보</Title>
+      <div className="h-full flex-column bg-secondary">
+        <div className="p-lg border-b border-border flex justify-between align-center bg-secondary">
+          <Title level={4} className="m-0">고객 상세 정보</Title>
           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
         </div>
-        <div style={{ 
-          flex: 1, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          color: 'var(--color-text-tertiary)',
-          backgroundColor: 'var(--color-bg-secondary)'
-        }}>
+        <div className="flex-1 flex-center text-tertiary bg-secondary">
           {loading ? '로딩 중...' : '고객을 선택해주세요'}
         </div>
       </div>
@@ -433,17 +415,10 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-secondary)' }}>
+    <div className="h-full flex flex-column bg-secondary">
       {/* Header */}
-      <div style={{ 
-        padding: '16px', 
-        borderBottom: '1px solid var(--color-border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        backgroundColor: 'var(--color-bg-secondary)'
-      }}>
-        <Space direction="vertical" size={4} style={{ flex: 1 }}>
+      <div className="p-lg border-b flex justify-between items-start bg-secondary">
+        <Space direction="vertical" size={4} className="flex-auto">
           <Space>
             <Avatar 
               size={32} 
@@ -451,10 +426,10 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
               style={{ backgroundColor: getCustomerTypeIconWithColor(customer).color }}
             />
             <div>
-              <Title level={5} style={{ margin: 0, lineHeight: 1.2 }}>
+              <Title level={5} className="m-0 leading-tight">
                 {customer.personal_info?.name}
               </Title>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
+              <Text type="secondary" className="text-sm">
                 {customer.insurance_info?.customer_type} • {customer.meta?.status === 'active' ? '활성' : '비활성'}
               </Text>
             </div>
@@ -467,7 +442,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
               size="small" 
               icon={<TeamOutlined />}
               onClick={handleOpenFamilyRelationshipModal}
-              style={{ fontSize: '11px', backgroundColor: '#ff4d4f', borderColor: '#ff4d4f' }}
+              className="text-xs"
             >
               가족 관계
             </Button>
@@ -478,7 +453,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
               size="small" 
               icon={<EditOutlined />}
               onClick={() => onEdit(customer)}
-              style={{ fontSize: '11px' }}
+className="text-2xs"
             >
               수정
             </Button>
@@ -496,7 +471,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                 danger 
                 size="small" 
                 icon={<DeleteOutlined />}
-                style={{ fontSize: '11px' }}
+                className="text-xs"
               >
                 삭제
               </Button>
@@ -509,7 +484,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                 size="small" 
                 icon={<ReloadOutlined />}
                 onClick={onResetRatio}
-                style={{ fontSize: '10px' }}
+className="text-2xs"
               />
             </Tooltip>
           )}
@@ -518,19 +493,19 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', backgroundColor: 'var(--color-bg-secondary)' }}>
+      <div className="flex-1 overflow-auto bg-secondary">
         <Tabs 
           activeKey={activeTab} 
           onChange={setActiveTab}
           size="small"
-          style={{ height: '100%' }}
+          className="h-full"
         >
           <TabPane 
             tab={<Space><UserOutlined />기본 정보</Space>}
             key="info"
           >
             <div style={{ padding: '16px' }}>
-              <Card size="small" title="개인 정보" style={{ marginBottom: 12 }}>
+              <Card size="small" title="개인 정보" className="mb-sm">
                 <Descriptions size="small" column={1}>
                   <Descriptions.Item label="고객명">
                     <Text strong>{customer.personal_info?.name}</Text>
@@ -554,8 +529,8 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                       
                       if (mobilePhone) {
                         contacts.push(
-                          <div key="mobile" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                            <MobileOutlined style={{ color: '#52c41a', marginRight: '6px' }} />
+                          <div key="mobile" className="flex items-center mb-xs">
+                            <MobileOutlined className="text-success mr-xs" />
                             <span>{mobilePhone}</span>
                           </div>
                         );
@@ -563,8 +538,8 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                       
                       if (homePhone) {
                         contacts.push(
-                          <div key="home" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                            <PhoneOutlined style={{ color: '#fa8c16', marginRight: '6px' }} />
+                          <div key="home" className="flex items-center mb-xs">
+                            <PhoneOutlined className="text-warning mr-xs" />
                             <span>{homePhone}</span>
                           </div>
                         );
@@ -572,8 +547,8 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                       
                       if (workPhone) {
                         contacts.push(
-                          <div key="work" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                            <BankOutlined style={{ color: '#722ed1', marginRight: '6px' }} />
+                          <div key="work" className="flex items-center mb-xs">
+                            <BankOutlined className="text-primary mr-xs" />
                             <span>{workPhone}</span>
                           </div>
                         );
@@ -591,13 +566,13 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                   </Descriptions.Item>
                   <Descriptions.Item label="주소">
                     {customer.personal_info?.address ? (
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '12px' }}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="text-xs">
                             [{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}
                           </div>
                           {customer.personal_info.address.address2 && (
-                            <div style={{ fontSize: '12px' }}>{customer.personal_info.address.address2}</div>
+                            <div className="text-xs">{customer.personal_info.address.address2}</div>
                           )}
                         </div>
                         <Button 
@@ -605,12 +580,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
                           size="small"
                           icon={<HistoryOutlined />}
                           onClick={() => setAddressArchiveVisible(true)}
-                          style={{ 
-                            padding: '2px 6px',
-                            fontSize: '11px',
-                            height: 'auto',
-                            marginLeft: '8px'
-                          }}
+                          className="px-1_5 py-0_5 text-4xs h-auto ml-2"
                         >
                           보관소
                         </Button>
@@ -677,7 +647,7 @@ const CustomerDetailPanel = ({ customerId, customer: initialCustomer, onClose, o
               ) : (
                 <Empty 
                   description="연결된 문서가 없습니다"
-                  style={{ margin: '20px 0' }}
+className="my-lg"
                 />
               )}
             </div>
