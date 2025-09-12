@@ -681,88 +681,135 @@ button, a, input, select, textarea {
 }
 
 /* ===== INPUT COMPONENTS ===== */
+/* Wrapper */
 .aims-input-wrapper {
+  display: inline-flex;
+  align-items: center;
   position: relative;
-  display: inline-block;
   width: 100%;
-}
-
-.aims-input {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  min-width: 0;
+  padding: 0 var(--spacing-md);
+  background-color: var(--color-input-bg);
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-default);
+  transition: all var(--transition-default) var(--transition-easing-smooth);
+}
+
+/* Size Variants */
+.aims-input-small {
+  height: var(--input-height-sm);
+  font-size: var(--font-size-sm);
+}
+
+.aims-input-default {
+  height: var(--input-height-default);
   font-size: var(--font-size-base);
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text-primary);
-  background-color: var(--color-input-bg);
-  transition: all var(--transition-fast) var(--transition-easing-smooth);
-  box-sizing: border-box;
+}
+
+.aims-input-large {
+  height: var(--input-height-lg);
+  font-size: var(--font-size-lg);
+}
+
+/* Input Element */
+.aims-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  background-color: transparent;
+  border: none;
   outline: none;
+  font-family: var(--font-family-base);
+  font-size: inherit;
+  color: var(--color-text-primary);
+  line-height: 1.5;
 }
 
 .aims-input::placeholder {
   color: var(--color-text-tertiary);
 }
 
-.aims-input:hover:not(:disabled) {
+/* Prefix & Suffix */
+.aims-input-prefix,
+.aims-input-suffix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-size: inherit;
+}
+
+.aims-input-prefix {
+  margin-right: var(--spacing-xs);
+}
+
+.aims-input-suffix {
+  margin-left: var(--spacing-xs);
+}
+
+/* Clear Button */
+.aims-input-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-left: var(--spacing-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+  outline: none;
+}
+
+.aims-input-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+/* States */
+.aims-input-wrapper:hover:not(.aims-input-disabled) {
   border-color: var(--color-primary);
 }
 
-.aims-input:focus:not(:disabled) {
+.aims-input-focused {
   border-color: var(--color-input-focus-border);
   box-shadow: 0 0 0 2px var(--color-primary-opacity);
 }
 
-.aims-input:disabled {
+.aims-input-disabled {
   background-color: var(--color-input-disabled-bg);
+  cursor: not-allowed;
+}
+
+.aims-input-disabled .aims-input {
   color: var(--color-text-disabled);
   cursor: not-allowed;
 }
 
-/* Input Sizes */
-.aims-input-small {
-  height: var(--input-height-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
+/* Status Variants */
+.aims-input-error {
+  border-color: var(--color-error);
 }
 
-.aims-input-default {
-  height: var(--input-height-default);
+.aims-input-error.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
 }
 
-.aims-input-large {
-  height: var(--input-height-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: var(--font-size-lg);
+.aims-input-warning {
+  border-color: var(--color-warning);
 }
 
-/* Input with Prefix/Suffix */
-.aims-input-wrapper-affix .aims-input {
-  padding-left: var(--spacing-xxxl);
+.aims-input-warning.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
 }
 
-.aims-input-wrapper-affix .aims-input-prefix {
-  position: absolute;
-  left: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-tertiary);
-  display: flex;
-  align-items: center;
-  font-size: var(--font-size-base);
+.aims-input-success {
+  border-color: var(--color-success);
 }
 
-.aims-input-wrapper-affix .aims-input-suffix {
-  position: absolute;
-  right: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-tertiary);
-  display: flex;
-  align-items: center;
-  font-size: var(--font-size-base);
+.aims-input-success.aims-input-focused {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
 }
 
 /* ===== CARD COMPONENTS ===== */
@@ -1088,8 +1135,9 @@ button, a, input, select, textarea {
 }
 
 .search-input-group {
-  flex: 1;
-  min-width: 150px;
+  flex: 0 1 400px; /* 최대 폭을 400px로 제한하고 축소 가능하도록 설정 */
+  min-width: 200px; /* 최소 폭 설정 */
+  max-width: 400px; /* 최대 폭 제한 */
 }
 
 .search-input {
@@ -1788,32 +1836,7 @@ button, a, input, select, textarea {
   color: var(--color-text-primary) !important;
 }
 
-/* Search input overrides */
-[data-theme="dark"] .search-input .ant-input,
-[data-theme="dark"] .search-input input,
-[data-theme="dark"] .customer-search-bar .ant-input,
-[data-theme="dark"] .customer-search-bar input {
-  background-color: var(--color-input-bg) !important;
-  border-color: var(--color-input-border) !important;
-  color: var(--color-text-primary) !important;
-}
-
-[data-theme="dark"] .search-input .ant-input::placeholder,
-[data-theme="dark"] .search-input input::placeholder,
-[data-theme="dark"] .customer-search-bar .ant-input::placeholder,
-[data-theme="dark"] .customer-search-bar input::placeholder {
-  color: var(--color-text-tertiary) !important;
-}
-
-[data-theme="dark"] .search-input .ant-input:focus,
-[data-theme="dark"] .search-input input:focus,
-[data-theme="dark"] .customer-search-bar .ant-input:focus,
-[data-theme="dark"] .customer-search-bar input:focus {
-  background-color: var(--color-input-bg) !important;
-  border-color: var(--color-primary) !important;
-  color: var(--color-text-primary) !important;
-  box-shadow: 0 0 0 2px var(--color-primary-opacity) !important;
-}
+/* Search input - AIMS components 사용으로 Ant Design 오버라이드 불필요 */
 
 /* Advanced search area */
 [data-theme="dark"] .search-advanced-inline {
