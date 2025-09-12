@@ -2067,6 +2067,7 @@ const DocumentStatusDashboard = ({ initialFiles = [], onDocumentClick, onDocumen
                     dataSource={currentPageDocuments}
                     rowKey={(record) => record.id || record._id}
                     loading={loading}
+                    size="small"
                     scroll={{ 
                       x: 800,
                       y: tableHeight
