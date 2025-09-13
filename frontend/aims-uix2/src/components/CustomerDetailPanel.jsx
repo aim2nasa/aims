@@ -436,14 +436,14 @@ className="text-sm"
             </div>
           </Space>
         </Space>
-        <Space>
+        <Space className="customer-action-buttons">
           {canAddFamilyRelation && (
             <Button 
               type="primary" 
               size="small" 
               icon={<TeamOutlined />}
               onClick={handleOpenFamilyRelationshipModal}
-              className="text-xs"
+              className="text-xs btn-add-relation"
             >
               가족 관계
             </Button>
@@ -454,7 +454,7 @@ className="text-sm"
               size="small" 
               icon={<EditOutlined />}
               onClick={() => onEdit(customer)}
-className="text-2xs"
+              className="text-2xs btn-edit"
             >
               수정
             </Button>
@@ -472,7 +472,7 @@ className="text-2xs"
                 danger 
                 size="small" 
                 icon={<DeleteOutlined />}
-                className="text-xs"
+                className="text-xs btn-delete"
               >
                 삭제
               </Button>
@@ -485,11 +485,11 @@ className="text-2xs"
                 size="small" 
                 icon={<ReloadOutlined />}
                 onClick={onResetRatio}
-className="text-2xs"
+                className="text-2xs btn-reload"
               />
             </Tooltip>
           )}
-          <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
+          <Button type="text" icon={<CloseOutlined />} onClick={onClose} className="btn-close" />
         </Space>
       </div>
 

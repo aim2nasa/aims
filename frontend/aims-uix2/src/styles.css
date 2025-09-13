@@ -3980,5 +3980,114 @@ body::-webkit-scrollbar {
 /* 더 이상 사용하지 않는 클래스 제거됨 */
 
 /* ===========================
+   아이콘 색상 시스템
+   =========================== */
+
+/* 좌측 사이드바 아이콘 색상 */
+.leftpane-menu .ant-menu-item .anticon {
+  transition: color 0.3s ease;
+}
+
+/* 검색 결과 아이콘 */
+.leftpane-menu .menu-item-search-results .anticon-search {
+  color: #10b981; /* 초록색 - 검색/발견 */
+}
+
+/* 고객 관리 아이콘 */
+.leftpane-menu .menu-item-customers .anticon-user {
+  color: #3b82f6; /* 파란색 - 사용자/고객 */
+}
+
+/* 전체보기 아이콘 */
+.leftpane-menu .menu-item-customers-all .anticon-unordered-list {
+  color: #6366f1; /* 보라색 - 리스트/목록 */
+}
+
+/* 지역별 보기 아이콘 */
+.leftpane-menu .menu-item-customers-regional .anticon-environment {
+  color: #f59e0b; /* 주황색 - 위치/지역 */
+}
+
+/* 관계별 보기 아이콘 */
+.leftpane-menu .menu-item-customers-relationship .anticon-team {
+  color: #8b5cf6; /* 보라색 - 팀/관계 */
+}
+
+/* 문서 관리 아이콘 */
+.leftpane-menu .menu-item-documents .anticon-file-text {
+  color: #059669; /* 에메랄드 - 문서/파일 */
+}
+
+/* 문서 처리 현황 아이콘 */
+.leftpane-menu .menu-item-dsd .anticon-dashboard {
+  color: #dc2626; /* 빨간색 - 대시보드/상태 */
+}
+
+/* 우측 상단 버튼 아이콘 색상 */
+/* 가족 관계 버튼 */
+.customer-action-buttons .btn-add-relation .anticon-team {
+  color: #8b5cf6; /* 보라색 - 관계/팀 */
+}
+
+/* 수정 버튼 */
+.customer-action-buttons .btn-edit .anticon-edit {
+  color: #3b82f6; /* 파란색 - 편집 */
+}
+
+/* 삭제 버튼 */
+.customer-action-buttons .btn-delete .anticon-delete {
+  color: #ef4444; /* 빨간색 - 삭제 */
+}
+
+/* 새로고침 버튼 */
+.customer-action-buttons .btn-reload .anticon-reload {
+  color: #6366f1; /* 보라색 - 새로고침 */
+}
+
+/* 닫기 버튼 */
+.customer-action-buttons .btn-close .anticon-close {
+  color: #ef4444; /* 빨간색 - 닫기 */
+}
+
+/* CustomerDetailPanel 탭 아이콘 색상 */
+/* 기본 정보 탭 */
+.ant-tabs .ant-tabs-tab .anticon-user {
+  color: #3b82f6; /* 파란색 - 사용자 정보 */
+}
+
+/* 문서 탭 */
+.ant-tabs .ant-tabs-tab .anticon-file-text {
+  color: #059669; /* 에메랄드 - 문서 */
+}
+
+/* 관계 탭 */
+.ant-tabs .ant-tabs-tab .anticon-team {
+  color: #8b5cf6; /* 보라색 - 관계/팀 */
+}
+
+/* 상담 이력 탭 */
+.ant-tabs .ant-tabs-tab .anticon-history {
+  color: #f59e0b; /* 주황색 - 이력/시간 */
+}
+
+/* 계약 탭 */
+.ant-tabs .ant-tabs-tab .anticon-link {
+  color: #dc2626; /* 빨간색 - 연결/계약 */
+}
+
+/* 호버 효과 */
+.leftpane-menu .ant-menu-item:hover .anticon,
+.customer-action-buttons .ant-btn:hover .anticon,
+.ant-tabs .ant-tabs-tab:hover .anticon {
+  filter: brightness(1.2);
+  transform: scale(1.05);
+}
+
+/* 액티브 상태 */
+.leftpane-menu .ant-menu-item-selected .anticon {
+  filter: brightness(1.3);
+}
+
+/* ===========================
    완료! 통합 CSS 시스템
    =========================== */
