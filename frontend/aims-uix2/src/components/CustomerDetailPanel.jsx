@@ -402,12 +402,12 @@ className="text-sm"
 
   if (!customer) {
     return (
-      <div className="h-full flex-column bg-secondary">
-        <div className="p-lg border-b border-border flex justify-between align-center bg-secondary">
+      <div className="h-full flex-column" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
+        <div className="p-lg border-b border-border flex justify-between align-center" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
           <Title level={4} className="m-0">고객 상세 정보</Title>
           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
         </div>
-        <div className="flex-1 flex-center text-tertiary bg-secondary">
+        <div className="flex-1 flex-center text-tertiary" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
           {loading ? '로딩 중...' : '고객을 선택해주세요'}
         </div>
       </div>
@@ -415,9 +415,9 @@ className="text-sm"
   }
 
   return (
-    <div className="h-full flex flex-column bg-secondary">
+    <div className="h-full flex flex-column" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
       {/* Header */}
-      <div className="p-lg border-b flex justify-between items-start bg-secondary">
+      <div className="p-lg border-b flex justify-between items-start" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
         <Space direction="vertical" size={4} className="flex-auto">
           <Space>
             <Avatar 
@@ -494,7 +494,7 @@ className="text-2xs"
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-secondary">
+      <div className="flex-1 overflow-auto" style={{backgroundColor: 'var(--color-rightpane-bg)'}}>
         <Tabs 
           activeKey={activeTab} 
           onChange={setActiveTab}
