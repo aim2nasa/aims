@@ -13,7 +13,7 @@ const ThemeToggle = () => {
       <div className="theme-toggle-container">
         <SunOutlined 
           className="theme-icon theme-icon-sun"
-          style={{ '--sun-color': !isDark ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }}
+          style={{ '--sun-color': !isDark ? 'var(--color-icon-orange)' : 'var(--color-text-tertiary)' }}
         />
         <Switch
           checked={isDark}
@@ -23,7 +23,7 @@ const ThemeToggle = () => {
         />
         <MoonOutlined 
           className="theme-icon theme-icon-moon"
-          style={{ '--moon-color': isDark ? 'var(--color-primary)' : 'var(--color-text-tertiary)' }}
+          style={{ '--moon-color': isDark ? 'var(--color-icon-cyan)' : 'var(--color-text-tertiary)' }}
         />
       </div>
     </Tooltip>
