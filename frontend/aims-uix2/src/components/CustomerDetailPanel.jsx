@@ -584,22 +584,28 @@ className="text-sm"
                     {customer.personal_info?.address ? (
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="text-xs">
-                            [{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}
+                          <div className="text-xs flex items-center gap-2">
+                            <span>[{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}</span>
+                            <Button 
+                              variant="link"
+                              size="small"
+                              icon={<HistoryOutlined style={{ color: 'var(--color-warning)' }} />}
+                              onClick={() => setAddressArchiveVisible(true)}
+                              className="px-1_5 py-0_5 text-4xs h-auto"
+                              style={{
+                                backgroundColor: 'var(--color-warning-bg)',
+                                borderColor: 'var(--color-warning)',
+                                color: 'var(--color-warning)',
+                                border: '1px solid var(--color-warning)'
+                              }}
+                            >
+                              보관소
+                            </Button>
                           </div>
                           {customer.personal_info.address.address2 && (
                             <div className="text-xs">{customer.personal_info.address.address2}</div>
                           )}
                         </div>
-                        <Button 
-                          variant="link"
-                          size="small"
-                          icon={<HistoryOutlined />}
-                          onClick={() => setAddressArchiveVisible(true)}
-                          className="px-1_5 py-0_5 text-4xs h-auto ml-2"
-                        >
-                          보관소
-                        </Button>
                       </div>
                     ) : '-'}
                   </Descriptions.Item>
