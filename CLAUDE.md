@@ -77,6 +77,119 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **기억하라**: 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!
 
+### 인라인 스타일 남발 금지 규칙 - 철칙! 🚫
+
+**모든 스타일은 반드시 공용 CSS 시스템을 사용한다!**
+
+1. **절대 금지사항:**
+   - 컴포넌트에서 `style={{}}` 인라인 스타일 남발 금지
+   - 개별 컴포넌트마다 색상/크기 직접 지정 금지
+   - 동일한 스타일을 여러 곳에서 중복 작성 금지
+
+2. **반드시 따라야 할 원칙:**
+   - **CSS 클래스 사용 필수**: `className="bg-primary"` ✅
+   - **CSS 변수 활용**: `var(--color-bg-primary)` ✅
+   - **공용 스타일 시스템**: `styles.css`에서 통합 관리 ✅
+   - **테마 호환성**: 라이트/다크 모드 모두 지원 ✅
+
+3. **허용되는 인라인 스타일:**
+   - **동적 계산값만**: `width: ${dynamicWidth}px` (변수 기반)
+   - **위치 좌표**: `top: ${mouseY}px, left: ${mouseX}px` (런타임 계산)
+   - **애니메이션 진행도**: `transform: translateX(${progress}%)` (실시간 변경)
+
+4. **공용화 방법:**
+   ```css
+   /* styles.css - 올바른 방법 ✅ */
+   .center-pane {
+     background-color: var(--color-bg-primary);
+     min-height: 100vh;
+   }
+
+   .card-primary {
+     background-color: var(--color-bg-secondary);
+     border: 1px solid var(--color-border);
+   }
+   ```
+
+   ```jsx
+   // Component - 올바른 방법 ✅
+   <div className="center-pane">
+     <Card className="card-primary">
+
+   // 잘못된 방법 ❌
+   <div style={{backgroundColor: '#e8e9eb'}}>
+     <Card style={{backgroundColor: '#ffffff'}}>
+   ```
+
+5. **위반시 즉시 조치:**
+   - 인라인 스타일 발견 즉시 CSS 클래스로 이동
+   - 중복 스타일을 공용 클래스로 통합
+   - 테마 시스템과 연동 확인
+
+**핵심**: 스타일의 일관성, 유지보수성, 확장성을 위해 모든 스타일은 중앙집중화한다!
+
+### 공용 CSS 시스템 구축 규칙 - 신성한 사명! ⚡
+
+**모든 스타일은 공용화하여 재사용 가능한 시스템으로 구축한다!**
+
+1. **공용 클래스 시스템 구축:**
+   ```css
+   /* styles.css - 공용 클래스 예시 */
+   .main-container {
+     background-color: var(--color-bg-primary);
+     min-height: 100vh;
+     transition: background-color 0.3s ease;
+   }
+
+   .content-pane {
+     background-color: var(--color-bg-secondary);
+     border-radius: 8px;
+     border: 1px solid var(--color-border);
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+   }
+
+   .hover-subtle:hover {
+     background-color: var(--color-bg-hover);
+     transition: background-color 0.2s ease;
+   }
+   ```
+
+2. **재사용 원칙:**
+   - 동일한 패턴이 2번 이상 나타나면 **즉시 공용 클래스로 추출**
+   - 컴포넌트별 개별 스타일링 **절대 금지**
+   - 모든 레이아웃, 색상, 간격은 **공용 변수 사용**
+
+3. **컴포넌트 적용 방법:**
+   ```jsx
+   // ✅ 올바른 방법 - 공용 클래스 조합
+   <div className="main-container">
+     <div className="content-pane hover-subtle">
+       <Card className="accent-button">
+
+   // ❌ 절대 금지 - 개별 스타일링
+   <div style={{backgroundColor: '#e8e9eb'}}>
+     <div style={{border: '1px solid #d1d5db'}}>
+   ```
+
+4. **공용 클래스 카테고리:**
+   - **Layout**: `.main-container`, `.content-pane`, `.side-panel`
+   - **Interactive**: `.hover-subtle`, `.selected-item`, `.disabled-state`
+   - **Accent**: `.accent-button`, `.accent-text`, `.accent-border`
+   - **Spacing**: `.p-lg`, `.m-md`, `.gap-sm` (Tailwind 스타일)
+
+5. **중복 제거 프로세스:**
+   - 모든 컴포넌트에서 중복 스타일 패턴 식별
+   - 공용 클래스로 추출하여 `styles.css`에 정의
+   - 모든 컴포넌트를 공용 클래스 사용으로 리팩토링
+   - 테마 호환성 검증
+
+6. **금지 사항:**
+   - 컴포넌트 파일에서 개별 스타일 정의
+   - 동일한 스타일을 여러 곳에서 중복 작성
+   - 테마 시스템과 분리된 고정 색상 값 사용
+
+**절대 진리**: 중복 스타일 = 유지보수의 지옥! 공용화 = 개발의 천국! 🔥
+
 ### React 개발 문제 해결 규칙 - 철칙! ⚠️
 
 **React Real-time Refreshing 문제 시 절대 준수 사항**
