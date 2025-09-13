@@ -365,7 +365,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
           <Space>
             <Icon style={{ color }} />
             <span 
-              className="font-bold text-primary cursor-pointer underline"
+              className="text-primary cursor-pointer underline"
               onClick={() => handleCustomerNameClick(record._id)}
             >
               {name}

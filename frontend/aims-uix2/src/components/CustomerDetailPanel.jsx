@@ -509,7 +509,7 @@ className="text-2xs"
               <Card size="small" title="개인 정보" className="mb-sm">
                 <Descriptions size="small" column={1}>
                   <Descriptions.Item label="고객명">
-                    <Text strong>{customer.personal_info?.name}</Text>
+                    <Text>{customer.personal_info?.name}</Text>
                     {customer.personal_info?.name_en && (
                       <Text type="secondary"> ({customer.personal_info.name_en})</Text>
                     )}

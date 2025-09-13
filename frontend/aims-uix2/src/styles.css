@@ -94,76 +94,76 @@ table {
 /* 라이트 테마 (기본) */
 :root,
 [data-theme="light"] {
-  /* ===== PRIMARY COLORS ===== */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
-  --color-primary-active: #1d4ed8;
-  --color-primary-light: #dbeafe;
-  --color-primary-opacity: rgba(59, 130, 246, 0.1);
-  --color-primary-shadow: rgba(59, 130, 246, 0.3);
-  --color-primary-shadow-hover: rgba(59, 130, 246, 0.4);
-  --color-primary-bg: #eff6ff;
-  --color-primary-border: #3b82f6;
+  /* ===== PRIMARY COLORS - Modern Blue-Purple Gradient ===== */
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-active: #4338ca;
+  --color-primary-light: #e0e7ff;
+  --color-primary-opacity: rgba(99, 102, 241, 0.1);
+  --color-primary-shadow: rgba(99, 102, 241, 0.25);
+  --color-primary-shadow-hover: rgba(99, 102, 241, 0.35);
+  --color-primary-bg: #f0f4ff;
+  --color-primary-border: #6366f1;
   
-  --color-secondary: #0ea5e9;
-  --color-secondary-light: #e0f2fe;
-  --color-ant-blue: #1890ff;
+  --color-secondary: #06b6d4;
+  --color-secondary-light: #e0f7fa;
+  --color-ant-blue: #6366f1;
   
-  --color-purple: #8b5cf6;
-  --color-purple-hover: #7c3aed;
-  --color-purple-bg: #ede9fe;
-  --color-purple-border: #8b5cf6;
-  --color-purple-shadow: rgba(139, 92, 246, 0.3);
-  --color-purple-shadow-hover: rgba(139, 92, 246, 0.4);
+  --color-purple: #a855f7;
+  --color-purple-hover: #9333ea;
+  --color-purple-bg: #f3e8ff;
+  --color-purple-border: #a855f7;
+  --color-purple-shadow: rgba(168, 85, 247, 0.25);
+  --color-purple-shadow-hover: rgba(168, 85, 247, 0.35);
   
-  /* ===== TEXT COLORS ===== */
-  --color-text-primary: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-tertiary: #6b7280;
-  --color-text-disabled: #9ca3af;
+  /* ===== TEXT COLORS - Warmer, More Readable ===== */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-disabled: #94a3b8;
   --color-text-white: #ffffff;
   --color-text-inverse: #ffffff;
   
-  /* ===== STATUS COLORS ===== */
-  --color-success: #10b981;
-  --color-success-hover: #0d9488;
-  --color-success-bg: #dcfce7;
-  --color-success-border: #86efac;
-  --color-success-shadow: rgba(16, 185, 129, 0.3);
-  --color-success-shadow-hover: rgba(16, 185, 129, 0.4);
+  /* ===== STATUS COLORS - More Vibrant ===== */
+  --color-success: #059669;
+  --color-success-hover: #047857;
+  --color-success-bg: #d1fae5;
+  --color-success-border: #6ee7b7;
+  --color-success-shadow: rgba(5, 150, 105, 0.25);
+  --color-success-shadow-hover: rgba(5, 150, 105, 0.35);
   
-  --color-warning: #f59e0b;
+  --color-warning: #d97706;
   --color-warning-bg: #fef3c7;
-  --color-warning-border: #fde047;
+  --color-warning-border: #fbbf24;
   
-  --color-error: #ef4444;
+  --color-error: #dc2626;
   --color-error-bg: #fee2e2;
-  --color-error-border: #fca5a5;
+  --color-error-border: #f87171;
   
-  --color-info: #3b82f6;
-  --color-info-bg: #dbeafe;
-  --color-info-border: #93c5fd;
+  --color-info: #0ea5e9;
+  --color-info-bg: #e0f2fe;
+  --color-info-border: #7dd3fc;
   
-  /* ===== BACKGROUND COLORS ===== */
+  /* ===== BACKGROUND COLORS - Softer, Warmer Tones ===== */
   --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-bg-tertiary: #f3f4f6;
-  --color-bg-hover: #f3f4f6;
-  --color-bg-selected: #eff6ff;
-  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  --color-bg-secondary: #fefefe;
+  --color-bg-tertiary: #f8fafc;
+  --color-bg-hover: #f1f5f9;
+  --color-bg-selected: #f0f4ff;
+  --color-bg-overlay: rgba(15, 23, 42, 0.6);
   
-  /* ===== SURFACE COLORS (Cards, Panels) ===== */
+  /* ===== SURFACE COLORS - Clean, Modern ===== */
   --color-surface-1: #ffffff;
-  --color-surface-2: #f9fafb;
-  --color-surface-3: #f3f4f6;
-  --color-surface-4: #e5e7eb;
+  --color-surface-2: #fefefe;
+  --color-surface-3: #f8fafc;
+  --color-surface-4: #e2e8f0;
   
-  /* ===== BORDER COLORS ===== */
-  --color-border-light: #f0f0f0;
-  --color-border-medium: #e5e7eb;
-  --color-border-dark: #d1d5db;
-  --color-border-focus: #3b82f6;
-  --color-border: #d1d5db;
+  /* ===== BORDER COLORS - Subtle, Clean ===== */
+  --color-border-light: #f1f5f9;
+  --color-border-medium: #e2e8f0;
+  --color-border-dark: #cbd5e1;
+  --color-border-focus: #6366f1;
+  --color-border: #e2e8f0;
   
   /* ===== SHADOW COLORS ===== */
   --color-shadow-sm: rgba(0, 0, 0, 0.05);
@@ -171,23 +171,23 @@ table {
   --color-shadow-lg: rgba(0, 0, 0, 0.15);
   --color-shadow-xl: rgba(0, 0, 0, 0.25);
   
-  /* ===== COMPONENT SPECIFIC ===== */
+  /* ===== COMPONENT SPECIFIC - Modern, Clean ===== */
   --color-input-bg: #ffffff;
-  --color-input-border: #d1d5db;
-  --color-input-focus-border: #3b82f6;
-  --color-input-disabled-bg: #f3f4f6;
+  --color-input-border: #e2e8f0;
+  --color-input-focus-border: #6366f1;
+  --color-input-disabled-bg: #f8fafc;
   
-  --color-button-ghost-hover: rgba(0, 0, 0, 0.05);
-  --color-button-ghost-active: rgba(0, 0, 0, 0.1);
+  --color-button-ghost-hover: rgba(99, 102, 241, 0.08);
+  --color-button-ghost-active: rgba(99, 102, 241, 0.15);
   
-  --color-link: #3b82f6;
-  --color-link-hover: #2563eb;
-  --color-link-visited: #7c3aed;
+  --color-link: #6366f1;
+  --color-link-hover: #4f46e5;
+  --color-link-visited: #a855f7;
   
-  /* ===== SCROLLBAR ===== */
-  --color-scrollbar-track: #f3f4f6;
-  --color-scrollbar-thumb: #d1d5db;
-  --color-scrollbar-thumb-hover: #9ca3af;
+  /* ===== SCROLLBAR - Subtle ===== */
+  --color-scrollbar-track: #f8fafc;
+  --color-scrollbar-thumb: #cbd5e1;
+  --color-scrollbar-thumb-hover: #94a3b8;
 
   /* ===== TYPOGRAPHY ===== */
   --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -1379,13 +1379,12 @@ button, a, input, select, textarea {
   color: var(--color-text-primary) !important;
   border-bottom: 1px solid var(--color-border-medium) !important;
   font-weight: var(--font-weight-semibold);
-  height: 24px !important;
-  padding: 4px 8px !important;
 }
 
 .ant-table-tbody > tr > td {
   border-bottom: 1px solid var(--color-border-light) !important;
-  color: var(--color-text-secondary) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: normal;
 }
 
 /* 높이 0인 숨겨진 행 제거 */
