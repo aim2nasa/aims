@@ -1659,6 +1659,11 @@ button, a, input, select, textarea {
   background-color: var(--color-surface-4) !important;
 }
 
+/* 라이트모드에서 툴팁 텍스트 색상 수정 */
+html[data-theme="light"] .ant-tooltip-inner {
+  color: #6b7280 !important;
+}
+
 /* ===== BADGE ===== */
 .ant-badge-count {
   background: var(--color-error) !important;
