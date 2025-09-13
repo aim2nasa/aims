@@ -51,8 +51,8 @@
 .standard-center-pane-content {
   flex: 1;
   padding: var(--spacing-lg);
-  overflow-y: auto;
-  min-height: 0; /* 스크롤이 필요할 때 올바르게 작동하도록 */
+  overflow: hidden; /* 스크롤바 제거 */
+  min-height: 0;
 }
 
 .standard-center-pane-loading {

@@ -4213,6 +4213,8 @@ body::-webkit-scrollbar {
   width: var(--content-width);
   margin-right: var(--content-margin-right);
   transition: var(--content-transition);
+  overflow: hidden; /* 스크롤바 제거 */
+  height: calc(100vh - 120px); /* 고정 높이로 스크롤 방지 */
 }
 
 .right-pane-container {
