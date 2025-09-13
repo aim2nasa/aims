@@ -3506,6 +3506,10 @@ body::-webkit-scrollbar {
 .resize-handle {
   width: 4px;
   background: var(--resize-bg, transparent);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .resize-grip {
