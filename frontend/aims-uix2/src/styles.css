@@ -45,6 +45,19 @@ body {
   height: 100vh;
 }
 
+/* ===== 테마 전환 애니메이션 ===== */
+* {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 사용자 상호작용 중에는 애니메이션 비활성화 */
+.no-transition * {
+  transition: none !important;
+}
+
 /* 기본 링크 스타일 */
 a {
   color: inherit;
@@ -151,9 +164,9 @@ table {
   --color-icon-red: #ef4444; /* 빨간색 아이콘 */
   
   /* ===== BACKGROUND COLORS - color.png 가이드 반영 ===== */
-  --color-bg-primary: #f5f6f7; /* 메인 배경 (color.png 기준) */
-  --color-bg-secondary: #ffffff; /* 카드, 패널 배경 */
-  --color-bg-rightpane: #faf8f5;
+  --color-bg-primary: #f8fafb; /* 메인 배경 - 더 은은하고 밝은 회색 */
+  --color-bg-secondary: #ffffff; /* 카드, 패널 배경 - 순백색 유지 */
+  --color-bg-rightpane: #fbfcfd; /* 우측 패널 - 메인 배경보다 약간 더 밝게 */
   --color-bg-tertiary: #f8fafc;
   --color-bg-hover: #f3f4f6;
   --color-bg-selected: #f0f4ff;

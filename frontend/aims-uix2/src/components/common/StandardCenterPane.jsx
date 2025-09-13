@@ -37,18 +37,22 @@ const StandardCenterPane = ({
     if (!showHeader) return null;
 
     return (
-      <div className="standard-center-pane-header">
+      <header className="standard-center-pane-header" role="banner">
         <div className="header-title-section">
-          {title && <h3 className="header-title">{title}</h3>}
+          {title && (
+            <h3 className="header-title" id="main-heading">
+              {title}
+            </h3>
+          )}
         </div>
-        <div className="header-actions-section">
+        <nav className="header-actions-section" role="navigation" aria-label="페이지 동작">
           {headerActions && (
             <Space size="middle">
               {headerActions}
             </Space>
           )}
-        </div>
-      </div>
+        </nav>
+      </header>
     );
   };
 
@@ -56,17 +60,24 @@ const StandardCenterPane = ({
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="standard-center-pane-loading">
-          <Spin size="large" />
-          <p className="loading-text">{loadingText}</p>
+        <div className="standard-center-pane-loading" role="status" aria-live="polite">
+          <Spin size="large" aria-hidden="true" />
+          <p className="loading-text" aria-describedby="main-heading">
+            {loadingText}
+          </p>
         </div>
       );
     }
 
     return (
-      <div className={`standard-center-pane-content ${bodyClassName}`}>
+      <main
+        className={`standard-center-pane-content ${bodyClassName}`}
+        role="main"
+        aria-labelledby="main-heading"
+        tabIndex={-1}
+      >
         {children}
-      </div>
+      </main>
     );
   };
 
@@ -75,10 +86,18 @@ const StandardCenterPane = ({
     if (!showFooter || (!footer && !pagination)) return null;
 
     return (
-      <div className="standard-center-pane-footer">
-        {footer && <div className="footer-content">{footer}</div>}
-        {pagination && <div className="footer-pagination">{pagination}</div>}
-      </div>
+      <footer className="standard-center-pane-footer" role="contentinfo">
+        {footer && (
+          <div className="footer-content" role="complementary">
+            {footer}
+          </div>
+        )}
+        {pagination && (
+          <nav className="footer-pagination" role="navigation" aria-label="페이지 네비게이션">
+            {pagination}
+          </nav>
+        )}
+      </footer>
     );
   };
 
@@ -93,9 +112,15 @@ const StandardCenterPane = ({
         display: 'flex',
         flexDirection: 'column'
       }}
+      role="main"
+      aria-label={title ? `${title} 콘텐츠 영역` : "메인 콘텐츠 영역"}
       {...props}
     >
-      <div className="standard-center-pane-wrapper">
+      <div
+        className="standard-center-pane-wrapper"
+        role="region"
+        aria-live="polite"
+      >
         {renderContent()}
         {renderFooter()}
       </div>
