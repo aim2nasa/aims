@@ -2568,16 +2568,43 @@ html[data-theme="light"] .ant-tooltip-inner {
   }
 }
 
-/* 헤더 내 텍스트는 흰색으로, 아이콘 색상은 유지 */
+/* 헤더 내 텍스트는 흰색으로, 셀렉터는 원래 색상 유지 */
 :root .ant-layout-header .app-title,
-[data-theme="light"] .ant-layout-header .app-title,
-:root .ant-layout-header .ant-input,
-[data-theme="light"] .ant-layout-header .ant-input,
-:root .ant-layout-header .ant-select-selection-item,
-[data-theme="light"] .ant-layout-header .ant-select-selection-item {
+[data-theme="light"] .ant-layout-header .app-title {
   color: var(--color-text-white) !important;
   position: relative;
   z-index: 2; /* 애니메이션 효과보다 위에 표시 */
+}
+
+/* 셀렉터와 입력창은 원래 테마 색상 유지 */
+:root .ant-layout-header .ant-input,
+[data-theme="light"] .ant-layout-header .ant-input {
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border-medium) !important;
+  position: relative;
+  z-index: 2;
+}
+
+:root .ant-layout-header .ant-select-selector,
+[data-theme="light"] .ant-layout-header .ant-select-selector {
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-bg-primary) !important;
+  border-color: var(--color-border-medium) !important;
+  position: relative;
+  z-index: 2;
+}
+
+:root .ant-layout-header .ant-select-selection-item,
+[data-theme="light"] .ant-layout-header .ant-select-selection-item {
+  color: var(--color-text-primary) !important;
+  position: relative;
+  z-index: 2;
+}
+
+:root .ant-layout-header .ant-select-selection-placeholder,
+[data-theme="light"] .ant-layout-header .ant-select-selection-placeholder {
+  color: var(--color-text-secondary) !important;
 }
 
 :root .app-title,
