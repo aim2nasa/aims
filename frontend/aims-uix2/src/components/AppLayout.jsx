@@ -389,7 +389,7 @@ const AppLayout = () => {
   return (
     <Layout>
       {/* 📐 Header: 상단 고정 */}
-      <Header className="px-lg bg-primary border-b flex items-center header-64" style={{ justifyContent: 'space-between', position: 'relative' }}>
+      <Header className="px-lg bg-header border-b flex items-center header-64" style={{ justifyContent: 'space-between', position: 'relative' }}>
         {/* 왼쪽 섹션 (AIMS-UIX2 글씨) */}
         <div style={{ flex: '0 0 auto' }}>
             <h2 className="app-title m-0 text-xl font-bold text-primary">AIMS-UIX2</h2>
@@ -464,7 +464,7 @@ const AppLayout = () => {
           onCollapse={(value) => setCollapsed(value)}
           width={280}
           trigger={null}
-          className="bg-primary overflow-hidden flex-column"
+          className="bg-sidebar overflow-hidden flex-column"
         >
           <div className="flex-auto overflow-auto p-lg">
             <LeftPane 

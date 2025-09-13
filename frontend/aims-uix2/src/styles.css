@@ -151,6 +151,8 @@ table {
   --color-bg-hover: #f1f5f9;
   --color-bg-selected: #f0f4ff;
   --color-bg-overlay: rgba(15, 23, 42, 0.6);
+  --color-bg-sidebar: #e8eaf2; /* 1번: 라벤더 그레이 - 강한 대비로 명확한 구분 */
+  --color-bg-header: #f8f9fc; /* Header 3번: 아주 연한 라벤더 - 화이트에 라벤더 힌트 */
   
   /* ===== SURFACE COLORS - Clean, Modern ===== */
   --color-surface-1: #ffffff;
@@ -437,7 +439,7 @@ button, a, input, select, textarea {
 
 /* Header */
 .ant-layout-header {
-  background: var(--color-surface-1) !important;
+  background: var(--color-bg-header) !important;
   border-bottom: 1px solid var(--color-border-medium) !important;
   padding: 0 var(--spacing-xl) !important;
   height: 64px;
@@ -447,7 +449,7 @@ button, a, input, select, textarea {
 
 /* Sider */
 .ant-layout-sider {
-  background: var(--color-surface-2) !important;
+  background: var(--color-bg-sidebar) !important;
 }
 
 .ant-layout-sider-trigger {
@@ -1782,6 +1784,8 @@ button, a, input, select, textarea {
 .bg-primary { background-color: var(--color-bg-primary); }
 .bg-secondary { background-color: var(--color-bg-secondary); }
 .bg-tertiary { background-color: var(--color-bg-tertiary); }
+.bg-sidebar { background-color: var(--color-bg-sidebar); }
+.bg-header { background-color: var(--color-bg-header); }
 .bg-surface-1 { background-color: var(--color-surface-1); }
 .bg-surface-2 { background-color: var(--color-surface-2); }
 .bg-hover { background-color: var(--color-bg-hover); }
