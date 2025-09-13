@@ -610,9 +610,9 @@ button, a, input, select, textarea {
 
 /* Action Buttons - Theme Responsive */
 .btn-family-relation {
-  background-color: #8b5cf6 !important;
-  border-color: #8b5cf6 !important;
-  color: #ffffff !important;
+  background-color: var(--color-purple) !important;
+  border-color: var(--color-purple) !important;
+  color: var(--color-text-white) !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2) !important;
@@ -620,9 +620,9 @@ button, a, input, select, textarea {
 }
 
 .btn-edit-action {
-  background-color: #34d399 !important;
-  border-color: #34d399 !important;
-  color: #ffffff !important;
+  background-color: var(--color-success) !important;
+  border-color: var(--color-success) !important;
+  color: var(--color-text-white) !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(52, 211, 153, 0.2) !important;
@@ -630,9 +630,9 @@ button, a, input, select, textarea {
 }
 
 .btn-delete-action {
-  background-color: #f87171 !important;
-  border-color: #f87171 !important;
-  color: #ffffff !important;
+  background-color: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-text-white) !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(248, 113, 113, 0.2) !important;
@@ -640,9 +640,9 @@ button, a, input, select, textarea {
 }
 
 .btn-archive-action {
-  background-color: #fbbf24 !important;
-  border-color: #fbbf24 !important;
-  color: #ffffff !important;
+  background-color: var(--color-warning) !important;
+  border-color: var(--color-warning) !important;
+  color: var(--color-text-white) !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2) !important;
@@ -650,41 +650,41 @@ button, a, input, select, textarea {
 }
 
 /* Icon colors for light theme */
-.icon-family-relation { color: #312e81 !important; font-size: 14px !important; font-weight: bold !important; }
-.icon-edit-action { color: #065f46 !important; font-size: 14px !important; font-weight: bold !important; }
-.icon-delete-action { color: #991b1b !important; font-size: 14px !important; font-weight: bold !important; }
-.icon-archive-action { color: #92400e !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-family-relation { color: var(--color-purple-hover) !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-edit-action { color: var(--color-success-hover) !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-delete-action { color: var(--color-error) !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-archive-action { color: var(--color-warning) !important; font-size: 14px !important; font-weight: bold !important; }
 
 /* Dark theme button overrides */
 [data-theme="dark"] .btn-family-relation {
-  background-color: #7c3aed !important;
-  border-color: #7c3aed !important;
+  background-color: var(--color-purple-hover) !important;
+  border-color: var(--color-purple-hover) !important;
   box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3) !important;
 }
 
 [data-theme="dark"] .btn-edit-action {
-  background-color: #10b981 !important;
-  border-color: #10b981 !important;
+  background-color: var(--color-success-hover) !important;
+  border-color: var(--color-success-hover) !important;
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
 }
 
 [data-theme="dark"] .btn-delete-action {
-  background-color: #ef4444 !important;
-  border-color: #ef4444 !important;
+  background-color: var(--color-error) !important;
+  border-color: var(--color-error) !important;
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
 }
 
 [data-theme="dark"] .btn-archive-action {
-  background-color: #f59e0b !important;
-  border-color: #f59e0b !important;
+  background-color: var(--color-warning) !important;
+  border-color: var(--color-warning) !important;
   box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3) !important;
 }
 
 /* Dark theme icon colors */
-[data-theme="dark"] .icon-family-relation { color: #e0e7ff !important; }
-[data-theme="dark"] .icon-edit-action { color: #d1fae5 !important; }
-[data-theme="dark"] .icon-delete-action { color: #fecaca !important; }
-[data-theme="dark"] .icon-archive-action { color: #fef3c7 !important; }
+[data-theme="dark"] .icon-family-relation { color: var(--color-primary-light) !important; }
+[data-theme="dark"] .icon-edit-action { color: var(--color-success-bg) !important; }
+[data-theme="dark"] .icon-delete-action { color: var(--color-error-bg) !important; }
+[data-theme="dark"] .icon-archive-action { color: var(--color-warning-bg) !important; }
 
 /* ===== BUTTON COMPONENTS ===== */
 .aims-btn {
@@ -760,7 +760,7 @@ button, a, input, select, textarea {
 }
 
 .aims-btn-danger:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: var(--color-error);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
@@ -1132,14 +1132,12 @@ button, a, input, select, textarea {
 
 /* ===== UTILITY CLASSES ===== */
 .status-card {
-  background: var(--color-bg-primary);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   box-shadow: 0 1px 3px 0 var(--color-shadow-md);
 }
 
 .document-card {
-  background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 6px -1px var(--color-shadow-md);
   padding: var(--spacing-lg);
@@ -2584,12 +2582,12 @@ html[data-theme="light"] .ant-tooltip-inner {
 
 /* ===== DOCUMENT LIST SELECTION ===== */
 .selected-document-item {
-  background-color: #87ceeb !important;
+  background-color: var(--color-bg-selected) !important;
   box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3) !important;
 }
 
 .selected-document-item:hover {
-  background-color: #5fb3d3 !important;
+  background-color: var(--color-primary) !important;
   box-shadow: 0 4px 12px rgba(95, 179, 211, 0.4) !important;
   transform: translateY(-1px);
   transition: all 0.2s ease;
@@ -3044,21 +3042,12 @@ body::-webkit-scrollbar {
   background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-border-light) 100%);
 }
 
-.gradient-completed { 
-  background: linear-gradient(135deg, var(--color-success-bg) 0%, #a7f3d0 100%);
-}
-
-.gradient-processing { 
-  background: linear-gradient(135deg, var(--color-info-bg) 0%, #bfdbfe 100%);
-}
-
-.gradient-pending { 
-  background: linear-gradient(135deg, var(--color-warning-bg) 0%, #fde68a 100%);
-}
-
-.gradient-error { 
-  background: linear-gradient(135deg, var(--color-error-bg) 0%, #fecaca 100%);
-}
+/* 중복 제거됨 - 대신 사용:
+   .bg-pattern-gradient-success (기존 .gradient-completed)
+   .bg-pattern-gradient-info (기존 .gradient-processing)
+   .bg-pattern-gradient-warning (기존 .gradient-pending)
+   .bg-pattern-gradient-error (기존 .gradient-error)
+*/
 
 /* Flexbox Utilities */
 .flex-column { display: flex; flex-direction: column; }
@@ -3210,27 +3199,7 @@ body::-webkit-scrollbar {
 .text-3xs { font-size: 10px; }
 .text-4xs { font-size: 11px; }
 
-/* 특정 색상들 */
-.text-gray-600 { color: #4b5563; }
-.text-gray-300 { color: #d1d5db; }
-.text-gray-400 { color: #9ca3af; }
-.text-green-600 { color: #059669; }
-.text-green-500 { color: #10b981; }
-.text-red-500 { color: #ef4444; }
-.text-red-600 { color: #dc2626; }
-.text-blue-500 { color: #1890ff; }
-
-/* Background colors */
-.bg-blue-50 { background-color: #f0f9ff; }
-.bg-blue-300 { background-color: #93c5fd; }
-.bg-blue-500 { background-color: #1890ff; }
-.bg-blue-600 { background-color: #3b82f6; }
-.bg-gray-100 { background-color: #f5f5f5; }
-.bg-white { background-color: #ffffff; }
-
-/* Border colors */
-.border-blue-200 { border-color: #bae6fd; }
-.border-gray-300 { border-color: #d9d9d9; }
+/* 중복 제거됨 - 첫 번째 Colors 섹션 사용 */
 
 /* Flex 특수 값들 */
 .flex-0-1-auto { flex: 0 1 auto; }
@@ -4537,6 +4506,46 @@ body::-webkit-scrollbar {
 
 [data-theme="dark"] .custom-menu-item .anticon-dashboard {
   color: #ff4d4f;
+}
+
+/* ===========================
+   공용 배경 패턴 클래스
+   =========================== */
+
+/* 기본 배경 패턴들 - 테마 인식 */
+.bg-pattern-primary {
+  background: var(--color-bg-primary) !important;
+}
+
+.bg-pattern-secondary {
+  background: var(--color-bg-secondary) !important;
+}
+
+.bg-pattern-surface {
+  background-color: var(--color-bg-primary) !important;
+}
+
+.bg-pattern-card {
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-lg);
+}
+
+/* 재사용 가능한 패턴들 */
+.bg-pattern-gradient-success {
+  background: linear-gradient(135deg, var(--color-success-bg) 0%, #a7f3d0 100%);
+}
+
+.bg-pattern-gradient-info {
+  background: linear-gradient(135deg, var(--color-info-bg) 0%, #bfdbfe 100%);
+}
+
+.bg-pattern-gradient-warning {
+  background: linear-gradient(135deg, var(--color-warning-bg) 0%, #fde68a 100%);
+}
+
+.bg-pattern-gradient-error {
+  background: linear-gradient(135deg, var(--color-error-bg) 0%, #fecaca 100%);
 }
 
 /* ===========================
