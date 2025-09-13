@@ -554,8 +554,26 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
   const uploadedDate = extractUploadedDate(document);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-lg" onClick={onClose}>
-      <div className="modal-container max-w-4xl shadow-xl" onClick={e => e.stopPropagation()}>
+    <div style={{
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '1000',
+      padding: '16px'
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--color-surface-1)',
+        borderRadius: '8px',
+        boxShadow: '0 20px 25px -5px var(--color-shadow-lg)',
+        maxWidth: '64rem',
+        width: '100%',
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }} onClick={e => e.stopPropagation()}>
         {/* 헤더 - 고정 */}
         <div className="flex items-center justify-between p-xl border-b flex-shrink-0 border-border-primary">
           <div className="flex items-center gap-md">
@@ -576,7 +594,12 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
         </div>
         
         {/* 콘텐츠 영역 - 스크롤 가능 */}
-        <div className="p-xl overflow-y-auto flex-1">
+        <div style={{
+          padding: '24px',
+          overflowY: 'auto',
+          flex: '1',
+          maxHeight: 'calc(90vh - 120px)'
+        }}>
           <div className="flex flex-col gap-lg">
             <div>
               <h3 className="font-medium text-primary mb-sm">Processing Progress</h3>
