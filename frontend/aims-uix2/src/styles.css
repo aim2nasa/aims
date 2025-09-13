@@ -3983,44 +3983,79 @@ body::-webkit-scrollbar {
    아이콘 색상 시스템
    =========================== */
 
-/* 좌측 사이드바 아이콘 색상 */
-.leftpane-menu .ant-menu-item .anticon {
+/* 좌측 사이드바 아이콘 색상 - 더 강력한 선택자 사용 */
+.leftpane-menu .ant-menu-item .anticon,
+.leftpane-menu .ant-menu-submenu-title .anticon {
   transition: color 0.3s ease;
 }
 
-/* 검색 결과 아이콘 */
-.leftpane-menu .menu-item-search-results .anticon-search {
-  color: #10b981; /* 초록색 - 검색/발견 */
+/* 메뉴별 아이콘 색상 - 키 기반 선택자 + 강제 적용 */
+
+/* 검색 결과 */
+.leftpane-menu .ant-menu-item[data-key="search-results"] .anticon,
+.leftpane-menu .menu-item-search-results .anticon {
+  color: #10b981 !important; /* 초록색 - 검색/발견 */
 }
 
-/* 고객 관리 아이콘 */
-.leftpane-menu .menu-item-customers .anticon-user {
-  color: #3b82f6; /* 파란색 - 사용자/고객 */
+/* 고객 관리 */
+.leftpane-menu .ant-menu-item[data-key="customers"] .anticon,
+.leftpane-menu .ant-menu-submenu[data-key="customers"] .ant-menu-submenu-title .anticon,
+.leftpane-menu .menu-item-customers .anticon {
+  color: #3b82f6 !important; /* 파란색 - 사용자/고객 */
 }
 
-/* 전체보기 아이콘 */
-.leftpane-menu .menu-item-customers-all .anticon-unordered-list {
-  color: #6366f1; /* 보라색 - 리스트/목록 */
+/* 전체보기 */
+.leftpane-menu .ant-menu-item[data-key="customers-all"] .anticon,
+.leftpane-menu .menu-item-customers-all .anticon {
+  color: #6366f1 !important; /* 보라색 - 리스트/목록 */
 }
 
-/* 지역별 보기 아이콘 */
-.leftpane-menu .menu-item-customers-regional .anticon-environment {
-  color: #f59e0b; /* 주황색 - 위치/지역 */
+/* 지역별 보기 */
+.leftpane-menu .ant-menu-item[data-key="customers-regional"] .anticon,
+.leftpane-menu .menu-item-customers-regional .anticon {
+  color: #f59e0b !important; /* 주황색 - 위치/지역 */
 }
 
-/* 관계별 보기 아이콘 */
-.leftpane-menu .menu-item-customers-relationship .anticon-team {
-  color: #8b5cf6; /* 보라색 - 팀/관계 */
+/* 관계별 보기 */
+.leftpane-menu .ant-menu-item[data-key="customers-relationship"] .anticon,
+.leftpane-menu .menu-item-customers-relationship .anticon {
+  color: #8b5cf6 !important; /* 보라색 - 팀/관계 */
 }
 
-/* 문서 관리 아이콘 */
-.leftpane-menu .menu-item-documents .anticon-file-text {
-  color: #059669; /* 에메랄드 - 문서/파일 */
+/* 문서 관리 */
+.leftpane-menu .ant-menu-item[data-key="documents"] .anticon,
+.leftpane-menu .ant-menu-submenu[data-key="documents"] .ant-menu-submenu-title .anticon,
+.leftpane-menu .menu-item-documents .anticon {
+  color: #059669 !important; /* 에메랄드 - 문서/파일 */
 }
 
-/* 문서 처리 현황 아이콘 */
-.leftpane-menu .menu-item-dsd .anticon-dashboard {
-  color: #dc2626; /* 빨간색 - 대시보드/상태 */
+/* 문서 처리 현황 */
+.leftpane-menu .ant-menu-item[data-key="dsd"] .anticon,
+.leftpane-menu .menu-item-dsd .anticon {
+  color: #dc2626 !important; /* 빨간색 - 대시보드/상태 */
+}
+
+/* 특정 아이콘 타입별 추가 선택자 */
+.leftpane-menu .anticon-search {
+  color: #10b981 !important;
+}
+.leftpane-menu .anticon-user {
+  color: #3b82f6 !important;
+}
+.leftpane-menu .anticon-unordered-list {
+  color: #6366f1 !important;
+}
+.leftpane-menu .anticon-environment {
+  color: #f59e0b !important;
+}
+.leftpane-menu .anticon-team {
+  color: #8b5cf6 !important;
+}
+.leftpane-menu .anticon-file-text {
+  color: #059669 !important;
+}
+.leftpane-menu .anticon-dashboard {
+  color: #dc2626 !important;
 }
 
 /* 우측 상단 버튼 아이콘 색상 */
