@@ -4236,5 +4236,162 @@ body::-webkit-scrollbar {
 }
 
 /* ===========================
+   Custom Menu Component Styles
+   =========================== */
+
+/* Custom menu container */
+.custom-menu {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Menu item base styles */
+.custom-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  margin: 2px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+/* Sub-menu item styles (with indentation) */
+.custom-menu-item.sub-menu {
+  padding-left: 32px;
+  font-size: 13px;
+}
+
+/* Collapsed state styles */
+.custom-menu-item.collapsed {
+  padding: 8px 16px;
+  justify-content: center;
+}
+
+.custom-menu-item.collapsed.sub-menu {
+  padding: 8px 12px;
+}
+
+/* Icon styles */
+.custom-menu-item .anticon {
+  margin-right: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.custom-menu-item.collapsed .anticon {
+  margin-right: 0;
+}
+
+/* Menu item text */
+.custom-menu-item-text {
+  transition: opacity 0.3s ease;
+}
+
+.custom-menu-item.collapsed .custom-menu-item-text {
+  display: none;
+}
+
+/* Hover states */
+.custom-menu-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.custom-menu-item:hover .anticon {
+  filter: brightness(1.2);
+  transform: scale(1.05);
+}
+
+/* Selected/Active states */
+.custom-menu-item.selected {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.custom-menu-item.selected .anticon {
+  filter: brightness(1.3);
+  color: var(--primary);
+}
+
+/* Main menu expand indicator */
+.custom-menu-expand {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.custom-menu-expand.expanded {
+  transform: rotate(90deg);
+}
+
+.custom-menu-item.collapsed .custom-menu-expand {
+  display: none;
+}
+
+/* Theme-specific icon colors */
+[data-theme="light"] .custom-menu-item .anticon-search {
+  color: #722ed1;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-user {
+  color: #1890ff;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-unordered-list {
+  color: #52c41a;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-environment {
+  color: #fa8c16;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-team {
+  color: #eb2f96;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-file-text {
+  color: #13c2c2;
+}
+
+[data-theme="light"] .custom-menu-item .anticon-dashboard {
+  color: #f5222d;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-search {
+  color: #b37feb;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-user {
+  color: #40a9ff;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-unordered-list {
+  color: #73d13d;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-environment {
+  color: #ffa940;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-team {
+  color: #f759ab;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-file-text {
+  color: #36cfc9;
+}
+
+[data-theme="dark"] .custom-menu-item .anticon-dashboard {
+  color: #ff4d4f;
+}
+
+/* ===========================
    완료! 통합 CSS 시스템
    =========================== */

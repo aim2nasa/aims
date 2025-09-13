@@ -1,184 +1,163 @@
-import React from 'react';
-import { Menu, Tooltip } from 'antd';
-import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined, FileTextOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Tooltip } from 'antd';
+import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined, FileTextOutlined, RightOutlined } from '@ant-design/icons';
 
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed }) => {
-  // collapsed 상태에 따라 다른 메뉴 구조
-  const menuItems = collapsed ? [
-    // collapsed 상태일 때의 메뉴 구조
+  const [selectedKey, setSelectedKey] = useState('dsd');
+  const [expandedKeys, setExpandedKeys] = useState(collapsed ? [] : ['customers', 'documents']);
+
+  // 메뉴 클릭 핸들러
+  const handleMenuClick = (key) => {
+    setSelectedKey(key);
+    if (onMenuClick) {
+      onMenuClick(key);
+    }
+  };
+
+  // 메인 메뉴 확장/축소 핸들러
+  const handleToggleExpand = (key, e) => {
+    e.stopPropagation();
+    if (collapsed) return;
+    
+    setExpandedKeys(prev => 
+      prev.includes(key) 
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    );
+  };
+
+  // 커스텀 메뉴 아이템 렌더링
+  const CustomMenuItem = ({ item, isSubMenu = false }) => {
+    const isSelected = selectedKey === item.key;
+    const isExpanded = expandedKeys.includes(item.key);
+    const hasChildren = item.children && item.children.length > 0;
+    
+    const className = `custom-menu-item ${
+      isSubMenu ? 'sub-menu' : ''
+    } ${collapsed ? 'collapsed' : ''} ${
+      isSelected ? 'selected' : ''
+    }`;
+
+    const content = (
+      <div 
+        className={className}
+        onClick={() => handleMenuClick(item.key)}
+      >
+        {item.icon}
+        <span className="custom-menu-item-text">{item.label}</span>
+        {hasChildren && !collapsed && (
+          <RightOutlined 
+            className={`custom-menu-expand ${isExpanded ? 'expanded' : ''}`}
+            onClick={(e) => handleToggleExpand(item.key, e)}
+          />
+        )}
+      </div>
+    );
+
+    return (
+      <div key={item.key}>
+        <Tooltip title={item.tooltipTitle} placement="right">
+          {content}
+        </Tooltip>
+        {hasChildren && !collapsed && isExpanded && (
+          <div>
+            {item.children.map(child => (
+              <CustomMenuItem key={child.key} item={child} isSubMenu={true} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 메뉴 데이터 구조
+  const menuItems = [
     ...(hasSearchResults ? [{
       key: 'search-results',
       icon: <SearchOutlined />,
-      label: ``,
+      label: collapsed ? '' : `검색 결과 (${searchResultsCount || 0}개)`,
       tooltipTitle: `검색 결과 (${searchResultsCount || 0}개)`,
-      className: 'menu-item-search-results'
     }] : []),
     
     {
       key: 'customers',
       icon: <UserOutlined />,
-      label: '',
+      label: collapsed ? '' : '고객 관리',
       tooltipTitle: '고객 관리',
-      className: 'menu-item-customers'
-    },
-    {
-      key: 'customers-all',
-      icon: <UnorderedListOutlined />,
-      label: '',
-      tooltipTitle: '모든 고객을 보여줍니다',
-      style: { paddingLeft: '12px' },
-      className: 'menu-item-customers-all'
-    },
-    {
-      key: 'customers-regional',
-      icon: <EnvironmentOutlined />,
-      label: '',
-      tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
-      style: { paddingLeft: '12px' },
-      className: 'menu-item-customers-regional'
-    },
-    {
-      key: 'customers-relationship',
-      icon: <TeamOutlined />,
-      label: '',
-      tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
-      style: { paddingLeft: '12px' },
-      className: 'menu-item-customers-relationship'
-    },
-    {
-      key: 'documents',
-      icon: <FileTextOutlined />,
-      label: '',
-      tooltipTitle: '문서 관리',
-      className: 'menu-item-documents'
-    },
-    {
-      key: 'dsd',
-      icon: <DashboardOutlined />,
-      label: '',
-      tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
-      style: { paddingLeft: '12px' },
-      className: 'menu-item-dsd'
-    },
-  ] : [
-    // 펼쳐진 상태일 때의 메뉴 구조
-    ...(hasSearchResults ? [{
-      key: 'search-results',
-      icon: <SearchOutlined />,
-      label: `검색 결과 (${searchResultsCount || 0}개)`,
-      tooltipTitle: `검색 결과 (${searchResultsCount || 0}개)`,
-      className: 'menu-item-search-results'
-    }] : []),
-    
-    {
-      key: 'customers',
-      icon: <UserOutlined />,
-      label: '고객 관리',
-      tooltipTitle: '고객 관리',
-      onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
-      className: 'menu-item-customers',
-      children: [
+      children: collapsed ? null : [
         {
           key: 'customers-all',
           icon: <UnorderedListOutlined />,
           label: '전체보기',
           tooltipTitle: '모든 고객을 보여줍니다',
-          className: 'menu-item-customers-all'
         },
         {
           key: 'customers-regional',
           icon: <EnvironmentOutlined />,
           label: '지역별 보기',
           tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
-          className: 'menu-item-customers-regional'
         },
         {
           key: 'customers-relationship',
           icon: <TeamOutlined />,
           label: '관계별 보기',
           tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
-          className: 'menu-item-customers-relationship'
         }
-      ],
+      ]
     },
+    
+    // collapsed 상태에서 서브메뉴들을 개별적으로 표시
+    ...(collapsed ? [
+      {
+        key: 'customers-all',
+        icon: <UnorderedListOutlined />,
+        label: '',
+        tooltipTitle: '모든 고객을 보여줍니다',
+      },
+      {
+        key: 'customers-regional',
+        icon: <EnvironmentOutlined />,
+        label: '',
+        tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
+      },
+      {
+        key: 'customers-relationship',
+        icon: <TeamOutlined />,
+        label: '',
+        tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
+      }
+    ] : []),
+    
     {
       key: 'documents',
       icon: <FileTextOutlined />,
-      label: '문서 관리',
+      label: collapsed ? '' : '문서 관리',
       tooltipTitle: '문서 관리',
-      onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
-      className: 'menu-item-documents',
-      children: [
+      children: collapsed ? null : [
         {
           key: 'dsd',
           icon: <DashboardOutlined />,
           label: '문서 처리 현황',
           tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
-          className: 'menu-item-dsd'
         }
-      ],
+      ]
     },
+    
+    // collapsed 상태에서 문서 서브메뉴 표시
+    ...(collapsed ? [{
+      key: 'dsd',
+      icon: <DashboardOutlined />,
+      label: '',
+      tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
+    }] : [])
   ];
 
-  // 커스텀 메뉴 아이템 렌더링 함수
-  const renderMenuItem = (item) => {
-    if (item.children) {
-      return {
-        key: item.key,
-        icon: item.icon,
-        className: item.className,
-        onTitleClick: item.onTitleClick,
-        children: item.children.map(child => ({
-          key: child.key,
-          icon: child.icon,
-          className: child.className,
-          style: child.style,
-          label: (
-            <Tooltip title={child.tooltipTitle} placement="right">
-              <span>{child.label}</span>
-            </Tooltip>
-          )
-        })),
-        label: (
-          <Tooltip title={item.tooltipTitle} placement="right">
-            <span>{item.label}</span>
-          </Tooltip>
-        )
-      };
-    }
-    
-    return {
-      key: item.key,
-      icon: item.icon,
-      className: item.className,
-      style: item.style,
-      label: (
-        <Tooltip title={item.tooltipTitle} placement="right">
-          <span>{item.label || ''}</span>
-        </Tooltip>
-      )
-    };
-  };
-
-  // 메뉴 아이템들에 툴팁 적용
-  const processedMenuItems = menuItems.map(renderMenuItem);
 
   return (
-    <div>
-      <Menu 
-        items={processedMenuItems} 
-        mode="inline" 
-        defaultSelectedKeys={['dsd']} 
-        openKeys={collapsed ? [] : ['customers', 'documents']}
-        onOpenChange={() => {}}
-        onClick={({ key }) => onMenuClick && onMenuClick(key)}
-        expandIcon={() => null}
-        className="leftpane-menu"
-        style={{
-          backgroundColor: 'transparent',
-          border: 'none'
-        }}
-      />
+    <div className="custom-menu">
+      {menuItems.map(item => (
+        <CustomMenuItem key={item.key} item={item} />
+      ))}
     </div>
   );
 };
