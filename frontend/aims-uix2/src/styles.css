@@ -3915,6 +3915,36 @@ body::-webkit-scrollbar {
 .grid { display: grid; }
 .grid-cols-auto-fit { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 
+/* Modal Components */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-container {
+  background: var(--color-surface-1);
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px var(--color-shadow-lg);
+  max-width: 64rem;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 120px);
+}
+
 /* ===========================
    완료! 통합 CSS 시스템
    =========================== */

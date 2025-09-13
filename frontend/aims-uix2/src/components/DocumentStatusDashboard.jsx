@@ -568,8 +568,9 @@ const DocumentDetailModal = ({ document, isOpen, onClose, rightPaneVisible = fal
         background: 'var(--color-surface-1)',
         borderRadius: '8px',
         boxShadow: '0 20px 25px -5px var(--color-shadow-lg)',
-        maxWidth: '64rem',
-        width: '100%',
+        maxWidth: 'fit-content',
+        width: 'auto',
+        minWidth: '32rem',
         maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column'
