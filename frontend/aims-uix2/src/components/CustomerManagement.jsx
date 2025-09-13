@@ -522,7 +522,7 @@ className="text-primary text-lg cursor-pointer"
     <div>
       {/* 고객 관리 제목 */}
       <div className="py-lg flex-center gap-sm">
-        <UserOutlined />
+        <UserOutlined style={{ color: '#3b82f6' }} />
         <span className="text-xl font-semibold text-primary">고객 관리</span>
         {searchText && (
           <span className="text-primary text-lg">
