@@ -1664,6 +1664,7 @@ html[data-theme="light"] .ant-tooltip-inner {
   color: #6b7280 !important;
 }
 
+
 /* ===== BADGE ===== */
 .ant-badge-count {
   background: var(--color-error) !important;
