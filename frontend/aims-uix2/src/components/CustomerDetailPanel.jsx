@@ -439,22 +439,32 @@ className="text-sm"
         <Space className="customer-action-buttons">
           {canAddFamilyRelation && (
             <Button 
-              type="primary" 
               size="small" 
               icon={<TeamOutlined />}
               onClick={handleOpenFamilyRelationshipModal}
               className="text-xs btn-add-relation"
+              style={{ 
+                backgroundColor: 'var(--color-primary-bg)', 
+                borderColor: 'var(--color-primary)',
+                color: 'var(--color-primary)',
+                border: '1px solid var(--color-primary)'
+              }}
             >
               가족 관계
             </Button>
           )}
           {onEdit && (
             <Button 
-              type="primary" 
               size="small" 
               icon={<EditOutlined />}
               onClick={() => onEdit(customer)}
               className="text-2xs btn-edit"
+              style={{ 
+                backgroundColor: 'var(--color-success-bg)', 
+                borderColor: 'var(--color-success)',
+                color: 'var(--color-success)',
+                border: '1px solid var(--color-success)'
+              }}
             >
               수정
             </Button>
@@ -469,10 +479,15 @@ className="text-sm"
               okType="danger"
             >
               <Button 
-                danger 
                 size="small" 
                 icon={<DeleteOutlined />}
                 className="text-xs btn-delete"
+                style={{ 
+                  backgroundColor: 'var(--color-error-bg)', 
+                  borderColor: 'var(--color-error)',
+                  color: 'var(--color-error)',
+                  border: '1px solid var(--color-error)'
+                }}
               >
                 삭제
               </Button>
