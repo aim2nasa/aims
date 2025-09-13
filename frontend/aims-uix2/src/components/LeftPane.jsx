@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu } from 'antd';
+import { Menu, Tooltip } from 'antd';
 import { DashboardOutlined, SearchOutlined, UserOutlined, UnorderedListOutlined, TeamOutlined, EnvironmentOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed }) => {
@@ -10,7 +10,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'search-results',
       icon: <SearchOutlined />,
       label: ``,
-      title: `검색 결과 (${searchResultsCount || 0}개)`,
+      tooltipTitle: `검색 결과 (${searchResultsCount || 0}개)`,
       className: 'menu-item-search-results'
     }] : []),
     
@@ -18,14 +18,14 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'customers',
       icon: <UserOutlined />,
       label: '',
-      title: '고객 관리',
+      tooltipTitle: '고객 관리',
       className: 'menu-item-customers'
     },
     {
       key: 'customers-all',
       icon: <UnorderedListOutlined />,
       label: '',
-      title: '전체보기',
+      tooltipTitle: '모든 고객을 보여줍니다',
       style: { paddingLeft: '12px' },
       className: 'menu-item-customers-all'
     },
@@ -33,7 +33,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'customers-regional',
       icon: <EnvironmentOutlined />,
       label: '',
-      title: '지역별 보기',
+      tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
       style: { paddingLeft: '12px' },
       className: 'menu-item-customers-regional'
     },
@@ -41,7 +41,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'customers-relationship',
       icon: <TeamOutlined />,
       label: '',
-      title: '관계별 보기',
+      tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
       style: { paddingLeft: '12px' },
       className: 'menu-item-customers-relationship'
     },
@@ -49,14 +49,14 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'documents',
       icon: <FileTextOutlined />,
       label: '',
-      title: '문서 관리',
+      tooltipTitle: '문서 관리',
       className: 'menu-item-documents'
     },
     {
       key: 'dsd',
       icon: <DashboardOutlined />,
       label: '',
-      title: '문서 처리 현황',
+      tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
       style: { paddingLeft: '12px' },
       className: 'menu-item-dsd'
     },
@@ -66,6 +66,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'search-results',
       icon: <SearchOutlined />,
       label: `검색 결과 (${searchResultsCount || 0}개)`,
+      tooltipTitle: `검색 결과 (${searchResultsCount || 0}개)`,
       className: 'menu-item-search-results'
     }] : []),
     
@@ -73,6 +74,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'customers',
       icon: <UserOutlined />,
       label: '고객 관리',
+      tooltipTitle: '고객 관리',
       onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
       className: 'menu-item-customers',
       children: [
@@ -80,18 +82,21 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
           key: 'customers-all',
           icon: <UnorderedListOutlined />,
           label: '전체보기',
+          tooltipTitle: '모든 고객을 보여줍니다',
           className: 'menu-item-customers-all'
         },
         {
           key: 'customers-regional',
           icon: <EnvironmentOutlined />,
           label: '지역별 보기',
+          tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
           className: 'menu-item-customers-regional'
         },
         {
           key: 'customers-relationship',
           icon: <TeamOutlined />,
           label: '관계별 보기',
+          tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
           className: 'menu-item-customers-relationship'
         }
       ],
@@ -100,6 +105,7 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
       key: 'documents',
       icon: <FileTextOutlined />,
       label: '문서 관리',
+      tooltipTitle: '문서 관리',
       onTitleClick: ({ key }) => onMenuClick && onMenuClick(key),
       className: 'menu-item-documents',
       children: [
@@ -107,16 +113,60 @@ const LeftPane = ({ onMenuClick, hasSearchResults, searchResultsCount, collapsed
           key: 'dsd',
           icon: <DashboardOutlined />,
           label: '문서 처리 현황',
+          tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
           className: 'menu-item-dsd'
         }
       ],
     },
   ];
 
+  // 커스텀 메뉴 아이템 렌더링 함수
+  const renderMenuItem = (item) => {
+    if (item.children) {
+      return {
+        key: item.key,
+        icon: item.icon,
+        className: item.className,
+        onTitleClick: item.onTitleClick,
+        children: item.children.map(child => ({
+          key: child.key,
+          icon: child.icon,
+          className: child.className,
+          style: child.style,
+          label: (
+            <Tooltip title={child.tooltipTitle} placement="right">
+              <span>{child.label}</span>
+            </Tooltip>
+          )
+        })),
+        label: (
+          <Tooltip title={item.tooltipTitle} placement="right">
+            <span>{item.label}</span>
+          </Tooltip>
+        )
+      };
+    }
+    
+    return {
+      key: item.key,
+      icon: item.icon,
+      className: item.className,
+      style: item.style,
+      label: (
+        <Tooltip title={item.tooltipTitle} placement="right">
+          <span>{item.label || ''}</span>
+        </Tooltip>
+      )
+    };
+  };
+
+  // 메뉴 아이템들에 툴팁 적용
+  const processedMenuItems = menuItems.map(renderMenuItem);
+
   return (
     <div>
       <Menu 
-        items={menuItems} 
+        items={processedMenuItems} 
         mode="inline" 
         defaultSelectedKeys={['dsd']} 
         openKeys={collapsed ? [] : ['customers', 'documents']}
