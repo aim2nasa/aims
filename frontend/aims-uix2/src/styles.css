@@ -129,13 +129,13 @@ table {
   --color-purple-shadow: rgba(168, 85, 247, 0.25);
   --color-purple-shadow-hover: rgba(168, 85, 247, 0.35);
   
-  /* ===== TEXT COLORS - Warmer, More Readable ===== */
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
+  /* ===== TEXT COLORS - 강렬한 대비에 맞는 색상 ===== */
+  --color-text-primary: #0f172a; /* 네이비 계열 유지 */
+  --color-text-secondary: #475569; /* 중간 네이비 회색 */
+  --color-text-tertiary: #64748b; /* 연한 네이비 회색 */
   --color-text-disabled: #94a3b8;
-  --color-text-white: #ffffff;
-  --color-text-inverse: #ffffff;
+  --color-text-white: #ffffff; /* 사이드바, 헤더용 흰색 */
+  --color-text-inverse: #ffffff; /* 강조 영역용 흰색 */
   
   /* ===== STATUS COLORS - More Vibrant ===== */
   --color-success: #059669;
@@ -163,29 +163,29 @@ table {
   --color-icon-cyan: #06b6d4; /* 청록색 아이콘 */
   --color-icon-red: #ef4444; /* 빨간색 아이콘 */
   
-  /* ===== BACKGROUND COLORS - color.png 가이드 반영 ===== */
-  --color-bg-primary: #f8fafb; /* 메인 배경 - 더 은은하고 밝은 회색 */
-  --color-bg-secondary: #ffffff; /* 카드, 패널 배경 - 순백색 유지 */
-  --color-bg-rightpane: #fbfcfd; /* 우측 패널 - 메인 배경보다 약간 더 밝게 */
+  /* ===== BACKGROUND COLORS - 강렬하고 눈에 띄는 대비 ===== */
+  --color-bg-primary: #dbeafe; /* 메인 배경 - 강렬한 하늘색 */
+  --color-bg-secondary: #e0f2fe; /* 카드, 패널 배경 - 시아니시 블루 */
+  --color-bg-rightpane: #fde8d3; /* 우측 패널 - 은은한 오렌지 */
   --color-bg-tertiary: #f8fafc;
-  --color-bg-hover: #f3f4f6;
-  --color-bg-selected: #f0f4ff;
-  --color-bg-overlay: rgba(15, 23, 42, 0.6);
+  --color-bg-hover: #dbeafe; /* 호버 - 진한 하늘색 */
+  --color-bg-selected: #bfdbfe; /* 선택 - 강렬한 하늘색 */
+  --color-bg-overlay: rgba(59, 130, 246, 0.15);
   --color-bg-sidebar: #e8eaf2; /* 1번: 라벤더 그레이 - 강한 대비로 명확한 구분 */
-  --color-bg-header: #f8f9fc; /* Header 3번: 아주 연한 라벤더 - 화이트에 라벤더 힌트 */
+  --color-bg-header: #3b82f6; /* 헤더 - 강렬한 파란색 (다크 모드와 대비) */
   
-  /* ===== SURFACE COLORS - Clean, Modern ===== */
-  --color-surface-1: #ffffff;
-  --color-surface-2: #fefefe;
-  --color-surface-3: #f8fafc;
-  --color-surface-4: #e2e8f0;
+  /* ===== SURFACE COLORS - 강렬한 대비를 위한 컴포넌트 색상 ===== */
+  --color-surface-1: #ffffff; /* 순백색 - 강한 대비 */
+  --color-surface-2: #f1f5f9; /* 연한 회색 - 카드 헤더 */
+  --color-surface-3: #e2e8f0; /* 중간 회색 - 구분선 */
+  --color-surface-4: #cbd5e1; /* 진한 회색 - 보더 */
   
-  /* ===== BORDER COLORS - Subtle, Clean ===== */
-  --color-border-light: #f1f5f9;
-  --color-border-medium: #e2e8f0;
-  --color-border-dark: #cbd5e1;
-  --color-border-focus: #6366f1;
-  --color-border: #e2e8f0;
+  /* ===== BORDER COLORS - Prominent, Visible ===== */
+  --color-border-light: #cbd5e1; /* 더 진한 회색 */
+  --color-border-medium: #94a3b8; /* 중간 진한 회색 */
+  --color-border-dark: #64748b; /* 진한 회색 */
+  --color-border-focus: #3b82f6; /* 강한 파란색 */
+  --color-border: #94a3b8; /* 기본 테두리 - 더 진함 */
   
   /* ===== SHADOW COLORS ===== */
   --color-shadow-sm: rgba(0, 0, 0, 0.05);
@@ -193,18 +193,18 @@ table {
   --color-shadow-lg: rgba(0, 0, 0, 0.15);
   --color-shadow-xl: rgba(0, 0, 0, 0.25);
   
-  /* ===== COMPONENT SPECIFIC - Modern, Clean ===== */
+  /* ===== COMPONENT SPECIFIC - Prominent, Visible ===== */
   --color-input-bg: #ffffff;
-  --color-input-border: #e2e8f0;
-  --color-input-focus-border: #6366f1;
-  --color-input-disabled-bg: #f8fafc;
+  --color-input-border: #94a3b8; /* 더 진한 테두리 */
+  --color-input-focus-border: #3b82f6; /* 강한 파란색 포커스 */
+  --color-input-disabled-bg: #e2e8f0; /* 더 진한 비활성화 배경 */
   
-  --color-button-ghost-hover: rgba(99, 102, 241, 0.08);
-  --color-button-ghost-active: rgba(99, 102, 241, 0.15);
+  --color-button-ghost-hover: rgba(59, 130, 246, 0.12); /* 더 진한 호버 */
+  --color-button-ghost-active: rgba(59, 130, 246, 0.20); /* 더 진한 액티브 */
   
-  --color-link: #6366f1;
-  --color-link-hover: #4f46e5;
-  --color-link-visited: #a855f7;
+  --color-link: #3b82f6; /* 더 강한 링크 색상 */
+  --color-link-hover: #2563eb; /* 더 진한 호버 */
+  --color-link-visited: #9333ea; /* 더 진한 방문 링크 */
   
   /* ===== SCROLLBAR - Subtle ===== */
   --color-scrollbar-track: #f8fafc;
@@ -451,7 +451,7 @@ table {
   /* ===== BACKGROUND COLORS - color.png 기준 ===== */
   --color-bg-primary: #374151; /* 메인 배경 */
   --color-bg-secondary: #4b5563; /* 카드/패널 배경 */
-  --color-bg-rightpane: #2d3748;
+  --color-bg-rightpane: #2d3748; /* 다크 테마 RightPane - 원래대로 복원 */
   --color-bg-tertiary: #6b7280;
   --color-bg-hover: #4b5563;
   --color-bg-selected: #1e3a8a;
@@ -587,9 +587,9 @@ button, a, input, select, textarea {
   color: var(--color-text-primary) !important;
 }
 
-/* Content */
+/* Content - 메인 배경 */
 .ant-layout-content {
-  background: var(--color-bg-secondary) !important;
+  background: var(--color-bg-primary) !important; /* 메인 배경 사용 */
   padding: var(--spacing-lg);
   min-height: calc(100vh - 64px);
 }
@@ -1549,14 +1549,14 @@ button, a, input, select, textarea {
 /* ===== CARDS & PANELS ===== */
 .ant-card {
   background: var(--color-surface-1) !important;
-  border: 1px solid var(--color-border-light) !important;
+  border: none !important; /* 미니멀리즘 - 테두리 제거 */
   color: var(--color-text-primary) !important;
-  box-shadow: 0 1px 2px var(--color-shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); /* 아주 은은한 그림자 */
 }
 
 .ant-card-head {
   background: var(--color-surface-2) !important;
-  border-bottom: 1px solid var(--color-border-light) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important; /* 아주 은은한 구분선 */
   color: var(--color-text-primary) !important;
 }
 
@@ -1584,12 +1584,12 @@ button, a, input, select, textarea {
 .ant-table-thead > tr > th {
   background: var(--color-surface-2) !important;
   color: var(--color-text-primary) !important;
-  border-bottom: 1px solid var(--color-border-medium) !important;
+  border-bottom: 2px solid var(--color-border-dark) !important; /* 더 진한 헤더 구분선 */
   font-weight: var(--font-weight-semibold);
 }
 
 .ant-table-tbody > tr > td {
-  border-bottom: 1px solid var(--color-border-light) !important;
+  border-bottom: 1px solid var(--color-border-medium) !important; /* 더 진한 행 구분선 */
   color: var(--color-text-primary) !important;
   font-weight: normal;
 }
@@ -1641,6 +1641,57 @@ button, a, input, select, textarea {
 .ant-input-affix-wrapper-focused {
   border-color: var(--color-input-focus-border) !important;
   box-shadow: 0 0 0 2px var(--color-primary-light) !important;
+}
+
+/* ===== BUTTONS - Prominent, Visible ===== */
+.ant-btn {
+  border-width: 2px !important; /* 더 진한 테두리 */
+  font-weight: var(--font-weight-medium) !important;
+  box-shadow: 0 1px 3px var(--color-shadow-sm) !important;
+}
+
+.ant-btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text-white) !important;
+}
+
+.ant-btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  box-shadow: 0 2px 6px var(--color-shadow-md) !important;
+}
+
+.ant-btn-default {
+  background: var(--color-surface-1) !important;
+  border-color: var(--color-border-medium) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-btn-default:hover {
+  background: var(--color-bg-hover) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  box-shadow: 0 2px 6px var(--color-shadow-md) !important;
+}
+
+.ant-btn-text {
+  color: var(--color-text-secondary) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.ant-btn-text:hover {
+  background: var(--color-bg-hover) !important;
+  color: var(--color-primary) !important;
+}
+
+.ant-btn-link {
+  color: var(--color-link) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.ant-btn-link:hover {
+  color: var(--color-link-hover) !important;
 }
 
 /* ===== SELECT ===== */
@@ -1734,10 +1785,35 @@ button, a, input, select, textarea {
   background-color: var(--color-surface-2) !important;
 }
 
+/* ===== LIST - Prominent Borders ===== */
+.ant-list {
+  background: var(--color-surface-1) !important;
+  border: none !important; /* 미니멀리즘 - 테두리 제거 */
+  border-radius: var(--border-radius-lg) !important;
+}
+
+.ant-list-item {
+  border-bottom: 1px solid var(--color-border-medium) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-list-item:hover {
+  background: var(--color-bg-hover) !important;
+}
+
+.ant-list-item-meta-title {
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.ant-list-item-meta-description {
+  color: var(--color-text-secondary) !important;
+}
+
 /* ===== DROPDOWN ===== */
 .ant-dropdown-menu {
   background: var(--color-surface-1) !important;
-  border: 1px solid var(--color-border-medium) !important;
+  border: 2px solid var(--color-border-medium) !important;
   box-shadow: 0 4px 12px var(--color-shadow-md) !important;
 }
 
@@ -2399,6 +2475,37 @@ html[data-theme="light"] .ant-tooltip-inner {
 /* ===========================
    THEME-SPECIFIC OVERRIDES
    =========================== */
+
+/* ===== LIGHT THEME BOLD STYLE ===== */
+/* 라이트 모드 강렬한 헤더 스타일 */
+:root .ant-layout-header,
+[data-theme="light"] .ant-layout-header {
+  background: var(--color-bg-header) !important;
+  color: var(--color-text-white) !important;
+}
+
+:root .ant-layout-header *,
+[data-theme="light"] .ant-layout-header * {
+  color: var(--color-text-white) !important;
+}
+
+:root .app-title,
+[data-theme="light"] .app-title {
+  color: var(--color-text-white) !important;
+  font-weight: bold !important;
+}
+
+/* 라이트 모드 사이드바 스타일 - 기존 디자인 유지 */
+:root .ant-layout-sider,
+[data-theme="light"] .ant-layout-sider {
+  background-color: var(--color-bg-sidebar) !important;
+}
+
+:root .ant-layout-sider-trigger,
+[data-theme="light"] .ant-layout-sider-trigger {
+  background-color: var(--color-bg-sidebar) !important;
+  color: var(--color-text-primary) !important; /* 기존 텍스트 색상 */
+}
 
 /* DARK THEME SPECIFIC OVERRIDES */
 [data-theme="dark"] .ant-layout-header {
@@ -4076,6 +4183,29 @@ body::-webkit-scrollbar {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* CenterPane & RightPane 대비 색상 설정 */
+.content-with-dynamic-width {
+  background: var(--color-bg-secondary) !important; /* CenterPane - 시안색 배경 */
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 미니멀한 그림자만 */
+  border: none; /* 경계선 제거 - 미니멀리즘 */
+  width: var(--content-width);
+  margin-right: var(--content-margin-right);
+  transition: var(--content-transition);
+}
+
+.right-pane-container {
+  background: var(--color-bg-rightpane) !important; /* RightPane - 앰버 배경 */
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 미니멀한 그림자만 */
+  border: none; /* 경계선 제거 - 미니멀리즘 */
+  width: var(--right-pane-width);
+  transition: var(--right-pane-transition);
+  flex-shrink: 0;
 }
 
 /* RightPane utilities */
