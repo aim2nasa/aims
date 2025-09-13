@@ -444,7 +444,7 @@ className="text-sm"
               onClick={handleOpenFamilyRelationshipModal}
               className="text-xs btn-add-relation btn-family-relation"
             >
-              가족 관계
+              가족 관계 추가
             </Button>
           )}
           {onEdit && (
@@ -454,7 +454,7 @@ className="text-sm"
               onClick={() => onEdit(customer)}
               className="text-2xs btn-edit btn-edit-action"
             >
-              수정
+              고객 정보 수정
             </Button>
           )}
           {onDelete && (
@@ -471,7 +471,7 @@ className="text-sm"
                 icon={<DeleteOutlined className="icon-delete-action" />}
                 className="text-xs btn-delete btn-delete-action"
               >
-                삭제
+                고객 삭제
               </Button>
             </Popconfirm>
           )}
@@ -575,7 +575,7 @@ className="text-sm"
                               onClick={() => setAddressArchiveVisible(true)}
                               className="px-1_5 py-0_5 text-4xs h-auto btn-archive-action"
                             >
-                              보관소
+                              주소 보관소
                             </Button>
                           </div>
                           {customer.personal_info.address.address2 && (
