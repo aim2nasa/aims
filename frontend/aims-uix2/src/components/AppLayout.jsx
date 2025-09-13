@@ -435,6 +435,7 @@ const AppLayout = () => {
             icon={<SearchOutlined />}
             onClick={onSearch}
             loading={isLoading}
+            className="aims-btn-primary"
             style={{ 
               width: '90px'
             }}
