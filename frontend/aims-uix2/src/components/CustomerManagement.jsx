@@ -357,7 +357,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
       title: '고객명',
       dataIndex: ['personal_info', 'name'],
       key: 'name',
-      width: 200,
+      width: '25%',
       render: (name, record) => {
         const { Icon, color } = getCustomerTypeIconWithColor(record);
         
@@ -380,7 +380,7 @@ const CustomerManagement = ({ onCustomerClick, selectedMenuKey, onRefreshCustome
     {
       title: '연락처',
       key: 'contact',
-      width: 140,
+      width: '20%',
       render: (_, record) => {
         const mobilePhone = record.personal_info?.mobile_phone || record.personal_info?.phone; // 호환성
         const homePhone = record.personal_info?.home_phone;
@@ -446,13 +446,13 @@ className="text-primary text-lg cursor-pointer"
       title: '고객 유형',
       dataIndex: ['insurance_info', 'customer_type'],
       key: 'customer_type',
-      width: 100,
+      width: '15%',
       render: type => type && <Tag color={type === '법인' ? 'blue' : 'green'}>{type}</Tag>
     },
     {
       title: '문서 수',
       key: 'documents_count',
-      width: 100,
+      width: '15%',
       render: (_, record) => (
         <Button 
           variant="link" 
@@ -467,7 +467,7 @@ className="text-primary text-lg cursor-pointer"
       title: '상태',
       dataIndex: ['meta', 'status'],
       key: 'status',
-      width: 80,
+      width: '10%',
       render: status => {
         const color = status === 'active' ? 'green' : 'red';
         const text = status === 'active' ? '활성' : '비활성';
@@ -478,7 +478,7 @@ className="text-primary text-lg cursor-pointer"
       title: '등록일',
       dataIndex: ['meta', 'created_at'],
       key: 'created_at',
-      width: 120,
+      width: '15%',
       render: date => date && dayjs(date).format('YYYY-MM-DD')
     }
   ];
@@ -603,13 +603,7 @@ className="text-primary text-lg cursor-pointer"
                   pageSize: size
                 }));
               },
-              showTotal: (total, range) => (
-                <div className="form-controls">
-                  <span>
-                    {range[0]}-{range[1]} of {total} customers
-                  </span>
-                </div>
-              ),
+              showTotal: false,
               className: 'fixed-bottom-pagination'
             }}
             onRow={(record) => ({
