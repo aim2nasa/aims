@@ -172,7 +172,7 @@ table {
   --color-bg-selected: #bfdbfe; /* 선택 - 강렬한 하늘색 */
   --color-bg-overlay: rgba(59, 130, 246, 0.15);
   --color-bg-sidebar: #e8eaf2; /* 1번: 라벤더 그레이 - 강한 대비로 명확한 구분 */
-  --color-bg-header: #3b82f6; /* 헤더 - 강렬한 파란색 (다크 모드와 대비) */
+  --color-bg-header: linear-gradient(135deg, #1e3a8a 0%, #1e40af 15%, #3b82f6 30%, #6366f1 45%, #8b5cf6 60%, #a855f7 75%, #d946ef 90%, #f59e0b 100%); /* 헤더 - 극적인 다층 그라데이션 */
   
   /* ===== SURFACE COLORS - 강렬한 대비를 위한 컴포넌트 색상 ===== */
   --color-surface-1: #ffffff; /* 순백색 - 강한 대비 */
@@ -2477,22 +2477,124 @@ html[data-theme="light"] .ant-tooltip-inner {
    =========================== */
 
 /* ===== LIGHT THEME BOLD STYLE ===== */
-/* 라이트 모드 강렬한 헤더 스타일 */
+/* 라이트 모드 극적인 헤더 스타일 */
 :root .ant-layout-header,
 [data-theme="light"] .ant-layout-header {
   background: var(--color-bg-header) !important;
   color: var(--color-text-white) !important;
+  box-shadow:
+    0 8px 32px rgba(59, 130, 246, 0.4),
+    0 4px 16px rgba(139, 92, 246, 0.3),
+    0 0 60px rgba(168, 85, 247, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1); /* 극적인 다층 그림자 */
+  position: relative;
+  overflow: hidden;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+  animation: headerPulse 6s ease-in-out infinite; /* 부드러운 펄스 효과 */
 }
 
-:root .ant-layout-header *,
-[data-theme="light"] .ant-layout-header * {
+/* 헤더에 다층 움직이는 효과 추가 */
+:root .ant-layout-header::before,
+[data-theme="light"] .ant-layout-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.05),
+    transparent);
+  animation: shimmer 2.5s infinite;
+  z-index: 1;
+}
+
+/* 추가적인 광채 효과 */
+:root .ant-layout-header::after,
+[data-theme="light"] .ant-layout-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(-45deg,
+    transparent,
+    rgba(255, 215, 0, 0.1),
+    rgba(255, 255, 255, 0.08),
+    transparent);
+  animation: glimmer 4s infinite;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+@keyframes glimmer {
+  0% { right: -100%; }
+  25% { right: 150%; }
+  50% { right: 150%; }
+  75% { right: 150%; }
+  100% { right: 150%; }
+}
+
+@keyframes headerPulse {
+  0% {
+    box-shadow:
+      0 8px 32px rgba(59, 130, 246, 0.4),
+      0 4px 16px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(168, 85, 247, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 12px 48px rgba(59, 130, 246, 0.6),
+      0 6px 24px rgba(139, 92, 246, 0.5),
+      0 0 80px rgba(168, 85, 247, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  100% {
+    box-shadow:
+      0 8px 32px rgba(59, 130, 246, 0.4),
+      0 4px 16px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(168, 85, 247, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* 헤더 내 텍스트는 흰색으로, 아이콘 색상은 유지 */
+:root .ant-layout-header .app-title,
+[data-theme="light"] .ant-layout-header .app-title,
+:root .ant-layout-header .ant-input,
+[data-theme="light"] .ant-layout-header .ant-input,
+:root .ant-layout-header .ant-select-selection-item,
+[data-theme="light"] .ant-layout-header .ant-select-selection-item {
   color: var(--color-text-white) !important;
+  position: relative;
+  z-index: 2; /* 애니메이션 효과보다 위에 표시 */
 }
 
 :root .app-title,
 [data-theme="light"] .app-title {
   color: var(--color-text-white) !important;
   font-weight: bold !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* 텍스트에 그림자 효과 */
+  position: relative;
+  z-index: 2;
+}
+
+/* 아이콘들의 고유 색상 유지하되 약간 밝게 조정 */
+:root .ant-layout-header .anticon,
+[data-theme="light"] .ant-layout-header .anticon {
+  position: relative;
+  z-index: 2;
+  filter: brightness(1.1) saturate(1.2); /* 아이콘을 약간 밝고 선명하게 */
 }
 
 /* 라이트 모드 사이드바 스타일 - 기존 디자인 유지 */
