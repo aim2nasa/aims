@@ -507,7 +507,7 @@ const AppLayout = () => {
               className="overflow-hidden content-with-dynamic-width"
               style={{
                 '--content-width': rightPaneVisible ? `${100 - rightPaneWidth}%` : '100%',
-                '--content-margin-right': rightPaneVisible ? '12px' : '0',
+                '--content-margin-right': rightPaneVisible ? '0px' : '0', /* 마진 제거 */
                 '--content-transition': isResizing ? 'none' : 'width 0.3s ease'
               }}>
               <CenterPane 
@@ -542,15 +542,18 @@ const AppLayout = () => {
             {rightPaneVisible && (
               <div
                 onMouseDown={handleMouseDown}
-                className="cursor-col-resize rounded-xs mx-sm relative transition-all resize-handle"
+                className="cursor-col-resize resize-handle"
                 style={{
-                  '--resize-bg': isResizing ? 'var(--color-primary)' : 'transparent'
+                  '--resize-bg': isResizing ? 'var(--color-primary)' : 'transparent',
+                  position: 'absolute',
+                  left: `calc(${100 - rightPaneWidth}% - 12px)`, /* padding 고려한 정확한 계산 */
+                  top: 0,
+                  transform: 'translateX(-50%)',
+                  zIndex: 20
                 }}
               >
-                <div 
-                  className="absolute top-1/2 left-1/2 transform-center flex items-center justify-center resize-grip">
-                  <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
-                  <div className="w-0.5 h-5 bg-gray-500 rounded-xs mx-px"></div>
+                <div className="resize-grip">
+                  {/* 별도 선 제거 - 깔끔한 단일 핸들만 */}
                 </div>
               </div>
             )}

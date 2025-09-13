@@ -3793,19 +3793,37 @@ body::-webkit-scrollbar {
 
 /* Resize handle */
 .resize-handle {
-  width: 4px;
-  background: var(--resize-bg, transparent);
+  width: 8px; /* 경계선 너비 */
+  background: var(--resize-bg, rgba(0, 0, 0, 0.08)); /* 기본상태에서도 자세히 보임 */
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: none; /* 트랜지션 제거 - 즉각 반응 */
+  /* position은 inline style에서 처리 */
+  flex-shrink: 0; /* 크기 고정 */
+  z-index: 10; /* 다른 요소들 위에 배치 */
 }
 
 .resize-grip {
-  width: 12px;
-  height: 40px;
-  background: #d9d9d9;
-  border-radius: 6px;
+  width: 8px; /* 핸들과 동일한 너비 */
+  height: 60px; /* 높이 유지 */
+  background: var(--color-border-medium); /* CSS 변수 사용 */
+  border-radius: 4px; /* 핸들과 동일한 라운딩 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+  transition: none; /* 즉각 반응 */
+  /* position과 left 제거 - 핸들 중앙에 자연스럽게 배치 */
+}
+
+/* 호버 시 경계선만 더 뚜렷하게 */
+.resize-handle:hover {
+  background: rgba(0, 0, 0, 0.15) !important; /* 더 진한 경계선 */
+}
+
+.resize-handle:hover .resize-grip {
+  background: var(--color-border-dark) !important; /* 더 뚜렷한 그립 */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* 약간 더 진한 그림자 */
 }
 
 /* Right pane with variable width */
