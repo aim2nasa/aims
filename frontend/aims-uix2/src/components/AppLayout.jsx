@@ -447,9 +447,9 @@ const AppLayout = () => {
         {/* 오른쪽 섹션 (아이콘) */}
         <div style={{ flex: '0 0 auto' }}>
           <Space>
-            <Button type="text" icon={<BellOutlined />} />
+            <Button type="text" icon={<BellOutlined style={{ color: '#f59e0b' }} />} />
             <Dropdown overlay={menu} placement="bottomRight" arrow>
-              <Button type="text" icon={<UserOutlined />} />
+              <Button type="text" icon={<UserOutlined style={{ color: '#3b82f6' }} />} />
             </Dropdown>
             <ThemeToggle />
           </Space>
