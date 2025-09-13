@@ -438,42 +438,48 @@ className="text-sm"
         </Space>
         <Space className="customer-action-buttons">
           {canAddFamilyRelation && (
-            <Button 
-              size="small" 
-              icon={<TeamOutlined className="icon-family-relation" />}
-              onClick={handleOpenFamilyRelationshipModal}
-              className="text-xs btn-add-relation btn-family-relation"
-            >
-              가족 관계 추가
-            </Button>
-          )}
-          {onEdit && (
-            <Button 
-              size="small" 
-              icon={<EditOutlined className="icon-edit-action" />}
-              onClick={() => onEdit(customer)}
-              className="text-2xs btn-edit btn-edit-action"
-            >
-              고객 정보 수정
-            </Button>
-          )}
-          {onDelete && (
-            <Popconfirm
-              title="고객 삭제"
-              description="정말로 이 고객을 삭제하시겠습니까?"
-              onConfirm={() => onDelete(customer._id)}
-              okText="삭제"
-              cancelText="취소"
-              okType="danger"
-            >
+            <Tooltip title="가족 구성원을 추가합니다">
               <Button 
                 size="small" 
-                icon={<DeleteOutlined className="icon-delete-action" />}
-                className="text-xs btn-delete btn-delete-action"
+                icon={<TeamOutlined className="icon-family-relation" />}
+                onClick={handleOpenFamilyRelationshipModal}
+                className="text-xs btn-add-relation btn-family-relation"
               >
-                고객 삭제
+                가족 관계 추가
               </Button>
-            </Popconfirm>
+            </Tooltip>
+          )}
+          {onEdit && (
+            <Tooltip title="고객의 개인정보를 수정합니다">
+              <Button 
+                size="small" 
+                icon={<EditOutlined className="icon-edit-action" />}
+                onClick={() => onEdit(customer)}
+                className="text-2xs btn-edit btn-edit-action"
+              >
+                고객 정보 수정
+              </Button>
+            </Tooltip>
+          )}
+          {onDelete && (
+            <Tooltip title="고객 데이터를 영구적으로 삭제합니다">
+              <Popconfirm
+                title="고객 삭제"
+                description="정말로 이 고객을 삭제하시겠습니까?"
+                onConfirm={() => onDelete(customer._id)}
+                okText="삭제"
+                cancelText="취소"
+                okType="danger"
+              >
+                <Button 
+                  size="small" 
+                  icon={<DeleteOutlined className="icon-delete-action" />}
+                  className="text-xs btn-delete btn-delete-action"
+                >
+                  고객 삭제
+                </Button>
+              </Popconfirm>
+            </Tooltip>
           )}
           {onResetRatio && (
             <Tooltip title="패널 크기 복원">
@@ -486,7 +492,9 @@ className="text-sm"
               />
             </Tooltip>
           )}
-          <Button type="text" icon={<CloseOutlined />} onClick={onClose} className="btn-close" />
+          <Tooltip title="패널 닫기">
+            <Button type="text" icon={<CloseOutlined />} onClick={onClose} className="btn-close" />
+          </Tooltip>
         </Space>
       </div>
 
@@ -568,15 +576,17 @@ className="text-sm"
                         <div className="flex-1">
                           <div className="text-xs flex items-center gap-2">
                             <span>[{customer.personal_info.address.postal_code}] {customer.personal_info.address.address1}</span>
-                            <Button 
-                              variant="link"
-                              size="small"
-                              icon={<HistoryOutlined className="icon-archive-action" />}
-                              onClick={() => setAddressArchiveVisible(true)}
-                              className="px-1_5 py-0_5 text-4xs h-auto btn-archive-action"
-                            >
-                              주소 보관소
-                            </Button>
+                            <Tooltip title="고객의 이전 주소 기록을 확인합니다">
+                              <Button 
+                                variant="link"
+                                size="small"
+                                icon={<HistoryOutlined className="icon-archive-action" />}
+                                onClick={() => setAddressArchiveVisible(true)}
+                                className="px-1_5 py-0_5 text-4xs h-auto btn-archive-action"
+                              >
+                                주소 보관소
+                              </Button>
+                            </Tooltip>
                           </div>
                           {customer.personal_info.address.address2 && (
                             <div className="text-xs">{customer.personal_info.address.address2}</div>
