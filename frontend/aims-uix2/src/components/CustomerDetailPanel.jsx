@@ -440,15 +440,9 @@ className="text-sm"
           {canAddFamilyRelation && (
             <Button 
               size="small" 
-              icon={<TeamOutlined />}
+              icon={<TeamOutlined className="icon-family-relation" />}
               onClick={handleOpenFamilyRelationshipModal}
-              className="text-xs btn-add-relation"
-              style={{ 
-                backgroundColor: 'var(--color-primary-bg)', 
-                borderColor: 'var(--color-primary)',
-                color: 'var(--color-primary)',
-                border: '1px solid var(--color-primary)'
-              }}
+              className="text-xs btn-add-relation btn-family-relation"
             >
               가족 관계
             </Button>
@@ -456,15 +450,9 @@ className="text-sm"
           {onEdit && (
             <Button 
               size="small" 
-              icon={<EditOutlined />}
+              icon={<EditOutlined className="icon-edit-action" />}
               onClick={() => onEdit(customer)}
-              className="text-2xs btn-edit"
-              style={{ 
-                backgroundColor: 'var(--color-success-bg)', 
-                borderColor: 'var(--color-success)',
-                color: 'var(--color-success)',
-                border: '1px solid var(--color-success)'
-              }}
+              className="text-2xs btn-edit btn-edit-action"
             >
               수정
             </Button>
@@ -480,14 +468,8 @@ className="text-sm"
             >
               <Button 
                 size="small" 
-                icon={<DeleteOutlined />}
-                className="text-xs btn-delete"
-                style={{ 
-                  backgroundColor: 'var(--color-error-bg)', 
-                  borderColor: 'var(--color-error)',
-                  color: 'var(--color-error)',
-                  border: '1px solid var(--color-error)'
-                }}
+                icon={<DeleteOutlined className="icon-delete-action" />}
+                className="text-xs btn-delete btn-delete-action"
               >
                 삭제
               </Button>
@@ -589,15 +571,9 @@ className="text-sm"
                             <Button 
                               variant="link"
                               size="small"
-                              icon={<HistoryOutlined style={{ color: 'var(--color-warning)' }} />}
+                              icon={<HistoryOutlined className="icon-archive-action" />}
                               onClick={() => setAddressArchiveVisible(true)}
-                              className="px-1_5 py-0_5 text-4xs h-auto"
-                              style={{
-                                backgroundColor: 'var(--color-warning-bg)',
-                                borderColor: 'var(--color-warning)',
-                                color: 'var(--color-warning)',
-                                border: '1px solid var(--color-warning)'
-                              }}
+                              className="px-1_5 py-0_5 text-4xs h-auto btn-archive-action"
                             >
                               보관소
                             </Button>

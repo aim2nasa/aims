@@ -493,6 +493,84 @@ button, a, input, select, textarea {
    섹션 D: COMMON COMPONENTS
    =========================== */
 
+/* Action Buttons - Theme Responsive */
+.btn-family-relation {
+  background-color: #8b5cf6 !important;
+  border-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2) !important;
+  font-weight: 500 !important;
+}
+
+.btn-edit-action {
+  background-color: #34d399 !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(52, 211, 153, 0.2) !important;
+  font-weight: 500 !important;
+}
+
+.btn-delete-action {
+  background-color: #f87171 !important;
+  border-color: #f87171 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(248, 113, 113, 0.2) !important;
+  font-weight: 500 !important;
+}
+
+.btn-archive-action {
+  background-color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2) !important;
+  font-weight: 500 !important;
+}
+
+/* Icon colors for light theme */
+.icon-family-relation { color: #312e81 !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-edit-action { color: #065f46 !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-delete-action { color: #991b1b !important; font-size: 14px !important; font-weight: bold !important; }
+.icon-archive-action { color: #92400e !important; font-size: 14px !important; font-weight: bold !important; }
+
+/* Dark theme button overrides */
+[data-theme="dark"] .btn-family-relation {
+  background-color: #7c3aed !important;
+  border-color: #7c3aed !important;
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-edit-action {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-delete-action {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-archive-action {
+  background-color: #f59e0b !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Dark theme icon colors */
+[data-theme="dark"] .icon-family-relation { color: #e0e7ff !important; }
+[data-theme="dark"] .icon-edit-action { color: #d1fae5 !important; }
+[data-theme="dark"] .icon-delete-action { color: #fecaca !important; }
+[data-theme="dark"] .icon-archive-action { color: #fef3c7 !important; }
+
 /* ===== BUTTON COMPONENTS ===== */
 .aims-btn {
   display: inline-flex;
