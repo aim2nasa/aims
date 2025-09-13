@@ -3948,6 +3948,16 @@ body::-webkit-scrollbar {
   max-height: calc(90vh - 120px);
 }
 
+/* 테이블 outline 및 box-shadow 제거 */
+.ant-table *,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td,
+.ant-table th,
+.ant-table td {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* ===========================
    완료! 통합 CSS 시스템
    =========================== */
