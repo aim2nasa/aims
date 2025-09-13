@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SearchOutlined, FilterOutlined, ClearOutlined } from '@ant-design/icons';
-import { Select, DatePicker } from 'antd';
+import { Select, DatePicker, Tooltip } from 'antd';
 import { Input, Button, Card, Badge } from './common';
 
 const { RangePicker } = DatePicker;
@@ -81,17 +81,19 @@ const CustomerSearchBar = ({
             prefix={<SearchOutlined className="search-icon" />}
             suffix={
               searchValue && (
-                <Button
-                  size="small"
-                  variant="ghost"
-                  icon={<ClearOutlined />}
-                  onClick={() => {
-                    setSearchValue('');
-                    // 검색어 초기화 시에도 실시간 검색 실행
-                    onSearch?.('', filters);
-                  }}
-                  className="clear-btn"
-                />
+                <Tooltip title="검색어 지우기">
+                  <Button
+                    size="small"
+                    variant="ghost"
+                    icon={<ClearOutlined />}
+                    onClick={() => {
+                      setSearchValue('');
+                      // 검색어 초기화 시에도 실시간 검색 실행
+                      onSearch?.('', filters);
+                    }}
+                    className="clear-btn"
+                  />
+                </Tooltip>
               )
             }
             allowClear
@@ -101,36 +103,42 @@ const CustomerSearchBar = ({
         </div>
         
         <div className="search-actions">
-          <Button
-            variant="primary"
-            size="large"
-            onClick={handleSearch}
-            loading={loading}
-            icon={<SearchOutlined />}
-          >
-            검색
-          </Button>
+          <Tooltip title="입력한 조건으로 고객을 검색합니다">
+            <Button
+              variant="primary"
+              size="large"
+              onClick={handleSearch}
+              loading={loading}
+              icon={<SearchOutlined />}
+            >
+              검색
+            </Button>
+          </Tooltip>
           
           <Badge count={activeFilterCount} size="small">
-            <Button
-              variant={showAdvanced ? "primary" : "secondary"}
-              size="large"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              icon={<FilterOutlined />}
-            >
-              필터
-            </Button>
+            <Tooltip title={showAdvanced ? "필터 옵션을 숨깁니다" : "고급 필터 옵션을 표시합니다"}>
+              <Button
+                variant={showAdvanced ? "primary" : "secondary"}
+                size="large"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                icon={<FilterOutlined />}
+              >
+                필터
+              </Button>
+            </Tooltip>
           </Badge>
           
           {(searchValue || activeFilterCount > 0) && (
-            <Button
-              variant="ghost"
-              size="large"
-              onClick={handleClearAll}
-              icon={<ClearOutlined />}
-            >
-              초기화
-            </Button>
+            <Tooltip title="검색어와 필터를 모두 초기화합니다">
+              <Button
+                variant="ghost"
+                size="large"
+                onClick={handleClearAll}
+                icon={<ClearOutlined />}
+              >
+                초기화
+              </Button>
+            </Tooltip>
           )}
           
           {rightActions && rightActions}
@@ -219,12 +227,16 @@ const CustomerSearchBar = ({
             </div>
             
             <div className="filter-inline-actions">
-              <Button onClick={handleSearch} variant="primary" size="small">
-                필터 적용
-              </Button>
-              <Button onClick={() => setShowAdvanced(false)} variant="ghost" size="small">
-                접기
-              </Button>
+              <Tooltip title="설정된 조건으로 고객을 필터링합니다">
+                <Button onClick={handleSearch} variant="primary" size="small">
+                  필터 적용
+                </Button>
+              </Tooltip>
+              <Tooltip title="고급 필터 옵션을 숨깁니다">
+                <Button onClick={() => setShowAdvanced(false)} variant="ghost" size="small">
+                  접기
+                </Button>
+              </Tooltip>
             </div>
           </div>
         </div>

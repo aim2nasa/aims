@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, message } from 'antd';
+import { Card, List, Typography, Button, Space, Tag, Select, Tree, Spin, Modal, Pagination, message, Tooltip } from 'antd';
 import { UnorderedListOutlined, AppstoreOutlined, FileTextOutlined, FolderOutlined, UploadOutlined, SettingOutlined, PlusOutlined, MinusOutlined, ReadOutlined, LinkOutlined } from '@ant-design/icons';
 import FileUploader from './FileUploader';
 import DocumentStatusDashboard from './DocumentStatusDashboard';
@@ -329,33 +329,35 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
                   <List.Item
                     key={itemId}
                     actions={[
-                      <Button
-                        type="text"
-                        icon={<LinkOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!item.customer_relation) {
-                            handleDocumentLink(item);
-                          }
-                        }}
-                        disabled={item.customer_relation}
-                        title={item.customer_relation ? "이미 고객과 연결됨" : "고객에게 연결"}
-                        className={item.customer_relation ? 'text-disabled cursor-not-allowed' : 'text-success cursor-pointer'}
-                      >
-                        고객연결
-                      </Button>,
-                      <Button
-                        type="text"
-                        icon={<ReadOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleFullTextView(item);
-                        }}
-                        title="전체 텍스트 보기"
-                        className="text-primary"
-                      >
-                        Full Text
-                      </Button>
+                      <Tooltip title={item.customer_relation ? "이미 고객과 연결됨" : "문서를 고객과 연결합니다"}>
+                        <Button
+                          type="text"
+                          icon={<LinkOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!item.customer_relation) {
+                              handleDocumentLink(item);
+                            }
+                          }}
+                          disabled={item.customer_relation}
+                          className={item.customer_relation ? 'text-disabled cursor-not-allowed' : 'text-success cursor-pointer'}
+                        >
+                          고객연결
+                        </Button>
+                      </Tooltip>,
+                      <Tooltip title="문서의 전체 텍스트를 확인합니다">
+                        <Button
+                          type="text"
+                          icon={<ReadOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFullTextView(item);
+                          }}
+                          className="text-primary"
+                        >
+                          Full Text
+                        </Button>
+                      </Tooltip>
                     ]}
                     onClick={() => handleDocumentClickWithScrollSave(item)}
                     className={`cursor-pointer py-md rounded-lg my-1 transition-all ${isSelected ? 'selected-document-item bg-primary' : ''}`}
@@ -540,18 +542,30 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
       extra={
         <Space>
           {/* ✅ 업로드 버튼 추가 */}
-          <Button icon={<UploadOutlined />} onClick={showUploadModal}>업로드</Button>
-          <Select defaultValue="업로드일" className="w-30">
-            <Option value="업로드일">업로드일</Option>
-            <Option value="문서명">문서명</Option>
-            <Option value="상태">상태</Option>
-          </Select>
+          <Tooltip title="새 문서를 업로드합니다">
+            <Button icon={<UploadOutlined />} onClick={showUploadModal}>업로드</Button>
+          </Tooltip>
+          <Tooltip title="문서 정렬 기준을 선택합니다">
+            <Select defaultValue="업로드일" className="w-30">
+              <Option value="업로드일">업로드일</Option>
+              <Option value="문서명">문서명</Option>
+              <Option value="상태">상태</Option>
+            </Select>
+          </Tooltip>
           <Button.Group>
-            <Button icon={<FileTextOutlined />} onClick={() => setViewMode('tree')} />
-            <Button icon={<UnorderedListOutlined />} onClick={() => setViewMode('list')} />
-            <Button icon={<AppstoreOutlined />} onClick={() => setViewMode('grid')} disabled />
+            <Tooltip title="트리 형태로 문서를 보여줍니다">
+              <Button icon={<FileTextOutlined />} onClick={() => setViewMode('tree')} />
+            </Tooltip>
+            <Tooltip title="목록 형태로 문서를 보여줍니다">
+              <Button icon={<UnorderedListOutlined />} onClick={() => setViewMode('list')} />
+            </Tooltip>
+            <Tooltip title="그리드 형태로 문서를 보여줍니다 (준비 중)">
+              <Button icon={<AppstoreOutlined />} onClick={() => setViewMode('grid')} disabled />
+            </Tooltip>
           </Button.Group>
-          <Button icon={<SettingOutlined />} onClick={() => setShowPageSizeModal(true)} />
+          <Tooltip title="페이지 표시 설정을 변경합니다">
+            <Button icon={<SettingOutlined />} onClick={() => setShowPageSizeModal(true)} />
+          </Tooltip>
         </Space>
       }
       className="h-screen-140 rounded-lg flex flex-col"
@@ -587,14 +601,15 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
               <Text className="mb-lg block">페이지당 문서 수 선택:</Text>
               <Space wrap>
                 {[5, 10, 20, 30, 50].map(size => (
-                  <Button
-                    key={size}
-                    type={pageSize === size ? "primary" : "default"}
-                    onClick={() => handlePageSizeChange(size)}
-                    className="min-w-12"
-                  >
-                    {size}개
-                  </Button>
+                  <Tooltip key={size} title={`페이지당 ${size}개씩 표시합니다`}>
+                    <Button
+                      type={pageSize === size ? "primary" : "default"}
+                      onClick={() => handlePageSizeChange(size)}
+                      className="min-w-12"
+                    >
+                      {size}개
+                    </Button>
+                  </Tooltip>
                 ))}
               </Space>
             </div>
@@ -602,25 +617,29 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
             <div>
               <Text className="mb-lg block">또는 +/- 버튼으로 원하는 개수 설정:</Text>
               <div className="page-size-controls">
-                <Button 
-                  type="primary"
-                  shape="circle"
-                  icon={<MinusOutlined />}
-                  onClick={() => handlePageSizeChange(Math.max(5, pageSize - 1))}
-                  disabled={pageSize <= 5}
-                  size="small"
-                />
+                <Tooltip title="페이지당 표시 개수를 하나 줄입니다">
+                  <Button 
+                    type="primary"
+                    shape="circle"
+                    icon={<MinusOutlined />}
+                    onClick={() => handlePageSizeChange(Math.max(5, pageSize - 1))}
+                    disabled={pageSize <= 5}
+                    size="small"
+                  />
+                </Tooltip>
                 <div className="page-size-display">
                   {pageSize}개
                 </div>
-                <Button 
-                  type="primary"
-                  shape="circle"
-                  icon={<PlusOutlined />}
-                  onClick={() => handlePageSizeChange(Math.min(50, pageSize + 1))}
-                  disabled={pageSize >= 50}
-                  size="small"
-                />
+                <Tooltip title="페이지당 표시 개수를 하나 늘립니다">
+                  <Button 
+                    type="primary"
+                    shape="circle"
+                    icon={<PlusOutlined />}
+                    onClick={() => handlePageSizeChange(Math.min(50, pageSize + 1))}
+                    disabled={pageSize >= 50}
+                    size="small"
+                  />
+                </Tooltip>
               </div>
             </div>
             
@@ -644,9 +663,11 @@ const CenterPane = ({ onDocumentClick, onDocumentPreview, onCustomerClick, searc
         visible={showFullTextModal}
         onCancel={handleFullTextModalClose}
         footer={[
-          <Button key="close" onClick={handleFullTextModalClose}>
-            닫기
-          </Button>
+          <Tooltip title="전체 텍스트 창을 닫습니다">
+            <Button key="close" onClick={handleFullTextModalClose}>
+              닫기
+            </Button>
+          </Tooltip>
         ]}
         width={800}
         className="modal-top-20"

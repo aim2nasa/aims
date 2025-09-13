@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Input, Space, Button, Dropdown, Select, message } from 'antd';
+import { Layout, Menu, Input, Space, Button, Dropdown, Select, message, Tooltip } from 'antd';
 import {
   BellOutlined, UserOutlined, SearchOutlined,
   MenuUnfoldOutlined, MenuFoldOutlined,
@@ -405,52 +405,62 @@ const AppLayout = () => {
           gap: '8px'
         }}>
           <div style={{ display: 'flex' }}>
-            <Input
-              placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
-              value={keyword}
-              onChange={handleKeywordChange}
-              onPressEnter={onSearch}
+            <Tooltip title="문서에서 검색할 키워드를 입력하세요">
+              <Input
+                placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
+                value={keyword}
+                onChange={handleKeywordChange}
+                onPressEnter={onSearch}
+                style={{ 
+                  borderTopRightRadius: 0, 
+                  borderBottomRightRadius: 0,
+                  width: '450px'
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="검색 조건을 선택하세요 (AND: 모든 키워드 포함, OR: 중 하나 포함)">
+              <Select 
+                defaultValue="and" 
+                onChange={handleLogicChange}
+                style={{ 
+                  borderTopLeftRadius: 0, 
+                  borderBottomLeftRadius: 0, 
+                  borderLeft: 0,
+                  width: '90px'
+                }}
+              >
+              <Option value="and">AND</Option>
+              <Option value="or">OR</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <Tooltip title="입력한 키워드로 문서를 검색합니다">
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              onClick={onSearch}
+              loading={isLoading}
+              className="aims-btn-primary"
               style={{ 
-                borderTopRightRadius: 0, 
-                borderBottomRightRadius: 0,
-                width: '450px'
-              }}
-            />
-            <Select 
-              defaultValue="and" 
-              onChange={handleLogicChange}
-              style={{ 
-                borderTopLeftRadius: 0, 
-                borderBottomLeftRadius: 0, 
-                borderLeft: 0,
                 width: '90px'
               }}
             >
-              <Option value="and">AND</Option>
-              <Option value="or">OR</Option>
-            </Select>
-          </div>
-          <Button
-            type="primary"
-            icon={<SearchOutlined />}
-            onClick={onSearch}
-            loading={isLoading}
-            className="aims-btn-primary"
-            style={{ 
-              width: '90px'
-            }}
-          >
-            Search
-          </Button>
+              Search
+            </Button>
+          </Tooltip>
         </div>
         
         {/* 오른쪽 섹션 (아이콘) */}
         <div style={{ flex: '0 0 auto' }}>
           <Space>
-            <Button type="text" icon={<BellOutlined style={{ color: '#f59e0b' }} />} />
-            <Dropdown overlay={menu} placement="bottomRight" arrow>
-              <Button type="text" icon={<UserOutlined style={{ color: '#3b82f6' }} />} />
-            </Dropdown>
+            <Tooltip title="알림">
+              <Button type="text" icon={<BellOutlined style={{ color: '#f59e0b' }} />} />
+            </Tooltip>
+            <Tooltip title="사용자 메뉴">
+              <Dropdown overlay={menu} placement="bottomRight" arrow>
+                <Button type="text" icon={<UserOutlined style={{ color: '#3b82f6' }} />} />
+              </Dropdown>
+            </Tooltip>
             <ThemeToggle />
           </Space>
         </div>
@@ -475,12 +485,14 @@ const AppLayout = () => {
             />
           </div>
           <div className="flex-none px-lg text-right border-t">
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-              className="p-1 my-1"
-            />
+            <Tooltip title={collapsed ? "메뉴 펼치기" : "메뉴 접기"}>
+              <Button
+                type="text"
+                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setCollapsed(!collapsed)}
+                className="p-1 my-1"
+              />
+            </Tooltip>
           </div>
         </Sider>
 

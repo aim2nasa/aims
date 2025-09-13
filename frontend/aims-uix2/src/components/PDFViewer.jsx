@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { Spin, Alert, Space, Typography } from 'antd';
+import { Spin, Alert, Space, Typography, Tooltip } from 'antd';
 import { Button } from './common';
 import { LeftOutlined, RightOutlined, DownloadOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
@@ -126,9 +126,11 @@ const PDFViewer = ({ file, onDownload }) => {
                   <p>{error || "PDF 파일을 불러오는 데 실패했습니다."}</p>
                   {!isRetrying && (
                     <div className="mt-sm">
-                      <Button variant="primary" size="small" onClick={handleRetry}>
-                        다시 시도
-                      </Button>
+                      <Tooltip title="PDF 파일 로딩을 다시 시도합니다">
+                        <Button variant="primary" size="small" onClick={handleRetry}>
+                          다시 시도
+                        </Button>
+                      </Tooltip>
                     </div>
                   )}
                   <details className="mt-sm text-xs" style={{ color: '#666' }}>
@@ -168,45 +170,55 @@ const PDFViewer = ({ file, onDownload }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: isCompact ? '12px' : '24px' }}>
           {/* 페이지 이동 */}
           <Space>
-            <Button
-              size="small"
-              variant="secondary"
-              disabled={pageNumber <= 1}
-              onClick={previousPage}
-              icon={<LeftOutlined />}
-            >
-              {!isCompact && <span className="text-xs">이전</span>}
-            </Button>
+            <Tooltip title="이전 페이지로 이동합니다">
+              <Button
+                size="small"
+                variant="secondary"
+                disabled={pageNumber <= 1}
+                onClick={previousPage}
+                icon={<LeftOutlined />}
+              >
+                {!isCompact && <span className="text-xs">이전</span>}
+              </Button>
+            </Tooltip>
             <Text className="mx-xs text-xs text-primary">
               {isCompact ? `${pageNumber}/${numPages || '--'}` : `페이지 ${pageNumber} / ${numPages || '--'}`}
             </Text>
-            <Button
-              size="small"
-              variant="secondary"
-              disabled={pageNumber >= numPages}
-              onClick={nextPage}
-              icon={<RightOutlined />}
-            >
-              {!isCompact && <span className="text-xs">다음</span>}
-            </Button>
+            <Tooltip title="다음 페이지로 이동합니다">
+              <Button
+                size="small"
+                variant="secondary"
+                disabled={pageNumber >= numPages}
+                onClick={nextPage}
+                icon={<RightOutlined />}
+              >
+                {!isCompact && <span className="text-xs">다음</span>}
+              </Button>
+            </Tooltip>
           </Space>
 
           {/* 확대/축소 */}
           <Space>
-            <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+            <Tooltip title="PDF를 축소합니다">
+              <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+            </Tooltip>
             <Text className="text-xs text-primary">{Math.round(scale * 100)}%</Text>
-            <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+            <Tooltip title="PDF를 확대합니다">
+              <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+            </Tooltip>
           </Space>
 
           {/* 다운로드 */}
-          <Button
-            size="small"
-            variant="primary"
-            onClick={onDownload}
-            icon={<DownloadOutlined />}
-          >
-            {!isCompact && <span className="text-xs">다운로드</span>}
-          </Button>
+          <Tooltip title="PDF 파일을 다운로드합니다">
+            <Button
+              size="small"
+              variant="primary"
+              onClick={onDownload}
+              icon={<DownloadOutlined />}
+            >
+              {!isCompact && <span className="text-xs">다운로드</span>}
+            </Button>
+          </Tooltip>
         </div>
       </div>
     </div>

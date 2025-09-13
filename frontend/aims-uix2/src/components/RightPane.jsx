@@ -1,5 +1,5 @@
 import React from 'react';
-import { message, Space } from 'antd';
+import { message, Space, Tooltip } from 'antd';
 import { Button } from './common';
 import { CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import PDFViewer from './PDFViewer';
@@ -98,13 +98,16 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
           {document.upload.originalName}
         </h4>
         <Space>
-          <Button 
-            variant="ghost" 
-            icon={<ReloadOutlined />} 
-            onClick={onResetRatio}
-            title="최적 비율로 리셋"
-          />
-          <Button variant="ghost" icon={<CloseOutlined />} onClick={onClose} />
+          <Tooltip title="화면 비율을 최적으로 리셋합니다">
+            <Button 
+              variant="ghost" 
+              icon={<ReloadOutlined />} 
+              onClick={onResetRatio}
+            />
+          </Tooltip>
+          <Tooltip title="미리보기를 닫습니다">
+            <Button variant="ghost" icon={<CloseOutlined />} onClick={onClose} />
+          </Tooltip>
         </Space>
       </div>
       
@@ -130,9 +133,11 @@ const DocumentViewer = ({ document, onClose, onResetRatio }) => {
             }}>
               이 문서는 미리보기를 지원하지 않는 형식입니다.
             </p>
-            <Button variant="primary" onClick={handleDownload}>
-              {document.upload.originalName} 다운로드
-            </Button>
+            <Tooltip title="파일을 다운로드합니다">
+              <Button variant="primary" onClick={handleDownload}>
+                {document.upload.originalName} 다운로드
+              </Button>
+            </Tooltip>
           </div>
         )}
       </div>

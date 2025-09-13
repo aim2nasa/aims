@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useCallback } from "react";
-import { Table, Space } from 'antd';
-import { Eye, Copy } from "lucide-react";
+import { Table, Space, Tooltip } from 'antd';
+import { Eye, Copy, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 
 // 개별 컴포넌트들도 함께 이동
 const StatusBadge = ({ status, size = "medium", isCompact = false, rightPaneVisible = false }) => {
@@ -71,10 +71,12 @@ const CopyableId = ({ id }) => {
   const shortId = id?.length > 8 ? `${id.slice(0, 8)}...` : (id || 'N/A');
 
   return (
-    <span className="flex-center gap-xs text-xs text-tertiary px-sm py-xs cursor-pointer rounded hover:bg-hover" onClick={handleCopy}>
-      <code className="text-xs">{shortId}</code>
-      <Copy className={`icon-xs ${copied ? 'text-success' : 'text-tertiary'}`} />
-    </span>
+    <Tooltip title={copied ? "복사됨!" : "클릭하여 ID를 복사합니다"}>
+      <span className="flex-center gap-xs text-xs text-tertiary px-sm py-xs cursor-pointer rounded hover:bg-hover" onClick={handleCopy}>
+        <code className="text-xs">{shortId}</code>
+        <Copy className={`icon-xs ${copied ? 'text-success' : 'text-tertiary'}`} />
+      </span>
+    </Tooltip>
   );
 };
 
@@ -152,13 +154,15 @@ const DocumentStatusTable = ({
       width: rightPaneVisible ? 50 : 80,
       render: (_, record) => (
         <Space size="small">
-          <Eye 
-            className="icon-sm cursor-pointer text-tertiary hover:text-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRowClick(record);
-            }}
-          />
+          <Tooltip title="문서를 미리보기로 확인합니다">
+            <Eye 
+              className="icon-sm cursor-pointer text-tertiary hover:text-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRowClick(record);
+              }}
+            />
+          </Tooltip>
         </Space>
       )
     }

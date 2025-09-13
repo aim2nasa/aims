@@ -1,7 +1,7 @@
 // src/components/ImageViewer.js
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Space, Typography, Spin, Alert } from 'antd';
+import { Space, Typography, Spin, Alert, Tooltip } from 'antd';
 import { Button } from './common';
 import { DownloadOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
@@ -97,20 +97,26 @@ const ImageViewer = ({ file, onDownload }) => {
 
         {/* 확대/축소 */}
         <Space className="ml-md">
-          <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+          <Tooltip title="이미지를 축소합니다">
+            <Button variant="ghost" size="small" onClick={zoomOut} icon={<MinusOutlined />} />
+          </Tooltip>
           <Text className="zoom-text">{Math.round(scale * 100)}%</Text>
-          <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+          <Tooltip title="이미지를 확대합니다">
+            <Button variant="ghost" size="small" onClick={zoomIn} icon={<PlusOutlined />} />
+          </Tooltip>
         </Space>
 
         {/* 다운로드 */}
-        <Button
-          size="small"
-          variant="primary"
-          onClick={onDownload}
-          icon={<DownloadOutlined />}
-        >
-          <span className="download-text">다운로드</span>
-        </Button>
+        <Tooltip title="이미지 파일을 다운로드합니다">
+          <Button
+            size="small"
+            variant="primary"
+            onClick={onDownload}
+            icon={<DownloadOutlined />}
+          >
+            <span className="download-text">다운로드</span>
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

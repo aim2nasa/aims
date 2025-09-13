@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Upload, Space, Tag, Modal, Select, message, Empty } from 'antd';
+import { Table, Upload, Space, Tag, Modal, Select, message, Empty, Tooltip } from 'antd';
 import { Button } from './common';
 import { 
   UploadOutlined, LinkOutlined, FileTextOutlined, 
@@ -80,14 +80,16 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
       title: '작업',
       key: 'actions',
       render: (_, record) => (
-        <Button 
-          variant="danger" 
-          size="small" 
-          icon={<DeleteOutlined />}
-          onClick={() => handleDocumentUnlink(record._id)}
-        >
-          연결해제
-        </Button>
+        <Tooltip title="고객과 문서의 연결을 해제합니다">
+          <Button 
+            variant="danger" 
+            size="small" 
+            icon={<DeleteOutlined />}
+            onClick={() => handleDocumentUnlink(record._id)}
+          >
+            연결해제
+          </Button>
+        </Tooltip>
       )
     }
   ];
@@ -131,18 +133,22 @@ const DocumentManagementPanel = ({ customerId, documents, onDocumentUpdate }) =>
             onChange={handleUpload}
             showUploadList={false}
           >
-            <Button variant="secondary" icon={<UploadOutlined />} size="small">
-              문서 업로드
-            </Button>
+            <Tooltip title="새 문서를 업로드하여 고객과 연결합니다">
+              <Button variant="secondary" icon={<UploadOutlined />} size="small">
+                문서 업로드
+              </Button>
+            </Tooltip>
           </Upload>
-          <Button 
-            variant="secondary"
-            icon={<LinkOutlined />} 
-            onClick={handleDocumentLink}
-            size="small"
-          >
-            기존 문서 연결
-          </Button>
+          <Tooltip title="기존 문서를 찾아서 고객과 연결합니다">
+            <Button 
+              variant="secondary"
+              icon={<LinkOutlined />} 
+              onClick={handleDocumentLink}
+              size="small"
+            >
+              기존 문서 연결
+            </Button>
+          </Tooltip>
         </Space>
       </Space>
 
