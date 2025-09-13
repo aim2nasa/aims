@@ -389,38 +389,62 @@ const AppLayout = () => {
   return (
     <Layout>
       {/* 📐 Header: 상단 고정 */}
-      <Header className="px-lg bg-primary border-b flex justify-between items-center header-64">
+      <Header className="px-lg bg-primary border-b flex items-center header-64" style={{ justifyContent: 'space-between', position: 'relative' }}>
         {/* 왼쪽 섹션 (AIMS-UIX2 글씨) */}
-        <div className="flex align-center flex-grow justify-start">
+        <div style={{ flex: '0 0 auto' }}>
             <h2 className="app-title m-0 text-xl font-bold text-primary">AIMS-UIX2</h2>
         </div>
-        {/* 중앙 섹션 (검색창) */}
-        <div className="flex align-center justify-center flex-grow-2">
-          <Input.Group compact className="flex-1">
+        
+        {/* 중앙 섹션 (검색창) - 절대 중앙 배치 */}
+        <div style={{ 
+          position: 'absolute', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{ display: 'flex' }}>
             <Input
               placeholder="문서에서 키워드 검색 (예: 홍길동 보험 증권)"
               value={keyword}
               onChange={handleKeywordChange}
               onPressEnter={onSearch}
-              className="w-calc-100-80"
+              style={{ 
+                borderTopRightRadius: 0, 
+                borderBottomRightRadius: 0,
+                width: '450px'
+              }}
             />
-            <Select defaultValue="and" className="w-20" onChange={handleLogicChange}>
+            <Select 
+              defaultValue="and" 
+              onChange={handleLogicChange}
+              style={{ 
+                borderTopLeftRadius: 0, 
+                borderBottomLeftRadius: 0, 
+                borderLeft: 0,
+                width: '90px'
+              }}
+            >
               <Option value="and">AND</Option>
               <Option value="or">OR</Option>
             </Select>
-          </Input.Group>
+          </div>
           <Button
             type="primary"
             icon={<SearchOutlined />}
-className="ml-xs"
             onClick={onSearch}
             loading={isLoading}
+            style={{ 
+              width: '90px'
+            }}
           >
             Search
           </Button>
         </div>
+        
         {/* 오른쪽 섹션 (아이콘) */}
-        <div className="flex align-center flex-grow justify-end">
+        <div style={{ flex: '0 0 auto' }}>
           <Space>
             <Button type="text" icon={<BellOutlined />} />
             <Dropdown overlay={menu} placement="bottomRight" arrow>
