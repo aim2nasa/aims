@@ -365,3 +365,127 @@ git show --name-only
 - **품질 우선**: 모든 경고와 오류를 해결한 후 다음 단계 진행  
 - **사용자 승인**: 모든 커밋 전 사용자 확인 필수
 - **문서화**: 모든 변경사항을 상세히 기록
+
+---
+
+## AIMS 디자인 시스템 - 공식 색상 가이드 🎨
+
+### 테마 색상 시스템 (color.png 기준)
+
+이 섹션은 `/mnt/d/Users/rossi/Desktop/color.png`에서 정의된 Light/Dark 테마를 기반으로 합니다.
+
+#### Light Theme 색상
+```css
+/* 배경 색상 */
+--color-bg-primary: #f5f6f7;        /* 메인 배경 */
+--color-bg-secondary: #ffffff;      /* 카드/패널 배경 */
+
+/* 텍스트 색상 */
+--color-text-primary: #1a1a1a;      /* 메인 텍스트 */
+--color-text-secondary: #6b7280;    /* 보조 텍스트 */
+
+/* 버튼 색상 */
+--color-primary: #3b82f6;           /* 주요 버튼 (파란색) */
+--color-primary-hover: #2563eb;     /* 주요 버튼 호버 */
+
+/* 아이콘 색상 */
+--color-icon-orange: #f97316;       /* 주황색 아이콘 */
+--color-icon-pink: #ec4899;         /* 분홍색 아이콘 */
+--color-icon-cyan: #06b6d4;         /* 청록색 아이콘 */
+--color-icon-red: #ef4444;          /* 빨간색 아이콘 */
+```
+
+#### Dark Theme 색상
+```css
+/* 배경 색상 */
+--color-bg-primary: #374151;        /* 메인 배경 */
+--color-bg-secondary: #4b5563;      /* 카드/패널 배경 */
+
+/* 텍스트 색상 */
+--color-text-primary: #f9fafb;      /* 메인 텍스트 */
+--color-text-secondary: #d1d5db;    /* 보조 텍스트 */
+
+/* 버튼 색상 */
+--color-primary: #2563eb;           /* 주요 버튼 (어두운 파란색) */
+--color-primary-hover: #1d4ed8;     /* 주요 버튼 호버 */
+
+/* 아이콘 색상 - 다크모드에서 약간 더 밝게 */
+--color-icon-orange: #fb923c;       /* 주황색 아이콘 */
+--color-icon-pink: #f472b6;         /* 분홍색 아이콘 */
+--color-icon-cyan: #22d3ee;         /* 청록색 아이콘 */
+--color-icon-red: #f87171;          /* 빨간색 아이콘 */
+```
+
+### 디자인 원칙
+
+1. **방향성 중심**: color.png는 디자인 방향을 제시하는 레퍼런스
+2. **유연한 적용**: 정확한 색상코드보다는 **톤과 분위기** 유지가 중요
+3. **통일성**: 전체적인 색조와 시각적 조화 확보
+4. **접근성**: 충분한 색상 대비 유지 (WCAG 2.1 AA 기준)
+5. **반응성**: 테마 전환 시 모든 요소가 즉시 반영되어야 함
+6. **확장성**: 새로운 색상 추가 시 시스템적 접근
+
+### 색상 적용 철학
+
+#### ✅ 올바른 접근
+- color.png와 **조화로운 색상** 선택
+- 상황에 맞는 **적절한 명도/채도** 조정
+- 전체적인 **일관된 분위기** 유지
+- Light/Dark 테마 간 **자연스러운 전환**
+
+#### ❌ 피해야 할 접근
+- 색상코드에 **경직되게** 얽매이기
+- 레퍼런스 **무시하고** 임의 색상 사용
+- 테마별 **불일치**하는 색조 적용
+- **하드코딩**된 고정 색상 사용
+
+#### 예시: 파란색 버튼 적용
+```css
+/* 상황별 유연한 적용 ✅ */
+--color-primary: #3b82f6;        /* 기본 */
+--color-primary: #2563eb;        /* 좀 더 진한 톤 */
+--color-primary: #1d4ed8;        /* 강조가 필요한 경우 */
+
+/* 경직된 적용 ❌ */
+--color-primary: #3b82f6;        /* 오직 이것만 */
+```
+
+### 구현 방법
+
+#### CSS Variables 사용
+```css
+/* 올바른 방법 ✅ */
+.button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+/* 잘못된 방법 ❌ */
+.button-primary {
+  background-color: #3b82f6;
+  color: #1a1a1a;
+}
+```
+
+#### 테마 전환 구조
+```css
+/* 기본 (Light Theme) */
+:root {
+  --color-bg-primary: #f5f6f7;
+  --color-text-primary: #1a1a1a;
+}
+
+/* Dark Theme */
+html[data-theme="dark"] {
+  --color-bg-primary: #374151;
+  --color-text-primary: #f9fafb;
+}
+```
+
+### 색상 적용 우선순위
+
+1. **필수 적용**: 배경, 텍스트, 주요 버튼
+2. **중요 적용**: 테두리, 그림자, 호버 상태
+3. **보조 적용**: 아이콘, 인디케이터, 상태 표시
+
+**중요**: 이 가이드는 color.png의 디자인을 모든 AIMS 컴포넌트에 일관되게 적용하기 위한 표준입니다.
