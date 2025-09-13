@@ -4123,6 +4123,34 @@ body::-webkit-scrollbar {
   filter: brightness(1.3);
 }
 
+/* 테이블 내 고객 유형 아이콘 색상 강화 */
+.ant-table .ant-table-tbody .anticon-idcard,
+.ant-table .ant-table-tbody .anticon-bank {
+  color: inherit !important; /* 인라인 스타일 우선 적용 */
+}
+
+/* 개인 고객 아이콘 (ID카드) */
+.ant-table .ant-table-tbody .anticon-idcard {
+  color: #52c41a !important; /* 녹색 */
+}
+
+/* 법인 고객 아이콘 (은행/건물) */
+.ant-table .ant-table-tbody .anticon-bank {
+  color: #1890ff !important; /* 파란색 */
+}
+
+/* 고객명 칼럼 내 아이콘 강화 */
+.ant-table-cell .anticon-idcard,
+.ant-table-cell .anticon-bank {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+/* 추가 보장을 위한 테이블 행별 아이콘 색상 */
+.ant-table-tbody tr .anticon {
+  transition: color 0.3s ease;
+}
+
 /* ===========================
    완료! 통합 CSS 시스템
    =========================== */
