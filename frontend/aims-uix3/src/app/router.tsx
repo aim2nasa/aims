@@ -150,69 +150,7 @@ const NotFoundPage: React.FC = () => (
  */
 const Layout: React.FC = () => {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-primary)' }}>
-      {/* 헤더 영역 */}
-      <header
-        style={{
-          backgroundColor: 'var(--color-bg-secondary)',
-          borderBottom: '1px solid var(--color-border-primary)',
-          padding: 'var(--spacing-4) var(--spacing-6)',
-        }}
-      >
-        <nav style={{ display: 'flex', gap: 'var(--spacing-4)', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-bold)' }}>
-            <a
-              href="/"
-              style={{
-                color: 'var(--color-text-primary)',
-                textDecoration: 'none',
-              }}
-            >
-              AIMS UIX-3
-            </a>
-          </h1>
-          <div style={{ display: 'flex', gap: 'var(--spacing-4)' }}>
-            <a
-              href="/"
-              style={{
-                color: 'var(--color-text-secondary)',
-                textDecoration: 'none',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--radius-md)',
-                transition: 'background-color var(--duration-fast) var(--easing-ease-in-out)',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              홈
-            </a>
-            <a
-              href="/customers"
-              style={{
-                color: 'var(--color-text-secondary)',
-                textDecoration: 'none',
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderRadius: 'var(--radius-md)',
-                transition: 'background-color var(--duration-fast) var(--easing-ease-in-out)',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              고객관리
-            </a>
-          </div>
-        </nav>
-      </header>
-
-      {/* 메인 콘텐츠 영역 */}
+    <div>
       <main>
         <ErrorBoundary>
           <Suspense fallback={<PageLoadingSkeleton />}>
