@@ -94,7 +94,7 @@ function App() {
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          transition: 'width 0.3s ease, padding 0.3s ease'
+          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
           {!leftPaneCollapsed && (
             <>
@@ -146,7 +146,7 @@ function App() {
           backgroundColor: '#3b82f6',
           padding: '8px',
           zIndex: 1,
-          transition: 'left 0.3s ease, width 0.3s ease'
+          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
         </div>
       )}
@@ -159,12 +159,13 @@ function App() {
           left: leftPaneCollapsed ? '64px' : '254px',
           width: rightPaneVisible ?
             `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 8px)` :
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 8px)`,
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 12px)`,
           height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
           backgroundColor: '#e0f2fe',
           padding: '20px',
+          boxSizing: 'border-box',
           zIndex: 10,
-          transition: 'left 0.3s ease, width 0.3s ease'
+          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
@@ -173,6 +174,30 @@ function App() {
           <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
             Pagination: {paginationVisible ? 'ON' : 'OFF'}
           </p>
+        </div>
+      )}
+
+      {/* Pagination - 독립 레이어 (조건부) */}
+      {paginationVisible && (
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          left: leftPaneCollapsed ? '64px' : '254px',
+          width: rightPaneVisible ?
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 8px)` :
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 12px)`,
+          height: '40px',
+          backgroundColor: '#06b6d4',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          boxSizing: 'border-box',
+          zIndex: 10,
+          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        }}>
+          Pagination Pane (On/Off depends on CenterPane content)
         </div>
       )}
 
@@ -188,7 +213,7 @@ function App() {
             backgroundColor: '#ec4899',
             cursor: 'col-resize',
             zIndex: 20,
-            transition: 'left 0.3s ease'
+            transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           }}
           onMouseDown={(e) => {
             e.preventDefault()
@@ -219,48 +244,32 @@ function App() {
       )}
 
       {/* RightPane - 독립 레이어 (조건부) */}
-      {rightPaneVisible && (
-        <div style={{
-          position: 'absolute',
-          top: '68px',
-          left: `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 + 6px)`,
-          width: `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${100 - centerWidth} / 100 - 14px)`,
-          height: 'calc(100vh - 76px)',
-          backgroundColor: '#f0fdf4',
-          padding: '20px',
-          zIndex: 10,
-          transition: 'left 0.3s ease, width 0.3s ease'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>RightPane (Resized according to BRB)</h3>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Additional tools & info</p>
-          <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
-            Pagination: {paginationVisible ? 'ON' : 'OFF'}
-          </p>
-        </div>
-      )}
+      <div style={{
+        position: 'absolute',
+        top: '68px',
+        right: '8px',
+        width: rightPaneVisible ?
+          `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${100 - centerWidth} / 100 - 14px)` :
+          '0px',
+        opacity: rightPaneVisible ? 1 : 0,
+        height: 'calc(100vh - 76px)',
+        backgroundColor: '#f0fdf4',
+        padding: rightPaneVisible ? '20px' : '0px',
+        zIndex: 10,
+        overflow: 'hidden',
+        transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      }}>
+        {rightPaneVisible && (
+          <>
+            <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>RightPane (Resized according to BRB)</h3>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Additional tools & info</p>
+            <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+              Pagination: {paginationVisible ? 'ON' : 'OFF'}
+            </p>
+          </>
+        )}
+      </div>
 
-      {/* Pagination - 독립 레이어 (조건부) */}
-      {paginationVisible && (
-        <div style={{
-          position: 'absolute',
-          bottom: '8px',
-          left: leftPaneCollapsed ? '64px' : '254px',
-          width: rightPaneVisible ?
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 8px)` :
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 8px)`,
-          height: '40px',
-          backgroundColor: '#06b6d4',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '14px',
-          zIndex: 10,
-          transition: 'left 0.3s ease, width 0.3s ease'
-        }}>
-          Pagination Pane (On/Off depends on CenterPane content)
-        </div>
-      )}
     </div>
   )
 }
