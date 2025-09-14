@@ -12,6 +12,9 @@ function App() {
   const [mainPaneVisible, setMainPaneVisible] = useState(true)
   const [brbVisible, setBrbVisible] = useState(true)
 
+  // LeftPane 축소/확장 상태
+  const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
+
   return (
     <div style={{
       width: '100vw',
@@ -83,15 +86,52 @@ function App() {
           position: 'absolute',
           top: '60px',
           left: 0,
-          width: '250px',
+          width: leftPaneCollapsed ? '60px' : '250px',
           height: 'calc(100vh - 60px)',
           backgroundColor: '#fef3e3',
-          padding: '20px',
+          padding: leftPaneCollapsed ? '10px' : '20px',
           borderRight: '2px solid #e5e7eb',
-          zIndex: 10
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.3s ease, padding 0.3s ease'
         }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Navigation & Controls</p>
+          {!leftPaneCollapsed && (
+            <>
+              <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Navigation & Controls</p>
+            </>
+          )}
+
+          {/* 햄버거 버튼 - 우측 하단 */}
+          <div style={{
+            marginTop: 'auto',
+            display: 'flex',
+            justifyContent: leftPaneCollapsed ? 'center' : 'flex-end',
+            paddingTop: '10px'
+          }}>
+            <button
+              style={{
+                backgroundColor: '#374151',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '2px',
+                width: '28px',
+                height: '28px'
+              }}
+              onClick={() => setLeftPaneCollapsed(!leftPaneCollapsed)}
+            >
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
+            </button>
+          </div>
         </div>
       )}
 
@@ -100,12 +140,13 @@ function App() {
         <div style={{
           position: 'absolute',
           top: '60px',
-          left: '250px',
-          width: 'calc(100vw - 250px)',
+          left: leftPaneCollapsed ? '60px' : '250px',
+          width: leftPaneCollapsed ? 'calc(100vw - 60px)' : 'calc(100vw - 250px)',
           height: 'calc(100vh - 60px)',
           backgroundColor: '#3b82f6',
           padding: '8px',
-          zIndex: 1
+          zIndex: 1,
+          transition: 'left 0.3s ease, width 0.3s ease'
         }}>
         </div>
       )}
@@ -115,12 +156,15 @@ function App() {
         <div style={{
           position: 'absolute',
           top: '68px',
-          left: '254px',
-          width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
+          left: leftPaneCollapsed ? '64px' : '254px',
+          width: rightPaneVisible ?
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 8px)` :
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 8px)`,
           height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
           backgroundColor: '#e0f2fe',
           padding: '20px',
-          zIndex: 10
+          zIndex: 10,
+          transition: 'left 0.3s ease, width 0.3s ease'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
@@ -138,12 +182,13 @@ function App() {
           style={{
             position: 'absolute',
             top: '68px',
-            left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 - 2px)`,
+            left: `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 2px)`,
             width: '4px',
             height: 'calc(100vh - 76px)',
             backgroundColor: '#ec4899',
             cursor: 'col-resize',
-            zIndex: 20
+            zIndex: 20,
+            transition: 'left 0.3s ease'
           }}
           onMouseDown={(e) => {
             e.preventDefault()
@@ -153,7 +198,7 @@ function App() {
             const handleMouseMove = (e: MouseEvent) => {
               e.preventDefault()
               const deltaX = e.clientX - startX
-              const mainPaneWidth = window.innerWidth - 250 // MainPane 너비
+              const mainPaneWidth = window.innerWidth - (leftPaneCollapsed ? 60 : 250) // MainPane 너비
               const deltaPercent = (deltaX / mainPaneWidth) * 100
               const newWidth = startWidth + deltaPercent
               setCenterWidth(Math.max(20, Math.min(80, newWidth)))
@@ -178,12 +223,13 @@ function App() {
         <div style={{
           position: 'absolute',
           top: '68px',
-          left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 + 6px)`,
-          width: `calc((100vw - 250px) * ${100 - centerWidth} / 100 - 14px)`,
+          left: `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 + 6px)`,
+          width: `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${100 - centerWidth} / 100 - 14px)`,
           height: 'calc(100vh - 76px)',
           backgroundColor: '#f0fdf4',
           padding: '20px',
-          zIndex: 10
+          zIndex: 10,
+          transition: 'left 0.3s ease, width 0.3s ease'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>RightPane (Resized according to BRB)</h3>
           <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Additional tools & info</p>
@@ -198,8 +244,10 @@ function App() {
         <div style={{
           position: 'absolute',
           bottom: '8px',
-          left: '254px',
-          width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
+          left: leftPaneCollapsed ? '64px' : '254px',
+          width: rightPaneVisible ?
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 8px)` :
+            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 8px)`,
           height: '40px',
           backgroundColor: '#06b6d4',
           color: 'white',
@@ -207,7 +255,8 @@ function App() {
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '14px',
-          zIndex: 10
+          zIndex: 10,
+          transition: 'left 0.3s ease, width 0.3s ease'
         }}>
           Pagination Pane (On/Off depends on CenterPane content)
         </div>
