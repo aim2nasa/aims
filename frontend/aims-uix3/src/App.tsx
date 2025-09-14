@@ -114,16 +114,42 @@ function App() {
 
       {/* BRB - 독립 레이어 (조건부) */}
       {rightPaneVisible && (
-        <div style={{
-          position: 'absolute',
-          top: '68px',
-          left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 - 2px)`,
-          width: '4px',
-          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
-          backgroundColor: '#ec4899',
-          cursor: 'col-resize',
-          zIndex: 20
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '68px',
+            left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 - 2px)`,
+            width: '4px',
+            height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+            backgroundColor: '#ec4899',
+            cursor: 'col-resize',
+            zIndex: 20
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            const startX = e.clientX
+            const startWidth = centerWidth
+
+            const handleMouseMove = (e: MouseEvent) => {
+              e.preventDefault()
+              const deltaX = e.clientX - startX
+              const mainPaneWidth = window.innerWidth - 250 // MainPane 너비
+              const deltaPercent = (deltaX / mainPaneWidth) * 100
+              const newWidth = startWidth + deltaPercent
+              setCenterWidth(Math.max(20, Math.min(80, newWidth)))
+            }
+
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove)
+              document.removeEventListener('mouseup', handleMouseUp)
+              document.body.style.cursor = 'default'
+            }
+
+            document.body.style.cursor = 'col-resize'
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+          }}
+        >
         </div>
       )}
 
