@@ -202,16 +202,18 @@ function App() {
       )}
 
       {/* BRB - 독립 레이어 (조건부) */}
-      {rightPaneVisible && brbVisible && (
+      {brbVisible && (
         <div
           style={{
             position: 'absolute',
             top: '68px',
-            left: `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 2px)`,
+            left: rightPaneVisible ?
+              `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 + 2px)` :
+              `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 10px)`,
             width: '4px',
             height: 'calc(100vh - 76px)',
             backgroundColor: '#ec4899',
-            cursor: 'col-resize',
+            cursor: rightPaneVisible ? 'col-resize' : 'default',
             zIndex: 20,
             transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           }}
