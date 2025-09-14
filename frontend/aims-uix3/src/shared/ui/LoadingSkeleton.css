@@ -1,0 +1,249 @@
+/**
+ * AIMS UIX-3 LoadingSkeleton Styles
+ * @since 2025-09-15
+ * @version 1.0.0
+ */
+
+/* === BASE SKELETON === */
+
+.loading-skeleton {
+  background-color: var(--color-neutral-200);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+[data-theme="dark"] .loading-skeleton {
+  background-color: var(--color-neutral-700);
+}
+
+/* === VARIANTS === */
+
+.loading-skeleton--text {
+  border-radius: var(--radius-sm);
+  height: 1em;
+}
+
+.loading-skeleton--rectangle {
+  border-radius: var(--radius-md);
+}
+
+.loading-skeleton--circle {
+  border-radius: var(--radius-full);
+  aspect-ratio: 1;
+}
+
+.loading-skeleton--rounded {
+  border-radius: var(--radius-lg);
+}
+
+/* === ANIMATION === */
+
+.loading-skeleton--animate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 20%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.4) 80%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+[data-theme="dark"] .loading-skeleton--animate::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 80%,
+    transparent 100%
+  );
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* === TEXT SKELETON GROUP === */
+
+.text-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+/* === CARD SKELETON === */
+
+.card-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-primary);
+}
+
+.card-skeleton__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.card-skeleton__header-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+}
+
+.card-skeleton__actions {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+
+/* === ACCESSIBILITY === */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* === REDUCED MOTION === */
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton--animate::before {
+    animation: none;
+  }
+
+  .loading-skeleton {
+    opacity: 0.7;
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+
+@media (prefers-contrast: high) {
+  .loading-skeleton {
+    background-color: var(--color-neutral-400);
+    border: 1px solid var(--color-neutral-600);
+  }
+
+  [data-theme="dark"] .loading-skeleton {
+    background-color: var(--color-neutral-600);
+    border: 1px solid var(--color-neutral-400);
+  }
+}
+
+/* === COMMON SKELETON LAYOUTS === */
+
+/* List Item Skeleton */
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+}
+
+.skeleton-list-item__avatar {
+  flex-shrink: 0;
+}
+
+.skeleton-list-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+}
+
+/* Table Row Skeleton */
+.skeleton-table-row {
+  display: flex;
+  gap: var(--spacing-4);
+  padding: var(--spacing-3);
+  align-items: center;
+}
+
+.skeleton-table-row .loading-skeleton {
+  flex: 1;
+}
+
+.skeleton-table-row .loading-skeleton:first-child {
+  flex: 0 0 60px; /* ID 컬럼 */
+}
+
+.skeleton-table-row .loading-skeleton:last-child {
+  flex: 0 0 100px; /* 액션 컬럼 */
+}
+
+/* Grid Item Skeleton */
+.skeleton-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-primary);
+}
+
+.skeleton-grid-item__image {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-grid-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+/* Form Field Skeleton */
+.skeleton-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.skeleton-form-field__label {
+  width: 25%;
+}
+
+.skeleton-form-field__input {
+  height: 40px;
+  border-radius: var(--radius-md);
+}
+
+/* Profile Skeleton */
+.skeleton-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-4);
+  text-align: center;
+}
+
+.skeleton-profile__avatar {
+  width: 80px;
+  height: 80px;
+}

@@ -1,0 +1,307 @@
+/**
+ * AIMS UIX-3 Theme System
+ * @since 2025-09-15
+ * @version 1.0.0
+ *
+ * 라이트/다크/시스템 테마를 위한 시맨틱 색상 토큰
+ * tokens.css의 원시 토큰을 기반으로 컨텍스트에 맞는 의미를 부여합니다.
+ */
+
+/* === LIGHT THEME (기본) === */
+
+:root,
+[data-theme="light"] {
+  /* Background Colors */
+  --color-bg-primary: var(--color-neutral-0);
+  --color-bg-secondary: var(--color-neutral-50);
+  --color-bg-tertiary: var(--color-neutral-100);
+  --color-bg-hover: var(--color-neutral-100);
+  --color-bg-active: var(--color-neutral-200);
+  --color-bg-disabled: var(--color-neutral-100);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-disabled: var(--color-neutral-300);
+  --color-text-inverse: var(--color-neutral-0);
+
+  /* Border Colors */
+  --color-border-primary: var(--color-neutral-200);
+  --color-border-secondary: var(--color-neutral-300);
+  --color-border-focus: var(--color-primary-500);
+  --color-border-error: var(--color-error-500);
+  --color-border-disabled: var(--color-neutral-200);
+
+  /* Button Colors */
+  --color-button-primary-bg: var(--color-primary-600);
+  --color-button-primary-bg-hover: var(--color-primary-700);
+  --color-button-primary-bg-active: var(--color-primary-800);
+  --color-button-primary-text: var(--color-neutral-0);
+
+  --color-button-secondary-bg: var(--color-neutral-0);
+  --color-button-secondary-bg-hover: var(--color-neutral-50);
+  --color-button-secondary-bg-active: var(--color-neutral-100);
+  --color-button-secondary-text: var(--color-neutral-700);
+  --color-button-secondary-border: var(--color-neutral-300);
+
+  --color-button-ghost-bg: transparent;
+  --color-button-ghost-bg-hover: var(--color-neutral-100);
+  --color-button-ghost-bg-active: var(--color-neutral-200);
+  --color-button-ghost-text: var(--color-neutral-700);
+
+  --color-button-destructive-bg: var(--color-error-600);
+  --color-button-destructive-bg-hover: var(--color-error-700);
+  --color-button-destructive-text: var(--color-neutral-0);
+
+  /* Input Colors */
+  --color-input-bg: var(--color-neutral-0);
+  --color-input-bg-disabled: var(--color-neutral-50);
+  --color-input-border: var(--color-neutral-300);
+  --color-input-border-focus: var(--color-primary-500);
+  --color-input-border-error: var(--color-error-500);
+  --color-input-text: var(--color-neutral-900);
+  --color-input-text-disabled: var(--color-neutral-400);
+  --color-input-placeholder: var(--color-neutral-400);
+
+  /* Status Colors */
+  --color-status-success: var(--color-success-600);
+  --color-status-success-bg: var(--color-success-50);
+  --color-status-warning: var(--color-warning-600);
+  --color-status-warning-bg: var(--color-warning-50);
+  --color-status-error: var(--color-error-600);
+  --color-status-error-bg: var(--color-error-50);
+  --color-status-info: var(--color-info-600);
+  --color-status-info-bg: var(--color-info-50);
+}
+
+/* === DARK THEME === */
+
+[data-theme="dark"] {
+  /* Background Colors */
+  --color-bg-primary: var(--color-neutral-900);
+  --color-bg-secondary: var(--color-neutral-800);
+  --color-bg-tertiary: var(--color-neutral-700);
+  --color-bg-hover: var(--color-neutral-800);
+  --color-bg-active: var(--color-neutral-700);
+  --color-bg-disabled: var(--color-neutral-800);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-neutral-100);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-disabled: var(--color-neutral-600);
+  --color-text-inverse: var(--color-neutral-900);
+
+  /* Border Colors */
+  --color-border-primary: var(--color-neutral-700);
+  --color-border-secondary: var(--color-neutral-600);
+  --color-border-focus: var(--color-primary-400);
+  --color-border-error: var(--color-error-400);
+  --color-border-disabled: var(--color-neutral-700);
+
+  /* Button Colors */
+  --color-button-primary-bg: var(--color-primary-500);
+  --color-button-primary-bg-hover: var(--color-primary-400);
+  --color-button-primary-bg-active: var(--color-primary-300);
+  --color-button-primary-text: var(--color-neutral-0);
+
+  --color-button-secondary-bg: var(--color-neutral-800);
+  --color-button-secondary-bg-hover: var(--color-neutral-700);
+  --color-button-secondary-bg-active: var(--color-neutral-600);
+  --color-button-secondary-text: var(--color-neutral-200);
+  --color-button-secondary-border: var(--color-neutral-600);
+
+  --color-button-ghost-bg: transparent;
+  --color-button-ghost-bg-hover: var(--color-neutral-800);
+  --color-button-ghost-bg-active: var(--color-neutral-700);
+  --color-button-ghost-text: var(--color-neutral-200);
+
+  --color-button-destructive-bg: var(--color-error-600);
+  --color-button-destructive-bg-hover: var(--color-error-500);
+  --color-button-destructive-text: var(--color-neutral-0);
+
+  /* Input Colors */
+  --color-input-bg: var(--color-neutral-800);
+  --color-input-bg-disabled: var(--color-neutral-900);
+  --color-input-border: var(--color-neutral-600);
+  --color-input-border-focus: var(--color-primary-400);
+  --color-input-border-error: var(--color-error-400);
+  --color-input-text: var(--color-neutral-100);
+  --color-input-text-disabled: var(--color-neutral-500);
+  --color-input-placeholder: var(--color-neutral-500);
+
+  /* Status Colors */
+  --color-status-success: var(--color-success-400);
+  --color-status-success-bg: rgba(34, 197, 94, 0.1);
+  --color-status-warning: var(--color-warning-400);
+  --color-status-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-status-error: var(--color-error-400);
+  --color-status-error-bg: rgba(239, 68, 68, 0.1);
+  --color-status-info: var(--color-info-400);
+  --color-status-info-bg: rgba(59, 130, 246, 0.1);
+}
+
+/* === SYSTEM PREFERENCE === */
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    /* Dark theme variables - same as [data-theme="dark"] */
+    --color-bg-primary: var(--color-neutral-900);
+    --color-bg-secondary: var(--color-neutral-800);
+    --color-bg-tertiary: var(--color-neutral-700);
+    --color-bg-hover: var(--color-neutral-800);
+    --color-bg-active: var(--color-neutral-700);
+    --color-bg-disabled: var(--color-neutral-800);
+
+    --color-text-primary: var(--color-neutral-100);
+    --color-text-secondary: var(--color-neutral-300);
+    --color-text-tertiary: var(--color-neutral-500);
+    --color-text-disabled: var(--color-neutral-600);
+    --color-text-inverse: var(--color-neutral-900);
+
+    --color-border-primary: var(--color-neutral-700);
+    --color-border-secondary: var(--color-neutral-600);
+    --color-border-focus: var(--color-primary-400);
+    --color-border-error: var(--color-error-400);
+    --color-border-disabled: var(--color-neutral-700);
+
+    --color-button-primary-bg: var(--color-primary-500);
+    --color-button-primary-bg-hover: var(--color-primary-400);
+    --color-button-primary-bg-active: var(--color-primary-300);
+    --color-button-primary-text: var(--color-neutral-0);
+
+    --color-button-secondary-bg: var(--color-neutral-800);
+    --color-button-secondary-bg-hover: var(--color-neutral-700);
+    --color-button-secondary-bg-active: var(--color-neutral-600);
+    --color-button-secondary-text: var(--color-neutral-200);
+    --color-button-secondary-border: var(--color-neutral-600);
+
+    --color-button-ghost-bg: transparent;
+    --color-button-ghost-bg-hover: var(--color-neutral-800);
+    --color-button-ghost-bg-active: var(--color-neutral-700);
+    --color-button-ghost-text: var(--color-neutral-200);
+
+    --color-button-destructive-bg: var(--color-error-600);
+    --color-button-destructive-bg-hover: var(--color-error-500);
+    --color-button-destructive-text: var(--color-neutral-0);
+
+    --color-input-bg: var(--color-neutral-800);
+    --color-input-bg-disabled: var(--color-neutral-900);
+    --color-input-border: var(--color-neutral-600);
+    --color-input-border-focus: var(--color-primary-400);
+    --color-input-border-error: var(--color-error-400);
+    --color-input-text: var(--color-neutral-100);
+    --color-input-text-disabled: var(--color-neutral-500);
+    --color-input-placeholder: var(--color-neutral-500);
+
+    --color-status-success: var(--color-success-400);
+    --color-status-success-bg: rgba(34, 197, 94, 0.1);
+    --color-status-warning: var(--color-warning-400);
+    --color-status-warning-bg: rgba(245, 158, 11, 0.1);
+    --color-status-error: var(--color-error-400);
+    --color-status-error-bg: rgba(239, 68, 68, 0.1);
+    --color-status-info: var(--color-info-400);
+    --color-status-info-bg: rgba(59, 130, 246, 0.1);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    /* Light theme variables - same as :root */
+    --color-bg-primary: var(--color-neutral-0);
+    --color-bg-secondary: var(--color-neutral-50);
+    --color-bg-tertiary: var(--color-neutral-100);
+    --color-bg-hover: var(--color-neutral-100);
+    --color-bg-active: var(--color-neutral-200);
+    --color-bg-disabled: var(--color-neutral-100);
+
+    --color-text-primary: var(--color-neutral-900);
+    --color-text-secondary: var(--color-neutral-600);
+    --color-text-tertiary: var(--color-neutral-400);
+    --color-text-disabled: var(--color-neutral-300);
+    --color-text-inverse: var(--color-neutral-0);
+
+    --color-border-primary: var(--color-neutral-200);
+    --color-border-secondary: var(--color-neutral-300);
+    --color-border-focus: var(--color-primary-500);
+    --color-border-error: var(--color-error-500);
+    --color-border-disabled: var(--color-neutral-200);
+
+    --color-button-primary-bg: var(--color-primary-600);
+    --color-button-primary-bg-hover: var(--color-primary-700);
+    --color-button-primary-bg-active: var(--color-primary-800);
+    --color-button-primary-text: var(--color-neutral-0);
+
+    --color-button-secondary-bg: var(--color-neutral-0);
+    --color-button-secondary-bg-hover: var(--color-neutral-50);
+    --color-button-secondary-bg-active: var(--color-neutral-100);
+    --color-button-secondary-text: var(--color-neutral-700);
+    --color-button-secondary-border: var(--color-neutral-300);
+
+    --color-button-ghost-bg: transparent;
+    --color-button-ghost-bg-hover: var(--color-neutral-100);
+    --color-button-ghost-bg-active: var(--color-neutral-200);
+    --color-button-ghost-text: var(--color-neutral-700);
+
+    --color-button-destructive-bg: var(--color-error-600);
+    --color-button-destructive-bg-hover: var(--color-error-700);
+    --color-button-destructive-text: var(--color-neutral-0);
+
+    --color-input-bg: var(--color-neutral-0);
+    --color-input-bg-disabled: var(--color-neutral-50);
+    --color-input-border: var(--color-neutral-300);
+    --color-input-border-focus: var(--color-primary-500);
+    --color-input-border-error: var(--color-error-500);
+    --color-input-text: var(--color-neutral-900);
+    --color-input-text-disabled: var(--color-neutral-400);
+    --color-input-placeholder: var(--color-neutral-400);
+
+    --color-status-success: var(--color-success-600);
+    --color-status-success-bg: var(--color-success-50);
+    --color-status-warning: var(--color-warning-600);
+    --color-status-warning-bg: var(--color-warning-50);
+    --color-status-error: var(--color-error-600);
+    --color-status-error-bg: var(--color-error-50);
+    --color-status-info: var(--color-info-600);
+    --color-status-info-bg: var(--color-info-50);
+  }
+}
+
+/* === THEME TRANSITIONS === */
+
+*,
+*::before,
+*::after {
+  transition:
+    background-color var(--duration-fast) var(--easing-ease-in-out),
+    border-color var(--duration-fast) var(--easing-ease-in-out),
+    color var(--duration-fast) var(--easing-ease-in-out),
+    box-shadow var(--duration-fast) var(--easing-ease-in-out);
+}
+
+/* === HIGH CONTRAST MODE SUPPORT === */
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-border-primary: var(--color-neutral-900);
+    --color-border-secondary: var(--color-neutral-800);
+  }
+
+  [data-theme="dark"] {
+    --color-border-primary: var(--color-neutral-100);
+    --color-border-secondary: var(--color-neutral-200);
+  }
+}
+
+/* === REDUCED MOTION SUPPORT === */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
