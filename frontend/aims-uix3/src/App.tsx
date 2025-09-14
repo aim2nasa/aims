@@ -208,7 +208,7 @@ function App() {
             position: 'absolute',
             top: '68px',
             left: rightPaneVisible ?
-              `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 + 2px)` :
+              `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - 4.7px)` :
               `calc(${leftPaneCollapsed ? '64px' : '254px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - 10px)`,
             width: '4px',
             height: 'calc(100vh - 76px)',
