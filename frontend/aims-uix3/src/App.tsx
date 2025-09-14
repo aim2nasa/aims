@@ -120,7 +120,7 @@ function App() {
             top: '68px',
             left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 - 2px)`,
             width: '4px',
-            height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+            height: 'calc(100vh - 76px)',
             backgroundColor: '#ec4899',
             cursor: 'col-resize',
             zIndex: 20
@@ -160,7 +160,7 @@ function App() {
           top: '68px',
           left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 + 6px)`,
           width: `calc((100vw - 250px) * ${100 - centerWidth} / 100 - 14px)`,
-          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+          height: 'calc(100vh - 76px)',
           backgroundColor: '#f0fdf4',
           padding: '20px',
           zIndex: 10
@@ -179,7 +179,7 @@ function App() {
           position: 'absolute',
           bottom: '8px',
           left: '254px',
-          width: 'calc((100vw - 250px) - 8px)',
+          width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
           height: '40px',
           backgroundColor: '#06b6d4',
           color: 'white',
