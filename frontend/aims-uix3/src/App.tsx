@@ -73,39 +73,6 @@ function App() {
               </label>
             </div>
 
-            <div style={{ width: '2px', height: '30px', backgroundColor: '#e5e7eb' }}></div>
-
-            {/* Original Buttons */}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setRightPaneVisible(!rightPaneVisible)}
-                style={{
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                {rightPaneVisible ? 'Hide Right Pane' : 'Show Right Pane'}
-              </button>
-              <button
-                onClick={() => setPaginationVisible(!paginationVisible)}
-                style={{
-                  backgroundColor: '#06b6d4',
-                  color: 'white',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                {paginationVisible ? 'Hide Pagination' : 'Show Pagination'}
-              </button>
-            </div>
           </div>
         </div>
       )}
