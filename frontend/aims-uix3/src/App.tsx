@@ -5,6 +5,13 @@ function App() {
   const [centerWidth, setCenterWidth] = useState(60)
   const [paginationVisible, setPaginationVisible] = useState(true)
 
+  // 각 레이어별 visibility 상태
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [leftPaneVisible, setLeftPaneVisible] = useState(true)
+  const [centerPaneVisible, setCenterPaneVisible] = useState(true)
+  const [mainPaneVisible, setMainPaneVisible] = useState(true)
+  const [brbVisible, setBrbVisible] = useState(true)
+
   return (
     <div style={{
       width: '100vw',
@@ -16,104 +23,150 @@ function App() {
       backgroundColor: '#000000'
     }}>
       {/* Header - 독립 레이어 */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '60px',
-        backgroundColor: '#f3e8ff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        borderBottom: '2px solid #e5e7eb',
-        zIndex: 100
-      }}>
-        <h1 style={{ margin: 0, color: '#1a1a1a' }}>AIMS UIX3</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setRightPaneVisible(!rightPaneVisible)}
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            {rightPaneVisible ? 'Hide Right Pane' : 'Show Right Pane'}
-          </button>
-          <button
-            onClick={() => setPaginationVisible(!paginationVisible)}
-            style={{
-              backgroundColor: '#06b6d4',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            {paginationVisible ? 'Hide Pagination' : 'Show Pagination'}
-          </button>
+      {headerVisible && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '60px',
+          backgroundColor: '#f3e8ff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 20px',
+          borderBottom: '2px solid #e5e7eb',
+          zIndex: 100
+        }}>
+          <h1 style={{ margin: 0, color: '#1a1a1a' }}>AIMS UIX3</h1>
+
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            {/* Layer Toggle Checkboxes */}
+            <div style={{ display: 'flex', gap: '10px', fontSize: '12px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={headerVisible} onChange={() => setHeaderVisible(!headerVisible)} />
+                Header
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={leftPaneVisible} onChange={() => setLeftPaneVisible(!leftPaneVisible)} />
+                LeftPane
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={centerPaneVisible} onChange={() => setCenterPaneVisible(!centerPaneVisible)} />
+                CenterPane
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={rightPaneVisible} onChange={() => setRightPaneVisible(!rightPaneVisible)} />
+                RightPane
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={brbVisible} onChange={() => setBrbVisible(!brbVisible)} />
+                BRB
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={paginationVisible} onChange={() => setPaginationVisible(!paginationVisible)} />
+                Pagination
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+                <input type="checkbox" checked={mainPaneVisible} onChange={() => setMainPaneVisible(!mainPaneVisible)} />
+                MainPane
+              </label>
+            </div>
+
+            <div style={{ width: '2px', height: '30px', backgroundColor: '#e5e7eb' }}></div>
+
+            {/* Original Buttons */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setRightPaneVisible(!rightPaneVisible)}
+                style={{
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {rightPaneVisible ? 'Hide Right Pane' : 'Show Right Pane'}
+              </button>
+              <button
+                onClick={() => setPaginationVisible(!paginationVisible)}
+                style={{
+                  backgroundColor: '#06b6d4',
+                  color: 'white',
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {paginationVisible ? 'Hide Pagination' : 'Show Pagination'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* LeftPane - 독립 레이어 */}
-      <div style={{
-        position: 'absolute',
-        top: '60px',
-        left: 0,
-        width: '250px',
-        height: 'calc(100vh - 60px)',
-        backgroundColor: '#fef3e3',
-        padding: '20px',
-        borderRight: '2px solid #e5e7eb',
-        zIndex: 10
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
-        <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Navigation & Controls</p>
-      </div>
+      {leftPaneVisible && (
+        <div style={{
+          position: 'absolute',
+          top: '60px',
+          left: 0,
+          width: '250px',
+          height: 'calc(100vh - 60px)',
+          backgroundColor: '#fef3e3',
+          padding: '20px',
+          borderRight: '2px solid #e5e7eb',
+          zIndex: 10
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
+          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Navigation & Controls</p>
+        </div>
+      )}
 
       {/* MainPane - 독립 레이어 (배경) */}
-      <div style={{
-        position: 'absolute',
-        top: '60px',
-        left: '250px',
-        width: 'calc(100vw - 250px)',
-        height: 'calc(100vh - 60px)',
-        backgroundColor: '#3b82f6',
-        padding: '8px',
-        zIndex: 1
-      }}>
-      </div>
+      {mainPaneVisible && (
+        <div style={{
+          position: 'absolute',
+          top: '60px',
+          left: '250px',
+          width: 'calc(100vw - 250px)',
+          height: 'calc(100vh - 60px)',
+          backgroundColor: '#3b82f6',
+          padding: '8px',
+          zIndex: 1
+        }}>
+        </div>
+      )}
 
       {/* CenterPane - 독립 레이어 */}
-      <div style={{
-        position: 'absolute',
-        top: '68px',
-        left: '254px',
-        width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
-        height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
-        backgroundColor: '#e0f2fe',
-        padding: '20px',
-        zIndex: 10
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
-          CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
-        </h3>
-        <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Main content area</p>
-        <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
-          Pagination: {paginationVisible ? 'ON' : 'OFF'}
-        </p>
-      </div>
+      {centerPaneVisible && (
+        <div style={{
+          position: 'absolute',
+          top: '68px',
+          left: '254px',
+          width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
+          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+          backgroundColor: '#e0f2fe',
+          padding: '20px',
+          zIndex: 10
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
+            CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
+          </h3>
+          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Main content area</p>
+          <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+            Pagination: {paginationVisible ? 'ON' : 'OFF'}
+          </p>
+        </div>
+      )}
 
       {/* BRB - 독립 레이어 (조건부) */}
-      {rightPaneVisible && (
+      {rightPaneVisible && brbVisible && (
         <div
           style={{
             position: 'absolute',
