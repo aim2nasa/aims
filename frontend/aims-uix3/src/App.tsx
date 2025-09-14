@@ -213,6 +213,7 @@ function App() {
             width: '4px',
             height: 'calc(100vh - 76px)',
             backgroundColor: '#ec4899',
+            opacity: rightPaneVisible ? 1 : 0,
             cursor: rightPaneVisible ? 'col-resize' : 'default',
             zIndex: 20,
             transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
