@@ -3,6 +3,7 @@ import { useState } from 'react'
 function App() {
   const [rightPaneVisible, setRightPaneVisible] = useState(false)
   const [centerWidth, setCenterWidth] = useState(60)
+  const [paginationVisible, setPaginationVisible] = useState(true)
 
   return (
     <div style={{
@@ -30,20 +31,36 @@ function App() {
         zIndex: 100
       }}>
         <h1 style={{ margin: 0, color: '#1a1a1a' }}>AIMS UIX3</h1>
-        <button
-          onClick={() => setRightPaneVisible(!rightPaneVisible)}
-          style={{
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            padding: '8px 16px',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          {rightPaneVisible ? 'Hide Right Pane' : 'Show Right Pane'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setRightPaneVisible(!rightPaneVisible)}
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            {rightPaneVisible ? 'Hide Right Pane' : 'Show Right Pane'}
+          </button>
+          <button
+            onClick={() => setPaginationVisible(!paginationVisible)}
+            style={{
+              backgroundColor: '#06b6d4',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            {paginationVisible ? 'Hide Pagination' : 'Show Pagination'}
+          </button>
+        </div>
       </div>
 
       {/* LeftPane - 독립 레이어 */}
@@ -81,7 +98,7 @@ function App() {
         top: '68px',
         left: '254px',
         width: rightPaneVisible ? `calc((100vw - 250px) * ${centerWidth} / 100 - 8px)` : 'calc((100vw - 250px) - 8px)',
-        height: 'calc(100vh - 116px)',
+        height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
         backgroundColor: '#e0f2fe',
         padding: '20px',
         zIndex: 10
@@ -90,6 +107,9 @@ function App() {
           CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
         </h3>
         <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Main content area</p>
+        <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+          Pagination: {paginationVisible ? 'ON' : 'OFF'}
+        </p>
       </div>
 
       {/* BRB - 독립 레이어 (조건부) */}
@@ -99,7 +119,7 @@ function App() {
           top: '68px',
           left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 - 2px)`,
           width: '4px',
-          height: 'calc(100vh - 116px)',
+          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
           backgroundColor: '#ec4899',
           cursor: 'col-resize',
           zIndex: 20
@@ -114,33 +134,38 @@ function App() {
           top: '68px',
           left: `calc(254px + (100vw - 250px) * ${centerWidth} / 100 + 6px)`,
           width: `calc((100vw - 250px) * ${100 - centerWidth} / 100 - 14px)`,
-          height: 'calc(100vh - 116px)',
+          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
           backgroundColor: '#f0fdf4',
           padding: '20px',
           zIndex: 10
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>RightPane (Resized according to BRB)</h3>
           <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Additional tools & info</p>
+          <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+            Pagination: {paginationVisible ? 'ON' : 'OFF'}
+          </p>
         </div>
       )}
 
-      {/* Pagination - 독립 레이어 */}
-      <div style={{
-        position: 'absolute',
-        bottom: '8px',
-        left: '254px',
-        width: 'calc((100vw - 250px) - 8px)',
-        height: '40px',
-        backgroundColor: '#06b6d4',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '14px',
-        zIndex: 10
-      }}>
-        Pagination Pane (On/Off depends on CenterPane content)
-      </div>
+      {/* Pagination - 독립 레이어 (조건부) */}
+      {paginationVisible && (
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          left: '254px',
+          width: 'calc((100vw - 250px) - 8px)',
+          height: '40px',
+          backgroundColor: '#06b6d4',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          zIndex: 10
+        }}>
+          Pagination Pane (On/Off depends on CenterPane content)
+        </div>
+      )}
     </div>
   )
 }
