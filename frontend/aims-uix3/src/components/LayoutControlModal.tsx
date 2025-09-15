@@ -126,7 +126,7 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
           </div>
 
           {/* Gap 설정 제어 */}
-          <div className="modal-control-section">
+          <div className="modal-control-section modal-control-section--with-divider">
             <div className="gap-section-header">
               <h3 className="modal-section-title">Gap 설정</h3>
               <div className="gap-controls">
