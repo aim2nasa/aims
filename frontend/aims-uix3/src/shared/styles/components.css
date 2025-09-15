@@ -222,12 +222,21 @@
 
 .reset-button {
   background-color: var(--color-gap-button-reset);
-  color: var(--color-text-inverse);
-  border: none;
+  color: var(--color-neutral-0);
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 6px 12px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.reset-button:hover {
+  background-color: var(--color-gap-button-reset);
+  border-color: var(--color-border-focus);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* === PANEL COMPONENTS === */
