@@ -89,7 +89,7 @@
   /* Layout Colors - Light Theme */
   --color-layout-main-bg: var(--color-neutral-900);
   --color-layout-header-bg: var(--color-primary-50);
-  --color-layout-leftpane-bg: var(--color-warning-50);
+  --color-layout-leftpane-bg: #e8eaf2; /* 라벤더 그레이 - light.png 참고 */
   --color-layout-mainpane-bg: var(--color-primary-500);
   --color-layout-centerpane-bg: var(--color-info-50);
   --color-layout-pagination-bg: var(--color-info-500);
@@ -183,7 +183,7 @@
   /* Layout Colors - Dark Theme */
   --color-layout-main-bg: var(--color-neutral-950);
   --color-layout-header-bg: var(--color-primary-900);
-  --color-layout-leftpane-bg: var(--color-warning-900);
+  --color-layout-leftpane-bg: #1f2937; /* 중간 다크 그레이 - dark.png 참고 */
   --color-layout-mainpane-bg: var(--color-primary-400);
   --color-layout-centerpane-bg: var(--color-info-900);
   --color-layout-pagination-bg: var(--color-info-400);
@@ -269,7 +269,7 @@
     /* Layout Colors - System Dark Theme */
     --color-layout-main-bg: var(--color-neutral-950);
     --color-layout-header-bg: var(--color-primary-900);
-    --color-layout-leftpane-bg: var(--color-warning-900);
+    --color-layout-leftpane-bg: #1f2937; /* 중간 다크 그레이 - dark.png 참고 */
     --color-layout-mainpane-bg: var(--color-primary-400);
     --color-layout-centerpane-bg: var(--color-info-900);
     --color-layout-pagination-bg: var(--color-info-400);
@@ -354,7 +354,7 @@
     /* Layout Colors - System Light Theme */
     --color-layout-main-bg: var(--color-neutral-900);
     --color-layout-header-bg: var(--color-primary-50);
-    --color-layout-leftpane-bg: var(--color-warning-50);
+    --color-layout-leftpane-bg: #e8eaf2; /* 라벤더 그레이 - light.png 참고 */
     --color-layout-mainpane-bg: var(--color-primary-500);
     --color-layout-centerpane-bg: var(--color-info-50);
     --color-layout-pagination-bg: var(--color-info-500);
