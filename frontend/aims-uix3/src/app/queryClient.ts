@@ -67,6 +67,7 @@ const defaultOptions: DefaultOptions = {
 
       // 개발 환경에서 콘솔에 에러 출력
       if (import.meta.env.DEV) {
+        console.error('Mutation Error:', errorMessage);
         console.error('Mutation Error:', error);
       }
 

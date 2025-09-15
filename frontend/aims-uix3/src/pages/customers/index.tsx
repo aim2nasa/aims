@@ -10,7 +10,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button';
-import { LoadingSkeleton, CardSkeleton } from '@/shared/ui/LoadingSkeleton';
+import { CardSkeleton } from '@/shared/ui/LoadingSkeleton';
 import { queryKeys, invalidateQueries } from '@/app/queryClient';
 import {
   getCustomers,
@@ -20,7 +20,7 @@ import {
   type CustomerSearchQuery,
   type CreateCustomerData,
   CustomerUtils,
-  CustomerTagUtils,
+  // CustomerTagUtils, // 현재 미사용
 } from '@/entities/customer';
 import './CustomersPage.css';
 

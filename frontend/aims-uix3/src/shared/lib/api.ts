@@ -60,12 +60,10 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
-/**
- * 응답 타입 가드
- */
-function isResponse(value: unknown): value is Response {
-  return value instanceof Response;
-}
+// 응답 타입 가드 (현재 미사용)
+// function isResponse(value: unknown): value is Response {
+//   return value instanceof Response;
+// }
 
 /**
  * 타임아웃을 적용한 fetch 함수
@@ -135,7 +133,7 @@ export async function apiRequest<T = unknown>(
   if (body !== undefined) {
     if (body instanceof FormData) {
       // FormData의 경우 Content-Type을 자동으로 설정하도록 제거
-      delete (requestHeaders as any)['Content-Type'];
+      delete (requestHeaders as Record<string, string>)['Content-Type'];
       requestOptions.body = body;
     } else if (typeof body === 'string') {
       requestOptions.body = body;
@@ -175,7 +173,7 @@ export async function apiRequest<T = unknown>(
     } else {
       data = await response.blob();
     }
-  } catch (error) {
+  } catch {
     throw new ApiError(
       '응답 파싱 중 오류가 발생했습니다',
       response.status,

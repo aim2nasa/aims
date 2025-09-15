@@ -27,6 +27,18 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
 
+  // 테마 시스템
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  // 테마 적용
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
+
   // 브라우저 리사이즈 상태 관리
   const [isResizing, setIsResizing] = useState(false)
   const [resizeTimer, setResizeTimer] = useState<NodeJS.Timeout | null>(null)
@@ -136,8 +148,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         position: 'relative',
         margin: 0,
         padding: 0,
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#000000',
+        fontFamily: 'var(--font-family-primary)',
+        backgroundColor: 'var(--color-layout-main-bg)',
         ...cssVariables // CSS 변수 적용
       }}>
       {/* Header - 독립 레이어 */}
@@ -148,55 +160,72 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           left: 0,
           width: '100vw',
           height: '60px',
-          backgroundColor: '#f3e8ff',
+          backgroundColor: 'var(--color-layout-header-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 20px',
-          borderBottom: '2px solid #e5e7eb',
+          borderBottom: '2px solid var(--color-border-primary)',
           zIndex: 100
         }}>
-          <h1 style={{ margin: 0, color: '#1a1a1a' }}>AIMS UIX3</h1>
+          <h1 style={{ margin: 0, color: 'var(--color-text-primary)' }}>AIMS UIX3</h1>
 
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
             {/* Layer Toggle Checkboxes */}
             <div style={{ display: 'flex', gap: '10px', fontSize: '12px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={headerVisible} onChange={toggleHeader} />
                 Header
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={leftPaneVisible} onChange={toggleLeftPane} />
                 LeftPane
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={centerPaneVisible} onChange={toggleCenterPane} />
                 CenterPane
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={rightPaneVisible} onChange={toggleRightPane} />
                 RightPane
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={brbVisible} onChange={toggleBrb} />
                 BRB
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={paginationVisible} onChange={togglePagination} />
                 Pagination
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-primary)' }}>
                 <input type="checkbox" checked={mainPaneVisible} onChange={toggleMainPane} />
                 MainPane
               </label>
             </div>
+
+            {/* Theme Toggle 버튼 */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                backgroundColor: 'var(--color-button-secondary-bg)',
+                color: 'var(--color-button-secondary-text)',
+                border: '1px solid var(--color-button-secondary-border)',
+                borderRadius: '4px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                marginLeft: '15px'
+              }}
+            >
+              {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+            </button>
 
             {/* Gap 버튼 */}
             {showGapController && (
               <button
                 onClick={toggleGapController}
                 style={{
-                  backgroundColor: gapControllerVisible ? '#ef4444' : '#374151',
+                  backgroundColor: gapControllerVisible ? 'var(--color-gap-button-active)' : 'var(--color-gap-button-inactive)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -222,9 +251,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           left: 0,
           width: layoutDimensions.leftPaneWidthPx,
           height: layoutDimensions.mainContentHeight,
-          backgroundColor: '#fef3e3',
+          backgroundColor: 'var(--color-layout-leftpane-bg)',
           padding: leftPaneCollapsed ? '10px' : '20px',
-          borderRight: '2px solid #e5e7eb',
+          borderRight: '2px solid var(--color-border-primary)',
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
@@ -233,7 +262,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           {!leftPaneCollapsed && (
             <>
               <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Navigation & Controls</p>
+              <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>Navigation & Controls</p>
             </>
           )}
 
@@ -277,7 +306,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           left: layoutDimensions.leftPaneWidthPx,
           width: layoutDimensions.mainPaneWidth,
           height: layoutDimensions.mainContentHeight,
-          backgroundColor: '#3b82f6',
+          backgroundColor: 'var(--color-layout-mainpane-bg)',
           padding: 'var(--gap-right)',
           zIndex: 1,
           transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
@@ -293,17 +322,17 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
           width: layoutDimensions.centerPaneWidth,
           height: layoutDimensions.centerPaneHeight,
-          backgroundColor: '#e0f2fe',
+          backgroundColor: 'var(--color-layout-centerpane-bg)',
           padding: '20px',
           boxSizing: 'border-box',
           zIndex: 10,
           transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
+          <h3 style={{ margin: '0 0 10px 0', color: 'var(--color-text-primary)' }}>
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
           </h3>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Main content area</p>
-          <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+          <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>Main content area</p>
+          <p style={{ margin: '10px 0 0 0', color: 'var(--color-text-secondary)', fontSize: '12px' }}>
             Pagination: {paginationVisible ? 'ON' : 'OFF'}
           </p>
         </div>
@@ -317,8 +346,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
           width: layoutDimensions.paginationWidth,
           height: '40px',
-          backgroundColor: '#06b6d4',
-          color: 'white',
+          backgroundColor: 'var(--color-layout-pagination-bg)',
+          color: 'var(--color-text-inverse)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -340,7 +369,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             left: layoutDimensions.brbLeftPosition,
             width: '4px',
             height: layoutDimensions.layoutContentHeight,
-            backgroundColor: '#ec4899',
+            backgroundColor: 'var(--color-layout-brb-bg)',
             opacity: rightPaneVisible ? 1 : 0,
             cursor: rightPaneVisible ? 'col-resize' : 'default',
             zIndex: 20,
@@ -385,7 +414,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
         opacity: rightPaneVisible ? 1 : 0,
         height: layoutDimensions.layoutContentHeight,
-        backgroundColor: '#f0fdf4',
+        backgroundColor: 'var(--color-layout-rightpane-bg)',
         padding: rightPaneVisible ? '20px' : '0px',
         zIndex: 10,
         overflow: 'hidden',
@@ -393,9 +422,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
       }}>
         {rightPaneVisible && (
           <>
-            <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>RightPane (Resized according to BRB)</h3>
-            <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Additional tools & info</p>
-            <p style={{ margin: '10px 0 0 0', color: '#6b7280', fontSize: '12px' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: 'var(--color-text-primary)' }}>RightPane (Resized according to BRB)</h3>
+            <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>Additional tools & info</p>
+            <p style={{ margin: '10px 0 0 0', color: 'var(--color-text-secondary)', fontSize: '12px' }}>
               Pagination: {paginationVisible ? 'ON' : 'OFF'}
             </p>
           </>
@@ -406,20 +435,20 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
       {showGapController && gapControllerVisible && (
         <div style={{ position: 'fixed', top: '120px', right: '10px', zIndex: 1000 }}>
           <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'var(--color-bg-primary)',
             padding: '15px',
             borderRadius: '8px',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            boxShadow: 'var(--shadow-md)',
             minWidth: '220px',
             fontSize: '12px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <h4 style={{ margin: 0, color: '#1a1a1a' }}>Gap</h4>
+              <h4 style={{ margin: 0, color: 'var(--color-text-primary)' }}>Gap</h4>
               <button
                 onClick={resetGaps}
                 style={{
-                  backgroundColor: '#10b981',
-                  color: 'white',
+                  backgroundColor: 'var(--color-gap-button-reset)',
+                  color: 'var(--color-text-inverse)',
                   border: 'none',
                   borderRadius: '4px',
                   padding: '4px 8px',
