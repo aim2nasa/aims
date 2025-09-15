@@ -74,6 +74,11 @@
   --color-status-info: var(--color-info-600);
   --color-status-info-bg: var(--color-info-50);
 
+  /* Effect Colors */
+  --color-effect-vite-glow: #646cffaa;
+  --color-effect-react-glow: #61dafbaa;
+  --color-effect-docs-text: var(--color-neutral-400);
+
   /* Layout Colors - Light Theme */
   --color-layout-main-bg: var(--color-neutral-900);
   --color-layout-header-bg: var(--color-primary-50);
@@ -156,6 +161,11 @@
   --color-status-info: var(--color-info-400);
   --color-status-info-bg: rgba(59, 130, 246, 0.1);
 
+  /* Effect Colors - Dark Theme */
+  --color-effect-vite-glow: #646cffcc;
+  --color-effect-react-glow: #61dafbcc;
+  --color-effect-docs-text: var(--color-neutral-400);
+
   /* Layout Colors - Dark Theme */
   --color-layout-main-bg: var(--color-neutral-950);
   --color-layout-header-bg: var(--color-primary-900);
@@ -234,6 +244,11 @@
     --color-status-info: var(--color-info-400);
     --color-status-info-bg: rgba(59, 130, 246, 0.1);
 
+    /* Effect Colors - System Dark Theme */
+    --color-effect-vite-glow: #646cffcc;
+    --color-effect-react-glow: #61dafbcc;
+    --color-effect-docs-text: var(--color-neutral-400);
+
     /* Layout Colors - System Dark Theme */
     --color-layout-main-bg: var(--color-neutral-950);
     --color-layout-header-bg: var(--color-primary-900);
@@ -310,6 +325,11 @@
     --color-status-error-bg: var(--color-error-50);
     --color-status-info: var(--color-info-600);
     --color-status-info-bg: var(--color-info-50);
+
+    /* Effect Colors - System Light Theme */
+    --color-effect-vite-glow: #646cffaa;
+    --color-effect-react-glow: #61dafbaa;
+    --color-effect-docs-text: var(--color-neutral-400);
 
     /* Layout Colors - System Light Theme */
     --color-layout-main-bg: var(--color-neutral-900);

@@ -261,7 +261,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         }}>
           {!leftPaneCollapsed && (
             <>
-              <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>LeftPane (Fixed)</h3>
+              <h3 style={{ margin: '0 0 10px 0', color: 'var(--color-text-primary)' }}>LeftPane (Fixed)</h3>
               <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '14px' }}>Navigation & Controls</p>
             </>
           )}
@@ -275,7 +275,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           }}>
             <button
               style={{
-                backgroundColor: '#374151',
+                backgroundColor: 'var(--color-bg-tertiary)',
                 border: 'none',
                 borderRadius: '4px',
                 padding: '6px',
@@ -461,7 +461,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </div>
 
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
+              <label style={{ display: 'block', marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
                 gapLeft: {gapValues.gapLeft}px
               </label>
               <input
@@ -475,7 +475,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </div>
 
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
+              <label style={{ display: 'block', marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
                 gapCenter: {gapValues.gapCenter}px
               </label>
               <input
@@ -489,7 +489,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </div>
 
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
+              <label style={{ display: 'block', marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
                 gapRight: {gapValues.gapRight}px
               </label>
               <input
@@ -503,7 +503,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </div>
 
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
+              <label style={{ display: 'block', marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
                 gapTop: {gapValues.gapTop}px
               </label>
               <input
@@ -517,7 +517,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </div>
 
             <div style={{ marginBottom: '8px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
+              <label style={{ display: 'block', marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
                 gapBottom: {gapValues.gapBottom}px
               </label>
               <input
