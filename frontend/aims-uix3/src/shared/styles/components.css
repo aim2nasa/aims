@@ -48,6 +48,7 @@
 
 /* === BUTTON COMPONENTS === */
 
+/* Legacy theme button (deprecated) */
 .theme-toggle-button {
   background-color: var(--color-button-secondary-bg);
   color: var(--color-button-secondary-text);
@@ -57,6 +58,77 @@
   cursor: pointer;
   font-size: 12px;
   margin-left: 15px;
+}
+
+/* === THEME TOGGLE COMPONENT === */
+
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  margin-left: var(--spacing-4);
+  border-left: 1px solid var(--color-border-primary);
+}
+
+.theme-icon {
+  font-size: 16px;
+  transition: color var(--duration-fast) var(--easing-ease-out);
+  user-select: none;
+}
+
+.theme-icon-sun {
+  color: var(--sun-color);
+}
+
+.theme-icon-moon {
+  color: var(--moon-color);
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.theme-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-theme-switch-bg-light);
+  transition: all var(--duration-normal) var(--easing-ease-out);
+  border-radius: 20px;
+}
+
+.theme-switch-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--color-theme-switch-handle);
+  transition: all var(--duration-normal) var(--easing-ease-out);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.theme-switch-input:checked + .theme-switch-slider {
+  background-color: var(--color-theme-switch-bg-dark);
+}
+
+.theme-switch-input:checked + .theme-switch-slider::before {
+  transform: translateX(20px);
 }
 
 .gap-toggle-button {

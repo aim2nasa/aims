@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
+import ThemeToggle from './components/ThemeToggle'
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
@@ -197,13 +198,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               </button>
             )}
 
-            {/* Theme Toggle 버튼 */}
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle-button"
-            >
-              {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-            </button>
+            {/* Theme Toggle 컴포넌트 */}
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
           </div>
         </div>
