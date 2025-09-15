@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDraggable } from '../hooks/useDraggable';
 
 interface LayoutControlModalProps {
   isOpen: boolean;
@@ -62,12 +63,26 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   handleGapTopChange,
   handleGapBottomChange,
 }) => {
+  const { position, isDragging, dragHandlers } = useDraggable({
+    constrainToViewport: true
+  });
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+      <div
+        className={`modal-content ${isDragging ? 'modal-content--dragging' : ''}`}
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="modal-header modal-header--draggable"
+          {...dragHandlers}
+        >
           <h2 className="modal-title">레이아웃 제어</h2>
           <button className="modal-close-button" onClick={onClose}>
             ×
