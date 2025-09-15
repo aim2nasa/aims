@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig } from './types/layout'
-import { GapController } from './components/GapController'
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
