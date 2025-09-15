@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 
@@ -63,6 +63,70 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
     }
   }, [resizeTimer])
 
+  // 이벤트 핸들러들 메모이제이션 (성능 최적화, 기존 동작 보존)
+  const toggleHeader = useCallback(() => setHeaderVisible(prev => !prev), [])
+  const toggleLeftPane = useCallback(() => setLeftPaneVisible(prev => !prev), [])
+  const toggleCenterPane = useCallback(() => setCenterPaneVisible(prev => !prev), [])
+  const toggleRightPane = useCallback(() => setRightPaneVisible(prev => !prev), [])
+  const toggleBrb = useCallback(() => setBrbVisible(prev => !prev), [])
+  const togglePagination = useCallback(() => setPaginationVisible(prev => !prev), [])
+  const toggleMainPane = useCallback(() => setMainPaneVisible(prev => !prev), [])
+  const toggleLeftPaneCollapsed = useCallback(() => setLeftPaneCollapsed(prev => !prev), [])
+  const toggleGapController = useCallback(() => setGapControllerVisible(prev => !prev), [])
+  const resetGaps = useCallback(() => setDynamicGaps(DEFAULT_GAPS), [])
+
+  // Gap 슬라이더 핸들러들
+  const handleGapLeftChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDynamicGaps(prev => ({ ...prev, gapLeft: Number(e.target.value) }))
+  }, [])
+  const handleGapCenterChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDynamicGaps(prev => ({ ...prev, gapCenter: Number(e.target.value) }))
+  }, [])
+  const handleGapRightChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDynamicGaps(prev => ({ ...prev, gapRight: Number(e.target.value) }))
+  }, [])
+  const handleGapTopChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDynamicGaps(prev => ({ ...prev, gapTop: Number(e.target.value) }))
+  }, [])
+  const handleGapBottomChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setDynamicGaps(prev => ({ ...prev, gapBottom: Number(e.target.value) }))
+  }, [])
+
+  // CSS 계산식들 메모이제이션 (성능 최적화, 기존 동작 보존)
+  const layoutDimensions = useMemo(() => {
+    const leftPaneWidth = leftPaneCollapsed ? 60 : 250
+    const leftPaneWidthPx = leftPaneCollapsed ? '60px' : '250px'
+    const mainPaneWidth = `calc(100vw - ${leftPaneWidthPx})`
+
+    return {
+      leftPaneWidth,
+      leftPaneWidthPx,
+      mainPaneWidth,
+      // CenterPane width calculations
+      centerPaneWidth: rightPaneVisible
+        ? `calc((100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
+        : `calc((100vw - ${leftPaneWidthPx}) - var(--gap-left) - var(--gap-right))`,
+
+      // RightPane width calculation
+      rightPaneWidth: `calc((100vw - ${leftPaneWidthPx}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))`,
+
+      // Pagination width (same as CenterPane)
+      paginationWidth: rightPaneVisible
+        ? `calc((100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
+        : `calc((100vw - ${leftPaneWidthPx}) - var(--gap-left) - var(--gap-right))`,
+
+      // BRB position calculations
+      brbLeftPosition: rightPaneVisible
+        ? `calc(${leftPaneWidthPx} + var(--gap-left) + (100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - 2px)`
+        : `calc(${leftPaneWidthPx} + (100vw - ${leftPaneWidthPx}) - var(--gap-right))`,
+
+      // Common height calculations
+      mainContentHeight: 'calc(100vh - 60px)',
+      centerPaneHeight: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+      layoutContentHeight: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`
+    }
+  }, [leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
+
   return (
     <div
       key={forceUpdate} // 브라우저 리사이즈 시 강제 리렌더링
@@ -98,31 +162,31 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             {/* Layer Toggle Checkboxes */}
             <div style={{ display: 'flex', gap: '10px', fontSize: '12px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={headerVisible} onChange={() => setHeaderVisible(!headerVisible)} />
+                <input type="checkbox" checked={headerVisible} onChange={toggleHeader} />
                 Header
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={leftPaneVisible} onChange={() => setLeftPaneVisible(!leftPaneVisible)} />
+                <input type="checkbox" checked={leftPaneVisible} onChange={toggleLeftPane} />
                 LeftPane
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={centerPaneVisible} onChange={() => setCenterPaneVisible(!centerPaneVisible)} />
+                <input type="checkbox" checked={centerPaneVisible} onChange={toggleCenterPane} />
                 CenterPane
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={rightPaneVisible} onChange={() => setRightPaneVisible(!rightPaneVisible)} />
+                <input type="checkbox" checked={rightPaneVisible} onChange={toggleRightPane} />
                 RightPane
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={brbVisible} onChange={() => setBrbVisible(!brbVisible)} />
+                <input type="checkbox" checked={brbVisible} onChange={toggleBrb} />
                 BRB
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={paginationVisible} onChange={() => setPaginationVisible(!paginationVisible)} />
+                <input type="checkbox" checked={paginationVisible} onChange={togglePagination} />
                 Pagination
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#1a1a1a' }}>
-                <input type="checkbox" checked={mainPaneVisible} onChange={() => setMainPaneVisible(!mainPaneVisible)} />
+                <input type="checkbox" checked={mainPaneVisible} onChange={toggleMainPane} />
                 MainPane
               </label>
             </div>
@@ -130,7 +194,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             {/* Gap 버튼 */}
             {showGapController && (
               <button
-                onClick={() => setGapControllerVisible(!gapControllerVisible)}
+                onClick={toggleGapController}
                 style={{
                   backgroundColor: gapControllerVisible ? '#ef4444' : '#374151',
                   color: 'white',
@@ -156,8 +220,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           position: 'absolute',
           top: '60px',
           left: 0,
-          width: leftPaneCollapsed ? '60px' : '250px',
-          height: 'calc(100vh - 60px)',
+          width: layoutDimensions.leftPaneWidthPx,
+          height: layoutDimensions.mainContentHeight,
           backgroundColor: '#fef3e3',
           padding: leftPaneCollapsed ? '10px' : '20px',
           borderRight: '2px solid #e5e7eb',
@@ -195,7 +259,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 width: '28px',
                 height: '28px'
               }}
-              onClick={() => setLeftPaneCollapsed(!leftPaneCollapsed)}
+              onClick={toggleLeftPaneCollapsed}
             >
               <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
               <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
@@ -210,9 +274,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         <div style={{
           position: 'absolute',
           top: '60px',
-          left: leftPaneCollapsed ? '60px' : '250px',
-          width: leftPaneCollapsed ? 'calc(100vw - 60px)' : 'calc(100vw - 250px)',
-          height: 'calc(100vh - 60px)',
+          left: layoutDimensions.leftPaneWidthPx,
+          width: layoutDimensions.mainPaneWidth,
+          height: layoutDimensions.mainContentHeight,
           backgroundColor: '#3b82f6',
           padding: 'var(--gap-right)',
           zIndex: 1,
@@ -226,11 +290,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         <div style={{
           position: 'absolute',
           top: `calc(60px + var(--gap-top))`,
-          left: `calc(${leftPaneCollapsed ? '60px' : '250px'} + var(--gap-left))`,
-          width: rightPaneVisible ?
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))` :
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - var(--gap-left) - var(--gap-right))`,
-          height: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
+          left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
+          width: layoutDimensions.centerPaneWidth,
+          height: layoutDimensions.centerPaneHeight,
           backgroundColor: '#e0f2fe',
           padding: '20px',
           boxSizing: 'border-box',
@@ -252,10 +314,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         <div style={{
           position: 'absolute',
           bottom: `var(--gap-bottom)`,
-          left: `calc(${leftPaneCollapsed ? '60px' : '250px'} + var(--gap-left))`,
-          width: rightPaneVisible ?
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))` :
-            `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - var(--gap-left) - var(--gap-right))`,
+          left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
+          width: layoutDimensions.paginationWidth,
           height: '40px',
           backgroundColor: '#06b6d4',
           color: 'white',
@@ -277,11 +337,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           style={{
             position: 'absolute',
             top: `calc(60px + var(--gap-top))`,
-            left: rightPaneVisible ?
-              `calc(${leftPaneCollapsed ? '60px' : '250px'} + var(--gap-left) + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - var(--gap-left) - 2px)` :
-              `calc(${leftPaneCollapsed ? '60px' : '250px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - var(--gap-right))`,
+            left: layoutDimensions.brbLeftPosition,
             width: '4px',
-            height: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`,
+            height: layoutDimensions.layoutContentHeight,
             backgroundColor: '#ec4899',
             opacity: rightPaneVisible ? 1 : 0,
             cursor: rightPaneVisible ? 'col-resize' : 'default',
@@ -296,7 +354,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             const handleMouseMove = (e: MouseEvent) => {
               e.preventDefault()
               const deltaX = e.clientX - startX
-              const mainPaneWidth = window.innerWidth - (leftPaneCollapsed ? 60 : 250) // MainPane 너비
+              const mainPaneWidth = window.innerWidth - layoutDimensions.leftPaneWidth // MainPane 너비
               const deltaPercent = (deltaX / mainPaneWidth) * 100
               const newWidth = startWidth + deltaPercent
               setCenterWidth(Math.max(20, Math.min(80, newWidth)))
@@ -324,11 +382,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         position: 'absolute',
         top: `calc(60px + var(--gap-top))`,
         right: `var(--gap-right)`,
-        width: rightPaneVisible ?
-          `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))` :
-          '0px',
+        width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
         opacity: rightPaneVisible ? 1 : 0,
-        height: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`,
+        height: layoutDimensions.layoutContentHeight,
         backgroundColor: '#f0fdf4',
         padding: rightPaneVisible ? '20px' : '0px',
         zIndex: 10,
@@ -360,7 +416,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <h4 style={{ margin: 0, color: '#1a1a1a' }}>Gap</h4>
               <button
-                onClick={() => setDynamicGaps(DEFAULT_GAPS)}
+                onClick={resetGaps}
                 style={{
                   backgroundColor: '#10b981',
                   color: 'white',
@@ -384,7 +440,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 min="0"
                 max="20"
                 value={gapValues.gapLeft}
-                onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapLeft: Number(e.target.value) }))}
+                onChange={handleGapLeftChange}
                 style={{ width: '100%' }}
               />
             </div>
@@ -398,7 +454,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 min="0"
                 max="20"
                 value={gapValues.gapCenter}
-                onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapCenter: Number(e.target.value) }))}
+                onChange={handleGapCenterChange}
                 style={{ width: '100%' }}
               />
             </div>
@@ -412,7 +468,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 min="0"
                 max="20"
                 value={gapValues.gapRight}
-                onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapRight: Number(e.target.value) }))}
+                onChange={handleGapRightChange}
                 style={{ width: '100%' }}
               />
             </div>
@@ -426,7 +482,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 min="0"
                 max="20"
                 value={gapValues.gapTop}
-                onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapTop: Number(e.target.value) }))}
+                onChange={handleGapTopChange}
                 style={{ width: '100%' }}
               />
             </div>
@@ -440,7 +496,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 min="0"
                 max="20"
                 value={gapValues.gapBottom}
-                onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapBottom: Number(e.target.value) }))}
+                onChange={handleGapBottomChange}
                 style={{ width: '100%' }}
               />
             </div>
