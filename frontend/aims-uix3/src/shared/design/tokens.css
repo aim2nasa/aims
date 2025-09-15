@@ -130,6 +130,20 @@
   --easing-ease-out: ease-out;
   --easing-ease-in-out: ease-in-out;
 
+  /* Status Colors for Components */
+  --color-status-success: var(--color-success-700);
+  --color-status-success-bg: var(--color-success-50);
+  --color-status-warning: var(--color-warning-700);
+  --color-status-warning-bg: var(--color-warning-50);
+  --color-status-error: var(--color-error-700);
+  --color-status-error-bg: var(--color-error-50);
+
+  /* Input Colors */
+  --color-input-bg: var(--color-neutral-0);
+  --color-input-text: var(--color-neutral-900);
+  --color-input-placeholder: var(--color-neutral-400);
+  --color-border-focus: var(--color-primary-500);
+
   /* === Z-INDEX === */
 
   --z-dropdown: 1000;

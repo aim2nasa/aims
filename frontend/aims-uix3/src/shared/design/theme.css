@@ -82,6 +82,10 @@
   /* Icon Colors */
   --color-hamburger-icon: var(--color-text-inverse);
 
+  /* Overlay Colors */
+  --color-overlay-modal: rgba(0, 0, 0, 0.5);
+  --color-overlay-backdrop: rgba(255, 255, 255, 0.1);
+
   /* Layout Colors - Light Theme */
   --color-layout-main-bg: var(--color-neutral-900);
   --color-layout-header-bg: var(--color-primary-50);
@@ -171,6 +175,10 @@
 
   /* Icon Colors - Dark Theme */
   --color-hamburger-icon: var(--color-text-primary);
+
+  /* Overlay Colors - Dark Theme */
+  --color-overlay-modal: rgba(0, 0, 0, 0.7);
+  --color-overlay-backdrop: rgba(0, 0, 0, 0.2);
 
   /* Layout Colors - Dark Theme */
   --color-layout-main-bg: var(--color-neutral-950);
