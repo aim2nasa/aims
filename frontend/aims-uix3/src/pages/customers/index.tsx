@@ -1,26 +1,21 @@
 /**
- * AIMS UIX-3 Customers Page
+ * AIMS UIX-3 Customers Page (View Layer)
  * @since 2025-09-15
- * @version 1.0.0
+ * @version 2.0.0
  *
- * 고객 관리를 위한 메인 페이지
- * 고객 목록 조회, 검색, 필터링, 생성 기능 제공
+ * 고객 관리 페이지 - 순수 View 컴포넌트
+ * ARCHITECTURE.md의 Document-Controller-View 패턴을 따름
+ * 비즈니스 로직은 useCustomersController에 위임
  */
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { CardSkeleton } from '@/shared/ui/LoadingSkeleton';
-import { queryKeys, invalidateQueries } from '@/app/queryClient';
+import { useCustomersController } from '@/controllers/useCustomersController';
 import {
-  getCustomers,
-  searchCustomers,
-  createCustomer,
   type Customer,
-  type CustomerSearchQuery,
   type CreateCustomerData,
   CustomerUtils,
-  // CustomerTagUtils, // 현재 미사용
 } from '@/entities/customer';
 import './CustomersPage.css';
 
@@ -267,69 +262,50 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit, onCancel, isLoadi
 };
 
 /**
- * 고객관리 페이지 메인 컴포넌트
+ * 고객관리 페이지 메인 컴포넌트 (View Layer)
  */
 const CustomersPage: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  // 상태 관리
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [searchParams, setSearchParams] = useState<Partial<CustomerSearchQuery>>({
-    limit: 20,
-    offset: 0,
-  });
-
-  // 고객 목록 조회
+  // Controller에서 모든 비즈니스 로직과 상태를 가져옴
   const {
-    data: customersData,
-    isLoading: isLoadingCustomers,
-    error: customersError,
-  } = useQuery({
-    queryKey: [queryKeys.customers(), searchParams],
-    queryFn: () => searchQuery.trim()
-      ? searchCustomers(searchQuery, searchParams)
-      : getCustomers(searchParams),
-    staleTime: 1000 * 60 * 2, // 2분
-  });
+    // 데이터
+    customers,
+    searchQuery,
+    error,
+    total,
+    hasMore,
 
-  // 고객 생성 뮤테이션
-  const createCustomerMutation = useMutation({
-    mutationFn: createCustomer,
-    onSuccess: () => {
-      invalidateQueries.customers();
-      setShowCreateForm(false);
-    },
-  });
+    // 로딩 상태
+    isLoading,
+    isCreating,
+    isEmpty,
+    searchResultMessage,
 
-  // 검색 핸들러
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setSearchParams(prev => ({ ...prev, offset: 0 }));
-  };
+    // UI 상태
+    showCreateForm,
 
-  // 페이지네이션 핸들러
-  const handleLoadMore = () => {
-    if (!customersData?.hasMore || isLoadingCustomers) return;
-
-    setSearchParams(prev => ({
-      ...prev,
-      offset: (prev.offset || 0) + (prev.limit || 20),
-    }));
-  };
-
-  // 고객 생성 핸들러
-  const handleCreateCustomer = (data: CreateCustomerData) => {
-    createCustomerMutation.mutate(data);
-  };
-
-  // 메모화된 고객 목록
-  const customers = useMemo(() => {
-    return customersData?.customers || [];
-  }, [customersData]);
+    // 액션들
+    createCustomer,
+    handleSearchChange,
+    loadMoreCustomers,
+    handleEditCustomer,
+    handleDeleteCustomer,
+    handleOpenCreateForm,
+    handleCloseCreateForm,
+    clearError,
+  } = useCustomersController();
 
   return (
     <div className="customers-page">
+      {/* 에러 메시지 */}
+      {error && (
+        <div className="customers-error">
+          <p>{error}</p>
+          <Button variant="ghost" onClick={clearError}>
+            닫기
+          </Button>
+        </div>
+      )}
+
       {/* 헤더 섹션 */}
       <div className="customers-header">
         <div className="customers-header__content">
@@ -348,15 +324,13 @@ const CustomersPage: React.FC = () => {
               type="text"
               placeholder="고객 이름, 전화번호, 이메일로 검색..."
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="customers-search__input"
             />
             <div className="customers-search__results">
-              {customersData && (
-                <span className="customers-search__count">
-                  총 {customersData.total.toLocaleString()}명의 고객
-                </span>
-              )}
+              <span className="customers-search__count">
+                {searchResultMessage}
+              </span>
             </div>
           </div>
         </div>
@@ -364,7 +338,7 @@ const CustomersPage: React.FC = () => {
         <div className="customers-actions__right">
           <Button
             variant="primary"
-            onClick={() => setShowCreateForm(true)}
+            onClick={handleOpenCreateForm}
           >
             새 고객 추가
           </Button>
@@ -376,9 +350,9 @@ const CustomersPage: React.FC = () => {
         <div className="customers-form-overlay">
           <div className="customers-form-container">
             <CustomerForm
-              onSubmit={handleCreateCustomer}
-              onCancel={() => setShowCreateForm(false)}
-              isLoading={createCustomerMutation.isPending}
+              onSubmit={createCustomer}
+              onCancel={handleCloseCreateForm}
+              isLoading={isCreating}
             />
           </div>
         </div>
@@ -386,7 +360,7 @@ const CustomersPage: React.FC = () => {
 
       {/* 고객 목록 */}
       <div className="customers-content">
-        {isLoadingCustomers && customers.length === 0 ? (
+        {isLoading && customers.length === 0 ? (
           // 초기 로딩 상태
           <div className="customers-loading">
             <div className="customers-grid">
@@ -401,26 +375,14 @@ const CustomersPage: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : customersError ? (
-          // 에러 상태
-          <div className="customers-error">
-            <h3>고객 목록을 불러올 수 없습니다</h3>
-            <p>잠시 후 다시 시도해 주세요.</p>
-            <Button
-              variant="primary"
-              onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.customers() })}
-            >
-              다시 시도
-            </Button>
-          </div>
-        ) : customers.length === 0 ? (
+        ) : isEmpty ? (
           // 빈 상태
           <div className="customers-empty">
             <h3>등록된 고객이 없습니다</h3>
             <p>첫 번째 고객을 추가해 보세요.</p>
             <Button
               variant="primary"
-              onClick={() => setShowCreateForm(true)}
+              onClick={handleOpenCreateForm}
             >
               고객 추가하기
             </Button>
@@ -433,25 +395,19 @@ const CustomersPage: React.FC = () => {
                 <CustomerCard
                   key={customer._id}
                   customer={customer}
-                  onEdit={(customer) => {
-                    console.log('Edit customer:', customer);
-                    // TODO: 편집 모달 열기
-                  }}
-                  onDelete={(customer) => {
-                    console.log('Delete customer:', customer);
-                    // TODO: 삭제 확인 모달 열기
-                  }}
+                  onEdit={handleEditCustomer}
+                  onDelete={handleDeleteCustomer}
                 />
               ))}
             </div>
 
             {/* 더 보기 버튼 */}
-            {customersData?.hasMore && (
+            {hasMore && (
               <div className="customers-load-more">
                 <Button
                   variant="secondary"
-                  onClick={handleLoadMore}
-                  loading={isLoadingCustomers}
+                  onClick={loadMoreCustomers}
+                  loading={isLoading}
                   fullWidth
                 >
                   더 보기

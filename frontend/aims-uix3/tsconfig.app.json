@@ -21,6 +21,10 @@
       "@/app/*": ["src/app/*"],
       "@/shared/*": ["src/shared/*"],
       "@/entities/*": ["src/entities/*"],
+      "@/services/*": ["src/services/*"],
+      "@/contexts/*": ["src/contexts/*"],
+      "@/providers/*": ["src/providers/*"],
+      "@/controllers/*": ["src/controllers/*"],
       "@/features/*": ["src/features/*"],
       "@/widgets/*": ["src/widgets/*"],
       "@/pages/*": ["src/pages/*"]
