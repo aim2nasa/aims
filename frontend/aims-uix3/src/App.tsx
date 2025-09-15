@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 
@@ -27,17 +27,55 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
 
+  // 브라우저 리사이즈 상태 관리
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizeTimer, setResizeTimer] = useState<NodeJS.Timeout | null>(null)
+  const [forceUpdate, setForceUpdate] = useState(0)
+
+  // 브라우저 리사이즈 이벤트 핸들러
+  useEffect(() => {
+    const handleResize = () => {
+      setIsResizing(true)
+
+      // 즉시 레이아웃 강제 업데이트 (Gap 계산 포함)
+      setForceUpdate(prev => prev + 1)
+
+      // 기존 타이머가 있으면 클리어
+      if (resizeTimer) {
+        clearTimeout(resizeTimer)
+      }
+
+      // 리사이즈 완료 후 100ms 뒤에 transition 재활성화 (더 빠른 반응)
+      const newTimer = setTimeout(() => {
+        setIsResizing(false)
+      }, 100)
+
+      setResizeTimer(newTimer)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (resizeTimer) {
+        clearTimeout(resizeTimer)
+      }
+    }
+  }, [resizeTimer])
+
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      position: 'relative',
-      margin: 0,
-      padding: 0,
-      fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#000000',
-      ...cssVariables // CSS 변수 적용
-    }}>
+    <div
+      key={forceUpdate} // 브라우저 리사이즈 시 강제 리렌더링
+      style={{
+        width: '100vw',
+        height: '100vh',
+        position: 'relative',
+        margin: 0,
+        padding: 0,
+        fontFamily: 'Arial, sans-serif',
+        backgroundColor: '#000000',
+        ...cssVariables // CSS 변수 적용
+      }}>
       {/* Header - 독립 레이어 */}
       {headerVisible && (
         <div style={{
@@ -126,7 +164,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
           {!leftPaneCollapsed && (
             <>
@@ -178,7 +216,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           backgroundColor: '#3b82f6',
           padding: 'var(--gap-right)',
           zIndex: 1,
-          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
         </div>
       )}
@@ -197,7 +235,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           padding: '20px',
           boxSizing: 'border-box',
           zIndex: 10,
-          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#1a1a1a' }}>
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
@@ -227,7 +265,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           fontSize: '14px',
           boxSizing: 'border-box',
           zIndex: 10,
-          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}>
           Pagination Pane (On/Off depends on CenterPane content)
         </div>
@@ -248,7 +286,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             opacity: rightPaneVisible ? 1 : 0,
             cursor: rightPaneVisible ? 'col-resize' : 'default',
             zIndex: 20,
-            transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            transition: isResizing ? 'none' : 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           }}
           onMouseDown={(e) => {
             e.preventDefault()
@@ -262,6 +300,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               const deltaPercent = (deltaX / mainPaneWidth) * 100
               const newWidth = startWidth + deltaPercent
               setCenterWidth(Math.max(20, Math.min(80, newWidth)))
+
+              // BRB 드래그 중에도 레이아웃 강제 업데이트
+              setForceUpdate(prev => prev + 1)
             }
 
             const handleMouseUp = () => {
