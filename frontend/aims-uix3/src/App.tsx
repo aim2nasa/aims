@@ -322,13 +322,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
-                gapLeft: {dynamicGaps.gapLeft || 4}px
+                gapLeft: {gapValues.gapLeft}px
               </label>
               <input
                 type="range"
                 min="0"
                 max="20"
-                value={dynamicGaps.gapLeft || 4}
+                value={gapValues.gapLeft}
                 onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapLeft: Number(e.target.value) }))}
                 style={{ width: '100%' }}
               />
@@ -336,13 +336,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
-                gapCenter: {dynamicGaps.gapCenter || 4}px
+                gapCenter: {gapValues.gapCenter}px
               </label>
               <input
                 type="range"
                 min="0"
                 max="20"
-                value={dynamicGaps.gapCenter || 4}
+                value={gapValues.gapCenter}
                 onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapCenter: Number(e.target.value) }))}
                 style={{ width: '100%' }}
               />
@@ -350,13 +350,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
-                gapRight: {dynamicGaps.gapRight || 8}px
+                gapRight: {gapValues.gapRight}px
               </label>
               <input
                 type="range"
                 min="0"
                 max="20"
-                value={dynamicGaps.gapRight || 8}
+                value={gapValues.gapRight}
                 onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapRight: Number(e.target.value) }))}
                 style={{ width: '100%' }}
               />
@@ -364,13 +364,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
-                gapTop: {dynamicGaps.gapTop || 8}px
+                gapTop: {gapValues.gapTop}px
               </label>
               <input
                 type="range"
                 min="0"
                 max="20"
-                value={dynamicGaps.gapTop || 8}
+                value={gapValues.gapTop}
                 onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapTop: Number(e.target.value) }))}
                 style={{ width: '100%' }}
               />
@@ -378,13 +378,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', marginBottom: '4px', color: '#374151' }}>
-                gapBottom: {dynamicGaps.gapBottom || 8}px
+                gapBottom: {gapValues.gapBottom}px
               </label>
               <input
                 type="range"
                 min="0"
                 max="20"
-                value={dynamicGaps.gapBottom || 8}
+                value={gapValues.gapBottom}
                 onChange={(e) => setDynamicGaps(prev => ({ ...prev, gapBottom: Number(e.target.value) }))}
                 style={{ width: '100%' }}
               />
