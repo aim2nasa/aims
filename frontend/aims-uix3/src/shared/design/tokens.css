@@ -170,6 +170,16 @@
   /* Grid */
   --grid-columns: 12;
   --grid-gap: var(--spacing-6);
+
+  /* === LAYOUT COLORS === */
+
+  /* LeftPane Colors */
+  --color-layout-leftpane-light: #e8eaf2;
+  --color-layout-leftpane-dark: #1f2937;
+
+  /* Header Colors */
+  --color-layout-header-light: linear-gradient(135deg, #1e3a8a 0%, #1e40af 15%, #3b82f6 30%, #6366f1 45%, #8b5cf6 60%, #a855f7 75%, #d946ef 90%, #f59e0b 100%);
+  --color-layout-header-dark: #2d3748;
 }
 
 /* === ANIMATION TOKENS === */

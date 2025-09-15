@@ -39,7 +39,7 @@
   padding: 0 20px;
   border-bottom: 2px solid var(--color-border-primary);
   z-index: 100;
-  background-color: var(--color-layout-header-bg);
+  background: var(--color-layout-header-bg);
 }
 
 .layout-leftpane {
