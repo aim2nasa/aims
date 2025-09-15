@@ -77,56 +77,80 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **기억하라**: 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!
 
-### 인라인 스타일 남발 금지 규칙 - 철칙! 🚫
+### 인라인 스타일 사용 가이드라인 - 균형잡힌 접근! ⚖️
 
-**모든 스타일은 반드시 공용 CSS 시스템을 사용한다!**
+**핵심 원칙: 실용성과 유지보수성의 균형**
 
-1. **절대 금지사항:**
-   - 컴포넌트에서 `style={{}}` 인라인 스타일 남발 금지
-   - 개별 컴포넌트마다 색상/크기 직접 지정 금지
-   - 동일한 스타일을 여러 곳에서 중복 작성 금지
+#### ✅ 권장 사용 사례
 
-2. **반드시 따라야 할 원칙:**
-   - **CSS 클래스 사용 필수**: `className="bg-primary"` ✅
-   - **CSS 변수 활용**: `var(--color-bg-primary)` ✅
-   - **공용 스타일 시스템**: `styles.css`에서 통합 관리 ✅
-   - **테마 호환성**: 라이트/다크 모드 모두 지원 ✅
+1. **동적 계산값**: `width: ${dynamicValue}px`, `opacity: ${fadeLevel}`
+2. **조건부 스타일링**: `display: ${isVisible ? 'block' : 'none'}`
+3. **컴포넌트 고유 속성**: 1-3개 속성까지 허용
+4. **레이아웃 위치 지정**: `position`, `top`, `left`, `right`, `bottom`
+5. **빠른 프로토타이핑**: 개발 초기 단계 임시 스타일
+6. **런타임 상호작용**: 마우스 위치, 스크롤 기반 애니메이션
 
-3. **허용되는 인라인 스타일:**
-   - **동적 계산값만**: `width: ${dynamicWidth}px` (변수 기반)
-   - **위치 좌표**: `top: ${mouseY}px, left: ${mouseX}px` (런타임 계산)
-   - **애니메이션 진행도**: `transform: translateX(${progress}%)` (실시간 변경)
+#### 🟡 신중한 사용 (검토 권장)
 
-4. **공용화 방법:**
-   ```css
-   /* styles.css - 올바른 방법 ✅ */
-   .center-pane {
-     background-color: var(--color-bg-primary);
-     min-height: 100vh;
-   }
+- **반복 스타일**: 3회 이상 반복시 CSS 클래스 검토 고려
+- **복잡한 스타일**: 5개 이상 속성시 분리 검토
+- **테마 관련**: CSS 변수 사용 여부 확인
 
-   .card-primary {
-     background-color: var(--color-bg-secondary);
-     border: 1px solid var(--color-border);
-   }
-   ```
+#### ❌ 절대 금지
 
-   ```jsx
-   // Component - 올바른 방법 ✅
-   <div className="center-pane">
-     <Card className="card-primary">
+- **하드코딩된 색상**: `color: '#ff0000'`, `backgroundColor: '#ffffff'`
+- **대량 중복**: 동일 스타일 패턴 10회 이상
+- **테마 시스템 우회**: CSS 변수 무시하고 고정값 사용
 
-   // 잘못된 방법 ❌
-   <div style={{backgroundColor: '#e8e9eb'}}>
-     <Card style={{backgroundColor: '#ffffff'}}>
-   ```
+#### 🎯 판단 기준
 
-5. **위반시 즉시 조치:**
-   - 인라인 스타일 발견 즉시 CSS 클래스로 이동
-   - 중복 스타일을 공용 클래스로 통합
-   - 테마 시스템과 연동 확인
+**"이 스타일이 3개월 후에도 유지보수하기 쉬운가?"**
 
-**핵심**: 스타일의 일관성, 유지보수성, 확장성을 위해 모든 스타일은 중앙집중화한다!
+#### 📝 코드 예시
+
+```jsx
+// ✅ 권장: 동적 값과 레이아웃
+<div
+  className="layout-pane"
+  style={{
+    width: `${dynamicWidth}px`,
+    top: `${headerHeight}px`
+  }}
+>
+
+// ✅ 권장: 조건부 스타일링 (간단한 경우)
+<div style={{ display: isLoading ? 'none' : 'block' }}>
+
+// 🟡 검토 필요: 복잡한 정적 스타일
+<div style={{
+  padding: '20px',
+  backgroundColor: 'var(--color-bg-primary)',
+  borderRadius: '8px',
+  boxShadow: 'var(--shadow-md)',
+  transition: 'all 0.3s ease'
+}}>  // 5개 속성 → CSS 클래스 고려
+
+// ❌ 금지: 하드코딩 색상
+<div style={{ backgroundColor: '#ff0000' }}>
+
+// ❌ 금지: 대량 중복 패턴
+<div style={{ padding: '20px', borderRadius: '8px' }}>  // 10회 반복됨
+```
+
+#### 🔧 개선 방법
+
+**중복 발견시:**
+```css
+/* 공용 클래스로 추출 */
+.content-card {
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+```
+
+**핵심**: 유연성을 유지하되, 중복과 하드코딩은 방지한다!
 
 ### 공용 CSS 시스템 구축 규칙 - 신성한 사명! ⚡
 
@@ -155,9 +179,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    ```
 
 2. **재사용 원칙:**
-   - 동일한 패턴이 2번 이상 나타나면 **즉시 공용 클래스로 추출**
-   - 컴포넌트별 개별 스타일링 **절대 금지**
-   - 모든 레이아웃, 색상, 간격은 **공용 변수 사용**
+   - 동일한 패턴이 **5회 이상** 나타나면 **공용 클래스로 추출 검토**
+   - 대량 중복 스타일링 **방지**
+   - 핵심 레이아웃, 색상, 간격은 **공용 변수 사용 권장**
 
 3. **컴포넌트 적용 방법:**
    ```jsx
@@ -183,12 +207,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 모든 컴포넌트를 공용 클래스 사용으로 리팩토링
    - 테마 호환성 검증
 
-6. **금지 사항:**
-   - 컴포넌트 파일에서 개별 스타일 정의
-   - 동일한 스타일을 여러 곳에서 중복 작성
-   - 테마 시스템과 분리된 고정 색상 값 사용
+6. **주의 사항:**
+   - 대량 중복 스타일 패턴 방지
+   - 테마 시스템과 분리된 하드코딩 색상 방지
+   - 복잡한 스타일의 무분별한 인라인 사용 지양
 
-**절대 진리**: 중복 스타일 = 유지보수의 지옥! 공용화 = 개발의 천국! 🔥
+**핵심 가치**: 중복 방지와 유연성의 균형! 실용적 개발과 유지보수성 확보! 🎯
 
 ### React 개발 문제 해결 규칙 - 철칙! ⚠️
 
