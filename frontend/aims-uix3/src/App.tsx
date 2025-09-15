@@ -243,7 +243,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               `calc(${leftPaneCollapsed ? '60px' : '250px'} + var(--gap-left) + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${centerWidth} / 100 - var(--gap-left) - 2px)` :
               `calc(${leftPaneCollapsed ? '60px' : '250px'} + (100vw - ${leftPaneCollapsed ? '60px' : '250px'}) - var(--gap-right))`,
             width: '4px',
-            height: 'calc(100vh - 76px)',
+            height: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`,
             backgroundColor: '#ec4899',
             opacity: rightPaneVisible ? 1 : 0,
             cursor: rightPaneVisible ? 'col-resize' : 'default',
@@ -287,7 +287,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           `calc((100vw - ${leftPaneCollapsed ? '60px' : '250px'}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))` :
           '0px',
         opacity: rightPaneVisible ? 1 : 0,
-        height: 'calc(100vh - 76px)',
+        height: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`,
         backgroundColor: '#f0fdf4',
         padding: rightPaneVisible ? '20px' : '0px',
         zIndex: 10,
