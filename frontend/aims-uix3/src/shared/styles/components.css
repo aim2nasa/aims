@@ -1,0 +1,165 @@
+/**
+ * AIMS UIX-3 Component Classes
+ * @since 2025-09-15
+ * @version 1.0.0
+ *
+ * 재사용 가능한 컴포넌트 스타일 클래스들
+ * CLAUDE.md 가이드라인 준수: 중복 제거 및 공용화
+ */
+
+/* === TEXT COMPONENTS === */
+
+.page-title {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.section-heading {
+  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+}
+
+.description-text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* === CONTROL COMPONENTS === */
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-primary);
+}
+
+.control-group {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.control-section {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+/* === BUTTON COMPONENTS === */
+
+.theme-toggle-button {
+  background-color: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-text);
+  border: 1px solid var(--color-button-secondary-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 15px;
+}
+
+.gap-toggle-button {
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 15px;
+  color: var(--color-text-inverse);
+}
+
+.gap-toggle-button--active {
+  background-color: var(--color-gap-button-active);
+}
+
+.gap-toggle-button--inactive {
+  background-color: var(--color-gap-button-inactive);
+}
+
+.hamburger-button {
+  background-color: var(--color-bg-tertiary);
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 28px;
+  height: 28px;
+}
+
+.hamburger-icon {
+  width: 12px;
+  height: 1.5px;
+  background-color: var(--color-hamburger-icon);
+  border-radius: 0.5px;
+}
+
+.reset-button {
+  background-color: var(--color-gap-button-reset);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* === PANEL COMPONENTS === */
+
+.gap-controller-panel {
+  background-color: var(--color-bg-primary);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  min-width: 220px;
+  font-size: 12px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.panel-title {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+/* === INPUT COMPONENTS === */
+
+.range-input-group {
+  margin-bottom: 8px;
+}
+
+.range-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text-secondary);
+}
+
+.range-input {
+  width: 100%;
+}
+
+/* === HAMBURGER CONTAINER === */
+
+.hamburger-container {
+  margin-top: auto;
+  display: flex;
+  padding-top: 10px;
+}
+
+.hamburger-container--collapsed {
+  justify-content: center;
+}
+
+.hamburger-container--expanded {
+  justify-content: flex-end;
+}

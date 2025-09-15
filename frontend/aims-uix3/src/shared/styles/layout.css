@@ -1,0 +1,116 @@
+/**
+ * AIMS UIX-3 Layout Classes
+ * @since 2025-09-15
+ * @version 1.0.0
+ *
+ * 재사용 가능한 레이아웃 컴포넌트 클래스들
+ * CLAUDE.md 가이드라인 준수: 중복 제거 및 공용화
+ */
+
+/* === BASE LAYOUT PANE === */
+
+.layout-pane {
+  position: absolute;
+  display: flex;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-sizing: border-box;
+}
+
+.layout-pane--no-transition {
+  transition: none;
+}
+
+/* === SPECIFIC LAYOUT COMPONENTS === */
+
+.layout-main {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-primary);
+  background-color: var(--color-layout-main-bg);
+}
+
+.layout-header {
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 2px solid var(--color-border-primary);
+  z-index: 100;
+  background-color: var(--color-layout-header-bg);
+}
+
+.layout-leftpane {
+  top: 60px;
+  left: 0;
+  flex-direction: column;
+  border-right: 2px solid var(--color-border-primary);
+  z-index: 10;
+  background-color: var(--color-layout-leftpane-bg);
+}
+
+.layout-mainpane {
+  top: 60px;
+  z-index: 1;
+  background-color: var(--color-layout-mainpane-bg);
+}
+
+.layout-centerpane {
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 10;
+  background-color: var(--color-layout-centerpane-bg);
+}
+
+.layout-pagination {
+  height: 40px;
+  color: var(--color-text-inverse);
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-sizing: border-box;
+  z-index: 10;
+  background-color: var(--color-layout-pagination-bg);
+}
+
+.layout-brb {
+  width: 4px;
+  cursor: col-resize;
+  z-index: 20;
+  background-color: var(--color-layout-brb-bg);
+}
+
+.layout-brb--hidden {
+  opacity: 0;
+  cursor: default;
+}
+
+.layout-rightpane {
+  z-index: 10;
+  overflow: hidden;
+  background-color: var(--color-layout-rightpane-bg);
+}
+
+.layout-rightpane--hidden {
+  width: 0px !important;
+  opacity: 0;
+  padding: 0px !important;
+}
+
+/* === POSITIONING UTILITIES === */
+
+.position-fixed {
+  position: fixed;
+}
+
+.position-absolute {
+  position: absolute;
+}
+
+.z-index-100 { z-index: 100; }
+.z-index-20 { z-index: 20; }
+.z-index-10 { z-index: 10; }
+.z-index-1 { z-index: 1; }
+.z-index-1000 { z-index: 1000; }

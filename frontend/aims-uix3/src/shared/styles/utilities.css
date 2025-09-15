@@ -1,0 +1,127 @@
+/**
+ * AIMS UIX-3 Utility Classes
+ * @since 2025-09-15
+ * @version 1.0.0
+ *
+ * 재사용 가능한 유틸리티 클래스들
+ * CLAUDE.md 가이드라인 준수: 간격, 레이아웃, 상호작용
+ */
+
+/* === FLEXBOX UTILITIES === */
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.flex-between-center {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+/* === GAP UTILITIES === */
+
+.gap-xs { gap: 2px; }
+.gap-sm { gap: 4px; }
+.gap-md { gap: 10px; }
+.gap-lg { gap: 15px; }
+
+/* === MARGIN UTILITIES === */
+
+.m-0 { margin: 0; }
+.mt-auto { margin-top: auto; }
+.mb-xs { margin-bottom: 4px; }
+.mb-sm { margin-bottom: 8px; }
+.mb-md { margin-bottom: 10px; }
+.ml-md { margin-left: 15px; }
+
+/* === PADDING UTILITIES === */
+
+.p-0 { padding: 0; }
+.p-sm { padding: 10px; }
+.p-md { padding: 15px; }
+.p-lg { padding: 20px; }
+.pt-sm { padding-top: 10px; }
+
+/* === TEXT UTILITIES === */
+
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 12px; }
+.text-md { font-size: 14px; }
+
+/* === DISPLAY UTILITIES === */
+
+.block { display: block; }
+.inline-flex { display: inline-flex; }
+.hidden { display: none; }
+
+/* === WIDTH/HEIGHT UTILITIES === */
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* === BORDER UTILITIES === */
+
+.border-none { border: none; }
+.border-radius-sm { border-radius: 4px; }
+.border-radius-md { border-radius: 8px; }
+
+/* === CURSOR UTILITIES === */
+
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-col-resize { cursor: col-resize; }
+
+/* === TRANSITION UTILITIES === */
+
+.transition-smooth {
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.transition-none {
+  transition: none;
+}
+
+/* === BOX SIZING === */
+
+.box-border {
+  box-sizing: border-box;
+}
+
+/* === OVERFLOW === */
+
+.overflow-hidden {
+  overflow: hidden;
+}
