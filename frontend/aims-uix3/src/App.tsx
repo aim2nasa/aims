@@ -226,7 +226,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 onClick={toggleGapController}
                 style={{
                   backgroundColor: gapControllerVisible ? 'var(--color-gap-button-active)' : 'var(--color-gap-button-inactive)',
-                  color: 'white',
+                  color: 'var(--color-text-inverse)',
                   border: 'none',
                   borderRadius: '4px',
                   padding: '6px 12px',
@@ -290,9 +290,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               }}
               onClick={toggleLeftPaneCollapsed}
             >
-              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
-              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
-              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'white', borderRadius: '0.5px' }}></div>
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'var(--color-hamburger-icon)', borderRadius: '0.5px' }}></div>
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'var(--color-hamburger-icon)', borderRadius: '0.5px' }}></div>
+              <div style={{ width: '12px', height: '1.5px', backgroundColor: 'var(--color-hamburger-icon)', borderRadius: '0.5px' }}></div>
             </button>
           </div>
         </div>
