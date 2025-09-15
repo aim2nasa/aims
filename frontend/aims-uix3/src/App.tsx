@@ -187,14 +187,6 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               </label>
             </div>
 
-            {/* Theme Toggle 버튼 */}
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle-button"
-            >
-              {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-            </button>
-
             {/* Gap 버튼 */}
             {showGapController && (
               <button
@@ -204,6 +196,14 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
                 Gap
               </button>
             )}
+
+            {/* Theme Toggle 버튼 */}
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle-button"
+            >
+              {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+            </button>
 
           </div>
         </div>
