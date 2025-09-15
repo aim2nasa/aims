@@ -164,8 +164,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             <button
               onClick={() => setLayoutControlModalOpen(true)}
               className="layout-control-button"
+              aria-label="레이아웃 제어"
+              title="레이아웃 제어"
             >
-              레이아웃 제어
+              ⚙️
             </button>
 
             {/* Theme Toggle 컴포넌트 */}
