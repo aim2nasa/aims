@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useGaps } from './hooks/useGaps'
-import { GapConfig } from './types/layout'
+import { GapConfig, DEFAULT_GAPS } from './types/layout'
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
@@ -316,8 +316,22 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             minWidth: '220px',
             fontSize: '12px'
           }}>
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <h4 style={{ margin: 0, color: '#1a1a1a' }}>Gap</h4>
+              <button
+                onClick={() => setDynamicGaps(DEFAULT_GAPS)}
+                style={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontSize: '11px'
+                }}
+              >
+                디폴트
+              </button>
             </div>
 
             <div style={{ marginBottom: '8px' }}>
