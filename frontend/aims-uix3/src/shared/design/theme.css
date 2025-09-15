@@ -80,7 +80,10 @@
   --color-effect-docs-text: var(--color-neutral-400);
 
   /* Icon Colors */
-  --color-hamburger-icon: var(--color-text-inverse);
+  --color-hamburger-icon: var(--color-hamburger-icon-light);
+
+  /* Hamburger Button Colors - Light Theme */
+  --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
 
   /* Overlay Colors */
   --color-overlay-modal: rgba(0, 0, 0, 0.5);
@@ -174,7 +177,10 @@
   --color-effect-docs-text: var(--color-neutral-400);
 
   /* Icon Colors - Dark Theme */
-  --color-hamburger-icon: var(--color-text-primary);
+  --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+  /* Hamburger Button Colors - Dark Theme */
+  --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
 
   /* Overlay Colors - Dark Theme */
   --color-overlay-modal: rgba(0, 0, 0, 0.7);
@@ -264,7 +270,10 @@
     --color-effect-docs-text: var(--color-neutral-400);
 
     /* Icon Colors - System Dark Theme */
-    --color-hamburger-icon: var(--color-text-primary);
+    --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+    /* Hamburger Button Colors - System Dark Theme */
+    --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
 
     /* Layout Colors - System Dark Theme */
     --color-layout-main-bg: var(--color-neutral-950);
@@ -349,7 +358,10 @@
     --color-effect-docs-text: var(--color-neutral-400);
 
     /* Icon Colors - System Light Theme */
-    --color-hamburger-icon: var(--color-text-inverse);
+    --color-hamburger-icon: var(--color-hamburger-icon-light);
+
+    /* Hamburger Button Colors - System Light Theme */
+    --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
 
     /* Layout Colors - System Light Theme */
     --color-layout-main-bg: var(--color-neutral-900);
