@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import ThemeToggle from './components/ThemeToggle'
+import LayoutControlModal from './components/LayoutControlModal'
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
@@ -27,6 +28,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || {})
   const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
+
+  // 통합 제어 모달 상태
+  const [layoutControlModalOpen, setLayoutControlModalOpen] = useState(false)
 
   // 테마 시스템
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -156,47 +160,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           <h1 className="page-title">AIMS UIX3</h1>
 
           <div className="control-section">
-            {/* Layer Toggle Checkboxes */}
-            <div className="control-group">
-              <label className="control-label">
-                <input type="checkbox" checked={headerVisible} onChange={toggleHeader} />
-                Header
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={leftPaneVisible} onChange={toggleLeftPane} />
-                LeftPane
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={centerPaneVisible} onChange={toggleCenterPane} />
-                CenterPane
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={rightPaneVisible} onChange={toggleRightPane} />
-                RightPane
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={brbVisible} onChange={toggleBrb} />
-                BRB
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={paginationVisible} onChange={togglePagination} />
-                Pagination
-              </label>
-              <label className="control-label">
-                <input type="checkbox" checked={mainPaneVisible} onChange={toggleMainPane} />
-                MainPane
-              </label>
-            </div>
-
-            {/* Gap 버튼 */}
-            {showGapController && (
-              <button
-                onClick={toggleGapController}
-                className={`gap-toggle-button ${gapControllerVisible ? 'gap-toggle-button--active' : 'gap-toggle-button--inactive'}`}
-              >
-                Gap
-              </button>
-            )}
+            {/* 통합 제어 버튼 */}
+            <button
+              onClick={() => setLayoutControlModalOpen(true)}
+              className="layout-control-button"
+            >
+              레이아웃 제어
+            </button>
 
             {/* Theme Toggle 컴포넌트 */}
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -347,92 +317,32 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         )}
       </div>
 
-      {/* 갭 컨트롤러 패널 */}
-      {showGapController && gapControllerVisible && (
-        <div className="position-fixed z-index-1000" style={{ top: '120px', right: '10px' }}>
-          <div className="gap-controller-panel">
-            <div className="panel-header">
-              <h4 className="panel-title">Gap</h4>
-              <button
-                onClick={resetGaps}
-                className="reset-button"
-              >
-                디폴트
-              </button>
-            </div>
-
-            <div className="range-input-group">
-              <label className="range-label">
-                gapLeft: {gapValues.gapLeft}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={gapValues.gapLeft}
-                onChange={handleGapLeftChange}
-                className="range-input"
-              />
-            </div>
-
-            <div className="range-input-group">
-              <label className="range-label">
-                gapCenter: {gapValues.gapCenter}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={gapValues.gapCenter}
-                onChange={handleGapCenterChange}
-                className="range-input"
-              />
-            </div>
-
-            <div className="range-input-group">
-              <label className="range-label">
-                gapRight: {gapValues.gapRight}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={gapValues.gapRight}
-                onChange={handleGapRightChange}
-                className="range-input"
-              />
-            </div>
-
-            <div className="range-input-group">
-              <label className="range-label">
-                gapTop: {gapValues.gapTop}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={gapValues.gapTop}
-                onChange={handleGapTopChange}
-                className="range-input"
-              />
-            </div>
-
-            <div className="range-input-group">
-              <label className="range-label">
-                gapBottom: {gapValues.gapBottom}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={gapValues.gapBottom}
-                onChange={handleGapBottomChange}
-                className="range-input"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 통합 제어 모달 */}
+      <LayoutControlModal
+        isOpen={layoutControlModalOpen}
+        onClose={() => setLayoutControlModalOpen(false)}
+        headerVisible={headerVisible}
+        leftPaneVisible={leftPaneVisible}
+        centerPaneVisible={centerPaneVisible}
+        rightPaneVisible={rightPaneVisible}
+        brbVisible={brbVisible}
+        paginationVisible={paginationVisible}
+        mainPaneVisible={mainPaneVisible}
+        toggleHeader={toggleHeader}
+        toggleLeftPane={toggleLeftPane}
+        toggleCenterPane={toggleCenterPane}
+        toggleRightPane={toggleRightPane}
+        toggleBrb={toggleBrb}
+        togglePagination={togglePagination}
+        toggleMainPane={toggleMainPane}
+        resetGaps={resetGaps}
+        gapValues={gapValues}
+        handleGapLeftChange={handleGapLeftChange}
+        handleGapCenterChange={handleGapCenterChange}
+        handleGapRightChange={handleGapRightChange}
+        handleGapTopChange={handleGapTopChange}
+        handleGapBottomChange={handleGapBottomChange}
+      />
 
     </div>
   )
