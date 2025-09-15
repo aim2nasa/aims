@@ -1,0 +1,599 @@
+# AIMS UIX-3 CSS System Documentation
+
+> **Version**: 1.0.0
+> **Last Updated**: 2025-09-15
+> **Purpose**: CSS 아키텍처 가이드라인과 디자인 시스템 표준
+
+## 📋 Overview
+
+AIMS UIX-3의 CSS 시스템은 **중복 제거**, **테마 지원**, **확장성**을 핵심으로 하는 체계적인 스타일링 아키텍처입니다.
+모든 스타일은 공용 클래스 시스템과 CSS 변수를 기반으로 구성되어 있습니다.
+
+## 🎯 Core Principles
+
+### 1. 절대적 금지 사항 🚫
+
+```css
+/* ❌ 절대 금지 - 인라인 스타일 */
+<div style={{backgroundColor: '#ffffff', padding: '16px'}}>
+
+/* ❌ 절대 금지 - 하드코딩된 색상 */
+.my-component {
+  background-color: #e8e9eb;
+  color: #333333;
+}
+
+/* ❌ 절대 금지 - 컴포넌트별 개별 스타일링 */
+.component-a { background: white; border: 1px solid gray; }
+.component-b { background: white; border: 1px solid gray; }  /* 중복! */
+```
+
+### 2. 반드시 준수할 원칙 ✅
+
+```css
+/* ✅ 필수 - CSS 변수 사용 */
+.my-component {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* ✅ 필수 - 공용 클래스 활용 */
+<div className="content-pane hover-subtle">
+
+/* ✅ 필수 - 테마 반응형 설계 */
+:root { --color-bg-primary: #f5f6f7; }
+html[data-theme="dark"] { --color-bg-primary: #374151; }
+```
+
+## 🏗️ CSS Architecture Layers
+
+### Layer 1: Design Tokens (설계 토큰)
+
+```css
+/* src/shared/design/tokens.css */
+
+/* === 색상 시스템 === */
+:root {
+  /* Primary Colors */
+  --color-bg-primary: #f5f6f7;        /* 메인 배경 */
+  --color-bg-secondary: #ffffff;      /* 카드/패널 배경 */
+  --color-bg-tertiary: #f8f9fa;       /* 서브 배경 */
+
+  /* Text Colors */
+  --color-text-primary: #1a1a1a;      /* 메인 텍스트 */
+  --color-text-secondary: #6b7280;    /* 보조 텍스트 */
+  --color-text-tertiary: #9ca3af;     /* 비활성 텍스트 */
+
+  /* Interactive Colors */
+  --color-primary: #3b82f6;           /* 주요 액션 */
+  --color-primary-hover: #2563eb;     /* 주요 액션 호버 */
+  --color-secondary: #6366f1;         /* 보조 액션 */
+  --color-danger: #ef4444;            /* 위험 액션 */
+  --color-success: #10b981;           /* 성공 상태 */
+  --color-warning: #f59e0b;           /* 경고 상태 */
+
+  /* Border & Shadow */
+  --color-border: #e5e7eb;            /* 기본 테두리 */
+  --color-border-hover: #d1d5db;      /* 호버 테두리 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+  /* Spacing System */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+```
+
+### Layer 2: Theme System (테마 시스템)
+
+```css
+/* src/shared/design/theme.css */
+
+/* === Dark Theme === */
+html[data-theme="dark"] {
+  --color-bg-primary: #374151;        /* 어두운 메인 배경 */
+  --color-bg-secondary: #4b5563;      /* 어두운 카드 배경 */
+  --color-bg-tertiary: #1f2937;       /* 어두운 서브 배경 */
+
+  --color-text-primary: #f9fafb;      /* 밝은 메인 텍스트 */
+  --color-text-secondary: #d1d5db;    /* 밝은 보조 텍스트 */
+  --color-text-tertiary: #9ca3af;     /* 밝은 비활성 텍스트 */
+
+  --color-border: #4b5563;            /* 어두운 테두리 */
+  --color-border-hover: #6b7280;      /* 어두운 호버 테두리 */
+}
+
+/* === High Contrast Theme === */
+html[data-theme="high-contrast"] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #ffffff;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #000000;
+  --color-border: #ffffff;
+}
+```
+
+### Layer 3: Utility Classes (유틸리티 클래스)
+
+```css
+/* src/shared/styles/utilities.css */
+
+/* === Layout Utilities === */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+
+/* === Spacing Utilities === */
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.px-md { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
+.py-md { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+/* === Text Utilities === */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+
+/* === Border Utilities === */
+.border { border: 1px solid var(--color-border); }
+.border-t { border-top: 1px solid var(--color-border); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+```
+
+### Layer 4: Layout Classes (레이아웃 클래스)
+
+```css
+/* src/shared/styles/layout.css */
+
+/* === Container System === */
+.main-container {
+  background-color: var(--color-bg-primary);
+  min-height: 100vh;
+  transition: background-color var(--transition-normal);
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.content-pane {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.side-panel {
+  background-color: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+}
+
+/* === Grid System === */
+.grid {
+  display: grid;
+}
+
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 768px) {
+  .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* === Responsive Layout === */
+.mobile-hidden {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-hidden { display: none; }
+  .mobile-only { display: block; }
+}
+```
+
+### Layer 5: Component Classes (컴포넌트 클래스)
+
+```css
+/* src/shared/styles/components.css */
+
+/* === Interactive States === */
+.hover-subtle {
+  transition: background-color var(--transition-fast);
+}
+
+.hover-subtle:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.hover-lift {
+  transition: all var(--transition-fast);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.selected-item {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.disabled-state {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* === Focus States === */
+.focus-ring {
+  outline: none;
+  transition: box-shadow var(--transition-fast);
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* === Status Indicators === */
+.status-active {
+  background-color: var(--color-success);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.status-inactive {
+  background-color: var(--color-text-tertiary);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.status-error {
+  background-color: var(--color-danger);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+/* === Card Components === */
+.card-basic {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  transition: all var(--transition-normal);
+}
+
+.card-elevated {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.card-interactive {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.card-interactive:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+```
+
+## 🎨 Component-Specific Styles
+
+각 컴포넌트는 위의 공용 클래스들을 조합하여 스타일링하며, 필요시에만 컴포넌트별 CSS 파일을 생성합니다.
+
+### 예시: CustomersPage.css
+
+```css
+/* src/pages/customers/CustomersPage.css */
+
+/* 이 파일은 customers 페이지만의 고유한 스타일만 포함 */
+.customers-page {
+  /* 공용 클래스들과 조합하여 사용 */
+}
+
+.customer-card {
+  /* 기본은 .card-interactive 클래스 사용 */
+  /* 여기서는 customer card만의 특별한 레이아웃만 정의 */
+}
+
+.customer-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-sm);
+}
+
+.customer-card__name {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.customer-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.customer-card__tag {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+```
+
+## 🔄 Theme Switching Implementation
+
+### JavaScript/TypeScript
+
+```typescript
+// src/shared/lib/theme.ts
+
+export type Theme = 'light' | 'dark' | 'high-contrast';
+
+export class ThemeManager {
+  private static currentTheme: Theme = 'light';
+
+  static setTheme(theme: Theme): void {
+    this.currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('aims-theme', theme);
+  }
+
+  static getTheme(): Theme {
+    return this.currentTheme;
+  }
+
+  static initTheme(): void {
+    const savedTheme = localStorage.getItem('aims-theme') as Theme || 'light';
+    this.setTheme(savedTheme);
+  }
+
+  static toggleTheme(): void {
+    const nextTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+    this.setTheme(nextTheme);
+  }
+}
+```
+
+### React Hook
+
+```typescript
+// src/shared/hooks/useTheme.ts
+
+import { useState, useEffect } from 'react';
+import { ThemeManager, type Theme } from '@/shared/lib/theme';
+
+export const useTheme = () => {
+  const [theme, setTheme] = useState<Theme>(ThemeManager.getTheme());
+
+  useEffect(() => {
+    ThemeManager.initTheme();
+    setTheme(ThemeManager.getTheme());
+  }, []);
+
+  const changeTheme = (newTheme: Theme) => {
+    ThemeManager.setTheme(newTheme);
+    setTheme(newTheme);
+  };
+
+  const toggleTheme = () => {
+    ThemeManager.toggleTheme();
+    setTheme(ThemeManager.getTheme());
+  };
+
+  return { theme, changeTheme, toggleTheme };
+};
+```
+
+## 🚀 CSS 최적화 전략
+
+### 1. Critical CSS
+```css
+/* Critical styles loaded inline */
+.main-container,
+.content-pane,
+.loading-skeleton {
+  /* Critical styles for above-the-fold content */
+}
+```
+
+### 2. CSS 번들 분할
+```typescript
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name?.split('.') ?? [];
+          const extType = info[info.length - 1];
+
+          if (/\.(css)$/.test(assetInfo.name ?? '')) {
+            if (assetInfo.name?.includes('critical')) {
+              return 'css/critical-[hash][extname]';
+            }
+            return 'css/[name]-[hash][extname]';
+          }
+        }
+      }
+    }
+  }
+});
+```
+
+### 3. CSS Tree Shaking
+```css
+/* 사용되지 않는 CSS 클래스 자동 제거 */
+/* PurgeCSS나 similar tools 활용 */
+```
+
+## 📏 Responsive Design System
+
+### Breakpoints
+
+```css
+/* Mobile First Approach */
+:root {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Media Query Utilities */
+@media (min-width: 640px) {  /* sm: */ }
+@media (min-width: 768px) {  /* md: */ }
+@media (min-width: 1024px) { /* lg: */ }
+@media (min-width: 1280px) { /* xl: */ }
+@media (min-width: 1536px) { /* 2xl: */ }
+```
+
+### Responsive Classes
+
+```css
+/* Mobile */
+.text-sm { font-size: var(--font-size-sm); }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+/* Tablet */
+@media (min-width: 768px) {
+  .md\:text-md { font-size: var(--font-size-md); }
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .lg\:text-lg { font-size: var(--font-size-lg); }
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+```
+
+## ✅ CSS Quality Checklist
+
+### 새 컴포넌트 생성시 체크리스트
+
+- [ ] 인라인 스타일 사용하지 않음 (`style={{}}` 금지)
+- [ ] 하드코딩된 색상/크기 사용하지 않음
+- [ ] CSS 변수 활용한 테마 반응형 설계
+- [ ] 공용 클래스 최대한 재사용
+- [ ] 중복 스타일 패턴 식별하여 공용화
+- [ ] 반응형 디자인 구현 (mobile-first)
+- [ ] 접근성 고려 (focus states, contrast ratio)
+- [ ] 다크모드 테스트 완료
+
+### CSS 코드 리뷰 체크리스트
+
+- [ ] 모든 색상이 CSS 변수로 정의됨
+- [ ] 중복 스타일 패턴이 공용 클래스로 추출됨
+- [ ] 컴포넌트별 CSS는 고유 기능만 포함
+- [ ] 테마 전환시 모든 요소가 올바르게 변경됨
+- [ ] 성능에 영향을 주는 비효율적 선택자 없음
+- [ ] 브라우저 호환성 확인 완료
+
+## 🔮 Future Enhancements
+
+### Phase 1: CSS-in-JS Integration (선택사항)
+- Styled Components 또는 Emotion 도입 고려
+- Dynamic styling 요구사항 증가시
+
+### Phase 2: Advanced Theming
+- 사용자 정의 테마 생성 기능
+- 테마 설정 저장/공유 시스템
+- 실시간 테마 편집기
+
+### Phase 3: Design System Package
+- NPM 패키지로 분리
+- 다른 프로젝트에서 재사용 가능
+- Storybook 통합 문서화
+
+---
+
+## 📞 References
+
+- [CSS Custom Properties](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties)
+- [CSS Architecture Guidelines](https://github.com/jareware/css-architecture)
+- [BEM Methodology](https://getbem.com/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+---
+
+**마지막 업데이트**: 2025-09-15
+**문서 버전**: 1.0.0
+**CSS 시스템 준수율**: 100%
