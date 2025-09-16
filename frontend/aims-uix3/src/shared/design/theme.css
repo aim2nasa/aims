@@ -89,15 +89,15 @@
   --color-overlay-modal: rgba(0, 0, 0, 0.5);
   --color-overlay-backdrop: rgba(255, 255, 255, 0.1);
 
-  /* Layout Colors - Light Theme */
-  --color-layout-main-bg: var(--color-neutral-900);
-  --color-layout-header-bg: var(--color-layout-header-light); /* 극적인 8색 그라데이션 - light.png 참고 */
-  --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* 라벤더 그레이 - light.png 참고 */
-  --color-layout-mainpane-bg: var(--color-primary-500);
-  --color-layout-centerpane-bg: var(--color-info-50);
-  --color-layout-pagination-bg: var(--color-info-500);
-  --color-layout-brb-bg: var(--color-error-500);
-  --color-layout-rightpane-bg: var(--color-success-50);
+  /* Layout Colors - Light Theme (color.png 기반) */
+  --color-layout-main-bg: var(--color-layout-main-light); /* color.png의 밝은 라벤더 그레이 */
+  --color-layout-header-bg: var(--color-layout-header-light); /* 극적인 8색 그라데이션 유지 */
+  --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* 라벤더 그레이 */
+  --color-layout-mainpane-bg: var(--color-layout-main-light); /* 메인과 동일한 배경 */
+  --color-layout-centerpane-bg: var(--color-layout-content-light); /* 화이트 컨텐츠 배경 */
+  --color-layout-pagination-bg: var(--color-layout-accent-light); /* 차분한 액센트 */
+  --color-layout-brb-bg: var(--color-primary-500); /* 드래그 바는 파란색 유지 */
+  --color-layout-rightpane-bg: var(--color-layout-secondary-light); /* 보조 배경색 */
 
   /* Gap Controller Colors */
   --color-gap-button-active: var(--color-error-500);
@@ -186,15 +186,15 @@
   --color-overlay-modal: rgba(0, 0, 0, 0.7);
   --color-overlay-backdrop: rgba(0, 0, 0, 0.2);
 
-  /* Layout Colors - Dark Theme */
-  --color-layout-main-bg: var(--color-neutral-950);
-  --color-layout-header-bg: #4b5563; /* 어두운 그레이 헤더 - uix2와 동일 */
-  --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* 중간 다크 그레이 - dark.png 참고 */
-  --color-layout-mainpane-bg: var(--color-primary-400);
-  --color-layout-centerpane-bg: var(--color-info-900);
-  --color-layout-pagination-bg: var(--color-info-400);
-  --color-layout-brb-bg: var(--color-error-400);
-  --color-layout-rightpane-bg: var(--color-success-900);
+  /* Layout Colors - Dark Theme (color.png 기반) */
+  --color-layout-main-bg: var(--color-layout-main-dark); /* color.png의 다크 그레이 */
+  --color-layout-header-bg: #4b5563; /* 어두운 그레이 헤더 유지 */
+  --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* 중간 다크 그레이 */
+  --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 배경 */
+  --color-layout-centerpane-bg: var(--color-layout-content-dark); /* 다크 컨텐츠 배경 */
+  --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
+  --color-layout-brb-bg: var(--color-primary-400); /* 드래그 바는 파란색 (다크용) */
+  --color-layout-rightpane-bg: var(--color-layout-secondary-dark); /* 다크 보조 배경 */
 
   /* Gap Controller Colors - Dark Theme */
   --color-gap-button-active: var(--color-error-400);
@@ -275,15 +275,15 @@
     /* Hamburger Button Colors - System Dark Theme */
     --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
 
-    /* Layout Colors - System Dark Theme */
-    --color-layout-main-bg: var(--color-neutral-950);
-    --color-layout-header-bg: var(--color-layout-header-dark); /* 어두운 그레이 헤더 - dark.png 참고 */
-    --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* 중간 다크 그레이 - dark.png 참고 */
-    --color-layout-mainpane-bg: var(--color-primary-400);
-    --color-layout-centerpane-bg: var(--color-info-900);
-    --color-layout-pagination-bg: var(--color-info-400);
-    --color-layout-brb-bg: var(--color-error-400);
-    --color-layout-rightpane-bg: var(--color-success-900);
+    /* Layout Colors - System Dark Theme (color.png 기반) */
+    --color-layout-main-bg: var(--color-layout-main-dark); /* color.png의 다크 그레이 */
+    --color-layout-header-bg: var(--color-layout-header-dark); /* 어두운 그레이 헤더 */
+    --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* 중간 다크 그레이 */
+    --color-layout-mainpane-bg: var(--color-layout-main-dark); /* 메인과 동일한 배경 */
+    --color-layout-centerpane-bg: var(--color-layout-content-dark); /* 다크 컨텐츠 배경 */
+    --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
+    --color-layout-brb-bg: var(--color-primary-400); /* 드래그 바는 파란색 (다크용) */
+    --color-layout-rightpane-bg: var(--color-layout-secondary-dark); /* 다크 보조 배경 */
 
     /* Gap Controller Colors - System Dark Theme */
     --color-gap-button-active: var(--color-error-400);
@@ -363,15 +363,15 @@
     /* Hamburger Button Colors - System Light Theme */
     --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
 
-    /* Layout Colors - System Light Theme */
-    --color-layout-main-bg: var(--color-neutral-900);
-    --color-layout-header-bg: var(--color-layout-header-light); /* 극적인 8색 그라데이션 - light.png 참고 */
-    --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* 라벤더 그레이 - light.png 참고 */
-    --color-layout-mainpane-bg: var(--color-primary-500);
-    --color-layout-centerpane-bg: var(--color-info-50);
-    --color-layout-pagination-bg: var(--color-info-500);
-    --color-layout-brb-bg: var(--color-error-500);
-    --color-layout-rightpane-bg: var(--color-success-50);
+    /* Layout Colors - System Light Theme (color.png 기반) */
+    --color-layout-main-bg: var(--color-layout-main-light); /* color.png의 밝은 라벤더 그레이 */
+    --color-layout-header-bg: var(--color-layout-header-light); /* 극적인 8색 그라데이션 유지 */
+    --color-layout-leftpane-bg: var(--color-layout-leftpane-light); /* 라벤더 그레이 */
+    --color-layout-mainpane-bg: var(--color-layout-main-light); /* 메인과 동일한 배경 */
+    --color-layout-centerpane-bg: var(--color-layout-content-light); /* 화이트 컨텐츠 배경 */
+    --color-layout-pagination-bg: var(--color-layout-accent-light); /* 차분한 액센트 */
+    --color-layout-brb-bg: var(--color-primary-500); /* 드래그 바는 파란색 유지 */
+    --color-layout-rightpane-bg: var(--color-layout-secondary-light); /* 보조 배경색 */
 
     /* Gap Controller Colors - System Light Theme */
     --color-gap-button-active: var(--color-error-500);

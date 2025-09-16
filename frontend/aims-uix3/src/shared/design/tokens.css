@@ -174,6 +174,24 @@
 
   /* === LAYOUT COLORS === */
 
+  /* color.png 기반 조화로운 색상 팔레트 */
+
+  /* Main Background Colors - color.png 참고 */
+  --color-layout-main-light: #e8e9eb; /* Light Theme 메인 배경 */
+  --color-layout-main-dark: #4b5563;  /* Dark Theme 메인 배경 */
+
+  /* Content Background Colors */
+  --color-layout-content-light: #ffffff;    /* Light Theme 컨텐츠 배경 */
+  --color-layout-content-dark: #374151;     /* Dark Theme 컨텐츠 배경 */
+
+  /* Secondary Background Colors */
+  --color-layout-secondary-light: #f3f4f6;  /* Light Theme 보조 배경 */
+  --color-layout-secondary-dark: #1f2937;   /* Dark Theme 보조 배경 */
+
+  /* Accent Background Colors */
+  --color-layout-accent-light: #e5e7eb;     /* Light Theme 액센트 배경 */
+  --color-layout-accent-dark: #374151;      /* Dark Theme 액센트 배경 */
+
   /* LeftPane Colors */
   --color-layout-leftpane-light: #e8eaf2;
   --color-layout-leftpane-dark: #374151;
