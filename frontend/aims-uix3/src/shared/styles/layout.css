@@ -83,6 +83,34 @@
   cursor: col-resize;
   z-index: 20;
   background-color: var(--color-layout-brb-bg);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* BRB 호버 시 그립 인디케이터 - 애플 스타일 */
+.layout-brb::before {
+  content: '⋮';
+  position: absolute;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--color-layout-brb-icon);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-family-primary);
+}
+
+/* BRB 호버 상태 - Progressive Disclosure */
+.layout-brb:hover {
+  background-color: var(--color-layout-brb-hover);
+}
+
+.layout-brb:hover::before {
+  opacity: 1;
 }
 
 .layout-brb--hidden {

@@ -290,6 +290,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             document.addEventListener('mousemove', handleMouseMove)
             document.addEventListener('mouseup', handleMouseUp)
           }}
+          aria-label="패널 크기 조절"
+          role="separator"
+          aria-orientation="vertical"
         >
         </div>
       )}

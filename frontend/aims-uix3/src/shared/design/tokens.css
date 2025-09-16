@@ -202,7 +202,15 @@
 
   /* BRB Colors - 후보6.1: 애플 스타일 서브틀 드래그 바 */
   --color-layout-brb-light: #d1d5db;       /* Light Theme: 서브틀 그레이 (거의 안보이게) */
-  --color-layout-brb-dark: #4b5563;
+  --color-layout-brb-dark: #4b5563;        /* Dark Theme: 서브틀 다크 그레이 */
+
+  /* BRB Hover Colors - 애플 스타일 Progressive Disclosure */
+  --color-layout-brb-hover-light: #9ca3af; /* Light Theme: 호버 시 더 진한 그레이 */
+  --color-layout-brb-hover-dark: #6b7280;  /* Dark Theme: 호버 시 더 진한 그레이 */
+
+  /* BRB Icon Colors - 호버 시 그립 인디케이터 */
+  --color-layout-brb-icon-light: #6b7280;  /* Light Theme: 아이콘 그레이 */
+  --color-layout-brb-icon-dark: #9ca3af;
 
   /* Theme Toggle Colors */
   --color-icon-orange: #f97316;

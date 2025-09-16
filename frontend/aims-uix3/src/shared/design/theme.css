@@ -97,6 +97,8 @@
   --color-layout-centerpane-bg: var(--color-layout-content-light); /* 순수 화이트 카드형 배경 */
   --color-layout-pagination-bg: var(--color-layout-accent-light); /* 라이트 액센트 */
   --color-layout-brb-bg: var(--color-layout-brb-light); /* 서브틀 그레이 드래그 바 */
+  --color-layout-brb-hover: var(--color-layout-brb-hover-light); /* 호버 시 진한 그레이 */
+  --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
   --color-layout-rightpane-bg: var(--color-layout-secondary-light); /* 시스템 그레이 */
 
   /* Gap Controller Colors */
@@ -194,6 +196,8 @@
   --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
   --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
   --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
+  --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
+  --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
   --color-layout-rightpane-bg: var(--color-layout-secondary-dark); /* 세컨더리 다크 */
 
   /* Gap Controller Colors - Dark Theme */
@@ -283,6 +287,8 @@
     --color-layout-centerpane-bg: var(--color-layout-content-dark); /* iOS 다크 그레이 카드형 배경 */
     --color-layout-pagination-bg: var(--color-layout-accent-dark); /* 다크 액센트 */
     --color-layout-brb-bg: var(--color-layout-brb-dark); /* 서브틀 다크 그레이 드래그 바 */
+    --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
+    --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
     --color-layout-rightpane-bg: var(--color-layout-secondary-dark); /* 세컨더리 다크 */
 
     /* Gap Controller Colors - System Dark Theme */
@@ -371,6 +377,8 @@
     --color-layout-centerpane-bg: var(--color-layout-content-light); /* 순수 화이트 카드형 배경 */
     --color-layout-pagination-bg: var(--color-layout-accent-light); /* 라이트 액센트 */
     --color-layout-brb-bg: var(--color-layout-brb-light); /* 서브틀 그레이 드래그 바 */
+    --color-layout-brb-hover: var(--color-layout-brb-hover-light); /* 호버 시 진한 그레이 */
+    --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
     --color-layout-rightpane-bg: var(--color-layout-secondary-light); /* 시스템 그레이 */
 
     /* Gap Controller Colors - System Light Theme */
