@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useDraggable } from '../hooks/useDraggable';
 
 interface LayoutControlModalProps {
@@ -70,7 +71,9 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  // Portal을 사용하여 모달을 document.body에 직접 렌더링
+  // App 컴포넌트의 리마운트 영향을 완전히 차단
+  return createPortal(
     <div
       className={`floating-modal ${isDragging ? 'floating-modal--dragging' : ''}`}
       style={{
@@ -215,7 +218,8 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
           닫기
         </button>
       </div>
-    </div>
+    </div>,
+    document.body // Portal 타겟: document.body에 직접 렌더링
   );
 };
 

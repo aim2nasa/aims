@@ -275,9 +275,6 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               const deltaPercent = (deltaX / mainPaneWidth) * 100
               const newWidth = startWidth + deltaPercent
               setCenterWidth(Math.max(20, Math.min(80, newWidth)))
-
-              // BRB 드래그 중에도 레이아웃 강제 업데이트
-              setForceUpdate(prev => prev + 1)
             }
 
             const handleMouseUp = () => {

@@ -695,7 +695,7 @@
   transition:
     box-shadow var(--duration-normal) var(--easing-ease-out),
     transform var(--duration-fast) var(--easing-ease-out);
-  z-index: var(--z-modal);
+  z-index: var(--z-portal-modal); /* Portal 환경에서 모든 요소 위에 표시 */
   /* 애플 스타일: 기본적으로 서브틀함 */
   opacity: 0.95;
   backdrop-filter: blur(10px);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface Position {
   x: number;
@@ -20,6 +20,9 @@ interface DraggableReturn {
   resetPosition: () => void;
 }
 
+// 모달 위치 영속화를 위한 정적 저장소 (컴포넌트 리마운트와 독립)
+const persistentPositionStorage = new Map<string, Position>();
+
 export const useDraggable = (options: DraggableOptions = {}): DraggableReturn => {
   const {
     initialPosition = { x: 0, y: 0 },
@@ -27,9 +30,26 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
     minVisibleArea = 50 // 기본 최소 가시 영역 50px
   } = options;
 
-  const [position, setPosition] = useState<Position>(initialPosition);
+  // 고유 키를 생성하여 여러 드래그 가능한 요소 구분
+  const storageKey = useRef(`draggable-${Date.now()}-${Math.random()}`);
+
+  // 영속 위치 저장소에서 이전 위치 복원 또는 초기 위치 사용
+  const getInitialPosition = useCallback(() => {
+    const storedPosition = persistentPositionStorage.get(storageKey.current);
+    return storedPosition || initialPosition;
+  }, [initialPosition]);
+
+  const [position, setPosition] = useState<Position>(getInitialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; startPos: Position } | null>(null);
+
+  // 컴포넌트 마운트 시 이전 위치 복원
+  useEffect(() => {
+    const storedPosition = persistentPositionStorage.get(storageKey.current);
+    if (storedPosition) {
+      setPosition(storedPosition);
+    }
+  }, []);
 
   const constrainPosition = useCallback((pos: Position): Position => {
     if (!constrainToViewport) return pos;
@@ -76,7 +96,10 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
         y: dragRef.current.startPos.y + deltaY
       };
 
-      setPosition(constrainPosition(newPosition));
+      const constrainedPosition = constrainPosition(newPosition);
+      setPosition(constrainedPosition);
+      // 위치 변경 시 영속 저장소에도 저장
+      persistentPositionStorage.set(storageKey.current, constrainedPosition);
     };
 
     const handleMouseUp = () => {
@@ -96,6 +119,8 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
 
   const resetPosition = useCallback(() => {
     setPosition(initialPosition);
+    // 영속 저장소도 초기 위치로 리셋
+    persistentPositionStorage.set(storageKey.current, initialPosition);
   }, [initialPosition]);
 
   return {
