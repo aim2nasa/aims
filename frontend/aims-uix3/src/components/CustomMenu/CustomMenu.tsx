@@ -123,6 +123,7 @@ const CustomMenuItem = ({
       onClick={handleMainMenuClick}
       onDoubleClick={handleDoubleClick}
       title={collapsed ? item.tooltipTitle : ''}
+      data-menu-key={item.key}
     >
       {item.icon}
       {!collapsed && <span className="custom-menu-item-text">{item.label}</span>}

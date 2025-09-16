@@ -413,6 +413,15 @@
   transform: scale(1.05);
 }
 
+/* color.png 스타일: 각 메뉴별 개별 그라데이션 적용 */
+.custom-menu-item.selected[data-menu-key="customers"] { background: var(--gradient-user); }
+.custom-menu-item.selected[data-menu-key="customers-all"] { background: var(--gradient-list); }
+.custom-menu-item.selected[data-menu-key="customers-regional"] { background: var(--gradient-location); }
+.custom-menu-item.selected[data-menu-key="customers-relationship"] { background: var(--gradient-team); }
+.custom-menu-item.selected[data-menu-key="documents"] { background: var(--gradient-file); }
+.custom-menu-item.selected[data-menu-key="dsd"] { background: var(--gradient-dashboard); }
+.custom-menu-item.selected[data-menu-key="search-results"] { background: var(--gradient-search); }
+
 /* === COLLAPSED TOOLTIPS === */
 .custom-menu-item.collapsed[title]:hover::after {
   content: attr(title);
@@ -470,6 +479,15 @@
   --color-menu-selected-inner: rgba(255, 255, 255, 0.25);
   --color-menu-selected-border: rgba(0, 122, 255, 0.6);
 
+  /* color.png보다 더 강력한 fade-out 그라데이션 - 위에서 아래로 옥어지는 효과 */
+  --gradient-user: linear-gradient(180deg, #0066FF 0%, #B3D9FF 100%);       /* 극도로 강한 파란색 fade-out */
+  --gradient-list: linear-gradient(180deg, #0066FF 0%, #B3D9FF 100%);       /* 극도로 강한 파란색 fade-out */
+  --gradient-location: linear-gradient(180deg, #FF8800 0%, #FFE0B3 100%);   /* 극도로 강한 주황색 fade-out */
+  --gradient-team: linear-gradient(180deg, #FF1166 0%, #FFCCE0 100%);       /* 극도로 강한 분홍색 fade-out */
+  --gradient-file: linear-gradient(180deg, #00CCFF 0%, #CCF2FF 100%);       /* 극도로 강한 청록색 fade-out */
+  --gradient-dashboard: linear-gradient(180deg, #FF3300 0%, #FFD9CC 100%);  /* 극도로 강한 빨간색 fade-out */
+  --gradient-search: linear-gradient(180deg, #CC00FF 0%, #F2CCFF 100%);     /* 극도로 강한 보라색 fade-out */
+
   /* 아름다운 아이콘 glow 효과 */
   --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.6);
   --color-menu-selected-icon-glow-outer: rgba(255, 255, 255, 0.3);
@@ -496,6 +514,15 @@
   --color-menu-selected-shadow: rgba(10, 132, 255, 0.45);
   --color-menu-selected-inner: rgba(255, 255, 255, 0.2);
   --color-menu-selected-border: rgba(10, 132, 255, 0.65);
+
+  /* 다크 테마: color.png보다 더 강력한 fade-out 그라데이션 */
+  --gradient-user: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
+  --gradient-list: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
+  --gradient-location: linear-gradient(180deg, #F57C00 0%, #FFD54F 100%);   /* 다크용 극도로 강한 주황색 fade-out */
+  --gradient-team: linear-gradient(180deg, #C2185B 0%, #F8BBD9 100%);       /* 다크용 극도로 강한 분홍색 fade-out */
+  --gradient-file: linear-gradient(180deg, #0097A7 0%, #B2EBF2 100%);       /* 다크용 극도로 강한 청록색 fade-out */
+  --gradient-dashboard: linear-gradient(180deg, #D32F2F 0%, #FFCDD2 100%);  /* 다크용 극도로 강한 빨간색 fade-out */
+  --gradient-search: linear-gradient(180deg, #7B1FA2 0%, #E1BEE7 100%);     /* 다크용 극도로 강한 보라색 fade-out */
 
   /* 다크 테마용 아름다운 아이콘 glow 효과 */
   --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.7);
