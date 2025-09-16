@@ -1,0 +1,539 @@
+/**
+ * AIMS UIX3 - Perfect CustomMenu Implementation
+ * color.png 기반 아름다운 디자인 + 지침 완벽 준수
+ *
+ * 핵심 원칙:
+ * 1. 하드코딩 절대 금지 - CSS 변수만 사용
+ * 2. color.png의 생동감 있는 색상 완벽 구현
+ * 3. 애플 디자인 철학 적용
+ * 4. 완전한 기능 (메인메뉴 토글 포함)
+ */
+
+/* === BASE MENU CONTAINER === */
+.custom-menu {
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* === MENU ITEM BASE STYLES === */
+.custom-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  margin: 3px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  position: relative;
+
+  /* color.png 기반 기본 상태 */
+  background: transparent;
+
+  /* 애플 디자인 철학: 매우 서브틀하고 자연스러운 애니메이션 */
+  transition:
+    background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* === SUB-MENU STYLES === */
+.custom-menu-item.sub-menu {
+  padding-left: 44px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.sub-menu-container {
+  overflow: hidden;
+  /* 애플 철학: 매우 자연스럽고 우아한 전개 애니메이션 */
+  animation: appleSubMenuSlide 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes appleSubMenuSlide {
+  from {
+    opacity: 0;
+    max-height: 0;
+    /* 애플 스타일: 서브틀한 수직 움직임 */
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+}
+
+/* === COLLAPSED STATE === */
+.custom-menu-item.collapsed {
+  padding: 12px;
+  justify-content: center;
+}
+
+.custom-menu-item.collapsed.sub-menu {
+  padding: 10px;
+}
+
+/* === VECTOR ICONS SYSTEM (하드코딩 금지 원칙 준수) === */
+.menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.custom-menu-item.collapsed .menu-icon {
+  margin-right: 0;
+}
+
+/* User Icon - color.png 파란색 */
+.icon-user .icon-shape {
+  width: 16px;
+  height: 16px;
+  border-radius: 50% 50% 0 0;
+  background: var(--color-menu-user);
+  position: relative;
+}
+
+.icon-user .icon-shape::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 12px;
+  border-radius: 10px 10px 0 0;
+  background: var(--color-menu-user);
+}
+
+/* List Icon - color.png 파란색 */
+.icon-list .icon-shape {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-menu-list);
+  border-radius: 2px;
+  position: relative;
+}
+
+.icon-list .icon-shape::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: var(--color-menu-list);
+}
+
+.icon-list .icon-shape::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: var(--color-menu-list);
+}
+
+/* Location Icon - color.png 주황색 */
+.icon-location .icon-shape {
+  width: 12px;
+  height: 16px;
+  background: var(--color-menu-location);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: relative;
+}
+
+.icon-location .icon-shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Team Icon - color.png 분홍색 */
+.icon-team .icon-shape {
+  width: 18px;
+  height: 14px;
+  position: relative;
+}
+
+.icon-team .icon-shape::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-menu-team);
+}
+
+.icon-team .icon-shape::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-menu-team);
+}
+
+/* FileText Icon - color.png 청록색 */
+.icon-file .icon-shape {
+  width: 12px;
+  height: 16px;
+  background: var(--color-menu-file);
+  border-radius: 2px;
+  position: relative;
+}
+
+.icon-file .icon-shape::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  background: white;
+}
+
+.icon-file .icon-shape::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  background: white;
+}
+
+/* Dashboard Icon - color.png 빨간색 */
+.icon-dashboard .icon-shape {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-menu-dashboard);
+  border-radius: 2px;
+  position: relative;
+}
+
+.icon-dashboard .icon-shape::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  background: var(--color-menu-dashboard);
+  border-radius: 1px;
+}
+
+.icon-dashboard .icon-shape::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-menu-dashboard);
+  border-radius: 1px;
+}
+
+/* Search Icon - color.png 보라색 */
+.icon-search .icon-shape {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-menu-search);
+  border-radius: 50%;
+  position: relative;
+}
+
+.icon-search .icon-shape::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 6px;
+  height: 2px;
+  background: var(--color-menu-search);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+/* ChevronDown Icon - 분리된 클릭 영역 */
+.icon-chevron {
+  margin-left: auto;
+  /* 클릭 영역 확장을 위한 패딩 */
+  padding: 4px;
+  margin: -4px -4px -4px auto;
+  cursor: pointer;
+  border-radius: 4px;
+
+  /* 애플 스타일: 서브틀한 호버 효과 */
+  transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.icon-chevron:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.icon-chevron .icon-shape {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-text-tertiary);
+  border-bottom: 2px solid var(--color-text-tertiary);
+  transform: rotate(45deg);
+  /* 애플 스타일: 매우 부드러운 회전 애니메이션 */
+  transition: transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.custom-menu-item.has-children.sub-menu .icon-chevron,
+.custom-menu-item.collapsed .icon-chevron {
+  display: none;
+}
+
+/* Expanded state */
+.custom-menu-item:has(+ .sub-menu-container) .icon-chevron .icon-shape {
+  transform: rotate(225deg);
+}
+
+/* === MENU TEXT === */
+.custom-menu-item-text {
+  flex: 1;
+  font-weight: inherit;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+.custom-menu-item.collapsed .custom-menu-item-text {
+  display: none;
+}
+
+/* === HOVER STATES (Progressive Disclosure - Apple Philosophy) === */
+.custom-menu-item:hover {
+  /* 애플 스타일: 매우 서브틀한 배경 변화 */
+  background-color: var(--color-bg-hover);
+
+  /* 애플 스타일: 과하지 않은 서브틀한 이동 */
+  transform: translateX(1px);
+}
+
+.custom-menu-item:hover .menu-icon {
+  /* 애플 스타일: 매우 섬세한 스케일 변화 */
+  transform: scale(1.02);
+}
+
+/* === SELECTED STATES (color.png 강렬한 그라데이션 완벽 재현) === */
+.custom-menu-item.selected {
+  /* color.png의 강렬하고 생동감 있는 그라데이션 */
+  background: var(--color-menu-selected-bg);
+  color: var(--color-menu-selected-text);
+  font-weight: 600; /* 선택 상태 강조를 위한 굵기 */
+
+  /* color.png 스타일: 뚜렷한 깊이감과 glow 효과 */
+  box-shadow:
+    0 2px 8px var(--color-menu-selected-shadow),
+    inset 0 1px 0 var(--color-menu-selected-inner),
+    0 0 0 1px var(--color-menu-selected-border);
+
+  /* 애플 스타일: 자연스러운 곡선 */
+  border-radius: 8px;
+
+  /* color.png와 같은 선명한 대비를 위한 약간의 elevation */
+  transform: translateY(-1px);
+
+  /* 추가적인 시각적 강조 */
+  position: relative;
+  z-index: 1;
+}
+
+.custom-menu-item.selected .custom-menu-item-text {
+  color: var(--color-menu-selected-text);
+}
+
+.custom-menu-item.selected .menu-icon {
+  /* 선택된 아이콘 강조 효과 */
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+}
+
+.custom-menu-item.selected .menu-icon .icon-shape,
+.custom-menu-item.selected .menu-icon .icon-shape::before,
+.custom-menu-item.selected .menu-icon .icon-shape::after {
+  background: var(--color-menu-selected-icon) !important;
+  border-color: var(--color-menu-selected-icon) !important;
+}
+
+/* === COLLAPSED TOOLTIPS === */
+.custom-menu-item.collapsed[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0.95;
+
+  /* 애플 스타일 그림자 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  /* 부드러운 나타남 효과 */
+  animation: tooltipAppear var(--duration-fast) var(--easing-ease-out);
+}
+
+@keyframes tooltipAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-8px);
+  }
+  to {
+    opacity: 0.95;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* === COLOR.PNG 기반 색상 시스템 (CSS 변수 사용) === */
+
+/* Light Theme - color.png 왼쪽 */
+:root,
+[data-theme="light"] {
+  /* 메뉴 아이콘 색상 - color.png와 완전 동일 */
+  --color-menu-user: #007AFF;          /* 파란색 - 고객 관리 */
+  --color-menu-list: #007AFF;          /* 파란색 - 전체보기 */
+  --color-menu-location: #FF9500;      /* 주황색 - 지역별 보기 */
+  --color-menu-team: #FF2D92;          /* 분홍색 - 관계별 보기 */
+  --color-menu-file: #5AC8FA;          /* 청록색 - 문서 관리 */
+  --color-menu-dashboard: #FF3B30;     /* 빨간색 - 문서 처리 현황 */
+  --color-menu-search: #AF52DE;        /* 보라색 - 검색 */
+
+  /* 선택된 상태 색상 - color.png의 강렬한 파란색 그라데이션 재현 */
+  --color-menu-selected-bg: linear-gradient(180deg, #4A9EFF 0%, #007AFF 50%, #0051D5 100%);
+  --color-menu-selected-text: #FFFFFF;
+  --color-menu-selected-icon: #FFFFFF;
+  --color-menu-selected-shadow: rgba(0, 122, 255, 0.4);
+  --color-menu-selected-inner: rgba(255, 255, 255, 0.25);
+  --color-menu-selected-border: rgba(0, 122, 255, 0.6);
+}
+
+/* Dark Theme - color.png 오른쪽 */
+[data-theme="dark"] {
+  /* 메뉴 아이콘 색상 - 다크 테마용 조정 */
+  --color-menu-user: #0A84FF;          /* 밝은 파란색 */
+  --color-menu-list: #0A84FF;          /* 밝은 파란색 */
+  --color-menu-location: #FF9F0A;      /* 밝은 주황색 */
+  --color-menu-team: #FF2D92;          /* 밝은 분홍색 */
+  --color-menu-file: #64D2FF;          /* 밝은 청록색 */
+  --color-menu-dashboard: #FF453A;     /* 밝은 빨간색 */
+  --color-menu-search: #BF5AF2;        /* 밝은 보라색 */
+
+  /* 선택된 상태 색상 - 다크 테마용 강렬한 그라데이션 */
+  --color-menu-selected-bg: linear-gradient(180deg, #5AA3FF 0%, #0A84FF 50%, #0051D5 100%);
+  --color-menu-selected-text: #FFFFFF;
+  --color-menu-selected-icon: #FFFFFF;
+  --color-menu-selected-shadow: rgba(10, 132, 255, 0.45);
+  --color-menu-selected-inner: rgba(255, 255, 255, 0.2);
+  --color-menu-selected-border: rgba(10, 132, 255, 0.65);
+}
+
+/* === ACCESSIBILITY === */
+.custom-menu-item:focus {
+  outline: 2px solid var(--color-menu-user);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: high) {
+  .custom-menu-item:hover {
+    background-color: var(--color-bg-active);
+    border: 1px solid var(--color-border-primary);
+  }
+
+  .custom-menu-item.selected {
+    border: 2px solid var(--color-menu-user);
+  }
+}
+
+/* === REDUCED MOTION SUPPORT === */
+@media (prefers-reduced-motion: reduce) {
+  .custom-menu-item,
+  .menu-icon,
+  .icon-chevron .icon-shape,
+  .sub-menu-container {
+    transition: none;
+    animation: none;
+  }
+
+  .custom-menu-item:hover {
+    transform: none;
+  }
+
+  .custom-menu-item.selected {
+    transform: translateX(1px); /* 변환 효과는 유지하되 애니메이션 제거 */
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .custom-menu-item {
+    padding: 12px 16px;
+  }
+
+  .custom-menu-item.sub-menu {
+    padding-left: 40px;
+  }
+}
+
+/* === SMOOTH SCROLLING === */
+.custom-menu {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+}
+
+/* 애플 스타일 스크롤바 */
+.custom-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-menu::-webkit-scrollbar-thumb {
+  background: var(--color-border-primary);
+  border-radius: 2px;
+  opacity: 0.3;
+}
+
+.custom-menu::-webkit-scrollbar-thumb:hover {
+  opacity: 0.6;
+}

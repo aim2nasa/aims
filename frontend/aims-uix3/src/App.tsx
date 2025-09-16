@@ -4,6 +4,7 @@ import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import ThemeToggle from './components/ThemeToggle'
 import LayoutControlModal from './components/LayoutControlModal'
 import HamburgerButton from './components/HamburgerButton'
+import CustomMenu from './components/CustomMenu/CustomMenu'
 
 // 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
 const persistentModalState = {
@@ -29,6 +30,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
   // LeftPane 축소/확장 상태
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
+
 
   // 갭 시스템 (실시간 조정 가능)
   const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || {})
@@ -141,6 +143,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
     setDynamicGaps(prev => ({ ...prev, gapBottom: Number(e.target.value) }))
   }, [])
 
+
   // CSS 계산식들 메모이제이션 (성능 최적화, 기존 동작 보존)
   const layoutDimensions = useMemo(() => {
     const leftPaneWidth = leftPaneCollapsed ? 60 : 250
@@ -240,12 +243,13 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             padding: leftPaneCollapsed ? '10px' : '20px'
           }}
         >
-          {!leftPaneCollapsed && (
-            <>
-              <h3 className="section-heading">LeftPane (Fixed)</h3>
-              <p className="description-text">Navigation & Controls</p>
-            </>
-          )}
+          {/* CustomMenu - color.png 기반 완벽한 구현 */}
+          <CustomMenu
+            collapsed={leftPaneCollapsed}
+            onMenuClick={(key) => {
+              console.log('Menu clicked:', key)
+            }}
+          />
 
           {/* 햄버거 버튼 - aims-uix2 스타일 */}
           <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`}>
