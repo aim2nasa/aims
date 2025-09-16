@@ -3,6 +3,7 @@ import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import ThemeToggle from './components/ThemeToggle'
 import LayoutControlModal from './components/LayoutControlModal'
+import HamburgerButton from './components/HamburgerButton'
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
@@ -194,16 +195,12 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </>
           )}
 
-          {/* 햄버거 버튼 - 우측 하단 */}
+          {/* 햄버거 버튼 - aims-uix2 스타일 */}
           <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`}>
-            <button
-              className="hamburger-button"
+            <HamburgerButton
+              collapsed={leftPaneCollapsed}
               onClick={toggleLeftPaneCollapsed}
-            >
-              <div className="hamburger-icon"></div>
-              <div className="hamburger-icon"></div>
-              <div className="hamburger-icon"></div>
-            </button>
+            />
           </div>
         </div>
       )}

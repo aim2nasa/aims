@@ -1,0 +1,123 @@
+/**
+ * HamburgerButton Component Styles
+ * @since 2025-09-16
+ * @version 1.0.0
+ *
+ * aims-uix2 스타일을 참조한 햄버거 버튼 컴포넌트
+ * AIMS UIX3 디자인 토큰 및 테마 시스템 준수
+ */
+
+.hamburger-button {
+  /* 기본 스타일 - aims-uix2 Button type="text" 스타일 참조 */
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-1);
+  cursor: pointer;
+
+  /* 레이아웃 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+
+  /* 트랜지션 */
+  transition: all var(--duration-fast) var(--easing-ease-out);
+
+  /* 색상 - CSS 변수 활용 */
+  color: var(--color-hamburger-icon);
+}
+
+/* 호버 상태 - aims-uix2 Button 호버 효과 참조 */
+.hamburger-button:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  transform: none; /* aims-uix2는 transform 없음 */
+}
+
+/* 포커스 상태 - 접근성 고려 */
+.hamburger-button:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.hamburger-button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+/* 액티브 상태 */
+.hamburger-button:active {
+  background-color: var(--color-bg-active);
+  transform: none;
+}
+
+/* 햄버거 아이콘 SVG 스타일 */
+.hamburger-icon {
+  width: 14px;
+  height: 14px;
+  color: inherit;
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 버튼 비활성화 상태 */
+.hamburger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: transparent;
+  color: var(--color-text-disabled);
+}
+
+.hamburger-button:disabled:hover {
+  background-color: transparent;
+  transform: none;
+}
+
+/* 햄버거 컨테이너 스타일 개선 */
+.hamburger-container {
+  margin-top: auto;
+  display: flex;
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.hamburger-container--collapsed {
+  justify-content: center;
+}
+
+.hamburger-container--expanded {
+  justify-content: flex-end;
+}
+
+/* 다크 테마 특화 스타일 (자동 적용) */
+[data-theme="dark"] .hamburger-button {
+  /* CSS 변수가 자동으로 다크 테마 값으로 변경됨 */
+}
+
+/* 시스템 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .hamburger-button {
+    /* 시스템 다크 모드일 때 자동 적용 */
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .hamburger-button {
+    border: 1px solid var(--color-border-primary);
+  }
+
+  .hamburger-button:focus {
+    outline-width: 3px;
+  }
+}
+
+/* 애니메이션 비활성화 모드 지원 */
+@media (prefers-reduced-motion: reduce) {
+  .hamburger-button,
+  .hamburger-icon {
+    transition: none;
+  }
+}
