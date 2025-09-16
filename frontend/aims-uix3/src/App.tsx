@@ -219,11 +219,11 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             <button
               onClick={handleModalOpen}
               className="layout-control-button"
-              aria-label="레이아웃 제어"
-              title="레이아웃 제어"
-              disabled={modalClickProtection} // 클릭 보호 중 비활성화
+              aria-label={layoutControlModalOpen ? "레이아웃 제어 모달 열림" : "레이아웃 제어"}
+              title={layoutControlModalOpen ? "레이아웃 제어 모달이 열려있습니다" : "레이아웃 제어"}
+              disabled={layoutControlModalOpen || modalClickProtection} // 모달 열림 또는 클릭 보호 중 비활성화
             >
-              ⚙️
+              {layoutControlModalOpen ? '●' : '⚙️'}
             </button>
 
             {/* Theme Toggle 컴포넌트 */}

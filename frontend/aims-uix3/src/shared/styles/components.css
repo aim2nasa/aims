@@ -179,6 +179,24 @@
   background-color: var(--color-primary-800);
 }
 
+/* 레이아웃 제어 버튼 비활성화 상태 */
+.layout-control-button:disabled {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-disabled);
+  border-color: var(--color-border-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.layout-control-button:disabled:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-disabled);
+  border-color: var(--color-border-disabled);
+  transform: none;
+  box-shadow: none;
+}
+
 
 .reset-button {
   background-color: var(--color-gap-button-reset);
