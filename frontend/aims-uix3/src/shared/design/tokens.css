@@ -174,31 +174,35 @@
 
   /* === LAYOUT COLORS === */
 
-  /* color.png 기반 조화로운 색상 팔레트 */
+  /* 후보 6: 애플 아이폰/맥 스타일 - 미니멀하고 세련된 애플 디자인 */
 
-  /* Main Background Colors - color.png 참고 */
-  --color-layout-main-light: #e8e9eb; /* Light Theme 메인 배경 */
-  --color-layout-main-dark: #4b5563;  /* Dark Theme 메인 배경 */
+  /* Main Background Colors - 애플 시그니처 배경 */
+  --color-layout-main-light: #f2f2f7; /* Light Theme: iOS 라이트 그레이 */
+  --color-layout-main-dark: #000000;  /* Dark Theme: 순수 블랙 */
 
-  /* Content Background Colors */
-  --color-layout-content-light: #ffffff;    /* Light Theme 컨텐츠 배경 */
-  --color-layout-content-dark: #374151;     /* Dark Theme 컨텐츠 배경 */
+  /* Content Background Colors - 깔끔한 카드형 배경 */
+  --color-layout-content-light: #ffffff;    /* Light Theme: 순수 화이트 */
+  --color-layout-content-dark: #1c1c1e;     /* Dark Theme: iOS 다크 그레이 */
 
-  /* Secondary Background Colors */
-  --color-layout-secondary-light: #f3f4f6;  /* Light Theme 보조 배경 */
-  --color-layout-secondary-dark: #1f2937;   /* Dark Theme 보조 배경 */
+  /* Secondary Background Colors - 시스템 보조 영역 */
+  --color-layout-secondary-light: #f2f2f7;  /* Light Theme: 시스템 그레이 */
+  --color-layout-secondary-dark: #2c2c2e;   /* Dark Theme: 세컨더리 다크 */
 
-  /* Accent Background Colors */
-  --color-layout-accent-light: #e5e7eb;     /* Light Theme 액센트 배경 */
-  --color-layout-accent-dark: #374151;      /* Dark Theme 액센트 배경 */
+  /* Accent Background Colors - 서브틀한 액센트 */
+  --color-layout-accent-light: #e5e5ea;     /* Light Theme: 라이트 액센트 */
+  --color-layout-accent-dark: #3a3a3c;      /* Dark Theme: 다크 액센트 */
 
   /* LeftPane Colors */
-  --color-layout-leftpane-light: #e8eaf2;
-  --color-layout-leftpane-dark: #374151;
+  --color-layout-leftpane-light: #e5e5ea;  /* Light Theme: iOS 시스템 그레이 */
+  --color-layout-leftpane-dark: #1c1c1e;   /* Dark Theme: iOS 다크 그레이 */
 
-  /* Header Colors */
-  --color-layout-header-light: linear-gradient(135deg, #1e3a8a 0%, #1e40af 15%, #3b82f6 30%, #6366f1 45%, #8b5cf6 60%, #a855f7 75%, #d946ef 90%, #f59e0b 100%);
-  --color-layout-header-dark: #2d3748;
+  /* Header Colors - 후보6.1: 애플 스타일 미니멀 헤더 */
+  --color-layout-header-light: #ffffff;    /* Light Theme: 순수 화이트 헤더 */
+  --color-layout-header-dark: #1c1c1e;     /* Dark Theme: iOS 다크 그레이 헤더 */
+
+  /* BRB Colors - 후보6.1: 애플 스타일 서브틀 드래그 바 */
+  --color-layout-brb-light: #d1d5db;       /* Light Theme: 서브틀 그레이 (거의 안보이게) */
+  --color-layout-brb-dark: #4b5563;
 
   /* Theme Toggle Colors */
   --color-icon-orange: #f97316;
