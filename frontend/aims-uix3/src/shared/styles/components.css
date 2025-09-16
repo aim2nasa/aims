@@ -158,7 +158,7 @@
   cursor: pointer;
   font-size: 16px;
   font-weight: 500;
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  transition: all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   margin-left: 15px;
   width: 36px;
   height: 36px;
@@ -179,7 +179,7 @@
   background-color: var(--color-primary-800);
 }
 
-/* 레이아웃 제어 버튼 비활성화 상태 */
+/* 레이아웃 제어 버튼 비활성화 상태 - 즉각적 피드백 */
 .layout-control-button:disabled {
   background-color: var(--color-bg-secondary);
   color: var(--color-text-disabled);
@@ -187,6 +187,7 @@
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
+  transition: all 50ms ease-out; /* 즉시 비활성화 피드백 */
 }
 
 .layout-control-button:disabled:hover {
@@ -195,6 +196,7 @@
   border-color: var(--color-border-disabled);
   transform: none;
   box-shadow: none;
+  transition: none; /* 호버 시 애니메이션 제거 */
 }
 
 

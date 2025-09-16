@@ -179,18 +179,21 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
     }
   }, [leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
 
-  // 모달 열기 핸들러 (클릭 보호 포함)
+  // 모달 열기 핸들러 (강화된 보호 로직)
   const handleModalOpen = useCallback(() => {
+    // 이미 열려있거나 보호 중이면 무시
+    if (layoutControlModalOpen || modalClickProtection) return
+
     setModalClickProtection(true)
     setLayoutControlModalOpen(true)
     modalStateRef.current = true
     persistentModalState.layoutControlModalOpen = true
 
-    // 클릭 보호 해제
+    // 클릭 보호 해제 (300ms → 100ms로 단축)
     setTimeout(() => {
       setModalClickProtection(false)
-    }, 300)
-  }, [])
+    }, 100)
+  }, [layoutControlModalOpen, modalClickProtection])
 
   // 모달 닫기 핸들러
   const handleModalClose = useCallback(() => {
@@ -221,7 +224,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               className="layout-control-button"
               aria-label={layoutControlModalOpen ? "레이아웃 제어 모달 열림" : "레이아웃 제어"}
               title={layoutControlModalOpen ? "레이아웃 제어 모달이 열려있습니다" : "레이아웃 제어"}
-              disabled={layoutControlModalOpen || modalClickProtection} // 모달 열림 또는 클릭 보호 중 비활성화
+              disabled={layoutControlModalOpen} // 모달 열림 시만 비활성화
             >
               {layoutControlModalOpen ? '●' : '⚙️'}
             </button>
