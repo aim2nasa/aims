@@ -674,12 +674,71 @@
   border-color: var(--color-primary);
 }
 
+/* === FLOATING MODAL STYLES === */
+/* 애플 디자인 철학 준수: "Invisible until you need it" + Progressive Disclosure */
+
+.floating-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  border: 1px solid var(--color-border-primary);
+  transition:
+    box-shadow var(--duration-normal) var(--easing-ease-out),
+    transform var(--duration-fast) var(--easing-ease-out);
+  z-index: var(--z-modal);
+  /* 애플 스타일: 기본적으로 서브틀함 */
+  opacity: 0.95;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.floating-modal:hover {
+  /* Progressive Disclosure: 호버 시 더 명확하게 */
+  opacity: 1;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.floating-modal--dragging {
+  /* 드래그 중: 사용자에게 명확한 시각적 피드백 */
+  opacity: 1;
+  box-shadow:
+    0 35px 60px -12px rgba(0, 0, 0, 0.25),
+    0 25px 50px -5px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  user-select: none;
+}
+
+/* 애플의 부드러운 애니메이션 커브 */
+.floating-modal * {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 /* === MODAL RESPONSIVE === */
 
 @media (max-width: 640px) {
   .modal-content {
     max-width: 95%;
     max-height: 88vh;
+  }
+
+  .floating-modal {
+    max-width: 95%;
+    max-height: 85vh;
+    width: 95%;
   }
 
   .modal-body {

@@ -8,6 +8,7 @@ interface Position {
 interface DraggableOptions {
   initialPosition?: Position;
   constrainToViewport?: boolean;
+  minVisibleArea?: number; // 최소 가시 영역 픽셀
 }
 
 interface DraggableReturn {
@@ -22,7 +23,8 @@ interface DraggableReturn {
 export const useDraggable = (options: DraggableOptions = {}): DraggableReturn => {
   const {
     initialPosition = { x: 0, y: 0 },
-    constrainToViewport = true
+    constrainToViewport = true,
+    minVisibleArea = 50 // 기본 최소 가시 영역 50px
   } = options;
 
   const [position, setPosition] = useState<Position>(initialPosition);
@@ -39,11 +41,18 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
     const modalWidth = 500;
     const modalHeight = 600;
 
+    // 최소 가시 영역을 확보하면서 더 자유로운 이동 허용
     return {
-      x: Math.max(-modalWidth / 2, Math.min(viewportWidth - modalWidth / 2, pos.x)),
-      y: Math.max(-modalHeight / 2, Math.min(viewportHeight - modalHeight / 2, pos.y))
+      x: Math.max(
+        -modalWidth + minVisibleArea,
+        Math.min(viewportWidth - minVisibleArea, pos.x)
+      ),
+      y: Math.max(
+        -modalHeight + minVisibleArea,
+        Math.min(viewportHeight - minVisibleArea, pos.y)
+      )
     };
-  }, [constrainToViewport]);
+  }, [constrainToViewport, minVisibleArea]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
