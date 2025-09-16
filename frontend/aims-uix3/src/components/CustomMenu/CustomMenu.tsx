@@ -98,6 +98,19 @@ const CustomMenuItem = ({
     onToggleExpand(item.key, e) // 토글 처리
   }
 
+  // 더블클릭 시 - 서브메뉴 토글 (펼치기/접기)
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault() // 기본 더블클릭 동작 방지
+
+    // 메뉴 선택
+    onMenuClick(item.key)
+
+    // 서브메뉴가 있고 축소 모드가 아닐 때, 토글 처리
+    if (hasChildren && !collapsed) {
+      onToggleExpand(item.key, e)
+    }
+  }
+
   const className = `custom-menu-item ${
     isSubMenu ? 'sub-menu' : ''
   } ${collapsed ? 'collapsed' : ''} ${
@@ -108,6 +121,7 @@ const CustomMenuItem = ({
     <div
       className={className}
       onClick={handleMainMenuClick}
+      onDoubleClick={handleDoubleClick}
       title={collapsed ? item.tooltipTitle : ''}
     >
       {item.icon}

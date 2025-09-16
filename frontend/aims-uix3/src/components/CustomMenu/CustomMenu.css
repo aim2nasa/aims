@@ -74,6 +74,20 @@
   }
 }
 
+/* 선택된 아이콘 아름다운 펄스 애니메이션 - 애플 스타일 */
+@keyframes selectedIconPulse {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 8px var(--color-menu-selected-icon-glow))
+      drop-shadow(0 0 16px var(--color-menu-selected-icon-glow-outer));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 12px var(--color-menu-selected-icon-glow))
+      drop-shadow(0 0 24px var(--color-menu-selected-icon-glow-outer));
+  }
+}
+
 /* === COLLAPSED STATE === */
 .custom-menu-item.collapsed {
   padding: 12px;
@@ -373,16 +387,30 @@
 }
 
 .custom-menu-item.selected .menu-icon {
-  /* 선택된 아이콘 강조 효과 */
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+  /* color.png 스타일의 아름다운 아이콘 강조 효과 */
+  transform: scale(1.08);
+
+  /* 더 강렬하고 아름다운 glow 효과 */
+  filter:
+    drop-shadow(0 0 8px var(--color-menu-selected-icon-glow))
+    drop-shadow(0 0 16px var(--color-menu-selected-icon-glow-outer));
+
+  /* 서브틀한 펄스 애니메이션 - 애플 스타일 */
+  animation: selectedIconPulse var(--duration-pulse) ease-in-out infinite;
 }
 
 .custom-menu-item.selected .menu-icon .icon-shape,
 .custom-menu-item.selected .menu-icon .icon-shape::before,
 .custom-menu-item.selected .menu-icon .icon-shape::after {
-  background: var(--color-menu-selected-icon) !important;
-  border-color: var(--color-menu-selected-icon) !important;
+  /* 원래 아이콘 색상을 유지하되 더 선명하고 아름답게 강조 */
+  filter: brightness(1.2) saturate(1.3) contrast(1.1);
+  /* 아이콘이 그라데이션 배경에서 돋보이도록 subtle glow */
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 0 4px rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  /* 약간의 scale up으로 선택 상태 강조 */
+  transform: scale(1.05);
 }
 
 /* === COLLAPSED TOOLTIPS === */
@@ -435,12 +463,19 @@
   --color-menu-search: #AF52DE;        /* 보라색 - 검색 */
 
   /* 선택된 상태 색상 - color.png의 강렬한 파란색 그라데이션 재현 */
-  --color-menu-selected-bg: linear-gradient(180deg, #4A9EFF 0%, #007AFF 50%, #0051D5 100%);
+  --color-menu-selected-bg: linear-gradient(180deg, #007AFF 0%, #0051D5 100%);
   --color-menu-selected-text: #FFFFFF;
   --color-menu-selected-icon: #FFFFFF;
   --color-menu-selected-shadow: rgba(0, 122, 255, 0.4);
   --color-menu-selected-inner: rgba(255, 255, 255, 0.25);
   --color-menu-selected-border: rgba(0, 122, 255, 0.6);
+
+  /* 아름다운 아이콘 glow 효과 */
+  --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.6);
+  --color-menu-selected-icon-glow-outer: rgba(255, 255, 255, 0.3);
+
+  /* 애니메이션 타이밍 */
+  --duration-pulse: 3s;
 }
 
 /* Dark Theme - color.png 오른쪽 */
@@ -455,12 +490,19 @@
   --color-menu-search: #BF5AF2;        /* 밝은 보라색 */
 
   /* 선택된 상태 색상 - 다크 테마용 강렬한 그라데이션 */
-  --color-menu-selected-bg: linear-gradient(180deg, #5AA3FF 0%, #0A84FF 50%, #0051D5 100%);
+  --color-menu-selected-bg: linear-gradient(180deg, #0A84FF 0%, #0051D5 100%);
   --color-menu-selected-text: #FFFFFF;
   --color-menu-selected-icon: #FFFFFF;
   --color-menu-selected-shadow: rgba(10, 132, 255, 0.45);
   --color-menu-selected-inner: rgba(255, 255, 255, 0.2);
   --color-menu-selected-border: rgba(10, 132, 255, 0.65);
+
+  /* 다크 테마용 아름다운 아이콘 glow 효과 */
+  --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.7);
+  --color-menu-selected-icon-glow-outer: rgba(255, 255, 255, 0.4);
+
+  /* 애니메이션 타이밍 (동일) */
+  --duration-pulse: 3s;
 }
 
 /* === ACCESSIBILITY === */
