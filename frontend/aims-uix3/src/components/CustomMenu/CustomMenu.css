@@ -523,10 +523,28 @@
   --color-menu-selected-bg: linear-gradient(180deg, #0A84FF 0%, #0051D5 100%);
   --color-menu-selected-text: #FFFFFF;
   --color-menu-selected-icon: #FFFFFF;
-  --color-menu-selected-shadow: rgba(10, 132, 255, 0.45);
+  --color-menu-selected-shadow: none;
   --color-menu-selected-inner: rgba(255, 255, 255, 0.2);
   --color-menu-selected-border: rgba(10, 132, 255, 0.65);
+}
 
+/* 다크 테마에서 메뉴 호버 상태: 애플 스타일 서브틀한 호버 - 그림자 없이 */
+[data-theme="dark"] .custom-menu-item:hover {
+  background-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 다크 테마에서 메뉴 아이템과 선택 상태도 그림자 제거 */
+[data-theme="dark"] .custom-menu-item {
+  box-shadow: none;
+}
+
+[data-theme="dark"] .custom-menu-item.selected {
+  box-shadow: none;
+}
+
+[data-theme="dark"] {
   /* 다크 테마: color.png보다 더 강력한 fade-out 그라데이션 */
   --gradient-user: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
   --gradient-list: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
