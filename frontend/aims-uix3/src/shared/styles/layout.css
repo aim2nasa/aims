@@ -83,7 +83,10 @@
   cursor: col-resize;
   z-index: 20;
   background-color: var(--color-layout-brb-bg);
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
+  transition:
+    background-color var(--duration-fast) var(--easing-ease-out),
+    transform var(--duration-normal) var(--easing-ease-in-out),
+    opacity var(--duration-normal) var(--easing-ease-in-out);
   position: relative;
   display: flex;
   align-items: center;
@@ -116,18 +119,46 @@
 .layout-brb--hidden {
   opacity: 0;
   cursor: default;
+  /* transform 제거 - 이제 컨테이너에서 함께 애니메이션됨 */
 }
 
 .layout-rightpane {
   z-index: 10;
   overflow: hidden;
   background-color: var(--color-layout-rightpane-bg);
+  transition:
+    width var(--duration-normal) var(--easing-ease-in-out),
+    opacity var(--duration-normal) var(--easing-ease-in-out),
+    padding var(--duration-normal) var(--easing-ease-in-out),
+    transform var(--duration-normal) var(--easing-ease-in-out);
 }
 
 .layout-rightpane--hidden {
   width: 0px !important;
   opacity: 0;
   padding: 0px !important;
+  transform: translateX(100px); /* RightPane을 우측으로 이동시켜 완전히 숨김 */
+}
+
+/* RightPane + BRB 통합 컨테이너 */
+.layout-rightpane-container {
+  z-index: 10;
+  overflow: hidden;
+  background-color: transparent;
+  transition:
+    width var(--duration-normal) var(--easing-ease-in-out),
+    opacity var(--duration-normal) var(--easing-ease-in-out),
+    transform var(--duration-normal) var(--easing-ease-in-out);
+}
+
+.layout-rightpane-container--hidden {
+  width: 0px !important;
+  opacity: 0;
+  transform: translateX(100px); /* BRB와 RightPane이 함께 슬라이드 */
+}
+
+.layout-rightpane-content {
+  background-color: var(--color-layout-rightpane-bg);
 }
 
 /* === POSITIONING UTILITIES === */

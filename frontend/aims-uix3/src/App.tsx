@@ -133,9 +133,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         ? `calc((100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
         : `calc((100vw - ${leftPaneWidthPx}) - var(--gap-left) - var(--gap-right))`,
 
-      // BRB position calculations
+      // BRB position calculations - CenterPane 우측 경계에 정확히 맞춤
       brbLeftPosition: rightPaneVisible
-        ? `calc(${leftPaneWidthPx} + var(--gap-left) + (100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - 2px)`
+        ? `calc(${leftPaneWidthPx} + var(--gap-left) + (100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left))`
         : `calc(${leftPaneWidthPx} + (100vw - ${leftPaneWidthPx}) - var(--gap-right))`,
 
       // Common height calculations
@@ -254,66 +254,89 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         </div>
       )}
 
-      {/* BRB - 독립 레이어 (조건부) */}
-      {brbVisible && (
-        <div
-          className={`layout-pane layout-brb ${rightPaneVisible ? '' : 'layout-brb--hidden'} ${isResizing ? 'layout-pane--no-transition' : ''}`}
-          style={{
-            top: `calc(60px + var(--gap-top))`,
-            left: layoutDimensions.brbLeftPosition,
-            height: layoutDimensions.layoutContentHeight,
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault()
-            const startX = e.clientX
-            const startWidth = centerWidth
-
-            const handleMouseMove = (e: MouseEvent) => {
-              e.preventDefault()
-              const deltaX = e.clientX - startX
-              const mainPaneWidth = window.innerWidth - layoutDimensions.leftPaneWidth // MainPane 너비
-              const deltaPercent = (deltaX / mainPaneWidth) * 100
-              const newWidth = startWidth + deltaPercent
-              setCenterWidth(Math.max(20, Math.min(80, newWidth)))
-            }
-
-            const handleMouseUp = () => {
-              document.removeEventListener('mousemove', handleMouseMove)
-              document.removeEventListener('mouseup', handleMouseUp)
-              document.body.style.cursor = 'default'
-            }
-
-            document.body.style.cursor = 'col-resize'
-            document.addEventListener('mousemove', handleMouseMove)
-            document.addEventListener('mouseup', handleMouseUp)
-          }}
-          aria-label="패널 크기 조절"
-          role="separator"
-          aria-orientation="vertical"
-        >
-        </div>
-      )}
-
-      {/* RightPane - 독립 레이어 (조건부) */}
+      {/* RightPane + BRB 통합 컨테이너 - 이전 버전의 완벽한 동기화 애니메이션 복원 */}
       <div
-        className={`layout-pane layout-rightpane ${rightPaneVisible ? '' : 'layout-rightpane--hidden'}`}
         style={{
+          position: 'absolute',
           top: `calc(60px + var(--gap-top))`,
           right: `var(--gap-right)`,
-          width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
+          width: rightPaneVisible ? `calc(${layoutDimensions.rightPaneWidth} + 4px)` : '0px',
           height: layoutDimensions.layoutContentHeight,
-          padding: rightPaneVisible ? '20px' : '0px',
+          display: 'flex',
+          flexDirection: 'row',
+          opacity: rightPaneVisible ? 1 : 0,
+          overflow: 'hidden',
+          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)', // 이전 버전과 동일한 transition
+          zIndex: 10,
         }}
       >
-        {rightPaneVisible && (
-          <>
-            <h3 className="section-heading">RightPane (Resized according to BRB)</h3>
-            <p className="description-text">Additional tools & info</p>
-            <p className="text-sm m-0" style={{ marginTop: '10px', color: 'var(--color-text-secondary)' }}>
-              Pagination: {paginationVisible ? 'ON' : 'OFF'}
-            </p>
-          </>
+        {/* BRB - RightPane 컨테이너 내부에서 좌측에 위치 */}
+        {brbVisible && (
+          <div
+            style={{
+              width: '4px',
+              height: '100%',
+              flexShrink: 0,
+              cursor: rightPaneVisible ? 'col-resize' : 'default',
+              backgroundColor: 'var(--color-layout-brb-bg)',
+              zIndex: 20,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              // transition 제거 - 컨테이너의 transition 사용
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              const startX = e.clientX
+              const startWidth = centerWidth
+
+              const handleMouseMove = (e: MouseEvent) => {
+                e.preventDefault()
+                const deltaX = e.clientX - startX
+                const mainPaneWidth = window.innerWidth - layoutDimensions.leftPaneWidth
+                const deltaPercent = (deltaX / mainPaneWidth) * 100
+                const newWidth = startWidth + deltaPercent
+                setCenterWidth(Math.max(20, Math.min(80, newWidth)))
+              }
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove)
+                document.removeEventListener('mouseup', handleMouseUp)
+                document.body.style.cursor = 'default'
+              }
+
+              document.body.style.cursor = 'col-resize'
+              document.addEventListener('mousemove', handleMouseMove)
+              document.addEventListener('mouseup', handleMouseUp)
+            }}
+            aria-label="패널 크기 조절"
+            role="separator"
+            aria-orientation="vertical"
+          >
+          </div>
         )}
+
+        {/* RightPane - 컨테이너 내부에서 우측에 위치 */}
+        <div
+          style={{
+            flex: 1,
+            padding: rightPaneVisible ? '20px' : '0px',
+            overflow: 'hidden',
+            backgroundColor: 'var(--color-layout-rightpane-bg)',
+            // transition 제거 - 컨테이너의 transition 사용
+          }}
+        >
+          {rightPaneVisible && (
+            <>
+              <h3 className="section-heading">RightPane (Resized according to BRB)</h3>
+              <p className="description-text">Additional tools & info</p>
+              <p className="text-sm m-0" style={{ marginTop: '10px', color: 'var(--color-text-secondary)' }}>
+                Pagination: {paginationVisible ? 'ON' : 'OFF'}
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 통합 제어 모달 */}
