@@ -188,7 +188,7 @@
 
   /* Layout Colors - Dark Theme */
   --color-layout-main-bg: var(--color-neutral-950);
-  --color-layout-header-bg: var(--color-layout-header-dark); /* 어두운 그레이 헤더 - dark.png 참고 */
+  --color-layout-header-bg: #4b5563; /* 어두운 그레이 헤더 - uix2와 동일 */
   --color-layout-leftpane-bg: var(--color-layout-leftpane-dark); /* 중간 다크 그레이 - dark.png 참고 */
   --color-layout-mainpane-bg: var(--color-primary-400);
   --color-layout-centerpane-bg: var(--color-info-900);
