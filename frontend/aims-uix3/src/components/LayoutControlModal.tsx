@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDraggable } from '../hooks/useDraggable';
 
@@ -64,12 +64,40 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   handleGapTopChange,
   handleGapBottomChange,
 }) => {
+  // 내부 상태 관리: 외부 props 변경에도 안정적 동작
+  const [internalOpen, setInternalOpen] = useState(isOpen)
+  const [isClosing, setIsClosing] = useState(false)
+
   const { position, isDragging, dragHandlers } = useDraggable({
     constrainToViewport: false, // 자유로운 이동 허용
     minVisibleArea: 60 // 헤더 영역은 항상 보이도록
-  });
+  })
 
-  if (!isOpen) return null;
+  // 외부 isOpen prop 변경 감지 및 내부 상태 동기화
+  useEffect(() => {
+    if (isOpen && !internalOpen) {
+      // 모달 열기: 즉시 반영
+      setInternalOpen(true)
+      setIsClosing(false)
+    } else if (!isOpen && internalOpen) {
+      // 모달 닫기: 애니메이션을 위한 단계적 처리
+      setIsClosing(true)
+      setTimeout(() => {
+        setInternalOpen(false)
+        setIsClosing(false)
+      }, 150) // CSS 트랜지션 시간과 동조
+    }
+  }, [isOpen, internalOpen])
+
+  // 내부적으로 닫힌 상태라면 렌더링하지 않음
+  if (!internalOpen) return null
+
+  // 안전한 닫기 핸들러 (여러 번 호출 방지)
+  const handleSafeClose = () => {
+    if (!isClosing) {
+      onClose()
+    }
+  }
 
   // Portal을 사용하여 모달을 document.body에 직접 렌더링
   // App 컴포넌트의 리마운트 영향을 완전히 차단
@@ -86,7 +114,7 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
         {...dragHandlers}
       >
         <h2 className="modal-title">레이아웃 제어</h2>
-        <button className="modal-close-button" onClick={onClose}>
+        <button className="modal-close-button" onClick={handleSafeClose}>
           ×
         </button>
       </div>
@@ -214,7 +242,7 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
       </div>
 
       <div className="modal-footer">
-        <button className="button-secondary" onClick={onClose}>
+        <button className="button-secondary" onClick={handleSafeClose}>
           닫기
         </button>
       </div>

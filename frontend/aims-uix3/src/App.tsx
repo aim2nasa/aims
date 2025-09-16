@@ -1,9 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import ThemeToggle from './components/ThemeToggle'
 import LayoutControlModal from './components/LayoutControlModal'
 import HamburgerButton from './components/HamburgerButton'
+
+// 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
+const persistentModalState = {
+  layoutControlModalOpen: false
+}
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
@@ -30,8 +35,24 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
 
-  // 통합 제어 모달 상태
+  // 통합 제어 모달 상태 (영속화 지원)
   const [layoutControlModalOpen, setLayoutControlModalOpen] = useState(false)
+  const [modalClickProtection, setModalClickProtection] = useState(false)
+  const modalStateRef = useRef(false)
+
+  // 컴포넌트 마운트 시 이전 모달 상태 복원
+  useEffect(() => {
+    if (persistentModalState.layoutControlModalOpen) {
+      setLayoutControlModalOpen(true)
+      modalStateRef.current = true
+    }
+  }, [])
+
+  // 모달 상태 변경 시 전역 저장소 동기화
+  useEffect(() => {
+    persistentModalState.layoutControlModalOpen = layoutControlModalOpen
+    modalStateRef.current = layoutControlModalOpen
+  }, [layoutControlModalOpen])
 
   // 테마 시스템
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -55,8 +76,18 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
     const handleResize = () => {
       setIsResizing(true)
 
-      // 즉시 레이아웃 강제 업데이트 (Gap 계산 포함)
-      setForceUpdate(prev => prev + 1)
+      // 모달 상태 보호: 모달이 열려있거나 클릭 보호 중일 때는 리마운트 지연
+      if (!modalStateRef.current && !modalClickProtection) {
+        // 즉시 레이아웃 강제 업데이트 (Gap 계산 포함)
+        setForceUpdate(prev => prev + 1)
+      } else {
+        // 모달 상태 보호를 위해 리마운트를 지연
+        setTimeout(() => {
+          if (!modalStateRef.current && !modalClickProtection) {
+            setForceUpdate(prev => prev + 1)
+          }
+        }, 100)
+      }
 
       // 기존 타이머가 있으면 클리어
       if (resizeTimer) {
@@ -145,6 +176,26 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
     }
   }, [leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
 
+  // 모달 열기 핸들러 (클릭 보호 포함)
+  const handleModalOpen = useCallback(() => {
+    setModalClickProtection(true)
+    setLayoutControlModalOpen(true)
+    modalStateRef.current = true
+    persistentModalState.layoutControlModalOpen = true
+
+    // 클릭 보호 해제
+    setTimeout(() => {
+      setModalClickProtection(false)
+    }, 300)
+  }, [])
+
+  // 모달 닫기 핸들러
+  const handleModalClose = useCallback(() => {
+    setLayoutControlModalOpen(false)
+    modalStateRef.current = false
+    persistentModalState.layoutControlModalOpen = false
+  }, [])
+
   return (
     <div
       key={forceUpdate} // 브라우저 리사이즈 시 강제 리렌더링
@@ -163,10 +214,11 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           <div className="control-section">
             {/* 통합 제어 버튼 */}
             <button
-              onClick={() => setLayoutControlModalOpen(true)}
+              onClick={handleModalOpen}
               className="layout-control-button"
               aria-label="레이아웃 제어"
               title="레이아웃 제어"
+              disabled={modalClickProtection} // 클릭 보호 중 비활성화
             >
               ⚙️
             </button>
@@ -339,7 +391,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
       {/* 통합 제어 모달 */}
       <LayoutControlModal
         isOpen={layoutControlModalOpen}
-        onClose={() => setLayoutControlModalOpen(false)}
+        onClose={handleModalClose}
         headerVisible={headerVisible}
         leftPaneVisible={leftPaneVisible}
         centerPaneVisible={centerPaneVisible}
