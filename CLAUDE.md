@@ -632,3 +632,143 @@ html[data-theme="dark"] {
 3. **보조 적용**: 아이콘, 인디케이터, 상태 표시
 
 **중요**: 이 가이드는 color.png의 디자인을 모든 AIMS 컴포넌트에 일관되게 적용하기 위한 표준입니다.
+
+---
+
+## 🍎 AIMS UIX3 애플 디자인 철학 - 공식 표준 🍎
+
+### 후보6.1 애플 아이폰/맥 스타일 - 영구 표준 적용
+
+**이 디자인 철학은 AIMS UIX3의 영구적인 표준이며, 모든 후속 개발에서 일관되게 유지되어야 합니다.**
+
+#### 🎯 핵심 디자인 원칙
+
+1. **극도의 미니멀리즘**
+   - 모든 불필요한 장식 요소 완전 제거
+   - iOS 공식 색상 팔레트만 사용
+   - 순수한 기능성에 집중
+
+2. **Progressive Disclosure (점진적 정보 공개)**
+   - 기본: 거의 보이지 않는 서브틀한 표현
+   - 상호작용 시: 필요한 정보만 단계적 표시
+   - "Invisible until you need it" 철학 구현
+
+3. **애플의 3대 디자인 원칙 완벽 구현**
+   - **Clarity (명확성)**: 정보 계층 구조가 명확함
+   - **Deference (겸손함)**: UI가 콘텐츠를 방해하지 않음
+   - **Depth (깊이감)**: 자연스러운 시각적 계층
+
+#### 🎨 색상 시스템 표준
+
+##### Light Theme 필수 색상
+```css
+/* 메인 배경 */
+--color-layout-main-light: #f2f2f7;      /* iOS 라이트 그레이 */
+--color-layout-header-light: #ffffff;     /* 순수 화이트 헤더 */
+
+/* 컨텐츠 배경 */
+--color-layout-content-light: #ffffff;    /* 순수 화이트 카드형 */
+--color-layout-leftpane-light: #e5e5ea;   /* iOS 시스템 그레이 */
+--color-layout-secondary-light: #f2f2f7;  /* 시스템 그레이 */
+--color-layout-accent-light: #e5e5ea;     /* 라이트 액센트 */
+```
+
+##### Dark Theme 필수 색상
+```css
+/* 메인 배경 */
+--color-layout-main-dark: #000000;        /* 순수 블랙 */
+--color-layout-header-dark: #1c1c1e;      /* iOS 다크 그레이 헤더 */
+
+/* 컨텐츠 배경 */
+--color-layout-content-dark: #1c1c1e;     /* iOS 다크 그레이 카드형 */
+--color-layout-leftpane-dark: #1c1c1e;    /* iOS 다크 그레이 */
+--color-layout-secondary-dark: #2c2c2e;   /* 세컨더리 다크 */
+--color-layout-accent-dark: #3a3a3c;      /* 다크 액센트 */
+```
+
+#### 🔧 BRB (드래그 바) 디자인 표준
+
+**BRB는 애플 디자인 철학의 완벽한 구현체입니다. 이 패턴을 다른 상호작용 요소에도 동일하게 적용해야 합니다.**
+
+##### 기본 상태 (Subtle Presence)
+- Light: #d1d5db (거의 보이지 않는 서브틀함)
+- Dark: #4b5563 (서브틀한 다크 그레이)
+- 사용자의 주의를 끌지 않음
+
+##### 호버 상태 (Progressive Disclosure)
+- Light: #9ca3af (인식 가능한 수준으로 진해짐)
+- Dark: #6b7280 (인식 가능한 다크 그레이)
+- 중앙에 그립 인디케이터(⋮) 부드럽게 페이드인
+
+##### 상호작용 원칙
+```css
+/* 필수 애니메이션 패턴 */
+transition: background-color var(--duration-fast) var(--easing-ease-out);
+transition: opacity var(--duration-fast) var(--easing-ease-out);
+
+/* 그립 인디케이터 패턴 */
+content: '⋮';
+opacity: 0;
+font-size: 12px;
+color: var(--color-layout-brb-icon);
+
+/* 호버 시 */
+opacity: 1;
+```
+
+#### ⚠️ 절대 금지사항 - 애플 스타일 위반
+
+1. **화려한 그라데이션 사용 금지**
+   - 8색 그라데이션 같은 과한 장식
+   - 애플은 단색 또는 매우 서브틀한 그라데이션만 사용
+
+2. **강한 색상 강조 금지**
+   - 눈에 띄는 파란색, 주황색 등 과도한 컬러
+   - 모든 요소는 서브틀하게 표현
+
+3. **복잡한 시각적 효과 금지**
+   - 그림자, 테두리 등의 과도한 장식
+   - 애플은 깔끔함과 단순함 추구
+
+4. **불필요한 상태 표시 금지**
+   - 항상 보이는 인디케이터나 가이드
+   - Progressive Disclosure 원칙 위반
+
+#### 🎯 다른 컴포넌트 적용 원칙
+
+**BRB의 성공적인 패턴을 다른 상호작용 요소에도 동일하게 적용:**
+
+1. **버튼 호버 상태**
+   - 기본: 거의 안보이는 배경
+   - 호버: 서브틀하게 진해지는 배경
+
+2. **드롭다운/모달 트리거**
+   - 기본: 최소한의 시각적 표시
+   - 호버: 필요한 정보만 단계적 표시
+
+3. **네비게이션 요소**
+   - 기본: 텍스트 위주의 깔끔한 표현
+   - 상호작용: 서브틀한 배경 변화
+
+#### 📐 구현 체크리스트
+
+모든 새로운 UI 요소는 다음을 만족해야 함:
+
+- [ ] iOS 공식 색상 팔레트 사용
+- [ ] 기본 상태에서 서브틀함
+- [ ] 호버/포커스 시 Progressive Disclosure
+- [ ] 부드러운 애니메이션 (var(--duration-fast))
+- [ ] Light/Dark 테마 완벽 지원
+- [ ] 접근성 속성 (ARIA) 완비
+- [ ] "Invisible until you need it" 철학 준수
+
+#### 🔮 미래 확장성
+
+**이 디자인 표준은 다음과 같이 확장되어야 함:**
+
+1. **새로운 컴포넌트**: BRB 패턴을 기준으로 설계
+2. **상호작용 개선**: Progressive Disclosure 원칙 적용
+3. **접근성 강화**: 애플의 접근성 가이드라인 준수
+4. **일관성 유지**: 모든 변경사항은 이 철학에 부합해야 함
+
+**⚠️ 중요**: 이 디자인 철학은 변경 불가한 표준입니다. 모든 개발자는 이 원칙을 완벽히 이해하고 일관되게 적용해야 합니다.
