@@ -79,14 +79,10 @@
 }
 
 .layout-brb {
-  width: 4px;
-  cursor: col-resize;
-  z-index: 20;
+  /* 레이아웃 관련 속성은 인라인 스타일에서 처리하므로 제거 */
+  /* 호버 관련 속성만 CSS에서 처리 */
   background-color: var(--color-layout-brb-bg);
-  transition:
-    background-color var(--duration-fast) var(--easing-ease-out),
-    transform var(--duration-normal) var(--easing-ease-in-out),
-    opacity var(--duration-normal) var(--easing-ease-in-out);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
   position: relative;
   display: flex;
   align-items: center;

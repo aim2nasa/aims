@@ -273,17 +273,14 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         {/* BRB - RightPane 컨테이너 내부에서 좌측에 위치 */}
         {brbVisible && (
           <div
+            className="layout-brb"
             style={{
               width: '4px',
               height: '100%',
               flexShrink: 0,
               cursor: rightPaneVisible ? 'col-resize' : 'default',
-              backgroundColor: 'var(--color-layout-brb-bg)',
-              zIndex: 20,
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              // CSS 클래스에서 처리되는 속성들을 인라인에서 제거
+              // backgroundColor, zIndex, position, display, alignItems, justifyContent는 CSS에서 처리
               // transition 제거 - 컨테이너의 transition 사용
             }}
             onMouseDown={(e) => {
