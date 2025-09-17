@@ -46,7 +46,7 @@
 }
 
 .layout-leftpane {
-  top: 60px;
+  top: var(--header-height-base);
   left: 0;
   flex-direction: column;
   border-right: 2px solid var(--color-border-primary);
@@ -55,7 +55,7 @@
 }
 
 .layout-mainpane {
-  top: 60px;
+  top: var(--header-height-base);
   z-index: 1;
   background-color: var(--color-layout-mainpane-bg);
 }
