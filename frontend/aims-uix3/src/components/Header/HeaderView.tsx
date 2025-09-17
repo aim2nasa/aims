@@ -10,6 +10,8 @@
 import React from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
+import HeaderTooltip from './HeaderTooltip'
+import useHeaderTooltip from './useHeaderTooltip'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -36,6 +38,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 }) => {
   const { state, handleMouseEnter, handleMouseLeave, handleFocus, handleBlur } = controller
 
+  // 3단계: 애플스러운 툴팁 Hook
+  const { showTooltip, dismissTooltip } = useHeaderTooltip()
+
   // 헤더 표시 여부 확인
   if (!visible) return null
 
@@ -54,10 +59,18 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     layoutControlModalOpen ? 'header-control-button--active' : ''
   ].filter(Boolean).join(' ')
 
+  // 툴팁 상호작용 처리
+  const handleHeaderMouseEnter = () => {
+    handleMouseEnter()
+    if (showTooltip) {
+      dismissTooltip() // 사용자가 상호작용하면 툴팁 즉시 해제
+    }
+  }
+
   return (
     <header
       className={headerClasses}
-      onMouseEnter={handleMouseEnter}
+      onMouseEnter={handleHeaderMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
@@ -106,6 +119,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       >
         {!state.showControls && '⋯'}
       </div>
+
+      {/* 3단계: 애플스러운 툴팁 - 첫 방문자용 */}
+      <HeaderTooltip visible={showTooltip}>
+        Hover for controls
+      </HeaderTooltip>
     </header>
   )
 }

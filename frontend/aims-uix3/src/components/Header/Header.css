@@ -7,6 +7,9 @@
  * CSS_SYSTEM.md 준수: 공용 클래스 시스템과 통합
  */
 
+/* === HeaderTooltip 스타일 임포트 === */
+@import './HeaderTooltip.css';
+
 /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
 
 .header-progressive {

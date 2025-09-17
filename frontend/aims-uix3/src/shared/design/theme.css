@@ -120,6 +120,14 @@
   /* === 2단계: 서브틀한 시각적 힌트 === */
   --color-header-hint-subtle: rgba(0, 0, 0, 0.08); /* 극도로 서브틀한 힌트 */
 
+  /* === 3단계: 애플스러운 툴팁 === */
+  --color-tooltip-bg: rgba(255, 255, 255, 0.95); /* 툴팁 배경 */
+  --color-tooltip-text: rgba(26, 26, 26, 0.8); /* 툴팁 텍스트 */
+  --color-tooltip-border: rgba(0, 0, 0, 0.1); /* 툴팁 테두리 */
+  --tooltip-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
+  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.1); /* 툴팁 그림자 */
+  --z-index-tooltip: 1000; /* 툴팁 레이어 */
+
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.1);
   --color-header-control-border: rgba(255, 255, 255, 0.2);
@@ -258,6 +266,12 @@
 
   /* === 2단계: 서브틀한 시각적 힌트 === */
   --color-header-hint-subtle: rgba(255, 255, 255, 0.1); /* 다크 테마 서브틀한 힌트 */
+
+  /* === 3단계: 애플스러운 툴팁 === */
+  --color-tooltip-bg: rgba(28, 28, 30, 0.95); /* 다크 툴팁 배경 */
+  --color-tooltip-text: rgba(249, 250, 251, 0.8); /* 다크 툴팁 텍스트 */
+  --color-tooltip-border: rgba(255, 255, 255, 0.1); /* 다크 툴팁 테두리 */
+  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.3); /* 다크 툴팁 그림자 */
 
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.05);
