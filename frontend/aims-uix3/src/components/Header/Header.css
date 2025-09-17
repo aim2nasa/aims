@@ -46,6 +46,10 @@
 
   /* 포커스 관리 */
   outline: none;
+
+  /* === 1단계: 애플스러운 마우스 커서 힌트 === */
+  /* 기본 상태: 상호작용 가능함을 암시 */
+  cursor: pointer;
 }
 
 /* === 확장 상태 - 호버/포커스 시 === */
@@ -54,6 +58,9 @@
   height: var(--header-height-expanded, 70px); /* 확장: 70px */
   background: var(--color-header-bg-expanded);
   border-bottom: 1px solid var(--color-header-border-expanded);
+
+  /* 호버 상태: 조작 가능함을 명확히 표시 */
+  cursor: grab;
 }
 
 /* === 제어 요소들 표시 상태 === */
@@ -73,6 +80,9 @@
 .header-progressive--animating {
   /* 애니메이션 중일 때 추가 최적화 */
   pointer-events: none; /* 애니메이션 중 상호작용 방지 */
+
+  /* 애니메이션 중 커서 혼란 방지 */
+  cursor: default;
 }
 
 .header-progressive--animating * {
