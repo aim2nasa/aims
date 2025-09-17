@@ -38,8 +38,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 }) => {
   const { state, handleMouseEnter, handleMouseLeave, handleFocus, handleBlur } = controller
 
-  // 3단계: 애플스러운 툴팁 Hook
-  const { showTooltip, dismissTooltip } = useHeaderTooltip()
+  // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
+  const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
 
   // 헤더 표시 여부 확인
   if (!visible) return null
@@ -59,11 +59,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     layoutControlModalOpen ? 'header-control-button--active' : ''
   ].filter(Boolean).join(' ')
 
-  // 툴팁 상호작용 처리
+  // 툴팁 및 펄스 상호작용 처리
   const handleHeaderMouseEnter = () => {
     handleMouseEnter()
-    if (showTooltip) {
-      dismissTooltip() // 사용자가 상호작용하면 툴팁 즉시 해제
+    if (showTooltip || showPulse) {
+      dismissTooltip() // 사용자가 상호작용하면 툴팁/펄스 즉시 해제
     }
   }
 
@@ -112,9 +112,12 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         </div>
       </div>
 
-      {/* Progressive Disclosure 인디케이터 - BRB 스타일 */}
+      {/* Progressive Disclosure 인디케이터 - BRB 스타일 + 4단계 펄스 */}
       <div
-        className="header-disclosure-indicator"
+        className={[
+          'header-disclosure-indicator',
+          showPulse ? 'header-disclosure-indicator--pulse' : ''
+        ].filter(Boolean).join(' ')}
         aria-hidden="true"
       >
         {!state.showControls && '⋯'}

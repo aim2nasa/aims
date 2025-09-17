@@ -128,6 +128,14 @@
   --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.1); /* 툴팁 그림자 */
   --z-index-tooltip: 1000; /* 툴팁 레이어 */
 
+  /* === 4단계: 첫 방문자 펄스 애니메이션 === */
+  --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
+  --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 (극도로 서브틀) */
+  --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 (인식 가능) */
+  --pulse-scale-min: 1; /* 펄스 최소 크기 */
+  --pulse-scale-max: 1.05; /* 펄스 최대 크기 (미세한 breathing) */
+  --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
+
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.1);
   --color-header-control-border: rgba(255, 255, 255, 0.2);
@@ -272,6 +280,15 @@
   --color-tooltip-text: rgba(249, 250, 251, 0.8); /* 다크 툴팁 텍스트 */
   --color-tooltip-border: rgba(255, 255, 255, 0.1); /* 다크 툴팁 테두리 */
   --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.3); /* 다크 툴팁 그림자 */
+
+  /* === 4단계: 첫 방문자 펄스 애니메이션 === */
+  /* 다크 테마에서도 동일한 펄스 변수 사용 (애니메이션 일관성) */
+  --pulse-duration: 3s; /* 애플 스타일 breathing 주기 */
+  --pulse-opacity-min: 0.3; /* 펄스 최소 투명도 */
+  --pulse-opacity-max: 0.7; /* 펄스 최대 투명도 */
+  --pulse-scale-min: 1; /* 펄스 최소 크기 */
+  --pulse-scale-max: 1.05; /* 펄스 최대 크기 */
+  --pulse-easing: ease-in-out; /* 자연스러운 breathing 리듬 */
 
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.05);

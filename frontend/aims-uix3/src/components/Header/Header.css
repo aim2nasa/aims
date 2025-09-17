@@ -10,6 +10,19 @@
 /* === HeaderTooltip 스타일 임포트 === */
 @import './HeaderTooltip.css';
 
+/* === 4단계: 애플 스타일 Breathing 키프레임 === */
+
+@keyframes header-pulse-breathing {
+  0%, 100% {
+    opacity: var(--pulse-opacity-min);
+    transform: scale(var(--pulse-scale-min));
+  }
+  50% {
+    opacity: var(--pulse-opacity-max);
+    transform: scale(var(--pulse-scale-max));
+  }
+}
+
 /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
 
 .header-progressive {
@@ -255,6 +268,19 @@
   opacity: 0;
 }
 
+/* === 4단계: 펄스 애니메이션 클래스 === */
+
+.header-disclosure-indicator--pulse {
+  /* Apple-style breathing 애니메이션 적용 */
+  animation: header-pulse-breathing var(--pulse-duration) var(--pulse-easing) infinite;
+
+  /* 기본 opacity 재정의 (애니메이션이 제어) */
+  opacity: var(--pulse-opacity-min);
+
+  /* transform-origin 중앙 고정 */
+  transform-origin: center center;
+}
+
 /* === 접근성 === */
 
 .header-progressive:focus-visible {
@@ -293,5 +319,11 @@
   .header-title,
   .header-disclosure-indicator {
     transition: none;
+  }
+
+  /* 펄스 애니메이션도 비활성화 */
+  .header-disclosure-indicator--pulse {
+    animation: none;
+    opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
   }
 }
