@@ -1,0 +1,258 @@
+/**
+ * Header Progressive Disclosure Styles
+ * @since 1.0.0
+ *
+ * 애플 디자인 철학 "Progressive Disclosure" 구현
+ * CLAUDE.md 준수: 하드코딩 금지, CSS 변수 100% 활용
+ * CSS_SYSTEM.md 준수: 공용 클래스 시스템과 통합
+ */
+
+/* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
+
+.header-progressive {
+  /* 기본 위치와 크기 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: var(--header-height-base); /* Progressive Disclosure 기본 높이 */
+
+  /* 플렉스 레이아웃 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  /* 애플 스타일 배경 */
+  background: var(--color-header-bg-subtle);
+  border-bottom: var(--color-header-border-subtle);
+
+  /* 헤더는 항상 보임 - Progressive Disclosure는 내부 요소만 */
+  opacity: 1;
+  background: var(--color-header-bg-subtle);
+  border-bottom: 1px solid var(--color-header-border-subtle);
+
+  /* 빠르고 자연스러운 전환 */
+  transition:
+    height var(--duration-fast) var(--easing-ease-out),
+    background-color var(--duration-fast) var(--easing-ease-out),
+    border-color var(--duration-fast) var(--easing-ease-out);
+
+  /* 레이어링 */
+  z-index: var(--z-index-header, 100);
+
+  /* 패딩 */
+  padding: 0 var(--spacing-4);
+  box-sizing: border-box;
+
+  /* 포커스 관리 */
+  outline: none;
+}
+
+/* === 확장 상태 - 호버/포커스 시 === */
+
+.header-progressive--expanded {
+  height: var(--header-height-expanded, 70px); /* 확장: 70px */
+  background: var(--color-header-bg-expanded);
+  border-bottom: 1px solid var(--color-header-border-expanded);
+}
+
+/* === 제어 요소들 표시 상태 === */
+
+.header-progressive--controls-visible .header-control-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.header-progressive--controls-visible .header-theme-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === 애니메이션 중 상태 === */
+
+.header-progressive--animating {
+  /* 애니메이션 중일 때 추가 최적화 */
+  pointer-events: none; /* 애니메이션 중 상호작용 방지 */
+}
+
+.header-progressive--animating * {
+  pointer-events: none;
+}
+
+/* === 브랜딩 영역 === */
+
+.header-branding {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.header-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-header-title);
+
+  /* 타이틀은 항상 보임 */
+  opacity: 0.7;
+  transform: translateY(0);
+  transition:
+    opacity var(--duration-normal) var(--easing-ease-out),
+    transform var(--duration-normal) var(--easing-ease-out);
+}
+
+.header-progressive--controls-visible .header-title {
+  opacity: 0.6; /* 매우 서브틀하게 표시 */
+  transform: translateY(0);
+}
+
+/* === 제어 영역 === */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+/* === 제어 버튼 === */
+
+.header-control-button {
+  /* 애플 스타일 기본 */
+  background-color: var(--color-header-control-bg);
+  color: var(--color-header-control-icon);
+  border: 1px solid var(--color-header-control-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  cursor: pointer;
+  backdrop-filter: var(--header-backdrop-blur);
+
+  /* 크기 */
+  width: var(--header-control-size);
+  height: var(--header-control-size);
+
+  /* 중앙 정렬 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 폰트 */
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+
+  /* Progressive Disclosure 전환 */
+  transition:
+    all var(--duration-fast) var(--easing-ease-out),
+    opacity var(--duration-fast) var(--easing-ease-out),
+    transform var(--duration-fast) var(--easing-ease-out);
+
+  /* 기본 상태: 투명 */
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.header-control-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-control-button:active {
+  transform: translateY(0);
+  background-color: var(--color-header-control-active);
+}
+
+.header-control-button--active {
+  background-color: var(--color-header-control-active);
+  color: var(--color-header-control-icon-active);
+  border-color: var(--color-header-control-border-active);
+}
+
+.header-control-button:disabled {
+  background-color: var(--color-header-control-disabled);
+  color: var(--color-header-control-icon-disabled);
+  border-color: var(--color-header-control-border-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* === 테마 토글 컨테이너 === */
+
+.header-theme-container {
+  /* Progressive Disclosure 전환 */
+  transition:
+    opacity var(--duration-fast) var(--easing-ease-out),
+    transform var(--duration-fast) var(--easing-ease-out);
+
+  /* 기본 상태: 투명 */
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* === Progressive Disclosure 인디케이터 === */
+
+.header-disclosure-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* 스타일링 */
+  font-size: var(--font-size-sm);
+  color: var(--color-header-indicator);
+  opacity: 0.4;
+
+  /* 전환 */
+  transition:
+    opacity var(--duration-fast) var(--easing-ease-out);
+
+  /* 상호작용 방지 */
+  pointer-events: none;
+  user-select: none;
+}
+
+.header-progressive--expanded .header-disclosure-indicator {
+  opacity: 0;
+}
+
+/* === 접근성 === */
+
+.header-progressive:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* === 반응형 === */
+
+@media (max-width: 768px) {
+  .header-progressive {
+    padding: 0 var(--spacing-3);
+  }
+
+  .header-title {
+    font-size: var(--font-size-base);
+  }
+
+  .header-controls {
+    gap: var(--spacing-2);
+  }
+
+  .header-control-button {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+/* === 테마별 최적화 === */
+
+@media (prefers-reduced-motion: reduce) {
+  .header-progressive,
+  .header-control-button,
+  .header-theme-container,
+  .header-title,
+  .header-disclosure-indicator {
+    transition: none;
+  }
+}

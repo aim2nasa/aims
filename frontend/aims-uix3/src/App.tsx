@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
-import ThemeToggle from './components/ThemeToggle'
 import LayoutControlModal from './components/LayoutControlModal'
 import HamburgerButton from './components/HamburgerButton'
 import CustomMenu from './components/CustomMenu/CustomMenu'
+import Header from './components/Header'
 
 // 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
 const persistentModalState = {
@@ -212,29 +212,14 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         position: 'relative',
         ...cssVariables // CSS 변수 적용
       }}>
-      {/* Header - 독립 레이어 */}
-      {headerVisible && (
-        <div className="layout-pane layout-header">
-          <h1 className="page-title">AIMS UIX3</h1>
-
-          <div className="control-section">
-            {/* 통합 제어 버튼 */}
-            <button
-              onClick={handleModalOpen}
-              className="layout-control-button"
-              aria-label={layoutControlModalOpen ? "레이아웃 제어 모달 열림" : "레이아웃 제어"}
-              title={layoutControlModalOpen ? "레이아웃 제어 모달이 열려있습니다" : "레이아웃 제어"}
-              disabled={layoutControlModalOpen} // 모달 열림 시만 비활성화
-            >
-              {layoutControlModalOpen ? '●' : '⚙️'}
-            </button>
-
-            {/* Theme Toggle 컴포넌트 */}
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
-          </div>
-        </div>
-      )}
+      {/* Header - Progressive Disclosure 애플 스타일 */}
+      <Header
+        visible={headerVisible}
+        layoutControlModalOpen={layoutControlModalOpen}
+        theme={theme}
+        onLayoutControlOpen={handleModalOpen}
+        onThemeToggle={toggleTheme}
+      />
 
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (

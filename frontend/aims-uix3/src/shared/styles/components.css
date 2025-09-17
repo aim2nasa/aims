@@ -77,12 +77,24 @@
   user-select: none;
 }
 
-.theme-icon-sun {
-  color: var(--sun-color);
+/* === THEME TOGGLE STATES === */
+
+/* Light 모드 상태 */
+.theme-toggle-container--light .theme-icon-sun {
+  color: var(--color-icon-orange); /* 활성화된 태양 아이콘 */
 }
 
-.theme-icon-moon {
-  color: var(--moon-color);
+.theme-toggle-container--light .theme-icon-moon {
+  color: var(--color-text-tertiary); /* 비활성화된 달 아이콘 */
+}
+
+/* Dark 모드 상태 */
+.theme-toggle-container--dark .theme-icon-sun {
+  color: var(--color-text-tertiary); /* 비활성화된 태양 아이콘 */
+}
+
+.theme-toggle-container--dark .theme-icon-moon {
+  color: var(--color-icon-cyan); /* 활성화된 달 아이콘 */
 }
 
 .theme-switch {

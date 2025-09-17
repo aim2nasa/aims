@@ -8,12 +8,15 @@ interface ThemeToggleProps {
 const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   const isDark = theme === 'dark'
 
+  // 테마별 클래스명 동적 생성
+  const containerClasses = [
+    'theme-toggle-container',
+    isDark ? 'theme-toggle-container--dark' : 'theme-toggle-container--light'
+  ].filter(Boolean).join(' ')
+
   return (
-    <div className="theme-toggle-container">
-      <span
-        className="theme-icon theme-icon-sun"
-        style={{ '--sun-color': !isDark ? 'var(--color-icon-orange)' : 'var(--color-text-tertiary)' } as any}
-      >
+    <div className={containerClasses}>
+      <span className="theme-icon theme-icon-sun">
         ☀️
       </span>
       <label className="theme-switch">
@@ -22,13 +25,11 @@ const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
           checked={isDark}
           onChange={onToggle}
           className="theme-switch-input"
+          aria-label={`테마를 ${isDark ? '라이트' : '다크'} 모드로 변경`}
         />
         <span className="theme-switch-slider"></span>
       </label>
-      <span
-        className="theme-icon theme-icon-moon"
-        style={{ '--moon-color': isDark ? 'var(--color-icon-cyan)' : 'var(--color-text-tertiary)' } as any}
-      >
+      <span className="theme-icon theme-icon-moon">
         🌙
       </span>
     </div>

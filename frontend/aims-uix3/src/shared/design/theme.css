@@ -105,6 +105,43 @@
   --color-gap-button-active: var(--color-error-500);
   --color-gap-button-inactive: var(--color-neutral-700);
   --color-gap-button-reset: var(--color-success-500);
+
+  /* === APPLE STYLE HEADER COLORS - LIGHT THEME === */
+
+  /* Progressive Disclosure Header Background - 가시성 개선 */
+  --color-header-bg-subtle: rgba(255, 255, 255, 0.85); /* 충분한 가시성 확보 */
+  --color-header-bg-expanded: rgba(255, 255, 255, 0.98); /* 확장 시 거의 불투명 */
+  --color-header-border-subtle: rgba(229, 229, 234, 0.6); /* 명확한 테두리 */
+  --color-header-border-expanded: rgba(229, 229, 234, 0.9); /* iOS 테두리 확장 */
+
+  /* Header Text */
+  --color-header-title: rgba(26, 26, 26, 0.6); /* 서브틀한 타이틀 */
+
+  /* Header Controls */
+  --color-header-control-bg: rgba(255, 255, 255, 0.1);
+  --color-header-control-border: rgba(255, 255, 255, 0.2);
+  --color-header-control-icon: var(--color-neutral-600);
+  --color-header-control-hover: rgba(229, 229, 234, 0.4);
+  --color-header-control-active: rgba(229, 229, 234, 0.6);
+  --color-header-control-border-hover: rgba(209, 213, 219, 0.6);
+  --color-header-control-border-active: rgba(209, 213, 219, 0.8);
+  --color-header-control-icon-active: var(--color-primary-600);
+  --color-header-control-disabled: rgba(243, 244, 246, 0.5);
+  --color-header-control-icon-disabled: var(--color-neutral-300);
+  --color-header-control-border-disabled: rgba(229, 229, 234, 0.3);
+
+  /* Header Control Size */
+  --header-control-size: 32px;
+
+  /* Progressive Disclosure Indicator */
+  --color-header-indicator: rgba(156, 163, 175, 0.6);
+
+  /* Header Heights and Opacities - Progressive Disclosure 최적화 */
+  --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
+  --header-height-expanded: 70px;
+  --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
+  --header-opacity-expanded: 1;
+  --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
 }
 
 /* === DARK THEME === */
@@ -204,6 +241,43 @@
   --color-gap-button-active: var(--color-error-400);
   --color-gap-button-inactive: var(--color-neutral-600);
   --color-gap-button-reset: var(--color-success-400);
+
+  /* === APPLE STYLE HEADER COLORS - DARK THEME === */
+
+  /* Progressive Disclosure Header Background - 가시성 개선 */
+  --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* 충분한 가시성 확보 */
+  --color-header-bg-expanded: rgba(28, 28, 30, 0.98); /* 확장 시 거의 불투명 */
+  --color-header-border-subtle: rgba(75, 85, 99, 0.6); /* 명확한 테두리 */
+  --color-header-border-expanded: rgba(75, 85, 99, 0.9); /* 다크 테두리 확장 */
+
+  /* Header Text */
+  --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
+
+  /* Header Controls */
+  --color-header-control-bg: rgba(255, 255, 255, 0.05);
+  --color-header-control-border: rgba(255, 255, 255, 0.1);
+  --color-header-control-icon: var(--color-neutral-300);
+  --color-header-control-hover: rgba(75, 85, 99, 0.4);
+  --color-header-control-active: rgba(75, 85, 99, 0.6);
+  --color-header-control-border-hover: rgba(107, 114, 128, 0.6);
+  --color-header-control-border-active: rgba(107, 114, 128, 0.8);
+  --color-header-control-icon-active: var(--color-primary-400);
+  --color-header-control-disabled: rgba(31, 41, 55, 0.5);
+  --color-header-control-icon-disabled: var(--color-neutral-600);
+  --color-header-control-border-disabled: rgba(75, 85, 99, 0.3);
+
+  /* Header Control Size */
+  --header-control-size: 32px;
+
+  /* Progressive Disclosure Indicator */
+  --color-header-indicator: rgba(156, 163, 175, 0.4);
+
+  /* Header Heights and Opacities - Progressive Disclosure 최적화 */
+  --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
+  --header-height-expanded: 70px;
+  --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
+  --header-opacity-expanded: 1;
+  --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
 }
 
 /* === SYSTEM PREFERENCE === */

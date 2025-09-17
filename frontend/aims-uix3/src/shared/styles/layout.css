@@ -37,12 +37,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  border-bottom: 2px solid var(--color-border-primary);
+  border-bottom: 1px solid var(--color-border-primary);
   z-index: 100;
   background: var(--color-layout-header-bg);
   position: relative;
   overflow: hidden;
-  animation: headerPulse 6s ease-in-out infinite;
+  /* 애플 스타일: 화려한 애니메이션 제거, 서브틀한 효과만 유지 */
 }
 
 .layout-leftpane {
@@ -173,74 +173,12 @@
 .z-index-1 { z-index: 1; }
 .z-index-1000 { z-index: 1000; }
 
-/* === HEADER ANIMATIONS === */
+/* === APPLE STYLE HEADER EFFECTS === */
 
-/* 헤더 shimmer 효과 */
-.layout-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(255, 255, 255, 0.015),
-    rgba(255, 255, 255, 0.04),
-    rgba(255, 255, 255, 0.015),
-    transparent);
-  animation: shimmer 2.5s infinite;
-  z-index: 1;
-}
-
-.layout-header::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(-45deg,
-    transparent,
-    rgba(255, 255, 255, 0.01),
-    rgba(255, 255, 255, 0.025),
-    transparent);
-  animation: glimmer 4s infinite;
-  z-index: 1;
-}
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  50% { left: 100%; }
-  100% { left: 100%; }
-}
-
-@keyframes glimmer {
-  0% { right: -100%; }
-  50% { right: 100%; }
-  100% { right: 100%; }
-}
-
-@keyframes headerPulse {
-  0% {
-    box-shadow:
-      0 8px 32px rgba(59, 130, 246, 0.4),
-      0 4px 16px rgba(139, 92, 246, 0.3),
-      0 0 60px rgba(168, 85, 247, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 12px 48px rgba(59, 130, 246, 0.6),
-      0 6px 24px rgba(139, 92, 246, 0.4),
-      0 0 80px rgba(168, 85, 247, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-  100% {
-    box-shadow:
-      0 8px 32px rgba(59, 130, 246, 0.4),
-      0 4px 16px rgba(139, 92, 246, 0.3),
-      0 0 60px rgba(168, 85, 247, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-}
+/*
+ * 화려한 애니메이션 제거됨 (shimmer, glimmer, headerPulse)
+ * 애플 디자인 철학: 극도의 미니멀리즘, 서브틀한 효과만 유지
+ *
+ * 새로운 Header는 Progressive Disclosure 패턴을 사용하며
+ * Header.css에서 별도로 관리됨
+ */
