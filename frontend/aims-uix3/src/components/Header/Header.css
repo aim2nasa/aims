@@ -52,6 +52,27 @@
   cursor: pointer;
 }
 
+/* === 2단계: 서브틀한 시각적 힌트 === */
+
+.header-progressive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--color-header-indicator),
+    transparent
+  );
+  transform: translateX(-50%);
+  opacity: 0.7; /* 충분히 인식 가능하게 */
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+  pointer-events: none;
+  user-select: none;
+}
+
 /* === 확장 상태 - 호버/포커스 시 === */
 
 .header-progressive--expanded {
@@ -61,6 +82,11 @@
 
   /* 호버 상태: 조작 가능함을 명확히 표시 */
   cursor: grab;
+}
+
+/* 호버/확장 시 힌트가 사라져 실제 컨트롤 등장을 강조 */
+.header-progressive--expanded::after {
+  opacity: 0;
 }
 
 /* === 제어 요소들 표시 상태 === */
@@ -211,7 +237,7 @@
   /* 스타일링 */
   font-size: var(--font-size-sm);
   color: var(--color-header-indicator);
-  opacity: 0.4;
+  opacity: 0.7; /* 원래보다 훨씬 더 명확하게 */
 
   /* 전환 */
   transition:

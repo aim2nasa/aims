@@ -117,6 +117,9 @@
   /* Header Text */
   --color-header-title: rgba(26, 26, 26, 0.6); /* 서브틀한 타이틀 */
 
+  /* === 2단계: 서브틀한 시각적 힌트 === */
+  --color-header-hint-subtle: rgba(0, 0, 0, 0.08); /* 극도로 서브틀한 힌트 */
+
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.1);
   --color-header-control-border: rgba(255, 255, 255, 0.2);
@@ -252,6 +255,9 @@
 
   /* Header Text */
   --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
+
+  /* === 2단계: 서브틀한 시각적 힌트 === */
+  --color-header-hint-subtle: rgba(255, 255, 255, 0.1); /* 다크 테마 서브틀한 힌트 */
 
   /* Header Controls */
   --color-header-control-bg: rgba(255, 255, 255, 0.05);
