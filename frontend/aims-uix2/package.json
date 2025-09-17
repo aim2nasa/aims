@@ -20,6 +20,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "start": "vite --force --port 3005",
     "dev": "vite --force",
     "build": "vite build",
     "preview": "vite preview --port 3008",
