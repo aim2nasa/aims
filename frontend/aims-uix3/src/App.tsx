@@ -268,10 +268,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         <div
           className="layout-pane layout-centerpane"
           style={{
-            top: `calc(60px + var(--gap-top))`,
+            top: `calc(var(--header-height-base) + var(--gap-top))`,
             left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
             width: layoutDimensions.centerPaneWidth,
-            height: layoutDimensions.centerPaneHeight
+            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`
           }}
         >
           <h3 className="section-heading">
@@ -303,10 +303,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         className="layout-rightpane-container"
         style={{
           position: 'absolute',
-          top: `calc(60px + var(--gap-top))`,
+          top: `calc(var(--header-height-base) + var(--gap-top))`,
           right: `var(--gap-right)`,
           width: rightPaneVisible ? `calc(${layoutDimensions.rightPaneWidth} + 4px)` : '0px',
-          height: layoutDimensions.layoutContentHeight,
+          height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
           display: 'flex',
           flexDirection: 'row',
           opacity: rightPaneVisible ? 1 : 0,
