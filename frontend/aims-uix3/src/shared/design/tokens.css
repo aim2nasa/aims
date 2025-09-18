@@ -245,21 +245,21 @@
   --color-layout-header-light: #ffffff;    /* Light Theme: 순수 화이트 헤더 */
   --color-layout-header-dark: #1c1c1e;     /* Dark Theme: iOS 다크 그레이 헤더 */
 
-  /* BRB Colors - 후보6.1: 애플 스타일 서브틀 드래그 바 */
-  --color-layout-brb-light: #d1d5db;       /* Light Theme: 서브틀 그레이 (거의 안보이게) */
-  --color-layout-brb-dark: #4b5563;        /* Dark Theme: 서브틀 다크 그레이 */
+  /* BRB Colors - iOS 16+ 공식 systemGray 색상 적용 */
+  --color-layout-brb-light: #d1d1d6;       /* Light Theme: iOS systemGray4 */
+  --color-layout-brb-dark: #3a3a3c;        /* Dark Theme: iOS systemGray4 */
 
-  /* BRB Hover Colors - 애플 스타일 Progressive Disclosure */
-  --color-layout-brb-hover-light: #9ca3af; /* Light Theme: 호버 시 더 진한 그레이 */
-  --color-layout-brb-hover-dark: #6b7280;  /* Dark Theme: 호버 시 더 진한 그레이 */
+  /* BRB Hover Colors - iOS systemGray3 적용 */
+  --color-layout-brb-hover-light: #c7c7cc; /* Light Theme: iOS systemGray3 */
+  --color-layout-brb-hover-dark: #48484a;  /* Dark Theme: iOS systemGray3 */
 
-  /* BRB Icon Colors - 호버 시 그립 인디케이터 */
-  --color-layout-brb-icon-light: #6b7280;  /* Light Theme: 아이콘 그레이 */
-  --color-layout-brb-icon-dark: #9ca3af;
+  /* BRB Icon Colors - iOS systemGray2 적용 */
+  --color-layout-brb-icon-light: #aeaeb2;  /* Light Theme: iOS systemGray2 */
+  --color-layout-brb-icon-dark: #636366;   /* Dark Theme: iOS systemGray2 */
 
-  /* RightPane Colors - gapRight 시각적 구분을 위한 별도 색상 */
-  --color-layout-rightpane-light: #e8e8ed; /* Light Theme: 약간 더 진한 시스템 그레이 (gapRight 구분용) */
-  --color-layout-rightpane-dark: #2c2c2e;  /* Dark Theme: 세컨더리 다크 */
+  /* RightPane Colors - iOS systemGray5 적용 (gapRight 시각적 구분용) */
+  --color-layout-rightpane-light: #e5e5ea; /* Light Theme: iOS systemGray5 */
+  --color-layout-rightpane-dark: #2c2c2e;  /* Dark Theme: iOS systemGray5 */
 
   /* Theme Toggle Colors */
   --color-icon-orange: #f97316;
@@ -268,11 +268,11 @@
   --color-theme-switch-bg-dark: #3b82f6;
   --color-theme-switch-handle: #ffffff;
 
-  /* Hamburger Button Colors */
-  --color-hamburger-button-bg-light: #d1d5db;
-  --color-hamburger-button-bg-dark: #4b5563;
-  --color-hamburger-icon-light: #374151;
-  --color-hamburger-icon-dark: #f9fafb;
+  /* Hamburger Button Colors - iOS 16+ 공식 색상 적용 */
+  --color-hamburger-button-bg-light: #d1d1d6; /* iOS systemGray4 */
+  --color-hamburger-button-bg-dark: #3a3a3c;  /* iOS systemGray4 */
+  --color-hamburger-icon-light: #636366;      /* iOS systemGray2 (dark shade) */
+  --color-hamburger-icon-dark: #aeaeb2;       /* iOS systemGray2 (light shade) */
 }
 
 /* === ANIMATION TOKENS === */

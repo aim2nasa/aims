@@ -271,11 +271,11 @@
 
   /* === APPLE STYLE HEADER COLORS - DARK THEME === */
 
-  /* Progressive Disclosure Header Background - 가시성 개선 */
-  --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* 충분한 가시성 확보 */
+  /* Progressive Disclosure Header Background - iOS systemGray6 기반 */
+  --color-header-bg-subtle: rgba(28, 28, 30, 0.85); /* iOS systemGray6 다크모드 (#1c1c1e) */
   --color-header-bg-expanded: rgba(28, 28, 30, 0.98); /* 확장 시 거의 불투명 */
-  --color-header-border-subtle: rgba(75, 85, 99, 0.6); /* 명확한 테두리 */
-  --color-header-border-expanded: rgba(75, 85, 99, 0.9); /* 다크 테두리 확장 */
+  --color-header-border-subtle: rgba(58, 58, 60, 0.6); /* iOS systemGray4 다크모드 (#3a3a3c) */
+  --color-header-border-expanded: rgba(58, 58, 60, 0.9); /* 다크 테두리 확장 */
 
   /* Header Text */
   --color-header-title: rgba(249, 250, 251, 0.6); /* 서브틀한 다크 타이틀 */
