@@ -204,13 +204,21 @@
   transform: translateX(100px); /* RightPane을 우측으로 이동시켜 완전히 숨김 */
 }
 
-/* RightPane + BRB 통합 컨테이너 */
+/* CenterPane + RightPane 통합 컨테이너 - 구조적 동기화 */
+.layout-center-right-container {
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 기존 RightPane + BRB 통합 컨테이너 - 더 이상 사용하지 않음 */
 .layout-rightpane-container {
   z-index: 10;
   overflow: hidden;
   background-color: transparent;
-  /* Group1과 동기화를 위한 transition 추가 */
-  transition: all var(--duration-apple-graceful) var(--easing-ease-in-out);
+  /* transition 제거 - BRB 드래그 시 직접 DOM 조작과 충돌 방지 */
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;

@@ -336,11 +336,24 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
               const handleMouseMove = (e: MouseEvent) => {
                 e.preventDefault()
+
+                // 완벽한 픽셀 계산으로 동기화 보장
                 const deltaX = e.clientX - startX
                 const mainPaneWidth = window.innerWidth - layoutDimensions.leftPaneWidth
-                const deltaPercent = (deltaX / mainPaneWidth) * 100
-                const newWidth = startWidth + deltaPercent
-                setCenterWidth(Math.max(20, Math.min(80, newWidth)))
+                const availableWidth = mainPaneWidth - gapValues.gapLeft - gapValues.gapCenter - gapValues.gapRight
+
+                // 픽셀 단위로 정확한 계산
+                const newCenterWidthPx = Math.max(
+                  availableWidth * 0.2,
+                  Math.min(
+                    availableWidth * 0.8,
+                    (availableWidth * startWidth / 100) + deltaX
+                  )
+                )
+
+                // 퍼센트로 변환하여 React state 업데이트
+                const newCenterPercent = (newCenterWidthPx / availableWidth) * 100
+                setCenterWidth(newCenterPercent)
               }
 
               const handleMouseUp = () => {
