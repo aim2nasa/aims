@@ -309,12 +309,44 @@
   /* Progressive Disclosure Indicator */
   --color-header-indicator: rgba(156, 163, 175, 0.4);
 
+  /* === APPLE iOS STYLE COLORS - DARK THEME === */
+
+  /* Header Apple-style controls */
+  --color-apple-control-bg: rgba(255, 255, 255, 0.08);
+  --color-apple-control-hover: rgba(255, 255, 255, 0.15);
+  --color-apple-control-border: rgba(255, 255, 255, 0.12);
+
+  /* Apple Glass Effects */
+  --color-apple-glass-dark: rgba(28, 28, 30, 0.8);
+  --color-apple-glass-subtle: rgba(255, 255, 255, 0.05);
+
+  /* Apple Shadows - Dark Theme */
+  --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0px 1px rgba(0, 0, 0, 0.2);
+
   /* Header Heights and Opacities - Progressive Disclosure 최적화 */
   --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
   --header-height-expanded: 70px;
   --header-opacity-subtle: 0.9;  /* 충분한 가시성 확보 */
   --header-opacity-expanded: 1;
   --header-backdrop-blur: blur(20px); /* iOS 스타일 블러 */
+
+  /* === APPLE iOS STYLE COLORS === */
+
+  /* Header Apple-style controls */
+  --color-apple-control-bg: rgba(255, 255, 255, 0.15);
+  --color-apple-control-hover: rgba(255, 255, 255, 0.25);
+  --color-apple-control-border: rgba(255, 255, 255, 0.2);
+
+  /* Apple Glass Effects */
+  --color-apple-glass-light: rgba(255, 255, 255, 0.8);
+  --color-apple-glass-subtle: rgba(255, 255, 255, 0.1);
+
+  /* Apple Shadows - Light Theme */
+  --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0px 1px rgba(0, 0, 0, 0.06);
 }
 
 /* === SYSTEM PREFERENCE === */

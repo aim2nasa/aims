@@ -203,10 +203,10 @@
 }
 
 .header-control-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-apple-control-hover);
+  border-color: var(--color-apple-control-border);
   transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-apple-button-hover);
 }
 
 .header-control-button:active {

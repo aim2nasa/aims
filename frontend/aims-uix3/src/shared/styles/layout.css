@@ -12,7 +12,7 @@
 .layout-pane {
   position: absolute;
   display: flex;
-  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all var(--duration-apple-graceful) var(--easing-ease-in-out);
   box-sizing: border-box;
 }
 

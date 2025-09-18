@@ -46,10 +46,10 @@
 
   /* 애플 디자인 철학: 매우 서브틀하고 자연스러운 애니메이션 */
   transition:
-    background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background-color var(--duration-apple-quick) var(--easing-apple-magic),
+    color var(--duration-apple-quick) var(--easing-apple-magic),
+    transform var(--duration-apple-quick) var(--easing-apple-magic),
+    box-shadow var(--duration-apple-quick) var(--easing-apple-magic);
 }
 
 /* === SUB-MENU STYLES === */
@@ -63,7 +63,7 @@
 .sub-menu-container {
   overflow: hidden;
   /* 애플 철학: 매우 자연스럽고 우아한 전개 애니메이션 */
-  animation: appleSubMenuSlide 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: appleSubMenuSlide 300ms var(--easing-apple-magic);
 }
 
 @keyframes appleSubMenuSlide {
@@ -312,7 +312,7 @@
   border-radius: 4px;
 
   /* 애플 스타일: 서브틀한 호버 효과 */
-  transition: background-color 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: background-color var(--duration-apple-quick) var(--easing-apple-magic);
 }
 
 .icon-chevron:hover {
@@ -326,7 +326,7 @@
   border-bottom: 2px solid var(--color-text-tertiary);
   transform: rotate(45deg);
   /* 애플 스타일: 매우 부드러운 회전 애니메이션 */
-  transition: transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 250ms var(--easing-apple-magic);
 }
 
 .custom-menu-item.has-children.sub-menu .icon-chevron,

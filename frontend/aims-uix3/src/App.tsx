@@ -310,7 +310,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           flexDirection: 'row',
           opacity: rightPaneVisible ? 1 : 0,
           overflow: 'hidden',
-          transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)', // 이전 버전과 동일한 transition
+          transition: 'all var(--duration-apple-graceful) var(--easing-ease-in-out)', // 원래 동작 유지
           zIndex: 10,
         }}
       >

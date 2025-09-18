@@ -131,6 +131,17 @@
   --easing-ease-out: ease-out;
   --easing-ease-in-out: ease-in-out;
 
+  /* === APPLE DESIGN TIMING === */
+
+  /* Apple Magic Easing - iOS/macOS 표준 */
+  --easing-apple-magic: cubic-bezier(0.23, 1, 0.32, 1);
+  --easing-apple-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 기존 유지용 */
+
+  /* Apple-specific durations */
+  --duration-apple-quick: 0.2s;   /* 버튼 hover 등 */
+  --duration-apple-smooth: 0.4s;  /* 레이아웃 전환 */
+  --duration-apple-graceful: 0.6s; /* 모달, 큰 전환 */
+
   /* Status Colors for Components */
   --color-status-success: var(--color-success-700);
   --color-status-success-bg: var(--color-success-50);

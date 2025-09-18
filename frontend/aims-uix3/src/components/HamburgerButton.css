@@ -23,7 +23,7 @@
   height: 32px;
 
   /* 입체감 그림자 효과 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-apple-button);
 
   /* 트랜지션 */
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -37,7 +37,7 @@
   background-color: var(--color-bg-hover);
   color: var(--color-text-primary);
   transform: translateY(-1px); /* 살짝 위로 올라오는 효과 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-apple-button-hover);
 }
 
 /* 포커스 상태 - 접근성 고려 */
@@ -56,7 +56,7 @@
 .hamburger-button:active {
   background-color: var(--color-bg-active);
   transform: translateY(0); /* 눌렸을 때 원래 위치로 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0px 1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-apple-elevated);
 }
 
 /* 햄버거 아이콘 SVG 스타일 */
