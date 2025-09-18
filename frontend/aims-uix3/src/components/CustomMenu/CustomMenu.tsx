@@ -1,4 +1,6 @@
-import { useState, ReactNode } from 'react'
+import { useState, ReactNode, useEffect, useMemo } from 'react'
+import { useNavigation } from '../../hooks/useNavigation'
+import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import './CustomMenu.css'
 
 // CSS로 구현한 벡터 아이콘 컴포넌트들 (하드코딩 금지 원칙 준수)
@@ -124,6 +126,10 @@ const CustomMenuItem = ({
       onDoubleClick={handleDoubleClick}
       title={collapsed ? item.tooltipTitle : ''}
       data-menu-key={item.key}
+      id={`menu-item-${item.key}`}
+      role="menuitem"
+      aria-selected={isSelected}
+      tabIndex={-1}
     >
       {item.icon}
       {!collapsed && <span className="custom-menu-item-text">{item.label}</span>}
@@ -170,27 +176,7 @@ const CustomMenu = ({
     collapsed ? [] : ['customers', 'documents']
   )
 
-  // 메뉴 클릭 핸들러
-  const handleMenuClick = (key: string) => {
-    setSelectedKey(key)
-    if (onMenuClick) {
-      onMenuClick(key)
-    }
-  }
-
-  // 메인 메뉴 확장/축소 핸들러
-  const handleToggleExpand = (key: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (collapsed) return
-
-    setExpandedKeys(prev =>
-      prev.includes(key)
-        ? prev.filter(k => k !== key)
-        : [...prev, key]
-    )
-  }
-
-  // 메뉴 데이터 구조 - color.png와 완전 동일한 구조
+  // 메뉴 데이터 구조 - color.png와 완전 동일한 구조 (navigation hook에서 사용하기 위해 먼저 정의)
   const menuItems: MenuItem[] = [
     // 검색 결과 (동적 표시)
     ...(hasSearchResults ? [{
@@ -275,8 +261,87 @@ const CustomMenu = ({
     }] : [])
   ]
 
+  // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
+  const navigableKeys = useMemo(() =>
+    getAllNavigableKeys(menuItems, collapsed, expandedKeys),
+    [menuItems, collapsed, expandedKeys]
+  )
+
+  // 메뉴 클릭 핸들러
+  const handleMenuClick = (key: string) => {
+    // 선택 변경 시 모든 메뉴 아이템의 포커스 제거 (시각적 흔적 방지)
+    const menuItems = document.querySelectorAll('.custom-menu-item')
+    menuItems.forEach(item => {
+      if (item instanceof HTMLElement) {
+        item.blur()
+      }
+    })
+
+    // 메뉴 컨테이너에 포커스를 주어 키보드 네비게이션 활성화
+    const menuContainer = document.querySelector('.custom-menu') as HTMLElement
+    if (menuContainer) {
+      menuContainer.focus()
+    }
+
+    setSelectedKey(key)
+    if (onMenuClick) {
+      onMenuClick(key)
+    }
+  }
+
+  // 메인 메뉴 확장/축소 핸들러
+  const handleToggleExpand = (key: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (collapsed) return
+
+    setExpandedKeys(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    )
+  }
+
+  // 네비게이션 훅 통합 (휠 + 키보드)
+  const navigation = useNavigation({
+    items: navigableKeys,
+    selectedKey,
+    onSelectionChange: handleMenuClick,
+    disabled: false,
+    scrollSensitivity: 50, // 더 민감하게 조정 (빠른 반응)
+    circular: true,
+    enableKeyboard: true,
+    onEnter: (key: string) => {
+      // Enter 키로 메뉴 아이템 활성화
+      handleMenuClick(key)
+    },
+    onEscape: () => {
+      // Escape 키로 첫 번째 메뉴로 복귀 (선택사항)
+      if (navigableKeys.length > 0) {
+        handleMenuClick(navigableKeys[0])
+      }
+    }
+  })
+
+  // 메뉴 컨테이너 클릭 시 포커스 설정
+  const handleMenuContainerClick = (e: React.MouseEvent) => {
+    // 메뉴 아이템 클릭이 아닌 컨테이너 직접 클릭일 때만
+    if (e.target === e.currentTarget) {
+      const menuContainer = e.currentTarget as HTMLElement
+      menuContainer.focus()
+    }
+  }
+
   return (
-    <div className="custom-menu">
+    <div
+      className="custom-menu"
+      onWheel={navigation.onWheel}
+      onKeyDown={navigation.onKeyDown}
+      onClick={handleMenuContainerClick}
+      tabIndex={0}
+      role="menu"
+      aria-label="메인 메뉴"
+      aria-activedescendant={`menu-item-${selectedKey}`}
+    >
       {menuItems.map(item => (
         <CustomMenuItem
           key={item.key}
