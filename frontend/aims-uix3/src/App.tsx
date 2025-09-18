@@ -263,10 +263,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         </div>
       )}
 
-      {/* CenterPane - 독립 레이어 */}
+      {/* CenterPane - Header-CBR 연동 레이어 */}
       {centerPaneVisible && (
         <div
-          className={`layout-pane layout-centerpane ${isResizing ? '' : 'transition-smooth'}`}
+          className="layout-pane layout-centerpane"
           style={{
             top: `calc(60px + var(--gap-top))`,
             left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
@@ -284,10 +284,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         </div>
       )}
 
-      {/* Pagination - 독립 레이어 (조건부) */}
+      {/* Pagination - Header-CBR 연동 레이어 (조건부) */}
       {paginationVisible && (
         <div
-          className={`layout-pane layout-pagination ${isResizing ? 'layout-pane--no-transition' : ''}`}
+          className="layout-pane layout-pagination"
           style={{
             bottom: `var(--gap-bottom)`,
             left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
@@ -298,8 +298,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         </div>
       )}
 
-      {/* RightPane + BRB 통합 컨테이너 - 이전 버전의 완벽한 동기화 애니메이션 복원 */}
+      {/* RightPane + BRB 통합 컨테이너 - Header-CBR 연동 완벽 동기화 */}
       <div
+        className="layout-rightpane-container"
         style={{
           position: 'absolute',
           top: `calc(60px + var(--gap-top))`,
@@ -310,7 +311,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           flexDirection: 'row',
           opacity: rightPaneVisible ? 1 : 0,
           overflow: 'hidden',
-          transition: 'all var(--duration-apple-graceful) var(--easing-ease-in-out)', // 원래 동작 유지
+          // transition 제거: CSS에서 Header-CBR 연동 전용 transition 사용
           zIndex: 10,
         }}
       >
@@ -379,6 +380,14 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           )}
         </div>
       </div>
+
+      {/* 접근성: 레이아웃 상태 알림 영역 */}
+      <div
+        id="layout-status-announcement"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
 
       {/* 통합 제어 모달 */}
       <LayoutControlModal

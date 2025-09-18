@@ -7,7 +7,7 @@
  * CLAUDE.md 준수: 애플 디자인 철학 "Progressive Disclosure" UI 구현
  */
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -40,6 +40,27 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
   // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
   const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
+
+  // Header-CBR 연동: 클래스 기반 접근법 (모달 격리)
+  useEffect(() => {
+    const layoutMain = document.querySelector('.layout-main');
+    if (!layoutMain) return;
+
+    if (state.isHovered || state.showControls) {
+      // Header 확장 시: CBR 요소들을 아래로 이동
+      layoutMain.classList.add('layout-main--header-expanded');
+    } else {
+      // Header 축소 시: CBR 요소들을 원래 위치로
+      layoutMain.classList.remove('layout-main--header-expanded');
+    }
+
+    // 접근성: 스크린 리더에 레이아웃 변경 알림 (변화가 있을 때만)
+    const announcement = state.isHovered ? 'Header expanded' : 'Header collapsed';
+    const ariaLive = document.getElementById('layout-status-announcement');
+    if (ariaLive && ariaLive.textContent !== announcement) {
+      ariaLive.textContent = announcement;
+    }
+  }, [state.isHovered, state.showControls])
 
   // 헤더 표시 여부 확인
   if (!visible) return null
