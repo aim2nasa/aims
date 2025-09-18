@@ -239,9 +239,9 @@
   --color-layout-secondary-light: #f2f2f7;  /* Light Theme: 시스템 그레이 */
   --color-layout-secondary-dark: #2c2c2e;   /* Dark Theme: 세컨더리 다크 */
 
-  /* Accent Background Colors - 서브틀한 액센트 */
-  --color-layout-accent-light: #e5e5ea;     /* Light Theme: 라이트 액센트 */
-  --color-layout-accent-dark: #3a3a3c;      /* Dark Theme: 다크 액센트 */
+  /* Accent Background Colors - iOS Status Bar 정확한 색상 */
+  --color-layout-accent-light: #f2f2f7;     /* Light Theme: iOS systemGray6 정확한 색상 */
+  --color-layout-accent-dark: #2c2c2e;      /* Dark Theme: iOS systemGray5 정확한 색상 */
 
   /* LeftPane Colors */
   --color-layout-leftpane-light: #e5e5ea;  /* Light Theme: iOS 시스템 그레이 */

@@ -94,18 +94,29 @@
 
 .layout-pagination {
   height: 40px;
-  color: var(--color-text-inverse);
+  color: var(--color-text-primary);
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px; /* iOS Status Bar 표준 크기 */
+  font-weight: 500; /* San Francisco Medium 가중치 */
+  letter-spacing: -0.08px; /* San Francisco 표준 자간 */
   box-sizing: border-box;
   z-index: 10;
   background-color: var(--color-layout-pagination-bg);
+  /* Apple Design: Clarity - 정보 계층 구조 명확화 */
+  opacity: 0.85; /* Deference - 콘텐츠를 방해하지 않는 겸손한 존재감 */
+  transition: opacity var(--duration-fast) var(--easing-ease-out); /* Depth - 자연스러운 시각적 변화 */
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* Apple Design: Progressive Enhancement - 필요할 때만 완전히 보임 */
+.layout-pagination:hover,
+.layout-pagination:focus-within {
+  opacity: 1; /* 상호작용 시 Clarity 향상 */
 }
 
 .layout-brb {
