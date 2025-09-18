@@ -172,7 +172,8 @@
   z-index: 10;
   overflow: hidden;
   background-color: transparent;
-  /* transition 제거 - Header-CBR 연동 전용 transition은 CBR 시스템에서 처리 */
+  /* Group1과 동기화를 위한 transition 추가 */
+  transition: all var(--duration-apple-graceful) var(--easing-ease-in-out);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
