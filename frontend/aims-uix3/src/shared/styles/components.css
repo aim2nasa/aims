@@ -273,7 +273,7 @@
 .range-label {
   display: block;
   margin-bottom: 2px;
-  color: var(--color-text-secondary);
+  color: var(--color-modal-text-secondary);
   font-size: 13px;
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
@@ -607,7 +607,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-modal-text-primary);
 }
 
 .modal-close-button {
@@ -659,7 +659,7 @@
   margin: 0 0 12px 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-modal-text-primary);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
@@ -679,7 +679,7 @@
   gap: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: var(--color-modal-text-secondary);
   transition: color 0.2s ease;
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
@@ -689,7 +689,7 @@
 }
 
 .checkbox-label:hover {
-  color: var(--color-text-primary);
+  color: var(--color-modal-text-primary);
 }
 
 .checkbox-label input[type="checkbox"] {

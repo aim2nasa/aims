@@ -89,6 +89,10 @@
   --color-overlay-modal: rgba(0, 0, 0, 0.5);
   --color-overlay-backdrop: rgba(255, 255, 255, 0.1);
 
+  /* Modal Text Colors - Light Theme */
+  --color-modal-text-primary: var(--color-text-primary);
+  --color-modal-text-secondary: var(--color-text-secondary);
+
   /* Layout Colors - Light Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
   --color-layout-main-bg: var(--color-layout-main-light); /* iOS 라이트 그레이 메인 배경 */
   --color-layout-header-bg: var(--color-layout-header-light); /* 순수 화이트 미니멀 헤더 */
@@ -243,6 +247,10 @@
   /* Overlay Colors - Dark Theme */
   --color-overlay-modal: rgba(0, 0, 0, 0.7);
   --color-overlay-backdrop: rgba(0, 0, 0, 0.2);
+
+  /* Modal Text Colors - Dark Theme (High Contrast for Visibility) */
+  --color-modal-text-primary: rgba(255, 255, 255, 0.95);
+  --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
 
   /* Layout Colors - Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
   --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
@@ -431,6 +439,10 @@
 
     /* Hamburger Button Colors - System Dark Theme */
     --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);
+
+    /* Modal Text Colors - System Dark Theme (High Contrast for Visibility) */
+    --color-modal-text-primary: rgba(255, 255, 255, 0.95);
+    --color-modal-text-secondary: rgba(255, 255, 255, 0.8);
 
     /* Layout Colors - System Dark Theme (후보6.1: 애플 아이폰/맥 스타일 - 헤더/BRB 포함) */
     --color-layout-main-bg: var(--color-layout-main-dark); /* 순수 블랙 메인 배경 */
