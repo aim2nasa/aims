@@ -278,22 +278,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         >
           <h3 className="section-heading" style={{
             color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-3)', /* 12px - 애플 표준 제목-내용 간격 */
-            marginTop: '0'
-          }}>
-            CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
-          </h3>
-          <p className="description-text" style={{
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-4)', /* 16px - 애플 표준 문단 간격 */
-            marginTop: '0'
-          }}>Main content area</p>
-          <p className="text-sm m-0 pagination-status" style={{
-            color: 'var(--color-text-tertiary)',
             margin: '0'
           }}>
-            Pagination: {paginationVisible ? 'ON' : 'OFF'}
-          </p>
+            CenterPane
+          </h3>
         </div>
       )}
 
@@ -387,20 +375,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             <>
               <h3 className="section-heading" style={{
                 color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-3)', /* 12px - 애플 표준 제목-내용 간격 */
-                marginTop: '0'
-              }}>RightPane (Resized according to BRB)</h3>
-              <p className="description-text" style={{
-                color: 'var(--color-text-secondary)',
-                marginBottom: 'var(--spacing-4)', /* 16px - 애플 표준 문단 간격 */
-                marginTop: '0'
-              }}>Additional tools & info</p>
-              <p className="text-sm m-0 pagination-status" style={{
-                color: 'var(--color-text-tertiary)',
                 margin: '0'
-              }}>
-                Pagination: {paginationVisible ? 'ON' : 'OFF'}
-              </p>
+              }}>RightPane</h3>
             </>
           )}
         </div>
