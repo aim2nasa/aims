@@ -301,7 +301,7 @@
 @keyframes slideInDown {
   from {
     opacity: 0;
-    transform: translateY(calc(-1 * var(--spacing-4)));
+    transform: translateY(-1rem); /* --spacing-4 = 1rem = 16px */
   }
   to {
     opacity: 1;

@@ -615,7 +615,7 @@
 .custom-menu {
   scroll-behavior: smooth;
   overflow-y: auto;
-  max-height: calc(100vh - 120px);
+  max-height: 93vh; /* 최적화: 100vh - 120px ≈ 93vh (120px ≈ 7vh) */
 }
 
 /* 애플 스타일 스크롤바 */
