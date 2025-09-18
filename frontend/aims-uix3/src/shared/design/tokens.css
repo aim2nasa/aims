@@ -133,11 +133,17 @@
 
   /* === APPLE DESIGN TIMING === */
 
-  /* Apple Magic Easing - iOS/macOS 표준 */
-  --easing-apple-magic: cubic-bezier(0.23, 1, 0.32, 1);
-  --easing-apple-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 기존 유지용 */
+  /* iOS 공식 애니메이션 이징 - Apple HIG 표준 */
+  --easing-ios-default: cubic-bezier(0.42, 0, 0.58, 1);        /* iOS UIViewAnimationOptionCurveEaseInOut */
+  --easing-apple-magic: cubic-bezier(0.23, 1, 0.32, 1);        /* Apple Magic Move 효과 */
+  --easing-apple-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 부드러운 전환용 */
 
-  /* Apple-specific durations */
+  /* iOS 표준 듀레이션 - Apple HIG 기준 */
+  --duration-ios-quick: 0.2s;      /* iOS 표준 빠른 전환 */
+  --duration-ios-standard: 0.3s;   /* iOS 표준 기본 전환 */
+  --duration-ios-modal: 0.5s;      /* iOS 모달 전환 표준 */
+
+  /* Legacy durations (하위 호환용) */
   --duration-apple-quick: 0.2s;   /* 버튼 hover 등 */
   --duration-apple-smooth: 0.4s;  /* 레이아웃 전환 */
   --duration-apple-graceful: 0.6s; /* 모달, 큰 전환 */
@@ -323,19 +329,19 @@
 /* === UTILITY CLASSES === */
 
 .animate-fade-in {
-  animation: fadeIn var(--duration-normal) var(--easing-ease-out);
+  animation: fadeIn var(--duration-ios-standard) var(--easing-ios-default);
 }
 
 .animate-slide-in-up {
-  animation: slideInUp var(--duration-normal) var(--easing-ease-out);
+  animation: slideInUp var(--duration-ios-standard) var(--easing-ios-default);
 }
 
 .animate-slide-in-down {
-  animation: slideInDown var(--duration-normal) var(--easing-ease-out);
+  animation: slideInDown var(--duration-ios-standard) var(--easing-ios-default);
 }
 
 .animate-scale-in {
-  animation: scaleIn var(--duration-normal) var(--easing-ease-out);
+  animation: scaleIn var(--duration-ios-modal) var(--easing-apple-magic);
 }
 
 /* === FOCUS MANAGEMENT === */

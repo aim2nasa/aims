@@ -559,10 +559,10 @@
 *::before,
 *::after {
   transition:
-    background-color var(--duration-fast) var(--easing-ease-in-out),
-    border-color var(--duration-fast) var(--easing-ease-in-out),
-    color var(--duration-fast) var(--easing-ease-in-out),
-    box-shadow var(--duration-fast) var(--easing-ease-in-out);
+    background-color var(--duration-ios-quick) var(--easing-ios-default),
+    border-color var(--duration-ios-quick) var(--easing-ios-default),
+    color var(--duration-ios-quick) var(--easing-ios-default),
+    box-shadow var(--duration-ios-quick) var(--easing-ios-default);
 }
 
 /* === HIGH CONTRAST MODE SUPPORT === */
