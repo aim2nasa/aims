@@ -26,12 +26,12 @@
 /* === PROGRESSIVE DISCLOSURE 핵심 구현 === */
 
 .header-progressive {
-  /* 기본 위치와 크기 */
+  /* 기본 위치와 크기 - 고정 높이로 변경 */
   position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
-  height: var(--header-height-base); /* Progressive Disclosure 기본 높이 */
+  height: 50px; /* 고정 높이 - 물리적 공간 변화 없음 */
 
   /* 플렉스 레이아웃 */
   display: flex;
@@ -40,18 +40,13 @@
 
   /* 애플 스타일 배경 */
   background: var(--color-header-bg-subtle);
-  border-bottom: var(--color-header-border-subtle);
-
-  /* 헤더는 항상 보임 - Progressive Disclosure는 내부 요소만 */
-  opacity: 1;
-  background: var(--color-header-bg-subtle);
   border-bottom: 1px solid var(--color-header-border-subtle);
 
-  /* 빠르고 자연스러운 전환 */
+  /* 애플 Progressive Disclosure 전환 - height 제거 */
   transition:
-    height var(--duration-fast) var(--easing-ease-out),
     background-color var(--duration-fast) var(--easing-ease-out),
-    border-color var(--duration-fast) var(--easing-ease-out);
+    border-color var(--duration-fast) var(--easing-ease-out),
+    backdrop-filter var(--duration-fast) var(--easing-ease-out);
 
   /* 레이어링 */
   z-index: var(--z-index-header, 100);
@@ -92,9 +87,13 @@
 /* === 확장 상태 - 호버/포커스 시 === */
 
 .header-progressive--expanded {
-  height: var(--header-height-expanded, 70px); /* 확장: 70px */
+  /* 물리적 높이 변화 제거 - 시각적 변화만 */
   background: var(--color-header-bg-expanded);
   border-bottom: 1px solid var(--color-header-border-expanded);
+
+  /* 애플 스타일 Backdrop Filter 추가 */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 
   /* 호버 상태: 조작 가능함을 명확히 표시 */
   cursor: grab;

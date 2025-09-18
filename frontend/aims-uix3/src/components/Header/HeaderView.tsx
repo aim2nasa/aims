@@ -74,11 +74,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
     className
   ].filter(Boolean).join(' ')
 
-  // 제어 버튼 클래스명
-  const controlButtonClasses = [
-    'header-control-button',
-    layoutControlModalOpen ? 'header-control-button--active' : ''
-  ].filter(Boolean).join(' ')
+  // 제어 버튼 클래스명 (현재 미사용이지만 향후 확장을 위해 유지)
+  // const controlButtonClasses = [
+  //   'header-control-button',
+  //   layoutControlModalOpen ? 'header-control-button--active' : ''
+  // ].filter(Boolean).join(' ')
 
   // 툴팁 및 펄스 상호작용 처리
   const handleHeaderMouseEnter = () => {

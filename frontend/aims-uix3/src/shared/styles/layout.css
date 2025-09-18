@@ -211,58 +211,17 @@
 .z-index-1 { z-index: 1; }
 .z-index-1000 { z-index: 1000; }
 
-/* === HEADER-CBR 연동 클래스 기반 시스템 === */
+/* === HEADER-CBR 연동 시스템 제거됨 === */
 
-/* CBR 요소들 기본 transition 통일 - 완전 동기화 보장 */
-.layout-centerpane,
-.layout-pagination,
-.layout-rightpane-container {
-  /* 모든 기존 transition 완전히 무력화하고 transform만 적용 */
-  transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-  transition-delay: 0ms !important; /* 지연 시간 완전 제거 */
-  /* 동기화를 위해 모든 다른 속성의 transition 강제 차단 */
-  transition-property: transform !important;
-}
-
-/* 개별 요소들의 모든 transition 강제 제거 */
-.layout-centerpane *,
-.layout-pagination *,
-.layout-rightpane-container *,
-.layout-brb,
-.layout-rightpane {
-  transition: none !important;
-}
-
-/* Header 확장시에도 개별 요소들의 transition 무력화 */
-.layout-main--header-expanded .layout-centerpane *,
-.layout-main--header-expanded .layout-pagination *,
-.layout-main--header-expanded .layout-rightpane-container *,
-.layout-main--header-expanded .layout-brb,
-.layout-main--header-expanded .layout-rightpane {
-  transition: none !important;
-}
-
-/* 클래스 기반 Header 확장 시 CBR 요소들 이동 (모달 격리됨) */
-.layout-main--header-expanded .layout-centerpane,
-.layout-main--header-expanded .layout-pagination,
-.layout-main--header-expanded .layout-rightpane-container {
-  transform: translateY(20px) !important; /* Header 확장값: 70px - 50px = 20px */
-}
-
-/* BRB와 RightPane 개별 요소는 transform 제거 (컨테이너가 처리) */
-.layout-main--header-expanded .layout-brb,
-.layout-main--header-expanded .layout-rightpane {
-  transform: none !important;
-}
-
-/* 모션 감소 설정 시 애니메이션 비활성화 */
-@media (prefers-reduced-motion: reduce) {
-  .layout-main--header-expanded .layout-centerpane,
-  .layout-main--header-expanded .layout-pagination,
-  .layout-main--header-expanded .layout-rightpane-container {
-    transition: none;
-  }
-}
+/*
+ * Header 높이가 고정되어 더 이상 CBR 요소들을 이동시킬 필요 없음
+ * Progressive Disclosure는 시각적 변화만으로 구현
+ *
+ * 기존 Header-CBR 연동 시스템 완전 제거:
+ * - layout-main--header-expanded 클래스는 HeaderView.tsx에서 여전히 사용되지만
+ * - CSS에서는 더 이상 아무런 스타일을 적용하지 않음
+ * - 이는 애플 디자인 철학 "물리적 공간 변화 없는 Progressive Disclosure"에 부합
+ */
 
 /* === APPLE STYLE HEADER EFFECTS === */
 
