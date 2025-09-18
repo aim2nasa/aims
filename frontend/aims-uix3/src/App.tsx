@@ -226,8 +226,9 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         <div
           className={`layout-pane layout-leftpane ${isResizing ? '' : 'transition-smooth'}`}
           style={{
+            top: `calc(var(--header-height-base) + var(--gap-top))`,
             width: layoutDimensions.leftPaneWidthPx,
-            height: layoutDimensions.mainContentHeight,
+            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
             padding: leftPaneCollapsed ? '10px' : '20px'
           }}
         >
