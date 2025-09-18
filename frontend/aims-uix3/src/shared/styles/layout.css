@@ -27,6 +27,11 @@
   padding: 0;
   font-family: var(--font-family-primary);
   background-color: var(--color-layout-main-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-header {
@@ -43,6 +48,11 @@
   position: relative;
   overflow: hidden;
   /* 애플 스타일: 화려한 애니메이션 제거, 서브틀한 효과만 유지 */
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-leftpane {
@@ -52,12 +62,22 @@
   border-right: 2px solid var(--color-border-primary);
   z-index: 10;
   background-color: var(--color-layout-leftpane-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-mainpane {
   top: var(--header-height-base);
   z-index: 1;
   background-color: var(--color-layout-mainpane-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-centerpane {
@@ -65,6 +85,11 @@
   box-sizing: border-box;
   z-index: 10;
   background-color: var(--color-layout-centerpane-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-pagination {
@@ -76,6 +101,11 @@
   box-sizing: border-box;
   z-index: 10;
   background-color: var(--color-layout-pagination-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-brb {
@@ -127,6 +157,11 @@
     opacity var(--duration-normal) var(--easing-ease-in-out),
     padding var(--duration-normal) var(--easing-ease-in-out),
     transform var(--duration-normal) var(--easing-ease-in-out);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-rightpane--hidden {
@@ -145,6 +180,11 @@
     width var(--duration-normal) var(--easing-ease-in-out),
     opacity var(--duration-normal) var(--easing-ease-in-out),
     transform var(--duration-normal) var(--easing-ease-in-out);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .layout-rightpane-container--hidden {
@@ -155,6 +195,11 @@
 
 .layout-rightpane-content {
   background-color: var(--color-layout-rightpane-bg);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* === POSITIONING UTILITIES === */

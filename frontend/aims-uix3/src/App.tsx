@@ -278,7 +278,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
           </h3>
           <p className="description-text">Main content area</p>
-          <p className="text-sm m-0" style={{ marginTop: '10px', color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm m-0 pagination-status">
             Pagination: {paginationVisible ? 'ON' : 'OFF'}
           </p>
         </div>
@@ -372,7 +372,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             <>
               <h3 className="section-heading">RightPane (Resized according to BRB)</h3>
               <p className="description-text">Additional tools & info</p>
-              <p className="text-sm m-0" style={{ marginTop: '10px', color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm m-0 pagination-status">
                 Pagination: {paginationVisible ? 'ON' : 'OFF'}
               </p>
             </>

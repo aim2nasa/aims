@@ -25,6 +25,16 @@
   font-size: 14px;
 }
 
+.pagination-status {
+  margin-top: 10px;
+  color: var(--color-text-secondary);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 /* === CONTROL COMPONENTS === */
 
 .control-label {
@@ -265,6 +275,11 @@
   margin-bottom: 2px;
   color: var(--color-text-secondary);
   font-size: 13px;
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .range-input {
@@ -620,6 +635,11 @@
   padding: 20px;
   overflow-y: auto;
   max-height: calc(80vh - 140px);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .modal-control-section {
@@ -640,6 +660,11 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--color-text-primary);
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .checkbox-grid {
@@ -656,6 +681,11 @@
   font-size: 14px;
   color: var(--color-text-secondary);
   transition: color 0.2s ease;
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .checkbox-label:hover {
@@ -690,6 +720,11 @@
   border-top: 1px solid var(--color-border-primary);
   display: flex;
   justify-content: flex-end;
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .button-secondary {
@@ -743,6 +778,12 @@
   /* transform은 JavaScript에서 완전히 제어 */
   /* transform 제거됨 */
   opacity: 1;
+
+  /* 프로페셔널 UI: 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 
   /* Smooth Transitions with Apple Magic */
   /* transform transition 제외 - 드래그 지원을 위해 */
