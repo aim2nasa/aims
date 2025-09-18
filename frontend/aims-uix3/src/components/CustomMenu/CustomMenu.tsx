@@ -331,12 +331,21 @@ const CustomMenu = ({
     }
   }
 
+  // 마우스 호버 시 자동 포커스 (애플 스타일 Progressive Enhancement)
+  const handleMenuContainerMouseEnter = () => {
+    const menuContainer = document.querySelector('.custom-menu') as HTMLElement
+    if (menuContainer) {
+      menuContainer.focus()
+    }
+  }
+
   return (
     <div
       className="custom-menu"
       onWheel={navigation.onWheel}
       onKeyDown={navigation.onKeyDown}
       onClick={handleMenuContainerClick}
+      onMouseEnter={handleMenuContainerMouseEnter}
       tabIndex={0}
       role="menu"
       aria-label="메인 메뉴"
