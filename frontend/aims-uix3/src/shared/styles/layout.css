@@ -81,15 +81,26 @@
 }
 
 .layout-centerpane {
-  padding: 20px;
+  /* 애플 디자인 가이드라인 표준 패딩 (iOS 앱 기준) */
+  padding: var(--spacing-6) var(--spacing-5); /* 24px 상하, 20px 좌우 */
   box-sizing: border-box;
   z-index: 10;
   background-color: var(--color-layout-centerpane-bg);
+  /* 애플 스타일 카드형 디자인 */
+  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+  /* 호버 시 더 깊은 그림자 효과 */
+  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
+.layout-centerpane:hover {
+  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
 }
 
 .layout-pagination {
@@ -200,11 +211,21 @@
 
 .layout-rightpane-content {
   background-color: var(--color-layout-rightpane-bg);
+  /* 애플 스타일 카드형 디자인 */
+  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+  /* 호버 시 더 깊은 그림자 효과 */
+  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
+.layout-rightpane-content:hover {
+  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
 }
 
 /* === POSITIONING UTILITIES === */

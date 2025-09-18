@@ -272,14 +272,26 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
             width: layoutDimensions.centerPaneWidth,
-            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`
+            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
+            color: 'var(--color-text-primary)'
           }}
         >
-          <h3 className="section-heading">
+          <h3 className="section-heading" style={{
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-3)', /* 12px - 애플 표준 제목-내용 간격 */
+            marginTop: '0'
+          }}>
             CenterPane {rightPaneVisible ? '(Resized according to BRB)' : '(Maximized state)'}
           </h3>
-          <p className="description-text">Main content area</p>
-          <p className="text-sm m-0 pagination-status">
+          <p className="description-text" style={{
+            color: 'var(--color-text-secondary)',
+            marginBottom: 'var(--spacing-4)', /* 16px - 애플 표준 문단 간격 */
+            marginTop: '0'
+          }}>Main content area</p>
+          <p className="text-sm m-0 pagination-status" style={{
+            color: 'var(--color-text-tertiary)',
+            margin: '0'
+          }}>
             Pagination: {paginationVisible ? 'ON' : 'OFF'}
           </p>
         </div>
@@ -362,19 +374,31 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
         {/* RightPane - 컨테이너 내부에서 우측에 위치 */}
         <div
+          className="layout-rightpane-content"
           style={{
             flex: 1,
-            padding: rightPaneVisible ? '20px' : '0px',
+            padding: rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0px', /* 애플 표준 패딩 */
             overflow: 'hidden',
-            backgroundColor: 'var(--color-layout-rightpane-bg)',
+            color: 'var(--color-text-primary)'
             // transition 제거 - 컨테이너의 transition 사용
           }}
         >
           {rightPaneVisible && (
             <>
-              <h3 className="section-heading">RightPane (Resized according to BRB)</h3>
-              <p className="description-text">Additional tools & info</p>
-              <p className="text-sm m-0 pagination-status">
+              <h3 className="section-heading" style={{
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-3)', /* 12px - 애플 표준 제목-내용 간격 */
+                marginTop: '0'
+              }}>RightPane (Resized according to BRB)</h3>
+              <p className="description-text" style={{
+                color: 'var(--color-text-secondary)',
+                marginBottom: 'var(--spacing-4)', /* 16px - 애플 표준 문단 간격 */
+                marginTop: '0'
+              }}>Additional tools & info</p>
+              <p className="text-sm m-0 pagination-status" style={{
+                color: 'var(--color-text-tertiary)',
+                margin: '0'
+              }}>
                 Pagination: {paginationVisible ? 'ON' : 'OFF'}
               </p>
             </>
