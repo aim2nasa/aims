@@ -85,9 +85,10 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
       setTimeout(() => {
         setInternalOpen(false)
         setIsClosing(false)
-      }, 150) // CSS 트랜지션 시간과 동조
+      }, 500) // iOS Sheet Presentation 애니메이션 시간과 동조
     }
   }, [isOpen, internalOpen])
+
 
   // 내부적으로 닫힌 상태라면 렌더링하지 않음
   if (!internalOpen) return null
@@ -99,21 +100,35 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
     }
   }
 
+  // ESC 키로 모달 닫기 (iOS 접근성 가이드라인)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleSafeClose()
+    }
+  }
+
   // Portal을 사용하여 모달을 document.body에 직접 렌더링
   // App 컴포넌트의 리마운트 영향을 완전히 차단
   return createPortal(
     <div
-      className={`floating-modal ${isDragging ? 'floating-modal--dragging' : ''}`}
+      className={`floating-modal ${isDragging ? 'floating-modal--dragging' : ''} ${!isClosing ? 'floating-modal--entering' : 'floating-modal--exiting'}`}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        cursor: isDragging ? 'grabbing' : 'default'
+        // ⚠️ 예외: 동적 드래그 위치는 런타임 계산 필수 - CSS로 불가능
+        transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px)) scale(${isDragging ? '1.03' : '1'})`,
+        left: `calc(50% + ${position.x}px)`,
+        top: `calc(50% + ${position.y}px)`,
       }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
     >
       <div
         className="modal-header modal-header--draggable"
         {...dragHandlers}
       >
-        <h2 className="modal-title">레이아웃 제어</h2>
+        <h2 id="modal-title" className="modal-title">레이아웃 제어</h2>
         <button className="modal-close-button" onClick={handleSafeClose}>
           ×
         </button>

@@ -394,10 +394,24 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
   );
 };
 
-// ❌ 피해야 할 패턴
+// ❌ 피해야 할 패턴 - 정적 인라인 스타일
 const BadCard = ({ customer }) => (
   <div style={{ backgroundColor: '#ffffff', padding: '16px' }}>
-    {/* 인라인 스타일 사용 금지 */}
+    {/* 정적 인라인 스타일 사용 금지 */}
+  </div>
+);
+
+// ✅ 허용되는 예외 - 동적 런타임 계산
+const DraggableModal = ({ position, isDragging }) => (
+  <div
+    className="floating-modal"
+    style={{
+      // ⚠️ 예외: 런타임 동적 위치는 CSS로 불가능
+      transform: `translate(${position.x}px, ${position.y}px)`,
+      scale: isDragging ? 1.03 : 1
+    }}
+  >
+    {/* 정적 스타일은 className으로, 동적 스타일만 style로 */}
   </div>
 );
 ```

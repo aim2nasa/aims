@@ -14,7 +14,7 @@ AIMS UIX-3의 CSS 시스템은 **중복 제거**, **테마 지원**, **확장성
 ### 1. 절대적 금지 사항 🚫
 
 ```css
-/* ❌ 절대 금지 - 인라인 스타일 */
+/* ❌ 절대 금지 - 정적 인라인 스타일 */
 <div style={{backgroundColor: '#ffffff', padding: '16px'}}>
 
 /* ❌ 절대 금지 - 하드코딩된 색상 */
@@ -26,6 +26,41 @@ AIMS UIX-3의 CSS 시스템은 **중복 제거**, **테마 지원**, **확장성
 /* ❌ 절대 금지 - 컴포넌트별 개별 스타일링 */
 .component-a { background: white; border: 1px solid gray; }
 .component-b { background: white; border: 1px solid gray; }  /* 중복! */
+```
+
+### 1.1. 기술적 예외 사항 ⚠️
+
+**런타임 동적 계산이 필수인 경우에만 인라인 스타일 허용:**
+
+```typescript
+/* ✅ 허용 - 동적 드래그 위치 (CSS로 불가능) */
+<div style={{
+  transform: `translate(${dynamicX}px, ${dynamicY}px)`,
+  left: `calc(50% + ${position.x}px)`,
+  top: `calc(50% + ${position.y}px)`
+}}>
+
+/* ✅ 허용 - 실시간 애니메이션 값 */
+<div style={{ opacity: animationProgress }}>
+
+/* ✅ 허용 - 사용자 입력 기반 동적 크기 */
+<div style={{ width: `${userInput}%` }}>
+```
+
+**허용 조건:**
+- CSS로 기술적 구현이 불가능한 경우만
+- 정적 속성은 반드시 CSS로 분리
+- 주석으로 예외 사유 명시 필수
+
+```typescript
+/* 예시: 올바른 예외 적용 */
+<div
+  className="floating-modal floating-modal--dragging"
+  style={{
+    // ⚠️ 예외: 런타임 드래그 위치는 CSS로 불가능
+    transform: `translate(${position.x}px, ${position.y}px)`
+  }}
+>
 ```
 
 ### 2. 반드시 준수할 원칙 ✅

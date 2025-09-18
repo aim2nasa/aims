@@ -142,6 +142,39 @@
   --duration-apple-smooth: 0.4s;  /* 레이아웃 전환 */
   --duration-apple-graceful: 0.6s; /* 모달, 큰 전환 */
 
+  /* === APPLE LIQUID GLASS SYSTEM (iOS 2025) === */
+
+  /* Liquid Glass Backdrop Filters */
+  --backdrop-glass-light: blur(20px) saturate(180%);
+  --backdrop-glass-medium: blur(40px) saturate(200%);
+  --backdrop-glass-heavy: blur(60px) saturate(220%);
+
+  /* Liquid Glass Colors - Light Theme */
+  --color-glass-light: rgba(255, 255, 255, 0.75);
+  --color-glass-medium: rgba(255, 255, 255, 0.85);
+  --color-glass-heavy: rgba(255, 255, 255, 0.95);
+
+  /* Modal Specific Glass Effects */
+  --color-modal-glass-bg: rgba(255, 255, 255, 0.8);
+  --color-modal-glass-border: rgba(255, 255, 255, 0.2);
+  --backdrop-modal-dimming: rgba(0, 0, 0, 0.4);
+
+  /* iOS Sheet Presentation Shadows */
+  --shadow-sheet-light: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-sheet-elevated: 0 20px 50px -12px rgba(0, 0, 0, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  --shadow-sheet-focused: 0 25px 60px -12px rgba(0, 0, 0, 0.2), 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+
+  /* Dynamic Focus Scale Values */
+  --scale-modal-default: 1;
+  --scale-modal-hover: 1.02;
+  --scale-modal-focus: 1.05;
+  --scale-modal-dragging: 1.03;
+
+  /* Sheet Presentation Animation */
+  --easing-sheet-entrance: cubic-bezier(0.32, 0.72, 0, 1);  /* iOS sheet slide-up */
+  --easing-sheet-dismissal: cubic-bezier(0.4, 0, 1, 1);     /* iOS sheet slide-down */
+  --duration-sheet-animation: 0.5s;
+
   /* Status Colors for Components */
   --color-status-success: var(--color-success-700);
   --color-status-success-bg: var(--color-success-50);

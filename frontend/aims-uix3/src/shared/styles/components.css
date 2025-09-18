@@ -579,6 +579,9 @@
 .modal-header--draggable {
   cursor: grab;
   user-select: none;
+  /* 드래그 이벤트가 확실히 작동하도록 강제 */
+  position: relative;
+  z-index: 10;
 }
 
 .modal-header--draggable:active {
@@ -710,53 +713,147 @@
 /* 애플 디자인 철학 준수: "Invisible until you need it" + Progressive Disclosure */
 
 .floating-modal {
+  /* === iOS 2025 LIQUID GLASS MODAL === */
   position: fixed;
   top: 50%;
   left: 50%;
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
-  max-width: 480px;
-  width: 90%;
-  max-height: 80vh;
+
+  /* Liquid Glass Background */
+  background: var(--color-modal-glass-bg);
+  border: 1px solid var(--color-modal-glass-border);
+  border-radius: var(--radius-2xl); /* Apple Guidelines: 24px radius for sheets */
+
+  /* Advanced Backdrop Filter - Liquid Glass Effect */
+  backdrop-filter: var(--backdrop-glass-medium);
+  -webkit-backdrop-filter: var(--backdrop-glass-medium);
+
+  /* iOS Sheet Presentation Shadows */
+  box-shadow: var(--shadow-sheet-light);
+
+  /* Apple Guidelines Sizing */
+  max-width: 420px;  /* iOS modal 표준 너비 */
+  width: 85%;       /* 모바일 친화적 */
+  max-height: 75vh; /* 화면 비율 고려 */
+  min-height: 200px; /* 최소 사용성 확보 */
+
+  /* 레이아웃 */
   overflow: hidden;
-  border: 1px solid var(--color-border-primary);
+  z-index: var(--z-portal-modal);
+
+  /* transform은 JavaScript에서 완전히 제어 */
+  /* transform 제거됨 */
+  opacity: 1;
+
+  /* Smooth Transitions with Apple Magic */
+  /* transform transition 제외 - 드래그 지원을 위해 */
   transition:
-    box-shadow var(--duration-normal) var(--easing-ease-out),
-    transform var(--duration-fast) var(--easing-ease-out);
-  z-index: var(--z-portal-modal); /* Portal 환경에서 모든 요소 위에 표시 */
-  /* 애플 스타일: 기본적으로 서브틀함 */
-  opacity: 0.95;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    box-shadow var(--duration-apple-smooth) var(--easing-apple-magic),
+    backdrop-filter var(--duration-apple-smooth) var(--easing-apple-magic);
 }
 
 .floating-modal:hover {
-  /* Progressive Disclosure: 호버 시 더 명확하게 */
-  opacity: 1;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.15),
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
+  /* === DYNAMIC FOCUS: Progressive Disclosure === */
+  /* transform은 JavaScript에서 제어하므로 제거 */
+  box-shadow: var(--shadow-sheet-elevated);
+  backdrop-filter: var(--backdrop-glass-heavy);
+  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
 }
 
 .floating-modal--dragging {
-  /* 드래그 중: 사용자에게 명확한 시각적 피드백 */
-  opacity: 1;
-  box-shadow:
-    0 35px 60px -12px rgba(0, 0, 0, 0.25),
-    0 25px 50px -5px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.1);
-  transform: scale(1.02);
+  /* === DYNAMIC FOCUS: Deep Engagement === */
+  /* transform은 JavaScript에서 제어하므로 제거 */
+  box-shadow: var(--shadow-sheet-focused);
+  backdrop-filter: var(--backdrop-glass-heavy);
+  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
+
+  /* 드래그 상태 최적화 */
   user-select: none;
+  cursor: grabbing;
+
+  /* 더 강한 Glass 효과로 집중도 표현 */
+  border-color: var(--color-modal-glass-border);
+
+  /* 성능 최적화 속성들 - 가이드라인 준수 */
+  will-change: transform;
+  backface-visibility: hidden;
+  /* 드래그 중에는 모든 transition 비활성화 */
+  transition: none !important;
 }
 
-/* 애플의 부드러운 애니메이션 커브 */
+/* === APPLE 2025 LIQUID GLASS ANIMATIONS === */
 .floating-modal * {
-  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-timing-function: var(--easing-apple-magic);
+}
+
+/* Modal Backdrop Dimming Layer */
+.floating-modal::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--backdrop-modal-dimming);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--duration-sheet-animation) var(--easing-apple-magic);
+}
+
+.floating-modal:hover::before {
+  opacity: 1;
+}
+
+/* === iOS DYNAMIC FOCUS STATES === */
+
+/* Focus state - 키보드 네비게이션 */
+.floating-modal:focus-within {
+  /* transform은 JavaScript에서 제어하므로 제거 */
+  box-shadow: var(--shadow-sheet-focused);
+  backdrop-filter: var(--backdrop-glass-heavy);
+  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 4px;
+}
+
+/* Active state - 클릭/터치 상호작용 */
+.floating-modal:active {
+  /* transform은 JavaScript에서 제어하므로 제거 */
+  transition-duration: var(--duration-apple-quick);
+}
+
+/* === MODAL ENTRANCE/EXIT ANIMATIONS === */
+
+/* 모달 등장 애니메이션 - iOS Sheet Slide-up */
+@keyframes modalSlideUp {
+  from {
+    transform: translate(-50%, 100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale-modal-default));
+    opacity: 1;
+  }
+}
+
+/* 모달 사라짐 애니메이션 - iOS Sheet Slide-down */
+@keyframes modalSlideDown {
+  from {
+    transform: translate(-50%, -50%) scale(var(--scale-modal-default));
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, 100%) scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* 애니메이션 클래스 */
+.floating-modal--entering {
+  animation: modalSlideUp var(--duration-sheet-animation) var(--easing-sheet-entrance) forwards;
+}
+
+.floating-modal--exiting {
+  animation: modalSlideDown var(--duration-sheet-animation) var(--easing-sheet-dismissal) forwards;
 }
 
 /* === MODAL RESPONSIVE === */

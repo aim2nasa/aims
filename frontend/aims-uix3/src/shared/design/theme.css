@@ -325,6 +325,11 @@
   --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
   --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0px 1px rgba(0, 0, 0, 0.2);
 
+  /* Liquid Glass Modal - Dark Theme */
+  --color-modal-glass-bg: rgba(28, 28, 30, 0.8);
+  --color-modal-glass-border: rgba(255, 255, 255, 0.1);
+  --backdrop-modal-dimming: rgba(0, 0, 0, 0.6);
+
   /* Header Heights and Opacities - Progressive Disclosure 최적화 */
   --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
   --header-height-expanded: 70px;
@@ -347,6 +352,11 @@
   --shadow-apple-button: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-apple-button-hover: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
   --shadow-apple-elevated: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0px 1px rgba(0, 0, 0, 0.06);
+
+  /* Liquid Glass Modal - Light Theme */
+  --color-modal-glass-bg: rgba(255, 255, 255, 0.8);
+  --color-modal-glass-border: rgba(255, 255, 255, 0.2);
+  --backdrop-modal-dimming: rgba(0, 0, 0, 0.4);
 }
 
 /* === SYSTEM PREFERENCE === */

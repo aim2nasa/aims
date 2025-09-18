@@ -89,6 +89,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. **레이아웃 위치 지정**: `position`, `top`, `left`, `right`, `bottom`
 5. **빠른 프로토타이핑**: 개발 초기 단계 임시 스타일
 6. **런타임 상호작용**: 마우스 위치, 스크롤 기반 애니메이션
+7. **드래그앤드롭 위치**: `transform: translate(${x}px, ${y}px)` (CSS로 불가능)
 
 #### 🟡 신중한 사용 (검토 권장)
 
