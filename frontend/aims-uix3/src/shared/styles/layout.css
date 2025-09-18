@@ -62,11 +62,21 @@
   border-right: 2px solid var(--color-border-primary);
   z-index: 10;
   background-color: var(--color-layout-leftpane-bg);
+  /* 애플 스타일 카드형 디자인 */
+  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
+  /* 호버 시 더 깊은 그림자 효과 */
+  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* 애플 스타일 Progressive Enhancement - 호버 시 깊이감 증가 */
+.layout-leftpane:hover {
+  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
 }
 
 .layout-mainpane {
@@ -114,9 +124,13 @@
   box-sizing: border-box;
   z-index: 10;
   background-color: var(--color-layout-pagination-bg);
+  /* 애플 스타일 카드형 디자인 */
+  border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
+  box-shadow: var(--shadow-apple-elevated); /* iOS 카드 표준 그림자 */
   /* Apple Design: Clarity - 정보 계층 구조 명확화 */
   opacity: 0.85; /* Deference - 콘텐츠를 방해하지 않는 겸손한 존재감 */
-  transition: opacity var(--duration-fast) var(--easing-ease-out); /* Depth - 자연스러운 시각적 변화 */
+  transition: opacity var(--duration-fast) var(--easing-ease-out),
+              box-shadow var(--duration-ios-quick) var(--easing-ios-default); /* Depth - 자연스러운 시각적 변화 */
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
@@ -128,6 +142,7 @@
 .layout-pagination:hover,
 .layout-pagination:focus-within {
   opacity: 1; /* 상호작용 시 Clarity 향상 */
+  box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
 }
 
 .layout-brb {
