@@ -257,6 +257,10 @@
   --color-layout-brb-icon-light: #6b7280;  /* Light Theme: 아이콘 그레이 */
   --color-layout-brb-icon-dark: #9ca3af;
 
+  /* RightPane Colors - gapRight 시각적 구분을 위한 별도 색상 */
+  --color-layout-rightpane-light: #e8e8ed; /* Light Theme: 약간 더 진한 시스템 그레이 (gapRight 구분용) */
+  --color-layout-rightpane-dark: #2c2c2e;  /* Dark Theme: 세컨더리 다크 */
+
   /* Theme Toggle Colors */
   --color-icon-orange: #f97316;
   --color-icon-cyan: #06b6d4;
