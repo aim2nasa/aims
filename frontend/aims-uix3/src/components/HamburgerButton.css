@@ -11,30 +11,34 @@
   /* 기본 스타일 - aims-uix2 Button type="text" 스타일 참조 */
   background-color: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-1);
+  border-radius: var(--radius-base); /* 6px - iOS 표준 */
+  padding: var(--spacing-2); /* 8px - 터치 영역 개선 */
   cursor: pointer;
 
   /* 레이아웃 */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-11);  /* 44px - iOS 최소 터치 영역 표준 */
+  height: var(--spacing-11); /* 44px - iOS 최소 터치 영역 표준 */
 
   /* 🍎 애플 스타일: 그림자 효과 제거 - 미니멀리즘 준수 */
   box-shadow: none;
 
   /* 트랜지션 */
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
 
-  /* 색상 - CSS 변수 활용 */
-  color: var(--color-hamburger-icon);
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: background-color;
+
+  /* 색상 - 통일된 CSS 변수 활용 */
+  background-color: var(--color-layout-hamburger-bg);
+  color: var(--color-layout-hamburger-icon);
 }
 
 /* 🍎 애플 스타일 호버 - 단순한 배경색 변화만 (iOS/macOS 표준) */
 .hamburger-button:hover {
-  background-color: var(--color-bg-hover);
+  background-color: var(--color-layout-hamburger-hover);
   /* 🍎 애플 철학: transform, box-shadow 효과 제거 - 미니멀리즘 준수 */
 }
 
@@ -52,16 +56,20 @@
 
 /* 🍎 애플 스타일 액티브 - 단순한 배경색 변화만 */
 .hamburger-button:active {
-  background-color: var(--color-bg-active);
+  background-color: var(--color-layout-hamburger-active);
   /* 🍎 애플 철학: transform, box-shadow 효과 제거 */
 }
 
 /* 햄버거 아이콘 SVG 스타일 */
 .hamburger-icon {
-  width: 14px;
-  height: 14px;
+  width: var(--font-size-sm);  /* 14px */
+  height: var(--font-size-sm); /* 14px */
   color: inherit;
-  transition: color var(--duration-fast) var(--easing-ease-out);
+  transition: color var(--duration-fast) var(--easing-ease-out),
+              transform var(--duration-ios-quick) var(--easing-ios-default);
+
+  /* 🍎 Micro-interaction: 서브틀한 회전 준비 */
+  transform-origin: center;
 }
 
 /* 버튼 비활성화 상태 */
@@ -79,9 +87,9 @@
 
 /* 🍎 애플 스타일 햄버거 컨테이너 - 자연스러운 여백으로 구분 */
 .hamburger-container {
-  margin-top: auto;
+  margin-block-start: auto; /* RTL 지원: margin-top → margin-block-start */
   display: flex;
-  padding-top: var(--spacing-4); /* 여백 약간 증가로 자연스러운 구분 */
+  padding-block-start: var(--spacing-4); /* RTL 지원: padding-top → padding-block-start */
   /* 🍎 애플 철학: border 제거 - 공간으로 구분하는 미니멀 접근 */
 }
 
@@ -93,17 +101,12 @@
   justify-content: flex-end;
 }
 
-/* 다크 테마 특화 스타일 (자동 적용) */
-[data-theme="dark"] .hamburger-button {
-  /* CSS 변수가 자동으로 다크 테마 값으로 변경됨 */
+/* 🍎 Micro-interaction: 클릭 시 서브틀한 회전 (Progressive Disclosure) */
+.hamburger-button--active .hamburger-icon {
+  transform: rotate(90deg);
 }
 
-/* 시스템 테마 지원 */
-@media (prefers-color-scheme: dark) {
-  [data-theme="system"] .hamburger-button {
-    /* 시스템 다크 모드일 때 자동 적용 */
-  }
-}
+/* 다크 테마와 시스템 테마는 tokens.css에서 자동 처리됨 */
 
 /* 고대비 모드 지원 */
 @media (prefers-contrast: high) {
@@ -116,10 +119,14 @@
   }
 }
 
-/* 애니메이션 비활성화 모드 지원 */
+/* 🍎 Accessibility: 완벽한 애니메이션 비활성화 지원 */
 @media (prefers-reduced-motion: reduce) {
   .hamburger-button,
-  .hamburger-icon {
-    transition: none;
+  .hamburger-icon,
+  .hamburger-button--active .hamburger-icon {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
   }
 }
