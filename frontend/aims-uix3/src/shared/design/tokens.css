@@ -197,6 +197,13 @@
   --z-index-tooltip: 1000;     /* 툴팁 */
   --z-index-notification: 1200; /* 알림 */
 
+  /* === SCROLLBAR SYSTEM === */
+
+  /* iOS/macOS 표준 스크롤바 크기 */
+  --scrollbar-width: 4px;              /* 기본 너비 */
+  --scrollbar-width-hover: 6px;        /* 호버시 너비 */
+  --scrollbar-border-radius: 2px;      /* 둥근 모서리 */
+
   /* Status Colors for Components */
   --color-status-success: var(--color-success);
   --color-status-warning: var(--color-warning);

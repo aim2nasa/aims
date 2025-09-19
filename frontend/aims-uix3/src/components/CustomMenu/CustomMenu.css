@@ -82,6 +82,12 @@
   overflow: hidden;
   /* 애플 철학: 매우 자연스럽고 우아한 전개 애니메이션 */
   animation: appleSubMenuSlide 300ms var(--easing-apple-magic);
+
+  /* 🍎 Performance: 60fps 보장 GPU 가속 */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+  contain: layout style paint;
+  backface-visibility: hidden;
 }
 
 @keyframes appleSubMenuSlide {
@@ -431,6 +437,12 @@
 
   /* 부드러운 나타남 효과 */
   animation: tooltipAppear var(--duration-fast) var(--easing-ease-out);
+
+  /* 🍎 Performance: 60fps 보장 GPU 가속 */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+  contain: layout style paint;
+  backface-visibility: hidden;
 }
 
 @keyframes tooltipAppear {
@@ -532,7 +544,7 @@
 
 /* 애플 스타일 스크롤바 */
 .custom-menu::-webkit-scrollbar {
-  width: 4px;
+  width: var(--scrollbar-width); /* 🍎 iOS/macOS 표준 스크롤바 */
 }
 
 .custom-menu::-webkit-scrollbar-track {
