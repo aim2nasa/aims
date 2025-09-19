@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, memo } from 'react'
 import { HapticType, withHaptic } from '../services/hapticService'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from './SFSymbol'
 
@@ -51,4 +51,4 @@ const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   )
 }
 
-export default ThemeToggle
+export default memo(ThemeToggle)

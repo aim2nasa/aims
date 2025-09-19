@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useDraggable } from '../hooks/useDraggable';
 import { HapticService, HapticType, withHaptic } from '../services/hapticService';
@@ -289,4 +289,4 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   );
 };
 
-export default LayoutControlModal;
+export default memo(LayoutControlModal);

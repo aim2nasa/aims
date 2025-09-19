@@ -6,7 +6,12 @@
  * 글로벌 스타일 초기화 및 기본 설정
  */
 
-/* Header Progressive Disclosure Styles Import */
+/* === 🍎 APPLE DESIGN SYSTEM IMPORTS === */
+@import './shared/design/tokens.css';
+@import './shared/design/theme.css';
+@import './shared/design/system.css';
+
+/* Component Styles */
 @import './components/Header/Header.css';
 
 /* === CSS RESET === */

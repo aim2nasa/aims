@@ -7,7 +7,7 @@
  * CLAUDE.md 준수: 애플 디자인 철학 "Progressive Disclosure" UI 구현
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, memo } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -168,4 +168,4 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   )
 }
 
-export default HeaderView
+export default memo(HeaderView)

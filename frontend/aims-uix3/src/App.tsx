@@ -141,38 +141,38 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [])
 
 
-  // CSS 계산식들 메모이제이션 (성능 최적화, 기존 동작 보존)
+  // CSS 계산식들 메모이제이션 (성능 최적화, 애플 표준 크기 사용)
   const layoutDimensions = useMemo(() => {
     const leftPaneWidth = leftPaneCollapsed ? 60 : 250
-    const leftPaneWidthPx = leftPaneCollapsed ? '60px' : '250px'
-    const mainPaneWidth = `calc(100vw - ${leftPaneWidthPx})`
+    const leftPaneWidthVar = leftPaneCollapsed ? 'var(--leftpane-width-collapsed)' : 'var(--leftpane-width-expanded)'
+    const mainPaneWidth = `calc(100vw - ${leftPaneWidthVar})`
 
     return {
       leftPaneWidth,
-      leftPaneWidthPx,
+      leftPaneWidthVar,
       mainPaneWidth,
       // CenterPane width calculations
       centerPaneWidth: rightPaneVisible
-        ? `calc((100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
-        : `calc((100vw - ${leftPaneWidthPx}) - var(--gap-left) - var(--gap-right))`,
+        ? `calc((100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
+        : `calc((100vw - ${leftPaneWidthVar}) - var(--gap-left) - var(--gap-right))`,
 
       // RightPane width calculation
-      rightPaneWidth: `calc((100vw - ${leftPaneWidthPx}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))`,
+      rightPaneWidth: `calc((100vw - ${leftPaneWidthVar}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))`,
 
       // Pagination width (same as CenterPane)
       paginationWidth: rightPaneVisible
-        ? `calc((100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
-        : `calc((100vw - ${leftPaneWidthPx}) - var(--gap-left) - var(--gap-right))`,
+        ? `calc((100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
+        : `calc((100vw - ${leftPaneWidthVar}) - var(--gap-left) - var(--gap-right))`,
 
       // BRB position calculations - CenterPane 우측 경계에 정확히 맞춤
       brbLeftPosition: rightPaneVisible
-        ? `calc(${leftPaneWidthPx} + var(--gap-left) + (100vw - ${leftPaneWidthPx}) * ${centerWidth} / 100 - var(--gap-left))`
-        : `calc(${leftPaneWidthPx} + (100vw - ${leftPaneWidthPx}) - var(--gap-right))`,
+        ? `calc(${leftPaneWidthVar} + var(--gap-left) + (100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left))`
+        : `calc(${leftPaneWidthVar} + (100vw - ${leftPaneWidthVar}) - var(--gap-right))`,
 
-      // Common height calculations
-      mainContentHeight: 'calc(100vh - 60px)',
-      centerPaneHeight: paginationVisible ? 'calc(100vh - 116px)' : 'calc(100vh - 76px)',
-      layoutContentHeight: `calc(100vh - 60px - var(--gap-top) - var(--gap-bottom))`
+      // Common height calculations - 애플 표준 크기 사용
+      mainContentHeight: 'var(--mainpane-height)',
+      centerPaneHeight: paginationVisible ? 'var(--centerpane-height-with-pagination)' : 'var(--centerpane-height-no-pagination)',
+      layoutContentHeight: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`
     }
   }, [leftPaneCollapsed, rightPaneVisible, centerWidth, paginationVisible])
 
@@ -216,26 +216,26 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         className="skip-navigation"
         style={{
           position: 'absolute',
-          top: '-40px',
-          left: '6px',
+          top: 'var(--skip-nav-offset)',
+          left: 'var(--spacing-2)',
           background: 'var(--color-primary-500)',
           color: 'white',
-          padding: '8px 16px',
-          borderRadius: '4px',
+          padding: 'var(--spacing-2) var(--spacing-4)',
+          borderRadius: 'var(--radius-sm)',
           textDecoration: 'none',
-          fontSize: '14px',
-          fontWeight: '600',
-          zIndex: '1000',
-          transform: 'translateY(-40px)',
-          transition: 'transform 0.3s ease',
+          fontSize: 'var(--font-size-footnote)',
+          fontWeight: 'var(--font-weight-semibold)',
+          zIndex: 'var(--z-index-notification)',
+          transform: 'translateY(var(--skip-nav-offset))',
+          transition: 'transform var(--duration-ios-standard) var(--easing-ios-default)',
           outline: '2px solid transparent',
           outlineOffset: '2px'
         }}
         onFocus={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)'
+          e.currentTarget.style.transform = 'translateY(var(--skip-nav-visible-offset))'
         }}
         onBlur={(e) => {
-          e.currentTarget.style.transform = 'translateY(-40px)'
+          e.currentTarget.style.transform = 'translateY(var(--skip-nav-offset))'
         }}
         aria-label="메인 콘텐츠로 바로 가기"
       >
@@ -250,10 +250,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         className="sr-only"
         style={{
           position: 'absolute',
-          width: '1px',
-          height: '1px',
+          width: 'var(--sr-only-size)',
+          height: 'var(--sr-only-size)',
           padding: '0',
-          margin: '-1px',
+          margin: 'calc(var(--sr-only-size) * -1)',
           overflow: 'hidden',
           clip: 'rect(0, 0, 0, 0)',
           whiteSpace: 'nowrap',
@@ -277,8 +277,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           aria-label="메인 네비게이션 메뉴"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
-            width: layoutDimensions.leftPaneWidthPx,
-            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
+            width: layoutDimensions.leftPaneWidthVar,
+            height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
             padding: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)' /* 🍎 애플 표준: 1:2 비율 (12px/24px) */
           }}
         >
@@ -305,7 +305,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         <div
           className={`layout-pane layout-mainpane ${isResizing ? '' : 'transition-smooth'}`}
           style={{
-            left: layoutDimensions.leftPaneWidthPx,
+            left: layoutDimensions.leftPaneWidthVar,
             width: layoutDimensions.mainPaneWidth,
             height: layoutDimensions.mainContentHeight,
             padding: 'var(--gap-right)'
@@ -323,9 +323,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           aria-label="메인 콘텐츠 영역"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
-            left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
+            left: `calc(${layoutDimensions.leftPaneWidthVar} + var(--gap-left))`,
             width: layoutDimensions.centerPaneWidth,
-            height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
+            height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
             color: 'var(--color-text-primary)'
           }}
         >
@@ -344,7 +344,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           className="layout-pane layout-pagination"
           style={{
             bottom: `var(--gap-bottom)`,
-            left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
+            left: `calc(${layoutDimensions.leftPaneWidthVar} + var(--gap-left))`,
             width: layoutDimensions.paginationWidth,
           }}
         >
@@ -361,8 +361,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           position: 'absolute',
           top: `calc(var(--header-height-base) + var(--gap-top))`,
           right: `var(--gap-right)`,
-          width: rightPaneVisible ? `calc(${layoutDimensions.rightPaneWidth} + 4px)` : '0px',
-          height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
+          width: rightPaneVisible ? `calc(${layoutDimensions.rightPaneWidth} + var(--rightpane-container-offset))` : '0px',
+          height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
           display: 'flex',
           flexDirection: 'row',
           opacity: rightPaneVisible ? 1 : 0,
@@ -376,7 +376,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <div
             className="layout-brb"
             style={{
-              width: '2px',
+              width: 'var(--brb-width)',
               height: '100%',
               flexShrink: 0,
               cursor: rightPaneVisible ? 'col-resize' : 'default',
@@ -433,7 +433,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           className="layout-rightpane-content"
           style={{
             flex: 1,
-            padding: rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0px', /* 애플 표준 패딩 */
+            padding: rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0', /* 애플 표준 패딩 */
             overflow: 'hidden',
             color: 'var(--color-text-primary)'
             // transition 제거 - 컨테이너의 transition 사용

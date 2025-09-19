@@ -1,49 +1,66 @@
-import { useState, ReactNode, useMemo } from 'react'
+import { useState, ReactNode, useMemo, memo } from 'react'
 import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import './CustomMenu.css'
 
-// CSS로 구현한 벡터 아이콘 컴포넌트들 (하드코딩 금지 원칙 준수)
+// SF Symbol 기반 아이콘 컴포넌트들 (애플 디자인 표준 준수)
 const MenuIcons = {
   User: () => (
-    <div className="menu-icon icon-user">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="person"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   List: () => (
-    <div className="menu-icon icon-list">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="list-bullet"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   Location: () => (
-    <div className="menu-icon icon-location">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="location"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   Team: () => (
-    <div className="menu-icon icon-team">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="person-2"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   FileText: () => (
-    <div className="menu-icon icon-file">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="doc"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   Dashboard: () => (
-    <div className="menu-icon icon-dashboard">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="chart-bar"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   Search: () => (
-    <div className="menu-icon icon-search">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="magnifyingglass"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   ),
   ChevronDown: () => (
-    <div className="menu-icon icon-chevron">
-      <div className="icon-shape"></div>
-    </div>
+    <SFSymbol
+      name="chevron-down"
+      size={SFSymbolSize.FOOTNOTE}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 
@@ -376,4 +393,4 @@ const CustomMenu = ({
   )
 }
 
-export default CustomMenu
+export default memo(CustomMenu)
