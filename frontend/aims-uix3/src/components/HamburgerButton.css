@@ -22,8 +22,8 @@
   width: 32px;
   height: 32px;
 
-  /* 입체감 그림자 효과 */
-  box-shadow: var(--shadow-apple-button);
+  /* 🍎 애플 스타일: 그림자 효과 제거 - 미니멀리즘 준수 */
+  box-shadow: none;
 
   /* 트랜지션 */
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -32,12 +32,10 @@
   color: var(--color-hamburger-icon);
 }
 
-/* 호버 상태 - aims-uix2 Button 호버 효과 참조 */
+/* 🍎 애플 스타일 호버 - 단순한 배경색 변화만 (iOS/macOS 표준) */
 .hamburger-button:hover {
   background-color: var(--color-bg-hover);
-  color: var(--color-text-primary);
-  transform: translateY(-1px); /* 살짝 위로 올라오는 효과 */
-  box-shadow: var(--shadow-apple-button-hover);
+  /* 🍎 애플 철학: transform, box-shadow 효과 제거 - 미니멀리즘 준수 */
 }
 
 /* 포커스 상태 - 접근성 고려 */
@@ -52,11 +50,10 @@
   box-shadow: 0 0 0 2px var(--color-primary-100);
 }
 
-/* 액티브 상태 */
+/* 🍎 애플 스타일 액티브 - 단순한 배경색 변화만 */
 .hamburger-button:active {
   background-color: var(--color-bg-active);
-  transform: translateY(0); /* 눌렸을 때 원래 위치로 */
-  box-shadow: var(--shadow-apple-elevated);
+  /* 🍎 애플 철학: transform, box-shadow 효과 제거 */
 }
 
 /* 햄버거 아이콘 SVG 스타일 */
@@ -77,15 +74,15 @@
 
 .hamburger-button:disabled:hover {
   background-color: transparent;
-  transform: none;
+  /* 🍎 애플 스타일: transform 제거됨 */
 }
 
-/* 햄버거 컨테이너 스타일 개선 */
+/* 🍎 애플 스타일 햄버거 컨테이너 - 자연스러운 여백으로 구분 */
 .hamburger-container {
   margin-top: auto;
   display: flex;
-  padding-top: var(--spacing-3);
-  border-top: 1px solid var(--color-border-secondary);
+  padding-top: var(--spacing-4); /* 여백 약간 증가로 자연스러운 구분 */
+  /* 🍎 애플 철학: border 제거 - 공간으로 구분하는 미니멀 접근 */
 }
 
 .hamburger-container--collapsed {
