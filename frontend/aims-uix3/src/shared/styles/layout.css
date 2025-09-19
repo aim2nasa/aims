@@ -145,38 +145,46 @@
   box-shadow: var(--shadow-sheet-elevated); /* 더 깊은 그림자로 Depth 강조 */
 }
 
+/* 🍎 제안 1: Ghost Mode - 완전히 투명하다가 호버 시에만 극히 서브틀하게 나타남 */
 .layout-brb {
-  /* 레이아웃 관련 속성은 인라인 스타일에서 처리하므로 제거 */
-  /* 호버 관련 속성만 CSS에서 처리 */
-  background-color: var(--color-layout-brb-bg);
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
+  /* 평상시 완전 투명 - "Invisible until you need it" */
+  background-color: transparent;
+  transition: background-color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: col-resize;
+
+  /* 🎯 UP/DOWN 영역 마스크: 상단 16px, 하단 16px는 안보이게 */
+  clip-path: inset(16px 0 16px 0);
+
+  /* 🎯 2px 폭에 맞는 미세한 라운드 적용 */
+  border-radius: 1px;
 }
 
-/* BRB 호버 시 그립 인디케이터 - 애플 스타일 */
+/* 그립 인디케이터 완전 제거 - 애플 미니멀리즘 */
 .layout-brb::before {
-  content: '⋮';
-  position: absolute;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--color-layout-brb-icon);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-  pointer-events: none;
-  user-select: none;
-  font-family: var(--font-family-primary);
+  display: none;
 }
 
-/* BRB 호버 상태 - Progressive Disclosure */
+/* 🍎 애플 스타일 최적 색상 - CenterPane과 RightPane 중간 톤 */
 .layout-brb:hover {
-  background-color: var(--color-layout-brb-hover);
+  /* Light: CenterPane(#ffffff)과 RightPane(#e5e5ea) 중간값 + 구분 가능한 강도 */
+  background-color: rgba(60, 60, 67, 0.08);  /* iOS systemGray4 기반 서브틀 */
 }
 
-.layout-brb:hover::before {
-  opacity: 1;
+/* 다크 모드 - iOS 표준 Separator 색상 */
+html[data-theme="dark"] .layout-brb:hover {
+  /* Dark: iOS separatorColor와 동일한 표준 색상 */
+  background-color: rgba(84, 84, 88, 0.6);   /* iOS systemGray5 기반 */
+}
+
+/* 시스템 다크 모드 */
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] .layout-brb:hover {
+    background-color: rgba(84, 84, 88, 0.6);
+  }
 }
 
 .layout-brb--hidden {

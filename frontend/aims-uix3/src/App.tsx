@@ -321,7 +321,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           <div
             className="layout-brb"
             style={{
-              width: '4px',
+              width: '2px',
               height: '100%',
               flexShrink: 0,
               cursor: rightPaneVisible ? 'col-resize' : 'default',
