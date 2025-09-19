@@ -60,17 +60,23 @@
   left: 0;
   flex-direction: column;
   /* 🍎 애플 철학: 테두리 제거 - 공간감과 그림자로만 구분 */
-  z-index: 10;
+  z-index: 2; /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
   background-color: var(--color-layout-leftpane-bg);
   /* 🍎 애플 사이드바 디자인 */
-  border-radius: var(--radius-lg); /* 12px - 🍎 애플 사이드바 표준 (macOS Big Sur+) */
-  box-shadow: var(--shadow-apple-elevated); /* 🍎 애플 사이드바 표준 그림자 */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  border-radius: 0.625rem; /* 10px - 🍎 macOS Sonoma 실제 측정값 */
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.08); /* 🍎 macOS 사이드바 전용 그림자 (측정값) */
   /* 🍎 애플 철학: 사이드바는 정적 상태 - transition 제거 */
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* 🍎 다크 테마 그림자 최적화 */
+[data-theme="dark"] .layout-leftpane {
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15); /* 다크에서 더 진한 그림자 */
 }
 
 /* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음

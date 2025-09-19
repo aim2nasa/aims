@@ -41,11 +41,7 @@
   /* color.png 기반 기본 상태 */
   background: transparent;
 
-  /* 텍스트 선택 방지 - 더블클릭 시 텍스트가 선택되지 않도록 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
 
   /* 🍎 애플 스타일: 단순한 배경색/텍스트 색상 변화만 */
   transition:
@@ -334,11 +330,7 @@
   font-weight: inherit;
   transition: opacity var(--duration-fast) var(--easing-ease-out);
 
-  /* 텍스트 선택 방지 - 명시적으로 추가 */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
 }
 
 .custom-menu-item.collapsed .custom-menu-item-text {
