@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { useDynamicType, initializeDynamicType } from './hooks/useDynamicType'
 import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks/useHapticFeedback'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
-import LayoutControlModal from './components/LayoutControlModal'
-import HamburgerButton from './components/HamburgerButton'
-import CustomMenu from './components/CustomMenu/CustomMenu'
 import Header from './components/Header'
+
+// Lazy loading으로 성능 최적화
+const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
+const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
+const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 
 // 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
 const persistentModalState = {
@@ -323,19 +325,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           }}
         >
           {/* CustomMenu - color.png 기반 완벽한 구현 */}
-          <CustomMenu
-            collapsed={leftPaneCollapsed}
-            onMenuClick={() => {
-              // Menu click handler - implement actual navigation logic here
-            }}
-          />
+          <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+            <CustomMenu
+              collapsed={leftPaneCollapsed}
+              onMenuClick={() => {
+                // Menu click handler - implement actual navigation logic here
+              }}
+            />
+          </Suspense>
 
           {/* 햄버거 버튼 - aims-uix2 스타일 */}
           <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`}>
-            <HamburgerButton
-              collapsed={leftPaneCollapsed}
-              onClick={toggleLeftPaneCollapsed}
-            />
+            <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+              <HamburgerButton
+                collapsed={leftPaneCollapsed}
+                onClick={toggleLeftPaneCollapsed}
+              />
+            </Suspense>
           </div>
         </nav>
       )}
@@ -505,32 +511,34 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         className="sr-only"
       />
 
-      {/* 통합 제어 모달 */}
-      <LayoutControlModal
-        isOpen={layoutControlModalOpen}
-        onClose={handleModalClose}
-        headerVisible={headerVisible}
-        leftPaneVisible={leftPaneVisible}
-        centerPaneVisible={centerPaneVisible}
-        rightPaneVisible={rightPaneVisible}
-        brbVisible={brbVisible}
-        paginationVisible={paginationVisible}
-        mainPaneVisible={mainPaneVisible}
-        toggleHeader={toggleHeader}
-        toggleLeftPane={toggleLeftPane}
-        toggleCenterPane={toggleCenterPane}
-        toggleRightPane={toggleRightPane}
-        toggleBrb={toggleBrb}
-        togglePagination={togglePagination}
-        toggleMainPane={toggleMainPane}
-        resetGaps={resetGaps}
-        gapValues={gapValues}
-        handleGapLeftChange={handleGapLeftChange}
-        handleGapCenterChange={handleGapCenterChange}
-        handleGapRightChange={handleGapRightChange}
-        handleGapTopChange={handleGapTopChange}
-        handleGapBottomChange={handleGapBottomChange}
-      />
+      {/* 통합 제어 모달 - Lazy Loading */}
+      <Suspense fallback={null}>
+        <LayoutControlModal
+          isOpen={layoutControlModalOpen}
+          onClose={handleModalClose}
+          headerVisible={headerVisible}
+          leftPaneVisible={leftPaneVisible}
+          centerPaneVisible={centerPaneVisible}
+          rightPaneVisible={rightPaneVisible}
+          brbVisible={brbVisible}
+          paginationVisible={paginationVisible}
+          mainPaneVisible={mainPaneVisible}
+          toggleHeader={toggleHeader}
+          toggleLeftPane={toggleLeftPane}
+          toggleCenterPane={toggleCenterPane}
+          toggleRightPane={toggleRightPane}
+          toggleBrb={toggleBrb}
+          togglePagination={togglePagination}
+          toggleMainPane={toggleMainPane}
+          resetGaps={resetGaps}
+          gapValues={gapValues}
+          handleGapLeftChange={handleGapLeftChange}
+          handleGapCenterChange={handleGapCenterChange}
+          handleGapRightChange={handleGapRightChange}
+          handleGapTopChange={handleGapTopChange}
+          handleGapBottomChange={handleGapBottomChange}
+        />
+      </Suspense>
 
     </div>
   )

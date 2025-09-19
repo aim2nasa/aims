@@ -222,10 +222,26 @@
   --easing-spring-wobbly: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 흔들리는 스프링 */
   --easing-spring-stiff: cubic-bezier(0.55, 0.055, 0.675, 0.19);   /* 강한 스프링 */
 
+  /* iOS 17+ 정밀 마이크로 인터랙션 이징 */
+  --easing-micro-press-down: cubic-bezier(0.4, 0, 1, 1);           /* 버튼 눌림 - 빠른 시작 */
+  --easing-micro-press-up: cubic-bezier(0, 0, 0.2, 1);             /* 버튼 올라옴 - 부드러운 끝 */
+  --easing-micro-progressive-expand: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Progressive Disclosure 확장 */
+  --easing-micro-progressive-collapse: cubic-bezier(0.55, 0.06, 0.68, 0.19); /* Progressive Disclosure 축소 */
+  --easing-micro-scale-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 스케일 바운스 */
+  --easing-micro-hover-lift: cubic-bezier(0.4, 0, 0.6, 1);         /* 호버 리프트 */
+  --easing-micro-focus-ring: cubic-bezier(0.25, 0.8, 0.25, 1);     /* 포커스 링 */
+
   /* iOS 표준 듀레이션 - Apple HIG 기준 */
   --duration-ios-quick: 0.2s;      /* iOS 표준 빠른 전환 */
   --duration-ios-standard: 0.3s;   /* iOS 표준 기본 전환 */
   --duration-ios-modal: 0.5s;      /* iOS 모달 전환 표준 */
+
+  /* 마이크로 인터랙션 정밀 듀레이션 */
+  --duration-micro-instant: 0.1s;  /* 즉각적 반응 (버튼 눌림) */
+  --duration-micro-quick: 0.15s;   /* 빠른 반응 (호버, 포커스) */
+  --duration-micro-smooth: 0.2s;   /* 부드러운 전환 (상태 변화) */
+  --duration-micro-gentle: 0.25s;  /* 점진적 변화 (Progressive Disclosure) */
+  --duration-micro-elaborate: 0.35s; /* 정교한 전환 (복잡한 상태 변화) */
 
   /* Legacy durations (하위 호환용) */
   --duration-apple-quick: 0.2s;   /* 버튼 hover 등 */

@@ -46,11 +46,11 @@
   /* 상호작용 */
   cursor: pointer;
   transition:
-    background-color var(--duration-fast) var(--easing-spring-gentle),
-    border-color var(--duration-fast) var(--easing-spring-gentle),
-    color var(--duration-fast) var(--easing-spring-gentle),
-    box-shadow var(--duration-fast) var(--easing-spring-gentle),
-    transform var(--duration-fast) var(--easing-spring-bouncy); /* Spring Physics transform */
+    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+    color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down); /* 정밀한 Press State */
 
   /* 포커스 관리 - WCAG 2.1 AAA 준수 */
   outline: 2px solid transparent;
@@ -130,8 +130,18 @@
 .button--primary:active:not(:disabled) {
   background-color: var(--color-button-primary-bg-active);
   border-color: var(--color-button-primary-bg-active);
-  transform: translateY(1px) scale(var(--scale-haptic-medium)); /* iOS 16+ 햅틱 패턴 */
-  transition: transform var(--duration-haptic-medium) var(--easing-haptic-medium);
+  transform: translateY(1px) scale(0.98); /* iOS 17+ 정밀 Press State */
+  transition:
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    border-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.button--primary:not(:active):not(:disabled) {
+  transition:
+    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
 }
 
 /* Secondary Button */
@@ -147,8 +157,16 @@
 
 .button--secondary:active:not(:disabled) {
   background-color: var(--color-button-secondary-bg-active);
-  transform: translateY(1px) scale(var(--scale-haptic-light)); /* iOS 16+ 가벼운 햅틱 */
-  transition: transform var(--duration-haptic-light) var(--easing-haptic-light);
+  transform: translateY(1px) scale(0.985); /* 더 서브틀한 Press State */
+  transition:
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.button--secondary:not(:active):not(:disabled) {
+  transition:
+    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
 }
 
 /* Ghost Button */
@@ -164,8 +182,16 @@
 
 .button--ghost:active:not(:disabled) {
   background-color: var(--color-button-ghost-bg-active);
-  transform: translateY(1px) scale(var(--scale-haptic-light)); /* iOS 16+ 가벼운 햅틱 */
-  transition: transform var(--duration-haptic-light) var(--easing-haptic-light);
+  transform: translateY(0.5px) scale(0.99); /* 매우 서브틀한 Press State */
+  transition:
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.button--ghost:not(:active):not(:disabled) {
+  transition:
+    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
 }
 
 /* Destructive Button */
@@ -183,8 +209,18 @@
 .button--destructive:active:not(:disabled) {
   background-color: var(--color-button-destructive-bg-hover);
   border-color: var(--color-button-destructive-bg-hover);
-  transform: translateY(1px) scale(var(--scale-haptic-heavy)); /* iOS 16+ 강한 햅틱 (위험한 액션) */
-  transition: transform var(--duration-haptic-heavy) var(--easing-haptic-heavy);
+  transform: translateY(1.5px) scale(0.975); /* 강조된 Press State (위험한 액션) */
+  transition:
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    border-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.button--destructive:not(:active):not(:disabled) {
+  transition:
+    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    transform var(--duration-micro-smooth) var(--easing-micro-press-up);
 }
 
 /* Link Button */

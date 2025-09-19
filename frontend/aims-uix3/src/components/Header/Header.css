@@ -42,11 +42,11 @@
   background: var(--color-header-bg-subtle);
   border-bottom: 1px solid var(--color-header-border-subtle);
 
-  /* 애플 Progressive Disclosure 전환 - height 제거 */
+  /* iOS 17+ 정밀 Progressive Disclosure 전환 */
   transition:
-    background-color var(--duration-fast) var(--easing-ease-out),
-    border-color var(--duration-fast) var(--easing-ease-out),
-    backdrop-filter var(--duration-fast) var(--easing-ease-out);
+    background-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+    border-color var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+    backdrop-filter var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
 
   /* 🍎 애플 표준 텍스트 렌더링 */
   -webkit-font-smoothing: antialiased;
@@ -201,11 +201,13 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
 
-  /* Progressive Disclosure 전환 */
+  /* iOS 17+ 정밀 Progressive Disclosure 전환 */
   transition:
-    all var(--duration-fast) var(--easing-ease-out),
-    opacity var(--duration-fast) var(--easing-ease-out),
-    transform var(--duration-fast) var(--easing-ease-out);
+    background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
+    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+    transform var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
 
   /* 기본 상태: 투명 */
   opacity: 0;
@@ -215,13 +217,29 @@
 .header-control-button:hover {
   background-color: var(--color-apple-control-hover);
   border-color: var(--color-apple-control-border);
-  transform: scale(1.05);
+  transform: scale(1.02); /* 더 서브틀한 스케일 */
   box-shadow: var(--shadow-apple-button-hover);
+  transition:
+    background-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring);
 }
 
 .header-control-button:active {
-  transform: translateY(0);
+  transform: scale(0.98); /* 정밀한 Press State */
   background-color: var(--color-header-control-active);
+  transition:
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.header-control-button:not(:active):not(:hover) {
+  transition:
+    background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
+    transform var(--duration-micro-smooth) var(--easing-micro-press-up),
+    box-shadow var(--duration-micro-smooth) var(--easing-micro-press-up);
 }
 
 .header-control-button--active {
