@@ -107,6 +107,10 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.625;
 
+  /* Golden Ratio Line Heights (자연스러운 읽기 리듬) */
+  --line-height-golden: var(--golden-ratio);      /* 1.618 - 황금비 기반 */
+  --line-height-golden-compressed: calc(var(--golden-ratio) / 1.2); /* ~1.348 - 압축된 텍스트용 */
+
   /* Font Weights */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -129,6 +133,20 @@
   --spacing-12: 3rem;     /* 48px */
   --spacing-16: 4rem;     /* 64px */
   --spacing-20: 5rem;     /* 80px */
+
+  /* === GOLDEN RATIO SPACING SYSTEM === */
+  /* φ (파이) = 1.618 - 자연에서 발견되는 가장 조화로운 비율 */
+
+  --golden-ratio: 1.618;
+  --golden-base: 1rem;    /* 16px - 기준값 */
+
+  /* Golden Ratio 배수 계산 (iPhone/macOS 디자인에서 자주 사용) */
+  --spacing-golden-xs: calc(var(--golden-base) / var(--golden-ratio) / var(--golden-ratio)); /* ~0.382rem ≈ 6px */
+  --spacing-golden-sm: calc(var(--golden-base) / var(--golden-ratio));                      /* ~0.618rem ≈ 10px */
+  --spacing-golden-md: var(--golden-base);                                                  /* 1rem = 16px */
+  --spacing-golden-lg: calc(var(--golden-base) * var(--golden-ratio));                      /* ~1.618rem ≈ 26px */
+  --spacing-golden-xl: calc(var(--golden-base) * var(--golden-ratio) * var(--golden-ratio)); /* ~2.618rem ≈ 42px */
+  --spacing-golden-2xl: calc(var(--golden-base) * var(--golden-ratio) * var(--golden-ratio) * var(--golden-ratio)); /* ~4.236rem ≈ 68px */
 
   /* === BORDER RADIUS === */
 
@@ -160,6 +178,11 @@
   --duration-ios-standard: 300ms;   /* iOS 표준 일반 전환 (기존 300ms 대체용) */
   --duration-ios-smooth: 350ms;     /* iOS 표준 부드러운 전환 */
 
+  /* iOS 16+ 햅틱 피드백 타이밍 */
+  --duration-haptic-light: 50ms;    /* 가벼운 햅틱 피드백 (selection) */
+  --duration-haptic-medium: 100ms;  /* 중간 햅틱 피드백 (impact) */
+  --duration-haptic-heavy: 150ms;   /* 강한 햅틱 피드백 (notification) */
+
   --easing-ease: ease;
   --easing-ease-in: ease-in;
   --easing-ease-out: ease-out;
@@ -171,6 +194,17 @@
   --easing-ios-default: cubic-bezier(0.42, 0, 0.58, 1);        /* iOS UIViewAnimationOptionCurveEaseInOut */
   --easing-apple-magic: cubic-bezier(0.23, 1, 0.32, 1);        /* Apple Magic Move 효과 */
   --easing-apple-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 부드러운 전환용 */
+
+  /* iOS 16+ 햅틱 피드백 스프링 이징 */
+  --easing-haptic-light: cubic-bezier(0.68, -0.55, 0.265, 1.55);  /* 가벼운 바운스 (selection) */
+  --easing-haptic-medium: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 중간 바운스 (impact) */
+  --easing-haptic-heavy: cubic-bezier(0.23, 1, 0.32, 1);          /* 강한 스프링 (notification) */
+
+  /* iOS Spring Physics 이징 - 물리적 자연스러움 */
+  --easing-spring-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);    /* 부드러운 스프링 */
+  --easing-spring-bouncy: cubic-bezier(0.68, -0.55, 0.265, 1.55);  /* 탄력적 스프링 */
+  --easing-spring-wobbly: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 흔들리는 스프링 */
+  --easing-spring-stiff: cubic-bezier(0.55, 0.055, 0.675, 0.19);   /* 강한 스프링 */
 
   /* iOS 표준 듀레이션 - Apple HIG 기준 */
   --duration-ios-quick: 0.2s;      /* iOS 표준 빠른 전환 */
@@ -254,6 +288,16 @@
   --z-popover: 1050;
   --z-tooltip: 1060;
   --z-portal-modal: 9999; /* Portal로 렌더링되는 플로팅 모달 - 모든 요소 위에 표시 */
+
+  /* === iOS 16+ HAPTIC FEEDBACK SCALES === */
+
+  /* 시각적 피드백 스케일 (상호작용 강도별) */
+  --scale-haptic-light: 0.98;      /* 가벼운 터치 (selection) */
+  --scale-haptic-medium: 0.95;     /* 중간 터치 (impact) */
+  --scale-haptic-heavy: 0.92;      /* 강한 터치 (notification) */
+
+  /* 햅틱 리바운드 스케일 */
+  --scale-haptic-rebound: 1.02;    /* 터치 해제 시 약간의 바운스 */
 
   /* === LAYOUT === */
 

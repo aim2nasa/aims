@@ -110,8 +110,8 @@
 .theme-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
+  width: 44px;   /* iOS Control Center 표준 크기 */
+  height: 26px;  /* iOS Control Center 표준 높이 */
 }
 
 .theme-switch-input {
@@ -128,29 +128,62 @@
   right: 0;
   bottom: 0;
   background-color: var(--color-theme-switch-bg-light);
-  transition: all var(--duration-normal) var(--easing-ease-out);
-  border-radius: 20px;
+  transition: all var(--duration-ios-standard) var(--easing-spring-gentle); /* iOS Spring Physics 배경 전환 */
+  border-radius: 13px; /* iOS Control Center 정확한 border radius */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15); /* iOS 내부 그림자 */
 }
 
 .theme-switch-slider::before {
   position: absolute;
   content: "";
-  height: 16px;
-  width: 16px;
+  height: 22px; /* iOS Control Center 핸들 크기 */
+  width: 22px;
   left: 2px;
-  bottom: 2px;
+  top: 2px;
   background-color: var(--color-theme-switch-handle);
-  transition: all var(--duration-normal) var(--easing-ease-out);
+  transition:
+    transform var(--duration-ios-standard) var(--easing-spring-bouncy), /* iOS Spring Physics 핸들 전환 */
+    box-shadow var(--duration-ios-quick) var(--easing-spring-gentle);
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.25),      /* iOS 기본 그림자 */
+    0 1px 3px rgba(0, 0, 0, 0.15);      /* iOS 서브틀 그림자 */
 }
 
 .theme-switch-input:checked + .theme-switch-slider {
   background-color: var(--color-theme-switch-bg-dark);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.25),   /* 체크 상태에서 더 진한 내부 그림자 */
+    0 0 0 2px rgba(52, 199, 89, 0.2);      /* iOS systemGreen 글로우 효과 */
 }
 
 .theme-switch-input:checked + .theme-switch-slider::before {
-  transform: translateX(20px);
+  transform: translateX(18px); /* 더 정확한 iOS Control Center 위치 */
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.35),       /* 체크 상태에서 더 강한 그림자 */
+    0 1px 4px rgba(0, 0, 0, 0.2);         /* iOS 서브틀 그림자 */
+}
+
+/* iOS Control Center 호버 상태 - Spring Physics */
+.theme-switch-slider:hover {
+  transform: scale(1.02); /* 서브틀한 스케일 효과 */
+  transition: transform var(--duration-ios-quick) var(--easing-spring-bouncy); /* 탄력적 스프링 */
+}
+
+/* iOS Control Center 포커스 접근성 */
+.theme-switch-input:focus + .theme-switch-slider {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(59, 130, 246, 0.15);   /* iOS 표준 포커스 링 */
+}
+
+.theme-switch-input:focus:checked + .theme-switch-slider {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.25),
+    0 0 0 2px rgba(52, 199, 89, 0.2),
+    0 0 0 4px rgba(52, 199, 89, 0.15);    /* 체크 상태 포커스 링 */
 }
 
 .gap-toggle-button {

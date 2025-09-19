@@ -188,8 +188,9 @@
 
 .layout-centerpane {
   /* 애플 디자인 가이드라인 표준 패딩 (iOS 앱 기준) */
-  padding-block: var(--spacing-6); /* 24px 상하 (RTL 지원) */
-  padding-inline: var(--spacing-5); /* 20px 좌우 (RTL 지원) */
+  /* Golden Ratio 적용: 조화로운 시각적 균형 */
+  padding-block: var(--spacing-golden-lg); /* ~26px 상하 - 황금비 기반 조화 */
+  padding-inline: var(--spacing-golden-md); /* 16px 좌우 - 황금비 기준값 */
   box-sizing: border-box;
   z-index: var(--z-index-elevated);
   background-color: var(--color-layout-centerpane-bg);
@@ -276,9 +277,9 @@
   -webkit-touch-callout: none;
   overscroll-behavior: contain;
 
-  /* 🍎 Safe Area 대응 */
-  padding-left: max(var(--spacing-4), env(safe-area-inset-left));
-  padding-right: max(var(--spacing-4), env(safe-area-inset-right));
+  /* 🍎 Safe Area 대응 - Golden Ratio 기반 조화로운 간격 */
+  padding-left: max(var(--spacing-golden-md), env(safe-area-inset-left));
+  padding-right: max(var(--spacing-golden-md), env(safe-area-inset-right));
   padding-bottom: max(0px, env(safe-area-inset-bottom));
 
   /* 프로페셔널 UI: 텍스트 선택 방지 */

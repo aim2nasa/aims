@@ -46,11 +46,11 @@
   /* 상호작용 */
   cursor: pointer;
   transition:
-    background-color var(--duration-fast) var(--easing-ease-in-out),
-    border-color var(--duration-fast) var(--easing-ease-in-out),
-    color var(--duration-fast) var(--easing-ease-in-out),
-    box-shadow var(--duration-fast) var(--easing-ease-in-out),
-    transform var(--duration-fast) var(--easing-ease-in-out);
+    background-color var(--duration-fast) var(--easing-spring-gentle),
+    border-color var(--duration-fast) var(--easing-spring-gentle),
+    color var(--duration-fast) var(--easing-spring-gentle),
+    box-shadow var(--duration-fast) var(--easing-spring-gentle),
+    transform var(--duration-fast) var(--easing-spring-bouncy); /* Spring Physics transform */
 
   /* 포커스 관리 */
   outline: 2px solid transparent;
@@ -70,6 +70,7 @@
   padding: var(--spacing-2) var(--spacing-3);
   font-size: var(--font-size-sm);
   min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
+  min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
 }
 
 .button--md {
@@ -77,6 +78,7 @@
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--font-size-base);
   min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
+  min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
 }
 
 .button--lg {
@@ -84,6 +86,7 @@
   padding: var(--spacing-4) var(--spacing-6);
   font-size: var(--font-size-lg);
   min-height: 3rem; /* 48px */
+  min-width: 3rem;  /* 48px - 일관된 터치 영역 보장 */
 }
 
 /* === STYLE VARIANTS === */
@@ -103,7 +106,8 @@
 .button--primary:active:not(:disabled) {
   background-color: var(--color-button-primary-bg-active);
   border-color: var(--color-button-primary-bg-active);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--scale-haptic-medium)); /* iOS 16+ 햅틱 패턴 */
+  transition: transform var(--duration-haptic-medium) var(--easing-haptic-medium);
 }
 
 /* Secondary Button */
@@ -119,7 +123,8 @@
 
 .button--secondary:active:not(:disabled) {
   background-color: var(--color-button-secondary-bg-active);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--scale-haptic-light)); /* iOS 16+ 가벼운 햅틱 */
+  transition: transform var(--duration-haptic-light) var(--easing-haptic-light);
 }
 
 /* Ghost Button */
@@ -135,7 +140,8 @@
 
 .button--ghost:active:not(:disabled) {
   background-color: var(--color-button-ghost-bg-active);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--scale-haptic-light)); /* iOS 16+ 가벼운 햅틱 */
+  transition: transform var(--duration-haptic-light) var(--easing-haptic-light);
 }
 
 /* Destructive Button */
@@ -153,7 +159,8 @@
 .button--destructive:active:not(:disabled) {
   background-color: var(--color-button-destructive-bg-hover);
   border-color: var(--color-button-destructive-bg-hover);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--scale-haptic-heavy)); /* iOS 16+ 강한 햅틱 (위험한 액션) */
+  transition: transform var(--duration-haptic-heavy) var(--easing-haptic-heavy);
 }
 
 /* Link Button */
