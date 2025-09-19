@@ -47,12 +47,10 @@
   -moz-user-select: none;
   -ms-user-select: none;
 
-  /* 애플 디자인 철학: 매우 서브틀하고 자연스러운 애니메이션 */
+  /* 🍎 애플 스타일: 단순한 배경색/텍스트 색상 변화만 */
   transition:
-    background-color var(--duration-apple-quick) var(--easing-apple-magic),
-    color var(--duration-apple-quick) var(--easing-apple-magic),
-    transform var(--duration-apple-quick) var(--easing-apple-magic),
-    box-shadow var(--duration-apple-quick) var(--easing-apple-magic);
+    background-color var(--duration-fast) var(--easing-ease-out),
+    color var(--duration-fast) var(--easing-ease-out);
 }
 
 /* === SUB-MENU STYLES === */
@@ -83,19 +81,7 @@
   }
 }
 
-/* 선택된 아이콘 아름다운 펄스 애니메이션 - 애플 스타일 */
-@keyframes selectedIconPulse {
-  0%, 100% {
-    filter:
-      drop-shadow(0 0 8px var(--color-menu-selected-icon-glow))
-      drop-shadow(0 0 16px var(--color-menu-selected-icon-glow-outer));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 12px var(--color-menu-selected-icon-glow))
-      drop-shadow(0 0 24px var(--color-menu-selected-icon-glow-outer));
-  }
-}
+/* 🍎 애플 스타일: 펄스 애니메이션 제거 - 과도한 효과 금지 */
 
 /* === COLLAPSED STATE === */
 .custom-menu-item.collapsed {
@@ -123,12 +109,12 @@
   margin-right: 0;
 }
 
-/* User Icon - color.png 파란색 */
+/* 🍎 User Icon - 애플 스타일 단순화 */
 .icon-user .icon-shape {
   width: 16px;
   height: 16px;
   border-radius: 50% 50% 0 0;
-  background: var(--color-menu-user);
+  background: var(--color-menu-icon-default);
   position: relative;
 }
 
@@ -141,14 +127,14 @@
   width: 20px;
   height: 12px;
   border-radius: 10px 10px 0 0;
-  background: var(--color-menu-user);
+  background: var(--color-menu-icon-default);
 }
 
-/* List Icon - color.png 파란색 */
+/* 🍎 List Icon - 애플 스타일 단순화 */
 .icon-list .icon-shape {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--color-menu-list);
+  border: 2px solid var(--color-menu-icon-default);
   border-radius: 2px;
   position: relative;
 }
@@ -160,7 +146,7 @@
   left: 2px;
   right: 2px;
   height: 2px;
-  background: var(--color-menu-list);
+  background: var(--color-menu-icon-default);
 }
 
 .icon-list .icon-shape::after {
@@ -170,14 +156,14 @@
   left: 2px;
   right: 2px;
   height: 2px;
-  background: var(--color-menu-list);
+  background: var(--color-menu-icon-default);
 }
 
-/* Location Icon - color.png 주황색 */
+/* 🍎 Location Icon - 애플 스타일 단순화 */
 .icon-location .icon-shape {
   width: 12px;
   height: 16px;
-  background: var(--color-menu-location);
+  background: var(--color-menu-icon-default);
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   position: relative;
@@ -195,7 +181,7 @@
   border-radius: 50%;
 }
 
-/* Team Icon - color.png 분홍색 */
+/* 🍎 Team Icon - 애플 스타일 단순화 */
 .icon-team .icon-shape {
   width: 18px;
   height: 14px;
@@ -210,7 +196,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--color-menu-team);
+  background: var(--color-menu-icon-default);
 }
 
 .icon-team .icon-shape::after {
@@ -221,14 +207,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--color-menu-team);
+  background: var(--color-menu-icon-default);
 }
 
-/* FileText Icon - color.png 청록색 */
+/* 🍎 FileText Icon - 애플 스타일 단순화 */
 .icon-file .icon-shape {
   width: 12px;
   height: 16px;
-  background: var(--color-menu-file);
+  background: var(--color-menu-icon-default);
   border-radius: 2px;
   position: relative;
 }
@@ -240,7 +226,7 @@
   left: 2px;
   right: 2px;
   height: 1px;
-  background: white;
+  background: var(--color-bg-secondary);
 }
 
 .icon-file .icon-shape::after {
@@ -250,14 +236,14 @@
   left: 2px;
   right: 2px;
   height: 1px;
-  background: white;
+  background: var(--color-bg-secondary);
 }
 
-/* Dashboard Icon - color.png 빨간색 */
+/* 🍎 Dashboard Icon - 애플 스타일 단순화 */
 .icon-dashboard .icon-shape {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--color-menu-dashboard);
+  border: 2px solid var(--color-menu-icon-default);
   border-radius: 2px;
   position: relative;
 }
@@ -269,7 +255,7 @@
   left: 2px;
   width: 4px;
   height: 4px;
-  background: var(--color-menu-dashboard);
+  background: var(--color-menu-icon-default);
   border-radius: 1px;
 }
 
@@ -280,15 +266,15 @@
   right: 2px;
   width: 6px;
   height: 6px;
-  background: var(--color-menu-dashboard);
+  background: var(--color-menu-icon-default);
   border-radius: 1px;
 }
 
-/* Search Icon - color.png 보라색 */
+/* 🍎 Search Icon - 애플 스타일 단순화 */
 .icon-search .icon-shape {
   width: 12px;
   height: 12px;
-  border: 2px solid var(--color-menu-search);
+  border: 2px solid var(--color-menu-icon-default);
   border-radius: 50%;
   position: relative;
 }
@@ -300,7 +286,7 @@
   right: -4px;
   width: 6px;
   height: 2px;
-  background: var(--color-menu-search);
+  background: var(--color-menu-icon-default);
   border-radius: 1px;
   transform: rotate(45deg);
 }
@@ -325,11 +311,11 @@
 .icon-chevron .icon-shape {
   width: 8px;
   height: 8px;
-  border-right: 2px solid var(--color-text-tertiary);
-  border-bottom: 2px solid var(--color-text-tertiary);
+  border-right: 2px solid var(--color-menu-icon-default);
+  border-bottom: 2px solid var(--color-menu-icon-default);
   transform: rotate(45deg);
-  /* 애플 스타일: 매우 부드러운 회전 애니메이션 */
-  transition: transform 250ms var(--easing-apple-magic);
+  /* 🍎 애플 스타일: 단순한 회전 애니메이션 */
+  transition: transform var(--duration-fast) var(--easing-ease-out);
 }
 
 .custom-menu-item.has-children.sub-menu .icon-chevron,
@@ -375,28 +361,18 @@
 
 /* 호버 효과 완전 제거 - 애플 네이티브 방식 */
 
-/* === SELECTED STATES (color.png 강렬한 그라데이션 완벽 재현) === */
+/* === 🍎 APPLE STANDARD SELECTION STATES === */
 .custom-menu-item.selected {
-  /* color.png의 강렬하고 생동감 있는 그라데이션 */
-  background: var(--color-menu-selected-bg);
+  /* 애플 표준: 단순한 배경색 변화만 (iOS Settings/Finder 스타일) */
+  background: var(--color-menu-selected-bg-subtle);
   color: var(--color-menu-selected-text);
-  font-weight: 600; /* 선택 상태 강조를 위한 굵기 */
+  font-weight: 600; /* 선택 상태 강조 */
 
-  /* color.png 스타일: 뚜렷한 깊이감과 glow 효과 */
-  box-shadow:
-    0 2px 8px var(--color-menu-selected-shadow),
-    inset 0 1px 0 var(--color-menu-selected-inner),
-    0 0 0 1px var(--color-menu-selected-border);
-
-  /* 애플 스타일: 자연스러운 곡선 */
+  /* 애플 스타일: 그림자/변형 효과 완전 제거 */
   border-radius: 8px;
 
-  /* color.png와 같은 선명한 대비를 위한 약간의 elevation */
-  transform: translateY(-1px);
-
-  /* 추가적인 시각적 강조 */
+  /* 애플 철학: 과도한 효과 없이 명확한 선택 표시만 */
   position: relative;
-  z-index: 1;
 }
 
 .custom-menu-item.selected .custom-menu-item-text {
@@ -404,40 +380,21 @@
 }
 
 .custom-menu-item.selected .menu-icon {
-  /* color.png 스타일의 아름다운 아이콘 강조 효과 */
-  transform: scale(1.08);
-
-  /* 더 강렬하고 아름다운 glow 효과 */
-  filter:
-    drop-shadow(0 0 8px var(--color-menu-selected-icon-glow))
-    drop-shadow(0 0 16px var(--color-menu-selected-icon-glow-outer));
-
-  /* 서브틀한 펄스 애니메이션 - 애플 스타일 */
-  animation: selectedIconPulse var(--duration-pulse) ease-in-out infinite;
+  /* 🍎 애플 표준: 아이콘 크기/위치 변화 없음, 색상 변화만 */
+  /* transform, filter, animation 모두 제거 - 미니멀리즘 준수 */
 }
 
 .custom-menu-item.selected .menu-icon .icon-shape,
 .custom-menu-item.selected .menu-icon .icon-shape::before,
 .custom-menu-item.selected .menu-icon .icon-shape::after {
-  /* 원래 아이콘 색상을 유지하되 더 선명하고 아름답게 강조 */
-  filter: brightness(1.2) saturate(1.3) contrast(1.1);
-  /* 아이콘이 그라데이션 배경에서 돋보이도록 subtle glow */
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.2),
-    0 0 4px rgba(255, 255, 255, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-  /* 약간의 scale up으로 선택 상태 강조 */
-  transform: scale(1.05);
+  /* 🍎 애플 표준: 아이콘 색상만 변경, 효과 완전 제거 */
+  background: var(--color-menu-icon-selected);
+  border-color: var(--color-menu-icon-selected);
+  /* filter, box-shadow, transform 모두 제거 */
 }
 
-/* color.png 스타일: 각 메뉴별 개별 그라데이션 적용 */
-.custom-menu-item.selected[data-menu-key="customers"] { background: var(--gradient-user); }
-.custom-menu-item.selected[data-menu-key="customers-all"] { background: var(--gradient-list); }
-.custom-menu-item.selected[data-menu-key="customers-regional"] { background: var(--gradient-location); }
-.custom-menu-item.selected[data-menu-key="customers-relationship"] { background: var(--gradient-team); }
-.custom-menu-item.selected[data-menu-key="documents"] { background: var(--gradient-file); }
-.custom-menu-item.selected[data-menu-key="dsd"] { background: var(--gradient-dashboard); }
-.custom-menu-item.selected[data-menu-key="search-results"] { background: var(--gradient-search); }
+/* 🍎 애플 스타일: 모든 메뉴 동일한 선택 상태 - 개별 색상 제거 */
+/* iOS에서는 모든 메뉴 아이템이 동일한 선택 스타일을 가짐 */
 
 /* === COLLAPSED TOOLTIPS === */
 .custom-menu-item.collapsed[title]:hover::after {
@@ -479,88 +436,29 @@
 /* Light Theme - color.png 왼쪽 */
 :root,
 [data-theme="light"] {
-  /* 메뉴 아이콘 색상 - color.png와 완전 동일 */
-  --color-menu-user: #007AFF;          /* 파란색 - 고객 관리 */
-  --color-menu-list: #007AFF;          /* 파란색 - 전체보기 */
-  --color-menu-location: #FF9500;      /* 주황색 - 지역별 보기 */
-  --color-menu-team: #FF2D92;          /* 분홍색 - 관계별 보기 */
-  --color-menu-file: #5AC8FA;          /* 청록색 - 문서 관리 */
-  --color-menu-dashboard: #FF3B30;     /* 빨간색 - 문서 처리 현황 */
-  --color-menu-search: #AF52DE;        /* 보라색 - 검색 */
+  /* 🍎 애플 스타일: 아이콘 색상 단순화 - 2가지만 사용 */
+  --color-menu-icon-default: var(--color-text-tertiary);    /* 미선택 상태 */
+  --color-menu-icon-selected: var(--color-primary-600);     /* 선택 상태 */
 
-  /* 선택된 상태 색상 - color.png의 강렬한 파란색 그라데이션 재현 */
-  --color-menu-selected-bg: linear-gradient(180deg, #007AFF 0%, #0051D5 100%);
-  --color-menu-selected-text: #FFFFFF;
-  --color-menu-selected-icon: #FFFFFF;
-  --color-menu-selected-shadow: rgba(0, 122, 255, 0.4);
-  --color-menu-selected-inner: rgba(255, 255, 255, 0.25);
-  --color-menu-selected-border: rgba(0, 122, 255, 0.6);
+  /* 🍎 애플 스타일: 선택 상태 단순화 */
+  --color-menu-selected-text: var(--color-text-primary);
+  --color-menu-selected-icon: var(--color-primary-600);
 
-  /* color.png보다 더 강력한 fade-out 그라데이션 - 위에서 아래로 옥어지는 효과 */
-  --gradient-user: linear-gradient(180deg, #0066FF 0%, #B3D9FF 100%);       /* 극도로 강한 파란색 fade-out */
-  --gradient-list: linear-gradient(180deg, #0066FF 0%, #B3D9FF 100%);       /* 극도로 강한 파란색 fade-out */
-  --gradient-location: linear-gradient(180deg, #FF8800 0%, #FFE0B3 100%);   /* 극도로 강한 주황색 fade-out */
-  --gradient-team: linear-gradient(180deg, #FF1166 0%, #FFCCE0 100%);       /* 극도로 강한 분홍색 fade-out */
-  --gradient-file: linear-gradient(180deg, #00CCFF 0%, #CCF2FF 100%);       /* 극도로 강한 청록색 fade-out */
-  --gradient-dashboard: linear-gradient(180deg, #FF3300 0%, #FFD9CC 100%);  /* 극도로 강한 빨간색 fade-out */
-  --gradient-search: linear-gradient(180deg, #CC00FF 0%, #F2CCFF 100%);     /* 극도로 강한 보라색 fade-out */
+  /* 🍎 애플 스타일: 단순한 단색 배경만 사용 - 그라데이션 완전 제거 */
+  /* iOS에서는 복잡한 그라데이션을 사용하지 않음 */
+  --color-menu-selected-bg: var(--color-primary-600); /* 애플 표준 선택 색상 */
+  --color-menu-selected-bg-subtle: rgba(59, 130, 246, 0.1); /* 10% 투명도 primary-600 */
 
-  /* 아름다운 아이콘 glow 효과 */
-  --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.6);
-  --color-menu-selected-icon-glow-outer: rgba(255, 255, 255, 0.3);
-
-  /* 애니메이션 타이밍 */
-  --duration-pulse: 3s;
+  /* 🍎 애플 스타일: 글로우 효과 제거 - 미니멀리즘 준수 */
 }
 
-/* Dark Theme - color.png 오른쪽 */
+/* 🍎 Dark Theme - 애플 스타일 단순화 */
 [data-theme="dark"] {
-  /* 메뉴 아이콘 색상 - 다크 테마용 조정 */
-  --color-menu-user: #0A84FF;          /* 밝은 파란색 */
-  --color-menu-list: #0A84FF;          /* 밝은 파란색 */
-  --color-menu-location: #FF9F0A;      /* 밝은 주황색 */
-  --color-menu-team: #FF2D92;          /* 밝은 분홍색 */
-  --color-menu-file: #64D2FF;          /* 밝은 청록색 */
-  --color-menu-dashboard: #FF453A;     /* 밝은 빨간색 */
-  --color-menu-search: #BF5AF2;        /* 밝은 보라색 */
-
-  /* 선택된 상태 색상 - 다크 테마용 강렬한 그라데이션 */
-  --color-menu-selected-bg: linear-gradient(180deg, #0A84FF 0%, #0051D5 100%);
-  --color-menu-selected-text: #FFFFFF;
-  --color-menu-selected-icon: #FFFFFF;
-  --color-menu-selected-shadow: none;
-  --color-menu-selected-inner: rgba(255, 255, 255, 0.2);
-  --color-menu-selected-border: rgba(10, 132, 255, 0.65);
+  /* 모든 아이콘은 기단 CSS 변수 사용 - 중복 제거 */
+  --color-menu-selected-bg-subtle: rgba(59, 130, 246, 0.15); /* 다크에서 약간 더 진하게 */
 }
 
-/* 다크 테마에서도 호버 효과 완전 제거 - 애플 철학 준수 */
-
-/* 다크 테마에서 메뉴 아이템과 선택 상태도 그림자 제거 */
-[data-theme="dark"] .custom-menu-item {
-  box-shadow: none;
-}
-
-[data-theme="dark"] .custom-menu-item.selected {
-  box-shadow: none;
-}
-
-[data-theme="dark"] {
-  /* 다크 테마: color.png보다 더 강력한 fade-out 그라데이션 */
-  --gradient-user: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
-  --gradient-list: linear-gradient(180deg, #1976D2 0%, #90CAF9 100%);       /* 다크용 극도로 강한 파란색 fade-out */
-  --gradient-location: linear-gradient(180deg, #F57C00 0%, #FFD54F 100%);   /* 다크용 극도로 강한 주황색 fade-out */
-  --gradient-team: linear-gradient(180deg, #C2185B 0%, #F8BBD9 100%);       /* 다크용 극도로 강한 분홍색 fade-out */
-  --gradient-file: linear-gradient(180deg, #0097A7 0%, #B2EBF2 100%);       /* 다크용 극도로 강한 청록색 fade-out */
-  --gradient-dashboard: linear-gradient(180deg, #D32F2F 0%, #FFCDD2 100%);  /* 다크용 극도로 강한 빨간색 fade-out */
-  --gradient-search: linear-gradient(180deg, #7B1FA2 0%, #E1BEE7 100%);     /* 다크용 극도로 강한 보라색 fade-out */
-
-  /* 다크 테마용 아름다운 아이콘 glow 효과 */
-  --color-menu-selected-icon-glow: rgba(255, 255, 255, 0.7);
-  --color-menu-selected-icon-glow-outer: rgba(255, 255, 255, 0.4);
-
-  /* 애니메이션 타이밍 (동일) */
-  --duration-pulse: 3s;
-}
+/* 🍎 다크 테마 완전 단순화 - 모든 늘복 제거 */
 
 /* === ACCESSIBILITY === */
 /* 키보드 포커스는 selected 상태와 분리하여 처리 */
