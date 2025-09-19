@@ -41,9 +41,9 @@
     "header header header"
     "nav main aside"
     "nav main aside";
-  grid-template-columns: var(--layout-nav-width, 280px) 1fr var(--layout-aside-width, 300px);
-  grid-template-rows: var(--layout-header-height, 60px) 1fr;
-  gap: var(--layout-gap, 16px);
+  grid-template-columns: var(--layout-nav-width) 1fr var(--layout-aside-width);
+  grid-template-rows: var(--layout-header-height) 1fr;
+  gap: var(--layout-gap);
   width: 100vw;
   height: 100vh;
   box-sizing: border-box;
@@ -88,7 +88,7 @@
       "header"
       "main";
     grid-template-columns: 1fr;
-    grid-template-rows: var(--layout-header-height, 60px) 1fr;
+    grid-template-rows: var(--layout-header-height) 1fr;
   }
 
   .layout-nav--grid,
@@ -103,7 +103,7 @@
     grid-template-areas:
       "header header"
       "nav main";
-    grid-template-columns: var(--layout-nav-width, 280px) 1fr;
+    grid-template-columns: var(--layout-nav-width) 1fr;
   }
 
   .layout-aside--grid {

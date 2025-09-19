@@ -373,6 +373,12 @@
   --leftpane-width-collapsed: 3.75rem;  /* 60px - 아이콘만 표시 */
   --leftpane-width-expanded: 15.625rem; /* 250px - 텍스트 포함 */
 
+  /* GridLayout 전용 레이아웃 크기 - CSS_SYSTEM.md 하드코딩 금지 원칙 준수 */
+  --layout-nav-width: 17.5rem;          /* 280px - 현재 GridLayout navigationWidth */
+  --layout-aside-width: 18.75rem;       /* 300px - 현재 GridLayout asideWidth */
+  --layout-gap: var(--spacing-4);       /* 16px - 현재 GridLayout gap */
+  --layout-header-height: var(--header-height-base); /* 60px - GridLayout 헤더 높이 */
+
   /* MainPane Height - 헤더 제외한 메인 영역 */
   --mainpane-height: calc(100vh - var(--header-height-base));
 

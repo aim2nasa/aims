@@ -23,9 +23,9 @@ const GridLayout = ({
   aside,
   showNavigation = true,
   showAside = true,
-  navigationWidth = '280px',
-  asideWidth = '300px',
-  gap = '16px'
+  navigationWidth = 'var(--layout-nav-width)',
+  asideWidth = 'var(--layout-aside-width)',
+  gap = 'var(--layout-gap)'
 }: GridLayoutProps) => {
   return (
     <div
