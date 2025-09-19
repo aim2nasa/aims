@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDraggable } from '../hooks/useDraggable';
+import { HapticService, HapticType, withHaptic } from '../services/hapticService';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from './SFSymbol';
 
 interface LayoutControlModalProps {
   isOpen: boolean;
@@ -68,15 +70,22 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   const [internalOpen, setInternalOpen] = useState(isOpen)
   const [isClosing, setIsClosing] = useState(false)
 
+  // 드래그 시작 시 햅틱 피드백 추가
+  const handleDragStart = () => {
+    HapticService.trigger(HapticType.LIGHT)
+  }
+
   const { position, isDragging, dragHandlers } = useDraggable({
     constrainToViewport: false, // 자유로운 이동 허용
-    minVisibleArea: 60 // 헤더 영역은 항상 보이도록
+    minVisibleArea: 60, // 헤더 영역은 항상 보이도록
+    onDragStart: handleDragStart // 드래그 시작 시 햅틱 피드백
   })
 
   // 외부 isOpen prop 변경 감지 및 내부 상태 동기화
   useEffect(() => {
     if (isOpen && !internalOpen) {
-      // 모달 열기: 즉시 반영
+      // 모달 열기: 즉시 반영 + 모달 오픈 햅틱
+      HapticService.trigger(HapticType.MEDIUM)
       setInternalOpen(true)
       setIsClosing(false)
     } else if (!isOpen && internalOpen) {
@@ -93,6 +102,9 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
 
   // 즉시 닫기 핸들러 - 애니메이션 지연 없이 즉시 처리
   const handleSafeClose = () => {
+    // 모달 닫기 햅틱 피드백
+    HapticService.trigger(HapticType.LIGHT)
+
     // 즉시 닫기 상태로 변경
     setIsClosing(true)
     setInternalOpen(false)
@@ -100,6 +112,12 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
     // 외부 상태도 즉시 업데이트
     onClose()
   }
+
+  // 체크박스 토글 시 햅틱 피드백 추가
+  const withCheckboxHaptic = (handler: () => void) => withHaptic(HapticType.SELECTION, handler)
+
+  // 리셋 버튼에 햅틱 피드백 추가
+  const handleResetWithHaptic = withHaptic(HapticType.HEAVY, resetGaps)
 
   // ESC 키로 모달 닫기 (iOS 접근성 가이드라인)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -130,8 +148,12 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
         {...dragHandlers}
       >
         <h2 id="modal-title" className="modal-title">레이아웃 제어</h2>
-        <button className="modal-close-button" onClick={handleSafeClose}>
-          ×
+        <button className="modal-close-button haptic-enabled" onClick={handleSafeClose}>
+          <SFSymbol
+            name="xmark"
+            size={SFSymbolSize.CALLOUT}
+            weight={SFSymbolWeight.MEDIUM}
+          />
         </button>
       </div>
 
@@ -140,32 +162,32 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
         <div className="modal-control-section">
           <h3 className="modal-section-title">레이아웃 컴포넌트</h3>
           <div className="checkbox-grid">
-            <label className="checkbox-label">
-              <input type="checkbox" checked={headerVisible} onChange={toggleHeader} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={headerVisible} onChange={withCheckboxHaptic(toggleHeader)} />
               <span>Header</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={leftPaneVisible} onChange={toggleLeftPane} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={leftPaneVisible} onChange={withCheckboxHaptic(toggleLeftPane)} />
               <span>LeftPane</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={centerPaneVisible} onChange={toggleCenterPane} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={centerPaneVisible} onChange={withCheckboxHaptic(toggleCenterPane)} />
               <span>CenterPane</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={rightPaneVisible} onChange={toggleRightPane} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={rightPaneVisible} onChange={withCheckboxHaptic(toggleRightPane)} />
               <span>RightPane</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={brbVisible} onChange={toggleBrb} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={brbVisible} onChange={withCheckboxHaptic(toggleBrb)} />
               <span>BRB</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={paginationVisible} onChange={togglePagination} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={paginationVisible} onChange={withCheckboxHaptic(togglePagination)} />
               <span>Pagination</span>
             </label>
-            <label className="checkbox-label">
-              <input type="checkbox" checked={mainPaneVisible} onChange={toggleMainPane} />
+            <label className="checkbox-label haptic-enabled">
+              <input type="checkbox" checked={mainPaneVisible} onChange={withCheckboxHaptic(toggleMainPane)} />
               <span>MainPane</span>
             </label>
           </div>
@@ -176,7 +198,7 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
           <div className="gap-section-header">
             <h3 className="modal-section-title">Gap 설정</h3>
             <div className="gap-controls">
-              <button onClick={resetGaps} className="reset-button">
+              <button onClick={handleResetWithHaptic} className="reset-button haptic-enabled">
                 디폴트
               </button>
             </div>

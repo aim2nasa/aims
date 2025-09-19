@@ -9,6 +9,8 @@ interface DraggableOptions {
   initialPosition?: Position;
   constrainToViewport?: boolean;
   minVisibleArea?: number; // 최소 가시 영역 픽셀
+  onDragStart?: () => void; // 드래그 시작 콜백 (햅틱 피드백용)
+  onDragEnd?: () => void; // 드래그 종료 콜백
 }
 
 interface DraggableReturn {
@@ -27,7 +29,9 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
   const {
     initialPosition = { x: 0, y: 0 },
     constrainToViewport = true,
-    minVisibleArea = 50 // 기본 최소 가시 영역 50px
+    minVisibleArea = 50, // 기본 최소 가시 영역 50px
+    onDragStart,
+    onDragEnd
   } = options;
 
   // 고유 키를 생성하여 여러 드래그 가능한 요소 구분
@@ -79,6 +83,10 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
     e.stopPropagation();
 
     setIsDragging(true);
+
+    // 드래그 시작 콜백 호출 (햅틱 피드백용)
+    onDragStart?.();
+
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -109,13 +117,16 @@ export const useDraggable = (options: DraggableOptions = {}): DraggableReturn =>
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
+
+      // 드래그 종료 콜백 호출
+      onDragEnd?.();
     };
 
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'grabbing';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [position, constrainPosition]);
+  }, [position, constrainPosition, onDragStart, onDragEnd]);
 
   const resetPosition = useCallback(() => {
     setPosition(initialPosition);

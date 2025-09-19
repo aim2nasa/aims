@@ -1,0 +1,481 @@
+/**
+ * SF Symbol Component Styles
+ * @since 1.0.0
+ *
+ * Apple SF Symbols 스타일 시스템 완벽 구현
+ * iOS Human Interface Guidelines 준수
+ * CLAUDE.md 준수: CSS 변수 활용, 하드코딩 금지
+ */
+
+/* === SF SYMBOL BASE === */
+
+.sf-symbol {
+  /* 기본 디스플레이 속성 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  /* iOS 표준 폰트 설정 */
+  font-family: var(--font-family-system);
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* SF Symbol 특성 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+
+  /* 텍스트와 정렬 */
+  vertical-align: middle;
+
+  /* 기본 색상 */
+  color: var(--color-text-primary);
+
+  /* 부드러운 전환 */
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+/* === SF SYMBOL SIZES === */
+
+.sf-symbol--size-caption-2 {
+  font-size: var(--font-size-caption-2); /* 11px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-caption-1 {
+  font-size: var(--font-size-caption-1); /* 12px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-footnote {
+  font-size: var(--font-size-footnote); /* 13px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-callout {
+  font-size: var(--font-size-callout); /* 16px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-body {
+  font-size: var(--font-size-body); /* 17px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-headline {
+  font-size: var(--font-size-headline); /* 17px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-title-3 {
+  font-size: var(--font-size-title-3); /* 20px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-title-2 {
+  font-size: var(--font-size-title-2); /* 22px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-title-1 {
+  font-size: var(--font-size-title-1); /* 28px */
+  width: 1em;
+  height: 1em;
+}
+
+.sf-symbol--size-large-title {
+  font-size: var(--font-size-large-title); /* 34px */
+  width: 1em;
+  height: 1em;
+}
+
+/* === SF SYMBOL WEIGHTS === */
+
+.sf-symbol--weight-ultralight {
+  font-weight: 100;
+}
+
+.sf-symbol--weight-thin {
+  font-weight: 200;
+}
+
+.sf-symbol--weight-light {
+  font-weight: 300;
+}
+
+.sf-symbol--weight-regular {
+  font-weight: 400;
+}
+
+.sf-symbol--weight-medium {
+  font-weight: 500;
+}
+
+.sf-symbol--weight-semibold {
+  font-weight: 600;
+}
+
+.sf-symbol--weight-bold {
+  font-weight: 700;
+}
+
+.sf-symbol--weight-heavy {
+  font-weight: 800;
+}
+
+.sf-symbol--weight-black {
+  font-weight: 900;
+}
+
+/* === SF SYMBOL SHAPE (실제 아이콘 모양) === */
+
+.sf-symbol__shape {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  position: relative;
+}
+
+/* === GEAR SYMBOL === */
+
+.sf-symbol--gear .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.8em;
+
+  /* iOS 표준 기어 모양 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20zm0-6c-3 0-5-2-5-5v-9c0-3 2-5 5-5s5 2 5 5v9c0 3-2 5-5 5zm0 52c3 0 5 2 5 5v9c0 3-2 5-5 5s-5-2-5-5v-9c0-3 2-5 5-5zm26-26c0-3 2-5 5-5h9c3 0 5 2 5 5s-2 5-5 5h-9c-3 0-5-2-5-5zm-52 0c0 3-2 5-5 5h-9c-3 0-5-2-5-5s2-5 5-5h9c3 0 5 2 5 5zm41-18c-2-2-2-5 0-7l6-6c2-2 5-2 7 0s2 5 0 7l-6 6c-2 2-5 2-7 0zm-30 30c2 2 2 5 0 7l-6 6c-2 2-5 2-7 0s-2-5 0-7l6-6c2-2 5-2 7 0zm30 0c2-2 5-2 7 0l6 6c2 2 2 5 0 7s-5 2-7 0l-6-6c-2-2-2-5 0-7zm-30-30c-2 2-5 2-7 0l-6-6c-2-2-2-5 0-7s5-2 7 0l6 6c2 2 2 5 0 7z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* === SUN SYMBOL === */
+
+.sf-symbol--sun-max .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.8em;
+
+  /* iOS 표준 태양 모양 */
+  background: currentColor;
+  border-radius: 50%;
+
+  /* 태양 광선 효과 */
+  box-shadow:
+    0 -1.3em 0 -0.6em currentColor,
+    0.9em -0.9em 0 -0.6em currentColor,
+    1.3em 0 0 -0.6em currentColor,
+    0.9em 0.9em 0 -0.6em currentColor,
+    0 1.3em 0 -0.6em currentColor,
+    -0.9em 0.9em 0 -0.6em currentColor,
+    -1.3em 0 0 -0.6em currentColor,
+    -0.9em -0.9em 0 -0.6em currentColor;
+}
+
+/* === MOON SYMBOL === */
+
+.sf-symbol--moon-stars .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+
+  /* iOS 표준 달 모양 */
+  background: currentColor;
+  border-radius: 50%;
+
+  /* 달 크레이터 효과 */
+  box-shadow:
+    inset 0.15em 0.15em 0 0 var(--color-bg-primary),
+    inset -0.1em -0.1em 0 0 var(--color-bg-primary);
+}
+
+/* 달 주변 별들 */
+.sf-symbol--moon-stars .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 0.1em;
+  right: 0.1em;
+  width: 0.15em;
+  height: 0.15em;
+  background: currentColor;
+  border-radius: 50%;
+
+  /* 추가 별들 */
+  box-shadow:
+    -0.4em 0.3em 0 -0.05em currentColor,
+    0.2em 0.6em 0 -0.05em currentColor;
+}
+
+/* === ELLIPSIS SYMBOL === */
+
+.sf-symbol--ellipsis .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.1em;
+  height: 0.1em;
+
+  /* 세 개의 점 */
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow:
+    -0.25em 0 0 currentColor,
+    0.25em 0 0 currentColor;
+}
+
+/* === XMARK (CLOSE) SYMBOL === */
+
+.sf-symbol--xmark .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 0.15em;
+  height: 0.8em;
+  background: currentColor;
+  border-radius: 0.075em;
+}
+
+.sf-symbol--xmark .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  width: 0.15em;
+  height: 0.8em;
+  background: currentColor;
+  border-radius: 0.075em;
+}
+
+/* === HAMBURGER MENU SYMBOL === */
+
+.sf-symbol--line-horizontal-3 .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.1em;
+  background: currentColor;
+  border-radius: 0.05em;
+
+  /* 세 줄 햄버거 메뉴 */
+  box-shadow:
+    0 -0.25em 0 currentColor,
+    0 0.25em 0 currentColor;
+}
+
+/* === INTERACTIVE STATES === */
+
+.sf-symbol--interactive {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0.2em;
+  margin: -0.2em;
+
+  /* 터치 타겟 크기 확보 (최소 44px) */
+  min-width: var(--spacing-11);
+  min-height: var(--spacing-11);
+}
+
+.sf-symbol--interactive:hover {
+  background-color: var(--color-bg-hover);
+  transform: scale(1.05);
+}
+
+.sf-symbol--interactive:active {
+  transform: scale(0.95);
+  background-color: var(--color-bg-active);
+}
+
+.sf-symbol--interactive:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* === RIPPLE EFFECT === */
+
+.sf-symbol__ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--color-primary-300);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.sf-symbol--interactive:active .sf-symbol__ripple {
+  animation: sf-symbol-ripple var(--duration-ios-standard) var(--easing-ios-default);
+}
+
+@keyframes sf-symbol-ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.6;
+  }
+  100% {
+    width: 2em;
+    height: 2em;
+    opacity: 0;
+  }
+}
+
+/* === ANIMATIONS === */
+
+.sf-symbol--animation-bounce {
+  animation: sf-symbol-bounce var(--duration-ios-standard) var(--easing-ios-default);
+}
+
+@keyframes sf-symbol-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.sf-symbol--animation-pulse {
+  animation: sf-symbol-pulse 2s infinite var(--easing-ios-default);
+}
+
+@keyframes sf-symbol-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.sf-symbol--animation-rotate {
+  animation: sf-symbol-rotate 1s linear infinite;
+}
+
+@keyframes sf-symbol-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.sf-symbol--animation-scale {
+  animation: sf-symbol-scale var(--duration-ios-standard) var(--easing-ios-default);
+}
+
+@keyframes sf-symbol-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.sf-symbol--animation-fade {
+  animation: sf-symbol-fade 1s var(--easing-ios-default) infinite alternate;
+}
+
+@keyframes sf-symbol-fade {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.sf-symbol--animation-wiggle {
+  animation: sf-symbol-wiggle 0.5s var(--easing-ios-default) 3;
+}
+
+@keyframes sf-symbol-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+/* === VARIANTS === */
+
+.sf-symbol--variant-fill .sf-symbol__shape::before {
+  /* 채워진 버전 - opacity 약간 증가 */
+  opacity: 1;
+}
+
+.sf-symbol--variant-circle .sf-symbol__shape {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 50%;
+  padding: 0.2em;
+}
+
+.sf-symbol--variant-square .sf-symbol__shape {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.2em;
+}
+
+.sf-symbol--variant-circle-fill .sf-symbol__shape {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+  border-radius: 50%;
+  padding: 0.2em;
+}
+
+.sf-symbol--variant-square-fill .sf-symbol__shape {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+  border-radius: var(--radius-sm);
+  padding: 0.2em;
+}
+
+/* === ACCESSIBILITY === */
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-symbol {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .sf-symbol--animation-bounce,
+  .sf-symbol--animation-pulse,
+  .sf-symbol--animation-rotate,
+  .sf-symbol--animation-scale,
+  .sf-symbol--animation-fade,
+  .sf-symbol--animation-wiggle {
+    animation: none !important;
+  }
+}
+
+/* === HIGH CONTRAST MODE === */
+
+@media (prefers-contrast: high) {
+  .sf-symbol {
+    filter: contrast(1.5);
+  }
+
+  .sf-symbol--interactive:hover {
+    background-color: var(--color-primary-500);
+    color: var(--color-neutral-0);
+  }
+}

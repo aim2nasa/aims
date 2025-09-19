@@ -12,6 +12,8 @@ import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
 import useHeaderTooltip from './useHeaderTooltip'
+import { HapticService, HapticType, withHaptic } from '../../services/hapticService'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -79,13 +81,18 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   //   layoutControlModalOpen ? 'header-control-button--active' : ''
   // ].filter(Boolean).join(' ')
 
-  // 툴팁 및 펄스 상호작용 처리
+  // 툴팁 및 펄스 상호작용 처리 + 햅틱 피드백
   const handleHeaderMouseEnter = () => {
     handleMouseEnter()
+    // Progressive Disclosure 확장 시 가벼운 햅틱 피드백
+    HapticService.trigger(HapticType.LIGHT)
     if (showTooltip || showPulse) {
       dismissTooltip() // 사용자가 상호작용하면 툴팁/펄스 즉시 해제
     }
   }
+
+  // 레이아웃 제어 버튼 클릭 핸들러 (햅틱 추가)
+  const handleLayoutControlClick = withHaptic(HapticType.MEDIUM, onLayoutControlOpen)
 
   return (
     <header
@@ -108,8 +115,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       <div className="header-controls">
         {/* 레이아웃 제어 버튼 */}
         <button
-          onClick={onLayoutControlOpen}
-          className="header-control-button"
+          onClick={handleLayoutControlClick}
+          className="header-control-button haptic-enabled"
           aria-label="레이아웃 제어"
           title="레이아웃 제어"
           style={{
@@ -117,9 +124,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
           }}
         >
-          <div className="sf-symbol sf-symbol--gear">
-            <div className="sf-symbol__shape"></div>
-          </div>
+          <SFSymbol
+            name="gear"
+            size={SFSymbolSize.CALLOUT}
+            weight={SFSymbolWeight.MEDIUM}
+          />
         </button>
 
         {/* 테마 토글 */}
@@ -143,9 +152,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         aria-hidden="true"
       >
         {!state.showControls && (
-          <div className="sf-symbol sf-symbol--ellipsis">
-            <div className="sf-symbol__shape"></div>
-          </div>
+          <SFSymbol
+            name="ellipsis"
+            size={SFSymbolSize.FOOTNOTE}
+            weight={SFSymbolWeight.MEDIUM}
+          />
         )}
       </div>
 
