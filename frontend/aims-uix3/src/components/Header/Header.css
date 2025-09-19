@@ -374,41 +374,12 @@
   transform: translateZ(0);
 }
 
-/* 🍎 SF Symbols: gear 아이콘 */
-.sf-symbol--gear .sf-symbol__shape {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
+/* 🍎 SF Symbols: gear 아이콘 - 간단한 기어 모양 */
 .sf-symbol--gear .sf-symbol__shape::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 6px;
-  height: 6px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
-
-.sf-symbol--gear .sf-symbol__shape::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  height: 6px;
-  background: currentColor;
-  box-shadow:
-    0 17px 0 currentColor,
-    6px 3px 0 currentColor,
-    -6px 3px 0 currentColor,
-    6px 11px 0 currentColor,
-    -6px 11px 0 currentColor;
+  content: '⚙';
+  font-size: 16px;
+  line-height: 1;
+  color: inherit;
 }
 
 /* 🍎 SF Symbols: ellipsis 아이콘 */
