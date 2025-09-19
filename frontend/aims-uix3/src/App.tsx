@@ -295,7 +295,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             width: layoutDimensions.paginationWidth,
           }}
         >
-          Pagination Pane (On/Off depends on CenterPane content)
+          PaginationPane
         </div>
       )}
 
