@@ -1,0 +1,350 @@
+/**
+ * Apple-style Confirmation Dialog Styles
+ * @since 1.0.0
+ *
+ * iOS Human Interface Guidelines 완벽 준수
+ * - 애플 표준 모달 디자인 구현
+ * - Glass morphism 효과
+ * - Progressive Disclosure 애니메이션
+ */
+
+/* === BACKDROP === */
+
+.confirmation-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-index-modal);
+
+  /* 애플 표준 백드롭 */
+  background-color: var(--backdrop-modal-dimming);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  /* 부드러운 나타남 애니메이션 */
+  animation: backdropAppear var(--duration-moderate) var(--easing-ease-out);
+
+  /* 중앙 정렬 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6);
+
+  /* 🍎 Performance: GPU 가속 */
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
+@keyframes backdropAppear {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* === DIALOG CONTAINER === */
+
+.confirmation-dialog {
+  background-color: var(--color-modal-glass-bg);
+  border: 1px solid var(--color-modal-glass-border);
+  border-radius: var(--radius-2xl);
+
+  /* 애플 표준 그림자 */
+  box-shadow: var(--shadow-apple-elevated);
+
+  /* 최대 크기 제한 */
+  max-width: 28rem; /* 448px - iOS 알럿 최대 너비 */
+  width: 100%;
+
+  /* Progressive Disclosure 애니메이션 */
+  animation: dialogAppear var(--duration-moderate) var(--easing-ios-spring);
+
+  /* 🍎 Performance: GPU 가속 */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+
+  /* 내부 레이아웃 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-8) var(--spacing-6) var(--spacing-6);
+  gap: var(--spacing-4);
+
+  /* 접근성: 포커스 트랩 */
+  isolation: isolate;
+}
+
+@keyframes dialogAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* === ICON AREA === */
+
+.confirmation-dialog__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 아이콘 색상 - 상황별 */
+  color: var(--color-neutral-500);
+
+  /* 부드러운 등장 */
+  animation: iconAppear var(--duration-slow) var(--easing-ease-out) 0.1s both;
+}
+
+.confirmation-dialog__icon .sf-symbol--exclamationmark-triangle {
+  color: var(--color-warning);
+}
+
+.confirmation-dialog__icon .sf-symbol--questionmark-circle {
+  color: var(--color-primary-600);
+}
+
+@keyframes iconAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === CONTENT AREA === */
+
+.confirmation-dialog__content {
+  text-align: center;
+  animation: contentAppear var(--duration-slow) var(--easing-ease-out) 0.2s both;
+}
+
+.confirmation-dialog__title {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+
+  /* 애플 타이포그래피 최적화 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.confirmation-dialog__message {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+  margin: 0;
+
+  /* 텍스트 간격 최적화 */
+  max-width: 24rem; /* 384px */
+}
+
+@keyframes contentAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === ACTION BUTTONS === */
+
+.confirmation-dialog__actions {
+  display: flex;
+  gap: var(--spacing-3);
+  width: 100%;
+  margin-top: var(--spacing-2);
+
+  /* 등장 애니메이션 */
+  animation: actionsAppear var(--duration-slow) var(--easing-ease-out) 0.3s both;
+}
+
+@keyframes actionsAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirmation-dialog__button {
+  flex: 1;
+  min-height: var(--touch-target-min);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+
+  /* 텍스트 스타일 */
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  text-align: center;
+
+  /* 기본 상태 */
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+
+  /* 🍎 Performance: GPU 가속 */
+  will-change: transform, background-color, border-color;
+  transform: translateZ(0);
+
+  /* 접근성 */
+  outline: none;
+
+  /* 햅틱 피드백 표시 */
+  touch-action: manipulation;
+}
+
+/* 취소 버튼 - 세컨더리 스타일 */
+.confirmation-dialog__button--cancel {
+  background-color: var(--color-neutral-100);
+  color: var(--color-text-primary);
+  border-color: var(--color-neutral-300);
+}
+
+.confirmation-dialog__button--cancel:hover {
+  background-color: var(--color-neutral-200);
+  border-color: var(--color-neutral-400);
+  transform: translateY(-1px) translateZ(0);
+}
+
+.confirmation-dialog__button--cancel:active {
+  background-color: var(--color-neutral-300);
+  transform: translateY(0) translateZ(0);
+}
+
+/* 확인 버튼 - 프라이머리 스타일 */
+.confirmation-dialog__button--confirm {
+  background-color: var(--color-primary-600);
+  color: var(--color-neutral-0);
+  border-color: var(--color-primary-600);
+  box-shadow: var(--shadow-apple-button);
+}
+
+.confirmation-dialog__button--confirm:hover {
+  background-color: var(--color-primary-700);
+  border-color: var(--color-primary-700);
+  transform: translateY(-1px) translateZ(0);
+  box-shadow: var(--shadow-apple-button-hover);
+}
+
+.confirmation-dialog__button--confirm:active {
+  background-color: var(--color-primary-800);
+  border-color: var(--color-primary-800);
+  transform: translateY(0) translateZ(0);
+  box-shadow: var(--shadow-apple-button);
+}
+
+/* 위험한 액션 버튼 - 경고 스타일 */
+.confirmation-dialog__button--destructive {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.confirmation-dialog__button--destructive:hover {
+  background-color: #dc2626; /* error-700 */
+  border-color: #dc2626;
+}
+
+.confirmation-dialog__button--destructive:active {
+  background-color: #b91c1c; /* error-800 */
+  border-color: #b91c1c;
+}
+
+/* 포커스 상태 */
+.confirmation-dialog__button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: var(--outline-offset-base);
+}
+
+.confirmation-dialog__button--destructive:focus-visible {
+  outline-color: var(--color-error);
+}
+
+/* === DARK THEME === */
+
+[data-theme="dark"] .confirmation-dialog__button--cancel {
+  background-color: var(--color-neutral-800);
+  color: var(--color-text-primary);
+  border-color: var(--color-neutral-600);
+}
+
+[data-theme="dark"] .confirmation-dialog__button--cancel:hover {
+  background-color: var(--color-neutral-700);
+  border-color: var(--color-neutral-500);
+}
+
+[data-theme="dark"] .confirmation-dialog__button--cancel:active {
+  background-color: var(--color-neutral-600);
+}
+
+/* === RESPONSIVE === */
+
+@media (max-width: 480px) {
+  .confirmation-dialog {
+    max-width: calc(100vw - 2rem);
+    margin: 0 1rem;
+    padding: var(--spacing-6) var(--spacing-4) var(--spacing-4);
+  }
+
+  .confirmation-dialog__actions {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .confirmation-dialog__button {
+    order: 0;
+  }
+
+  .confirmation-dialog__button--confirm {
+    order: -1; /* 모바일에서는 확인 버튼이 위에 */
+  }
+}
+
+/* === REDUCED MOTION === */
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-dialog-backdrop,
+  .confirmation-dialog,
+  .confirmation-dialog__icon,
+  .confirmation-dialog__content,
+  .confirmation-dialog__actions {
+    animation: none;
+  }
+
+  .confirmation-dialog__button {
+    transition: none;
+  }
+
+  .confirmation-dialog__button:hover {
+    transform: none;
+  }
+}

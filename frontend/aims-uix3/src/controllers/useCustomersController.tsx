@@ -13,6 +13,7 @@ import { useCustomerContext } from '@/contexts/CustomerContextHooks';
 import { CustomerService } from '@/services/customerService';
 import { handleApiError } from '@/shared/lib/api';
 import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerSearchQuery } from '@/entities/customer';
+import { useConfirmation } from '../shared/hooks/useConfirmation';
 
 /**
  * 고객 관리 Controller Hook
@@ -36,6 +37,9 @@ export const useCustomersController = () => {
     setDeleting,
     setError,
   } = useCustomerContext();
+
+  // Apple-style 확인 다이얼로그 Hook
+  const { confirmationState, showConfirmation, handleConfirm, handleCancel, handleClose } = useConfirmation();
 
   // === 데이터 로딩 로직 ===
 
@@ -191,13 +195,21 @@ export const useCustomersController = () => {
   }, [selectCustomer, showEditForm]);
 
   /**
-   * 고객 삭제 확인
+   * 고객 삭제 확인 - Apple-style 다이얼로그 사용
    */
-  const handleDeleteCustomer = useCallback((customer: Customer) => {
-    if (window.confirm(`${customer.name} 고객을 삭제하시겠습니까?`)) {
+  const handleDeleteCustomer = useCallback(async (customer: Customer) => {
+    const confirmed = await showConfirmation({
+      title: '고객 삭제',
+      message: `${customer.name} 고객을 삭제하시겠습니까?`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      destructive: true
+    });
+
+    if (confirmed) {
       deleteCustomer(customer._id);
     }
-  }, [deleteCustomer]);
+  }, [deleteCustomer, showConfirmation]);
 
   /**
    * 생성 폼 열기
@@ -324,6 +336,12 @@ export const useCustomersController = () => {
 
     // 선택 액션
     selectCustomer,
+
+    // Apple-style 확인 다이얼로그
+    confirmationState,
+    handleConfirm,
+    handleCancel,
+    handleClose,
   };
 };
 

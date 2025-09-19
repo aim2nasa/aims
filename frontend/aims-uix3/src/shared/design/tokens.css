@@ -63,6 +63,18 @@
   /* Primary Font (Dynamic Type 지원) */
   --font-family-primary: var(--font-family-system);
 
+  /* === BASE TYPOGRAPHY === */
+  --font-size-root: 1rem;           /* 16px - iOS 표준 기본 크기 */
+  --scrollbar-width: 0.5rem;        /* 8px - iOS 표준 스크롤바 */
+  --outline-offset-base: 0.125rem;  /* 2px - iOS 표준 포커스 오프셋 */
+
+  /* === LEGACY APP LAYOUT === */
+  --app-max-width: 80rem;           /* 1280px - 컨테이너 최대 너비 */
+  --app-padding: 2rem;              /* 32px - 기본 패딩 */
+  --logo-height: 6em;               /* 96px - 로고 높이 */
+  --logo-padding: 1.5em;            /* 24px - 로고 패딩 */
+  --card-padding: 2em;              /* 32px - 카드 패딩 */
+
   /* Font Sizes - iOS Dynamic Type 호환 */
   --font-size-caption-2: 0.6875rem;  /* 11px - iOS Caption 2 */
   --font-size-caption-1: 0.75rem;    /* 12px - iOS Caption 1 */
@@ -335,6 +347,32 @@
   --color-theme-switch-bg-dark: #3b82f6;
   --color-theme-switch-handle: #ffffff;
 
+  /* === SKELETON SHIMMER COLORS === */
+
+  /* Light Theme Shimmer - iOS 표준 불투명도 */
+  --color-skeleton-shimmer-light-start: rgba(255, 255, 255, 0);    /* 완전 투명 시작 */
+  --color-skeleton-shimmer-light-20: rgba(255, 255, 255, 0.2);     /* 20% 지점 */
+  --color-skeleton-shimmer-light-center: rgba(255, 255, 255, 0.4); /* 50% 중앙 */
+  --color-skeleton-shimmer-light-80: rgba(255, 255, 255, 0.2);     /* 80% 지점 */
+  --color-skeleton-shimmer-light-end: rgba(255, 255, 255, 0);      /* 완전 투명 끝 */
+
+  /* Dark Theme Shimmer - iOS 표준 불투명도 (더 서브틀) */
+  --color-skeleton-shimmer-dark-start: rgba(255, 255, 255, 0);     /* 완전 투명 시작 */
+  --color-skeleton-shimmer-dark-20: rgba(255, 255, 255, 0.1);      /* 20% 지점 (더 서브틀) */
+  --color-skeleton-shimmer-dark-center: rgba(255, 255, 255, 0.2);  /* 50% 중앙 (더 서브틀) */
+  --color-skeleton-shimmer-dark-80: rgba(255, 255, 255, 0.1);      /* 80% 지점 (더 서브틀) */
+  --color-skeleton-shimmer-dark-end: rgba(255, 255, 255, 0);       /* 완전 투명 끝 */
+
+  /* === MENU SYSTEM COLORS === */
+
+  /* Menu Selection Colors - iOS 표준 primary 색상 기반 */
+  --color-menu-selected-bg-light: rgba(59, 130, 246, 0.1);    /* Light: primary-600 10% */
+  --color-menu-selected-bg-dark: rgba(59, 130, 246, 0.15);    /* Dark: primary-600 15% (더 진하게) */
+
+  /* Menu Shadow Colors - iOS 표준 그림자 */
+  --color-menu-shadow-light: rgba(0, 0, 0, 0.15);             /* Light: 15% 검은색 */
+  --color-menu-shadow-dark: rgba(0, 0, 0, 0.25);              /* Dark: 25% 검은색 (더 진하게) */
+
   /* === ESSENTIAL UI COLORS === */
 
   /* Layout Background Colors (테마별 매핑) */
@@ -366,6 +404,17 @@
   --color-layout-hamburger-hover: var(--color-layout-hamburger-hover-light);
   --color-layout-hamburger-active: var(--color-layout-hamburger-active-light);
   --color-layout-hamburger-icon: var(--color-layout-hamburger-icon-light);
+
+  /* Skeleton Shimmer Default (Light Theme) */
+  --color-skeleton-shimmer-start: var(--color-skeleton-shimmer-light-start);
+  --color-skeleton-shimmer-20: var(--color-skeleton-shimmer-light-20);
+  --color-skeleton-shimmer-center: var(--color-skeleton-shimmer-light-center);
+  --color-skeleton-shimmer-80: var(--color-skeleton-shimmer-light-80);
+  --color-skeleton-shimmer-end: var(--color-skeleton-shimmer-light-end);
+
+  /* Menu System Default (Light Theme) */
+  --color-menu-selected-bg: var(--color-menu-selected-bg-light);
+  --color-menu-shadow: var(--color-menu-shadow-light);
 }
 
 /* === DARK THEME OVERRIDES === */
@@ -389,6 +438,17 @@
   --color-layout-hamburger-hover: var(--color-layout-hamburger-hover-dark);
   --color-layout-hamburger-active: var(--color-layout-hamburger-active-dark);
   --color-layout-hamburger-icon: var(--color-layout-hamburger-icon-dark);
+
+  /* Skeleton Shimmer - Dark Theme */
+  --color-skeleton-shimmer-start: var(--color-skeleton-shimmer-dark-start);
+  --color-skeleton-shimmer-20: var(--color-skeleton-shimmer-dark-20);
+  --color-skeleton-shimmer-center: var(--color-skeleton-shimmer-dark-center);
+  --color-skeleton-shimmer-80: var(--color-skeleton-shimmer-dark-80);
+  --color-skeleton-shimmer-end: var(--color-skeleton-shimmer-dark-end);
+
+  /* Menu System - Dark Theme */
+  --color-menu-selected-bg: var(--color-menu-selected-bg-dark);
+  --color-menu-shadow: var(--color-menu-shadow-dark);
 }
 
 /* === SYSTEM THEME SUPPORT === */

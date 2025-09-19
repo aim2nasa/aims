@@ -1,13 +1,13 @@
 #root {
-  max-width: 1280px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--app-padding);
   text-align: center;
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
+  height: var(--logo-height);
+  padding: var(--logo-padding);
   will-change: filter;
   transition: filter 300ms;
 }
@@ -34,7 +34,7 @@
 }
 
 .card {
-  padding: 2em;
+  padding: var(--card-padding);
 }
 
 .read-the-docs {

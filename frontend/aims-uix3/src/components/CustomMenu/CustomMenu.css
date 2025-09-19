@@ -531,7 +531,7 @@
   opacity: 0.95;
 
   /* 애플 스타일 그림자 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px var(--color-menu-shadow);
 
   /* 부드러운 나타남 효과 */
   animation: tooltipAppear var(--duration-fast) var(--easing-ease-out);
@@ -570,7 +570,7 @@
   /* 🍎 애플 스타일: 단순한 단색 배경만 사용 - 그라데이션 완전 제거 */
   /* iOS에서는 복잡한 그라데이션을 사용하지 않음 */
   --color-menu-selected-bg: var(--color-primary-600); /* 애플 표준 선택 색상 */
-  --color-menu-selected-bg-subtle: rgba(59, 130, 246, 0.1); /* 10% 투명도 primary-600 */
+  --color-menu-selected-bg-subtle: var(--color-menu-selected-bg); /* CSS 변수 사용 */
 
   /* 🍎 애플 스타일: 글로우 효과 제거 - 미니멀리즘 준수 */
 }
@@ -578,7 +578,7 @@
 /* 🍎 Dark Theme - 애플 스타일 단순화 */
 [data-theme="dark"] {
   /* 모든 아이콘은 기단 CSS 변수 사용 - 중복 제거 */
-  --color-menu-selected-bg-subtle: rgba(59, 130, 246, 0.15); /* 다크에서 약간 더 진하게 */
+  --color-menu-selected-bg-subtle: var(--color-menu-selected-bg); /* CSS 변수 사용 */
 }
 
 /* 🍎 다크 테마 완전 단순화 - 모든 늘복 제거 */

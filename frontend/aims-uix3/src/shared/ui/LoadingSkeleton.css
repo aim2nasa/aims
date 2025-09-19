@@ -57,11 +57,11 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 20%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0.2) 80%,
-    transparent 100%
+    var(--color-skeleton-shimmer-start) 0%,
+    var(--color-skeleton-shimmer-20) 20%,
+    var(--color-skeleton-shimmer-center) 50%,
+    var(--color-skeleton-shimmer-80) 80%,
+    var(--color-skeleton-shimmer-end) 100%
   );
   transform: translateX(-100%);
   /* 🍎 iOS 표준 shimmer 타이밍 - Apple HIG 준수 */
@@ -72,16 +72,7 @@
   backface-visibility: hidden;
 }
 
-[data-theme="dark"] .loading-skeleton--animate::before {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 20%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.1) 80%,
-    transparent 100%
-  );
-}
+/* Dark theme shimmer gradient now handled by CSS variables */
 
 /* 🍎 iOS 표준 shimmer 애니메이션 - 완벽한 애플 스타일 */
 @keyframes skeleton-shimmer {

@@ -79,7 +79,7 @@ p, h1, h2, h3, h4, h5, h6 {
 
 html {
   font-family: var(--font-family-primary);
-  font-size: 16px;
+  font-size: var(--font-size-root);
   scroll-behavior: smooth;
 }
 
@@ -117,7 +117,7 @@ a:hover {
 
 a:focus-visible {
   outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset-base);
   border-radius: var(--radius-sm);
 }
 
@@ -175,7 +175,7 @@ input:disabled, textarea:disabled, select:disabled {
 
 :focus-visible {
   outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset-base);
 }
 
 /* === SELECTION === */
@@ -193,8 +193,8 @@ input:disabled, textarea:disabled, select:disabled {
 /* === SCROLLBAR STYLING === */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
 }
 
 ::-webkit-scrollbar-track {

@@ -170,7 +170,7 @@ const symbolNameToClass = (name: string): string => {
  *   name="moon.stars"
  *   interactive={true}
  *   hapticType={HapticType.LIGHT}
- *   onClick={() => console.log('Moon clicked!')}
+ *   onClick={() => handleMoonClick()}
  *   animation={SFSymbolAnimation.BOUNCE}
  * />
  * ```
