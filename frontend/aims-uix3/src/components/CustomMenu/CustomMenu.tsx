@@ -129,6 +129,10 @@ const CustomMenuItem = ({
       id={`menu-item-${item.key}`}
       role="menuitem"
       aria-selected={isSelected}
+      aria-label={item.tooltipTitle}
+      aria-expanded={hasChildren ? isExpanded : undefined}
+      aria-haspopup={hasChildren ? 'menu' : undefined}
+      aria-current={isSelected ? 'page' : undefined}
       tabIndex={-1}
     >
       {item.icon}
@@ -145,7 +149,11 @@ const CustomMenuItem = ({
     <div key={item.key}>
       {content}
       {hasChildren && !collapsed && isExpanded && (
-        <div className="sub-menu-container">
+        <div
+          className="sub-menu-container"
+          role="menu"
+          aria-label={`${item.label} 하위 메뉴`}
+        >
           {item.children!.map(child => (
             <CustomMenuItem
               key={child.key}
@@ -350,6 +358,8 @@ const CustomMenu = ({
       role="menu"
       aria-label="메인 메뉴"
       aria-activedescendant={`menu-item-${selectedKey}`}
+      aria-orientation="vertical"
+      aria-expanded="true"
     >
       {menuItems.map(item => (
         <CustomMenuItem
