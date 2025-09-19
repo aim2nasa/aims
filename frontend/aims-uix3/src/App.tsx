@@ -229,7 +229,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             width: layoutDimensions.leftPaneWidthPx,
             height: `calc(100vh - var(--header-height-base) - var(--gap-top) - var(--gap-bottom))`,
-            padding: leftPaneCollapsed ? '10px' : '20px'
+            padding: leftPaneCollapsed ? 'var(--spacing-2)' : 'var(--spacing-5)' /* 🍎 애플 표준: 시스템적 간격 (8px/20px) */
           }}
         >
           {/* CustomMenu - color.png 기반 완벽한 구현 */}
