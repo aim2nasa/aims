@@ -54,9 +54,9 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-primary);
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 500;
+  font-size: var(--font-size-footnote); /* 14px → iOS Footnote */
+  line-height: var(--line-height-normal); /* 20px → CSS variable */
+  font-weight: var(--font-weight-medium); /* 500 → iOS Medium */
   position: relative;
 
   /* color.png 기반 기본 상태 */
@@ -81,7 +81,7 @@
 .sub-menu-container {
   overflow: hidden;
   /* 애플 철학: 매우 자연스럽고 우아한 전개 애니메이션 */
-  animation: appleSubMenuSlide 300ms var(--easing-apple-magic);
+  animation: appleSubMenuSlide var(--duration-ios-standard) var(--easing-apple-magic);
 
   /* 🍎 Performance: 60fps 보장 GPU 가속 */
   will-change: opacity, transform;
@@ -483,7 +483,7 @@
   /* 애플 표준: 단순한 배경색 변화만 (iOS Settings/Finder 스타일) */
   background: var(--color-menu-selected-bg-subtle);
   color: var(--color-menu-selected-text);
-  font-weight: 600; /* 선택 상태 강조 */
+  font-weight: var(--font-weight-semibold); /* 600 → iOS Semibold - 선택 상태 강조 */
 
   /* 애플 스타일: 그림자/변형 효과 완전 제거 */
   border-radius: 8px;
@@ -525,7 +525,7 @@
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px → iOS Caption 1 */
   white-space: nowrap;
   z-index: var(--z-index-tooltip);
   opacity: 0.95;

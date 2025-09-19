@@ -8,30 +8,11 @@
 .logo {
   height: var(--logo-height);
   padding: var(--logo-padding);
-  will-change: filter;
-  transition: filter 300ms;
+  /* Apple style: Simple, clean logo without flashy effects */
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em var(--color-effect-vite-glow));
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em var(--color-effect-react-glow));
-}
+/* Apple style: Removed flashy glow effects for professional minimalism */
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
+/* Apple style: Removed distracting spin animation for professional focus */
 
 .card {
   padding: var(--card-padding);

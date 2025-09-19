@@ -42,6 +42,11 @@
   --color-error: #ef4444;
   --color-info: #3b82f6;
 
+  /* Error Color Scale - iOS 표준 색상 팔레트 */
+  --color-error-600: #dc2626;  /* iOS systemRed 표준 */
+  --color-error-700: #b91c1c;  /* iOS systemRed Dark */
+  --color-error-800: #991b1b;  /* iOS systemRed Darker */
+
   /* === TYPOGRAPHY === */
 
   /* Font Families - Apple 표준 Typography Scale */
@@ -149,6 +154,11 @@
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
+
+  /* iOS 표준 애니메이션 듀레이션 */
+  --duration-ios-quick: 200ms;      /* iOS 표준 빠른 전환 */
+  --duration-ios-standard: 300ms;   /* iOS 표준 일반 전환 (기존 300ms 대체용) */
+  --duration-ios-smooth: 350ms;     /* iOS 표준 부드러운 전환 */
 
   --easing-ease: ease;
   --easing-ease-in: ease-in;

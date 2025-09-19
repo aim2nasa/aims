@@ -299,7 +299,7 @@
 .layout-brb {
   /* 평상시 완전 투명 - "Invisible until you need it" */
   background-color: transparent;
-  transition: background-color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: background-color var(--duration-ios-standard) var(--easing-apple-smooth); /* Apple standard easing */
 
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: background-color;

@@ -270,13 +270,13 @@
 }
 
 .confirmation-dialog__button--destructive:hover {
-  background-color: #dc2626; /* error-700 */
-  border-color: #dc2626;
+  background-color: var(--color-error-600); /* iOS systemRed 표준 */
+  border-color: var(--color-error-600);
 }
 
 .confirmation-dialog__button--destructive:active {
-  background-color: #b91c1c; /* error-800 */
-  border-color: #b91c1c;
+  background-color: var(--color-error-700); /* iOS systemRed Dark */
+  border-color: var(--color-error-700);
 }
 
 /* 포커스 상태 */
