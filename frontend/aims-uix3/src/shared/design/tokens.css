@@ -167,6 +167,36 @@
   --shadow-apple-elevated: var(--shadow-base);
   --shadow-sheet-elevated: 0 20px 50px -12px rgba(0, 0, 0, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.1);
 
+  /* Focus Ring Shadows - iOS 표준 */
+  --shadow-focus-ring: 0 0 0 2px var(--color-primary-100);
+  --shadow-focus-ring-dark: 0 0 0 2px rgba(59, 130, 246, 0.2);
+
+  /* Status Glow Effects */
+  --shadow-glow-success: 0 0 var(--spacing-1) var(--color-success-500);
+  --shadow-glow-error: 0 0 var(--spacing-1) var(--color-error-500);
+
+  /* macOS/iOS Sidebar Shadow - 정확한 측정값 */
+  --shadow-sidebar-light: 0 0.5px 1px rgba(0, 0, 0, 0.08);
+  --shadow-sidebar-dark: 0 0.5px 1px rgba(0, 0, 0, 0.15);
+
+  /* iOS System Colors - Alpha 지원 */
+  --color-ios-system-gray4-alpha: rgba(60, 60, 67, 0.08);
+  --color-ios-system-gray5-alpha: rgba(84, 84, 88, 0.6);
+
+  /* === Z-INDEX SYSTEM === */
+
+  /* 기본 레이어링 시스템 - iOS/macOS 표준 */
+  --z-index-behind: -1;        /* 배경 레이어 */
+  --z-index-base: 0;           /* 기본 레이어 */
+  --z-index-content: 1;        /* 일반 콘텐츠 */
+  --z-index-sidebar: 2;        /* 사이드바 */
+  --z-index-elevated: 10;      /* 약간 상승된 요소 */
+  --z-index-header: 100;       /* 헤더/네비게이션 */
+  --z-index-overlay: 500;      /* 오버레이 */
+  --z-index-modal: 800;        /* 모달 */
+  --z-index-tooltip: 1000;     /* 툴팁 */
+  --z-index-notification: 1200; /* 알림 */
+
   /* Status Colors for Components */
   --color-status-success: var(--color-success);
   --color-status-warning: var(--color-warning);

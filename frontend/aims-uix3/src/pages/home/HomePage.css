@@ -39,12 +39,12 @@
 
 .system-status--healthy .system-status__dot {
   background-color: var(--color-success-500);
-  box-shadow: 0 0 var(--spacing-1) var(--color-success-500); /* 4px → CSS 변수 */
+  box-shadow: var(--shadow-glow-success);
 }
 
 .system-status--unhealthy .system-status__dot {
   background-color: var(--color-error-500);
-  box-shadow: 0 0 var(--spacing-1) var(--color-error-500); /* 4px → CSS 변수 */
+  box-shadow: var(--shadow-glow-error);
   animation: system-status-pulse var(--duration-slow) infinite; /* 2s → CSS 변수 */
 }
 

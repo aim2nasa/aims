@@ -38,13 +38,15 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 60px;
+  /* 🍎 Safe Area 대응: Dynamic Island/노치 공간 확보 */
+  height: calc(60px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
   align-items: center;
   justify-content: space-between;
-  padding-block: 0;
-  padding-inline: 20px; /* RTL 지원: 좌우 여백 */
+  /* 🍎 Safe Area 대응 + RTL 지원 */
+  padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
   border-bottom: 1px solid var(--color-border-primary);
-  z-index: 100;
+  z-index: var(--z-index-header);
   background: var(--color-layout-header-bg);
   position: relative;
   overflow: hidden;
@@ -61,23 +63,23 @@
   left: 0;
   flex-direction: column;
   /* 🍎 애플 철학: 테두리 제거 - 공간감과 그림자로만 구분 */
-  z-index: 2; /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
+  z-index: var(--z-index-sidebar); /* 🍎 사이드바 최적값 - 과도한 레이어링 방지 */
   background-color: var(--color-layout-leftpane-bg);
   /* 🍎 애플 사이드바 디자인 - 정교한 Typography */
   font-family: var(--font-family-text); /* 텍스트 전용 폰트 사용 */
   font-size: var(--font-size-subheadline-dynamic); /* iOS Dynamic Type 지원 */
 
-  /* 🍎 Safe Area 대응 - 노치/Dynamic Island 고려 */
-  padding-left: max(var(--spacing-4), env(safe-area-inset-left));
-  padding-right: max(var(--spacing-4), env(safe-area-inset-right));
+  /* 🍎 Safe Area 대응 - 노치/Dynamic Island 완벽 지원 */
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
   padding-top: max(0px, env(safe-area-inset-top));
-  padding-bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
+  padding-bottom: max(44px, env(safe-area-inset-bottom)); /* iOS 최소 터치 영역 */
 
   /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   border-radius: 0.625rem; /* 10px - 🍎 macOS Sonoma 실제 측정값 */
-  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.08); /* 🍎 macOS 사이드바 전용 그림자 (측정값) */
+  box-shadow: var(--shadow-sidebar-light); /* 🍎 macOS 사이드바 전용 그림자 */
   /* 🍎 애플 철학: 사이드바는 정적 상태 - transition 제거 */
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
@@ -88,7 +90,7 @@
 
 /* 🍎 다크 테마 그림자 최적화 */
 [data-theme="dark"] .layout-leftpane {
-  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.15); /* 다크에서 더 진한 그림자 */
+  box-shadow: var(--shadow-sidebar-dark); /* 다크에서 더 진한 그림자 */
 }
 
 /* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음
@@ -98,7 +100,7 @@
 
 .layout-mainpane {
   top: var(--header-height-base);
-  z-index: 1;
+  z-index: var(--z-index-content);
   background-color: var(--color-layout-mainpane-bg);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
@@ -112,7 +114,7 @@
   padding-block: var(--spacing-6); /* 24px 상하 (RTL 지원) */
   padding-inline: var(--spacing-5); /* 20px 좌우 (RTL 지원) */
   box-sizing: border-box;
-  z-index: 10;
+  z-index: var(--z-index-elevated);
   background-color: var(--color-layout-centerpane-bg);
   /* 애플 스타일 카드형 디자인 */
   border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
@@ -163,7 +165,7 @@
   font-weight: var(--font-weight-medium); /* San Francisco Medium */
   letter-spacing: -0.08px; /* San Francisco 표준 자간 */
   box-sizing: border-box;
-  z-index: 10;
+  z-index: var(--z-index-elevated);
   background-color: var(--color-layout-pagination-bg);
   /* 애플 스타일 카드형 디자인 */
   border-radius: var(--radius-xl); /* 16px - iOS 카드 표준 */
@@ -252,19 +254,19 @@
 /* 🍎 애플 스타일 최적 색상 - CenterPane과 RightPane 중간 톤 */
 .layout-brb:hover {
   /* Light: CenterPane(#ffffff)과 RightPane(#e5e5ea) 중간값 + 구분 가능한 강도 */
-  background-color: rgba(60, 60, 67, 0.08);  /* iOS systemGray4 기반 서브틀 */
+  background-color: var(--color-ios-system-gray4-alpha);  /* iOS systemGray4 기반 서브틀 */
 }
 
 /* 다크 모드 - iOS 표준 Separator 색상 */
 html[data-theme="dark"] .layout-brb:hover {
   /* Dark: iOS separatorColor와 동일한 표준 색상 */
-  background-color: rgba(84, 84, 88, 0.6);   /* iOS systemGray5 기반 */
+  background-color: var(--color-ios-system-gray5-alpha);   /* iOS systemGray5 기반 */
 }
 
 /* 시스템 다크 모드 */
 @media (prefers-color-scheme: dark) {
   html[data-theme="system"] .layout-brb:hover {
-    background-color: rgba(84, 84, 88, 0.6);
+    background-color: var(--color-ios-system-gray5-alpha);
   }
 }
 
@@ -275,7 +277,7 @@ html[data-theme="dark"] .layout-brb:hover {
 }
 
 .layout-rightpane {
-  z-index: 10;
+  z-index: var(--z-index-elevated);
   overflow: hidden;
   background-color: var(--color-layout-rightpane-bg);
   /* transition 완전 제거 - Header-CBR 연동 시 컨테이너에서 처리 */
@@ -304,7 +306,7 @@ html[data-theme="dark"] .layout-brb:hover {
 
 /* 기존 RightPane + BRB 통합 컨테이너 - 더 이상 사용하지 않음 */
 .layout-rightpane-container {
-  z-index: 10;
+  z-index: var(--z-index-elevated);
   overflow: hidden;
   background-color: transparent;
   /* transition 제거 - BRB 드래그 시 직접 DOM 조작과 충돌 방지 */

@@ -423,7 +423,7 @@
   border-radius: 6px;
   font-size: 12px;
   white-space: nowrap;
-  z-index: 1000;
+  z-index: var(--z-index-tooltip);
   opacity: 0.95;
 
   /* 애플 스타일 그림자 */
