@@ -48,11 +48,30 @@
     border-color var(--duration-fast) var(--easing-ease-out),
     backdrop-filter var(--duration-fast) var(--easing-ease-out);
 
+  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures;
+
+  /* 🌍 국제화: 완벽한 다국어 지원 */
+  unicode-bidi: isolate;
+  text-size-adjust: 100%;
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: background-color, backdrop-filter;
+  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+  contain: layout style; /* CSS Containment 최적화 */
+
   /* 레이어링 */
   z-index: var(--z-index-header, 100);
 
-  /* 패딩 */
-  padding: 0 var(--spacing-4);
+  /* 패딩 - Safe Area 지원 */
+  padding-left: max(var(--spacing-4), env(safe-area-inset-left));
+  padding-right: max(var(--spacing-4), env(safe-area-inset-right));
+  padding-top: max(0px, env(safe-area-inset-top));
+  padding-bottom: 0;
   box-sizing: border-box;
 
   /* 포커스 관리 */

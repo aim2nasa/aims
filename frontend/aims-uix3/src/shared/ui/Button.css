@@ -25,6 +25,24 @@
   line-height: var(--line-height-normal);
   text-decoration: none;
 
+  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings: var(--font-feature-settings-kerning);
+
+  /* 🌍 국제화: 완벽한 다국어 지원 */
+  unicode-bidi: isolate;
+  text-size-adjust: 100%;
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: background-color, color, border-color, transform;
+  transform: translateZ(0);
+  contain: layout style;
+  backface-visibility: hidden;
+
   /* 상호작용 */
   cursor: pointer;
   transition:

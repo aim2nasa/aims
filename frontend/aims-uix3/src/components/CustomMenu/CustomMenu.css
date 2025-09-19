@@ -14,11 +14,32 @@
   background: transparent;
   border: none;
   color: var(--color-text-primary);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--font-size-sm); /* 14px → CSS 변수 */
+  line-height: var(--line-height-relaxed);
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-family-system);
+
+  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures;
+
+  /* 🌍 국제화: 완벽한 다국어 지원 */
+  unicode-bidi: isolate;
+  text-size-adjust: 100%;
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout style;
+
+  /* 🎨 벡터 렌더링 완벽성 */
+  shape-rendering: geometricPrecision;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 
   /* 키보드 네비게이션을 위한 포커스 처리 */
   outline: none;

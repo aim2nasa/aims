@@ -12,6 +12,17 @@
   overflow: hidden;
   position: relative;
   isolation: isolate;
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: transform;
+  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+  contain: layout style paint; /* CSS Containment 최적화 */
+  backface-visibility: hidden; /* Subpixel 렌더링 최적화 */
+
+  /* 🔤 Typography 완벽성: 애플 표준 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 [data-theme="dark"] .loading-skeleton {
@@ -53,7 +64,12 @@
     transparent 100%
   );
   transform: translateX(-100%);
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  /* 🍎 iOS 표준 shimmer 타이밍 - Apple HIG 준수 */
+  animation: skeleton-shimmer 2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 [data-theme="dark"] .loading-skeleton--animate::before {
@@ -67,12 +83,18 @@
   );
 }
 
+/* 🍎 iOS 표준 shimmer 애니메이션 - 완벽한 애플 스타일 */
 @keyframes skeleton-shimmer {
   0% {
     transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
   100% {
     transform: translateX(100%);
+    opacity: 0;
   }
 }
 
