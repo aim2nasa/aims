@@ -608,7 +608,7 @@
   max-height: 80vh;
   overflow: hidden;
   border: 1px solid var(--color-border-primary);
-  transition: box-shadow var(--duration-ios-quick) ease;
+  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
 }
 
 .modal-content--dragging {
@@ -656,7 +656,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: all var(--duration-ios-quick) ease;
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
 }
 
 .modal-close-button:hover {
@@ -713,7 +713,7 @@
   cursor: pointer;
   font-size: var(--font-size-footnote); /* 14px → iOS Footnote */
   color: var(--color-modal-text-secondary);
-  transition: color var(--duration-ios-quick) ease;
+  transition: color var(--duration-ios-quick) var(--easing-ios-default);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
