@@ -17,7 +17,7 @@ interface AppProps {
 }
 
 function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
-  const [rightPaneVisible, setRightPaneVisible] = useState(false)
+  const [rightPaneVisible, setRightPaneVisible] = useState(true)
   const [centerWidth, setCenterWidth] = useState(60)
   const [paginationVisible, setPaginationVisible] = useState(true)
 
@@ -32,8 +32,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
 
 
-  // 갭 시스템 (실시간 조정 가능)
-  const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || {})
+  // 갭 시스템 (실시간 조정 가능) - DEFAULT_GAPS 기본값 적용
+  const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || DEFAULT_GAPS)
   const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
 
