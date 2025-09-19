@@ -8,7 +8,7 @@
 
 .loading-skeleton {
   background-color: var(--color-neutral-200);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-md); /* 🍎 iOS 표준 8px */
   overflow: hidden;
   position: relative;
   isolation: isolate;
@@ -58,14 +58,14 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.4) 20%,
-    rgba(255, 255, 255, 0.8) 50%,
-    rgba(255, 255, 255, 0.4) 80%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.2) 80%,
     transparent 100%
   );
   transform: translateX(-100%);
   /* 🍎 iOS 표준 shimmer 타이밍 - Apple HIG 준수 */
-  animation: skeleton-shimmer 2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  animation: skeleton-shimmer 1.5s var(--easing-ios-default) infinite;
 
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: transform, opacity;

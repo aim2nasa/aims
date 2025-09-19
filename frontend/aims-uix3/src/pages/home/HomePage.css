@@ -62,19 +62,19 @@
   left: 0;
   right: 0;
   height: var(--border-width-lg); /* 3px → CSS 변수 */
-  background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-600));
+  background-color: var(--color-primary-500); /* 🍎 Apple 미니멀리즘: 단색 배경 */
 }
 
 .stat-card--success::before {
-  background: linear-gradient(90deg, var(--color-success-500), var(--color-success-600));
+  background-color: var(--color-success-500); /* 🍎 Apple 미니멀리즘: 단색 배경 */
 }
 
 .stat-card--warning::before {
-  background: linear-gradient(90deg, var(--color-warning-500), var(--color-warning-600));
+  background-color: var(--color-warning-500); /* 🍎 Apple 미니멀리즘: 단색 배경 */
 }
 
 .stat-card--error::before {
-  background: linear-gradient(90deg, var(--color-error-500), var(--color-error-600));
+  background-color: var(--color-error-500); /* 🍎 Apple 미니멀리즘: 단색 배경 */
 }
 
 .stat-card__trend {
@@ -130,7 +130,7 @@
   justify-content: center;
   width: var(--spacing-12); /* 48px → CSS 변수 */
   height: var(--spacing-12); /* 48px → CSS 변수 */
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
+  background-color: var(--color-primary-500); /* 🍎 Apple 미니멀리즘: 단색 배경 */
   color: var(--color-neutral-0);
   border-radius: var(--radius-lg);
   margin-bottom: var(--spacing-4);
