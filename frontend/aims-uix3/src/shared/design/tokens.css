@@ -164,8 +164,15 @@
 
   /* 사용 중인 Glass 효과만 유지 */
   --backdrop-glass-light: blur(20px) saturate(180%);
+  --backdrop-glass-medium: blur(24px) saturate(190%);
+  --backdrop-glass-heavy: blur(32px) saturate(200%);
+
+  /* iOS Modal/Sheet 표준 그림자 - 라이트 테마 가시성 향상 */
+  --shadow-sheet-light: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-sheet-elevated: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-sheet-focused: 0 24px 64px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.12);
+
   --shadow-apple-elevated: var(--shadow-base);
-  --shadow-sheet-elevated: 0 20px 50px -12px rgba(0, 0, 0, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.1);
 
   /* Focus Ring Shadows - iOS 표준 */
   --shadow-focus-ring: 0 0 0 2px var(--color-primary-100);

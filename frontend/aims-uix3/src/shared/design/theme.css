@@ -363,7 +363,7 @@
 
   /* Liquid Glass Modal - Light Theme */
   --color-modal-glass-bg: rgba(255, 255, 255, 0.8);
-  --color-modal-glass-border: rgba(255, 255, 255, 0.2);
+  --color-modal-glass-border: rgba(0, 0, 0, 0.1);  /* iOS separatorColor - 라이트 테마 가시성 */
   --backdrop-modal-dimming: rgba(0, 0, 0, 0.4);
 }
 
