@@ -92,7 +92,7 @@
 /* 🍎 애플 철학: 사이드바 컨테이너는 정적 상태 유지 - 호버 효과 없음
  * macOS Finder, iOS Settings 등 모든 네이티브 사이드바는 호버 시 변화하지 않음
  * Progressive Enhancement는 기능의 점진적 공개이지, 시각적 효과가 아님
- */"
+ */
 
 .layout-mainpane {
   top: var(--header-height-base);
@@ -175,6 +175,7 @@
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: background-color;
   transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+  contain: layout style paint; /* CSS Containment: 드래그 성능 최적화 */
   position: relative;
   display: flex;
   align-items: center;
@@ -186,6 +187,11 @@
 
   /* 🎯 2px 폭에 맞는 미세한 라운드 적용 */
   border-radius: 1px;
+
+  /* 🔬 드래그 상호작용 최적화: 완벽한 터치 반응성 */
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* 그립 인디케이터 완전 제거 - 애플 미니멀리즘 */

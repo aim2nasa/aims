@@ -48,7 +48,17 @@
   --font-family-system: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-family-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-family-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-family-mono: 'SF Mono', ui-monospace, Monaco, Consolas, monospace;
+  --font-family-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* 🔬 타이포그래피 마이크로 최적화 */
+  --font-feature-settings-ligatures: "liga" 1, "clig" 1;
+  --font-feature-settings-kerning: "kern" 1;
+  --font-feature-settings-numerals: "tnum" 1;
+  --font-variant-numeric-tabular: tabular-nums;
+
+  /* 🍎 문서/코드 작성시 탭 크기 표준화 */
+  --tab-size: 2;
+  --tab-size-mono: 4;
 
   /* Primary Font (Dynamic Type 지원) */
   --font-family-primary: var(--font-family-system);

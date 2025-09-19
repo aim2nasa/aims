@@ -31,6 +31,23 @@
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: background-color;
   transform: translateZ(0); /* 강제 GPU 레이어 생성 */
+  contain: layout style paint; /* CSS Containment 최적화 */
+
+  /* 🔬 Subpixel Rendering 완벽 정렬 */
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+
+  /* 🔤 Typography 최적화: 애플 표준 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures;
+
+  /* 🌍 국제화: 완벽한 다국어 지원 */
+  unicode-bidi: isolate;
+  text-size-adjust: 100%;
 
   /* 색상 - 통일된 CSS 변수 활용 */
   background-color: var(--color-layout-hamburger-bg);
@@ -71,6 +88,14 @@
 
   /* 🍎 Micro-interaction: 서브틀한 회전 준비 */
   transform-origin: center;
+
+  /* 🎨 SVG 렌더링 최적화: 완벽한 벡터 품질 */
+  shape-rendering: geometricPrecision;
+  vector-effect: non-scaling-stroke;
+
+  /* 🔬 Pixel-Perfect 렌더링: 1px 선명도 보장 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 /* 버튼 비활성화 상태 */
