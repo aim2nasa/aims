@@ -8,7 +8,6 @@
  */
 
 import React, { useEffect } from 'react'
-import { hapticTap, hapticSelection } from '../../utils/hapticFeedback'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -30,7 +29,6 @@ interface HeaderViewProps extends HeaderProps {
  */
 export const HeaderView: React.FC<HeaderViewProps> = ({
   visible,
-  layoutControlModalOpen,
   theme,
   onLayoutControlOpen,
   onThemeToggle,

@@ -251,7 +251,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit, onCancel, isLoadi
         <Button
           type="submit"
           variant="primary"
-          loading={isLoading}
+          loading={isLoading || false}
           disabled={!formData.name?.trim()}
         >
           추가하기
@@ -271,7 +271,6 @@ const CustomersPage: React.FC = () => {
     customers,
     searchQuery,
     error,
-    total,
     hasMore,
 
     // 로딩 상태

@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo } from 'react';
-import { useCustomerContext } from '@/contexts/CustomerContext';
+import { useCustomerContext } from '@/contexts/CustomerContextHooks';
 import { CustomerService } from '@/services/customerService';
 import { handleApiError } from '@/shared/lib/api';
 import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerSearchQuery } from '@/entities/customer';
@@ -237,7 +237,7 @@ export const useCustomersController = () => {
     if (state.customers.length === 0) {
       loadCustomers();
     }
-  }, []); // 최초 한 번만 실행
+  }, [loadCustomers, state.customers.length]); // 의존성 배열 수정
 
   /**
    * 검색어나 파라미터 변경 시 데이터 리로딩
@@ -250,7 +250,7 @@ export const useCustomersController = () => {
     }, 500); // 500ms 디바운스
 
     return () => clearTimeout(timeoutId);
-  }, [state.searchQuery]);
+  }, [state.searchQuery, handleSearch]);
 
   // === 계산된 값들 ===
 

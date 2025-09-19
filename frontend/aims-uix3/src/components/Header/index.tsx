@@ -33,7 +33,3 @@ const Header: React.FC<HeaderProps> = (props) => {
 }
 
 export default Header
-
-// 타입과 Controller 내보내기 (필요시 사용)
-export { useHeaderController } from './HeaderController'
-export type { HeaderProps, HeaderState, HeaderControllerReturn } from './Header.types'

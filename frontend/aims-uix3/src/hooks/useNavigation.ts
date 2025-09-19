@@ -206,7 +206,7 @@ export const useNavigation = ({
       }
     }
 
-  }, [disabled, enableKeyboard, items.length, selectedKey, onSelectionChange, getNextKey, onEnter, onEscape])
+  }, [disabled, enableKeyboard, items, selectedKey, onSelectionChange, getNextKey, onEnter, onEscape])
 
   // 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {

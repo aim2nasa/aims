@@ -1,4 +1,4 @@
-import { useState, ReactNode, useEffect, useMemo } from 'react'
+import { useState, ReactNode, useMemo } from 'react'
 import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import './CustomMenu.css'
@@ -53,7 +53,7 @@ export interface MenuItem {
   icon: ReactNode
   label: string
   tooltipTitle: string
-  children?: MenuItem[]
+  children?: MenuItem[] | undefined
 }
 
 // 컴포넌트 Props 타입 정의
@@ -89,7 +89,7 @@ const CustomMenuItem = ({
   const hasChildren = item.children && item.children.length > 0
 
   // 메인 메뉴 영역 클릭 시 - 선택만 처리
-  const handleMainMenuClick = (e: React.MouseEvent) => {
+  const handleMainMenuClick = () => {
     onMenuClick(item.key)
   }
 
@@ -185,7 +185,7 @@ const CustomMenu = ({
   )
 
   // 메뉴 데이터 구조 - color.png와 완전 동일한 구조 (navigation hook에서 사용하기 위해 먼저 정의)
-  const menuItems: MenuItem[] = [
+  const menuItems: MenuItem[] = useMemo(() => [
     // 검색 결과 (동적 표시)
     ...(hasSearchResults ? [{
       key: 'search-results',
@@ -267,7 +267,7 @@ const CustomMenu = ({
       label: '',
       tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
     }] : [])
-  ]
+  ], [collapsed, hasSearchResults, searchResultsCount])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
   const navigableKeys = useMemo(() =>
@@ -324,7 +324,7 @@ const CustomMenu = ({
     },
     onEscape: () => {
       // Escape 키로 첫 번째 메뉴로 복귀 (선택사항)
-      if (navigableKeys.length > 0) {
+      if (navigableKeys.length > 0 && navigableKeys[0]) {
         handleMenuClick(navigableKeys[0])
       }
     }

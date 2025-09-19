@@ -9,8 +9,6 @@
 export interface HeaderProps {
   /** 헤더 표시 여부 */
   visible: boolean;
-  /** 레이아웃 제어 모달 열림 상태 */
-  layoutControlModalOpen: boolean;
   /** 현재 테마 */
   theme: 'light' | 'dark';
   /** 레이아웃 제어 모달 열기 핸들러 */

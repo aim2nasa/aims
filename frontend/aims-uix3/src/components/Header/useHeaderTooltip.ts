@@ -54,6 +54,9 @@ export const useHeaderTooltip = () => {
         clearTimeout(dismissTimer)
       }
     }
+
+    // 이미 툴팁을 본 경우 cleanup 함수 없이 종료
+    return undefined
   }, [])
 
   /**

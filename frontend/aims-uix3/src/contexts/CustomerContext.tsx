@@ -7,8 +7,8 @@
  * ARCHITECTURE.md의 Context/Provider 패턴을 따름
  */
 
-import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
-import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerSearchQuery } from '@/entities/customer';
+import React, { createContext, useReducer, useMemo } from 'react';
+import type { Customer, CustomerSearchQuery } from '@/entities/customer';
 
 /**
  * 고객 Context 상태 타입
@@ -266,7 +266,7 @@ export const CustomerContextProvider: React.FC<CustomerContextProviderProps> = (
     setSearchParams: (params: Partial<CustomerSearchQuery>) =>
       dispatch({ type: 'SET_SEARCH_PARAMS', payload: params }),
     showCreateForm: (show: boolean) => dispatch({ type: 'SHOW_CREATE_FORM', payload: show }),
-    showEditForm: (show: boolean, customer?: Customer) =>
+    showEditForm: (show: boolean, customer?: Customer | undefined) =>
       dispatch({ type: 'SHOW_EDIT_FORM', payload: { show, customer } }),
     setCreating: (creating: boolean) => dispatch({ type: 'SET_CREATING', payload: creating }),
     setUpdating: (updating: boolean) => dispatch({ type: 'SET_UPDATING', payload: updating }),
@@ -292,66 +292,11 @@ export const CustomerContextProvider: React.FC<CustomerContextProviderProps> = (
   );
 };
 
-/**
- * 고객 Context Hook
- */
-export const useCustomerContext = (): CustomerContextValue => {
-  const context = useContext(CustomerContext);
 
-  if (!context) {
-    throw new Error('useCustomerContext must be used within a CustomerContextProvider');
-  }
-
-  return context;
-};
-
-/**
- * 고객 Context 선택적 Hook (선택적 데이터만 반환)
- */
-export const useCustomerState = () => {
-  const { state } = useCustomerContext();
-  return state;
-};
-
-export const useCustomerActions = () => {
-  const {
-    setLoading,
-    setCustomers,
-    addCustomer,
-    updateCustomer,
-    removeCustomer,
-    selectCustomer,
-    setSearchQuery,
-    setSearchParams,
-    showCreateForm,
-    showEditForm,
-    setCreating,
-    setUpdating,
-    setDeleting,
-    setError,
-    resetState,
-  } = useCustomerContext();
-
-  return {
-    setLoading,
-    setCustomers,
-    addCustomer,
-    updateCustomer,
-    removeCustomer,
-    selectCustomer,
-    setSearchQuery,
-    setSearchParams,
-    showCreateForm,
-    showEditForm,
-    setCreating,
-    setUpdating,
-    setDeleting,
-    setError,
-    resetState,
-  };
-};
+// Context 내보내기
+export { CustomerContext };
 
 /**
  * 기본 내보내기
  */
-export default CustomerContext;
+export default CustomerContextProvider;

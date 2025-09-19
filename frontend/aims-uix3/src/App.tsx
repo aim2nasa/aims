@@ -13,10 +13,9 @@ const persistentModalState = {
 
 interface AppProps {
   gaps?: Partial<GapConfig>;
-  showGapController?: boolean;
 }
 
-function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
+function App({ gaps: initialGaps }: AppProps = {}) {
   const [rightPaneVisible, setRightPaneVisible] = useState(true)
   const [centerWidth, setCenterWidth] = useState(60)
   const [paginationVisible, setPaginationVisible] = useState(true)
@@ -34,7 +33,6 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
   // 갭 시스템 (실시간 조정 가능) - DEFAULT_GAPS 기본값 적용
   const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || DEFAULT_GAPS)
-  const [gapControllerVisible, setGapControllerVisible] = useState(false)
   const { cssVariables, gapValues } = useGaps(dynamicGaps)
 
   // 통합 제어 모달 상태 (영속화 지원)
@@ -112,7 +110,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         clearTimeout(resizeTimer)
       }
     }
-  }, [resizeTimer])
+  }, [resizeTimer, modalClickProtection])
 
   // 이벤트 핸들러들 메모이제이션 (성능 최적화, 기존 동작 보존)
   const toggleHeader = useCallback(() => setHeaderVisible(prev => !prev), [])
@@ -123,7 +121,6 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
   const togglePagination = useCallback(() => setPaginationVisible(prev => !prev), [])
   const toggleMainPane = useCallback(() => setMainPaneVisible(prev => !prev), [])
   const toggleLeftPaneCollapsed = useCallback(() => setLeftPaneCollapsed(prev => !prev), [])
-  const toggleGapController = useCallback(() => setGapControllerVisible(prev => !prev), [])
   const resetGaps = useCallback(() => setDynamicGaps(DEFAULT_GAPS), [])
 
   // Gap 슬라이더 핸들러들
@@ -267,7 +264,6 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
       {/* Header - Progressive Disclosure 애플 스타일 */}
       <Header
         visible={headerVisible}
-        layoutControlModalOpen={layoutControlModalOpen}
         theme={theme}
         onLayoutControlOpen={handleModalOpen}
         onThemeToggle={toggleTheme}
@@ -289,8 +285,8 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           {/* CustomMenu - color.png 기반 완벽한 구현 */}
           <CustomMenu
             collapsed={leftPaneCollapsed}
-            onMenuClick={(key) => {
-              console.log('Menu clicked:', key)
+            onMenuClick={() => {
+              // Menu click handler - implement actual navigation logic here
             }}
           />
 
