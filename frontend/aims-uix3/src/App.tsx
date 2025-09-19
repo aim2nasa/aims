@@ -212,6 +212,58 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
         position: 'relative',
         ...cssVariables // CSS 변수 적용
       }}>
+
+      {/* 🍎 Apple A11y: Skip Navigation - VoiceOver 완벽 지원 */}
+      <a
+        href="#main-content"
+        className="skip-navigation"
+        style={{
+          position: 'absolute',
+          top: '-40px',
+          left: '6px',
+          background: 'var(--color-primary-500)',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: '4px',
+          textDecoration: 'none',
+          fontSize: '14px',
+          fontWeight: '600',
+          zIndex: '1000',
+          transform: 'translateY(-40px)',
+          transition: 'transform 0.3s ease',
+          outline: '2px solid transparent',
+          outlineOffset: '2px'
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.transform = 'translateY(-40px)'
+        }}
+        aria-label="메인 콘텐츠로 바로 가기"
+      >
+        메인 콘텐츠로 바로 가기
+      </a>
+
+      {/* 🍎 Apple A11y: 접근성 상태 알림 영역 */}
+      <div
+        id="accessibility-announcements"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: '0',
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: '0'
+        }}
+      />
+
       {/* Header - Progressive Disclosure 애플 스타일 */}
       <Header
         visible={headerVisible}
@@ -223,8 +275,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (
-        <div
+        <nav
           className={`layout-pane layout-leftpane ${isResizing ? '' : 'transition-smooth'}`}
+          role="navigation"
+          aria-label="메인 네비게이션 메뉴"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             width: layoutDimensions.leftPaneWidthPx,
@@ -247,7 +301,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
               onClick={toggleLeftPaneCollapsed}
             />
           </div>
-        </div>
+        </nav>
       )}
 
       {/* MainPane - 독립 레이어 (배경) */}
@@ -266,8 +320,11 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
 
       {/* CenterPane - Header-CBR 연동 레이어 */}
       {centerPaneVisible && (
-        <div
+        <main
+          id="main-content"
           className="layout-pane layout-centerpane"
+          role="main"
+          aria-label="메인 콘텐츠 영역"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             left: `calc(${layoutDimensions.leftPaneWidthPx} + var(--gap-left))`,
@@ -282,7 +339,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
           }}>
             CenterPane
           </h3>
-        </div>
+        </main>
       )}
 
       {/* Pagination - Header-CBR 연동 레이어 (조건부) */}
@@ -300,8 +357,10 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
       )}
 
       {/* RightPane + BRB 통합 컨테이너 - Header-CBR 연동 완벽 동기화 */}
-      <div
+      <aside
         className="layout-rightpane-container"
+        role="complementary"
+        aria-label="보조 정보 패널"
         style={{
           position: 'absolute',
           top: `calc(var(--header-height-base) + var(--gap-top))`,
@@ -393,7 +452,7 @@ function App({ gaps: initialGaps, showGapController = true }: AppProps = {}) {
             </>
           )}
         </div>
-      </div>
+      </aside>
 
       {/* 접근성: 레이아웃 상태 알림 영역 */}
       <div

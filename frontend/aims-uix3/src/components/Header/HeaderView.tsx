@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect } from 'react'
+import { hapticTap, hapticSelection } from '../../utils/hapticFeedback'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -118,7 +119,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
           }}
         >
-          ⚙
+          <div className="sf-symbol sf-symbol--gear">
+            <div className="sf-symbol__shape"></div>
+          </div>
         </button>
 
         {/* 테마 토글 */}
@@ -141,7 +144,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         ].filter(Boolean).join(' ')}
         aria-hidden="true"
       >
-        {!state.showControls && '⋯'}
+        {!state.showControls && (
+          <div className="sf-symbol sf-symbol--ellipsis">
+            <div className="sf-symbol__shape"></div>
+          </div>
+        )}
       </div>
 
       {/* 3단계: 애플스러운 툴팁 - 첫 방문자용 */}

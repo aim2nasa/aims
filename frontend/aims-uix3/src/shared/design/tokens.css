@@ -476,3 +476,61 @@
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--color-primary-100);
 }
+
+/* === 🍎 iOS DYNAMIC TYPE SYSTEM === */
+/* iOS 설정 > 화면 표시 및 밝기 > 텍스트 크기 대응 */
+
+:root {
+  /* Dynamic Type Size Classes */
+  --dynamic-type-multiplier: 1; /* 기본값, JavaScript에서 동적 조정 */
+
+  /* Large Accessibility Sizes (iOS 접근성 옵션) */
+  --dynamic-type-ax1: 1.4;
+  --dynamic-type-ax2: 1.6;
+  --dynamic-type-ax3: 1.8;
+  --dynamic-type-ax4: 2.0;
+  --dynamic-type-ax5: 2.2;
+
+  /* Standard Sizes */
+  --dynamic-type-xs: 0.8;
+  --dynamic-type-s: 0.9;
+  --dynamic-type-m: 1.0;  /* 기본 크기 */
+  --dynamic-type-l: 1.1;
+  --dynamic-type-xl: 1.2;
+  --dynamic-type-xxl: 1.3;
+
+  /* 🍎 Dynamic Type Responsive Font Sizes */
+  --font-size-dynamic-xs: calc(var(--font-size-xs) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-sm: calc(var(--font-size-sm) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-base: calc(var(--font-size-base) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-lg: calc(var(--font-size-lg) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-xl: calc(var(--font-size-xl) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-2xl: calc(var(--font-size-2xl) * var(--dynamic-type-multiplier));
+  --font-size-dynamic-3xl: calc(var(--font-size-3xl) * var(--dynamic-type-multiplier));
+}
+
+/* 🍎 Dynamic Type Utility Classes */
+.text-dynamic-xs { font-size: var(--font-size-dynamic-xs); }
+.text-dynamic-sm { font-size: var(--font-size-dynamic-sm); }
+.text-dynamic-base { font-size: var(--font-size-dynamic-base); }
+.text-dynamic-lg { font-size: var(--font-size-dynamic-lg); }
+.text-dynamic-xl { font-size: var(--font-size-dynamic-xl); }
+.text-dynamic-2xl { font-size: var(--font-size-dynamic-2xl); }
+.text-dynamic-3xl { font-size: var(--font-size-dynamic-3xl); }
+
+/* 🍎 iOS 제스처 지원 */
+.ios-gesture-enabled {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 🍎 iOS 햅틱 피드백 준비 클래스 */
+.haptic-enabled {
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--easing-ease-out);
+}
+
+.haptic-enabled:active {
+  transform: scale(0.98);
+}

@@ -34,6 +34,83 @@
   -ms-user-select: none;
 }
 
+/* 🍎 Apple Performance: CSS Grid 기반 레이아웃 시스템 */
+.layout-main--grid {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "nav main aside"
+    "nav main aside";
+  grid-template-columns: var(--layout-nav-width, 280px) 1fr var(--layout-aside-width, 300px);
+  grid-template-rows: var(--layout-header-height, 60px) 1fr;
+  gap: var(--layout-gap, 16px);
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+
+  /* 🍎 iOS Safe Area 완벽 대응 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+
+  /* 🍎 애플 성능 최적화 */
+  contain: layout style paint;
+  transform: translateZ(0);
+  will-change: grid-template-columns;
+}
+
+/* 🍎 CSS Grid Areas - JavaScript 계산 완전 대체 */
+.layout-header--grid {
+  grid-area: header;
+  z-index: var(--z-index-header);
+}
+
+.layout-nav--grid {
+  grid-area: nav;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.layout-main-content--grid {
+  grid-area: main;
+  overflow: auto;
+  position: relative;
+}
+
+.layout-aside--grid {
+  grid-area: aside;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 🍎 Responsive Grid - 모바일 최적화 */
+@media (max-width: 768px) {
+  .layout-main--grid {
+    grid-template-areas:
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--layout-header-height, 60px) 1fr;
+  }
+
+  .layout-nav--grid,
+  .layout-aside--grid {
+    display: none;
+  }
+}
+
+/* 🍎 Tablet 최적화 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .layout-main--grid {
+    grid-template-areas:
+      "header header"
+      "nav main";
+    grid-template-columns: var(--layout-nav-width, 280px) 1fr;
+  }
+
+  .layout-aside--grid {
+    display: none;
+  }
+}
+
 .layout-header {
   top: 0;
   left: 0;

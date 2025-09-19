@@ -345,3 +345,91 @@
     opacity: var(--pulse-opacity-max); /* 정적 상태로 표시 */
   }
 }
+
+/* === 🍎 SF Symbols 스타일 아이콘 시스템 === */
+
+.sf-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  position: relative;
+
+  /* 🍎 SF Symbols 품질 최적화 */
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.sf-symbol__shape {
+  position: relative;
+  color: var(--color-header-text);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+
+  /* 🍎 서브픽셀 렌더링 최적화 */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* 🍎 SF Symbols: gear 아이콘 */
+.sf-symbol--gear .sf-symbol__shape {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.sf-symbol--gear .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.sf-symbol--gear .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 6px;
+  background: currentColor;
+  box-shadow:
+    0 17px 0 currentColor,
+    6px 3px 0 currentColor,
+    -6px 3px 0 currentColor,
+    6px 11px 0 currentColor,
+    -6px 11px 0 currentColor;
+}
+
+/* 🍎 SF Symbols: ellipsis 아이콘 */
+.sf-symbol--ellipsis .sf-symbol__shape {
+  width: 16px;
+  height: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sf-symbol--ellipsis .sf-symbol__shape::before,
+.sf-symbol--ellipsis .sf-symbol__shape::after {
+  content: '';
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.sf-symbol--ellipsis .sf-symbol__shape::before {
+  margin-right: 3px;
+  box-shadow: 6px 0 0 currentColor;
+}
