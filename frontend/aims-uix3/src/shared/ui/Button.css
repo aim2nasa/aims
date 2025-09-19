@@ -52,7 +52,7 @@
     box-shadow var(--duration-fast) var(--easing-spring-gentle),
     transform var(--duration-fast) var(--easing-spring-bouncy); /* Spring Physics transform */
 
-  /* 포커스 관리 */
+  /* 포커스 관리 - WCAG 2.1 AAA 준수 */
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
@@ -61,6 +61,30 @@
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
   box-shadow: var(--shadow-focus-ring);
+}
+
+/* === ACCESSIBILITY FOCUS VARIANTS === */
+
+/* High Contrast 모드 지원 */
+@media (prefers-contrast: high) {
+  .button:focus-visible {
+    outline: 3px solid var(--color-voiceover-focus);
+    box-shadow: var(--shadow-focus-high-contrast);
+  }
+}
+
+/* VoiceOver 사용자 최적화 */
+.button.focus-voiceover:focus-visible {
+  outline: 4px solid var(--color-voiceover-focus);
+  box-shadow: var(--shadow-voiceover-cursor);
+}
+
+/* 모션 감소 사용자 지원 */
+@media (prefers-reduced-motion: reduce) {
+  .button:focus-visible {
+    box-shadow: var(--shadow-focus-reduced-motion);
+    transition: none;
+  }
 }
 
 /* === SIZE VARIANTS === */

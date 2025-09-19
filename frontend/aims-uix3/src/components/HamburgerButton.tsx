@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from './SFSymbol';
-import { HapticType, withHaptic } from '../services/hapticService';
+import { HAPTIC_TYPES } from '../hooks/useHapticFeedback';
 import './HamburgerButton.css';
 
 interface HamburgerButtonProps {
@@ -17,7 +17,12 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
   'aria-label': ariaLabel
 }) => {
   // 애플 스타일 햅틱 피드백을 포함한 클릭 핸들러
-  const handleClickWithHaptic = withHaptic(HapticType.LIGHT, onClick)
+  const handleClickWithHaptic = () => {
+    if (window.aimsHaptic) {
+      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+    }
+    onClick()
+  }
 
   return (
     <button
@@ -33,7 +38,7 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
         animation={SFSymbolAnimation.SCALE}
         className="hamburger-icon"
         interactive={true}
-        hapticType={HapticType.LIGHT}
+        hapticType="light"
       />
     </button>
   );

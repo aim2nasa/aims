@@ -1,5 +1,5 @@
 import { FC, memo } from 'react'
-import { HapticType, withHaptic } from '../services/hapticService'
+import { HAPTIC_TYPES } from '../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from './SFSymbol'
 
 interface ThemeToggleProps {
@@ -11,7 +11,12 @@ const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   const isDark = theme === 'dark'
 
   // 테마 토글 시 햅틱 피드백 추가
-  const handleToggleWithHaptic = withHaptic(HapticType.LIGHT, onToggle)
+  const handleToggleWithHaptic = () => {
+    if (window.aimsHaptic) {
+      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+    }
+    onToggle()
+  }
 
   // 테마별 클래스명 동적 생성
   const containerClasses = [

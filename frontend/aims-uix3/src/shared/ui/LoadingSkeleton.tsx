@@ -12,7 +12,7 @@ import './LoadingSkeleton.css';
 
 export interface LoadingSkeletonProps {
   /** 스켈레톤의 너비 (CSS 값) */
-  width?: string | number;
+  width?: string | number | undefined;
 
   /** 스켈레톤의 높이 (CSS 값) */
   height?: string | number;
@@ -99,7 +99,7 @@ export interface TextSkeletonProps {
   lines?: number;
 
   /** 각 라인의 너비 배열 (기본값: 랜덤) */
-  widths?: string[];
+  widths?: string[] | undefined;
 
   /** 라인 간격 */
   gap?: string;

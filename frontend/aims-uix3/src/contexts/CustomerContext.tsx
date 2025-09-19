@@ -59,7 +59,7 @@ export type CustomerAction =
 
   // 폼 상태
   | { type: 'SHOW_CREATE_FORM'; payload: boolean }
-  | { type: 'SHOW_EDIT_FORM'; payload: { show: boolean; customer?: Customer } }
+  | { type: 'SHOW_EDIT_FORM'; payload: { show: boolean; customer?: Customer | undefined } }
 
   // 로딩 상태
   | { type: 'SET_CREATING'; payload: boolean }

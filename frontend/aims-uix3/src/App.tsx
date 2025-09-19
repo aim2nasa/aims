@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGaps } from './hooks/useGaps'
+import { useDynamicType, initializeDynamicType } from './hooks/useDynamicType'
+import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks/useHapticFeedback'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import LayoutControlModal from './components/LayoutControlModal'
 import HamburgerButton from './components/HamburgerButton'
@@ -19,6 +21,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [rightPaneVisible, setRightPaneVisible] = useState(true)
   const [centerWidth, setCenterWidth] = useState(60)
   const [paginationVisible, setPaginationVisible] = useState(true)
+
+  // iOS Dynamic Type 시스템 초기화 및 추적
+  const dynamicType = useDynamicType()
+
+  // iOS 햅틱 피드백 시스템
+  const haptic = useHapticFeedback()
 
   // 각 레이어별 visibility 상태
   const [headerVisible, setHeaderVisible] = useState(true)
@@ -48,6 +56,33 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [])
 
+  // iOS Dynamic Type + 햅틱 피드백 시스템 초기화
+  useEffect(() => {
+    initializeDynamicType()
+    initializeHapticStyles()
+
+    console.log('[App] iOS 네이티브 시스템 초기화 완료', {
+      dynamicType: {
+        currentSize: dynamicType.currentSize,
+        scaleFactor: dynamicType.scaleFactor,
+        isAccessibilitySize: dynamicType.isAccessibilitySize
+      },
+      hapticEnabled: haptic.isHapticEnabled
+    })
+  }, [])
+
+  // 햅틱 피드백을 전역적으로 사용할 수 있도록 window 객체에 바인딩
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.aimsHaptic = haptic
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.aimsHaptic
+      }
+    }
+  }, [haptic])
+
   // 모달 상태 변경 시 전역 저장소 동기화
   useEffect(() => {
     persistentModalState.layoutControlModalOpen = layoutControlModalOpen
@@ -63,6 +98,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [theme])
 
   const toggleTheme = () => {
+    // iOS 16+ 미디움 햅틱 피드백 - 인터페이스 변경
+    haptic.triggerHaptic('medium')
     setTheme(prev => prev === 'light' ? 'dark' : 'light')
   }
 
@@ -181,6 +218,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // 이미 열려있거나 보호 중이면 무시
     if (layoutControlModalOpen || modalClickProtection) return
 
+    // iOS 16+ 라이트 햅틱 피드백 - 인터페이스 호버/오픈
+    haptic.triggerHaptic('light')
+
     setModalClickProtection(true)
     setLayoutControlModalOpen(true)
     modalStateRef.current = true
@@ -190,7 +230,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setTimeout(() => {
       setModalClickProtection(false)
     }, 100)
-  }, [layoutControlModalOpen, modalClickProtection])
+  }, [layoutControlModalOpen, modalClickProtection, haptic])
 
   // 모달 닫기 핸들러
   const handleModalClose = useCallback(() => {
@@ -386,6 +426,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             }}
             onMouseDown={(e) => {
               e.preventDefault()
+
+              // iOS 16+ 셀렉션 햅틱 피드백 - 드래그 시작
+              haptic.triggerHaptic(HAPTIC_TYPES.SELECTION)
+
               const startX = e.clientX
               const startWidth = centerWidth
 
@@ -412,6 +456,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               }
 
               const handleMouseUp = () => {
+                // iOS 16+ 라이트 햅틱 피드백 - 드래그 완료
+                haptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+
                 document.removeEventListener('mousemove', handleMouseMove)
                 document.removeEventListener('mouseup', handleMouseUp)
                 document.body.style.cursor = 'default'

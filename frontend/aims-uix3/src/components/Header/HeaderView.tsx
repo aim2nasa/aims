@@ -12,7 +12,7 @@ import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
 import useHeaderTooltip from './useHeaderTooltip'
-import { HapticService, HapticType, withHaptic } from '../../services/hapticService'
+import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import './Header.css'
 
@@ -85,14 +85,21 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   const handleHeaderMouseEnter = () => {
     handleMouseEnter()
     // Progressive Disclosure 확장 시 가벼운 햅틱 피드백
-    HapticService.trigger(HapticType.LIGHT)
+    if (window.aimsHaptic) {
+      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+    }
     if (showTooltip || showPulse) {
       dismissTooltip() // 사용자가 상호작용하면 툴팁/펄스 즉시 해제
     }
   }
 
   // 레이아웃 제어 버튼 클릭 핸들러 (햅틱 추가)
-  const handleLayoutControlClick = withHaptic(HapticType.MEDIUM, onLayoutControlOpen)
+  const handleLayoutControlClick = () => {
+    if (window.aimsHaptic) {
+      window.aimsHaptic.triggerHaptic(HAPTIC_TYPES.MEDIUM)
+    }
+    onLayoutControlOpen()
+  }
 
   return (
     <header

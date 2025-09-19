@@ -8,7 +8,7 @@
  */
 
 import React from 'react'
-import { HapticService, HapticType } from '../../services/hapticService'
+import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import './SFSymbol.css'
 
 /**
@@ -122,7 +122,7 @@ export interface SFSymbolProps {
   /** 클릭 가능 여부 */
   interactive?: boolean
   /** 햅틱 피드백 타입 (interactive=true일 때만) */
-  hapticType?: HapticType
+  hapticType?: string
   /** 클릭 핸들러 */
   onClick?: () => void
   /** 추가 CSS 클래스 */
@@ -169,7 +169,7 @@ const symbolNameToClass = (name: string): string => {
  * <SFSymbol
  *   name="moon.stars"
  *   interactive={true}
- *   hapticType={HapticType.LIGHT}
+ *   hapticType="light"
  *   onClick={() => handleMoonClick()}
  *   animation={SFSymbolAnimation.BOUNCE}
  * />
@@ -183,7 +183,7 @@ export const SFSymbol: React.FC<SFSymbolProps> = ({
   variant = SFSymbolVariant.REGULAR,
   color,
   interactive = false,
-  hapticType = HapticType.LIGHT,
+  hapticType = HAPTIC_TYPES.LIGHT,
   onClick,
   className = '',
   'aria-label': ariaLabel,
@@ -195,7 +195,9 @@ export const SFSymbol: React.FC<SFSymbolProps> = ({
   const handleClick = () => {
     if (interactive && onClick) {
       // 햅틱 피드백 트리거
-      HapticService.trigger(hapticType)
+      if (window.aimsHaptic) {
+        window.aimsHaptic.triggerHaptic(hapticType)
+      }
       onClick()
     }
   }
