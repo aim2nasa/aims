@@ -65,7 +65,11 @@
   background-color: var(--color-layout-leftpane-bg);
   /* 🍎 애플 사이드바 디자인 - 정교한 Typography */
   font-family: var(--font-family-text); /* 텍스트 전용 폰트 사용 */
-  font-size: var(--font-size-subheadline); /* iOS 15px 표준 */
+  font-size: var(--font-size-subheadline-dynamic); /* iOS Dynamic Type 지원 */
+
+  /* 🍎 Safe Area 대응 - 노치/Dynamic Island 고려 */
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
 
   /* 🍎 Safari 특화: 폰트 렌더링 최적화 */
   -webkit-font-smoothing: antialiased;
@@ -135,7 +139,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-family-text); /* 텍스트 전용 폰트 */
-  font-size: var(--font-size-footnote); /* iOS 13px 표준 */
+  font-size: var(--font-size-footnote-dynamic); /* iOS Dynamic Type 지원 */
   font-weight: var(--font-weight-medium); /* San Francisco Medium */
   letter-spacing: -0.08px; /* San Francisco 표준 자간 */
   box-sizing: border-box;
@@ -170,6 +174,7 @@
 
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: background-color;
+  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
   position: relative;
   display: flex;
   align-items: center;

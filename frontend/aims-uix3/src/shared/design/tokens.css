@@ -278,8 +278,6 @@
   --color-layout-hamburger-hover: var(--color-layout-hamburger-hover-light);
   --color-layout-hamburger-active: var(--color-layout-hamburger-active-light);
   --color-layout-hamburger-icon: var(--color-layout-hamburger-icon-light);
-  --color-bg-hover: var(--color-layout-hamburger-hover-light);
-  --color-bg-active: var(--color-layout-hamburger-active-light);
 }
 
 /* === DARK THEME OVERRIDES === */
@@ -303,8 +301,6 @@
   --color-layout-hamburger-hover: var(--color-layout-hamburger-hover-dark);
   --color-layout-hamburger-active: var(--color-layout-hamburger-active-dark);
   --color-layout-hamburger-icon: var(--color-layout-hamburger-icon-dark);
-  --color-bg-hover: var(--color-layout-hamburger-hover-dark);
-  --color-bg-active: var(--color-layout-hamburger-active-dark);
 }
 
 /* === SYSTEM THEME SUPPORT === */
@@ -329,9 +325,33 @@
     --color-layout-hamburger-hover: var(--color-layout-hamburger-hover-dark);
     --color-layout-hamburger-active: var(--color-layout-hamburger-active-dark);
     --color-layout-hamburger-icon: var(--color-layout-hamburger-icon-dark);
-    --color-bg-hover: var(--color-layout-hamburger-hover-dark);
-    --color-bg-active: var(--color-layout-hamburger-active-dark);
   }
+}
+
+/* === APPLE DYNAMIC TYPE SUPPORT === */
+
+/* iOS Dynamic Type - 텍스트 크기 사용자 설정에 반응 */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    /* 기본 상태에서 애니메이션과 함께 스케일링 */
+    --font-scale-factor: 1;
+  }
+}
+
+/* 큰 텍스트 접근성 지원 */
+@media (prefers-contrast: more) {
+  :root {
+    --font-scale-factor: 1.1; /* 10% 크기 증가 */
+    --font-weight-adjustment: 100; /* 폰트 두께 증가 */
+  }
+}
+
+/* Dynamic Type 반영 폰트 크기 */
+:root {
+  --font-size-caption-2-dynamic: calc(var(--font-size-caption-2) * var(--font-scale-factor, 1));
+  --font-size-caption-1-dynamic: calc(var(--font-size-caption-1) * var(--font-scale-factor, 1));
+  --font-size-footnote-dynamic: calc(var(--font-size-footnote) * var(--font-scale-factor, 1));
+  --font-size-subheadline-dynamic: calc(var(--font-size-subheadline) * var(--font-scale-factor, 1));
 }
 
 /* === ANIMATION TOKENS === */

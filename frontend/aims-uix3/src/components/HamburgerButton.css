@@ -30,6 +30,7 @@
 
   /* 🍎 Performance: GPU 가속 최적화 */
   will-change: background-color;
+  transform: translateZ(0); /* 강제 GPU 레이어 생성 */
 
   /* 색상 - 통일된 CSS 변수 활용 */
   background-color: var(--color-layout-hamburger-bg);
@@ -104,6 +105,14 @@
 /* 🍎 Micro-interaction: 클릭 시 서브틀한 회전 (Progressive Disclosure) */
 .hamburger-button--active .hamburger-icon {
   transform: rotate(90deg);
+}
+
+/* ♿ 접근성: 고대비 모드에서 추가 시각적 피드백 */
+@media (prefers-contrast: high) {
+  .hamburger-button--active {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
 }
 
 /* 다크 테마와 시스템 테마는 tokens.css에서 자동 처리됨 */
