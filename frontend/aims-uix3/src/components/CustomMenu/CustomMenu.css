@@ -554,34 +554,189 @@
   }
 }
 
-/* === COLOR.PNG 기반 색상 시스템 (CSS 변수 사용) === */
+/* === 🍎 애플 스타일 테마별 아이콘 색상 시스템 === */
 
-/* Light Theme - color.png 왼쪽 */
+/* Light Theme - iOS/macOS 시스템 컬러 기반 */
 :root,
 [data-theme="light"] {
-  /* 🍎 애플 스타일: 아이콘 색상 단순화 - 2가지만 사용 */
-  --color-menu-icon-default: var(--color-text-tertiary);    /* 미선택 상태 */
-  --color-menu-icon-selected: var(--color-primary-600);     /* 선택 상태 */
+  /* 기본 메뉴 색상 - iOS systemGray2 기반 */
+  --color-menu-icon-default: #8e8e93;                      /* iOS systemGray2 */
+  --color-menu-text-default: var(--color-text-primary);
+  --color-menu-bg-default: transparent;
 
-  /* 🍎 애플 스타일: 선택 상태 단순화 */
-  --color-menu-selected-text: var(--color-text-primary);
-  --color-menu-selected-icon: var(--color-primary-600);
+  /* 선택 상태 - iOS 시스템 블루 기반 */
+  --color-menu-selected-text: var(--color-neutral-0);      /* 화이트 텍스트 */
+  --color-menu-selected-icon: var(--color-neutral-0);      /* 화이트 아이콘 */
+  --color-menu-selected-bg: var(--color-primary-600);      /* iOS systemBlue */
+  --color-menu-selected-bg-subtle: var(--color-primary-600);
 
-  /* 🍎 애플 스타일: 단순한 단색 배경만 사용 - 그라데이션 완전 제거 */
-  /* iOS에서는 복잡한 그라데이션을 사용하지 않음 */
-  --color-menu-selected-bg: var(--color-primary-600); /* 애플 표준 선택 색상 */
-  --color-menu-selected-bg-subtle: var(--color-menu-selected-bg); /* CSS 변수 사용 */
+  /* 🎨 메뉴별 시맨틱 아이콘 색상 - 애플 스타일 색상 팔레트 */
 
-  /* 🍎 애플 스타일: 글로우 효과 제거 - 미니멀리즘 준수 */
+  /* 고객 관리 (User) - iOS systemBlue 계열 */
+  --color-menu-icon-user: #007aff;                         /* iOS systemBlue */
+  --color-menu-icon-user-selected: var(--color-neutral-0);
+
+  /* 전체보기 (List) - iOS systemGreen 계열 */
+  --color-menu-icon-list: #34c759;                         /* iOS systemGreen */
+  --color-menu-icon-list-selected: var(--color-neutral-0);
+
+  /* 지역별 보기 (Location) - iOS systemOrange 계열 */
+  --color-menu-icon-location: #ff9500;                     /* iOS systemOrange */
+  --color-menu-icon-location-selected: var(--color-neutral-0);
+
+  /* 관계별 보기 (Team) - iOS systemPurple 계열 */
+  --color-menu-icon-team: #af52de;                         /* iOS systemPurple */
+  --color-menu-icon-team-selected: var(--color-neutral-0);
+
+  /* 문서 관리 (Doc) - iOS systemTeal 계열 */
+  --color-menu-icon-doc: #5ac8fa;                          /* iOS systemTeal */
+  --color-menu-icon-doc-selected: var(--color-neutral-0);
+
+  /* 문서 처리 현황 (Dashboard) - iOS systemIndigo 계열 */
+  --color-menu-icon-dashboard: #5856d6;                    /* iOS systemIndigo */
+  --color-menu-icon-dashboard-selected: var(--color-neutral-0);
+
+  /* 검색 결과 (Search) - iOS systemYellow 계열 */
+  --color-menu-icon-search: #ffcc00;                       /* iOS systemYellow */
+  --color-menu-icon-search-selected: var(--color-neutral-0);
+
+  /* 그림자 및 효과 */
+  --color-menu-shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* 🍎 Dark Theme - 애플 스타일 단순화 */
+/* Dark Theme - iOS/macOS 다크모드 시스템 컬러 */
 [data-theme="dark"] {
-  /* 모든 아이콘은 기단 CSS 변수 사용 - 중복 제거 */
-  --color-menu-selected-bg-subtle: var(--color-menu-selected-bg); /* CSS 변수 사용 */
+  /* 기본 메뉴 색상 - 다크모드 적응 */
+  --color-menu-icon-default: #8e8e93;                      /* iOS systemGray2 (동일) */
+  --color-menu-text-default: var(--color-text-primary);
+  --color-menu-bg-default: transparent;
+
+  /* 선택 상태 - 다크모드에서 더 밝은 블루 */
+  --color-menu-selected-text: var(--color-neutral-0);
+  --color-menu-selected-icon: var(--color-neutral-0);
+  --color-menu-selected-bg: var(--color-primary-500);      /* 다크모드에서 더 밝게 */
+  --color-menu-selected-bg-subtle: var(--color-primary-500);
+
+  /* 🌙 다크모드 시맨틱 아이콘 색상 - 더 밝고 부드럽게 */
+
+  /* 고객 관리 (User) - 다크모드 블루 */
+  --color-menu-icon-user: #0a84ff;                         /* iOS systemBlue (Dark) */
+  --color-menu-icon-user-selected: var(--color-neutral-0);
+
+  /* 전체보기 (List) - 다크모드 그린 */
+  --color-menu-icon-list: #30d158;                         /* iOS systemGreen (Dark) */
+  --color-menu-icon-list-selected: var(--color-neutral-0);
+
+  /* 지역별 보기 (Location) - 다크모드 오렌지 */
+  --color-menu-icon-location: #ff9f0a;                     /* iOS systemOrange (Dark) */
+  --color-menu-icon-location-selected: var(--color-neutral-0);
+
+  /* 관계별 보기 (Team) - 다크모드 퍼플 */
+  --color-menu-icon-team: #bf5af2;                         /* iOS systemPurple (Dark) */
+  --color-menu-icon-team-selected: var(--color-neutral-0);
+
+  /* 문서 관리 (Doc) - 다크모드 틸 */
+  --color-menu-icon-doc: #64d2ff;                          /* iOS systemTeal (Dark) */
+  --color-menu-icon-doc-selected: var(--color-neutral-0);
+
+  /* 문서 처리 현황 (Dashboard) - 다크모드 인디고 */
+  --color-menu-icon-dashboard: #5e5ce6;                    /* iOS systemIndigo (Dark) */
+  --color-menu-icon-dashboard-selected: var(--color-neutral-0);
+
+  /* 검색 결과 (Search) - 다크모드 옐로우 */
+  --color-menu-icon-search: #ffd60a;                       /* iOS systemYellow (Dark) */
+  --color-menu-icon-search-selected: var(--color-neutral-0);
+
+  /* 그림자 및 효과 */
+  --color-menu-shadow: rgba(0, 0, 0, 0.3);
 }
 
-/* 🍎 다크 테마 완전 단순화 - 모든 늘복 제거 */
+/* === 🎨 SF Symbol 아이콘별 색상 적용 === */
+
+/* SF Symbol과 연동하여 테마별 색상 자동 적용 */
+.sf-symbol--person {
+  color: var(--color-menu-icon-user);
+}
+
+.sf-symbol--list-bullet {
+  color: var(--color-menu-icon-list);
+}
+
+.sf-symbol--location {
+  color: var(--color-menu-icon-location);
+}
+
+.sf-symbol--person-2 {
+  color: var(--color-menu-icon-team);
+}
+
+.sf-symbol--doc {
+  color: var(--color-menu-icon-doc);
+}
+
+.sf-symbol--chart-bar {
+  color: var(--color-menu-icon-dashboard);
+}
+
+.sf-symbol--magnifyingglass {
+  color: var(--color-menu-icon-search);
+}
+
+/* 선택 상태에서는 모든 아이콘이 흰색으로 통일 */
+.custom-menu-item.selected .sf-symbol--person,
+.custom-menu-item.selected .sf-symbol--list-bullet,
+.custom-menu-item.selected .sf-symbol--location,
+.custom-menu-item.selected .sf-symbol--person-2,
+.custom-menu-item.selected .sf-symbol--doc,
+.custom-menu-item.selected .sf-symbol--chart-bar,
+.custom-menu-item.selected .sf-symbol--magnifyingglass {
+  color: var(--color-neutral-0);
+}
+
+/* === 🍎 Progressive Disclosure 호버 효과 (아이콘만) === */
+
+/* 아이콘에만 서브틀한 호버 효과 적용 - 애플 스타일 */
+.custom-menu-item:hover .sf-symbol--person {
+  color: var(--color-menu-icon-user);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--list-bullet {
+  color: var(--color-menu-icon-list);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--location {
+  color: var(--color-menu-icon-location);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--person-2 {
+  color: var(--color-menu-icon-team);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--doc {
+  color: var(--color-menu-icon-doc);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--chart-bar {
+  color: var(--color-menu-icon-dashboard);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.custom-menu-item:hover .sf-symbol--magnifyingglass {
+  color: var(--color-menu-icon-search);
+  transform: scale(1.05);
+  transition: all var(--duration-ios-quick) var(--easing-ios-default);
+}
 
 /* === ACCESSIBILITY === */
 /* 키보드 포커스는 selected 상태와 분리하여 처리 */
