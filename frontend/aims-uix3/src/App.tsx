@@ -92,17 +92,47 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [layoutControlModalOpen])
 
   // 테마 시스템
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
 
-  // 테마 적용
+  // 테마 적용 및 시스템 설정 감지
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
+
+    // 시스템 테마일 때만 미디어 쿼리 리스너 등록
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+      const handleSystemThemeChange = () => {
+        // 시스템 설정이 변경되었을 때 재렌더링 트리거
+        // CSS는 이미 @media (prefers-color-scheme: dark) 로 처리됨
+        console.log(`[Theme] 시스템 테마 변경 감지: ${mediaQuery.matches ? 'dark' : 'light'}`)
+      }
+
+      // 초기 로그
+      console.log(`[Theme] 시스템 테마 모드 활성화 - 현재: ${mediaQuery.matches ? 'dark' : 'light'}`)
+
+      mediaQuery.addEventListener('change', handleSystemThemeChange)
+
+      return () => {
+        mediaQuery.removeEventListener('change', handleSystemThemeChange)
+      }
+    }
+
+    // 시스템 테마가 아닐 때는 정리 함수 불필요
+    return () => {}
   }, [theme])
 
   const toggleTheme = () => {
     // iOS 16+ 미디움 햅틱 피드백 - 인터페이스 변경
     haptic.triggerHaptic('medium')
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    setTheme(prev => {
+      switch (prev) {
+        case 'light': return 'dark'
+        case 'dark': return 'system'
+        case 'system': return 'light'
+        default: return 'system'
+      }
+    })
   }
 
   // 브라우저 리사이즈 상태 관리

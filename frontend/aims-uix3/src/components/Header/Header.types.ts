@@ -10,7 +10,7 @@ export interface HeaderProps {
   /** 헤더 표시 여부 */
   visible: boolean;
   /** 현재 테마 */
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'system';
   /** 레이아웃 제어 모달 열기 핸들러 */
   onLayoutControlOpen: () => void;
   /** 테마 토글 핸들러 */
