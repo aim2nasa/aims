@@ -72,9 +72,9 @@
 
 /* === SUB-MENU STYLES === */
 .custom-menu-item.sub-menu {
-  padding-left: 44px;
-  font-size: 13px;
-  font-weight: 400;
+  padding-left: var(--spacing-11);        /* 44px - iOS 최소 터치 영역 표준 */
+  font-size: var(--font-size-footnote);   /* 13px - iOS Footnote */
+  font-weight: var(--font-weight-normal);  /* 400 - iOS Normal */
   color: var(--color-text-secondary);
 }
 
