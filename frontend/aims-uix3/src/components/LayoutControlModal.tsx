@@ -80,12 +80,10 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
       setInternalOpen(true)
       setIsClosing(false)
     } else if (!isOpen && internalOpen) {
-      // 모달 닫기: 애니메이션을 위한 단계적 처리
+      // 모달 닫기: 즉시 처리 (애니메이션 지연 제거)
       setIsClosing(true)
-      setTimeout(() => {
-        setInternalOpen(false)
-        setIsClosing(false)
-      }, 500) // iOS Sheet Presentation 애니메이션 시간과 동조
+      setInternalOpen(false)
+      setIsClosing(false)
     }
   }, [isOpen, internalOpen])
 
@@ -93,11 +91,14 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
   // 내부적으로 닫힌 상태라면 렌더링하지 않음
   if (!internalOpen) return null
 
-  // 안전한 닫기 핸들러 (여러 번 호출 방지)
+  // 즉시 닫기 핸들러 - 애니메이션 지연 없이 즉시 처리
   const handleSafeClose = () => {
-    if (!isClosing) {
-      onClose()
-    }
+    // 즉시 닫기 상태로 변경
+    setIsClosing(true)
+    setInternalOpen(false)
+
+    // 외부 상태도 즉시 업데이트
+    onClose()
   }
 
   // ESC 키로 모달 닫기 (iOS 접근성 가이드라인)
