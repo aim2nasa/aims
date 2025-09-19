@@ -753,17 +753,17 @@
   top: 50%;
   left: 50%;
 
-  /* Liquid Glass Background */
-  background: var(--color-modal-glass-bg);
-  border: 1px solid var(--color-modal-glass-border);
-  border-radius: var(--radius-2xl); /* Apple Guidelines: 24px radius for sheets */
+  /* Liquid Glass Background - 테마별 조건부 적용 */
+  background: rgba(255, 255, 255, 0.95);  /* 라이트 테마 기본 */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 24px; /* Apple Guidelines: 24px radius for sheets */
 
   /* Advanced Backdrop Filter - Liquid Glass Effect */
-  backdrop-filter: var(--backdrop-glass-medium);
-  -webkit-backdrop-filter: var(--backdrop-glass-medium);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
 
   /* iOS Sheet Presentation Shadows */
-  box-shadow: var(--shadow-sheet-light);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
 
   /* Apple Guidelines Sizing */
   max-width: 420px;  /* iOS modal 표준 너비 */
@@ -788,16 +788,28 @@
   /* Smooth Transitions with Apple Magic */
   /* transform transition 제외 - 드래그 지원을 위해 */
   transition:
+    background var(--duration-apple-smooth) var(--easing-apple-magic),
     box-shadow var(--duration-apple-smooth) var(--easing-apple-magic),
     backdrop-filter var(--duration-apple-smooth) var(--easing-apple-magic);
 }
 
+/* 다크 테마 전용 모달 배경 */
+[data-theme="dark"] .floating-modal {
+  background: #2c2c2e;  /* 다크 테마: iOS systemGray6 */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .floating-modal:hover {
+  background: #3a3a3c;  /* 다크 테마 호버: iOS systemGray5 */
+}
+
+/* 라이트 테마 호버 */
 .floating-modal:hover {
   /* === DYNAMIC FOCUS: Progressive Disclosure === */
-  /* transform은 JavaScript에서 제어하므로 제거 */
-  box-shadow: var(--shadow-sheet-elevated);
-  backdrop-filter: var(--backdrop-glass-heavy);
-  -webkit-backdrop-filter: var(--backdrop-glass-heavy);
+  background: rgba(255, 255, 255, 0.98);  /* 라이트 테마 호버: 더 불투명 */
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
 }
 
 .floating-modal--dragging {
