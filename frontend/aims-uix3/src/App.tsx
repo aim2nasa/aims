@@ -95,7 +95,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [layoutControlModalOpen])
 
   // 테마 시스템
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
 
   // 테마 적용 및 시스템 설정 감지
   useEffect(() => {
@@ -128,7 +128,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const toggleTheme = () => {
     // iOS 16+ 미디움 햅틱 피드백 - 인터페이스 변경
     haptic.triggerHaptic('medium')
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    setTheme(prev => prev === 'light' ? 'dark' : prev === 'dark' ? 'system' : 'light')
   }
 
   // 브라우저 리사이즈 상태 관리

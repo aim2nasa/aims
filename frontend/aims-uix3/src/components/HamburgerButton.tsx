@@ -26,7 +26,7 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
 
   return (
     <button
-      className={`hamburger-button apple-interactive haptic-enabled ${className}`.trim()}
+      className={`hamburger-button apple-interactive haptic-enabled micro-button micro-haptic-light ${className}`.trim()}
       onClick={handleClickWithHaptic}
       aria-label={ariaLabel || (collapsed ? '메뉴 펼치기' : '메뉴 접기')}
       title={collapsed ? '메뉴 펼치기' : '메뉴 접기'}

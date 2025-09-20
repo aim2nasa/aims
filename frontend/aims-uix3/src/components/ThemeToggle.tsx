@@ -3,12 +3,12 @@ import { HAPTIC_TYPES } from '../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from './SFSymbol'
 
 interface ThemeToggleProps {
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark' | 'system'
   onToggle: () => void
 }
 
 const ThemeToggle: FC<ThemeToggleProps> = ({ theme, onToggle }) => {
-  const isDark = theme === 'dark'
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   // 테마 토글 시 햅틱 피드백 추가
   const handleToggleWithHaptic = () => {

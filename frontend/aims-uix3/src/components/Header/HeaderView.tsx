@@ -123,7 +123,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         {/* 레이아웃 제어 버튼 */}
         <button
           onClick={handleLayoutControlClick}
-          className="header-control-button haptic-enabled"
+          className="header-control-button haptic-enabled micro-button micro-haptic-medium"
           aria-label="레이아웃 제어"
           title="레이아웃 제어"
           style={{

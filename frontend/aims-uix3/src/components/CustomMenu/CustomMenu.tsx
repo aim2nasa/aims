@@ -1,4 +1,4 @@
-import { useState, ReactNode, useMemo, memo, useEffect, useRef } from 'react'
+import { useState, ReactNode, useMemo, memo, useEffect } from 'react'
 import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
@@ -198,20 +198,6 @@ const CustomMenu = ({
 }: CustomMenuProps) => {
   const [selectedKey, setSelectedKey] = useState('dsd')
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
-  const timersRef = useRef<NodeJS.Timeout[]>([]) // 타이머 참조 저장
-
-
-  // 🍎 Progressive Disclosure: 현재 선택된 메뉴의 부모만 자동 확장
-  const getParentMenuKey = (itemKey: string): string | null => {
-    // 현재 메뉴 구조에서 부모-자식 관계 매핑
-    const parentChildMap: { [key: string]: string } = {
-      'customers-all': 'customers',
-      'customers-regional': 'customers',
-      'customers-relationship': 'customers',
-      'dsd': 'documents'
-    }
-    return parentChildMap[itemKey] || null
-  }
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
   useEffect(() => {

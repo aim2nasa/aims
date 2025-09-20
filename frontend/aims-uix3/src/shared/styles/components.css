@@ -15,7 +15,7 @@
 }
 
 .section-heading {
-  margin: 0 0 10px 0;
+  margin: 0 0 var(--spacing-golden-sm) 0; /* 10px → Golden Ratio 기반 */
   color: var(--color-text-primary);
 }
 
@@ -26,7 +26,7 @@
 }
 
 .pagination-status {
-  margin-top: 10px;
+  margin-top: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
   color: var(--color-text-secondary);
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
@@ -40,19 +40,19 @@
 .control-label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-1); /* 4px → iOS 표준 토큰 */
   color: var(--color-text-primary);
 }
 
 .control-group {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-golden-sm); /* 10px → Golden Ratio 기반 */
   font-size: var(--font-size-caption-1); /* 12px → iOS Caption 1 */
 }
 
 .control-section {
   display: flex;
-  gap: 15px;
+  gap: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
   align-items: center;
 }
 
@@ -63,11 +63,11 @@
   background-color: var(--color-button-secondary-bg);
   color: var(--color-button-secondary-text);
   border: 1px solid var(--color-button-secondary-border);
-  border-radius: 4px;
-  padding: 6px 12px;
+  border-radius: var(--radius-sm); /* 4px → iOS 표준 토큰 */
+  padding: var(--spacing-golden-xs) var(--spacing-3); /* 6px 12px → Golden Ratio 기반 */
   cursor: pointer;
   font-size: var(--font-size-caption-1); /* 12px → iOS Caption 1 */
-  margin-left: 15px;
+  margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
 }
 
 /* === THEME TOGGLE COMPONENT === */
@@ -208,30 +208,54 @@
   background-color: var(--color-primary);
   color: var(--color-text-inverse);
   border: 1px solid var(--color-primary);
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: var(--radius-md); /* 8px → iOS 표준 토큰 */
+  padding: var(--spacing-2); /* 8px → iOS 표준 토큰 */
   cursor: pointer;
   font-size: var(--font-size-callout); /* 16px → iOS Callout */
   font-weight: var(--font-weight-medium); /* 500 → iOS Medium */
-  transition: all var(--duration-fast) var(--easing-apple-smooth); /* Apple smooth easing */
-  margin-left: 15px;
+  margin-left: var(--spacing-4); /* 15px → 16px iOS 표준 토큰 */
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+  transition:
+    transform var(--duration-micro-instant) var(--easing-micro-press-down),
+    box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
+    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
+
+  /* 성능 최적화 */
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
 }
 
 .layout-control-button:hover {
   background-color: var(--color-primary-700);
   border-color: var(--color-primary-700);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px) scale(1.002);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.2),
+    0 2px 4px rgba(59, 130, 246, 0.1);
+
+  transition:
+    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle),
+    background-color var(--duration-micro-smooth) var(--easing-apple-smooth);
 }
 
 .layout-control-button:active {
-  transform: translateY(0);
+  transform: scale(0.97) translateY(1px);
   background-color: var(--color-primary-800);
+  box-shadow:
+    inset 0 2px 4px rgba(59, 130, 246, 0.3),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
+
+  transition:
+    transform var(--duration-micro-instant) var(--easing-micro-press-down),
+    background-color var(--duration-micro-instant) var(--easing-micro-press-down),
+    box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
 }
 
 /* 레이아웃 제어 버튼 비활성화 상태 - 즉각적 피드백 */
@@ -331,9 +355,17 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+  transform: translateY(-2px) scale(1.002);
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.12),
+    0 3px 8px rgba(0, 0, 0, 0.08);
   border-color: var(--color-primary-300);
+
+  transition:
+    transform var(--duration-micro-gentle) var(--easing-spring-gentle),
+    box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-quick) var(--easing-ease-out);
 }
 
 .card-content {
@@ -462,14 +494,25 @@
   color: var(--color-input-text);
   font-size: var(--font-size-base);
   font-family: var(--font-family-primary);
-  transition: border-color var(--duration-fast) var(--easing-ease-in-out);
+
+  /* 🍎 Phase 1: 마이크로 애니메이션 적용 */
+  transition:
+    border-color var(--duration-micro-quick) var(--easing-ease-out),
+    box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
+    transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
 }
 
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
+  transform: scale(1.005);
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  box-shadow:
+    0 0 0 2px rgba(59, 130, 246, 0.1),
+    0 2px 8px rgba(59, 130, 246, 0.05);
+
+  transition:
+    all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
 }
 
 .form-textarea {
@@ -998,4 +1041,159 @@
   .modal-body {
     max-height: 86vh; /* 최적화: 92vh - 100px ≈ 86vh (100px ≈ 6vh) */
   }
+}
+
+/* === 🍎 MICRO INTERACTION SYSTEM === */
+/* Phase 1: 마이크로 인터랙션 완벽화 - iOS 17+ 표준 */
+
+/* === MICRO BUTTON ANIMATIONS === */
+
+.micro-button {
+  transition:
+    transform var(--duration-micro-instant) var(--easing-micro-press-down),
+    box-shadow var(--duration-micro-quick) var(--easing-micro-scale-bounce),
+    background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift);
+
+  /* iOS 네이티브 버튼 기본 상태 */
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+}
+
+.micro-button:hover {
+  transform: translateY(-1px) scale(1.002);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+  transition:
+    transform var(--duration-micro-quick) var(--easing-micro-hover-lift),
+    box-shadow var(--duration-micro-smooth) var(--easing-spring-gentle);
+}
+
+.micro-button:active {
+  transform: scale(0.97) translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition:
+    transform var(--duration-micro-instant) var(--easing-micro-press-down),
+    box-shadow var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.micro-button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  transition: outline var(--duration-micro-quick) var(--easing-micro-focus-ring);
+}
+
+/* === MICRO CARD ANIMATIONS === */
+
+.micro-card {
+  transition:
+    transform var(--duration-micro-smooth) var(--easing-spring-gentle),
+    box-shadow var(--duration-micro-gentle) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-quick) var(--easing-ease-out);
+
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+}
+
+.micro-card:hover {
+  transform: translateY(-2px) scale(1.002);
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.12),
+    0 3px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-primary-300);
+
+  transition:
+    transform var(--duration-micro-gentle) var(--easing-spring-gentle),
+    box-shadow var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+    border-color var(--duration-micro-quick) var(--easing-ease-out);
+}
+
+/* === MICRO INPUT ANIMATIONS === */
+
+.micro-input {
+  transition:
+    border-color var(--duration-micro-quick) var(--easing-ease-out),
+    box-shadow var(--duration-micro-smooth) var(--easing-micro-focus-ring),
+    transform var(--duration-micro-quick) var(--easing-micro-scale-bounce);
+}
+
+.micro-input:focus {
+  transform: scale(1.005);
+  border-color: var(--color-primary-500);
+  box-shadow:
+    0 0 0 2px rgba(59, 130, 246, 0.1),
+    0 2px 8px rgba(59, 130, 246, 0.05);
+
+  transition:
+    all var(--duration-micro-smooth) var(--easing-micro-focus-ring);
+}
+
+/* === MICRO PROGRESSIVE DISCLOSURE === */
+
+.micro-progressive {
+  opacity: 0.6;
+  transition:
+    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+    transform var(--duration-micro-smooth) var(--easing-spring-gentle);
+}
+
+.micro-progressive:hover,
+.micro-progressive:focus-within {
+  opacity: 1;
+  transform: translateY(-1px);
+  transition:
+    opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
+    transform var(--duration-micro-smooth) var(--easing-spring-gentle);
+}
+
+.micro-progressive-controls {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity var(--duration-micro-gentle) var(--easing-micro-progressive-expand),
+    transform var(--duration-micro-smooth) var(--easing-spring-bouncy);
+}
+
+.micro-progressive:hover .micro-progressive-controls,
+.micro-progressive:focus-within .micro-progressive-controls {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--duration-micro-quick) var(--easing-micro-progressive-expand),
+    transform var(--duration-micro-gentle) var(--easing-spring-bouncy);
+}
+
+/* === MICRO HAPTIC FEEDBACK SIMULATION === */
+
+.micro-haptic-light:active {
+  transform: scale(0.98);
+  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.micro-haptic-medium:active {
+  transform: scale(0.95);
+  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+.micro-haptic-heavy:active {
+  transform: scale(0.92);
+  transition: transform var(--duration-micro-instant) var(--easing-micro-press-down);
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+
+/* 60fps 보장을 위한 최적화 */
+.micro-optimized {
+  will-change: transform, opacity, box-shadow;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  contain: layout style paint;
+}
+
+/* GPU 가속 활성화 */
+.micro-gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
