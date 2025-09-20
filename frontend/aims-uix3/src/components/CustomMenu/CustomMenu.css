@@ -64,10 +64,8 @@
 
   /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
 
-  /* 🍎 애플 스타일: 단순한 배경색/텍스트 색상 변화만 */
-  transition:
-    background-color var(--duration-fast) var(--easing-ease-out),
-    color var(--duration-fast) var(--easing-ease-out);
+  /* 🍎 애플 스타일: 단순한 배경색 변화만 (macOS Finder 동일) */
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
 }
 
 /* === SUB-MENU STYLES === */
@@ -80,28 +78,29 @@
 
 .sub-menu-container {
   overflow: hidden;
-  /* 애플 철학: 매우 자연스럽고 우아한 전개 애니메이션 */
-  animation: appleSubMenuSlide var(--duration-ios-standard) var(--easing-apple-magic);
+  /* 🍎 애플 스타일: 부드러운 슬라이드 다운 애니메이션 */
+  transition:
+    max-height var(--duration-ios-graceful) var(--easing-apple-magic),
+    opacity var(--duration-ios-graceful) var(--easing-apple-magic),
+    transform var(--duration-ios-graceful) var(--easing-apple-magic);
 
   /* 🍎 Performance: 60fps 보장 GPU 가속 */
-  will-change: opacity, transform;
+  will-change: max-height, opacity, transform;
   transform: translateZ(0);
   contain: layout style paint;
   backface-visibility: hidden;
+
+  /* 기본 상태: 숨김 */
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
-@keyframes appleSubMenuSlide {
-  from {
-    opacity: 0;
-    max-height: 0;
-    /* 애플 스타일: 서브틀한 수직 움직임 */
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    max-height: 200px;
-    transform: translateY(0);
-  }
+/* 펼쳐진 상태: 부드럽게 슬라이드 다운 */
+.sub-menu-container.expanded {
+  max-height: 300px; /* 충분한 높이 */
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 🍎 애플 스타일: 펄스 애니메이션 제거 - 과도한 효과 금지 */
@@ -754,6 +753,36 @@
   .custom-menu-item.sub-menu {
     padding-left: 40px;
   }
+}
+
+/* === 🍎 APPLE SIMPLE: CLEAN FADE-IN === */
+
+/*
+ * 진짜 애플 스타일: 단순하고 즉각적
+ * - macOS Finder처럼 전체 메뉴가 깔끔하게 나타남
+ * - 복잡한 단계별 애니메이션 없음
+ * - 자연스럽고 빠른 반응성
+ */
+
+/* LeftPane 펼침 시: 전체 메뉴 페이드인 */
+.layout-leftpane--expanding .custom-menu {
+  opacity: 0;
+  animation: appleCleanFadeIn var(--duration-fast) var(--easing-ease-out) forwards;
+}
+
+/* 애플 표준 페이드인 */
+@keyframes appleCleanFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 접힘 시: 즉시 처리 */
+.layout-leftpane--collapsing .custom-menu {
+  transition: none;
 }
 
 /* === SMOOTH SCROLLING === */

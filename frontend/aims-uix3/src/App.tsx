@@ -40,6 +40,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // LeftPane 축소/확장 상태
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
 
+  // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
+  const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
+
 
   // 갭 시스템 (실시간 조정 가능) - DEFAULT_GAPS 기본값 적용
   const [dynamicGaps, setDynamicGaps] = useState<Partial<GapConfig>>(initialGaps || DEFAULT_GAPS)
@@ -182,7 +185,24 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const toggleBrb = useCallback(() => setBrbVisible(prev => !prev), [])
   const togglePagination = useCallback(() => setPaginationVisible(prev => !prev), [])
   const toggleMainPane = useCallback(() => setMainPaneVisible(prev => !prev), [])
-  const toggleLeftPaneCollapsed = useCallback(() => setLeftPaneCollapsed(prev => !prev), [])
+  // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
+  const toggleLeftPaneCollapsed = useCallback(() => {
+    setLeftPaneCollapsed(prev => {
+      const newCollapsed = !prev
+
+      // 애니메이션 상태 설정
+      console.log('[App] 애니메이션 상태 변경:', newCollapsed ? 'collapsing' : 'expanding')
+      setLeftPaneAnimationState(newCollapsed ? 'collapsing' : 'expanding')
+
+      // 모든 단계적 애니메이션 완료 후 idle 상태로 복귀
+      setTimeout(() => {
+        console.log('[App] 애니메이션 상태 idle로 복귀')
+        setLeftPaneAnimationState('idle')
+      }, 1000) // 전체 전동 커튼 효과 완료 시간 (600ms + 충분한 여유)
+
+      return newCollapsed
+    })
+  }, [])
   const resetGaps = useCallback(() => setDynamicGaps(DEFAULT_GAPS), [])
 
   // Gap 슬라이더 핸들러들
@@ -337,7 +357,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (
         <nav
-          className={`layout-pane layout-leftpane ${isResizing ? '' : 'transition-smooth'}`}
+          className={`layout-pane layout-leftpane ${isResizing ? '' : 'transition-smooth'} ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
           role="navigation"
           aria-label="메인 네비게이션 메뉴"
           style={{

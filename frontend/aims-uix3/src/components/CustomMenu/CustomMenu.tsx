@@ -1,4 +1,4 @@
-import { useState, ReactNode, useMemo, memo } from 'react'
+import { useState, ReactNode, useMemo, memo, useEffect, useRef } from 'react'
 import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
@@ -165,9 +165,9 @@ const CustomMenuItem = ({
   return (
     <div key={item.key}>
       {content}
-      {hasChildren && !collapsed && isExpanded && (
+      {hasChildren && !collapsed && (
         <div
-          className="sub-menu-container"
+          className={`sub-menu-container ${isExpanded ? 'expanded' : ''}`}
           role="menu"
           aria-label={`${item.label} 하위 메뉴`}
         >
@@ -197,9 +197,42 @@ const CustomMenu = ({
   collapsed = false
 }: CustomMenuProps) => {
   const [selectedKey, setSelectedKey] = useState('dsd')
-  const [expandedKeys, setExpandedKeys] = useState<string[]>(
-    collapsed ? [] : ['customers', 'documents']
-  )
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  const timersRef = useRef<NodeJS.Timeout[]>([]) // 타이머 참조 저장
+
+
+  // 🍎 Progressive Disclosure: 현재 선택된 메뉴의 부모만 자동 확장
+  const getParentMenuKey = (itemKey: string): string | null => {
+    // 현재 메뉴 구조에서 부모-자식 관계 매핑
+    const parentChildMap: { [key: string]: string } = {
+      'customers-all': 'customers',
+      'customers-regional': 'customers',
+      'customers-relationship': 'customers',
+      'dsd': 'documents'
+    }
+    return parentChildMap[itemKey] || null
+  }
+
+  // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
+  useEffect(() => {
+    if (!collapsed) {
+      // 햄버거 버튼으로 펼침: 무조건 모든 서브메뉴 접기에서 시작
+      console.log('[CustomMenu] LeftPane 펼침 - 계층적 애니메이션 시작')
+      setExpandedKeys([]) // 강제로 모든 서브메뉴 접기
+
+      // 1단계: 300ms 후 고객관리 펼침
+      setTimeout(() => {
+        console.log('[CustomMenu] 1단계 - 고객관리 펼침')
+        setExpandedKeys(['customers'])
+      }, 300)
+
+      // 2단계: 600ms 후 문서관리도 펼침 (전동 커튼 효과)
+      setTimeout(() => {
+        console.log('[CustomMenu] 2단계 - 문서관리 추가 펼침')
+        setExpandedKeys(['customers', 'documents'])
+      }, 600)
+    }
+  }, [collapsed]) // collapsed 상태 변화만 감지
 
   // 메뉴 데이터 구조 - color.png와 완전 동일한 구조 (navigation hook에서 사용하기 위해 먼저 정의)
   const menuItems: MenuItem[] = useMemo(() => [
