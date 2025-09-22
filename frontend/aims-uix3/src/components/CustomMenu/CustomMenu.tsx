@@ -238,6 +238,12 @@ const CustomMenu = ({
       tooltipTitle: '고객 관리',
       children: collapsed ? undefined : [
         {
+          key: 'customers-register',
+          icon: <MenuIcons.User />,
+          label: '고객 등록',
+          tooltipTitle: '새로운 고객을 등록합니다',
+        },
+        {
           key: 'customers-all',
           icon: <MenuIcons.List />,
           label: '전체보기',
@@ -260,6 +266,12 @@ const CustomMenu = ({
 
     // collapsed 상태에서 서브메뉴들을 개별적으로 표시
     ...(collapsed ? [
+      {
+        key: 'customers-register',
+        icon: <MenuIcons.User />,
+        label: '',
+        tooltipTitle: '새로운 고객을 등록합니다',
+      },
       {
         key: 'customers-all',
         icon: <MenuIcons.List />,
