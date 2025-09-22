@@ -300,6 +300,12 @@ const CustomMenu = ({
       tooltipTitle: '문서 관리',
       children: collapsed ? undefined : [
         {
+          key: 'documents-search',
+          icon: <MenuIcons.Search />,
+          label: '문서 검색',
+          tooltipTitle: '문서를 검색합니다',
+        },
+        {
           key: 'dsd',
           icon: <MenuIcons.Dashboard />,
           label: '문서 처리 현황',
@@ -309,12 +315,20 @@ const CustomMenu = ({
     },
 
     // collapsed 상태에서 문서 서브메뉴 표시
-    ...(collapsed ? [{
-      key: 'dsd',
-      icon: <MenuIcons.Dashboard />,
-      label: '',
-      tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
-    }] : [])
+    ...(collapsed ? [
+      {
+        key: 'documents-search',
+        icon: <MenuIcons.Search />,
+        label: '',
+        tooltipTitle: '문서를 검색합니다',
+      },
+      {
+        key: 'dsd',
+        icon: <MenuIcons.Dashboard />,
+        label: '',
+        tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
+      }
+    ] : [])
   ], [collapsed, hasSearchResults, searchResultsCount])
 
   // 네비게이션 가능한 키 추출 (메뉴 구조 변경 시 자동 업데이트)
