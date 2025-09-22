@@ -638,6 +638,25 @@
   -webkit-mask-size: contain;
 }
 
+/* === SEARCH BOLD SYMBOL === */
+
+.sf-symbol--search-bold .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.8em;
+
+  /* 더 뚜렷한 검색 아이콘 - 두꺼운 선 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='35' r='28' fill='none' stroke='currentColor' stroke-width='8'/%3e%3cpath d='58 58l30 30' stroke='currentColor' stroke-width='8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='35' r='28' fill='none' stroke='currentColor' stroke-width='8'/%3e%3cpath d='58 58l30 30' stroke='currentColor' stroke-width='8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
 /* === CHEVRON DOWN SYMBOL === */
 
 .sf-symbol--chevron-down .sf-symbol__shape::before {

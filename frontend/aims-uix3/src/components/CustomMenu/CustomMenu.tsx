@@ -61,6 +61,13 @@ const MenuIcons = {
       size={SFSymbolSize.FOOTNOTE}
       weight={SFSymbolWeight.MEDIUM}
     />
+  ),
+  SearchBold: () => (
+    <SFSymbol
+      name="search-bold"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 
@@ -301,7 +308,7 @@ const CustomMenu = ({
       children: collapsed ? undefined : [
         {
           key: 'documents-search',
-          icon: <MenuIcons.Search />,
+          icon: <MenuIcons.SearchBold />,
           label: '문서 검색',
           tooltipTitle: '문서를 검색합니다',
         },
@@ -318,7 +325,7 @@ const CustomMenu = ({
     ...(collapsed ? [
       {
         key: 'documents-search',
-        icon: <MenuIcons.Search />,
+        icon: <MenuIcons.SearchBold />,
         label: '',
         tooltipTitle: '문서를 검색합니다',
       },
