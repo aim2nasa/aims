@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Vite 캐시 디렉토리
+.vite
+node_modules/.vite
+node_modules/.cache
+
+# TypeScript 빌드 정보
+*.tsbuildinfo
+.tsbuildinfo
+
+# ESLint 캐시
+.eslintcache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
