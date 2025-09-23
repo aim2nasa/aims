@@ -15,7 +15,7 @@ API_URL = "https://n8nd.giize.com/webhook/smartsearch"
 class SmartSearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.1.6"
+        self.version = "0.2.0"
         self.root.title(f"SmartSearch Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -29,7 +29,7 @@ class SmartSearchApp:
         self.search_type_var = tk.StringVar(value="query")
         self.search_type_frame = tk.Frame(self.query_frame)
         self.search_type_frame.pack(side=tk.LEFT)
-        
+
         tk.Radiobutton(self.search_type_frame, text="검색어", variable=self.search_type_var, value="query", command=self.update_ui).pack(side=tk.LEFT)
         tk.Radiobutton(self.search_type_frame, text="ID", variable=self.search_type_var, value="id", command=self.update_ui).pack(side=tk.LEFT, padx=(10, 0))
 
@@ -131,52 +131,114 @@ class SmartSearchApp:
             mode = self.mode_var.get().upper()
             payload = {"query": query_input, "mode": mode}
         else: # search_type == "id"
+            # ID 검증
+            if len(query_input) != 24:
+                messagebox.showerror("ID 오류", "문서 ID는 24자리여야 합니다.")
+                return
+            try:
+                int(query_input, 16)  # 16진수 검증
+            except ValueError:
+                messagebox.showerror("ID 오류", "문서 ID는 유효한 16진수여야 합니다.")
+                return
             payload = {"id": query_input}
 
         try:
-            response = requests.post(API_URL, json=payload)
+            response = requests.post(API_URL, json=payload, timeout=10)
             response.raise_for_status()
-            self.data = response.json()
+
+            # 응답 처리 개선
+            response_text = response.text.strip()
+            if not response_text:
+                self.data = []
+            else:
+                try:
+                    self.data = response.json()
+                    if not self.data:
+                        self.data = []
+                except json.JSONDecodeError:
+                    self.data = []
+
+            # ID 검색에서 결과 없음 처리
+            if search_type == "id" and not self.data:
+                messagebox.showinfo("검색 결과", "해당 ID의 문서를 찾을 수 없습니다.")
+
             self.populate_table()
+        except requests.exceptions.Timeout:
+            messagebox.showerror("오류", "요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.")
+        except requests.exceptions.ConnectionError:
+            messagebox.showerror("오류", "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.")
         except Exception as e:
             messagebox.showerror("오류", f"검색 중 오류 발생: {e}")
 
     def populate_table(self):
-        if len(self.data) == 1 and isinstance(self.data[0], dict) and not self.data[0]:
-            self.result_count_label.config(text="검색 결과: 0건")
-            for row in self.result_tree.get_children():
-                self.result_tree.delete(row)
-            self.result_tree.insert("", "end", values=("", ""))
-            self.detail_text.delete("1.0", tk.END)
-            return
-
-        count = len(self.data)
-        self.result_count_label.config(text=f"검색 결과: {count}건")
+        # 기존 결과 지우기
         for row in self.result_tree.get_children():
             self.result_tree.delete(row)
-
-        for item in self.data:
-            filename = item.get("originalName", "")
-            summary = item.get("ocr", {}).get("summary", "")
-            self.result_tree.insert("", "end", values=(filename, summary))
-
         self.detail_text.delete("1.0", tk.END)
+
+        # 결과 수 표시
+        count = len(self.data)
+        self.result_count_label.config(text=f"검색 결과: {count}건")
+
+        # 결과 없음 처리
+        if count == 0:
+            self.result_tree.insert("", "end", values=("데이터 없음", "검색 결과가 없습니다."))
+            return
+
+        # 결과 테이블에 데이터 추가
+        for item in self.data:
+            # 업데이트된 데이터 구조에 맞게 수정
+            filename = (
+                item.get("upload", {}).get("originalName", "") or
+                item.get("meta", {}).get("filename", "") or
+                item.get("originalName", "") or
+                "알 수 없는 파일"
+            )
+            summary = (
+                item.get("meta", {}).get("summary", "") or
+                item.get("ocr", {}).get("summary", "") or
+                ""
+            )
+            self.result_tree.insert("", "end", values=(filename, summary))
 
     def show_details(self, event):
         selected = self.result_tree.selection()
         if not selected:
             return
         index = self.result_tree.index(selected[0])
-        full_text = self.data[index].get("ocr", {}).get("full_text", "")
-        self.detail_text.delete("1.0", tk.END)
-        self.detail_text.insert(tk.END, full_text)
+        if index >= len(self.data):
+            return
+
         item = self.data[index]
 
-        mime = item.get("meta", {}).get("mime", "")
-        dest_path = item.get("destPath", "")
+        # 업데이트된 데이터 구조에 맞게 텍스트 추출
+        full_text = (
+            item.get("meta", {}).get("full_text", "") or
+            item.get("ocr", {}).get("full_text", "") or
+            item.get("full_text", "") or
+            ""
+        )
 
+        self.detail_text.delete("1.0", tk.END)
+        if full_text:
+            self.detail_text.insert(tk.END, full_text)
+        else:
+            filename = (
+                item.get("upload", {}).get("originalName", "") or
+                item.get("meta", {}).get("filename", "") or
+                "알 수 없는 파일"
+            )
+            self.detail_text.insert(tk.END, f"파일: {filename}\n\n이 문서에는 추출된 텍스트가 없습니다.")
+
+        # 자동 미리보기
         if not self.auto_open_enabled.get():
             return
+
+        mime = item.get("meta", {}).get("mime", "")
+        dest_path = (
+            item.get("upload", {}).get("destPath", "") or
+            item.get("destPath", "")
+        )
 
         if mime.startswith("image/"):
             if dest_path.startswith("/data/files/"):
@@ -195,7 +257,7 @@ class SmartSearchApp:
         win.title("이미지 미리보기")
 
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
             img_data = response.content
             image = Image.open(BytesIO(img_data))
@@ -224,6 +286,7 @@ class SmartSearchApp:
 
         except Exception as e:
             messagebox.showerror("이미지 로드 실패", str(e))
+            win.destroy()
 
     def open_external_pdf(self, path):
         try:
