@@ -34,15 +34,18 @@ URL: http://tars.giize.com:8080/health
 
 ### 3. RAG Search API (선택적 서비스)
 ```
-URL: http://tars.giize.com:8000/
-포트: 8000
+URL: https://tars.giize.com/rag/
+포트: 443 (HTTPS)
 ```
 **예상 응답:**
 ```json
 {
-  "message": "RAG Search API",
-  "version": "1.0.0"
+  "detail": "Not Found"
 }
+```
+**또는 API 문서:**
+```
+URL: https://tars.giize.com/rag/docs
 ```
 
 ### 4. N8N Workflow (선택적 서비스)
@@ -66,7 +69,7 @@ curl -s http://tars.giize.com:8080/health | jq . || echo "JSON 파싱 실패"
 
 # RAG Search API
 echo -e "\n=== RAG Search API ==="
-curl -s http://tars.giize.com:8000/ | jq . || echo "JSON 파싱 실패"
+curl -s https://tars.giize.com/rag/ | jq . || echo "JSON 파싱 실패"
 
 # N8N Workflow
 echo -e "\n=== N8N Workflow ==="
@@ -82,7 +85,7 @@ curl -v http://tars.giize.com:3010/api/health
 curl -v http://tars.giize.com:8080/health
 
 # 3. RAG Search API
-curl -v http://tars.giize.com:8000/
+curl -v https://tars.giize.com/rag/
 
 # 4. N8N Workflow
 curl -v https://n8nd.giize.com/
@@ -106,7 +109,7 @@ curl -v https://n8nd.giize.com/
    ```bash
    sudo netstat -tulpn | grep :3010   # TARS Main
    sudo netstat -tulpn | grep :8080   # Document Status
-   sudo netstat -tulpn | grep :8000   # RAG Search
+   # RAG Search API는 Nginx 경로 기반 프록시로 제공
    sudo netstat -tulpn | grep :5678   # N8N
    ```
 
@@ -130,7 +133,7 @@ curl -v https://n8nd.giize.com/
 
 - [ ] TARS Main API (3010) 응답 정상
 - [ ] Document Status API (8080) 응답 정상 (또는 선택적 서비스)
-- [ ] RAG Search API (8000) 응답 정상 (또는 선택적 서비스)
+- [ ] RAG Search API (HTTPS /rag/) 응답 정상 (또는 선택적 서비스)
 - [ ] N8N Workflow (5678) 응답 정상 (또는 선택적 서비스)
 - [ ] 응답 시간이 10초 이내
 - [ ] JSON 형식 응답 (N8N 제외)

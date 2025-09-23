@@ -18,8 +18,8 @@ const services = [
   },
   {
     name: 'RAG Search API',
-    url: 'http://tars.giize.com:8000/',
-    port: 8000,
+    url: 'https://tars.giize.com/rag/',
+    port: 443,
     required: false
   },
   {
