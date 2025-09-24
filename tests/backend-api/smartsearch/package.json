@@ -1,0 +1,25 @@
+{
+  "name": "aims-smartsearch-tests",
+  "version": "1.0.0",
+  "description": "AIMS SmartSearch Webhook 자동화 테스트",
+  "main": "smartsearch-automation.test.js",
+  "scripts": {
+    "test": "node smartsearch-automation.test.js",
+    "test:verbose": "DEBUG=true node smartsearch-automation.test.js",
+    "test:watch": "nodemon smartsearch-automation.test.js",
+    "test:win": "run-smartsearch-test.bat",
+    "test:unix": "./run-smartsearch-test.sh"
+  },
+  "dependencies": {
+    "mongodb": "^6.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "author": "AIMS Team",
+  "license": "MIT"
+}
