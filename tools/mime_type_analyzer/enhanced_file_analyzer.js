@@ -26,6 +26,10 @@ const EXTENSION_MIME_MAP = {
     ".hwpx": "application/x-hwp"
 };
 
+const DEFAULT_MAX_PAGES = 5;
+let ALL_PAGES = false;
+let VERBOSE = false;
+
 /**
  * PDF 텍스트 비율 분석
  */
@@ -67,16 +71,31 @@ async function analyzePdfTextRatio(pdfPath, minTextLengthPerPage = 50) {
  */
 async function extractPdfText(filePath) {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
-    const pdfData = await pdfParse(dataBuffer);
-    
-    // 의미 있는 텍스트가 있는지 확인 (공백, 개행 문자만 있는 경우 null 반환)
-    const cleanedText = pdfData.text.trim();
-    if (cleanedText.length === 0) {
-      return null;
+    // 전체 출력 모드: 기존 동작 유지 (pdf-parse)
+    if (ALL_PAGES) {
+      const dataBuffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(dataBuffer);
+      const cleaned = pdfData.text.trim();
+      return cleaned.length ? pdfData.text : null;
     }
-    
-    return pdfData.text;
+
+    // 제한 모드: pdfjs로 앞 N페이지만 직접 추출 (페이지 구분자 미존재 PDF 대응)
+    const data = new Uint8Array(fs.readFileSync(filePath));
+    const pdf = await getDocument({ data }).promise;
+    const max = Math.min(pdf.numPages || 0, DEFAULT_MAX_PAGES);
+    let parts = [];
+    for (let i = 1; i <= max; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(it => it.str).join(" ").trim();
+      if (pageText) parts.push(pageText);
+    }
+    if (parts.length === 0) return null;
+    let out = parts.join("\n\f\n");
+    if (pdf.numPages > DEFAULT_MAX_PAGES) {
+      out += `\n...[TRUNCATED to ${DEFAULT_MAX_PAGES} pages]`;
+    }
+    return out;
   } catch (error) {
     throw new Error(`PDF 텍스트 추출 오류: ${error.message}`);
   }
@@ -402,12 +421,16 @@ async function getFileMetadata(filePath, extractText = true) {
 
   const filePath = args[0];
   const extractText = !args.includes('--no-extract-text'); // 기본적으로 텍스트 추출
+  ALL_PAGES = args.includes('--all-pages');
+  VERBOSE = args.includes('--verbose');
   
-  console.error(`파일 분석 중: ${filePath}`);
-  if (extractText) {
-    console.error("텍스트 추출 모드 활성화 (기본값)");
-  } else {
-    console.error("텍스트 추출 비활성화");
+  if (VERBOSE) {
+    console.error(`파일 분석 중: ${filePath}`);
+    if (extractText) {
+      console.error("텍스트 추출 모드 활성화 (기본값)");
+    } else {
+      console.error("텍스트 추출 비활성화");
+    }
   }
 
   const meta = await getFileMetadata(filePath, extractText);
