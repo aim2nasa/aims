@@ -26,7 +26,7 @@ const EXTENSION_MIME_MAP = {
     ".hwpx": "application/x-hwp"
 };
 
-const DEFAULT_MAX_PAGES = 5;
+const DEFAULT_MAX_PAGES = 30;
 let ALL_PAGES = false;
 let VERBOSE = false;
 
