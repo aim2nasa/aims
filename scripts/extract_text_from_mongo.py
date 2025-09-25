@@ -19,19 +19,31 @@ def extract_text_from_mongo(doc_id: str, mongo_uri: str = 'mongodb://localhost:2
         # ObjectId로 변환하여 문서 조회
         document = collection.find_one({'_id': ObjectId(doc_id)})
 
-        if document and 'ocr' in document and 'full_text' in document['ocr']:
-            full_text = document['ocr']['full_text']
-            # 필요한 메타데이터 추출
+        if document:
+            # 1. meta.full_text 우선 확인
+            if 'meta' in document and 'full_text' in document['meta']:
+                full_text = document['meta']['full_text']
+                text_source = 'meta'
+            # 2. ocr.full_text 대안 확인
+            elif 'ocr' in document and 'full_text' in document['ocr']:
+                full_text = document['ocr']['full_text']
+                text_source = 'ocr'
+            else:
+                print(f"문서 ID '{doc_id}'에 full_text가 없습니다.")
+                return None
+
+            # 새로운 스키마에 맞는 메타데이터 추출
             meta = {
                 'doc_id': str(document['_id']),
-                'original_name': document.get('originalName'),
-                'uploaded_at': document.get('uploaded_at'),
-                'mime': document.get('meta', {}).get('mime')
+                'original_name': document.get('upload', {}).get('originalName'),
+                'uploaded_at': document.get('upload', {}).get('uploaded_at'),
+                'mime': document.get('meta', {}).get('mime'),
+                'text_source': text_source
             }
-            print(f"문서 ID '{doc_id}'의 텍스트 로딩 완료!")
+            print(f"문서 ID '{doc_id}'의 텍스트 로딩 완료! (출처: {text_source})")
             return {'text': full_text, 'meta': meta}
         else:
-            print(f"문서 ID '{doc_id}'를 찾을 수 없거나 'ocr.full_text' 필드가 없습니다.")
+            print(f"문서 ID '{doc_id}'를 찾을 수 없습니다.")
             return None
 
     except Exception as e:
