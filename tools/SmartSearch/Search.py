@@ -149,15 +149,19 @@ class SearchApp:
 
     def find_file_path(self, item):
         """다양한 스키마 구조에서 파일 경로를 찾는 함수"""
-        # 1. meta.destPath (새로운 스키마)
+        # 1. upload.destPath (upload 섹션에서 먼저 확인)
+        if "upload" in item and "destPath" in item["upload"]:
+            return item["upload"]["destPath"]
+
+        # 2. meta.destPath (새로운 스키마)
         if "meta" in item and "destPath" in item["meta"]:
             return item["meta"]["destPath"]
 
-        # 2. destPath (기존 스키마)
+        # 3. destPath (기존 스키마)
         if "destPath" in item:
             return item["destPath"]
 
-        # 3. filename만 있는 경우 (GridFS 구조)
+        # 4. filename만 있는 경우 (GridFS 구조)
         if "filename" in item:
             filename = item['filename']
             # 이미 전체 경로인 경우
@@ -167,7 +171,7 @@ class SearchApp:
             now = datetime.now()
             return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
 
-        # 4. meta.filename이 있는 경우
+        # 5. meta.filename이 있는 경우
         if "meta" in item and "filename" in item["meta"]:
             filename = item["meta"]["filename"]
             if filename.startswith("/data/files/"):
@@ -175,11 +179,14 @@ class SearchApp:
             now = datetime.now()
             return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
 
-        # 5. MongoDB에서 직접 조회
+        # 6. MongoDB에서 직접 조회
         doc_id = item.get("_id")
         if doc_id:
             detail_doc = self.get_mongo_details(doc_id)
             if detail_doc:
+                # upload.destPath 우선 확인
+                if "upload" in detail_doc and "destPath" in detail_doc["upload"]:
+                    return detail_doc["upload"]["destPath"]
                 # meta.destPath 확인
                 if "meta" in detail_doc and "destPath" in detail_doc["meta"]:
                     return detail_doc["meta"]["destPath"]
@@ -193,24 +200,33 @@ class SearchApp:
         return ""
 
     def find_original_name(self, item):
-        """다양한 스키마 구조에서 원본 파일명을 찾는 함수"""
-        # 1. meta.originalName (새로운 스키마)
+        """다양한 스키마 구조에서 실제 원본 파일명을 찾는 함수"""
+        # SmartSearch.py 패턴을 따라 실제 원본 파일명 우선순위로 수정
+        # 1. upload.originalName (실제 원본 파일명 - 최우선)
+        if "upload" in item and "originalName" in item["upload"]:
+            return item["upload"]["originalName"]
+
+        # 2. meta.originalName (새로운 스키마)
         if "meta" in item and "originalName" in item["meta"]:
             return item["meta"]["originalName"]
 
-        # 2. originalName (기존 스키마)
+        # 3. originalName (기존 스키마)
         if "originalName" in item:
             return item["originalName"]
 
-        # 3. filename (GridFS)
-        if "filename" in item:
-            return item["filename"]
+        # 4. payload.original_name (벡터 검색 결과)
+        if "payload" in item and "original_name" in item["payload"]:
+            return item["payload"]["original_name"]
 
-        # 4. meta.filename
+        # 5. meta.filename (저장된 파일명)
         if "meta" in item and "filename" in item["meta"]:
             return item["meta"]["filename"]
 
-        return "downloaded_file"
+        # 6. filename (GridFS - 저장된 파일명)
+        if "filename" in item:
+            return item["filename"]
+
+        return "알 수 없는 파일"
 
     def display_results(self, data):
         self.results_text.delete(1.0, tk.END)
@@ -228,8 +244,8 @@ class SearchApp:
                 self.results_text.insert(tk.END, f"총 {len(search_results)}건의 결과가 발견되었습니다.\n\n", "header")
                 self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
                 for i, doc in enumerate(search_results):
-                    original_name = doc.get("originalName", "이름 없음")
-                    summary = doc.get("ocr", {}).get("summary", "요악 없음")
+                    original_name = self.find_original_name(doc)
+                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
@@ -254,11 +270,11 @@ class SearchApp:
             else:
                 self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
+                    original_name = self.find_original_name(doc)
                     summary = doc.get("ocr", {}).get("summary", "요약 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
-                    original_name = payload.get("original_name", "이름 없음")
                     preview = payload.get("preview", "미리보기 없음")
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
