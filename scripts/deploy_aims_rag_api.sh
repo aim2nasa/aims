@@ -15,7 +15,8 @@ docker build -t $IMAGE_NAME .
 echo "3. 새 컨테이너 실행..."
 docker run -d \
   --name $CONTAINER_NAME \
-  -p 8001:8000 \
+  -p 8000:8000 \
+  --network=host \
   -e OPENAI_API_KEY="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" \
   $IMAGE_NAME
 
