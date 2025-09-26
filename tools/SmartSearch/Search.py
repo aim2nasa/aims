@@ -8,6 +8,7 @@ from io import BytesIO
 import os
 import subprocess
 import platform
+from datetime import datetime
 import webbrowser
 
 API_URL = "https://tars.giize.com/search_api"
@@ -15,7 +16,7 @@ API_URL = "https://tars.giize.com/search_api"
 class SearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.2.1"
+        self.version = "0.3.0"
         self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -133,10 +134,83 @@ class SearchApp:
             self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
     
     def get_full_text(self,doc):
+        # 1. meta.full_text 우선 확인 (새로운 스키마)
+        full_text = doc.get("meta", {}).get("full_text", "")
+        if full_text:
+            return full_text
+
+        # 2. ocr.full_text 대안 확인 (기존 스키마)
         full_text = doc.get("ocr", {}).get("full_text", "")
         if full_text:
             return full_text
+
+        # 3. text.full_text 최후 대안 (구 스키마)
         return doc.get("text", {}).get("full_text", "")
+
+    def find_file_path(self, item):
+        """다양한 스키마 구조에서 파일 경로를 찾는 함수"""
+        # 1. meta.destPath (새로운 스키마)
+        if "meta" in item and "destPath" in item["meta"]:
+            return item["meta"]["destPath"]
+
+        # 2. destPath (기존 스키마)
+        if "destPath" in item:
+            return item["destPath"]
+
+        # 3. filename만 있는 경우 (GridFS 구조)
+        if "filename" in item:
+            filename = item['filename']
+            # 이미 전체 경로인 경우
+            if filename.startswith("/data/files/"):
+                return filename
+            # 파일명만 있는 경우 현재 날짜 폴더에 추가
+            now = datetime.now()
+            return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
+
+        # 4. meta.filename이 있는 경우
+        if "meta" in item and "filename" in item["meta"]:
+            filename = item["meta"]["filename"]
+            if filename.startswith("/data/files/"):
+                return filename
+            now = datetime.now()
+            return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
+
+        # 5. MongoDB에서 직접 조회
+        doc_id = item.get("_id")
+        if doc_id:
+            detail_doc = self.get_mongo_details(doc_id)
+            if detail_doc:
+                # meta.destPath 확인
+                if "meta" in detail_doc and "destPath" in detail_doc["meta"]:
+                    return detail_doc["meta"]["destPath"]
+                # destPath 확인
+                if "destPath" in detail_doc:
+                    return detail_doc["destPath"]
+                # filename 확인
+                if "filename" in detail_doc:
+                    return f"/data/files/{detail_doc['filename']}"
+
+        return ""
+
+    def find_original_name(self, item):
+        """다양한 스키마 구조에서 원본 파일명을 찾는 함수"""
+        # 1. meta.originalName (새로운 스키마)
+        if "meta" in item and "originalName" in item["meta"]:
+            return item["meta"]["originalName"]
+
+        # 2. originalName (기존 스키마)
+        if "originalName" in item:
+            return item["originalName"]
+
+        # 3. filename (GridFS)
+        if "filename" in item:
+            return item["filename"]
+
+        # 4. meta.filename
+        if "meta" in item and "filename" in item["meta"]:
+            return item["meta"]["filename"]
+
+        return "downloaded_file"
 
     def display_results(self, data):
         self.results_text.delete(1.0, tk.END)
@@ -254,20 +328,34 @@ class SearchApp:
         if not self.data or index >= len(self.data):
             messagebox.showerror("오류", "유효하지 않은 검색 결과입니다.")
             return
-            
+
         item = self.data[index]
-        
-        dest_path = item.get("destPath", "")
-        original_name = item.get("originalName", "downloaded_file")
+
+        # 다양한 경로에서 파일 경로 찾기
+        dest_path = self.find_file_path(item)
+        original_name = self.find_original_name(item)
+
+        print(f"Debug - item keys: {list(item.keys())}")
+        print(f"Debug - dest_path: {dest_path}")
+        print(f"Debug - original_name: {original_name}")
+        if "meta" in item:
+            print(f"Debug - meta keys: {list(item['meta'].keys())}")
 
         if not dest_path:
-            messagebox.showerror("오류", "파일 경로가 유효하지 않습니다.")
+            # 더 자세한 디버그 정보 출력
+            debug_info = f"파일 경로를 찾을 수 없습니다.\n"
+            debug_info += f"Item keys: {list(item.keys())}\n"
+            if "meta" in item:
+                debug_info += f"Meta keys: {list(item['meta'].keys())}\n"
+            debug_info += f"Item content: {str(item)[:500]}..."
+            messagebox.showerror("오류", debug_info)
             return
 
         try:
             if dest_path.startswith("/data/files/"):
-                relative_path = dest_path.replace("/data/files/", "")
-                file_url = f"https://tars.giize.com/files/{relative_path}"
+                # /data를 제거하여 올바른 URL 생성 (/data/files/2025/09/file.pdf → /files/2025/09/file.pdf)
+                corrected_path = dest_path.replace("/data", "")
+                file_url = f"https://tars.giize.com{corrected_path}"
                 
                 # 파일 다운로드 및 로컬에 저장
                 response = requests.get(file_url, stream=True)
