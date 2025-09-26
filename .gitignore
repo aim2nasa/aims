@@ -13,3 +13,8 @@ temp_downloads
 
 # Claude Code local settings
 .claude/
+
+# PyInstaller build files
+build/
+dist/
+*.spec
