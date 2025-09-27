@@ -2,7 +2,7 @@
 # deploy_aims_rag_api.sh
 # AIMS RAG API 컨테이너 재배포 스크립트
 
-CONTAINER_NAME="aims-api-container"
+CONTAINER_NAME="aims-rag-api"
 IMAGE_NAME="aims-rag-api"
 
 echo "1. 기존 컨테이너 중지 및 삭제..."
