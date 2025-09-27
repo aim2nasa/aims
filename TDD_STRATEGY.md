@@ -403,7 +403,7 @@ test.describe('Customer Relationship Management', () => {
 ### 3. Python API 테스트
 
 ```python
-# api/python/tests/test_document_api.py
+# api/doc_status_api/tests/test_document_api.py
 
 import pytest
 from httpx import AsyncClient
@@ -450,12 +450,12 @@ npm test -- --coverage      # 커버리지 포함
 npm test RelationshipService # 특정 파일만
 
 # Backend (Node.js) 테스트
-cd api
+cd api/aims_api
 npm test
 npm run test:watch
 
 # Backend (Python) 테스트
-cd api/python
+cd api/doc_status_api
 pytest
 pytest -v --cov            # 커버리지 포함
 pytest tests/test_api.py   # 특정 파일만

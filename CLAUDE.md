@@ -299,8 +299,8 @@ The system is organized into functional modules:
   - `document-monitor`: Document tracking interface
 
 - **Backend Services**:
-  - Node.js API server in `api/` for document status monitoring
-  - Python FastAPI service in `api/python/` for document status API
+  - Node.js API server in `api/aims_api/` for document status monitoring
+  - Python FastAPI service in `api/doc_status_api/` for document status API
   - MongoDB database on `tars:27017`
 
 - **Core Python Modules** in `src/`:
@@ -331,13 +331,13 @@ cd frontend/aims-uix1 && npm test
 ### Backend Services
 ```bash
 # Start Node.js API server
-cd api && npm start
+cd api/aims_api && npm start
 
 # Start Python FastAPI service
-cd api/python && uvicorn main:app --reload
+cd api/doc_status_api && uvicorn main:app --reload
 
 # Start Python document status API
-cd api/python && python main.py
+cd api/doc_status_api && python main.py
 ```
 
 ### Python Development
