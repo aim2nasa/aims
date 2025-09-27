@@ -1,6 +1,4 @@
 #!/bin/bash
-# deploy_aims_rag_api.sh
-# AIMS RAG API 컨테이너 재배포 스크립트
 
 CONTAINER_NAME="aims-rag-api"
 IMAGE_NAME="aims-rag-api"
@@ -22,4 +20,3 @@ docker run -d \
 
 echo "✅ AIMS RAG API 컨테이너가 배포되었습니다."
 echo "로그 확인: docker logs -f $CONTAINER_NAME"
-
