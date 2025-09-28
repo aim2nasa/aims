@@ -85,13 +85,55 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
 
   return (
     <div className={`progress-indicator ${className}`}>
-      {/* 🍎 FINDER STYLE: Just progress bar */}
+      {/* 🍎 CURRENT FILE INFO: Show what's uploading */}
+      {stats.isUploading && stats.currentFile && (
+        <div className="progress-indicator__current">
+          <div className="progress-indicator__file-info">
+            <SFSymbol
+              name="arrow.up.circle"
+              size={SFSymbolSize.CAPTION}
+              weight={SFSymbolWeight.LIGHT}
+              decorative={true}
+            />
+            <span className="progress-indicator__filename">
+              {stats.currentFile.file.name}
+            </span>
+            <span className="progress-indicator__size">
+              {uploadHelpers.formatFileSize(stats.currentFile.file.size)}
+            </span>
+          </div>
+          <div className="progress-indicator__progress-text">
+            {stats.currentFile.progress}%
+          </div>
+        </div>
+      )}
+
+      {/* 🍎 OVERALL PROGRESS: Total progress bar */}
       {stats.isUploading && (
-        <div className="progress-indicator__track">
-          <div
-            className="progress-indicator__fill"
-            style={{ width: `${stats.totalProgress}%` }}
-          />
+        <div className="progress-indicator__overall">
+          <div className="progress-indicator__track">
+            <div
+              className="progress-indicator__fill"
+              style={{ width: `${stats.totalProgress}%` }}
+            />
+          </div>
+          <div className="progress-indicator__stats">
+            <span>{stats.completedCount}/{stats.totalCount} files</span>
+            {onCancel && (
+              <button
+                type="button"
+                className="progress-indicator__cancel"
+                onClick={onCancel}
+                aria-label="Cancel upload"
+              >
+                <SFSymbol
+                  name="xmark"
+                  size={SFSymbolSize.CAPTION}
+                  weight={SFSymbolWeight.MEDIUM}
+                />
+              </button>
+            )}
+          </div>
         </div>
       )}
 

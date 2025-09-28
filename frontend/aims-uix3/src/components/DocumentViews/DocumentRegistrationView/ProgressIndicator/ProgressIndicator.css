@@ -18,26 +18,116 @@
 .progress-indicator__track {
   width: 100%;
   height: 2px;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--color-neutral-200);
   border-radius: 1px;
   overflow: hidden;
 }
 
 html[data-theme="dark"] .progress-indicator__track {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-neutral-700);
 }
 
 /* 🍎 PROGRESS FILL: System blue */
 .progress-indicator__fill {
   height: 100%;
-  background: rgba(0, 122, 255, 0.7);
+  background: var(--color-ios-system-blue);
   border-radius: 1px;
   transition: width 0.2s ease;
 }
 
+/* 🍎 CURRENT FILE: Show what's uploading */
+.progress-indicator__current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-ios-system-blue-subtle);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .progress-indicator__current {
+  background: var(--color-ios-system-blue-subtle-dark);
+}
+
+.progress-indicator__file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.progress-indicator__filename {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-indicator__size {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-indicator__progress-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-ios-system-blue);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* 🍎 OVERALL PROGRESS: Total progress */
+.progress-indicator__overall {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-indicator__stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-indicator__cancel {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--color-error);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.progress-indicator__cancel:hover {
+  color: var(--color-error-600);
+  background: var(--color-neutral-100);
+}
+
+html[data-theme="dark"] .progress-indicator__cancel:hover {
+  background: var(--color-neutral-800);
+}
+
 /* 🍎 COMPLETION: Barely visible */
 .progress-indicator__done {
-  color: rgba(52, 199, 89, 0.4);
+  color: var(--color-success);
+  opacity: 0.4;
 }
 
 
@@ -45,13 +135,13 @@ html[data-theme="dark"] .progress-indicator__track {
 .simple-progress {
   width: 100%;
   height: 2px;
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--color-neutral-200);
   border-radius: 1px;
   overflow: hidden;
 }
 
 html[data-theme="dark"] .simple-progress {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-neutral-700);
 }
 
 .simple-progress__fill {
@@ -61,19 +151,19 @@ html[data-theme="dark"] .simple-progress {
 }
 
 .simple-progress--primary .simple-progress__fill {
-  background: rgba(0, 122, 255, 0.8);
+  background: var(--color-ios-system-blue);
 }
 
 .simple-progress--success .simple-progress__fill {
-  background: rgba(52, 199, 89, 0.8);
+  background: var(--color-success);
 }
 
 .simple-progress--warning .simple-progress__fill {
-  background: rgba(255, 204, 0, 0.8);
+  background: var(--color-warning);
 }
 
 .simple-progress--error .simple-progress__fill {
-  background: rgba(255, 69, 58, 0.8);
+  background: var(--color-error);
 }
 
 /* 🍎 RESPONSIVE: Minimal changes */
@@ -107,18 +197,14 @@ html[data-theme="dark"] .simple-progress {
 /* 🍎 HIGH CONTRAST: Subtle increase */
 @media (prefers-contrast: high) {
   .progress-indicator__track {
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--color-neutral-300);
   }
 
   html[data-theme="dark"] .progress-indicator__track {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--color-neutral-600);
   }
 
-  .progress-indicator__progress {
-    color: rgba(0, 0, 0, 0.9);
-  }
-
-  html[data-theme="dark"] .progress-indicator__progress {
-    color: rgba(255, 255, 255, 0.9);
+  .progress-indicator__stats {
+    color: var(--color-text-primary);
   }
 }

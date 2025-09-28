@@ -447,6 +447,11 @@
   --color-layout-rightpane-light: #e5e5ea; /* Light Theme: iOS systemGray5 */
   --color-layout-rightpane-dark: #2c2c2e;  /* Dark Theme: iOS systemGray5 */
 
+  /* iOS System Colors - 공식 색상 팔레트 */
+  --color-ios-system-blue: rgba(0, 122, 255, 0.8);
+  --color-ios-system-blue-subtle: rgba(0, 122, 255, 0.02);
+  --color-ios-system-blue-subtle-dark: rgba(0, 122, 255, 0.04);
+
   /* Theme Toggle Colors */
   --color-icon-orange: #f97316;
   --color-icon-cyan: #06b6d4;
