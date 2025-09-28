@@ -10,8 +10,8 @@
   left: 50%;
   z-index: 10000;
 
-  /* 🍎 TRUE APPLE HUD: 검은색 반투명 박스 */
-  background: rgba(0, 0, 0, 0.8);
+  /* 🍎 TRUE APPLE HUD: 테마 무관 검은색 반투명 박스 */
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
@@ -28,9 +28,7 @@
   min-width: 350px;
 }
 
-html[data-theme="dark"] .feedback-toast {
-  background: rgba(0, 0, 0, 0.85);
-}
+/* 🍎 진짜 애플 HUD는 테마에 상관없이 항상 동일 - 테마별 스타일 불필요 */
 
 /* 🍎 HUD VISIBLE STATE: 애플 스케일 페이드인 */
 .feedback-toast--visible {
