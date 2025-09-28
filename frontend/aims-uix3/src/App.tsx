@@ -198,6 +198,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const togglePagination = useCallback(() => setPaginationVisible(prev => !prev), [])
   const toggleMainPane = useCallback(() => setMainPaneVisible(prev => !prev), [])
 
+  // 활성 View 존재 여부 확인 (CenterPane 문구 표시 제어용)
+  const hasActiveView = useMemo(() => {
+    return activeDocumentView !== null
+  }, [activeDocumentView])
+
   // 메뉴 클릭 핸들러 - 모든 View 지원
   const handleMenuClick = useCallback((menuKey: string) => {
     const allViewKeys = [
@@ -445,12 +450,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             color: 'var(--color-text-primary)'
           }}
         >
-          <h3 className="section-heading" style={{
-            color: 'var(--color-text-primary)',
-            margin: '0'
-          }}>
-            CenterPane
-          </h3>
+          {/* CenterPane 문구 - 활성 View가 없을 때만 표시 (애플 스타일: Invisible until you need it) */}
+          {!hasActiveView && (
+            <h3
+              className="section-heading"
+              style={{
+                color: 'var(--color-text-primary)',
+                margin: '0',
+                opacity: hasActiveView ? 0 : 1,
+                transition: 'opacity var(--duration-fast) var(--easing-ease-out)',
+                animation: hasActiveView ? 'none' : 'centerPanePlaceholderFadeIn var(--duration-fast) var(--easing-ease-out)'
+              }}
+            >
+              CenterPane
+            </h3>
+          )}
 
           {/* 문서 관리 View 오버레이들 */}
           <Suspense fallback={null}>

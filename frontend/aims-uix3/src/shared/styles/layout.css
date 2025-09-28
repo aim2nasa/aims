@@ -537,3 +537,21 @@ html[data-theme="dark"] .layout-brb:hover {
  * 새로운 Header는 Progressive Disclosure 패턴을 사용하며
  * Header.css에서 별도로 관리됨
  */
+
+/* === CENTERPANE PLACEHOLDER ANIMATION === */
+
+/**
+ * CenterPane 플레이스홀더 애니메이션
+ * 애플 Progressive Disclosure 원칙 적용
+ * 서브틀한 페이드인 효과로 자연스러운 등장
+ */
+@keyframes centerPanePlaceholderFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px); /* 애플 스타일: 서브틀한 상승 효과 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
