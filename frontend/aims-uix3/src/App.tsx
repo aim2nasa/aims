@@ -66,6 +66,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.activeDocumentView
   )
 
+  // DocumentRegistrationView 활성 시 PaginationPane 숨김
+  useEffect(() => {
+    if (activeDocumentView === 'documents-register') {
+      setPaginationVisible(false)
+    } else {
+      setPaginationVisible(true)
+    }
+  }, [activeDocumentView])
+
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
 
