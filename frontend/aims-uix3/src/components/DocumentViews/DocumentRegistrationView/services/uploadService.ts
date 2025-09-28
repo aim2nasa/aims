@@ -319,19 +319,10 @@ export const fileValidator = {
   },
 
   /**
-   * 파일 형식 검증
+   * 파일 형식 검증 - 모든 파일 허용
    */
   validateType(file: File): { valid: boolean; error?: string } {
-    const allowedTypes = uploadConfig.limits.allowedMimeTypes
-
-    if (!allowedTypes.includes(file.type)) {
-      return {
-        valid: false,
-        error: `지원하지 않는 파일 형식입니다. (${file.type})`
-      }
-    }
-
-    return { valid: true }
+    return { valid: true }  // 모든 파일 형식 허용
   },
 
   /**

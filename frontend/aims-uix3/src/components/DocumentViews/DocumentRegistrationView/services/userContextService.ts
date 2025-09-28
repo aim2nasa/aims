@@ -185,10 +185,10 @@ export const uploadHelpers = {
   },
 
   /**
-   * MIME 타입이 허용되는지 확인
+   * MIME 타입이 허용되는지 확인 - 모든 파일 형식 허용
    */
   isAllowedMimeType(mimeType: string): boolean {
-    return uploadConfig.limits.allowedMimeTypes.includes(mimeType)
+    return true  // 모든 파일 형식 허용
   },
 
   /**

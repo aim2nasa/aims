@@ -63,30 +63,38 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   } = options
 
   /**
-   * 파일 유효성 검사
+   * 파일 유효성 검사 - 업계 표준: 전체 거부 방식
    */
   const validateFiles = useCallback((files: File[]): File[] => {
+    // 1단계: 파일 개수 사전 검증 (전체 거부)
+    if (maxFileCount && files.length > maxFileCount) {
+      alert(`선택한 파일이 너무 많습니다. (${files.length}개)\n최대 ${maxFileCount}개까지만 업로드 가능합니다.\n\n파일을 ${maxFileCount}개 이하로 나누어서 다시 시도해 주세요.`)
+      return []
+    }
+
     const validFiles: File[] = []
+    const rejectedFiles: string[] = []
 
     for (const file of files) {
       // 파일 크기 검사
       if (maxFileSize && file.size > maxFileSize) {
-        console.warn(`파일 크기 초과: ${file.name} (${uploadHelpers.formatFileSize(file.size)})`)
+        rejectedFiles.push(`${file.name} (파일 크기 초과: ${uploadHelpers.formatFileSize(file.size)})`)
         continue
       }
 
-      // MIME 타입 검사
+      // MIME 타입 검사 (항상 통과 - 모든 파일 형식 허용)
       if (!uploadHelpers.isAllowedMimeType(file.type)) {
-        console.warn(`허용되지 않는 파일 형식: ${file.name} (${file.type})`)
+        rejectedFiles.push(`${file.name} (지원하지 않는 파일 형식: ${file.type})`)
         continue
       }
 
       validFiles.push(file)
+    }
 
-      // 최대 파일 개수 검사
-      if (maxFileCount && validFiles.length >= maxFileCount) {
-        break
-      }
+    // 2단계: 일부 파일 거부 시 전체 거부
+    if (rejectedFiles.length > 0) {
+      alert(`다음 파일들이 업로드 조건에 맞지 않습니다:\n\n${rejectedFiles.join('\n')}\n\n모든 파일이 조건에 맞아야 업로드 가능합니다.`)
+      return []
     }
 
     return validFiles
