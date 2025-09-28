@@ -247,7 +247,7 @@ const CustomMenu = ({
       children: collapsed ? undefined : [
         {
           key: 'customers-register',
-          icon: <MenuIcons.User />,
+          icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
           label: '고객 등록',
           tooltipTitle: '새로운 고객을 등록합니다',
         },
@@ -276,7 +276,7 @@ const CustomMenu = ({
     ...(collapsed ? [
       {
         key: 'customers-register',
-        icon: <MenuIcons.User />,
+        icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
         label: '',
         tooltipTitle: '새로운 고객을 등록합니다',
       },

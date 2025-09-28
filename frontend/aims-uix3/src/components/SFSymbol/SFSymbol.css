@@ -772,6 +772,25 @@
   70% { transform: translate(-50%, -50%) scale(0.95) translateX(-0.1em); }
 }
 
+/* === PERSON FILL BADGE PLUS SYMBOL === */
+
+.sf-symbol--person-fill-badge-plus .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.8em;
+
+  /* 채워진 사람 + 플러스 배지 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='25' r='15' fill='currentColor'/%3e%3cpath d='M35 45c-15 0-25 10-25 25v20h40V70c0-15-10-25-25-25z' fill='currentColor'/%3e%3ccircle cx='75' cy='20' r='12' fill='currentColor'/%3e%3cpath d='M75 14v12M69 20h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
 /* === HIGH CONTRAST MODE === */
 
 @media (prefers-contrast: high) {
