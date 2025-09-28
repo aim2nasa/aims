@@ -87,6 +87,7 @@ interface CustomMenuProps {
   hasSearchResults?: boolean
   searchResultsCount?: number
   collapsed?: boolean
+  selectedKey?: string // 외부에서 제어되는 선택된 키
 }
 
 interface CustomMenuItemProps {
@@ -202,9 +203,10 @@ const CustomMenu = ({
   onMenuClick,
   hasSearchResults = false,
   searchResultsCount = 0,
-  collapsed = false
+  collapsed = false,
+  selectedKey: externalSelectedKey = 'dsd' // 외부에서 제어, 기본값은 'dsd'
 }: CustomMenuProps) => {
-  const [selectedKey, setSelectedKey] = useState('dsd')
+  const selectedKey = externalSelectedKey // 외부 제어 키 사용
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
   // 🍎 collapsed 상태 변화 감지 및 계층적 Progressive Disclosure
@@ -373,7 +375,7 @@ const CustomMenu = ({
       menuContainer.focus()
     }
 
-    setSelectedKey(key)
+    // selectedKey는 외부에서 제어되므로 setSelectedKey 제거
     if (onMenuClick) {
       onMenuClick(key)
     }

@@ -19,9 +19,21 @@ const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAl
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
 
-// 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
-const persistentModalState = {
-  layoutControlModalOpen: false
+// 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
+const STORAGE_KEYS = {
+  LAYOUT_MODAL: 'aims_layout_modal_open',
+  ACTIVE_VIEW: 'aims_active_document_view'
+} as const
+
+const persistentState = {
+  layoutControlModalOpen: false,
+  activeDocumentView: (() => {
+    // 브라우저 환경에서만 LocalStorage 읽기
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.ACTIVE_VIEW) || null
+    }
+    return null
+  })() as string | null
 }
 
 interface AppProps {
@@ -49,8 +61,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // LeftPane 축소/확장 상태
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
 
-  // 문서 관리 View 상태 (한 번에 하나의 View만 표시)
-  const [activeDocumentView, setActiveDocumentView] = useState<string | null>(null)
+  // 문서 관리 View 상태 (한 번에 하나의 View만 표시) - 영속화 지원
+  const [activeDocumentView, setActiveDocumentView] = useState<string | null>(
+    persistentState.activeDocumentView
+  )
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
@@ -65,11 +79,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [modalClickProtection, setModalClickProtection] = useState(false)
   const modalStateRef = useRef(false)
 
-  // 컴포넌트 마운트 시 이전 모달 상태 복원
+  // 컴포넌트 마운트 시 이전 상태 복원 (모달 + 활성 View)
   useEffect(() => {
-    if (persistentModalState.layoutControlModalOpen) {
+    if (persistentState.layoutControlModalOpen) {
       setLayoutControlModalOpen(true)
       modalStateRef.current = true
+    }
+
+    // 활성 View 상태 복원
+    if (persistentState.activeDocumentView) {
+      setActiveDocumentView(persistentState.activeDocumentView)
     }
   }, [])
 
@@ -100,11 +119,25 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [haptic])
 
-  // 모달 상태 변경 시 전역 저장소 동기화
+  // 상태 변경 시 전역 저장소 동기화 (모달 + 활성 View)
   useEffect(() => {
-    persistentModalState.layoutControlModalOpen = layoutControlModalOpen
+    persistentState.layoutControlModalOpen = layoutControlModalOpen
     modalStateRef.current = layoutControlModalOpen
   }, [layoutControlModalOpen])
+
+  // 활성 View 상태 변경 시 전역 저장소 + LocalStorage 동기화
+  useEffect(() => {
+    persistentState.activeDocumentView = activeDocumentView
+
+    // LocalStorage에 영속 저장
+    if (typeof window !== 'undefined') {
+      if (activeDocumentView) {
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_VIEW, activeDocumentView)
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_VIEW)
+      }
+    }
+  }, [activeDocumentView])
 
   // 테마 시스템
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
@@ -303,7 +336,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setModalClickProtection(true)
     setLayoutControlModalOpen(true)
     modalStateRef.current = true
-    persistentModalState.layoutControlModalOpen = true
+    persistentState.layoutControlModalOpen = true
 
     // 클릭 보호 해제 (300ms → 100ms로 단축)
     setTimeout(() => {
@@ -315,7 +348,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const handleModalClose = useCallback(() => {
     setLayoutControlModalOpen(false)
     modalStateRef.current = false
-    persistentModalState.layoutControlModalOpen = false
+    persistentState.layoutControlModalOpen = false
   }, [])
 
   return (
@@ -406,6 +439,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomMenu
               collapsed={leftPaneCollapsed}
               onMenuClick={handleMenuClick}
+              selectedKey={activeDocumentView || 'dsd'}
             />
           </Suspense>
 
