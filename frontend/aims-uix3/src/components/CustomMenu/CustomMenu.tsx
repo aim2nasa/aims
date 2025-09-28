@@ -3,6 +3,7 @@ import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import './CustomMenu.css'
+import './CustomMenuTooltip.css'
 
 // SF Symbol 기반 아이콘 컴포넌트들 (애플 디자인 표준 준수)
 const MenuIcons = {
@@ -148,7 +149,6 @@ const CustomMenuItem = ({
       className={className}
       onClick={handleMainMenuClick}
       onDoubleClick={handleDoubleClick}
-      title={collapsed ? item.tooltipTitle : ''}
       data-menu-key={item.key}
       id={`menu-item-${item.key}`}
       role="menuitem"
@@ -158,6 +158,7 @@ const CustomMenuItem = ({
       aria-haspopup={hasChildren ? 'menu' : undefined}
       aria-current={isSelected ? 'page' : undefined}
       tabIndex={-1}
+      title={collapsed ? item.tooltipTitle : ''}
     >
       {item.icon}
       {!collapsed && <span className="custom-menu-item-text">{item.label}</span>}
