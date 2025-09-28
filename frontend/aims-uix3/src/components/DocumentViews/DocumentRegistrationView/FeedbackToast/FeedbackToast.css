@@ -1,86 +1,75 @@
 /**
- * 🍎 APPLE STYLE FEEDBACK TOAST
- * "Invisible until you need it" - Progressive Disclosure
+ * 🍎 APPLE HUD STYLE FEEDBACK
+ * 진짜 iOS/macOS 볼륨/스크린샷 HUD 스타일
  */
 
-/* 🍎 CONTAINER: Fixed positioning for overlay */
+/* 🍎 HUD CONTAINER: 중앙 오버레이 */
 .feedback-toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
+  top: 50%;
+  left: 50%;
+  z-index: 10000;
 
-  max-width: 400px;
-  min-width: 300px;
+  /* 🍎 TRUE APPLE HUD: 검은색 반투명 박스 */
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  /* 🍎 GLASS MORPHISM: iOS style */
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 24px;
 
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-
-  /* 🍎 ANIMATION: Smooth slide in */
-  transform: translateX(120%);
+  /* 🍎 중앙 정렬 */
+  transform: translate(-50%, -50%) scale(0.8);
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* 🍎 적절한 크기 - 한 문장이 한 줄에 표시되도록 */
+  max-width: 450px;
+  min-width: 350px;
 }
 
 html[data-theme="dark"] .feedback-toast {
-  background: rgba(28, 28, 30, 0.9);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.85);
 }
 
-/* 🍎 VISIBLE STATE: Slide in */
+/* 🍎 HUD VISIBLE STATE: 애플 스케일 페이드인 */
 .feedback-toast--visible {
-  transform: translateX(0);
+  transform: translate(-50%, -50%) scale(1);
   opacity: 1;
 }
 
-/* 🍎 CONTENT: Flexible layout */
+/* 🍎 HUD CONTENT: 중앙 정렬 콘텐츠 */
 .feedback-toast__content {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   gap: 12px;
-  padding: 16px;
+  text-align: center;
 }
 
-/* 🍎 ICON: Type-specific colors */
+/* 🍎 HUD ICON: 큰 중앙 아이콘 */
 .feedback-toast__icon {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2px;
+  font-size: 32px;
+  color: white;
 }
 
-.feedback-toast--error .feedback-toast__icon {
-  color: var(--color-error);
-}
-
-.feedback-toast--warning .feedback-toast__icon {
-  color: var(--color-warning);
-}
-
-.feedback-toast--info .feedback-toast__icon {
-  color: var(--color-ios-system-blue);
-}
-
-/* 🍎 MESSAGE: Clean typography */
+/* 🍎 HUD MESSAGE: 깔끔한 흰색 텍스트 */
 .feedback-toast__message {
-  flex: 1;
-  min-width: 0;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .feedback-toast__line {
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   margin-bottom: 4px;
 }
 
@@ -88,93 +77,73 @@ html[data-theme="dark"] .feedback-toast {
   margin-bottom: 0;
 }
 
-/* 🍎 CLOSE BUTTON: Subtle interaction */
+/* 🍎 HUD CLOSE: 미니멀 X 버튼 (우상단) */
 .feedback-toast__close {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 4px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
 
-  color: var(--color-text-secondary);
-  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  color: white;
+  font-size: 12px;
+  transition: all 0.15s ease;
 }
 
 .feedback-toast__close:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--color-text-primary);
-}
-
-html[data-theme="dark"] .feedback-toast__close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 .feedback-toast__close:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+  background: rgba(255, 255, 255, 0.4);
 }
 
-/* 🍎 TYPE VARIANTS: Subtle border colors */
-.feedback-toast--error {
-  border-left: 3px solid var(--color-error);
-}
-
-.feedback-toast--warning {
-  border-left: 3px solid var(--color-warning);
-}
-
-.feedback-toast--info {
-  border-left: 3px solid var(--color-ios-system-blue);
-}
-
-/* 🍎 RESPONSIVE: Mobile friendly */
+/* 🍎 RESPONSIVE: 모바일에서도 중앙 유지 */
 @media (max-width: 768px) {
   .feedback-toast {
-    top: 16px;
-    right: 16px;
-    left: 16px;
-    max-width: none;
-    min-width: auto;
+    max-width: 350px;
+    min-width: 280px;
+    padding: 20px;
   }
 
-  .feedback-toast__content {
-    padding: 14px;
-    gap: 10px;
+  .feedback-toast__message {
+    font-size: 14px;
   }
 
-  .feedback-toast__line {
-    font-size: 12px;
+  .feedback-toast__icon {
+    font-size: 28px;
   }
 }
 
-/* 🍎 ACCESSIBILITY: Reduced motion */
+/* 🍎 ACCESSIBILITY: 모션 줄이기 */
 @media (prefers-reduced-motion: reduce) {
   .feedback-toast {
     transition: opacity 0.3s ease;
   }
 
   .feedback-toast--visible {
-    transform: none;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
-/* 🍎 HIGH CONTRAST: Enhanced visibility */
+/* 🍎 HIGH CONTRAST: HUD 스타일 유지 */
 @media (prefers-contrast: high) {
   .feedback-toast {
-    background: rgba(255, 255, 255, 0.95);
-    border-width: 2px;
+    background: rgba(0, 0, 0, 0.9);
   }
 
-  html[data-theme="dark"] .feedback-toast {
-    background: rgba(28, 28, 30, 0.95);
-  }
-
-  .feedback-toast__line {
-    font-weight: 500;
+  .feedback-toast__message {
+    font-weight: 600;
   }
 }

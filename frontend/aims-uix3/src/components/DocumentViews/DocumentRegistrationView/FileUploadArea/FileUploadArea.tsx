@@ -10,6 +10,7 @@ import React, { useRef, useState, useCallback } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { FileSelectionOptions } from '../types/uploadTypes'
 import { uploadHelpers } from '../services/userContextService'
+import { FeedbackToast } from '../FeedbackToast/FeedbackToast'
 import './FileUploadArea.css'
 
 interface FileUploadAreaProps {
@@ -46,6 +47,10 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const [dragCounter, setDragCounter] = useState(0)
 
+  // 애플 스타일 피드백 상태
+  const [toastVisible, setToastVisible] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
   // TypeScript unused variable fix
   React.useEffect(() => {
     if (dragCounter > 0) {
@@ -66,9 +71,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
    * 파일 유효성 검사 - 업계 표준: 전체 거부 방식
    */
   const validateFiles = useCallback((files: File[]): File[] => {
-    // 1단계: 파일 개수 사전 검증 (전체 거부)
+    // 1단계: 파일 개수 사전 검증 (전체 거부) - 애플 스타일 피드백
     if (maxFileCount && files.length > maxFileCount) {
-      alert(`선택한 파일이 너무 많습니다. (${files.length}개)\n최대 ${maxFileCount}개까지만 업로드 가능합니다.\n\n파일을 ${maxFileCount}개 이하로 나누어서 다시 시도해 주세요.`)
+      const message = `파일이 너무 많습니다 (${files.length}개). 최대 ${maxFileCount}개까지 가능합니다.`
+      setToastMessage(message)
+      setToastVisible(true)
       return []
     }
 
@@ -91,9 +98,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
       validFiles.push(file)
     }
 
-    // 2단계: 일부 파일 거부 시 전체 거부
+    // 2단계: 일부 파일 거부 시 전체 거부 - 애플 스타일 피드백
     if (rejectedFiles.length > 0) {
-      alert(`다음 파일들이 업로드 조건에 맞지 않습니다:\n\n${rejectedFiles.join('\n')}\n\n모든 파일이 조건에 맞아야 업로드 가능합니다.`)
+      const message = `파일 검증 실패. 파일 크기를 확인해주세요.`
+      setToastMessage(message)
+      setToastVisible(true)
       return []
     }
 
@@ -251,6 +260,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     e.target.value = ''
   }, [handleFiles])
 
+  // 애플 스타일 피드백 닫기 핸들러
+  const handleToastClose = useCallback(() => {
+    setToastVisible(false)
+  }, [])
+
   // CSS 클래스 계산
   const containerClasses = [
     'file-upload-area',
@@ -343,6 +357,14 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
           </div>
         )}
       </div>
+
+      {/* 🍎 애플 스타일 피드백 토스트 */}
+      <FeedbackToast
+        message={toastMessage}
+        type="error"
+        visible={toastVisible}
+        onClose={handleToastClose}
+      />
     </div>
   )
 }
