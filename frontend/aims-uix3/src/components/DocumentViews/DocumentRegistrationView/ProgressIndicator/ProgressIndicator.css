@@ -1,0 +1,124 @@
+/**
+ * 🍎 TRUE APPLE STYLE PROGRESS INDICATOR
+ * "Invisible until you need it" - Pure minimalism
+ */
+
+/* 🍎 FINDER STYLE: Invisible container */
+.progress-indicator {
+  width: 100%;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+}
+
+/* 🍎 PROGRESS TRACK: macOS native progress bar */
+.progress-indicator__track {
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .progress-indicator__track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* 🍎 PROGRESS FILL: System blue */
+.progress-indicator__fill {
+  height: 100%;
+  background: rgba(0, 122, 255, 0.7);
+  border-radius: 1px;
+  transition: width 0.2s ease;
+}
+
+/* 🍎 COMPLETION: Barely visible */
+.progress-indicator__done {
+  color: rgba(52, 199, 89, 0.4);
+}
+
+
+/* 🍎 SIMPLE PROGRESS: Reusable minimal bar */
+.simple-progress {
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .simple-progress {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.simple-progress__fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.simple-progress--primary .simple-progress__fill {
+  background: rgba(0, 122, 255, 0.8);
+}
+
+.simple-progress--success .simple-progress__fill {
+  background: rgba(52, 199, 89, 0.8);
+}
+
+.simple-progress--warning .simple-progress__fill {
+  background: rgba(255, 204, 0, 0.8);
+}
+
+.simple-progress--error .simple-progress__fill {
+  background: rgba(255, 69, 58, 0.8);
+}
+
+/* 🍎 RESPONSIVE: Minimal changes */
+@media (max-width: 768px) {
+  .progress-indicator__info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .progress-indicator__details {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .progress-indicator__current {
+    padding: 4px 0;
+    gap: 6px;
+  }
+}
+
+/* 🍎 ACCESSIBILITY: Maintain minimalism */
+@media (prefers-reduced-motion: reduce) {
+  .progress-indicator__fill,
+  .progress-indicator__cancel,
+  .simple-progress__fill {
+    transition: none;
+  }
+}
+
+/* 🍎 HIGH CONTRAST: Subtle increase */
+@media (prefers-contrast: high) {
+  .progress-indicator__track {
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  html[data-theme="dark"] .progress-indicator__track {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .progress-indicator__progress {
+    color: rgba(0, 0, 0, 0.9);
+  }
+
+  html[data-theme="dark"] .progress-indicator__progress {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}

@@ -1,0 +1,353 @@
+/**
+ * 🍎 TRUE APPLE STYLE FILE LIST
+ * iOS/macOS native table view style
+ */
+
+/* 🍎 CONTAINER: Pure minimal */
+.file-list {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 🍎 HEADER: Ultra-subtle if exists */
+.file-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 4px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .file-list__header {
+  border-bottom-color: rgba(255, 255, 255, 0.03);
+}
+
+.file-list__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-list__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-list__title {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 🍎 STATS: Minimal badges */
+.file-list__stats {
+  display: flex;
+  gap: 8px;
+}
+
+.file-list__stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-list__stat {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.file-list__stat--completed {
+  color: rgba(52, 199, 89, 0.8);
+  background: rgba(52, 199, 89, 0.04);
+}
+
+.file-list__stat--uploading {
+  color: rgba(0, 122, 255, 0.8);
+  background: rgba(0, 122, 255, 0.04);
+}
+
+.file-list__stat--error {
+  color: rgba(255, 69, 58, 0.8);
+  background: rgba(255, 69, 58, 0.04);
+}
+
+/* 🍎 CLEAR BUTTON: Apple-style minimal */
+.file-list__clear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgba(255, 69, 58, 0.6);
+  font-size: 11px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+  transition: all 0.15s ease;
+  opacity: 0.7;
+}
+
+.file-list__clear:hover {
+  background: rgba(255, 69, 58, 0.04);
+  color: rgba(255, 69, 58, 0.9);
+  opacity: 1;
+}
+
+.file-list__clear-text {
+  margin: 0;
+}
+
+/* 🍎 ITEMS: Native table rows */
+.file-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 🍎 FILE ITEM: iOS table cell style */
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+
+  transition: all 0.15s ease;
+  cursor: default;
+}
+
+html[data-theme="dark"] .file-item {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.file-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme="dark"] .file-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* 🍎 STATES: Minimal color coding */
+.file-item--pending {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.file-item--uploading {
+  background: rgba(0, 122, 255, 0.02);
+  border-left: 2px solid rgba(0, 122, 255, 0.2);
+}
+
+.file-item--completed {
+  background: rgba(52, 199, 89, 0.02);
+}
+
+.file-item--error {
+  background: rgba(255, 69, 58, 0.02);
+  border-left: 2px solid rgba(255, 69, 58, 0.2);
+}
+
+.file-item--cancelled {
+  background: rgba(0, 0, 0, 0.01);
+  opacity: 0.5;
+}
+
+html[data-theme="dark"] .file-item--cancelled {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* 🍎 ICON: Minimal file type */
+.file-item__icon {
+  color: rgba(0, 0, 0, 0.3);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .file-item__icon {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 🍎 INFO: Clean typography */
+.file-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-item__name {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .file-item__name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.file-item__details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-item__details {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.file-item__size {
+  font-variant-numeric: tabular-nums;
+}
+
+.file-item__time {
+  font-variant-numeric: tabular-nums;
+}
+
+.file-item__path {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* 🍎 STATUS MESSAGES: Minimal */
+.file-item__error {
+  margin-top: 3px;
+  font-size: 10px;
+  color: rgba(255, 69, 58, 0.8);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.file-item__cancelled {
+  margin-top: 3px;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-style: italic;
+}
+
+html[data-theme="dark"] .file-item__cancelled {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 🍎 NATIVE STATUS: macOS Finder style */
+.file-item__status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  width: 40px;
+  justify-content: flex-end;
+}
+
+/* 🍎 MINIMAL PROGRESS: No decoration */
+.file-item__progress-minimal {
+  width: 30px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0.5px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .file-item__progress-minimal {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.file-item__progress-fill {
+  height: 100%;
+  background: rgba(0, 122, 255, 0.6);
+  transition: width 0.3s ease;
+}
+
+/* 🍎 COMPLETION: Barely visible */
+.file-item__done {
+  color: rgba(52, 199, 89, 0.5);
+}
+
+/* 🍎 RETRY: Invisible until needed */
+.file-item__retry-minimal {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: rgba(255, 69, 58, 0.4);
+  border-radius: 2px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: opacity 0.2s ease;
+}
+
+.file-item__retry-minimal:hover {
+  color: rgba(255, 69, 58, 0.8);
+}
+
+/* 🍎 RESPONSIVE: Minimal changes */
+@media (max-width: 768px) {
+  .file-item {
+    padding: 6px 8px;
+  }
+
+  .file-item__name {
+    font-size: 12px;
+  }
+
+  .file-item__details {
+    font-size: 10px;
+  }
+
+  .file-item__progress-track {
+    width: 30px;
+  }
+
+  .file-item__progress-text {
+    font-size: 9px;
+    min-width: 24px;
+  }
+}
+
+/* 🍎 ACCESSIBILITY: Maintain minimalism */
+@media (prefers-reduced-motion: reduce) {
+  .file-item,
+  .file-item__progress-fill,
+  .file-item__action {
+    transition: none;
+  }
+}
+
+/* 🍎 HIGH CONTRAST: Subtle increase */
+@media (prefers-contrast: high) {
+  .file-item__name {
+    color: rgba(0, 0, 0, 0.9);
+  }
+
+  html[data-theme="dark"] .file-item__name {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .file-item__icon {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  html[data-theme="dark"] .file-item__icon {
+    color: rgba(255, 255, 255, 0.5);
+  }
+}

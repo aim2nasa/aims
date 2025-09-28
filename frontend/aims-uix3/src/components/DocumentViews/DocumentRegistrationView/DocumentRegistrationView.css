@@ -1,0 +1,111 @@
+/**
+ * DocumentRegistrationView Styles
+ * @since 1.0.0
+ *
+ * 문서 등록 View 메인 스타일
+ * 업로드 완료 메시지 및 레이아웃
+ */
+
+/* 메인 콘텐츠 영역 */
+.document-registration-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* 8의 배수 그리드 */
+  min-height: 400px;
+}
+
+/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification */
+.upload-success {
+  padding: 8px 0;
+  margin: 8px 0;
+
+  /* 🍎 NATIVE ANIMATION: Smooth fade-in from top */
+  animation: successFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.upload-success__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(52, 199, 89, 0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(52, 199, 89, 0.1);
+}
+
+html[data-theme="dark"] .upload-success__content {
+  background: rgba(52, 199, 89, 0.06);
+  border-color: rgba(52, 199, 89, 0.15);
+}
+
+.upload-success__icon {
+  color: rgba(52, 199, 89, 0.8);
+  flex-shrink: 0;
+}
+
+.upload-success__text {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(52, 199, 89, 0.9);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  flex: 1;
+}
+
+.upload-success__button {
+  background: none;
+  border: none;
+  padding: 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: rgba(52, 199, 89, 0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.15s ease;
+}
+
+.upload-success__button:hover {
+  background: rgba(52, 199, 89, 0.1);
+  color: rgba(52, 199, 89, 0.9);
+}
+
+/* 🍎 NATIVE ANIMATION: Apple-style fade-in */
+@keyframes successFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 🍎 RESPONSIVE: Minimal changes */
+@media (max-width: 768px) {
+  .document-registration-content {
+    gap: 16px;
+    min-height: 300px;
+  }
+
+  .upload-success__content {
+    padding: 5px 6px;
+  }
+
+  .upload-success__text {
+    font-size: 11px;
+  }
+}
+
+/* 🍎 ACCESSIBILITY: Maintain minimalism */
+@media (prefers-reduced-motion: reduce) {
+  .upload-success {
+    animation: none;
+  }
+
+  .upload-success__button {
+    transition: none;
+  }
+}

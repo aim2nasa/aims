@@ -1,0 +1,210 @@
+/**
+ * 🍎 CLEAR APPLE STYLE FILE UPLOAD
+ * 명확한 버튼과 드롭존으로 UX 개선
+ */
+
+/* 🍎 CONTAINER: Start with nothing */
+.file-upload-area {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 🍎 CLEAR ACTIONS: Explicit buttons */
+.file-upload-area__actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+
+.file-upload-area__button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.file-upload-area__button:focus {
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+.file-upload-area__button--primary {
+  background: rgba(0, 122, 255, 1);
+  color: white;
+}
+
+.file-upload-area__button--primary:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 0.8);
+  transform: translateY(-1px);
+}
+
+.file-upload-area__button--minimal {
+  background: rgba(0, 122, 255, 0.8);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+
+html[data-theme="dark"] .file-upload-area__button--minimal {
+  background: rgba(0, 122, 255, 0.9);
+  color: white;
+}
+
+.file-upload-area__button--minimal:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 1);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 1);
+}
+
+.file-upload-area__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 🍎 CLEAN DROPZONE: Simple drag area */
+.file-upload-area__dropzone {
+  min-height: 80px;
+  background: rgba(0, 0, 0, 0.01);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+
+  transition: all 0.15s ease;
+}
+
+html[data-theme="dark"] .file-upload-area__dropzone {
+  background: rgba(255, 255, 255, 0.01);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 🍎 DRAG STATES: Clear visual feedback */
+.file-upload-area__dropzone--dragging {
+  background: rgba(0, 122, 255, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
+  border-style: solid;
+}
+
+/* 🍎 DROP HINTS: Subtle guidance */
+.file-upload-area__drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.file-upload-area__dropzone:hover .file-upload-area__drop-hint {
+  opacity: 0.7;
+}
+
+.file-upload-area__hint-text {
+  font-size: 12px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .file-upload-area__hint-text {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 🍎 DROP ACTIVE: Clear feedback */
+.file-upload-area__drop-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 122, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+/* 🍎 UPLOADING: Minimal indicator */
+.file-upload-area__uploading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 122, 255, 0.6);
+  font-size: 12px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+/* 🍎 RESPONSIVE: Clear on mobile */
+@media (max-width: 768px) {
+  .file-upload-area__actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .file-upload-area__button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .file-upload-area__dropzone {
+    min-height: 60px;
+    padding: 20px;
+  }
+
+  .file-upload-area__hint-text {
+    font-size: 11px;
+  }
+}
+
+/* 🍎 ACCESSIBILITY: Maintain clarity */
+@media (prefers-reduced-motion: reduce) {
+  .file-upload-area__button,
+  .file-upload-area__dropzone,
+  .file-upload-area__drop-hint {
+    transition: none;
+  }
+}
+
+/* 🍎 HIGH CONTRAST: Enhanced visibility */
+@media (prefers-contrast: high) {
+  .file-upload-area__dropzone {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  html[data-theme="dark"] .file-upload-area__dropzone {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .file-upload-area__button--secondary {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  html[data-theme="dark"] .file-upload-area__button--secondary {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
