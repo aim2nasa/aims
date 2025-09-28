@@ -30,6 +30,10 @@ interface CenterPaneViewProps {
   className?: string
   /** 자식 컴포넌트 */
   children?: React.ReactNode
+  /** 플레이스홀더 아이콘 이름 (SF Symbol) */
+  placeholderIcon?: string
+  /** 플레이스홀더 메시지 */
+  placeholderMessage?: string
 }
 
 /**
@@ -80,7 +84,9 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   marginLeft = 4,
   marginRight = 4,
   className = '',
-  children
+  children,
+  placeholderIcon = 'doc.text',
+  placeholderMessage
 }) => {
   if (!visible) return null
 
@@ -110,12 +116,12 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
         {children || (
           <div className="center-pane-view__placeholder">
             <SFSymbol
-              name="doc.text"
+              name={placeholderIcon}
               size={SFSymbolSize.TITLE_1}
-              weight={SFSymbolWeight.LIGHT}
+              weight={SFSymbolWeight.ULTRALIGHT} // 더 서브틀한 아이콘
               decorative={true}
             />
-            <p>{title} 인터페이스가 여기에 표시됩니다.</p>
+            <p>{placeholderMessage || `${title} 인터페이스가 여기에 표시됩니다.`}</p>
           </div>
         )}
       </div>

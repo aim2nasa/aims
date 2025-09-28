@@ -33,24 +33,25 @@ html[data-theme="dark"] .center-pane-view {
   box-shadow: var(--shadow-dark-lg);
 }
 
-/* 헤더 영역 - 애플 스타일 좌측 정렬 (X 버튼 제거로 인한 레이아웃 변경) */
+/* 헤더 영역 - 애플 Ultra-Subtle 스타일 */
 .center-pane-view__header {
   display: flex;
   align-items: center;
   justify-content: flex-start; /* 애플 디자인: X 버튼 제거로 좌측 정렬 */
-  padding: var(--spacing-4) var(--spacing-5);
-  border-bottom: 1px solid var(--color-layout-accent-light);
-  background-color: var(--color-layout-secondary-light);
+  padding: 20px 24px; /* 애플 표준: 8의 배수 그리드 시스템 */
+  border-bottom: 0.5px solid var(--color-layout-accent-light); /* Ultra-subtle 구분선 */
+  background-color: rgba(255, 255, 255, 0.7); /* 거의 투명한 배경 */
+  backdrop-filter: blur(10px); /* 애플 glassmorphism */
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   flex-shrink: 0;
 }
 
 html[data-theme="dark"] .center-pane-view__header {
-  background-color: var(--color-layout-secondary-dark);
+  background-color: rgba(28, 28, 30, 0.7); /* 다크모드 glassmorphism */
   border-bottom-color: var(--color-layout-accent-dark);
 }
 
-/* 제목 스타일 - 애플 디자인 시스템 적용 */
+/* 제목 스타일 - 애플 정제된 타이포그래피 */
 .center-pane-view__title {
   margin: 0;
   font-size: var(--font-size-subheadline); /* 15px - 애플 스타일 서브틀한 크기 */
@@ -58,24 +59,27 @@ html[data-theme="dark"] .center-pane-view__header {
   color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
   font-family: var(--font-family-display);
   line-height: var(--line-height-tight);
+  letter-spacing: -0.05px; /* 애플 스타일 정제된 자간 */
+  font-variant-numeric: tabular-nums; /* 숫자 정렬 개선 */
 }
 
 /* X 버튼 관련 스타일 완전 제거 - 애플 미니멀 디자인 적용 */
 /* .center-pane-view__close-button 관련 스타일 모두 삭제됨 */
 
-/* 콘텐츠 영역 */
+/* 콘텐츠 영역 - 애플 표준 패딩 시스템 */
 .center-pane-view__content {
   flex: 1;
-  padding: var(--spacing-6) var(--spacing-5);
+  padding: 24px; /* 애플 표준: 8의 배수 그리드 (일관된 패딩) */
   overflow-y: auto;
   color: var(--color-text-primary);
-  /* 스크롤바 스타일링 */
+  /* 애플 스타일 스크롤바 */
   scrollbar-width: thin;
-  scrollbar-color: var(--color-layout-accent-light) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent; /* 더 서브틀한 스크롤바 */
 }
 
+/* 애플 스타일 Ultra-Subtle 스크롤바 */
 .center-pane-view__content::-webkit-scrollbar {
-  width: var(--spacing-1);
+  width: 6px; /* 더 얇은 스크롤바 */
 }
 
 .center-pane-view__content::-webkit-scrollbar-track {
@@ -83,15 +87,24 @@ html[data-theme="dark"] .center-pane-view__header {
 }
 
 .center-pane-view__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-accent-light);
-  border-radius: var(--radius-full);
+  background-color: rgba(0, 0, 0, 0.1); /* 거의 보이지 않는 스크롤바 */
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.center-pane-view__content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2); /* 호버 시만 살짝 진해짐 */
 }
 
 html[data-theme="dark"] .center-pane-view__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-accent-dark);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* 플레이스홀더 영역 - 애플 스타일 센터링 */
+html[data-theme="dark"] .center-pane-view__content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 플레이스홀더 영역 - 애플 Ultra-Subtle 스타일 */
 .center-pane-view__placeholder {
   display: flex;
   flex-direction: column;
@@ -99,49 +112,68 @@ html[data-theme="dark"] .center-pane-view__content::-webkit-scrollbar-thumb {
   justify-content: center;
   height: 100%;
   text-align: center;
-  color: var(--color-text-secondary);
-  gap: var(--spacing-4);
+  color: rgba(0, 0, 0, 0.3); /* 더 서브틀한 색상 */
+  gap: 16px; /* 8의 배수 그리드 시스템 */
+  padding: 40px; /* 여유로운 패딩 */
 }
 
 .center-pane-view__placeholder p {
   margin: 0;
-  font-size: var(--font-size-body);
+  font-size: 13px; /* 애플 스타일 작은 설명 텍스트 */
   font-weight: var(--font-weight-regular);
   font-family: var(--font-family-text);
-  line-height: var(--line-height-normal);
+  line-height: 1.4;
+  letter-spacing: 0.02px; /* 가독성 향상 */
+  max-width: 240px; /* 적절한 줄바꿈 */
 }
 
-/* 애니메이션 정의 - Progressive Disclosure */
+html[data-theme="dark"] .center-pane-view__placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 애니메이션 정의 - 애플 스타일 Progressive Disclosure */
 @keyframes centerPaneViewFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-var(--spacing-2));
+    transform: scale(0.98) translateY(-8px); /* 더 서브틀한 스케일과 이동 */
+    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+    backdrop-filter: blur(10px);
   }
 }
 
-/* 반응형 디자인 */
+/* 반응형 디자인 - 애플 표준 브레이크포인트 */
 @media (max-width: 768px) {
   .center-pane-view {
-    --margin-top: 2px;
-    --margin-bottom: 2px;
-    --margin-left: 2px;
-    --margin-right: 2px;
+    --margin-top: 8px;
+    --margin-bottom: 8px;
+    --margin-left: 8px;
+    --margin-right: 8px;
   }
 
   .center-pane-view__header {
-    padding: var(--spacing-3) var(--spacing-4);
+    padding: 16px 20px; /* 모바일에서 더 컴팩트 */
   }
 
   .center-pane-view__content {
-    padding: var(--spacing-4);
+    padding: 20px; /* 일관된 패딩 */
   }
 
   .center-pane-view__title {
-    font-size: var(--font-size-callout);
+    font-size: 14px; /* 모바일에서 더 작게 */
+    letter-spacing: -0.02px;
+  }
+
+  .center-pane-view__placeholder {
+    padding: 32px 20px;
+    gap: 12px;
+  }
+
+  .center-pane-view__placeholder p {
+    font-size: 12px;
   }
 }
 
