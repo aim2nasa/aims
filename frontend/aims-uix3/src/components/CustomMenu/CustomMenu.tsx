@@ -309,7 +309,7 @@ const CustomMenu = ({
       children: collapsed ? undefined : [
         {
           key: 'documents-register',
-          icon: <MenuIcons.FileText />,
+          icon: <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
           label: '문서 등록',
           tooltipTitle: '새로운 문서를 등록합니다',
         },
@@ -332,7 +332,7 @@ const CustomMenu = ({
     ...(collapsed ? [
       {
         key: 'documents-register',
-        icon: <MenuIcons.FileText />,
+        icon: <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
         label: '',
         tooltipTitle: '새로운 문서를 등록합니다',
       },

@@ -791,6 +791,25 @@
   -webkit-mask-size: contain;
 }
 
+/* === DOC BADGE PLUS SYMBOL === */
+
+.sf-symbol--doc-badge-plus .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.8em;
+
+  /* 문서 + 플러스 배지 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
 /* === HIGH CONTRAST MODE === */
 
 @media (prefers-contrast: high) {
