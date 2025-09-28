@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../../DocumentViews/BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="전체보기"
       onClose={onClose}

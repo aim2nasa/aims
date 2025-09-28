@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../../DocumentViews/BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface CustomerRelationshipViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="관계별 보기"
       onClose={onClose}

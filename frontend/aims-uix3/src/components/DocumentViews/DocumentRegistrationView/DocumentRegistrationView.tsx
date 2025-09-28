@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface DocumentRegistrationViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="문서 등록"
       onClose={onClose}

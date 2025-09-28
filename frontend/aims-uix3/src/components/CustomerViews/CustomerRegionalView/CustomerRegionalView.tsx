@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../../DocumentViews/BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface CustomerRegionalViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="지역별 보기"
       onClose={onClose}

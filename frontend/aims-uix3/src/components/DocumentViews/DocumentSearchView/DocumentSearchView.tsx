@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface DocumentSearchViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="문서 검색"
       onClose={onClose}

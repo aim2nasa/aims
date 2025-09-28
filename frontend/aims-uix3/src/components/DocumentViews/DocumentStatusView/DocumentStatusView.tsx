@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import BaseDocumentView from '../BaseDocumentView/BaseDocumentView'
+import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 
 interface DocumentStatusViewProps {
   /** View 표시 여부 */
@@ -35,7 +35,7 @@ export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
   onClose
 }) => {
   return (
-    <BaseDocumentView
+    <CenterPaneView
       visible={visible}
       title="문서 처리 현황"
       onClose={onClose}

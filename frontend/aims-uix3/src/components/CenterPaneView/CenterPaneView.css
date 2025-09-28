@@ -1,0 +1,165 @@
+/**
+ * CenterPaneView Styles
+ * @since 1.0.0
+ *
+ * CenterPane 위 모든 View의 상위 클래스 스타일
+ * 애플 디자인 시스템 및 AIMS 가이드라인 준수
+ * 객체지향 상속 구조의 부모 클래스 스타일
+ */
+
+/* 메인 컨테이너 - CenterPane 위 오버레이 */
+.center-pane-view {
+  position: absolute;
+  top: var(--margin-top);
+  left: var(--margin-left);
+  right: var(--margin-right);
+  bottom: var(--margin-bottom);
+  background-color: var(--color-layout-content-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-layout-accent-light);
+  z-index: var(--z-index-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 애플 스타일 애니메이션 - Progressive Disclosure */
+  animation: centerPaneViewFadeIn var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 다크 테마 지원 */
+html[data-theme="dark"] .center-pane-view {
+  background-color: var(--color-layout-content-dark);
+  border-color: var(--color-layout-accent-dark);
+  box-shadow: var(--shadow-dark-lg);
+}
+
+/* 헤더 영역 - 애플 스타일 좌측 정렬 (X 버튼 제거로 인한 레이아웃 변경) */
+.center-pane-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 애플 디자인: X 버튼 제거로 좌측 정렬 */
+  padding: var(--spacing-4) var(--spacing-5);
+  border-bottom: 1px solid var(--color-layout-accent-light);
+  background-color: var(--color-layout-secondary-light);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .center-pane-view__header {
+  background-color: var(--color-layout-secondary-dark);
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
+/* 제목 스타일 - 애플 디자인 시스템 적용 */
+.center-pane-view__title {
+  margin: 0;
+  font-size: var(--font-size-subheadline); /* 15px - 애플 스타일 서브틀한 크기 */
+  font-weight: var(--font-weight-medium); /* medium - 애플 스타일 가벼운 두께 */
+  color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
+  font-family: var(--font-family-display);
+  line-height: var(--line-height-tight);
+}
+
+/* X 버튼 관련 스타일 완전 제거 - 애플 미니멀 디자인 적용 */
+/* .center-pane-view__close-button 관련 스타일 모두 삭제됨 */
+
+/* 콘텐츠 영역 */
+.center-pane-view__content {
+  flex: 1;
+  padding: var(--spacing-6) var(--spacing-5);
+  overflow-y: auto;
+  color: var(--color-text-primary);
+  /* 스크롤바 스타일링 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-layout-accent-light) transparent;
+}
+
+.center-pane-view__content::-webkit-scrollbar {
+  width: var(--spacing-1);
+}
+
+.center-pane-view__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.center-pane-view__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-accent-light);
+  border-radius: var(--radius-full);
+}
+
+html[data-theme="dark"] .center-pane-view__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-accent-dark);
+}
+
+/* 플레이스홀더 영역 - 애플 스타일 센터링 */
+.center-pane-view__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--color-text-secondary);
+  gap: var(--spacing-4);
+}
+
+.center-pane-view__placeholder p {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  font-family: var(--font-family-text);
+  line-height: var(--line-height-normal);
+}
+
+/* 애니메이션 정의 - Progressive Disclosure */
+@keyframes centerPaneViewFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-var(--spacing-2));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .center-pane-view {
+    --margin-top: 2px;
+    --margin-bottom: 2px;
+    --margin-left: 2px;
+    --margin-right: 2px;
+  }
+
+  .center-pane-view__header {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  .center-pane-view__content {
+    padding: var(--spacing-4);
+  }
+
+  .center-pane-view__title {
+    font-size: var(--font-size-callout);
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .center-pane-view {
+    border-width: 2px;
+  }
+
+  .center-pane-view__title {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* 애니메이션 감소 모드 지원 */
+@media (prefers-reduced-motion: reduce) {
+  .center-pane-view {
+    animation: none;
+  }
+}
