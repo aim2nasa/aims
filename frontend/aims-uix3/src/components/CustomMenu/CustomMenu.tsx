@@ -307,6 +307,12 @@ const CustomMenu = ({
       tooltipTitle: '문서 관리',
       children: collapsed ? undefined : [
         {
+          key: 'documents-register',
+          icon: <MenuIcons.FileText />,
+          label: '문서 등록',
+          tooltipTitle: '새로운 문서를 등록합니다',
+        },
+        {
           key: 'documents-search',
           icon: <MenuIcons.SearchBold />,
           label: '문서 검색',
@@ -323,6 +329,12 @@ const CustomMenu = ({
 
     // collapsed 상태에서 문서 서브메뉴 표시
     ...(collapsed ? [
+      {
+        key: 'documents-register',
+        icon: <MenuIcons.FileText />,
+        label: '',
+        tooltipTitle: '새로운 문서를 등록합니다',
+      },
       {
         key: 'documents-search',
         icon: <MenuIcons.SearchBold />,
