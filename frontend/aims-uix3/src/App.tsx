@@ -9,6 +9,15 @@ import Header from './components/Header'
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
 const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
 const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
+const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
+const DocumentSearchView = lazy(() => import('./components/DocumentViews/DocumentSearchView/DocumentSearchView'))
+const DocumentStatusView = lazy(() => import('./components/DocumentViews/DocumentStatusView/DocumentStatusView'))
+const DocumentManagementView = lazy(() => import('./components/DocumentViews/DocumentManagementView/DocumentManagementView'))
+const CustomerManagementView = lazy(() => import('./components/CustomerViews/CustomerManagementView/CustomerManagementView'))
+const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/CustomerRegistrationView/CustomerRegistrationView'))
+const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAllView/CustomerAllView'))
+const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
+const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
 
 // 모달 상태 영속화를 위한 전역 저장소 (컴포넌트 리마운트와 독립)
 const persistentModalState = {
@@ -39,6 +48,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // LeftPane 축소/확장 상태
   const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
+
+  // 문서 관리 View 상태 (한 번에 하나의 View만 표시)
+  const [activeDocumentView, setActiveDocumentView] = useState<string | null>(null)
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
@@ -185,6 +197,23 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const toggleBrb = useCallback(() => setBrbVisible(prev => !prev), [])
   const togglePagination = useCallback(() => setPaginationVisible(prev => !prev), [])
   const toggleMainPane = useCallback(() => setMainPaneVisible(prev => !prev), [])
+
+  // 메뉴 클릭 핸들러 - 모든 View 지원
+  const handleMenuClick = useCallback((menuKey: string) => {
+    const allViewKeys = [
+      // 문서 관리 View들
+      'documents', 'documents-register', 'documents-search', 'dsd',
+      // 고객 관리 View들
+      'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship'
+    ]
+    if (allViewKeys.includes(menuKey)) {
+      setActiveDocumentView(menuKey)
+    }
+  }, [])
+
+  const closeDocumentView = useCallback(() => {
+    setActiveDocumentView(null)
+  }, [])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -371,9 +400,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={<div style={{ width: '100%', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
             <CustomMenu
               collapsed={leftPaneCollapsed}
-              onMenuClick={() => {
-                // Menu click handler - implement actual navigation logic here
-              }}
+              onMenuClick={handleMenuClick}
             />
           </Suspense>
 
@@ -424,6 +451,71 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           }}>
             CenterPane
           </h3>
+
+          {/* 문서 관리 View 오버레이들 */}
+          <Suspense fallback={null}>
+            <DocumentManagementView
+              visible={activeDocumentView === 'documents'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <DocumentRegistrationView
+              visible={activeDocumentView === 'documents-register'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <DocumentSearchView
+              visible={activeDocumentView === 'documents-search'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <DocumentStatusView
+              visible={activeDocumentView === 'dsd'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          {/* 고객 관리 View 오버레이들 */}
+          <Suspense fallback={null}>
+            <CustomerManagementView
+              visible={activeDocumentView === 'customers'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <CustomerRegistrationView
+              visible={activeDocumentView === 'customers-register'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <CustomerAllView
+              visible={activeDocumentView === 'customers-all'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <CustomerRegionalView
+              visible={activeDocumentView === 'customers-regional'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <CustomerRelationshipView
+              visible={activeDocumentView === 'customers-relationship'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
         </main>
       )}
 

@@ -1,0 +1,206 @@
+/**
+ * BaseDocumentView Styles
+ * 애플 디자인 시스템 및 AIMS 가이드라인 준수
+ * 공용 CSS 시스템 활용
+ */
+
+/* 메인 컨테이너 - CenterPane 위 오버레이 */
+.base-document-view {
+  position: absolute;
+  top: var(--margin-top);
+  left: var(--margin-left);
+  right: var(--margin-right);
+  bottom: var(--margin-bottom);
+  background-color: var(--color-layout-content-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-layout-accent-light);
+  z-index: var(--z-index-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 애플 스타일 애니메이션 - Progressive Disclosure */
+  animation: documentViewFadeIn var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 다크 테마 지원 */
+html[data-theme="dark"] .base-document-view {
+  background-color: var(--color-layout-content-dark);
+  border-color: var(--color-layout-accent-dark);
+  box-shadow: var(--shadow-dark-lg);
+}
+
+/* 헤더 영역 */
+.base-document-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4) var(--spacing-5);
+  border-bottom: 1px solid var(--color-layout-accent-light);
+  background-color: var(--color-layout-secondary-light);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .base-document-view__header {
+  background-color: var(--color-layout-secondary-dark);
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
+/* 제목 스타일 - 애플 타이포그래피 */
+.base-document-view__title {
+  margin: 0;
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  /* 애플 시스템 폰트 */
+  font-family: var(--font-family-display);
+  line-height: var(--line-height-tight);
+}
+
+/* 닫기 버튼 - 애플 스타일 인터랙션 */
+.base-document-view__close-button {
+  background: none;
+  border: none;
+  padding: var(--spacing-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+}
+
+.base-document-view__close-button:hover {
+  background-color: var(--color-layout-accent-light);
+  color: var(--color-text-primary);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .base-document-view__close-button:hover {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.base-document-view__close-button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.base-document-view__close-button:active {
+  transform: scale(0.95);
+}
+
+/* 콘텐츠 영역 */
+.base-document-view__content {
+  flex: 1;
+  padding: var(--spacing-6) var(--spacing-5);
+  overflow-y: auto;
+  color: var(--color-text-primary);
+  /* 스크롤바 스타일링 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-layout-accent-light) transparent;
+}
+
+.base-document-view__content::-webkit-scrollbar {
+  width: var(--spacing-1);
+}
+
+.base-document-view__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.base-document-view__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-accent-light);
+  border-radius: var(--radius-full);
+}
+
+html[data-theme="dark"] .base-document-view__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-accent-dark);
+}
+
+/* 플레이스홀더 영역 - 애플 스타일 센터링 */
+.base-document-view__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--color-text-secondary);
+  gap: var(--spacing-4);
+}
+
+.base-document-view__placeholder p {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  font-family: var(--font-family-text);
+  line-height: var(--line-height-normal);
+}
+
+/* 애니메이션 정의 - Progressive Disclosure */
+@keyframes documentViewFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-var(--spacing-2));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .base-document-view {
+    --margin-top: 2px;
+    --margin-bottom: 2px;
+    --margin-left: 2px;
+    --margin-right: 2px;
+  }
+
+  .base-document-view__header {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  .base-document-view__content {
+    padding: var(--spacing-4);
+  }
+
+  .base-document-view__title {
+    font-size: var(--font-size-callout);
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .base-document-view {
+    border-width: 2px;
+  }
+
+  .base-document-view__close-button:focus {
+    outline-width: 3px;
+  }
+}
+
+/* 애니메이션 감소 모드 지원 */
+@media (prefers-reduced-motion: reduce) {
+  .base-document-view {
+    animation: none;
+  }
+
+  .base-document-view__close-button {
+    transition: none;
+  }
+
+  .base-document-view__close-button:hover {
+    transform: none;
+  }
+
+  .base-document-view__close-button:active {
+    transform: none;
+  }
+}
