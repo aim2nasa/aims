@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -544,
-        272
+        -736,
+        80
       ],
-      "id": "0a6f4074-fd20-4e11-8b49-ab269e02c94d",
+      "id": "24f9748d-0788-4ce3-ad05-16a8c54e15f6",
       "name": "DocMeta Webhook",
       "webhookId": "7fdf34d7-7dd7-474c-a534-34e5238f7f1e"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        128,
-        272
+        -64,
+        80
       ],
-      "id": "b2c9ae84-ae7c-45b0-8d40-cf0607001208",
+      "id": "8888bd14-accf-4b0c-8c53-1e5eeee735a3",
       "name": "Save Upload to Temp",
       "alwaysOutputData": true
     },
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        576,
-        368
+        384,
+        176
       ],
-      "id": "e97eeb0b-d957-4f76-b0f5-56bfd93f295c",
+      "id": "76dd11c5-a065-42f3-b644-fd3f9f0f1bfd",
       "name": "Run DocMeta Analyzer",
       "alwaysOutputData": true
     },
@@ -56,10 +56,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1024,
-        560
+        832,
+        368
       ],
-      "id": "fc2333ac-f9e8-4e74-a081-f5e6b6ab4f92",
+      "id": "c1716425-c4c8-4bba-8e5a-896ed96d6e00",
       "name": "Parse Analyzer Output"
     },
     {
@@ -73,10 +73,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -96,
-        176
+        -288,
+        -16
       ],
-      "id": "0090d127-9a4d-4ebf-b685-cd4498166551",
+      "id": "0d2d6b03-6d9a-460f-8d66-cfdfe66048d5",
       "name": "Respond 400 BadRequest (NO_BINARY_FILE)"
     },
     {
@@ -107,10 +107,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        352,
-        272
+        160,
+        80
       ],
-      "id": "979e967b-df4a-4aeb-8f53-f9c98acae8e1",
+      "id": "1733da86-3878-446e-9ff2-b8d3811eaddf",
       "name": "Save Error?"
     },
     {
@@ -124,10 +124,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        576,
-        176
+        384,
+        -16
       ],
-      "id": "bcbc91ee-1adf-4519-9398-e6254fb84e52",
+      "id": "a84d0756-bddd-4c84-a280-bf9dbd5fa392",
       "name": "Respond 500 SaveFail"
     },
     {
@@ -141,10 +141,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1024,
-        368
+        832,
+        176
       ],
-      "id": "b59b6b36-1feb-4915-bd0d-6a6a5eb198f2",
+      "id": "0d9b735b-a991-4fd4-94be-58abb8e2a2dc",
       "name": "Respond 500 AnalyzerFail"
     },
     {
@@ -175,10 +175,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        800,
-        464
+        608,
+        272
       ],
-      "id": "c347fb05-f717-4e10-8f68-e8ba04a6000a",
+      "id": "a8013d7f-13cd-4cb6-a121-f024349342f0",
       "name": "Analyzed?"
     },
     {
@@ -209,10 +209,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1248,
-        488
+        1056,
+        304
       ],
-      "id": "f5a07bc6-3235-4945-9125-f6f715b5b110",
+      "id": "18439df7-9a57-49c5-b49e-f50d9a445e85",
       "name": "Parsed?"
     },
     {
@@ -226,10 +226,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1472,
-        392
+        1280,
+        208
       ],
-      "id": "c8a0231e-6883-4005-9764-c562b488fb9f",
+      "id": "85dbaa3f-cee6-4e0a-9231-9ac758276124",
       "name": "Respond 500 AnalyzerOutputFail"
     },
     {
@@ -241,10 +241,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2592,
-        656
+        2400,
+        464
       ],
-      "id": "d82ebd70-b338-4376-9341-894ea6c4efbd",
+      "id": "453bb9d9-bd6f-404c-ba42-df846a6bd06e",
       "name": "Respond to DocMeta Webhook"
     },
     {
@@ -275,10 +275,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -96,
-        368
+        -288,
+        176
       ],
-      "id": "d28a973b-ba25-4131-bb90-7a956f0f539a",
+      "id": "8a013168-eb24-4eec-bb5f-cb1107521f9d",
       "name": "Binary Exist?"
     },
     {
@@ -309,10 +309,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -320,
-        272
+        -512,
+        80
       ],
-      "id": "603e29fc-4379-4859-a65b-3fa737880e02",
+      "id": "68294e57-1933-4dc2-b36d-04964ff2048d",
       "name": "No Binary & No Path?"
     },
     {
@@ -322,10 +322,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        576,
-        560
+        384,
+        368
       ],
-      "id": "5aa0f10e-fc7d-4282-a459-bf43ba0cd359",
+      "id": "fc9c1f3d-d4e8-4a59-90b5-6bf96737e7a0",
       "name": "Run DocMeta Analyzer with Path"
     },
     {
@@ -353,10 +353,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1696,
-        656
+        1504,
+        464
       ],
-      "id": "e7fb7d66-9cff-41ae-940f-0fa9ec6d0a92",
+      "id": "30d615dc-0471-4179-9360-e0802898af9c",
       "name": "Summary Request"
     },
     {
@@ -386,10 +386,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1920,
-        656
+        1728,
+        464
       ],
-      "id": "6bdfb973-cc21-4ff5-9849-65319f95ffad",
+      "id": "bb33a9fe-1c22-4746-91ae-cdbaa78dd595",
       "name": "Summary Failed?"
     },
     {
@@ -401,10 +401,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2144,
-        608
+        1952,
+        416
       ],
-      "id": "89bc0b73-acc5-4597-bc6b-62478ea8451d",
+      "id": "461925be-1f10-4cac-9b98-6d05586dacaa",
       "name": "Summary Error"
     },
     {
@@ -416,10 +416,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        2144,
-        824
+        1952,
+        640
       ],
-      "id": "cbfddd81-23d9-4e5a-8041-a7bffa62678f",
+      "id": "c4b81fd3-d230-4954-8a90-18580261ac01",
       "name": "Merge"
     },
     {
@@ -517,10 +517,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2368,
-        824
+        2176,
+        640
       ],
-      "id": "33ec96de-b851-48b8-84fb-a8a4fc73aef5",
+      "id": "73697a37-fb67-4816-85c0-72819d776a01",
       "name": "Response Data"
     },
     {
@@ -551,10 +551,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1472,
-        584
+        1280,
+        400
       ],
-      "id": "e524909e-29d6-4cdb-b429-c6e269356270",
+      "id": "5b43befb-7b8c-4012-bc8c-3685b147c25f",
       "name": "extracted_text Empty?"
     },
     {
@@ -652,10 +652,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2368,
-        464
+        2176,
+        272
       ],
-      "id": "6a2f2041-ed10-446b-a1e6-937ef3191885",
+      "id": "0d2df5a7-c338-4adc-87fd-7b6ad2ee8db9",
       "name": "Empty extracted_text Response Data"
     }
   ],
@@ -899,7 +899,7 @@
     "errorWorkflow": "pbOS7kBxmfv07Cb7",
     "timezone": "Asia/Seoul"
   },
-  "versionId": "c1776603-be36-4e1a-9665-19861ae2379c",
+  "versionId": "eee73d3d-eaea-40eb-95e8-713969ccd43a",
   "meta": {
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },

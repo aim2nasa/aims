@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1952,
-        176
+        -304,
+        -128
       ],
-      "id": "c91e330e-d412-4337-936a-8a2299aaadbc",
+      "id": "af9f7217-9838-484f-96d2-21638cace94e",
       "name": "DocOCR Request"
     },
     {
@@ -42,10 +42,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -2400,
-        80
+        -752,
+        -224
       ],
-      "id": "7188f0e2-1745-48ca-b1c3-3c9a7c5b054f",
+      "id": "41e35d93-7643-4f05-825d-2c66e11cf482",
       "name": "Prepare OCR Binary",
       "alwaysOutputData": true
     },
@@ -76,10 +76,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1728,
-        176
+        -80,
+        -128
       ],
-      "id": "51369f29-7db9-408b-b3df-638d7aa5c57a",
+      "id": "68054290-ba9a-4b91-83b3-011c25159f4b",
       "name": "Is OCR Error?"
     },
     {
@@ -89,10 +89,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -1056,
-        80
+        592,
+        -224
       ],
-      "id": "5a768755-8f36-4295-9a86-b86b6e3f6753",
+      "id": "99d2a82d-7e8a-4ae4-8bad-151d38fac723",
       "name": "Log Final OCR Failure"
     },
     {
@@ -102,10 +102,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2624,
-        80
+        -976,
+        -224
       ],
-      "id": "55aa89ce-16bf-44c6-a563-2736397cf211",
+      "id": "38e2bec0-2215-4890-9c01-723ed4c6b46e",
       "name": "Pasre"
     },
     {
@@ -115,10 +115,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -3520,
-        80
+        -1872,
+        -224
       ],
-      "id": "6f62f3bf-6e64-4515-89cb-c0221df7848c",
+      "id": "f9b9663c-5d80-4550-915b-90199fdf7709",
       "name": "Read Redis Stream",
       "alwaysOutputData": true
     },
@@ -129,10 +129,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2848,
-        80
+        -1200,
+        -224
       ],
-      "id": "baf63320-7421-439a-9d14-651cc3fa54cf",
+      "id": "b6e7cd9a-1d17-40c1-ba94-e6978840cbd1",
       "name": "Parse Stream Message"
     },
     {
@@ -152,10 +152,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -3072,
-        80
+        -1424,
+        -224
       ],
-      "id": "1e6219fd-dae1-489a-bd62-d4df0c7357c9",
+      "id": "6c4538de-7141-463f-8ba3-d7a8f2502965",
       "name": "Edit Fields"
     },
     {
@@ -172,10 +172,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -3744,
-        80
+        -2096,
+        -224
       ],
-      "id": "75e2b1ed-8a96-467f-be66-cbb2c1b4581f",
+      "id": "0569ec64-6951-4954-b162-0fe27c85e68f",
       "name": "Schedule Trigger"
     },
     {
@@ -206,10 +206,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -3296,
-        80
+        -1648,
+        -224
       ],
-      "id": "a8526020-a130-4303-adcf-817f112d62c8",
+      "id": "a296b410-5c2b-4610-baca-15fa36ee2f71",
       "name": "Redis Message Empty?"
     },
     {
@@ -219,10 +219,10 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -832,
-        176
+        816,
+        -128
       ],
-      "id": "07434434-d796-476e-a893-d97fd5f40fb8",
+      "id": "ba0b6a42-f32d-4403-9ca3-d9b0d53e0363",
       "name": "Delete Redis Stream Message"
     },
     {
@@ -261,10 +261,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2176,
-        80
+        -528,
+        -224
       ],
-      "id": "b6f6cdcd-a5f4-43d1-a0ae-d9a8ceb3e75a",
+      "id": "5f4975b4-baf1-4193-bc2b-bdb04e29a5ba",
       "name": "Set OCR Running"
     },
     {
@@ -278,10 +278,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -1952,
-        -16
+        -304,
+        -320
       ],
-      "id": "e96be087-c8f6-4534-add1-f7b2c14f351a",
+      "id": "b05f1e2e-5ac1-480a-9482-d0f204733d13",
       "name": "Update OCR Running",
       "credentials": {
         "mongoDb": {
@@ -350,10 +350,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1280,
-        272
+        368,
+        -32
       ],
-      "id": "f656cb01-7248-4d74-a676-bf51451d9037",
+      "id": "6816071e-7513-4809-b93c-9f04e64e6247",
       "name": "OCR Done"
     },
     {
@@ -367,10 +367,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -1056,
-        272
+        592,
+        -32
       ],
-      "id": "0442dadc-dcce-47a0-ae5a-801cd7c75c80",
+      "id": "b71c7253-ee53-4bb7-956b-2469cc58a073",
       "name": "Update OCR Done in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -439,10 +439,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1504,
-        80
+        144,
+        -224
       ],
-      "id": "1033d99a-b385-4709-b89c-bf8aa990a5df",
+      "id": "dfd17662-7131-40e1-bfc9-a232bb874b67",
       "name": "Set OCR Error Message"
     },
     {
@@ -456,10 +456,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -1280,
-        80
+        368,
+        -224
       ],
-      "id": "e4e4a247-0c7a-432b-ad6e-187f51ced2ac",
+      "id": "78d9409f-8a13-42cc-bd0e-eefda71ae14f",
       "name": "Update OCR Error in MongoDB",
       "credentials": {
         "mongoDb": {
@@ -648,11 +648,6 @@
           }
         ]
       ]
-    },
-    "Update OCR Running": {
-      "main": [
-        []
-      ]
     }
   },
   "active": true,
@@ -666,7 +661,7 @@
     "saveExecutionProgress": true,
     "saveManualExecutions": true
   },
-  "versionId": "d152a47e-5a5c-4d6c-88b5-299c46e4d3f4",
+  "versionId": "30bc1a7a-9b72-40b4-bd5a-0173bbb0712b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"

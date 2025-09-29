@@ -12,10 +12,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
       "position": [
-        720,
-        -128
+        224,
+        -144
       ],
-      "id": "13a8c285-a901-459f-99e5-4baa906dab55",
+      "id": "7def9a63-3d63-424d-ac0d-0bb5f6eb37b8",
       "name": "AI Agent"
     },
     {
@@ -31,10 +31,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        816,
-        96
+        320,
+        80
       ],
-      "id": "c1be6402-7543-4042-ac72-04c6dd869f7a",
+      "id": "2607be1c-99a2-4a84-aff1-3ada21b0353a",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -50,10 +50,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        496,
-        -128
+        -16,
+        -144
       ],
-      "id": "860f264c-7ccd-442a-b9bb-5f3c0c81cbea",
+      "id": "dd057cae-2162-4e90-b3ca-5f5689a82406",
       "name": "LimitText"
     },
     {
@@ -65,10 +65,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1344,
-        -128
+        848,
+        -144
       ],
-      "id": "b3257167-2a7c-4119-95a9-dbf49ca7cb4a",
+      "id": "45305619-f560-4766-8086-ce33c00dd0b5",
       "name": "Summary Return"
     },
     {
@@ -78,10 +78,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
-        -128
+        624,
+        -144
       ],
-      "id": "87a32bfb-0c2c-48a6-93d4-f770697c5001",
+      "id": "f497793d-532b-48d8-8124-8f79b804388a",
       "name": "Code"
     },
     {
@@ -94,10 +94,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        272,
-        -128
+        -240,
+        -144
       ],
-      "id": "6e4e0439-a180-4db9-98df-b401bc57e47e",
+      "id": "62cc16ee-18f5-4ff0-aa9f-9b80400bc393",
       "name": "Summary Request",
       "webhookId": "94082f79-7eb0-43ae-a2f3-f5ee6df4508f"
     }
@@ -162,16 +162,12 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "pbOS7kBxmfv07Cb7",
-    "timezone": "Asia/Seoul"
+    "executionOrder": "v1"
   },
-  "versionId": "2aa89513-9894-4dcf-b872-b523a5a5048f",
+  "versionId": "3586e857-2506-4102-91eb-4b9ce99730c6",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },
-  "id": "SmTOn3mdK21O5WZt",
+  "id": "yl0wALuJYN67vPoa",
   "tags": []
 }

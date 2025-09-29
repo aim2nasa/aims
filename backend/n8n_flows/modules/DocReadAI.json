@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -496,
-        -704
+        -128,
+        -400
       ],
-      "id": "be3cf361-5b04-49d3-a8bb-52e99086f5aa",
+      "id": "cf85026b-5a71-427a-99a4-8ad5b932c5d7",
       "name": "DocReadAI Webhook",
       "webhookId": "32139984-6d2d-439c-b0e9-2ead0ebf35bb"
     },
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        -80,
-        -224
+        288,
+        96
       ],
-      "id": "c169fbb7-ce07-4a4a-b36d-18105544e5fd",
+      "id": "7e57fc9f-b38e-4fe0-8203-e405d7f46620",
       "name": "Load File for AI Input",
       "alwaysOutputData": false
     },
@@ -58,10 +58,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1728,
-        -632
+        2096,
+        -320
       ],
-      "id": "0c3dd756-af04-4895-82f2-643706705f22",
+      "id": "858d8b45-2b20-42ca-9057-dcfd6b60319d",
       "name": "Create Assistant Thread",
       "credentials": {
         "openAiApi": {
@@ -96,10 +96,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        144,
-        -224
+        512,
+        96
       ],
-      "id": "ff72ca06-ac04-4c32-a1d6-3c6161d3fe84",
+      "id": "100780fc-e531-4489-aada-b7cf9fb6c1dd",
       "name": "Upload File to OpenAI",
       "credentials": {
         "openAiApi": {
@@ -131,10 +131,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1952,
-        -416
+        2320,
+        -112
       ],
-      "id": "586c6b80-d8d5-4a3a-9dd2-57a84783aa14",
+      "id": "8f6f15ad-c57e-4d77-933e-475f27b4d59b",
       "name": "Send Message to Thread",
       "credentials": {
         "openAiApi": {
@@ -166,10 +166,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2176,
-        -416
+        2544,
+        -112
       ],
-      "id": "66c0afbf-aae1-4d33-a590-b18adf71b174",
+      "id": "9d4be1f6-62f2-4c05-ada2-00f3c6a02ebe",
       "name": "Run Assistant",
       "credentials": {
         "openAiApi": {
@@ -197,10 +197,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2400,
-        -416
+        2768,
+        -112
       ],
-      "id": "01f9f89b-fbf6-4ebf-9be3-c5edd133f137",
+      "id": "51244705-4cb7-480c-9470-aead29f09979",
       "name": "Get Run Result",
       "credentials": {
         "openAiApi": {
@@ -228,10 +228,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2848,
-        -536
+        3216,
+        -224
       ],
-      "id": "f8892508-e994-4fde-bbf9-c2eed003f4e2",
+      "id": "e8efb1cb-052b-49ed-80e9-c24ec5f7f44f",
       "name": "Get Final Response",
       "credentials": {
         "openAiApi": {
@@ -249,10 +249,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        3744,
-        -704
+        4112,
+        -400
       ],
-      "id": "f8fddc0e-b38d-427e-b0d7-8dd10490e316",
+      "id": "fa3adda8-e6b1-40d7-afc7-54f38ffd4b47",
       "name": "Respond to DocReadAI Webhook"
     },
     {
@@ -282,10 +282,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        816,
-        -128
+        1184,
+        192
       ],
-      "id": "cc722225-5cbc-4cc1-8c2f-5df3b304dbf7",
+      "id": "c33a4480-0f33-4673-9062-7add1f69f594",
       "name": "Attach File to VectorStore",
       "alwaysOutputData": false,
       "credentials": {
@@ -302,10 +302,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1728,
-        -224
+        2096,
+        96
       ],
-      "id": "2cab3e3c-071f-4d12-a06e-a28ee44a15b2",
+      "id": "e5c830ea-7ba5-4cc6-8395-7d2545207268",
       "name": "Wait",
       "webhookId": "b2cfee9d-6f02-43f8-b0fa-ba86eee5fc44"
     },
@@ -328,10 +328,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1952,
-        -224
+        2320,
+        96
       ],
-      "id": "56dc6c1c-4bf4-41f1-bd3c-d00b6dd59795",
+      "id": "8f4c3c4b-3d5d-4fb3-a10a-986a6d3e51bb",
       "name": "Check File Indexing Status",
       "credentials": {
         "openAiApi": {
@@ -349,10 +349,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        368,
-        -224
+        736,
+        96
       ],
-      "id": "56207ed8-0918-4441-bdb5-09fce39f6821",
+      "id": "7abe1bf3-497c-4d0b-b916-e5dc23c77bb4",
       "name": "Save Uploaded File ID"
     },
     {
@@ -372,10 +372,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1328,
-        -400
+        1696,
+        -96
       ],
-      "id": "04227e99-7722-4114-831a-ff96e94e7cd6",
+      "id": "3f3d3866-6421-4f46-9a0d-2a1c784a20d2",
       "name": "Merge Uploaded ID with Index Status"
     },
     {
@@ -388,10 +388,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        592,
-        -224
+        960,
+        96
       ],
-      "id": "4e664e87-9a28-48d9-a3e6-cd201bcfcc4b",
+      "id": "ab2225f1-3f4d-4eb4-97cc-4c764b1f8151",
       "name": "Set Retry Counter"
     },
     {
@@ -422,10 +422,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1504,
-        -400
+        1872,
+        -96
       ],
-      "id": "32c89808-f0b7-4f8c-b72b-9beeb6b55ebb",
+      "id": "42713448-74fc-44dc-81e0-27f15b5c1c4a",
       "name": "Is Indexing Completed?"
     },
     {
@@ -438,10 +438,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        816,
-        -336
+        1184,
+        -32
       ],
-      "id": "e54295ab-3130-4450-8692-ded792af6cbc",
+      "id": "1cb7a829-3fc0-4e04-a01c-7171da470cef",
       "name": "Keep uploaded_file_id"
     },
     {
@@ -453,10 +453,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1040,
-        -224
+        1408,
+        96
       ],
-      "id": "6599deec-90b4-48da-b632-325b941f2fed",
+      "id": "ff143a60-87f9-4213-8f10-f7dd2f892366",
       "name": "Merge uploaded_file_id with Attach Response"
     },
     {
@@ -466,10 +466,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2176,
-        -152
+        2544,
+        160
       ],
-      "id": "a5043eb2-6096-46c0-b8bc-4dfd18fca0e4",
+      "id": "32821287-c74e-410a-af13-4881cc4d2054",
       "name": "Extract Indexed File Items"
     },
     {
@@ -490,10 +490,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1728,
-        -416
+        2096,
+        -112
       ],
-      "id": "0134ad26-46e1-48c6-b5fa-941308a45a9e",
+      "id": "9a644788-b2b0-47b0-bc6e-07684e0c1adf",
       "name": "Set Thread ID"
     },
     {
@@ -524,10 +524,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2624,
-        -488
+        2992,
+        -176
       ],
-      "id": "397cbb87-d6cf-4714-a53d-a14667668030",
+      "id": "2830c772-abe5-40ef-99d0-923f33c32909",
       "name": "Is Run Completed?"
     },
     {
@@ -535,10 +535,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2848,
-        -320
+        3216,
+        -16
       ],
-      "id": "495a371b-e97c-45c4-969a-64e55ed967be",
+      "id": "f79ffd34-b132-4019-9f76-8a854755ed79",
       "name": "Wait Before Recheck Run",
       "webhookId": "18614bd1-4ec9-447c-b63a-4734a887c493"
     },
@@ -552,10 +552,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -272,
-        -704
+        96,
+        -400
       ],
-      "id": "8875d5e8-1eb9-4258-b215-da8b243e9910",
+      "id": "76bc66a0-ed93-4668-8e64-c8a6bfbc23ef",
       "name": "Keep _id"
     },
     {
@@ -567,10 +567,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        3296,
-        -704
+        3664,
+        -400
       ],
-      "id": "5fd53691-3da8-42a2-885e-4be7da12a034",
+      "id": "9ad24e81-f63e-4381-9c1e-50630361a76e",
       "name": "Merge _id with AI Response"
     },
     {
@@ -580,10 +580,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3072,
-        -536
+        3440,
+        -224
       ],
-      "id": "9883f911-9ea4-4b90-a3f7-689f16b838a9",
+      "id": "8157797d-a9e9-4ccc-87a5-57ae9670edb3",
       "name": "Extract AI Output JSON"
     },
     {
@@ -593,10 +593,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3520,
-        -704
+        3888,
+        -400
       ],
-      "id": "d2595ef8-3128-4f84-81c5-3cb64ad096c4",
+      "id": "6c9a654c-75d2-44b4-b0a3-d33d0cc7fee6",
       "name": "Build Final Summary JSON"
     }
   ],
@@ -622,11 +622,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "Create Assistant Thread": {
-      "main": [
-        []
       ]
     },
     "Upload File to OpenAI": {
@@ -907,8 +902,13 @@
     }
   },
   "active": true,
-  "settings": {},
-  "versionId": "e0fa7382-17c8-4265-8b9f-ecae7455d482",
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionOrder": "v0",
+    "errorWorkflow": "pbOS7kBxmfv07Cb7",
+    "timezone": "Asia/Seoul"
+  },
+  "versionId": "1e01cc67-9d5d-49db-aa9a-413c390f2197",
   "meta": {
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
   },

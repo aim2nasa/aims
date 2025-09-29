@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -768,
-        64
+        -1200,
+        16
       ],
-      "id": "3110280a-d391-4134-aa17-70161b318d93",
+      "id": "224af7b5-8abb-49c6-950c-0f46bfafb856",
       "name": "SmartSearch Webhook",
       "webhookId": "4c1d0839-8a20-40ea-bfd1-5575c65fa171"
     },
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.mongoDb",
       "typeVersion": 1.2,
       "position": [
-        -96,
-        64
+        -528,
+        16
       ],
-      "id": "7eee8a8c-64c2-4f53-abb8-25e5145a023c",
+      "id": "4fee94f4-ca9e-443b-9da2-351e3405d25c",
       "name": "MongoDB",
       "alwaysOutputData": true,
       "credentials": {
@@ -50,10 +50,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        352,
-        160
+        -80,
+        112
       ],
-      "id": "6e019b6c-ad64-4457-9cd1-e696f6781c02",
+      "id": "c88a83be-d274-46d0-be8d-1f04a037fa07",
       "name": "Respond with Search Results"
     },
     {
@@ -63,10 +63,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -544,
-        64
+        -976,
+        16
       ],
-      "id": "e622ab04-9e7a-43bb-a130-1a1d44941ecf",
+      "id": "568dff69-b215-44ee-9152-70b6b10370c2",
       "name": "Build Mongo Query"
     },
     {
@@ -76,10 +76,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -320,
-        64
+        -752,
+        16
       ],
-      "id": "67c97b11-8ace-4a4e-ae5c-b638cfd9d640",
+      "id": "3b78fa09-8fc7-4e2f-9bdc-495d0b414cef",
       "name": "Stringify Mongo Query"
     },
     {
@@ -109,10 +109,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        128,
-        64
+        -304,
+        16
       ],
-      "id": "49535115-74aa-4945-9405-a6302a208fcf",
+      "id": "ae1b00b9-27d5-4095-a01a-49a1c8b00558",
       "name": "If"
     },
     {
@@ -124,10 +124,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        352,
-        -32
+        -80,
+        -80
       ],
-      "id": "46af4190-15b4-4f25-9f21-9d793f07b2b9",
+      "id": "58e8725b-20f7-4e57-9f19-579767377786",
       "name": "Empty Result Response"
     }
   ],
@@ -202,7 +202,7 @@
     "timezone": "Asia/Seoul",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "faf96796-1856-4b19-9ba8-a34bf4527977",
+  "versionId": "e722bc85-fd7c-47bb-a97f-bb96c9978e75",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"

@@ -6,10 +6,10 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        496,
-        112
+        240,
+        96
       ],
-      "id": "8289a0b9-c4d7-4972-a7ea-9c9b069b4414",
+      "id": "42702fdb-4b7c-4b44-b853-8481841a0e81",
       "name": "Error Trigger"
     },
     {
@@ -101,10 +101,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.6,
       "position": [
-        720,
-        16
+        464,
+        -16
       ],
-      "id": "80f4f4f1-c9dc-4cc1-9cee-54cad8033242",
+      "id": "696a34ea-6da0-4c6c-bd09-c68e42cb7f47",
       "name": "Log Error",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -129,10 +129,10 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        720,
-        208
+        464,
+        192
       ],
-      "id": "4c2da53f-7203-4919-adcf-83eb06ec4980",
+      "id": "0c43bdad-f48a-4220-a890-c12bde8ea60e",
       "name": "Send a message",
       "webhookId": "96aaa491-8f44-4683-973c-af781a8c9219",
       "credentials": {
@@ -166,9 +166,10 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "pbOS7kBxmfv07Cb7"
+    "errorWorkflow": "pbOS7kBxmfv07Cb7",
+    "timezone": "Asia/Seoul"
   },
-  "versionId": "7f8e6624-6dd0-4f6a-a603-3b70e3840eca",
+  "versionId": "c0843708-87d1-4e79-af08-4f0d4b1ce7da",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9bef19803d9cc74827d34f20e7912edba5a94f10490a7ef90f1da29ab157dd9a"
