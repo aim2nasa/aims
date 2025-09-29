@@ -328,7 +328,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
               decorative={true}
             />
             <span className="file-upload-area__hint-text">
-              Or drag files here
+              또는 파일을 여기에 끌어오세요
             </span>
           </div>
         )}
