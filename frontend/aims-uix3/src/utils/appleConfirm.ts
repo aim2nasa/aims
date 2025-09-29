@@ -126,10 +126,11 @@ export function showAppleConfirm(
       }
     }
 
-    // 🍎 링크 클릭 핸들러
-    const handleLinkClick = () => {
+    // 🍎 링크 클릭 핸들러 - 모달을 닫지 않고 링크 함수만 실행
+    const handleLinkClick = async () => {
       if (options?.onLinkClick) {
-        options.onLinkClick()
+        await options.onLinkClick()
+        // 링크 클릭 후에는 모달을 닫지 않음 - 사용자가 취소/확인 선택해야 함
       }
     }
 
@@ -245,7 +246,7 @@ export function showOversizedFilesModal(
       previousModal.style.display = 'none'
     }
 
-    currentResolver = resolve
+    // currentResolver는 변경하지 않음 - mod1의 resolver 보호
 
     // 🔒 DOM 직접 생성으로 절대 신뢰성 확보
     const overlay = document.createElement('div')
@@ -305,9 +306,9 @@ export function showOversizedFilesModal(
 
     const handleClose = () => {
       closeModal()
-      if (currentResolver) {
-        currentResolver(true)
-        currentResolver = null
+      // mod2에서는 자체 resolver만 처리, mod1의 resolver는 건드리지 않음
+      if (resolve) {
+        resolve(true)
       }
     }
 
@@ -363,11 +364,11 @@ export function showOversizedFilesModal(
       window.removeEventListener('resize', handleResize)
       document.body.style.overflow = ''
 
-      // 🔄 mod2.png 닫힌 후 mod1.png로 복귀
+      // 🔄 mod2.png 닫힌 후 mod1.png로 복귀 (resolver는 원래 그대로 유지됨)
       if (previousModal) {
         previousModal.style.display = 'flex'
         currentModal = previousModal
-        currentResolver = previousResolver // 🔥 mod1의 resolver 복원!
+        // currentResolver는 이미 previousResolver와 같으므로 복원 불필요
       }
     }
 
