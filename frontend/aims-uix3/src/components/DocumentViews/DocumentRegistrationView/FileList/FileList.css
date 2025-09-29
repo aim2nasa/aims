@@ -79,6 +79,153 @@ html[data-theme="dark"] .file-list__stat {
   background: rgba(255, 69, 58, 0.04);
 }
 
+.file-list__stat--completed {
+  color: rgba(52, 199, 89, 0.8);
+  background: rgba(52, 199, 89, 0.04);
+}
+
+/* 🍎 CLICKABLE STATS: Apple-style interaction */
+.file-list__stat--clickable {
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  border-radius: 6px;
+}
+
+/* 🍎 COMPLETED BUTTON: Green theme */
+.file-list__stat--completed.file-list__stat--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.15);
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.file-list__stat--completed.file-list__stat--clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(52, 199, 89, 0.2);
+}
+
+.file-list__stat--completed.file-list__stat--active {
+  background: rgba(52, 199, 89, 0.12) !important;
+  color: rgba(52, 199, 89, 1) !important;
+  font-weight: 600;
+  box-shadow: inset 0 1px 2px rgba(52, 199, 89, 0.1);
+}
+
+/* 🍎 ERROR BUTTON: Red theme */
+.file-list__stat--error.file-list__stat--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 69, 58, 0.15);
+  background: rgba(255, 69, 58, 0.08);
+}
+
+.file-list__stat--error.file-list__stat--clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(255, 69, 58, 0.2);
+}
+
+.file-list__stat--error.file-list__stat--active {
+  background: rgba(255, 69, 58, 0.12) !important;
+  color: rgba(255, 69, 58, 1) !important;
+  font-weight: 600;
+  box-shadow: inset 0 1px 2px rgba(255, 69, 58, 0.1);
+}
+
+/* 🍎 DARK MODE: Completed button */
+html[data-theme="dark"] .file-list__stat--completed.file-list__stat--clickable:hover {
+  background: rgba(52, 199, 89, 0.12);
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
+}
+
+html[data-theme="dark"] .file-list__stat--completed.file-list__stat--active {
+  background: rgba(52, 199, 89, 0.15) !important;
+}
+
+/* 🍎 DARK MODE: Error button */
+html[data-theme="dark"] .file-list__stat--error.file-list__stat--clickable:hover {
+  background: rgba(255, 69, 58, 0.12);
+  box-shadow: 0 2px 8px rgba(255, 69, 58, 0.25);
+}
+
+html[data-theme="dark"] .file-list__stat--error.file-list__stat--active {
+  background: rgba(255, 69, 58, 0.15) !important;
+}
+
+/* 🍎 FILTER STATUS: Apple-style filter indication */
+.file-list__filter-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  margin: 8px 0;
+  background: rgba(0, 122, 255, 0.04);
+  border: 1px solid rgba(0, 122, 255, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+  animation: filterSlideIn 0.3s ease-out;
+}
+
+html[data-theme="dark"] .file-list__filter-status {
+  background: rgba(0, 122, 255, 0.08);
+  border-color: rgba(0, 122, 255, 0.12);
+}
+
+.file-list__filter-text {
+  color: rgba(0, 122, 255, 0.8);
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-list__filter-text {
+  color: rgba(100, 170, 255, 0.9);
+}
+
+.file-list__show-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  color: rgba(0, 122, 255, 0.7);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease-out;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.file-list__show-all:hover {
+  background: rgba(0, 122, 255, 0.06);
+  color: rgba(0, 122, 255, 1);
+  transform: translateY(-0.5px);
+}
+
+.file-list__show-all:active {
+  transform: translateY(0);
+  background: rgba(0, 122, 255, 0.1);
+}
+
+html[data-theme="dark"] .file-list__show-all {
+  color: rgba(100, 170, 255, 0.8);
+}
+
+html[data-theme="dark"] .file-list__show-all:hover {
+  background: rgba(0, 122, 255, 0.1);
+  color: rgba(100, 170, 255, 1);
+}
+
+@keyframes filterSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 🍎 CLEAR BUTTON: Apple-style minimal */
 .file-list__clear {
   display: flex;

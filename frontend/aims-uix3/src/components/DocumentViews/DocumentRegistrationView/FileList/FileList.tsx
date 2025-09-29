@@ -3,9 +3,9 @@
  * iOS/macOS native table view minimalism
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
-import { UploadFile } from '../types/uploadTypes'
+import { UploadFile, UploadStatus } from '../types/uploadTypes'
 import { uploadHelpers } from '../services/userContextService'
 import './FileList.css'
 
@@ -64,6 +64,9 @@ export const FileList: React.FC<FileListProps> = ({
   readonly = false,
   className = ''
 }) => {
+  // 🍎 FILTER STATE: Apple-style filtering
+  const [filterStatus, setFilterStatus] = useState<'all' | UploadStatus>('all')
+
   // 🍎 MINIMAL STATS
   const stats = useMemo(() => {
     const total = files.length
@@ -73,6 +76,21 @@ export const FileList: React.FC<FileListProps> = ({
 
     return { total, completed, error, uploading }
   }, [files])
+
+  // 🍎 FILTERED FILES: Smart filtering with Apple UX
+  const filteredFiles = useMemo(() => {
+    if (filterStatus === 'all') return files
+    return files.filter(file => file.status === filterStatus)
+  }, [files, filterStatus])
+
+  // 🍎 FILTER HANDLERS: Apple-style interaction
+  const handleFilterToggle = useCallback((status: UploadStatus) => {
+    setFilterStatus(current => current === status ? 'all' : status)
+  }, [])
+
+  const handleShowAll = useCallback(() => {
+    setFilterStatus('all')
+  }, [])
 
   if (files.length === 0) {
     return null
@@ -91,14 +109,21 @@ export const FileList: React.FC<FileListProps> = ({
           {(stats.completed > 0 || stats.uploading > 0 || stats.error > 0) && (
             <div className="file-list__stats">
               {stats.completed > 0 && (
-                <span className="file-list__stat file-list__stat--completed">
+                <button
+                  type="button"
+                  className={`file-list__stat file-list__stat--completed file-list__stat--clickable ${
+                    filterStatus === 'completed' ? 'file-list__stat--active' : ''
+                  }`}
+                  onClick={() => handleFilterToggle('completed')}
+                  aria-label={filterStatus === 'completed' ? '모든 파일 보기' : '완료된 파일만 보기'}
+                >
                   <SFSymbol
                     name="checkmark"
                     size={SFSymbolSize.CAPTION}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                   {stats.completed}
-                </span>
+                </button>
               )}
               {stats.uploading > 0 && (
                 <span className="file-list__stat file-list__stat--uploading">
@@ -111,18 +136,49 @@ export const FileList: React.FC<FileListProps> = ({
                 </span>
               )}
               {stats.error > 0 && (
-                <span className="file-list__stat file-list__stat--error">
+                <button
+                  type="button"
+                  className={`file-list__stat file-list__stat--error file-list__stat--clickable ${
+                    filterStatus === 'error' ? 'file-list__stat--active' : ''
+                  }`}
+                  onClick={() => handleFilterToggle('error')}
+                  aria-label={filterStatus === 'error' ? '모든 파일 보기' : '오류 파일만 보기'}
+                >
                   <SFSymbol
                     name="exclamationmark"
                     size={SFSymbolSize.CAPTION}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                   {stats.error}
-                </span>
+                </button>
               )}
             </div>
           )}
         </div>
+
+        {/* 🍎 FILTER STATUS: Show when filtering */}
+        {filterStatus !== 'all' && (
+          <div className="file-list__filter-status">
+            <span className="file-list__filter-text">
+              {filterStatus === 'error' && '오류 파일만 표시 중'}
+              {filterStatus === 'completed' && '완료된 파일만 표시 중'}
+              {filterStatus === 'uploading' && '업로드 중인 파일만 표시 중'}
+            </span>
+            <button
+              type="button"
+              className="file-list__show-all"
+              onClick={handleShowAll}
+              aria-label="모든 파일 보기"
+            >
+              <SFSymbol
+                name="xmark.circle.fill"
+                size={SFSymbolSize.CAPTION}
+                weight={SFSymbolWeight.LIGHT}
+              />
+              모든 파일
+            </button>
+          </div>
+        )}
 
         {/* 🍎 CLEAR BUTTON: Apple-style minimal */}
         {onClearAll && !readonly && stats.total > 0 && (
@@ -144,7 +200,7 @@ export const FileList: React.FC<FileListProps> = ({
 
       {/* 🍎 NATIVE TABLE: iOS/macOS style */}
       <div className="file-list__items">
-        {files.map((uploadFile) => (
+        {filteredFiles.map((uploadFile) => (
           <div
             key={uploadFile.id}
             className={`file-item file-item--${uploadFile.status}`}
