@@ -237,6 +237,180 @@ function formatBytes(bytes) {
 }
 
 /**
+ * 모든 문서 목록 조회 API (문서검색View용)
+ */
+app.get('/api/documents', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, sort = 'uploadTime_desc' } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+
+    // 검색 조건 추가
+    if (search) {
+      console.log(`🔍 검색 요청 - 원본: "${search}"`);
+      
+      // 1. URL 디코딩 처리 (한글 인코딩 문제 해결)
+      let decodedSearch;
+      try {
+        decodedSearch = decodeURIComponent(search);
+        console.log(`📝 디코딩 완료: "${decodedSearch}"`);
+      } catch (e) {
+        console.warn(`⚠️ URL 디코딩 실패, 원본 사용: ${e.message}`);
+        decodedSearch = search;
+      }
+      
+      // 2. 유니코드 정규화 (한글 조합 문자 문제 해결)
+      const normalizedSearch = decodedSearch.normalize('NFC');
+      console.log(`🔄 정규화 완료: "${normalizedSearch}"`);
+      
+      // 3. 검색 조건 구성
+      query = {
+        $or: [
+          { 'upload.originalName': { $regex: normalizedSearch, $options: 'i' } },
+          { 'meta.mime': { $regex: normalizedSearch, $options: 'i' } }
+        ]
+      };
+      
+      console.log(`🎯 MongoDB 쿼리:`, JSON.stringify(query, null, 2));
+    }
+
+    // 크기 정렬이 필요한 경우와 아닌 경우를 분기 처리
+    let documents;
+
+    if (sort === 'size_desc' || sort === 'size_asc') {
+      console.log(`📊 크기 정렬 요청: ${sort}`);
+      
+      // MongoDB Aggregation Pipeline을 사용하여 문자열을 숫자로 변환 후 정렬
+      const sortDirection = sort === 'size_desc' ? -1 : 1;
+      
+      const pipeline = [
+        // 1. 검색 조건 적용
+        { $match: query },
+        
+        // 2. 크기 필드를 숫자로 변환
+        {
+          $addFields: {
+            'meta.size_bytes_numeric': {
+              $cond: {
+                if: { $ne: ["$meta.size_bytes", null] },
+                then: { $toDouble: "$meta.size_bytes" },
+                else: 0  // null이나 undefined인 경우 0으로 처리
+              }
+            }
+          }
+        },
+        
+        // 3. 숫자로 변환된 필드로 정렬
+        { $sort: { 'meta.size_bytes_numeric': sortDirection } },
+        
+        // 4. 페이징 적용
+        { $skip: parseInt(skip) },
+        { $limit: parseInt(limit) },
+        
+        // 5. 임시 필드 제거 (선택사항)
+        {
+          $project: {
+            'meta.size_bytes_numeric': 0  // 응답에서 임시 필드 제거
+          }
+        }
+      ];
+      
+      console.log(`🔧 Aggregation Pipeline:`, JSON.stringify(pipeline, null, 2));
+      
+      // Aggregation 실행
+      documents = await db.collection(COLLECTION_NAME)
+        .aggregate(pipeline)
+        .toArray();
+      
+      console.log(`📈 크기 정렬 결과 개수: ${documents.length}`);
+      
+    } else {
+      // 기존 방식: 크기 정렬이 아닌 경우
+      console.log(`📝 일반 정렬 요청: ${sort}`);
+      
+      // 정렬 조건 설정 (크기 정렬 제외)
+      let sortOption = {};
+      switch (sort) {
+        case 'uploadTime_desc':
+          sortOption = { 'upload.uploaded_at': -1 };
+          break;
+        case 'uploadTime_asc':
+          sortOption = { 'upload.uploaded_at': 1 };
+          break;
+        case 'filename_asc':
+          sortOption = { 'upload.originalName': 1 };
+          break;
+        case 'filename_desc':
+          sortOption = { 'upload.originalName': -1 };
+          break;
+        default:
+          sortOption = { 'upload.uploaded_at': -1 };
+      }
+      
+      // 일반 쿼리 실행
+      documents = await db.collection(COLLECTION_NAME)
+        .find(query)
+        .sort(sortOption)
+        .skip(parseInt(skip))
+        .limit(parseInt(limit))
+        .toArray();
+    }
+
+    // 전체 문서 수 조회
+    const totalCount = await db.collection(COLLECTION_NAME).countDocuments(query);
+
+    // 문서 데이터 변환 (단순화)
+    const transformedDocuments = documents.map(doc => {
+      // 단순한 상태 판단
+      let status = 'processing';
+      let progress = 50;
+
+      if (doc.ocr && doc.ocr.status === 'done') {
+        status = 'completed';
+        progress = 100;
+      } else if (doc.meta && doc.meta.meta_status === 'ok') {
+        status = 'processing';
+        progress = 60;
+      }
+
+      return {
+        _id: doc._id,
+        filename: doc.upload?.originalName || 'Unknown File',
+        fileSize: doc.meta?.size_bytes || 0,
+        mimeType: doc.meta?.mime || 'unknown',
+        uploadTime: doc.upload?.uploaded_at || doc.createdAt,
+        status: status,
+        progress: progress,
+        filePath: doc.upload?.destPath
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        documents: transformedDocuments,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount: parseInt(totalCount),
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('문서 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '문서 목록 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 모든 문서의 상태를 조회하는 API
  */
 app.get('/api/documents/status', async (req, res) => {
@@ -666,6 +840,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('🚀🚀🚀 ================================\n');
   
   console.log(`📋 API 엔드포인트:`);
+  console.log(`  GET  /api/documents - 모든 문서 목록 조회 (검색, 정렬, 페이징)`);
   console.log(`  GET  /api/documents/status - 문서 목록 및 상태 조회`);
   console.log(`  GET  /api/documents/:id/status - 특정 문서 상세 상태`);
   console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회`);
