@@ -314,15 +314,217 @@ html[data-theme="dark"] .file-item--cancelled {
   background: rgba(255, 255, 255, 0.01);
 }
 
-/* 🍎 ICON: Minimal file type */
+/* 🍎 ICON: Apple-style file type colors with Progressive Disclosure */
 .file-item__icon {
-  color: rgba(0, 0, 0, 0.3);
   margin-right: 10px;
   flex-shrink: 0;
+  transition: color var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme="dark"] .file-item__icon {
-  color: rgba(255, 255, 255, 0.3);
+/* === 🍎 FILE TYPE ICON COLORS === */
+/* PDF Files - Red theme */
+.file-item__icon.file-icon--pdf {
+  color: var(--color-file-pdf-light);
+}
+
+.file-item__icon.file-icon--pdf:hover {
+  color: var(--color-file-pdf-hover-light);
+}
+
+/* Image Files - Blue theme */
+.file-item__icon.file-icon--image {
+  color: var(--color-file-image-light);
+}
+
+.file-item__icon.file-icon--image:hover {
+  color: var(--color-file-image-hover-light);
+}
+
+/* Video Files - Purple theme */
+.file-item__icon.file-icon--video {
+  color: var(--color-file-video-light);
+}
+
+.file-item__icon.file-icon--video:hover {
+  color: var(--color-file-video-hover-light);
+}
+
+/* Audio Files - Pink theme */
+.file-item__icon.file-icon--audio {
+  color: var(--color-file-audio-light);
+}
+
+.file-item__icon.file-icon--audio:hover {
+  color: var(--color-file-audio-hover-light);
+}
+
+/* Archive Files - Orange theme */
+.file-item__icon.file-icon--archive {
+  color: var(--color-file-archive-light);
+}
+
+.file-item__icon.file-icon--archive:hover {
+  color: var(--color-file-archive-hover-light);
+}
+
+/* Word Documents - Blue theme */
+.file-item__icon.file-icon--word {
+  color: var(--color-file-word-light);
+}
+
+.file-item__icon.file-icon--word:hover {
+  color: var(--color-file-word-hover-light);
+}
+
+/* Excel Documents - Green theme */
+.file-item__icon.file-icon--excel {
+  color: var(--color-file-excel-light);
+}
+
+.file-item__icon.file-icon--excel:hover {
+  color: var(--color-file-excel-hover-light);
+}
+
+/* PowerPoint Documents - Orange theme */
+.file-item__icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-light);
+}
+
+.file-item__icon.file-icon--powerpoint:hover {
+  color: var(--color-file-powerpoint-hover-light);
+}
+
+/* Code Files - Indigo theme */
+.file-item__icon.file-icon--code {
+  color: var(--color-file-code-light);
+}
+
+.file-item__icon.file-icon--code:hover {
+  color: var(--color-file-code-hover-light);
+}
+
+/* Text Files - Gray theme */
+.file-item__icon.file-icon--text {
+  color: var(--color-file-text-light);
+}
+
+.file-item__icon.file-icon--text:hover {
+  color: var(--color-file-text-hover-light);
+}
+
+/* Executable Files - Dark theme */
+.file-item__icon.file-icon--executable {
+  color: var(--color-file-executable-light);
+}
+
+.file-item__icon.file-icon--executable:hover {
+  color: var(--color-file-executable-hover-light);
+}
+
+/* Default Files - Neutral theme */
+.file-item__icon.file-icon--default {
+  color: var(--color-file-default-light);
+}
+
+.file-item__icon.file-icon--default:hover {
+  color: var(--color-file-default-hover-light);
+}
+
+/* === 🍎 DARK THEME ICON COLORS === */
+html[data-theme="dark"] .file-item__icon.file-icon--pdf {
+  color: var(--color-file-pdf-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--pdf:hover {
+  color: var(--color-file-pdf-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--image {
+  color: var(--color-file-image-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--image:hover {
+  color: var(--color-file-image-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--video {
+  color: var(--color-file-video-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--video:hover {
+  color: var(--color-file-video-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--audio {
+  color: var(--color-file-audio-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--audio:hover {
+  color: var(--color-file-audio-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--archive {
+  color: var(--color-file-archive-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--archive:hover {
+  color: var(--color-file-archive-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--word {
+  color: var(--color-file-word-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--word:hover {
+  color: var(--color-file-word-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--excel {
+  color: var(--color-file-excel-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--excel:hover {
+  color: var(--color-file-excel-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--powerpoint:hover {
+  color: var(--color-file-powerpoint-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--code {
+  color: var(--color-file-code-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--code:hover {
+  color: var(--color-file-code-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--text {
+  color: var(--color-file-text-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--text:hover {
+  color: var(--color-file-text-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--executable {
+  color: var(--color-file-executable-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--executable:hover {
+  color: var(--color-file-executable-hover-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--default {
+  color: var(--color-file-default-dark);
+}
+
+html[data-theme="dark"] .file-item__icon.file-icon--default:hover {
+  color: var(--color-file-default-hover-dark);
 }
 
 /* 🍎 INFO: Clean typography */

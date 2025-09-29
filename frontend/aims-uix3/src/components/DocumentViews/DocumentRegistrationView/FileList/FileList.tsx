@@ -82,6 +82,72 @@ const getFileIcon = (file: File): string => {
   return 'doc'
 }
 
+/**
+ * 🍎 FILE TYPE CSS CLASS: Apple-style color categorization
+ */
+const getFileTypeClass = (file: File): string => {
+  const mimeType = file.type.toLowerCase()
+  const extension = file.name.split('.').pop()?.toLowerCase() || ''
+
+  // 🍎 PDF: Red theme
+  if (mimeType.includes('pdf') || extension === 'pdf') {
+    return 'file-icon--pdf'
+  }
+
+  // 🍎 IMAGES: Blue theme
+  if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension)) {
+    return 'file-icon--image'
+  }
+
+  // 🍎 VIDEOS: Purple theme
+  if (mimeType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp'].includes(extension)) {
+    return 'file-icon--video'
+  }
+
+  // 🍎 AUDIO: Pink theme
+  if (mimeType.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'].includes(extension)) {
+    return 'file-icon--audio'
+  }
+
+  // 🍎 ARCHIVES: Orange theme
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'dmg', 'iso'].includes(extension)) {
+    return 'file-icon--archive'
+  }
+
+  // 🍎 WORD DOCUMENTS: Blue theme
+  if (['doc', 'docx', 'hwp'].includes(extension) || mimeType.includes('msword')) {
+    return 'file-icon--word'
+  }
+
+  // 🍎 EXCEL DOCUMENTS: Green theme
+  if (['xls', 'xlsx'].includes(extension) || mimeType.includes('sheet')) {
+    return 'file-icon--excel'
+  }
+
+  // 🍎 POWERPOINT DOCUMENTS: Orange theme
+  if (['ppt', 'pptx'].includes(extension) || mimeType.includes('presentation')) {
+    return 'file-icon--powerpoint'
+  }
+
+  // 🍎 CODE FILES: Indigo theme
+  if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'less', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'dart'].includes(extension)) {
+    return 'file-icon--code'
+  }
+
+  // 🍎 TEXT FILES: Gray theme
+  if (mimeType.includes('text') || ['txt', 'md', 'rtf', 'log', 'csv'].includes(extension)) {
+    return 'file-icon--text'
+  }
+
+  // 🍎 EXECUTABLE: Dark theme
+  if (['exe', 'msi', 'deb', 'rpm', 'pkg', 'dmg', 'app'].includes(extension)) {
+    return 'file-icon--executable'
+  }
+
+  // 🍎 DEFAULT: Neutral theme
+  return 'file-icon--default'
+}
+
 
 /**
  * 🍎 TRUE APPLE FILE LIST COMPONENT
@@ -255,7 +321,7 @@ export const FileList: React.FC<FileListProps> = ({
             className={`file-item file-item--${uploadFile.status}`}
           >
             {/* 🍎 MINIMAL ICON */}
-            <div className="file-item__icon">
+            <div className={`file-item__icon ${getFileTypeClass(uploadFile.file)}`}>
               <SFSymbol
                 name={getFileIcon(uploadFile.file)}
                 size={SFSymbolSize.FOOTNOTE}

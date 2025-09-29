@@ -459,6 +459,81 @@
   --color-theme-switch-bg-dark: #3b82f6;
   --color-theme-switch-handle: #ffffff;
 
+  /* === 🍎 FILE TYPE ICON COLORS === */
+  /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
+
+  /* PDF Files - Red/Coral theme (like Apple's PDF icons) */
+  --color-file-pdf-light: rgba(239, 68, 68, 0.6);           /* Subtle red base */
+  --color-file-pdf-hover-light: rgba(239, 68, 68, 1);       /* Vibrant red hover */
+  --color-file-pdf-dark: rgba(248, 113, 113, 0.6);          /* Subtle red base dark */
+  --color-file-pdf-hover-dark: rgba(248, 113, 113, 1);      /* Vibrant red hover dark */
+
+  /* Image Files - Blue/Cyan theme (like Apple's Photo app) */
+  --color-file-image-light: rgba(59, 130, 246, 0.6);        /* Subtle blue base */
+  --color-file-image-hover-light: rgba(59, 130, 246, 1);    /* Vibrant blue hover */
+  --color-file-image-dark: rgba(96, 165, 250, 0.6);         /* Subtle blue base dark */
+  --color-file-image-hover-dark: rgba(96, 165, 250, 1);     /* Vibrant blue hover dark */
+
+  /* Video Files - Purple theme (like Apple's video icons) */
+  --color-file-video-light: rgba(147, 51, 234, 0.6);        /* Subtle purple base */
+  --color-file-video-hover-light: rgba(147, 51, 234, 1);    /* Vibrant purple hover */
+  --color-file-video-dark: rgba(168, 85, 247, 0.6);         /* Subtle purple base dark */
+  --color-file-video-hover-dark: rgba(168, 85, 247, 1);     /* Vibrant purple hover dark */
+
+  /* Audio Files - Pink theme (like Apple's Music app) */
+  --color-file-audio-light: rgba(236, 72, 153, 0.6);        /* Subtle pink base */
+  --color-file-audio-hover-light: rgba(236, 72, 153, 1);    /* Vibrant pink hover */
+  --color-file-audio-dark: rgba(244, 114, 182, 0.6);        /* Subtle pink base dark */
+  --color-file-audio-hover-dark: rgba(244, 114, 182, 1);    /* Vibrant pink hover dark */
+
+  /* Archive Files - Orange theme (like Apple's archive icons) */
+  --color-file-archive-light: rgba(249, 115, 22, 0.6);      /* Subtle orange base */
+  --color-file-archive-hover-light: rgba(249, 115, 22, 1);  /* Vibrant orange hover */
+  --color-file-archive-dark: rgba(251, 146, 60, 0.6);       /* Subtle orange base dark */
+  --color-file-archive-hover-dark: rgba(251, 146, 60, 1);   /* Vibrant orange hover dark */
+
+  /* Word Documents - Blue theme (Microsoft Word branding) */
+  --color-file-word-light: rgba(37, 99, 235, 0.6);          /* Subtle Word blue base */
+  --color-file-word-hover-light: rgba(37, 99, 235, 1);      /* Vibrant Word blue hover */
+  --color-file-word-dark: rgba(59, 130, 246, 0.6);          /* Subtle Word blue base dark */
+  --color-file-word-hover-dark: rgba(59, 130, 246, 1);      /* Vibrant Word blue hover dark */
+
+  /* Excel Documents - Green theme (Microsoft Excel branding) */
+  --color-file-excel-light: rgba(34, 197, 94, 0.6);         /* Subtle Excel green base */
+  --color-file-excel-hover-light: rgba(34, 197, 94, 1);     /* Vibrant Excel green hover */
+  --color-file-excel-dark: rgba(74, 222, 128, 0.6);         /* Subtle Excel green base dark */
+  --color-file-excel-hover-dark: rgba(74, 222, 128, 1);     /* Vibrant Excel green hover dark */
+
+  /* PowerPoint Documents - Orange theme (Microsoft PowerPoint branding) */
+  --color-file-powerpoint-light: rgba(234, 88, 12, 0.6);    /* Subtle PowerPoint orange base */
+  --color-file-powerpoint-hover-light: rgba(234, 88, 12, 1); /* Vibrant PowerPoint orange hover */
+  --color-file-powerpoint-dark: rgba(251, 146, 60, 0.6);    /* Subtle PowerPoint orange base dark */
+  --color-file-powerpoint-hover-dark: rgba(251, 146, 60, 1); /* Vibrant PowerPoint orange hover dark */
+
+  /* Code Files - Indigo theme (like developer tools) */
+  --color-file-code-light: rgba(99, 102, 241, 0.6);         /* Subtle indigo base */
+  --color-file-code-hover-light: rgba(99, 102, 241, 1);     /* Vibrant indigo hover */
+  --color-file-code-dark: rgba(129, 140, 248, 0.6);         /* Subtle indigo base dark */
+  --color-file-code-hover-dark: rgba(129, 140, 248, 1);     /* Vibrant indigo hover dark */
+
+  /* Text Files - Gray theme (neutral but still distinguishable) */
+  --color-file-text-light: rgba(107, 114, 128, 0.6);        /* Subtle gray base */
+  --color-file-text-hover-light: rgba(107, 114, 128, 1);    /* Vibrant gray hover */
+  --color-file-text-dark: rgba(156, 163, 175, 0.6);         /* Subtle gray base dark */
+  --color-file-text-hover-dark: rgba(156, 163, 175, 1);     /* Vibrant gray hover dark */
+
+  /* Executable Files - Dark theme (like system files) */
+  --color-file-executable-light: rgba(75, 85, 99, 0.6);     /* Subtle dark gray base */
+  --color-file-executable-hover-light: rgba(75, 85, 99, 1); /* Vibrant dark gray hover */
+  --color-file-executable-dark: rgba(107, 114, 128, 0.6);   /* Subtle gray base dark */
+  --color-file-executable-hover-dark: rgba(107, 114, 128, 1); /* Vibrant gray hover dark */
+
+  /* Default Files - Neutral theme (fallback) */
+  --color-file-default-light: rgba(107, 114, 128, 0.4);     /* Very subtle gray base */
+  --color-file-default-hover-light: rgba(107, 114, 128, 0.8); /* Moderate gray hover */
+  --color-file-default-dark: rgba(156, 163, 175, 0.4);      /* Very subtle gray base dark */
+  --color-file-default-hover-dark: rgba(156, 163, 175, 0.8); /* Moderate gray hover dark */
+
   /* === SKELETON SHIMMER COLORS === */
 
   /* Light Theme Shimmer - iOS 표준 불투명도 */
