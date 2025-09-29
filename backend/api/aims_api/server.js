@@ -241,7 +241,61 @@ function formatBytes(bytes) {
  */
 app.get('/api/documents', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, sort = 'uploadTime_desc' } = req.query;
+    // 파라미터 검증 및 기본값 설정
+    let { page = 1, limit = 10, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType } = req.query;
+    
+    // limit 파라미터 검증 (0 이하 또는 음수 방지)
+    limit = parseInt(limit);
+    if (isNaN(limit) || limit <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'limit 파라미터는 1 이상의 양의 정수여야 합니다.',
+        provided: req.query.limit,
+        expected: '1 이상의 양의 정수'
+      });
+    }
+    
+    // limit 최대값 제한 (DoS 공격 방지)
+    if (limit > 1000) {
+      return res.status(400).json({
+        success: false,
+        error: 'limit 파라미터는 1000 이하여야 합니다.',
+        provided: limit,
+        max_allowed: 1000
+      });
+    }
+    
+    // page 파라미터 검증 (0 이하 방지)
+    page = parseInt(page);
+    if (isNaN(page) || page <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'page 파라미터는 1 이상의 양의 정수여야 합니다.',
+        provided: req.query.page,
+        expected: '1 이상의 양의 정수'
+      });
+    }
+    
+    // sortBy 파라미터 검증 (유효한 필드만 허용)
+    if (sortBy && !['size', 'time', 'name'].includes(sortBy)) {
+      return res.status(400).json({
+        success: false,
+        error: 'sortBy 파라미터는 size, time, name 중 하나여야 합니다.',
+        provided: sortBy,
+        allowed: ['size', 'time', 'name']
+      });
+    }
+    
+    // sortOrder 파라미터 검증 (asc 또는 desc만 허용)
+    if (sortOrder && !['asc', 'desc'].includes(sortOrder)) {
+      return res.status(400).json({
+        success: false,
+        error: 'sortOrder 파라미터는 asc 또는 desc여야 합니다.',
+        provided: sortOrder,
+        allowed: ['asc', 'desc']
+      });
+    }
+
     const skip = (page - 1) * limit;
 
     let query = {};
@@ -810,13 +864,36 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// 404 Not Found 핸들러 (잘못된 엔드포인트에 대한 JSON 응답)
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: '요청한 엔드포인트를 찾을 수 없습니다.',
+    requested_url: req.originalUrl,
+    method: req.method,
+    available_endpoints: [
+      'GET /api/health',
+      'GET /api/documents',
+      'GET /api/documents/status',
+      'GET /api/documents/:id/status',
+      'GET /api/customers',
+      'POST /api/customers',
+      'GET /api/customers/:id',
+      'PUT /api/customers/:id',
+      'DELETE /api/customers/:id'
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // 에러 핸들링 미들웨어
 app.use((error, req, res, next) => {
   console.error('서버 오류:', error);
   res.status(500).json({
     success: false,
     error: '내부 서버 오류가 발생했습니다.',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    timestamp: new Date().toISOString()
   });
 });
 
