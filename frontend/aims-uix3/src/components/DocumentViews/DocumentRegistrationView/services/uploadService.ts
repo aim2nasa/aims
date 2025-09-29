@@ -311,7 +311,7 @@ export const fileValidator = {
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: `파일 크기가 너무 큽니다. 최대 크기: ${this.formatFileSize(maxSize)}`
+        error: `${Math.round(maxSize / (1024 * 1024))}MB 초과`
       }
     }
 

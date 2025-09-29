@@ -144,7 +144,7 @@ export const uploadConfig = {
   // 업로드 제한
   limits: {
     maxConcurrentUploads: 3,        // 최대 동시 업로드
-    maxFileSize: 100 * 1024 * 1024, // 100MB
+    maxFileSize: 50 * 1024 * 1024, // 50MB (Nginx 제한에 맞춤)
     maxFileCount: 100,              // 최대 파일 개수
     allowedMimeTypes: [             // 허용 파일 형식
       'application/pdf',

@@ -176,6 +176,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     })
 
+    // 크기 초과 파일 개수 확인 및 팝업 표시
+    const oversizedFiles = newUploadFiles.filter(f =>
+      f.status === 'error' && f.error?.includes('MB 초과')
+    )
+
+    if (oversizedFiles.length > 0) {
+      const validFiles = newUploadFiles.filter(f => f.status === 'pending')
+      const oversizedCount = oversizedFiles.length
+
+      // 애플 스타일 확인 팝업
+      const confirmed = window.confirm(
+        `총 ${newUploadFiles.length}개 파일들중 50MB를 초과하는 ${oversizedCount}개 파일들은 업로드에서 제외됩니다.`
+      )
+
+      if (!confirmed) {
+        return // 사용자가 취소하면 아무것도 하지 않음
+      }
+    }
+
     // 상태 업데이트 - 새 파일을 맨 앞에 추가
     setUploadState(prev => ({
       ...prev,

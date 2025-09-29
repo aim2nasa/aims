@@ -98,15 +98,8 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
       validFiles.push(file)
     }
 
-    // 2단계: 일부 파일 거부 시 전체 거부 - 애플 스타일 피드백
-    if (rejectedFiles.length > 0) {
-      const message = `파일 검증 실패. 파일 크기를 확인해주세요.`
-      setToastMessage(message)
-      setToastVisible(true)
-      return []
-    }
-
-    return validFiles
+    // 모든 파일을 상위로 전달 (개별 검증은 상위에서 처리)
+    return files
   }, [maxFileSize, maxFileCount])
 
   /**
@@ -115,11 +108,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   const handleFiles = useCallback((files: File[]) => {
     if (disabled || uploading) return
 
-    const validFiles = validateFiles(files)
-    if (validFiles.length > 0) {
-      onFilesSelected(validFiles)
+    // 모든 파일을 상위로 전달 (검증은 DocumentRegistrationView에서)
+    if (files.length > 0) {
+      onFilesSelected(files)
     }
-  }, [disabled, uploading, validateFiles, onFilesSelected])
+  }, [disabled, uploading, onFilesSelected])
 
   /**
    * 드래그 이벤트 핸들러
