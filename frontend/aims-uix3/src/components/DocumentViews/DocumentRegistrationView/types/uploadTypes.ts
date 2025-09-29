@@ -24,7 +24,7 @@ export interface UploadContext {
 }
 
 // 파일 업로드 상태
-export type UploadStatus = 'pending' | 'uploading' | 'completed' | 'error' | 'cancelled'
+export type UploadStatus = 'pending' | 'uploading' | 'completed' | 'warning' | 'error' | 'cancelled'
 
 // 업로드할 파일 정보
 export interface UploadFile {
@@ -120,4 +120,31 @@ export interface DropEvent {
   files: File[]
   /** 폴더 구조가 포함되어 있는지 여부 */
   hasDirectories: boolean
+}
+
+// DocPrepMain 엔드포인트 응답 타입
+export interface DocPrepResponse {
+  // 성공 케이스 - OCR 큐잉 성공
+  ocr?: {
+    status: 'queued'
+    queued_at: string
+  }
+
+  // 성공 케이스 - 텍스트 파일 처리 완료
+  exitCode?: number
+  stderr?: string
+
+  // 경고 케이스 - 지원하지 않는 파일 형식
+  warn?: boolean
+  status?: number
+  userMessage?: string
+  mime?: string
+  filename?: string
+
+  // 에러 케이스 - 업로드/처리 실패
+  error?: {
+    statusCode: string
+    statusMessage: string
+    body?: string
+  }
 }

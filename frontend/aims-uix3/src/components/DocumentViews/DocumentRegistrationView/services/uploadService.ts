@@ -9,7 +9,8 @@
 import {
   UploadFile,
   UploadProgressEvent,
-  UploadStatus
+  UploadStatus,
+  DocPrepResponse
 } from '../types/uploadTypes'
 import { UserContextService, uploadConfig } from './userContextService'
 
@@ -142,11 +143,20 @@ export class UploadService {
       // XMLHttpRequest로 업로드 (진행률 추적을 위해)
       const result = await this.uploadWithProgress(formData, id, controller.signal)
 
-      // 성공 처리
+      // 응답 분석 및 상태 결정
       this.activeUploads.delete(id)
-      this.statusCallback?.(id, 'completed')
 
-      console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
+      // 경고 케이스: 지원하지 않는 파일 형식
+      if (result.warn) {
+        const errorMessage = result.userMessage || '지원하지 않는 파일 형식입니다'
+        this.statusCallback?.(id, 'warning', errorMessage)
+        console.log(`[UploadService] 파일 업로드 경고: ${file.name}`, result)
+      }
+      // 성공 케이스: OCR 큐잉, 텍스트 완료, 기본 성공
+      else {
+        this.statusCallback?.(id, 'completed')
+        console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
+      }
 
     } catch (error) {
       // 에러 처리
@@ -157,7 +167,8 @@ export class UploadService {
           console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
           this.statusCallback?.(id, 'cancelled')
         } else {
-          const errorMessage = this.getErrorMessage(error)
+          const response = (error as any)?.response as DocPrepResponse | undefined
+          const errorMessage = this.getErrorMessage(error, response)
           this.statusCallback?.(id, 'error', errorMessage)
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
         }
@@ -176,7 +187,7 @@ export class UploadService {
     formData: FormData,
     fileId: string,
     signal: AbortSignal
-  ): Promise<any> {
+  ): Promise<DocPrepResponse> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
 
@@ -196,15 +207,32 @@ export class UploadService {
 
       // 완료 이벤트
       xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = xhr.responseText ? JSON.parse(xhr.responseText) : {}
+        try {
+          const response: DocPrepResponse = xhr.responseText ? JSON.parse(xhr.responseText) : {}
+
+          // HTTP 2xx: 성공 응답 처리
+          if (xhr.status >= 200 && xhr.status < 300) {
             resolve(response)
-          } catch (error) {
-            resolve({ success: true })
           }
-        } else {
-          reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`))
+          // HTTP 415: 지원하지 않는 파일 형식 (경고로 처리)
+          else if (xhr.status === 415) {
+            resolve(response) // 415도 성공으로 처리하되 warn 플래그로 구분
+          }
+          // 기타 HTTP 에러
+          else {
+            const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`) as any
+            error.response = response // 응답 데이터를 에러에 첨부
+            reject(error)
+          }
+        } catch (parseError) {
+          // JSON 파싱 실패 시 기본 응답으로 처리
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({}) // 빈 성공 응답
+          } else {
+            const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`) as any
+            error.response = {} // 빈 응답 첨부
+            reject(error)
+          }
         }
       })
 
@@ -236,9 +264,19 @@ export class UploadService {
   }
 
   /**
-   * 에러 메시지 추출
+   * 에러 메시지 추출 (백엔드 userMessage 우선 처리)
    */
-  private getErrorMessage(error: Error): string {
+  private getErrorMessage(error: Error, response?: DocPrepResponse): string {
+    // 백엔드 응답의 userMessage 우선 사용
+    if (response?.userMessage) {
+      return response.userMessage
+    }
+
+    // 백엔드 error 객체의 메시지 사용
+    if (response?.error?.statusMessage) {
+      return response.error.statusMessage
+    }
+
     // 네트워크 에러
     if (error.message.includes('network') || error.message.includes('fetch')) {
       return '네트워크 연결을 확인해주세요'

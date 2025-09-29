@@ -329,7 +329,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const updatedFiles = prev.files.map(f => {
         if (f.id === fileId) {
           const updatedFile = { ...f, status, error }
-          if (status === 'completed') {
+          if (status === 'completed' || status === 'warning') {
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
           }
@@ -338,10 +338,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         return f
       })
 
-      const completedCount = updatedFiles.filter(f => f.status === 'completed').length
+      const completedCount = updatedFiles.filter(f => f.status === 'completed' || f.status === 'warning').length
       const uploadingCount = updatedFiles.filter(f => f.status === 'uploading').length
       const totalProgress = updatedFiles.length > 0
-        ? Math.round(updatedFiles.reduce((sum, f) => sum + (f.status === 'completed' ? 100 : f.progress), 0) / updatedFiles.length)
+        ? Math.round(updatedFiles.reduce((sum, f) => sum + (f.status === 'completed' || f.status === 'warning' ? 100 : f.progress), 0) / updatedFiles.length)
         : 0
 
       return {
@@ -408,8 +408,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   useEffect(() => {
     const allCompleted = uploadState.files.length > 0 &&
-      uploadState.files.every(f => f.status === 'completed' || f.status === 'error')
-    const hasSuccessfulUploads = uploadState.files.some(f => f.status === 'completed')
+      uploadState.files.every(f => f.status === 'completed' || f.status === 'warning' || f.status === 'error')
+    const hasSuccessfulUploads = uploadState.files.some(f => f.status === 'completed' || f.status === 'warning')
 
     // 모든 업로드 완료 후 5분 뒤 자동 정리 (사용자가 수동으로 정리하지 않은 경우)
     if (allCompleted && hasSuccessfulUploads && !uploadState.uploading) {
@@ -432,8 +432,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   useEffect(() => {
     const allCompleted = uploadState.files.length > 0 &&
-      uploadState.files.every(f => f.status === 'completed' || f.status === 'error')
-    const hasSuccessfulUploads = uploadState.files.some(f => f.status === 'completed')
+      uploadState.files.every(f => f.status === 'completed' || f.status === 'warning' || f.status === 'error')
+    const hasSuccessfulUploads = uploadState.files.some(f => f.status === 'completed' || f.status === 'warning')
 
     if (allCompleted && hasSuccessfulUploads && !uploadState.uploading) {
       setShowSuccessMessage(true)
@@ -466,7 +466,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   const stats = useMemo(() => {
     const total = uploadState.files.length
-    const completed = uploadState.files.filter(f => f.status === 'completed').length
+    const completed = uploadState.files.filter(f => f.status === 'completed' || f.status === 'warning').length
     const errors = uploadState.files.filter(f => f.status === 'error').length
     const uploading = uploadState.files.filter(f => f.status === 'uploading').length
 
