@@ -42,6 +42,23 @@ html[data-theme="dark"] .file-list__title {
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* 🍎 COMPACT TITLE: One-line layout optimization */
+.file-list__title-compact {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100vw - 400px); /* 오른쪽 여백 확보 */
+}
+
+html[data-theme="dark"] .file-list__title-compact {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* 🍎 STATS: Minimal badges */
 .file-list__stats {
   display: flex;
@@ -318,17 +335,26 @@ html[data-theme="dark"] .file-item__completed-info {
 .file-list__items {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
-/* 🍎 FILE ITEM: iOS table cell style */
+/* 🍎 APPLE COMPACT GRID: One-line layout like iOS/macOS table view */
 .file-item {
-  display: flex;
+  display: grid;
+  grid-template-columns:
+    24px           /* 아이콘 고정 */
+    1fr            /* 파일명 (가변) */
+    80px           /* 크기 고정 */
+    70px           /* 시간 고정 */
+    32px;          /* 상태 고정 */
+  gap: 12px;
   align-items: center;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 6px;
+  height: 32px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
   cursor: default;
+  transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
 html[data-theme="dark"] .file-item {
@@ -353,37 +379,11 @@ html[data-theme="dark"] .file-item:hover {
   border-left: 2px solid rgba(0, 122, 255, 0.2);
 }
 
+/* 🍎 COMPLETED STATE: Invisible by default - Apple Philosophy */
 .file-item--completed {
-  background: linear-gradient(135deg, var(--color-upload-completed-bg-light) 0%, var(--color-upload-completed-overlay-light) 100%);
-  border-left: 3px solid var(--color-upload-completed-border-light);
+  background: transparent;
+  border: none;
   position: relative;
-}
-
-html[data-theme="dark"] .file-item--completed {
-  background: linear-gradient(135deg, var(--color-upload-completed-bg-dark) 0%, var(--color-upload-completed-overlay-dark) 100%);
-  border-left: 3px solid var(--color-upload-completed-border-dark);
-}
-
-.file-item--completed::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-upload-completed-overlay-light);
-  border-radius: 6px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .file-item--completed::after {
-  background: var(--color-upload-completed-overlay-dark);
-}
-
-.file-item--completed:hover::after {
-  opacity: 1;
 }
 
 .file-item--error {
@@ -849,5 +849,488 @@ html[data-theme="dark"] .file-item__done:hover {
 
   html[data-theme="dark"] .file-item__icon {
     color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* === 🍎 APPLE COMPACT LAYOUT STYLES === */
+
+/* 🍎 ICON COMPACT: Smaller size for dense layout */
+.file-item__icon-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+/* === 🍎 FILE TYPE ICON COLORS - COMPACT VERSION === */
+/* Progressive Disclosure: Subtle base colors → Vibrant hover states */
+
+/* PDF Files - Red theme */
+.file-item__icon-compact.file-icon--pdf {
+  color: var(--color-file-pdf-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--pdf {
+  color: var(--color-file-pdf-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--pdf {
+  color: var(--color-file-pdf-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--pdf {
+  color: var(--color-file-pdf-hover-dark);
+}
+
+/* Image Files - Blue theme */
+.file-item__icon-compact.file-icon--image {
+  color: var(--color-file-image-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--image {
+  color: var(--color-file-image-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--image {
+  color: var(--color-file-image-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--image {
+  color: var(--color-file-image-hover-dark);
+}
+
+/* Video Files - Purple theme */
+.file-item__icon-compact.file-icon--video {
+  color: var(--color-file-video-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--video {
+  color: var(--color-file-video-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--video {
+  color: var(--color-file-video-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--video {
+  color: var(--color-file-video-hover-dark);
+}
+
+/* Audio Files - Pink theme */
+.file-item__icon-compact.file-icon--audio {
+  color: var(--color-file-audio-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--audio {
+  color: var(--color-file-audio-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--audio {
+  color: var(--color-file-audio-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--audio {
+  color: var(--color-file-audio-hover-dark);
+}
+
+/* Archive Files - Orange theme */
+.file-item__icon-compact.file-icon--archive {
+  color: var(--color-file-archive-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--archive {
+  color: var(--color-file-archive-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--archive {
+  color: var(--color-file-archive-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--archive {
+  color: var(--color-file-archive-hover-dark);
+}
+
+/* Word Documents - Blue theme */
+.file-item__icon-compact.file-icon--word {
+  color: var(--color-file-word-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--word {
+  color: var(--color-file-word-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--word {
+  color: var(--color-file-word-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--word {
+  color: var(--color-file-word-hover-dark);
+}
+
+/* Excel Documents - Green theme */
+.file-item__icon-compact.file-icon--excel {
+  color: var(--color-file-excel-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--excel {
+  color: var(--color-file-excel-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--excel {
+  color: var(--color-file-excel-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--excel {
+  color: var(--color-file-excel-hover-dark);
+}
+
+/* PowerPoint Documents - Orange theme */
+.file-item__icon-compact.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--powerpoint {
+  color: var(--color-file-powerpoint-hover-dark);
+}
+
+/* Code Files - Indigo theme */
+.file-item__icon-compact.file-icon--code {
+  color: var(--color-file-code-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--code {
+  color: var(--color-file-code-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--code {
+  color: var(--color-file-code-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--code {
+  color: var(--color-file-code-hover-dark);
+}
+
+/* Text Files - Gray theme */
+.file-item__icon-compact.file-icon--text {
+  color: var(--color-file-text-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--text {
+  color: var(--color-file-text-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--text {
+  color: var(--color-file-text-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--text {
+  color: var(--color-file-text-hover-dark);
+}
+
+/* Executable Files - Dark theme */
+.file-item__icon-compact.file-icon--executable {
+  color: var(--color-file-executable-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--executable {
+  color: var(--color-file-executable-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--executable {
+  color: var(--color-file-executable-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--executable {
+  color: var(--color-file-executable-hover-dark);
+}
+
+/* Default Files - Neutral theme */
+.file-item__icon-compact.file-icon--default {
+  color: var(--color-file-default-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item:hover .file-item__icon-compact.file-icon--default {
+  color: var(--color-file-default-hover-light);
+}
+
+html[data-theme="dark"] .file-item__icon-compact.file-icon--default {
+  color: var(--color-file-default-dark);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__icon-compact.file-icon--default {
+  color: var(--color-file-default-hover-dark);
+}
+
+/* 🍎 APPLE NATIVE COMPLETION STYLE: Already defined above */
+
+/* 🍎 COMPLETION BADGE: SF Symbol style minimal badge */
+.file-item--completed .file-item__status-compact::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2334C759' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.8;
+}
+
+html[data-theme="dark"] .file-item--completed .file-item__status-compact::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2330D158' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+  opacity: 0.7;
+}
+
+/* 🍎 PROGRESSIVE DISCLOSURE: Invisible hover - just like macOS Finder */
+.file-item--completed:hover {
+  /* No background change - only the checkmark gets more visible */
+  background: transparent;
+}
+
+.file-item--completed:hover .file-item__status-compact::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 🍎 FILE TYPE COLORS: Always preserved - never overridden */
+.file-item--completed .file-item__icon-compact {
+  /* 파일 타입별 색상 100% 유지 - 절대 덮어쓰지 않음 */
+  position: relative;
+}
+
+/* 🍎 NAME COMPACT: Primary information column */
+.file-item__name-compact {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.file-item__name-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .file-item__name-text {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.file-item__error-inline {
+  font-size: 11px;
+  color: rgba(255, 69, 58, 0.8);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .file-item__error-inline {
+  color: rgba(255, 105, 97, 0.9);
+}
+
+.file-item__path-compact {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .file-item__path-compact {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 🍎 SIZE COMPACT: Fixed width size column */
+.file-item__size-compact {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: right;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-item__size-compact {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 🍎 TIME COMPACT: Fixed width time column */
+.file-item__time-compact {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: right;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .file-item__time-compact {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 🍎 STATUS COMPACT: Minimal action column */
+.file-item__status-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative; /* For completion badge positioning */
+}
+
+.file-item__progress-compact {
+  width: 20px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .file-item__progress-compact {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.file-item__progress-fill-compact {
+  height: 100%;
+  background: rgba(0, 122, 255, 0.8);
+  border-radius: 1px;
+  transition: width var(--duration-fast) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .file-item__progress-fill-compact {
+  background: rgba(100, 170, 255, 0.9);
+}
+
+.file-item__done-compact {
+  color: rgba(52, 199, 89, 0.8);
+}
+
+html[data-theme="dark"] .file-item__done-compact {
+  color: rgba(52, 199, 89, 0.9);
+}
+
+.file-item__retry-compact {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  color: rgba(255, 69, 58, 0.7);
+}
+
+.file-item__retry-compact:hover {
+  background: rgba(255, 69, 58, 0.05);
+  color: rgba(255, 69, 58, 0.9);
+}
+
+html[data-theme="dark"] .file-item__retry-compact {
+  color: rgba(255, 105, 97, 0.8);
+}
+
+html[data-theme="dark"] .file-item__retry-compact:hover {
+  background: rgba(255, 105, 97, 0.1);
+  color: rgba(255, 105, 97, 1);
+}
+
+.file-item__cancelled-compact {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .file-item__cancelled-compact {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 🍎 HOVER EFFECTS: Subtle Progressive Disclosure */
+.file-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+  transform: translateY(-0.5px);
+}
+
+html[data-theme="dark"] .file-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.file-item:hover .file-item__name-text {
+  color: rgba(0, 0, 0, 0.95);
+}
+
+html[data-theme="dark"] .file-item:hover .file-item__name-text {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* 🍎 RESPONSIVE: Tablet and mobile optimization */
+@media (max-width: 768px) {
+  .file-item {
+    grid-template-columns:
+      20px           /* 아이콘 줄임 */
+      1fr            /* 파일명 */
+      60px           /* 크기 줄임 */
+      28px;          /* 상태만 */
+    gap: 8px;
+    height: 28px;
+    padding: 4px 8px;
+  }
+
+  .file-item__time-compact {
+    display: none; /* 모바일에서 시간 숨김 */
+  }
+
+  .file-item__name-text {
+    font-size: 12px;
+  }
+
+  .file-item__size-compact {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .file-item {
+    grid-template-columns:
+      18px           /* 아이콘 더 줄임 */
+      1fr            /* 파일명 */
+      24px;          /* 상태만 */
+    gap: 6px;
+    height: 26px;
+    padding: 3px 6px;
+  }
+
+  .file-item__size-compact {
+    display: none; /* 모바일에서 크기 숨김 */
+  }
+
+  .file-item__name-text {
+    font-size: 11px;
   }
 }

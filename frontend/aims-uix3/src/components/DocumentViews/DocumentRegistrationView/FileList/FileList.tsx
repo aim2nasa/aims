@@ -198,14 +198,15 @@ export const FileList: React.FC<FileListProps> = ({
       {/* 🍎 MINIMAL HEADER: Only when needed */}
       <div className="file-list__header">
         <div className="file-list__header-left">
-          <div className="file-list__title">
+          <div className="file-list__title-compact">
             {stats.total} {stats.total === 1 ? 'file' : 'files'}
             {stats.total > 1 && (stats.completed > 0 || stats.uploading > 0 || stats.error > 0) && (
-              <span className="file-list__progress-summary">
-                {' '}({stats.completed} 완료
-                {stats.uploading > 0 && `, ${stats.uploading} 업로드 중`}
-                {stats.error > 0 && `, ${stats.error} 오류`})
-              </span>
+              <>
+                {' • '}{stats.completed} 완료
+                {stats.uploading > 0 && ` • ${stats.uploading} 업로드 중`}
+                {stats.error > 0 && ` • ${stats.error} 오류`}
+                {stats.cancelled > 0 && ` • ${stats.cancelled} 취소`}
+              </>
             )}
           </div>
 
@@ -337,71 +338,62 @@ export const FileList: React.FC<FileListProps> = ({
             key={uploadFile.id}
             className={`file-item file-item--${uploadFile.status}`}
           >
-            {/* 🍎 MINIMAL ICON */}
-            <div className={`file-item__icon ${getFileTypeClass(uploadFile.file)}`}>
+            {/* 🍎 APPLE COMPACT GRID: One-line layout like iOS/macOS table view */}
+
+            {/* 🍎 ICON: File type indicator */}
+            <div className={`file-item__icon-compact ${getFileTypeClass(uploadFile.file)}`}>
               <SFSymbol
                 name={getFileIcon(uploadFile.file)}
-                size={SFSymbolSize.FOOTNOTE}
+                size={SFSymbolSize.CAPTION_1}
                 weight={SFSymbolWeight.REGULAR}
                 decorative={true}
               />
             </div>
 
-            {/* 🍎 CLEAN INFO */}
-            <div className="file-item__info">
-              <div className="file-item__name">
+            {/* 🍎 NAME: Primary information (flexible width) */}
+            <div className="file-item__name-compact">
+              <span className="file-item__name-text" title={uploadFile.file.name}>
                 {uploadFile.file.name}
-              </div>
-
-              <div className="file-item__details">
-                <span className="file-item__size">
-                  {uploadHelpers.formatFileSize(uploadFile.fileSize || uploadFile.file.size || 0)}
-                </span>
-
-                {uploadFile.relativePath && (
-                  <span className="file-item__path">
-                    {uploadFile.relativePath}
-                  </span>
-                )}
-
-                {uploadFile.completedAt && (
-                  <span className="file-item__time">
-                    {uploadFile.completedAt.toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
-
-              {/* 🍎 STATUS MESSAGES: Minimal */}
+              </span>
+              {/* 🍎 ERROR MESSAGE: Inline minimal display */}
               {uploadFile.status === 'error' && uploadFile.error && (
-                <div className="file-item__error">
-                  {uploadFile.error}
-                </div>
+                <span className="file-item__error-inline" title={uploadFile.error}>
+                  {uploadFile.error.length > 20 ? `${uploadFile.error.substring(0, 20)}...` : uploadFile.error}
+                </span>
               )}
-
-              {uploadFile.status === 'cancelled' && (
-                <div className="file-item__cancelled">
-                  Cancelled
-                </div>
-              )}
-
-              {uploadFile.status === 'completed' && uploadFile.completedAt && (
-                <div className="file-item__completed-info">
-                  <SFSymbol
-                    name="checkmark.circle.fill"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                  완료됨
-                </div>
+              {/* 🍎 PATH: Subtle secondary info */}
+              {uploadFile.relativePath && (
+                <span className="file-item__path-compact" title={uploadFile.relativePath}>
+                  {uploadFile.relativePath}
+                </span>
               )}
             </div>
 
-            {/* 🍎 NATIVE STATUS: macOS Finder minimalism */}
-            <div className="file-item__status">
+            {/* 🍎 SIZE: Fixed width column */}
+            <div className="file-item__size-compact">
+              {uploadHelpers.formatFileSize(uploadFile.fileSize || uploadFile.file.size || 0)}
+            </div>
+
+            {/* 🍎 TIME: Fixed width column */}
+            <div className="file-item__time-compact">
+              {uploadFile.completedAt
+                ? uploadFile.completedAt.toLocaleTimeString('en-US', {
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })
+                : uploadFile.status === 'uploading'
+                  ? `${uploadFile.progress || 0}%`
+                  : ''
+              }
+            </div>
+
+            {/* 🍎 STATUS: Minimal action column */}
+            <div className="file-item__status-compact">
               {uploadFile.status === 'uploading' && (
-                <div className="file-item__progress-minimal">
+                <div className="file-item__progress-compact">
                   <div
-                    className="file-item__progress-fill"
+                    className="file-item__progress-fill-compact"
                     style={{ width: `${uploadFile.progress}%` }}
                   />
                 </div>
@@ -410,18 +402,18 @@ export const FileList: React.FC<FileListProps> = ({
               {uploadFile.status === 'completed' && (
                 <SFSymbol
                   name="checkmark.circle.fill"
-                  size={SFSymbolSize.FOOTNOTE}
+                  size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
-                  className="file-item__done"
+                  className="file-item__done-compact"
                 />
               )}
 
               {uploadFile.status === 'error' && onRetryFile && (
                 <button
                   type="button"
-                  className="file-item__retry-minimal"
+                  className="file-item__retry-compact"
                   onClick={() => onRetryFile(uploadFile.id)}
-                  aria-label="Retry"
+                  aria-label="Retry upload"
                 >
                   <SFSymbol
                     name="arrow.clockwise"
@@ -429,6 +421,15 @@ export const FileList: React.FC<FileListProps> = ({
                     weight={SFSymbolWeight.LIGHT}
                   />
                 </button>
+              )}
+
+              {uploadFile.status === 'cancelled' && (
+                <SFSymbol
+                  name="xmark.circle"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.LIGHT}
+                  className="file-item__cancelled-compact"
+                />
               )}
             </div>
           </div>
