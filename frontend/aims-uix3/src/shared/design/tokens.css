@@ -534,6 +534,37 @@
   --color-file-default-dark: rgba(156, 163, 175, 0.4);      /* Very subtle gray base dark */
   --color-file-default-hover-dark: rgba(156, 163, 175, 0.8); /* Moderate gray hover dark */
 
+  /* === 🍎 UPLOAD COMPLETION COLORS === */
+  /* Apple-style upload completion state with Progressive Disclosure principle */
+
+  /* Upload Completion Background - subtle green overlay */
+  --color-upload-completed-bg-light: rgba(52, 199, 89, 0.04);        /* Very subtle green background */
+  --color-upload-completed-bg-dark: rgba(52, 199, 89, 0.08);         /* Slightly more visible in dark */
+
+  /* Upload Completion Border - left accent stripe */
+  --color-upload-completed-border-light: rgba(52, 199, 89, 0.6);     /* Visible green border */
+  --color-upload-completed-border-dark: rgba(52, 199, 89, 0.7);      /* Slightly stronger in dark */
+
+  /* Upload Completion Icon - checkmark colors */
+  --color-upload-completed-icon-light: rgba(52, 199, 89, 0.7);       /* Base checkmark color */
+  --color-upload-completed-icon-hover-light: rgba(52, 199, 89, 0.9); /* Hover enhancement */
+  --color-upload-completed-icon-dark: rgba(52, 199, 89, 0.8);        /* Base checkmark dark */
+  --color-upload-completed-icon-hover-dark: rgba(52, 199, 89, 1);    /* Full visibility on hover */
+
+  /* Upload Completion Text - status and time display */
+  --color-upload-completed-text-light: rgba(52, 199, 89, 0.8);       /* Readable green text */
+  --color-upload-completed-text-dark: rgba(52, 199, 89, 0.9);        /* Higher contrast in dark */
+
+  /* Upload Completion Overlay - subtle shimmer effect */
+  --color-upload-completed-overlay-light: rgba(52, 199, 89, 0.02);   /* Almost invisible overlay */
+  --color-upload-completed-overlay-dark: rgba(52, 199, 89, 0.04);    /* Slightly visible overlay */
+
+  /* Overall Progress Bar - for multi-file uploads */
+  --color-upload-progress-bg-light: rgba(0, 0, 0, 0.04);             /* Light progress track */
+  --color-upload-progress-bg-dark: rgba(255, 255, 255, 0.04);        /* Dark progress track */
+  --color-upload-progress-fill-light: rgba(52, 199, 89, 0.6);        /* Green progress fill */
+  --color-upload-progress-fill-dark: rgba(52, 199, 89, 0.7);         /* Stronger green in dark */
+
   /* === SKELETON SHIMMER COLORS === */
 
   /* Light Theme Shimmer - iOS 표준 불투명도 */

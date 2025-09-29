@@ -200,6 +200,13 @@ export const FileList: React.FC<FileListProps> = ({
         <div className="file-list__header-left">
           <div className="file-list__title">
             {stats.total} {stats.total === 1 ? 'file' : 'files'}
+            {stats.total > 1 && (stats.completed > 0 || stats.uploading > 0 || stats.error > 0) && (
+              <span className="file-list__progress-summary">
+                {' '}({stats.completed} 완료
+                {stats.uploading > 0 && `, ${stats.uploading} 업로드 중`}
+                {stats.error > 0 && `, ${stats.error} 오류`})
+              </span>
+            )}
           </div>
 
           {/* 🍎 SUBTLE STATS: Ultra-minimal badges */}
@@ -311,6 +318,16 @@ export const FileList: React.FC<FileListProps> = ({
             <span className="file-list__clear-text">Clear</span>
           </button>
         )}
+
+        {/* 🍎 OVERALL PROGRESS: Multi-file upload progress */}
+        {stats.total > 1 && (stats.uploading > 0 || (stats.completed > 0 && stats.completed < stats.total)) && (
+          <div className="file-list__overall-progress">
+            <div
+              className="file-list__overall-progress-fill"
+              style={{ width: `${(stats.completed / stats.total) * 100}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* 🍎 NATIVE TABLE: iOS/macOS style */}
@@ -366,6 +383,17 @@ export const FileList: React.FC<FileListProps> = ({
                   Cancelled
                 </div>
               )}
+
+              {uploadFile.status === 'completed' && uploadFile.completedAt && (
+                <div className="file-item__completed-info">
+                  <SFSymbol
+                    name="checkmark.circle.fill"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                  완료됨
+                </div>
+              )}
             </div>
 
             {/* 🍎 NATIVE STATUS: macOS Finder minimalism */}
@@ -381,9 +409,9 @@ export const FileList: React.FC<FileListProps> = ({
 
               {uploadFile.status === 'completed' && (
                 <SFSymbol
-                  name="checkmark"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.LIGHT}
+                  name="checkmark.circle.fill"
+                  size={SFSymbolSize.FOOTNOTE}
+                  weight={SFSymbolWeight.MEDIUM}
                   className="file-item__done"
                 />
               )}

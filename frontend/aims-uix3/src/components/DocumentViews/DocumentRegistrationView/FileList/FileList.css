@@ -255,6 +255,65 @@ html[data-theme="dark"] .file-list__show-all:hover {
   margin: 0;
 }
 
+/* 🍎 PROGRESS SUMMARY: Enhanced file status display */
+.file-list__progress-summary {
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+html[data-theme="dark"] .file-list__progress-summary {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 🍎 OVERALL PROGRESS: Multi-file upload progress bar */
+.file-list__overall-progress {
+  width: 100%;
+  height: 2px;
+  background: var(--color-upload-progress-bg-light);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 8px;
+  position: relative;
+}
+
+html[data-theme="dark"] .file-list__overall-progress {
+  background: var(--color-upload-progress-bg-dark);
+}
+
+.file-list__overall-progress-fill {
+  height: 100%;
+  background: var(--color-upload-progress-fill-light);
+  transition: width var(--duration-ios-standard) var(--easing-ease-out);
+  border-radius: 1px;
+}
+
+html[data-theme="dark"] .file-list__overall-progress-fill {
+  background: var(--color-upload-progress-fill-dark);
+}
+
+/* 🍎 COMPLETED INFO: Apple-style completion status */
+.file-item__completed-info {
+  font-size: 10px;
+  color: var(--color-upload-completed-text-light);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  opacity: 0.8;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .file-item__completed-info {
+  color: var(--color-upload-completed-text-dark);
+}
+
+.file-item--completed:hover .file-item__completed-info {
+  opacity: 1;
+}
+
 /* 🍎 ITEMS: Native table rows */
 .file-list__items {
   display: flex;
@@ -269,8 +328,6 @@ html[data-theme="dark"] .file-list__show-all:hover {
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.5);
   border-radius: 6px;
-
-  transition: all 0.15s ease;
   cursor: default;
 }
 
@@ -297,7 +354,36 @@ html[data-theme="dark"] .file-item:hover {
 }
 
 .file-item--completed {
-  background: rgba(52, 199, 89, 0.02);
+  background: linear-gradient(135deg, var(--color-upload-completed-bg-light) 0%, var(--color-upload-completed-overlay-light) 100%);
+  border-left: 3px solid var(--color-upload-completed-border-light);
+  position: relative;
+}
+
+html[data-theme="dark"] .file-item--completed {
+  background: linear-gradient(135deg, var(--color-upload-completed-bg-dark) 0%, var(--color-upload-completed-overlay-dark) 100%);
+  border-left: 3px solid var(--color-upload-completed-border-dark);
+}
+
+.file-item--completed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-upload-completed-overlay-light);
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .file-item--completed::after {
+  background: var(--color-upload-completed-overlay-dark);
+}
+
+.file-item--completed:hover::after {
+  opacity: 1;
 }
 
 .file-item--error {
@@ -624,9 +710,22 @@ html[data-theme="dark"] .file-item__progress-minimal {
   transition: width 0.3s ease;
 }
 
-/* 🍎 COMPLETION: Barely visible */
+/* 🍎 COMPLETION: Enhanced visibility with Progressive Disclosure */
 .file-item__done {
-  color: rgba(52, 199, 89, 0.5);
+  color: var(--color-upload-completed-icon-light);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-item__done:hover {
+  color: var(--color-upload-completed-icon-hover-light);
+}
+
+html[data-theme="dark"] .file-item__done {
+  color: var(--color-upload-completed-icon-dark);
+}
+
+html[data-theme="dark"] .file-item__done:hover {
+  color: var(--color-upload-completed-icon-hover-dark);
 }
 
 /* 🍎 RETRY: Invisible until needed */
@@ -673,12 +772,64 @@ html[data-theme="dark"] .file-item__progress-minimal {
   }
 }
 
+/* 🍎 APPLE ANIMATIONS: Subtle completion feedback */
+@keyframes completionPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.3);
+  }
+  50% {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+  }
+}
+
+@keyframes progressPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Apply completion animation when file becomes completed */
+.file-item--completed {
+  animation: completionPulse 0.6s ease-out;
+}
+
+/* Subtle animation for overall progress bar */
+.file-list__overall-progress-fill {
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+/* Enhanced transition for file items */
+.file-item {
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.file-item:hover {
+  transform: translateY(-0.5px);
+}
+
 /* 🍎 ACCESSIBILITY: Maintain minimalism */
 @media (prefers-reduced-motion: reduce) {
   .file-item,
   .file-item__progress-fill,
-  .file-item__action {
+  .file-item__action,
+  .file-item--completed,
+  .file-list__overall-progress-fill {
     transition: none;
+    animation: none;
+    transform: none;
+  }
+
+  .file-item:hover {
+    transform: none;
   }
 }
 
