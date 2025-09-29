@@ -280,9 +280,6 @@ export function showOversizedFilesModal(
         <div style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
           <div style="font-size: var(--font-size-2xl, 28px); opacity: 0.95; transform: scale(0.9);">⚠️</div>
         </div>
-        <h2 style="font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.25; color: var(--color-text-primary, #000000); margin: 0; letter-spacing: -0.35px; font-family: var(--font-family-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);">
-          사이즈 제한 초과 파일들
-        </h2>
       </div>
       <div style="padding: 0 20px 16px 20px; text-align: center;">
         <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary, #000000); margin: 0 0 16px 0; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
