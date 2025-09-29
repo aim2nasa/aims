@@ -12,6 +12,8 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import FileList from './FileList/FileList'
 import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
+import AppleConfirmModal from './AppleConfirmModal/AppleConfirmModal'
+import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
@@ -107,6 +109,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 자동 성공 메시지 숨김 타이머
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
+  // 🍎 애플 스타일 확인 모달 Controller Hook
+  const confirmController = useAppleConfirmController()
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -145,9 +150,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
+   * 🍎 애플 스타일 확인 모달 헬퍼 함수 (Controller Hook 사용)
+   */
+  const showAppleConfirm = useCallback((message: string): Promise<boolean> => {
+    return confirmController.actions.openModal({ message })
+  }, [confirmController.actions])
+
+  /**
    * 파일 선택 핸들러
    */
-  const handleFilesSelected = useCallback((files: File[]) => {
+  const handleFilesSelected = useCallback(async (files: File[]) => {
     const newUploadFiles: UploadFile[] = []
 
     files.forEach(file => {
@@ -187,8 +199,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (oversizedFiles.length > 0) {
       const oversizedCount = oversizedFiles.length
 
-      // 애플 스타일 확인 팝업
-      const confirmed = window.confirm(
+      // 🍎 애플 스타일 확인 모달
+      const confirmed = await showAppleConfirm(
         `총 ${newUploadFiles.length}개 파일들중 50MB를 초과하는 ${oversizedCount}개 파일들은 업로드에서 제외됩니다.`
       )
 
@@ -533,6 +545,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             </div>
           </div>
         )}
+
+        {/* 🍎 애플 스타일 확인 모달 */}
+        <AppleConfirmModal
+          state={confirmController.state}
+          actions={confirmController.actions}
+        />
       </div>
     </CenterPaneView>
   )

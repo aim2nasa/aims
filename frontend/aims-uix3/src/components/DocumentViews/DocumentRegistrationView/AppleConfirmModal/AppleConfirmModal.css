@@ -1,0 +1,266 @@
+/**
+ * AppleConfirmModal Styles
+ * @since 1.0.0
+ *
+ * 🍎 iOS/macOS 네이티브 alert 완벽 재현
+ * 애플 디자인 철학: Clarity, Deference, Depth
+ */
+
+/* 🍎 OVERLAY: 블러 배경 효과 */
+.apple-confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(25px) saturate(1.8);
+  -webkit-backdrop-filter: blur(25px) saturate(1.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  padding: 20px;
+}
+
+.apple-confirm-modal-overlay--visible {
+  opacity: 1;
+}
+
+/* 🍎 MODAL CONTAINER: iOS Alert 카드 */
+.apple-confirm-modal {
+  background-color: rgba(255, 255, 255, 0.78); /* iOS 라이트 모드 최신 스타일 */
+  border-radius: 13px; /* iOS 15+ 표준 둥근 모서리 */
+  backdrop-filter: blur(60px) saturate(1.5);
+  -webkit-backdrop-filter: blur(60px) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 0.25px rgba(255, 255, 255, 0.8),
+    0 0.5px 1px rgba(0, 0, 0, 0.01),
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 3px 12px rgba(0, 0, 0, 0.04),
+    0 12px 40px rgba(0, 0, 0, 0.06),
+    0 25px 80px rgba(0, 0, 0, 0.08);
+  max-width: 300px; /* iOS alert 더 compact한 너비 */
+  min-width: 270px;
+  width: 100%;
+  max-height: 70vh;
+  overflow: hidden;
+  transform: scale(0.85) translateY(10px);
+  opacity: 0;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.apple-confirm-modal--visible {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+/* 🍎 MODAL HEADER: 아이콘과 제목 */
+.apple-confirm-modal__header {
+  padding: 18px 20px 10px 20px;
+  text-align: center;
+}
+
+.apple-confirm-modal__icon {
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.apple-confirm-modal__warning-icon {
+  font-size: var(--font-size-2xl); /* 이모지 아이콘 크기 (28px) */
+  opacity: 0.95;
+  transform: scale(0.9); /* 아이콘 크기를 미세하게 줄여서 더 세련되게 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apple-confirm-modal__title {
+  font-size: var(--font-size-callout); /* iOS Alert 제목 최적 크기 (16px) */
+  font-weight: 590; /* iOS Semibold 최적화 */
+  line-height: 1.25; /* iOS 라인 높이 최적화 */
+  color: #000000; /* iOS Label 색상 */
+  margin: 0;
+  letter-spacing: -0.35px; /* iOS kerning 최적화 */
+  font-family: var(--font-family-display);
+}
+
+/* 🍎 MODAL BODY: 메시지 영역 */
+.apple-confirm-modal__body {
+  padding: 0 20px 18px 20px;
+  text-align: center;
+}
+
+.apple-confirm-modal__message {
+  font-size: var(--font-size-caption-1); /* iOS Alert 메시지 최적 크기 (12px) */
+  font-weight: 400; /* iOS Regular */
+  line-height: 1.33; /* iOS 라인 높이 최적화 */
+  color: #000000; /* iOS Secondary Label 색상 */
+  margin: 0;
+  white-space: pre-wrap; /* 줄바꿈 지원 */
+  font-family: var(--font-family-text);
+  letter-spacing: -0.06px; /* iOS kerning 최적화 */
+  opacity: 0.85; /* 메시지 텍스트를 약간 서브틀하게 */
+}
+
+/* 🍎 MODAL ACTIONS: iOS 버튼 영역 */
+.apple-confirm-modal__actions {
+  display: flex;
+  border-top: 0.33px solid rgba(60, 60, 67, 0.18); /* iOS Separator 더 서브틀하게 */
+  min-height: 43px; /* iOS 최적화된 터치 영역 */
+}
+
+.apple-confirm-modal__button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 11px 16px;
+  font-size: var(--font-size-callout); /* iOS 버튼 텍스트 최적 크기 (16px) */
+  font-weight: 400; /* iOS Regular */
+  line-height: 1.24; /* iOS 표준 라인 높이 최적화 */
+  cursor: pointer;
+  transition:
+    background-color 0.12s cubic-bezier(0.4, 0, 0.6, 1),
+    color 0.12s cubic-bezier(0.4, 0, 0.6, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 43px;
+  position: relative;
+  font-family: var(--font-family-text);
+  letter-spacing: -0.32px; /* iOS 표준 kerning 최적화 */
+}
+
+/* 🍎 BUTTON DIVIDER: 버튼 사이 구분선 */
+.apple-confirm-modal__button:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0.33px;
+  background-color: rgba(60, 60, 67, 0.18); /* iOS Separator 더 서브틀하게 */
+}
+
+/* 🍎 CANCEL BUTTON: 취소 버튼 스타일 */
+.apple-confirm-modal__button--cancel {
+  color: #007AFF; /* iOS systemBlue 정확한 색상 */
+  font-weight: 400; /* iOS Regular */
+}
+
+.apple-confirm-modal__button--cancel:hover {
+  background-color: rgba(0, 122, 255, 0.04);
+}
+
+.apple-confirm-modal__button--cancel:active {
+  background-color: rgba(0, 122, 255, 0.1);
+}
+
+/* 🍎 CONFIRM BUTTON: 확인 버튼 기본 스타일 */
+.apple-confirm-modal__button--confirm {
+  font-weight: 590; /* iOS Semibold 최적화 - 주요 액션 강조 */
+}
+
+/* 🍎 PRIMARY CONFIRM: 일반 확인 (파란색) */
+.apple-confirm-modal__button--primary {
+  color: #007AFF; /* iOS systemBlue 정확한 색상 */
+}
+
+.apple-confirm-modal__button--primary:hover {
+  background-color: rgba(0, 122, 255, 0.04);
+}
+
+.apple-confirm-modal__button--primary:active {
+  background-color: rgba(0, 122, 255, 0.1);
+}
+
+/* 🍎 DESTRUCTIVE CONFIRM: 위험한 액션 (빨간색) */
+.apple-confirm-modal__button--destructive {
+  color: #FF3B30; /* iOS systemRed 정확한 색상 */
+}
+
+.apple-confirm-modal__button--destructive:hover {
+  background-color: rgba(255, 59, 48, 0.04);
+}
+
+.apple-confirm-modal__button--destructive:active {
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+/* 🍎 FOCUS STYLES: 접근성 포커스 */
+.apple-confirm-modal__button:focus {
+  outline: none;
+  background-color: rgba(0, 122, 255, 0.1);
+  box-shadow: inset 0 0 0 2px #007AFF;
+}
+
+/* 🍎 REDUCED MOTION: 모션 감소 사용자 배려 */
+@media (prefers-reduced-motion: reduce) {
+  .apple-confirm-modal-overlay,
+  .apple-confirm-modal,
+  .apple-confirm-modal__button {
+    transition: none;
+  }
+}
+
+/* 🍎 MOBILE RESPONSIVE: 작은 화면 대응 */
+@media (max-width: 480px) {
+  .apple-confirm-modal-overlay {
+    padding: 16px;
+  }
+
+  .apple-confirm-modal {
+    max-width: none;
+    min-width: 260px;
+  }
+
+  .apple-confirm-modal__header {
+    padding: 20px 20px 12px 20px;
+  }
+
+  .apple-confirm-modal__body {
+    padding: 0 20px 20px 20px;
+  }
+
+  .apple-confirm-modal__message {
+    font-size: var(--font-size-body); /* 모바일에서 약간 더 크게 */
+  }
+}
+
+/* 🍎 DARK MODE: iOS 다크 모드 완벽 지원 */
+html[data-theme="dark"] .apple-confirm-modal {
+  background-color: rgba(44, 44, 46, 0.85); /* iOS 다크 모드 최신 스타일 */
+  box-shadow:
+    inset 0 0 0 0.25px rgba(255, 255, 255, 0.12),
+    0 0.5px 1px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 3px 12px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 25px 80px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .apple-confirm-modal__title {
+  color: #FFFFFF; /* iOS Label 다크 모드 색상 */
+}
+
+html[data-theme="dark"] .apple-confirm-modal__message {
+  color: #FFFFFF; /* iOS Secondary Label 다크 모드 색상 */
+}
+
+html[data-theme="dark"] .apple-confirm-modal__actions {
+  border-top-color: rgba(84, 84, 88, 0.65); /* iOS Separator 다크 모드 */
+}
+
+html[data-theme="dark"] .apple-confirm-modal__button:not(:last-child)::after {
+  background-color: rgba(84, 84, 88, 0.65); /* iOS Separator 다크 모드 */
+}
+
+html[data-theme="dark"] .apple-confirm-modal__warning-icon {
+  /* 이모지는 다크 모드에서도 동일하게 표시 */
+}
