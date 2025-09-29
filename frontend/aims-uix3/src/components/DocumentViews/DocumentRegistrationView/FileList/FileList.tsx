@@ -167,7 +167,7 @@ export const FileList: React.FC<FileListProps> = ({
 
               <div className="file-item__details">
                 <span className="file-item__size">
-                  {uploadHelpers.formatFileSize(uploadFile.file.size)}
+                  {uploadHelpers.formatFileSize(uploadFile.fileSize || uploadFile.file.size || 0)}
                 </span>
 
                 {uploadFile.relativePath && (

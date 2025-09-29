@@ -32,6 +32,8 @@ export interface UploadFile {
   id: string
   /** 원본 File 객체 */
   file: File
+  /** 파일 크기 (bytes) - 브라우저 리사이징 시 보존용 */
+  fileSize: number
   /** 업로드 상태 */
   status: UploadStatus
   /** 업로드 진행률 (0-100) */

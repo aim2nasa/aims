@@ -99,7 +99,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
               {stats.currentFile.file.name}
             </span>
             <span className="progress-indicator__size">
-              {uploadHelpers.formatFileSize(stats.currentFile.file.size)}
+              {uploadHelpers.formatFileSize(stats.currentFile.fileSize || stats.currentFile.file.size || 0)}
             </span>
           </div>
           <div className="progress-indicator__progress-text">

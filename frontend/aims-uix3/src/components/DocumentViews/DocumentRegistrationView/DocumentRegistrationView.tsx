@@ -69,6 +69,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           return {
             id: savedFile.id,
             file: dummyFile,
+            fileSize: savedFile.fileSize || savedFile.fileInfo?.size || 0, // fileSize 복원
             status: savedFile.status,
             progress: savedFile.progress,
             error: savedFile.error,
@@ -124,7 +125,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // File 객체 정보만 저장 (실제 File 객체는 저장 불가)
           fileInfo: {
             name: file.file.name,
-            size: file.file.size,
+            size: file.fileSize,
             type: file.file.type,
             lastModified: file.file.lastModified
           }
@@ -157,6 +158,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         newUploadFiles.push({
           id: generateFileId(),
           file,
+          fileSize: file.size, // 파일 크기 보존
           status: 'pending',
           progress: 0,
           error: undefined,
@@ -168,6 +170,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         const errorFile: UploadFile = {
           id: generateFileId(),
           file,
+          fileSize: file.size, // 파일 크기 보존
           status: 'error',
           progress: 0,
           error: validation.errors.join(', ')
@@ -182,7 +185,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     )
 
     if (oversizedFiles.length > 0) {
-      const validFiles = newUploadFiles.filter(f => f.status === 'pending')
       const oversizedCount = oversizedFiles.length
 
       // 애플 스타일 확인 팝업
