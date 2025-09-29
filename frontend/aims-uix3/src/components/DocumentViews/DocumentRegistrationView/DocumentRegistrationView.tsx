@@ -358,6 +358,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         window.removeEventListener('beforeunload', handleBeforeUnload)
       }
     }
+    return undefined
   }, [uploadState.uploading])
 
   /**
@@ -381,6 +382,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       return () => clearTimeout(autoCleanupTimer)
     }
+    return undefined
   }, [uploadState, SESSION_KEY])
 
   /**
@@ -487,7 +489,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             <div className="upload-success__content">
               <SFSymbol
                 name="checkmark"
-                size={SFSymbolSize.CAPTION}
+                size={SFSymbolSize.CAPTION_1}
                 weight={SFSymbolWeight.MEDIUM}
                 className="upload-success__icon"
               />
@@ -506,7 +508,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 >
                   <SFSymbol
                     name="xmark"
-                    size={SFSymbolSize.CAPTION}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                 </button>

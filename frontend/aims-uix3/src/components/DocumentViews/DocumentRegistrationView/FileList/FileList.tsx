@@ -19,46 +19,76 @@ interface FileListProps {
 }
 
 /**
- * 🍎 MINIMAL FILE ICONS: System-style
+ * 🍎 COMPREHENSIVE FILE ICONS: iOS-style system icons
  */
 const getFileIcon = (file: File): string => {
   const mimeType = file.type.toLowerCase()
   const extension = file.name.split('.').pop()?.toLowerCase() || ''
 
-  // 🍎 IMAGE: Simple photo icon
-  if (mimeType.startsWith('image/')) {
+  // 🍎 PDF: Dedicated PDF icon
+  if (mimeType.includes('pdf') || extension === 'pdf') {
+    return 'doc.richtext'
+  }
+
+  // 🍎 IMAGES: Photo gallery icon
+  if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension)) {
     return 'photo'
   }
 
-  // 🍎 DOCUMENT: Text icon
-  if (mimeType.includes('pdf') || mimeType.includes('document') || mimeType.includes('text')) {
+  // 🍎 VIDEOS: Video camera icon
+  if (mimeType.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp'].includes(extension)) {
+    return 'video'
+  }
+
+  // 🍎 AUDIO: Music note icon
+  if (mimeType.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'].includes(extension)) {
+    return 'music.note'
+  }
+
+  // 🍎 ARCHIVES: Folder icon
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'dmg', 'iso'].includes(extension)) {
+    return 'archivebox'
+  }
+
+  // 🍎 OFFICE DOCUMENTS: Specific icons
+  if (['doc', 'docx'].includes(extension) || mimeType.includes('msword')) {
     return 'doc.text'
+  }
+
+  if (['xls', 'xlsx'].includes(extension) || mimeType.includes('sheet')) {
+    return 'tablecells'
+  }
+
+  if (['ppt', 'pptx'].includes(extension) || mimeType.includes('presentation')) {
+    return 'play.rectangle'
+  }
+
+  // 🍎 CODE FILES: Terminal icon
+  if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'less', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'dart'].includes(extension)) {
+    return 'chevron.left.forwardslash.chevron.right'
+  }
+
+  // 🍎 TEXT FILES: Document icon
+  if (mimeType.includes('text') || ['txt', 'md', 'rtf', 'log', 'csv'].includes(extension)) {
+    return 'doc.plaintext'
+  }
+
+  // 🍎 EXECUTABLE: Gear icon
+  if (['exe', 'msi', 'deb', 'rpm', 'pkg', 'dmg', 'app'].includes(extension)) {
+    return 'gearshape'
   }
 
   // 🍎 DEFAULT: Generic document
   return 'doc'
 }
 
-/**
- * 🍎 MINIMAL STATUS ICONS
- */
-const getStatusIcon = (status: string): string => {
-  switch (status) {
-    case 'pending': return 'clock'
-    case 'uploading': return 'ellipsis'
-    case 'completed': return 'checkmark'
-    case 'error': return 'exclamationmark'
-    case 'cancelled': return 'xmark'
-    default: return 'clock'
-  }
-}
 
 /**
  * 🍎 TRUE APPLE FILE LIST COMPONENT
  */
 export const FileList: React.FC<FileListProps> = ({
   files,
-  onRemoveFile,
+  onRemoveFile: _onRemoveFile, // 미래 사용 예정
   onRetryFile,
   onClearAll,
   readonly = false,
@@ -119,7 +149,7 @@ export const FileList: React.FC<FileListProps> = ({
                 >
                   <SFSymbol
                     name="checkmark"
-                    size={SFSymbolSize.CAPTION}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                   {stats.completed}
@@ -129,7 +159,7 @@ export const FileList: React.FC<FileListProps> = ({
                 <span className="file-list__stat file-list__stat--uploading">
                   <SFSymbol
                     name="ellipsis"
-                    size={SFSymbolSize.CAPTION}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                   {stats.uploading}
@@ -146,7 +176,7 @@ export const FileList: React.FC<FileListProps> = ({
                 >
                   <SFSymbol
                     name="exclamationmark"
-                    size={SFSymbolSize.CAPTION}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.MEDIUM}
                   />
                   {stats.error}
@@ -172,7 +202,7 @@ export const FileList: React.FC<FileListProps> = ({
             >
               <SFSymbol
                 name="xmark.circle.fill"
-                size={SFSymbolSize.CAPTION}
+                size={SFSymbolSize.CAPTION_1}
                 weight={SFSymbolWeight.LIGHT}
               />
               모든 파일
@@ -190,7 +220,7 @@ export const FileList: React.FC<FileListProps> = ({
           >
             <SFSymbol
               name="trash"
-              size={SFSymbolSize.CAPTION}
+              size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.LIGHT}
             />
             <span className="file-list__clear-text">Clear</span>
@@ -267,7 +297,7 @@ export const FileList: React.FC<FileListProps> = ({
               {uploadFile.status === 'completed' && (
                 <SFSymbol
                   name="checkmark"
-                  size={SFSymbolSize.CAPTION}
+                  size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.LIGHT}
                   className="file-item__done"
                 />
@@ -282,7 +312,7 @@ export const FileList: React.FC<FileListProps> = ({
                 >
                   <SFSymbol
                     name="arrow.clockwise"
-                    size={SFSymbolSize.CAPTION}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.LIGHT}
                   />
                 </button>

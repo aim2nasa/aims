@@ -54,6 +54,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
     } else {
       setIsAnimating(false)
     }
+    return undefined
   }, [visible, duration])
 
   const handleClose = () => {
@@ -89,7 +90,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
         <div className="feedback-toast__icon">
           <SFSymbol
             name={getIcon()}
-            size={SFSymbolSize.CAPTION}
+            size={SFSymbolSize.CAPTION_1}
             weight={SFSymbolWeight.MEDIUM}
             decorative={true}
           />
@@ -110,7 +111,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
         >
           <SFSymbol
             name="xmark"
-            size={SFSymbolSize.CAPTION}
+            size={SFSymbolSize.CAPTION_1}
             weight={SFSymbolWeight.MEDIUM}
             decorative={true}
           />

@@ -187,7 +187,7 @@ export const uploadHelpers = {
   /**
    * MIME 타입이 허용되는지 확인 - 모든 파일 형식 허용
    */
-  isAllowedMimeType(mimeType: string): boolean {
+  isAllowedMimeType(_mimeType: string): boolean { // 매개변수명 변경으로 미사용 표시
     return true  // 모든 파일 형식 허용
   },
 

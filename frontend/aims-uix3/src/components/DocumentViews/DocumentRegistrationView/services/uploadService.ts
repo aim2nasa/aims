@@ -321,7 +321,7 @@ export const fileValidator = {
   /**
    * 파일 형식 검증 - 모든 파일 허용
    */
-  validateType(file: File): { valid: boolean; error?: string } {
+  validateType(_file: File): { valid: boolean; error?: string } { // 매개변수명 변경으로 미사용 표시
     return { valid: true }  // 모든 파일 형식 허용
   },
 

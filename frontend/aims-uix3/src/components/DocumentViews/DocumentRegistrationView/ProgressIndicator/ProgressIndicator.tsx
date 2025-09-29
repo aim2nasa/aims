@@ -91,7 +91,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
           <div className="progress-indicator__file-info">
             <SFSymbol
               name="arrow.up.circle"
-              size={SFSymbolSize.CAPTION}
+              size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.LIGHT}
               decorative={true}
             />
@@ -128,7 +128,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
               >
                 <SFSymbol
                   name="xmark"
-                  size={SFSymbolSize.CAPTION}
+                  size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
                 />
               </button>
@@ -142,7 +142,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         <div className="progress-indicator__done">
           <SFSymbol
             name="checkmark"
-            size={SFSymbolSize.CAPTION}
+            size={SFSymbolSize.CAPTION_1}
             weight={SFSymbolWeight.ULTRALIGHT}
           />
         </div>

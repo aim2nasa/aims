@@ -34,7 +34,7 @@
   vertical-align: middle;
 
   /* 기본 색상 */
-  color: var(--color-text-primary);
+  color: currentColor;
 
   /* 부드러운 전환 */
   transition: all var(--duration-ios-quick) var(--easing-ios-default);
@@ -491,8 +491,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sf-symbol {
-    animation: none !important;
-    transition: none !important;
+    animation: none;
+    transition: none;
   }
 
   .sf-symbol--animation-bounce,
@@ -501,7 +501,7 @@
   .sf-symbol--animation-scale,
   .sf-symbol--animation-fade,
   .sf-symbol--animation-wiggle {
-    animation: none !important;
+    animation: none;
   }
 }
 
@@ -808,6 +808,473 @@
   mask-size: contain;
   -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M15 5v80h45V25L45 5H15zm25 5l15 15H40V10z'/%3e%3crect x='23' y='35' width='25' height='3'/%3e%3crect x='23' y='43' width='25' height='3'/%3e%3crect x='23' y='51' width='20' height='3'/%3e%3crect x='23' y='59' width='25' height='3'/%3e%3ccircle cx='75' cy='25' r='12' fill='currentColor'/%3e%3cpath d='M75 19v12M69 25h12' stroke='white' stroke-width='3' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
   -webkit-mask-size: contain;
+}
+
+/* === 🍎 TRUE APPLE GEOMETRIC ICONS === */
+
+/* DOC RICHTEXT (PDF) SYMBOL - 순수 기하학적 */
+.sf-symbol--doc-richtext .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5em;
+  height: 0.65em;
+
+  /* 애플 스타일 - 문서 실루엣만 */
+  background: currentColor;
+  border-radius: 0.04em 0.04em 0.04em 0.04em;
+  opacity: 0.7;
+
+  /* 문서 접힌 모서리 효과 */
+  clip-path: polygon(0% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%);
+}
+
+.sf-symbol--doc-richtext .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  right: 15%;
+  width: 0.08em;
+  height: 0.08em;
+  background: var(--color-bg-primary);
+  transform: rotate(45deg);
+}
+
+/* PHOTO SYMBOL - 미니멀한 이미지 */
+.sf-symbol--photo .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.6em;
+
+  /* 애플 스타일 사진 - 단순한 사각형 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-radius: 0.08em;
+  opacity: 0.7;
+}
+
+.sf-symbol--photo .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 0.12em;
+  right: 0.12em;
+  width: 0.15em;
+  height: 0.15em;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* VIDEO SYMBOL - 깔끔한 재생 버튼 */
+.sf-symbol--video .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+
+  /* 애플 스타일 비디오 - 원형 재생 버튼 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.sf-symbol--video .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 52%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 0.15em solid currentColor;
+  border-top: 0.08em solid transparent;
+  border-bottom: 0.08em solid transparent;
+}
+
+/* MUSIC NOTE SYMBOL - 단순한 음표 */
+.sf-symbol--music-note .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.12em;
+  height: 0.45em;
+
+  /* 애플 스타일 음표 - 선과 점 */
+  background: currentColor;
+  border-radius: 0.06em;
+  opacity: 0.8;
+}
+
+.sf-symbol--music-note .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -0.05em;
+  width: 0.22em;
+  height: 0.15em;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+/* ARCHIVE BOX SYMBOL - 미니멀한 박스 */
+.sf-symbol--archivebox .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.65em;
+  height: 0.5em;
+
+  /* 애플 스타일 아카이브 - 단순한 박스 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-radius: 0.08em;
+  opacity: 0.7;
+}
+
+.sf-symbol--archivebox .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.3em;
+  height: 0.08em;
+  background: currentColor;
+  border-radius: 0.04em;
+}
+
+/* DOC TEXT (Word) SYMBOL - 텍스트 라인 */
+.sf-symbol--doc-text .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6em;
+  height: 0.75em;
+
+  /* 애플 스타일 문서 - 라인들 */
+  background: currentColor;
+  border-radius: 0.05em;
+  box-shadow:
+    inset 0.1em 0.15em 0 var(--color-bg-primary),
+    inset 0.1em 0.25em 0 var(--color-bg-primary),
+    inset 0.1em 0.35em 0 var(--color-bg-primary);
+  opacity: 0.8;
+}
+
+/* TABLE CELLS (Excel) SYMBOL - 아름다운 스프레드시트 */
+.sf-symbol--tablecells .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6em;
+  height: 0.6em;
+
+  /* 애플 스타일 스프레드시트 - 그리드 패턴 */
+  background: none;
+  border: 0.06em solid currentColor;
+  border-radius: 0.06em;
+  opacity: 0.85;
+  box-shadow:
+    inset 0.18em 0 0 currentColor,
+    inset 0 0.18em 0 currentColor;
+}
+
+.sf-symbol--tablecells .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 70%;
+  width: 0.1em;
+  height: 0.1em;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+  box-shadow:
+    -0.15em 0.1em 0 -0.02em currentColor,
+    0.05em 0.15em 0 -0.02em currentColor;
+}
+
+/* PLAY RECTANGLE (PowerPoint) SYMBOL - 아름다운 프레젠테이션 */
+.sf-symbol--play-rectangle .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.65em;
+  height: 0.5em;
+
+  /* 애플 스타일 프레젠테이션 - 와이드 스크린 */
+  background: none;
+  border: 0.06em solid currentColor;
+  border-radius: 0.06em;
+  opacity: 0.85;
+}
+
+.sf-symbol--play-rectangle .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 52%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 0.1em solid currentColor;
+  border-top: 0.06em solid transparent;
+  border-bottom: 0.06em solid transparent;
+  opacity: 0.8;
+}
+
+/* CHEVRON LEFT SLASH CHEVRON RIGHT (Code) SYMBOL - 코드 */
+.sf-symbol--chevron-left-forwardslash-chevron-right .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 30%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  width: 0.08em;
+  height: 0.5em;
+
+  /* 애플 스타일 코드 - 단순한 슬래시 */
+  background: currentColor;
+  border-radius: 0.04em;
+  opacity: 0.7;
+}
+
+.sf-symbol--chevron-left-forwardslash-chevron-right .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 70%;
+  transform: translate(-50%, -50%);
+  width: 0.15em;
+  height: 0.15em;
+  border-left: 0.08em solid currentColor;
+  border-bottom: 0.08em solid currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+  opacity: 0.6;
+}
+
+/* DOC PLAINTEXT (Text) SYMBOL - 플레인 텍스트 */
+.sf-symbol--doc-plaintext .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6em;
+  height: 0.75em;
+
+  /* 애플 스타일 텍스트 - 불규칙한 라인들 */
+  background: currentColor;
+  border-radius: 0.05em;
+  box-shadow:
+    inset 0.08em 0.12em 0 var(--color-bg-primary),
+    inset 0.08em 0.2em 0 var(--color-bg-primary),
+    inset 0.08em 0.28em 0 var(--color-bg-primary),
+    inset 0.08em 0.36em 0 var(--color-bg-primary);
+  opacity: 0.8;
+}
+
+/* GEAR SHAPE (Executable) SYMBOL - 실행 파일 */
+.sf-symbol--gearshape .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+
+  /* 애플 스타일 기어 - 단순한 원 + 톱니 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.sf-symbol--gearshape .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.25em;
+  height: 0.25em;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* CHECKMARK (Success) SYMBOL - 애플 스타일 체크마크 */
+.sf-symbol--checkmark .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 45%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 0.08em;
+  height: 0.25em;
+
+  /* 애플 스타일 체크 - 단순한 선들 */
+  background: currentColor;
+  border-radius: 0.04em;
+  opacity: 0.8;
+}
+
+.sf-symbol--checkmark .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 45%;
+  left: 35%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  width: 0.08em;
+  height: 0.15em;
+  background: currentColor;
+  border-radius: 0.04em;
+  opacity: 0.8;
+}
+
+/* EXCLAMATIONMARK (Error) SYMBOL - 애플 스타일 느낌표 */
+.sf-symbol--exclamationmark .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.1em;
+  height: 0.4em;
+
+  /* 애플 스타일 느낌표 - 선과 점 */
+  background: currentColor;
+  border-radius: 0.05em;
+  opacity: 0.8;
+}
+
+.sf-symbol--exclamationmark .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 0.12em;
+  height: 0.12em;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+/* XMARK CIRCLE FILL SYMBOL - 애플 스타일 닫기 */
+.sf-symbol--xmark-circle-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+
+  /* 애플 스타일 닫기 - 채워진 원 */
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.sf-symbol--xmark-circle-fill .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 0.08em;
+  height: 0.35em;
+  background: var(--color-bg-primary);
+  border-radius: 0.04em;
+  box-shadow: 0 0 0 0.08em var(--color-bg-primary),
+              0.27em 0 0 -0.08em var(--color-bg-primary),
+              -0.27em 0 0 -0.08em var(--color-bg-primary);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* TRASH SYMBOL - 애플 스타일 휴지통 */
+.sf-symbol--trash .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5em;
+  height: 0.4em;
+
+  /* 애플 스타일 휴지통 - 단순한 통 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-top: none;
+  border-radius: 0 0 0.08em 0.08em;
+  opacity: 0.7;
+}
+
+.sf-symbol--trash .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6em;
+  height: 0.08em;
+  background: currentColor;
+  border-radius: 0.04em;
+  opacity: 0.7;
+}
+
+/* ARROW CLOCKWISE (Retry) SYMBOL - 애플 스타일 새로고침 */
+.sf-symbol--arrow-clockwise .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.7em;
+  height: 0.7em;
+
+  /* 애플 스타일 화살표 - 원형 화살표 */
+  background: none;
+  border: 0.08em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.7;
+  transform: translate(-50%, -50%) rotate(-30deg);
+}
+
+.sf-symbol--arrow-clockwise .sf-symbol__shape::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  right: 20%;
+  transform: rotate(45deg);
+  width: 0.12em;
+  height: 0.12em;
+  border-right: 0.08em solid currentColor;
+  border-top: 0.08em solid currentColor;
+  opacity: 0.7;
 }
 
 /* === HIGH CONTRAST MODE === */

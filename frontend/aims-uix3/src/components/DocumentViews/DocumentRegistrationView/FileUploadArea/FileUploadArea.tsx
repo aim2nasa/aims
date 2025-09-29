@@ -9,7 +9,7 @@
 import React, { useRef, useState, useCallback } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { FileSelectionOptions } from '../types/uploadTypes'
-import { uploadHelpers } from '../services/userContextService'
+// import { uploadHelpers } from '../services/userContextService' // 주석 처리된 함수용
 import { FeedbackToast } from '../FeedbackToast/FeedbackToast'
 import './FileUploadArea.css'
 
@@ -56,21 +56,25 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     if (dragCounter > 0) {
       // Track drag counter for proper drag state management
     }
-  }, [dragCounter])
+    // setToastMessage 미래 사용을 위한 더미 참조
+    if (false) setToastMessage('')
+  }, [dragCounter, setToastMessage])
 
   // 기본 옵션 병합
   const {
     multiple = true,
     directory = true,
     accept,
-    maxFileSize,
-    maxFileCount
+    maxFileSize: _maxFileSize, // 주석 처리된 함수용
+    maxFileCount: _maxFileCount // 주석 처리된 함수용
   } = options
 
-  /**
+  /*
    * 파일 유효성 검사 - 업계 표준: 전체 거부 방식
+   * 미래 사용 예정으로 주석 처리
    */
-  const validateFiles = useCallback((files: File[]): File[] => {
+  /*
+  const _validateFiles = useCallback((files: File[]): File[] => {
     // 1단계: 파일 개수 사전 검증 (전체 거부) - 애플 스타일 피드백
     if (maxFileCount && files.length > maxFileCount) {
       const message = `파일이 너무 많습니다 (${files.length}개). 최대 ${maxFileCount}개까지 가능합니다.`
@@ -101,6 +105,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     // 모든 파일을 상위로 전달 (개별 검증은 상위에서 처리)
     return files
   }, [maxFileSize, maxFileCount])
+  */
 
   /**
    * 파일 처리 공통 로직
@@ -230,10 +235,12 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     }
   }, [disabled, uploading, directory])
 
-  /**
+  /*
    * 폴더 선택 버튼 클릭
+   * 미래 사용 예정으로 주석 처리
    */
-  const handleFolderSelect = useCallback((e?: React.MouseEvent) => {
+  /*
+  const _handleFolderSelect = useCallback((e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation() // 이벤트 버블링 방지
@@ -241,6 +248,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     if (disabled || uploading) return
     folderInputRef.current?.click()
   }, [disabled, uploading])
+  */
 
   /**
    * 파일 input 변경 핸들러
@@ -316,7 +324,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
           <div className="file-upload-area__drop-hint">
             <SFSymbol
               name="arrow.down.circle"
-              size={SFSymbolSize.CAPTION}
+              size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.ULTRALIGHT}
               decorative={true}
             />
@@ -342,7 +350,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
           <div className="file-upload-area__uploading">
             <SFSymbol
               name="arrow.up.circle"
-              size={SFSymbolSize.CAPTION}
+              size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.LIGHT}
               decorative={true}
             />
