@@ -12,7 +12,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import FileList from './FileList/FileList'
 import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
-import { showAppleConfirm } from '../../../utils/appleConfirm'
+import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
@@ -189,10 +189,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     if (oversizedFiles.length > 0) {
       const oversizedCount = oversizedFiles.length
+      const sizeLimitMB = Math.round(uploadConfig.limits.maxFileSize / (1024 * 1024))
 
-      // 🍎 애플 스타일 확인 모달
+      // 🍎 애플 스타일 확인 모달 - 새로운 메시지 형식과 클릭 가능한 링크
       const confirmed = await showAppleConfirm(
-        `총 ${newUploadFiles.length}개 파일들중 50MB를 초과하는 ${oversizedCount}개 파일들은 업로드에서 제외됩니다.`
+        `총 ${newUploadFiles.length}개의 파일들중에 ${oversizedCount}개의 파일이 ${sizeLimitMB}MB의 사이즈 제한을 초과합니다. 사이즈 제한 초과 파일들은 업로드에서 제외됩니다.`,
+        undefined, // 타이틀 없음 - "확인" 문구 제거
+        {
+          linkText: '사이즈 제한 초과 파일들',
+          onLinkClick: async () => {
+            // 파일 정보를 올바른 형식으로 변환
+            const fileList = oversizedFiles.map(uploadFile => ({
+              name: uploadFile.file.name,
+              size: uploadFile.fileSize
+            }))
+
+            // mod2.png 모달 표시
+            await showOversizedFilesModal(fileList, uploadConfig.limits.maxFileSize)
+
+            // mod2.png에서 "확인" 후 mod1.png 모달로 다시 돌아오기
+            // 링크 클릭 후에는 아무것도 하지 않음 (모달이 열린 상태 유지)
+          },
+          showConfirmButton: true // "취소" "확인" 두 버튼 유지
+        }
       )
 
       if (!confirmed) {
