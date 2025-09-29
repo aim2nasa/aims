@@ -240,7 +240,7 @@ export function showOversizedFilesModal(
   return new Promise((resolve) => {
     // 기존 모달을 임시로 숨기기 (제거하지 않음)
     const previousModal = currentModal
-    const previousResolver = currentResolver // 🔥 mod1의 resolver 보존!
+    // mod1의 resolver는 currentResolver에 그대로 유지됨
 
     if (previousModal) {
       previousModal.style.display = 'none'

@@ -79,10 +79,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           }
         })
 
+        // 업로드 중인 파일이 있으면 uploading 상태 복원
+        const hasUploadingFiles = restoredFiles?.some((f: UploadFile) => f.status === 'uploading') || false
+
         return {
           ...parsed,
           files: restoredFiles || [],
-          uploading: false // 새로고침 시 업로드 상태는 초기화
+          uploading: hasUploadingFiles // 업로드 중인 파일이 있으면 true 유지
         }
       }
     } catch (error) {
@@ -503,11 +506,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           disabled={false}
         />
 
-        {/* 진행률 표시 (업로드 중이거나 성공 메시지 표시 중일 때) */}
-        {(uploadState.uploading || showSuccessMessage) && (
+        {/* 진행률 표시 - 업로드 중인 파일이 있으면 항상 표시 */}
+        {(uploadState.uploading || showSuccessMessage || stats.uploading > 0) && (
           <ProgressIndicator
             uploadState={uploadState}
-            onCancel={uploadState.uploading ? handleCancelAll : (() => {})}
+            onCancel={(uploadState.uploading || stats.uploading > 0) ? handleCancelAll : (() => {})}
           />
         )}
 
