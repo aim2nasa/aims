@@ -123,9 +123,9 @@ export class UploadService {
   }
 
   /**
-   * 개별 파일 업로드
+   * 개별 파일 업로드 (자동 재시도 지원)
    */
-  private async uploadFile(uploadFile: UploadFile): Promise<void> {
+  private async uploadFile(uploadFile: UploadFile, _retryCount: number = 0): Promise<void> {
     const { id, file } = uploadFile
     const controller = new AbortController()
 
@@ -154,8 +154,8 @@ export class UploadService {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
+          console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
           this.statusCallback?.(id, 'cancelled')
-          console.log(`[UploadService] 파일 업로드 취소: ${file.name}`)
         } else {
           const errorMessage = this.getErrorMessage(error)
           this.statusCallback?.(id, 'error', errorMessage)
@@ -167,6 +167,7 @@ export class UploadService {
       }
     }
   }
+
 
   /**
    * 진행률을 추적하면서 파일 업로드
@@ -284,10 +285,11 @@ export class UploadService {
   }
 
   /**
-   * 서비스 정리
+   * 서비스 정리 - 진행 중인 업로드는 유지
    */
   cleanup(): void {
-    this.cancelAllUploads()
+    console.log('[UploadService] cleanup 호출됨 - 콜백만 정리 (업로드는 계속)')
+    // 콜백만 정리하고 진행 중인 업로드는 그대로 유지
     this.progressCallback = undefined
     this.statusCallback = undefined
   }

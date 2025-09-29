@@ -6,7 +6,7 @@
  * 애플 스타일의 파일 업로드 시스템 구현
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
@@ -330,16 +330,33 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
-   * 업로드 서비스 콜백 설정
+   * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지
    */
-  useEffect(() => {
-    uploadService.setProgressCallback(handleProgress)
-    uploadService.setStatusCallback(handleStatusChange)
+  const handleProgressRef = useRef(handleProgress)
+  const handleStatusChangeRef = useRef(handleStatusChange)
 
-    return () => {
-      uploadService.cleanup()
+  // 최신 콜백 함수를 ref에 저장
+  handleProgressRef.current = handleProgress
+  handleStatusChangeRef.current = handleStatusChange
+
+  useEffect(() => {
+    // 안정적인 래퍼 함수 사용
+    const stableProgressCallback = (event: UploadProgressEvent) => {
+      handleProgressRef.current(event)
     }
-  }, [handleProgress, handleStatusChange])
+
+    const stableStatusCallback = (fileId: string, status: UploadStatus, error?: string) => {
+      handleStatusChangeRef.current(fileId, status, error)
+    }
+
+    uploadService.setProgressCallback(stableProgressCallback)
+    uploadService.setStatusCallback(stableStatusCallback)
+
+    // 컴포넌트 언마운트 시에도 업로드 중단하지 않음
+    return () => {
+      // cleanup 호출하지 않음 - 브라우저 크기 변경 등으로 업로드 취소 방지
+    }
+  }, []) // 빈 배열로 한 번만 실행, 재렌더링 시 cleanup 방지
 
   /**
    * 개발 환경에서 업로드 중 페이지 이탈 경고

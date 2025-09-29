@@ -103,8 +103,9 @@ export const FileList: React.FC<FileListProps> = ({
     const completed = files.filter(f => f.status === 'completed').length
     const error = files.filter(f => f.status === 'error').length
     const uploading = files.filter(f => f.status === 'uploading').length
+    const cancelled = files.filter(f => f.status === 'cancelled').length
 
-    return { total, completed, error, uploading }
+    return { total, completed, error, uploading, cancelled }
   }, [files])
 
   // 🍎 FILTERED FILES: Smart filtering with Apple UX
@@ -136,7 +137,7 @@ export const FileList: React.FC<FileListProps> = ({
           </div>
 
           {/* 🍎 SUBTLE STATS: Ultra-minimal badges */}
-          {(stats.completed > 0 || stats.uploading > 0 || stats.error > 0) && (
+          {(stats.completed > 0 || stats.uploading > 0 || stats.error > 0 || stats.cancelled > 0) && (
             <div className="file-list__stats">
               {stats.completed > 0 && (
                 <button
@@ -182,6 +183,23 @@ export const FileList: React.FC<FileListProps> = ({
                   {stats.error}
                 </button>
               )}
+              {stats.cancelled > 0 && (
+                <button
+                  type="button"
+                  className={`file-list__stat file-list__stat--cancelled file-list__stat--clickable ${
+                    filterStatus === 'cancelled' ? 'file-list__stat--active' : ''
+                  }`}
+                  onClick={() => handleFilterToggle('cancelled')}
+                  aria-label={filterStatus === 'cancelled' ? '모든 파일 보기' : '취소된 파일만 보기'}
+                >
+                  <SFSymbol
+                    name="xmark"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                  {stats.cancelled}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -193,6 +211,7 @@ export const FileList: React.FC<FileListProps> = ({
               {filterStatus === 'error' && '오류 파일만 표시 중'}
               {filterStatus === 'completed' && '완료된 파일만 표시 중'}
               {filterStatus === 'uploading' && '업로드 중인 파일만 표시 중'}
+              {filterStatus === 'cancelled' && '취소된 파일만 표시 중'}
             </span>
             <button
               type="button"
