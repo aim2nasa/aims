@@ -51,8 +51,8 @@ const getFileIcon = (file: File): string => {
   }
 
   // 🍎 OFFICE DOCUMENTS: Specific icons
-  if (['doc', 'docx'].includes(extension) || mimeType.includes('msword')) {
-    return 'doc.text'
+  if (['doc', 'docx', 'hwp'].includes(extension) || mimeType.includes('msword')) {
+    return 'doc.plaintext'
   }
 
   if (['xls', 'xlsx'].includes(extension) || mimeType.includes('sheet')) {
