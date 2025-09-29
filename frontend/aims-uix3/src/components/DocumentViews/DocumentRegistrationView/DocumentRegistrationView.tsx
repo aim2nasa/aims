@@ -12,8 +12,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import FileList from './FileList/FileList'
 import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
-import AppleConfirmModal from './AppleConfirmModal/AppleConfirmModal'
-import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController'
+import { showAppleConfirm } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
@@ -109,9 +108,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 자동 성공 메시지 숨김 타이머
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
-  // 🍎 애플 스타일 확인 모달 Controller Hook
-  const confirmController = useAppleConfirmController()
-
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -149,12 +145,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }, [])
 
-  /**
-   * 🍎 애플 스타일 확인 모달 헬퍼 함수 (Controller Hook 사용)
-   */
-  const showAppleConfirm = useCallback((message: string): Promise<boolean> => {
-    return confirmController.actions.openModal({ message })
-  }, [confirmController.actions])
+  // 🔒 절대 신뢰성 모달 함수는 utils에서 import
 
   /**
    * 파일 선택 핸들러
@@ -546,11 +537,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🍎 애플 스타일 확인 모달 */}
-        <AppleConfirmModal
-          state={confirmController.state}
-          actions={confirmController.actions}
-        />
+        {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
       </div>
     </CenterPaneView>
   )

@@ -36,8 +36,9 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
   state,
   actions
 }) => {
-  // 렌더링하지 않을 때는 null 반환
-  if (!state.shouldRender) return null
+  // 🔒 절대 신뢰성: 모달이 열린 상태에서는 절대 사라지지 않음
+  // shouldRender가 false더라도 isOpen이 true라면 렌더링 유지
+  if (!state.shouldRender && !state.isOpen) return null
 
   // 🍎 Portal을 사용해 body에 직접 렌더링 (애플 스타일)
   return createPortal(

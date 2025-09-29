@@ -91,16 +91,17 @@ export const useAppleConfirmController = () => {
    * 모달을 닫고 애니메이션 처리
    */
   const closeModal = useCallback(() => {
+    // 🔒 1단계: 애니메이션 시작 (모달 축소)
     setState(prev => ({ ...prev, isAnimating: false }))
 
-    // 애니메이션 완료 후 DOM에서 제거
+    // 🔒 2단계: 애니메이션 완료 후 완전히 닫기
     const timer = setTimeout(() => {
       setState(prev => ({
         ...prev,
         isOpen: false,
         shouldRender: false
       }))
-    }, 300)
+    }, 350) // 350ms로 여유있게 설정
 
     return () => clearTimeout(timer)
   }, [])
@@ -161,6 +162,107 @@ export const useAppleConfirmController = () => {
       document.body.style.overflow = ''
     }
   }, [state.isOpen, handleKeyDown])
+
+  /**
+   * 🔒 신뢰성: 브라우저 리사이즈 시 모달 상태 보호
+   * 모달이 열린 상태에서는 외부 요인으로 인한 상태 변경 방지
+   */
+  useEffect(() => {
+    if (state.isOpen) {
+      const handleResize = () => {
+        // 🔒 절대 신뢰성: 모달이 열린 상태라면 무조건 보호
+        requestAnimationFrame(() => {
+          setState(prev => {
+            if (prev.isOpen) {
+              return {
+                ...prev,
+                isOpen: true,
+                isAnimating: true,
+                shouldRender: true
+              }
+            }
+            return prev
+          })
+        })
+      }
+
+      const handleVisibilityChange = () => {
+        // 🔒 탭 전환 시에도 모달 상태 유지
+        requestAnimationFrame(() => {
+          setState(prev => {
+            if (prev.isOpen && !document.hidden) {
+              return {
+                ...prev,
+                isOpen: true,
+                isAnimating: true,
+                shouldRender: true
+              }
+            }
+            return prev
+          })
+        })
+      }
+
+      const handleOrientationChange = () => {
+        // 🔒 화면 회전 시에도 모달 상태 유지
+        requestAnimationFrame(() => {
+          setState(prev => {
+            if (prev.isOpen) {
+              return {
+                ...prev,
+                isOpen: true,
+                isAnimating: true,
+                shouldRender: true
+              }
+            }
+            return prev
+          })
+        })
+      }
+
+      // 🔒 모든 가능한 이벤트에 대한 방어
+      window.addEventListener('resize', handleResize, { passive: true })
+      window.addEventListener('orientationchange', handleOrientationChange, { passive: true })
+      document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true })
+
+      // 🔒 주기적으로 모달 상태 검증 (500ms마다, 더 빠른 복원)
+      const stateChecker = setInterval(() => {
+        setState(prev => {
+          if (prev.isOpen && (!prev.shouldRender)) {
+            console.warn('🔒 Critical: shouldRender was false while modal is open! Restoring immediately.')
+            return {
+              ...prev,
+              isOpen: true,
+              isAnimating: true,
+              shouldRender: true
+            }
+          }
+          if (prev.isOpen && !prev.isAnimating) {
+            console.warn('🔒 Modal animation lost, restoring...')
+            return {
+              ...prev,
+              isOpen: true,
+              isAnimating: true,
+              shouldRender: true
+            }
+          }
+          return prev
+        })
+      }, 500) // 더 빠른 복원을 위해 500ms로 단축
+
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        window.removeEventListener('orientationchange', handleOrientationChange)
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        clearInterval(stateChecker)
+      }
+    }
+
+    // 🔒 TypeScript: 모든 경우에 cleanup 함수 반환
+    return () => {
+      // 모달이 닫힌 상태에서는 아무것도 정리할 필요 없음
+    }
+  }, [state.isOpen])
 
   // === RETURN ===
   return {

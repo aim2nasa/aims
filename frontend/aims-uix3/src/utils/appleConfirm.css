@@ -1,0 +1,65 @@
+/**
+ * Apple Confirm Modal - DOM Utility Styles
+ * @since 1.0.0
+ *
+ * 🔒 절대 신뢰성을 위한 높은 특이성 CSS
+ * !important 없이 안전한 우선순위 확보
+ */
+
+/* 🔒 오버레이 - 최고 우선순위 확보 */
+html body div.apple-confirm-direct-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-overlay-backdrop, rgba(0, 0, 0, 0.32));
+  backdrop-filter: blur(25px) saturate(1.8);
+  -webkit-backdrop-filter: blur(25px) saturate(1.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 1;
+  transition: none;
+  padding: 20px;
+}
+
+/* 🔒 모달 - 최고 우선순위 확보 */
+html body div.apple-confirm-direct-overlay div.apple-confirm-direct-modal {
+  background-color: var(--color-modal-bg, rgba(255, 255, 255, 0.78));
+  border-radius: 13px;
+  backdrop-filter: blur(60px) saturate(1.5);
+  -webkit-backdrop-filter: blur(60px) saturate(1.5);
+  box-shadow: inset 0 0 0 0.25px rgba(255, 255, 255, 0.8),
+              0 0.5px 1px rgba(0, 0, 0, 0.01),
+              0 1px 2px rgba(0, 0, 0, 0.02),
+              0 3px 12px rgba(0, 0, 0, 0.04),
+              0 12px 40px rgba(0, 0, 0, 0.06),
+              0 25px 80px rgba(0, 0, 0, 0.08);
+  max-width: 300px;
+  min-width: 270px;
+  width: 100%;
+  overflow: hidden;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  transition: none;
+}
+
+/* 🍎 흔들기 애니메이션 */
+@keyframes apple-confirm-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* 🔒 다크 모드 지원 */
+html[data-theme="dark"] body div.apple-confirm-direct-overlay div.apple-confirm-direct-modal {
+  background-color: var(--color-modal-bg-dark, rgba(44, 44, 46, 0.85));
+  box-shadow: inset 0 0 0 0.25px rgba(255, 255, 255, 0.12),
+              0 0.5px 1px rgba(0, 0, 0, 0.2),
+              0 1px 2px rgba(0, 0, 0, 0.3),
+              0 3px 12px rgba(0, 0, 0, 0.4),
+              0 12px 40px rgba(0, 0, 0, 0.5),
+              0 25px 80px rgba(0, 0, 0, 0.6);
+}
