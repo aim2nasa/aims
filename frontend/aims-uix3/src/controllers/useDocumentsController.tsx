@@ -21,6 +21,7 @@ export const useDocumentsController = () => {
   // 상태 관리
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // 초기 로딩 상태
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -35,10 +36,14 @@ export const useDocumentsController = () => {
 
   /**
    * 문서 목록 로드
+   * @param params 검색 파라미터
+   * @param silent true일 경우 로딩 상태를 변경하지 않음 (백그라운드 업데이트)
    */
-  const loadDocuments = useCallback(async (params?: Partial<DocumentSearchQuery>) => {
+  const loadDocuments = useCallback(async (params?: Partial<DocumentSearchQuery>, silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      }
       setError(null);
 
       const finalParams = { ...searchParams, ...params };
@@ -49,10 +54,13 @@ export const useDocumentsController = () => {
       setDocuments(result.documents);
       setTotal(result.total);
       setHasMore(result.hasMore);
+      setIsInitialLoad(false); // 초기 로딩 완료
     } catch (err) {
       setError(handleApiError(err));
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [searchQuery, searchParams]);
 
@@ -165,6 +173,7 @@ export const useDocumentsController = () => {
     // 상태
     documents,
     isLoading,
+    isInitialLoad,
     error,
     total,
     hasMore,

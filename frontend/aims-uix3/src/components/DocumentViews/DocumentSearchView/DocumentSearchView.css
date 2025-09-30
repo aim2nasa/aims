@@ -291,6 +291,19 @@ html[data-theme="dark"] .document-list-empty {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease-out;
+  animation: documentFadeIn 0.3s ease-out;
+}
+
+/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
+@keyframes documentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 html[data-theme="dark"] .document-item {

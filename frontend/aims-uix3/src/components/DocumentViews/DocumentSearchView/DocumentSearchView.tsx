@@ -43,6 +43,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const {
     documents,
     isLoading,
+    isInitialLoad,
     error,
     searchQuery,
     searchResultMessage,
@@ -56,15 +57,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   } = useDocumentsController()
 
   // View가 열려있는 동안 주기적으로 데이터 새로고침 (3초마다)
+  // Silent refresh: 초기 로딩 후에는 백그라운드에서 조용히 업데이트
   React.useEffect(() => {
     if (!visible) return
 
-    // 즉시 로드
-    loadDocuments()
+    // 즉시 로드 (초기 로딩)
+    loadDocuments(undefined, false)
 
-    // 3초마다 자동 새로고침
+    // 3초마다 자동 새로고침 (silent mode)
     const intervalId = setInterval(() => {
-      loadDocuments()
+      loadDocuments(undefined, true) // silent=true로 깜빡임 방지
     }, 3000)
 
     return () => clearInterval(intervalId)
@@ -152,7 +154,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
         {/* 문서 리스트 */}
         <div className="document-list">
-          {isLoading ? (
+          {isLoading && isInitialLoad ? (
             <div className="document-list-loading">
               <div className="loading-spinner" aria-label="로딩 중" />
               <span>문서를 불러오는 중...</span>
