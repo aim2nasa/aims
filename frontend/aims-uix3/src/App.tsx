@@ -749,6 +749,22 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             role="separator"
             aria-orientation="vertical"
           >
+            {/* Layout Reset Button - BRB 내부 */}
+            {centerWidth !== 60 && (
+              <button
+                className="layout-brb-reset"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setCenterWidth(60)
+                  haptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                aria-label="레이아웃 비율 초기화"
+                title="기본 비율로 초기화 (60:40)"
+              >
+                <span aria-hidden="true">⟲</span>
+              </button>
+            )}
           </div>
         )}
 

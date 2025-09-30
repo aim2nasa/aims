@@ -354,6 +354,55 @@ html[data-theme="dark"] .layout-brb:hover {
   /* transform 제거 - 이제 컨테이너에서 함께 애니메이션됨 */
 }
 
+/* === 🍎 BRB RESET BUTTON === */
+
+.layout-brb-reset {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .layout-brb-reset {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.layout-brb:hover .layout-brb-reset {
+  opacity: 1;
+}
+
+.layout-brb-reset:hover {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  color: white;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+html[data-theme="dark"] .layout-brb-reset:hover {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.layout-brb-reset:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+
 .layout-rightpane {
   z-index: var(--z-index-elevated);
   overflow: hidden;
