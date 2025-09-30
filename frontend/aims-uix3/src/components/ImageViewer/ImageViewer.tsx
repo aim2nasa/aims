@@ -150,10 +150,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
             className="control-button control-button--primary"
             onClick={onDownload}
             aria-label="이미지 다운로드"
-            title="이미지 파일을 다운로드합니다"
+            title="다운로드"
           >
             <span aria-hidden="true">↓</span>
-            <span>다운로드</span>
           </button>
         )}
       </div>

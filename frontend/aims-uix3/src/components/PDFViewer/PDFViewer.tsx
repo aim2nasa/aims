@@ -189,9 +189,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
             className="control-button control-button--primary"
             onClick={onDownload}
             aria-label="다운로드"
+            title="다운로드"
           >
             <span aria-hidden="true">↓</span>
-            <span>다운로드</span>
           </button>
         )}
       </div>

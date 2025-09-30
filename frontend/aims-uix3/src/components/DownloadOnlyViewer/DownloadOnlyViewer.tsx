@@ -75,10 +75,9 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
           className="control-button control-button--primary"
           onClick={onDownload}
           aria-label={`${fileName} 다운로드`}
-          title="파일을 다운로드합니다"
+          title="다운로드"
         >
           <span aria-hidden="true">↓</span>
-          <span>다운로드</span>
         </button>
       </div>
     </div>
