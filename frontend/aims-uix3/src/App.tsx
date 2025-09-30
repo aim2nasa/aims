@@ -21,6 +21,7 @@ const CustomerRegionalView = lazy(() => import('./components/CustomerViews/Custo
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
+const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 import DownloadHelper from './utils/downloadHelper'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
@@ -797,17 +798,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                     />
                   )
                 } else {
+                  // 미리보기를 지원하지 않는 파일 - DownloadOnlyViewer 사용
+                  const fileName = selectedDocument.upload?.originalName ||
+                                   selectedDocument.payload?.original_name ||
+                                   '파일'
                   return (
-                    <div style={{
-                      padding: 'var(--spacing-6)',
-                      color: 'var(--color-text-secondary)',
-                      textAlign: 'center'
-                    }}>
-                      <p>지원하지 않는 파일 형식입니다.</p>
-                      <p style={{ fontSize: '12px', marginTop: '8px' }}>
-                        PDF 또는 이미지 파일만 미리보기가 가능합니다.
-                      </p>
-                    </div>
+                    <DownloadOnlyViewer
+                      fileName={fileName}
+                      onDownload={() => {
+                        DownloadHelper.downloadDocument(selectedDocument)
+                      }}
+                    />
                   )
                 }
               })()}
