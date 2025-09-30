@@ -19,6 +19,7 @@ const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/C
 const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAllView/CustomerAllView'))
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
+const PDFViewer = lazy(() => import('./components/PDFViewer'))
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -66,6 +67,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [activeDocumentView, setActiveDocumentView] = useState<string | null>(
     persistentState.activeDocumentView
   )
+
+  // RightPane 문서 프리뷰 상태
+  const [selectedDocument, setSelectedDocument] = useState<any | null>(null)
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
@@ -267,14 +271,63 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setActiveDocumentView(null)
   }, [])
 
-  // 문서 클릭 핸들러 - RightPane 열기
-  const handleDocumentClick = useCallback((documentId: string) => {
+  // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
+  const handleDocumentClick = useCallback(async (documentId: string) => {
     console.log('[App] 문서 클릭:', documentId)
-    // RightPane이 숨겨져 있으면 표시
-    if (!rightPaneVisible) {
-      setRightPaneVisible(true)
+
+    try {
+      // n8n webhook을 통해 문서 상세 정보 조회
+      const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: documentId })
+      })
+
+      const data = await response.json()
+      console.log('[App] API 응답 데이터:', data)
+
+      if (data && data.length > 0) {
+        const fileData = data[0]
+        console.log('[App] fileData:', fileData)
+
+        // destPath에서 fileUrl 생성 (aims-uix2 패턴)
+        let fileUrl = ''
+        const destPath = fileData.upload?.destPath || fileData.payload?.dest_path
+        if (destPath) {
+          const correctPath = destPath.replace('/data', '')
+          fileUrl = `https://tars.giize.com${correctPath}`
+        }
+
+        // 문서 객체 구성
+        const document = {
+          _id: documentId,
+          fileUrl: fileUrl,
+          upload: {
+            originalName: fileData.upload?.originalName || fileData.payload?.original_name || '문서',
+            destPath: destPath || '',
+            uploaded_at: fileData.upload?.uploaded_at || fileData.payload?.uploaded_at || new Date().toISOString()
+          },
+          meta: {
+            mime: fileData.meta?.mime || fileData.payload?.mime || '',
+            size_bytes: fileData.meta?.size_bytes || fileData.payload?.size_bytes || 0
+          }
+        }
+
+        console.log('[App] 구성된 document 객체:', document)
+        console.log('[App] fileUrl:', document.fileUrl)
+
+        setSelectedDocument(document)
+
+        // RightPane이 숨겨져 있으면 표시
+        if (!rightPaneVisible) {
+          setRightPaneVisible(true)
+        }
+      }
+    } catch (error) {
+      console.error('[App] 문서 로드 오류:', error)
     }
-    // TODO: RightPane에 문서 상세 정보 표시
   }, [rightPaneVisible])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
@@ -701,19 +754,31 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           className="layout-rightpane-content"
           style={{
             flex: 1,
-            padding: rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0', /* 애플 표준 패딩 */
+            padding: selectedDocument ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
             overflow: 'hidden',
-            color: 'var(--color-text-primary)'
-            // transition 제거 - 컨테이너의 transition 사용
+            color: 'var(--color-text-primary)',
+            display: 'flex',
+            flexDirection: 'column'
           }}
         >
-          {rightPaneVisible && (
+          {rightPaneVisible && !selectedDocument && (
             <>
               <h3 className="section-heading" style={{
                 color: 'var(--color-text-primary)',
                 margin: '0'
               }}>RightPane</h3>
             </>
+          )}
+          {rightPaneVisible && selectedDocument && (
+            <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
+              <PDFViewer
+                file={selectedDocument.fileUrl}
+                onDownload={() => {
+                  // TODO: 다운로드 구현
+                  console.log('다운로드:', selectedDocument.upload.originalName)
+                }}
+              />
+            </Suspense>
           )}
         </div>
       </aside>

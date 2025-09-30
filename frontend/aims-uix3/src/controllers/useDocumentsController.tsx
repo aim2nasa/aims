@@ -136,9 +136,10 @@ export const useDocumentsController = () => {
    */
   const handleSortChange = useCallback((newSortBy: string, newSortOrder: 'asc' | 'desc') => {
     setSearchParams(prev => {
+      const validSortBy = newSortBy as 'filename' | 'uploadDate' | 'size' | 'createdAt' | 'updatedAt';
       const newParams = {
         ...prev,
-        sortBy: newSortBy,
+        sortBy: validSortBy,
         sortOrder: newSortOrder,
         offset: 0
       };

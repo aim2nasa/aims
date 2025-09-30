@@ -1,0 +1,288 @@
+/**
+ * PDFViewer Styles
+ * @since 1.0.0
+ *
+ * Apple 디자인 철학 준수:
+ * - Progressive Disclosure: 컨트롤은 필요시에만 강조
+ * - Clarity: 명확한 정보 계층
+ * - Depth: 자연스러운 깊이감
+ */
+
+/* === 🍎 PDF VIEWER CONTAINER === */
+
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-ios-bg-secondary-light);
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .pdf-viewer {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+/* === 🍎 PDF CONTENT AREA === */
+
+.pdf-viewer-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 16px;
+}
+
+.pdf-page-container {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--color-ios-bg-primary-light);
+}
+
+html[data-theme="dark"] .pdf-page-container {
+  border-color: var(--color-ios-separator-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: var(--color-ios-bg-primary-dark);
+}
+
+/* === 🍎 LOADING STATE === */
+
+.pdf-viewer-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .pdf-viewer-loading {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-ios-separator-light);
+  border-top-color: var(--color-ios-interactive-light);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--color-ios-separator-dark);
+  border-top-color: var(--color-ios-interactive-dark);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === 🍎 ERROR STATE === */
+
+.pdf-viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 32px;
+  color: var(--color-ios-system-red-light);
+}
+
+html[data-theme="dark"] .error-icon {
+  color: var(--color-ios-system-red-dark);
+}
+
+.error-message {
+  margin: 0;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .error-message {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.retry-button {
+  padding: 8px 16px;
+  background-color: var(--color-ios-interactive-light);
+  color: var(--color-ios-bg-primary-light);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: pointer;
+  transition: opacity 0.2s ease-out;
+}
+
+.retry-button:hover {
+  opacity: 0.8;
+}
+
+html[data-theme="dark"] .retry-button {
+  background-color: var(--color-ios-interactive-dark);
+  color: var(--color-ios-bg-primary-dark);
+}
+
+/* === 🍎 CONTROLS: Progressive Disclosure === */
+
+.pdf-viewer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 12px 16px;
+  background-color: var(--color-ios-bg-primary-light);
+  border-top: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .pdf-viewer-controls {
+  background-color: var(--color-ios-bg-primary-dark);
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+.controls-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === 🍎 CONTROL BUTTONS: Apple Style === */
+
+.control-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--color-ios-interactive-light);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.control-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-ios-separator-light);
+  opacity: 1;
+}
+
+.control-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.control-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+html[data-theme="dark"] .control-button {
+  color: var(--color-ios-interactive-dark);
+}
+
+html[data-theme="dark"] .control-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* === 🍎 PRIMARY BUTTON: Accent Style === */
+
+.control-button--primary {
+  background-color: var(--color-ios-interactive-light);
+  color: var(--color-ios-bg-primary-light);
+  opacity: 1;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 4px;
+  padding: 5px 10px;
+}
+
+.control-button--primary span[aria-hidden] {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.control-button--primary:hover {
+  background-color: var(--color-ios-interactive-light);
+  opacity: 0.8;
+  border-color: transparent;
+}
+
+html[data-theme="dark"] .control-button--primary {
+  background-color: var(--color-ios-interactive-dark);
+  color: var(--color-ios-bg-primary-dark);
+}
+
+html[data-theme="dark"] .control-button--primary:hover {
+  background-color: var(--color-ios-interactive-dark);
+}
+
+/* === 🍎 INFO TEXT: Subtle Typography === */
+
+.page-info,
+.zoom-info {
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .page-info,
+html[data-theme="dark"] .zoom-info {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 SCROLLBAR: Apple Style === */
+
+.pdf-viewer-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pdf-viewer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pdf-viewer-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .pdf-viewer-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+.pdf-viewer-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-light);
+}
+
+html[data-theme="dark"] .pdf-viewer-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-dark);
+}

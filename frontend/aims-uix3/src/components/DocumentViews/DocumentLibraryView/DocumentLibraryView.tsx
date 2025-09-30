@@ -73,7 +73,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 정렬 변경 핸들러
   const handleSortSelectChange = (value: string) => {
     const [sortBy, sortOrder] = value.split('_')
-    handleSortChange(sortBy, sortOrder as 'asc' | 'desc')
+    if (sortBy && sortOrder) {
+      handleSortChange(sortBy, sortOrder as 'asc' | 'desc')
+    }
   }
 
   // View가 열려있는 동안 주기적으로 데이터 새로고침 (3초마다)
