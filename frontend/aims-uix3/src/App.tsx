@@ -20,6 +20,7 @@ const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAl
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
+import DownloadHelper from './utils/downloadHelper'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -774,8 +775,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <PDFViewer
                 file={selectedDocument.fileUrl}
                 onDownload={() => {
-                  // TODO: 다운로드 구현
-                  console.log('다운로드:', selectedDocument.upload.originalName)
+                  DownloadHelper.downloadDocument(selectedDocument)
                 }}
               />
             </Suspense>
