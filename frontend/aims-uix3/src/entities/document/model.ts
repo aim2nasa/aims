@@ -319,16 +319,20 @@ export const DocumentUtils = {
   },
 
   /**
-   * 업로드 날짜 포맷팅
+   * 업로드 날짜 포맷팅 (시분초 포함)
    */
   formatUploadDate: (date?: string): string => {
     if (!date) return '-';
 
     const uploadDate = new Date(date);
-    return uploadDate.toLocaleDateString('ko-KR', {
+    return uploadDate.toLocaleString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     });
   },
 
