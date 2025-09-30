@@ -266,6 +266,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const closeDocumentView = useCallback(() => {
     setActiveDocumentView(null)
   }, [])
+
+  // 문서 클릭 핸들러 - RightPane 열기
+  const handleDocumentClick = useCallback((documentId: string) => {
+    console.log('[App] 문서 클릭:', documentId)
+    // RightPane이 숨겨져 있으면 표시
+    if (!rightPaneVisible) {
+      setRightPaneVisible(true)
+    }
+    // TODO: RightPane에 문서 상세 정보 표시
+  }, [rightPaneVisible])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -533,6 +543,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <DocumentLibraryView
               visible={activeDocumentView === 'documents-library'}
               onClose={closeDocumentView}
+              onDocumentClick={handleDocumentClick}
             />
           </Suspense>
 

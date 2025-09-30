@@ -19,6 +19,8 @@ interface DocumentLibraryViewProps {
   visible: boolean
   /** View 닫기 핸들러 */
   onClose: () => void
+  /** 문서 클릭 핸들러 */
+  onDocumentClick?: (documentId: string) => void
 }
 
 /**
@@ -38,7 +40,8 @@ interface DocumentLibraryViewProps {
  */
 export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
-  onClose
+  onClose,
+  onDocumentClick
 }) => {
   const {
     documents,
@@ -208,7 +211,19 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
           ) : (
             documents.map((document) => (
-              <div key={document._id} className="document-item">
+              <div
+                key={document._id}
+                className="document-item"
+                onClick={() => onDocumentClick?.(document._id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onDocumentClick?.(document._id);
+                  }
+                }}
+              >
                 {/* 🍎 ICON: File type indicator with color class */}
                 <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
                   <SFSymbol
