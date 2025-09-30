@@ -49,10 +49,26 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     isEmpty,
     currentPage,
     totalPages,
+    loadDocuments,
     handleSearchChange,
     handlePageChange,
     clearError,
   } = useDocumentsController()
+
+  // View가 열려있는 동안 주기적으로 데이터 새로고침 (3초마다)
+  React.useEffect(() => {
+    if (!visible) return
+
+    // 즉시 로드
+    loadDocuments()
+
+    // 3초마다 자동 새로고침
+    const intervalId = setInterval(() => {
+      loadDocuments()
+    }, 3000)
+
+    return () => clearInterval(intervalId)
+  }, [visible, loadDocuments])
 
   return (
     <CenterPaneView
