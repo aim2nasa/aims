@@ -66,9 +66,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.activeDocumentView
   )
 
-  // DocumentRegistrationView 활성 시 PaginationPane 및 RightPane 숨김
+  // DocumentRegistrationView, DocumentSearchView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
-    if (activeDocumentView === 'documents-register') {
+    if (activeDocumentView === 'documents-register' || activeDocumentView === 'documents-search') {
       setPaginationVisible(false)
       setRightPaneVisible(false)
     } else {
