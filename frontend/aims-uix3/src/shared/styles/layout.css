@@ -361,19 +361,19 @@ html[data-theme="dark"] .layout-brb:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--color-ios-bg-secondary-light);
-  border: 1px solid var(--color-ios-separator-light);
+  border: 2px solid var(--color-ios-separator-light);
   border-radius: 50%;
-  font-size: 14px;
+  font-size: 18px;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.5;
   transition: all 0.2s ease-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 html[data-theme="dark"] .layout-brb-reset {
@@ -384,6 +384,8 @@ html[data-theme="dark"] .layout-brb-reset {
 
 .layout-brb:hover .layout-brb-reset {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .layout-brb-reset:hover {
