@@ -179,7 +179,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
                   <SFSymbol
                     name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
-                    size={SFSymbolSize.BODY}
+                    size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.REGULAR}
                     decorative={true}
                   />
@@ -190,38 +190,22 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   <div className="document-name" title={DocumentUtils.getDisplayName(document)}>
                     {DocumentUtils.getDisplayName(document)}
                   </div>
-                  <div className="document-meta">
-                    <span className="document-size">
-                      {DocumentUtils.formatFileSize(document.size)}
-                    </span>
-                    <span className="document-separator">•</span>
-                    <span className="document-date">
-                      {DocumentUtils.formatUploadDate(document.uploadDate)}
-                    </span>
-                    {document.mimeType && (
-                      <>
-                        <span className="document-separator">•</span>
-                        <span className="document-type">
-                          {DocumentUtils.getFileExtension(document.mimeType)}
-                        </span>
-                      </>
-                    )}
-                  </div>
                 </div>
 
-                {/* 🍎 STATUS: OCR completion badge */}
-                {document.ocrStatus === 'completed' && (
-                  <div className="document-badge">
-                    <SFSymbol
-                      name="checkmark.circle.fill"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.REGULAR}
-                      className="badge-icon"
-                      decorative={true}
-                    />
-                    <span>OCR 완료</span>
-                  </div>
-                )}
+                {/* 🍎 SIZE: Fixed width column */}
+                <span className="document-size">
+                  {DocumentUtils.formatFileSize(document.size)}
+                </span>
+
+                {/* 🍎 DATE: Fixed width column */}
+                <span className="document-date">
+                  {DocumentUtils.formatUploadDate(document.uploadDate)}
+                </span>
+
+                {/* 🍎 TYPE: Fixed width column */}
+                <span className="document-type">
+                  {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
+                </span>
               </div>
             ))
           )}
