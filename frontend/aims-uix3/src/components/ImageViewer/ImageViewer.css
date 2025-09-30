@@ -1,0 +1,339 @@
+/**
+ * ImageViewer Styles
+ * @since 1.0.0
+ *
+ * Apple 디자인 철학 준수:
+ * - Progressive Disclosure: 컨트롤은 필요시에만 강조
+ * - Clarity: 명확한 정보 계층
+ * - Depth: 자연스러운 깊이감
+ */
+
+/* === 🍎 IMAGE VIEWER CONTAINER === */
+
+.image-viewer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-ios-bg-secondary-light);
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .image-viewer-container {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+/* === 🍎 IMAGE CONTENT AREA === */
+
+.image-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  padding: 16px;
+  position: relative;
+}
+
+.image-wrapper {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--color-ios-bg-primary-light);
+  transition: opacity 0.3s ease-out;
+}
+
+html[data-theme="dark"] .image-wrapper {
+  border-color: var(--color-ios-separator-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: var(--color-ios-bg-primary-dark);
+}
+
+.image-hidden {
+  opacity: 0;
+}
+
+.image-visible {
+  opacity: 1;
+}
+
+.preview-image {
+  display: block;
+  max-height: calc(100vh - 200px);
+  height: auto;
+  width: auto;
+  transition: transform 0.2s ease-out;
+  transform-origin: center center;
+}
+
+/* === 🍎 LOADING STATE === */
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-ios-separator-light);
+  border-top-color: var(--color-ios-interactive-light);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--color-ios-separator-dark);
+  border-top-color: var(--color-ios-interactive-dark);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin: 0;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .loading-text {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 ERROR STATE === */
+
+.image-viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  padding: 40px 20px;
+  background-color: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .image-viewer-error {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 32px;
+  color: var(--color-ios-system-red-light);
+}
+
+html[data-theme="dark"] .error-icon {
+  color: var(--color-ios-system-red-dark);
+}
+
+.error-title {
+  margin: 0;
+  color: var(--color-ios-text-primary-light);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .error-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.error-message {
+  margin: 0;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .error-message {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 CONTROLS: Progressive Disclosure === */
+
+.controls-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 16px;
+  background-color: var(--color-ios-bg-primary-light);
+  border-top: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .controls-container {
+  background-color: var(--color-ios-bg-primary-dark);
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+.controls-spacer {
+  flex: 1;
+}
+
+/* === 🍎 ZOOM CONTROLS === */
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-text {
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .zoom-text {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 CONTROL BUTTONS: Apple Style === */
+
+.control-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--color-ios-interactive-light);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.control-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-ios-separator-light);
+  opacity: 1;
+}
+
+.control-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.control-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+html[data-theme="dark"] .control-button {
+  color: var(--color-ios-interactive-dark);
+}
+
+html[data-theme="dark"] .control-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* === 🍎 GHOST BUTTON VARIANT === */
+
+.control-button--ghost {
+  /* 기본 control-button 스타일 유지 */
+}
+
+/* === 🍎 PRIMARY BUTTON: Accent Style === */
+
+/* Light Mode - 어두운 파란색 */
+.control-button--primary {
+  background-color: var(--color-primary-600);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  transition: background-color 0.15s ease-out;
+}
+
+.control-button--primary span[aria-hidden] {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.control-button.control-button--primary:hover {
+  background-color: var(--color-primary-700);
+  color: white;
+}
+
+.control-button.control-button--primary:active {
+  background-color: var(--color-primary-800);
+  color: white;
+}
+
+/* Dark Mode - 밝은 파란색 */
+html[data-theme="dark"] .control-button--primary {
+  background-color: var(--color-primary-500);
+  color: white;
+}
+
+html[data-theme="dark"] .control-button.control-button--primary:hover {
+  background-color: var(--color-primary-400);
+  color: white;
+}
+
+html[data-theme="dark"] .control-button.control-button--primary:active {
+  background-color: var(--color-primary-300);
+  color: white;
+}
+
+/* === 🍎 SCROLLBAR: Apple Style === */
+
+.image-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.image-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.image-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .image-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+.image-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-light);
+}
+
+html[data-theme="dark"] .image-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-dark);
+}

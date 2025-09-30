@@ -20,6 +20,7 @@ const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAl
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
+const ImageViewer = lazy(() => import('./components/ImageViewer'))
 import DownloadHelper from './utils/downloadHelper'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
@@ -772,12 +773,44 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           )}
           {rightPaneVisible && selectedDocument && (
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
-              <PDFViewer
-                file={selectedDocument.fileUrl}
-                onDownload={() => {
-                  DownloadHelper.downloadDocument(selectedDocument)
-                }}
-              />
+              {(() => {
+                const fileUrl = selectedDocument.fileUrl?.toLowerCase() || ''
+                const isPdf = fileUrl.endsWith('.pdf')
+                const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl)
+
+                if (isPdf) {
+                  return (
+                    <PDFViewer
+                      file={selectedDocument.fileUrl}
+                      onDownload={() => {
+                        DownloadHelper.downloadDocument(selectedDocument)
+                      }}
+                    />
+                  )
+                } else if (isImage) {
+                  return (
+                    <ImageViewer
+                      file={selectedDocument.fileUrl}
+                      onDownload={() => {
+                        DownloadHelper.downloadDocument(selectedDocument)
+                      }}
+                    />
+                  )
+                } else {
+                  return (
+                    <div style={{
+                      padding: 'var(--spacing-6)',
+                      color: 'var(--color-text-secondary)',
+                      textAlign: 'center'
+                    }}>
+                      <p>지원하지 않는 파일 형식입니다.</p>
+                      <p style={{ fontSize: '12px', marginTop: '8px' }}>
+                        PDF 또는 이미지 파일만 미리보기가 가능합니다.
+                      </p>
+                    </div>
+                  )
+                }
+              })()}
             </Suspense>
           )}
         </div>
