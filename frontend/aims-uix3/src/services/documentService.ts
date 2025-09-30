@@ -47,6 +47,9 @@ export class DocumentService {
     if (query.limit) params.append('limit', String(query.limit));
     if (query.offset !== undefined) params.append('offset', String(query.offset));
 
+    // 검색어 파라미터 추가 (백엔드 검색 기능 사용)
+    if (query.q) params.append('search', query.q);
+
     // sortBy 매핑: 프론트엔드 → 백엔드
     // uploadDate → time, filename → name, size → size
     if (query.sortBy) {
@@ -95,19 +98,11 @@ export class DocumentService {
       const total = pagination.totalCount || documents.length;
       const hasMore = pagination.hasNext || false;
 
-      // 검색어 필터링 (클라이언트 사이드)
-      let filtered = documents;
-      if (query.q) {
-        const searchTerm = query.q.toLowerCase();
-        filtered = documents.filter((doc: any) =>
-          doc.filename.toLowerCase().includes(searchTerm)
-        );
-      }
-
+      // 백엔드에서 검색이 완료된 결과를 그대로 사용
       return {
-        documents: filtered,
-        total: query.q ? filtered.length : total,
-        hasMore: query.q ? false : hasMore,
+        documents: documents,
+        total: total,
+        hasMore: hasMore,
         offset: query.offset || 0,
         limit: query.limit || 10,
       };
