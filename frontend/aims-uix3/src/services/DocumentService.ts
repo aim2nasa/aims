@@ -50,21 +50,22 @@ export class DocumentService {
     // 검색어 파라미터 추가 (백엔드 검색 기능 사용)
     if (query.q) params.append('search', query.q);
 
-    // sortBy 매핑: 프론트엔드 → 백엔드
-    // uploadDate → time, filename → name, size → size
-    if (query.sortBy) {
+    // 백엔드는 'sort' 파라미터를 조합 형식으로 받음
+    // 예: 'uploadTime_desc', 'filename_asc', 'size_desc'
+    if (query.sortBy && query.sortOrder) {
       const sortByMap: Record<string, string> = {
-        'uploadDate': 'time',
-        'filename': 'name',
+        'time': 'uploadTime',
+        'name': 'filename',
         'size': 'size',
-        'createdAt': 'time',
-        'updatedAt': 'time',
+        'uploadDate': 'uploadTime',
+        'filename': 'filename',
+        'createdAt': 'uploadTime',
+        'updatedAt': 'uploadTime',
       };
-      const backendSortBy = sortByMap[query.sortBy] || 'time';
-      params.append('sortBy', backendSortBy);
+      const backendSortBy = sortByMap[query.sortBy] || 'uploadTime';
+      const sortValue = `${backendSortBy}_${query.sortOrder}`;
+      params.append('sort', sortValue);
     }
-
-    if (query.sortOrder) params.append('sortOrder', query.sortOrder);
 
     const url = params.toString() ? `${ENDPOINTS.DOCUMENTS}?${params.toString()}` : ENDPOINTS.DOCUMENTS;
     const response = await api.get<any>(url);

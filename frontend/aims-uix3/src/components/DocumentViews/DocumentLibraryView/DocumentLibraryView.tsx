@@ -54,10 +54,24 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     itemsPerPage,
     loadDocuments,
     handleSearchChange,
+    handleSortChange,
     handlePageChange,
     handleLimitChange,
     clearError,
   } = useDocumentsController()
+
+  // 현재 정렬 상태
+  const currentSortBy = searchParams.sortBy || 'time'
+  const currentSortOrder = searchParams.sortOrder || 'desc'
+
+  // 정렬 옵션을 결합한 값
+  const sortValue = `${currentSortBy}_${currentSortOrder}`
+
+  // 정렬 변경 핸들러
+  const handleSortSelectChange = (value: string) => {
+    const [sortBy, sortOrder] = value.split('_')
+    handleSortChange(sortBy, sortOrder as 'asc' | 'desc')
+  }
 
   // View가 열려있는 동안 주기적으로 데이터 새로고침 (3초마다)
   // Silent refresh: 초기 로딩 후에는 백그라운드에서 조용히 업데이트
@@ -152,6 +166,23 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         {!isLoading && !isEmpty && (
           <div className="document-library-result-header">
             <span className="result-count">{searchResultMessage}</span>
+
+            {/* 🍎 정렬 드롭다운 */}
+            <div className="sort-selector">
+              <select
+                className="sort-select"
+                value={sortValue}
+                onChange={(e) => handleSortSelectChange(e.target.value)}
+                aria-label="정렬 기준 선택"
+              >
+                <option value="time_desc">최신순</option>
+                <option value="time_asc">오래된순</option>
+                <option value="name_asc">이름순 (가나다)</option>
+                <option value="name_desc">이름순 (하파타)</option>
+                <option value="size_desc">크기순 (큰 것부터)</option>
+                <option value="size_asc">크기순 (작은 것부터)</option>
+              </select>
+            </div>
           </div>
         )}
 

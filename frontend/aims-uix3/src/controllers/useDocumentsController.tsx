@@ -29,7 +29,7 @@ export const useDocumentsController = () => {
   const [searchParams, setSearchParams] = useState<Partial<DocumentSearchQuery>>({
     limit: 10,
     offset: 0,
-    sortBy: 'uploadDate',
+    sortBy: 'time',
     sortOrder: 'desc',
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,6 +132,24 @@ export const useDocumentsController = () => {
   }, [searchParams, loadDocuments]);
 
   /**
+   * 정렬 기준 변경 핸들러
+   */
+  const handleSortChange = useCallback((newSortBy: string, newSortOrder: 'asc' | 'desc') => {
+    setSearchParams(prev => {
+      const newParams = {
+        ...prev,
+        sortBy: newSortBy,
+        sortOrder: newSortOrder,
+        offset: 0
+      };
+      // 비동기로 loadDocuments 호출
+      setTimeout(() => loadDocuments(newParams), 0);
+      return newParams;
+    });
+    setCurrentPage(1);
+  }, [loadDocuments]);
+
+  /**
    * 문서 삭제
    */
   const deleteDocument = useCallback(async (id: string) => {
@@ -202,6 +220,7 @@ export const useDocumentsController = () => {
     deleteDocument,
     handleSearchChange,
     handleSearch,
+    handleSortChange,
     handlePageChange,
     handleLimitChange,
     clearError,
