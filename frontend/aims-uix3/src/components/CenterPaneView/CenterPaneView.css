@@ -54,7 +54,7 @@ html[data-theme="dark"] .center-pane-view__header {
 /* 제목 스타일 - 애플 정제된 타이포그래피 */
 .center-pane-view__title {
   margin: 0;
-  font-size: var(--font-size-subheadline); /* 15px - 애플 스타일 서브틀한 크기 */
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote (CustomMenu와 동일) */
   font-weight: var(--font-weight-medium); /* medium - 애플 스타일 가벼운 두께 */
   color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
   font-family: var(--font-family-display);

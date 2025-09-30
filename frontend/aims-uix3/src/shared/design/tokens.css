@@ -293,6 +293,134 @@
   --color-ios-system-gray4-alpha: rgba(60, 60, 67, 0.08);
   --color-ios-system-gray5-alpha: rgba(84, 84, 88, 0.6);
 
+  /* === iOS SYSTEM COLORS - Document Search View === */
+
+  /* Text Colors */
+  --color-ios-text-primary-light: rgba(0, 0, 0, 0.85);
+  --color-ios-text-primary-dark: rgba(255, 255, 255, 0.85);
+  --color-ios-text-secondary-light: rgba(0, 0, 0, 0.5);
+  --color-ios-text-secondary-dark: rgba(255, 255, 255, 0.5);
+  --color-ios-text-tertiary-light: rgba(0, 0, 0, 0.45);
+  --color-ios-text-tertiary-dark: rgba(255, 255, 255, 0.45);
+  --color-ios-text-quaternary-light: rgba(0, 0, 0, 0.4);
+  --color-ios-text-quaternary-dark: rgba(255, 255, 255, 0.4);
+  --color-ios-text-placeholder-light: rgba(0, 0, 0, 0.3);
+  --color-ios-text-placeholder-dark: rgba(255, 255, 255, 0.3);
+
+  /* Background Colors */
+  --color-ios-bg-primary-light: rgba(255, 255, 255, 0.3);
+  --color-ios-bg-primary-dark: rgba(255, 255, 255, 0.02);
+  --color-ios-bg-secondary-light: rgba(0, 0, 0, 0.04);
+  --color-ios-bg-secondary-dark: rgba(255, 255, 255, 0.06);
+  --color-ios-bg-tertiary-light: rgba(0, 0, 0, 0.06);
+  --color-ios-bg-tertiary-dark: rgba(255, 255, 255, 0.08);
+  --color-ios-bg-hover-light: rgba(0, 0, 0, 0.03);
+  --color-ios-bg-hover-dark: rgba(255, 255, 255, 0.05);
+
+  /* Interactive Colors */
+  --color-ios-interactive-light: rgba(0, 0, 0, 0.6);
+  --color-ios-interactive-dark: rgba(255, 255, 255, 0.6);
+
+  /* Separator Colors */
+  --color-ios-separator-light: rgba(0, 0, 0, 0.25);
+  --color-ios-separator-dark: rgba(255, 255, 255, 0.25);
+  --color-ios-separator-subtle-light: rgba(0, 0, 0, 0.03);
+  --color-ios-separator-subtle-dark: rgba(255, 255, 255, 0.03);
+
+  /* Error Colors */
+  --color-ios-error-bg-light: rgba(255, 69, 58, 0.06);
+  --color-ios-error-bg-dark: rgba(255, 69, 58, 0.08);
+  --color-ios-error-border-light: rgba(255, 69, 58, 0.5);
+  --color-ios-error-border-dark: rgba(255, 69, 58, 0.5);
+  --color-ios-error-text-light: rgba(255, 69, 58, 0.9);
+  --color-ios-error-text-dark: rgba(255, 69, 58, 0.9);
+  --color-ios-error-button-light: rgba(255, 69, 58, 0.7);
+  --color-ios-error-button-dark: rgba(255, 69, 58, 0.7);
+  --color-ios-error-button-bg-light: rgba(255, 69, 58, 0.1);
+  --color-ios-error-button-bg-dark: rgba(255, 69, 58, 0.1);
+
+  /* Loading Spinner Colors */
+  --color-ios-spinner-track-light: rgba(0, 0, 0, 0.08);
+  --color-ios-spinner-track-dark: rgba(255, 255, 255, 0.08);
+  --color-ios-spinner-fill-light: rgba(0, 122, 255, 0.8);
+  --color-ios-spinner-fill-dark: rgba(100, 170, 255, 0.8);
+
+  /* Empty State Colors */
+  --color-ios-empty-light: rgba(0, 0, 0, 0.3);
+  --color-ios-empty-dark: rgba(255, 255, 255, 0.3);
+
+  /* Scrollbar Colors */
+  --color-ios-scrollbar-light: rgba(0, 0, 0, 0.15);
+  --color-ios-scrollbar-dark: rgba(255, 255, 255, 0.15);
+  --color-ios-scrollbar-hover-light: rgba(0, 0, 0, 0.25);
+  --color-ios-scrollbar-hover-dark: rgba(255, 255, 255, 0.25);
+
+  /* File Type Icon Colors - Light Theme */
+  --color-file-pdf-light: rgba(255, 59, 48, 0.85);
+  --color-file-image-light: rgba(0, 122, 255, 0.85);
+  --color-file-video-light: rgba(175, 82, 222, 0.85);
+  --color-file-audio-light: rgba(255, 45, 85, 0.85);
+  --color-file-archive-light: rgba(255, 149, 0, 0.85);
+  --color-file-word-light: rgba(0, 122, 255, 0.85);
+  --color-file-excel-light: rgba(52, 199, 89, 0.85);
+  --color-file-powerpoint-light: rgba(255, 149, 0, 0.85);
+  --color-file-code-light: rgba(88, 86, 214, 0.85);
+  --color-file-text-light: rgba(142, 142, 147, 0.85);
+  --color-file-executable-light: rgba(99, 99, 102, 0.85);
+  --color-file-default-light: rgba(0, 0, 0, 0.5);
+
+  /* File Type Icon Colors - Dark Theme */
+  --color-file-pdf-dark: rgba(255, 69, 58, 0.9);
+  --color-file-image-dark: rgba(100, 170, 255, 0.9);
+  --color-file-video-dark: rgba(191, 90, 242, 0.9);
+  --color-file-audio-dark: rgba(255, 55, 95, 0.9);
+  --color-file-archive-dark: rgba(255, 159, 10, 0.9);
+  --color-file-word-dark: rgba(100, 170, 255, 0.9);
+  --color-file-excel-dark: rgba(52, 199, 89, 0.9);
+  --color-file-powerpoint-dark: rgba(255, 159, 10, 0.9);
+  --color-file-code-dark: rgba(94, 92, 230, 0.9);
+  --color-file-text-dark: rgba(174, 174, 178, 0.9);
+  --color-file-executable-dark: rgba(142, 142, 147, 0.9);
+  --color-file-default-dark: rgba(255, 255, 255, 0.5);
+
+  /* File Type Icon Hover Colors - Light Theme */
+  --color-file-pdf-hover-light: rgba(255, 59, 48, 1);
+  --color-file-image-hover-light: rgba(0, 122, 255, 1);
+  --color-file-video-hover-light: rgba(175, 82, 222, 1);
+  --color-file-audio-hover-light: rgba(255, 45, 85, 1);
+  --color-file-archive-hover-light: rgba(255, 149, 0, 1);
+  --color-file-word-hover-light: rgba(0, 122, 255, 1);
+  --color-file-excel-hover-light: rgba(52, 199, 89, 1);
+  --color-file-powerpoint-hover-light: rgba(255, 149, 0, 1);
+  --color-file-code-hover-light: rgba(88, 86, 214, 1);
+  --color-file-text-hover-light: rgba(142, 142, 147, 1);
+  --color-file-executable-hover-light: rgba(99, 99, 102, 1);
+  --color-file-default-hover-light: rgba(0, 0, 0, 0.7);
+
+  /* File Type Icon Hover Colors - Dark Theme */
+  --color-file-pdf-hover-dark: rgba(255, 69, 58, 1);
+  --color-file-image-hover-dark: rgba(100, 170, 255, 1);
+  --color-file-video-hover-dark: rgba(191, 90, 242, 1);
+  --color-file-audio-hover-dark: rgba(255, 55, 95, 1);
+  --color-file-archive-hover-dark: rgba(255, 159, 10, 1);
+  --color-file-word-hover-dark: rgba(100, 170, 255, 1);
+  --color-file-excel-hover-dark: rgba(52, 199, 89, 1);
+  --color-file-powerpoint-hover-dark: rgba(255, 159, 10, 1);
+  --color-file-code-hover-dark: rgba(94, 92, 230, 1);
+  --color-file-text-hover-dark: rgba(174, 174, 178, 1);
+  --color-file-executable-hover-dark: rgba(142, 142, 147, 1);
+  --color-file-default-hover-dark: rgba(255, 255, 255, 0.7);
+
+  /* Badge Colors */
+  --color-badge-success-bg-light: rgba(52, 199, 89, 0.08);
+  --color-badge-success-bg-dark: rgba(52, 199, 89, 0.12);
+  --color-badge-success-text-light: rgba(52, 199, 89, 0.9);
+  --color-badge-success-text-dark: rgba(52, 199, 89, 1);
+
+  /* Focus Colors */
+  --color-ios-focus-light: rgba(0, 122, 255, 0.8);
+  --color-ios-focus-dark: rgba(100, 170, 255, 0.8);
+
   /* === Z-INDEX SYSTEM === */
 
   /* 기본 레이어링 시스템 - iOS/macOS 표준 */

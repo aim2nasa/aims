@@ -1,0 +1,444 @@
+/**
+ * AIMS UIX-3 Document Entity Model
+ * @since 2025-09-30
+ * @version 1.0.0
+ *
+ * 문서 엔티티의 타입 정의 및 검증 스키마
+ * Zod를 사용한 런타임 타입 검증
+ */
+
+import { z } from 'zod';
+
+/**
+ * 문서 기본 정보 스키마
+ */
+export const DocumentSchema = z.object({
+  _id: z.string(),
+  filename: z.string().min(1, '파일명은 필수입니다'),
+  originalName: z.string().optional(),
+  mimeType: z.string().optional(),
+  size: z.number().optional(),
+  path: z.string().optional(),
+  uploadDate: z.string().datetime().optional(),
+
+  // 문서 메타데이터
+  category: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  description: z.string().optional(),
+
+  // OCR 및 분석 결과
+  ocrText: z.string().optional(),
+  ocrStatus: z.enum(['pending', 'processing', 'completed', 'failed']).default('pending'),
+
+  // 고객 연결 정보
+  customerId: z.string().optional(),
+  customerName: z.string().optional(),
+
+  // 상태 정보
+  status: z.enum(['active', 'archived', 'deleted']).default('active'),
+
+  // 메타데이터
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+/**
+ * 문서 생성 요청 스키마
+ */
+export const CreateDocumentSchema = DocumentSchema.omit({
+  _id: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial({
+  tags: true,
+  status: true,
+  ocrStatus: true,
+});
+
+/**
+ * 문서 업데이트 요청 스키마
+ */
+export const UpdateDocumentSchema = CreateDocumentSchema.partial({
+  filename: true,
+});
+
+/**
+ * 문서 검색 쿼리 스키마
+ */
+export const DocumentSearchQuerySchema = z.object({
+  q: z.string().optional(), // 검색어 (파일명, OCR 텍스트 등)
+  category: z.string().optional(), // 카테고리 필터
+  tags: z.array(z.string()).optional(), // 태그 필터
+  customerId: z.string().optional(), // 고객 ID 필터
+  status: z.enum(['active', 'archived', 'deleted']).optional(), // 상태 필터
+  ocrStatus: z.enum(['pending', 'processing', 'completed', 'failed']).optional(), // OCR 상태 필터
+  mimeType: z.string().optional(), // MIME 타입 필터
+  limit: z.number().min(1).max(100).default(20),
+  offset: z.number().min(0).default(0),
+  sortBy: z.enum(['filename', 'uploadDate', 'size', 'createdAt', 'updatedAt']).default('uploadDate'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+/**
+ * 문서 검색 응답 스키마
+ */
+export const DocumentSearchResponseSchema = z.object({
+  documents: z.array(DocumentSchema),
+  total: z.number(),
+  hasMore: z.boolean(),
+  offset: z.number(),
+  limit: z.number(),
+});
+
+/**
+ * TypeScript 타입 추출
+ */
+export type Document = z.infer<typeof DocumentSchema>;
+export type CreateDocumentData = z.infer<typeof CreateDocumentSchema>;
+export type UpdateDocumentData = z.infer<typeof UpdateDocumentSchema>;
+export type DocumentSearchQuery = z.infer<typeof DocumentSearchQuerySchema>;
+export type DocumentSearchResponse = z.infer<typeof DocumentSearchResponseSchema>;
+
+/**
+ * 문서 유틸리티
+ */
+export const DocumentUtils = {
+  /**
+   * 문서 표시용 이름 반환
+   */
+  getDisplayName: (document: Document): string => {
+    return document.originalName || document.filename || '이름 없음';
+  },
+
+  /**
+   * 파일 크기를 사람이 읽기 쉬운 형식으로 변환
+   */
+  formatFileSize: (bytes?: number): string => {
+    if (!bytes || bytes === 0) return '0 B';
+
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  },
+
+  /**
+   * MIME 타입에서 파일 확장자 추출
+   */
+  getFileExtension: (mimeType?: string): string => {
+    if (!mimeType) return '';
+
+    const mimeMap: Record<string, string> = {
+      'application/pdf': 'PDF',
+      'image/jpeg': 'JPG',
+      'image/jpg': 'JPG',
+      'image/png': 'PNG',
+      'image/gif': 'GIF',
+      'application/msword': 'DOC',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+      'application/vnd.ms-excel': 'XLS',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+      'text/plain': 'TXT',
+      'text/csv': 'CSV',
+    };
+
+    return mimeMap[mimeType] || mimeType.split('/')[1]?.toUpperCase() || '';
+  },
+
+  /**
+   * 파일 아이콘 타입 반환 (SF Symbol 이름)
+   * 🍎 COMPREHENSIVE FILE ICONS: iOS-style system icons
+   */
+  getFileIcon: (mimeType?: string, filename?: string): string => {
+    if (!mimeType && !filename) return 'doc';
+
+    const mime = (mimeType || '').toLowerCase();
+    const extension = filename?.split('.').pop()?.toLowerCase() || '';
+
+    // 🍎 PDF: Dedicated PDF icon
+    if (mime.includes('pdf') || extension === 'pdf') {
+      return 'doc.richtext';
+    }
+
+    // 🍎 IMAGES: Photo gallery icon
+    if (mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension)) {
+      return 'photo';
+    }
+
+    // 🍎 VIDEOS: Video camera icon
+    if (mime.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp'].includes(extension)) {
+      return 'video';
+    }
+
+    // 🍎 AUDIO: Music note icon
+    if (mime.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'].includes(extension)) {
+      return 'music.note';
+    }
+
+    // 🍎 ARCHIVES: Folder icon
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'dmg', 'iso'].includes(extension)) {
+      return 'archivebox';
+    }
+
+    // 🍎 OFFICE DOCUMENTS: Specific icons
+    if (['doc', 'docx', 'hwp'].includes(extension) || mime.includes('msword')) {
+      return 'doc.plaintext';
+    }
+
+    if (['xls', 'xlsx'].includes(extension) || mime.includes('sheet')) {
+      return 'tablecells';
+    }
+
+    if (['ppt', 'pptx'].includes(extension) || mime.includes('presentation')) {
+      return 'play.rectangle';
+    }
+
+    // 🍎 CODE FILES: Terminal icon
+    if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'less', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'dart'].includes(extension)) {
+      return 'chevron.left.forwardslash.chevron.right';
+    }
+
+    // 🍎 TEXT FILES: Document icon
+    if (mime.includes('text') || ['txt', 'md', 'rtf', 'log', 'csv'].includes(extension)) {
+      return 'doc.plaintext';
+    }
+
+    // 🍎 EXECUTABLE: Gear icon
+    if (['exe', 'msi', 'deb', 'rpm', 'pkg', 'dmg', 'app'].includes(extension)) {
+      return 'gearshape';
+    }
+
+    // 🍎 DEFAULT: Generic document
+    return 'doc';
+  },
+
+  /**
+   * 파일 타입 CSS 클래스 반환
+   * 🍎 FILE TYPE CSS CLASS: Apple-style color categorization
+   */
+  getFileTypeClass: (mimeType?: string, filename?: string): string => {
+    if (!mimeType && !filename) return 'file-icon--default';
+
+    const mime = (mimeType || '').toLowerCase();
+    const extension = filename?.split('.').pop()?.toLowerCase() || '';
+
+    // 🍎 PDF: Red theme
+    if (mime.includes('pdf') || extension === 'pdf') {
+      return 'file-icon--pdf';
+    }
+
+    // 🍎 IMAGES: Blue theme
+    if (mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(extension)) {
+      return 'file-icon--image';
+    }
+
+    // 🍎 VIDEOS: Purple theme
+    if (mime.startsWith('video/') || ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp'].includes(extension)) {
+      return 'file-icon--video';
+    }
+
+    // 🍎 AUDIO: Pink theme
+    if (mime.startsWith('audio/') || ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'].includes(extension)) {
+      return 'file-icon--audio';
+    }
+
+    // 🍎 ARCHIVES: Orange theme
+    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'cab', 'dmg', 'iso'].includes(extension)) {
+      return 'file-icon--archive';
+    }
+
+    // 🍎 WORD DOCUMENTS: Blue theme
+    if (['doc', 'docx', 'hwp'].includes(extension) || mime.includes('msword')) {
+      return 'file-icon--word';
+    }
+
+    // 🍎 EXCEL DOCUMENTS: Green theme
+    if (['xls', 'xlsx'].includes(extension) || mime.includes('sheet')) {
+      return 'file-icon--excel';
+    }
+
+    // 🍎 POWERPOINT DOCUMENTS: Orange theme
+    if (['ppt', 'pptx'].includes(extension) || mime.includes('presentation')) {
+      return 'file-icon--powerpoint';
+    }
+
+    // 🍎 CODE FILES: Indigo theme
+    if (['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'less', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'dart'].includes(extension)) {
+      return 'file-icon--code';
+    }
+
+    // 🍎 TEXT FILES: Gray theme
+    if (mime.includes('text') || ['txt', 'md', 'rtf', 'log', 'csv'].includes(extension)) {
+      return 'file-icon--text';
+    }
+
+    // 🍎 EXECUTABLE: Dark theme
+    if (['exe', 'msi', 'deb', 'rpm', 'pkg', 'dmg', 'app'].includes(extension)) {
+      return 'file-icon--executable';
+    }
+
+    // 🍎 DEFAULT: Neutral theme
+    return 'file-icon--default';
+  },
+
+  /**
+   * OCR 상태 텍스트 반환
+   */
+  getOCRStatusText: (document: Document): string => {
+    switch (document.ocrStatus) {
+      case 'pending':
+        return '대기 중';
+      case 'processing':
+        return '처리 중';
+      case 'completed':
+        return '완료';
+      case 'failed':
+        return '실패';
+      default:
+        return '알 수 없음';
+    }
+  },
+
+  /**
+   * 문서 상태 텍스트 반환
+   */
+  getStatusText: (document: Document): string => {
+    switch (document.status) {
+      case 'active':
+        return '활성';
+      case 'archived':
+        return '보관됨';
+      case 'deleted':
+        return '삭제됨';
+      default:
+        return '알 수 없음';
+    }
+  },
+
+  /**
+   * 업로드 날짜 포맷팅
+   */
+  formatUploadDate: (date?: string): string => {
+    if (!date) return '-';
+
+    const uploadDate = new Date(date);
+    return uploadDate.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  },
+
+  /**
+   * 문서 데이터 검증
+   */
+  validate: (data: unknown): Document => {
+    return DocumentSchema.parse(data);
+  },
+
+  /**
+   * 문서 생성 데이터 검증
+   */
+  validateCreateData: (data: unknown): CreateDocumentData => {
+    return CreateDocumentSchema.parse(data);
+  },
+
+  /**
+   * 문서 업데이트 데이터 검증
+   */
+  validateUpdateData: (data: unknown): UpdateDocumentData => {
+    return UpdateDocumentSchema.parse(data);
+  },
+
+  /**
+   * 검색 쿼리 검증
+   */
+  validateSearchQuery: (query: unknown): DocumentSearchQuery => {
+    return DocumentSearchQuerySchema.parse(query);
+  },
+
+  /**
+   * 검색 응답 검증
+   */
+  validateSearchResponse: (response: unknown): DocumentSearchResponse => {
+    return DocumentSearchResponseSchema.parse(response);
+  },
+
+  /**
+   * 파일명으로 정렬하는 비교 함수
+   */
+  sortByFilename: (a: Document, b: Document): number => {
+    return a.filename.localeCompare(b.filename, 'ko', { numeric: true });
+  },
+
+  /**
+   * 업로드 날짜로 정렬하는 비교 함수 (최신순)
+   */
+  sortByUploadDate: (a: Document, b: Document): number => {
+    const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
+    const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
+    return dateB - dateA;
+  },
+
+  /**
+   * 파일 크기로 정렬하는 비교 함수
+   */
+  sortBySize: (a: Document, b: Document): number => {
+    const sizeA = a.size || 0;
+    const sizeB = b.size || 0;
+    return sizeB - sizeA;
+  },
+};
+
+/**
+ * 문서 태그 관련 유틸리티
+ */
+export const DocumentTagUtils = {
+  /**
+   * 자주 사용되는 태그 목록
+   */
+  COMMON_TAGS: [
+    '보험청구서',
+    '진단서',
+    '처방전',
+    '영수증',
+    '계약서',
+    '신분증',
+    '주민등록등본',
+    '통장사본',
+    '기타서류',
+  ] as const,
+
+  /**
+   * 태그 추가
+   */
+  addTag: (document: Document, tag: string): Document => {
+    if (!document.tags.includes(tag)) {
+      return {
+        ...document,
+        tags: [...document.tags, tag],
+      };
+    }
+    return document;
+  },
+
+  /**
+   * 태그 제거
+   */
+  removeTag: (document: Document, tag: string): Document => {
+    return {
+      ...document,
+      tags: document.tags.filter(t => t !== tag),
+    };
+  },
+
+  /**
+   * 태그 토글
+   */
+  toggleTag: (document: Document, tag: string): Document => {
+    return document.tags.includes(tag)
+      ? DocumentTagUtils.removeTag(document, tag)
+      : DocumentTagUtils.addTag(document, tag);
+  },
+};

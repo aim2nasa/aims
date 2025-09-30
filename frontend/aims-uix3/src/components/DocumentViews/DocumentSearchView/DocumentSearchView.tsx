@@ -4,10 +4,15 @@
  *
  * 문서 검색 View 컴포넌트
  * BaseDocumentView를 확장하여 구현
+ * /api/documents API를 사용하여 문서 리스트 표시
  */
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { useDocumentsController } from '@/controllers/useDocumentsController'
+import { DocumentUtils } from '@/entities/document'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
   /** View 표시 여부 */
@@ -19,8 +24,9 @@ interface DocumentSearchViewProps {
 /**
  * DocumentSearchView React 컴포넌트
  *
- * 문서 검색 기능을 위한 View
+ * 문서 검색 및 리스트 표시 기능을 위한 View
  * 6px 마진으로 설정된 약간 넓은 간격 사용
+ * 애플 디자인 철학 준수 - 서브틀하고 깔끔한 인터페이스
  *
  * @example
  * ```tsx
@@ -34,6 +40,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
   onClose
 }) => {
+  const {
+    documents,
+    isLoading,
+    error,
+    searchQuery,
+    searchResultMessage,
+    isEmpty,
+    handleSearchChange,
+    clearError,
+  } = useDocumentsController()
+
   return (
     <CenterPaneView
       visible={visible}
@@ -44,7 +61,152 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       marginLeft={6}
       marginRight={6}
       className="document-search-view"
-    />
+    >
+      <div className="document-search-container">
+        {/* 검색 바 */}
+        <div className="document-search-bar">
+          <div className="search-input-wrapper">
+            <SFSymbol
+              name="magnifyingglass"
+              size={SFSymbolSize.BODY}
+              weight={SFSymbolWeight.REGULAR}
+              className="search-icon"
+              decorative={true}
+            />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="파일명 또는 내용 검색..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              aria-label="문서 검색"
+            />
+            {searchQuery && (
+              <button
+                className="search-clear-button"
+                onClick={() => handleSearchChange('')}
+                aria-label="검색어 지우기"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.BODY}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="document-search-error" role="alert">
+            <SFSymbol
+              name="exclamationmark.triangle.fill"
+              size={SFSymbolSize.BODY}
+              weight={SFSymbolWeight.REGULAR}
+              className="error-icon"
+              decorative={true}
+            />
+            <span>{error}</span>
+            <button
+              className="error-dismiss-button"
+              onClick={clearError}
+              aria-label="에러 메시지 닫기"
+            >
+              <SFSymbol
+                name="xmark"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+                decorative={true}
+              />
+            </button>
+          </div>
+        )}
+
+        {/* 검색 결과 헤더 */}
+        {!isLoading && !isEmpty && (
+          <div className="document-search-result-header">
+            <span className="result-count">{searchResultMessage}</span>
+          </div>
+        )}
+
+        {/* 문서 리스트 */}
+        <div className="document-list">
+          {isLoading ? (
+            <div className="document-list-loading">
+              <div className="loading-spinner" aria-label="로딩 중" />
+              <span>문서를 불러오는 중...</span>
+            </div>
+          ) : isEmpty ? (
+            <div className="document-list-empty">
+              <SFSymbol
+                name="doc.text"
+                size={SFSymbolSize.TITLE_1}
+                weight={SFSymbolWeight.ULTRALIGHT}
+                className="empty-icon"
+                decorative={true}
+              />
+              <p className="empty-message">
+                {searchQuery ? '검색 결과가 없습니다' : '등록된 문서가 없습니다'}
+              </p>
+            </div>
+          ) : (
+            documents.map((document) => (
+              <div key={document._id} className="document-item">
+                {/* 🍎 ICON: File type indicator with color class */}
+                <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
+                  <SFSymbol
+                    name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
+                    size={SFSymbolSize.BODY}
+                    weight={SFSymbolWeight.REGULAR}
+                    decorative={true}
+                  />
+                </div>
+
+                {/* 🍎 NAME: Primary information (flexible width) */}
+                <div className="document-info">
+                  <div className="document-name" title={DocumentUtils.getDisplayName(document)}>
+                    {DocumentUtils.getDisplayName(document)}
+                  </div>
+                  <div className="document-meta">
+                    <span className="document-size">
+                      {DocumentUtils.formatFileSize(document.size)}
+                    </span>
+                    <span className="document-separator">•</span>
+                    <span className="document-date">
+                      {DocumentUtils.formatUploadDate(document.uploadDate)}
+                    </span>
+                    {document.mimeType && (
+                      <>
+                        <span className="document-separator">•</span>
+                        <span className="document-type">
+                          {DocumentUtils.getFileExtension(document.mimeType)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* 🍎 STATUS: OCR completion badge */}
+                {document.ocrStatus === 'completed' && (
+                  <div className="document-badge">
+                    <SFSymbol
+                      name="checkmark.circle.fill"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.REGULAR}
+                      className="badge-icon"
+                      decorative={true}
+                    />
+                    <span>OCR 완료</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </CenterPaneView>
   )
 }
 
