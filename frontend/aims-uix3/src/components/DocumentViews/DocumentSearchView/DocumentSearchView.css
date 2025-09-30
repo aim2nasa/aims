@@ -659,7 +659,7 @@ html[data-theme="dark"] .document-item:focus-visible {
 .document-pagination {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 16px;
   padding: 16px 0;
   margin-top: 8px;
@@ -668,6 +668,85 @@ html[data-theme="dark"] .document-item:focus-visible {
 
 html[data-theme="dark"] .document-pagination {
   border-top-color: var(--color-ios-separator-subtle-dark);
+}
+
+/* 🍎 PAGINATION LIMIT - iOS Native Style (Progressive Disclosure) */
+.pagination-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-limit-select {
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-secondary-light);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 24px 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23999' d='M5 7L1.5 3.5h7z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px;
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .pagination-limit-select {
+  color: var(--color-ios-text-secondary-dark);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888' d='M5 7L1.5 3.5h7z'/%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+
+/* 🍎 Progressive Disclosure: Hover시에만 배경 표시 */
+.pagination-limit-select:hover {
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-ios-separator-light);
+  color: var(--color-ios-text-primary-light);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .pagination-limit-select:hover {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-primary-dark);
+  opacity: 1;
+}
+
+/* 🍎 Focus: Apple Blue Ring */
+.pagination-limit-select:focus {
+  outline: none;
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-ios-interactive-light);
+  color: var(--color-ios-text-primary-light);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .pagination-limit-select:focus {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-interactive-dark);
+  color: var(--color-ios-text-primary-dark);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+  opacity: 1;
+}
+
+/* 🍎 PAGINATION CONTROLS - Center group */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
+.pagination-spacer {
+  flex: 1;
 }
 
 /* 🍎 PAGINATION BUTTONS - Apple iOS Style */

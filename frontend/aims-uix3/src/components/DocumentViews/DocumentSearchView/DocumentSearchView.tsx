@@ -50,9 +50,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     isEmpty,
     currentPage,
     totalPages,
+    itemsPerPage,
     loadDocuments,
     handleSearchChange,
     handlePageChange,
+    handleLimitChange,
     clearError,
   } = useDocumentsController()
 
@@ -212,31 +214,54 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         </div>
 
         {/* 페이지네이션 */}
-        {!isLoading && !isEmpty && totalPages > 1 && (
+        {!isLoading && !isEmpty && (
           <div className="document-pagination">
-            <button
-              className="pagination-button pagination-button--prev"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              aria-label="이전 페이지"
-            >
-              <span className="pagination-arrow">‹</span>
-            </button>
-
-            <div className="pagination-info">
-              <span className="pagination-current">{currentPage}</span>
-              <span className="pagination-separator">/</span>
-              <span className="pagination-total">{totalPages}</span>
+            {/* 🍎 페이지당 항목 수 선택 */}
+            <div className="pagination-limit">
+              <select
+                className="pagination-limit-select"
+                value={itemsPerPage}
+                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                aria-label="페이지당 항목 수"
+              >
+                <option value={10}>10개씩</option>
+                <option value={20}>20개씩</option>
+                <option value={50}>50개씩</option>
+                <option value={100}>100개씩</option>
+              </select>
             </div>
 
-            <button
-              className="pagination-button pagination-button--next"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              aria-label="다음 페이지"
-            >
-              <span className="pagination-arrow">›</span>
-            </button>
+            {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button
+                  className="pagination-button pagination-button--prev"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  aria-label="이전 페이지"
+                >
+                  <span className="pagination-arrow">‹</span>
+                </button>
+
+                <div className="pagination-info">
+                  <span className="pagination-current">{currentPage}</span>
+                  <span className="pagination-separator">/</span>
+                  <span className="pagination-total">{totalPages}</span>
+                </div>
+
+                <button
+                  className="pagination-button pagination-button--next"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  aria-label="다음 페이지"
+                >
+                  <span className="pagination-arrow">›</span>
+                </button>
+              </div>
+            )}
+
+            {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
+            {totalPages <= 1 && <div className="pagination-spacer"></div>}
           </div>
         )}
       </div>

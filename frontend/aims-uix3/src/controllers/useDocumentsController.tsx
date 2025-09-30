@@ -112,6 +112,15 @@ export const useDocumentsController = () => {
   }, [searchParams.limit, loadDocuments]);
 
   /**
+   * 페이지당 항목 수 변경 핸들러
+   */
+  const handleLimitChange = useCallback((newLimit: number) => {
+    setSearchParams(prev => ({ ...prev, limit: newLimit, offset: 0 }));
+    setCurrentPage(1);
+    loadDocuments({ limit: newLimit, offset: 0 });
+  }, [loadDocuments]);
+
+  /**
    * 검색 실행
    */
   const handleSearch = useCallback(() => {
@@ -189,6 +198,7 @@ export const useDocumentsController = () => {
     handleSearchChange,
     handleSearch,
     handlePageChange,
+    handleLimitChange,
     clearError,
 
     // 계산된 값
