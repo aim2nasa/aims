@@ -144,10 +144,7 @@ export async function apiRequest<T = unknown>(
 
   // 요청 전 로그 (개발 환경에서만)
   if (import.meta.env.DEV) {
-    console.log(`API Request: ${requestOptions.method || 'GET'} ${url}`, {
-      headers: requestHeaders,
-      body: requestOptions.body,
-    });
+    console.log(`🌐 API Request: ${requestOptions.method || 'GET'} ${url}`);
   }
 
   let response: Response;
