@@ -29,7 +29,7 @@ export const useDocumentsController = () => {
   const [searchParams, setSearchParams] = useState<Partial<DocumentSearchQuery>>({
     limit: 10,
     offset: 0,
-    sortBy: 'time',
+    sortBy: 'uploadDate',
     sortOrder: 'desc',
   });
   const [currentPage, setCurrentPage] = useState(1);
