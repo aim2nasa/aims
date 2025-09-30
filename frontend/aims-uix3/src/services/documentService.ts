@@ -42,8 +42,29 @@ export class DocumentService {
   static async getDocuments(
     query: Partial<DocumentSearchQuery> = {}
   ): Promise<DocumentSearchResponse> {
-    // 백엔드는 쿼리 파라미터 없이 전체 목록 반환
-    const response = await api.get<any>(ENDPOINTS.DOCUMENTS);
+    // 백엔드 페이지네이션 파라미터 구성
+    const params = new URLSearchParams();
+    if (query.limit) params.append('limit', String(query.limit));
+    if (query.offset !== undefined) params.append('offset', String(query.offset));
+
+    // sortBy 매핑: 프론트엔드 → 백엔드
+    // uploadDate → time, filename → name, size → size
+    if (query.sortBy) {
+      const sortByMap: Record<string, string> = {
+        'uploadDate': 'time',
+        'filename': 'name',
+        'size': 'size',
+        'createdAt': 'time',
+        'updatedAt': 'time',
+      };
+      const backendSortBy = sortByMap[query.sortBy] || 'time';
+      params.append('sortBy', backendSortBy);
+    }
+
+    if (query.sortOrder) params.append('sortOrder', query.sortOrder);
+
+    const url = params.toString() ? `${ENDPOINTS.DOCUMENTS}?${params.toString()}` : ENDPOINTS.DOCUMENTS;
+    const response = await api.get<any>(url);
 
     // 백엔드 응답 구조: { success: true, data: { documents: [...] } }
     if (response.success && response.data && Array.isArray(response.data.documents)) {
@@ -69,35 +90,26 @@ export class DocumentService {
         };
       });
 
-      // 프론트엔드에서 필터링 및 정렬 적용
-      let filtered = documents;
+      // 백엔드 페이지네이션 정보 사용
+      const pagination = response.data.pagination || {};
+      const total = pagination.totalCount || documents.length;
+      const hasMore = pagination.hasNext || false;
 
-      // 검색어 필터링
+      // 검색어 필터링 (클라이언트 사이드)
+      let filtered = documents;
       if (query.q) {
         const searchTerm = query.q.toLowerCase();
-        filtered = filtered.filter((doc: any) =>
+        filtered = documents.filter((doc: any) =>
           doc.filename.toLowerCase().includes(searchTerm)
         );
       }
 
-      // 정렬
-      if (query.sortBy === 'uploadDate' && query.sortOrder === 'desc') {
-        filtered.sort((a: any, b: any) =>
-          new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
-        );
-      }
-
-      // 페이지네이션
-      const offset = query.offset || 0;
-      const limit = query.limit || 20;
-      const paginated = filtered.slice(offset, offset + limit);
-
       return {
-        documents: paginated,
-        total: filtered.length,
-        hasMore: offset + limit < filtered.length,
-        offset,
-        limit,
+        documents: filtered,
+        total: query.q ? filtered.length : total,
+        hasMore: query.q ? false : hasMore,
+        offset: query.offset || 0,
+        limit: query.limit || 10,
       };
     }
 

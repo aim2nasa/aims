@@ -26,11 +26,12 @@ export const useDocumentsController = () => {
   const [hasMore, setHasMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchParams, setSearchParams] = useState<Partial<DocumentSearchQuery>>({
-    limit: 20,
+    limit: 10,
     offset: 0,
     sortBy: 'uploadDate',
     sortOrder: 'desc',
   });
+  const [currentPage, setCurrentPage] = useState(1);
 
   /**
    * 문서 목록 로드
@@ -63,7 +64,7 @@ export const useDocumentsController = () => {
 
     const newParams = {
       ...searchParams,
-      offset: (searchParams.offset || 0) + (searchParams.limit || 20),
+      offset: (searchParams.offset || 0) + (searchParams.limit || 10),
     };
 
     try {
@@ -89,7 +90,18 @@ export const useDocumentsController = () => {
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
     setSearchParams(prev => ({ ...prev, offset: 0 }));
+    setCurrentPage(1);
   }, []);
+
+  /**
+   * 페이지 변경 핸들러
+   */
+  const handlePageChange = useCallback((page: number) => {
+    const newOffset = (page - 1) * (searchParams.limit || 20);
+    setCurrentPage(page);
+    setSearchParams(prev => ({ ...prev, offset: newOffset }));
+    loadDocuments({ offset: newOffset });
+  }, [searchParams.limit, loadDocuments]);
 
   /**
    * 검색 실행
@@ -145,6 +157,10 @@ export const useDocumentsController = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, handleSearch]);
 
+  // 페이지네이션 계산
+  const itemsPerPage = searchParams.limit || 10;
+  const totalPages = Math.ceil(total / itemsPerPage);
+
   return {
     // 상태
     documents,
@@ -153,6 +169,9 @@ export const useDocumentsController = () => {
     total,
     hasMore,
     searchQuery,
+    currentPage,
+    totalPages,
+    itemsPerPage,
 
     // 액션
     loadDocuments,
@@ -160,6 +179,7 @@ export const useDocumentsController = () => {
     deleteDocument,
     handleSearchChange,
     handleSearch,
+    handlePageChange,
     clearError,
 
     // 계산된 값
