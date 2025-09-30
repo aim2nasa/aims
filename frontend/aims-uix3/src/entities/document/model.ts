@@ -139,6 +139,8 @@ export const DocumentUtils = {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
       'application/vnd.ms-excel': 'XLS',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+      'application/vnd.ms-powerpoint': 'PPT',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
       'text/plain': 'TXT',
       'text/csv': 'CSV',
     };
