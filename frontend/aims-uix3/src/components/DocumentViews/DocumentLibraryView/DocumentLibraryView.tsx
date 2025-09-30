@@ -100,7 +100,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             <input
               type="text"
               className="search-input"
-              placeholder="파일명 또는 내용 검색..."
+              placeholder="파일명 또는 파일 형식 검색..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               aria-label="문서 검색"
