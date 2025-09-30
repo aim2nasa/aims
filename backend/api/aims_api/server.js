@@ -242,8 +242,8 @@ function formatBytes(bytes) {
 app.get('/api/documents', async (req, res) => {
   try {
     // 파라미터 검증 및 기본값 설정
-    let { page = 1, limit = 10, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType } = req.query;
-    
+    let { page, limit = 10, offset, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType } = req.query;
+
     // limit 파라미터 검증 (0 이하 또는 음수 방지)
     limit = parseInt(limit);
     if (isNaN(limit) || limit <= 0) {
@@ -254,7 +254,7 @@ app.get('/api/documents', async (req, res) => {
         expected: '1 이상의 양의 정수'
       });
     }
-    
+
     // limit 최대값 제한 (DoS 공격 방지)
     if (limit > 1000) {
       return res.status(400).json({
@@ -264,18 +264,36 @@ app.get('/api/documents', async (req, res) => {
         max_allowed: 1000
       });
     }
-    
-    // page 파라미터 검증 (0 이하 방지)
-    page = parseInt(page);
-    if (isNaN(page) || page <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'page 파라미터는 1 이상의 양의 정수여야 합니다.',
-        provided: req.query.page,
-        expected: '1 이상의 양의 정수'
-      });
+
+    // offset과 page 파라미터 처리 (offset 우선)
+    let skip;
+    if (offset !== undefined) {
+      // offset이 제공된 경우 offset 사용 (프론트엔드 호환성)
+      skip = parseInt(offset);
+      if (isNaN(skip) || skip < 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'offset 파라미터는 0 이상의 정수여야 합니다.',
+          provided: req.query.offset,
+          expected: '0 이상의 정수'
+        });
+      }
+      console.log(`📄 Offset 기반 페이지네이션: offset=${skip}, limit=${limit}`);
+    } else {
+      // offset이 없으면 page 사용 (기존 방식 호환)
+      page = parseInt(page) || 1;
+      if (page <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'page 파라미터는 1 이상의 양의 정수여야 합니다.',
+          provided: req.query.page,
+          expected: '1 이상의 양의 정수'
+        });
+      }
+      skip = (page - 1) * limit;
+      console.log(`📄 Page 기반 페이지네이션: page=${page}, limit=${limit}, skip=${skip}`);
     }
-    
+
     // sortBy 파라미터 검증 (유효한 필드만 허용)
     if (sortBy && !['size', 'time', 'name'].includes(sortBy)) {
       return res.status(400).json({
@@ -285,7 +303,7 @@ app.get('/api/documents', async (req, res) => {
         allowed: ['size', 'time', 'name']
       });
     }
-    
+
     // sortOrder 파라미터 검증 (asc 또는 desc만 허용)
     if (sortOrder && !['asc', 'desc'].includes(sortOrder)) {
       return res.status(400).json({
@@ -295,8 +313,6 @@ app.get('/api/documents', async (req, res) => {
         allowed: ['asc', 'desc']
       });
     }
-
-    const skip = (page - 1) * limit;
 
     let query = {};
 

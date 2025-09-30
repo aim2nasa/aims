@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { DocumentService } from '@/services/documentService';
+import { DocumentService } from '@/services/DocumentService';
 import { handleApiError } from '@/shared/lib/api';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
 
@@ -39,17 +39,17 @@ export const useDocumentsController = () => {
    * @param params 검색 파라미터
    * @param silent true일 경우 로딩 상태를 변경하지 않음 (백그라운드 업데이트)
    */
-  const loadDocuments = useCallback(async (params?: Partial<DocumentSearchQuery>, silent = false) => {
+  const loadDocuments = useCallback(async (params: Partial<DocumentSearchQuery>, silent = false) => {
     try {
       if (!silent) {
         setIsLoading(true);
       }
       setError(null);
 
-      const finalParams = { ...searchParams, ...params };
+      // params를 그대로 사용 (closure 문제 방지)
       const result = searchQuery.trim()
-        ? await DocumentService.searchDocuments(searchQuery, finalParams)
-        : await DocumentService.getDocuments(finalParams);
+        ? await DocumentService.searchDocuments(searchQuery, params)
+        : await DocumentService.getDocuments(params);
 
       setDocuments(result.documents);
       setTotal(result.total);
@@ -62,7 +62,7 @@ export const useDocumentsController = () => {
         setIsLoading(false);
       }
     }
-  }, [searchQuery, searchParams]);
+  }, [searchQuery]);
 
   /**
    * 더 많은 문서 로드 (페이지네이션)
@@ -105,27 +105,31 @@ export const useDocumentsController = () => {
    * 페이지 변경 핸들러
    */
   const handlePageChange = useCallback((page: number) => {
-    const newOffset = (page - 1) * (searchParams.limit || 20);
+    const limit = searchParams.limit || 10;
+    const newOffset = (page - 1) * limit;
+    const newParams = { ...searchParams, offset: newOffset };
     setCurrentPage(page);
-    setSearchParams(prev => ({ ...prev, offset: newOffset }));
-    loadDocuments({ offset: newOffset });
-  }, [searchParams.limit, loadDocuments]);
+    setSearchParams(newParams);
+    loadDocuments(newParams);
+  }, [searchParams, loadDocuments]);
 
   /**
    * 페이지당 항목 수 변경 핸들러
    */
   const handleLimitChange = useCallback((newLimit: number) => {
-    setSearchParams(prev => ({ ...prev, limit: newLimit, offset: 0 }));
+    const newParams = { ...searchParams, limit: newLimit, offset: 0 };
+    setSearchParams(newParams);
     setCurrentPage(1);
-    loadDocuments({ limit: newLimit, offset: 0 });
-  }, [loadDocuments]);
+    loadDocuments(newParams);
+  }, [searchParams, loadDocuments]);
 
   /**
    * 검색 실행
    */
   const handleSearch = useCallback(() => {
-    loadDocuments({ offset: 0 });
-  }, [loadDocuments]);
+    const newParams = { ...searchParams, offset: 0 };
+    loadDocuments(newParams);
+  }, [searchParams, loadDocuments]);
 
   /**
    * 문서 삭제
@@ -157,9 +161,9 @@ export const useDocumentsController = () => {
    */
   useEffect(() => {
     if (documents.length === 0) {
-      loadDocuments();
+      loadDocuments(searchParams);
     }
-  }, [loadDocuments, documents.length]);
+  }, []);
 
   /**
    * 검색어 변경 시 디바운스 적용하여 재로딩
@@ -187,6 +191,7 @@ export const useDocumentsController = () => {
     total,
     hasMore,
     searchQuery,
+    searchParams,
     currentPage,
     totalPages,
     itemsPerPage,

@@ -23,7 +23,7 @@ export {
   downloadDocument,
   type DocumentStats,
   type UploadDocumentResult,
-} from '@/services/documentService';
+} from '@/services/DocumentService';
 
 /**
  * 마이그레이션 노트:

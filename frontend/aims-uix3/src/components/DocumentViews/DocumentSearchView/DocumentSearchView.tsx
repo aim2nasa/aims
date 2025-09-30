@@ -46,6 +46,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     isInitialLoad,
     error,
     searchQuery,
+    searchParams,
     searchResultMessage,
     isEmpty,
     currentPage,
@@ -64,15 +65,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     if (!visible) return
 
     // 즉시 로드 (초기 로딩)
-    loadDocuments(undefined, false)
+    loadDocuments(searchParams, false)
 
     // 3초마다 자동 새로고침 (silent mode)
     const intervalId = setInterval(() => {
-      loadDocuments(undefined, true) // silent=true로 깜빡임 방지
+      loadDocuments(searchParams, true) // silent=true로 깜빡임 방지
     }, 3000)
 
     return () => clearInterval(intervalId)
-  }, [visible, loadDocuments])
+  }, [visible, loadDocuments, searchParams])
 
   return (
     <CenterPaneView
