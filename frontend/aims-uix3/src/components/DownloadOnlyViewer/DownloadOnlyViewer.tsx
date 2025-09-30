@@ -48,12 +48,17 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
             미리보기를 지원하지 않는 형식입니다
           </p>
 
-          {/* 파일명 */}
-          <div className="file-name-badge">
-            <span className="file-name-text" title={fileName}>
+          {/* 파일명 - 클릭 가능 */}
+          <button
+            className="file-name-badge file-name-badge--clickable"
+            onClick={onDownload}
+            aria-label={`${fileName} 다운로드`}
+            title="클릭하여 다운로드"
+          >
+            <span className="file-name-text">
               {fileName}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 

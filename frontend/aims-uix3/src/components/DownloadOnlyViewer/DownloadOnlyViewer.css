@@ -79,11 +79,36 @@ html[data-theme="dark"] .preview-message {
   border-radius: 20px;
   margin-top: 8px;
   max-width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
 }
 
 html[data-theme="dark"] .file-name-badge {
   background-color: var(--color-ios-bg-tertiary-dark);
   border-color: var(--color-ios-separator-dark);
+}
+
+/* 클릭 가능한 배지 스타일 */
+.file-name-badge--clickable:hover {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html[data-theme="dark"] .file-name-badge--clickable:hover {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.file-name-badge--clickable:hover .file-name-text {
+  color: white;
+}
+
+.file-name-badge--clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
 }
 
 .file-name-text {
@@ -97,6 +122,7 @@ html[data-theme="dark"] .file-name-badge {
   text-overflow: ellipsis;
   line-height: 1.4;
   max-width: 360px;
+  transition: color 0.2s ease-out;
 }
 
 html[data-theme="dark"] .file-name-text {
