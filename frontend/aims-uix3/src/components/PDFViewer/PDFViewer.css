@@ -210,14 +210,16 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 
 /* === 🍎 PRIMARY BUTTON: Accent Style === */
 
+/* Light Mode - 어두운 파란색 */
 .control-button--primary {
-  background-color: var(--color-ios-interactive-light);
-  color: var(--color-ios-bg-primary-light);
-  opacity: 1;
+  background-color: var(--color-primary-600);
+  color: white;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   gap: 4px;
-  padding: 5px 10px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  transition: background-color 0.15s ease-out;
 }
 
 .control-button--primary span[aria-hidden] {
@@ -225,19 +227,30 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
   line-height: 1;
 }
 
-.control-button--primary:hover {
-  background-color: var(--color-ios-interactive-light);
-  opacity: 0.8;
-  border-color: transparent;
+.control-button.control-button--primary:hover {
+  background-color: var(--color-primary-700);
+  color: white;
 }
 
+.control-button.control-button--primary:active {
+  background-color: var(--color-primary-800);
+  color: white;
+}
+
+/* Dark Mode - 밝은 파란색 */
 html[data-theme="dark"] .control-button--primary {
-  background-color: var(--color-ios-interactive-dark);
-  color: var(--color-ios-bg-primary-dark);
+  background-color: var(--color-primary-500);
+  color: white;
 }
 
-html[data-theme="dark"] .control-button--primary:hover {
-  background-color: var(--color-ios-interactive-dark);
+html[data-theme="dark"] .control-button.control-button--primary:hover {
+  background-color: var(--color-primary-400);
+  color: white;
+}
+
+html[data-theme="dark"] .control-button.control-button--primary:active {
+  background-color: var(--color-primary-300);
+  color: white;
 }
 
 /* === 🍎 INFO TEXT: Subtle Typography === */
