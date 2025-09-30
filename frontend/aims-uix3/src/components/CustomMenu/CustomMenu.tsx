@@ -69,6 +69,13 @@ const MenuIcons = {
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
+  ),
+  Library: () => (
+    <SFSymbol
+      name="books-vertical"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 
@@ -316,6 +323,12 @@ const CustomMenu = ({
           tooltipTitle: '새로운 문서를 등록합니다',
         },
         {
+          key: 'documents-library',
+          icon: <MenuIcons.Library />,
+          label: '문서 라이브러리',
+          tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
+        },
+        {
           key: 'documents-search',
           icon: <MenuIcons.SearchBold />,
           label: '문서 검색',
@@ -337,6 +350,12 @@ const CustomMenu = ({
         icon: <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
         label: '',
         tooltipTitle: '새로운 문서를 등록합니다',
+      },
+      {
+        key: 'documents-library',
+        icon: <MenuIcons.Library />,
+        label: '',
+        tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
       },
       {
         key: 'documents-search',

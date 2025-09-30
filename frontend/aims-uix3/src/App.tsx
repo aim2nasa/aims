@@ -10,6 +10,7 @@ const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
 const HamburgerButton = lazy(() => import('./components/HamburgerButton'))
 const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
+const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
 const DocumentSearchView = lazy(() => import('./components/DocumentViews/DocumentSearchView/DocumentSearchView'))
 const DocumentStatusView = lazy(() => import('./components/DocumentViews/DocumentStatusView/DocumentStatusView'))
 const DocumentManagementView = lazy(() => import('./components/DocumentViews/DocumentManagementView/DocumentManagementView'))
@@ -66,9 +67,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.activeDocumentView
   )
 
-  // DocumentRegistrationView, DocumentSearchView 활성 시 PaginationPane 및 RightPane 숨김
+  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
-    if (activeDocumentView === 'documents-register' || activeDocumentView === 'documents-search') {
+    if (activeDocumentView === 'documents-register' ||
+        activeDocumentView === 'documents-library' ||
+        activeDocumentView === 'documents-search') {
       setPaginationVisible(false)
       setRightPaneVisible(false)
     } else {
@@ -251,7 +254,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const handleMenuClick = useCallback((menuKey: string) => {
     const allViewKeys = [
       // 문서 관리 View들
-      'documents', 'documents-register', 'documents-search', 'dsd',
+      'documents', 'documents-register', 'documents-library', 'documents-search', 'dsd',
       // 고객 관리 View들
       'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship'
     ]
@@ -522,6 +525,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={null}>
             <DocumentRegistrationView
               visible={activeDocumentView === 'documents-register'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <DocumentLibraryView
+              visible={activeDocumentView === 'documents-library'}
               onClose={closeDocumentView}
             />
           </Suspense>
