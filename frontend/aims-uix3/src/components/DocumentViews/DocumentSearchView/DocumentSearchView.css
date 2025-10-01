@@ -14,19 +14,22 @@
   padding: 16px;
 }
 
-/* === 🍎 SEARCH BAR: iOS Spotlight Style === */
+/* === 🍎 SEARCH BAR: iOS Spotlight Style - 한 줄 레이아웃 === */
 
 .search-bar-wrapper {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap; /* 한 줄 유지 */
 }
 
-/* iOS Spotlight 서치필드 */
+/* A: iOS Spotlight 서치필드 (flex-grow로 반응형) */
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1; /* 남은 공간 모두 차지 */
+  min-width: 200px; /* 최소 너비 보장 */
   background-color: var(--color-ios-bg-secondary-light);
   border-radius: 10px;
   padding: 8px 12px;
@@ -83,70 +86,29 @@ html[data-theme="dark"] .search-input::placeholder {
   color: var(--color-ios-text-placeholder-dark);
 }
 
-/* === 🍎 SEARCH OPTIONS: iOS Dropdown + Pills === */
+/* === 🍎 SEARCH OPTIONS: B (Dropdown) + C (Pills) === */
 
-.search-options-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+/* B: Dropdown은 shared/ui/Dropdown.css에 정의됨 */
 
-/* iOS 스타일 드롭다운 (서브틀) */
-.search-mode-dropdown {
-  padding: 6px 12px;
-  background-color: var(--color-ios-bg-secondary-light);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
-  color: var(--color-ios-text-primary-light);
-  font-size: 13px;
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  outline: none;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%23666' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 32px;
-}
-
-html[data-theme="dark"] .search-mode-dropdown {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-primary-dark);
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%23ccc' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
-}
-
-.search-mode-dropdown:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-  border-color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .search-mode-dropdown:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
-  border-color: var(--color-ios-text-quaternary-dark);
-}
-
-.search-mode-dropdown:focus {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* iOS Pills for 키워드 모드 (Progressive Disclosure) */
+/* C: iOS Pills for 키워드 모드 (Progressive Disclosure - 동적 공간) */
 .keyword-mode-pills {
   display: inline-flex;
   gap: 6px;
+  flex-shrink: 0; /* 축소 방지 */
+
+  /* 동적 공간: AI 검색 시 width:0으로 수축 */
+  max-width: 0;
+  overflow: hidden;
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateX(-8px);
   transition: all var(--duration-ios-standard) var(--easing-ease-out);
   pointer-events: none;
 }
 
 .keyword-mode-pills.visible {
+  max-width: 150px; /* 키워드 검색 시 공간 확보 */
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 
@@ -172,6 +134,13 @@ html[data-theme="dark"] .keyword-mode-pill {
 .keyword-mode-pill.active {
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+html[data-theme="dark"] .keyword-mode-pill.active {
+  background-color: var(--color-primary-600);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
 }
 
 .keyword-mode-pill:hover:not(.active) {
@@ -184,6 +153,7 @@ html[data-theme="dark"] .keyword-mode-pill:hover:not(.active) {
 
 /* 검색 버튼 - iOS 스타일 */
 .search-button {
+  flex-shrink: 0; /* 축소 방지 */
   padding: 8px 20px;
   border: none;
   background-color: var(--color-primary-500);
@@ -195,6 +165,7 @@ html[data-theme="dark"] .keyword-mode-pill:hover:not(.active) {
   border-radius: 8px;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
   white-space: nowrap;
+  min-width: 80px; /* 최소 너비 보장 */
 }
 
 .search-button:hover:not(:disabled) {
@@ -318,7 +289,7 @@ html[data-theme="dark"] .search-results-header {
 
 .results-divider {
   font-weight: 500;
-  margin-top: 8px !important;
+  margin-top: 8px;
 }
 
 /* === 🍎 RESULTS TABLE VIEW: iOS Native Style === */

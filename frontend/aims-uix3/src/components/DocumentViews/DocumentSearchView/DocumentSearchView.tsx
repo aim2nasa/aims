@@ -12,6 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem, SearchMode } from '@/entities/search'
+import { Dropdown, type DropdownOption } from '@/shared/ui'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -38,6 +39,12 @@ interface DocumentSearchViewProps {
  * />
  * ```
  */
+// 검색 모드 옵션 정의
+const SEARCH_MODE_OPTIONS: DropdownOption[] = [
+  { value: 'keyword', label: '키워드 검색' },
+  { value: 'semantic', label: 'AI 검색 (실험적)' },
+]
+
 export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
   onClose,
@@ -88,9 +95,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       className="document-search-view"
     >
       <div className="document-search-container">
-        {/* 🍎 iOS Spotlight 검색바 */}
+        {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
         <div className="search-bar-wrapper">
-          {/* 검색 입력 필드 */}
+          {/* A: 검색 입력 필드 (flex-grow) */}
           <div className="search-input-wrapper">
             <span className="search-icon" aria-hidden="true">🔍</span>
             <input
@@ -104,53 +111,47 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             />
           </div>
 
-          {/* 검색 옵션 */}
-          <div className="search-options-container">
-            {/* 검색 모드 드롭다운 (서브틀) */}
-            <select
-              className="search-mode-dropdown"
-              value={searchMode}
-              onChange={(e) => handleSearchModeChange(e.target.value as SearchMode)}
-              aria-label="검색 모드 선택"
-            >
-              <option value="keyword">키워드 검색</option>
-              <option value="semantic">AI 검색 (실험적)</option>
-            </select>
+          {/* B: 검색 모드 드롭다운 */}
+          <Dropdown
+            value={searchMode}
+            options={SEARCH_MODE_OPTIONS}
+            onChange={(value) => handleSearchModeChange(value as SearchMode)}
+            aria-label="검색 모드 선택"
+          />
 
-            {/* iOS Pills: AND/OR (Progressive Disclosure) */}
-            <div
-              className={`keyword-mode-pills ${searchMode === 'keyword' ? 'visible' : ''}`}
-              role="group"
-              aria-label="키워드 검색 모드"
-            >
-              <button
-                className={`keyword-mode-pill ${keywordMode === 'AND' ? 'active' : ''}`}
-                onClick={() => handleKeywordModeChange('AND')}
-                aria-pressed={keywordMode === 'AND'}
-                disabled={searchMode !== 'keyword'}
-              >
-                AND
-              </button>
-              <button
-                className={`keyword-mode-pill ${keywordMode === 'OR' ? 'active' : ''}`}
-                onClick={() => handleKeywordModeChange('OR')}
-                aria-pressed={keywordMode === 'OR'}
-                disabled={searchMode !== 'keyword'}
-              >
-                OR
-              </button>
-            </div>
-
-            {/* 검색 버튼 */}
+          {/* C: iOS Pills AND/OR (동적 공간) */}
+          <div
+            className={`keyword-mode-pills ${searchMode === 'keyword' ? 'visible' : ''}`}
+            role="group"
+            aria-label="키워드 검색 모드"
+          >
             <button
-              className="search-button"
-              onClick={handleSearch}
-              disabled={isLoading}
-              aria-label={isLoading ? '검색 중' : '검색 실행'}
+              className={`keyword-mode-pill ${keywordMode === 'AND' ? 'active' : ''}`}
+              onClick={() => handleKeywordModeChange('AND')}
+              aria-pressed={keywordMode === 'AND'}
+              disabled={searchMode !== 'keyword'}
             >
-              {isLoading ? '검색 중...' : '검색'}
+              AND
+            </button>
+            <button
+              className={`keyword-mode-pill ${keywordMode === 'OR' ? 'active' : ''}`}
+              onClick={() => handleKeywordModeChange('OR')}
+              aria-pressed={keywordMode === 'OR'}
+              disabled={searchMode !== 'keyword'}
+            >
+              OR
             </button>
           </div>
+
+          {/* 검색 버튼 */}
+          <button
+            className="search-button"
+            onClick={handleSearch}
+            disabled={isLoading}
+            aria-label={isLoading ? '검색 중' : '검색 실행'}
+          >
+            {isLoading ? '검색 중...' : '검색'}
+          </button>
         </div>
 
         {/* 에러 메시지 */}

@@ -1,0 +1,114 @@
+/**
+ * 🍎 iOS Style Dropdown Component
+ *
+ * 가이드 준수:
+ * - CSS_SYSTEM.md: CSS 변수 사용, 하드코딩 금지
+ * - COMPONENT_GUIDE.md: 타입 안전한 Props, 합성 우선
+ * - ARCHITECTURE.md: Document-Controller-View 패턴
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
+import './Dropdown.css';
+
+export interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+export interface DropdownProps {
+  value: string;
+  options: DropdownOption[];
+  onChange: (value: string) => void;
+  className?: string;
+  'aria-label'?: string;
+}
+
+export const Dropdown: React.FC<DropdownProps> = ({
+  value,
+  options,
+  onChange,
+  className = '',
+  'aria-label': ariaLabel,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 선택된 옵션 찾기
+  const selectedOption = options.find(opt => opt.value === value);
+
+  // 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // 옵션 선택 핸들러
+  const handleOptionClick = (optionValue: string) => {
+    onChange(optionValue);
+    setIsOpen(false);
+  };
+
+  // 키보드 네비게이션
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setIsOpen(!isOpen);
+    } else if (event.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div
+      ref={dropdownRef}
+      className={`ios-dropdown ${className}`}
+      aria-label={ariaLabel}
+    >
+      {/* Dropdown 트리거 버튼 */}
+      <button
+        type="button"
+        className="ios-dropdown__trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="ios-dropdown__value">{selectedOption?.label || '선택'}</span>
+        <span className="ios-dropdown__arrow" aria-hidden="true">
+          {isOpen ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {/* Dropdown 옵션 리스트 */}
+      {isOpen && (
+        <div className="ios-dropdown__menu" role="listbox">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`ios-dropdown__option ${
+                option.value === value ? 'ios-dropdown__option--selected' : ''
+              }`}
+              onClick={() => handleOptionClick(option.value)}
+              role="option"
+              aria-selected={option.value === value}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

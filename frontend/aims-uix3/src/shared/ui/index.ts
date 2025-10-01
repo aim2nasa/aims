@@ -13,3 +13,6 @@ export type {
   TextSkeletonProps,
   CardSkeletonProps,
 } from './LoadingSkeleton';
+
+export { Dropdown } from './Dropdown';
+export type { DropdownProps, DropdownOption } from './Dropdown';

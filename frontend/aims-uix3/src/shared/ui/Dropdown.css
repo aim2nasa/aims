@@ -1,0 +1,171 @@
+/**
+ * 🍎 iOS Style Dropdown Component Styles
+ *
+ * CSS_SYSTEM.md 준수:
+ * - CSS 변수 사용 필수
+ * - 하드코딩 금지
+ * - 테마 반응형 설계
+ * - !important 사용 금지
+ */
+
+/* === DROPDOWN CONTAINER === */
+.ios-dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 140px;
+}
+
+/* === TRIGGER BUTTON === */
+.ios-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  color: var(--color-ios-text-primary-light);
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .ios-dropdown__trigger {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.ios-dropdown__trigger:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+  border-color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .ios-dropdown__trigger:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+  border-color: var(--color-ios-text-quaternary-dark);
+}
+
+.ios-dropdown__trigger:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* === TRIGGER CONTENT === */
+.ios-dropdown__value {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-dropdown__arrow {
+  margin-left: 8px;
+  font-size: 10px;
+  color: var(--color-ios-text-quaternary-light);
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .ios-dropdown__arrow {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === DROPDOWN MENU === */
+.ios-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1000;
+  animation: dropdownFadeIn var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .ios-dropdown__menu {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === DROPDOWN OPTION === */
+.ios-dropdown__option {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: transparent;
+  border: none;
+  color: var(--color-ios-text-primary-light);
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .ios-dropdown__option {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 🍎 단일 하이라이트 색상 - iOS 스타일 */
+.ios-dropdown__option:hover {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .ios-dropdown__option:hover {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.ios-dropdown__option:focus {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .ios-dropdown__option:focus {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* 선택된 옵션은 hover와 동일한 색상 (일관성) */
+.ios-dropdown__option--selected {
+  background-color: var(--color-ios-bg-hover-light);
+  font-weight: 500;
+}
+
+html[data-theme="dark"] .ios-dropdown__option--selected {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .ios-dropdown__menu {
+    animation: none;
+  }
+}
+
+/* 터치 디바이스 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  .ios-dropdown__trigger,
+  .ios-dropdown__option {
+    min-height: 44px; /* iOS 최소 터치 영역 */
+  }
+}
