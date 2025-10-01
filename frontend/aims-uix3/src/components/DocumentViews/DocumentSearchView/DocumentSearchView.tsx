@@ -12,6 +12,8 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
+import { DocumentUtils } from '@/entities/document'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
 import './DocumentSearchView.css'
 
@@ -191,6 +193,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   const summary = SearchService.getSummary(item)
                   const confidence = SearchService.getOCRConfidence(item)
                   const score = 'score' in item ? item.score : null
+                  const mimeType = SearchService.getMimeType(item)
 
                   return (
                     <div
@@ -212,9 +215,20 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <span className="row-index">[{index + 1}]</span>
                       </div>
 
-                      {/* Content: 제목 + 요약 */}
+                      {/* Content: 아이콘 + 제목 + 요약 */}
                       <div className="row-content">
-                        <div className="row-title">{originalName}</div>
+                        <div className="row-title-wrapper">
+                          {/* 🍎 파일 타입 아이콘 */}
+                          <div className={`document-icon ${DocumentUtils.getFileTypeClass(mimeType, originalName)}`}>
+                            <SFSymbol
+                              name={DocumentUtils.getFileIcon(mimeType, originalName)}
+                              size={SFSymbolSize.CAPTION_1}
+                              weight={SFSymbolWeight.REGULAR}
+                              decorative={true}
+                            />
+                          </div>
+                          <span className="row-title">{originalName}</span>
+                        </div>
                         <div className="row-subtitle">{summary}</div>
                       </div>
 

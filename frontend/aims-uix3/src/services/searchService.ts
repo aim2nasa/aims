@@ -215,4 +215,34 @@ export class SearchService {
 
     return ''
   }
+
+  /**
+   * MIME Type 추출 (다양한 스키마 지원)
+   *
+   * @param item 검색 결과 아이템
+   * @returns MIME Type
+   */
+  static getMimeType(item: SearchResultItem): string | undefined {
+    // 1. mimeType 필드
+    if ('mimeType' in item && item.mimeType) {
+      return item.mimeType
+    }
+
+    // 2. upload.mimeType
+    if ('upload' in item && item.upload?.mimeType) {
+      return item.upload.mimeType
+    }
+
+    // 3. meta.mimeType
+    if (item.meta?.mimeType) {
+      return item.meta.mimeType
+    }
+
+    // 4. payload.mime_type (시맨틱 검색)
+    if ('payload' in item && item.payload?.mime_type) {
+      return item.payload.mime_type
+    }
+
+    return undefined
+  }
 }

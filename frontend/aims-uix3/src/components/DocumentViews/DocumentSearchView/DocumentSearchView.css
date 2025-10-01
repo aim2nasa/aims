@@ -296,21 +296,55 @@ html[data-theme="dark"] .row-index {
   color: var(--color-ios-text-tertiary-dark);
 }
 
-/* Row Content (제목 + 요약) */
+/* Row Content (아이콘 + 제목 + 요약) */
 .row-content {
   flex: 1;
   min-width: 0; /* 텍스트 오버플로우 방지 */
 }
+
+/* 제목 래퍼 (아이콘 + 제목) */
+.row-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+/* 🍎 파일 타입 아이콘 */
+.row-title-wrapper .document-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.search-result-row:hover .document-icon {
+  transform: scale(1.1);
+}
+
+/* 파일 타입별 색상 (DocumentLibraryView와 동일) */
+.document-icon.file-type-pdf { background-color: var(--color-file-pdf); color: var(--color-neutral-0); }
+.document-icon.file-type-image { background-color: var(--color-file-image); color: var(--color-neutral-0); }
+.document-icon.file-type-excel { background-color: var(--color-file-excel); color: var(--color-neutral-0); }
+.document-icon.file-type-word { background-color: var(--color-file-word); color: var(--color-neutral-0); }
+.document-icon.file-type-text { background-color: var(--color-file-text); color: var(--color-neutral-0); }
+.document-icon.file-type-archive { background-color: var(--color-file-archive); color: var(--color-neutral-0); }
+.document-icon.file-type-unknown { background-color: var(--color-file-unknown); color: var(--color-neutral-600); }
 
 .row-title {
   font-size: 13px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
-  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 html[data-theme="dark"] .row-title {
