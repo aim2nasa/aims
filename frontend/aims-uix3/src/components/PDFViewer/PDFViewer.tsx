@@ -42,6 +42,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
   const [containerWidth, setContainerWidth] = useState(600)
   const [error, setError] = useState<string | null>(null)
   const [isRetrying, setIsRetrying] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
@@ -75,6 +78,42 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), [])
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.5)), [])
 
+  // 마우스 휠로 확대/축소
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    setScale(prev => Math.max(0.5, Math.min(3.0, prev + delta)))
+  }, [])
+
+  // 마우스 드래그 시작
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (scale <= 1.0) return // 확대되지 않았으면 드래그 불가
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    })
+  }, [scale, position])
+
+  // 마우스 드래그 중
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    })
+  }, [isDragging, dragStart])
+
+  // 마우스 드래그 종료
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // 스케일이나 페이지 변경 시 위치 초기화
+  useEffect(() => {
+    setPosition({ x: 0, y: 0 })
+  }, [scale, pageNumber])
+
   // 컨테이너 크기에 따른 PDF 너비 동적 조정
   useEffect(() => {
     const updateContainerWidth = () => {
@@ -104,7 +143,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
   return (
     <div className="pdf-viewer">
       {/* PDF Document */}
-      <div className="pdf-viewer-content">
+      <div
+        className={`pdf-viewer-content ${scale > 1.0 ? (isDragging ? 'pdf-viewer-content--dragging' : 'pdf-viewer-content--draggable') : ''}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -127,7 +173,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
             </div>
           }
         >
-          <div className="pdf-page-container">
+          <div
+            className="pdf-page-container"
+            style={{
+              // ⚠️ 예외: 런타임 동적 계산 (CSS로 불가능)
+              transform: `translate(${position.x}px, ${position.y}px)`
+            }}
+          >
             <Page
               pageNumber={pageNumber}
               renderTextLayer={false}

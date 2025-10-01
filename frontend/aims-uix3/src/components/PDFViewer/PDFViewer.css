@@ -32,6 +32,16 @@ html[data-theme="dark"] .pdf-viewer {
   align-items: flex-start;
   overflow: auto;
   padding: 16px;
+  user-select: none;
+}
+
+/* Cursor states for draggable content */
+.pdf-viewer-content--draggable {
+  cursor: grab;
+}
+
+.pdf-viewer-content--dragging {
+  cursor: grabbing;
 }
 
 .pdf-page-container {
@@ -40,6 +50,8 @@ html[data-theme="dark"] .pdf-viewer {
   border-radius: 8px;
   overflow: hidden;
   background-color: var(--color-ios-bg-primary-light);
+  user-select: none;
+  pointer-events: none;
 }
 
 html[data-theme="dark"] .pdf-page-container {

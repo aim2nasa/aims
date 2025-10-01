@@ -34,11 +34,53 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
   const [imageLoading, setImageLoading] = useState(true)
   const [imageError, setImageError] = useState(false)
   const [maxImageWidth, setMaxImageWidth] = useState<number>(600)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLDivElement>(null)
 
   // 확대/축소 함수
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), [])
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.2)), [])
+
+  // 마우스 휠로 확대/축소
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    setScale(prev => Math.max(0.2, Math.min(3.0, prev + delta)))
+  }, [])
+
+  // 마우스 드래그 시작
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (scale <= 1.0) return // 확대되지 않았으면 드래그 불가
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    })
+  }, [scale, position])
+
+  // 마우스 드래그 중
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    })
+  }, [isDragging, dragStart])
+
+  // 마우스 드래그 종료
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // 스케일 변경 시 위치 초기화
+  useEffect(() => {
+    if (scale <= 1.0) {
+      setPosition({ x: 0, y: 0 })
+    }
+  }, [scale])
 
   // 컨테이너 크기 변경에 따른 이미지 최대 너비 동적 조정
   useEffect(() => {
@@ -98,18 +140,30 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
       )}
 
       {/* 이미지 콘텐츠 영역 */}
-      <div className="image-content">
-        <div className={`image-wrapper ${imageLoading ? 'image-hidden' : 'image-visible'}`}>
+      <div
+        className={`image-content ${scale > 1.0 ? (isDragging ? 'image-content--dragging' : 'image-content--draggable') : ''}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div
+          ref={imageRef}
+          className={`image-wrapper ${imageLoading ? 'image-hidden' : 'image-visible'}`}
+        >
           <img
             src={file}
             alt="Preview"
             className="preview-image"
             style={{
-              transform: `scale(${scale})`,
+              // ⚠️ 예외: 런타임 동적 계산 (CSS로 불가능)
+              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
               maxWidth: `${maxImageWidth}px`
             }}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            draggable={false}
           />
         </div>
       </div>
