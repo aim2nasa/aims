@@ -150,31 +150,31 @@ html[data-theme="dark"] .ios-dropdown__option {
   color: var(--color-ios-text-primary-dark);
 }
 
-/* 🍎 단일 하이라이트 색상 - iOS 스타일 */
+/* 🍎 명확한 하이라이트 색상 - 가시성 개선 */
 .ios-dropdown__option:hover {
-  background-color: var(--color-ios-bg-hover-light);
+  background-color: var(--color-ios-menu-option-hover-light);
 }
 
 html[data-theme="dark"] .ios-dropdown__option:hover {
-  background-color: var(--color-ios-bg-hover-dark);
+  background-color: var(--color-ios-menu-option-hover-dark);
 }
 
 .ios-dropdown__option:focus {
-  background-color: var(--color-ios-bg-hover-light);
+  background-color: var(--color-ios-menu-option-hover-light);
 }
 
 html[data-theme="dark"] .ios-dropdown__option:focus {
-  background-color: var(--color-ios-bg-hover-dark);
+  background-color: var(--color-ios-menu-option-hover-dark);
 }
 
-/* 선택된 옵션은 hover와 동일한 색상 (일관성) */
+/* 선택된 옵션은 더 진한 색상으로 명확하게 표시 */
 .ios-dropdown__option--selected {
-  background-color: var(--color-ios-bg-hover-light);
-  font-weight: 500;
+  background-color: var(--color-ios-menu-option-selected-light);
+  font-weight: 600; /* 폰트 굵기도 증가 */
 }
 
 html[data-theme="dark"] .ios-dropdown__option--selected {
-  background-color: var(--color-ios-bg-hover-dark);
+  background-color: var(--color-ios-menu-option-selected-dark);
 }
 
 /* === ACCESSIBILITY === */

@@ -321,6 +321,12 @@
   --color-ios-menu-bg-light: #ffffff;
   --color-ios-menu-bg-dark: #1c1c1e;
 
+  /* Menu Option Selection Colors (드롭다운 옵션 선택 시 명확한 가시성) */
+  --color-ios-menu-option-hover-light: rgba(0, 0, 0, 0.08);
+  --color-ios-menu-option-hover-dark: rgba(255, 255, 255, 0.12);
+  --color-ios-menu-option-selected-light: rgba(0, 0, 0, 0.12);
+  --color-ios-menu-option-selected-dark: rgba(255, 255, 255, 0.18);
+
   /* Interactive Colors */
   --color-ios-interactive-light: rgba(0, 0, 0, 0.6);
   --color-ios-interactive-dark: rgba(255, 255, 255, 0.6);
