@@ -9,6 +9,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/**
+ * 정규식 특수문자 이스케이프 함수
+ * 정규식에서 특별한 의미를 가진 문자들을 리터럴로 처리
+ * @param {string} str - 이스케이프할 문자열
+ * @returns {string} - 이스케이프된 문자열
+ */
+function escapeRegex(str) {
+  if (typeof str !== 'string') return '';
+  // 정규식 특수문자: . * + ? ^ $ { } ( ) | [ ] \
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
@@ -333,12 +345,16 @@ app.get('/api/documents', async (req, res) => {
       // 2. 유니코드 정규화 (한글 조합 문자 문제 해결)
       const normalizedSearch = decodedSearch.normalize('NFC');
       console.log(`🔄 정규화 완료: "${normalizedSearch}"`);
-      
-      // 3. 검색 조건 구성
+
+      // 3. 정규식 특수문자 이스케이프 (500 에러 방지)
+      const escapedSearch = escapeRegex(normalizedSearch);
+      console.log(`🛡️ 이스케이프 완료: "${escapedSearch}"`);
+
+      // 4. 검색 조건 구성
       query = {
         $or: [
-          { 'upload.originalName': { $regex: normalizedSearch, $options: 'i' } },
-          { 'meta.mime': { $regex: normalizedSearch, $options: 'i' } }
+          { 'upload.originalName': { $regex: escapedSearch, $options: 'i' } },
+          { 'meta.mime': { $regex: escapedSearch, $options: 'i' } }
         ]
       };
       
