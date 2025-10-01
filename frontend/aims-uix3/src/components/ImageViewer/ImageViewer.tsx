@@ -43,6 +43,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
   // 확대/축소 함수
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), [])
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.2)), [])
+  const resetView = useCallback(() => {
+    setScale(1.0)
+    setPosition({ x: 0, y: 0 })
+  }, [])
 
   // 마우스 휠로 확대/축소
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -117,6 +121,9 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
     setImageError(true)
   }, [])
 
+  // 뷰가 기본 상태에서 벗어났는지 확인
+  const isModified = scale !== 1.0 || position.x !== 0 || position.y !== 0
+
   if (imageError) {
     return (
       <div className="image-viewer-error">
@@ -170,8 +177,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
 
       {/* === 🍎 APPLE STYLE CONTROLS === */}
       <div className="controls-container">
-        {/* 왼쪽 공간 (균형) */}
-        <div className="controls-spacer" />
+        {/* 왼쪽 - 리셋 버튼 */}
+        <div className="controls-left">
+          {isModified && (
+            <button
+              className="control-button control-button--ghost"
+              onClick={resetView}
+              aria-label="원래 크기로 되돌리기"
+              title="100% 크기로 중앙 정렬"
+            >
+              <span aria-hidden="true">⟲</span>
+            </button>
+          )}
+        </div>
 
         {/* 중앙 - 확대/축소 컨트롤 */}
         <div className="zoom-controls">
@@ -199,16 +217,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
         </div>
 
         {/* 오른쪽 - 다운로드 버튼 */}
-        {onDownload && (
-          <button
-            className="control-button control-button--primary"
-            onClick={onDownload}
-            aria-label="이미지 다운로드"
-            title="다운로드"
-          >
-            <span aria-hidden="true">↓</span>
-          </button>
-        )}
+        <div className="controls-right">
+          {onDownload && (
+            <button
+              className="control-button control-button--primary"
+              onClick={onDownload}
+              aria-label="이미지 다운로드"
+              title="다운로드"
+            >
+              <span aria-hidden="true">↓</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

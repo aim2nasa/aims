@@ -157,7 +157,7 @@ html[data-theme="dark"] .retry-button {
 .pdf-viewer-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 24px;
   padding: 12px 16px;
   background-color: var(--color-ios-bg-primary-light);
@@ -168,6 +168,27 @@ html[data-theme="dark"] .retry-button {
 html[data-theme="dark"] .pdf-viewer-controls {
   background-color: var(--color-ios-bg-primary-dark);
   border-top-color: var(--color-ios-separator-dark);
+}
+
+.controls-left,
+.controls-center,
+.controls-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.controls-left {
+  justify-content: flex-start;
+}
+
+.controls-center {
+  justify-content: center;
+  gap: 24px;
+}
+
+.controls-right {
+  justify-content: flex-end;
 }
 
 .controls-section {

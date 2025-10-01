@@ -200,8 +200,19 @@ html[data-theme="dark"] .controls-container {
   border-top-color: var(--color-ios-separator-dark);
 }
 
-.controls-spacer {
+.controls-left,
+.controls-right {
   flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.controls-left {
+  justify-content: flex-start;
+}
+
+.controls-right {
+  justify-content: flex-end;
 }
 
 /* === 🍎 ZOOM CONTROLS === */

@@ -77,6 +77,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
 
   const zoomIn = useCallback(() => setScale(prev => Math.min(prev + 0.25, 3.0)), [])
   const zoomOut = useCallback(() => setScale(prev => Math.max(prev - 0.25, 0.5)), [])
+  const resetView = useCallback(() => {
+    setScale(1.0)
+    setPosition({ x: 0, y: 0 })
+  }, [])
 
   // 마우스 휠로 확대/축소
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -113,6 +117,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
   useEffect(() => {
     setPosition({ x: 0, y: 0 })
   }, [scale, pageNumber])
+
+  // 뷰가 기본 상태에서 벗어났는지 확인
+  const isModified = scale !== 1.0 || position.x !== 0 || position.y !== 0
 
   // 컨테이너 크기에 따른 PDF 너비 동적 조정
   useEffect(() => {
@@ -193,59 +200,78 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
 
       {/* Controls */}
       <div className="pdf-viewer-controls">
-        {/* Page Navigation */}
-        <div className="controls-section">
-          <button
-            className="control-button"
-            disabled={pageNumber <= 1}
-            onClick={previousPage}
-            aria-label="이전 페이지"
-          >
-            <span aria-hidden="true">‹</span>
-          </button>
-          <span className="page-info">
-            {pageNumber} / {numPages || '--'}
-          </span>
-          <button
-            className="control-button"
-            disabled={pageNumber >= (numPages || 0)}
-            onClick={nextPage}
-            aria-label="다음 페이지"
-          >
-            <span aria-hidden="true">›</span>
-          </button>
+        {/* Left - Reset Button */}
+        <div className="controls-left">
+          {isModified && (
+            <button
+              className="control-button control-button--ghost"
+              onClick={resetView}
+              aria-label="원래 크기로 되돌리기"
+              title="100% 크기로 중앙 정렬"
+            >
+              <span aria-hidden="true">⟲</span>
+            </button>
+          )}
         </div>
 
-        {/* Zoom Controls */}
-        <div className="controls-section">
-          <button
-            className="control-button"
-            onClick={zoomOut}
-            aria-label="축소"
-          >
-            <span aria-hidden="true">−</span>
-          </button>
-          <span className="zoom-info">{Math.round(scale * 100)}%</span>
-          <button
-            className="control-button"
-            onClick={zoomIn}
-            aria-label="확대"
-          >
-            <span aria-hidden="true">+</span>
-          </button>
+        {/* Center - Page Navigation and Zoom */}
+        <div className="controls-center">
+          {/* Page Navigation */}
+          <div className="controls-section">
+            <button
+              className="control-button"
+              disabled={pageNumber <= 1}
+              onClick={previousPage}
+              aria-label="이전 페이지"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <span className="page-info">
+              {pageNumber} / {numPages || '--'}
+            </span>
+            <button
+              className="control-button"
+              disabled={pageNumber >= (numPages || 0)}
+              onClick={nextPage}
+              aria-label="다음 페이지"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="controls-section">
+            <button
+              className="control-button"
+              onClick={zoomOut}
+              aria-label="축소"
+            >
+              <span aria-hidden="true">−</span>
+            </button>
+            <span className="zoom-info">{Math.round(scale * 100)}%</span>
+            <button
+              className="control-button"
+              onClick={zoomIn}
+              aria-label="확대"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
         </div>
 
-        {/* Download Button */}
-        {onDownload && (
-          <button
-            className="control-button control-button--primary"
-            onClick={onDownload}
-            aria-label="다운로드"
-            title="다운로드"
-          >
-            <span aria-hidden="true">↓</span>
-          </button>
-        )}
+        {/* Right - Download Button */}
+        <div className="controls-right">
+          {onDownload && (
+            <button
+              className="control-button control-button--primary"
+              onClick={onDownload}
+              aria-label="다운로드"
+              title="다운로드"
+            >
+              <span aria-hidden="true">↓</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
