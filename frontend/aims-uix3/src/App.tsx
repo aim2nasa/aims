@@ -20,6 +20,7 @@ const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/C
 const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAllView/CustomerAllView'))
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
+const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
@@ -792,44 +793,55 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           )}
           {rightPaneVisible && selectedDocument && (
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
-              {(() => {
-                const fileUrl = selectedDocument.fileUrl?.toLowerCase() || ''
-                const isPdf = fileUrl.endsWith('.pdf')
-                const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl)
+              <BaseViewer
+                visible={true}
+                title={selectedDocument.upload?.originalName ||
+                       selectedDocument.payload?.original_name ||
+                       '파일'}
+                onClose={() => {
+                  setSelectedDocument(null)
+                  setRightPaneVisible(false)
+                }}
+              >
+                {(() => {
+                  const fileUrl = selectedDocument.fileUrl?.toLowerCase() || ''
+                  const isPdf = fileUrl.endsWith('.pdf')
+                  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl)
 
-                if (isPdf) {
-                  return (
-                    <PDFViewer
-                      file={selectedDocument.fileUrl}
-                      onDownload={() => {
-                        DownloadHelper.downloadDocument(selectedDocument)
-                      }}
-                    />
-                  )
-                } else if (isImage) {
-                  return (
-                    <ImageViewer
-                      file={selectedDocument.fileUrl}
-                      onDownload={() => {
-                        DownloadHelper.downloadDocument(selectedDocument)
-                      }}
-                    />
-                  )
-                } else {
-                  // 미리보기를 지원하지 않는 파일 - DownloadOnlyViewer 사용
-                  const fileName = selectedDocument.upload?.originalName ||
-                                   selectedDocument.payload?.original_name ||
-                                   '파일'
-                  return (
-                    <DownloadOnlyViewer
-                      fileName={fileName}
-                      onDownload={() => {
-                        DownloadHelper.downloadDocument(selectedDocument)
-                      }}
-                    />
-                  )
-                }
-              })()}
+                  if (isPdf) {
+                    return (
+                      <PDFViewer
+                        file={selectedDocument.fileUrl}
+                        onDownload={() => {
+                          DownloadHelper.downloadDocument(selectedDocument)
+                        }}
+                      />
+                    )
+                  } else if (isImage) {
+                    return (
+                      <ImageViewer
+                        file={selectedDocument.fileUrl}
+                        onDownload={() => {
+                          DownloadHelper.downloadDocument(selectedDocument)
+                        }}
+                      />
+                    )
+                  } else {
+                    // 미리보기를 지원하지 않는 파일 - DownloadOnlyViewer 사용
+                    const fileName = selectedDocument.upload?.originalName ||
+                                     selectedDocument.payload?.original_name ||
+                                     '파일'
+                    return (
+                      <DownloadOnlyViewer
+                        fileName={fileName}
+                        onDownload={() => {
+                          DownloadHelper.downloadDocument(selectedDocument)
+                        }}
+                      />
+                    )
+                  }
+                })()}
+              </BaseViewer>
             </Suspense>
           )}
         </div>
