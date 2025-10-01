@@ -1,869 +1,291 @@
 /**
- * 🍎 TRUE APPLE STYLE DOCUMENT SEARCH VIEW
- * iOS/macOS native table view style - matching FileList design
- * ✅ CSS_SYSTEM.md 준수: 모든 하드코딩 제거, CSS 변수 사용
+ * DocumentSearchView Styles
+ * @since 1.0.0
+ *
+ * 문서 검색 View 스타일
+ * CSS 변수와 공용 클래스를 활용한 테마 반응형 설계
  */
 
-/* 🍎 CONTAINER: Pure minimal */
+/* === 컨테이너 === */
 .document-search-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-5);
   height: 100%;
-  padding: 16px;
+  overflow: hidden;
 }
 
-/* === 🍎 SEARCH BAR: iOS-style search field === */
-
-.document-search-bar {
-  width: 100%;
+/* === 검색 입력 영역 === */
+.search-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5);
+  background-color: var(--color-layout-content-light);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
 }
 
-.search-input-wrapper {
-  position: relative;
+html[data-theme="dark"] .search-input-section {
+  background-color: var(--color-layout-content-dark);
+}
+
+.search-input-row,
+.search-options-row {
   display: flex;
   align-items: center;
-  background-color: var(--color-ios-bg-secondary-light);
-  border-radius: 10px;
-  padding: 8px 12px;
-  transition: background-color 0.2s ease-out;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
 }
 
-html[data-theme="dark"] .search-input-wrapper {
-  background-color: var(--color-ios-bg-secondary-dark);
-}
-
-.search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.search-icon {
-  margin-right: 8px;
-  color: var(--color-ios-text-quaternary-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .search-icon {
-  color: var(--color-ios-text-quaternary-dark);
+.search-label {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  min-width: 80px;
 }
 
 .search-input {
   flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
+  min-width: 200px;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.search-input:focus {
   outline: none;
-  padding: 4px 0;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 html[data-theme="dark"] .search-input {
-  color: var(--color-ios-text-primary-dark);
+  background-color: var(--color-layout-secondary-dark);
+  border-color: var(--color-border-subtle-dark);
 }
 
-.search-input::placeholder {
-  color: var(--color-ios-text-placeholder-light);
-  font-weight: 400;
+/* === 검색 모드 그룹 === */
+.search-mode-group,
+.keyword-mode-group {
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: center;
 }
 
-html[data-theme="dark"] .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-dark);
-}
-
-.search-clear-button {
+.radio-label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 4px;
+  gap: var(--spacing-2);
   cursor: pointer;
-  color: var(--color-ios-text-quaternary-light);
-  transition: color 0.15s ease-out;
-  flex-shrink: 0;
-  border-radius: 50%;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme="dark"] .search-clear-button {
-  color: var(--color-ios-text-quaternary-dark);
+.radio-label:hover {
+  opacity: 0.8;
 }
 
-.search-clear-button:hover {
-  color: var(--color-ios-interactive-light);
-  background: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .search-clear-button:hover {
-  color: var(--color-ios-interactive-dark);
-  background: var(--color-ios-bg-secondary-dark);
-}
-
-/* === 🍎 ERROR MESSAGE: Apple-style alert === */
-
-.document-search-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: var(--color-ios-error-bg-light);
-  border-left: 3px solid var(--color-ios-error-border-light);
-  border-radius: 8px;
-  color: var(--color-ios-error-text-light);
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .document-search-error {
-  background-color: var(--color-ios-error-bg-dark);
-}
-
-.error-icon {
-  flex-shrink: 0;
-}
-
-.error-dismiss-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: 4px;
-  margin-left: auto;
+.radio-label input[type="radio"] {
   cursor: pointer;
-  color: var(--color-ios-error-button-light);
-  opacity: 0.7;
-  transition: opacity 0.15s ease-out;
-  border-radius: 50%;
 }
 
-.error-dismiss-button:hover {
-  opacity: 1;
-  background: var(--color-ios-error-button-bg-light);
+/* === 검색 버튼 === */
+.search-button {
+  padding: var(--spacing-2) var(--spacing-5);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  background-color: var(--color-primary-500);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-/* === 🍎 RESULT HEADER: Minimal count display === */
-
-.document-search-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 4px 4px;
-  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+.search-button:hover:not(:disabled) {
+  background-color: var(--color-primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-html[data-theme="dark"] .document-search-result-header {
-  border-bottom-color: var(--color-ios-separator-subtle-dark);
+.search-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
-.result-count {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  font-weight: 500;
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-html[data-theme="dark"] .result-count {
-  color: var(--color-ios-text-secondary-dark);
+/* === 에러 메시지 === */
+.search-error {
+  padding: var(--spacing-3);
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
+  border-left: 4px solid var(--color-error-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-body);
 }
 
-/* === 🍎 DOCUMENT LIST: iOS table view === */
-
-.document-list {
+/* === 검색 결과 영역 === */
+.search-results-section {
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-right: 4px;
+  gap: var(--spacing-4);
+  overflow-y: auto;
+  padding: var(--spacing-2);
 }
 
-/* 🍎 SCROLLBAR: Apple-style subtle */
-.document-list::-webkit-scrollbar {
+.search-loading,
+.search-empty {
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+}
+
+/* === AI 답변 === */
+.search-answer {
+  padding: var(--spacing-5);
+  background-color: var(--color-primary-50);
+  border-left: 4px solid var(--color-primary-500);
+  border-radius: var(--radius-md);
+}
+
+html[data-theme="dark"] .search-answer {
+  background-color: var(--color-primary-900);
+}
+
+.answer-title {
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: var(--font-size-subhead);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .answer-title {
+  color: var(--color-primary-400);
+}
+
+.answer-content {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+/* === 검색 결과 헤더 === */
+.search-results-header {
+  padding: var(--spacing-3) 0;
+}
+
+.search-results-header p {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.results-divider {
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--spacing-3) !important;
+}
+
+/* === 검색 결과 리스트 === */
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.search-result-item {
+  padding: var(--spacing-4);
+  background-color: var(--color-layout-content-light);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .search-result-item {
+  background-color: var(--color-layout-content-dark);
+  border-color: var(--color-border-subtle-dark);
+}
+
+.search-result-item:hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-primary-300);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .search-result-item:hover {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-callout);
+}
+
+.result-index {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.result-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.result-score,
+.result-confidence {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-tertiary);
+}
+
+.result-link {
+  margin-left: auto;
+  font-size: var(--font-size-footnote);
+  color: var(--color-primary-500);
+  text-decoration: underline;
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.result-link:hover {
+  color: var(--color-primary-600);
+}
+
+.result-summary {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* === 스크롤바 스타일 === */
+.search-results-section::-webkit-scrollbar {
   width: 8px;
 }
 
-.document-list::-webkit-scrollbar-track {
+.search-results-section::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.document-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-  transition: background-color 0.15s ease-out;
+.search-results-section::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: var(--radius-full);
 }
 
-html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-.document-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-light);
-}
-
-html[data-theme="dark"] .document-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-dark);
-}
-
-/* === 🍎 LOADING STATE: Apple spinner === */
-
-.document-list-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-text-quaternary-light);
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .document-list-loading {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2.5px solid var(--color-ios-spinner-track-light);
-  border-top-color: var(--color-ios-spinner-fill-light);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-html[data-theme="dark"] .loading-spinner {
-  border-color: var(--color-ios-spinner-track-dark);
-  border-top-color: var(--color-ios-spinner-fill-dark);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === 🍎 EMPTY STATE: Minimal zen === */
-
-.document-list-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 200px;
-  color: var(--color-ios-empty-light);
-}
-
-html[data-theme="dark"] .document-list-empty {
-  color: var(--color-ios-empty-dark);
-}
-
-.empty-icon {
-  opacity: 0.25;
-}
-
-.empty-message {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  margin: 0;
-}
-
-/* === 🍎 DOCUMENT ITEM: iOS table row - Compact Layout === */
-
-.document-item {
-  display: grid;
-  grid-template-columns:
-    24px           /* 아이콘 고정 */
-    1fr            /* 파일명 (가변) */
-    80px           /* 크기 고정 */
-    120px          /* 날짜 고정 */
-    50px;          /* 타입 고정 */
-  gap: 12px;
-  align-items: center;
-  height: 32px;
-  padding: 6px 12px;
-  background: var(--color-ios-bg-primary-light);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  animation: documentFadeIn 0.3s ease-out;
-}
-
-/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
-@keyframes documentFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-html[data-theme="dark"] .document-item {
-  background: var(--color-ios-bg-primary-dark);
-}
-
-.document-item:hover {
-  background: var(--color-ios-bg-hover-light);
-  transform: translateY(-1px);
-}
-
-html[data-theme="dark"] .document-item:hover {
-  background: var(--color-ios-bg-hover-dark);
-}
-
-/* === 🍎 DOCUMENT ICON: File type colors - Compact === */
-
-.document-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  transition: color 0.2s ease-out;
-}
-
-/* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */
-
-/* PDF Files - Red theme */
-.document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-dark);
-}
-
-.document-item:hover .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--pdf {
-  color: var(--color-file-pdf-hover-dark);
-}
-
-/* Image Files - Blue theme */
-.document-icon.file-icon--image {
-  color: var(--color-file-image-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--image {
-  color: var(--color-file-image-dark);
-}
-
-.document-item:hover .document-icon.file-icon--image {
-  color: var(--color-file-image-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--image {
-  color: var(--color-file-image-hover-dark);
-}
-
-/* Video Files - Purple theme */
-.document-icon.file-icon--video {
-  color: var(--color-file-video-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--video {
-  color: var(--color-file-video-dark);
-}
-
-.document-item:hover .document-icon.file-icon--video {
-  color: var(--color-file-video-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--video {
-  color: var(--color-file-video-hover-dark);
-}
-
-/* Audio Files - Pink theme */
-.document-icon.file-icon--audio {
-  color: var(--color-file-audio-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--audio {
-  color: var(--color-file-audio-dark);
-}
-
-.document-item:hover .document-icon.file-icon--audio {
-  color: var(--color-file-audio-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--audio {
-  color: var(--color-file-audio-hover-dark);
-}
-
-/* Archive Files - Orange theme */
-.document-icon.file-icon--archive {
-  color: var(--color-file-archive-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--archive {
-  color: var(--color-file-archive-dark);
-}
-
-.document-item:hover .document-icon.file-icon--archive {
-  color: var(--color-file-archive-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--archive {
-  color: var(--color-file-archive-hover-dark);
-}
-
-/* Word Documents - Blue theme */
-.document-icon.file-icon--word {
-  color: var(--color-file-word-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--word {
-  color: var(--color-file-word-dark);
-}
-
-.document-item:hover .document-icon.file-icon--word {
-  color: var(--color-file-word-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--word {
-  color: var(--color-file-word-hover-dark);
-}
-
-/* Excel Documents - Green theme */
-.document-icon.file-icon--excel {
-  color: var(--color-file-excel-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--excel {
-  color: var(--color-file-excel-dark);
-}
-
-.document-item:hover .document-icon.file-icon--excel {
-  color: var(--color-file-excel-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--excel {
-  color: var(--color-file-excel-hover-dark);
-}
-
-/* PowerPoint Documents - Orange theme */
-.document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-dark);
-}
-
-.document-item:hover .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--powerpoint {
-  color: var(--color-file-powerpoint-hover-dark);
-}
-
-/* Code Files - Indigo theme */
-.document-icon.file-icon--code {
-  color: var(--color-file-code-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--code {
-  color: var(--color-file-code-dark);
-}
-
-.document-item:hover .document-icon.file-icon--code {
-  color: var(--color-file-code-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--code {
-  color: var(--color-file-code-hover-dark);
-}
-
-/* Text Files - Gray theme */
-.document-icon.file-icon--text {
-  color: var(--color-file-text-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--text {
-  color: var(--color-file-text-dark);
-}
-
-.document-item:hover .document-icon.file-icon--text {
-  color: var(--color-file-text-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--text {
-  color: var(--color-file-text-hover-dark);
-}
-
-/* Executable Files - Dark theme */
-.document-icon.file-icon--executable {
-  color: var(--color-file-executable-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--executable {
-  color: var(--color-file-executable-dark);
-}
-
-.document-item:hover .document-icon.file-icon--executable {
-  color: var(--color-file-executable-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--executable {
-  color: var(--color-file-executable-hover-dark);
-}
-
-/* Default - Neutral theme */
-.document-icon.file-icon--default {
-  color: var(--color-file-default-light);
-}
-
-html[data-theme="dark"] .document-icon.file-icon--default {
-  color: var(--color-file-default-dark);
-}
-
-.document-item:hover .document-icon.file-icon--default {
-  color: var(--color-file-default-hover-light);
-}
-
-html[data-theme="dark"] .document-item:hover .document-icon.file-icon--default {
-  color: var(--color-file-default-hover-dark);
-}
-
-/* === 🍎 DOCUMENT INFO: Compact one-line layout === */
-
-.document-info {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.document-name {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .document-name {
-  color: var(--color-ios-text-primary-dark);
-}
-
-/* 🍎 DOCUMENT SIZE: Fixed width column */
-.document-size {
-  font-size: 12px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-  text-align: right;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-size {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* 🍎 DOCUMENT DATE: Fixed width column */
-.document-date {
-  font-size: 12px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-tertiary-light);
-  text-align: right;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-date {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 DOCUMENT TYPE: Fixed width column */
-.document-type {
-  font-size: 11px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
-  color: var(--color-ios-text-quaternary-light);
-  text-align: center;
-  white-space: nowrap;
-}
-
-html[data-theme="dark"] .document-type {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-/* 🍎 HIDE META - Not used in compact layout */
-.document-meta {
-  display: none;
-}
-
-.document-separator {
-  display: none;
-}
-
-/* === 🍎 DOCUMENT BADGE: OCR completion - Removed in compact layout === */
-
-/* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
-
-@media (max-width: 768px) {
-  .document-search-container {
-    padding: 12px;
-  }
-
-  .document-item {
-    grid-template-columns: 20px 1fr 60px 28px;
-    gap: 8px;
-    height: 28px;
-    padding: 4px 8px;
-  }
-
-  .document-type {
-    display: none; /* 모바일에서 타입 숨김 */
-  }
-
-  .document-name {
-    font-size: 12px;
-  }
-
-  .document-size,
-  .document-date {
-    font-size: 11px;
-  }
-}
-
-/* === 🍎 ACCESSIBILITY === */
-
-.document-item:focus-visible {
-  outline: 2px solid var(--color-ios-focus-light);
-  outline-offset: 2px;
-}
-
-html[data-theme="dark"] .document-item:focus-visible {
-  outline-color: var(--color-ios-focus-dark);
-}
-
-/* === PAGINATION - iOS Style === */
-
-.document-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  margin-top: 8px;
-  border-top: 1px solid var(--color-ios-separator-subtle-light);
-}
-
-html[data-theme="dark"] .document-pagination {
-  border-top-color: var(--color-ios-separator-subtle-dark);
-}
-
-/* 🍎 PAGINATION LIMIT - iOS Native Style (Progressive Disclosure) */
-.pagination-limit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pagination-limit-select {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  color: var(--color-ios-text-secondary-light);
-  background-color: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 4px 24px 4px 8px;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23999' d='M5 7L1.5 3.5h7z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  background-size: 10px;
-  opacity: 0.7;
-}
-
-html[data-theme="dark"] .pagination-limit-select {
-  color: var(--color-ios-text-secondary-dark);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888' d='M5 7L1.5 3.5h7z'/%3E%3C/svg%3E");
-  opacity: 0.6;
-}
-
-/* 🍎 Progressive Disclosure: Hover시에만 배경 표시 */
-.pagination-limit-select:hover {
-  background-color: var(--color-ios-bg-secondary-light);
-  border-color: var(--color-ios-separator-light);
-  color: var(--color-ios-text-primary-light);
-  opacity: 1;
-}
-
-html[data-theme="dark"] .pagination-limit-select:hover {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-ios-text-primary-dark);
-  opacity: 1;
-}
-
-/* 🍎 Focus: Apple Blue Ring */
-.pagination-limit-select:focus {
-  outline: none;
-  background-color: var(--color-ios-bg-secondary-light);
-  border-color: var(--color-ios-interactive-light);
-  color: var(--color-ios-text-primary-light);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-  opacity: 1;
-}
-
-html[data-theme="dark"] .pagination-limit-select:focus {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-interactive-dark);
-  color: var(--color-ios-text-primary-dark);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
-  opacity: 1;
-}
-
-/* 🍎 PAGINATION CONTROLS - Center group */
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: center;
-  flex: 1;
-}
-
-/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
-.pagination-spacer {
-  flex: 1;
-}
-
-/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
-.pagination-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-dark);
-}
-
-.pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-light);
-  transform: scale(0.96);
-}
-
-html[data-theme="dark"] .pagination-button:active:not(:disabled) {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.pagination-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.3;
-}
-
-/* 🍎 PAGINATION ARROW - Large and Clear */
-.pagination-arrow {
-  font-size: 24px;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--color-ios-text-primary-light);
-  user-select: none;
-}
-
-html[data-theme="dark"] .pagination-arrow {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.pagination-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
-  color: var(--color-ios-text-secondary-light);
-  min-width: 60px;
-  justify-content: center;
-}
-
-html[data-theme="dark"] .pagination-info {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.pagination-current {
-  color: var(--color-ios-text-primary-light);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .pagination-current {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.pagination-separator {
-  color: var(--color-ios-text-quaternary-light);
-}
-
-html[data-theme="dark"] .pagination-separator {
-  color: var(--color-ios-text-quaternary-dark);
-}
-
-.pagination-total {
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .pagination-total {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-/* 🍎 MOTION REDUCTION: Respect user preferences */
-@media (prefers-reduced-motion: reduce) {
-  .document-item,
-  .search-input-wrapper,
-  .search-clear-button,
-  .error-dismiss-button,
-  .document-icon,
-  .pagination-button {
-    transition: none;
-  }
-
-  .loading-spinner {
-    animation: none;
-  }
-
-  .pagination-button:active:not(:disabled) {
-    transform: none;
-  }
+.search-results-section::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
 }

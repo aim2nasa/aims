@@ -607,6 +607,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <DocumentSearchView
               visible={activeDocumentView === 'documents-search'}
               onClose={closeDocumentView}
+              onDocumentClick={handleDocumentClick}
             />
           </Suspense>
 
