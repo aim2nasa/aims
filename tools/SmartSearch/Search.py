@@ -8,9 +8,10 @@ from io import BytesIO
 import os
 import subprocess
 import platform
+from datetime import datetime
 import webbrowser
 
-API_URL = "https://n8nd.giize.com/webhook/smartsearch"
+API_URL = "https://tars.giize.com/search_api"
 
 class SearchApp:
     def __init__(self, root):
@@ -97,44 +98,17 @@ class SearchApp:
         self.root.update_idletasks()
 
         try:
-            # SmartSearch API와 호환되도록 페이로드 수정
+            payload = {
+                "query": query,
+                "search_mode": self.search_mode.get()
+            }
             if self.search_mode.get() == "keyword":
-                payload = {
-                    "query": query,
-                    "mode": self.keyword_mode.get()
-                }
-            else:
-                # semantic 검색의 경우 기본 OR 모드로 검색
-                payload = {
-                    "query": query,
-                    "mode": "OR"
-                }
+                payload["mode"] = self.keyword_mode.get()
 
             response = requests.post(API_URL, json=payload, timeout=30)
             response.raise_for_status()
-
-            # 응답 처리 개선 (SmartSearch API 형태에 맞게)
-            response_text = response.text.strip()
-            if not response_text:
-                search_results = []
-            else:
-                try:
-                    search_results = response.json()
-                    if not search_results:
-                        search_results = []
-                except json.JSONDecodeError:
-                    messagebox.showerror("오류", "서버에서 잘못된 응답을 받았습니다.")
-                    self.results_text.delete(1.0, tk.END)
-                    self.results_text.insert(tk.END, "서버 응답 처리 실패.")
-                    self.detail_text.delete(1.0, tk.END)
-                    return
-
-            # SmartSearch API는 직접 결과 배열을 반환하므로 result_data 구조 생성
-            self.data = search_results
-            result_data = {
-                "search_results": search_results,
-                "search_mode": self.search_mode.get()
-            }
+            result_data = response.json()
+            self.data = result_data.get("search_results", [])
 
             # semantic 검색 시 상세 정보 보강
             if self.search_mode.get() == "semantic" and self.data:
@@ -148,56 +122,111 @@ class SearchApp:
 
             self.display_results(result_data)
 
-        except requests.exceptions.Timeout:
-            messagebox.showerror("오류", "요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.")
-            self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, "요청 시간 초과.")
-            self.detail_text.delete(1.0, tk.END)
-        except requests.exceptions.ConnectionError:
-            messagebox.showerror("오류", "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.")
-            self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, "서버 연결 실패.")
-            self.detail_text.delete(1.0, tk.END)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                messagebox.showerror("오류", "요청한 데이터를 찾을 수 없습니다.")
-            elif e.response.status_code == 500:
-                messagebox.showerror("오류", "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
-            else:
-                messagebox.showerror("오류", f"서버 오류가 발생했습니다 (HTTP {e.response.status_code})")
-            self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, "API 호출 실패.")
-            self.detail_text.delete(1.0, tk.END)
         except requests.exceptions.RequestException as e:
             messagebox.showerror("오류", f"API 호출 중 오류가 발생했습니다: {e}")
             self.results_text.delete(1.0, tk.END)
             self.results_text.insert(tk.END, "API 호출 실패.")
             self.detail_text.delete(1.0, tk.END)
-        except Exception as e:
-            messagebox.showerror("오류", f"예상치 못한 오류가 발생했습니다: {e}")
-            self.results_text.delete(1.0, tk.END)
-            self.results_text.insert(tk.END, "예상치 못한 오류 발생.")
-            self.detail_text.delete(1.0, tk.END)
 
     def display_ocr_confidence(self,doc):
-        # 새로운 데이터 구조에 맞게 업데이트
-        confidence = (
-            doc.get("meta", {}).get("confidence", "") or
-            doc.get("ocr", {}).get("confidence", "") or
-            ""
-        )
+        confidence = doc.get("ocr", {}).get("confidence", "")
         if confidence:
             self.results_text.insert(tk.END, f"(문자 인식률:{confidence}) ")
     
     def get_full_text(self,doc):
-        # 새로운 데이터 구조에 맞게 업데이트
-        return (
-            doc.get("meta", {}).get("full_text", "") or
-            doc.get("ocr", {}).get("full_text", "") or
-            doc.get("full_text", "") or
-            doc.get("text", {}).get("full_text", "") or
-            ""
-        )
+        # 1. meta.full_text 우선 확인 (새로운 스키마)
+        full_text = doc.get("meta", {}).get("full_text", "")
+        if full_text:
+            return full_text
+
+        # 2. ocr.full_text 대안 확인 (기존 스키마)
+        full_text = doc.get("ocr", {}).get("full_text", "")
+        if full_text:
+            return full_text
+
+        # 3. text.full_text 최후 대안 (구 스키마)
+        return doc.get("text", {}).get("full_text", "")
+
+    def find_file_path(self, item):
+        """다양한 스키마 구조에서 파일 경로를 찾는 함수"""
+        # 1. upload.destPath (upload 섹션에서 먼저 확인)
+        if "upload" in item and "destPath" in item["upload"]:
+            return item["upload"]["destPath"]
+
+        # 2. meta.destPath (새로운 스키마)
+        if "meta" in item and "destPath" in item["meta"]:
+            return item["meta"]["destPath"]
+
+        # 3. destPath (기존 스키마)
+        if "destPath" in item:
+            return item["destPath"]
+
+        # 4. filename만 있는 경우 (GridFS 구조)
+        if "filename" in item:
+            filename = item['filename']
+            # 이미 전체 경로인 경우
+            if filename.startswith("/data/files/"):
+                return filename
+            # 파일명만 있는 경우 현재 날짜 폴더에 추가
+            now = datetime.now()
+            return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
+
+        # 5. meta.filename이 있는 경우
+        if "meta" in item and "filename" in item["meta"]:
+            filename = item["meta"]["filename"]
+            if filename.startswith("/data/files/"):
+                return filename
+            now = datetime.now()
+            return f"/data/files/{now.year:04d}/{now.month:02d}/{filename}"
+
+        # 6. MongoDB에서 직접 조회
+        doc_id = item.get("_id")
+        if doc_id:
+            detail_doc = self.get_mongo_details(doc_id)
+            if detail_doc:
+                # upload.destPath 우선 확인
+                if "upload" in detail_doc and "destPath" in detail_doc["upload"]:
+                    return detail_doc["upload"]["destPath"]
+                # meta.destPath 확인
+                if "meta" in detail_doc and "destPath" in detail_doc["meta"]:
+                    return detail_doc["meta"]["destPath"]
+                # destPath 확인
+                if "destPath" in detail_doc:
+                    return detail_doc["destPath"]
+                # filename 확인
+                if "filename" in detail_doc:
+                    return f"/data/files/{detail_doc['filename']}"
+
+        return ""
+
+    def find_original_name(self, item):
+        """다양한 스키마 구조에서 실제 원본 파일명을 찾는 함수"""
+        # SmartSearch.py 패턴을 따라 실제 원본 파일명 우선순위로 수정
+        # 1. upload.originalName (실제 원본 파일명 - 최우선)
+        if "upload" in item and "originalName" in item["upload"]:
+            return item["upload"]["originalName"]
+
+        # 2. meta.originalName (새로운 스키마)
+        if "meta" in item and "originalName" in item["meta"]:
+            return item["meta"]["originalName"]
+
+        # 3. originalName (기존 스키마)
+        if "originalName" in item:
+            return item["originalName"]
+
+        # 4. payload.original_name (벡터 검색 결과)
+        if "payload" in item and "original_name" in item["payload"]:
+            return item["payload"]["original_name"]
+
+        # 5. meta.filename (저장된 파일명)
+        if "meta" in item and "filename" in item["meta"]:
+            return item["meta"]["filename"]
+
+        # 6. filename (GridFS - 저장된 파일명)
+        if "filename" in item:
+            return item["filename"]
+
+        return "알 수 없는 파일"
 
     def display_results(self, data):
         self.results_text.delete(1.0, tk.END)
@@ -215,19 +244,8 @@ class SearchApp:
                 self.results_text.insert(tk.END, f"총 {len(search_results)}건의 결과가 발견되었습니다.\n\n", "header")
                 self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
                 for i, doc in enumerate(search_results):
-                    # 새로운 데이터 구조에 맞게 파일명 추출
-                    original_name = (
-                        doc.get("upload", {}).get("originalName", "") or
-                        doc.get("meta", {}).get("filename", "") or
-                        doc.get("originalName", "") or
-                        "이름 없음"
-                    )
-                    # 새로운 데이터 구조에 맞게 요약 추출
-                    summary = (
-                        doc.get("meta", {}).get("summary", "") or
-                        doc.get("ocr", {}).get("summary", "") or
-                        "요약 없음"
-                    )
+                    original_name = self.find_original_name(doc)
+                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
@@ -252,27 +270,15 @@ class SearchApp:
             else:
                 self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
-                    # 새로운 데이터 구조에 맞게 요약 추출
-                    summary = (
-                        doc.get("meta", {}).get("summary", "") or
-                        doc.get("ocr", {}).get("summary", "") or
-                        "요약 없음"
-                    )
+                    original_name = self.find_original_name(doc)
+                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
-                    # 새로운 데이터 구조에 맞게 파일명 추출
-                    original_name = (
-                        payload.get("original_name", "") or
-                        doc.get("upload", {}).get("originalName", "") or
-                        doc.get("meta", {}).get("filename", "") or
-                        doc.get("originalName", "") or
-                        "이름 없음"
-                    )
                     preview = payload.get("preview", "미리보기 없음")
-                    score = doc.get("score", 0.0)
+                    score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
-                    self.results_text.insert(tk.END, f"(유사도: {score:.4f}," if score is not None else "(유사도: N/A,")
+                    self.results_text.insert(tk.END, f"(유사도: {score:.4f},")
                     self.display_ocr_confidence(doc)
                     self.results_text.insert(tk.END, "[다운로드 및 열기]", ("link", f"item_link_{i}"))
                     self.results_text.insert(tk.END, f"\n{summary}\n\n")
@@ -308,33 +314,16 @@ class SearchApp:
         try:
             response = requests.post(smartsearch_api_url, json=payload, timeout=10)
             response.raise_for_status()
-
-            # 응답 처리 개선
-            response_text = response.text.strip()
-            if not response_text:
+            
+            # 결과가 비어있는지 확인
+            detail_data = response.json()
+            if detail_data and detail_data[0]:
+                return detail_data[0]
+            else:
                 return {}
-
-            try:
-                detail_data = response.json()
-                if detail_data and detail_data[0]:
-                    return detail_data[0]
-                else:
-                    return {}
-            except json.JSONDecodeError:
-                print(f"상세 정보 JSON 파싱 실패 (doc_id: {doc_id})")
-                return {}
-
-        except requests.exceptions.Timeout:
-            print(f"상세 정보 조회 시간 초과 (doc_id: {doc_id})")
-            return {}
-        except requests.exceptions.ConnectionError:
-            print(f"상세 정보 조회 연결 실패 (doc_id: {doc_id})")
-            return {}
+                
         except requests.exceptions.RequestException as e:
             print(f"상세 정보 조회 오류 (doc_id: {doc_id}): {e}")
-            return {}
-        except Exception as e:
-            print(f"상세 정보 조회 예상치 못한 오류 (doc_id: {doc_id}): {e}")
             return {}
 
     def on_enter_title(self, event, tag):
@@ -355,34 +344,37 @@ class SearchApp:
         if not self.data or index >= len(self.data):
             messagebox.showerror("오류", "유효하지 않은 검색 결과입니다.")
             return
-            
+
         item = self.data[index]
 
-        # 새로운 데이터 구조에 맞게 파일 경로 추출
-        dest_path = (
-            item.get("upload", {}).get("destPath", "") or
-            item.get("destPath", "") or
-            ""
-        )
-        # 새로운 데이터 구조에 맞게 파일명 추출
-        original_name = (
-            item.get("upload", {}).get("originalName", "") or
-            item.get("meta", {}).get("filename", "") or
-            item.get("originalName", "") or
-            "downloaded_file"
-        )
+        # 다양한 경로에서 파일 경로 찾기
+        dest_path = self.find_file_path(item)
+        original_name = self.find_original_name(item)
+
+        print(f"Debug - item keys: {list(item.keys())}")
+        print(f"Debug - dest_path: {dest_path}")
+        print(f"Debug - original_name: {original_name}")
+        if "meta" in item:
+            print(f"Debug - meta keys: {list(item['meta'].keys())}")
 
         if not dest_path:
-            messagebox.showerror("오류", "파일 경로가 유효하지 않습니다.")
+            # 더 자세한 디버그 정보 출력
+            debug_info = f"파일 경로를 찾을 수 없습니다.\n"
+            debug_info += f"Item keys: {list(item.keys())}\n"
+            if "meta" in item:
+                debug_info += f"Meta keys: {list(item['meta'].keys())}\n"
+            debug_info += f"Item content: {str(item)[:500]}..."
+            messagebox.showerror("오류", debug_info)
             return
 
         try:
             if dest_path.startswith("/data/files/"):
-                relative_path = dest_path.replace("/data/files/", "")
-                file_url = f"https://tars.giize.com/files/{relative_path}"
+                # /data를 제거하여 올바른 URL 생성 (/data/files/2025/09/file.pdf → /files/2025/09/file.pdf)
+                corrected_path = dest_path.replace("/data", "")
+                file_url = f"https://tars.giize.com{corrected_path}"
                 
                 # 파일 다운로드 및 로컬에 저장
-                response = requests.get(file_url, stream=True, timeout=30)
+                response = requests.get(file_url, stream=True)
                 response.raise_for_status()
                 
                 # 임시 파일로 저장
