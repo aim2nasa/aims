@@ -8,7 +8,7 @@
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
-import { useDocumentSearchController } from '@/controllers/useDocumentSearchController'
+import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem } from '@/entities/search'
 import './DocumentSearchView.css'
@@ -54,7 +54,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,
-  } = useDocumentSearchController()
+  } = useDocumentSearch()
 
   /**
    * Enter 키 입력 핸들러

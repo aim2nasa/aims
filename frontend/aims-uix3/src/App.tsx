@@ -4,6 +4,7 @@ import { useDynamicType, initializeDynamicType } from './hooks/useDynamicType'
 import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks/useHapticFeedback'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
+import { DocumentSearchProvider } from './contexts/DocumentSearchContext'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -875,4 +876,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   )
 }
 
-export default App
+// DocumentSearchProvider로 App 감싸기
+function AppWithProviders(props: AppProps) {
+  return (
+    <DocumentSearchProvider>
+      <App {...props} />
+    </DocumentSearchProvider>
+  )
+}
+
+export default AppWithProviders
