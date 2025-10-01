@@ -64,6 +64,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     answer,
     isLoading,
     error,
+    lastSearchMode,
     handleSearch,
     handleQueryChange,
     handleSearchModeChange,
@@ -173,7 +174,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
               {/* 검색 결과 헤더 */}
               <div className="search-results-header">
-                {searchMode === 'semantic' ? (
+                {lastSearchMode === 'semantic' ? (
                   <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
                 ) : (
                   <>

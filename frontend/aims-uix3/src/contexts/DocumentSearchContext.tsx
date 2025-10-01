@@ -22,6 +22,7 @@ interface SearchContextState {
   answer: string | null
   isLoading: boolean
   error: string | null
+  lastSearchMode: SearchMode | null // 마지막 검색 실행 시 사용한 모드
 
   // Actions
   handleSearch: () => Promise<void>
@@ -59,6 +60,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   const [answer, setAnswer] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [lastSearchMode, setLastSearchMode] = useState<SearchMode | null>(null)
 
   /**
    * 검색 실행
@@ -85,6 +87,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
 
       setResults(response.search_results)
       setAnswer(response.answer || null)
+      setLastSearchMode(searchMode) // 검색 실행 시점의 모드 기록
     } catch (err) {
       console.error('[DocumentSearchContext] 검색 오류:', err)
       setError('검색 중 오류가 발생했습니다. 다시 시도해 주세요.')
@@ -124,6 +127,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setResults([])
     setAnswer(null)
     setError(null)
+    setLastSearchMode(null)
   }, [])
 
   const value: SearchContextState = {
@@ -135,6 +139,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     answer,
     isLoading,
     error,
+    lastSearchMode,
 
     // Actions
     handleSearch,
