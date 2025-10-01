@@ -21,6 +21,10 @@ export interface DropdownProps {
   onChange: (value: string) => void;
   className?: string;
   'aria-label'?: string;
+  /** 드롭다운 폭 (px 단위 숫자 또는 CSS 문자열) */
+  width?: number | string;
+  /** 최소 폭 (px 단위 숫자 또는 CSS 문자열) */
+  minWidth?: number | string;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -29,6 +33,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   onChange,
   className = '',
   'aria-label': ariaLabel,
+  width,
+  minWidth,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
@@ -84,10 +90,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
   };
 
+  // 동적 스타일 계산
+  const containerStyle: React.CSSProperties = {};
+  if (width !== undefined) {
+    containerStyle.width = typeof width === 'number' ? `${width}px` : width;
+  }
+  if (minWidth !== undefined) {
+    containerStyle.minWidth = typeof minWidth === 'number' ? `${minWidth}px` : minWidth;
+  }
+
   return (
     <div
       ref={dropdownRef}
       className={`ios-dropdown ${className}`}
+      style={containerStyle}
       aria-label={ariaLabel}
     >
       {/* Dropdown 트리거 버튼 */}

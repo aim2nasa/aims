@@ -199,6 +199,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                 options={SORT_OPTIONS}
                 onChange={handleSortSelectChange}
                 aria-label="정렬 기준 선택"
+                minWidth={160}
               />
             </div>
           </div>
@@ -285,6 +286,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                 options={ITEMS_PER_PAGE_OPTIONS}
                 onChange={(value) => handleLimitChange(Number(value))}
                 aria-label="페이지당 항목 수"
+                width={100}
               />
             </div>
 
