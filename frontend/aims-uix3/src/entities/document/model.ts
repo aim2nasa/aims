@@ -75,7 +75,7 @@ export const DocumentSearchQuerySchema = z.object({
   mimeType: z.string().optional(), // MIME 타입 필터
   limit: z.number().min(1).max(100).default(20),
   offset: z.number().min(0).default(0),
-  sortBy: z.enum(['filename', 'uploadDate', 'size', 'createdAt', 'updatedAt']).default('uploadDate'),
+  sortBy: z.enum(['filename', 'uploadDate', 'size', 'createdAt', 'updatedAt', 'fileType']).default('uploadDate'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
@@ -394,6 +394,55 @@ export const DocumentUtils = {
     const sizeA = a.size || 0;
     const sizeB = b.size || 0;
     return sizeB - sizeA;
+  },
+
+  /**
+   * 파일 형식 우선순위 반환 (숫자가 작을수록 우선순위 높음)
+   * 보험 업무에 최적화된 순서: PDF → 문서 → 스프레드시트 → 프레젠테이션 → 이미지 → 기타
+   */
+  getFileTypePriority: (mimeType?: string, filename?: string): number => {
+    const mime = (mimeType || '').toLowerCase();
+    const extension = filename?.split('.').pop()?.toLowerCase() || '';
+
+    // 1. PDF (보험 서류에서 가장 많이 사용)
+    if (mime.includes('pdf') || extension === 'pdf') return 1;
+
+    // 2. 문서 (DOC, DOCX, HWP)
+    if (['doc', 'docx', 'hwp'].includes(extension) || mime.includes('msword')) return 2;
+
+    // 3. 스프레드시트 (XLS, XLSX)
+    if (['xls', 'xlsx'].includes(extension) || mime.includes('sheet')) return 3;
+
+    // 4. 프레젠테이션 (PPT, PPTX)
+    if (['ppt', 'pptx'].includes(extension) || mime.includes('presentation')) return 4;
+
+    // 5. 이미지
+    if (mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) return 5;
+
+    // 6. 텍스트 파일
+    if (mime.includes('text') || ['txt', 'md', 'csv'].includes(extension)) return 6;
+
+    // 7. 압축 파일
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) return 7;
+
+    // 8. 기타
+    return 99;
+  },
+
+  /**
+   * 파일 형식으로 정렬하는 비교 함수
+   */
+  sortByFileType: (a: Document, b: Document): number => {
+    const priorityA = DocumentUtils.getFileTypePriority(a.mimeType, a.filename);
+    const priorityB = DocumentUtils.getFileTypePriority(b.mimeType, b.filename);
+
+    // 우선순위가 다르면 우선순위로 정렬
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // 같은 형식이면 파일명으로 정렬
+    return a.filename.localeCompare(b.filename, 'ko', { numeric: true });
   },
 };
 

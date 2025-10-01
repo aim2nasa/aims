@@ -306,25 +306,25 @@ app.get('/api/documents', async (req, res) => {
       console.log(`📄 Page 기반 페이지네이션: page=${page}, limit=${limit}, skip=${skip}`);
     }
 
-    // sortBy 파라미터 검증 (유효한 필드만 허용)
-    if (sortBy && !['size', 'time', 'name'].includes(sortBy)) {
-      return res.status(400).json({
-        success: false,
-        error: 'sortBy 파라미터는 size, time, name 중 하나여야 합니다.',
-        provided: sortBy,
-        allowed: ['size', 'time', 'name']
-      });
-    }
+    // sortBy/sortOrder 검증 제거: sort 파라미터를 직접 사용하므로 불필요
+    // 이 검증이 검색 기능을 방해하는 문제 발생
+    // if (sortBy && !['size', 'time', 'name', 'fileType'].includes(sortBy)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'sortBy 파라미터는 size, time, name, fileType 중 하나여야 합니다.',
+    //     provided: sortBy,
+    //     allowed: ['size', 'time', 'name', 'fileType']
+    //   });
+    // }
 
-    // sortOrder 파라미터 검증 (asc 또는 desc만 허용)
-    if (sortOrder && !['asc', 'desc'].includes(sortOrder)) {
-      return res.status(400).json({
-        success: false,
-        error: 'sortOrder 파라미터는 asc 또는 desc여야 합니다.',
-        provided: sortOrder,
-        allowed: ['asc', 'desc']
-      });
-    }
+    // if (sortOrder && !['asc', 'desc'].includes(sortOrder)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'sortOrder 파라미터는 asc 또는 desc여야 합니다.',
+    //     provided: sortOrder,
+    //     allowed: ['asc', 'desc']
+    //   });
+    // }
 
     let query = {};
 
@@ -358,46 +358,67 @@ app.get('/api/documents', async (req, res) => {
       console.log(`🎯 MongoDB 쿼리:`, JSON.stringify(query, null, 2));
     }
 
-    // 크기 정렬이 필요한 경우와 아닌 경우를 분기 처리
+    // 크기 정렬 또는 파일 형식 정렬이 필요한 경우 Aggregation 사용
     let documents;
 
-    if (sort === 'size_desc' || sort === 'size_asc') {
-      console.log(`📊 크기 정렬 요청: ${sort}`);
-      
-      // MongoDB Aggregation Pipeline을 사용하여 문자열을 숫자로 변환 후 정렬
-      const sortDirection = sort === 'size_desc' ? -1 : 1;
-      
+    if (sort === 'size_desc' || sort === 'size_asc' || sort === 'fileType_asc' || sort === 'fileType_desc') {
+      console.log(`📊 Aggregation 정렬 요청: ${sort}`);
+
       const pipeline = [
         // 1. 검색 조건 적용
         { $match: query },
-        
-        // 2. 크기 필드를 숫자로 변환
-        {
+      ];
+
+      // 2. 정렬 종류에 따라 $addFields 추가
+      if (sort === 'size_desc' || sort === 'size_asc') {
+        // 크기 정렬: 문자열을 숫자로 변환
+        const sortDirection = sort === 'size_desc' ? -1 : 1;
+        pipeline.push({
           $addFields: {
             'meta.size_bytes_numeric': {
               $cond: {
                 if: { $ne: ["$meta.size_bytes", null] },
                 then: { $toDouble: "$meta.size_bytes" },
-                else: 0  // null이나 undefined인 경우 0으로 처리
+                else: 0
               }
             }
           }
-        },
-        
-        // 3. 숫자로 변환된 필드로 정렬
-        { $sort: { 'meta.size_bytes_numeric': sortDirection } },
-        
-        // 4. 페이징 적용
-        { $skip: parseInt(skip) },
-        { $limit: parseInt(limit) },
-        
-        // 5. 임시 필드 제거 (선택사항)
-        {
-          $project: {
-            'meta.size_bytes_numeric': 0  // 응답에서 임시 필드 제거
+        });
+        pipeline.push({ $sort: { 'meta.size_bytes_numeric': sortDirection } });
+        pipeline.push({ $project: { 'meta.size_bytes_numeric': 0 } });
+      } else if (sort === 'fileType_asc' || sort === 'fileType_desc') {
+        // 파일 형식 정렬: MIME 타입 우선순위
+        const sortDirection = sort === 'fileType_desc' ? -1 : 1;
+        pipeline.push({
+          $addFields: {
+            'fileTypePriority': {
+              $switch: {
+                branches: [
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /pdf/i } }, then: 1 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /msword|hwp/i } }, then: 2 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /sheet|excel/i } }, then: 3 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /presentation|powerpoint/i } }, then: 4 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /^image/i } }, then: 5 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /text/i } }, then: 6 },
+                  { case: { $regexMatch: { input: "$meta.mime", regex: /zip|rar|7z|tar|gz/i } }, then: 7 },
+                ],
+                default: 99
+              }
+            }
           }
-        }
-      ];
+        });
+        pipeline.push({
+          $sort: {
+            'fileTypePriority': sortDirection,
+            'upload.originalName': 1  // 같은 형식이면 파일명순
+          }
+        });
+        pipeline.push({ $project: { 'fileTypePriority': 0 } });
+      }
+
+      // 3. 페이징 적용
+      pipeline.push({ $skip: parseInt(skip) });
+      pipeline.push({ $limit: parseInt(limit) });
       
       console.log(`🔧 Aggregation Pipeline:`, JSON.stringify(pipeline, null, 2));
       

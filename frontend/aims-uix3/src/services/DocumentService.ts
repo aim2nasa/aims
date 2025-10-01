@@ -51,7 +51,7 @@ export class DocumentService {
     if (query.q) params.append('search', query.q);
 
     // 백엔드는 'sort' 파라미터를 조합 형식으로 받음
-    // 예: 'uploadTime_desc', 'filename_asc', 'size_desc'
+    // 예: 'uploadTime_desc', 'filename_asc', 'size_desc', 'fileType_asc'
     if (query.sortBy && query.sortOrder) {
       const sortByMap: Record<string, string> = {
         'time': 'uploadTime',
@@ -61,6 +61,7 @@ export class DocumentService {
         'filename': 'filename',
         'createdAt': 'uploadTime',
         'updatedAt': 'uploadTime',
+        'fileType': 'fileType',  // 파일 형식 정렬 추가
       };
       const backendSortBy = sortByMap[query.sortBy] || 'uploadTime';
       const sortValue = `${backendSortBy}_${query.sortOrder}`;

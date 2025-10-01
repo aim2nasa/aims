@@ -186,6 +186,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                 <option value="filename_desc">이름순 (하파타)</option>
                 <option value="size_desc">크기순 (큰 것부터)</option>
                 <option value="size_asc">크기순 (작은 것부터)</option>
+                <option value="fileType_asc">파일 형식순</option>
               </select>
             </div>
           </div>
