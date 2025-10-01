@@ -2,8 +2,9 @@
  * DocumentSearchView Component
  * @since 1.0.0
  *
- * 문서 검색 View 컴포넌트
- * Search.py 기능을 React로 구현
+ * 🍎 iOS Spotlight Search 스타일 문서 검색 View
+ * DocumentLibrary와 완벽한 디자인 일관성
+ * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
 import React from 'react'
@@ -25,8 +26,8 @@ interface DocumentSearchViewProps {
 /**
  * DocumentSearchView React 컴포넌트
  *
- * 시맨틱/키워드 검색 기능을 제공하며,
- * 검색 결과를 리스트로 표시합니다.
+ * iOS Spotlight 스타일의 검색 UI를 제공합니다.
+ * Progressive Disclosure 원칙에 따라 필요한 옵션만 단계적으로 표시됩니다.
  *
  * @example
  * ```tsx
@@ -87,78 +88,72 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       className="document-search-view"
     >
       <div className="document-search-container">
-        {/* 검색 입력 영역 */}
-        <div className="search-input-section">
-          <div className="search-input-row">
-            <label className="search-label">검색어:</label>
+        {/* 🍎 iOS Spotlight 검색바 */}
+        <div className="search-bar-wrapper">
+          {/* 검색 입력 필드 */}
+          <div className="search-input-wrapper">
+            <span className="search-icon" aria-hidden="true">🔍</span>
             <input
               type="text"
               className="search-input"
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="검색어를 입력하세요"
+              placeholder="문서 검색"
+              aria-label="문서 검색"
             />
           </div>
 
-          <div className="search-options-row">
-            <label className="search-label">검색 모드:</label>
-
-            <div className="search-mode-group">
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="searchMode"
-                  value="semantic"
-                  checked={searchMode === 'semantic'}
-                  onChange={() => handleSearchModeChange('semantic')}
-                />
-                <span>시맨틱 검색</span>
-              </label>
-
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="searchMode"
-                  value="keyword"
-                  checked={searchMode === 'keyword'}
-                  onChange={() => handleSearchModeChange('keyword')}
-                />
-                <span>키워드 검색</span>
-              </label>
+          {/* 검색 옵션 */}
+          <div className="search-options-container">
+            {/* iOS Segmented Control: 시맨틱/키워드 */}
+            <div className="search-mode-segmented" role="group" aria-label="검색 모드 선택">
+              <button
+                className={`search-mode-segment ${searchMode === 'semantic' ? 'active' : ''}`}
+                onClick={() => handleSearchModeChange('semantic')}
+                aria-pressed={searchMode === 'semantic'}
+              >
+                시맨틱 검색
+              </button>
+              <button
+                className={`search-mode-segment ${searchMode === 'keyword' ? 'active' : ''}`}
+                onClick={() => handleSearchModeChange('keyword')}
+                aria-pressed={searchMode === 'keyword'}
+              >
+                키워드 검색
+              </button>
             </div>
 
-            {/* 키워드 모드 선택 (키워드 검색시만 표시) */}
-            {searchMode === 'keyword' && (
-              <div className="keyword-mode-group">
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="keywordMode"
-                    value="AND"
-                    checked={keywordMode === 'AND'}
-                    onChange={() => handleKeywordModeChange('AND')}
-                  />
-                  <span>AND</span>
-                </label>
+            {/* iOS Pills: AND/OR (Progressive Disclosure) */}
+            <div
+              className={`keyword-mode-pills ${searchMode === 'keyword' ? 'visible' : ''}`}
+              role="group"
+              aria-label="키워드 검색 모드"
+            >
+              <button
+                className={`keyword-mode-pill ${keywordMode === 'AND' ? 'active' : ''}`}
+                onClick={() => handleKeywordModeChange('AND')}
+                aria-pressed={keywordMode === 'AND'}
+                disabled={searchMode !== 'keyword'}
+              >
+                AND
+              </button>
+              <button
+                className={`keyword-mode-pill ${keywordMode === 'OR' ? 'active' : ''}`}
+                onClick={() => handleKeywordModeChange('OR')}
+                aria-pressed={keywordMode === 'OR'}
+                disabled={searchMode !== 'keyword'}
+              >
+                OR
+              </button>
+            </div>
 
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="keywordMode"
-                    value="OR"
-                    checked={keywordMode === 'OR'}
-                    onChange={() => handleKeywordModeChange('OR')}
-                  />
-                  <span>OR</span>
-                </label>
-              </div>
-            )}
-
+            {/* 검색 버튼 */}
             <button
               className="search-button"
               onClick={handleSearch}
               disabled={isLoading}
+              aria-label={isLoading ? '검색 중' : '검색 실행'}
             >
               {isLoading ? '검색 중...' : '검색'}
             </button>
@@ -167,7 +162,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
         {/* 에러 메시지 */}
         {error && (
-          <div className="search-error">
+          <div className="search-error" role="alert" aria-live="assertive">
             {error}
           </div>
         )}
@@ -175,7 +170,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         {/* 검색 결과 영역 */}
         <div className="search-results-section">
           {isLoading ? (
-            <div className="search-loading">
+            <div className="search-loading" role="status" aria-live="polite">
               검색 중입니다. 잠시만 기다려 주세요...
             </div>
           ) : results.length > 0 ? (
@@ -183,12 +178,12 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               {/* AI 답변 (시맨틱 검색시) */}
               {answer && (
                 <div className="search-answer">
-                  <h3 className="answer-title">AI 답변:</h3>
+                  <h3 className="answer-title">AI 답변</h3>
                   <p className="answer-content">{answer}</p>
                 </div>
               )}
 
-              {/* 검색 결과 안내 */}
+              {/* 검색 결과 헤더 */}
               <div className="search-results-header">
                 {searchMode === 'semantic' ? (
                   <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
@@ -200,8 +195,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 )}
               </div>
 
-              {/* 검색 결과 리스트 */}
-              <div className="search-results-list">
+              {/* 🍎 iOS Table View 스타일 결과 리스트 */}
+              <div className="search-results-table" role="list">
                 {results.map((item, index) => {
                   const originalName = SearchService.getOriginalName(item)
                   const summary = SearchService.getSummary(item)
@@ -211,27 +206,43 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   return (
                     <div
                       key={index}
-                      className="search-result-item"
+                      className="search-result-row"
                       onClick={() => handleItemClick(item)}
+                      role="listitem"
+                      tabIndex={0}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleItemClick(item)
+                        }
+                      }}
+                      aria-label={`문서: ${originalName}`}
                     >
-                      <div className="result-header">
-                        <span className="result-index">[{index + 1}]</span>
-                        <span className="result-title">{originalName}</span>
-
-                        {score !== null && (
-                          <span className="result-score">
-                            (유사도: {score.toFixed(4)},
-                          </span>
-                        )}
-
-                        {confidence && (
-                          <span className="result-confidence">
-                            {score !== null ? '' : '('}문자 인식률: {confidence})
-                          </span>
-                        )}
+                      {/* Leading: 인덱스 */}
+                      <div className="row-leading">
+                        <span className="row-index">[{index + 1}]</span>
                       </div>
 
-                      <p className="result-summary">{summary}</p>
+                      {/* Content: 제목 + 요약 */}
+                      <div className="row-content">
+                        <div className="row-title">{originalName}</div>
+                        <div className="row-subtitle">{summary}</div>
+                      </div>
+
+                      {/* Trailing: 점수 + 화살표 */}
+                      <div className="row-trailing">
+                        {score !== null && (
+                          <div className="row-detail">
+                            유사도: {score.toFixed(4)}
+                          </div>
+                        )}
+                        {confidence && !score && (
+                          <div className="row-detail">
+                            인식률: {confidence}
+                          </div>
+                        )}
+                        <span className="row-chevron" aria-hidden="true">›</span>
+                      </div>
                     </div>
                   )
                 })}
@@ -239,8 +250,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             </>
           ) : (
             !isLoading && (
-              <div className="search-empty">
-                상세 영역: 검색을 실행하면 결과가 표시됩니다.
+              <div className="search-empty" role="status">
+                검색을 실행하면 결과가 표시됩니다.
               </div>
             )
           )}
