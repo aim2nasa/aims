@@ -16,7 +16,7 @@ API_URL = "https://tars.giize.com/search_api"
 class SearchApp:
     def __init__(self, root):
         self.root = root
-        self.version = "0.3.0"
+        self.version = "0.4.0"
         self.root.title(f"Search Viewer v{self.version}")
         self.root.geometry("1000x600")
         self.root.minsize(800, 400)
@@ -228,6 +228,30 @@ class SearchApp:
 
         return "알 수 없는 파일"
 
+    def get_summary(self, doc):
+        """다양한 스키마 구조에서 요약을 찾는 함수"""
+        # 1. meta.summary 우선 (새로운 스키마)
+        summary = doc.get("meta", {}).get("summary", "")
+        if summary:
+            return summary
+
+        # 2. ocr.summary (기존 스키마)
+        summary = doc.get("ocr", {}).get("summary", "")
+        if summary:
+            return summary
+
+        # 3. docsum.summary (smartsearch API 응답)
+        summary = doc.get("docsum", {}).get("summary", "")
+        if summary:
+            return summary
+
+        # 4. summary 직접 (최상위)
+        summary = doc.get("summary", "")
+        if summary:
+            return summary
+
+        return "요약 없음"
+
     def display_results(self, data):
         self.results_text.delete(1.0, tk.END)
 
@@ -245,7 +269,7 @@ class SearchApp:
                 self.results_text.insert(tk.END, "--- 검색 결과 ---\n\n", "header")
                 for i, doc in enumerate(search_results):
                     original_name = self.find_original_name(doc)
-                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
+                    summary = self.get_summary(doc)
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
@@ -271,11 +295,11 @@ class SearchApp:
                 self.results_text.insert(tk.END, f"주어진 검색어와 유사도가 높은 상위 {len(search_results)}개의 문서를 보여드립니다.\n\n", "header")
                 for i, doc in enumerate(search_results):
                     original_name = self.find_original_name(doc)
-                    summary = doc.get("ocr", {}).get("summary", "요약 없음")
+                    summary = self.get_summary(doc)
                     full_text = self.get_full_text(doc)
                     confidence = doc.get("ocr", {}).get("confidence", "")
                     payload = doc.get("payload", {})
-                    preview = payload.get("preview", "미리보기 없음")
+                    preview = payload.get("preview", "미리보기")
                     score = doc.get("score")
                     self.results_text.insert(tk.END, f"[{i+1}] {original_name} ", ("doc_title", f"item_{i}"))
                     self.results_text.insert(tk.END, f"(유사도: {score:.4f},")
