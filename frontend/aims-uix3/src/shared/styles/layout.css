@@ -157,7 +157,10 @@
   -moz-osx-font-smoothing: grayscale;
   border-radius: 0.625rem; /* 10px - 🍎 macOS Sonoma 실제 측정값 */
   box-shadow: var(--shadow-sidebar-light); /* 🍎 macOS 사이드바 전용 그림자 */
-  /* 🍎 애플 철학: 사이드바는 정적 상태 - transition 제거 */
+
+  /* 🍎 중요: transition 중 내부 콘텐츠 overflow 방지 */
+  overflow: hidden;
+
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
@@ -201,11 +204,14 @@
   /* 🍎 Safari 특화: Glass Effect 최적화 */
   -webkit-backdrop-filter: var(--backdrop-glass-light);
   backdrop-filter: var(--backdrop-glass-light);
-  /* 호버 시 더 깊은 그림자 효과 */
-  transition: box-shadow var(--duration-ios-quick) var(--easing-ios-default);
+
+  /* 🍎 중요: LeftPane과 완벽한 동기화를 위해 명시적 transition 추가 */
+  transition: left var(--duration-apple-graceful) var(--easing-ease-in-out),
+              width var(--duration-apple-graceful) var(--easing-ease-in-out),
+              box-shadow var(--duration-ios-quick) var(--easing-ios-default);
 
   /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: box-shadow, transform;
+  will-change: left, width, box-shadow, transform;
   transform: translateZ(0); /* 강제 GPU 레이어 생성 */
   contain: layout style paint; /* CSS Containment 최적화 */
   backface-visibility: hidden; /* Subpixel 렌더링 최적화 */

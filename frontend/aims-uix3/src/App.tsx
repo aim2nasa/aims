@@ -375,7 +375,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // CSS 계산식들 메모이제이션 (성능 최적화, 애플 표준 크기 사용)
   const layoutDimensions = useMemo(() => {
     const leftPaneWidth = leftPaneCollapsed ? 60 : 250
-    const leftPaneWidthVar = leftPaneCollapsed ? 'var(--leftpane-width-collapsed)' : 'var(--leftpane-width-expanded)'
+    const leftPaneWidthVar = `${leftPaneWidth}px` // 🍎 transition 동기화: 실제 픽셀 값 사용
     const mainPaneWidth = `calc(100vw - ${leftPaneWidthVar})`
 
     return {
