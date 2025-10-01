@@ -31,10 +31,25 @@ export const Dropdown: React.FC<DropdownProps> = ({
   'aria-label': ariaLabel,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // 선택된 옵션 찾기
   const selectedOption = options.find(opt => opt.value === value);
+
+  // 드롭다운 위치 계산 (위/아래)
+  useEffect(() => {
+    if (isOpen && dropdownRef.current && menuRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const menuHeight = menuRef.current.offsetHeight;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // 아래 공간이 충분하면 아래로, 아니면 위로
+      setOpenUpward(spaceBelow < menuHeight && spaceAbove > spaceBelow);
+    }
+  }, [isOpen]);
 
   // 외부 클릭 감지
   useEffect(() => {
@@ -92,7 +107,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
       {/* Dropdown 옵션 리스트 */}
       {isOpen && (
-        <div className="ios-dropdown__menu" role="listbox">
+        <div
+          ref={menuRef}
+          className={`ios-dropdown__menu ${openUpward ? 'ios-dropdown__menu--upward' : ''}`}
+          role="listbox"
+        >
           {options.map((option) => (
             <button
               key={option.value}

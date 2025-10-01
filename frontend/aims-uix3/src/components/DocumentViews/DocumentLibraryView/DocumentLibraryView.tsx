@@ -12,6 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import { Dropdown, type DropdownOption } from '@/shared/ui'
 import './DocumentLibraryView.css'
 
 interface DocumentLibraryViewProps {
@@ -22,6 +23,25 @@ interface DocumentLibraryViewProps {
   /** 문서 클릭 핸들러 */
   onDocumentClick?: (documentId: string) => void
 }
+
+// 정렬 옵션 정의
+const SORT_OPTIONS: DropdownOption[] = [
+  { value: 'uploadDate_desc', label: '최신순' },
+  { value: 'uploadDate_asc', label: '오래된순' },
+  { value: 'filename_asc', label: '이름순 (가나다)' },
+  { value: 'filename_desc', label: '이름순 (하파타)' },
+  { value: 'size_desc', label: '크기순 (큰 것부터)' },
+  { value: 'size_asc', label: '크기순 (작은 것부터)' },
+  { value: 'fileType_asc', label: '파일 형식순' },
+]
+
+// 페이지당 항목 수 옵션 정의
+const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
+  { value: '10', label: '10개씩' },
+  { value: '20', label: '20개씩' },
+  { value: '50', label: '50개씩' },
+  { value: '100', label: '100개씩' },
+]
 
 /**
  * DocumentLibraryView React 컴포넌트
@@ -174,20 +194,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
             {/* 🍎 정렬 드롭다운 */}
             <div className="sort-selector">
-              <select
-                className="sort-select"
+              <Dropdown
                 value={sortValue}
-                onChange={(e) => handleSortSelectChange(e.target.value)}
+                options={SORT_OPTIONS}
+                onChange={handleSortSelectChange}
                 aria-label="정렬 기준 선택"
-              >
-                <option value="uploadDate_desc">최신순</option>
-                <option value="uploadDate_asc">오래된순</option>
-                <option value="filename_asc">이름순 (가나다)</option>
-                <option value="filename_desc">이름순 (하파타)</option>
-                <option value="size_desc">크기순 (큰 것부터)</option>
-                <option value="size_asc">크기순 (작은 것부터)</option>
-                <option value="fileType_asc">파일 형식순</option>
-              </select>
+              />
             </div>
           </div>
         )}
@@ -268,17 +280,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           <div className="document-pagination">
             {/* 🍎 페이지당 항목 수 선택 */}
             <div className="pagination-limit">
-              <select
-                className="pagination-limit-select"
-                value={itemsPerPage}
-                onChange={(e) => handleLimitChange(Number(e.target.value))}
+              <Dropdown
+                value={String(itemsPerPage)}
+                options={ITEMS_PER_PAGE_OPTIONS}
+                onChange={(value) => handleLimitChange(Number(value))}
                 aria-label="페이지당 항목 수"
-              >
-                <option value={10}>10개씩</option>
-                <option value={20}>20개씩</option>
-                <option value={50}>50개씩</option>
-                <option value={100}>100개씩</option>
-              </select>
+              />
             </div>
 
             {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}

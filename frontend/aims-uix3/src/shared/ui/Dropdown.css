@@ -78,28 +78,50 @@ html[data-theme="dark"] .ios-dropdown__arrow {
 /* === DROPDOWN MENU === */
 .ios-dropdown__menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 4px); /* 기본: 아래로 펼쳐짐 */
   left: 0;
   right: 0;
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: var(--color-ios-menu-bg-light); /* CSS 변수 사용 */
   border: 1px solid var(--color-ios-separator-light);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  z-index: 1000;
-  animation: dropdownFadeIn var(--duration-ios-quick) var(--easing-ease-out);
+  z-index: 10000; /* 높은 z-index로 다른 요소 위에 표시 */
+  max-height: 300px; /* 최대 높이 제한 */
+  overflow-y: auto; /* 스크롤 가능 */
+  animation: dropdownFadeInDown var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+/* 위로 펼쳐지는 경우 (공간 부족시) */
+.ios-dropdown__menu--upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+  animation: dropdownFadeInUp var(--duration-ios-quick) var(--easing-ease-out);
 }
 
 html[data-theme="dark"] .ios-dropdown__menu {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: var(--color-ios-menu-bg-dark); /* CSS 변수 사용 */
   border-color: var(--color-ios-separator-dark);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes dropdownFadeIn {
+/* 아래로 펼쳐지는 애니메이션 (기본) */
+@keyframes dropdownFadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-4px); /* 위에서 아래로 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 위로 펼쳐지는 애니메이션 (공간 부족시) */
+@keyframes dropdownFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px); /* 아래에서 위로 */
   }
   to {
     opacity: 1;

@@ -317,6 +317,10 @@
   --color-ios-bg-hover-light: rgba(0, 0, 0, 0.03);
   --color-ios-bg-hover-dark: rgba(255, 255, 255, 0.05);
 
+  /* Menu Background Colors (불투명 배경 필요한 경우) */
+  --color-ios-menu-bg-light: #ffffff;
+  --color-ios-menu-bg-dark: #1c1c1e;
+
   /* Interactive Colors */
   --color-ios-interactive-light: rgba(0, 0, 0, 0.6);
   --color-ios-interactive-dark: rgba(255, 255, 255, 0.6);
