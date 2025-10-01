@@ -229,8 +229,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             {score !== null ? '' : '('}문자 인식률: {confidence})
                           </span>
                         )}
-
-                        <span className="result-link">[다운로드 및 열기]</span>
                       </div>
 
                       <p className="result-summary">{summary}</p>
