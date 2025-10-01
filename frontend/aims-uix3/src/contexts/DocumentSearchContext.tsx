@@ -51,8 +51,8 @@ interface DocumentSearchProviderProps {
 export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ children }) => {
   // 검색 입력 상태
   const [query, setQuery] = useState<string>('')
-  const [searchMode, setSearchMode] = useState<SearchMode>('semantic')
-  const [keywordMode, setKeywordMode] = useState<KeywordMode>('OR')
+  const [searchMode, setSearchMode] = useState<SearchMode>('keyword') // 기본값: 키워드 검색 (신뢰성 우선)
+  const [keywordMode, setKeywordMode] = useState<KeywordMode>('AND') // 기본값: AND (정확도 우선)
 
   // 검색 결과 상태
   const [results, setResults] = useState<SearchResultItem[]>([])

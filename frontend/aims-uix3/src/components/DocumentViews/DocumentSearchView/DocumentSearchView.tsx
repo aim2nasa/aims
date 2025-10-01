@@ -11,7 +11,7 @@ import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
 import { SearchService } from '@/services/searchService'
-import type { SearchResultItem } from '@/entities/search'
+import type { SearchResultItem, SearchMode } from '@/entities/search'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -106,23 +106,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
           {/* 검색 옵션 */}
           <div className="search-options-container">
-            {/* iOS Segmented Control: 시맨틱/키워드 */}
-            <div className="search-mode-segmented" role="group" aria-label="검색 모드 선택">
-              <button
-                className={`search-mode-segment ${searchMode === 'semantic' ? 'active' : ''}`}
-                onClick={() => handleSearchModeChange('semantic')}
-                aria-pressed={searchMode === 'semantic'}
-              >
-                시맨틱 검색
-              </button>
-              <button
-                className={`search-mode-segment ${searchMode === 'keyword' ? 'active' : ''}`}
-                onClick={() => handleSearchModeChange('keyword')}
-                aria-pressed={searchMode === 'keyword'}
-              >
-                키워드 검색
-              </button>
-            </div>
+            {/* 검색 모드 드롭다운 (서브틀) */}
+            <select
+              className="search-mode-dropdown"
+              value={searchMode}
+              onChange={(e) => handleSearchModeChange(e.target.value as SearchMode)}
+              aria-label="검색 모드 선택"
+            >
+              <option value="keyword">키워드 검색</option>
+              <option value="semantic">AI 검색 (실험적)</option>
+            </select>
 
             {/* iOS Pills: AND/OR (Progressive Disclosure) */}
             <div

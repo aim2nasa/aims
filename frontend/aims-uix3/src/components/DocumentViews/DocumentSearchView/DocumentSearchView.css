@@ -83,7 +83,7 @@ html[data-theme="dark"] .search-input::placeholder {
   color: var(--color-ios-text-placeholder-dark);
 }
 
-/* === 🍎 SEARCH OPTIONS: iOS Segmented Control + Pills === */
+/* === 🍎 SEARCH OPTIONS: iOS Dropdown + Pills === */
 
 .search-options-container {
   display: flex;
@@ -92,56 +92,46 @@ html[data-theme="dark"] .search-input::placeholder {
   flex-wrap: wrap;
 }
 
-/* iOS Segmented Control for 검색 모드 */
-.search-mode-segmented {
-  display: inline-flex;
-  background-color: var(--color-ios-bg-tertiary-light);
+/* iOS 스타일 드롭다운 (서브틀) */
+.search-mode-dropdown {
+  padding: 6px 12px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
   border-radius: 8px;
-  padding: 2px;
-  gap: 0;
-}
-
-html[data-theme="dark"] .search-mode-segmented {
-  background-color: var(--color-ios-bg-tertiary-dark);
-}
-
-.search-mode-segment {
-  padding: 6px 16px;
-  border: none;
-  background: transparent;
   color: var(--color-ios-text-primary-light);
   font-size: 13px;
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
-  border-radius: 6px;
+  outline: none;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  white-space: nowrap;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%23666' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
 }
 
-html[data-theme="dark"] .search-mode-segment {
+html[data-theme="dark"] .search-mode-dropdown {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
   color: var(--color-ios-text-primary-dark);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%23ccc' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
 }
 
-.search-mode-segment.active {
-  background-color: var(--color-neutral-0);
-  color: var(--color-ios-text-primary-light);
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+.search-mode-dropdown:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+  border-color: var(--color-ios-text-quaternary-light);
 }
 
-html[data-theme="dark"] .search-mode-segment.active {
-  background-color: var(--color-neutral-800);
-  color: var(--color-ios-text-primary-dark);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+html[data-theme="dark"] .search-mode-dropdown:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+  border-color: var(--color-ios-text-quaternary-dark);
 }
 
-.search-mode-segment:hover:not(.active) {
-  background-color: var(--color-ios-bg-hover-light);
-}
-
-html[data-theme="dark"] .search-mode-segment:hover:not(.active) {
-  background-color: var(--color-ios-bg-hover-dark);
+.search-mode-dropdown:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* iOS Pills for 키워드 모드 (Progressive Disclosure) */
