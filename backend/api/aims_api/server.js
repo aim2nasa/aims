@@ -17,8 +17,8 @@ app.use(express.urlencoded({ extended: true }));
  */
 function escapeRegex(str) {
   if (typeof str !== 'string') return '';
-  // 정규식 특수문자: . * + ? ^ $ { } ( ) | [ ] \
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // 정규식 특수문자: . * + ? ^ $ { } ( ) | [ ] \ -
+  return str.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&');
 }
 
 // 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
@@ -350,12 +350,9 @@ app.get('/api/documents', async (req, res) => {
       const escapedSearch = escapeRegex(normalizedSearch);
       console.log(`🛡️ 이스케이프 완료: "${escapedSearch}"`);
 
-      // 4. 검색 조건 구성
+      // 4. 검색 조건 구성 (파일명만 검색)
       query = {
-        $or: [
-          { 'upload.originalName': { $regex: escapedSearch, $options: 'i' } },
-          { 'meta.mime': { $regex: escapedSearch, $options: 'i' } }
-        ]
+        'upload.originalName': { $regex: escapedSearch, $options: 'i' }
       };
       
       console.log(`🎯 MongoDB 쿼리:`, JSON.stringify(query, null, 2));
