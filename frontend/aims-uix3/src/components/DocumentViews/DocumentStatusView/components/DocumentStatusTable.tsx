@@ -12,6 +12,7 @@
 import React, { useMemo, useState } from 'react'
 import { DocumentStatusService } from '../../../../services/documentStatusService'
 import type { Document } from '../../../../types/documentStatus'
+import { Dropdown, type DropdownOption } from '@/shared/ui'
 import './DocumentStatusTable.css'
 
 interface DocumentStatusTableProps {
@@ -26,6 +27,14 @@ interface DocumentStatusTableProps {
   /** 문서 전체 텍스트 보기 핸들러 */
   onFullTextClick?: (document: Document) => void
 }
+
+// 페이지당 항목 수 옵션 정의
+const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
+  { value: '10', label: '10개씩' },
+  { value: '20', label: '20개씩' },
+  { value: '50', label: '50개씩' },
+  { value: '100', label: '100개씩' },
+]
 
 /**
  * DocumentStatusTable React 컴포넌트
@@ -53,7 +62,7 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
   const [pageSize, setPageSize] = useState(20)
 
   // 페이지네이션 계산
-  const { paginatedDocuments, totalPages, startIndex, endIndex } = useMemo(() => {
+  const { paginatedDocuments, totalPages } = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     const end = start + pageSize
     const paginated = documents.slice(start, end)
@@ -62,8 +71,6 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
     return {
       paginatedDocuments: paginated,
       totalPages: total,
-      startIndex: start + 1,
-      endIndex: Math.min(end, documents.length)
     }
   }, [documents, currentPage, pageSize])
 
@@ -238,64 +245,51 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
         </table>
       </div>
 
-      {/* 페이지네이션 */}
+      {/* 🍎 페이지네이션 - iOS Style (DocumentLibraryView와 동일) */}
       {documents.length > 0 && (
         <div className="table-pagination">
-          <div className="pagination-info">
-            <span className="pagination-range">
-              {startIndex}-{endIndex} / {documents.length}개
-            </span>
-            <select
-              className="pagination-page-size"
-              value={pageSize}
-              onChange={handlePageSizeChange}
+          {/* 🍎 페이지당 항목 수 선택 */}
+          <div className="pagination-limit">
+            <Dropdown
+              value={String(pageSize)}
+              options={ITEMS_PER_PAGE_OPTIONS}
+              onChange={(value) => handlePageSizeChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
               aria-label="페이지당 항목 수"
-            >
-              <option value={10}>10개씩</option>
-              <option value={20}>20개씩</option>
-              <option value={30}>30개씩</option>
-              <option value={50}>50개씩</option>
-              <option value={100}>100개씩</option>
-            </select>
+              width={100}
+            />
           </div>
 
-          <div className="pagination-controls">
-            <button
-              className="pagination-button"
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              aria-label="첫 페이지"
-            >
-              ⟨⟨
-            </button>
-            <button
-              className="pagination-button"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              aria-label="이전 페이지"
-            >
-              ⟨
-            </button>
-            <span className="pagination-current">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              className="pagination-button"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              aria-label="다음 페이지"
-            >
-              ⟩
-            </button>
-            <button
-              className="pagination-button"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              aria-label="마지막 페이지"
-            >
-              ⟩⟩
-            </button>
-          </div>
+          {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-button pagination-button--prev"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className="pagination-arrow">‹</span>
+              </button>
+
+              <div className="pagination-info">
+                <span className="pagination-current">{currentPage}</span>
+                <span className="pagination-separator">/</span>
+                <span className="pagination-total">{totalPages}</span>
+              </div>
+
+              <button
+                className="pagination-button pagination-button--next"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className="pagination-arrow">›</span>
+              </button>
+            </div>
+          )}
+
+          {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
+          {totalPages <= 1 && <div className="pagination-spacer"></div>}
         </div>
       )}
     </div>
