@@ -274,12 +274,13 @@ html[data-theme="dark"] .status-date {
 }
 
 .action-btn:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-  transform: scale(1.1);
+  background-color: transparent;
+  transform: scale(1.15);
+  opacity: 1;
 }
 
 html[data-theme="dark"] .action-btn:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
+  background-color: transparent;
 }
 
 /* === RESPONSIVE === */

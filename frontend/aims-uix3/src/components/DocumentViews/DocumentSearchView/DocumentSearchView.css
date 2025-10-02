@@ -106,13 +106,13 @@ html[data-theme="dark"] .fulltext-button {
 }
 
 .fulltext-button:hover {
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: transparent;
   opacity: 1;
-  transform: scale(1.05);
+  transform: scale(1.15);
 }
 
 html[data-theme="dark"] .fulltext-button:hover {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: transparent;
 }
 
 .fulltext-button:active {
