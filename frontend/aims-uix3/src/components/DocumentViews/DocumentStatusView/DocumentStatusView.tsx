@@ -6,12 +6,14 @@
  * DocumentStatusProvider와 함께 사용하여 실시간 문서 처리 현황 표시
  */
 
-import React from 'react'
+import React, { useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
+import { Document } from '../../../types/documentStatus'
 import DocumentStatusStats from './components/DocumentStatusStats'
 import DocumentStatusTable from './components/DocumentStatusTable'
+import DocumentDetailModal from './components/DocumentDetailModal'
 import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
@@ -27,6 +29,28 @@ interface DocumentStatusViewProps {
  */
 const DocumentStatusViewContent: React.FC = () => {
   const { state, actions } = useDocumentStatusContext()
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [isDetailModalVisible, setDetailModalVisible] = useState(false)
+
+  /**
+   * 문서 클릭 핸들러
+   * Document Detail Modal 열기
+   */
+  const handleDocumentClick = (document: Document) => {
+    setSelectedDocument(document)
+    setDetailModalVisible(true)
+  }
+
+  /**
+   * Document Detail Modal 닫기 핸들러
+   */
+  const handleDetailModalClose = () => {
+    setDetailModalVisible(false)
+    // 모달 애니메이션 완료 후 선택 해제
+    setTimeout(() => {
+      setSelectedDocument(null)
+    }, 300)
+  }
 
   return (
     <div className="document-status-view-content">
@@ -57,10 +81,7 @@ const DocumentStatusViewContent: React.FC = () => {
         <DocumentStatusTable
           documents={state.filteredDocuments}
           isLoading={state.isLoading}
-          onDocumentClick={(document) => {
-            // Phase 4에서 Document Detail Modal 구현 예정
-            console.log('Document clicked:', document)
-          }}
+          onDocumentClick={handleDocumentClick}
         />
       )}
 
@@ -70,6 +91,13 @@ const DocumentStatusViewContent: React.FC = () => {
           <p>문서가 없습니다.</p>
         </div>
       )}
+
+      {/* Document Detail Modal */}
+      <DocumentDetailModal
+        visible={isDetailModalVisible}
+        onClose={handleDetailModalClose}
+        document={selectedDocument}
+      />
     </div>
   )
 }

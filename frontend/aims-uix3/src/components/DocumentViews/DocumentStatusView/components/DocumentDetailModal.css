@@ -1,0 +1,562 @@
+/**
+ * DocumentDetailModal Styles
+ * @since 1.0.0
+ *
+ * 🍎 Apple/iOS 디자인 시스템 적용
+ * - Progressive Disclosure: 탭 전환, 호버 효과
+ * - iOS 애니메이션 타이밍
+ * - Light/Dark 테마 지원
+ */
+
+/* ===== Modal Overlay ===== */
+.document-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn var(--duration-ios-normal) var(--easing-ease-out);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== Modal Container ===== */
+.document-detail-modal {
+  background-color: var(--color-layout-content-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp var(--duration-ios-normal) var(--easing-ease-out);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html[data-theme='dark'] .document-detail-modal {
+  background-color: var(--color-layout-content-dark);
+}
+
+/* ===== Modal Header ===== */
+.document-detail-modal .modal-header {
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--color-layout-accent-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .modal-header {
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
+.document-detail-modal .header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  position: relative;
+}
+
+.document-detail-modal .file-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.document-detail-modal .file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.document-detail-modal .file-name {
+  font-size: var(--font-size-title3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary-light);
+  margin: 0;
+  word-break: break-word;
+}
+
+html[data-theme='dark'] .document-detail-modal .file-name {
+  color: var(--color-text-primary-dark);
+}
+
+.document-detail-modal .server-name {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-tertiary-light);
+  margin: 0;
+  word-break: break-all;
+}
+
+html[data-theme='dark'] .document-detail-modal .server-name {
+  color: var(--color-text-tertiary-dark);
+}
+
+.document-detail-modal .status-container {
+  margin-top: var(--spacing-1);
+}
+
+.document-detail-modal .close-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary-light);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme='dark'] .document-detail-modal .close-button {
+  color: var(--color-text-secondary-dark);
+}
+
+/* 🍎 Progressive Disclosure: 호버 시 배경 표시 */
+.document-detail-modal .close-button:hover {
+  background-color: var(--color-layout-secondary-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .close-button:hover {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.document-detail-modal .close-button:active {
+  background-color: var(--color-layout-accent-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .close-button:active {
+  background-color: var(--color-layout-accent-dark);
+}
+
+/* ===== Status Badge ===== */
+.document-detail-modal .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-caption1);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+}
+
+.document-detail-modal .status-badge.status-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+html[data-theme='dark'] .document-detail-modal .status-badge.status-completed {
+  background-color: #064e3b;
+  color: #6ee7b7;
+}
+
+.document-detail-modal .status-badge.status-processing {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+html[data-theme='dark'] .document-detail-modal .status-badge.status-processing {
+  background-color: #1e3a8a;
+  color: #93c5fd;
+}
+
+.document-detail-modal .status-badge.status-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+html[data-theme='dark'] .document-detail-modal .status-badge.status-error {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+.document-detail-modal .status-badge.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+html[data-theme='dark'] .document-detail-modal .status-badge.status-pending {
+  background-color: #78350f;
+  color: #fcd34d;
+}
+
+.document-detail-modal .status-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+.document-detail-modal .status-badge.status-processing .status-icon {
+  animation: rotate-processing 2s linear infinite;
+}
+
+@keyframes rotate-processing {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Tab Navigation ===== */
+.document-detail-modal .tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--color-layout-accent-light);
+  background-color: var(--color-layout-secondary-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .tab-navigation {
+  border-bottom-color: var(--color-layout-accent-dark);
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.document-detail-modal .tab-button {
+  flex: 1;
+  padding: var(--spacing-3);
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary-light);
+  font-size: var(--font-size-subheadline);
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  position: relative;
+}
+
+html[data-theme='dark'] .document-detail-modal .tab-button {
+  color: var(--color-text-secondary-dark);
+}
+
+/* 🍎 Progressive Disclosure: 기본 상태는 서브틀 */
+.document-detail-modal .tab-button:hover {
+  background-color: var(--color-layout-content-light);
+  color: var(--color-text-primary-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .tab-button:hover {
+  background-color: var(--color-layout-content-dark);
+  color: var(--color-text-primary-dark);
+}
+
+.document-detail-modal .tab-button.active {
+  color: var(--color-ios-blue-light);
+  font-weight: var(--font-weight-semibold);
+}
+
+html[data-theme='dark'] .document-detail-modal .tab-button.active {
+  color: var(--color-ios-blue-dark);
+}
+
+.document-detail-modal .tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-ios-blue-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .tab-button.active::after {
+  background-color: var(--color-ios-blue-dark);
+}
+
+/* ===== Modal Content ===== */
+.document-detail-modal .modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-4);
+}
+
+.document-detail-modal .tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  animation: fadeIn var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.document-detail-modal .section-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary-light);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+html[data-theme='dark'] .document-detail-modal .section-title {
+  color: var(--color-text-primary-dark);
+}
+
+/* ===== Progress Bar ===== */
+.document-detail-modal .progress-bar-wrapper {
+  width: 100%;
+  height: 8px;
+  background-color: var(--color-layout-accent-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+html[data-theme='dark'] .document-detail-modal .progress-bar-wrapper {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.document-detail-modal .progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-ios-normal) var(--easing-ease-out);
+}
+
+.document-detail-modal .progress-bar-fill.status-completed {
+  background-color: #10b981;
+}
+
+.document-detail-modal .progress-bar-fill.status-processing {
+  background-color: #3b82f6;
+}
+
+.document-detail-modal .progress-bar-fill.status-error {
+  background-color: #ef4444;
+}
+
+.document-detail-modal .progress-bar-fill.status-pending {
+  background-color: #f59e0b;
+}
+
+/* ===== Progress Info Grid ===== */
+.document-detail-modal .progress-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.document-detail-modal .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.document-detail-modal .info-label {
+  font-size: var(--font-size-caption1);
+  color: var(--color-text-tertiary-light);
+}
+
+html[data-theme='dark'] .document-detail-modal .info-label {
+  color: var(--color-text-tertiary-dark);
+}
+
+.document-detail-modal .info-value {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary-light);
+  font-weight: var(--font-weight-medium);
+}
+
+html[data-theme='dark'] .document-detail-modal .info-value {
+  color: var(--color-text-primary-dark);
+}
+
+/* ===== Info List ===== */
+.document-detail-modal .info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.document-detail-modal .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2);
+  background-color: var(--color-layout-secondary-light);
+  border-radius: var(--radius-md);
+  gap: var(--spacing-3);
+}
+
+html[data-theme='dark'] .document-detail-modal .info-row {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.document-detail-modal .row-label {
+  font-size: var(--font-size-subheadline);
+  color: var(--color-text-secondary-light);
+  flex-shrink: 0;
+}
+
+html[data-theme='dark'] .document-detail-modal .row-label {
+  color: var(--color-text-secondary-dark);
+}
+
+.document-detail-modal .row-value {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.document-detail-modal .code-text {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-caption2);
+  color: var(--color-text-primary-light);
+  background-color: var(--color-layout-accent-light);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme='dark'] .document-detail-modal .code-text {
+  color: var(--color-text-primary-dark);
+  background-color: var(--color-layout-accent-dark);
+}
+
+.document-detail-modal .text-value {
+  font-size: var(--font-size-subheadline);
+  color: var(--color-text-primary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme='dark'] .document-detail-modal .text-value {
+  color: var(--color-text-primary-dark);
+}
+
+/* 🍎 Progressive Disclosure: 복사 버튼 */
+.document-detail-modal .copy-button {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-tertiary-light);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.7;
+}
+
+html[data-theme='dark'] .document-detail-modal .copy-button {
+  color: var(--color-text-tertiary-dark);
+}
+
+.document-detail-modal .copy-button:hover {
+  background-color: var(--color-layout-accent-light);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .document-detail-modal .copy-button:hover {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.document-detail-modal .copy-button.copied {
+  color: var(--color-ios-green-light);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .document-detail-modal .copy-button.copied {
+  color: var(--color-ios-green-dark);
+}
+
+/* ===== Raw Data Container ===== */
+.document-detail-modal .raw-data-container {
+  background-color: var(--color-layout-secondary-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  max-height: 400px;
+  overflow: auto;
+}
+
+html[data-theme='dark'] .document-detail-modal .raw-data-container {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.document-detail-modal .raw-data-pre {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-caption2);
+  color: var(--color-text-primary-light);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+html[data-theme='dark'] .document-detail-modal .raw-data-pre {
+  color: var(--color-text-primary-dark);
+}
+
+/* ===== Modal Footer ===== */
+.document-detail-modal .modal-footer {
+  padding: var(--spacing-4);
+  border-top: 1px solid var(--color-layout-accent-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+}
+
+html[data-theme='dark'] .document-detail-modal .modal-footer {
+  border-top-color: var(--color-layout-accent-dark);
+}
+
+.document-detail-modal .footer-button {
+  padding: var(--spacing-2) var(--spacing-4);
+  border: none;
+  background-color: var(--color-ios-blue-light);
+  color: #ffffff;
+  font-size: var(--font-size-subheadline);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme='dark'] .document-detail-modal .footer-button {
+  background-color: var(--color-ios-blue-dark);
+}
+
+.document-detail-modal .footer-button:hover {
+  background-color: #2563eb;
+}
+
+html[data-theme='dark'] .document-detail-modal .footer-button:hover {
+  background-color: #1d4ed8;
+}
+
+.document-detail-modal .footer-button:active {
+  background-color: #1e40af;
+}
+
+html[data-theme='dark'] .document-detail-modal .footer-button:active {
+  background-color: #1e3a8a;
+}
