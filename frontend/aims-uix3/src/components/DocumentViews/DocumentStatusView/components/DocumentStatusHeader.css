@@ -75,11 +75,13 @@ html[data-theme="dark"] .last-updated {
 }
 
 .polling-toggle:hover {
-  background-color: var(--color-ios-bg-hover-light);
+  /* Remove hover background to keep icon background invisible */
+  background-color: transparent;
 }
 
 html[data-theme="dark"] .polling-toggle:hover {
-  background-color: var(--color-ios-bg-hover-dark);
+  /* Ensure no background in dark theme as well */
+  background-color: transparent;
 }
 
 .polling-dot {
@@ -121,11 +123,13 @@ html[data-theme="dark"] .dot-inactive {
 }
 
 .refresh-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-light);
+  /* Remove hover background to keep icon background invisible */
+  background-color: transparent;
 }
 
 html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-dark);
+  /* Ensure no background in dark theme as well */
+  background-color: transparent;
 }
 
 .refresh-button:disabled {
