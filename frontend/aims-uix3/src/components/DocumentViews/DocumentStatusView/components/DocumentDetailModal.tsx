@@ -14,6 +14,7 @@ import React, { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { Tooltip } from '../../../../shared/ui'
 import './DocumentDetailModal.css'
 
 interface DocumentDetailModalProps {
@@ -191,14 +192,16 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           <h2 id="detail-modal-title" className="fulltext-modal-title">
             {filename}
           </h2>
-          <button
-            className="fulltext-modal-close"
-            onClick={onClose}
-            aria-label="모달 닫기"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            ✕
-          </button>
+          <Tooltip content="모달 닫기">
+            <button
+              className="fulltext-modal-close"
+              onClick={onClose}
+              aria-label="모달 닫기"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              ✕
+            </button>
+          </Tooltip>
         </div>
 
         {/* 탭 네비게이션 */}
@@ -279,13 +282,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   <span className="detail-row-label">Document ID</span>
                   <div className="detail-row-value">
                     <code className="detail-code-text">{document._id || document['id']}</code>
-                    <button
-                      className={`detail-copy-button ${copied['id'] ? 'copied' : ''}`}
-                      onClick={() => handleCopy(document._id || document['id'] || '', 'id')}
-                      aria-label="ID 복사"
-                    >
-                      {copied['id'] ? '✓' : '📋'}
-                    </button>
+                    <Tooltip content="ID 복사">
+                      <button
+                        className={`detail-copy-button ${copied['id'] ? 'copied' : ''}`}
+                        onClick={() => handleCopy(document._id || document['id'] || '', 'id')}
+                        aria-label="ID 복사"
+                      >
+                        {copied['id'] ? '✓' : '📋'}
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 
@@ -293,13 +298,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   <span className="detail-row-label">파일명</span>
                   <div className="detail-row-value">
                     <span className="detail-text-value">{filename}</span>
-                    <button
-                      className={`detail-copy-button ${copied['filename'] ? 'copied' : ''}`}
-                      onClick={() => handleCopy(filename, 'filename')}
-                      aria-label="파일명 복사"
-                    >
-                      {copied['filename'] ? '✓' : '📋'}
-                    </button>
+                    <Tooltip content="파일명 복사">
+                      <button
+                        className={`detail-copy-button ${copied['filename'] ? 'copied' : ''}`}
+                        onClick={() => handleCopy(filename, 'filename')}
+                        aria-label="파일명 복사"
+                      >
+                        {copied['filename'] ? '✓' : '📋'}
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 
@@ -308,13 +315,15 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     <span className="detail-row-label">서버 파일명</span>
                     <div className="detail-row-value">
                       <code className="detail-code-text">{saveName}</code>
-                      <button
-                        className={`detail-copy-button ${copied['saveName'] ? 'copied' : ''}`}
-                        onClick={() => handleCopy(saveName, 'saveName')}
-                        aria-label="서버 파일명 복사"
-                      >
-                        {copied['saveName'] ? '✓' : '📋'}
-                      </button>
+                      <Tooltip content="서버 파일명 복사">
+                        <button
+                          className={`detail-copy-button ${copied['saveName'] ? 'copied' : ''}`}
+                          onClick={() => handleCopy(saveName, 'saveName')}
+                          aria-label="서버 파일명 복사"
+                        >
+                          {copied['saveName'] ? '✓' : '📋'}
+                        </button>
+                      </Tooltip>
                     </div>
                   </div>
                 )}
@@ -325,11 +334,22 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           {/* 원본 데이터 탭 */}
           {activeTab === 'raw' && (
             <div className="detail-tab-content">
-              <div className="detail-raw-data-container">
-                <pre className="fulltext-content">
-                  {JSON.stringify(document, null, 2)}
-                </pre>
+              <div className="detail-raw-header">
+                <Tooltip content="원본 데이터 복사" placement="left">
+                  <button
+                    className={`detail-copy-button ${copied['raw'] ? 'copied' : ''}`}
+                    onClick={() => handleCopy(JSON.stringify(document, null, 2), 'raw')}
+                    aria-label="원본 데이터 복사"
+                  >
+                    {copied['raw'] ? '✓' : '📋'}
+                  </button>
+                </Tooltip>
               </div>
+              <pre className="detail-code-block">
+                <code className="detail-code-text detail-code-text--raw">
+                  {JSON.stringify(document, null, 2)}
+                </code>
+              </pre>
             </div>
           )}
         </div>

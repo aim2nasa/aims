@@ -47,6 +47,18 @@
   --color-error-700: #b91c1c;  /* iOS systemRed Dark */
   --color-error-800: #991b1b;  /* iOS systemRed Darker */
 
+  /* iOS Progress Bar Colors - Light Mode */
+  --color-progress-completed-light: #34c759;   /* iOS systemGreen */
+  --color-progress-processing-light: #007aff;  /* iOS systemBlue */
+  --color-progress-error-light: #ff3b30;       /* iOS systemRed */
+  --color-progress-pending-light: #8e8e93;     /* iOS systemGray */
+
+  /* iOS Progress Bar Colors - Dark Mode */
+  --color-progress-completed-dark: #30d158;    /* iOS systemGreen Dark */
+  --color-progress-processing-dark: #0a84ff;   /* iOS systemBlue Dark */
+  --color-progress-error-dark: #ff453a;        /* iOS systemRed Dark */
+  --color-progress-pending-dark: #98989d;      /* iOS systemGray Dark */
+
   /* === ACCESSIBILITY COLOR CONTRAST === */
   /* WCAG 2.1 AAA 준수 (7:1 대비) - iOS 접근성 표준 */
 
