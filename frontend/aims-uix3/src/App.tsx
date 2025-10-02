@@ -76,11 +76,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // RightPane 문서 프리뷰 상태
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null)
 
-  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 및 RightPane 숨김
+  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
     if (activeDocumentView === 'documents-register' ||
         activeDocumentView === 'documents-library' ||
-        activeDocumentView === 'documents-search') {
+        activeDocumentView === 'documents-search' ||
+        activeDocumentView === 'dsd') {
       setPaginationVisible(false)
       setRightPaneVisible(false)
     } else {
