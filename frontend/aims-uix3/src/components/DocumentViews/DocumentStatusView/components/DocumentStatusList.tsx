@@ -109,16 +109,16 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             </div>
 
             {/* 상태 아이콘 */}
-            <div className={"status-icon status-" + status}>
-              {statusIcon}
-            </div>
+            <Tooltip content={statusLabel}>
+              <div className={"status-icon status-" + status}>
+                {statusIcon}
+              </div>
+            </Tooltip>
 
             {/* 진행률 */}
             <div className="status-progress">
-              {status === 'processing' && progress ? (
+              {status === 'processing' && progress && (
                 <span className="progress-text">{progress}%</span>
-              ) : (
-                <span className="status-label">{statusLabel}</span>
               )}
             </div>
 
