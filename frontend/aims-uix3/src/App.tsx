@@ -618,6 +618,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <DocumentStatusView
               visible={activeDocumentView === 'dsd'}
               onClose={closeDocumentView}
+              onDocumentClick={handleDocumentClick}
             />
           </Suspense>
 

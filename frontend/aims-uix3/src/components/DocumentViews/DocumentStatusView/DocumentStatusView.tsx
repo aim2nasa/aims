@@ -16,7 +16,6 @@ import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvide
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import DocumentStatusHeader from './components/DocumentStatusHeader'
 import DocumentStatusList from './components/DocumentStatusList'
-import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
 import { Dropdown, Tooltip } from '../../../shared/ui'
@@ -27,6 +26,8 @@ interface DocumentStatusViewProps {
   visible: boolean
   /** View 닫기 핸들러 */
   onClose: () => void
+  /** 문서 클릭 핸들러 */
+  onDocumentClick?: (documentId: string) => void
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -41,7 +42,7 @@ const ITEMS_PER_PAGE_OPTIONS = [
  * DocumentStatusView 내부 컴포넌트 (Pure View)
  * 🍎 리스트 기반 레이아웃 - 공간 효율성 극대화
  */
-const DocumentStatusViewContent: React.FC = () => {
+const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: string) => void }> = ({ onDocumentClick }) => {
   const controller = useDocumentStatusController()
 
   return (
@@ -64,7 +65,7 @@ const DocumentStatusViewContent: React.FC = () => {
         isLoading={controller.isLoading}
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
-        onDocumentClick={controller.handleDocumentClick}
+        onDocumentClick={onDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
       />
@@ -122,11 +123,6 @@ const DocumentStatusViewContent: React.FC = () => {
       )}
 
       {/* 모달들 */}
-      <DocumentDetailModal
-        visible={controller.isDetailModalVisible}
-        onClose={controller.handleDetailModalClose}
-        document={controller.selectedDocument}
-      />
       <DocumentSummaryModal
         visible={controller.isSummaryModalVisible}
         onClose={controller.handleSummaryModalClose}
@@ -143,7 +139,8 @@ const DocumentStatusViewContent: React.FC = () => {
 
 export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
   visible,
-  onClose
+  onClose,
+  onDocumentClick
 }) => {
   return (
     <CenterPaneView
@@ -157,7 +154,7 @@ export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
       className="document-status-view"
     >
       <DocumentStatusProvider>
-        <DocumentStatusViewContent />
+        <DocumentStatusViewContent onDocumentClick={onDocumentClick} />
       </DocumentStatusProvider>
     </CenterPaneView>
   )

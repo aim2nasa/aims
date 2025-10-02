@@ -18,7 +18,7 @@ interface DocumentStatusListProps {
   isLoading: boolean
   isEmpty: boolean
   error: string | null
-  onDocumentClick?: (document: Document) => void
+  onDocumentClick?: (documentId: string) => void
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
 }
@@ -81,13 +81,13 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           <div
             key={document._id}
             className="status-item"
-            onClick={() => onDocumentClick?.(document)}
+            onClick={() => onDocumentClick?.(document._id)}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                onDocumentClick?.(document)
+                onDocumentClick?.(document._id)
               }
             }}
           >
