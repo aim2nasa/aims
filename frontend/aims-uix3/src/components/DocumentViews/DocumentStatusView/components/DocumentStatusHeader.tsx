@@ -19,6 +19,7 @@ interface DocumentStatusHeaderProps {
   onFilterChange: (filter: 'all' | 'completed' | 'processing' | 'error' | 'pending') => void
   documentsCount: number
   filteredCount: number
+  lastUpdated: Date | null
 }
 
 const FILTER_OPTIONS: DropdownOption[] = [
@@ -37,8 +38,32 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   statusFilter,
   onFilterChange,
   documentsCount,
-  filteredCount
+  filteredCount,
+  lastUpdated
 }) => {
+  /**
+   * 마지막 업데이트 시간 포맷팅
+   * "오늘 HH:MM:SS" 형식으로 표시
+   */
+  const formatLastUpdated = (date: Date | null): string => {
+    if (!date) return ''
+
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    if (isToday) {
+      return `오늘 ${hours}:${minutes}:${seconds}`
+    } else {
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${month}.${day}. ${hours}:${minutes}:${seconds}`
+    }
+  }
+
   return (
     <div className="document-status-header">
       {/* 왼쪽: 필터 드롭다운 + 결과 카운트 */}
@@ -58,8 +83,13 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
       {/* 중앙: 여백 */}
       <div className="header-spacer" />
 
-      {/* 오른쪽: 폴링 토글 + 새로고침 */}
+      {/* 오른쪽: Last Updated + 폴링 토글 + 새로고침 */}
       <div className="header-right">
+        {lastUpdated && (
+          <span className="last-updated">
+            최근 업데이트: {formatLastUpdated(lastUpdated)}
+          </span>
+        )}
         <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
           <button
             className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}

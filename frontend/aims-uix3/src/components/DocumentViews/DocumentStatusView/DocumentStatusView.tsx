@@ -58,6 +58,7 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onFilterChange={controller.setStatusFilter}
         documentsCount={controller.documents.length}
         filteredCount={controller.filteredDocuments.length}
+        lastUpdated={controller.lastUpdated}
       />
 
       {/* 🍎 리스트: DocumentLibrary와 동일한 구조 */}
