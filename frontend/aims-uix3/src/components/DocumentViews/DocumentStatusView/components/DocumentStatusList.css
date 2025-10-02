@@ -243,11 +243,6 @@ html[data-theme="dark"] .status-date {
   display: flex;
   align-items: center;
   gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-.status-item:hover .status-actions {
   opacity: 1;
 }
 
