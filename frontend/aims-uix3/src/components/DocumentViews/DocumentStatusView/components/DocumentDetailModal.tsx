@@ -163,7 +163,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 </div>
                 <div className="info-item">
                   <span className="info-label">파일명</span>
-                  <span className="info-value" style={{ wordBreak: 'break-all' }}>
+                  <span className="info-value info-value--wrap">
                     {filename}
                   </span>
                 </div>

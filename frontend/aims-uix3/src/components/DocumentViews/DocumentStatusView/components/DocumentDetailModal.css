@@ -378,6 +378,10 @@ html[data-theme='dark'] .document-detail-modal .info-label {
   font-weight: var(--font-weight-medium);
 }
 
+.document-detail-modal .info-value--wrap {
+  word-break: break-all;
+}
+
 html[data-theme='dark'] .document-detail-modal .info-value {
   color: var(--color-text-primary-dark);
 }
