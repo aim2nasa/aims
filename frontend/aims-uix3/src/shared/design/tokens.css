@@ -326,8 +326,10 @@
   --color-ios-bg-secondary-dark: rgba(255, 255, 255, 0.06);
   --color-ios-bg-tertiary-light: rgba(0, 0, 0, 0.06);
   --color-ios-bg-tertiary-dark: rgba(255, 255, 255, 0.08);
-  --color-ios-bg-hover-light: rgba(0, 0, 0, 0.03);
+  --color-ios-bg-hover-light: rgba(0, 0, 0, 0.06);
   --color-ios-bg-hover-dark: rgba(255, 255, 255, 0.05);
+  --color-ios-bg-selected-light: rgba(0, 0, 0, 0.08);
+  --color-ios-bg-selected-dark: rgba(255, 255, 255, 0.08);
 
   /* Menu Background Colors (불투명 배경 필요한 경우) */
   --color-ios-menu-bg-light: #ffffff;

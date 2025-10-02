@@ -331,6 +331,19 @@ html[data-theme="dark"] .document-item:hover {
   background: var(--color-ios-bg-hover-dark);
 }
 
+/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+.document-item.selected,
+.document-item[data-selected="true"],
+.document-item:active {
+  background: var(--color-ios-bg-selected-light);
+}
+
+html[data-theme="dark"] .document-item.selected,
+html[data-theme="dark"] .document-item[data-selected="true"],
+html[data-theme="dark"] .document-item:active {
+  background: var(--color-ios-bg-selected-dark);
+}
+
 /* === 🍎 DOCUMENT ICON: File type colors - Compact === */
 
 .document-icon {

@@ -301,6 +301,17 @@ html[data-theme="dark"] .search-result-row:active {
   background-color: var(--color-ios-bg-secondary-dark);
 }
 
+/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+.search-result-row.selected,
+.search-result-row[data-selected="true"] {
+  background-color: var(--color-ios-bg-selected-light);
+}
+
+html[data-theme="dark"] .search-result-row.selected,
+html[data-theme="dark"] .search-result-row[data-selected="true"] {
+  background-color: var(--color-ios-bg-selected-dark);
+}
+
 /* 스태거 애니메이션 */
 .search-result-row:nth-child(1) { animation-delay: 0s; }
 .search-result-row:nth-child(2) { animation-delay: 0.03s; }
