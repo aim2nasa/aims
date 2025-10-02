@@ -122,10 +122,20 @@ export const useDocumentStatusController = () => {
     apiHealth: state.apiHealth,
     lastUpdated: state.lastUpdated,
 
+    // 🍎 Pagination State
+    currentPage: state.currentPage,
+    totalPages: state.totalPages,
+    itemsPerPage: state.itemsPerPage,
+    paginatedDocuments: state.paginatedDocuments,
+
     // Context Actions
     setStatusFilter: actions.setStatusFilter,
     togglePolling: actions.togglePolling,
     refreshDocuments: actions.refreshDocuments,
+
+    // 🍎 Pagination Actions
+    handlePageChange: actions.handlePageChange,
+    handleLimitChange: actions.handleLimitChange,
 
     // Document Detail Modal State & Handlers
     selectedDocument,

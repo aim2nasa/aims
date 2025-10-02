@@ -20,6 +20,11 @@ export interface DocumentStatusState {
   lastUpdated: Date | null
   isPollingEnabled: boolean
   apiHealth: boolean | null
+  // 🍎 Pagination State
+  currentPage: number
+  itemsPerPage: number
+  totalPages: number
+  paginatedDocuments: Document[]
 }
 
 /**
@@ -40,6 +45,11 @@ export interface DocumentStatusActions {
   fetchDocuments: (isInitialLoad?: boolean) => Promise<void>
   refreshDocuments: () => Promise<void>
   checkApiHealth: () => Promise<void>
+  // 🍎 Pagination Actions
+  setCurrentPage: (page: number) => void
+  setItemsPerPage: (limit: number) => void
+  handlePageChange: (page: number) => void
+  handleLimitChange: (limit: number) => void
 }
 
 /**

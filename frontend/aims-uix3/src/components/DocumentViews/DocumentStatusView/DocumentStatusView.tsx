@@ -19,6 +19,7 @@ import DocumentStatusList from './components/DocumentStatusList'
 import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
+import { Dropdown } from '../../../shared/ui/Dropdown'
 import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
@@ -27,6 +28,14 @@ interface DocumentStatusViewProps {
   /** View 닫기 핸들러 */
   onClose: () => void
 }
+
+// 🍎 페이지당 항목 수 옵션
+const ITEMS_PER_PAGE_OPTIONS = [
+  { value: '10', label: '10개씩 보기' },
+  { value: '20', label: '20개씩 보기' },
+  { value: '50', label: '50개씩 보기' },
+  { value: '100', label: '100개씩 보기' }
+]
 
 /**
  * DocumentStatusView 내부 컴포넌트 (Pure View)
@@ -51,7 +60,7 @@ const DocumentStatusViewContent: React.FC = () => {
 
       {/* 🍎 리스트: DocumentLibrary와 동일한 구조 */}
       <DocumentStatusList
-        documents={controller.filteredDocuments}
+        documents={controller.paginatedDocuments}
         isLoading={controller.isLoading}
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
@@ -59,6 +68,54 @@ const DocumentStatusViewContent: React.FC = () => {
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
       />
+
+      {/* 🍎 페이지네이션: DocumentLibrary와 동일한 구조 */}
+      {!controller.isLoading && controller.filteredDocuments.length > 0 && (
+        <div className="document-pagination">
+          {/* 🍎 페이지당 항목 수 선택 */}
+          <div className="pagination-limit">
+            <Dropdown
+              value={String(controller.itemsPerPage)}
+              options={ITEMS_PER_PAGE_OPTIONS}
+              onChange={(value) => controller.handleLimitChange(Number(value))}
+              aria-label="페이지당 항목 수"
+              width={100}
+            />
+          </div>
+
+          {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+          {controller.totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-button pagination-button--prev"
+                onClick={() => controller.handlePageChange(controller.currentPage - 1)}
+                disabled={controller.currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className="pagination-arrow">‹</span>
+              </button>
+
+              <div className="pagination-info">
+                <span className="pagination-current">{controller.currentPage}</span>
+                <span className="pagination-separator">/</span>
+                <span className="pagination-total">{controller.totalPages}</span>
+              </div>
+
+              <button
+                className="pagination-button pagination-button--next"
+                onClick={() => controller.handlePageChange(controller.currentPage + 1)}
+                disabled={controller.currentPage === controller.totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className="pagination-arrow">›</span>
+              </button>
+            </div>
+          )}
+
+          {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
+          {controller.totalPages <= 1 && <div className="pagination-spacer"></div>}
+        </div>
+      )}
 
       {/* 모달들 */}
       <DocumentDetailModal

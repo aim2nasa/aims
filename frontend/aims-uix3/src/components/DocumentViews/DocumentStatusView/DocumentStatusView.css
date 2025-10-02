@@ -13,10 +13,157 @@
   overflow: hidden;
 }
 
+/* === 🍎 PAGINATION: DocumentLibrary와 동일한 iOS 스타일 === */
+
+.document-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-ios-separator-subtle-light);
+}
+
+html[data-theme="dark"] .document-pagination {
+  border-top-color: var(--color-ios-separator-subtle-dark);
+}
+
+/* 🍎 PAGINATION LIMIT - iOS Native Style (커스텀 Dropdown 컴포넌트 사용) */
+.pagination-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 🍎 PAGINATION CONTROLS - Center group */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
+.pagination-spacer {
+  flex: 1;
+}
+
+/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-active-light);
+  transform: scale(0.95);
+}
+
+html[data-theme="dark"] .pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-active-dark);
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* 🍎 PAGINATION ARROW - Large and Clear */
+.pagination-arrow {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-ios-text-primary-light);
+  user-select: none;
+}
+
+html[data-theme="dark"] .pagination-arrow {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  justify-content: center;
+}
+
+html[data-theme="dark"] .pagination-info {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.pagination-current {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .pagination-current {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-separator {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-separator {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.pagination-total {
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .pagination-total {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
   .document-status-view-content {
     padding: 10px;
     gap: 6px;
+  }
+}
+
+/* 🍎 MOTION REDUCTION: Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  .pagination-button {
+    transition: none;
+  }
+
+  .pagination-button:active:not(:disabled) {
+    transform: none;
   }
 }

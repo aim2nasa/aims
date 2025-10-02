@@ -39,6 +39,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
 
+  // 🍎 Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10)
+
   /**
    * 문서 목록 가져오기
    */
@@ -215,6 +219,35 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setFilteredDocuments(filtered)
   }, [documents, searchTerm, statusFilter])
 
+  // 🍎 Pagination Logic
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredDocuments.length / itemsPerPage)),
+    [filteredDocuments.length, itemsPerPage]
+  )
+
+  const paginatedDocuments = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredDocuments.slice(startIndex, endIndex)
+  }, [filteredDocuments, currentPage, itemsPerPage])
+
+  // 🍎 Pagination Handlers
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }, [totalPages])
+
+  const handleLimitChange = useCallback((limit: number) => {
+    setItemsPerPage(limit)
+    setCurrentPage(1) // Reset to first page
+  }, [])
+
+  // 🍎 필터 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter, searchTerm])
+
   // State 객체
   const state: DocumentStatusState = useMemo(
     () => ({
@@ -227,7 +260,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       statusFilter,
       lastUpdated,
       isPollingEnabled,
-      apiHealth
+      apiHealth,
+      currentPage,
+      itemsPerPage,
+      totalPages,
+      paginatedDocuments
     }),
     [
       documents,
@@ -239,7 +276,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       statusFilter,
       lastUpdated,
       isPollingEnabled,
-      apiHealth
+      apiHealth,
+      currentPage,
+      itemsPerPage,
+      totalPages,
+      paginatedDocuments
     ]
   )
 
@@ -259,9 +300,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setApiHealth,
       fetchDocuments,
       refreshDocuments,
-      checkApiHealth
+      checkApiHealth,
+      setCurrentPage,
+      setItemsPerPage,
+      handlePageChange,
+      handleLimitChange
     }),
-    [fetchDocuments, refreshDocuments, togglePolling, checkApiHealth]
+    [fetchDocuments, refreshDocuments, togglePolling, checkApiHealth, handlePageChange, handleLimitChange]
   )
 
   // Context Value
