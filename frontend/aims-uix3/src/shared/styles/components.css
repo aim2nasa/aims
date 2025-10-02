@@ -1197,3 +1197,23 @@
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
 }
+/* === ACCESSIBILITY - FOCUS RING === */
+/* COMPONENT_GUIDE.md 라인 314-322: 포커스 상태 지원 */
+
+/**
+ * focus-ring 공용 클래스
+ * 키보드 접근성을 위한 표준 포커스 스타일
+ * @see COMPONENT_GUIDE.md 라인 314-322
+ */
+.focus-ring {
+  outline: none;
+  transition: box-shadow var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-ios-blue-light);
+}
+
+html[data-theme='dark'] .focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-ios-blue-dark);
+}

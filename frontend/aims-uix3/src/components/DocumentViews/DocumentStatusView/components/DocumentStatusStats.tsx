@@ -64,6 +64,20 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
     return counts
   }, [documents])
 
+  /**
+   * 키보드 접근성: Enter 또는 Space 키로 필터 변경
+   * COMPONENT_GUIDE.md 라인 674-681 준수
+   */
+  const handleKeyPress = (
+    event: React.KeyboardEvent,
+    filterKey: 'all' | 'completed' | 'processing' | 'error' | 'pending'
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onFilterChange(filterKey)
+    }
+  }
+
   // 상태 카드 정의
   const statusCards = [
     {
@@ -104,14 +118,16 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
   ]
 
   return (
-    <div className="document-status-stats">
+    <div className="document-status-stats" role="group" aria-label="문서 상태별 통계">
       {statusCards.map((card) => (
         <button
           key={card.key}
-          className={`status-card ${card.className} ${activeFilter === card.key ? 'status-card--active' : ''}`}
+          className={`status-card ${card.className} ${activeFilter === card.key ? 'status-card--active' : ''} focus-ring`}
           onClick={() => onFilterChange(card.key)}
+          onKeyDown={(e) => handleKeyPress(e, card.key)}
           aria-label={`${card.label} 문서 ${card.count}개`}
           aria-pressed={activeFilter === card.key}
+          tabIndex={0}
         >
           <div className="status-card-icon" aria-hidden="true">
             {card.icon}
