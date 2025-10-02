@@ -7,7 +7,7 @@
  */
 
 import React from 'react'
-import { Dropdown, type DropdownOption } from '@/shared/ui'
+import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
 import './DocumentStatusHeader.css'
 
 interface DocumentStatusHeaderProps {
@@ -60,22 +60,26 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
 
       {/* 오른쪽: 폴링 토글 + 새로고침 */}
       <div className="header-right">
-        <button
-          className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}
-          onClick={onTogglePolling}
-          aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-        >
-          <span className={"polling-dot " + (isPollingEnabled ? 'dot-active' : 'dot-inactive')}>●</span>
-        </button>
+        <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+          <button
+            className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}
+            onClick={onTogglePolling}
+            aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+          >
+            <span className={"polling-dot " + (isPollingEnabled ? 'dot-active' : 'dot-inactive')}>●</span>
+          </button>
+        </Tooltip>
 
-        <button
-          className="refresh-button"
-          onClick={onRefresh}
-          disabled={isLoading}
-          aria-label="새로고침"
-        >
-          <span className={"refresh-icon " + (isLoading ? 'icon-spinning' : '')}>↻</span>
-        </button>
+        <Tooltip content="새로고침">
+          <button
+            className="refresh-button"
+            onClick={onRefresh}
+            disabled={isLoading}
+            aria-label="새로고침"
+          >
+            <span className={"refresh-icon " + (isLoading ? 'icon-spinning' : '')}>↻</span>
+          </button>
+        </Tooltip>
       </div>
     </div>
   )

@@ -6,6 +6,7 @@
  */
 
 import React from 'react'
+import { Tooltip } from '@/shared/ui'
 import { DocumentStatusService } from '../../../../services/documentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusList.css'
@@ -116,28 +117,30 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 액션 버튼 */}
             <div className="status-actions">
-              <button
-                className="action-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onSummaryClick?.(document)
-                }}
-                aria-label="요약 보기"
-                title="요약 보기"
-              >
-                📋
-              </button>
-              <button
-                className="action-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onFullTextClick?.(document)
-                }}
-                aria-label="전체 텍스트 보기"
-                title="전체 텍스트 보기"
-              >
-                📄
-              </button>
+              <Tooltip content="요약 보기">
+                <button
+                  className="action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSummaryClick?.(document)
+                  }}
+                  aria-label="요약 보기"
+                >
+                  📋
+                </button>
+              </Tooltip>
+              <Tooltip content="전체 텍스트 보기">
+                <button
+                  className="action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onFullTextClick?.(document)
+                  }}
+                  aria-label="전체 텍스트 보기"
+                >
+                  📄
+                </button>
+              </Tooltip>
             </div>
           </div>
         )

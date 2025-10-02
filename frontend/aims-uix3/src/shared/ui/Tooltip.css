@@ -1,0 +1,85 @@
+/**
+ * Tooltip Styles
+ * @since 2025-10-02
+ * @version 1.0.0
+ *
+ * 🍎 iOS 스타일 툴팁 디자인
+ * - Progressive Disclosure
+ * - 부드러운 페이드인 애니메이션
+ * - 다크모드 지원
+ */
+
+/* 툴팁 트리거 (자식 요소 래퍼) */
+.tooltip-trigger {
+  display: inline-block;
+}
+
+/* 툴팁 컨테이너 */
+.tooltip {
+  z-index: 9999;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 툴팁 내용 */
+.tooltip-content {
+  background-color: var(--color-ios-tooltip-bg-light);
+  color: var(--color-ios-tooltip-text-light);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+html[data-theme="dark"] .tooltip-content {
+  background-color: var(--color-ios-tooltip-bg-dark);
+  color: var(--color-ios-tooltip-text-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* 툴팁 화살표 */
+.tooltip-arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-ios-tooltip-bg-light);
+  transform: rotate(45deg);
+}
+
+html[data-theme="dark"] .tooltip-arrow {
+  background-color: var(--color-ios-tooltip-bg-dark);
+}
+
+/* 위치별 화살표 조정 */
+.tooltip--top .tooltip-arrow {
+  bottom: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+
+.tooltip--bottom .tooltip-arrow {
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+
+.tooltip--left .tooltip-arrow {
+  right: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+
+.tooltip--right .tooltip-arrow {
+  left: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+
+/* 접근성: 포커스 시에도 툴팁 표시 */
+.tooltip-trigger > *:focus-visible + .tooltip {
+  opacity: 1;
+}
