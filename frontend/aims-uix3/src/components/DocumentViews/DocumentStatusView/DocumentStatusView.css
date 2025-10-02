@@ -1,0 +1,94 @@
+/**
+ * DocumentStatusView Styles
+ * @description 문서 처리 현황 View 메인 스타일
+ *
+ * 🍎 Design Principles:
+ * - iOS/Apple 디자인 시스템 준수
+ * - CSS 변수만 사용 (하드코딩 금지)
+ * - Progressive Disclosure 패턴 적용
+ */
+
+/* === 메인 컨테이너 === */
+.document-status-view-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6);
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* === 로딩 상태 === */
+.document-status-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-12);
+  color: var(--color-ios-text-secondary-light);
+  font-size: var(--font-size-body);
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-layout-accent-light);
+  border-top-color: var(--color-primary-500);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === 에러 상태 === */
+.document-status-error {
+  padding: var(--spacing-4);
+  background-color: var(--color-layout-secondary-light);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: var(--font-size-body);
+}
+
+/* === 빈 상태 === */
+.document-status-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12);
+  color: var(--color-ios-text-tertiary-light);
+  font-size: var(--font-size-body);
+}
+
+/* === Dark Theme === */
+html[data-theme="dark"] .document-status-loading {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--color-layout-accent-dark);
+  border-top-color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .document-status-error {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+html[data-theme="dark"] .document-status-empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === 반응형 === */
+@media (max-width: 768px) {
+  .document-status-view-content {
+    padding: var(--spacing-4);
+    gap: var(--spacing-4);
+  }
+}

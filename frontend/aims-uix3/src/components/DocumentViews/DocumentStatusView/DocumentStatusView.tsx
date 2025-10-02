@@ -3,11 +3,15 @@
  * @since 1.0.0
  *
  * 문서 처리 현황 View 컴포넌트
- * BaseDocumentView를 확장하여 구현
+ * DocumentStatusProvider와 함께 사용하여 실시간 문서 처리 현황 표시
  */
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
+import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
+import DocumentStatusStats from './components/DocumentStatusStats'
+import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
   /** View 표시 여부 */
@@ -17,10 +21,51 @@ interface DocumentStatusViewProps {
 }
 
 /**
+ * DocumentStatusView 내부 컴포넌트
+ * Context를 사용하여 상태 관리
+ */
+const DocumentStatusViewContent: React.FC = () => {
+  const { state, actions } = useDocumentStatusContext()
+
+  return (
+    <div className="document-status-view-content">
+      {/* 상태 통계 카드 */}
+      <DocumentStatusStats
+        documents={state.documents}
+        activeFilter={state.statusFilter}
+        onFilterChange={actions.setStatusFilter}
+      />
+
+      {/* 로딩 상태 */}
+      {state.isLoading && state.documents.length === 0 && (
+        <div className="document-status-loading">
+          <div className="loading-spinner" />
+          <p>문서 목록을 불러오는 중...</p>
+        </div>
+      )}
+
+      {/* 에러 상태 */}
+      {state.error && (
+        <div className="document-status-error">
+          <p>{state.error}</p>
+        </div>
+      )}
+
+      {/* 문서 목록 (Phase 3에서 구현) */}
+      {!state.isLoading && state.filteredDocuments.length === 0 && (
+        <div className="document-status-empty">
+          <p>문서가 없습니다.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
  * DocumentStatusView React 컴포넌트
  *
  * 문서 처리 현황 기능을 위한 View
- * 8px 마진으로 설정된 가장 넓은 간격 사용
+ * Provider로 감싸서 전역 상태 관리
  *
  * @example
  * ```tsx
@@ -44,7 +89,11 @@ export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
       marginLeft={8}
       marginRight={8}
       className="document-status-view"
-    />
+    >
+      <DocumentStatusProvider>
+        <DocumentStatusViewContent />
+      </DocumentStatusProvider>
+    </CenterPaneView>
   )
 }
 
