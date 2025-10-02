@@ -129,6 +129,7 @@ export interface Document {
   file_name?: string
   name?: string
   title?: string
+  mimeType?: string
 
   // 상태 필드들
   status?: DocumentStatus

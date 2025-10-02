@@ -26,10 +26,19 @@ const mockController = {
   searchTerm: '',
   apiHealth: true,
 
+  // Pagination State
+  currentPage: 1,
+  totalPages: 1,
+  itemsPerPage: 50,
+  paginatedDocuments: [] as Document[],
+
   // Context Actions
   setStatusFilter: vi.fn(),
   togglePolling: vi.fn(),
   refreshDocuments: vi.fn(),
+  handlePageChange: vi.fn(),
+  handleItemsPerPageChange: vi.fn(),
+  handleLimitChange: vi.fn(),
 
   // Modal States
   isDetailModalVisible: false,

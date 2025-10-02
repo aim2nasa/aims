@@ -42,7 +42,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<number | undefined>(undefined)
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
 
@@ -92,7 +92,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
    * 마우스 진입 시 지연 후 툴팁 표시
    */
   const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => {
+    timeoutRef.current = window.setTimeout(() => {
       setIsVisible(true)
     }, delay)
   }
@@ -101,8 +101,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
    * 마우스 이탈 시 즉시 툴팁 숨김
    */
   const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
+    if (timeoutRef.current !== undefined) {
+      window.clearTimeout(timeoutRef.current)
     }
     setIsVisible(false)
   }
@@ -112,8 +112,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
    */
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+      if (timeoutRef.current !== undefined) {
+        window.clearTimeout(timeoutRef.current)
       }
     }
   }, [])
@@ -125,7 +125,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
     'aria-describedby': isVisible ? 'tooltip' : undefined
-  })
+  } as React.HTMLAttributes<HTMLElement>)
 
   /**
    * 툴팁 렌더링
