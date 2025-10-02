@@ -118,11 +118,11 @@ html[data-theme="dark"] .empty-message {
   display: grid;
   grid-template-columns:
     24px           /* 파일 타입 아이콘 */
-    1fr            /* 파일명 (가변) */
+    minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     28px           /* 상태 아이콘 */
-    80px           /* 진행률/상태 */
-    100px          /* 날짜 */
-    60px;          /* 액션 버튼 */
+    minmax(60px, 80px)  /* 진행률/상태 (축소 가능) */
+    minmax(80px, 100px) /* 날짜 (축소 가능) */
+    minmax(60px, 72px); /* 액션 버튼 (축소 가능) */
   gap: 10px;
   align-items: center;
   height: 32px;
