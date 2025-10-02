@@ -19,8 +19,12 @@ interface DocumentStatusTableProps {
   documents: Document[]
   /** 로딩 상태 */
   isLoading: boolean
-  /** 문서 클릭 핸들러 */
+  /** 문서 상세 보기 핸들러 */
   onDocumentClick?: (document: Document) => void
+  /** 문서 요약 보기 핸들러 */
+  onSummaryClick?: (document: Document) => void
+  /** 문서 전체 텍스트 보기 핸들러 */
+  onFullTextClick?: (document: Document) => void
 }
 
 /**
@@ -41,7 +45,9 @@ interface DocumentStatusTableProps {
 export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
   documents,
   isLoading,
-  onDocumentClick
+  onDocumentClick,
+  onSummaryClick,
+  onFullTextClick
 }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -120,19 +126,20 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
               <th className="col-status">상태</th>
               <th className="col-progress">진행률</th>
               <th className="col-upload-date">업로드일</th>
+              <th className="col-actions">작업</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && documents.length === 0 ? (
               <tr>
-                <td colSpan={4} className="table-loading">
+                <td colSpan={5} className="table-loading">
                   <div className="loading-spinner" />
                   <span>문서 목록을 불러오는 중...</span>
                 </td>
               </tr>
             ) : paginatedDocuments.length === 0 ? (
               <tr>
-                <td colSpan={4} className="table-empty">
+                <td colSpan={5} className="table-empty">
                   문서가 없습니다.
                 </td>
               </tr>
@@ -144,11 +151,12 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                 const uploadedDate = DocumentStatusService.extractUploadedDate(doc)
                 const docId = doc._id || doc.id
 
+                const isCompleted = status === 'completed'
+
                 return (
                   <tr
                     key={docId}
-                    className={`table-row ${onDocumentClick ? 'table-row-clickable' : ''}`}
-                    onClick={() => onDocumentClick?.(doc)}
+                    className="table-row"
                   >
                     <td className="col-filename">
                       <div className="filename-cell">
@@ -182,6 +190,45 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                     </td>
                     <td className="col-upload-date">
                       <span className="date-text">{formatDate(uploadedDate)}</span>
+                    </td>
+                    <td className="col-actions">
+                      <div className="action-buttons">
+                        <button
+                          className="action-button action-button-detail"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDocumentClick?.(doc)
+                          }}
+                          aria-label="상세 보기"
+                          title="상세 보기"
+                        >
+                          👁️
+                        </button>
+                        <button
+                          className="action-button action-button-summary"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (isCompleted) onSummaryClick?.(doc)
+                          }}
+                          disabled={!isCompleted}
+                          aria-label="요약 보기"
+                          title={isCompleted ? '요약 보기' : '완료된 문서만 가능'}
+                        >
+                          📝
+                        </button>
+                        <button
+                          className="action-button action-button-fulltext"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (isCompleted) onFullTextClick?.(doc)
+                          }}
+                          disabled={!isCompleted}
+                          aria-label="전체 텍스트 보기"
+                          title={isCompleted ? '전체 텍스트 보기' : '완료된 문서만 가능'}
+                        >
+                          📄
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )

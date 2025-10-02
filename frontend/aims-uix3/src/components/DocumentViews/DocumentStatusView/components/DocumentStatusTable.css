@@ -205,6 +205,69 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* === 작업 버튼 === */
+.col-actions {
+  width: 120px;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-1);
+  justify-content: center;
+  align-items: center;
+}
+
+.action-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.7;
+}
+
+/* 🍎 Progressive Disclosure: 기본 상태는 서브틀 */
+.action-button:hover:not(:disabled) {
+  background-color: var(--color-layout-secondary-light);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .action-button:hover:not(:disabled) {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.action-button:active:not(:disabled) {
+  background-color: var(--color-layout-accent-light);
+}
+
+html[data-theme='dark'] .action-button:active:not(:disabled) {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.action-button-detail {
+  /* 상세 보기 버튼 */
+}
+
+.action-button-summary {
+  /* 요약 보기 버튼 */
+}
+
+.action-button-fulltext {
+  /* 전체 텍스트 보기 버튼 */
+}
+
 /* === 로딩/빈 상태 === */
 .table-loading,
 .table-empty {

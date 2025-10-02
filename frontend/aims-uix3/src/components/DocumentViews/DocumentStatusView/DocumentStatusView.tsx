@@ -14,6 +14,8 @@ import { Document } from '../../../types/documentStatus'
 import DocumentStatusStats from './components/DocumentStatusStats'
 import DocumentStatusTable from './components/DocumentStatusTable'
 import DocumentDetailModal from './components/DocumentDetailModal'
+import DocumentSummaryModal from './components/DocumentSummaryModal'
+import DocumentFullTextModal from './components/DocumentFullTextModal'
 import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
@@ -29,8 +31,18 @@ interface DocumentStatusViewProps {
  */
 const DocumentStatusViewContent: React.FC = () => {
   const { state, actions } = useDocumentStatusContext()
+
+  // Document Detail Modal 상태
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isDetailModalVisible, setDetailModalVisible] = useState(false)
+
+  // Document Summary Modal 상태
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<Document | null>(null)
+  const [isSummaryModalVisible, setSummaryModalVisible] = useState(false)
+
+  // Document Full Text Modal 상태
+  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState<Document | null>(null)
+  const [isFullTextModalVisible, setFullTextModalVisible] = useState(false)
 
   /**
    * 문서 클릭 핸들러
@@ -46,9 +58,46 @@ const DocumentStatusViewContent: React.FC = () => {
    */
   const handleDetailModalClose = () => {
     setDetailModalVisible(false)
-    // 모달 애니메이션 완료 후 선택 해제
     setTimeout(() => {
       setSelectedDocument(null)
+    }, 300)
+  }
+
+  /**
+   * Document Summary 핸들러
+   * Document Summary Modal 열기
+   */
+  const handleDocumentSummary = (document: Document) => {
+    setSelectedDocumentForSummary(document)
+    setSummaryModalVisible(true)
+  }
+
+  /**
+   * Document Summary Modal 닫기 핸들러
+   */
+  const handleSummaryModalClose = () => {
+    setSummaryModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForSummary(null)
+    }, 300)
+  }
+
+  /**
+   * Document Full Text 핸들러
+   * Document Full Text Modal 열기
+   */
+  const handleDocumentFullText = (document: Document) => {
+    setSelectedDocumentForFullText(document)
+    setFullTextModalVisible(true)
+  }
+
+  /**
+   * Document Full Text Modal 닫기 핸들러
+   */
+  const handleFullTextModalClose = () => {
+    setFullTextModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForFullText(null)
     }, 300)
   }
 
@@ -82,6 +131,8 @@ const DocumentStatusViewContent: React.FC = () => {
           documents={state.filteredDocuments}
           isLoading={state.isLoading}
           onDocumentClick={handleDocumentClick}
+          onSummaryClick={handleDocumentSummary}
+          onFullTextClick={handleDocumentFullText}
         />
       )}
 
@@ -97,6 +148,20 @@ const DocumentStatusViewContent: React.FC = () => {
         visible={isDetailModalVisible}
         onClose={handleDetailModalClose}
         document={selectedDocument}
+      />
+
+      {/* Document Summary Modal */}
+      <DocumentSummaryModal
+        visible={isSummaryModalVisible}
+        onClose={handleSummaryModalClose}
+        document={selectedDocumentForSummary}
+      />
+
+      {/* Document Full Text Modal */}
+      <DocumentFullTextModal
+        visible={isFullTextModalVisible}
+        onClose={handleFullTextModalClose}
+        document={selectedDocumentForFullText}
       />
     </div>
   )
