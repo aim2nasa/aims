@@ -10,7 +10,7 @@
  */
 
 import React from 'react'
-import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusStats.css'
 

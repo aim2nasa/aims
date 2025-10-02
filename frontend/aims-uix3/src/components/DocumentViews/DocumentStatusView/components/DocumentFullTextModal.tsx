@@ -13,7 +13,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Document } from '../../../../types/documentStatus'
-import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import './DocumentFullTextModal.css'
 
 interface DocumentFullTextModalProps {

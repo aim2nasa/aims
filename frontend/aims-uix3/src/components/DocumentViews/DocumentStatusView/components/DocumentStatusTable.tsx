@@ -10,7 +10,7 @@
  */
 
 import React, { useMemo, useState } from 'react'
-import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
 import './DocumentStatusTable.css'

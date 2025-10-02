@@ -9,7 +9,7 @@ import React from 'react'
 import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
-import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusList.css'
 

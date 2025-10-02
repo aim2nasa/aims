@@ -13,7 +13,7 @@
 import React, { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Document } from '../../../../types/documentStatus'
-import { DocumentStatusService } from '../../../../services/documentStatusService'
+import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Tooltip } from '../../../../shared/ui'
 import './DocumentDetailModal.css'
 
