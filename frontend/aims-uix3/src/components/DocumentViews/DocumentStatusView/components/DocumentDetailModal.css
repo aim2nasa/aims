@@ -1,26 +1,30 @@
 /**
  * DocumentDetailModal Styles
  * @since 1.0.0
+ * @version 2.0.0 - 🍎 문서검색 FullTextModal 스타일 적용
  *
- * 🍎 Apple/iOS 디자인 시스템 적용
- * - Progressive Disclosure: 탭 전환, 호버 효과
- * - iOS 애니메이션 타이밍
- * - Light/Dark 테마 지원
+ * 🍎 iOS 스타일 Full Text 모달 기반
+ * - React Portal 사용
+ * - 드래그로 이동 가능
+ * - ESC 키로 닫기
+ * - 탭 네비게이션 추가 스타일
  */
 
-/* ===== Modal Overlay ===== */
-.document-detail-modal-overlay {
+/* ===== 기본 모달 구조 (FullTextModal과 동일) ===== */
+
+/* 배경 오버레이 */
+.fulltext-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-layout-main);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn var(--duration-ios-normal) var(--easing-ease-out);
+  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
 }
 
 @keyframes fadeIn {
@@ -32,535 +36,388 @@
   }
 }
 
-/* ===== Modal Container ===== */
-.document-detail-modal {
-  background-color: var(--color-layout-content-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+/* 모달 컨테이너 */
+.fulltext-modal-container {
+  background-color: var(--color-neutral-0);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 800px;
-  max-height: 90vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: slideUp var(--duration-ios-normal) var(--easing-ease-out);
+  animation: slideUp var(--duration-normal) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .fulltext-modal-container {
+  background-color: var(--color-ios-menu-bg-dark);
 }
 
 @keyframes slideUp {
   from {
-    opacity: 0;
     transform: translateY(20px);
+    opacity: 0;
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
-html[data-theme='dark'] .document-detail-modal {
-  background-color: var(--color-layout-content-dark);
-}
-
-/* ===== Modal Header ===== */
-.document-detail-modal .modal-header {
-  padding: var(--spacing-4);
-  border-bottom: 1px solid var(--color-layout-accent-light);
-}
-
-html[data-theme='dark'] .document-detail-modal .modal-header {
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-.document-detail-modal .header-content {
+/* 모달 헤더 */
+.fulltext-modal-header {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-3);
-  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-layout-border);
+  user-select: none; /* 드래그 시 텍스트 선택 방지 */
 }
 
-.document-detail-modal .file-icon {
-  font-size: 32px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.document-detail-modal .file-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.document-detail-modal .file-name {
-  font-size: var(--font-size-title3);
+.fulltext-modal-title {
+  font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary-light);
+  color: var(--color-text-primary);
   margin: 0;
-  word-break: break-word;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-html[data-theme='dark'] .document-detail-modal .file-name {
-  color: var(--color-text-primary-dark);
-}
-
-.document-detail-modal .server-name {
-  font-size: var(--font-size-footnote);
-  color: var(--color-text-tertiary-light);
-  margin: 0;
-  word-break: break-all;
-}
-
-html[data-theme='dark'] .document-detail-modal .server-name {
-  color: var(--color-text-tertiary-dark);
-}
-
-.document-detail-modal .status-container {
-  margin-top: var(--spacing-1);
-}
-
-.document-detail-modal .close-button {
-  position: absolute;
-  top: 0;
-  right: 0;
+.fulltext-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
   width: 32px;
   height: 32px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text-secondary-light);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  border-radius: 6px;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme='dark'] .document-detail-modal .close-button {
-  color: var(--color-text-secondary-dark);
+.fulltext-modal-close:hover {
+  background-color: var(--color-layout-accent);
 }
 
-/* 🍎 Progressive Disclosure: 호버 시 배경 표시 */
-.document-detail-modal .close-button:hover {
-  background-color: var(--color-layout-secondary-light);
+.fulltext-modal-close:active {
+  transform: scale(0.95);
 }
 
-html[data-theme='dark'] .document-detail-modal .close-button:hover {
-  background-color: var(--color-layout-secondary-dark);
-}
+/* ===== 탭 네비게이션 (DocumentDetailModal 전용) ===== */
 
-.document-detail-modal .close-button:active {
-  background-color: var(--color-layout-accent-light);
-}
-
-html[data-theme='dark'] .document-detail-modal .close-button:active {
-  background-color: var(--color-layout-accent-dark);
-}
-
-/* ===== Status Badge ===== */
-.document-detail-modal .status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-caption1);
-  font-weight: var(--font-weight-medium);
-  text-transform: capitalize;
-}
-
-.document-detail-modal .status-badge.status-completed {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-html[data-theme='dark'] .document-detail-modal .status-badge.status-completed {
-  background-color: #064e3b;
-  color: #6ee7b7;
-}
-
-.document-detail-modal .status-badge.status-processing {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-html[data-theme='dark'] .document-detail-modal .status-badge.status-processing {
-  background-color: #1e3a8a;
-  color: #93c5fd;
-}
-
-.document-detail-modal .status-badge.status-error {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-html[data-theme='dark'] .document-detail-modal .status-badge.status-error {
-  background-color: #7f1d1d;
-  color: #fca5a5;
-}
-
-.document-detail-modal .status-badge.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-html[data-theme='dark'] .document-detail-modal .status-badge.status-pending {
-  background-color: #78350f;
-  color: #fcd34d;
-}
-
-.document-detail-modal .status-icon {
-  display: inline-block;
-  line-height: 1;
-}
-
-.document-detail-modal .status-badge.status-processing .status-icon {
-  animation: rotate-processing 2s linear infinite;
-}
-
-@keyframes rotate-processing {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ===== Tab Navigation ===== */
-.document-detail-modal .tab-navigation {
+.detail-tab-navigation {
   display: flex;
-  border-bottom: 1px solid var(--color-layout-accent-light);
+  border-bottom: 1px solid var(--color-layout-border);
+  padding: 0 20px;
   background-color: var(--color-layout-secondary-light);
 }
 
-html[data-theme='dark'] .document-detail-modal .tab-navigation {
-  border-bottom-color: var(--color-layout-accent-dark);
+html[data-theme="dark"] .detail-tab-navigation {
   background-color: var(--color-layout-secondary-dark);
 }
 
-.document-detail-modal .tab-button {
+.detail-tab-button {
   flex: 1;
-  padding: var(--spacing-3);
+  padding: 12px 16px;
+  background: none;
   border: none;
-  background-color: transparent;
-  color: var(--color-text-secondary-light);
-  font-size: var(--font-size-subheadline);
-  font-weight: var(--font-weight-regular);
-  cursor: pointer;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  position: relative;
-}
-
-html[data-theme='dark'] .document-detail-modal .tab-button {
-  color: var(--color-text-secondary-dark);
-}
-
-/* 🍎 Progressive Disclosure: 기본 상태는 서브틀 */
-.document-detail-modal .tab-button:hover {
-  background-color: var(--color-layout-content-light);
-  color: var(--color-text-primary-light);
-}
-
-html[data-theme='dark'] .document-detail-modal .tab-button:hover {
-  background-color: var(--color-layout-content-dark);
-  color: var(--color-text-primary-dark);
-}
-
-.document-detail-modal .tab-button.active {
-  color: var(--color-ios-blue-light);
-  font-weight: var(--font-weight-semibold);
-}
-
-html[data-theme='dark'] .document-detail-modal .tab-button.active {
-  color: var(--color-ios-blue-dark);
-}
-
-.document-detail-modal .tab-button.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--color-ios-blue-light);
-}
-
-html[data-theme='dark'] .document-detail-modal .tab-button.active::after {
-  background-color: var(--color-ios-blue-dark);
-}
-
-/* ===== Modal Content ===== */
-.document-detail-modal .modal-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-4);
-}
-
-.document-detail-modal .tab-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-  animation: fadeIn var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-.document-detail-modal .section-title {
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
   font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.detail-tab-button:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-layout-accent);
+}
+
+.detail-tab-button.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* 모달 바디 */
+.fulltext-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  background-color: var(--color-layout-secondary-light);
+  min-height: 0;
+}
+
+html[data-theme="dark"] .fulltext-modal-body {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+.fulltext-content {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption-1);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* 모달 푸터 */
+.fulltext-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-layout-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fulltext-modal-button {
+  background-color: var(--color-accent);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.fulltext-modal-button:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.fulltext-modal-button:active {
+  transform: scale(0.98);
+}
+
+/* ===== DocumentDetailModal 전용 컨텐츠 스타일 ===== */
+
+.detail-tab-content {
+  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
+}
+
+.detail-section-title {
+  font-size: var(--font-size-title-3);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary-light);
-  margin: 0 0 var(--spacing-3) 0;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
 }
 
-html[data-theme='dark'] .document-detail-modal .section-title {
-  color: var(--color-text-primary-dark);
-}
-
-/* ===== Progress Bar ===== */
-.document-detail-modal .progress-bar-wrapper {
+/* 진행률 바 */
+.detail-progress-bar-wrapper {
   width: 100%;
   height: 8px;
-  background-color: var(--color-layout-accent-light);
-  border-radius: var(--radius-full);
+  background-color: var(--color-layout-accent);
+  border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 20px;
 }
 
-html[data-theme='dark'] .document-detail-modal .progress-bar-wrapper {
-  background-color: var(--color-layout-accent-dark);
-}
-
-.document-detail-modal .progress-bar-fill {
+.detail-progress-bar-fill {
   height: 100%;
-  border-radius: var(--radius-full);
-  transition: width var(--duration-ios-normal) var(--easing-ease-out);
+  border-radius: 4px;
+  transition: width var(--duration-normal) var(--easing-ease-out);
 }
 
-.document-detail-modal .progress-bar-fill.status-completed {
-  background-color: #10b981;
+.detail-progress-bar-fill.status-completed {
+  background-color: var(--color-success);
 }
 
-.document-detail-modal .progress-bar-fill.status-processing {
-  background-color: #3b82f6;
+.detail-progress-bar-fill.status-processing {
+  background-color: var(--color-accent);
 }
 
-.document-detail-modal .progress-bar-fill.status-error {
-  background-color: #ef4444;
+.detail-progress-bar-fill.status-error {
+  background-color: var(--color-danger);
 }
 
-.document-detail-modal .progress-bar-fill.status-pending {
-  background-color: #f59e0b;
+.detail-progress-bar-fill.status-pending {
+  background-color: var(--color-text-tertiary);
 }
 
-/* ===== Progress Info Grid ===== */
-.document-detail-modal .progress-info-grid {
+/* 진행 정보 그리드 */
+.detail-progress-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-3);
+  gap: 16px;
 }
 
-.document-detail-modal .info-item {
+.detail-info-item {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: 4px;
 }
 
-.document-detail-modal .info-label {
-  font-size: var(--font-size-caption1);
-  color: var(--color-text-tertiary-light);
+.detail-info-label {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
-html[data-theme='dark'] .document-detail-modal .info-label {
-  color: var(--color-text-tertiary-dark);
-}
-
-.document-detail-modal .info-value {
+.detail-info-value {
   font-size: var(--font-size-body);
-  color: var(--color-text-primary-light);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.detail-info-value--wrap {
+  word-break: break-all;
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-regular);
+}
+
+/* 상태 배지 */
+.detail-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-caption-1);
   font-weight: var(--font-weight-medium);
 }
 
-.document-detail-modal .info-value--wrap {
-  word-break: break-all;
+.detail-status-badge.status-completed {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
 }
 
-html[data-theme='dark'] .document-detail-modal .info-value {
-  color: var(--color-text-primary-dark);
+.detail-status-badge.status-processing {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
 }
 
-/* ===== Info List ===== */
-.document-detail-modal .info-list {
+.detail-status-badge.status-error {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.detail-status-badge.status-pending {
+  background-color: var(--color-layout-accent);
+  color: var(--color-text-tertiary);
+}
+
+.detail-status-icon {
+  font-size: 12px;
+}
+
+/* 문서 정보 리스트 */
+.detail-info-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: 12px;
 }
 
-.document-detail-modal .info-row {
+.detail-info-row {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--color-layout-content-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-layout-border);
+}
+
+html[data-theme="dark"] .detail-info-row {
+  background-color: var(--color-layout-content-dark);
+}
+
+.detail-row-label {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.detail-row-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-2);
-  background-color: var(--color-layout-secondary-light);
-  border-radius: var(--radius-md);
-  gap: var(--spacing-3);
 }
 
-html[data-theme='dark'] .document-detail-modal .info-row {
-  background-color: var(--color-layout-secondary-dark);
-}
-
-.document-detail-modal .row-label {
-  font-size: var(--font-size-subheadline);
-  color: var(--color-text-secondary-light);
-  flex-shrink: 0;
-}
-
-html[data-theme='dark'] .document-detail-modal .row-label {
-  color: var(--color-text-secondary-dark);
-}
-
-.document-detail-modal .row-value {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+.detail-code-text {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-text-primary);
+  background-color: var(--color-layout-accent);
+  padding: 4px 8px;
+  border-radius: 4px;
   flex: 1;
-  min-width: 0;
-}
-
-.document-detail-modal .code-text {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-caption2);
-  color: var(--color-text-primary-light);
-  background-color: var(--color-layout-accent-light);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html[data-theme='dark'] .document-detail-modal .code-text {
-  color: var(--color-text-primary-dark);
-  background-color: var(--color-layout-accent-dark);
-}
-
-.document-detail-modal .text-value {
-  font-size: var(--font-size-subheadline);
-  color: var(--color-text-primary-light);
+.detail-text-value {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html[data-theme='dark'] .document-detail-modal .text-value {
-  color: var(--color-text-primary-dark);
-}
-
-/* 🍎 Progressive Disclosure: 복사 버튼 */
-.document-detail-modal .copy-button {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text-tertiary-light);
-  font-size: 16px;
+.detail-copy-button {
+  background: none;
+  border: 1px solid var(--color-layout-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
   cursor: pointer;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  opacity: 0.7;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  flex-shrink: 0;
 }
 
-html[data-theme='dark'] .document-detail-modal .copy-button {
-  color: var(--color-text-tertiary-dark);
+.detail-copy-button:hover {
+  background-color: var(--color-layout-accent);
+  border-color: var(--color-accent);
 }
 
-.document-detail-modal .copy-button:hover {
-  background-color: var(--color-layout-accent-light);
-  opacity: 1;
+.detail-copy-button.copied {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
-html[data-theme='dark'] .document-detail-modal .copy-button:hover {
-  background-color: var(--color-layout-accent-dark);
-}
-
-.document-detail-modal .copy-button.copied {
-  color: var(--color-ios-green-light);
-  opacity: 1;
-}
-
-html[data-theme='dark'] .document-detail-modal .copy-button.copied {
-  color: var(--color-ios-green-dark);
-}
-
-/* ===== Raw Data Container ===== */
-.document-detail-modal .raw-data-container {
-  background-color: var(--color-layout-secondary-light);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-3);
-  max-height: 400px;
+/* 원본 데이터 컨테이너 */
+.detail-raw-data-container {
+  background-color: var(--color-layout-content-light);
+  border: 1px solid var(--color-layout-border);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 500px;
   overflow: auto;
 }
 
-html[data-theme='dark'] .document-detail-modal .raw-data-container {
-  background-color: var(--color-layout-secondary-dark);
+html[data-theme="dark"] .detail-raw-data-container {
+  background-color: var(--color-layout-content-dark);
 }
 
-.document-detail-modal .raw-data-pre {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-caption2);
-  color: var(--color-text-primary-light);
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
+/* 스크롤바 스타일 (WebKit) */
+.fulltext-modal-body::-webkit-scrollbar,
+.detail-raw-data-container::-webkit-scrollbar {
+  width: 8px;
 }
 
-html[data-theme='dark'] .document-detail-modal .raw-data-pre {
-  color: var(--color-text-primary-dark);
+.fulltext-modal-body::-webkit-scrollbar-track,
+.detail-raw-data-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* ===== Modal Footer ===== */
-.document-detail-modal .modal-footer {
-  padding: var(--spacing-4);
-  border-top: 1px solid var(--color-layout-accent-light);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-2);
+.fulltext-modal-body::-webkit-scrollbar-thumb,
+.detail-raw-data-container::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-border);
+  border-radius: 4px;
 }
 
-html[data-theme='dark'] .document-detail-modal .modal-footer {
-  border-top-color: var(--color-layout-accent-dark);
-}
-
-.document-detail-modal .footer-button {
-  padding: var(--spacing-2) var(--spacing-4);
-  border: none;
-  background-color: var(--color-ios-blue-light);
-  color: #ffffff;
-  font-size: var(--font-size-subheadline);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme='dark'] .document-detail-modal .footer-button {
-  background-color: var(--color-ios-blue-dark);
-}
-
-.document-detail-modal .footer-button:hover {
-  background-color: #2563eb;
-}
-
-html[data-theme='dark'] .document-detail-modal .footer-button:hover {
-  background-color: #1d4ed8;
-}
-
-.document-detail-modal .footer-button:active {
-  background-color: #1e40af;
-}
-
-html[data-theme='dark'] .document-detail-modal .footer-button:active {
-  background-color: #1e3a8a;
+.fulltext-modal-body::-webkit-scrollbar-thumb:hover,
+.detail-raw-data-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
 }

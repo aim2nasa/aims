@@ -1,193 +1,187 @@
 /**
  * DocumentSummaryModal Styles
  * @since 1.0.0
+ * @version 2.0.0 - 🍎 문서검색 FullTextModal 스타일 적용
  *
- * 🍎 Apple/iOS 디자인 시스템 적용
- * - Progressive Disclosure: 서브틀한 기본 상태
- * - iOS 애니메이션 타이밍
- * - Light/Dark 테마 지원
+ * 🍎 iOS 스타일 Full Text 모달 기반
+ * - React Portal 사용
+ * - 드래그로 이동 가능
+ * - ESC 키로 닫기
+ * - 로딩 스피너 추가
  */
 
-/* ===== Modal Overlay ===== */
-.document-summary-modal-overlay {
+/* ===== 기본 모달 구조 (FullTextModal과 동일) ===== */
+
+/* 배경 오버레이 */
+.fulltext-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-layout-main);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn var(--duration-ios-normal) var(--easing-ease-out);
+  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
 }
 
-/* ===== Modal Container ===== */
-.document-summary-modal {
-  background-color: var(--color-layout-content-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 모달 컨테이너 */
+.fulltext-modal-container {
+  background-color: var(--color-neutral-0);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 800px;
-  max-height: 80vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: slideUp var(--duration-ios-normal) var(--easing-ease-out);
+  animation: slideUp var(--duration-normal) var(--easing-ease-out);
 }
 
-html[data-theme='dark'] .document-summary-modal {
-  background-color: var(--color-layout-content-dark);
+html[data-theme="dark"] .fulltext-modal-container {
+  background-color: var(--color-ios-menu-bg-dark);
 }
 
-/* ===== Modal Header ===== */
-.document-summary-modal .modal-header {
-  padding: var(--spacing-4);
-  border-bottom: 1px solid var(--color-layout-accent-light);
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-html[data-theme='dark'] .document-summary-modal .modal-header {
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-.document-summary-modal .header-content {
+/* 모달 헤더 */
+.fulltext-modal-header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  position: relative;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-layout-border);
+  user-select: none; /* 드래그 시 텍스트 선택 방지 */
 }
 
-.document-summary-modal .file-icon {
-  font-size: 24px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.document-summary-modal .modal-title {
-  flex: 1;
-  font-size: var(--font-size-title3);
+.fulltext-modal-title {
+  font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary-light);
+  color: var(--color-text-primary);
   margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-html[data-theme='dark'] .document-summary-modal .modal-title {
-  color: var(--color-text-primary-dark);
-}
-
-.document-summary-modal .close-button {
+.fulltext-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
   width: 32px;
   height: 32px;
-  border: none;
-  background-color: transparent;
-  color: var(--color-text-secondary-light);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  border-radius: 6px;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme='dark'] .document-summary-modal .close-button {
-  color: var(--color-text-secondary-dark);
+.fulltext-modal-close:hover {
+  background-color: var(--color-layout-accent);
 }
 
-/* 🍎 Progressive Disclosure: 호버 시 배경 표시 */
-.document-summary-modal .close-button:hover {
+.fulltext-modal-close:active {
+  transform: scale(0.95);
+}
+
+/* 모달 바디 */
+.fulltext-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
   background-color: var(--color-layout-secondary-light);
+  min-height: 0;
 }
 
-html[data-theme='dark'] .document-summary-modal .close-button:hover {
+html[data-theme="dark"] .fulltext-modal-body {
   background-color: var(--color-layout-secondary-dark);
 }
 
-.document-summary-modal .close-button:active {
-  background-color: var(--color-layout-accent-light);
+.fulltext-content {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption-1);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-html[data-theme='dark'] .document-summary-modal .close-button:active {
-  background-color: var(--color-layout-accent-dark);
+/* 모달 푸터 */
+.fulltext-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-layout-border);
+  display: flex;
+  justify-content: flex-end;
 }
 
-/* ===== Document Title ===== */
-.document-summary-modal .document-title {
-  padding: var(--spacing-3) var(--spacing-4);
-  border-bottom: 1px solid var(--color-layout-accent-light);
-}
-
-html[data-theme='dark'] .document-summary-modal .document-title {
-  border-bottom-color: var(--color-layout-accent-dark);
-}
-
-.document-summary-modal .filename {
+.fulltext-modal-button {
+  background-color: var(--color-accent);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary-light);
-  margin: 0;
-  word-break: break-word;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme='dark'] .document-summary-modal .filename {
-  color: var(--color-text-primary-dark);
+.fulltext-modal-button:hover {
+  background-color: var(--color-accent-hover);
 }
 
-/* ===== Modal Content ===== */
-.document-summary-modal .modal-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-4);
+.fulltext-modal-button:active {
+  transform: scale(0.98);
 }
 
-.document-summary-modal .summary-container {
-  background-color: var(--color-layout-secondary-light);
-  border: 1px solid var(--color-layout-accent-light);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-4);
-  min-height: 200px;
-}
+/* ===== DocumentSummaryModal 전용 스타일 ===== */
 
-html[data-theme='dark'] .document-summary-modal .summary-container {
-  background-color: var(--color-layout-secondary-dark);
-  border-color: var(--color-layout-accent-dark);
-}
-
-.document-summary-modal .summary-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.6;
-  color: var(--color-text-primary-light);
-  font-size: var(--font-size-body);
-}
-
-html[data-theme='dark'] .document-summary-modal .summary-text {
-  color: var(--color-text-primary-dark);
-}
-
-/* ===== Loading State ===== */
-.document-summary-modal .loading-state {
+/* 로딩 상태 */
+.summary-loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-3);
+  gap: 12px;
   min-height: 200px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
 }
 
-.document-summary-modal .loading-spinner {
+.summary-loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--color-layout-accent-light);
-  border-top-color: var(--color-ios-blue-light);
-  border-radius: var(--radius-full);
-  animation: spin 1s linear infinite;
-}
-
-html[data-theme='dark'] .document-summary-modal .loading-spinner {
-  border-color: var(--color-layout-accent-dark);
-  border-top-color: var(--color-ios-blue-dark);
+  border: 3px solid var(--color-layout-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -196,57 +190,20 @@ html[data-theme='dark'] .document-summary-modal .loading-spinner {
   }
 }
 
-.document-summary-modal .loading-state p {
-  color: var(--color-text-secondary-light);
-  font-size: var(--font-size-subheadline);
-  margin: 0;
+/* 스크롤바 스타일 (WebKit) */
+.fulltext-modal-body::-webkit-scrollbar {
+  width: 8px;
 }
 
-html[data-theme='dark'] .document-summary-modal .loading-state p {
-  color: var(--color-text-secondary-dark);
+.fulltext-modal-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* ===== Modal Footer ===== */
-.document-summary-modal .modal-footer {
-  padding: var(--spacing-4);
-  border-top: 1px solid var(--color-layout-accent-light);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-2);
+.fulltext-modal-body::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-border);
+  border-radius: 4px;
 }
 
-html[data-theme='dark'] .document-summary-modal .modal-footer {
-  border-top-color: var(--color-layout-accent-dark);
-}
-
-.document-summary-modal .footer-button {
-  padding: var(--spacing-2) var(--spacing-4);
-  border: none;
-  background-color: var(--color-ios-blue-light);
-  color: #ffffff;
-  font-size: var(--font-size-subheadline);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-html[data-theme='dark'] .document-summary-modal .footer-button {
-  background-color: var(--color-ios-blue-dark);
-}
-
-.document-summary-modal .footer-button:hover {
-  background-color: #2563eb;
-}
-
-html[data-theme='dark'] .document-summary-modal .footer-button:hover {
-  background-color: #1d4ed8;
-}
-
-.document-summary-modal .footer-button:active {
-  background-color: #1e40af;
-}
-
-html[data-theme='dark'] .document-summary-modal .footer-button:active {
-  background-color: #1e3a8a;
+.fulltext-modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
 }
