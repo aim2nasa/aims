@@ -11,6 +11,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
 import { Document } from '../../../types/documentStatus'
+import DocumentStatusControls from './components/DocumentStatusControls'
 import DocumentStatusStats from './components/DocumentStatusStats'
 import DocumentStatusTable from './components/DocumentStatusTable'
 import DocumentDetailModal from './components/DocumentDetailModal'
@@ -103,6 +104,16 @@ const DocumentStatusViewContent: React.FC = () => {
 
   return (
     <div className="document-status-view-content">
+      {/* 컨트롤 UI */}
+      <DocumentStatusControls
+        isPollingEnabled={state.isPollingEnabled}
+        onTogglePolling={actions.togglePolling}
+        onRefresh={actions.refreshDocuments}
+        isLoading={state.isLoading}
+        apiHealth={state.apiHealth}
+        lastUpdated={state.lastUpdated}
+      />
+
       {/* 상태 통계 카드 */}
       <DocumentStatusStats
         documents={state.documents}

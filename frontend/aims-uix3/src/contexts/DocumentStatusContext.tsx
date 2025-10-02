@@ -35,6 +35,7 @@ export interface DocumentStatusActions {
   setStatusFilter: (filter: 'all' | 'completed' | 'processing' | 'error' | 'pending') => void
   setLastUpdated: (date: Date) => void
   setPollingEnabled: (enabled: boolean) => void
+  togglePolling: () => void
   setApiHealth: (health: boolean | null) => void
   fetchDocuments: (isInitialLoad?: boolean) => Promise<void>
   refreshDocuments: () => Promise<void>

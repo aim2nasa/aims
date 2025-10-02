@@ -107,6 +107,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [fetchDocuments])
 
   /**
+   * 폴링 토글
+   */
+  const togglePolling = useCallback(() => {
+    setPollingEnabled((prev) => !prev)
+  }, [])
+
+  /**
    * API 헬스 체크
    */
   const checkApiHealth = useCallback(async () => {
@@ -242,12 +249,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setStatusFilter,
       setLastUpdated,
       setPollingEnabled,
+      togglePolling,
       setApiHealth,
       fetchDocuments,
       refreshDocuments,
       checkApiHealth
     }),
-    [fetchDocuments, refreshDocuments, checkApiHealth]
+    [fetchDocuments, refreshDocuments, togglePolling, checkApiHealth]
   )
 
   // Context Value
