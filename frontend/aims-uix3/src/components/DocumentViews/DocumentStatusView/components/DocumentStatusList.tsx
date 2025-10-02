@@ -7,6 +7,8 @@
 
 import React from 'react'
 import { Tooltip } from '@/shared/ui'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
+import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/documentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusList.css'
@@ -89,14 +91,24 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               }
             }}
           >
-            {/* 아이콘 + 상태 */}
-            <div className={"status-icon status-" + status}>
-              {statusIcon}
+            {/* 파일 타입 아이콘 */}
+            <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, DocumentStatusService.extractFilename(document))}`}>
+              <SFSymbol
+                name={DocumentUtils.getFileIcon(document.mimeType, DocumentStatusService.extractFilename(document))}
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.REGULAR}
+                decorative={true}
+              />
             </div>
 
             {/* 파일명 */}
             <div className="status-filename">
               {DocumentStatusService.extractFilename(document)}
+            </div>
+
+            {/* 상태 아이콘 */}
+            <div className={"status-icon status-" + status}>
+              {statusIcon}
             </div>
 
             {/* 진행률 */}
