@@ -51,28 +51,28 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         setError(null)
 
         const data = await DocumentStatusService.getRecentDocuments(1000)
-        const realDocuments = data.documents || []
+        const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
-        const documentsWithCustomerRelation = await Promise.all(
-          realDocuments.map(async (doc) => {
+        const documentsWithCustomerRelation: Document[] = await Promise.all(
+          realDocuments.map(async (doc: Document): Promise<Document> => {
             try {
-              const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc.id || '')
+              const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc['id'] || '')
               return {
                 ...doc,
                 customer_relation: detailedDoc.data?.rawDocument?.customer_relation
-              }
+              } as Document
             } catch (error) {
               console.error(`Failed to fetch detailed info for document ${doc._id}:`, error)
-              return { ...doc, customer_relation: undefined }
+              return doc
             }
           })
         )
 
         // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
         setDocuments((prevDocs) => {
-          const tempDocs = prevDocs.filter((doc) => doc.id?.startsWith('temp-'))
-          const realDocFilenames = documentsWithCustomerRelation.map((doc) =>
+          const tempDocs = prevDocs.filter((doc) => doc['id']?.startsWith('temp-'))
+          const realDocFilenames = documentsWithCustomerRelation.map((doc: Document) =>
             DocumentStatusService.extractFilename(doc).toLowerCase()
           )
           const uniqueTempDocs = tempDocs.filter((tempDoc) => {
@@ -139,7 +139,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   useEffect(() => {
     if (initialFiles.length > 0) {
       setDocuments((prevDocs) => {
-        const realDocs = prevDocs.filter((doc) => !doc.id?.startsWith('temp-'))
+        const realDocs = prevDocs.filter((doc) => !doc['id']?.startsWith('temp-'))
         const realDocFilenames = realDocs.map((doc) =>
           DocumentStatusService.extractFilename(doc).toLowerCase()
         )
@@ -180,22 +180,28 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     if (searchTerm) {
       filtered = filtered.filter((doc) => {
         const filename = DocumentStatusService.extractFilename(doc)
-        const id = doc.id || doc._id || ''
+        const id = doc['id'] || doc._id || ''
         const searchTermLower = searchTerm.toLowerCase()
 
         const matchesFilename = filename.toLowerCase().includes(searchTermLower)
         const matchesId = id.toLowerCase().includes(searchTermLower)
 
         // Meta full_text 검색
-        const metaFullText = (doc.meta as any)?.full_text || ''
+        const metaFullText = (typeof doc.meta === 'object' && doc.meta !== null)
+          ? doc.meta.full_text || ''
+          : ''
         const matchesMetaText = metaFullText.toLowerCase().includes(searchTermLower)
 
         // OCR full_text 검색
-        const ocrFullText = (doc.ocr as any)?.full_text || ''
+        const ocrFullText = (typeof doc.ocr === 'object' && doc.ocr !== null)
+          ? doc.ocr.full_text || ''
+          : ''
         const matchesOcrText = ocrFullText.toLowerCase().includes(searchTermLower)
 
         // Text full_text 검색
-        const textFullText = (doc.text as any)?.full_text || ''
+        const textFullText = (typeof doc.text === 'object' && doc.text !== null)
+          ? doc.text.full_text || ''
+          : ''
         const matchesTextText = textFullText.toLowerCase().includes(searchTermLower)
 
         return matchesFilename || matchesId || matchesMetaText || matchesOcrText || matchesTextText

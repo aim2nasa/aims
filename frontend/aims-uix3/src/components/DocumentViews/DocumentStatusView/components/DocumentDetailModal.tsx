@@ -178,13 +178,13 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 <div className="info-row">
                   <span className="row-label">Document ID</span>
                   <div className="row-value">
-                    <code className="code-text">{document._id || document.id}</code>
+                    <code className="code-text">{document._id || document['id']}</code>
                     <button
-                      className={`copy-button ${copied.id ? 'copied' : ''}`}
-                      onClick={() => handleCopy(document._id || document.id || '', 'id')}
+                      className={`copy-button ${copied['id'] ? 'copied' : ''}`}
+                      onClick={() => handleCopy(document._id || document['id'] || '', 'id')}
                       aria-label="ID 복사"
                     >
-                      {copied.id ? '✓' : '📋'}
+                      {copied['id'] ? '✓' : '📋'}
                     </button>
                   </div>
                 </div>
@@ -194,11 +194,11 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   <div className="row-value">
                     <span className="text-value">{filename}</span>
                     <button
-                      className={`copy-button ${copied.filename ? 'copied' : ''}`}
+                      className={`copy-button ${copied['filename'] ? 'copied' : ''}`}
                       onClick={() => handleCopy(filename, 'filename')}
                       aria-label="파일명 복사"
                     >
-                      {copied.filename ? '✓' : '📋'}
+                      {copied['filename'] ? '✓' : '📋'}
                     </button>
                   </div>
                 </div>
@@ -209,11 +209,11 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                     <div className="row-value">
                       <code className="code-text">{saveName}</code>
                       <button
-                        className={`copy-button ${copied.saveName ? 'copied' : ''}`}
+                        className={`copy-button ${copied['saveName'] ? 'copied' : ''}`}
                         onClick={() => handleCopy(saveName, 'saveName')}
                         aria-label="서버 파일명 복사"
                       >
-                        {copied.saveName ? '✓' : '📋'}
+                        {copied['saveName'] ? '✓' : '📋'}
                       </button>
                     </div>
                   </div>

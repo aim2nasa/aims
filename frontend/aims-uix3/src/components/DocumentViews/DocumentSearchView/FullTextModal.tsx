@@ -103,6 +103,7 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
+    return undefined
   }, [isDragging, dragStart])
 
   /**
@@ -121,6 +122,7 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
         document.removeEventListener('keydown', handleEscape)
       }
     }
+    return undefined
   }, [visible, onClose])
 
   /**

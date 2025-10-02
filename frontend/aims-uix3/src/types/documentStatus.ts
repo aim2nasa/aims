@@ -162,11 +162,14 @@ export interface Document {
  * API 응답 인터페이스
  */
 export interface DocumentStatusResponse {
-  success: boolean
-  data: {
+  success?: boolean
+  files?: Document[]
+  data?: {
     documents: Document[]
     total: number
   }
+  documents?: Document[]
+  total?: number
 }
 
 /**

@@ -17,7 +17,7 @@ import type {
   TextData
 } from '../types/documentStatus'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://tars.giize.com:3010'
+const API_BASE_URL = import.meta.env['VITE_API_URL'] || 'http://tars.giize.com:3010'
 const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
 
 /**
@@ -265,30 +265,47 @@ export class DocumentStatusService {
     if (document.status) return document.status
 
     // stages 구조 확인 (레거시)
-    if (document.stages?.upload?.status === 'completed') {
+    const uploadStatus = (typeof document.stages?.upload === 'object' && document.stages?.upload !== null)
+      ? (document.stages.upload as any).status
+      : undefined
+
+    if (uploadStatus === 'completed') {
       // embed/docembed가 완료되면 completed
-      if (
-        document.stages?.embed?.status === 'completed' ||
-        document.stages?.docembed?.status === 'completed'
-      ) {
+      const embedStatus = (typeof document.stages?.embed === 'object' && document.stages?.embed !== null)
+        ? (document.stages.embed as any).status
+        : undefined
+      const docembedStatus = (typeof document.stages?.docembed === 'object' && document.stages?.docembed !== null)
+        ? (document.stages.docembed as any).status
+        : undefined
+
+      if (embedStatus === 'completed' || docembedStatus === 'completed') {
         return 'completed'
       }
 
       // meta.full_text가 있고 OCR만 pending이면 completed
+      const metaFullText = (typeof document.meta === 'object' && document.meta !== null)
+        ? (document.meta as MetaData).full_text
+        : undefined
+      const stagesMetaFullText = (typeof document.stages?.meta === 'object' && document.stages?.meta !== null)
+        ? (document.stages.meta as any).full_text
+        : undefined
+      const metaStatus = (typeof document.stages?.meta === 'object' && document.stages?.meta !== null)
+        ? (document.stages.meta as any).status
+        : undefined
+      const ocrStatus = (typeof document.stages?.ocr === 'object' && document.stages?.ocr !== null)
+        ? (document.stages.ocr as any).status
+        : undefined
+
       if (
-        (document.stages?.meta?.full_text || (document.meta as MetaData)?.full_text) &&
-        (document.stages?.meta as any)?.status === 'completed' &&
-        (document.stages?.ocr as any)?.status === 'pending'
+        (stagesMetaFullText || metaFullText) &&
+        metaStatus === 'completed' &&
+        ocrStatus === 'pending'
       ) {
         return 'completed'
       }
 
       // 에러 체크
-      if (
-        (document.stages?.meta as any)?.status === 'error' ||
-        document.stages?.embed?.status === 'error' ||
-        document.stages?.docembed?.status === 'error'
-      ) {
+      if (metaStatus === 'error' || embedStatus === 'error' || docembedStatus === 'error') {
         return 'error'
       }
 
@@ -383,13 +400,24 @@ export class DocumentStatusService {
     // 서버에서 계산된 progress 우선 사용
     if (document.progress !== undefined && document.progress !== null) {
       // embed가 완료되었거나 meta.full_text가 있으면 100%
-      const embedCompleted =
-        document.stages?.embed?.status === 'completed' ||
-        document.stages?.docembed?.status === 'completed'
+      const embedStatus = (typeof document.stages?.embed === 'object' && document.stages?.embed !== null)
+        ? (document.stages.embed as any).status
+        : undefined
+      const docembedStatus = (typeof document.stages?.docembed === 'object' && document.stages?.docembed !== null)
+        ? (document.stages.docembed as any).status
+        : undefined
+      const embedCompleted = embedStatus === 'completed' || docembedStatus === 'completed'
 
-      const metaFullTextExists =
-        ((document.stages?.meta as any)?.full_text || (document.meta as MetaData)?.full_text) &&
-        (document.stages?.meta as any)?.status === 'completed'
+      const metaFullText = (typeof document.meta === 'object' && document.meta !== null)
+        ? (document.meta as MetaData).full_text
+        : undefined
+      const stagesMetaFullText = (typeof document.stages?.meta === 'object' && document.stages?.meta !== null)
+        ? (document.stages.meta as any).full_text
+        : undefined
+      const metaStatus = (typeof document.stages?.meta === 'object' && document.stages?.meta !== null)
+        ? (document.stages.meta as any).status
+        : undefined
+      const metaFullTextExists = (stagesMetaFullText || metaFullText) && metaStatus === 'completed'
 
       if (embedCompleted || metaFullTextExists) {
         return 100
@@ -403,11 +431,17 @@ export class DocumentStatusService {
     }
 
     // DocEmbed/Embed가 완료된 경우 무조건 100%
-    if (
-      (document.docembed && (document.docembed as any).status === 'done') ||
-      (document.embed && (document.embed as any).status === 'completed') ||
-      (document.stages?.embed && document.stages.embed.status === 'completed')
-    ) {
+    const docembedDone = (document.docembed && typeof document.docembed === 'object' && document.docembed !== null)
+      ? (document.docembed as any).status === 'done'
+      : false
+    const embedCompleted = (document.embed && typeof document.embed === 'object' && document.embed !== null)
+      ? (document.embed as any).status === 'completed'
+      : false
+    const stagesEmbedCompleted = (document.stages?.embed && typeof document.stages.embed === 'object' && document.stages.embed !== null)
+      ? (document.stages.embed as any).status === 'completed'
+      : false
+
+    if (docembedDone || embedCompleted || stagesEmbedCompleted) {
       return 100
     }
 

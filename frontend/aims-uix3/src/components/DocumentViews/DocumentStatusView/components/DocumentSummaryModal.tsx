@@ -53,7 +53,7 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
       setSummaryContent('로딩 중...')
 
       try {
-        const docId = document._id || document.id
+        const docId = document._id || document['id']
         if (!docId) {
           setSummaryContent('문서 ID를 찾을 수 없습니다.')
           setIsLoading(false)
@@ -93,8 +93,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
    */
   const getSummaryFromDocument = (doc: Document): string => {
     // meta에서 full_text 확인
-    const metaFullText = doc.meta?.full_text ||
-      (typeof doc.meta === 'string' ? (() => {
+    const metaFullText = (typeof doc.meta === 'object' && doc.meta !== null)
+      ? doc.meta.full_text
+      : (typeof doc.meta === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.meta as string)
           return parsed.full_text
@@ -105,8 +106,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
 
     // meta에 full_text가 있는 경우 - meta summary 사용
     if (metaFullText && metaFullText.trim()) {
-      const metaSummary = doc.meta?.summary ||
-        (typeof doc.meta === 'string' ? (() => {
+      const metaSummary = (typeof doc.meta === 'object' && doc.meta !== null)
+        ? doc.meta.summary
+        : (typeof doc.meta === 'string' ? (() => {
           try {
             const parsed = JSON.parse(doc.meta as string)
             return parsed.summary
@@ -125,8 +127,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
     }
 
     // meta에 full_text가 없는 경우 - ocr summary 사용
-    const ocrSummary = doc.ocr?.summary ||
-      (typeof doc.ocr === 'string' ? (() => {
+    const ocrSummary = (typeof doc.ocr === 'object' && doc.ocr !== null)
+      ? doc.ocr.summary
+      : (typeof doc.ocr === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.ocr as string)
           return parsed.summary
@@ -140,8 +143,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
     }
 
     // ocr summary가 없으면 ocr full_text의 앞부분 사용
-    const ocrFullText = doc.ocr?.full_text ||
-      (typeof doc.ocr === 'string' ? (() => {
+    const ocrFullText = (typeof doc.ocr === 'object' && doc.ocr !== null)
+      ? doc.ocr.full_text
+      : (typeof doc.ocr === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.ocr as string)
           return parsed.full_text

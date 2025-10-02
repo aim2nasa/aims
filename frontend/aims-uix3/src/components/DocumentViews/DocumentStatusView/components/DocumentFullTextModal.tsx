@@ -53,7 +53,7 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
       setFullTextContent('로딩 중...')
 
       try {
-        const docId = document._id || document.id
+        const docId = document._id || document['id']
         if (!docId) {
           setFullTextContent('문서 ID를 찾을 수 없습니다.')
           setIsLoading(false)
@@ -93,8 +93,9 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
    */
   const getFullTextFromDocument = (doc: Document): string => {
     // meta에서 full_text 확인 (최우선)
-    const metaFullText = doc.meta?.full_text ||
-      (typeof doc.meta === 'string' ? (() => {
+    const metaFullText = (typeof doc.meta === 'object' && doc.meta !== null)
+      ? doc.meta.full_text
+      : (typeof doc.meta === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.meta as string)
           return parsed.full_text
@@ -108,8 +109,9 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
     }
 
     // text에서 full_text 확인 (text/plain 파일용)
-    const textFullText = doc.text?.full_text ||
-      (typeof doc.text === 'string' ? (() => {
+    const textFullText = (typeof doc.text === 'object' && doc.text !== null)
+      ? doc.text.full_text
+      : (typeof doc.text === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.text as string)
           return parsed.full_text
@@ -123,8 +125,9 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
     }
 
     // ocr에서 full_text 확인
-    const ocrFullText = doc.ocr?.full_text ||
-      (typeof doc.ocr === 'string' ? (() => {
+    const ocrFullText = (typeof doc.ocr === 'object' && doc.ocr !== null)
+      ? doc.ocr.full_text
+      : (typeof doc.ocr === 'string' ? (() => {
         try {
           const parsed = JSON.parse(doc.ocr as string)
           return parsed.full_text
