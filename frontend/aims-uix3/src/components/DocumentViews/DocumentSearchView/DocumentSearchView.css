@@ -461,15 +461,22 @@ html[data-theme="dark"] .row-detail {
 .row-chevron {
   font-size: 14px;
   color: var(--color-ios-text-quaternary-light);
-  transition: transform var(--duration-micro-quick) var(--easing-ease-out);
+  opacity: 0.3;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
 }
 
 html[data-theme="dark"] .row-chevron {
   color: var(--color-ios-text-quaternary-dark);
+  opacity: 0.25;
 }
 
 .search-result-row:hover .row-chevron {
+  opacity: 0.8;
   transform: translateX(2px);
+}
+
+html[data-theme="dark"] .search-result-row:hover .row-chevron {
+  opacity: 0.7;
 }
 
 /* === 🍎 SCROLLBAR: iOS Style === */
