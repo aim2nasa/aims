@@ -124,6 +124,27 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     setSelectedDocument(null)
   }
 
+  /**
+   * 유사도 점수를 5단계로 분류
+   */
+  const getSimilarityLevel = (score: number): {
+    icon: string
+    label: string
+    color: string
+  } => {
+    if (score >= 0.85) {
+      return { icon: '🟢', label: '매우 높음', color: 'excellent' }
+    } else if (score >= 0.70) {
+      return { icon: '🟢', label: '높음', color: 'high' }
+    } else if (score >= 0.50) {
+      return { icon: '🟡', label: '보통', color: 'medium' }
+    } else if (score >= 0.30) {
+      return { icon: '🟠', label: '낮음', color: 'low' }
+    } else {
+      return { icon: '🔴', label: '매우 낮음', color: 'very-low' }
+    }
+  }
+
   return (
     <CenterPaneView
       visible={visible}
@@ -288,11 +309,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             </svg>
                           </button>
                         )}
+                        {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (
-                          <div className="row-detail">
-                            유사도: {score.toFixed(4)}
+                          <div
+                            className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
+                            title={`유사도: ${score.toFixed(4)} (${getSimilarityLevel(score).label})`}
+                            aria-label={`유사도 ${getSimilarityLevel(score).label}`}
+                          >
+                            {getSimilarityLevel(score).icon}
                           </div>
                         )}
+                        {/* OCR 신뢰도 (키워드 검색 시) */}
                         {confidence && !score && (
                           <div className="row-detail">
                             인식률: {confidence}
