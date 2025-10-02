@@ -65,12 +65,15 @@ export interface SemanticSearchResultItem {
   id?: string
   /** 유사도 점수 */
   score: number
+  /** MIME Type (최상위 필드) */
+  mimeType?: string
   /** payload 데이터 */
   payload?: {
     doc_id?: string
     original_name?: string
     preview?: string
     mime?: string
+    mime_type?: string
     dest_path?: string
     uploaded_at?: string
   }
@@ -79,10 +82,12 @@ export interface SemanticSearchResultItem {
     originalName?: string
     destPath?: string
     uploaded_at?: string
+    mimeType?: string
   }
   /** 메타 정보 */
   meta?: {
     mime?: string
+    mimeType?: string
     size_bytes?: number
     full_text?: string
     summary?: string
@@ -105,15 +110,19 @@ export interface KeywordSearchResultItem {
   _id: string
   /** 파일명 */
   filename?: string
+  /** MIME Type (최상위 필드) */
+  mimeType?: string
   /** 업로드 정보 */
   upload?: {
     originalName?: string
     destPath?: string
     uploaded_at?: string
+    mimeType?: string
   }
   /** 메타 정보 */
   meta?: {
     mime?: string
+    mimeType?: string
     size_bytes?: number
     full_text?: string
     summary?: string
