@@ -1,13 +1,14 @@
 /**
  * DocumentDetailModal Component
  * @since 1.0.0
- * @version 2.0.0 - 🍎 문서검색 FullTextModal 스타일 적용
+ * @version 3.0.0 - 🍎 단일 통합 레이아웃 (애플 스타일)
  *
- * 문서 상세 정보를 표시하는 모달 컴포넌트
+ * 문서 상세 정보를 단일 뷰로 표시하는 모달 컴포넌트
  * - React Portal 사용
  * - 드래그로 이동 가능
  * - ESC 키로 닫기
- * - iOS 스타일 디자인
+ * - iOS Settings 스타일 디자인
+ * - 원본 데이터 섹션만 독립 스크롤
  */
 
 import React, { useState, useRef } from 'react'
@@ -33,10 +34,10 @@ type CopiedState = {
 /**
  * DocumentDetailModal React 컴포넌트
  *
- * 문서의 상세 정보를 탭 형식으로 표시하는 모달
- * - Processing Progress: 처리 진행 상태
- * - Document Info: 문서 정보 (복사 기능)
- * - Raw Data: 원본 JSON 데이터
+ * 문서의 상세 정보를 단일 레이아웃으로 표시
+ * - 처리 진행 상태 (컴팩트)
+ * - 문서 정보 2열 그리드
+ * - 원본 데이터 (독립 스크롤)
  *
  * @example
  * ```tsx
@@ -52,7 +53,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   onClose,
   document
 }) => {
-  const [activeTab, setActiveTab] = useState<'progress' | 'info' | 'raw'>('progress')
   const [copied, setCopied] = useState<CopiedState>({})
 
   // 🍎 드래그 상태 관리
@@ -120,7 +120,6 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   React.useEffect(() => {
     if (visible) {
       setPosition({ x: 0, y: 0 })
-      setActiveTab('progress') // 탭도 초기화
     }
   }, [visible])
 
@@ -204,154 +203,121 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           </Tooltip>
         </div>
 
-        {/* 탭 네비게이션 */}
-        <div className="detail-tab-navigation">
-          <button
-            className={`detail-tab-button ${activeTab === 'progress' ? 'active' : ''}`}
-            onClick={() => setActiveTab('progress')}
-            aria-pressed={activeTab === 'progress'}
-          >
-            처리 진행
-          </button>
-          <button
-            className={`detail-tab-button ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={() => setActiveTab('info')}
-            aria-pressed={activeTab === 'info'}
-          >
-            문서 정보
-          </button>
-          <button
-            className={`detail-tab-button ${activeTab === 'raw' ? 'active' : ''}`}
-            onClick={() => setActiveTab('raw')}
-            aria-pressed={activeTab === 'raw'}
-          >
-            원본 데이터
-          </button>
-        </div>
+        {/* 모달 바디 - 통합 레이아웃 */}
+        <div className="fulltext-modal-body detail-unified-layout">
 
-        {/* 모달 바디 */}
-        <div className="fulltext-modal-body">
-          {/* 처리 진행 탭 */}
-          {activeTab === 'progress' && (
-            <div className="detail-tab-content">
-              <h3 className="detail-section-title">처리 진행 상태</h3>
+          {/* 섹션 1: 컴팩트 처리 진행 상태 */}
+          <section className="detail-section detail-section--status">
+            <h3 className="detail-section-title">처리 진행 상태</h3>
 
-              {/* 진행률 바 */}
-              <div className="detail-progress-bar-wrapper">
-                <div
-                  className={`detail-progress-bar-fill status-${status}`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-
-              {/* 진행 정보 */}
-              <div className="detail-progress-info-grid">
-                <div className="detail-info-item">
-                  <span className="detail-info-label">진행률</span>
-                  <span className="detail-info-value">{progress}%</span>
-                </div>
-                <div className="detail-info-item">
-                  <span className="detail-info-label">상태</span>
-                  <span className="detail-info-value">
-                    <span className={`detail-status-badge status-${status}`}>
-                      {status === 'processing' && <span className="detail-status-icon">⟳</span>}
-                      {status === 'completed' && <span className="detail-status-icon">✓</span>}
-                      {status === 'error' && <span className="detail-status-icon">✕</span>}
-                      {status === 'pending' && <span className="detail-status-icon">⋯</span>}
-                      {status}
-                    </span>
-                  </span>
-                </div>
-                {saveName && (
-                  <div className="detail-info-item">
-                    <span className="detail-info-label">서버 파일명</span>
-                    <span className="detail-info-value detail-info-value--wrap">
-                      {saveName}
-                    </span>
-                  </div>
-                )}
-              </div>
+            {/* 진행률 바 */}
+            <div className="detail-progress-bar-wrapper">
+              <div
+                className={`detail-progress-bar-fill status-${status}`}
+                style={{ width: `${progress}%` }}
+              />
             </div>
-          )}
 
-          {/* 문서 정보 탭 */}
-          {activeTab === 'info' && (
-            <div className="detail-tab-content">
-              <div className="detail-info-list">
-                <div className="detail-info-row">
-                  <span className="detail-row-label">Document ID</span>
-                  <div className="detail-row-value">
-                    <code className="detail-code-text">{document._id || document['id']}</code>
-                    <Tooltip content="ID 복사">
+            {/* 인라인 상태 정보 */}
+            <div className="detail-status-inline">
+              <span className={`detail-status-badge status-${status}`}>
+                {status === 'processing' && <span className="detail-status-icon">⟳</span>}
+                {status === 'completed' && <span className="detail-status-icon">✓</span>}
+                {status === 'error' && <span className="detail-status-icon">✕</span>}
+                {status === 'pending' && <span className="detail-status-icon">⋯</span>}
+                {status}
+              </span>
+              <span className="detail-progress-text">{progress}%</span>
+            </div>
+          </section>
+
+          {/* 섹션 2: 문서 정보 2열 그리드 */}
+          <section className="detail-section detail-section--info">
+            <h3 className="detail-section-title">문서 정보</h3>
+
+            <div className="detail-info-grid">
+              {/* Document ID 카드 */}
+              <div className="detail-info-card">
+                <div className="detail-info-card-header">
+                  <span className="detail-info-card-label">Document ID</span>
+                  <Tooltip content="ID 복사">
+                    <button
+                      className={`detail-copy-button ${copied['id'] ? 'copied' : ''}`}
+                      onClick={() => handleCopy(document._id || document['id'] || '', 'id')}
+                      aria-label="ID 복사"
+                    >
+                      {copied['id'] ? '✓' : '📋'}
+                    </button>
+                  </Tooltip>
+                </div>
+                <code className="detail-info-card-value">{document._id || document['id']}</code>
+              </div>
+
+              {/* 파일명 카드 */}
+              <div className="detail-info-card">
+                <div className="detail-info-card-header">
+                  <span className="detail-info-card-label">파일명</span>
+                  <Tooltip content="파일명 복사">
+                    <button
+                      className={`detail-copy-button ${copied['filename'] ? 'copied' : ''}`}
+                      onClick={() => handleCopy(filename, 'filename')}
+                      aria-label="파일명 복사"
+                    >
+                      {copied['filename'] ? '✓' : '📋'}
+                    </button>
+                  </Tooltip>
+                </div>
+                <span className="detail-info-card-value">{filename}</span>
+              </div>
+
+              {/* 서버 파일명 카드 (있는 경우만) */}
+              {saveName && (
+                <div className="detail-info-card detail-info-card--full">
+                  <div className="detail-info-card-header">
+                    <span className="detail-info-card-label">서버 파일명</span>
+                    <Tooltip content="서버 파일명 복사">
                       <button
-                        className={`detail-copy-button ${copied['id'] ? 'copied' : ''}`}
-                        onClick={() => handleCopy(document._id || document['id'] || '', 'id')}
-                        aria-label="ID 복사"
+                        className={`detail-copy-button ${copied['saveName'] ? 'copied' : ''}`}
+                        onClick={() => handleCopy(saveName, 'saveName')}
+                        aria-label="서버 파일명 복사"
                       >
-                        {copied['id'] ? '✓' : '📋'}
+                        {copied['saveName'] ? '✓' : '📋'}
                       </button>
                     </Tooltip>
                   </div>
+                  <code className="detail-info-card-value detail-info-card-value--wrap">
+                    {saveName}
+                  </code>
                 </div>
-
-                <div className="detail-info-row">
-                  <span className="detail-row-label">파일명</span>
-                  <div className="detail-row-value">
-                    <span className="detail-text-value">{filename}</span>
-                    <Tooltip content="파일명 복사">
-                      <button
-                        className={`detail-copy-button ${copied['filename'] ? 'copied' : ''}`}
-                        onClick={() => handleCopy(filename, 'filename')}
-                        aria-label="파일명 복사"
-                      >
-                        {copied['filename'] ? '✓' : '📋'}
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-
-                {saveName && (
-                  <div className="detail-info-row">
-                    <span className="detail-row-label">서버 파일명</span>
-                    <div className="detail-row-value">
-                      <code className="detail-code-text">{saveName}</code>
-                      <Tooltip content="서버 파일명 복사">
-                        <button
-                          className={`detail-copy-button ${copied['saveName'] ? 'copied' : ''}`}
-                          onClick={() => handleCopy(saveName, 'saveName')}
-                          aria-label="서버 파일명 복사"
-                        >
-                          {copied['saveName'] ? '✓' : '📋'}
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          )}
+          </section>
 
-          {/* 원본 데이터 탭 */}
-          {activeTab === 'raw' && (
-            <div className="detail-tab-content">
-              <div className="detail-raw-header">
-                <Tooltip content="원본 데이터 복사" placement="left">
-                  <button
-                    className={`detail-copy-button ${copied['raw'] ? 'copied' : ''}`}
-                    onClick={() => handleCopy(JSON.stringify(document, null, 2), 'raw')}
-                    aria-label="원본 데이터 복사"
-                  >
-                    {copied['raw'] ? '✓' : '📋'}
-                  </button>
-                </Tooltip>
-              </div>
+          {/* 섹션 3: 원본 데이터 (독립 스크롤) */}
+          <section className="detail-section detail-section--raw">
+            <div className="detail-raw-header">
+              <h3 className="detail-section-title">원본 데이터</h3>
+              <Tooltip content="원본 데이터 복사" placement="left">
+                <button
+                  className={`detail-copy-button ${copied['raw'] ? 'copied' : ''}`}
+                  onClick={() => handleCopy(JSON.stringify(document, null, 2), 'raw')}
+                  aria-label="원본 데이터 복사"
+                >
+                  {copied['raw'] ? '✓' : '📋'}
+                </button>
+              </Tooltip>
+            </div>
+
+            {/* 독립 스크롤 영역 */}
+            <div className="detail-raw-scroll-container">
               <pre className="detail-code-block">
                 <code className="detail-code-text detail-code-text--raw">
                   {JSON.stringify(document, null, 2)}
                 </code>
               </pre>
             </div>
-          )}
+          </section>
+
         </div>
 
         {/* 모달 푸터 */}
