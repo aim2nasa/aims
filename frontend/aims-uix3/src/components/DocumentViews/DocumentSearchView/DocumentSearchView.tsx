@@ -7,7 +7,7 @@
  * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
-import React from 'react'
+import React, { useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
 import { SearchService } from '@/services/searchService'
@@ -15,6 +15,7 @@ import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/searc
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
+import FullTextModal from './FullTextModal'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -73,6 +74,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleKeywordModeChange,
   } = useDocumentSearch()
 
+  // Full Text 모달 상태
+  const [isFullTextModalVisible, setIsFullTextModalVisible] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<{
+    name: string
+    fullText: string
+  } | null>(null)
+
   /**
    * Enter 키 입력 핸들러
    */
@@ -90,6 +98,30 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     if (docId && onDocumentClick) {
       onDocumentClick(docId)
     }
+  }
+
+  /**
+   * Full Text 보기 핸들러
+   */
+  const handleShowFullText = (item: SearchResultItem, e: React.MouseEvent) => {
+    e.stopPropagation() // 부모 클릭 이벤트 방지
+
+    const fullText = item.meta?.full_text || item.ocr?.full_text || ''
+    const documentName = SearchService.getOriginalName(item)
+
+    setSelectedDocument({
+      name: documentName,
+      fullText: fullText
+    })
+    setIsFullTextModalVisible(true)
+  }
+
+  /**
+   * Full Text 모달 닫기 핸들러
+   */
+  const handleCloseFullTextModal = () => {
+    setIsFullTextModalVisible(false)
+    setSelectedDocument(null)
   }
 
   return (
@@ -232,8 +264,30 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="row-subtitle">{summary}</div>
                       </div>
 
-                      {/* Trailing: 점수 + 화살표 */}
+                      {/* Trailing: Full Text 버튼 + 점수 + 화살표 */}
                       <div className="row-trailing">
+                        {/* Full Text 보기 버튼 */}
+                        {(item.meta?.full_text || item.ocr?.full_text) && (
+                          <button
+                            className="fulltext-button"
+                            onClick={(e) => handleShowFullText(item, e)}
+                            aria-label="전체 텍스트 보기"
+                            title="텍스트 전체보기"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                              <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                        )}
                         {score !== null && (
                           <div className="row-detail">
                             유사도: {score.toFixed(4)}
@@ -260,6 +314,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Full Text 모달 */}
+      {selectedDocument && (
+        <FullTextModal
+          visible={isFullTextModalVisible}
+          onClose={handleCloseFullTextModal}
+          documentName={selectedDocument.name}
+          fullText={selectedDocument.fullText}
+        />
+      )}
     </CenterPaneView>
   )
 }

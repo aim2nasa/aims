@@ -86,6 +86,39 @@ html[data-theme="dark"] .search-input::placeholder {
   color: var(--color-ios-text-placeholder-dark);
 }
 
+/* Full Text 보기 버튼 - Progressive Disclosure */
+.fulltext-button {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  margin-right: 8px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.6;
+}
+
+html[data-theme="dark"] .fulltext-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.fulltext-button:hover {
+  background-color: var(--color-ios-bg-secondary-light);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .fulltext-button:hover {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+.fulltext-button:active {
+  transform: scale(0.95);
+}
+
 /* 검색 버튼 - iOS 스타일 */
 .search-button {
   flex-shrink: 0; /* 축소 방지 */
