@@ -2,15 +2,19 @@
  * DocumentStatusView Component
  * @since 1.0.0
  *
- * 문서 처리 현황 View 컴포넌트
- * DocumentStatusProvider와 함께 사용하여 실시간 문서 처리 현황 표시
+ * 문서 처리 현황 Pure View 컴포넌트
+ * ARCHITECTURE.md Layer 5: View Layer 구현
+ *
+ * 역할:
+ * - 순수 렌더링만 담당
+ * - Controller Hook에서 모든 상태와 액션 수신
+ * - 사용자 인터랙션을 Controller에 위임
  */
 
-import React, { useState } from 'react'
+import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
-import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
-import { Document } from '../../../types/documentStatus'
+import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import DocumentStatusControls from './components/DocumentStatusControls'
 import DocumentStatusStats from './components/DocumentStatusStats'
 import DocumentStatusTable from './components/DocumentStatusTable'
@@ -27,102 +31,35 @@ interface DocumentStatusViewProps {
 }
 
 /**
- * DocumentStatusView 내부 컴포넌트
- * Context를 사용하여 상태 관리
+ * DocumentStatusView 내부 컴포넌트 (Pure View)
+ * Controller Hook을 사용하여 모든 상태와 액션 수신
+ * 순수 렌더링만 담당
  */
 const DocumentStatusViewContent: React.FC = () => {
-  const { state, actions } = useDocumentStatusContext()
-
-  // Document Detail Modal 상태
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
-  const [isDetailModalVisible, setDetailModalVisible] = useState(false)
-
-  // Document Summary Modal 상태
-  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<Document | null>(null)
-  const [isSummaryModalVisible, setSummaryModalVisible] = useState(false)
-
-  // Document Full Text Modal 상태
-  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState<Document | null>(null)
-  const [isFullTextModalVisible, setFullTextModalVisible] = useState(false)
-
-  /**
-   * 문서 클릭 핸들러
-   * Document Detail Modal 열기
-   */
-  const handleDocumentClick = (document: Document) => {
-    setSelectedDocument(document)
-    setDetailModalVisible(true)
-  }
-
-  /**
-   * Document Detail Modal 닫기 핸들러
-   */
-  const handleDetailModalClose = () => {
-    setDetailModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocument(null)
-    }, 300)
-  }
-
-  /**
-   * Document Summary 핸들러
-   * Document Summary Modal 열기
-   */
-  const handleDocumentSummary = (document: Document) => {
-    setSelectedDocumentForSummary(document)
-    setSummaryModalVisible(true)
-  }
-
-  /**
-   * Document Summary Modal 닫기 핸들러
-   */
-  const handleSummaryModalClose = () => {
-    setSummaryModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocumentForSummary(null)
-    }, 300)
-  }
-
-  /**
-   * Document Full Text 핸들러
-   * Document Full Text Modal 열기
-   */
-  const handleDocumentFullText = (document: Document) => {
-    setSelectedDocumentForFullText(document)
-    setFullTextModalVisible(true)
-  }
-
-  /**
-   * Document Full Text Modal 닫기 핸들러
-   */
-  const handleFullTextModalClose = () => {
-    setFullTextModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocumentForFullText(null)
-    }, 300)
-  }
+  // ✅ Controller Hook - 모든 비즈니스 로직을 여기서 가져옴
+  const controller = useDocumentStatusController()
 
   return (
     <div className="document-status-view-content">
       {/* 컨트롤 UI */}
       <DocumentStatusControls
-        isPollingEnabled={state.isPollingEnabled}
-        onTogglePolling={actions.togglePolling}
-        onRefresh={actions.refreshDocuments}
-        isLoading={state.isLoading}
-        apiHealth={state.apiHealth}
-        lastUpdated={state.lastUpdated}
+        isPollingEnabled={controller.isPollingEnabled}
+        onTogglePolling={controller.togglePolling}
+        onRefresh={controller.refreshDocuments}
+        isLoading={controller.isLoading}
+        apiHealth={controller.apiHealth}
+        lastUpdated={controller.lastUpdated}
       />
 
       {/* 상태 통계 카드 */}
       <DocumentStatusStats
-        documents={state.documents}
-        activeFilter={state.statusFilter}
-        onFilterChange={actions.setStatusFilter}
+        documents={controller.documents}
+        activeFilter={controller.statusFilter}
+        onFilterChange={controller.setStatusFilter}
       />
 
       {/* 로딩 상태 */}
-      {state.isLoading && state.documents.length === 0 && (
+      {controller.isLoading && controller.documents.length === 0 && (
         <div className="document-status-loading">
           <div className="loading-spinner" />
           <p>문서 목록을 불러오는 중...</p>
@@ -130,25 +67,25 @@ const DocumentStatusViewContent: React.FC = () => {
       )}
 
       {/* 에러 상태 */}
-      {state.error && (
+      {controller.error && (
         <div className="document-status-error">
-          <p>{state.error}</p>
+          <p>{controller.error}</p>
         </div>
       )}
 
       {/* 문서 테이블 */}
-      {!state.error && state.filteredDocuments.length > 0 && (
+      {!controller.error && controller.filteredDocuments.length > 0 && (
         <DocumentStatusTable
-          documents={state.filteredDocuments}
-          isLoading={state.isLoading}
-          onDocumentClick={handleDocumentClick}
-          onSummaryClick={handleDocumentSummary}
-          onFullTextClick={handleDocumentFullText}
+          documents={controller.filteredDocuments}
+          isLoading={controller.isLoading}
+          onDocumentClick={controller.handleDocumentClick}
+          onSummaryClick={controller.handleDocumentSummary}
+          onFullTextClick={controller.handleDocumentFullText}
         />
       )}
 
       {/* 빈 상태 */}
-      {!state.isLoading && !state.error && state.filteredDocuments.length === 0 && (
+      {!controller.isLoading && !controller.error && controller.filteredDocuments.length === 0 && (
         <div className="document-status-empty">
           <p>문서가 없습니다.</p>
         </div>
@@ -156,23 +93,23 @@ const DocumentStatusViewContent: React.FC = () => {
 
       {/* Document Detail Modal */}
       <DocumentDetailModal
-        visible={isDetailModalVisible}
-        onClose={handleDetailModalClose}
-        document={selectedDocument}
+        visible={controller.isDetailModalVisible}
+        onClose={controller.handleDetailModalClose}
+        document={controller.selectedDocument}
       />
 
       {/* Document Summary Modal */}
       <DocumentSummaryModal
-        visible={isSummaryModalVisible}
-        onClose={handleSummaryModalClose}
-        document={selectedDocumentForSummary}
+        visible={controller.isSummaryModalVisible}
+        onClose={controller.handleSummaryModalClose}
+        document={controller.selectedDocumentForSummary}
       />
 
       {/* Document Full Text Modal */}
       <DocumentFullTextModal
-        visible={isFullTextModalVisible}
-        onClose={handleFullTextModalClose}
-        document={selectedDocumentForFullText}
+        visible={controller.isFullTextModalVisible}
+        onClose={controller.handleFullTextModalClose}
+        document={controller.selectedDocumentForFullText}
       />
     </div>
   )
