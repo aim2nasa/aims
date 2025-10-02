@@ -1,0 +1,427 @@
+/**
+ * DocumentStatusTable Styles
+ * @description iOS/Apple 디자인 시스템 기반 문서 테이블 스타일
+ *
+ * 🍎 Design Principles:
+ * - Clarity: 명확한 테이블 구조
+ * - Deference: 콘텐츠 중심 디자인
+ * - Depth: 서브틀한 그림자와 구분선
+ */
+
+/* === 컨테이너 === */
+.document-status-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  width: 100%;
+}
+
+/* === 테이블 래퍼 === */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-layout-content-light);
+  box-shadow: var(--shadow-sm);
+}
+
+/* === 테이블 === */
+.document-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-footnote);
+}
+
+/* === 테이블 헤더 === */
+.document-status-table thead {
+  background-color: var(--color-layout-secondary-light);
+  border-bottom: 1px solid var(--color-layout-accent-light);
+}
+
+.document-status-table thead th {
+  padding: var(--spacing-3) var(--spacing-4);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ios-text-secondary-light);
+  font-size: var(--font-size-caption-1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 컬럼 너비 */
+.col-filename {
+  width: 40%;
+  min-width: 200px;
+}
+
+.col-status {
+  width: 15%;
+  min-width: 100px;
+}
+
+.col-progress {
+  width: 20%;
+  min-width: 150px;
+}
+
+.col-upload-date {
+  width: 25%;
+  min-width: 180px;
+}
+
+/* === 테이블 바디 === */
+.document-status-table tbody tr {
+  border-bottom: 1px solid var(--color-layout-accent-light);
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+/* 🍎 Progressive Disclosure: 호버 상태 */
+.table-row-clickable {
+  cursor: pointer;
+}
+
+.table-row-clickable:hover {
+  background-color: var(--color-layout-secondary-light);
+}
+
+.document-status-table tbody td {
+  padding: var(--spacing-3) var(--spacing-4);
+  color: var(--color-ios-text-primary-light);
+}
+
+/* === 파일명 셀 === */
+.filename-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.filename-icon {
+  font-size: var(--font-size-body);
+  flex-shrink: 0;
+}
+
+.filename-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-ios-text-primary-light);
+}
+
+/* === 상태 뱃지 === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+}
+
+.status-icon {
+  font-size: var(--font-size-footnote);
+}
+
+.status-text {
+  line-height: 1;
+}
+
+/* 상태별 색상 */
+.status-completed {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+}
+
+.status-processing {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary-500);
+}
+
+.status-processing .status-icon {
+  animation: rotate-processing 2s linear infinite;
+}
+
+.status-pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+}
+
+.status-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+/* === 진행률 셀 === */
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.progress-bar-wrapper {
+  flex: 1;
+  height: 6px;
+  background-color: var(--color-layout-accent-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-ios-standard) var(--easing-ease-out);
+}
+
+.progress-bar-fill.status-completed {
+  background-color: var(--color-success);
+}
+
+.progress-bar-fill.status-processing {
+  background-color: var(--color-primary-500);
+}
+
+.progress-bar-fill.status-pending {
+  background-color: var(--color-warning);
+}
+
+.progress-bar-fill.status-error {
+  background-color: var(--color-error);
+}
+
+.progress-text {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* === 날짜 셀 === */
+.date-text {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 로딩/빈 상태 === */
+.table-loading,
+.table-empty {
+  padding: var(--spacing-12) var(--spacing-6);
+  text-align: center;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+.table-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-layout-accent-light);
+  border-top-color: var(--color-primary-500);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+/* === 페이지네이션 === */
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-layout-secondary-light);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+}
+
+.pagination-range {
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination-page-size {
+  padding: var(--spacing-1) var(--spacing-2);
+  background-color: var(--color-layout-content-light);
+  border: 1px solid var(--color-layout-accent-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  transition: border-color var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.pagination-page-size:hover {
+  border-color: var(--color-primary-500);
+}
+
+.pagination-page-size:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.pagination-button {
+  padding: var(--spacing-1) var(--spacing-2);
+  background-color: var(--color-layout-content-light);
+  border: 1px solid var(--color-layout-accent-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-ios-quick) var(--easing-ease-out),
+    border-color var(--duration-ios-quick) var(--easing-ease-out);
+  user-select: none;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: var(--color-layout-secondary-light);
+  border-color: var(--color-primary-500);
+}
+
+.pagination-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-current {
+  padding: 0 var(--spacing-2);
+  font-size: var(--font-size-caption-1);
+  color: var(--color-ios-text-secondary-light);
+  font-variant-numeric: tabular-nums;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* === 애니메이션 === */
+@keyframes rotate-processing {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === Dark Theme === */
+html[data-theme="dark"] .table-wrapper {
+  background-color: var(--color-layout-content-dark);
+}
+
+html[data-theme="dark"] .document-status-table thead {
+  background-color: var(--color-layout-secondary-dark);
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
+html[data-theme="dark"] .document-status-table thead th {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+html[data-theme="dark"] .document-status-table tbody tr {
+  border-bottom-color: var(--color-layout-accent-dark);
+}
+
+html[data-theme="dark"] .table-row-clickable:hover {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+html[data-theme="dark"] .document-status-table tbody td {
+  color: var(--color-ios-text-primary-dark);
+}
+
+html[data-theme="dark"] .filename-text {
+  color: var(--color-ios-text-primary-dark);
+}
+
+html[data-theme="dark"] .progress-bar-wrapper {
+  background-color: var(--color-layout-accent-dark);
+}
+
+html[data-theme="dark"] .progress-text,
+html[data-theme="dark"] .date-text {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+html[data-theme="dark"] .table-loading,
+html[data-theme="dark"] .table-empty {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--color-layout-accent-dark);
+  border-top-color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .table-pagination {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+html[data-theme="dark"] .pagination-info {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+html[data-theme="dark"] .pagination-page-size {
+  background-color: var(--color-layout-content-dark);
+  border-color: var(--color-layout-accent-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+html[data-theme="dark"] .pagination-button {
+  background-color: var(--color-layout-content-dark);
+  border-color: var(--color-layout-accent-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+html[data-theme="dark"] .pagination-current {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 반응형 === */
+@media (max-width: 768px) {
+  .document-status-table {
+    font-size: var(--font-size-caption-2);
+  }
+
+  .document-status-table thead th,
+  .document-status-table tbody td {
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+
+  .table-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination-controls {
+    justify-content: center;
+  }
+}

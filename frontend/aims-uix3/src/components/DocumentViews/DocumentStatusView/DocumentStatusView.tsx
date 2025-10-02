@@ -11,6 +11,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
 import DocumentStatusStats from './components/DocumentStatusStats'
+import DocumentStatusTable from './components/DocumentStatusTable'
 import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
@@ -51,8 +52,20 @@ const DocumentStatusViewContent: React.FC = () => {
         </div>
       )}
 
-      {/* 문서 목록 (Phase 3에서 구현) */}
-      {!state.isLoading && state.filteredDocuments.length === 0 && (
+      {/* 문서 테이블 */}
+      {!state.error && state.filteredDocuments.length > 0 && (
+        <DocumentStatusTable
+          documents={state.filteredDocuments}
+          isLoading={state.isLoading}
+          onDocumentClick={(document) => {
+            // Phase 4에서 Document Detail Modal 구현 예정
+            console.log('Document clicked:', document)
+          }}
+        />
+      )}
+
+      {/* 빈 상태 */}
+      {!state.isLoading && !state.error && state.filteredDocuments.length === 0 && (
         <div className="document-status-empty">
           <p>문서가 없습니다.</p>
         </div>
