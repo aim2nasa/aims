@@ -1,0 +1,149 @@
+/**
+ * DocumentStatusList Component
+ * @version 3.0.0 - 🍎 DocumentLibrary 리스트 구조 완벽 복제
+ *
+ * 공간 효율적인 리스트 레이아웃
+ */
+
+import React from 'react'
+import { DocumentStatusService } from '../../../../services/documentStatusService'
+import type { Document } from '../../../../types/documentStatus'
+import './DocumentStatusList.css'
+
+interface DocumentStatusListProps {
+  documents: Document[]
+  isLoading: boolean
+  isEmpty: boolean
+  error: string | null
+  onDocumentClick?: (document: Document) => void
+  onSummaryClick?: (document: Document) => void
+  onFullTextClick?: (document: Document) => void
+}
+
+export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
+  documents,
+  isLoading,
+  isEmpty,
+  error,
+  onDocumentClick,
+  onSummaryClick,
+  onFullTextClick
+}) => {
+  // 로딩 상태
+  if (isLoading && isEmpty) {
+    return (
+      <div className="document-status-list">
+        <div className="list-loading">
+          <div className="loading-spinner" aria-label="로딩 중" />
+          <span>문서를 불러오는 중...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="document-status-list">
+        <div className="list-error">
+          <span className="error-icon">⚠️</span>
+          <span>{error}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // 빈 상태
+  if (isEmpty) {
+    return (
+      <div className="document-status-list">
+        <div className="list-empty">
+          <span className="empty-icon">📄</span>
+          <p className="empty-message">문서가 없습니다</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 리스트 렌더링
+  return (
+    <div className="document-status-list">
+      {documents.map((document) => {
+        const status = DocumentStatusService.extractStatus(document)
+        const progress = DocumentStatusService.extractProgress(document)
+        const statusLabel = DocumentStatusService.getStatusLabel(status)
+        const statusIcon = DocumentStatusService.getStatusIcon(status)
+
+        return (
+          <div
+            key={document._id}
+            className="status-item"
+            onClick={() => onDocumentClick?.(document)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onDocumentClick?.(document)
+              }
+            }}
+          >
+            {/* 아이콘 + 상태 */}
+            <div className={"status-icon status-" + status}>
+              {statusIcon}
+            </div>
+
+            {/* 파일명 */}
+            <div className="status-filename">
+              {DocumentStatusService.extractFilename(document)}
+            </div>
+
+            {/* 진행률 */}
+            <div className="status-progress">
+              {status === 'processing' && progress ? (
+                <span className="progress-text">{progress}%</span>
+              ) : (
+                <span className="status-label">{statusLabel}</span>
+              )}
+            </div>
+
+            {/* 업로드 날짜 */}
+            <div className="status-date">
+              {DocumentStatusService.formatUploadDate(
+                DocumentStatusService.extractUploadedDate(document)
+              )}
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="status-actions">
+              <button
+                className="action-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onSummaryClick?.(document)
+                }}
+                aria-label="요약 보기"
+                title="요약 보기"
+              >
+                📋
+              </button>
+              <button
+                className="action-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onFullTextClick?.(document)
+                }}
+                aria-label="전체 텍스트 보기"
+                title="전체 텍스트 보기"
+              >
+                📄
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export default DocumentStatusList

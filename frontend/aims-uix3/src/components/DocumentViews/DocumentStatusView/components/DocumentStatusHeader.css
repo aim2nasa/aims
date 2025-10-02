@@ -1,0 +1,163 @@
+/**
+ * 🍎 DocumentStatusHeader - 극도로 미니멀한 헤더
+ * 한 줄 레이아웃, 공간 효율 극대화
+ */
+
+.document-status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+}
+
+html[data-theme="dark"] .document-status-header {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+/* === LEFT: 필터 + 카운트 === */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-count {
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-tertiary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="dark"] .result-count {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* === SPACER === */
+.header-spacer {
+  flex: 1;
+}
+
+/* === RIGHT: 폴링 + 새로고침 === */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.polling-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.polling-toggle:hover {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .polling-toggle:hover {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.polling-dot {
+  font-size: 8px;
+  line-height: 1;
+}
+
+.dot-active {
+  color: var(--color-primary-500);
+  animation: polling-pulse 2s ease-in-out infinite;
+}
+
+.dot-inactive {
+  color: var(--color-ios-text-quaternary-light);
+  opacity: 0.4;
+}
+
+html[data-theme="dark"] .dot-inactive {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+@keyframes polling-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.refresh-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.refresh-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.refresh-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.3s ease-out;
+}
+
+.icon-spinning {
+  animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .document-status-header {
+    padding: 6px 10px;
+  }
+
+  .result-count {
+    font-size: 11px;
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .polling-toggle,
+  .refresh-button,
+  .refresh-icon {
+    transition: none;
+    animation: none;
+  }
+
+  .dot-active,
+  .icon-spinning {
+    animation: none;
+  }
+}

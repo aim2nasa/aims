@@ -1,0 +1,319 @@
+/**
+ * 🍎 DocumentStatusList - DocumentLibrary 리스트 완벽 복제
+ * 극도로 아름답고 효율적인 리스트
+ */
+
+.document-status-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+/* === 스크롤바 === */
+.document-status-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.document-status-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.document-status-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .document-status-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+/* === 로딩 상태 === */
+.list-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 200px;
+  color: var(--color-ios-text-quaternary-light);
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .list-loading {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-ios-spinner-track-light);
+  border-top-color: var(--color-primary-500);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--color-ios-spinner-track-dark);
+  border-top-color: var(--color-primary-400);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === 에러 상태 === */
+.list-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100px;
+  color: var(--color-ios-text-secondary-light);
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .list-error {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.error-icon {
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+/* === 빈 상태 === */
+.list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.2;
+}
+
+.empty-message {
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-quaternary-light);
+  margin: 0;
+}
+
+html[data-theme="dark"] .empty-message {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === 🍎 STATUS ITEM: DocumentLibrary와 동일한 구조 === */
+.status-item {
+  display: grid;
+  grid-template-columns:
+    28px           /* 상태 아이콘 */
+    1fr            /* 파일명 (가변) */
+    80px           /* 진행률/상태 */
+    100px          /* 날짜 */
+    60px;          /* 액션 버튼 */
+  gap: 10px;
+  align-items: center;
+  height: 32px;
+  padding: 6px 10px;
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  animation: itemFadeIn 0.25s ease-out;
+}
+
+@keyframes itemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html[data-theme="dark"] .status-item {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover {
+  background: var(--color-ios-bg-hover-light);
+  transform: translateY(-1px);
+}
+
+html[data-theme="dark"] .status-item:hover {
+  background: var(--color-ios-bg-hover-dark);
+}
+
+/* === 상태 아이콘 === */
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.status-icon.status-completed {
+  color: var(--color-success);
+}
+
+.status-icon.status-processing {
+  color: var(--color-primary-500);
+  animation: processing-pulse 2s ease-in-out infinite;
+}
+
+@keyframes processing-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-icon.status-error {
+  color: var(--color-error);
+}
+
+.status-icon.status-pending {
+  color: var(--color-warning);
+}
+
+/* === 파일명 === */
+.status-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .status-filename {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* === 진행률/상태 === */
+.status-progress {
+  text-align: right;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .status-progress {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.progress-text {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--color-primary-500);
+}
+
+.status-label {
+  font-weight: 400;
+}
+
+/* === 날짜 === */
+.status-date {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-quaternary-light);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="dark"] .status-date {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === 액션 버튼 === */
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+.status-item:hover .status-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.action-btn:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .action-btn:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .status-item {
+    grid-template-columns:
+      24px
+      1fr
+      70px
+      80px
+      50px;
+    gap: 8px;
+    padding: 5px 8px;
+  }
+
+  .status-filename {
+    font-size: 12px;
+  }
+
+  .status-progress,
+  .status-date {
+    font-size: 10px;
+  }
+
+  .status-actions {
+    opacity: 1;
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .status-item,
+  .status-icon,
+  .action-btn {
+    transition: none;
+    animation: none;
+  }
+
+  .status-item:hover {
+    transform: none;
+  }
+
+  .action-btn:hover {
+    transform: none;
+  }
+}

@@ -726,4 +726,70 @@ export class DocumentStatusService {
 
     return '문서의 전체 텍스트를 찾을 수 없습니다.'
   }
+
+  /**
+   * 상태 레이블 반환
+   */
+  static getStatusLabel(status: DocumentStatus): string {
+    switch (status) {
+      case 'completed':
+        return '완료'
+      case 'processing':
+        return '처리중'
+      case 'error':
+        return '오류'
+      case 'pending':
+        return '대기'
+      default:
+        return '알 수 없음'
+    }
+  }
+
+  /**
+   * 상태 아이콘 반환
+   */
+  static getStatusIcon(status: DocumentStatus): string {
+    switch (status) {
+      case 'completed':
+        return '✓'
+      case 'processing':
+        return '⟳'
+      case 'error':
+        return '✗'
+      case 'pending':
+        return '○'
+      default:
+        return '?'
+    }
+  }
+
+  /**
+   * 업로드 날짜 포맷
+   */
+  static formatUploadDate(dateString: string | null): string {
+    if (!dateString) return '-'
+
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return '-'
+
+      const now = new Date()
+      const diffMs = now.getTime() - date.getTime()
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMs / 3600000)
+      const diffDays = Math.floor(diffMs / 86400000)
+
+      if (diffMins < 1) return '방금 전'
+      if (diffMins < 60) return `${diffMins}분 전`
+      if (diffHours < 24) return `${diffHours}시간 전`
+      if (diffDays < 7) return `${diffDays}일 전`
+
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    } catch (e) {
+      return '-'
+    }
+  }
 }
