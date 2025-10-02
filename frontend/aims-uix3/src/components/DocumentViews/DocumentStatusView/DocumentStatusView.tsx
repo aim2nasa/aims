@@ -16,6 +16,7 @@ import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvide
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import DocumentStatusHeader from './components/DocumentStatusHeader'
 import DocumentStatusList from './components/DocumentStatusList'
+import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
 import { Dropdown, Tooltip } from '../../../shared/ui'
@@ -66,6 +67,7 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
         onDocumentClick={onDocumentClick}
+        onDetailClick={controller.handleDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
       />
@@ -123,6 +125,11 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
       )}
 
       {/* 모달들 */}
+      <DocumentDetailModal
+        visible={controller.isDetailModalVisible}
+        onClose={controller.handleDetailModalClose}
+        document={controller.selectedDocument}
+      />
       <DocumentSummaryModal
         visible={controller.isSummaryModalVisible}
         onClose={controller.handleSummaryModalClose}

@@ -19,6 +19,7 @@ interface DocumentStatusListProps {
   isEmpty: boolean
   error: string | null
   onDocumentClick?: (documentId: string) => void
+  onDetailClick?: (document: Document) => void
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
 }
@@ -29,6 +30,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   isEmpty,
   error,
   onDocumentClick,
+  onDetailClick,
   onSummaryClick,
   onFullTextClick
 }) => {
@@ -129,6 +131,18 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
             {/* 액션 버튼 */}
             <div className="status-actions">
+              <Tooltip content="상세 보기">
+                <button
+                  className="action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDetailClick?.(document)
+                  }}
+                  aria-label="상세 보기"
+                >
+                  👁️
+                </button>
+              </Tooltip>
               <Tooltip content="요약 보기">
                 <button
                   className="action-btn"
