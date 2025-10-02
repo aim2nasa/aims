@@ -121,7 +121,7 @@ html[data-theme="dark"] .empty-message {
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     28px           /* 상태 아이콘 */
     minmax(60px, 80px)  /* 진행률/상태 (축소 가능) */
-    minmax(80px, 100px) /* 날짜 (축소 가능) */
+    minmax(130px, 150px) /* 날짜 (2줄 방지 위해 확대) */
     minmax(60px, 72px); /* 액션 버튼 (축소 가능) */
   gap: 10px;
   align-items: center;

@@ -765,6 +765,7 @@ export class DocumentStatusService {
 
   /**
    * 업로드 날짜 포맷
+   * "YYYY. MM. DD. HH:MM:SS" 형식으로 표시
    */
   static formatUploadDate(dateString: string | null): string {
     if (!dateString) return '-'
@@ -773,21 +774,14 @@ export class DocumentStatusService {
       const date = new Date(dateString)
       if (isNaN(date.getTime())) return '-'
 
-      const now = new Date()
-      const diffMs = now.getTime() - date.getTime()
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMs / 3600000)
-      const diffDays = Math.floor(diffMs / 86400000)
-
-      if (diffMins < 1) return '방금 전'
-      if (diffMins < 60) return `${diffMins}분 전`
-      if (diffHours < 24) return `${diffHours}시간 전`
-      if (diffDays < 7) return `${diffDays}일 전`
-
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+
+      return `${year}. ${month}. ${day}. ${hours}:${minutes}:${seconds}`
     } catch (e) {
       return '-'
     }
