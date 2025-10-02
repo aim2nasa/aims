@@ -42,6 +42,28 @@
   --color-error: #ef4444;
   --color-info: #3b82f6;
 
+  /* === OPACITY VALUES === */
+  --opacity-overlay: 0.5;
+  --opacity-shadow-xs: 0.02;
+  --opacity-shadow-sm: 0.05;
+  --opacity-shadow-md: 0.1;
+  --opacity-shadow-lg: 0.15;
+  --opacity-shadow-xl: 0.2;
+  --opacity-shadow-2xl: 0.3;
+  --opacity-shadow-dark-sm: 0.03;
+  --opacity-shadow-dark-md: 0.3;
+  --opacity-shadow-dark-lg: 0.4;
+  --opacity-shadow-dark-xl: 0.5;
+  --opacity-dark-overlay: 0.08;
+  --opacity-light-overlay: 0.1;
+  --opacity-border: 0.12;
+  --opacity-border-dark: 0.4;
+
+  /* === OVERLAY COLORS === */
+  --color-overlay-backdrop: rgba(0, 0, 0, var(--opacity-overlay));
+  --color-overlay-dark: rgba(0, 0, 0, var(--opacity-dark-overlay));
+  --color-overlay-light: rgba(255, 255, 255, var(--opacity-light-overlay));
+
   /* Error Color Scale - iOS 표준 색상 팔레트 */
   --color-error-600: #dc2626;  /* iOS systemRed 표준 */
   --color-error-700: #b91c1c;  /* iOS systemRed Dark */
@@ -194,6 +216,38 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* Modal/Card Shadows */
+  --shadow-modal-light:
+    0 0 0 1px rgba(0, 0, 0, var(--opacity-shadow-xs)),
+    0 4px 6px rgba(0, 0, 0, var(--opacity-shadow-sm)),
+    0 10px 20px rgba(0, 0, 0, var(--opacity-shadow-md)),
+    0 20px 40px rgba(0, 0, 0, var(--opacity-shadow-lg));
+
+  --shadow-modal-dark:
+    0 0 0 1px rgba(255, 255, 255, var(--opacity-shadow-dark-sm)),
+    0 4px 6px rgba(0, 0, 0, var(--opacity-shadow-dark-md)),
+    0 10px 20px rgba(0, 0, 0, var(--opacity-shadow-dark-lg)),
+    0 20px 40px rgba(0, 0, 0, var(--opacity-shadow-dark-xl));
+
+  --shadow-card-light:
+    0 0 0 1px rgba(0, 0, 0, var(--opacity-shadow-xs)),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+
+  --shadow-card-dark:
+    0 0 0 1px rgba(255, 255, 255, var(--opacity-shadow-xs)),
+    0 2px 6px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+
+  --shadow-button-hover:
+    0 4px 12px rgba(0, 123, 255, var(--opacity-shadow-2xl)),
+    0 6px 20px rgba(0, 123, 255, var(--opacity-shadow-xl));
+
+  --shadow-inset-light: inset 0 1px 3px rgba(0, 0, 0, var(--opacity-border));
+  --shadow-inset-dark: inset 0 1px 3px rgba(0, 0, 0, var(--opacity-border-dark));
+  --shadow-progress: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-xl));
+  --shadow-badge: 0 2px 6px rgba(0, 0, 0, var(--opacity-dark-overlay));
 
   /* === TRANSITIONS === */
 
