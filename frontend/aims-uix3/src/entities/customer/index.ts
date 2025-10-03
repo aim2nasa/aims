@@ -12,7 +12,7 @@ export {
   CustomerSearchQuerySchema,
   CustomerSearchResponseSchema,
   CustomerUtils,
-  CustomerTagUtils,
+  CustomerTypeUtils,
 } from './model';
 
 export type {

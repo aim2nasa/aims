@@ -1,0 +1,191 @@
+/**
+ * AIMS UIX-3 Customer Registration View Styles
+ * @since 2025-10-03
+ * @version 1.0.0
+ *
+ * iOS Settings 스타일의 고객 등록 페이지
+ * 애플 디자인 철학 적용
+ */
+
+/* ===== Container ===== */
+.customer-registration {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+/* ===== Header ===== */
+.customer-registration__header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.customer-registration__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.customer-registration__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ===== Form ===== */
+.customer-registration__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* ===== Form Section ===== */
+.form-section {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+
+  /* iOS 스타일 카드 그림자 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.form-section:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Section Title */
+.form-section__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Section Content */
+.form-section__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* ===== Radio Group ===== */
+.radio-group {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xs);
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.radio-option:hover {
+  color: var(--color-primary-500);
+}
+
+.radio-option input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+
+  /* iOS 스타일 라디오 버튼 */
+  accent-color: var(--color-primary-500);
+}
+
+.radio-option span {
+  user-select: none;
+}
+
+/* ===== Form Error ===== */
+.form-error {
+  padding: var(--spacing-md);
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+
+  margin-top: var(--spacing-md);
+}
+
+/* ===== Actions ===== */
+.customer-registration__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ===== Dark Theme ===== */
+html[data-theme="dark"] .form-section {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .form-error {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .customer-registration {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .customer-registration__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .form-section {
+    padding: var(--spacing-md);
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .customer-registration__actions {
+    flex-direction: column-reverse;
+  }
+
+  .customer-registration__actions button {
+    width: 100%;
+  }
+}
+
+/* ===== Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+  .form-section,
+  .radio-option {
+    transition: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .form-section {
+    border-width: 2px;
+  }
+
+  .form-section__title {
+    border-bottom-width: 2px;
+  }
+}

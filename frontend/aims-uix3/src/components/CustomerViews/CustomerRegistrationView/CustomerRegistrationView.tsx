@@ -1,19 +1,21 @@
 /**
  * CustomerRegistrationView Component
- * @since 1.0.0
+ * @since 2.0.0
+ * @updated 2025-10-03
  *
  * 고객 등록 View 컴포넌트
- * BaseDocumentView를 확장하여 구현
+ * iOS Settings 스타일의 폼 기반 구현
  */
 
-import React from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import React from 'react';
+import CenterPaneView from '../../CenterPaneView/CenterPaneView';
+import { CustomerRegistrationView as RegistrationForm } from '@/features/customer/views/CustomerRegistrationView/CustomerRegistrationView';
 
 interface CustomerRegistrationViewProps {
   /** View 표시 여부 */
-  visible: boolean
+  visible: boolean;
   /** View 닫기 핸들러 */
-  onClose: () => void
+  onClose: () => void;
 }
 
 /**
@@ -32,7 +34,7 @@ interface CustomerRegistrationViewProps {
  */
 export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> = ({
   visible,
-  onClose
+  onClose,
 }) => {
   return (
     <CenterPaneView
@@ -44,8 +46,10 @@ export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> =
       marginLeft={3}
       marginRight={3}
       className="customer-registration-view"
-    />
-  )
-}
+    >
+      <RegistrationForm />
+    </CenterPaneView>
+  );
+};
 
-export default CustomerRegistrationView
+export default CustomerRegistrationView;

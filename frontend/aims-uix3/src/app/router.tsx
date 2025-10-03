@@ -16,6 +16,7 @@ import { queryClient } from './queryClient';
 // 페이지 컴포넌트 지연 로딩
 const HomePage = React.lazy(() => import('@/pages/home'));
 const CustomersPage = React.lazy(() => import('@/pages/customers'));
+const CustomerRegistrationPage = React.lazy(() => import('@/pages/customers/register'));
 
 /**
  * 페이지 로딩 스켈레톤
@@ -178,6 +179,10 @@ const router = createBrowserRouter([
       {
         path: 'customers',
         element: <CustomersPage />,
+      },
+      {
+        path: 'customers/register',
+        element: <CustomerRegistrationPage />,
       },
       {
         path: '*',
