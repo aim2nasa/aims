@@ -83,6 +83,22 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     clearError,
   } = useDocumentsController()
 
+  // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
+  const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
+
+  /**
+   * 페이지 변경 핸들러 (클릭 피드백 포함)
+   */
+  const handlePageChangeWithFeedback = (page: number, direction: 'prev' | 'next') => {
+    setClickedButton(direction)
+    handlePageChange(page)
+
+    // 600ms 후 클릭 상태 복원
+    setTimeout(() => {
+      setClickedButton(null)
+    }, 600)
+  }
+
   // 현재 정렬 상태
   const currentSortBy = searchParams.sortBy || 'uploadDate'
   const currentSortOrder = searchParams.sortOrder || 'desc'
@@ -295,11 +311,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               <div className="pagination-controls">
                 <button
                   className="pagination-button pagination-button--prev"
-                  onClick={() => handlePageChange(currentPage - 1)}
+                  onClick={() => handlePageChangeWithFeedback(currentPage - 1, 'prev')}
                   disabled={currentPage === 1}
                   aria-label="이전 페이지"
                 >
-                  <span className="pagination-arrow">‹</span>
+                  <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
+                    ‹
+                  </span>
                 </button>
 
                 <div className="pagination-info">
@@ -310,11 +328,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
                 <button
                   className="pagination-button pagination-button--next"
-                  onClick={() => handlePageChange(currentPage + 1)}
+                  onClick={() => handlePageChangeWithFeedback(currentPage + 1, 'next')}
                   disabled={currentPage === totalPages}
                   aria-label="다음 페이지"
                 >
-                  <span className="pagination-arrow">›</span>
+                  <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
+                    ›
+                  </span>
                 </button>
               </div>
             )}

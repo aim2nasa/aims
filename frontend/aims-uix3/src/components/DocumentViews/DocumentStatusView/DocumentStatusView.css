@@ -60,17 +60,36 @@ html[data-theme="dark"] .document-pagination {
   border: none;
   border-radius: 6px;
   background-color: transparent;
+  color: var(--color-ios-text-primary-light);
   cursor: pointer;
   transition: background-color 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
+html[data-theme="dark"] .pagination-button {
+  color: var(--color-ios-text-primary-dark);
+}
+
 .pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-light);
+  /* Remove hover background to keep icon background invisible */
+  background-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) .pagination-arrow {
+  /* 🍎 Progressive Disclosure: 호버 시 화살표 색상 진하게 + 스케일 */
+  color: var(--color-primary-700);
+  transform: scale(1.15);
 }
 
 html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-hover-dark);
+  /* Ensure no background in dark theme as well */
+  background-color: transparent;
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
+  /* 다크 테마에서는 더 밝게 + 스케일 */
+  color: var(--color-primary-300);
+  transform: scale(1.15);
 }
 
 .pagination-button:active:not(:disabled) {
@@ -92,8 +111,10 @@ html[data-theme="dark"] .pagination-button:active:not(:disabled) {
   font-size: 24px;
   font-weight: 300;
   line-height: 1;
-  color: var(--color-ios-text-primary-light);
+  color: inherit;
   user-select: none;
+  display: inline-block;
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
 }
 
 html[data-theme="dark"] .pagination-arrow {
@@ -106,6 +127,24 @@ html[data-theme="dark"] .pagination-arrow {
 
 html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
   color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 PAGINATION ARROW CLICKED STATE - Apple Subtle Animation */
+.pagination-arrow--clicked {
+  color: var(--color-primary-700);
+}
+
+html[data-theme="dark"] .pagination-arrow--clicked {
+  color: var(--color-primary-300);
+}
+
+/* 🍎 Direction-specific animations - iOS style */
+.pagination-button--prev .pagination-arrow--clicked {
+  transform: translateX(-2px) scale(1.05);
+}
+
+.pagination-button--next .pagination-arrow--clicked {
+  transform: translateX(2px) scale(1.05);
 }
 
 .pagination-info {

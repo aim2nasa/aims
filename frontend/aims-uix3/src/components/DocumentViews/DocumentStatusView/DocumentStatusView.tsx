@@ -46,6 +46,22 @@ const ITEMS_PER_PAGE_OPTIONS = [
 const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: string) => void }> = ({ onDocumentClick }) => {
   const controller = useDocumentStatusController()
 
+  // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
+  const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
+
+  /**
+   * 페이지 변경 핸들러 (클릭 피드백 포함)
+   */
+  const handlePageChangeWithFeedback = (page: number, direction: 'prev' | 'next') => {
+    setClickedButton(direction)
+    controller.handlePageChange(page)
+
+    // 600ms 후 클릭 상태 복원
+    setTimeout(() => {
+      setClickedButton(null)
+    }, 600)
+  }
+
   return (
     <div className="document-status-view-content">
       {/* 🍎 헤더: 컨트롤 + 필터 (한 줄) */}
@@ -93,11 +109,13 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
               <Tooltip content="이전 페이지">
                 <button
                   className="pagination-button pagination-button--prev"
-                  onClick={() => controller.handlePageChange(controller.currentPage - 1)}
+                  onClick={() => handlePageChangeWithFeedback(controller.currentPage - 1, 'prev')}
                   disabled={controller.currentPage === 1}
                   aria-label="이전 페이지"
                 >
-                  <span className="pagination-arrow">‹</span>
+                  <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
+                    ‹
+                  </span>
                 </button>
               </Tooltip>
 
@@ -110,11 +128,13 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
               <Tooltip content="다음 페이지">
                 <button
                   className="pagination-button pagination-button--next"
-                  onClick={() => controller.handlePageChange(controller.currentPage + 1)}
+                  onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
                   disabled={controller.currentPage === controller.totalPages}
                   aria-label="다음 페이지"
                 >
-                  <span className="pagination-arrow">›</span>
+                  <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
+                    ›
+                  </span>
                 </button>
               </Tooltip>
             </div>
