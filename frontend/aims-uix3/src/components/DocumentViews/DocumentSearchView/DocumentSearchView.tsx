@@ -14,7 +14,7 @@ import { SearchService } from '@/services/searchService'
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, type DropdownOption } from '@/shared/ui'
+import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
 import FullTextModal from './FullTextModal'
 import './DocumentSearchView.css'
 
@@ -289,14 +289,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       <div className="row-trailing">
                         {/* Full Text 보기 버튼 */}
                         {(item.meta?.full_text || item.ocr?.full_text) && (
-                          <button
-                            className="fulltext-button"
-                            onClick={(e) => handleShowFullText(item, e)}
-                            aria-label="전체 텍스트 보기"
-                            title="전체 텍스트 보기"
-                          >
-                            📄
-                          </button>
+                          <Tooltip content="전체 텍스트 보기">
+                            <button
+                              className="fulltext-button"
+                              onClick={(e) => handleShowFullText(item, e)}
+                              aria-label="전체 텍스트 보기"
+                            >
+                              📄
+                            </button>
+                          </Tooltip>
                         )}
                         {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (
