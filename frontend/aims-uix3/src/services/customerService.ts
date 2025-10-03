@@ -112,15 +112,14 @@ export class CustomerService {
   }
 
   /**
-   * 고객 삭제 (소프트 삭제)
+   * 고객 삭제
    */
   static async deleteCustomer(id: string): Promise<void> {
     if (!id.trim()) {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    // 실제로는 isActive를 false로 변경
-    await CustomerService.updateCustomer(id, { isActive: false });
+    await api.delete(ENDPOINTS.CUSTOMER(id));
   }
 
   /**

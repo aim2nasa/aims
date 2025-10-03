@@ -218,3 +218,49 @@ html[data-theme='dark'] .customer-detail-view__content::-webkit-scrollbar-thumb 
 html[data-theme='dark'] .customer-detail-view__content::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-gray-500);
 }
+
+/* 액션 버튼 그룹 - 수정/삭제 */
+.customer-detail-view__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 삭제 버튼 - 🍎 iOS 아이콘 버튼 스타일 (빨간색) */
+.customer-detail-view__delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  color: var(--color-red-500);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  flex-shrink: 0;
+}
+
+.customer-detail-view__delete-button:hover {
+  background-color: var(--color-red-50);
+  color: var(--color-red-600);
+  border-color: var(--color-red-200);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .customer-detail-view__delete-button {
+  color: var(--color-red-400);
+  border-color: var(--color-gray-600);
+}
+
+html[data-theme="dark"] .customer-detail-view__delete-button:hover {
+  background-color: var(--color-red-900);
+  color: var(--color-red-300);
+  border-color: var(--color-red-700);
+}
+
+.customer-detail-view__delete-button:active {
+  transform: scale(0.95);
+}
