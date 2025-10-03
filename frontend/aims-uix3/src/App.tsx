@@ -24,6 +24,7 @@ const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
+const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 import DownloadHelper from './utils/downloadHelper'
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
@@ -75,6 +76,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // RightPane 문서 프리뷰 상태
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null)
+
+  // RightPane 고객 상세 상태
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null)
+  const [rightPaneContentType, setRightPaneContentType] = useState<'document' | 'customer' | null>(null)
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
@@ -325,6 +330,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         console.log('[App] fileUrl:', document.fileUrl)
 
         setSelectedDocument(document)
+        setRightPaneContentType('document')
 
         // RightPane이 숨겨져 있으면 표시
         if (!rightPaneVisible) {
@@ -333,6 +339,19 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
     } catch (error) {
       console.error('[App] 문서 로드 오류:', error)
+    }
+  }, [rightPaneVisible])
+
+  // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
+  const handleCustomerClick = useCallback(async (customerId: string, customerData?: any) => {
+    console.log('[App] 고객 클릭:', customerId, customerData)
+
+    setSelectedCustomer(customerData)
+    setRightPaneContentType('customer')
+
+    // RightPane이 숨겨져 있으면 표시
+    if (!rightPaneVisible) {
+      setRightPaneVisible(true)
     }
   }, [rightPaneVisible])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
@@ -641,6 +660,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomerAllView
               visible={activeDocumentView === 'customers-all'}
               onClose={closeDocumentView}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 
@@ -778,14 +798,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           className="layout-rightpane-content"
           style={{
             flex: 1,
-            padding: selectedDocument ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
+            padding: (selectedDocument || selectedCustomer) ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
             overflow: 'hidden',
             color: 'var(--color-text-primary)',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
-          {rightPaneVisible && !selectedDocument && (
+          {rightPaneVisible && !rightPaneContentType && (
             <>
               <h3 className="section-heading" style={{
                 color: 'var(--color-text-primary)',
@@ -793,7 +813,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               }}>RightPane</h3>
             </>
           )}
-          {rightPaneVisible && selectedDocument && (
+
+          {/* 고객 상세 정보 표시 */}
+          {rightPaneVisible && rightPaneContentType === 'customer' && selectedCustomer && (
+            <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
+              <CustomerDetailView
+                customer={selectedCustomer}
+                onClose={() => {
+                  setSelectedCustomer(null)
+                  setRightPaneContentType(null)
+                  setRightPaneVisible(false)
+                }}
+                gapLeft={gapValues.gapLeft}
+                gapRight={gapValues.gapRight}
+                gapTop={gapValues.gapTop}
+                gapBottom={gapValues.gapBottom}
+              />
+            </Suspense>
+          )}
+
+          {/* 문서 프리뷰 표시 */}
+          {rightPaneVisible && rightPaneContentType === 'document' && selectedDocument && (
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
               <BaseViewer
                 visible={true}
@@ -802,6 +842,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                        '파일'}
                 onClose={() => {
                   setSelectedDocument(null)
+                  setRightPaneContentType(null)
                   setRightPaneVisible(false)
                 }}
               >

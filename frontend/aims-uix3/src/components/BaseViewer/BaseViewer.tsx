@@ -20,6 +20,14 @@ interface BaseViewerProps {
   onClose: () => void
   /** 자식 컴포넌트 (실제 뷰어) */
   children: React.ReactNode
+  /** RightPane과의 좌측 간격 (px) */
+  gapLeft?: number
+  /** RightPane과의 우측 간격 (px) */
+  gapRight?: number
+  /** RightPane과의 상단 간격 (px) */
+  gapTop?: number
+  /** RightPane과의 하단 간격 (px) */
+  gapBottom?: number
 }
 
 /**
@@ -49,7 +57,11 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
   visible,
   title,
   onClose,
-  children
+  children,
+  gapLeft = 2,
+  gapRight = 2,
+  gapTop = 2,
+  gapBottom = 2
 }) => {
   if (!visible) return null
 
@@ -59,6 +71,12 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
       role="dialog"
       aria-label={title || '문서 뷰어'}
       aria-modal="true"
+      style={{
+        top: `${gapTop}px`,
+        left: `${gapLeft}px`,
+        right: `${gapRight}px`,
+        bottom: `${gapBottom}px`
+      }}
     >
       {/* 🍎 헤더 영역 - iOS 스타일 */}
       <div className="base-viewer__header">

@@ -9,10 +9,10 @@
 /* 메인 컨테이너 - RightPane 위 뷰어 창 */
 .base-viewer {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
   background-color: var(--color-layout-content-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);

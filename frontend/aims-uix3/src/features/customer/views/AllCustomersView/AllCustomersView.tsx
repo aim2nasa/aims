@@ -11,9 +11,15 @@ import React from 'react';
 import { Button, Input } from '@/shared/ui';
 import { useCustomersController } from '../../controllers/useCustomersController';
 import { CustomerCard } from './components/CustomerCard';
+import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
-export const AllCustomersView: React.FC = () => {
+interface AllCustomersViewProps {
+  /** 고객 클릭 핸들러 */
+  onCustomerClick?: (customerId: string, customer: Customer) => void;
+}
+
+export const AllCustomersView: React.FC<AllCustomersViewProps> = ({ onCustomerClick }) => {
   const {
     customers,
     pagination,
@@ -83,8 +89,9 @@ export const AllCustomersView: React.FC = () => {
                   key={customer._id}
                   customer={customer}
                   onClick={(customer) => {
-                    console.log('Customer clicked:', customer);
-                    // TODO: 상세 페이지로 이동 또는 모달 열기
+                    if (onCustomerClick) {
+                      onCustomerClick(customer._id, customer);
+                    }
                   }}
                 />
               ))}

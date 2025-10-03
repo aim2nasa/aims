@@ -10,12 +10,15 @@
 import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { AllCustomersView } from '@/features/customer/views/AllCustomersView/AllCustomersView';
+import type { Customer } from '@/entities/customer/model';
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** 고객 클릭 핸들러 */
+  onCustomerClick?: (customerId: string, customer: Customer) => void;
 }
 
 /**
@@ -35,6 +38,7 @@ interface CustomerAllViewProps {
 export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   visible,
   onClose,
+  onCustomerClick,
 }) => {
   return (
     <CenterPaneView
@@ -47,7 +51,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
       marginRight={4}
       className="customer-all-view"
     >
-      <AllCustomersView />
+      <AllCustomersView onCustomerClick={onCustomerClick} />
     </CenterPaneView>
   );
 };
