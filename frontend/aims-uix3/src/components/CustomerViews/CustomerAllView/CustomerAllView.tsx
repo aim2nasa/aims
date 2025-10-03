@@ -1,19 +1,21 @@
 /**
  * CustomerAllView Component
- * @since 1.0.0
+ * @since 2.0.0
+ * @updated 2025-10-03
  *
  * 고객 전체보기 View 컴포넌트
- * BaseDocumentView를 확장하여 구현
+ * iOS 스타일의 그리드 레이아웃 구현
  */
 
-import React from 'react'
-import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import React from 'react';
+import CenterPaneView from '../../CenterPaneView/CenterPaneView';
+import { AllCustomersView } from '@/features/customer/views/AllCustomersView/AllCustomersView';
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */
-  visible: boolean
+  visible: boolean;
   /** View 닫기 핸들러 */
-  onClose: () => void
+  onClose: () => void;
 }
 
 /**
@@ -32,7 +34,7 @@ interface CustomerAllViewProps {
  */
 export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   visible,
-  onClose
+  onClose,
 }) => {
   return (
     <CenterPaneView
@@ -44,8 +46,10 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
       marginLeft={4}
       marginRight={4}
       className="customer-all-view"
-    />
-  )
-}
+    >
+      <AllCustomersView />
+    </CenterPaneView>
+  );
+};
 
-export default CustomerAllView
+export default CustomerAllView;

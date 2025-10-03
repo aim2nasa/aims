@@ -158,7 +158,7 @@ export const useCustomerRegistrationController = ({
       const apiData = transformToApiFormat(formData);
 
       // API 호출
-      const response = await fetch('/api/customers', {
+      const response = await fetch('http://tars.giize.com:3010/api/customers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ export const useCustomerRegistrationController = ({
       }
 
       const result = await response.json();
-      const customerId = result.customer?._id || result._id;
+      const customerId = result.data?.customer_id;
 
       // 성공 콜백
       if (onSuccess) {

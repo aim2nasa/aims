@@ -38,9 +38,19 @@
 
   /* Essential Semantic Colors (미니멀 세트) */
   --color-success: #22c55e;
+  --color-success-light: #86efac;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
+
+  /* Status Background Colors (for badges/alerts) */
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-neutral-bg: rgba(156, 163, 175, 0.1);
+
+  /* Status Text Colors */
+  --color-success-text: #16a34a;
+  --color-neutral-text: #6b7280;
 
   /* === OPACITY VALUES === */
   --opacity-overlay: 0.5;
