@@ -1,0 +1,178 @@
+/**
+ * AIMS UIX-3 Input Component Styles
+ * @since 2025-10-03
+ * @version 1.0.0
+ *
+ * iOS Settings 스타일의 입력 필드
+ * Progressive Disclosure 패턴 적용
+ */
+
+/* ===== Input Wrapper ===== */
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.input-wrapper--full-width {
+  width: 100%;
+}
+
+/* ===== Input Container ===== */
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Input Field ===== */
+.input {
+  width: 100%;
+  height: 44px; /* iOS 터치 타겟 최소 크기 */
+  padding: var(--spacing-sm) var(--spacing-md);
+
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-base);
+  line-height: 1.5;
+
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  transition: all var(--duration-fast) var(--easing-ease-out);
+
+  /* iOS 스타일 그림자 제거 */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Padding adjustments with icons */
+.input--with-left-icon {
+  padding-left: calc(var(--spacing-lg) + 24px);
+}
+
+.input--with-right-icon {
+  padding-right: calc(var(--spacing-lg) + 24px);
+}
+
+/* ===== Input States ===== */
+
+/* Focus State - Progressive Disclosure */
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  background-color: var(--color-bg-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+html[data-theme="dark"] .input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Hover State - Subtle Presence */
+.input:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-border-hover);
+}
+
+/* Disabled State */
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Error State */
+.input-wrapper--error .input {
+  border-color: var(--color-error);
+}
+
+.input-wrapper--error .input:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* ===== Input Icons ===== */
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 20px;
+  height: 20px;
+
+  color: var(--color-text-tertiary);
+
+  pointer-events: none;
+
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.input-icon--left {
+  left: var(--spacing-md);
+}
+
+.input-icon--right {
+  right: var(--spacing-md);
+}
+
+/* Icon color change on focus */
+.input:focus ~ .input-icon {
+  color: var(--color-primary-500);
+}
+
+/* ===== Error Message ===== */
+.input-error-message {
+  display: block;
+
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+
+  color: var(--color-error);
+
+  margin-top: var(--spacing-xs);
+  padding-left: var(--spacing-xs);
+}
+
+/* ===== Placeholder ===== */
+.input::placeholder {
+  color: var(--color-text-placeholder);
+  opacity: 1; /* Firefox fix */
+}
+
+/* ===== Autofill 스타일 오버라이드 ===== */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-secondary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ===== Accessibility ===== */
+
+/* 포커스 가시성 향상 */
+.input:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .input {
+    border-width: 2px;
+  }
+
+  .input:focus {
+    outline: 3px solid var(--color-primary-500);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .input {
+    font-size: 16px; /* iOS zoom 방지 */
+  }
+}

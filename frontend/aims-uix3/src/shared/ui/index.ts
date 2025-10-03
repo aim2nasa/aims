@@ -19,3 +19,9 @@ export type { DropdownProps, DropdownOption } from './Dropdown';
 
 export { Tooltip } from './Tooltip';
 export type { TooltipProps } from './Tooltip';
+
+export { Input } from './Input';
+export type { InputProps, InputType } from './Input';
+
+export { FormField } from './FormField';
+export type { FormFieldProps } from './FormField';
