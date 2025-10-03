@@ -19,7 +19,7 @@ import DocumentStatusList from './components/DocumentStatusList'
 import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
-import { Dropdown, Tooltip } from '../../../shared/ui'
+import { Dropdown } from '../../../shared/ui'
 import './DocumentStatusView.css'
 
 interface DocumentStatusViewProps {
@@ -106,18 +106,16 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
           {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
           {controller.totalPages > 1 && (
             <div className="pagination-controls">
-              <Tooltip content="이전 페이지">
-                <button
-                  className="pagination-button pagination-button--prev"
-                  onClick={() => handlePageChangeWithFeedback(controller.currentPage - 1, 'prev')}
-                  disabled={controller.currentPage === 1}
-                  aria-label="이전 페이지"
-                >
-                  <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
-                    ‹
-                  </span>
-                </button>
-              </Tooltip>
+              <button
+                className="pagination-button pagination-button--prev"
+                onClick={() => handlePageChangeWithFeedback(controller.currentPage - 1, 'prev')}
+                disabled={controller.currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
+                  ‹
+                </span>
+              </button>
 
               <div className="pagination-info">
                 <span className="pagination-current">{controller.currentPage}</span>
@@ -125,18 +123,16 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
                 <span className="pagination-total">{controller.totalPages}</span>
               </div>
 
-              <Tooltip content="다음 페이지">
-                <button
-                  className="pagination-button pagination-button--next"
-                  onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
-                  disabled={controller.currentPage === controller.totalPages}
-                  aria-label="다음 페이지"
-                >
-                  <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
-                    ›
-                  </span>
-                </button>
-              </Tooltip>
+              <button
+                className="pagination-button pagination-button--next"
+                onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
+                disabled={controller.currentPage === controller.totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
+                  ›
+                </span>
+              </button>
             </div>
           )}
 
