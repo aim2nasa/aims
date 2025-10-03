@@ -127,9 +127,21 @@ html[data-theme="dark"] .dot-inactive {
   background-color: transparent;
 }
 
+.refresh-button:hover:not(:disabled) .refresh-icon {
+  /* 🍎 Progressive Disclosure: 호버 시 아이콘 색상 진하게 + 스케일 */
+  color: var(--color-primary-700);
+  transform: scale(1.15);
+}
+
 html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
   /* Ensure no background in dark theme as well */
   background-color: transparent;
+}
+
+html[data-theme="dark"] .refresh-button:hover:not(:disabled) .refresh-icon {
+  /* 다크 테마에서는 더 밝게 + 스케일 */
+  color: var(--color-primary-300);
+  transform: scale(1.15);
 }
 
 .refresh-button:disabled {
@@ -141,11 +153,22 @@ html[data-theme="dark"] .refresh-button:hover:not(:disabled) {
   font-size: 16px;
   line-height: 1;
   display: inline-block;
-  transition: transform 0.3s ease-out;
+  color: inherit;
+  transition: transform 0.3s ease-out, color 0.15s ease-out;
 }
 
 .icon-spinning {
   animation: refresh-spin 1s linear infinite;
+}
+
+.icon-clicked {
+  /* 🍎 Progressive Disclosure: 클릭 피드백 - 체크마크 표시 */
+  color: var(--color-success);
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .icon-clicked {
+  color: var(--color-success);
 }
 
 @keyframes refresh-spin {
