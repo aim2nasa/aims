@@ -14,13 +14,22 @@
   background-color: var(--color-layout-content);
 }
 
+/* 헤더 (탭 + 수정 버튼) */
+.customer-detail-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-layout-secondary);
+}
+
 /* 탭 네비게이션 */
 .customer-detail-view__tabs {
   display: flex;
   gap: 4px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-layout-secondary);
+  flex: 1;
 }
 
 .customer-detail-view__tab {
@@ -49,6 +58,49 @@
 .customer-detail-view__tab--active:hover {
   background-color: var(--color-primary-600);
   color: white;
+}
+
+/* 수정 버튼 - 🍎 iOS 아이콘 버튼 스타일 */
+.customer-detail-view__edit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  color: var(--color-primary-500);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  flex-shrink: 0;
+}
+
+.customer-detail-view__edit-button:hover {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-600);
+  border-color: var(--color-primary-200);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .customer-detail-view__edit-button {
+  color: var(--color-primary-400);
+  border-color: var(--color-gray-600);
+}
+
+html[data-theme="dark"] .customer-detail-view__edit-button:hover {
+  background-color: var(--color-primary-900);
+  color: var(--color-primary-300);
+  border-color: var(--color-primary-700);
+}
+
+.customer-detail-view__edit-button:active {
+  transform: scale(0.95);
+}
+
+.customer-detail-view__edit-button svg {
+  display: block;
 }
 
 /* 콘텐츠 영역 */

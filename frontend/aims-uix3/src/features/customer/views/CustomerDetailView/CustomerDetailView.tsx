@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
+import CustomerEditModal from '../CustomerEditModal';
 import type { Customer } from '@/entities/customer/model';
 import './CustomerDetailView.css';
 
@@ -50,8 +51,30 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   gapBottom = 2,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('info');
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [customerData, setCustomerData] = useState<Customer>(customer);
 
-  if (!customer) return null;
+  // 고객 데이터 업데이트 시 동기화
+  useEffect(() => {
+    setCustomerData(customer);
+  }, [customer]);
+
+  /**
+   * 수정 버튼 클릭 핸들러
+   */
+  const handleEditClick = useCallback(() => {
+    setIsEditModalVisible(true);
+  }, []);
+
+  /**
+   * 저장 성공 핸들러
+   */
+  const handleSaveSuccess = useCallback(() => {
+    // TODO: 고객 데이터 새로고침 (부모 컴포넌트에서 처리)
+    console.log('[CustomerDetailView] 고객 정보 수정 완료');
+  }, []);
+
+  if (!customerData) return null;
 
   return (
     <BaseViewer
@@ -64,25 +87,48 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       gapBottom={gapBottom}
     >
       <div className="customer-detail-view">
-        {/* 탭 네비게이션 */}
-        <div className="customer-detail-view__tabs">
+        {/* 탭 네비게이션 및 수정 버튼 */}
+        <div className="customer-detail-view__header">
+          <div className="customer-detail-view__tabs">
+            <button
+              className={`customer-detail-view__tab ${activeTab === 'info' ? 'customer-detail-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('info')}
+            >
+              기본 정보
+            </button>
+            <button
+              className={`customer-detail-view__tab ${activeTab === 'contact' ? 'customer-detail-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('contact')}
+            >
+              연락처
+            </button>
+            <button
+              className={`customer-detail-view__tab ${activeTab === 'insurance' ? 'customer-detail-view__tab--active' : ''}`}
+              onClick={() => setActiveTab('insurance')}
+            >
+              보험 정보
+            </button>
+          </div>
           <button
-            className={`customer-detail-view__tab ${activeTab === 'info' ? 'customer-detail-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('info')}
+            className="customer-detail-view__edit-button"
+            onClick={handleEditClick}
+            aria-label="고객 정보 수정"
+            title="고객 정보 수정"
           >
-            기본 정보
-          </button>
-          <button
-            className={`customer-detail-view__tab ${activeTab === 'contact' ? 'customer-detail-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('contact')}
-          >
-            연락처
-          </button>
-          <button
-            className={`customer-detail-view__tab ${activeTab === 'insurance' ? 'customer-detail-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('insurance')}
-          >
-            보험 정보
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
           </button>
         </div>
 
@@ -277,6 +323,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* 고객 정보 수정 모달 */}
+      <CustomerEditModal
+        visible={isEditModalVisible}
+        customer={customerData}
+        onClose={() => setIsEditModalVisible(false)}
+        onSuccess={handleSaveSuccess}
+      />
     </BaseViewer>
   );
 };
