@@ -449,8 +449,8 @@ html[data-theme="dark"] .detail-info-card:hover {
 
 /* ⚠️ 핵심: 독립 스크롤 컨테이너 */
 .detail-raw-scroll-container {
-  height: 380px;
-  max-height: 380px;
+  height: 220px;
+  max-height: 220px;
   overflow-y: auto;
   overflow-x: auto;
   padding: 0 24px 30px 24px;
@@ -513,7 +513,6 @@ html[data-theme="dark"] .detail-code-block {
   width: 100%;
   margin: 0;
   box-sizing: border-box;
-  max-height: 200px;
 }
 
 /* ===== 모달 푸터 ===== */
