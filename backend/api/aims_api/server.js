@@ -914,87 +914,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 404 Not Found 핸들러 (잘못된 엔드포인트에 대한 JSON 응답)
-app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
-    error: '요청한 엔드포인트를 찾을 수 없습니다.',
-    requested_url: req.originalUrl,
-    method: req.method,
-    available_endpoints: [
-      'GET /api/health',
-      'GET /api/documents',
-      'GET /api/documents/status',
-      'GET /api/documents/:id/status',
-      'GET /api/customers',
-      'POST /api/customers',
-      'GET /api/customers/:id',
-      'PUT /api/customers/:id',
-      'DELETE /api/customers/:id'
-    ],
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 에러 핸들링 미들웨어
-app.use((error, req, res, next) => {
-  console.error('서버 오류:', error);
-  res.status(500).json({
-    success: false,
-    error: '내부 서버 오류가 발생했습니다.',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 고객 관계 관리 라우트 설정
-MongoClient.connect(MONGO_URI)
-  .then(client => {
-    console.log('MongoDB 연결 성공');
-    db = client.db(DB_NAME);
-    
-    // 고객 관계 라우트 설정
-    setupCustomerRelationshipRoutes(app, db);
-  })
-  .catch(error => console.error('MongoDB 연결 실패:', error));
-
-const PORT = process.env.PORT || 3010;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('\n🚀🚀🚀 ================================');
-  console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
-  console.log(`🚀 서버 시간: ${new Date().toISOString()}`);
-  console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
-  console.log('🚀🚀🚀 ================================\n');
-  
-  console.log(`📋 API 엔드포인트:`);
-  console.log(`  GET  /api/documents - 모든 문서 목록 조회 (검색, 정렬, 페이징)`);
-  console.log(`  GET  /api/documents/status - 문서 목록 및 상태 조회`);
-  console.log(`  GET  /api/documents/:id/status - 특정 문서 상세 상태`);
-  console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회`);
-  console.log(`  GET  /api/documents/statistics - 처리 상태 통계`);
-  console.log(`  POST /api/documents/:id/retry - 문서 재처리`);
-  console.log(`  GET  /api/documents/status/live - 실시간 상태 (폴링용)`);
-  console.log(`  DELETE /api/documents/:id - 문서 삭제`);
-  console.log(`  GET  /api/health - 헬스체크`);
-  
-  console.log(`\n👥 Customer Management APIs:`);
-  console.log(`  GET  /api/customers - 고객 목록 조회`);
-  console.log(`  POST /api/customers - 새 고객 등록`);
-  console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
-  console.log(`  PUT  /api/customers/:id - 고객 정보 수정`);
-  console.log(`  DELETE /api/customers/:id - 고객 삭제`);
-  console.log(`  GET /api/admin/orphaned-relationships - Orphaned relationships 조회`);
-  console.log(`  DELETE /api/admin/orphaned-relationships - Orphaned relationships 정리`);
-  console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
-  console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
-  
-  console.log(`\n🏠 Address Search API:`);
-  console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
-  
-  console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
-  console.log(`=============================================\n`);
-});
-
 // ==================== 고객 관리 API ====================
 
 /**
@@ -2034,5 +1953,89 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
   }
 });
 
+// ==================== 404 & Error Handlers (맨 마지막에 등록) ====================
+
+// 404 Not Found 핸들러 (잘못된 엔드포인트에 대한 JSON 응답)
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: '요청한 엔드포인트를 찾을 수 없습니다.',
+    requested_url: req.originalUrl,
+    method: req.method,
+    available_endpoints: [
+      'GET /api/health',
+      'GET /api/documents',
+      'GET /api/documents/status',
+      'GET /api/documents/:id/status',
+      'GET /api/customers',
+      'POST /api/customers',
+      'GET /api/customers/:id',
+      'PUT /api/customers/:id',
+      'DELETE /api/customers/:id'
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 에러 핸들링 미들웨어
+app.use((error, req, res, next) => {
+  console.error('서버 오류:', error);
+  res.status(500).json({
+    success: false,
+    error: '내부 서버 오류가 발생했습니다.',
+    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ==================== MongoDB 연결 & 서버 시작 ====================
+
+// 고객 관계 관리 라우트 설정
+MongoClient.connect(MONGO_URI)
+  .then(client => {
+    console.log('MongoDB 연결 성공');
+    db = client.db(DB_NAME);
+
+    // 고객 관계 라우트 설정
+    setupCustomerRelationshipRoutes(app, db);
+  })
+  .catch(error => console.error('MongoDB 연결 실패:', error));
+
+const PORT = process.env.PORT || 3010;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n🚀🚀🚀 ================================');
+  console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
+  console.log(`🚀 서버 시간: ${new Date().toISOString()}`);
+  console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
+  console.log('🚀🚀🚀 ================================\n');
+
+  console.log(`📋 API 엔드포인트:`);
+  console.log(`  GET  /api/documents - 모든 문서 목록 조회 (검색, 정렬, 페이징)`);
+  console.log(`  GET  /api/documents/status - 문서 목록 및 상태 조회`);
+  console.log(`  GET  /api/documents/:id/status - 특정 문서 상세 상태`);
+  console.log(`  GET  /webhook/get-status/:document_id - 간단한 문서 상태 조회`);
+  console.log(`  GET  /api/documents/statistics - 처리 상태 통계`);
+  console.log(`  POST /api/documents/:id/retry - 문서 재처리`);
+  console.log(`  GET  /api/documents/status/live - 실시간 상태 (폴링용)`);
+  console.log(`  DELETE /api/documents/:id - 문서 삭제`);
+  console.log(`  GET  /api/health - 헬스체크`);
+
+  console.log(`\n👥 Customer Management APIs:`);
+  console.log(`  GET  /api/customers - 고객 목록 조회`);
+  console.log(`  POST /api/customers - 새 고객 등록`);
+  console.log(`  GET  /api/customers/:id - 고객 상세 정보`);
+  console.log(`  PUT  /api/customers/:id - 고객 정보 수정`);
+  console.log(`  DELETE /api/customers/:id - 고객 삭제`);
+  console.log(`  GET /api/admin/orphaned-relationships - Orphaned relationships 조회`);
+  console.log(`  DELETE /api/admin/orphaned-relationships - Orphaned relationships 정리`);
+  console.log(`  POST /api/customers/:id/documents - 고객에 문서 연결`);
+  console.log(`  GET  /api/customers/:id/documents - 고객 관련 문서 목록`);
+
+  console.log(`\n🏠 Address Search API:`);
+  console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
+
+  console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
+  console.log(`=============================================\n`);
+});
 
 module.exports = app;
