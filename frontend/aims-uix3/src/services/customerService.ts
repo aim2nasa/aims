@@ -70,10 +70,14 @@ export class CustomerService {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    const response = await api.get<unknown>(ENDPOINTS.CUSTOMER(id));
+    const response = await api.get<{ success: boolean; data: unknown }>(ENDPOINTS.CUSTOMER(id));
 
-    // 응답 검증
-    return CustomerUtils.validate(response);
+    // 응답에서 data 추출 후 검증
+    if (!response.success || !response.data) {
+      throw new Error('고객 정보를 가져올 수 없습니다');
+    }
+
+    return CustomerUtils.validate(response.data);
   }
 
   /**
@@ -100,13 +104,11 @@ export class CustomerService {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    // 입력 데이터 검증
-    const validatedData = CustomerUtils.validateUpdateData(data);
+    // 업데이트 요청
+    await api.put<unknown>(ENDPOINTS.CUSTOMER(id), data);
 
-    const response = await api.put<unknown>(ENDPOINTS.CUSTOMER(id), validatedData);
-
-    // 응답 검증
-    return CustomerUtils.validate(response);
+    // 업데이트 후 최신 정보 조회
+    return await CustomerService.getCustomer(id);
   }
 
   /**

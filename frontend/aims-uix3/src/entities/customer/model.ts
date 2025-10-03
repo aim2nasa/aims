@@ -25,7 +25,7 @@ export const AddressSchema = z.object({
 export const PersonalInfoSchema = z.object({
   name: z.string().min(1, '이름은 필수입니다'),
   name_en: z.string().optional(),
-  birth_date: z.string().optional(),
+  birth_date: z.string().nullable().optional(),
   gender: z.enum(['M', 'F']).optional(),
   mobile_phone: z.string().optional(),
   home_phone: z.string().optional(),
@@ -82,8 +82,14 @@ export const CreateCustomerSchema = z.object({
 
 /**
  * 고객 업데이트 요청 스키마
+ *
+ * 업데이트는 personal_info와 insurance_info만 가능
+ * _id, meta, contracts, documents, consultations는 업데이트 대상이 아님
  */
-export const UpdateCustomerSchema = CreateCustomerSchema.partial();
+export const UpdateCustomerSchema = z.object({
+  personal_info: PersonalInfoSchema.partial().optional(),
+  insurance_info: InsuranceInfoSchema.partial().optional(),
+});
 
 /**
  * 고객 검색 쿼리 스키마
