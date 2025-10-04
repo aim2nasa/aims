@@ -270,6 +270,70 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
         {/* 고객 목록 */}
         <div className="customer-list">
+          {/* 컬럼 헤더 */}
+          {!isEmpty && !isLoading && (
+            <div className="customer-list-header">
+              <div className="header-icon"></div>
+              <div className="header-name">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                </svg>
+                <span>이름</span>
+              </div>
+              <div className="header-birth">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 4h10v9H3V4zm2-2h1v1H5V2zm4 0h1v1H9V2z" fill="currentColor"/>
+                </svg>
+                <span>생년월일</span>
+              </div>
+              <div className="header-gender" title="성별">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="5" cy="6" r="2" fill="currentColor"/>
+                  <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
+                  <circle cx="11" cy="6" r="2" fill="currentColor"/>
+                  <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div className="header-phone">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
+                </svg>
+                <span>전화</span>
+              </div>
+              <div className="header-email">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M2 3h12v10H2V3zm1 2l5 3 5-3v6H3V5z" fill="currentColor"/>
+                </svg>
+                <span>이메일</span>
+              </div>
+              <div className="header-address">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
+                </svg>
+                <span>주소</span>
+              </div>
+              <div className="header-type" title="고객유형">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div className="header-status" title="상태">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="7" fill="currentColor"/>
+                  <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/>
+                </svg>
+              </div>
+              <div className="header-created">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="7" fill="currentColor"/>
+                  <path d="M8 4v4h3" stroke="white" strokeWidth="1" fill="none"/>
+                </svg>
+                <span>등록일</span>
+              </div>
+            </div>
+          )}
+
           {isLoading && (
             <div className="customer-list-loading">
               <div className="loading-spinner" />
