@@ -19,8 +19,10 @@ interface CustomerDetailViewProps {
   customer: Customer;
   /** 닫기 핸들러 */
   onClose: () => void;
-  /** 고객 정보 새로고침 핸들러 */
+  /** 고객 정보 새로고침 핸들러 (수정 시) */
   onRefresh?: () => void;
+  /** 고객 삭제 후 핸들러 (삭제 시) */
+  onDelete?: () => void;
   /** RightPane과의 좌측 간격 (px) */
   gapLeft?: number;
   /** RightPane과의 우측 간격 (px) */
@@ -49,6 +51,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   customer,
   onClose,
   onRefresh,
+  onDelete,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -78,13 +81,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       try {
         await CustomerService.deleteCustomer(customer._id);
         console.log('[CustomerDetailView] 고객 삭제 성공:', customer._id);
+        onDelete?.(); // 전체보기 새로고침
         onClose(); // 삭제 성공 시 상세보기 닫기
       } catch (error) {
         console.error('[CustomerDetailView] 고객 삭제 실패:', error);
         alert(error instanceof Error ? error.message : '고객 삭제에 실패했습니다');
       }
     }
-  }, [customer, onClose]);
+  }, [customer, onClose, onDelete]);
 
   /**
    * 저장 성공 핸들러

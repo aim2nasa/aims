@@ -364,7 +364,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [rightPaneVisible])
 
-  // 고객 정보 새로고침 핸들러
+  // 고객 정보 새로고침 핸들러 (수정 시 사용)
   const handleCustomerRefresh = useCallback(async () => {
     if (!selectedCustomer?._id) return
 
@@ -384,6 +384,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       console.error('[App] 고객 정보 새로고침 실패:', error)
     }
   }, [selectedCustomer])
+
+  // 고객 삭제 후 전체보기만 새로고침 핸들러 (삭제 시 사용)
+  const handleCustomerDelete = useCallback(() => {
+    // 고객 전체보기만 새로고침 (selectedCustomer는 이미 없음)
+    if (customerAllViewRefreshRef.current) {
+      customerAllViewRefreshRef.current()
+      console.log('[App] 고객 삭제 후 전체보기 새로고침 완료')
+    }
+  }, [])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -858,6 +867,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   setRightPaneVisible(false)
                 }}
                 onRefresh={handleCustomerRefresh}
+                onDelete={handleCustomerDelete}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}
                 gapTop={gapValues.gapTop}
