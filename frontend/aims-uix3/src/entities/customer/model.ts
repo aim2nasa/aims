@@ -53,7 +53,7 @@ export const MetaSchema = z.object({
   created_by: z.string().nullable().optional(),
   last_modified_by: z.string().nullable().optional(),
   status: z.enum(['active', 'inactive']).default('active'),
-  original_name: z.string().optional(),
+  original_name: z.string().nullable().optional(),
 });
 
 /**

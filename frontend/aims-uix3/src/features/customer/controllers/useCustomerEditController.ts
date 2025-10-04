@@ -175,7 +175,28 @@ export const useCustomerEditController = (customer: Customer) => {
 
     setIsSubmitting(true);
     try {
-      await CustomerService.updateCustomer(customer._id, formData);
+      // personal_info에서 null/빈값 제거 및 정리
+      const cleanPersonalInfo: any = {};
+      if (formData.personal_info) {
+        Object.entries(formData.personal_info).forEach(([key, value]) => {
+          // name은 필수이므로 항상 포함
+          if (key === 'name') {
+            cleanPersonalInfo[key] = value;
+          }
+          // 나머지 필드는 유효한 값만 포함
+          else if (value !== null && value !== '' && value !== undefined) {
+            cleanPersonalInfo[key] = value;
+          }
+        });
+      }
+
+      // 백엔드로 전송할 데이터 (personal_info와 insurance_info만)
+      const updatePayload: UpdateCustomerData = {
+        personal_info: cleanPersonalInfo,
+        insurance_info: formData.insurance_info,
+      };
+
+      await CustomerService.updateCustomer(customer._id, updatePayload);
       return true;
     } catch (error) {
       console.error('[useCustomerEditController] 저장 실패:', error);
