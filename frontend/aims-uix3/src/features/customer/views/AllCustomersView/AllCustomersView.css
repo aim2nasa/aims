@@ -359,19 +359,16 @@ html[data-theme="dark"] .customer-item:active {
   height: 24px;
   flex-shrink: 0;
   transition: color 0.2s ease-out;
-  color: var(--color-primary-500);
 }
 
-html[data-theme="dark"] .customer-icon {
-  color: var(--color-primary-400);
+/* 개인 고객 - 파란색 */
+.customer-icon--personal {
+  color: var(--color-icon-blue);
 }
 
-.customer-item:hover .customer-icon {
-  color: var(--color-primary-600);
-}
-
-html[data-theme="dark"] .customer-item:hover .customer-icon {
-  color: var(--color-primary-300);
+/* 법인 고객 - 주황색 */
+.customer-icon--corporate {
+  color: var(--color-icon-orange);
 }
 
 /* === 🍎 CUSTOMER INFO: Compact one-line layout === */
