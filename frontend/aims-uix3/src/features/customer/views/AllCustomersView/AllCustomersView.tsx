@@ -7,7 +7,7 @@
  * iOS/macOS native table view style
  */
 
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useMemo } from 'react';
 import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
 import { Dropdown } from '@/shared/ui';
 import { useCustomersController } from '../../controllers/useCustomersController';
@@ -83,7 +83,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     const handleSortChange = (value: string) => {
       setSortBy(value);
-      // TODO: Implement sort logic when backend supports it
     };
 
     const handlePrevPage = () => {
@@ -177,6 +176,40 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       return `${year}.${month}.${day}`;
     };
 
+    // 정렬된 고객 목록
+    const sortedCustomers = useMemo(() => {
+      const sorted = [...customers];
+
+      switch (sortBy) {
+        case 'latest':
+          // 최신순 (등록일 내림차순)
+          sorted.sort((a, b) => {
+            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+            return dateB - dateA;
+          });
+          break;
+        case 'name':
+          // 이름순 (가나다순)
+          sorted.sort((a, b) => {
+            const nameA = a.personal_info?.name || '';
+            const nameB = b.personal_info?.name || '';
+            return nameA.localeCompare(nameB, 'ko');
+          });
+          break;
+        case 'oldest':
+          // 오래된순 (등록일 오름차순)
+          sorted.sort((a, b) => {
+            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+            return dateA - dateB;
+          });
+          break;
+      }
+
+      return sorted;
+    }, [customers, sortBy]);
+
     return (
       <div className="customer-library-container">
         {/* 검색 바 */}
@@ -255,7 +288,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
           {!isEmpty &&
             !isLoading &&
-            customers.map((customer) => (
+            sortedCustomers.map((customer) => (
               <div
                 key={customer._id}
                 className="customer-item"
