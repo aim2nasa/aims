@@ -22,7 +22,6 @@ export default defineConfig({
     },
     hmr: {
       overlay: true,
-      port: process.env.PORT || 3007,
       host: 'localhost'
     },
     // CSS 강제 새로고침을 위한 설정
