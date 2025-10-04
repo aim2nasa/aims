@@ -1,16 +1,16 @@
 /**
  * AIMS UIX-3 All Customers View
  * @since 2025-10-03
- * @version 1.0.0
+ * @version 2.0.0 - Apple Style (DocumentLibraryView 패턴)
  *
- * 고객 전체보기 페이지
- * iOS 스타일의 그리드 레이아웃
+ * 전체 고객 목록 뷰
+ * iOS/macOS native table view style
  */
 
-import { forwardRef, useImperativeHandle } from 'react';
-import { Button, Input } from '@/shared/ui';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
+import { Dropdown } from '@/shared/ui';
 import { useCustomersController } from '../../controllers/useCustomersController';
-import { CustomerCard } from './components/CustomerCard';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
@@ -23,108 +23,249 @@ export interface AllCustomersViewRef {
   refresh: () => void;
 }
 
+const ITEMS_PER_PAGE_OPTIONS = [
+  { value: '10', label: '10개씩 보기' },
+  { value: '20', label: '20개씩 보기' },
+  { value: '50', label: '50개씩 보기' },
+  { value: '100', label: '100개씩 보기' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'latest', label: '최신순' },
+  { value: 'name', label: '이름순' },
+  { value: 'oldest', label: '오래된순' },
+];
+
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
+    const [itemsPerPage, setItemsPerPage] = useState('20');
+    const [sortBy, setSortBy] = useState('latest');
+    const [searchValue, setSearchValue] = useState('');
+    const [prevArrowClicked, setPrevArrowClicked] = useState(false);
+    const [nextArrowClicked, setNextArrowClicked] = useState(false);
+
     const {
       customers,
       pagination,
       isLoading,
       error,
       isEmpty,
-      hasMore,
+      totalCustomers,
       handleSearchChange,
-      loadMore,
+      goToPage,
       refresh,
-      setError,
-    } = useCustomersController();
+      searchCustomers,
+    } = useCustomersController({
+      initialLimit: parseInt(itemsPerPage),
+      autoLoad: true,
+    });
 
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
       refresh,
     }), [refresh]);
 
+    const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchValue(value);
+      handleSearchChange(value);
+    };
+
+    const handleClearSearch = () => {
+      setSearchValue('');
+      handleSearchChange('');
+    };
+
+    const handleItemsPerPageChange = (value: string) => {
+      setItemsPerPage(value);
+      searchCustomers({ limit: parseInt(value), page: 1 });
+    };
+
+    const handleSortChange = (value: string) => {
+      setSortBy(value);
+      // TODO: Implement sort logic when backend supports it
+    };
+
+    const handlePrevPage = () => {
+      if (pagination.currentPage > 1) {
+        setPrevArrowClicked(true);
+        setTimeout(() => setPrevArrowClicked(false), 150);
+        goToPage(pagination.currentPage - 1);
+      }
+    };
+
+    const handleNextPage = () => {
+      if (pagination.currentPage < pagination.totalPages) {
+        setNextArrowClicked(true);
+        setTimeout(() => setNextArrowClicked(false), 150);
+        goToPage(pagination.currentPage + 1);
+      }
+    };
+
+    const getCustomerIcon = () => {
+      return <SFSymbol name="person.circle.fill" size={SFSymbolSize.BODY} />;
+    };
+
+    const getCustomerEmail = (customer: Customer) => {
+      const email = customer.personal_info?.email;
+      if (!email) return '-';
+      // 이메일이 길면 앞부분만 표시
+      return email.length > 20 ? email.substring(0, 17) + '...' : email;
+    };
+
+    const getCustomerType = (customer: Customer) => {
+      return customer.insurance_info?.customer_type || '-';
+    };
+
+    const getCustomerInfo = (customer: Customer) => {
+      const phoneNumber = customer.personal_info?.mobile_phone || '-';
+      return `${phoneNumber}`;
+    };
+
     return (
-    <div className="all-customers">
-      {/* Header */}
-      <div className="all-customers__header">
-        <div>
-          <h1 className="all-customers__title">고객 전체보기</h1>
-          <p className="all-customers__subtitle">
-            전체 {pagination.totalCount}명의 고객
-          </p>
-        </div>
-        <Button variant="ghost" onClick={refresh}>
-          새로고침
-        </Button>
-      </div>
-
-      {/* Search */}
-      <div className="all-customers__search">
-        <Input
-          type="text"
-          placeholder="고객 이름, 전화번호, 이메일로 검색..."
-          onChange={(e) => handleSearchChange(e.target.value)}
-          fullWidth
-        />
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="all-customers__error" role="alert">
-          <p>{error}</p>
-          <Button variant="ghost" size="sm" onClick={() => setError(null)}>
-            닫기
-          </Button>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="all-customers__content">
-        {isLoading && customers.length === 0 ? (
-          // 초기 로딩
-          <div className="all-customers__loading">
-            <p>고객 목록을 불러오는 중...</p>
+      <div className="customer-library-container">
+        {/* 검색 바 */}
+        <div className="customer-library-bar">
+          <div className="search-input-wrapper">
+            <div className="search-icon">
+              <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} />
+            </div>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="이름, 전화번호, 이메일로 검색..."
+              value={searchValue}
+              onChange={handleSearchInputChange}
+            />
+            {searchValue && (
+              <button
+                className="search-clear-button"
+                onClick={handleClearSearch}
+                aria-label="검색어 지우기"
+              >
+                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
+              </button>
+            )}
           </div>
-        ) : isEmpty ? (
-          // 빈 상태
-          <div className="all-customers__empty">
-            <p>등록된 고객이 없습니다.</p>
+        </div>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="customer-library-error">
+            <div className="error-icon">
+              <SFSymbol name="exclamationmark.triangle.fill" size={SFSymbolSize.BODY} />
+            </div>
+            <span>{error}</span>
+            <button
+              className="error-dismiss-button"
+              onClick={() => refresh()}
+              aria-label="에러 닫기"
+            >
+              <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} />
+            </button>
           </div>
-        ) : (
-          <>
-            {/* 고객 그리드 */}
-            <div className="all-customers__grid">
-              {customers.map((customer) => (
-                <CustomerCard
-                  key={customer._id}
-                  customer={customer}
-                  onClick={(customer) => {
-                    if (onCustomerClick) {
-                      onCustomerClick(customer._id, customer);
-                    }
-                  }}
-                />
-              ))}
+        )}
+
+        {/* 결과 헤더 */}
+        {!isLoading && (
+          <div className="customer-library-result-header">
+            <div className="result-count">총 {totalCustomers}명</div>
+            <div className="sort-selector">
+              <Dropdown
+                value={sortBy}
+                options={SORT_OPTIONS}
+                onChange={handleSortChange}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 고객 목록 */}
+        <div className="customer-list">
+          {isLoading && (
+            <div className="customer-list-loading">
+              <div className="loading-spinner" />
+              <p>고객 목록을 불러오는 중...</p>
+            </div>
+          )}
+
+          {isEmpty && !isLoading && (
+            <div className="customer-list-empty">
+              <div className="empty-icon">
+                <SFSymbol name="person.2.slash" size={SFSymbolSize.LARGE_TITLE} />
+              </div>
+              <p className="empty-message">고객이 없습니다.</p>
+            </div>
+          )}
+
+          {!isEmpty &&
+            !isLoading &&
+            customers.map((customer) => (
+              <div
+                key={customer._id}
+                className="customer-item"
+                onClick={() => {
+                  if (onCustomerClick) {
+                    onCustomerClick(customer._id, customer);
+                  }
+                }}
+              >
+                <div className="customer-icon">{getCustomerIcon()}</div>
+                <div className="customer-info">
+                  <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
+                </div>
+                <span className="customer-size">{getCustomerInfo(customer)}</span>
+                <span className="customer-date">{getCustomerEmail(customer)}</span>
+                <span className="customer-type">{getCustomerType(customer)}</span>
+              </div>
+            ))}
+        </div>
+
+        {/* 페이지네이션 */}
+        {pagination.totalPages > 1 && (
+          <div className="customer-pagination">
+            <div className="pagination-limit">
+              <Dropdown
+                value={itemsPerPage}
+                options={ITEMS_PER_PAGE_OPTIONS}
+                onChange={handleItemsPerPageChange}
+              />
             </div>
 
-            {/* 더보기 버튼 */}
-            {hasMore && (
-              <div className="all-customers__load-more">
-                <Button
-                  variant="secondary"
-                  onClick={loadMore}
-                  loading={isLoading}
-                  disabled={isLoading}
-                  fullWidth
-                >
-                  더 보기 ({pagination.currentPage} / {pagination.totalPages})
-                </Button>
+            <div className="pagination-controls">
+              <button
+                className="pagination-button pagination-button--prev"
+                onClick={handlePrevPage}
+                disabled={pagination.currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                  ‹
+                </span>
+              </button>
+
+              <div className="pagination-info">
+                <span className="pagination-current">{pagination.currentPage}</span>
+                <span className="pagination-separator">/</span>
+                <span className="pagination-total">{pagination.totalPages}</span>
               </div>
-            )}
-          </>
+
+              <button
+                className="pagination-button pagination-button--next"
+                onClick={handleNextPage}
+                disabled={pagination.currentPage === pagination.totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                  ›
+                </span>
+              </button>
+            </div>
+
+            {pagination.totalPages === 1 && <div className="pagination-spacer" />}
+          </div>
         )}
       </div>
-    </div>
     );
   }
 );

@@ -65,7 +65,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
     >
       <AllCustomersView
         ref={allCustomersViewRef}
-        onCustomerClick={onCustomerClick}
+        {...(onCustomerClick && { onCustomerClick })}
       />
     </CenterPaneView>
   );
