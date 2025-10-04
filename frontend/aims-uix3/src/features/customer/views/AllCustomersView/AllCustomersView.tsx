@@ -24,10 +24,10 @@ export interface AllCustomersViewRef {
 }
 
 const ITEMS_PER_PAGE_OPTIONS = [
-  { value: '10', label: '10개씩 보기' },
-  { value: '20', label: '20개씩 보기' },
-  { value: '50', label: '50개씩 보기' },
-  { value: '100', label: '100개씩 보기' },
+  { value: '10', label: '10개씩' },
+  { value: '20', label: '20개씩' },
+  { value: '50', label: '50개씩' },
+  { value: '100', label: '100개씩' },
 ];
 
 const SORT_OPTIONS = [
@@ -38,7 +38,7 @@ const SORT_OPTIONS = [
 
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
-    const [itemsPerPage, setItemsPerPage] = useState('20');
+    const [itemsPerPage, setItemsPerPage] = useState('10');
     const [sortBy, setSortBy] = useState('latest');
     const [searchValue, setSearchValue] = useState('');
     const [prevArrowClicked, setPrevArrowClicked] = useState(false);
@@ -315,47 +315,53 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         </div>
 
         {/* 페이지네이션 */}
-        {pagination.totalPages > 1 && (
+        {!isLoading && !isEmpty && (
           <div className="customer-pagination">
+            {/* 🍎 페이지당 항목 수 선택 */}
             <div className="pagination-limit">
               <Dropdown
                 value={itemsPerPage}
                 options={ITEMS_PER_PAGE_OPTIONS}
                 onChange={handleItemsPerPageChange}
+                aria-label="페이지당 항목 수"
               />
             </div>
 
-            <div className="pagination-controls">
-              <button
-                className="pagination-button pagination-button--prev"
-                onClick={handlePrevPage}
-                disabled={pagination.currentPage === 1}
-                aria-label="이전 페이지"
-              >
-                <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                  ‹
-                </span>
-              </button>
+            {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+            {pagination.totalPages > 1 && (
+              <div className="pagination-controls">
+                <button
+                  className="pagination-button pagination-button--prev"
+                  onClick={handlePrevPage}
+                  disabled={pagination.currentPage === 1}
+                  aria-label="이전 페이지"
+                >
+                  <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                    ‹
+                  </span>
+                </button>
 
-              <div className="pagination-info">
-                <span className="pagination-current">{pagination.currentPage}</span>
-                <span className="pagination-separator">/</span>
-                <span className="pagination-total">{pagination.totalPages}</span>
+                <div className="pagination-info">
+                  <span className="pagination-current">{pagination.currentPage}</span>
+                  <span className="pagination-separator">/</span>
+                  <span className="pagination-total">{pagination.totalPages}</span>
+                </div>
+
+                <button
+                  className="pagination-button pagination-button--next"
+                  onClick={handleNextPage}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  aria-label="다음 페이지"
+                >
+                  <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                    ›
+                  </span>
+                </button>
               </div>
+            )}
 
-              <button
-                className="pagination-button pagination-button--next"
-                onClick={handleNextPage}
-                disabled={pagination.currentPage === pagination.totalPages}
-                aria-label="다음 페이지"
-              >
-                <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
-                  ›
-                </span>
-              </button>
-            </div>
-
-            {pagination.totalPages === 1 && <div className="pagination-spacer" />}
+            {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
+            {pagination.totalPages <= 1 && <div className="pagination-spacer"></div>}
           </div>
         )}
       </div>
