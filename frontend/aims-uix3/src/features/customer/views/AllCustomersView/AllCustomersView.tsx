@@ -126,8 +126,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const getCustomerEmail = (customer: Customer) => {
       const email = customer.personal_info?.email;
       if (!email) return '-';
-      // 이메일이 길면 앞부분만 표시
-      return email.length > 20 ? email.substring(0, 17) + '...' : email;
+      return email.length > 25 ? email.substring(0, 22) + '...' : email;
     };
 
     const getCustomerType = (customer: Customer) => {
@@ -137,6 +136,45 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const getCustomerInfo = (customer: Customer) => {
       const phoneNumber = customer.personal_info?.mobile_phone || '-';
       return `${phoneNumber}`;
+    };
+
+    const getCustomerBirthDate = (customer: Customer) => {
+      const birthDate = customer.personal_info?.birth_date;
+      if (!birthDate) return '-';
+      const date = new Date(birthDate);
+      const year = date.getFullYear().toString().slice(2);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}.${month}.${day}`;
+    };
+
+    const getCustomerGender = (customer: Customer) => {
+      const gender = customer.personal_info?.gender;
+      if (!gender) return '-';
+      return gender === 'M' ? '남' : '여';
+    };
+
+    const getCustomerAddress = (customer: Customer) => {
+      const address = customer.personal_info?.address;
+      if (!address || !address.address1) return '-';
+      const fullAddress = `${address.address1} ${address.address2 || ''}`.trim();
+      return fullAddress.length > 30 ? fullAddress.substring(0, 27) + '...' : fullAddress;
+    };
+
+    const getCustomerStatus = (customer: Customer) => {
+      const status = customer.meta?.status;
+      if (!status) return '-';
+      return status === 'active' ? '활성' : '비활성';
+    };
+
+    const getCustomerCreatedDate = (customer: Customer) => {
+      const createdAt = customer.meta?.created_at;
+      if (!createdAt) return '-';
+      const date = new Date(createdAt);
+      const year = date.getFullYear().toString().slice(2);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}.${month}.${day}`;
     };
 
     return (
@@ -231,9 +269,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 <div className="customer-info">
                   <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
                 </div>
-                <span className="customer-size">{getCustomerInfo(customer)}</span>
-                <span className="customer-date">{getCustomerEmail(customer)}</span>
+                <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
+                <span className="customer-gender">{getCustomerGender(customer)}</span>
+                <span className="customer-phone">{getCustomerInfo(customer)}</span>
+                <span className="customer-email">{getCustomerEmail(customer)}</span>
+                <span className="customer-address">{getCustomerAddress(customer)}</span>
                 <span className="customer-type">{getCustomerType(customer)}</span>
+                <span className="customer-status">{getCustomerStatus(customer)}</span>
+                <span className="customer-created">{getCustomerCreatedDate(customer)}</span>
               </div>
             ))}
         </div>

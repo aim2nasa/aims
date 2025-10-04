@@ -291,11 +291,16 @@ html[data-theme="dark"] .customer-list-empty {
   display: grid;
   grid-template-columns:
     24px           /* 아이콘 고정 */
-    minmax(120px, 2fr)  /* 이름 (최소 120px, 가변) */
-    140px          /* 전화번호 고정 */
-    minmax(150px, 2fr)  /* 이메일 (최소 150px, 가변) */
-    60px;          /* 타입 고정 */
-  gap: 12px;
+    minmax(100px, 1.5fr)  /* 이름 (최소 100px, 가변) */
+    70px           /* 생년월일 고정 */
+    30px           /* 성별 고정 */
+    110px          /* 전화번호 고정 */
+    minmax(140px, 2fr)  /* 이메일 (최소 140px, 가변) */
+    minmax(180px, 3fr)  /* 주소 (최소 180px, 가변) */
+    50px           /* 타입 고정 */
+    50px           /* 상태 고정 */
+    70px;          /* 등록일 고정 */
+  gap: 10px;
   align-items: center;
   height: 32px;
   padding: 6px 12px;
@@ -392,9 +397,37 @@ html[data-theme="dark"] .customer-name {
   color: var(--color-ios-text-primary-dark);
 }
 
-/* 🍎 CUSTOMER SIZE: Fixed width column (phone number) */
-.customer-size {
-  font-size: 12px;
+/* 🍎 CUSTOMER BIRTH: 생년월일 */
+.customer-birth {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-tertiary-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .customer-birth {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+/* 🍎 CUSTOMER GENDER: 성별 */
+.customer-gender {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-quaternary-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .customer-gender {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 CUSTOMER PHONE: 전화번호 */
+.customer-phone {
+  font-size: 11px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
@@ -404,13 +437,13 @@ html[data-theme="dark"] .customer-name {
   text-overflow: ellipsis;
 }
 
-html[data-theme="dark"] .customer-size {
+html[data-theme="dark"] .customer-phone {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 🍎 CUSTOMER DATE: Flexible width column (email) */
-.customer-date {
-  font-size: 12px;
+/* 🍎 CUSTOMER EMAIL: 이메일 */
+.customer-email {
+  font-size: 11px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
@@ -420,11 +453,27 @@ html[data-theme="dark"] .customer-size {
   text-overflow: ellipsis;
 }
 
-html[data-theme="dark"] .customer-date {
+html[data-theme="dark"] .customer-email {
   color: var(--color-ios-text-tertiary-dark);
 }
 
-/* 🍎 CUSTOMER TYPE: Fixed width column */
+/* 🍎 CUSTOMER ADDRESS: 주소 */
+.customer-address {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-quaternary-light);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme="dark"] .customer-address {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 CUSTOMER TYPE: 고객 타입 */
 .customer-type {
   font-size: 11px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -436,6 +485,34 @@ html[data-theme="dark"] .customer-date {
 
 html[data-theme="dark"] .customer-type {
   color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 CUSTOMER STATUS: 상태 */
+.customer-status {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .customer-status {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 🍎 CUSTOMER CREATED: 등록일 */
+.customer-created {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-tertiary-light);
+  text-align: center;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .customer-created {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* === 🍎 RESPONSIVE: iPhone/iPad optimization === */
