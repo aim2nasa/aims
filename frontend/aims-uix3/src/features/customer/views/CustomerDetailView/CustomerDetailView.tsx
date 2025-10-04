@@ -10,6 +10,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
 import CustomerEditModal from '../CustomerEditModal';
+import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
+import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerService } from '@/services/customerService';
 import './CustomerDetailView.css';
@@ -61,6 +63,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
 
+  // 🍎 애플 스타일 확인 모달
+  const confirmController = useAppleConfirmController();
+
   // 고객 데이터 업데이트 시 동기화
   useEffect(() => {
     setCustomerData(customer);
@@ -77,7 +82,18 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
    * 삭제 버튼 클릭 핸들러
    */
   const handleDeleteClick = useCallback(async () => {
-    if (window.confirm(`"${customer.personal_info?.name}" 고객을 삭제하시겠습니까?`)) {
+    // 🍎 애플 스타일 삭제 확인 모달 (취소/삭제 둘 다 표시)
+    const confirmed = await confirmController.actions.openModal({
+      title: '고객 삭제',
+      message: `"${customer.personal_info?.name}" 고객을 삭제하시겠습니까?`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'warning'
+    });
+
+    if (confirmed) {
       try {
         await CustomerService.deleteCustomer(customer._id);
         console.log('[CustomerDetailView] 고객 삭제 성공:', customer._id);
@@ -85,10 +101,19 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onClose(); // 삭제 성공 시 상세보기 닫기
       } catch (error) {
         console.error('[CustomerDetailView] 고객 삭제 실패:', error);
-        alert(error instanceof Error ? error.message : '고객 삭제에 실패했습니다');
+
+        // 🍎 삭제 실패 모달 (확인만 표시)
+        await confirmController.actions.openModal({
+          title: '삭제 실패',
+          message: error instanceof Error ? error.message : '고객 삭제에 실패했습니다.',
+          confirmText: '확인',
+          confirmStyle: 'destructive',
+          showCancel: false,
+          iconType: 'error'
+        });
       }
     }
-  }, [customer, onClose, onDelete]);
+  }, [customer, onClose, onDelete, confirmController]);
 
   /**
    * 저장 성공 핸들러
@@ -379,6 +404,12 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         customer={customerData}
         onClose={() => setIsEditModalVisible(false)}
         onSuccess={handleSaveSuccess}
+      />
+
+      {/* 🍎 애플 스타일 확인 모달 */}
+      <AppleConfirmModal
+        state={confirmController.state}
+        actions={confirmController.actions}
       />
     </BaseViewer>
   );
