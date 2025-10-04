@@ -681,6 +681,11 @@
   --color-theme-switch-bg-dark: #3b82f6;
   --color-theme-switch-handle: #ffffff;
 
+  /* Form Section Icon Colors - iOS System Colors */
+  --color-icon-blue: #007aff;      /* iOS systemBlue */
+  --color-icon-green: #34c759;     /* iOS systemGreen */
+  --color-icon-purple: #af52de;    /* iOS systemPurple */
+
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
 

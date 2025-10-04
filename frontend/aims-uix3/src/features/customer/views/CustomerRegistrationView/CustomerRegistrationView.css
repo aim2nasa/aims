@@ -66,10 +66,27 @@
   color: var(--color-text-secondary);
 }
 
-/* Section Title Icon */
+/* Section Title Icon - 컬러풀한 아이콘 */
 .form-section__title svg {
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 1;
+}
+
+/* 아이콘 색상 - 섹션별 구분 */
+.form-section__title--basic svg {
+  color: var(--color-icon-blue);
+}
+
+.form-section__title--contact svg {
+  color: var(--color-icon-green);
+}
+
+.form-section__title--address svg {
+  color: var(--color-icon-orange);
+}
+
+.form-section__title--insurance svg {
+  color: var(--color-icon-purple);
 }
 
 /* Section Content */

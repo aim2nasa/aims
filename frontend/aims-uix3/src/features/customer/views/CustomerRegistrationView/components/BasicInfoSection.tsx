@@ -29,7 +29,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">
+      <h3 className="form-section__title form-section__title--basic">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <circle cx="8" cy="5" r="2.5"/>
           <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>

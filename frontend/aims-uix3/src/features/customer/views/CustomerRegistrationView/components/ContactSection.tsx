@@ -26,7 +26,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">
+      <h3 className="form-section__title form-section__title--contact">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <path d="M3.5 1A1.5 1.5 0 002 2.5v11A1.5 1.5 0 003.5 15h9a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0012.5 1h-9zM8 4a1 1 0 011 1v1a1 1 0 01-2 0V5a1 1 0 011-1zm-2 7a1 1 0 011-1h2a1 1 0 110 2H7a1 1 0 01-1-1z"/>
         </svg>
