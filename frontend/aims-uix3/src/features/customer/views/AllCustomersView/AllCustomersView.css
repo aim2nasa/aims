@@ -200,14 +200,14 @@ html[data-theme="dark"] .result-count {
   grid-template-columns:
     24px           /* 아이콘 */
     minmax(100px, 1.5fr)  /* 이름 */
-    90px           /* 생년월일 (아이콘 공간 확보) */
-    50px           /* 성별 (아이콘 공간 확보) */
-    120px          /* 전화번호 (아이콘 공간 확보) */
-    minmax(150px, 2fr)  /* 이메일 (아이콘 공간 확보) */
+    110px          /* 생년월일 (텍스트 표시) */
+    60px           /* 성별 (텍스트 표시) */
+    120px          /* 전화번호 */
+    minmax(150px, 2fr)  /* 이메일 */
     minmax(180px, 3fr)  /* 주소 */
-    70px           /* 유형 (아이콘 공간 확보) */
-    70px           /* 상태 (아이콘 공간 확보) */
-    90px;          /* 등록일 (아이콘 공간 확보) */
+    80px           /* 유형 (텍스트 표시) */
+    80px           /* 상태 (텍스트 표시) */
+    100px;         /* 등록일 (텍스트 표시) */
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
@@ -386,14 +386,14 @@ html[data-theme="dark"] .customer-list-empty {
   grid-template-columns:
     24px           /* 아이콘 */
     minmax(100px, 1.5fr)  /* 이름 */
-    90px           /* 생년월일 */
-    50px           /* 성별 */
+    110px          /* 생년월일 (텍스트 표시) */
+    60px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(180px, 3fr)  /* 주소 */
-    70px           /* 유형 */
-    70px           /* 상태 */
-    90px;          /* 등록일 */
+    80px           /* 유형 (텍스트 표시) */
+    80px           /* 상태 (텍스트 표시) */
+    100px;         /* 등록일 (텍스트 표시) */
   gap: 12px;
   align-items: center;
   height: 32px;

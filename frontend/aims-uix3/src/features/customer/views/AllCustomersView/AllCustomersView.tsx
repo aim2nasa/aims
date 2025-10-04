@@ -287,13 +287,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 </svg>
                 <span>생년월일</span>
               </div>
-              <div className="header-gender" title="성별">
+              <div className="header-gender">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="5" cy="6" r="2" fill="currentColor"/>
                   <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                   <circle cx="11" cy="6" r="2" fill="currentColor"/>
                   <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                 </svg>
+                <span>성별</span>
               </div>
               <div className="header-phone">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -313,16 +314,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 </svg>
                 <span>주소</span>
               </div>
-              <div className="header-type" title="고객유형">
+              <div className="header-type">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
                 </svg>
+                <span>유형</span>
               </div>
-              <div className="header-status" title="상태">
+              <div className="header-status">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="8" r="7" fill="currentColor"/>
                   <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/>
                 </svg>
+                <span>상태</span>
               </div>
               <div className="header-created">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
