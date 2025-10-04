@@ -1,14 +1,15 @@
 /**
  * AIMS UIX-3 Customer Registration - Basic Info Section
- * @since 2025-10-03
- * @version 1.0.0
+ * @since 2025-10-04
+ * @version 2.0.0
  *
- * 기본 정보 입력 섹션
- * iOS Settings 스타일 적용
+ * 🍎 애플 iOS Settings 스타일 완벽 구현
+ * - List Item Row 형태의 깔끔한 레이아웃
+ * - Progressive Disclosure 패턴 적용
+ * - 서브틀한 호버 효과
  */
 
 import React from 'react';
-import { FormField } from '@/shared/ui';
 
 interface BasicInfoSectionProps {
   formData: {
@@ -28,45 +29,80 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">기본 정보</h3>
+      <h3 className="form-section__title">기본</h3>
 
       <div className="form-section__content">
         {/* 이름 */}
-        <FormField
-          label="이름"
-          type="text"
-          value={formData.name}
-          onChange={(e) => onChange('name', e.target.value)}
-          error={!!errors['personal_info.name']}
-          errorMessage={errors['personal_info.name']}
-          placeholder="홍길동"
-          required
-        />
+        <div className={`form-row ${errors['personal_info.name'] ? 'form-row--error' : ''}`}>
+          <label className="form-row__label form-row__label--required">
+            이름
+          </label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => onChange('name', e.target.value)}
+              placeholder="홍길동"
+              aria-label="이름"
+              aria-required="true"
+              aria-invalid={!!errors['personal_info.name']}
+            />
+          </div>
+        </div>
+        {errors['personal_info.name'] && (
+          <div className="form-row__error" role="alert">
+            {errors['personal_info.name']}
+          </div>
+        )}
 
         {/* 이름 (영문) */}
-        <FormField
-          label="이름 (영문)"
-          type="text"
-          value={formData.name_en || ''}
-          onChange={(e) => onChange('name_en', e.target.value)}
-          error={!!errors['personal_info.name_en']}
-          errorMessage={errors['personal_info.name_en']}
-          placeholder="Hong Gildong"
-        />
+        <div className={`form-row ${errors['personal_info.name_en'] ? 'form-row--error' : ''}`}>
+          <label className="form-row__label">
+            이름 (영문)
+          </label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value={formData.name_en || ''}
+              onChange={(e) => onChange('name_en', e.target.value)}
+              placeholder="Hong Gildong"
+              aria-label="이름 (영문)"
+              aria-invalid={!!errors['personal_info.name_en']}
+            />
+          </div>
+        </div>
+        {errors['personal_info.name_en'] && (
+          <div className="form-row__error" role="alert">
+            {errors['personal_info.name_en']}
+          </div>
+        )}
 
         {/* 생년월일 */}
-        <FormField
-          label="생년월일"
-          type="date"
-          value={formData.birth_date || ''}
-          onChange={(e) => onChange('birth_date', e.target.value)}
-          error={!!errors['personal_info.birth_date']}
-          errorMessage={errors['personal_info.birth_date']}
-        />
+        <div className={`form-row ${errors['personal_info.birth_date'] ? 'form-row--error' : ''}`}>
+          <label className="form-row__label">
+            생년월일
+          </label>
+          <div className="form-row__input">
+            <input
+              type="date"
+              value={formData.birth_date || ''}
+              onChange={(e) => onChange('birth_date', e.target.value)}
+              aria-label="생년월일"
+              aria-invalid={!!errors['personal_info.birth_date']}
+            />
+          </div>
+        </div>
+        {errors['personal_info.birth_date'] && (
+          <div className="form-row__error" role="alert">
+            {errors['personal_info.birth_date']}
+          </div>
+        )}
 
         {/* 성별 */}
-        <div className="form-field">
-          <label className="form-field__label">성별</label>
+        <div className="form-row">
+          <label className="form-row__label">
+            성별
+          </label>
           <div className="radio-group">
             <label className="radio-option">
               <input
@@ -75,6 +111,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 value="M"
                 checked={formData.gender === 'M'}
                 onChange={(e) => onChange('gender', e.target.value as 'M' | 'F')}
+                aria-label="남성"
               />
               <span>남성</span>
             </label>
@@ -85,6 +122,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
                 value="F"
                 checked={formData.gender === 'F'}
                 onChange={(e) => onChange('gender', e.target.value as 'M' | 'F')}
+                aria-label="여성"
               />
               <span>여성</span>
             </label>

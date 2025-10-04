@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import { FormField } from '@/shared/ui';
 
 interface AddressSectionProps {
   formData: {
@@ -22,46 +21,51 @@ interface AddressSectionProps {
 
 export const AddressSection: React.FC<AddressSectionProps> = ({
   formData,
-  errors,
   onChange,
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">주소 정보</h3>
+      <h3 className="form-section__title">주소</h3>
 
       <div className="form-section__content">
         {/* 우편번호 */}
-        <FormField
-          label="우편번호"
-          type="text"
-          value={formData.postal_code || ''}
-          onChange={(e) => onChange('postal_code', e.target.value)}
-          error={!!errors['personal_info.address.postal_code']}
-          errorMessage={errors['personal_info.address.postal_code']}
-          placeholder="12345"
-        />
+        <div className="form-row">
+          <label className="form-row__label">우편번호</label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value={formData.postal_code || ''}
+              onChange={(e) => onChange('postal_code', e.target.value)}
+              placeholder="12345"
+            />
+          </div>
+        </div>
 
         {/* 주소 1 */}
-        <FormField
-          label="주소"
-          type="text"
-          value={formData.address1 || ''}
-          onChange={(e) => onChange('address1', e.target.value)}
-          error={!!errors['personal_info.address.address1']}
-          errorMessage={errors['personal_info.address.address1']}
-          placeholder="서울특별시 강남구 테헤란로 123"
-        />
+        <div className="form-row">
+          <label className="form-row__label">주소</label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value={formData.address1 || ''}
+              onChange={(e) => onChange('address1', e.target.value)}
+              placeholder="서울특별시 강남구 테헤란로 123"
+            />
+          </div>
+        </div>
 
         {/* 주소 2 (상세주소) */}
-        <FormField
-          label="상세주소"
-          type="text"
-          value={formData.address2 || ''}
-          onChange={(e) => onChange('address2', e.target.value)}
-          error={!!errors['personal_info.address.address2']}
-          errorMessage={errors['personal_info.address.address2']}
-          placeholder="101동 1001호"
-        />
+        <div className="form-row">
+          <label className="form-row__label">상세주소</label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value={formData.address2 || ''}
+              onChange={(e) => onChange('address2', e.target.value)}
+              placeholder="101동 1001호"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

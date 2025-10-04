@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import { Button } from '@/shared/ui';
 import { useCustomerRegistrationController } from '../../controllers/useCustomerRegistrationController';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
@@ -36,71 +35,63 @@ export const CustomerRegistrationView: React.FC = () => {
 
   return (
     <div className="customer-registration">
-      {/* Header */}
-      <div className="customer-registration__header">
-        <h1 className="customer-registration__title">고객 등록</h1>
-        <p className="customer-registration__subtitle">
-          새로운 고객의 정보를 입력하세요
-        </p>
-      </div>
+      <div className="customer-registration__inner">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="customer-registration__form">
+          {/* Basic Info Section */}
+          <BasicInfoSection
+            formData={formData}
+            errors={errors}
+            onChange={handleChange}
+          />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="customer-registration__form">
-        {/* Basic Info Section */}
-        <BasicInfoSection
-          formData={formData}
-          errors={errors}
-          onChange={handleChange}
-        />
+          {/* Contact Section */}
+          <ContactSection
+            formData={formData}
+            errors={errors}
+            onChange={handleChange}
+          />
 
-        {/* Contact Section */}
-        <ContactSection
-          formData={formData}
-          errors={errors}
-          onChange={handleChange}
-        />
+          {/* Address Section */}
+          <AddressSection
+            formData={formData}
+            errors={errors}
+            onChange={handleChange}
+          />
 
-        {/* Address Section */}
-        <AddressSection
-          formData={formData}
-          errors={errors}
-          onChange={handleChange}
-        />
+          {/* Insurance Info Section */}
+          <InsuranceInfoSection
+            formData={formData}
+            errors={errors}
+            onChange={handleChange}
+          />
 
-        {/* Insurance Info Section */}
-        <InsuranceInfoSection
-          formData={formData}
-          errors={errors}
-          onChange={handleChange}
-        />
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="form-error" role="alert">
+              {errors.submit}
+            </div>
+          )}
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="form-error" role="alert">
-            {errors.submit}
+          {/* Actions */}
+          <div className="customer-registration__actions">
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={isSubmitting}
+            >
+              초기화
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              등록하기
+            </button>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="customer-registration__actions">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleReset}
-            disabled={isSubmitting}
-          >
-            초기화
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          >
-            등록하기
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

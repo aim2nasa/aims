@@ -1,82 +1,98 @@
 /**
  * AIMS UIX-3 FormField Component Styles
- * @since 2025-10-03
- * @version 1.0.0
+ * @version 3.1.0 - SUPER COMPACT
  *
- * iOS Settings 스타일의 폼 필드
- * 명확한 정보 계층 구조
+ * 극도로 압축된 레이아웃
  */
 
-/* ===== Form Field Container ===== */
+/* Form Field - 극도 압축 */
 .form-field {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  width: 100%;
+  align-items: center;
+  padding: 8px 0;
+  margin: 0;
+  min-height: 28px;
+  height: auto;
+  border-bottom: 1px solid var(--color-layout-brb-light);
+  background-color: transparent;
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
 }
 
-/* ===== Label ===== */
+.form-field:last-child {
+  border-bottom: none;
+}
+
+[data-theme="dark"] .form-field {
+  border-bottom-color: var(--color-layout-brb-dark);
+}
+
+.form-field:focus-within {
+  border-bottom-color: var(--color-accent-primary);
+}
+
+/* Label - 압축 */
 .form-field__label {
+  flex: 0 0 80px;
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  margin-right: 12px;
+  line-height: var(--line-height-normal);
+  font-family: var(--font-family-system);
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="dark"] .form-field__label {
+  color: var(--color-text-secondary);
+}
+
+/* Required - 제거 */
+.form-field__required {
+  display: none;
+}
+
+/* Content - 입력 영역 */
+.form-field__content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-
-  color: var(--color-text-secondary);
-
-  /* iOS Settings 스타일: 대문자 강조 제거, 자연스러운 대소문자 */
-  text-transform: none;
 }
 
-/* ===== Required Indicator ===== */
-.form-field__required {
-  color: var(--color-error);
-  font-size: var(--font-size-base);
-  line-height: 1;
-  margin-left: 2px;
-}
-
-/* ===== Help Text ===== */
+/* Help Text - 제거 (애플 스타일) */
 .form-field__help-text {
-  display: block;
-
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
-
-  color: var(--color-text-tertiary);
-
-  margin-top: calc(var(--spacing-xs) * -1);
-  margin-bottom: var(--spacing-xs);
+  display: none;
 }
 
-/* ===== Accessibility ===== */
+/* Error State */
+.form-field--error {
+  border-bottom-color: var(--color-error-light);
+}
 
-/* 라벨 포커스 가시성 향상 */
+.form-field--error .form-field__label {
+  color: var(--color-error-light);
+}
+
+/* Accessibility */
 .form-field__label:has(+ input:focus-visible) {
-  color: var(--color-primary-500);
+  color: var(--color-text-primary);
 }
 
-/* 고대비 모드 지원 */
 @media (prefers-contrast: high) {
   .form-field__label {
     font-weight: var(--font-weight-semibold);
   }
-
-  .form-field__required {
-    font-weight: var(--font-weight-bold);
-  }
 }
 
-/* ===== Responsive ===== */
+/* Responsive */
 @media (max-width: 768px) {
   .form-field {
-    gap: var(--spacing-sm);
+    padding: 10px 0;
   }
 
   .form-field__label {
-    font-size: var(--font-size-base);
+    flex: 0 0 80px;
+    margin-right: var(--spacing-3);
   }
 }

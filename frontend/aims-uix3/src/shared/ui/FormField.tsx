@@ -52,12 +52,25 @@ export const FormField: React.FC<FormFieldProps> = ({
   const inputId = id || `form-field-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
-    <div className="form-field">
+    <div className={`form-field${error ? ' form-field--error' : ''}`}>
       {/* Label */}
       <label htmlFor={inputId} className="form-field__label">
         {label}
         {required && <span className="form-field__required" aria-label="필수">*</span>}
       </label>
+
+      {/* Content */}
+      <div className="form-field__content">
+        {/* Input */}
+        <Input
+          id={inputId}
+          error={error}
+          errorMessage={errorMessage}
+          aria-required={required}
+          fullWidth
+          {...inputProps}
+        />
+      </div>
 
       {/* Help Text */}
       {helpText && !error && (
@@ -65,16 +78,6 @@ export const FormField: React.FC<FormFieldProps> = ({
           {helpText}
         </span>
       )}
-
-      {/* Input */}
-      <Input
-        id={inputId}
-        error={error}
-        errorMessage={errorMessage}
-        aria-required={required}
-        fullWidth
-        {...inputProps}
-      />
     </div>
   );
 };
