@@ -85,11 +85,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 및 RightPane 숨김
+  // 고객 관련 View 활성 시 PaginationPane 및 RightPane 숨김 (디폴트 상태)
   useEffect(() => {
     if (activeDocumentView === 'documents-register' ||
         activeDocumentView === 'documents-library' ||
         activeDocumentView === 'documents-search' ||
-        activeDocumentView === 'dsd') {
+        activeDocumentView === 'dsd' ||
+        activeDocumentView === 'customers' ||
+        activeDocumentView === 'customers-register' ||
+        activeDocumentView === 'customers-all' ||
+        activeDocumentView === 'customers-regional' ||
+        activeDocumentView === 'customers-relationship') {
       setPaginationVisible(false)
       setRightPaneVisible(false)
     } else {
