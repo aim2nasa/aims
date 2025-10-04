@@ -57,8 +57,11 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
         {/* 🍎 MODAL HEADER: iOS Alert 스타일 */}
         <div className="apple-confirm-modal__header">
           <div className="apple-confirm-modal__icon">
-            <div className="apple-confirm-modal__warning-icon">
-              ⚠️
+            <div className={`apple-confirm-modal__icon-display apple-confirm-modal__icon-display--${state.iconType || 'warning'}`}>
+              {state.iconType === 'success' && '✅'}
+              {state.iconType === 'error' && '❌'}
+              {state.iconType === 'info' && 'ℹ️'}
+              {(!state.iconType || state.iconType === 'warning') && '⚠️'}
             </div>
           </div>
 
@@ -82,20 +85,22 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
 
         {/* 🍎 MODAL ACTIONS: iOS 버튼 스타일 */}
         <div className="apple-confirm-modal__actions">
-          <button
-            type="button"
-            className="apple-confirm-modal__button apple-confirm-modal__button--cancel"
-            onClick={actions.handleCancel}
-            autoFocus={state.confirmStyle === 'destructive'} // destructive일 때는 취소에 포커스
-          >
-            {state.cancelText}
-          </button>
+          {state.showCancel && (
+            <button
+              type="button"
+              className="apple-confirm-modal__button apple-confirm-modal__button--cancel"
+              onClick={actions.handleCancel}
+              autoFocus={state.confirmStyle === 'destructive'} // destructive일 때는 취소에 포커스
+            >
+              {state.cancelText}
+            </button>
+          )}
 
           <button
             type="button"
             className={`apple-confirm-modal__button apple-confirm-modal__button--confirm apple-confirm-modal__button--${state.confirmStyle}`}
             onClick={actions.handleConfirm}
-            autoFocus={state.confirmStyle === 'primary'} // primary일 때는 확인에 포커스
+            autoFocus={!state.showCancel || state.confirmStyle === 'primary'} // 취소 버튼 없거나 primary일 때 확인에 포커스
           >
             {state.confirmText}
           </button>

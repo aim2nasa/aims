@@ -12,9 +12,9 @@ import { CreateCustomerSchema, type CreateCustomerData } from '@/entities/custom
 
 interface UseCustomerRegistrationControllerProps {
   /** 등록 성공 시 콜백 */
-  onSuccess?: (customerId: string) => void;
+  onSuccess?: (customerId: string) => void | Promise<void>;
   /** 등록 실패 시 콜백 */
-  onError?: (error: Error) => void;
+  onError?: (error: Error) => void | Promise<void>;
 }
 
 interface FormData {
@@ -174,9 +174,9 @@ export const useCustomerRegistrationController = ({
       const result = await response.json();
       const customerId = result.data?.customer_id;
 
-      // 성공 콜백
+      // 성공 콜백 (async 지원)
       if (onSuccess) {
-        onSuccess(customerId);
+        await onSuccess(customerId);
       }
 
       // 폼 초기화
@@ -187,9 +187,9 @@ export const useCustomerRegistrationController = ({
     } catch (error) {
       const err = error as Error;
 
-      // 에러 콜백
+      // 에러 콜백 (async 지원)
       if (onError) {
-        onError(err);
+        await onError(err);
       }
 
       // 일반 에러 메시지 설정

@@ -18,6 +18,8 @@ export interface AppleConfirmState {
   confirmText?: string
   cancelText?: string
   confirmStyle?: 'primary' | 'destructive'
+  showCancel?: boolean
+  iconType?: 'success' | 'error' | 'warning' | 'info'
 }
 
 export interface AppleConfirmActions {
@@ -35,6 +37,8 @@ export interface AppleConfirmParams {
   confirmText?: string
   cancelText?: string
   confirmStyle?: 'primary' | 'destructive'
+  showCancel?: boolean
+  iconType?: 'success' | 'error' | 'warning' | 'info'
 }
 
 /**
@@ -54,7 +58,9 @@ export const useAppleConfirmController = () => {
     title: '확인',
     confirmText: '확인',
     cancelText: '취소',
-    confirmStyle: 'primary'
+    confirmStyle: 'primary',
+    showCancel: true,
+    iconType: 'warning'
   })
 
   // Promise resolver 저장
@@ -129,22 +135,22 @@ export const useAppleConfirmController = () => {
   }, [resolver, closeModal])
 
   /**
-   * ESC 키 처리
+   * ESC 키 처리 (취소 버튼이 있을 때만)
    */
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && state.showCancel) {
       handleCancel()
     }
-  }, [handleCancel])
+  }, [handleCancel, state.showCancel])
 
   /**
-   * 오버레이 클릭 처리
+   * 오버레이 클릭 처리 (취소 버튼이 있을 때만)
    */
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && state.showCancel) {
       handleCancel()
     }
-  }, [handleCancel])
+  }, [handleCancel, state.showCancel])
 
   // === SIDE EFFECTS ===
 

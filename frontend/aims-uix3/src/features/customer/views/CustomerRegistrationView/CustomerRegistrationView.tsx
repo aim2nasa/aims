@@ -7,8 +7,10 @@
  * iOS Settings 스타일의 카드형 레이아웃
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useCustomerRegistrationController } from '../../controllers/useCustomerRegistrationController';
+import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
+import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
 import { AddressSection } from './components/AddressSection';
@@ -16,6 +18,11 @@ import { InsuranceInfoSection } from './components/InsuranceInfoSection';
 import './CustomerRegistrationView.css';
 
 export const CustomerRegistrationView: React.FC = () => {
+  const [resetClicked, setResetClicked] = useState(false);
+
+  // 🍎 애플 스타일 확인 모달
+  const confirmController = useAppleConfirmController();
+
   const {
     formData,
     errors,
@@ -24,75 +31,108 @@ export const CustomerRegistrationView: React.FC = () => {
     handleSubmit,
     handleReset,
   } = useCustomerRegistrationController({
-    onSuccess: (customerId) => {
-      alert(`고객 등록 완료! ID: ${customerId}`);
+    onSuccess: async (customerId) => {
+      // 애플 스타일 성공 모달 표시 (취소 버튼 없이)
+      await confirmController.actions.openModal({
+        title: '등록 완료',
+        message: `고객 등록이 완료되었습니다.\nID: ${customerId}`,
+        confirmText: '확인',
+        confirmStyle: 'primary',
+        showCancel: false,
+        iconType: 'success'
+      });
       // TODO: 고객 상세 페이지로 이동 또는 목록 새로고침
     },
-    onError: (error) => {
-      alert(`고객 등록 실패: ${error.message}`);
+    onError: async (error) => {
+      // 애플 스타일 에러 모달 표시 (취소 버튼 없이)
+      await confirmController.actions.openModal({
+        title: '등록 실패',
+        message: `고객 등록에 실패했습니다.\n${error.message}`,
+        confirmText: '확인',
+        confirmStyle: 'destructive',
+        showCancel: false,
+        iconType: 'error'
+      });
     },
   });
 
+  const handleResetClick = () => {
+    setResetClicked(true);
+    setTimeout(() => setResetClicked(false), 200);
+    handleReset();
+  };
+
   return (
-    <div className="customer-registration">
-      <div className="customer-registration__inner">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="customer-registration__form">
-          {/* Basic Info Section */}
-          <BasicInfoSection
-            formData={formData}
-            errors={errors}
-            onChange={handleChange}
-          />
+    <React.Fragment>
+      <div className="customer-registration">
+        <div className="customer-registration__inner">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="customer-registration__form">
+            {/* Basic Info Section */}
+            <BasicInfoSection
+              formData={formData}
+              errors={errors}
+              onChange={handleChange}
+            />
 
-          {/* Contact Section */}
-          <ContactSection
-            formData={formData}
-            errors={errors}
-            onChange={handleChange}
-          />
+            {/* Contact Section */}
+            <ContactSection
+              formData={formData}
+              errors={errors}
+              onChange={handleChange}
+            />
 
-          {/* Address Section */}
-          <AddressSection
-            formData={formData}
-            errors={errors}
-            onChange={handleChange}
-          />
+            {/* Address Section */}
+            <AddressSection
+              formData={formData}
+              errors={errors}
+              onChange={handleChange}
+            />
 
-          {/* Insurance Info Section */}
-          <InsuranceInfoSection
-            formData={formData}
-            errors={errors}
-            onChange={handleChange}
-          />
+            {/* Insurance Info Section */}
+            <InsuranceInfoSection
+              formData={formData}
+              errors={errors}
+              onChange={handleChange}
+            />
 
-          {/* Submit Error */}
-          {errors.submit && (
-            <div className="form-error" role="alert">
-              {errors.submit}
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="form-error" role="alert">
+                {errors.submit}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="customer-registration__actions">
+              <button
+                type="button"
+                onClick={handleResetClick}
+                disabled={isSubmitting}
+                className={resetClicked ? 'button-clicked' : ''}
+              >
+                <span className="button-icon">{resetClicked ? '🔃' : '🔄'}</span>
+                <span>초기화</span>
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || !formData.name.trim()}
+                aria-busy={isSubmitting}
+              >
+                <span className="button-icon">✅</span>
+                <span>등록하기</span>
+              </button>
             </div>
-          )}
-
-          {/* Actions */}
-          <div className="customer-registration__actions">
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={isSubmitting}
-            >
-              초기화
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
-            >
-              등록하기
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* 🍎 애플 스타일 확인 모달 */}
+      <AppleConfirmModal
+        state={confirmController.state}
+        actions={confirmController.actions}
+      />
+    </React.Fragment>
   );
 };
 

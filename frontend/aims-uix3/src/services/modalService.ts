@@ -12,6 +12,8 @@ export interface ModalServiceParams {
   confirmText?: string
   cancelText?: string
   confirmStyle?: 'primary' | 'destructive'
+  showCancel?: boolean
+  iconType?: 'success' | 'error' | 'warning' | 'info'
 }
 
 /**
@@ -62,7 +64,9 @@ export class ModalService {
       message: this.validateMessage(params.message),
       confirmText: params.confirmText || '확인',
       cancelText: params.cancelText || '취소',
-      confirmStyle: params.confirmStyle || 'primary'
+      confirmStyle: params.confirmStyle || 'primary',
+      showCancel: params.showCancel !== undefined ? params.showCancel : true,
+      iconType: params.iconType || 'warning'
     }
   }
 
