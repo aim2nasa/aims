@@ -25,7 +25,12 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">주소</h3>
+      <h3 className="form-section__title">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1zm0 2.5L12 7v6h-2V8H6v5H4V7l4-3.5z"/>
+        </svg>
+        <span>주소</span>
+      </h3>
 
       <div className="form-section__content">
         {/* 우편번호 */}

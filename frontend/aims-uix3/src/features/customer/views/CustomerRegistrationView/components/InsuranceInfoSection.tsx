@@ -26,7 +26,13 @@ export const InsuranceInfoSection: React.FC<InsuranceInfoSectionProps> = ({
 }) => {
   return (
     <div className="form-section">
-      <h3 className="form-section__title">보험</h3>
+      <h3 className="form-section__title">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1L3 3v3.5c0 3.5 2.5 6.5 5 7.5 2.5-1 5-4 5-7.5V3L8 1zm0 2l3 1.5v3c0 2-1.5 4-3 5-1.5-1-3-3-3-5v-3L8 3z"/>
+          <path d="M6.5 7L7 8l2-2 .5.5L7 9 6 7.5z"/>
+        </svg>
+        <span>보험</span>
+      </h3>
 
       <div className="form-section__content">
         {/* 고객 유형 */}
