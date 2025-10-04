@@ -180,10 +180,12 @@
   text-align: left;
   font-weight: var(--font-weight-regular);
   font-size: var(--font-size-footnote);
+  opacity: 0.4;
 }
 
 [data-theme="dark"] .form-row__input input::placeholder {
   color: var(--color-text-tertiary);
+  opacity: 0.3;
 }
 
 /* Error Message */
