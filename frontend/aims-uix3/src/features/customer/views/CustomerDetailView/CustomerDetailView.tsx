@@ -19,6 +19,8 @@ interface CustomerDetailViewProps {
   customer: Customer;
   /** 닫기 핸들러 */
   onClose: () => void;
+  /** 고객 정보 새로고침 핸들러 */
+  onRefresh?: () => void;
   /** RightPane과의 좌측 간격 (px) */
   gapLeft?: number;
   /** RightPane과의 우측 간격 (px) */
@@ -46,6 +48,7 @@ interface CustomerDetailViewProps {
 export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   customer,
   onClose,
+  onRefresh,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -87,9 +90,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
    * 저장 성공 핸들러
    */
   const handleSaveSuccess = useCallback(() => {
-    // TODO: 고객 데이터 새로고침 (부모 컴포넌트에서 처리)
+    onRefresh?.();
     console.log('[CustomerDetailView] 고객 정보 수정 완료');
-  }, []);
+  }, [onRefresh]);
 
   if (!customerData) return null;
 

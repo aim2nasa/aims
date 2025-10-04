@@ -7,7 +7,7 @@
  * iOS 스타일의 그리드 레이아웃
  */
 
-import React from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { Button, Input } from '@/shared/ui';
 import { useCustomersController } from '../../controllers/useCustomersController';
 import { CustomerCard } from './components/CustomerCard';
@@ -19,21 +19,31 @@ interface AllCustomersViewProps {
   onCustomerClick?: (customerId: string, customer: Customer) => void;
 }
 
-export const AllCustomersView: React.FC<AllCustomersViewProps> = ({ onCustomerClick }) => {
-  const {
-    customers,
-    pagination,
-    isLoading,
-    error,
-    isEmpty,
-    hasMore,
-    handleSearchChange,
-    loadMore,
-    refresh,
-    setError,
-  } = useCustomersController();
+export interface AllCustomersViewRef {
+  refresh: () => void;
+}
 
-  return (
+export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
+  function AllCustomersView({ onCustomerClick }, ref) {
+    const {
+      customers,
+      pagination,
+      isLoading,
+      error,
+      isEmpty,
+      hasMore,
+      handleSearchChange,
+      loadMore,
+      refresh,
+      setError,
+    } = useCustomersController();
+
+    // refresh 함수를 부모에게 노출
+    useImperativeHandle(ref, () => ({
+      refresh,
+    }), [refresh]);
+
+    return (
     <div className="all-customers">
       {/* Header */}
       <div className="all-customers__header">
@@ -115,7 +125,8 @@ export const AllCustomersView: React.FC<AllCustomersViewProps> = ({ onCustomerCl
         )}
       </div>
     </div>
-  );
-};
+    );
+  }
+);
 
 export default AllCustomersView;

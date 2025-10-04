@@ -81,6 +81,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null)
   const [rightPaneContentType, setRightPaneContentType] = useState<'document' | 'customer' | null>(null)
 
+  // 고객 전체보기 새로고침을 위한 ref
+  const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
+
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 및 RightPane 숨김
   useEffect(() => {
     if (activeDocumentView === 'documents-register' ||
@@ -354,6 +357,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneVisible(true)
     }
   }, [rightPaneVisible])
+
+  // 고객 정보 새로고침 핸들러
+  const handleCustomerRefresh = useCallback(async () => {
+    if (!selectedCustomer?._id) return
+
+    try {
+      // CustomerService를 동적으로 import
+      const { CustomerService } = await import('@/services/customerService')
+      const updatedCustomer = await CustomerService.getCustomer(selectedCustomer._id)
+      setSelectedCustomer(updatedCustomer)
+      console.log('[App] 고객 상세정보 새로고침 완료')
+
+      // 고객 전체보기도 새로고침
+      if (customerAllViewRefreshRef.current) {
+        customerAllViewRefreshRef.current()
+        console.log('[App] 고객 전체보기 새로고침 완료')
+      }
+    } catch (error) {
+      console.error('[App] 고객 정보 새로고침 실패:', error)
+    }
+  }, [selectedCustomer])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -661,6 +685,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-all'}
               onClose={closeDocumentView}
               onCustomerClick={handleCustomerClick}
+              onRefreshExpose={(refreshFn) => {
+                customerAllViewRefreshRef.current = refreshFn
+              }}
             />
           </Suspense>
 
@@ -824,6 +851,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   setRightPaneContentType(null)
                   setRightPaneVisible(false)
                 }}
+                onRefresh={handleCustomerRefresh}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}
                 gapTop={gapValues.gapTop}

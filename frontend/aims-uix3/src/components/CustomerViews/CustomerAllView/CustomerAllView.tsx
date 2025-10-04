@@ -9,7 +9,7 @@
 
 import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import { AllCustomersView } from '@/features/customer/views/AllCustomersView/AllCustomersView';
+import { AllCustomersView, AllCustomersViewRef } from '@/features/customer/views/AllCustomersView/AllCustomersView';
 import type { Customer } from '@/entities/customer/model';
 
 interface CustomerAllViewProps {
@@ -19,6 +19,8 @@ interface CustomerAllViewProps {
   onClose: () => void;
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string, customer: Customer) => void;
+  /** 새로고침 함수를 노출하는 콜백 */
+  onRefreshExpose?: (refreshFn: () => void) => void;
 }
 
 /**
@@ -39,7 +41,17 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   visible,
   onClose,
   onCustomerClick,
+  onRefreshExpose,
 }) => {
+  const allCustomersViewRef = React.useRef<AllCustomersViewRef | null>(null);
+
+  // refresh 함수를 부모에게 노출
+  React.useEffect(() => {
+    if (onRefreshExpose && allCustomersViewRef.current?.refresh) {
+      onRefreshExpose(allCustomersViewRef.current.refresh);
+    }
+  }, [onRefreshExpose]);
+
   return (
     <CenterPaneView
       visible={visible}
@@ -51,7 +63,10 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
       marginRight={4}
       className="customer-all-view"
     >
-      <AllCustomersView onCustomerClick={onCustomerClick} />
+      <AllCustomersView
+        ref={allCustomersViewRef}
+        onCustomerClick={onCustomerClick}
+      />
     </CenterPaneView>
   );
 };
