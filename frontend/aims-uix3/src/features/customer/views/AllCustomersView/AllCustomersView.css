@@ -291,10 +291,10 @@ html[data-theme="dark"] .customer-list-empty {
   display: grid;
   grid-template-columns:
     24px           /* 아이콘 고정 */
-    1fr            /* 이름 (가변) */
-    120px          /* 전화번호 고정 */
-    80px           /* 날짜 고정 */
-    50px;          /* 타입 고정 */
+    minmax(120px, 2fr)  /* 이름 (최소 120px, 가변) */
+    140px          /* 전화번호 고정 */
+    minmax(150px, 2fr)  /* 이메일 (최소 150px, 가변) */
+    60px;          /* 타입 고정 */
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -398,22 +398,26 @@ html[data-theme="dark"] .customer-name {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-theme="dark"] .customer-size {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 🍎 CUSTOMER DATE: Fixed width column */
+/* 🍎 CUSTOMER DATE: Flexible width column (email) */
 .customer-date {
   font-size: 12px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-theme="dark"] .customer-date {
