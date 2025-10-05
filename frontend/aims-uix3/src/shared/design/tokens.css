@@ -685,6 +685,7 @@
   --color-icon-blue: #007aff;      /* iOS systemBlue */
   --color-icon-green: #34c759;     /* iOS systemGreen */
   --color-icon-purple: #af52de;    /* iOS systemPurple */
+  --color-icon-red: #ff3b30;       /* iOS systemRed */
 
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */

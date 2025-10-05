@@ -105,6 +105,36 @@
   filter: grayscale(0.5);
 }
 
+/* 🍎 버튼 아이콘 스타일 */
+.customer-detail-view__action-button svg {
+  flex-shrink: 0;
+  opacity: 1;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+/* Primary 버튼 아이콘: 파란색 (섹션 아이콘과 동일) */
+.customer-detail-view__action-button--primary svg {
+  color: var(--color-icon-blue);
+}
+
+[data-theme="dark"] .customer-detail-view__action-button--primary svg {
+  color: var(--color-icon-blue);
+}
+
+/* Destructive 버튼 아이콘: 빨간색 (섹션 아이콘처럼 선명하게) */
+.customer-detail-view__action-button--destructive svg {
+  color: var(--color-icon-red);
+}
+
+[data-theme="dark"] .customer-detail-view__action-button--destructive svg {
+  color: var(--color-icon-red);
+}
+
+/* 호버시 약간 밝아지는 효과 */
+.customer-detail-view__action-button:hover:not(:disabled) svg {
+  filter: brightness(1.2);
+}
+
 /* Form */
 .customer-detail-view__form {
   display: flex;

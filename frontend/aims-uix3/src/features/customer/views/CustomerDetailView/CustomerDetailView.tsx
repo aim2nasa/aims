@@ -103,12 +103,19 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               className="customer-detail-view__action-button customer-detail-view__action-button--primary"
               onClick={handleEditClick}
             >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M12.146.146a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-10 10a.5.5 0 01-.168.11l-5 2a.5.5 0 01-.65-.65l2-5a.5.5 0 01.11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 2.793L10.5 3 4 9.5 3.1 12.9l3.4-.9 6.293-6.707z"/>
+              </svg>
               정보 수정
             </button>
             <button
               className="customer-detail-view__action-button customer-detail-view__action-button--destructive"
               onClick={handleDeleteClick}
             >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/>
+                <path d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 01-1-1V2a1 1 0 011-1H6a1 1 0 011-1h2a1 1 0 011 1h3.5a1 1 0 011 1v1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+              </svg>
               고객 삭제
             </button>
           </div>
