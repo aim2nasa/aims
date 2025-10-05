@@ -14,6 +14,12 @@ AIMS UIX-3의 CSS 시스템은 **중복 제거**, **테마 지원**, **확장성
 ### 1. 절대적 금지 사항 🚫
 
 ```css
+/* ❌ 절대 금지 - !important 사용 */
+.my-component {
+  background-color: #ffffff !important;  /* 근시안적 해결책 */
+  z-index: 9999 !important;              /* CSS 구조 파괴 */
+}
+
 /* ❌ 절대 금지 - 정적 인라인 스타일 */
 <div style={{backgroundColor: '#ffffff', padding: '16px'}}>
 
@@ -28,7 +34,54 @@ AIMS UIX-3의 CSS 시스템은 **중복 제거**, **테마 지원**, **확장성
 .component-b { background: white; border: 1px solid gray; }  /* 중복! */
 ```
 
-### 1.1. 기술적 예외 사항 ⚠️
+#### 1.1. !important 사용 금지 - 철칙 ⚠️
+
+**!important는 근시안적인 문제 해결을 위한 것으로 절대 사용하지 않는다**
+
+```css
+/* ❌ 잘못된 예: !important로 문제 덮어버리기 */
+.button {
+  background-color: blue;
+}
+
+.button-override {
+  background-color: red !important;  /* 나쁜 해결책 */
+}
+
+/* ✅ 올바른 예: CSS 특이성(specificity) 이해하고 구조적으로 해결 */
+.button {
+  background-color: blue;
+}
+
+.button.button--primary {
+  background-color: red;  /* 더 높은 specificity */
+}
+
+/* 또는 */
+.sidebar .button {
+  background-color: red;  /* 컨텍스트 기반 스타일링 */
+}
+```
+
+**!important를 쓰고 싶을 때 해야 할 것:**
+1. CSS 선택자 특이성(specificity) 검토
+2. 스타일 적용 순서 확인
+3. 구조적 문제 파악 및 근본 원인 해결
+4. BEM, SMACSS 등 CSS 방법론 적용
+
+**예외:** 오직 유틸리티 클래스에서만 제한적 허용
+```css
+/* ✅ 허용: 유틸리티 클래스 - 명확한 의도 */
+.!hidden {
+  display: none !important;  /* 무조건 숨김 */
+}
+
+.!visible {
+  display: block !important;  /* 무조건 표시 */
+}
+```
+
+### 1.2. 기술적 예외 사항 ⚠️
 
 **런타임 동적 계산이 필수인 경우에만 인라인 스타일 허용:**
 
@@ -580,10 +633,206 @@ export default defineConfig({
 }
 ```
 
+## 🧪 CSS Testing with Playwright
+
+### Playwright를 활용한 프론트엔드 테스트 - 필수 사항 ⚡
+
+**프론트엔드의 테스트를 위해서 Playwright를 적극적으로 사용한다**
+
+#### 왜 Playwright인가?
+
+1. **자동화된 검증**: 수동 테스트 없이 CSS 변경사항 자동 검증
+2. **회귀 방지**: 기존 기능 파괴 조기 발견
+3. **시각적 일관성**: 스크린샷 비교로 디자인 일관성 보장
+4. **크로스 브라우저**: Chrome, Firefox, Safari 동시 테스트
+
+#### 테스트 시나리오 작성 예시
+
+```javascript
+// tests/css/focus-styles.spec.js
+import { test, expect } from '@playwright/test';
+
+test('포커스 스타일 검증', async ({ page }) => {
+  // 1. 페이지 로드
+  await page.goto('http://localhost:5175/');
+
+  // 2. 사용자 시나리오 재현
+  await page.getByText('전체보기').click();
+  await page.locator('div').filter({ hasText: /^고객1$/ }).click();
+  await page.getByRole('button', { name: '고객 삭제' }).click();
+
+  // 3. CSS 속성 검증
+  const cancelBtn = page.getByRole('button', { name: '취소' });
+  await cancelBtn.focus();
+
+  const styles = await cancelBtn.evaluate(el => {
+    const computed = window.getComputedStyle(el);
+    return {
+      backgroundColor: computed.backgroundColor,
+      borderRadius: computed.borderRadius,
+      outline: computed.outline
+    };
+  });
+
+  // 4. Assertions
+  expect(styles.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(styles.borderRadius).toContain('13px');
+  expect(styles.outline).not.toContain('!important');
+
+  // 5. 스크린샷 비교
+  await expect(page).toHaveScreenshot('focus-state.png');
+});
+```
+
+#### CSS 변경 시 필수 테스트 항목
+
+```javascript
+// tests/css/theme-switching.spec.js
+test('테마 전환 검증', async ({ page }) => {
+  await page.goto('http://localhost:5175/');
+
+  // Light 테마 색상 확인
+  const lightBg = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-bg-primary')
+  );
+
+  // Dark 테마로 전환
+  await page.evaluate(() =>
+    document.documentElement.setAttribute('data-theme', 'dark')
+  );
+
+  // Dark 테마 색상 확인
+  const darkBg = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-bg-primary')
+  );
+
+  expect(lightBg).not.toBe(darkBg);
+});
+```
+
+#### 반복 테스트 자동화
+
+```javascript
+// tests/css/regression.spec.js
+test.describe('CSS 회귀 테스트', () => {
+  test('모든 버튼 포커스 스타일', async ({ page }) => {
+    await page.goto('http://localhost:5175/');
+
+    const buttons = await page.locator('button').all();
+
+    for (const button of buttons) {
+      await button.focus();
+
+      const outline = await button.evaluate(el =>
+        getComputedStyle(el).outline
+      );
+
+      // !important 사용 확인
+      expect(outline).not.toContain('!important');
+    }
+  });
+
+  test('하드코딩된 색상 검증', async ({ page }) => {
+    await page.goto('http://localhost:5175/');
+
+    // 모든 요소의 computed style 검사
+    const hasHardcodedColors = await page.evaluate(() => {
+      const elements = document.querySelectorAll('*');
+      const hardcoded = [];
+
+      elements.forEach(el => {
+        const style = el.getAttribute('style');
+        if (style && (
+          style.includes('#') ||
+          /rgba?\(\d+,\s*\d+,\s*\d+/.test(style)
+        )) {
+          hardcoded.push(el.tagName);
+        }
+      });
+
+      return hardcoded.length > 0;
+    });
+
+    expect(hasHardcodedColors).toBe(false);
+  });
+});
+```
+
+#### Playwright 실행 명령어
+
+```bash
+# 단일 테스트 실행
+npx playwright test tests/css/focus-styles.spec.js
+
+# 헤드리스 모드 (빠른 검증)
+npx playwright test --headed=false
+
+# UI 모드 (디버깅)
+npx playwright test --ui
+
+# 스크린샷 업데이트
+npx playwright test --update-snapshots
+
+# 특정 브라우저만 테스트
+npx playwright test --project=chromium
+```
+
+#### 권장 테스트 구조
+
+```
+tests/
+├── css/
+│   ├── focus-styles.spec.js      # 포커스 스타일 검증
+│   ├── theme-switching.spec.js   # 테마 전환 검증
+│   ├── responsive.spec.js        # 반응형 디자인 검증
+│   ├── regression.spec.js        # 회귀 테스트
+│   └── visual/
+│       ├── light-theme.png       # 시각적 회귀 기준
+│       └── dark-theme.png
+└── playwright.config.ts
+```
+
+#### 테스트 작성 원칙
+
+1. **자동화 우선**: 수동 테스트 대신 Playwright로 자동화
+2. **사용자 시나리오 기반**: 실제 사용자 행동 재현
+3. **CSS 속성 직접 검증**: `getComputedStyle()` 활용
+4. **시각적 회귀 방지**: 스크린샷 비교 활용
+5. **실패 시 자동 재시도**: Playwright 설정 활용
+
+#### 실패 시 디버깅
+
+```javascript
+// 실패 시 자동으로 trace 수집
+test('디버깅 예시', async ({ page }, testInfo) => {
+  await page.goto('http://localhost:5175/');
+
+  // 실패 시 trace 저장
+  await page.context().tracing.start({ screenshots: true, snapshots: true });
+
+  try {
+    // 테스트 로직
+    await expect(page.locator('.button')).toHaveCSS('outline', 'none');
+  } catch (error) {
+    await page.screenshot({
+      path: `test-results/${testInfo.title}-failure.png`
+    });
+    throw error;
+  } finally {
+    await page.context().tracing.stop({
+      path: `test-results/${testInfo.title}-trace.zip`
+    });
+  }
+});
+```
+
 ## ✅ CSS Quality Checklist
 
 ### 새 컴포넌트 생성시 체크리스트
 
+- [ ] **!important 사용하지 않음** (근시안적 해결책 금지)
 - [ ] 인라인 스타일 사용하지 않음 (`style={{}}` 금지)
 - [ ] 하드코딩된 색상/크기 사용하지 않음
 - [ ] CSS 변수 활용한 테마 반응형 설계
@@ -592,15 +841,18 @@ export default defineConfig({
 - [ ] 반응형 디자인 구현 (mobile-first)
 - [ ] 접근성 고려 (focus states, contrast ratio)
 - [ ] 다크모드 테스트 완료
+- [ ] **Playwright 자동화 테스트 작성** (필수)
 
 ### CSS 코드 리뷰 체크리스트
 
+- [ ] **!important 사용 여부 확인** (있으면 거부)
 - [ ] 모든 색상이 CSS 변수로 정의됨
 - [ ] 중복 스타일 패턴이 공용 클래스로 추출됨
 - [ ] 컴포넌트별 CSS는 고유 기능만 포함
 - [ ] 테마 전환시 모든 요소가 올바르게 변경됨
 - [ ] 성능에 영향을 주는 비효율적 선택자 없음
 - [ ] 브라우저 호환성 확인 완료
+- [ ] **Playwright 테스트 통과 확인** (필수)
 
 ## 🔮 Future Enhancements
 
