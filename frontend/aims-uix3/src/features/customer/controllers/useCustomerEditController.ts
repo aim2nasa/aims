@@ -90,9 +90,13 @@ export const useCustomerEditController = (customer: Customer) => {
   const validatePhoneNumber = (phone: string | undefined): boolean => {
     if (!phone || phone.trim() === '') return true; // 선택 필드
 
-    // 010-1234-5678 또는 02-123-4567 형식
-    const phoneRegex = /^0\d{1,2}-\d{3,4}-\d{4}$/;
-    return phoneRegex.test(phone);
+    // 하이픈 제거 후 검증
+    const cleaned = phone.replace(/-/g, '');
+
+    // 휴대폰: 010/011/016/017/018/019로 시작하는 10~11자리
+    // 일반전화: 02/03x/04x/05x/06x로 시작하는 8~11자리
+    const phoneRegex = /^(01[0-9]{8,9}|0[2-9]{1}[0-9]{7,9})$/;
+    return phoneRegex.test(cleaned);
   };
 
   /**
@@ -118,49 +122,17 @@ export const useCustomerEditController = (customer: Customer) => {
 
   /**
    * 전체 폼 검증
+   * 모든 값을 그대로 저장 - 검증 없음
    */
   const validateAllFields = useCallback((): boolean => {
     const newErrors: FieldErrors = {};
 
-    // 필수 필드: 고객명
+    // 필수 필드: 고객명만 검증
     if (!formData.personal_info?.name || formData.personal_info.name.trim() === '') {
       newErrors['personal_info.name'] = '고객명은 필수입니다';
     }
 
-    // 휴대폰번호 형식 검증
-    if (formData.personal_info?.mobile_phone && !validatePhoneNumber(formData.personal_info.mobile_phone)) {
-      newErrors['personal_info.mobile_phone'] = '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)';
-    }
-
-    // 집전화 형식 검증
-    if (formData.personal_info?.home_phone && !validatePhoneNumber(formData.personal_info.home_phone)) {
-      newErrors['personal_info.home_phone'] = '올바른 전화번호 형식이 아닙니다 (예: 02-123-4567)';
-    }
-
-    // 직장전화 형식 검증
-    if (formData.personal_info?.work_phone && !validatePhoneNumber(formData.personal_info.work_phone)) {
-      newErrors['personal_info.work_phone'] = '올바른 전화번호 형식이 아닙니다 (예: 02-123-4567)';
-    }
-
-    // 이메일 형식 검증
-    if (formData.personal_info?.email && !validateEmail(formData.personal_info.email)) {
-      newErrors['personal_info.email'] = '올바른 이메일 형식이 아닙니다';
-    }
-
-    // 생년월일 형식 검증
-    if (formData.personal_info?.birth_date && !validateBirthDate(formData.personal_info.birth_date)) {
-      newErrors['personal_info.birth_date'] = '올바른 날짜 형식이 아닙니다 (YYYY-MM-DD)';
-    }
-
-    // 연간보험료 검증
-    if (formData.insurance_info?.annual_premium !== undefined && formData.insurance_info.annual_premium < 0) {
-      newErrors['insurance_info.annual_premium'] = '0 이상의 값을 입력해주세요';
-    }
-
-    // 총보장액 검증
-    if (formData.insurance_info?.total_coverage !== undefined && formData.insurance_info.total_coverage < 0) {
-      newErrors['insurance_info.total_coverage'] = '0 이상의 값을 입력해주세요';
-    }
+    // 나머지 필드는 검증 없이 모두 허용
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -198,10 +170,12 @@ export const useCustomerEditController = (customer: Customer) => {
         insurance_info: formData.insurance_info,
       };
 
+      // API 호출
+
       await CustomerService.updateCustomer(customer._id, updatePayload);
       return true;
     } catch (error) {
-      console.error('[useCustomerEditController] 저장 실패:', error);
+      console.error('[Customer Edit] 저장 실패:', error);
       setErrors({
         submit: error instanceof Error ? error.message : '저장에 실패했습니다',
       });

@@ -116,32 +116,31 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   if (!visible) return null;
 
   // 폼 데이터를 섹션 컴포넌트 형식으로 변환
-  const basicInfoData = {
+  const basicInfoData: any = {
     name: formData.personal_info?.name || '',
-    ...(formData.personal_info?.name_en && { name_en: formData.personal_info.name_en }),
-    ...(formData.personal_info?.birth_date && { birth_date: formData.personal_info.birth_date }),
-    ...(formData.personal_info?.gender && { gender: formData.personal_info.gender }),
+  };
+  if (formData.personal_info?.name_en !== undefined) basicInfoData.name_en = formData.personal_info.name_en;
+  if (formData.personal_info?.birth_date !== undefined) basicInfoData.birth_date = formData.personal_info.birth_date;
+  if (formData.personal_info?.gender !== undefined) basicInfoData.gender = formData.personal_info.gender;
+
+  const contactData: any = {
+    mobile_phone: formData.personal_info?.mobile_phone || '',
+    home_phone: formData.personal_info?.home_phone || '',
+    work_phone: formData.personal_info?.work_phone || '',
+    email: formData.personal_info?.email || '',
   };
 
-  const contactData = {
-    ...(formData.personal_info?.mobile_phone && { mobile_phone: formData.personal_info.mobile_phone }),
-    ...(formData.personal_info?.home_phone && { home_phone: formData.personal_info.home_phone }),
-    ...(formData.personal_info?.work_phone && { work_phone: formData.personal_info.work_phone }),
-    ...(formData.personal_info?.email && { email: formData.personal_info.email }),
-  };
+  const addressData: any = {};
+  if (formData.personal_info?.address?.postal_code !== undefined) addressData.postal_code = formData.personal_info.address.postal_code;
+  if (formData.personal_info?.address?.address1 !== undefined) addressData.address1 = formData.personal_info.address.address1;
+  if (formData.personal_info?.address?.address2 !== undefined) addressData.address2 = formData.personal_info.address.address2;
 
-  const addressData = {
-    ...(formData.personal_info?.address?.postal_code && { postal_code: formData.personal_info.address.postal_code }),
-    ...(formData.personal_info?.address?.address1 && { address1: formData.personal_info.address.address1 }),
-    ...(formData.personal_info?.address?.address2 && { address2: formData.personal_info.address.address2 }),
-  };
-
-  const insuranceData = {
+  const insuranceData: any = {
     customer_type: formData.insurance_info?.customer_type || '개인',
-    ...(formData.insurance_info?.risk_level && { risk_level: formData.insurance_info.risk_level }),
-    ...(formData.insurance_info?.annual_premium !== undefined && { annual_premium: formData.insurance_info.annual_premium }),
-    ...(formData.insurance_info?.total_coverage !== undefined && { total_coverage: formData.insurance_info.total_coverage }),
   };
+  if (formData.insurance_info?.risk_level !== undefined) insuranceData.risk_level = formData.insurance_info.risk_level;
+  if (formData.insurance_info?.annual_premium !== undefined) insuranceData.annual_premium = formData.insurance_info.annual_premium;
+  if (formData.insurance_info?.total_coverage !== undefined) insuranceData.total_coverage = formData.insurance_info.total_coverage;
 
   return createPortal(
     <div
