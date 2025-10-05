@@ -150,6 +150,9 @@
   position: relative;
   font-family: var(--font-family-text);
   letter-spacing: -0.32px; /* iOS 표준 kerning 최적화 */
+
+  /* 🍎 애플 스타일: outline 없이 배경색으로만 포커스 표현 */
+  outline: none;
 }
 
 /* 🍎 BUTTON DIVIDER: 버튼 사이 구분선 */
@@ -167,6 +170,7 @@
 .apple-confirm-modal__button--cancel {
   color: #007AFF; /* iOS systemBlue 정확한 색상 */
   font-weight: 400; /* iOS Regular */
+  border-radius: 0 0 0 13px; /* 왼쪽 하단 모서리만 둥글게 */
 }
 
 .apple-confirm-modal__button--cancel:hover {
@@ -180,6 +184,7 @@
 /* 🍎 CONFIRM BUTTON: 확인 버튼 기본 스타일 */
 .apple-confirm-modal__button--confirm {
   font-weight: 590; /* iOS Semibold 최적화 - 주요 액션 강조 */
+  border-radius: 0 0 13px 0; /* 오른쪽 하단 모서리만 둥글게 */
 }
 
 /* 🍎 PRIMARY CONFIRM: 일반 확인 (파란색) */
@@ -208,11 +213,14 @@
   background-color: rgba(255, 59, 48, 0.1);
 }
 
-/* 🍎 FOCUS STYLES: 접근성 포커스 */
+/* 🍎 FOCUS STYLES: 애플 스타일 포커스 - 배경색만 사용 (inset 그림자 제거) */
 .apple-confirm-modal__button:focus {
-  outline: none;
-  background-color: rgba(0, 122, 255, 0.1);
-  box-shadow: inset 0 0 0 2px #007AFF;
+  background-color: rgba(0, 122, 255, 0.12);
+}
+
+/* 키보드 포커스 - 약간 더 강조 */
+.apple-confirm-modal__button:focus-visible {
+  background-color: rgba(0, 122, 255, 0.18);
 }
 
 /* 🍎 REDUCED MOTION: 모션 감소 사용자 배려 */
