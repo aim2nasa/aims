@@ -102,6 +102,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <button
               className="customer-detail-view__action-button customer-detail-view__action-button--primary"
               onClick={handleEditClick}
+              autoFocus
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M12.146.146a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-10 10a.5.5 0 01-.168.11l-5 2a.5.5 0 01-.65-.65l2-5a.5.5 0 01.11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 2.793L10.5 3 4 9.5 3.1 12.9l3.4-.9 6.293-6.707z"/>
