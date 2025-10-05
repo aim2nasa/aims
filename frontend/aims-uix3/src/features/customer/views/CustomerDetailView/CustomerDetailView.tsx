@@ -1,10 +1,11 @@
 /**
  * AIMS UIX-3 Customer Detail View
  * @since 2025-10-03
- * @version 1.0.0
+ * @version 5.0.0
  *
- * 고객 상세 정보 표시 (RightPane)
- * AIMS-UIX2 방식: BaseViewer 상속받아 구현
+ * 🍎 고객 등록 UI와 완벽히 동일한 레이아웃
+ * - 모든 필드를 항상 표시 (등록 UI와 동일)
+ * - 값이 없으면 빈 칸으로 표시
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -17,38 +18,16 @@ import { CustomerService } from '@/services/customerService';
 import './CustomerDetailView.css';
 
 interface CustomerDetailViewProps {
-  /** 고객 정보 */
   customer: Customer;
-  /** 닫기 핸들러 */
   onClose: () => void;
-  /** 고객 정보 새로고침 핸들러 (수정 시) */
   onRefresh?: () => void;
-  /** 고객 삭제 후 핸들러 (삭제 시) */
   onDelete?: () => void;
-  /** RightPane과의 좌측 간격 (px) */
   gapLeft?: number;
-  /** RightPane과의 우측 간격 (px) */
   gapRight?: number;
-  /** RightPane과의 상단 간격 (px) */
   gapTop?: number;
-  /** RightPane과의 하단 간격 (px) */
   gapBottom?: number;
 }
 
-/**
- * CustomerDetailView React Component
- *
- * RightPane에 표시되는 고객 상세 정보
- * BaseViewer를 상속받아 문서 뷰어와 동일한 UI/UX 패턴 적용
- *
- * @example
- * ```tsx
- * <CustomerDetailView
- *   customer={customerData}
- *   onClose={handleClose}
- * />
- * ```
- */
 export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   customer,
   onClose,
@@ -59,30 +38,19 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   gapTop = 2,
   gapBottom = 2,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('info');
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
-
-  // 🍎 애플 스타일 확인 모달
   const confirmController = useAppleConfirmController();
 
-  // 고객 데이터 업데이트 시 동기화
   useEffect(() => {
     setCustomerData(customer);
   }, [customer]);
 
-  /**
-   * 수정 버튼 클릭 핸들러
-   */
   const handleEditClick = useCallback(() => {
     setIsEditModalVisible(true);
   }, []);
 
-  /**
-   * 삭제 버튼 클릭 핸들러
-   */
   const handleDeleteClick = useCallback(async () => {
-    // 🍎 애플 스타일 삭제 확인 모달 (취소/삭제 둘 다 표시)
     const confirmed = await confirmController.actions.openModal({
       title: '고객 삭제',
       message: `"${customer.personal_info?.name}" 고객을 삭제하시겠습니까?`,
@@ -96,13 +64,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     if (confirmed) {
       try {
         await CustomerService.deleteCustomer(customer._id);
-        console.log('[CustomerDetailView] 고객 삭제 성공:', customer._id);
-        onDelete?.(); // 전체보기 새로고침
-        onClose(); // 삭제 성공 시 상세보기 닫기
+        onDelete?.();
+        onClose();
       } catch (error) {
-        console.error('[CustomerDetailView] 고객 삭제 실패:', error);
-
-        // 🍎 삭제 실패 모달 (확인만 표시)
         await confirmController.actions.openModal({
           title: '삭제 실패',
           message: error instanceof Error ? error.message : '고객 삭제에 실패했습니다.',
@@ -115,12 +79,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     }
   }, [customer, onClose, onDelete, confirmController]);
 
-  /**
-   * 저장 성공 핸들러
-   */
   const handleSaveSuccess = useCallback(() => {
     onRefresh?.();
-    console.log('[CustomerDetailView] 고객 정보 수정 완료');
   }, [onRefresh]);
 
   if (!customerData) return null;
@@ -136,265 +96,163 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       gapBottom={gapBottom}
     >
       <div className="customer-detail-view">
-        {/* 탭 네비게이션 및 수정 버튼 */}
-        <div className="customer-detail-view__header">
-          <div className="customer-detail-view__tabs">
-            <button
-              className={`customer-detail-view__tab ${activeTab === 'info' ? 'customer-detail-view__tab--active' : ''}`}
-              onClick={() => setActiveTab('info')}
-            >
-              기본 정보
-            </button>
-            <button
-              className={`customer-detail-view__tab ${activeTab === 'contact' ? 'customer-detail-view__tab--active' : ''}`}
-              onClick={() => setActiveTab('contact')}
-            >
-              연락처
-            </button>
-            <button
-              className={`customer-detail-view__tab ${activeTab === 'insurance' ? 'customer-detail-view__tab--active' : ''}`}
-              onClick={() => setActiveTab('insurance')}
-            >
-              보험 정보
-            </button>
-          </div>
+        <div className="customer-detail-view__inner">
+          {/* 🍎 액션 버튼 영역 */}
           <div className="customer-detail-view__actions">
             <button
-              className="customer-detail-view__edit-button"
+              className="customer-detail-view__action-button customer-detail-view__action-button--primary"
               onClick={handleEditClick}
-              aria-label="고객 정보 수정"
-              title="고객 정보 수정"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
+              정보 수정
             </button>
             <button
-              className="customer-detail-view__delete-button"
+              className="customer-detail-view__action-button customer-detail-view__action-button--destructive"
               onClick={handleDeleteClick}
-              aria-label="고객 삭제"
-              title="고객 삭제"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-              </svg>
+              고객 삭제
             </button>
           </div>
-        </div>
 
-        {/* 탭 콘텐츠 */}
-        <div className="customer-detail-view__content">
-          {/* 기본 정보 탭 */}
-          {activeTab === 'info' && (
-            <div className="customer-detail-view__section">
-              <div className="customer-detail-view__field-group">
-                <div className="customer-detail-view__field">
-                  <label className="customer-detail-view__label">이름</label>
-                  <span className="customer-detail-view__value">
-                    {customer.personal_info?.name || '-'}
-                  </span>
-                </div>
-
-                {customer.personal_info?.name_en && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">영문 이름</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.name_en}
-                    </span>
-                  </div>
-                )}
-
-                {customer.personal_info?.birth_date && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">생년월일</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.birth_date}
-                    </span>
-                  </div>
-                )}
-
-                {customer.personal_info?.gender && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">성별</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.gender === 'M' ? '남성' : '여성'}
-                    </span>
-                  </div>
-                )}
+          {/* 🍎 기본 정보 섹션 */}
+          <div className="form-section">
+            <h3 className="form-section__title form-section__title--basic">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="5" r="2.5"/>
+                <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
+              </svg>
+              <span>기본</span>
+            </h3>
+            <div className="form-section__content">
+              {/* 이름 */}
+              <div className="form-row">
+                <label className="form-row__label">이름</label>
+                <div className="form-row__value">{customer.personal_info?.name || ''}</div>
               </div>
 
-              {/* 주소 정보 */}
-              {customer.personal_info?.address && (
-                <>
-                  <div className="customer-detail-view__divider" />
-                  <h3 className="customer-detail-view__section-title">주소</h3>
-                  <div className="customer-detail-view__field-group">
-                    {customer.personal_info.address.postal_code && (
-                      <div className="customer-detail-view__field">
-                        <label className="customer-detail-view__label">우편번호</label>
-                        <span className="customer-detail-view__value">
-                          {customer.personal_info.address.postal_code}
-                        </span>
-                      </div>
-                    )}
-                    {customer.personal_info.address.address1 && (
-                      <div className="customer-detail-view__field">
-                        <label className="customer-detail-view__label">주소</label>
-                        <span className="customer-detail-view__value">
-                          {customer.personal_info.address.address1}
-                        </span>
-                      </div>
-                    )}
-                    {customer.personal_info.address.address2 && (
-                      <div className="customer-detail-view__field">
-                        <label className="customer-detail-view__label">상세 주소</label>
-                        <span className="customer-detail-view__value">
-                          {customer.personal_info.address.address2}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+              {/* 이름 (영문) */}
+              <div className="form-row">
+                <label className="form-row__label">이름 (영문)</label>
+                <div className="form-row__value">{customer.personal_info?.name_en || ''}</div>
+              </div>
 
-          {/* 연락처 탭 */}
-          {activeTab === 'contact' && (
-            <div className="customer-detail-view__section">
-              <div className="customer-detail-view__field-group">
-                {customer.personal_info?.mobile_phone && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">휴대전화</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.mobile_phone}
-                    </span>
-                  </div>
-                )}
+              {/* 생년월일 */}
+              <div className="form-row">
+                <label className="form-row__label">생년월일</label>
+                <div className="form-row__value">{customer.personal_info?.birth_date || ''}</div>
+              </div>
 
-                {customer.personal_info?.home_phone && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">집 전화</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.home_phone}
-                    </span>
-                  </div>
-                )}
-
-                {customer.personal_info?.work_phone && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">직장 전화</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.work_phone}
-                    </span>
-                  </div>
-                )}
-
-                {customer.personal_info?.email && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">이메일</label>
-                    <span className="customer-detail-view__value">
-                      {customer.personal_info.email}
-                    </span>
-                  </div>
-                )}
+              {/* 성별 */}
+              <div className="form-row">
+                <label className="form-row__label">성별</label>
+                <div className="form-row__value">
+                  {customer.personal_info?.gender === 'M' ? '남성' : customer.personal_info?.gender === 'F' ? '여성' : ''}
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* 보험 정보 탭 */}
-          {activeTab === 'insurance' && (
-            <div className="customer-detail-view__section">
-              <div className="customer-detail-view__field-group">
-                <div className="customer-detail-view__field">
-                  <label className="customer-detail-view__label">고객 유형</label>
-                  <span className="customer-detail-view__value">
-                    {customer.insurance_info?.customer_type || '-'}
-                  </span>
-                </div>
-
-                {customer.insurance_info?.risk_level && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">위험도</label>
-                    <span className="customer-detail-view__value">
-                      {customer.insurance_info.risk_level}
-                    </span>
-                  </div>
-                )}
-
-                {customer.insurance_info?.annual_premium && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">연간 보험료</label>
-                    <span className="customer-detail-view__value">
-                      {customer.insurance_info.annual_premium.toLocaleString()}원
-                    </span>
-                  </div>
-                )}
-
-                {customer.insurance_info?.total_coverage && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">총 보장액</label>
-                    <span className="customer-detail-view__value">
-                      {customer.insurance_info.total_coverage.toLocaleString()}원
-                    </span>
-                  </div>
-                )}
+          {/* 🍎 연락처 정보 섹션 */}
+          <div className="form-section">
+            <h3 className="form-section__title form-section__title--contact">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M3.5 1A1.5 1.5 0 002 2.5v11A1.5 1.5 0 003.5 15h9a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0012.5 1h-9zM8 4a1 1 0 011 1v1a1 1 0 01-2 0V5a1 1 0 011-1zm-2 7a1 1 0 011-1h2a1 1 0 110 2H7a1 1 0 01-1-1z"/>
+              </svg>
+              <span>연락처</span>
+            </h3>
+            <div className="form-section__content">
+              {/* 휴대폰 */}
+              <div className="form-row">
+                <label className="form-row__label">휴대폰</label>
+                <div className="form-row__value">{customer.personal_info?.mobile_phone || ''}</div>
               </div>
 
-              <div className="customer-detail-view__divider" />
-              <h3 className="customer-detail-view__section-title">관리 정보</h3>
-              <div className="customer-detail-view__field-group">
-                <div className="customer-detail-view__field">
-                  <label className="customer-detail-view__label">상태</label>
-                  <span className={`customer-detail-view__status customer-detail-view__status--${customer.meta?.status || 'active'}`}>
-                    {customer.meta?.status === 'active' ? '활성' : '비활성'}
-                  </span>
-                </div>
+              {/* 집 전화 */}
+              <div className="form-row">
+                <label className="form-row__label">집 전화</label>
+                <div className="form-row__value">{customer.personal_info?.home_phone || ''}</div>
+              </div>
 
-                {customer.meta?.created_at && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">등록일</label>
-                    <span className="customer-detail-view__value">
-                      {new Date(customer.meta.created_at).toLocaleDateString('ko-KR')}
-                    </span>
-                  </div>
-                )}
+              {/* 회사 전화 */}
+              <div className="form-row">
+                <label className="form-row__label">회사 전화</label>
+                <div className="form-row__value">{customer.personal_info?.work_phone || ''}</div>
+              </div>
 
-                {customer.meta?.updated_at && (
-                  <div className="customer-detail-view__field">
-                    <label className="customer-detail-view__label">수정일</label>
-                    <span className="customer-detail-view__value">
-                      {new Date(customer.meta.updated_at).toLocaleDateString('ko-KR')}
-                    </span>
-                  </div>
-                )}
+              {/* 이메일 */}
+              <div className="form-row">
+                <label className="form-row__label">이메일</label>
+                <div className="form-row__value">{customer.personal_info?.email || ''}</div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* 🍎 주소 정보 섹션 */}
+          <div className="form-section">
+            <h3 className="form-section__title form-section__title--address">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
+              </svg>
+              <span>주소</span>
+            </h3>
+            <div className="form-section__content">
+              {/* 우편번호 */}
+              <div className="form-row">
+                <label className="form-row__label">우편번호</label>
+                <div className="form-row__value">{customer.personal_info?.address?.postal_code || ''}</div>
+              </div>
+
+              {/* 주소 */}
+              <div className="form-row">
+                <label className="form-row__label">주소</label>
+                <div className="form-row__value">{customer.personal_info?.address?.address1 || ''}</div>
+              </div>
+
+              {/* 상세주소 */}
+              <div className="form-row">
+                <label className="form-row__label">상세주소</label>
+                <div className="form-row__value">{customer.personal_info?.address?.address2 || ''}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 🍎 보험 정보 섹션 */}
+          <div className="form-section">
+            <h3 className="form-section__title form-section__title--insurance">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0L2 3v5c0 3.5 2.5 6.5 6 7 3.5-.5 6-3.5 6-7V3L8 0zm0 2l4 2v4c0 2.5-1.5 4.5-4 5-2.5-.5-4-2.5-4-5V4l4-2z"/>
+              </svg>
+              <span>보험</span>
+            </h3>
+            <div className="form-section__content">
+              {/* 고객 유형 */}
+              <div className="form-row">
+                <label className="form-row__label">고객 유형</label>
+                <div className="form-row__value">{customer.insurance_info?.customer_type || ''}</div>
+              </div>
+
+              {/* 위험도 */}
+              <div className="form-row">
+                <label className="form-row__label">위험도</label>
+                <div className="form-row__value">{customer.insurance_info?.risk_level || ''}</div>
+              </div>
+
+              {/* 연간 보험료 */}
+              <div className="form-row">
+                <label className="form-row__label">연간 보험료</label>
+                <div className="form-row__value">
+                  {customer.insurance_info?.annual_premium ? `${customer.insurance_info.annual_premium.toLocaleString()}` : ''}
+                </div>
+              </div>
+
+              {/* 총 보장액 */}
+              <div className="form-row">
+                <label className="form-row__label">총 보장액</label>
+                <div className="form-row__value">
+                  {customer.insurance_info?.total_coverage ? `${customer.insurance_info.total_coverage.toLocaleString()}` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
