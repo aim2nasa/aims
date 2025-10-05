@@ -37,3 +37,8 @@ node_modules/.cache
 
 # Local development configuration
 vite.config.ts
+
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/
