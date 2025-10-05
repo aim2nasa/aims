@@ -13,8 +13,9 @@ import { CustomerService } from '@/services/customerService';
 
 /**
  * 탭 타입 정의
+ * 고객 등록과 동일한 4개 탭
  */
-export type CustomerEditTab = 'info' | 'contact' | 'insurance';
+export type CustomerEditTab = 'info' | 'contact' | 'address' | 'insurance';
 
 /**
  * 필드 에러 타입
@@ -63,10 +64,11 @@ export const useCustomerEditController = (customer: Customer) => {
 
       // 중첩된 객체 업데이트
       const [parent, child] = keys;
+      const parentKey = parent as keyof UpdateCustomerData;
       return {
         ...prev,
-        [parent]: {
-          ...(prev[parent as keyof UpdateCustomerData] as any),
+        [parentKey]: {
+          ...(prev[parentKey] as any),
           [child]: value,
         },
       };
