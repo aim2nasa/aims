@@ -223,7 +223,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
             <AddressSection
               formData={addressData}
               errors={errors}
-              onChange={(field, value) => handleFieldChange(`personal_info.${field}`, value)}
+              onChange={(field, value) => handleFieldChange(`personal_info.address.${field}`, value)}
             />
           )}
 

@@ -62,16 +62,36 @@ export const useCustomerEditController = (customer: Customer) => {
         return { ...prev, [field]: value };
       }
 
-      // 중첩된 객체 업데이트
-      const [parent, child] = keys;
-      const parentKey = parent as keyof UpdateCustomerData;
-      return {
-        ...prev,
-        [parentKey]: {
-          ...(prev[parentKey] as any),
-          [child]: value,
-        },
-      };
+      // 중첩된 객체 업데이트 (2단계 이상 지원)
+      if (keys.length === 2) {
+        const [parent, child] = keys;
+        const parentKey = parent as keyof UpdateCustomerData;
+        return {
+          ...prev,
+          [parentKey]: {
+            ...(prev[parentKey] as any),
+            [child]: value,
+          },
+        };
+      }
+
+      // 3단계 중첩 (personal_info.address.postal_code 등)
+      if (keys.length === 3) {
+        const [parent, middle, child] = keys;
+        const parentKey = parent as keyof UpdateCustomerData;
+        return {
+          ...prev,
+          [parentKey]: {
+            ...(prev[parentKey] as any),
+            [middle]: {
+              ...((prev[parentKey] as any)?.[middle] || {}),
+              [child]: value,
+            },
+          },
+        };
+      }
+
+      return prev;
     });
 
     // 에러 클리어
