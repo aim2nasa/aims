@@ -251,13 +251,9 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: var(--spacing-4);
-  padding-top: var(--spacing-4);
-  border-top: 1px solid var(--color-layout-brb-light);
-}
-
-[data-theme="dark"] .customer-registration__actions {
-  border-top-color: var(--color-layout-brb-dark);
+  margin-top: var(--spacing-2);
+  padding-top: 0;
+  border-top: none;
 }
 
 .customer-registration__actions button {
