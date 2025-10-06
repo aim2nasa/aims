@@ -283,7 +283,14 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               </div>
               <div className="header-birth">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M3 4h10v9H3V4zm2-2h1v1H5V2zm4 0h1v1H9V2z" fill="currentColor"/>
+                  <rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/>
+                  <rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/>
+                  <rect x="4" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <rect x="7.25" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <rect x="10.5" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <ellipse cx="4.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
+                  <ellipse cx="8" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
+                  <ellipse cx="11.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
                 </svg>
                 <span>생년월일</span>
               </div>
@@ -304,7 +311,8 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               </div>
               <div className="header-email">
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                  <path d="M2 3h12v10H2V3zm1 2l5 3 5-3v6H3V5z" fill="currentColor"/>
+                  <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>이메일</span>
               </div>

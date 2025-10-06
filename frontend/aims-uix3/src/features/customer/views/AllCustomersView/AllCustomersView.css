@@ -257,6 +257,10 @@ html[data-theme="dark"] .customer-list-header {
 
 .header-birth .header-icon-svg {
   color: var(--color-icon-green);  /* 생년월일 - 초록색 */
+  --cake-bottom: #D4A574;  /* 케이크 아래층 - 갈색 */
+  --cake-top: #FFB74D;     /* 케이크 위층 - 주황색 */
+  --candle: #FF5252;       /* 촛불 - 빨간색 */
+  --flame: #FFA726;        /* 불꽃 - 주황색 */
 }
 
 .header-gender .header-icon-svg {
