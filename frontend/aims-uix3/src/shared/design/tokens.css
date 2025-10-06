@@ -70,11 +70,49 @@
   --opacity-border: 0.12;
   --opacity-border-dark: 0.4;
 
+  /* iOS-style Opacity Values */
+  --opacity-ios-bg-light: 0.12;
+  --opacity-ios-bg-dark: 0.24;
+  --opacity-ios-bg-focus-light: 0.2;
+  --opacity-ios-bg-focus-dark: 0.32;
+  --opacity-ios-text-secondary: 0.6;
+  --opacity-ios-border: 0.12;
+  --opacity-ios-border-dark: 0.65;
+  --opacity-hover-light: 0.04;
+  --opacity-hover-dark: 0.08;
+  --opacity-active-light: 0.08;
+  --opacity-active-dark: 0.12;
+  --opacity-selected: 0.1;
+  --opacity-scrollbar-light: 0.2;
+  --opacity-scrollbar-dark: 0.2;
+  --opacity-scrollbar-hover-light: 0.3;
+  --opacity-scrollbar-hover-dark: 0.3;
+
   /* === OVERLAY COLORS === */
   --color-overlay-backdrop: rgba(0, 0, 0, var(--opacity-overlay));
   --color-overlay-backdrop-strong: rgba(0, 0, 0, var(--opacity-overlay-strong));
   --color-overlay-dark: rgba(0, 0, 0, var(--opacity-dark-overlay));
   --color-overlay-light: rgba(255, 255, 255, var(--opacity-light-overlay));
+
+  /* iOS-style Overlay Colors */
+  --color-ios-bg-light: rgba(142, 142, 147, var(--opacity-ios-bg-light));
+  --color-ios-bg-dark: rgba(142, 142, 147, var(--opacity-ios-bg-dark));
+  --color-ios-bg-focus-light: rgba(142, 142, 147, var(--opacity-ios-bg-focus-light));
+  --color-ios-bg-focus-dark: rgba(142, 142, 147, var(--opacity-ios-bg-focus-dark));
+  --color-ios-text-light: rgba(60, 60, 67, var(--opacity-ios-text-secondary));
+  --color-ios-text-dark: rgba(235, 235, 245, var(--opacity-ios-text-secondary));
+  --color-ios-border-light: rgba(60, 60, 67, var(--opacity-ios-border));
+  --color-ios-border-dark: rgba(84, 84, 88, var(--opacity-ios-border-dark));
+  --color-hover-light: rgba(0, 0, 0, var(--opacity-hover-light));
+  --color-hover-dark: rgba(255, 255, 255, var(--opacity-hover-dark));
+  --color-active-light: rgba(0, 0, 0, var(--opacity-active-light));
+  --color-active-dark: rgba(255, 255, 255, var(--opacity-active-dark));
+  --color-selected: rgba(0, 122, 255, var(--opacity-selected));
+  --color-scrollbar-light: rgba(0, 0, 0, var(--opacity-scrollbar-light));
+  --color-scrollbar-dark: rgba(255, 255, 255, var(--opacity-scrollbar-dark));
+  --color-scrollbar-hover-light: rgba(0, 0, 0, var(--opacity-scrollbar-hover-light));
+  --color-scrollbar-hover-dark: rgba(255, 255, 255, var(--opacity-scrollbar-hover-dark));
+  --color-guide-bg-dark: rgba(255, 255, 255, 0.05);
 
   /* Error Color Scale - iOS 표준 색상 팔레트 */
   --color-error-600: #dc2626;  /* iOS systemRed 표준 */
@@ -241,6 +279,10 @@
     0 4px 6px rgba(0, 0, 0, var(--opacity-shadow-dark-md)),
     0 10px 20px rgba(0, 0, 0, var(--opacity-shadow-dark-lg)),
     0 20px 40px rgba(0, 0, 0, var(--opacity-shadow-dark-xl));
+
+  /* Address Search Modal Shadows */
+  --shadow-address-modal-light: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow-address-modal-dark: 0 20px 60px rgba(0, 0, 0, 0.6);
 
   --shadow-card-light:
     0 0 0 1px rgba(0, 0, 0, var(--opacity-shadow-xs)),

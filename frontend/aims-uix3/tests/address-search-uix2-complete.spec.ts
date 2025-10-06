@@ -84,15 +84,12 @@ test.describe('UIX3 주소 검색 완전 테스트 (UIX2 방식)', () => {
 
     const isTitleVisible = await modalTitle.isVisible();
     const isInputVisible = await modalInput.isVisible();
-    const isModalSearchBtnVisible = await modalSearchBtn.isVisible();
 
     console.log(`   - 제목 표시: ${isTitleVisible}`);
     console.log(`   - 검색창 표시: ${isInputVisible}`);
-    console.log(`   - 검색 버튼 표시: ${isModalSearchBtnVisible}`);
 
     expect(isTitleVisible).toBe(true);
     expect(isInputVisible).toBe(true);
-    expect(isModalSearchBtnVisible).toBe(true);
 
     console.log('   - 검색창에 "마두동 901-4" 입력');
     await modalInput.fill('마두동 901-4');
@@ -100,8 +97,8 @@ test.describe('UIX3 주소 검색 완전 테스트 (UIX2 방식)', () => {
     console.log(`   - 입력값: "${inputValue}"`);
     expect(inputValue).toBe('마두동 901-4');
 
-    console.log('   - 모달 내 "🔍 검색" 버튼 클릭');
-    await modalSearchBtn.click();
+    console.log('   - Enter 키로 검색 (검색 버튼 없음 - iOS 스타일)');
+    await modalInput.press('Enter');
     await page.waitForTimeout(1500);
 
     // 4단계: 검색 결과 표시 → 첫 번째 결과 클릭

@@ -147,10 +147,10 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
         {/* 헤더 */}
         <div className="address-search-modal__header">
           <h2 id="address-search-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
-            <span>주소 검색</span>
+            주소 검색
           </h2>
           <button
             className="address-search-modal__close"
@@ -163,26 +163,34 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
 
         {/* 검색 입력 */}
         <div className="address-search-modal__search">
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="address-search-modal__input"
-            placeholder="도로명 또는 지번주소를 입력하세요 (예: 테헤란로 123)"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                searchAddress(searchKeyword);
-              }
-            }}
-          />
+          <div className="address-search-modal__input-wrapper">
+            <svg className="address-search-modal__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="address-search-modal__input"
+              placeholder="도로명 또는 지번주소를 입력하세요"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  searchAddress(searchKeyword);
+                }
+              }}
+              spellCheck={false}
+              autoComplete="off"
+            />
+          </div>
           <button
             className="address-search-modal__search-btn"
             onClick={() => searchAddress(searchKeyword)}
             disabled={loading}
           >
-            {loading ? '검색 중...' : '🔍 검색'}
+            {loading ? '검색 중...' : '검색'}
           </button>
         </div>
 
@@ -243,12 +251,17 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
           {/* 검색 가이드 */}
           {searchResults.length === 0 && searchKeyword === '' && (
             <div className="address-search-modal__guide">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-              <div>도로명주소 또는 지번주소를 입력하여 검색해주세요.</div>
-              <div className="address-search-modal__guide-example">
-                예시: 테헤란로 123, 역삼동 123-45
+              <div className="address-search-modal__guide-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4m0-4h.01" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <div>도로명 또는 지번주소를 입력하세요</div>
+                  <div className="address-search-modal__guide-example">
+                    예: 테헤란로 123, 역삼동 123-45
+                  </div>
+                </div>
               </div>
             </div>
           )}
