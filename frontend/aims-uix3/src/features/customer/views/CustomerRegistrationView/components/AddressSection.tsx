@@ -1,13 +1,15 @@
 /**
  * AIMS UIX-3 Customer Registration - Address Section
  * @since 2025-10-03
- * @version 1.0.0
+ * @version 2.0.0 - UIX2 주소 검색 기능 통합
  *
  * 주소 정보 입력 섹션
  * iOS Settings 스타일 적용
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { AddressSearchModal } from '../../../components/AddressSearchModal';
+import { FormattedAddress } from '../../../api/addressApi';
 
 interface AddressSectionProps {
   formData: {
@@ -23,6 +25,20 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   formData,
   onChange,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddressSelect = (address: FormattedAddress) => {
+    console.log('✅ 주소 선택됨:', address);
+    onChange('postal_code', address.postal_code);
+    onChange('address1', address.address1);
+    onChange('address2', address.address2);
+  };
+
+  const handleSearchClick = () => {
+    console.log('🔍 주소 검색 버튼 클릭!');
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="form-section">
       <h3 className="form-section__title form-section__title--address">
@@ -33,45 +49,82 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
       </h3>
 
       <div className="form-section__content">
-        {/* 우편번호 */}
+        {/* 주소 검색 */}
+        <div className="form-row">
+          <label className="form-row__label">주소 검색</label>
+          <div className="form-row__input">
+            <input
+              type="text"
+              value=""
+              readOnly
+              placeholder="도로명 또는 지번주소를 검색하세요 (예: 테헤란로 123)"
+              className="address-search-placeholder"
+            />
+          </div>
+          <button
+            type="button"
+            className="form-row__search-btn"
+            onClick={handleSearchClick}
+          >
+            🔍 검색
+          </button>
+        </div>
+
+        {/* 검색된 주소 */}
         <div className="form-row">
           <label className="form-row__label">우편번호</label>
           <div className="form-row__input">
             <input
               type="text"
               value={formData.postal_code || ''}
-              onChange={(e) => onChange('postal_code', e.target.value)}
-              placeholder="12345"
+              readOnly
+              placeholder="우편번호"
+              className="address-field-readonly"
             />
           </div>
         </div>
 
-        {/* 주소 1 */}
         <div className="form-row">
-          <label className="form-row__label">주소</label>
+          <label className="form-row__label">기본주소</label>
           <div className="form-row__input">
             <input
               type="text"
               value={formData.address1 || ''}
-              onChange={(e) => onChange('address1', e.target.value)}
-              placeholder="서울특별시 강남구 테헤란로 123"
+              readOnly
+              placeholder="경기 고양시 일산동구 일산로286번길 19-2"
+              className="address-field-readonly"
             />
           </div>
         </div>
 
-        {/* 주소 2 (상세주소) */}
+        {/* 상세주소 입력 */}
         <div className="form-row">
-          <label className="form-row__label">상세주소</label>
+          <label className="form-row__label">상세주소 입력</label>
           <div className="form-row__input">
-            <input
-              type="text"
-              value={formData.address2 || ''}
-              onChange={(e) => onChange('address2', e.target.value)}
-              placeholder="101동 1001호"
-            />
+            {formData.address1 ? (
+              <input
+                type="text"
+                value={formData.address2 || ''}
+                onChange={(e) => onChange('address2', e.target.value)}
+                placeholder="상세주소를 입력하세요 (동/호수, 건물명 등)"
+              />
+            ) : (
+              <div className="address-disabled-message">
+                ❌ 주소검색을 먼저 해주세요
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* 주소 검색 모달 */}
+      {isModalOpen && (
+        <AddressSearchModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onAddressSelect={handleAddressSelect}
+        />
+      )}
     </div>
   );
 };

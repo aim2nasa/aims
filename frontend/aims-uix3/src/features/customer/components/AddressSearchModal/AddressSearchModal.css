@@ -1,0 +1,293 @@
+/* 오버레이 */
+.address-search-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn var(--duration-normal) var(--easing-ease-out);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 모달 컨테이너 */
+.address-search-modal {
+  background-color: var(--color-layout-content);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp var(--duration-normal) var(--easing-ease-out);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 헤더 */
+.address-search-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-layout-accent);
+}
+
+.address-search-modal__header h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.address-search-modal__header svg {
+  color: var(--color-primary);
+}
+
+.address-search-modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-search-modal__close:hover {
+  background-color: var(--color-layout-accent);
+}
+
+/* 검색 영역 */
+.address-search-modal__search {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+}
+
+.address-search-modal__input {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-layout-accent);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  background-color: var(--color-layout-content);
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-search-modal__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.address-search-modal__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.address-search-modal__search-btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+  white-space: nowrap;
+}
+
+.address-search-modal__search-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.address-search-modal__search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 컨텐츠 영역 */
+.address-search-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
+/* 결과 헤더 */
+.address-search-modal__result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.address-search-modal__more-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-search-modal__more-btn:hover:not(:disabled) {
+  background-color: var(--color-layout-accent);
+}
+
+.address-search-modal__more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 결과 목록 */
+.address-search-modal__results {
+  border: 1px solid var(--color-layout-accent);
+  border-radius: var(--radius-md);
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: var(--color-layout-content);
+}
+
+/* 결과 아이템 */
+.address-search-modal__item {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-layout-accent);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-search-modal__item:last-child {
+  border-bottom: none;
+}
+
+.address-search-modal__item:hover {
+  background-color: var(--color-layout-accent);
+}
+
+.address-search-modal__item--selected {
+  background-color: var(--color-primary-alpha);
+  border-left: 3px solid var(--color-primary);
+}
+
+.address-search-modal__item-main {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.address-search-modal__item-sub {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.address-search-modal__item-building {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+/* 더보기 버튼 */
+.address-search-modal__load-more {
+  width: 100%;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-layout-secondary);
+  border: 1px dashed var(--color-layout-accent);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-search-modal__load-more:hover:not(:disabled) {
+  background-color: var(--color-layout-accent);
+}
+
+.address-search-modal__load-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 검색 가이드 */
+.address-search-modal__guide {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  color: var(--color-text-secondary);
+}
+
+.address-search-modal__guide svg {
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--spacing-md);
+}
+
+.address-search-modal__guide-example {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-sm);
+}
+
+/* 검색 결과 없음 */
+.address-search-modal__empty {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  color: var(--color-text-secondary);
+}
+
+.address-search-modal__empty-sub {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-sm);
+}
+
+/* Dark Theme */
+html[data-theme="dark"] .address-search-modal {
+  background-color: var(--color-layout-content);
+}
+
+html[data-theme="dark"] .address-search-modal__input {
+  background-color: var(--color-layout-secondary);
+  border-color: var(--color-layout-accent);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .address-search-modal__results {
+  background-color: var(--color-layout-secondary);
+  border-color: var(--color-layout-accent);
+}
+
+html[data-theme="dark"] .address-search-modal__item {
+  border-color: var(--color-layout-accent);
+}

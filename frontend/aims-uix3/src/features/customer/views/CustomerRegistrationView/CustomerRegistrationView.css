@@ -374,3 +374,49 @@
     width: 100%;
   }
 }
+
+/* Address Search Styles */
+.form-row__search-btn {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+  white-space: nowrap;
+  margin-left: var(--spacing-2);
+}
+
+.form-row__search-btn:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.address-search-placeholder {
+  cursor: pointer;
+}
+
+.address-field-readonly {
+  background-color: var(--color-layout-secondary);
+  cursor: not-allowed;
+}
+
+.address-disabled-message {
+  padding: var(--spacing-2) var(--spacing-4);
+  background-color: var(--color-layout-secondary);
+  border: 1px solid var(--color-layout-accent);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-footnote);
+  text-align: center;
+}
+
+[data-theme="dark"] .address-field-readonly {
+  background-color: var(--color-layout-main-dark);
+}
+
+[data-theme="dark"] .address-disabled-message {
+  background-color: var(--color-layout-main-dark);
+}
