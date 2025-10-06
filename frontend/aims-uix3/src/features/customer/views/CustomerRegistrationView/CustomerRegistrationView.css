@@ -378,7 +378,7 @@
 /* Address Search Styles */
 .form-row__search-btn {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-neutral-0);
   border: none;
   border-radius: var(--radius-sm);
   padding: var(--spacing-2) var(--spacing-4);

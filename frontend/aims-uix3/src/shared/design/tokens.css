@@ -54,6 +54,7 @@
 
   /* === OPACITY VALUES === */
   --opacity-overlay: 0.5;
+  --opacity-overlay-strong: 0.75;
   --opacity-shadow-xs: 0.02;
   --opacity-shadow-sm: 0.05;
   --opacity-shadow-md: 0.1;
@@ -71,6 +72,7 @@
 
   /* === OVERLAY COLORS === */
   --color-overlay-backdrop: rgba(0, 0, 0, var(--opacity-overlay));
+  --color-overlay-backdrop-strong: rgba(0, 0, 0, var(--opacity-overlay-strong));
   --color-overlay-dark: rgba(0, 0, 0, var(--opacity-dark-overlay));
   --color-overlay-light: rgba(255, 255, 255, var(--opacity-light-overlay));
 

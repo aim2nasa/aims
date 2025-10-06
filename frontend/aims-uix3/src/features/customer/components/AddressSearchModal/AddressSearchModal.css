@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay-backdrop-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,7 +24,7 @@
 
 /* 모달 컨테이너 */
 .address-search-modal {
-  background-color: var(--color-layout-content);
+  background-color: var(--color-neutral-0);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   width: 90%;
@@ -33,6 +33,12 @@
   display: flex;
   flex-direction: column;
   animation: slideUp var(--duration-normal) var(--easing-ease-out);
+  opacity: 1;
+}
+
+/* Dark 테마 모달 배경 */
+html[data-theme="dark"] .address-search-modal {
+  background-color: var(--color-neutral-800);
 }
 
 @keyframes slideUp {
@@ -114,7 +120,7 @@
 .address-search-modal__search-btn {
   padding: var(--spacing-md) var(--spacing-xl);
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-neutral-0);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);
