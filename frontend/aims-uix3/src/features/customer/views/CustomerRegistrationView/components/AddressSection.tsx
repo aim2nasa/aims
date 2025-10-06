@@ -91,7 +91,7 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
               type="text"
               value={formData.address1 || ''}
               readOnly
-              placeholder="경기 고양시 일산동구 일산로286번길 19-2"
+              placeholder="서울 강남구 테헤란로 123"
               className="address-field-readonly"
             />
           </div>
