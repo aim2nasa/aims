@@ -1,19 +1,41 @@
 /**
  * RegionalTreeView Component
  * 애플 스타일의 지역별 고객 트리 뷰 (커스텀 구현, antd 사용 안 함)
+ *
+ * @since 1.0.0
+ * @example
+ * ```tsx
+ * <RegionalTreeView
+ *   customers={customers}
+ *   selectedCustomerId={selectedId}
+ *   onCustomerSelect={handleSelect}
+ *   loading={isLoading}
+ * />
+ * ```
  */
 import React, { useState, useMemo } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import './RegionalTreeView.css'
 
+/**
+ * RegionalTreeView 컴포넌트 Props
+ */
 interface RegionalTreeViewProps {
+  /** 표시할 고객 목록 */
   customers: Customer[]
+  /** 현재 선택된 고객 ID */
   selectedCustomerId?: string | null
+  /** 고객 선택 시 호출되는 콜백 함수 */
   onCustomerSelect?: (customerId: string) => void
+  /** 로딩 상태 */
   loading?: boolean
 }
 
+/**
+ * 트리 노드 데이터 구조
+ * @internal
+ */
 interface TreeNodeData {
   key: string
   label: string
@@ -23,7 +45,17 @@ interface TreeNodeData {
   children?: TreeNodeData[]
 }
 
-export const RegionalTreeView: React.FC<RegionalTreeViewProps> = ({
+/**
+ * RegionalTreeView Component
+ *
+ * 지역별 고객을 3단계 트리 구조(도시 → 구/군 → 고객)로 표시합니다.
+ * 애플 디자인 철학(Progressive Disclosure)을 따르며,
+ * React.memo를 통해 불필요한 리렌더링을 방지합니다.
+ *
+ * @param props - RegionalTreeView Props
+ * @returns 렌더링된 지역별 트리 컴포넌트
+ */
+export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   customers,
   selectedCustomerId,
   onCustomerSelect,
@@ -210,12 +242,26 @@ export const RegionalTreeView: React.FC<RegionalTreeViewProps> = ({
     )
   }
 
+  // 로딩 상태
   if (loading) {
     return (
       <div className="regional-tree-view">
         <div className="regional-tree-loading">
           <SFSymbol name="arrow-clockwise" size={SFSymbolSize.TITLE1} weight={SFSymbolWeight.MEDIUM} />
           <span>로딩 중...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty State - 고객 데이터가 없을 때
+  if (customers.length === 0) {
+    return (
+      <div className="regional-tree-view">
+        <div className="regional-tree-empty">
+          <SFSymbol name="person-3" size={SFSymbolSize.LARGE_TITLE} weight={SFSymbolWeight.LIGHT} />
+          <h3 className="empty-title">등록된 고객이 없습니다</h3>
+          <p className="empty-message">고객을 추가하면 지역별로 자동 분류됩니다.</p>
         </div>
       </div>
     )
@@ -244,6 +290,15 @@ export const RegionalTreeView: React.FC<RegionalTreeViewProps> = ({
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // 커스텀 비교 함수: 고객 목록 길이와 선택된 ID만 비교
+  return (
+    prevProps.customers.length === nextProps.customers.length &&
+    prevProps.selectedCustomerId === nextProps.selectedCustomerId &&
+    prevProps.loading === nextProps.loading
+  )
+})
+
+RegionalTreeView.displayName = 'RegionalTreeView'
 
 export default RegionalTreeView
