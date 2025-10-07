@@ -47,14 +47,22 @@ export const useCustomersController = () => {
    * 고객 목록 로드
    */
   const loadCustomers = useCallback(async (params?: Partial<CustomerSearchQuery>) => {
+    console.log('[useCustomersController] loadCustomers called with params:', params)
     try {
       setLoading(true);
       setError(null);
 
       const searchParams = { ...state.searchParams, ...params };
+      console.log('[useCustomersController] Calling CustomerService.getCustomers with:', searchParams)
       const result = state.searchQuery.trim()
         ? await CustomerService.searchCustomers(state.searchQuery, searchParams)
         : await CustomerService.getCustomers(searchParams);
+
+      console.log('[useCustomersController] CustomerService returned:', {
+        customersCount: result.customers.length,
+        total: result.total,
+        hasMore: result.hasMore
+      })
 
       setCustomers({
         customers: result.customers,
@@ -62,6 +70,7 @@ export const useCustomersController = () => {
         hasMore: result.hasMore,
       });
     } catch (error) {
+      console.error('[useCustomersController] Error loading customers:', error)
       setError(handleApiError(error));
     } finally {
       setLoading(false);
@@ -284,10 +293,11 @@ export const useCustomersController = () => {
    * 검색 결과 메시지
    */
   const searchResultMessage = useMemo(() => {
+    const total = state.total ?? 0;
     if (state.searchQuery.trim()) {
-      return `"${state.searchQuery}" 검색 결과: ${state.total.toLocaleString()}명`;
+      return `"${state.searchQuery}" 검색 결과: ${total.toLocaleString()}명`;
     }
-    return `총 ${state.total.toLocaleString()}명의 고객`;
+    return `총 ${total.toLocaleString()}명의 고객`;
   }, [state.searchQuery, state.total]);
 
   // === 공개 API ===

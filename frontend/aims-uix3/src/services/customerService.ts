@@ -56,7 +56,20 @@ export class CustomerService {
       }
     });
 
-    const response = await api.get<unknown>(`${ENDPOINTS.CUSTOMERS}?${params.toString()}`);
+    const rawResponse = await api.get<unknown>(`${ENDPOINTS.CUSTOMERS}?${params.toString()}`);
+
+    console.log('[CustomerService.getCustomers] Raw API response:', rawResponse);
+
+    // API 응답이 { success: true, data: { customers: [...], pagination: {...} } } 형식인 경우 변환
+    const response =
+      rawResponse &&
+      typeof rawResponse === 'object' &&
+      'success' in rawResponse &&
+      'data' in rawResponse
+        ? (rawResponse as { success: boolean; data: unknown }).data
+        : rawResponse;
+
+    console.log('[CustomerService.getCustomers] Transformed response:', response);
 
     // 응답 검증
     return CustomerUtils.validateSearchResponse(response);

@@ -248,7 +248,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               <div className="form-row">
                 <label className="form-row__label">연간 보험료</label>
                 <div className="form-row__value">
-                  {customer.insurance_info?.annual_premium ? `${customer.insurance_info.annual_premium.toLocaleString()}` : ''}
+                  {customer.insurance_info?.annual_premium != null ? `${customer.insurance_info.annual_premium.toLocaleString()}원` : '-'}
                 </div>
               </div>
 
@@ -256,7 +256,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               <div className="form-row">
                 <label className="form-row__label">총 보장액</label>
                 <div className="form-row__value">
-                  {customer.insurance_info?.total_coverage ? `${customer.insurance_info.total_coverage.toLocaleString()}` : ''}
+                  {customer.insurance_info?.total_coverage != null ? `${customer.insurance_info.total_coverage.toLocaleString()}원` : '-'}
                 </div>
               </div>
             </div>

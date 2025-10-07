@@ -96,7 +96,7 @@ export const UpdateCustomerSchema = z.object({
  */
 export const CustomerSearchQuerySchema = z.object({
   page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(20),
+  limit: z.number().min(1).max(100000).default(20),  // 지역별 보기 등을 위해 큰 값 허용
   search: z.string().optional(),
   status: z.string().optional(),
   customerType: z.enum(['개인', '법인']).optional(),
