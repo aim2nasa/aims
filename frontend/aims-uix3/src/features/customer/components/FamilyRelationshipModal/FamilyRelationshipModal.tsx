@@ -56,7 +56,7 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
       const result = await CustomerService.getCustomers({
         page: 1,
         limit: 50,
-        q: searchValue
+        search: searchValue
       });
 
       if (result.customers) {
