@@ -256,7 +256,9 @@
   gap: 8px;
   padding: 6px 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
   transition: background-color var(--duration-fast) var(--easing-ease-out);
   border-left: 2px solid transparent;
   position: relative;
@@ -303,6 +305,9 @@
 }
 
 .tree-customer-name {
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
   color: var(--color-neutral-900);
 }
 
@@ -482,13 +487,6 @@ html[data-theme="dark"] .tree-customer-item::after {
   opacity: 0.9;
 }
 
-/* 고객 이름 - 가장 작고 서브틀 */
-.tree-customer-name {
-  font-size: 12px;
-  line-height: 1.4;
-  font-weight: 400;
-  opacity: 0.85;
-}
 
 /* 헤더 제목 - 페이지 제목과 통일 */
 .regional-tree-title {
