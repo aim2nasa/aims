@@ -15,7 +15,7 @@ interface BaseViewerProps {
   /** 뷰어 표시 여부 */
   visible: boolean
   /** 파일명 또는 제목 */
-  title?: string
+  title?: React.ReactNode
   /** 뷰어 닫기 핸들러 */
   onClose: () => void
   /** 자식 컴포넌트 (실제 뷰어) */

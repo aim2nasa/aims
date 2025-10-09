@@ -85,10 +85,41 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   if (!customerData) return null;
 
+  // 고객 타입 아이콘 (전체 보기와 동일한 SVG)
+  const getCustomerTypeIcon = () => {
+    const customerType = customer.insurance_info?.customer_type;
+    if (customerType === '법인') {
+      // 법인: 건물 아이콘
+      return (
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-detail-icon customer-icon--corporate">
+          <circle cx="10" cy="10" r="10" opacity="0.2" />
+          <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+        </svg>
+      );
+    }
+    // 개인: 사람 아이콘
+    return (
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-detail-icon customer-icon--personal">
+        <circle cx="10" cy="10" r="10" opacity="0.2" />
+        <circle cx="10" cy="7" r="3" />
+        <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+      </svg>
+    );
+  };
+
+  // 아이콘과 이름을 조합한 타이틀
+  const customerTitle = (
+    <span className="customer-detail-title">
+      {getCustomerTypeIcon()}
+      <span className="customer-detail-name">{customer.personal_info?.name || '고객 정보'}</span>
+    </span>
+  );
+
+
   return (
     <BaseViewer
       visible={true}
-      title={customer.personal_info?.name || '고객 정보'}
+      title={customerTitle}
       onClose={onClose}
       gapLeft={gapLeft}
       gapRight={gapRight}
