@@ -236,9 +236,6 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                         ) : (
                           <span>알 수 없음</span>
                         )}
-                        <span className="relationships-link__type">
-                          ({row.relatedCustomer?.insurance_info?.customer_type ?? '-'})
-                        </span>
                       </td>
                       <td>{row.createdAt}</td>
                       <td>
