@@ -11,6 +11,7 @@ import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { AllCustomersView, AllCustomersViewRef } from '@/features/customer/views/AllCustomersView/AllCustomersView';
 import type { Customer } from '@/entities/customer/model';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */
@@ -56,6 +57,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="전체보기"
+      titleIcon={<SFSymbol name="list-bullet" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={4}
       marginBottom={4}
