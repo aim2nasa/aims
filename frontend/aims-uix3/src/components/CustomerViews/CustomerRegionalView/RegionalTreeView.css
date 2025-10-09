@@ -141,8 +141,8 @@
 
 /* 도시 노드 */
 .tree-node-city {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote (제목과 동일) */
 }
 
 .tree-node-city .tree-node-icon svg {
@@ -151,8 +151,8 @@
 
 /* 구/군 노드 */
 .tree-node-district {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
 }
 
 .tree-node-district .tree-node-icon svg {
@@ -161,8 +161,8 @@
 
 /* 주소 없음 노드 */
 .tree-node-no-address {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
 }
 
 .tree-node-no-address .tree-node-icon svg {
@@ -256,9 +256,9 @@
   gap: 8px;
   padding: 6px 12px;
   cursor: pointer;
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
   transition: background-color var(--duration-fast) var(--easing-ease-out);
   border-left: 2px solid transparent;
   position: relative;
@@ -305,9 +305,9 @@
 }
 
 .tree-customer-name {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
   color: var(--color-neutral-900);
 }
 
@@ -354,14 +354,17 @@
 
 .empty-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: var(--font-size-body); /* 16px - iOS Body */
+  font-weight: var(--font-weight-semibold); /* 600 - iOS Semibold */
+  font-family: var(--font-family-system);
   color: var(--color-neutral-700);
 }
 
 .empty-message {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
   color: var(--color-neutral-500);
   line-height: 1.5;
 }
@@ -459,7 +462,7 @@ html[data-theme="dark"] .tree-customer-item::after {
 /* 폴더 아이콘 - 서브틀하고 작게 */
 .tree-node-folder-icon {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
   line-height: 1;
   opacity: 0.8;
   margin-right: 6px;
@@ -469,41 +472,45 @@ html[data-theme="dark"] .tree-customer-item::after {
 .tree-node-label {
   flex: 0 0 auto;
   margin-right: 4px;
-  font-size: 13px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-family: var(--font-family-system);
   line-height: 1.4;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
 }
 
 /* 도시 노드 - 약간 강조 */
 .tree-node-city .tree-node-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote (제목과 동일) */
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
 }
 
 /* 구/군 노드 - 더 서브틀 */
 .tree-node-district .tree-node-label {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
   opacity: 0.9;
 }
 
 
 /* 헤더 제목 - 페이지 제목과 통일 */
 .regional-tree-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-size-body); /* 16px - iOS Body */
+  font-weight: var(--font-weight-semibold); /* 600 - iOS Semibold */
+  font-family: var(--font-family-system);
 }
 
 /* 통계 폰트 - 더 작게 */
 .regional-tree-stats {
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 */
 }
 
 /* 뱃지 - aims-uix2 스타일로 레이블 바로 옆에 표시 */
 .tree-node-badge {
   margin-left: 0;
   margin-right: auto;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - iOS Caption 2 */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
   padding: 0 5px;
   height: 18px;
   min-width: 20px;
@@ -513,7 +520,8 @@ html[data-theme="dark"] .tree-customer-item::after {
 .regional-tree-stats {
   gap: 16px;
   padding: 16px 20px;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote */
+  font-family: var(--font-family-system);
 }
 
 .stat-item {
@@ -527,13 +535,13 @@ html[data-theme="dark"] .tree-customer-item::after {
 }
 
 .stat-label {
-  font-weight: 400;
-  font-size: 13px;
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote */
 }
 
 .stat-value {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: var(--font-weight-semibold); /* 600 - iOS Semibold */
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote (제목과 동일) */
 }
 
 .stat-divider {

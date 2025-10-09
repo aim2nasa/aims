@@ -33,7 +33,9 @@
 }
 
 .loading-text {
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-normal); /* 400 */
   color: var(--color-text-secondary);
 }
 
@@ -46,7 +48,9 @@
   padding: 60px 20px;
   gap: 16px;
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-normal); /* 400 */
 }
 
 /* 트리 컨테이너 */
@@ -72,6 +76,7 @@
   cursor: pointer;
   transition: background-color 0.15s ease-out;
   user-select: none;
+  font-family: var(--font-family-system);
 }
 
 .tree-node:hover {
@@ -79,29 +84,37 @@
 }
 
 .tree-node--root {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
+  font-size: var(--font-size-footnote); /* 13px - iOS Footnote (제목과 동일) */
+  line-height: var(--line-height-normal);
 }
 
 .tree-node--group {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  line-height: var(--line-height-normal);
   margin-left: 24px;
 }
 
 .tree-node--leaf {
-  font-size: 13px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  line-height: var(--line-height-normal);
   margin-left: 48px;
 }
 
 .tree-node--relation {
-  font-size: 13px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  line-height: var(--line-height-normal);
   margin-left: 48px;
   background-color: var(--color-bg-secondary);
 }
 
 .tree-node--empty {
-  font-size: 13px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
+  font-weight: var(--font-weight-normal); /* 400 - iOS Normal */
+  line-height: var(--line-height-normal);
   margin-left: 48px;
   font-style: italic;
   color: var(--color-text-tertiary);
@@ -114,11 +127,11 @@
 
 /* 트리 노드 아이콘 */
 .tree-node__icon {
-  font-size: 14px;
+  font-size: var(--font-size-caption-1); /* 12px - iOS Caption 1 (제목보다 작게) */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
+  width: 16px;
   flex-shrink: 0;
   transition: transform 0.15s ease-out;
 }
@@ -135,6 +148,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--color-text-primary);
+
+  /* 🔤 iOS Typography: 완벽한 텍스트 렌더링 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .tree-node__label--family {
@@ -169,13 +187,15 @@
 
 /* 트리 노드 배지 */
 .tree-node__badge {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - iOS Caption 2 */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
+  line-height: 1.2;
   padding: 2px 8px;
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-border-primary);
   border-radius: 12px;
   color: var(--color-text-secondary);
-  font-weight: 500;
 }
 
 .tree-node__badge--success {
@@ -186,12 +206,14 @@
 
 /* 관계 배지 */
 .tree-node__relation-badge {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - iOS Caption 2 */
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-medium); /* 500 - iOS Medium */
+  line-height: 1.2;
   padding: 2px 8px;
   background-color: var(--color-icon-red);
   border-radius: 4px;
   color: white;
-  font-weight: 500;
 }
 
 /* 트리 자식 노드 컨테이너 */
