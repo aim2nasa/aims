@@ -82,6 +82,45 @@ const CASES_COLLECTION = 'cases';
 const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
 
 let db;
+let fallbackHandlersRegistered = false;
+
+const registerFallbackHandlers = () => {
+  if (fallbackHandlersRegistered) {
+    return;
+  }
+  fallbackHandlersRegistered = true;
+
+  app.use((req, res, next) => {
+    res.status(404).json({
+      success: false,
+      error: '요청한 엔드포인트를 찾을 수 없습니다.',
+      requested_url: req.originalUrl,
+      method: req.method,
+      available_endpoints: [
+        'GET /api/health',
+        'GET /api/documents',
+        'GET /api/documents/status',
+        'GET /api/documents/:id/status',
+        'GET /api/customers',
+        'POST /api/customers',
+        'GET /api/customers/:id',
+        'PUT /api/customers/:id',
+        'DELETE /api/customers/:id'
+      ],
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  app.use((error, req, res, next) => {
+    console.error('서버 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '내부 서버 오류가 발생했습니다.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    });
+  });
+};
 
 // MongoDB 연결
 MongoClient.connect(MONGO_URI)
@@ -1959,41 +1998,6 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
   }
 });
 
-// ==================== 404 & Error Handlers (맨 마지막에 등록) ====================
-
-// 404 Not Found 핸들러 (잘못된 엔드포인트에 대한 JSON 응답)
-app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
-    error: '요청한 엔드포인트를 찾을 수 없습니다.',
-    requested_url: req.originalUrl,
-    method: req.method,
-    available_endpoints: [
-      'GET /api/health',
-      'GET /api/documents',
-      'GET /api/documents/status',
-      'GET /api/documents/:id/status',
-      'GET /api/customers',
-      'POST /api/customers',
-      'GET /api/customers/:id',
-      'PUT /api/customers/:id',
-      'DELETE /api/customers/:id'
-    ],
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 에러 핸들링 미들웨어
-app.use((error, req, res, next) => {
-  console.error('서버 오류:', error);
-  res.status(500).json({
-    success: false,
-    error: '내부 서버 오류가 발생했습니다.',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // ==================== MongoDB 연결 & 서버 시작 ====================
 
 // 고객 관계 관리 라우트 설정
@@ -2004,8 +2008,12 @@ MongoClient.connect(MONGO_URI)
 
     // 고객 관계 라우트 설정
     setupCustomerRelationshipRoutes(app, db);
+    registerFallbackHandlers();
   })
-  .catch(error => console.error('MongoDB 연결 실패:', error));
+  .catch(error => {
+    console.error('MongoDB 연결 실패:', error);
+    registerFallbackHandlers();
+  });
 
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', () => {
