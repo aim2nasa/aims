@@ -1,6 +1,7 @@
 /**
  * AIMS UIX-3 Customer Detail - Relationships Tab
  * @since 2025-10-20
+ * @updated 2025-10-10 - 아이콘 크기 개선
  *
  * 고객 관계 정보를 aims-uix2와 동일한 로직으로 표시합니다.
  * - 관계 목록 테이블
@@ -35,7 +36,7 @@ interface RelationshipsTabProps {
 }
 
 const CATEGORY_SYMBOLS: Record<string, string> = {
-  family: 'house.fill',
+  family: 'heart.fill',
   relative: 'person.2.fill',
   social: 'person.3.fill',
   professional: 'briefcase.fill',
@@ -211,7 +212,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                           <span className="relationships-category__icon">
                             <SFSymbol
                               name={symbolName}
-                              size={SFSymbolSize.CAPTION_1}
+                              size={SFSymbolSize.TITLE_3}
                               weight={SFSymbolWeight.SEMIBOLD}
                             />
                           </span>
@@ -245,12 +246,12 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                           type="button"
                           className="relationships-action relationships-action--danger"
                           onClick={() => handleDelete(row.key)}
-                          aria-label="관계 삭제"
-                          title="관계 삭제"
+                          aria-label="정말로 이 관계를 삭제하시겠습니까?"
+                          title="정말로 이 관계를 삭제하시겠습니까?"
                         >
                           <SFSymbol
                             name="trash"
-                            size={SFSymbolSize.CAPTION_1}
+                            size={SFSymbolSize.TITLE_3}
                             weight={SFSymbolWeight.SEMIBOLD}
                           />
                         </button>

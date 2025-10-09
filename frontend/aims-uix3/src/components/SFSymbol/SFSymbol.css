@@ -562,6 +562,126 @@
   -webkit-mask-size: contain;
 }
 
+/* === HEART.FILL SYMBOL (배우자/가족) === */
+
+.sf-symbol--heart-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.75em;
+
+  /* iOS SF Symbols 하트 아이콘 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cpath d='M50 90 C 20 70, 5 50, 5 35 C 5 20, 15 10, 25 10 C 35 10, 45 20, 50 30 C 55 20, 65 10, 75 10 C 85 10, 95 20, 95 35 C 95 50, 80 70, 50 90 Z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.95;
+}
+
+/* === HOUSE.FILL SYMBOL (가족/집) === */
+
+.sf-symbol--house-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.8em;
+
+  /* iOS 표준 집 실루엣 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 80'%3e%3cpath d='M42.5 5L5 35v40h25V55h25v20h25V35L42.5 5z' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
+}
+
+/* === PERSON 2 FILL SYMBOL (친척) === */
+
+.sf-symbol--person-2-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9em;
+  height: 0.8em;
+
+  /* iOS 표준 두 사람 실루엣 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3ccircle cx='30' cy='20' r='12'/%3e%3ccircle cx='60' cy='20' r='12'/%3e%3cpath d='M30 38c-12 0-20 8-20 20v15h35V58c0-8-3-15-8-18 3-1 6-2 8-2 12 0 20 8 20 20v15h15V58c0-12-8-20-20-20-3 0-6 1-8 2-5-3-12-2-22-2z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
+}
+
+/* === PERSON 3 FILL SYMBOL (사회) === */
+
+.sf-symbol--person-3-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.95em;
+  height: 0.8em;
+
+  /* iOS 표준 세 사람 실루엣 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 95 80'%3e%3ccircle cx='20' cy='20' r='10'/%3e%3ccircle cx='47.5' cy='15' r='12'/%3e%3ccircle cx='75' cy='20' r='10'/%3e%3cpath d='M20 35c-10 0-17 7-17 17v13h27V52c0-5-2-10-5-13 2-1 4-2 6-2 10 0 17 7 17 17v13h27V52c0-10-7-17-17-17-2 0-4 1-6 2-3-3-6-5-10-5-4 0-7 2-10 5-2-1-4-2-6-2z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 95 80'%3e%3ccircle cx='20' cy='20' r='10'/%3e%3ccircle cx='47.5' cy='15' r='12'/%3e%3ccircle cx='75' cy='20' r='10'/%3e%3cpath d='M20 35c-10 0-17 7-17 17v13h27V52c0-5-2-10-5-13 2-1 4-2 6-2 10 0 17 7 17 17v13h27V52c0-10-7-17-17-17-2 0-4 1-6 2-3-3-6-5-10-5-4 0-7 2-10 5-2-1-4-2-6-2z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
+}
+
+/* === BRIEFCASE FILL SYMBOL (비즈니스) === */
+
+.sf-symbol--briefcase-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.7em;
+
+  /* iOS 표준 서류가방 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 70'%3e%3cpath d='M30 5h25v10H30V5z'/%3e%3crect x='5' y='15' width='75' height='50' rx='5' fill='currentColor'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
+}
+
+/* === BUILDING 2 FILL SYMBOL (법인) === */
+
+.sf-symbol--building-2-fill .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.9em;
+  height: 0.8em;
+
+  /* iOS 표준 두 빌딩 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3crect x='5' y='15' width='35' height='60' rx='3' fill='currentColor'/%3e%3crect x='50' y='5' width='35' height='70' rx='3' fill='currentColor'/%3e%3crect x='12' y='25' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='12' y='38' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='12' y='51' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='25' y='25' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='25' y='38' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='15' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='28' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='41' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='70' y='15' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='70' y='28' width='8' height='8' fill='white' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 80'%3e%3crect x='5' y='15' width='35' height='60' rx='3' fill='currentColor'/%3e%3crect x='50' y='5' width='35' height='70' rx='3' fill='currentColor'/%3e%3crect x='12' y='25' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='12' y='38' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='12' y='51' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='25' y='25' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='25' y='38' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='15' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='28' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='57' y='41' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='70' y='15' width='8' height='8' fill='white' opacity='0.3'/%3e%3crect x='70' y='28' width='8' height='8' fill='white' opacity='0.3'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
+}
+
 /* === PERSON 2 (TEAM) SYMBOL === */
 
 .sf-symbol--person-2 .sf-symbol__shape::before {
@@ -1233,35 +1353,23 @@
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-/* TRASH SYMBOL - 애플 스타일 휴지통 */
+/* TRASH SYMBOL - iOS SF Symbols 스타일 휴지통 */
 .sf-symbol--trash .sf-symbol__shape::before {
   content: '';
   position: absolute;
-  top: 60%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 0.5em;
-  height: 0.4em;
+  width: 0.85em;
+  height: 0.75em;
 
-  /* 애플 스타일 휴지통 - 단순한 통 */
-  background: none;
-  border: 0.08em solid currentColor;
-  border-top: none;
-  border-radius: 0 0 0.08em 0.08em;
-  opacity: 0.7;
-}
-
-.sf-symbol--trash .sf-symbol__shape::after {
-  content: '';
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 0.6em;
-  height: 0.08em;
+  /* iOS 표준 쓰레기통 아이콘 */
   background: currentColor;
-  border-radius: 0.04em;
-  opacity: 0.7;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 85 100'%3e%3cpath d='M25 20 L25 10 C25 5, 28 0, 35 0 L50 0 C57 0, 60 5, 60 10 L60 20 M10 20 L75 20 M15 25 L15 90 C15 95, 18 100, 25 100 L60 100 C67 100, 70 95, 70 90 L70 25 M32 35 L32 85 M50 35 L50 85' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  opacity: 0.9;
 }
 
 /* ARROW CLOCKWISE (Retry) SYMBOL - 애플 스타일 새로고침 */
