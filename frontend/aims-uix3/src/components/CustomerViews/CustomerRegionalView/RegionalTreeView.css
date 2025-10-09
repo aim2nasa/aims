@@ -510,3 +510,68 @@ html[data-theme="dark"] .tree-customer-item::after {
   height: 18px;
   min-width: 20px;
 }
+
+/* === STATS 애플 스타일 override === */
+.regional-tree-stats {
+  gap: 16px;
+  padding: 16px 20px;
+  font-size: 13px;
+}
+
+.stat-item {
+  gap: 8px;
+  color: var(--color-neutral-700);
+}
+
+.stat-item svg {
+  color: var(--color-primary-600);
+  opacity: 0.8;
+}
+
+.stat-label {
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.stat-divider {
+  color: var(--color-neutral-400);
+  font-weight: 300;
+  opacity: 0.6;
+}
+
+/* === 통계 및 고객 아이콘 텍스트 스타일 === */
+.stat-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tree-customer-icon-text {
+  font-size: 13px;
+  line-height: 1;
+  margin-right: 6px;
+}
+
+/* === 전체 보기와 동일한 고객 아이콘 SVG 스타일 === */
+.customer-icon--corporate,
+.customer-icon--personal {
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.customer-icon--corporate {
+  color: var(--color-primary-600);
+}
+
+.customer-icon--personal {
+  color: var(--color-success);
+}
+
+.tree-customer-item.selected .customer-icon--corporate,
+.tree-customer-item.selected .customer-icon--personal {
+  color: var(--color-primary-600);
+}
