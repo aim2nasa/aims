@@ -675,7 +675,7 @@
 
   /* Main Background Colors - 애플 시그니처 배경 */
   --color-layout-main-light: #f2f2f7; /* Light Theme: iOS 라이트 그레이 */
-  --color-layout-main-dark: #000000;  /* Dark Theme: 순수 블랙 */
+  --color-layout-main-dark: #1c1c1e;  /* Dark Theme: 순수 블랙 */
 
   /* Content Background Colors - 깔끔한 카드형 배경 */
   --color-layout-content-light: #ffffff;    /* Light Theme: 순수 화이트 */
