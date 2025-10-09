@@ -318,8 +318,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 <span className={`tree-node__icon ${expandedNodes.has('family') ? 'expanded' : ''}`}>
                   {expandedNodes.has('family') ? '📂' : '📁'}
                 </span>
-                <span className="tree-node__label tree-node__label--family">가족</span>
-                <span className="tree-node__badge">{familyGroups.length}</span>
+                <div className="tree-node__content">
+                  <span className="tree-node__label tree-node__label--family">가족</span>
+                  <span className="tree-node__badge">{familyGroups.length}</span>
+                </div>
               </div>
 
               {expandedNodes.has('family') && (
@@ -335,15 +337,17 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                           <span className={`tree-node__icon ${expandedNodes.has(`family-${repName}`) ? 'expanded' : ''}`}>
                             {expandedNodes.has(`family-${repName}`) ? '📂' : '📁'}
                           </span>
-                          <span
-                            className="tree-node__label tree-node__label--clickable"
-                            onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
-                          >
-                            👑 {repName} (대표)
-                          </span>
-                          <span className="tree-node__badge tree-node__badge--success">
-                            {groupData.members.length}
-                          </span>
+                          <div className="tree-node__content">
+                            <span
+                              className="tree-node__label tree-node__label--clickable"
+                              onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
+                            >
+                              👑 {repName} (대표)
+                            </span>
+                            <span className="tree-node__badge tree-node__badge--success">
+                              {groupData.members.length}
+                            </span>
+                          </div>
                         </div>
 
                         {expandedNodes.has(`family-${repName}`) && (
@@ -400,8 +404,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 <span className={`tree-node__icon ${expandedNodes.has('corporate') ? 'expanded' : ''}`}>
                   {expandedNodes.has('corporate') ? '📂' : '📁'}
                 </span>
-                <span className="tree-node__label tree-node__label--corporate">법인</span>
-                <span className="tree-node__badge">{corporateEntries.length}</span>
+                <div className="tree-node__content">
+                  <span className="tree-node__label tree-node__label--corporate">법인</span>
+                  <span className="tree-node__badge">{corporateEntries.length}</span>
+                </div>
               </div>
 
               {expandedNodes.has('corporate') && (
@@ -420,13 +426,15 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             <span className={`tree-node__icon ${expandedNodes.has(`corporate-${companyName}`) ? 'expanded' : ''}`}>
                               {expandedNodes.has(`corporate-${companyName}`) ? '📂' : '📁'}
                             </span>
-                            <span
-                              className="tree-node__label tree-node__label--clickable"
-                              onClick={(e) => company && handleCustomerClick(company._id, e)}
-                            >
-                              {companyName}
-                            </span>
-                            <span className="tree-node__badge">{employees.length}</span>
+                            <div className="tree-node__content">
+                              <span
+                                className="tree-node__label tree-node__label--clickable"
+                                onClick={(e) => company && handleCustomerClick(company._id, e)}
+                              >
+                                {companyName}
+                              </span>
+                              <span className="tree-node__badge">{employees.length}</span>
+                            </div>
                           </div>
 
                           {expandedNodes.has(`corporate-${companyName}`) && (
