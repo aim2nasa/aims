@@ -23,7 +23,7 @@ interface CustomerRelationshipViewProps {
   /** View 닫기 핸들러 */
   onClose: () => void;
   /** 고객 선택 핸들러 */
-  onCustomerSelect?: (customerId: string) => void;
+  onCustomerSelect?: (customerId: string, customer?: Customer) => void;
 }
 
 interface FamilyGroup {
@@ -269,8 +269,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onCustomerSelect?.(customerId);
-  }, [onCustomerSelect]);
+    const customer = customers.find(c => c._id === customerId);
+    if (customer) {
+      onCustomerSelect?.(customerId, customer);
+    }
+  }, [customers, onCustomerSelect]);
 
   if (loading) {
     return (
