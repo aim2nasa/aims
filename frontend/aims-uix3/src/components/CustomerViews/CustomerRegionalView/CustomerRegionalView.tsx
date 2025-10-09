@@ -11,6 +11,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomersController } from '../../../controllers/useCustomersController'
 import type { Customer } from '../../../entities/customer/model'
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
 interface CustomerRegionalViewProps {
   /** View 표시 여부 */
@@ -70,6 +71,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="지역별 보기"
+      titleIcon={<SFSymbol name="location" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={6}
       marginBottom={6}
