@@ -8,6 +8,7 @@
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
 interface CustomerRelationshipViewProps {
   /** View 표시 여부 */
@@ -38,6 +39,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     <CenterPaneView
       visible={visible}
       title="관계별 보기"
+      titleIcon={<SFSymbol name="person-2" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={7}
       marginBottom={7}
