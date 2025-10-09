@@ -134,6 +134,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="문서 라이브러리"
+      titleIcon={<SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-library)' }} />}
       onClose={onClose}
       marginTop={6}
       marginBottom={6}
