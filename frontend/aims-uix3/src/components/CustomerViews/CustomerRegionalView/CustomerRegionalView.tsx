@@ -10,12 +10,15 @@ import React, { useEffect } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomersController } from '../../../controllers/useCustomersController'
+import type { Customer } from '../../../entities/customer/model'
 
 interface CustomerRegionalViewProps {
   /** View 표시 여부 */
   visible: boolean
   /** View 닫기 핸들러 */
   onClose: () => void
+  /** 고객 클릭 핸들러 (RightPane 표시용) */
+  onCustomerClick?: (customerId: string, customer: Customer) => void
 }
 
 /**
@@ -31,12 +34,14 @@ interface CustomerRegionalViewProps {
  * <CustomerRegionalView
  *   visible={isVisible}
  *   onClose={handleClose}
+ *   onCustomerClick={handleCustomerClick}
  * />
  * ```
  */
 export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   visible,
-  onClose
+  onClose,
+  onCustomerClick
 }) => {
   const { customers, isLoading, selectCustomer, selectedCustomer, loadCustomers } = useCustomersController()
 
@@ -48,11 +53,16 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     }
   }, [visible, isLoading, loadCustomers])
 
-  // 고객 선택 핸들러
+  // 고객 선택 핸들러 (내부 상태 + RightPane 표시)
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers.find(c => c._id === customerId)
     if (customer) {
+      // 내부 선택 상태 업데이트
       selectCustomer(customer)
+      // RightPane 표시 (부모 컴포넌트로 전달)
+      if (onCustomerClick) {
+        onCustomerClick(customerId, customer)
+      }
     }
   }
 

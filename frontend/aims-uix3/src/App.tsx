@@ -349,7 +349,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     } catch (error) {
       console.error('[App] 문서 로드 오류:', error)
     }
-  }, [rightPaneVisible])
+  }, [])
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
   const handleCustomerClick = useCallback(async (customerId: string, customerData?: any) => {
@@ -359,10 +359,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     setRightPaneContentType('customer')
 
     // RightPane이 숨겨져 있으면 표시
-    if (!rightPaneVisible) {
-      setRightPaneVisible(true)
-    }
-  }, [rightPaneVisible])
+    setRightPaneVisible(true)
+  }, [])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
   const handleCustomerRefresh = useCallback(async () => {
@@ -710,6 +708,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomerRegionalView
               visible={activeDocumentView === 'customers-regional'}
               onClose={closeDocumentView}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 
