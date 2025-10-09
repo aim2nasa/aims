@@ -369,7 +369,13 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
                               .map((member) => (
                                 <div key={member._id} className="tree-node tree-node--leaf">
-                                  <span className="tree-node__icon">👤</span>
+                                  <span className="tree-node__icon">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                                      <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                      <circle cx="10" cy="7" r="3" />
+                                      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                    </svg>
+                                  </span>
                                   <span
                                     className="tree-node__label tree-node__label--clickable"
                                     onClick={(e) => handleCustomerClick(member._id, e)}
@@ -457,7 +463,13 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
                                   return (
                                     <div key={`${companyName}-${employeeName}`} className="tree-node tree-node--leaf">
-                                      <span className="tree-node__icon">👤</span>
+                                      <span className="tree-node__icon">
+                                        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                                          <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                          <circle cx="10" cy="7" r="3" />
+                                          <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                        </svg>
+                                      </span>
                                       <span
                                         className="tree-node__label tree-node__label--clickable"
                                         onClick={(e) => employee && handleCustomerClick(employee._id, e)}
