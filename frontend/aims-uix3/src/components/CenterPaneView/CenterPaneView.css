@@ -195,3 +195,15 @@ html[data-theme="dark"] .center-pane-view__placeholder {
     animation: none;
   }
 }
+/* 제목 아이콘 스타일 */
+.center-pane-view__title-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  opacity: 0.6;
+}
+
+/* 다크 테마 아이콘 지원 */
+html[data-theme="dark"] .center-pane-view__title-icon {
+  opacity: 0.7; /* 다크 테마에서 살짝 더 밝게 */
+}

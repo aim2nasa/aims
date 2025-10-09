@@ -16,6 +16,8 @@ interface CenterPaneViewProps {
   visible: boolean
   /** View 제목 */
   title: string
+  /** 제목 앞에 표시할 아이콘 (React Node) */
+  titleIcon?: React.ReactNode
   /** View 닫기 핸들러 */
   onClose: () => void
   /** 상단 마진 (px) */
@@ -73,11 +75,22 @@ interface CenterPaneViewProps {
  * >
  *   <div>콘텐츠</div>
  * </CenterPaneView>
+ *
+ * // With titleIcon
+ * <CenterPaneView
+ *   visible={isVisible}
+ *   title="Customer Registration"
+ *   titleIcon={<SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+ *   onClose={handleClose}
+ * >
+ *   <div>Content</div>
+ * </CenterPaneView>
  * ```
  */
 export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   visible,
   title,
+  titleIcon,
   onClose: _onClose, // eslint-disable-line @typescript-eslint/no-unused-vars
   marginTop = 4,
   marginBottom = 4,
@@ -106,6 +119,7 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
       {/* 헤더 영역 - 애플 스타일 적용 */}
       <div className="center-pane-view__header">
         <h2 className="center-pane-view__title">
+          {titleIcon && <span className="center-pane-view__title-icon">{titleIcon}</span>}
           {title}
         </h2>
         {/* X 버튼 제거 - 애플의 미니멀 디자인 철학 적용 */}

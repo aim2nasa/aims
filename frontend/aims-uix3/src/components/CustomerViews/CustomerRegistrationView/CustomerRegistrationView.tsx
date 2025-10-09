@@ -10,6 +10,7 @@
 import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { CustomerRegistrationView as RegistrationForm } from '@/features/customer/views/CustomerRegistrationView/CustomerRegistrationView';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
 interface CustomerRegistrationViewProps {
   /** View 표시 여부 */
@@ -40,6 +41,7 @@ export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> =
     <CenterPaneView
       visible={visible}
       title="고객 등록"
+      titleIcon={<SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={3}
       marginBottom={3}
