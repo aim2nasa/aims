@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
 import CustomerEditModal from '../CustomerEditModal';
+import FamilyRelationshipModal from '../../components/FamilyRelationshipModal';
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import type { Customer } from '@/entities/customer/model';
@@ -39,6 +40,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   gapBottom = 2,
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
   const confirmController = useAppleConfirmController();
 
@@ -82,6 +84,13 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const handleSaveSuccess = useCallback(() => {
     onRefresh?.();
   }, [onRefresh]);
+
+  const handleFamilyRelationshipSuccess = useCallback(() => {
+    onRefresh?.();
+  }, [onRefresh]);
+
+  // 개인 고객인지 확인
+  const isPersonalCustomer = customer.insurance_info?.customer_type === '개인';
 
   if (!customerData) return null;
 
@@ -130,6 +139,18 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         <div className="customer-detail-view__inner">
           {/* 🍎 액션 버튼 영역 */}
           <div className="customer-detail-view__actions">
+            {isPersonalCustomer && (
+              <button
+                className="customer-detail-view__action-button customer-detail-view__action-button--family"
+                onClick={() => setIsFamilyModalVisible(true)}
+                title="가족 구성원을 추가합니다"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
+                </svg>
+                가족 관계 추가
+              </button>
+            )}
             <button
               className="customer-detail-view__action-button customer-detail-view__action-button--primary"
               onClick={handleEditClick}
@@ -301,6 +322,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         customer={customerData}
         onClose={() => setIsEditModalVisible(false)}
         onSuccess={handleSaveSuccess}
+      />
+
+      {/* 가족 관계 추가 모달 */}
+      <FamilyRelationshipModal
+        visible={isFamilyModalVisible}
+        onCancel={() => setIsFamilyModalVisible(false)}
+        customerId={customer._id}
+        onSuccess={handleFamilyRelationshipSuccess}
       />
 
       {/* 🍎 애플 스타일 확인 모달 */}

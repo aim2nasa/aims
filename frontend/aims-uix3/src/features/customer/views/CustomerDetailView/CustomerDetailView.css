@@ -78,6 +78,24 @@
   background-color: var(--color-accent-hover);
 }
 
+.customer-detail-view__action-button--family {
+  background-color: var(--color-accent-green);
+  color: var(--color-text-on-accent);
+}
+
+.customer-detail-view__action-button--family:hover:not(:disabled) {
+  background-color: #22c55e;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .customer-detail-view__action-button--family {
+  background-color: var(--color-accent-green);
+}
+
+[data-theme="dark"] .customer-detail-view__action-button--family:hover:not(:disabled) {
+  background-color: #22c55e;
+}
+
 .customer-detail-view__action-button--destructive {
   background-color: transparent;
   color: var(--color-text-secondary);
@@ -119,6 +137,15 @@
 
 [data-theme="dark"] .customer-detail-view__action-button--primary svg {
   color: var(--color-icon-blue);
+}
+
+/* Family 버튼 아이콘: 흰색 (버튼이 초록색이므로) */
+.customer-detail-view__action-button--family svg {
+  color: white;
+}
+
+[data-theme="dark"] .customer-detail-view__action-button--family svg {
+  color: white;
 }
 
 /* Destructive 버튼 아이콘: 빨간색 (섹션 아이콘처럼 선명하게) */
