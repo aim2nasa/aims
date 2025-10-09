@@ -1,0 +1,230 @@
+/**
+ * CustomerRelationshipView Styles
+ * @since 1.0.0
+ * @version 2.0.0
+ *
+ * 🍎 애플 디자인 철학 준수
+ * - iOS 공식 색상 팔레트 사용
+ * - Progressive Disclosure
+ * - 서브틀한 기본 상태
+ */
+
+/* 로딩 상태 */
+.relationship-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border-primary);
+  border-top-color: var(--color-icon-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* 빈 상태 */
+.relationship-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* 트리 컨테이너 */
+.relationship-tree {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 트리 노드 */
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out;
+  user-select: none;
+}
+
+.tree-node:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.tree-node--root {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.tree-node--group {
+  font-weight: 500;
+  font-size: 14px;
+  margin-left: 24px;
+}
+
+.tree-node--leaf {
+  font-size: 13px;
+  margin-left: 48px;
+}
+
+.tree-node--relation {
+  font-size: 13px;
+  margin-left: 48px;
+  background-color: var(--color-bg-secondary);
+}
+
+.tree-node--empty {
+  font-size: 13px;
+  margin-left: 48px;
+  font-style: italic;
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+.tree-node--empty:hover {
+  background-color: transparent;
+}
+
+/* 트리 노드 아이콘 */
+.tree-node__icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease-out;
+}
+
+.tree-node__icon.expanded {
+  transform: rotate(0deg);
+}
+
+/* 트리 노드 라벨 */
+.tree-node__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.tree-node__label--family {
+  color: var(--color-icon-red);
+}
+
+.tree-node__label--corporate {
+  color: var(--color-icon-blue);
+}
+
+.tree-node__label--clickable {
+  color: var(--color-icon-blue);
+  text-decoration: none;
+  position: relative;
+}
+
+.tree-node__label--clickable::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background-color: var(--color-icon-blue);
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.tree-node__label--clickable:hover::after {
+  opacity: 0.5;
+}
+
+/* 트리 노드 배지 */
+.tree-node__badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.tree-node__badge--success {
+  background-color: rgba(52, 199, 89, 0.1);
+  border-color: var(--color-icon-green);
+  color: var(--color-icon-green);
+}
+
+/* 관계 배지 */
+.tree-node__relation-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background-color: var(--color-icon-red);
+  border-radius: 4px;
+  color: white;
+  font-weight: 500;
+}
+
+/* 트리 자식 노드 컨테이너 */
+.tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.tree-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .relationship-tree {
+    padding: 8px;
+  }
+
+  .tree-node {
+    padding: 6px 10px;
+  }
+
+  .tree-node--group {
+    margin-left: 20px;
+  }
+
+  .tree-node--leaf,
+  .tree-node--relation,
+  .tree-node--empty {
+    margin-left: 40px;
+  }
+}

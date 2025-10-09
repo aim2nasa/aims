@@ -716,6 +716,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomerRelationshipView
               visible={activeDocumentView === 'customers-relationship'}
               onClose={closeDocumentView}
+              onCustomerSelect={handleCustomerClick}
             />
           </Suspense>
         </main>
