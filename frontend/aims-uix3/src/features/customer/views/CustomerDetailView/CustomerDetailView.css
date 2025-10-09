@@ -162,6 +162,11 @@
   filter: brightness(1.2);
 }
 
+/* Tabs spacing */
+.customer-detail-view__tab-content {
+  padding-top: var(--spacing-3);
+}
+
 /* Form */
 .customer-detail-view__form {
   display: flex;
