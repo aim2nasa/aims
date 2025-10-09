@@ -132,7 +132,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     </span>
   );
 
-  // 🍎 탭 정의 (aims-uix2와 동일한 5개 탭)
+  // 🍎 탭 정의 (순서: 기본정보, 관계, 문서, 상담이력, 계약)
   const tabs: Tab[] = [
     {
       key: 'info',
@@ -145,6 +145,15 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       )
     },
     {
+      key: 'relationships',
+      label: '관계',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
+        </svg>
+      )
+    },
+    {
       key: 'documents',
       label: '문서',
       icon: (
@@ -153,15 +162,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         </svg>
       ),
       count: 0
-    },
-    {
-      key: 'relationships',
-      label: '관계',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
-        </svg>
-      )
     },
     {
       key: 'consultations',
