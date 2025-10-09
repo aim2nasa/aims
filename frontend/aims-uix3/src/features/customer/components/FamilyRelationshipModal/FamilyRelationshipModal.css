@@ -121,10 +121,15 @@
   font-weight: 500;
   color: var(--color-text-primary);
   margin-bottom: 8px;
+  flex-wrap: nowrap;
 }
 
 .form-label svg {
   color: var(--color-icon-blue);
+}
+
+.form-label span {
+  white-space: nowrap;
 }
 
 /* 입력 필드 */
@@ -155,6 +160,7 @@
 /* Autocomplete 래퍼 */
 .autocomplete-wrapper {
   position: relative;
+  width: 100%;
 }
 
 .autocomplete-clear,
@@ -199,6 +205,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  width: 100%;
+  box-sizing: border-box;
   background-color: var(--color-bg-primary);
   border: 1px solid var(--color-border-primary);
   border-radius: 8px;

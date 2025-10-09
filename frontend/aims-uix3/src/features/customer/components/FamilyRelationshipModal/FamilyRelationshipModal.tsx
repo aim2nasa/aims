@@ -197,8 +197,8 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
       <div className="family-modal" onClick={(e) => e.stopPropagation()}>
         <div className="family-modal__header">
           <div className="family-modal__title">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3zm0 1.5l4 2v3.5c0 3-2 5-4 5s-4-2-4-5V4.5l4-2z"/>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z"/>
             </svg>
             <span>가족 관계 추가</span>
           </div>
@@ -301,8 +301,8 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
             {/* 가족 관계 선택 */}
             <div className="form-section">
               <label className="form-label">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 2a3 3 0 013 3v2a3 3 0 01-6 0V5a3 3 0 013-3zm0 8c-2.5 0-4.5 1.5-4.5 3v1.5h9V13c0-1.5-2-3-4.5-3z"/>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z"/>
                 </svg>
                 <span>가족 관계</span>
               </label>
