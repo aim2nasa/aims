@@ -111,7 +111,7 @@
   border-spacing: 0;
   font-size: var(--font-size-footnote);
   color: var(--color-text-primary);
-  min-width: 720px;
+  min-width: 520px;
 }
 
 .relationships-table thead {
@@ -215,64 +215,6 @@
   color: var(--color-text-secondary);
 }
 
-.relationships-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  padding: 0 var(--spacing-2);
-  height: 24px;
-  border-radius: 999px;
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
-  color: #fff;
-}
-
-.relationships-tag--strong {
-  background-color: rgba(255, 59, 48, 0.9);
-}
-
-.relationships-tag--medium {
-  background-color: rgba(255, 159, 10, 0.9);
-}
-
-.relationships-tag--weak {
-  background-color: rgba(0, 122, 255, 0.9);
-}
-
-.relationships-tag-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-1);
-  align-items: center;
-}
-
-.relationships-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 var(--spacing-2);
-  height: 22px;
-  border-radius: 6px;
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
-  color: #fff;
-  white-space: nowrap;
-}
-
-.relationships-badge--green {
-  background-color: rgba(52, 199, 89, 0.9);
-}
-
-.relationships-badge--purple {
-  background-color: rgba(94, 92, 230, 0.9);
-}
-
-.relationships-badge--gold {
-  background-color: rgba(255, 204, 0, 0.9);
-  color: var(--color-neutral-800);
-}
-
 .relationships-action {
   display: inline-flex;
   align-items: center;
@@ -303,7 +245,7 @@
 
 @media (max-width: 960px) {
   .relationships-table {
-    min-width: 640px;
+    min-width: 480px;
   }
 }
 

@@ -34,20 +34,6 @@ interface RelationshipsTabProps {
   onRelationshipsUpdated?: () => void;
 }
 
-const STRENGTH_LABELS: Record<string, { label: string; tone: 'strong' | 'medium' | 'weak' }> = {
-  strong: { label: '강함', tone: 'strong' },
-  medium: { label: '보통', tone: 'medium' },
-  weak: { label: '약함', tone: 'weak' },
-};
-
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: '매일',
-  weekly: '주간',
-  monthly: '월간',
-  rarely: '드물게',
-  never: '없음',
-};
-
 const CATEGORY_SYMBOLS: Record<string, string> = {
   family: 'house.fill',
   relative: 'person.2.fill',
@@ -121,11 +107,6 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       const relatedCustomer =
         (relationship.related_customer as Customer | undefined) ?? undefined;
       const category = relationship.relationship_info?.relationship_category ?? 'default';
-      const strengthKey = relationship.relationship_info?.strength ?? '';
-      const strength = STRENGTH_LABELS[strengthKey];
-      const frequencyKey = relationship.relationship_details?.contact_frequency ?? '';
-      const contactFrequency =
-        FREQUENCY_LABELS[frequencyKey] ?? relationship.relationship_details?.contact_frequency ?? '-';
       const createdAt =
         relationship.meta?.created_at ?? relationship.created_at ?? '';
       const createdAtLabel = createdAt ? DATE_FORMATTER.format(new Date(createdAt)) : '-';
@@ -135,10 +116,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
         category,
         relationship,
         relatedCustomer,
-        strength,
-        contactFrequency,
         createdAt: createdAtLabel,
-        insurance: relationship.insurance_relevance ?? {},
         isReversed: relationship.is_reversed ?? false,
       };
     });
@@ -219,9 +197,6 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                 <tr>
                   <th>관계 유형</th>
                   <th>관련 고객</th>
-                  <th>관계 강도</th>
-                  <th>연락 빈도</th>
-                  <th>보험 연관성</th>
                   <th>등록일</th>
                   <th aria-label="작업 열" />
                 </tr>
@@ -263,32 +238,6 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                         <span className="relationships-link__type">
                           ({row.relatedCustomer?.insurance_info?.customer_type ?? '-'})
                         </span>
-                      </td>
-                      <td>
-                        {row.strength ? (
-                          <span className={`relationships-tag relationships-tag--${row.strength.tone}`}>
-                            {row.strength.label}
-                          </span>
-                        ) : (
-                          <span>-</span>
-                        )}
-                      </td>
-                      <td>{row.contactFrequency}</td>
-                      <td>
-                        <div className="relationships-tag-group">
-                          {row.insurance.is_beneficiary && (
-                            <span className="relationships-badge relationships-badge--green">수익자</span>
-                          )}
-                          {row.insurance.cross_selling_opportunity && (
-                            <span className="relationships-badge relationships-badge--purple">교차판매</span>
-                          )}
-                          {row.insurance.referral_potential === 'high' && (
-                            <span className="relationships-badge relationships-badge--gold">추천 가능</span>
-                          )}
-                          {!row.insurance.is_beneficiary &&
-                            !row.insurance.cross_selling_opportunity &&
-                            row.insurance.referral_potential !== 'high' && <span>-</span>}
-                        </div>
                       </td>
                       <td>{row.createdAt}</td>
                       <td>
