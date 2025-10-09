@@ -58,19 +58,19 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     isLoading: customersLoading,
   } = useCustomersController({
     initialLimit: 10000,
-    autoLoad: visible, // visible일 때만 로드
+    autoLoad: true, // 앱 시작 시 한 번만 로드 (캐싱됨)
   });
 
   const [relationships, setRelationships] = useState<any[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
-  // 관계 데이터만 별도 로드 (고객 데이터는 Controller가 관리)
+  // 관계 데이터 로드 (한 번만)
   useEffect(() => {
-    if (visible && allCustomers.length > 0 && relationships.length === 0) {
+    if (relationships.length === 0 && allCustomers.length > 0) {
       loadRelationshipsData();
     }
-  }, [visible, allCustomers.length, relationships.length]);
+  }, [allCustomers.length, relationships.length]);
 
   const loadRelationshipsData = async () => {
     try {
