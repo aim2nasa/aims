@@ -8,6 +8,7 @@
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
 interface DocumentManagementViewProps {
   /** View 표시 여부 */
@@ -38,6 +39,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="문서 관리"
+      titleIcon={<SFSymbol name="doc" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={5}
       marginBottom={5}
