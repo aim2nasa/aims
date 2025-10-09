@@ -65,12 +65,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
-  // 관계 데이터 로드 (visible이 true가 될 때마다 새로고침)
+  // 관계 데이터 로드 (한 번만)
   useEffect(() => {
-    if (visible && allCustomers.length > 0) {
+    if (relationships.length === 0 && allCustomers.length > 0) {
       loadRelationshipsData();
     }
-  }, [visible, allCustomers.length]);
+  }, [allCustomers.length, relationships.length]);
 
   const loadRelationshipsData = async () => {
     try {
