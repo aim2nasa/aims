@@ -149,6 +149,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="문서 검색"
+      titleIcon={<SFSymbol name="magnifyingglass" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-search)' }} />}
       onClose={onClose}
       marginTop={6}
       marginBottom={6}
