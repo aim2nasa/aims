@@ -84,25 +84,29 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
 
-  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 및 RightPane 숨김
-  // 고객 관련 View 활성 시 PaginationPane 및 RightPane 숨김 (디폴트 상태)
+  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 숨김
+  // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
+  // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
-    if (activeDocumentView === 'documents-register' ||
-        activeDocumentView === 'documents-library' ||
-        activeDocumentView === 'documents-search' ||
-        activeDocumentView === 'dsd' ||
-        activeDocumentView === 'customers' ||
-        activeDocumentView === 'customers-register' ||
-        activeDocumentView === 'customers-all' ||
-        activeDocumentView === 'customers-regional' ||
-        activeDocumentView === 'customers-relationship') {
+    if (activeDocumentView === "documents-register" ||
+        activeDocumentView === "documents-library" ||
+        activeDocumentView === "documents-search" ||
+        activeDocumentView === "dsd" ||
+        activeDocumentView === "customers" ||
+        activeDocumentView === "customers-register" ||
+        activeDocumentView === "customers-all" ||
+        activeDocumentView === "customers-regional" ||
+        activeDocumentView === "customers-relationship") {
       setPaginationVisible(false)
-      setRightPaneVisible(false)
+      // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
+      if (!selectedDocument && !selectedCustomer) {
+        setRightPaneVisible(false)
+      }
     } else {
       setPaginationVisible(true)
       setRightPaneVisible(true)
     }
-  }, [activeDocumentView])
+  }, [activeDocumentView, selectedDocument, selectedCustomer])
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
