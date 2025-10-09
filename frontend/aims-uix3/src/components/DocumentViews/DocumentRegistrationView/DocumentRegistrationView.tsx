@@ -488,6 +488,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     <CenterPaneView
       visible={visible}
       title={getTitle()}
+      titleIcon={<SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-register)' }} />}
       onClose={onClose}
       marginTop={4}
       marginBottom={4}

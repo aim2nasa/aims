@@ -730,6 +730,12 @@
   --color-icon-green: #34c759;     /* iOS systemGreen */
   --color-icon-purple: #af52de;    /* iOS systemPurple */
   --color-icon-red: #ff3b30;       /* iOS systemRed */
+  
+  /* Document Menu Icon Colors - iOS System Colors */
+  --color-icon-doc-register: #ff9500;  /* iOS systemOrange - 문서 등록 */
+  --color-icon-doc-library: #af52de;   /* iOS systemPurple - 문서 라이브러리 */
+  --color-icon-doc-search: #007aff;    /* iOS systemBlue - 문서 검색 */
+  --color-icon-doc-status: #ff3b30;    /* iOS systemRed - 문서 처리 현황 */
 
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
