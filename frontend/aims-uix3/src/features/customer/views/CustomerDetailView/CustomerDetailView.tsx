@@ -17,6 +17,7 @@ import { useAppleConfirmController } from '../../../../controllers/useAppleConfi
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Tabs, type Tab } from '../../../../components/Tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
+import { RelationshipsTab } from './tabs/RelationshipsTab';
 import { EmptyTab } from './tabs/EmptyTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerService } from '@/services/customerService';
@@ -27,6 +28,7 @@ interface CustomerDetailViewProps {
   onClose: () => void;
   onRefresh?: () => void;
   onDelete?: () => void;
+  onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   gapLeft?: number;
   gapRight?: number;
   gapTop?: number;
@@ -38,6 +40,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onClose,
   onRefresh,
   onDelete,
+  onSelectCustomer,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -201,14 +204,10 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         );
       case 'relationships':
         return (
-          <EmptyTab
-            title="관계 탭"
-            description="고객의 가족 및 비즈니스 관계가 여기에 표시됩니다."
-            icon={
-              <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
-              </svg>
-            }
+          <RelationshipsTab
+            customer={customer}
+            onSelectCustomer={onSelectCustomer}
+            onRelationshipsUpdated={onRefresh}
           />
         );
       case 'consultations':

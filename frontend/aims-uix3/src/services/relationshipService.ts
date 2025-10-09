@@ -7,14 +7,15 @@
  */
 
 import { api } from '@/shared/lib/api';
+import type { Customer } from '@/entities/customer/model';
 
 /**
  * 관계 정보 인터페이스
  */
 export interface Relationship {
   _id: string;
-  from_customer: string | any; // Customer ID or populated object
-  related_customer: string | any; // Customer ID or populated object
+  from_customer: string | Customer; // Customer ID or populated object
+  related_customer: string | Customer; // Customer ID or populated object
   relationship_info: {
     relationship_type: string;
     relationship_category: string;
@@ -30,7 +31,13 @@ export interface Relationship {
     cross_selling_opportunity?: boolean;
     referral_potential?: string;
   };
-  family_representative?: string | any;
+  family_representative?: string | Customer;
+  is_reversed?: boolean;
+  display_relationship_label?: string;
+  meta?: {
+    created_at?: string;
+    updated_at?: string;
+  };
   created_at?: string;
   updated_at?: string;
 }

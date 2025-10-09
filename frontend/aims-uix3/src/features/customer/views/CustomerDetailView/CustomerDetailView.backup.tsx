@@ -23,6 +23,7 @@ interface CustomerDetailViewProps {
   onClose: () => void;
   onRefresh?: () => void;
   onDelete?: () => void;
+  onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   gapLeft?: number;
   gapRight?: number;
   gapTop?: number;
@@ -34,6 +35,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onClose,
   onRefresh,
   onDelete,
+  onSelectCustomer,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -43,6 +45,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
   const confirmController = useAppleConfirmController();
+
+  void onSelectCustomer;
 
   useEffect(() => {
     setCustomerData(customer);

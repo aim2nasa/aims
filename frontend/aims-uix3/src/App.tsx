@@ -868,6 +868,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 }}
                 onRefresh={handleCustomerRefresh}
                 onDelete={handleCustomerDelete}
+                onSelectCustomer={handleCustomerClick}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}
                 gapTop={gapValues.gapTop}
