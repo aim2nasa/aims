@@ -345,3 +345,24 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
 }
+
+/* === 탭 아이콘 색상 (좌측 메뉴와 통일) === */
+.customer-detail-view .tabs-bar__tab[data-tab-key="info"] svg {
+  color: var(--color-icon-blue);
+}
+
+.customer-detail-view .tabs-bar__tab[data-tab-key="relationships"] svg {
+  color: var(--color-menu-icon-team); /* 관계별 보기(person-2)와 동일 - purple */
+}
+
+.customer-detail-view .tabs-bar__tab[data-tab-key="documents"] svg {
+  color: var(--color-menu-icon-doc); /* 문서 관리(doc)와 동일 - teal */
+}
+
+.customer-detail-view .tabs-bar__tab[data-tab-key="consultations"] svg {
+  color: var(--color-icon-green);
+}
+
+.customer-detail-view .tabs-bar__tab[data-tab-key="contracts"] svg {
+  color: var(--color-icon-purple);
+}

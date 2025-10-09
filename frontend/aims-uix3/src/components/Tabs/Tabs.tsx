@@ -89,6 +89,7 @@ export const Tabs: React.FC<TabsProps> = ({
             className={tabClasses}
             onClick={() => handleTabClick(tab.key, tab.disabled)}
             disabled={tab.disabled}
+            data-tab-key={tab.key}
           >
             {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
             <span className="tabs-bar__tab-label">
