@@ -28,7 +28,7 @@
 
 /* 다크 테마 지원 */
 html[data-theme="dark"] .center-pane-view {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: var(--color-layout-content-dark);
   border-color: var(--color-layout-accent-dark);
   box-shadow: var(--shadow-dark-lg);
 }
