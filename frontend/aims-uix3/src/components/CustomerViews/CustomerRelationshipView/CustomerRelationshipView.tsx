@@ -389,7 +389,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             {groupData.relations.length > 0 ? (
                               groupData.relations.map((relation) => (
                                 <div key={relation.key} className="tree-node tree-node--relation">
-                                  <span className="tree-node__icon">❤️</span>
                                   <span className="tree-node__relation-badge">{relation.relationLabel}</span>
                                   <span className="tree-node__label">
                                     {relation.fromName} → {relation.toName}
