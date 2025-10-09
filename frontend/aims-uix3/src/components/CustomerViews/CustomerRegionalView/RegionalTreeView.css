@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--color-neutral-0);
+  background-color: var(--color-ios-bg-secondary-light);
   overflow: hidden;
 }
 
@@ -37,7 +37,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background-color: var(--color-neutral-50);
+  background-color: var(--color-ios-bg-tertiary-light);
   border-bottom: 1px solid var(--color-neutral-200);
   font-size: 14px;
 }
@@ -132,11 +132,11 @@
 .tree-node-level-5 { padding-left: 136px; }
 
 .tree-node:hover {
-  background-color: var(--color-neutral-100);
+  background-color: var(--color-ios-bg-hover-light);
 }
 
 .tree-node:active {
-  background-color: var(--color-neutral-200);
+  background-color: var(--color-ios-bg-selected-light);
 }
 
 /* 도시 노드 */
@@ -284,15 +284,15 @@
 .tree-customer-item-level-5 { padding-left: 136px; }
 
 .tree-customer-item:hover {
-  background-color: var(--color-neutral-100);
+  background-color: var(--color-ios-bg-hover-light);
 }
 
 .tree-customer-item:active {
-  background-color: var(--color-neutral-200);
+  background-color: var(--color-ios-bg-selected-light);
 }
 
 .tree-customer-item.selected {
-  background-color: var(--color-primary-50);
+  background-color: var(--color-ios-bg-selected-light);
   border-left-color: var(--color-primary-600);
 }
 
@@ -388,7 +388,7 @@
 
 /* === DARK MODE (미래 확장) === */
 html[data-theme="dark"] .regional-tree-view {
-  background-color: var(--color-neutral-900);
+  background-color: var(--color-ios-bg-secondary-dark);
 }
 
 html[data-theme="dark"] .regional-tree-header {
@@ -400,7 +400,7 @@ html[data-theme="dark"] .regional-tree-title {
 }
 
 html[data-theme="dark"] .regional-tree-stats {
-  background-color: var(--color-neutral-800);
+  background-color: var(--color-ios-bg-tertiary-dark);
   border-bottom-color: var(--color-neutral-700);
 }
 
@@ -413,11 +413,11 @@ html[data-theme="dark"] .stat-value {
 }
 
 html[data-theme="dark"] .tree-node:hover {
-  background-color: var(--color-neutral-800);
+  background-color: var(--color-ios-bg-hover-dark);
 }
 
 html[data-theme="dark"] .tree-node:active {
-  background-color: var(--color-neutral-700);
+  background-color: var(--color-ios-bg-selected-dark);
 }
 
 html[data-theme="dark"] .tree-node-label {
@@ -425,15 +425,15 @@ html[data-theme="dark"] .tree-node-label {
 }
 
 html[data-theme="dark"] .tree-customer-item:hover {
-  background-color: var(--color-neutral-800);
+  background-color: var(--color-ios-bg-hover-dark);
 }
 
 html[data-theme="dark"] .tree-customer-item:active {
-  background-color: var(--color-neutral-700);
+  background-color: var(--color-ios-bg-selected-dark);
 }
 
 html[data-theme="dark"] .tree-customer-item.selected {
-  background-color: var(--color-primary-900);
+  background-color: var(--color-ios-bg-selected-dark);
 }
 
 html[data-theme="dark"] .tree-customer-name {
