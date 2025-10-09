@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 import { RelationshipService } from '../../../services/relationshipService';
+import { useCustomersController } from '@/features/customer/controllers/useCustomersController';
 import type { Customer } from '@/entities/customer/model';
 import './CustomerRelationshipView.css';
 
@@ -51,30 +52,40 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   onClose,
   onCustomerSelect
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  // Controller 패턴 사용 (자동 캐싱)
+  const {
+    customers: allCustomers,
+    isLoading: customersLoading,
+  } = useCustomersController({
+    initialLimit: 10000,
+    autoLoad: visible, // visible일 때만 로드
+  });
+
   const [relationships, setRelationships] = useState<any[]>([]);
+  const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
-  // 데이터 로드
+  // 관계 데이터만 별도 로드 (고객 데이터는 Controller가 관리)
   useEffect(() => {
-    if (visible) {
-      loadAllRelationshipsData();
+    if (visible && allCustomers.length > 0 && relationships.length === 0) {
+      loadRelationshipsData();
     }
-  }, [visible]);
+  }, [visible, allCustomers.length, relationships.length]);
 
-  const loadAllRelationshipsData = async () => {
+  const loadRelationshipsData = async () => {
     try {
-      setLoading(true);
+      setRelationshipsLoading(true);
       const data = await RelationshipService.getAllRelationshipsWithCustomers();
-      setCustomers(data.customers);
       setRelationships(data.relationships);
     } catch (error) {
       console.error('관계 데이터 로드 실패:', error);
     } finally {
-      setLoading(false);
+      setRelationshipsLoading(false);
     }
   };
+
+  const loading = customersLoading || relationshipsLoading;
+  const customers = allCustomers;
 
   // 데이터 구조화
   const structuredData = useMemo((): StructuredData => {
