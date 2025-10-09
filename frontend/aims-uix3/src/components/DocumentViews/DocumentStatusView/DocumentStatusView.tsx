@@ -21,6 +21,7 @@ import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
 import { Dropdown } from '../../../shared/ui'
 import './DocumentStatusView.css'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 
 interface DocumentStatusViewProps {
   /** View 표시 여부 */
@@ -170,6 +171,7 @@ export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
     <CenterPaneView
       visible={visible}
       title="문서 처리 현황"
+      titleIcon={<SFSymbol name="chart-bar" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-status)' }} />}
       onClose={onClose}
       marginTop={6}
       marginBottom={6}
