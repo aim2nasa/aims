@@ -169,14 +169,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     const isExpanded = expandedKeys.has(node.key)
     const hasChildren = node.children && node.children.length > 0
     const hasCustomers = node.customers && node.customers.length > 0
+    const isExpandable = hasChildren || hasCustomers
 
     return (
       <div key={node.key} className="tree-node-wrapper">
         <div
           className={`tree-node tree-node-${node.type} tree-node-level-${level}`}
-          onClick={() => hasChildren && toggleNode(node.key)}
+          onClick={() => isExpandable && toggleNode(node.key)}
         >
-          {hasChildren && (
+          {/* 윈도우 탐색기 스타일: 확장/축소 표시 */}
+          {isExpandable && (
             <SFSymbol
               name={isExpanded ? 'chevron-down' : 'chevron-right'}
               size={SFSymbolSize.CAPTION1}
@@ -184,18 +186,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               className="tree-node-chevron"
             />
           )}
+          {!isExpandable && <div className="tree-node-spacer" />}
 
-          <SFSymbol
-            name={
-              node.type === 'city' ? 'map' :
-              node.type === 'district' ? 'mappin-and-ellipse' :
-              node.type === 'no-address' ? 'exclamationmark-triangle' :
-              'person'
-            }
-            size={SFSymbolSize.CALLOUT}
-            weight={SFSymbolWeight.MEDIUM}
-            className="tree-node-icon"
-          />
+          {/* 폴더 아이콘 (텍스트) */}
+          <span className="tree-node-folder-icon">
+            {node.type === 'city' || node.type === 'district'
+              ? (isExpanded ? '📂' : '📁')
+              : node.type === 'no-address'
+              ? '⚠️'
+              : ''}
+          </span>
 
           <span className="tree-node-label">{node.label}</span>
 
@@ -269,11 +269,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
   return (
     <div className="regional-tree-view">
-      {/* 헤더 */}
-      <div className="regional-tree-header">
-        <SFSymbol name="location" size={SFSymbolSize.TITLE3} weight={SFSymbolWeight.SEMIBOLD} />
-        <h3 className="regional-tree-title">지역별 고객 분류</h3>
-      </div>
 
       {/* 통계 */}
       <div className="regional-tree-stats">
