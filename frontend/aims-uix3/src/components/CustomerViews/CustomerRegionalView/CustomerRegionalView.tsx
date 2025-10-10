@@ -6,10 +6,10 @@
  * Document-Controller-View 패턴 준수
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
-import { useCustomersController } from '../../../controllers/useCustomersController'
+import { useCustomerDocument } from '@/hooks/useCustomerDocument'
 import type { Customer } from '../../../entities/customer/model'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 
@@ -44,28 +44,30 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   onClose,
   onCustomerClick
 }) => {
-  const { customers, isLoading, selectCustomer, selectedCustomer, loadCustomers } = useCustomersController()
+  // Document-View 패턴: CustomerDocument 구독
+  const { customers, isLoading, loadCustomers } = useCustomerDocument()
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
-  // View가 열릴 때 전체 고객 데이터 로딩
+  // 초기 데이터 로드
   useEffect(() => {
-    if (visible && !isLoading) {
-      // 지역별 보기는 전체 고객 데이터가 필요하므로 limit을 크게 설정
-      loadCustomers({ limit: 10000, offset: 0 })
-    }
-  }, [visible, isLoading, loadCustomers])
+    console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
+    loadCustomers({ limit: 10000, offset: 0 })
+  }, [loadCustomers])
 
   // 고객 선택 핸들러 (내부 상태 + RightPane 표시)
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers.find(c => c._id === customerId)
     if (customer) {
       // 내부 선택 상태 업데이트
-      selectCustomer(customer)
+      setSelectedCustomerId(customerId)
       // RightPane 표시 (부모 컴포넌트로 전달)
       if (onCustomerClick) {
         onCustomerClick(customerId, customer)
       }
     }
   }
+
+  const selectedCustomer = customers.find(c => c._id === selectedCustomerId)
 
   return (
     <CenterPaneView
