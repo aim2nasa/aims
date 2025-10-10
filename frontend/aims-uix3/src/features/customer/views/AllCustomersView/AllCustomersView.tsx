@@ -84,6 +84,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const totalCustomers = total;
     const isEmpty = allCustomers.length === 0 && !isLoading;
 
+    // 개인/법인 고객 수 계산
+    const customerTypeCounts = useMemo(() => {
+      const personal = allCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
+      const corporate = allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
+      return { personal, corporate };
+    }, [allCustomers]);
+
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
       refresh,
@@ -282,7 +289,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         {/* 결과 헤더 */}
         {!isLoading && (
           <div className="customer-library-result-header">
-            <div className="result-count">총 {totalCustomers}명</div>
+            <div className="result-count">총 {totalCustomers}명 (개인 {customerTypeCounts.personal}, 법인 {customerTypeCounts.corporate})</div>
             <div className="sort-selector">
               <Dropdown
                 value={sortBy}
