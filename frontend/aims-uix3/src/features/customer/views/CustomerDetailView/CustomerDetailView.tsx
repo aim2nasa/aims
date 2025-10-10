@@ -22,6 +22,7 @@ import { RelationshipsTab } from './tabs/RelationshipsTab';
 import { EmptyTab } from './tabs/EmptyTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
+import { RelationshipService } from '@/services/relationshipService';
 import './CustomerDetailView.css';
 
 interface CustomerDetailViewProps {
@@ -51,11 +52,113 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
   const [activeTab, setActiveTab] = useState<string>('info');
+  const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
   const confirmController = useAppleConfirmController();
 
   useEffect(() => {
     setCustomerData(customer);
   }, [customer]);
+
+  // 가족 관계 추가 가능 여부 확인 (aims-uix2 로직 적용)
+  useEffect(() => {
+    const checkCanAddFamilyRelation = async () => {
+      // 법인 고객은 가족 추가 불가
+      if (customer.insurance_info?.customer_type !== '개인') {
+        setCanAddFamilyRelation(false);
+        return;
+      }
+
+      try {
+        // 모든 관계 데이터 로드
+        const allData = await RelationshipService.getAllRelationshipsWithCustomers();
+        const { customers, relationships } = allData;
+
+        // 가족 관계 네트워크 구축
+        const familyNetworks = new Map<string, Set<string>>();
+
+        // 가족 관계만 필터링 (개인-개인만)
+        relationships.forEach(relationship => {
+          const category = relationship.relationship_info.relationship_category;
+          const fromCustomer = relationship.from_customer;
+          const toCustomer = relationship.related_customer;
+
+          if (category === 'family' &&
+              typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '개인' &&
+              typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '개인') {
+
+            const fromId = fromCustomer._id;
+            const toId = toCustomer._id;
+
+            // 양방향 관계 설정
+            if (!familyNetworks.has(fromId)) {
+              familyNetworks.set(fromId, new Set());
+            }
+            if (!familyNetworks.has(toId)) {
+              familyNetworks.set(toId, new Set());
+            }
+
+            familyNetworks.get(fromId)!.add(toId);
+            familyNetworks.get(toId)!.add(fromId);
+          }
+        });
+
+        // 현재 고객이 가족이 없는 경우 → 가족관계 추가 가능 (첫 가족대표가 됨)
+        if (!familyNetworks.has(customer._id)) {
+          setCanAddFamilyRelation(true);
+          return;
+        }
+
+        // 현재 고객이 가족이 있는 경우, 가족대표인지 확인
+        const myFamilyMembers = new Set<string>();
+        const stack = [customer._id];
+        const visited = new Set<string>();
+
+        // DFS로 연결된 모든 가족 구성원 찾기
+        while (stack.length > 0) {
+          const currentId = stack.pop()!;
+          if (visited.has(currentId)) continue;
+
+          visited.add(currentId);
+          myFamilyMembers.add(currentId);
+
+          const connections = familyNetworks.get(currentId);
+          if (connections) {
+            connections.forEach(connectedId => {
+              if (!visited.has(connectedId)) {
+                stack.push(connectedId);
+              }
+            });
+          }
+        }
+
+        // 이 가족의 관계들 수집하여 가족대표 찾기
+        const familyRelationships = relationships.filter(rel => {
+          const fromId = typeof rel.from_customer === 'string' ? rel.from_customer : rel.from_customer?._id;
+          const toId = typeof rel.related_customer === 'string' ? rel.related_customer : rel.related_customer?._id;
+          return fromId && toId && myFamilyMembers.has(fromId) && myFamilyMembers.has(toId);
+        });
+
+        // 가족대표 찾기
+        let familyRepId: string | null = null;
+
+        if (familyRelationships.length > 0) {
+          const relationshipWithRep = familyRelationships.find(rel => rel.family_representative);
+          if (relationshipWithRep) {
+            const rep = relationshipWithRep.family_representative;
+            familyRepId = typeof rep === 'string' ? rep : rep?._id || null;
+          }
+        }
+
+        // 현재 고객이 가족대표인 경우에만 가족관계 추가 가능
+        setCanAddFamilyRelation(familyRepId === customer._id);
+      } catch (error) {
+        console.error('[CustomerDetailView] 가족 관계 확인 실패:', error);
+        setCanAddFamilyRelation(false);
+      }
+    };
+
+    checkCanAddFamilyRelation();
+  }, [customer._id, customer.insurance_info?.customer_type]);
 
   const handleEditClick = useCallback(() => {
     setIsEditModalVisible(true);
@@ -108,8 +211,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     onRefresh?.();
   }, [onRefresh]);
 
-  // 개인 고객인지 확인
-  const isPersonalCustomer = customer.insurance_info?.customer_type === '개인';
+  // 개인 고객인지 확인 (더 이상 사용하지 않음 - canAddFamilyRelation으로 대체)
+  // const isPersonalCustomer = customer.insurance_info?.customer_type === '개인';
 
   if (!customerData) return null;
 
@@ -264,12 +367,12 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         <div className="customer-detail-view__inner">
           {/* 🍎 액션 버튼 영역 */}
           <div className="customer-detail-view__actions">
-            {isPersonalCustomer && (
+            {canAddFamilyRelation && (
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => setIsFamilyModalVisible(true)}
-                title="가족 구성원을 추가합니다"
+                title="가족 구성원을 추가합니다 (가족대표만 가능)"
                 leftIcon={<span>👥</span>}
               >
                 가족 추가
