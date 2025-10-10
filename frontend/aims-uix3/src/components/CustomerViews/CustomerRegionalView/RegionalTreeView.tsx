@@ -19,6 +19,63 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import './RegionalTreeView.css'
 
 /**
+ * 광역시/도 이름 정규화 맵
+ * 주소의 첫 단어를 표준 광역시/도 이름으로 변환
+ */
+const PROVINCE_NORMALIZATION_MAP: { [key: string]: string } = {
+  // 특별시/광역시
+  '서울': '서울특별시',
+  '서울특별시': '서울특별시',
+  '부산': '부산광역시',
+  '부산광역시': '부산광역시',
+  '대구': '대구광역시',
+  '대구광역시': '대구광역시',
+  '인천': '인천광역시',
+  '인천광역시': '인천광역시',
+  '광주': '광주광역시',
+  '광주광역시': '광주광역시',
+  '대전': '대전광역시',
+  '대전광역시': '대전광역시',
+  '울산': '울산광역시',
+  '울산광역시': '울산광역시',
+
+  // 특별자치시/도
+  '세종': '세종특별자치시',
+  '세종특별자치시': '세종특별자치시',
+  '제주': '제주특별자치도',
+  '제주특별자치도': '제주특별자치도',
+
+  // 도
+  '경기': '경기도',
+  '경기도': '경기도',
+  '강원': '강원특별자치도',
+  '강원도': '강원특별자치도',
+  '강원특별자치도': '강원특별자치도',
+  '충북': '충청북도',
+  '충청북도': '충청북도',
+  '충남': '충청남도',
+  '충청남도': '충청남도',
+  '전북': '전북특별자치도',
+  '전라북도': '전북특별자치도',
+  '전북특별자치도': '전북특별자치도',
+  '전남': '전라남도',
+  '전라남도': '전라남도',
+  '경북': '경상북도',
+  '경상북도': '경상북도',
+  '경남': '경상남도',
+  '경상남도': '경상남도',
+}
+
+/**
+ * 광역시/도 이름 정규화 함수
+ * @param rawCity - 주소에서 추출한 원본 광역시/도 이름
+ * @returns 정규화된 광역시/도 이름
+ */
+const normalizeProvinceName = (rawCity: string): string => {
+  return PROVINCE_NORMALIZATION_MAP[rawCity] || rawCity
+}
+
+/**
  * RegionalTreeView 컴포넌트 Props
  */
 interface RegionalTreeViewProps {
@@ -63,7 +120,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 }) => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(['no-address']))
 
-  // 지역별 그룹핑 - aims-uix2와 동일한 로직
+  // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
   const regionalGroups = useMemo(() => {
     const groups: { [city: string]: { [district: string]: Customer[] } } = {}
     const noAddressCustomers: Customer[] = []
@@ -75,8 +132,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         return
       }
       const parts = address.split(' ')
-      const city = parts[0] || '기타'
+      const rawCity = parts[0] || '기타'
       const district = parts[1] || '기타구'
+
+      // 광역시/도 이름 정규화 (예: "경기" → "경기도")
+      const city = normalizeProvinceName(rawCity)
 
       if (!groups[city]) groups[city] = {}
       if (!groups[city][district]) groups[city][district] = []
