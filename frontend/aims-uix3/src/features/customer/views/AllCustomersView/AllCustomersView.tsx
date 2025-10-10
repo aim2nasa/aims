@@ -7,10 +7,10 @@
  * iOS/macOS native table view style
  */
 
-import React, { forwardRef, useImperativeHandle, useState, useMemo } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } from 'react';
 import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
 import { Dropdown } from '@/shared/ui';
-import { useCustomersController } from '../../controllers/useCustomersController';
+import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
@@ -44,21 +44,45 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [prevArrowClicked, setPrevArrowClicked] = useState(false);
     const [nextArrowClicked, setNextArrowClicked] = useState(false);
 
+    // Document-View 패턴: CustomerDocument 구독
     const {
-      customers,
-      pagination,
+      customers: allCustomers,
+      total,
       isLoading,
       error,
-      isEmpty,
-      totalCustomers,
-      handleSearchChange,
-      goToPage,
+      loadCustomers,
       refresh,
-      searchCustomers,
-    } = useCustomersController({
-      initialLimit: parseInt(itemsPerPage),
-      autoLoad: true,
-    });
+    } = useCustomerDocument();
+
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // 초기 데이터 로드
+    useEffect(() => {
+      console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
+      loadCustomers({ limit: 10000, offset: 0 });
+    }, [loadCustomers]);
+
+    // 로컬 pagination 계산
+    const pagination = useMemo(() => {
+      const limit = parseInt(itemsPerPage);
+      const totalPages = Math.ceil(total / limit);
+      return {
+        currentPage,
+        totalPages,
+        limit,
+        total,
+      };
+    }, [currentPage, itemsPerPage, total]);
+
+    // 현재 페이지에 표시할 고객들
+    const customers = useMemo(() => {
+      const limit = parseInt(itemsPerPage);
+      const offset = (currentPage - 1) * limit;
+      return allCustomers.slice(offset, offset + limit);
+    }, [allCustomers, currentPage, itemsPerPage]);
+
+    const totalCustomers = total;
+    const isEmpty = allCustomers.length === 0 && !isLoading;
 
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
@@ -68,36 +92,37 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setSearchValue(value);
-      handleSearchChange(value);
+      // TODO: 검색 기능 구현
     };
 
     const handleClearSearch = () => {
       setSearchValue('');
-      handleSearchChange('');
+      setCurrentPage(1);
     };
 
     const handleItemsPerPageChange = (value: string) => {
       setItemsPerPage(value);
-      searchCustomers({ limit: parseInt(value), page: 1 });
+      setCurrentPage(1);
     };
 
     const handleSortChange = (value: string) => {
       setSortBy(value);
+      // TODO: 정렬 기능 구현
     };
 
     const handlePrevPage = () => {
-      if (pagination.currentPage > 1) {
+      if (currentPage > 1) {
         setPrevArrowClicked(true);
         setTimeout(() => setPrevArrowClicked(false), 150);
-        goToPage(pagination.currentPage - 1);
+        setCurrentPage(currentPage - 1);
       }
     };
 
     const handleNextPage = () => {
-      if (pagination.currentPage < pagination.totalPages) {
+      if (currentPage < pagination.totalPages) {
         setNextArrowClicked(true);
         setTimeout(() => setNextArrowClicked(false), 150);
-        goToPage(pagination.currentPage + 1);
+        setCurrentPage(currentPage + 1);
       }
     };
 

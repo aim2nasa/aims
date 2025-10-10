@@ -27,7 +27,9 @@
       "@/controllers/*": ["src/controllers/*"],
       "@/features/*": ["src/features/*"],
       "@/widgets/*": ["src/widgets/*"],
-      "@/pages/*": ["src/pages/*"]
+      "@/pages/*": ["src/pages/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/stores/*": ["src/stores/*"]
     },
 
     /* Linting */
