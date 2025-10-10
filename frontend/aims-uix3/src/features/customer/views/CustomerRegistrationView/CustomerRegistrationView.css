@@ -26,7 +26,7 @@
 .customer-registration__inner {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: 4px var(--spacing-4);
   height: 100%;
   overflow-y: auto;
 }
@@ -35,7 +35,7 @@
 .customer-registration__form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: 2px;
 }
 
 /* Form Section - 가로 레이아웃 */
