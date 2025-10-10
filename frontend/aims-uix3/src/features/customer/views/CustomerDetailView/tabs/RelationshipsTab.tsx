@@ -199,7 +199,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                   <th>관계 유형</th>
                   <th>관련 고객</th>
                   <th>등록일</th>
-                  <th aria-label="작업 열" />
+                  <th className="relationships-table__delete-header">가족 삭제</th>
                 </tr>
               </thead>
               <tbody>

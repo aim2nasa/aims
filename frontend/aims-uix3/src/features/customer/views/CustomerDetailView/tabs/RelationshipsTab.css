@@ -130,6 +130,11 @@
   vertical-align: middle;
 }
 
+.relationships-table__delete-header {
+  color: var(--color-icon-red);
+  font-weight: var(--font-weight-semibold);
+}
+
 [data-theme="dark"] .relationships-table th,
 [data-theme="dark"] .relationships-table td {
   border-bottom-color: rgba(255, 255, 255, 0.08);
