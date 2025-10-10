@@ -448,3 +448,59 @@ html[data-theme="dark"] .tree-node__badge--success {
     padding-left: 42px;
   }
 }
+
+/* ==========================================
+   🔗 관계 아이콘 토글 - 작고 서브틀하게
+   ========================================== */
+
+.tree-node__relation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--easing-ease-out),
+              transform var(--duration-fast) var(--easing-ease-out);
+  user-select: none;
+}
+
+.tree-node__relation-toggle:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* ==========================================
+   관계 정보 리스트 - 작은 폰트로 컴팩트하게
+   ========================================== */
+
+.relation-list {
+  padding-left: 48px; /* leaf와 동일한 indentation */
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.relation-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.relation-item__icon {
+  font-size: 10px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.relation-item__text {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  white-space: nowrap;
+}

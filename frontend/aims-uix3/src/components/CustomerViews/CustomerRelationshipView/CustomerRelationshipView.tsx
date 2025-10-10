@@ -378,6 +378,17 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             >
                               👑 {repName} (대표)
                             </span>
+                            {groupData.relations.length > 0 && (
+                              <span
+                                className="tree-node__relation-toggle"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleNode(`family-${repName}-relations`);
+                                }}
+                              >
+                                {expandedNodes.has(`family-${repName}-relations`) ? '🔗' : '🔗'}
+                              </span>
+                            )}
                             <span className="tree-node__badge tree-node__badge--success">
                               {groupData.members.length}
                             </span>
@@ -408,20 +419,23 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 </div>
                               ))}
 
-                            {/* 관계 정보 */}
-                            {groupData.relations.length > 0 ? (
-                              groupData.relations.map((relation) => (
-                                <div key={relation.key} className="tree-node tree-node--relation">
-                                  <span className="tree-node__relation-badge">{relation.relationLabel}</span>
-                                  <span className="tree-node__label">
-                                    {relation.fromName} → {relation.toName}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="tree-node tree-node--empty">
-                                <span className="tree-node__icon">💔</span>
-                                <span className="tree-node__label">가족 관계 없음 (0)</span>
+                            {/* 관계 정보 - 🔗 클릭 시에만 표시 */}
+                            {expandedNodes.has(`family-${repName}-relations`) && groupData.relations.length > 0 && (
+                              <div className="relation-list">
+                                {groupData.relations.map((relation) => {
+                                  const icon = relation.relationLabel === '배우자' ? '❤️' :
+                                              relation.relationLabel === '자녀' ? '👶' :
+                                              relation.relationLabel === '부모' ? '👨‍👩‍👧' :
+                                              relation.relationLabel === '형제자매' ? '👫' : '👥';
+                                  return (
+                                    <div key={relation.key} className="relation-item">
+                                      <span className="relation-item__icon">{icon}</span>
+                                      <span className="relation-item__text">
+                                        {relation.fromName} → {relation.toName}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
