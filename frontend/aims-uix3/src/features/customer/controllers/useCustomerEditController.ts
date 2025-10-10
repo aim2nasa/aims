@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Customer, UpdateCustomerData } from '@/entities/customer';
-import { CustomerService } from '@/services/customerService';
+import { CustomerDocument } from '@/stores/CustomerDocument';
 
 /**
  * 탭 타입 정의
@@ -190,9 +190,10 @@ export const useCustomerEditController = (customer: Customer) => {
         insurance_info: formData.insurance_info,
       };
 
-      // API 호출
-
-      await CustomerService.updateCustomer(customer._id, updatePayload);
+      // Document-View 패턴: CustomerDocument를 통해 업데이트
+      const document = CustomerDocument.getInstance();
+      await document.updateCustomer(customer._id, updatePayload);
+      console.log('[useCustomerEditController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
       return true;
     } catch (error) {
       console.error('[Customer Edit] 저장 실패:', error);
