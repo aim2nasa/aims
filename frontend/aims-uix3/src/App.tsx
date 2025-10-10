@@ -345,10 +345,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         setSelectedDocument(document)
         setRightPaneContentType('document')
 
-        // RightPane이 숨겨져 있으면 표시
-        if (!rightPaneVisible) {
-          setRightPaneVisible(true)
-        }
+        // RightPane 항상 표시 (조건 없이)
+        setRightPaneVisible(true)
       }
     } catch (error) {
       console.error('[App] 문서 로드 오류:', error)
