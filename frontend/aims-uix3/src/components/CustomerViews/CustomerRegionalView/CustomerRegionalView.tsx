@@ -45,7 +45,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   onCustomerClick
 }) => {
   // Document-View 패턴: CustomerDocument 구독
-  const { customers, isLoading, loadCustomers } = useCustomerDocument()
+  const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
   // 초기 데이터 로드
@@ -53,6 +53,20 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
     loadCustomers({ limit: 10000, offset: 0 })
   }, [loadCustomers])
+
+  // customerChanged 이벤트 리스너 (고객 생성/수정/삭제 시 즉시 반영)
+  useEffect(() => {
+    const handleCustomerChange = async () => {
+      console.log('[CustomerRegionalView] customerChanged 이벤트 수신 - 데이터 새로고침')
+      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
+      await refresh({ limit: 10000, offset: 0 })
+    }
+
+    window.addEventListener('customerChanged', handleCustomerChange)
+    return () => {
+      window.removeEventListener('customerChanged', handleCustomerChange)
+    }
+  }, [refresh])
 
   // 고객 선택 핸들러 (내부 상태 + RightPane 표시)
   const handleCustomerSelect = (customerId: string) => {
