@@ -13,7 +13,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 import { RelationshipService } from '../../../services/relationshipService';
-import { useCustomersController } from '@/features/customer/controllers/useCustomersController';
+import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import './CustomerRelationshipView.css';
 
@@ -52,27 +52,24 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   onClose,
   onCustomerSelect
 }) => {
-  // Controller 패턴 사용 (자동 캐싱)
+  // Document-View 패턴: CustomerDocument 구독
   const {
     customers: allCustomers,
     isLoading: customersLoading,
-  } = useCustomersController({
-    initialLimit: 10000,
-    autoLoad: true, // 앱 시작 시 한 번만 로드 (캐싱됨)
-  });
+    loadCustomers,
+  } = useCustomerDocument();
 
   const [relationships, setRelationships] = useState<any[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
-  // 관계 데이터 로드 (한 번만)
+  // 초기 데이터 로드
   useEffect(() => {
-    if (relationships.length === 0 && allCustomers.length > 0) {
-      loadRelationshipsData();
-    }
-  }, [allCustomers.length, relationships.length]);
+    console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
+    loadCustomers({ limit: 10000, offset: 0 });
+  }, [loadCustomers]);
 
-  const loadRelationshipsData = async () => {
+  const loadRelationshipsData = useCallback(async () => {
     try {
       setRelationshipsLoading(true);
       const data = await RelationshipService.getAllRelationshipsWithCustomers();
@@ -82,7 +79,14 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     } finally {
       setRelationshipsLoading(false);
     }
-  };
+  }, []);
+
+  // 관계 데이터 로드 (고객 데이터 로드 후)
+  useEffect(() => {
+    if (relationships.length === 0 && allCustomers.length > 0) {
+      loadRelationshipsData();
+    }
+  }, [allCustomers.length, relationships.length, loadRelationshipsData]);
 
   const loading = customersLoading || relationshipsLoading;
   const customers = allCustomers;
