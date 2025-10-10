@@ -88,7 +88,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
-    if (activeDocumentView === "documents-register" ||
+    if (activeDocumentView === "documents" ||
+        activeDocumentView === "documents-register" ||
         activeDocumentView === "documents-library" ||
         activeDocumentView === "documents-search" ||
         activeDocumentView === "dsd" ||
@@ -288,6 +289,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     ]
     if (allViewKeys.includes(menuKey)) {
       setActiveDocumentView(menuKey)
+
+      // 메뉴 변경 시 RightPane 닫기 (문서/고객 선택 해제)
+      setSelectedDocument(null)
+      setSelectedCustomer(null)
+      setRightPaneContentType(null)
+      setRightPaneVisible(false)
     }
   }, [])
 
