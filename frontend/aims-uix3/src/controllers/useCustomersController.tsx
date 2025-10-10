@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo } from 'react';
 import { useCustomerContext } from '@/contexts/CustomerContextHooks';
-import { CustomerService } from '@/services/customerService';
+import { CustomerDocument } from '@/stores/CustomerDocument';
 import { handleApiError } from '@/shared/lib/api';
 import type { Customer, CreateCustomerData, UpdateCustomerData, CustomerSearchQuery } from '@/entities/customer';
 import { useConfirmation } from '../shared/hooks/useConfirmation';
@@ -52,22 +52,27 @@ export const useCustomersController = () => {
       setLoading(true);
       setError(null);
 
+      // Document-View 패턴: CustomerDocument를 통해 로드
+      const document = CustomerDocument.getInstance();
       const searchParams = { ...state.searchParams, ...params };
-      console.log('[useCustomersController] Calling CustomerService.getCustomers with:', searchParams)
-      const result = state.searchQuery.trim()
-        ? await CustomerService.searchCustomers(state.searchQuery, searchParams)
-        : await CustomerService.getCustomers(searchParams);
 
-      console.log('[useCustomersController] CustomerService returned:', {
-        customersCount: result.customers.length,
-        total: result.total,
-        hasMore: result.hasMore
+      console.log('[useCustomersController] Document를 통해 고객 목록 로드:', searchParams)
+      await document.loadCustomers(searchParams);
+
+      const customers = document.getCustomers();
+      const total = document.getTotal();
+      const hasMore = document.getHasMore();
+
+      console.log('[useCustomersController] Document 로드 완료:', {
+        customersCount: customers.length,
+        total,
+        hasMore
       })
 
       setCustomers({
-        customers: result.customers,
-        total: result.total,
-        hasMore: result.hasMore,
+        customers,
+        total,
+        hasMore,
       });
     } catch (error) {
       console.error('[useCustomersController] Error loading customers:', error)
@@ -148,7 +153,11 @@ export const useCustomersController = () => {
       setCreating(true);
       setError(null);
 
-      const newCustomer = await CustomerService.createCustomer(data);
+      // Document-View 패턴: CustomerDocument를 통해 생성
+      const document = CustomerDocument.getInstance();
+      const newCustomer = await document.createCustomer(data);
+      console.log('[useCustomersController] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
+
       addCustomer(newCustomer);
       showCreateForm(false);
     } catch (error) {
@@ -166,7 +175,11 @@ export const useCustomersController = () => {
       setUpdating(true);
       setError(null);
 
-      const updatedCustomer = await CustomerService.updateCustomer(id, data);
+      // Document-View 패턴: CustomerDocument를 통해 수정
+      const document = CustomerDocument.getInstance();
+      const updatedCustomer = await document.updateCustomer(id, data);
+      console.log('[useCustomersController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+
       updateCustomerInState(updatedCustomer);
       showEditForm(false);
     } catch (error) {
@@ -184,7 +197,11 @@ export const useCustomersController = () => {
       setDeleting(true);
       setError(null);
 
-      await CustomerService.deleteCustomer(id);
+      // Document-View 패턴: CustomerDocument를 통해 삭제
+      const document = CustomerDocument.getInstance();
+      await document.deleteCustomer(id);
+      console.log('[useCustomersController] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+
       removeCustomer(id);
     } catch (error) {
       setError(handleApiError(error));

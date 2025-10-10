@@ -12,7 +12,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import CustomerContextProvider from '@/contexts/CustomerContext';
 import { useCustomerContext } from '@/contexts/CustomerContextHooks';
-import { CustomerService } from '@/services/customerService';
+import { CustomerDocument } from '@/stores/CustomerDocument';
 import { queryKeys, invalidateQueries } from '@/app/queryClient';
 import { handleApiError } from '@/shared/lib/api';
 import type { CreateCustomerData, UpdateCustomerData } from '@/entities/customer';
@@ -55,12 +55,15 @@ const useCustomerDataManager = () => {
   const createCustomerMutation = useMutation({
     mutationFn: (data: CreateCustomerData) => {
       setCreating(true);
-      return CustomerService.createCustomer(data);
+      // Document-View 패턴: CustomerDocument를 통해 생성
+      const document = CustomerDocument.getInstance();
+      return document.createCustomer(data);
     },
     onSuccess: (newCustomer) => {
       addCustomer(newCustomer);
       invalidateQueries.customers();
       setError(null);
+      console.log('[CustomerProvider] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
     },
     onError: (error) => {
       setCreating(false);
@@ -72,12 +75,15 @@ const useCustomerDataManager = () => {
   const updateCustomerMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateCustomerData }) => {
       setUpdating(true);
-      return CustomerService.updateCustomer(id, data);
+      // Document-View 패턴: CustomerDocument를 통해 수정
+      const document = CustomerDocument.getInstance();
+      return document.updateCustomer(id, data);
     },
     onSuccess: (updatedCustomer) => {
       updateCustomer(updatedCustomer);
       invalidateQueries.customer(updatedCustomer._id);
       setError(null);
+      console.log('[CustomerProvider] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
     },
     onError: (error) => {
       setUpdating(false);
@@ -89,12 +95,15 @@ const useCustomerDataManager = () => {
   const deleteCustomerMutation = useMutation({
     mutationFn: (id: string) => {
       setDeleting(true);
-      return CustomerService.deleteCustomer(id);
+      // Document-View 패턴: CustomerDocument를 통해 삭제
+      const document = CustomerDocument.getInstance();
+      return document.deleteCustomer(id);
     },
     onSuccess: (_, deletedId) => {
       removeCustomer(deletedId);
       invalidateQueries.customers();
       setError(null);
+      console.log('[CustomerProvider] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
     },
     onError: (error) => {
       setDeleting(false);
