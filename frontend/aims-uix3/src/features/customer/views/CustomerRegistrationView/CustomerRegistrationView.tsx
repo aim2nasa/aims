@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { useCustomerRegistrationController } from '../../controllers/useCustomerRegistrationController';
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
+import { Button } from '../../../../shared/ui/Button';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
 import { AddressSection } from './components/AddressSection';
@@ -105,23 +106,26 @@ export const CustomerRegistrationView: React.FC = () => {
 
             {/* Actions */}
             <div className="customer-registration__actions">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handleResetClick}
                 disabled={isSubmitting}
-                className={resetClicked ? 'button-clicked' : ''}
+                leftIcon={<span>{resetClicked ? '🔃' : '🔄'}</span>}
               >
-                <span className="button-icon">{resetClicked ? '🔃' : '🔄'}</span>
-                <span>초기화</span>
-              </button>
-              <button
+                초기화
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 disabled={isSubmitting || !formData.name.trim()}
-                aria-busy={isSubmitting}
+                loading={isSubmitting}
+                leftIcon={!isSubmitting ? <span>✅</span> : undefined}
               >
-                <span className="button-icon">✅</span>
-                <span>등록하기</span>
-              </button>
+                등록하기
+              </Button>
             </div>
           </form>
         </div>
