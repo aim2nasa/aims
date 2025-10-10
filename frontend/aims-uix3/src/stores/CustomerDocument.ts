@@ -158,7 +158,7 @@ export class CustomerDocument {
       const response = await CustomerService.getCustomers(query);
 
       this.customers = response.customers;
-      this.total = response.total;
+      this.total = response.total ?? this.customers.length; // 🔥 FIX: total이 undefined일 경우 customers.length 사용
       this.hasMore = response.hasMore;
 
       console.log('[CustomerDocument] 고객 목록 로드 완료:', {

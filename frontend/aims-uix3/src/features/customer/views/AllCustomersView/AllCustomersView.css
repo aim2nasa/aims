@@ -185,6 +185,7 @@ html[data-theme="dark"] .result-count {
 /* === 🍎 CUSTOMER LIST: iOS table view === */
 
 .customer-list {
+  min-height: 0; /* 🔥 FIX: flex item이 parent를 넘지 않도록 */
   flex: 1;
   overflow-y: auto;
   display: flex;
