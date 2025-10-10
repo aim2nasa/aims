@@ -43,6 +43,7 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [alreadyFamiliedCustomers, setAlreadyFamiliedCustomers] = useState<Set<string>>(new Set());
 
   // 고객 검색
   const searchCustomers = useCallback(async (searchValue: string = '') => {
@@ -60,10 +61,11 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
       });
 
       if (result.customers) {
-        // 개인 고객만 필터링하고 현재 고객 제외
+        // 개인 고객만 필터링하고 현재 고객 제외, 그리고 이미 가족이 있는 고객 제외
         const individualCustomers = result.customers.filter((customer: Customer) =>
           customer._id !== customerId &&
-          customer.insurance_info?.customer_type === '개인'
+          customer.insurance_info?.customer_type === '개인' &&
+          !alreadyFamiliedCustomers.has(customer._id)
         );
 
         setCustomers(individualCustomers);
@@ -73,6 +75,40 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
       setErrorMessage('고객 검색에 실패했습니다.');
     } finally {
       setSearchLoading(false);
+    }
+  }, [customerId, alreadyFamiliedCustomers]);
+
+  // 이미 가족이 있는 고객들을 식별하는 함수 (aims-uix2 로직 적용)
+  const identifyFamiliedCustomers = useCallback(async () => {
+    try {
+      // 모든 관계 데이터 로드
+      const allData = await RelationshipService.getAllRelationshipsWithCustomers();
+      const { relationships } = allData;
+      const familiedCustomers = new Set<string>();
+
+      // 가족 관계만 필터링 (개인-개인만)
+      relationships.forEach(relationship => {
+        const category = relationship.relationship_info.relationship_category;
+        const fromCustomer = relationship.from_customer;
+        const toCustomer = relationship.related_customer;
+
+        if (category === 'family' &&
+            typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '개인' &&
+            typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '개인') {
+
+          familiedCustomers.add(fromCustomer._id);
+          familiedCustomers.add(toCustomer._id);
+        }
+      });
+
+      // 현재 고객이 가족이 없는 경우에만 다른 사람을 가족으로 추가할 수 있음
+      // 현재 고객은 제외 (자기 자신은 가족 대표자인 경우 추가 가능)
+      familiedCustomers.delete(customerId);
+
+      setAlreadyFamiliedCustomers(familiedCustomers);
+    } catch (error) {
+      console.error('[FamilyRelationshipModal] 가족 고객 식별 실패:', error);
+      setAlreadyFamiliedCustomers(new Set());
     }
   }, [customerId]);
 
@@ -88,8 +124,9 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
   useEffect(() => {
     if (visible) {
       resetForm();
+      identifyFamiliedCustomers();
     }
-  }, [visible, resetForm]);
+  }, [visible, resetForm, identifyFamiliedCustomers]);
 
   // 가족구성원과 가족관계가 모두 선택되었는지 확인
   const isFormValid = selectedCustomer && selectedRelationType;
@@ -105,6 +142,12 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
     // 자기 자신과의 관계 방지
     if (customerId === selectedCustomer._id) {
       setErrorMessage('자기 자신과는 관계를 설정할 수 없습니다');
+      return;
+    }
+
+    // 이미 가족이 있는 고객과의 관계 방지
+    if (alreadyFamiliedCustomers.has(selectedCustomer._id)) {
+      setErrorMessage('선택한 고객은 이미 다른 가족에 속해 있습니다. 가족이 없는 고객만 선택할 수 있습니다.');
       return;
     }
 
