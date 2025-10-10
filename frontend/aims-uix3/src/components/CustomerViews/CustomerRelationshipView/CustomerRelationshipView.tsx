@@ -57,6 +57,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     customers: allCustomers,
     isLoading: customersLoading,
     loadCustomers,
+    refresh,
   } = useCustomerDocument();
 
   const [relationships, setRelationships] = useState<any[]>([]);
@@ -87,6 +88,21 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       loadRelationshipsData();
     }
   }, [allCustomers.length, relationships.length, loadRelationshipsData]);
+
+  // relationshipChanged 이벤트 수신하여 데이터 새로고침
+  useEffect(() => {
+    const handleRelationshipChange = async () => {
+      console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 데이터 새로고침');
+      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
+      await refresh({ limit: 10000, offset: 0 });
+      await loadRelationshipsData();
+    };
+
+    window.addEventListener('relationshipChanged', handleRelationshipChange);
+    return () => {
+      window.removeEventListener('relationshipChanged', handleRelationshipChange);
+    };
+  }, [refresh, loadRelationshipsData]);
 
   const loading = customersLoading || relationshipsLoading;
   const customers = allCustomers;
