@@ -88,7 +88,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           <label className="form-row__label">
             생년월일
           </label>
-          <div className="form-row__input">
+          <div className="form-row__input form-row__input--date">
             <input
               type="date"
               value={formData.birth_date || ''}
@@ -96,6 +96,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               aria-label="생년월일"
               aria-invalid={!!errors['personal_info.birth_date']}
             />
+            <span className="date-icon">📅</span>
           </div>
         </div>
         {errors['personal_info.birth_date'] && (
