@@ -91,10 +91,10 @@
 
 .button--sm {
   gap: var(--spacing-1);
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: 4px 12px;
   font-size: var(--font-size-sm);
-  min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
-  min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
+  min-height: 1.875rem; /* 44px - iOS 최소 터치 영역 표준 */
+  min-width: auto;  /* 44px - iOS 최소 터치 영역 너비 보장 */
 }
 
 .button--md {
@@ -146,15 +146,22 @@
 
 /* Secondary Button */
 .button--secondary {
-  background-color: var(--color-button-secondary-bg);
+  background-color: var(--color-button-secondary-bg-light);
   border-color: var(--color-button-secondary-border);
   color: var(--color-button-secondary-text);
 }
 
-.button--secondary:hover:not(:disabled) {
-  background-color: var(--color-button-secondary-bg-hover);
+[data-theme="dark"] .button--secondary {
+  background-color: var(--color-button-secondary-bg-dark);
 }
 
+.button--secondary:hover:not(:disabled) {
+  background-color: var(--color-button-secondary-hover-light);
+}
+
+[data-theme="dark"] .button--secondary:hover:not(:disabled) {
+  background-color: var(--color-button-secondary-hover-dark);
+}
 .button--secondary:active:not(:disabled) {
   background-color: var(--color-button-secondary-bg-active);
   transform: translateY(1px) scale(0.985); /* 더 서브틀한 Press State */
@@ -225,7 +232,7 @@
 
 /* Link Button */
 .button--link {
-  background-color: transparent;
+  background-color: var(--color-button-ghost-bg-light);
   border-color: transparent;
   color: var(--color-primary-600);
   text-decoration: underline;
@@ -370,5 +377,3 @@
 /* === DARK THEME OVERRIDES === */
 
 [data-theme="dark"] .button:focus-visible {
-  box-shadow: var(--shadow-focus-ring-dark);
-}

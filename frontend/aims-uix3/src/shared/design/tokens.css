@@ -1202,6 +1202,35 @@
   --font-size-dynamic-xl: calc(var(--font-size-xl) * var(--dynamic-type-multiplier));
   --font-size-dynamic-2xl: calc(var(--font-size-2xl) * var(--dynamic-type-multiplier));
   --font-size-dynamic-3xl: calc(var(--font-size-3xl) * var(--dynamic-type-multiplier));
+
+  /* === 🍎 BUTTON COLOR SYSTEM === */
+  /* iOS 표준 버튼 색상 - 애플 디자인 가이드라인 준수 */
+
+  /* Primary Button - iOS Blue */
+  --color-button-primary-bg-light: #007aff;           /* iOS systemBlue */
+  --color-button-primary-bg-dark: #0a84ff;            /* iOS systemBlue Dark */
+  --color-button-primary-hover-light: #0051d5;        /* Hover: 더 진한 파란색 */
+  --color-button-primary-hover-dark: #409cff;         /* Hover Dark: 더 밝은 파란색 */
+
+  /* Secondary Button - iOS Orange */
+  --color-button-secondary-bg-light: #ff9500;         /* iOS systemOrange */
+  --color-button-secondary-bg-dark: #ff9f0a;          /* iOS systemOrange Dark */
+  --color-button-secondary-hover-light: #ff8c00;      /* Hover: 더 진한 주황색 */
+  --color-button-secondary-hover-dark: #ffb340;       /* Hover Dark: 더 밝은 주황색 */
+
+  /* Ghost Button - iOS Gray */
+  --color-button-ghost-bg-light: #e8e9eb;             /* 밝은 회색 배경 */
+  --color-button-ghost-bg-dark: rgba(255, 255, 255, 0.15); /* 반투명 흰색 */
+  --color-button-ghost-hover-light: #d1d5db;          /* Hover: 더 진한 회색 */
+  --color-button-ghost-hover-dark: rgba(255, 255, 255, 0.1); /* Hover Dark: 약간 어둡게 */
+  --color-button-ghost-text-light: #6b7280;           /* Light 텍스트 */
+  --color-button-ghost-text-dark: #9ca3af;            /* Dark 텍스트 */
+
+  /* Destructive Button - iOS Red */
+  --color-button-destructive-bg-light: #ff3b30;       /* iOS systemRed */
+  --color-button-destructive-bg-dark: #ff453a;        /* iOS systemRed Dark */
+  --color-button-destructive-hover-light: #ff1507;    /* Hover: 더 진한 빨간색 */
+  --color-button-destructive-hover-dark: #ff6961;     /* Hover Dark: 더 밝은 빨간색 */
 }
 
 /* 🍎 Dynamic Type Utility Classes */
@@ -1228,4 +1257,17 @@
 
 .haptic-enabled:active {
   transform: scale(0.98);
+}
+
+/* Dark Theme Button Colors */
+[data-theme="dark"] {
+  --color-button-primary-bg: var(--color-button-primary-bg-dark);
+  --color-button-primary-hover: var(--color-button-primary-hover-dark);
+  --color-button-secondary-bg: var(--color-button-secondary-bg-dark);
+  --color-button-secondary-hover: var(--color-button-secondary-hover-dark);
+  --color-button-ghost-bg: var(--color-button-ghost-bg-dark);
+  --color-button-ghost-hover: var(--color-button-ghost-hover-dark);
+  --color-button-ghost-text: var(--color-button-ghost-text-dark);
+  --color-button-destructive-bg: var(--color-button-destructive-bg-dark);
+  --color-button-destructive-hover: var(--color-button-destructive-hover-dark);
 }
