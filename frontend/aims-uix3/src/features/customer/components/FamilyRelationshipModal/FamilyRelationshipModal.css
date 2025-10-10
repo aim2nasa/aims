@@ -101,35 +101,54 @@
   flex: 1;
 }
 
-.family-modal__description {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: 20px;
+.family-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 /* 폼 섹션 */
-.form-section {
-  margin-bottom: 20px;
+.family-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.form-label {
+.family-modal__field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.family-modal__field-title {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 8px;
-  flex-wrap: nowrap;
 }
 
-.form-label svg {
+.family-modal__field-title svg {
   color: var(--color-icon-blue);
 }
 
-.form-label span {
-  white-space: nowrap;
+.family-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: rgba(52, 199, 89, 0.15);
+  color: var(--color-icon-green);
+}
+
+.family-modal__badge--muted {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-tertiary, #9ca3af);
 }
 
 /* 입력 필드 */
@@ -143,6 +162,47 @@
   background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
   transition: all 0.15s ease-out;
+}
+
+.family-modal__search {
+  position: relative;
+}
+
+.family-modal__input {
+  padding-right: 40px;
+}
+
+.family-modal__input-affix {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+.family-modal__input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.family-modal__input-clear {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.family-modal__input-clear:hover {
+  color: var(--color-text-primary);
 }
 
 .form-input:focus,
@@ -161,28 +221,6 @@
 .autocomplete-wrapper {
   position: relative;
   width: 100%;
-}
-
-.autocomplete-clear,
-.autocomplete-loading {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.autocomplete-clear {
-  padding: 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: opacity 0.15s ease-out;
-}
-
-.autocomplete-clear:hover {
-  opacity: 0.7;
 }
 
 .autocomplete-loading svg {
@@ -248,21 +286,7 @@
 }
 
 .autocomplete-option__name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.autocomplete-option__tag {
-  padding: 2px 8px;
-  font-size: 11px;
-  background-color: var(--color-icon-green);
-  color: white;
-  border-radius: 4px;
-}
-
-.autocomplete-option__year {
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .autocomplete-empty {
@@ -270,22 +294,6 @@
   text-align: center;
   font-size: 13px;
   color: var(--color-text-secondary);
-}
-
-/* 정보 박스 */
-.family-modal__info {
-  padding: 12px;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  margin-bottom: 20px;
-}
-
-.family-modal__info strong {
-  color: var(--color-text-primary);
 }
 
 /* 에러 메시지 */

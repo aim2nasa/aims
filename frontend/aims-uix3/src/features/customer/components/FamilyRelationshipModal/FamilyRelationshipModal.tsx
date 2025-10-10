@@ -17,9 +17,21 @@ import './FamilyRelationshipModal.css';
 
 // 가족관계등록부 범위 내 관계 유형만 허용
 const FAMILY_RELATIONSHIP_TYPES = {
-  spouse: { label: '배우자', icon: '💑' },
-  parent: { label: '부모', icon: '👨‍👩‍👧‍👦' },
-  child: { label: '자녀', icon: '👶' }
+  spouse: {
+    label: '배우자',
+    icon: '💑',
+    description: '결혼 관계, 동일 세대의 핵심 파트너',
+  },
+  parent: {
+    label: '부모',
+    icon: '👨‍👩‍👧‍👦',
+    description: '상위 세대 보호자 및 법정 대리인',
+  },
+  child: {
+    label: '자녀',
+    icon: '👶',
+    description: '하위 세대 피부양자 및 상속 대상',
+  },
 };
 
 interface FamilyRelationshipModalProps {
@@ -61,11 +73,13 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
       });
 
       if (result.customers) {
+        const normalizedSearch = searchValue.trim().toLowerCase();
         // 개인 고객만 필터링하고 현재 고객 제외, 그리고 이미 가족이 있는 고객 제외
         const individualCustomers = result.customers.filter((customer: Customer) =>
           customer._id !== customerId &&
           customer.insurance_info?.customer_type === '개인' &&
-          !alreadyFamiliedCustomers.has(customer._id)
+          !alreadyFamiliedCustomers.has(customer._id) &&
+          (customer.personal_info?.name || '').toLowerCase().includes(normalizedSearch)
         );
 
         setCustomers(individualCustomers);
@@ -223,14 +237,28 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
+    setSelectedRelationType(null);
     setSearchText(customer.personal_info?.name || '');
     setCustomers([]);
+    setErrorMessage(null);
   };
 
   const handleClearSearch = () => {
     setSearchText('');
     setCustomers([]);
     setSelectedCustomer(null);
+    setSelectedRelationType(null);
+    setErrorMessage(null);
+  };
+
+  const handleRelationTypeSelect = (type: string) => {
+    if (!selectedCustomer) {
+      setSelectedRelationType(null);
+      return;
+    }
+
+    setSelectedRelationType(type || null);
+    setErrorMessage(null);
   };
 
   if (!visible) return null;
@@ -257,103 +285,103 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
         </div>
 
         <div className="family-modal__body">
-          <div className="family-modal__description">
-            개인 고객과의 가족 관계를 설정할 수 있습니다. 법인 고객이나 이미 다른 가족에 속한 고객은 선택할 수 없습니다.
-          </div>
-
-          <form onSubmit={handleSubmit}>
+          <form className="family-modal__form" onSubmit={handleSubmit}>
             {/* 가족 구성원 선택 */}
-            <div className="form-section">
-              <label className="form-label">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="8" cy="5" r="2.5"/>
-                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
-                </svg>
-                <span>가족 구성원 선택</span>
-              </label>
-
-              <div className="autocomplete-wrapper">
+            <section className="family-modal__field">
+              <div className="family-modal__field-header">
+                <div className="family-modal__field-title">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <circle cx="8" cy="5" r="2.5" />
+                    <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" />
+                  </svg>
+                  <span>가족 구성원 선택</span>
+                </div>
+                {selectedCustomer && <span className="family-modal__badge">선택됨</span>}
+              </div>
+              <div className="autocomplete-wrapper family-modal__search">
                 <input
                   type="text"
-                  className="form-input"
+                  className="form-input family-modal__input"
                   placeholder="고객 이름을 입력하여 검색하세요"
                   value={searchText}
                   onChange={handleSearchChange}
                   autoComplete="off"
                 />
 
-                {searchText && (
-                  <button
-                    type="button"
-                    className="autocomplete-clear"
-                    onClick={handleClearSearch}
-                    aria-label="검색어 지우기"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="8" r="8" opacity="0.2"/>
-                      <path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/>
-                    </svg>
-                  </button>
-                )}
-
-                {searchLoading && (
-                  <div className="autocomplete-loading">
-                    <svg className="spinner" width="16" height="16" viewBox="0 0 16 16">
-                      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                  </div>
-                )}
+                <div className="family-modal__input-affix">
+                  {searchLoading ? (
+                    <div className="autocomplete-loading" role="status" aria-live="polite">
+                      <svg className="spinner" width="16" height="16" viewBox="0 0 16 16">
+                        <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                      </svg>
+                    </div>
+                  ) : searchText ? (
+                    <button
+                      type="button"
+                      className="family-modal__input-clear"
+                      onClick={handleClearSearch}
+                      aria-label="검색어 지우기"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="family-modal__input-icon" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.397l3.86 3.86a.75.75 0 101.06-1.061l-3.523-3.523zM7 12.5a5.5 5.5 0 110-11 5.5 5.5 0 010 11z" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
 
                 {customers.length > 0 && (
-                  <div className="autocomplete-dropdown">
-                    {customers.map((customer) => (
-                      <button
-                        key={customer._id}
-                        type="button"
-                        className="autocomplete-option"
-                        onClick={() => handleCustomerSelect(customer)}
-                      >
-                        <div className="autocomplete-option__avatar">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                            <circle cx="8" cy="5" r="2.5"/>
-                            <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
-                          </svg>
-                        </div>
-                        <span className="autocomplete-option__name">
-                          {customer.personal_info?.name}
-                        </span>
-                        <span className="autocomplete-option__tag">개인</span>
-                        {customer.personal_info?.birth_date && (
-                          <span className="autocomplete-option__year">
-                            ({new Date(customer.personal_info.birth_date).getFullYear()}년생)
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                  <div className="autocomplete-dropdown" role="listbox">
+                    {customers.map((customer) => {
+                      const customerName = customer.personal_info?.name;
+
+                      return (
+                        <button
+                          key={customer._id}
+                          type="button"
+                          className="autocomplete-option"
+                          onClick={() => handleCustomerSelect(customer)}
+                          role="option"
+                        >
+                          <div className="autocomplete-option__avatar" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                              <circle cx="8" cy="5" r="2.5" />
+                              <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" />
+                            </svg>
+                          </div>
+                          <span className="autocomplete-option__name">{customerName}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
-                {searchText && !searchLoading && customers.length === 0 && (
-                  <div className="autocomplete-empty">
-                    검색 결과가 없습니다
-                  </div>
+                {searchText && !searchLoading && customers.length === 0 && !selectedCustomer && (
+                  <div className="autocomplete-empty">검색 결과가 없습니다</div>
                 )}
               </div>
-            </div>
+            </section>
 
             {/* 가족 관계 선택 */}
-            <div className="form-section">
-              <label className="form-label">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
-                  <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z"/>
-                </svg>
-                <span>가족 관계</span>
-              </label>
-
+            <section className="family-modal__field">
+              <div className="family-modal__field-header">
+                <div className="family-modal__field-title">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z" />
+                  </svg>
+                  <span>가족 관계 유형 선택</span>
+                </div>
+                {!selectedCustomer && <span className="family-modal__badge family-modal__badge--muted">구성원 먼저 선택</span>}
+              </div>
               <select
                 className="form-select"
                 value={selectedRelationType || ''}
-                onChange={(e) => setSelectedRelationType(e.target.value)}
+                onChange={(e) => handleRelationTypeSelect(e.target.value)}
                 disabled={!selectedCustomer}
               >
                 <option value="">
@@ -365,27 +393,13 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
                   </option>
                 ))}
               </select>
-            </div>
-
-            {/* 자동 설정 안내 */}
-            <div className="family-modal__info">
-              💡 <strong>자동 설정:</strong> 가족 관계는 강한 관계 강도, 주간 연락 빈도, 높은 영향력으로 자동 설정되며,
-              교차판매 기회와 높은 추천 잠재력이 활성화됩니다.
-            </div>
+            </section>
 
             {/* 에러 메시지 */}
-            {errorMessage && (
-              <div className="family-modal__error">
-                {errorMessage}
-              </div>
-            )}
+            {errorMessage && <div className="family-modal__error">{errorMessage}</div>}
 
             {/* 성공 메시지 */}
-            {successMessage && (
-              <div className="family-modal__success">
-                {successMessage}
-              </div>
-            )}
+            {successMessage && <div className="family-modal__success">{successMessage}</div>}
 
             {/* 액션 버튼 */}
             <div className="family-modal__actions">
@@ -402,10 +416,12 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
                 className="family-modal__button family-modal__button--primary"
                 disabled={!isFormValid || loading}
               >
-                {loading ? '추가 중...' : (
+                {loading ? (
+                  '추가 중...'
+                ) : (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z"/>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z" />
                     </svg>
                     가족 관계 추가
                   </>
