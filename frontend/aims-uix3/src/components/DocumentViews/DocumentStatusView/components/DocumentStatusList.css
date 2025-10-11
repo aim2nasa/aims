@@ -273,6 +273,44 @@ html[data-theme="dark"] .status-date {
   transition: all 0.15s ease-out;
 }
 
+/* 🍎 고객 연결 상태 CSS 변수 정의 */
+.status-actions {
+  --opacity-link-base: 0.85;
+  --opacity-link-base-dark: 1;
+  --opacity-link-disabled: 0.25;
+  --opacity-link-disabled-dark: 0.15;
+  --filter-link-base: brightness(1);
+  --filter-link-base-dark: brightness(1.3) saturate(1.2);
+  --filter-link-active: brightness(1) saturate(1.1);
+  --filter-link-active-dark: brightness(1.5) saturate(1.5) contrast(1.2);
+  --filter-link-disabled: grayscale(0.5);
+  --filter-link-disabled-dark: grayscale(0.8) brightness(0.5);
+  --shadow-link-glow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* 🍎 다크 테마 고객 연결 상태 강화 - 라이트 테마 */
+.action-btn:last-child { /* 링크 버튼 (마지막 버튼) */
+  opacity: var(--opacity-link-base);
+  filter: var(--filter-link-base);
+}
+
+/* 🍎 다크 테마 고객 연결 상태 강화 - 다크 테마에서 더 강렬한 대비 */
+html[data-theme="dark"] .action-btn:last-child { /* 링크 버튼 (마지막 버튼) */
+  opacity: var(--opacity-link-base-dark);
+  filter: var(--filter-link-base-dark);
+}
+
+/* 연결 가능 상태 (활성) - 라이트 테마 */
+.action-btn:last-child:not([data-disabled="true"]) {
+  filter: var(--filter-link-active);
+}
+
+/* 연결 가능 상태 (활성) - 다크 테마에서 더욱 밝게 */
+html[data-theme="dark"] .action-btn:last-child:not([data-disabled="true"]) {
+  filter: var(--filter-link-active-dark);
+  text-shadow: var(--shadow-link-glow);
+}
+
 .action-btn:hover {
   background-color: transparent;
   transform: scale(1.15);
@@ -283,10 +321,19 @@ html[data-theme="dark"] .action-btn:hover {
   background-color: transparent;
 }
 
+/* 비활성 상태 (이미 연결됨) - 라이트 테마 */
 .action-btn[data-disabled="true"] {
-  opacity: 0.4;
+  opacity: var(--opacity-link-disabled);
   cursor: not-allowed;
   transform: none;
+  filter: var(--filter-link-disabled);
+}
+
+/* 비활성 상태 (이미 연결됨) - 다크 테마에서 더 어둡게 */
+html[data-theme="dark"] .action-btn[data-disabled="true"] {
+  opacity: var(--opacity-link-disabled-dark);
+  filter: var(--filter-link-disabled-dark);
+  text-shadow: none;
 }
 
 .action-btn[data-disabled="true"]:hover {
