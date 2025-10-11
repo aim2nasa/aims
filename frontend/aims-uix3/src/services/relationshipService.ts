@@ -78,8 +78,8 @@ export class RelationshipService {
   /**
    * 관계 유형 조회
    */
-  static async getRelationshipTypes(): Promise<Record<string, any>> {
-    const response = await api.get<{ success: boolean; data: Record<string, any> }>(
+  static async getRelationshipTypes(): Promise<Record<string, unknown>> {
+    const response = await api.get<{ success: boolean; data: Record<string, unknown> }>(
       ENDPOINTS.RELATIONSHIP_TYPES
     );
 
@@ -174,14 +174,14 @@ export class RelationshipService {
    * 모든 고객의 관계 데이터 조회 (트리뷰용)
    */
   static async getAllRelationshipsWithCustomers(): Promise<{
-    customers: any[];
+    customers: Customer[];
     relationships: Relationship[];
     timestamp: number;
   }> {
     // 1. 모든 고객 조회
     const customersResponse = await api.get<{
       success: boolean;
-      data: { customers: any[] };
+      data: { customers: Customer[] };
     }>('/api/customers?page=1&limit=1000');
 
     if (!customersResponse.success || !customersResponse.data) {

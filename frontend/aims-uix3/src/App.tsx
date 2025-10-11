@@ -5,6 +5,7 @@ import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchContext'
+import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -26,6 +27,44 @@ const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 import DownloadHelper from './utils/downloadHelper'
+
+interface SmartSearchDocumentResponse {
+  upload?: {
+    originalName?: string
+    destPath?: string
+    uploaded_at?: string
+  }
+  payload?: {
+    original_name?: string
+    dest_path?: string
+    mime?: string
+    size_bytes?: number
+    uploaded_at?: string
+  }
+  meta?: {
+    mime?: string
+    size_bytes?: number
+  }
+}
+
+interface SelectedDocument {
+  _id: string
+  fileUrl: string | null
+  upload: {
+    originalName: string
+    destPath: string
+    uploaded_at?: string
+  }
+  payload?: {
+    original_name?: string
+    dest_path?: string
+    uploaded_at?: string
+  }
+  meta: {
+    mime?: string
+    size_bytes?: number
+  }
+}
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -75,10 +114,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   )
 
   // RightPane 문서 프리뷰 상태
-  const [selectedDocument, setSelectedDocument] = useState<any | null>(null)
+  const [selectedDocument, setSelectedDocument] = useState<SelectedDocument | null>(null)
 
   // RightPane 고객 상세 상태
-  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [rightPaneContentType, setRightPaneContentType] = useState<'document' | 'customer' | null>(null)
 
   // 고객 전체보기 새로고침을 위한 ref
@@ -139,16 +178,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   useEffect(() => {
     initializeDynamicType()
     initializeHapticStyles()
-
-    console.log('[App] iOS 네이티브 시스템 초기화 완료', {
-      dynamicType: {
-        currentSize: dynamicType.currentSize,
-        scaleFactor: dynamicType.scaleFactor,
-        isAccessibilitySize: dynamicType.isAccessibilitySize
-      },
-      hapticEnabled: haptic.isHapticEnabled
-    })
   }, [])
+
+  const { currentSize, scaleFactor, isAccessibilitySize } = dynamicType
+  const { isHapticEnabled } = haptic
+
+  useEffect(() => {
+    console.log('[App] iOS 네이티브 시스템 초기화 상태', {
+      dynamicType: {
+        currentSize,
+        scaleFactor,
+        isAccessibilitySize
+      },
+      hapticEnabled: isHapticEnabled
+    })
+  }, [currentSize, scaleFactor, isAccessibilitySize, isHapticEnabled])
 
   // 햅틱 피드백을 전역적으로 사용할 수 있도록 window 객체에 바인딩
   useEffect(() => {
@@ -316,7 +360,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         body: JSON.stringify({ id: documentId })
       })
 
-      const data = await response.json()
+      const data = await response.json() as SmartSearchDocumentResponse[]
       console.log('[App] API 응답 데이터:', data)
 
       if (data && data.length > 0) {
@@ -324,7 +368,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         console.log('[App] fileData:', fileData)
 
         // destPath에서 fileUrl 생성 (aims-uix2 패턴)
-        let fileUrl = ''
+        let fileUrl: string | null = null
         const destPath = fileData.upload?.destPath || fileData.payload?.dest_path
         if (destPath) {
           const correctPath = destPath.replace('/data', '')
@@ -332,7 +376,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         }
 
         // 문서 객체 구성
-        const document = {
+        const document: SelectedDocument = {
           _id: documentId,
           fileUrl: fileUrl,
           upload: {
@@ -340,6 +384,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             destPath: destPath || '',
             uploaded_at: fileData.upload?.uploaded_at || fileData.payload?.uploaded_at || new Date().toISOString()
           },
+          payload: fileData.payload,
           meta: {
             mime: fileData.meta?.mime || fileData.payload?.mime || '',
             size_bytes: fileData.meta?.size_bytes || fileData.payload?.size_bytes || 0
@@ -361,10 +406,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [])
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
-  const handleCustomerClick = useCallback(async (customerId: string, customerData?: any) => {
+  const handleCustomerClick = useCallback(async (customerId: string, customerData?: Customer) => {
     console.log('[App] 고객 클릭:', customerId, customerData)
 
-    setSelectedCustomer(customerData)
+    if (customerData) {
+      setSelectedCustomer(customerData)
+    } else {
+      const { CustomerService } = await import('@/services/customerService')
+      const fetchedCustomer = await CustomerService.getCustomer(customerId)
+      setSelectedCustomer(fetchedCustomer)
+    }
     setRightPaneContentType('customer')
 
     // RightPane이 숨겨져 있으면 표시

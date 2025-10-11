@@ -13,7 +13,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
 import RefreshButton from '../../RefreshButton/RefreshButton';
-import { RelationshipService } from '../../../services/relationshipService';
+import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import './CustomerRelationshipView.css';
@@ -45,6 +45,12 @@ interface StructuredData {
   법인: Record<string, string[]>;
 }
 
+interface PopulatedRelationship extends Relationship {
+  from_customer: Customer;
+  related_customer: Customer;
+  family_representative?: Customer | string;
+}
+
 /**
  * CustomerRelationshipView React 컴포넌트
  */
@@ -61,7 +67,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     refresh,
   } = useCustomerDocument();
 
-  const [relationships, setRelationships] = useState<any[]>([]);
+  const [relationships, setRelationships] = useState<PopulatedRelationship[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
@@ -75,7 +81,35 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     try {
       setRelationshipsLoading(true);
       const data = await RelationshipService.getAllRelationshipsWithCustomers();
-      setRelationships(data.relationships);
+      const customerMap = new Map(data.customers.map(customer => [customer._id, customer] as const));
+
+      const populated = data.relationships
+        .map<PopulatedRelationship | null>((relationship) => {
+          const fromCustomer = typeof relationship.from_customer === 'string'
+            ? customerMap.get(relationship.from_customer)
+            : relationship.from_customer;
+          const toCustomer = typeof relationship.related_customer === 'string'
+            ? customerMap.get(relationship.related_customer)
+            : relationship.related_customer;
+
+          if (!fromCustomer || !toCustomer) {
+            return null;
+          }
+
+          const representative = relationship.family_representative;
+          const resolvedRepresentative =
+            typeof representative === 'string' ? customerMap.get(representative) || representative : representative;
+
+          return {
+            ...relationship,
+            from_customer: fromCustomer,
+            related_customer: toCustomer,
+            family_representative: resolvedRepresentative,
+          };
+        })
+        .filter((relationship): relationship is PopulatedRelationship => relationship !== null);
+
+      setRelationships(populated);
     } catch (error) {
       console.error('관계 데이터 로드 실패:', error);
     } finally {
