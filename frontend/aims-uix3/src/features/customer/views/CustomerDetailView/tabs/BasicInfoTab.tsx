@@ -175,7 +175,6 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
         addressHistory={addressArchiveController.addressHistory}
         isLoading={addressArchiveController.isLoading}
         error={addressArchiveController.error}
-        onSetCurrent={addressArchiveController.setCurrentAddress}
         customerName={customer.personal_info?.name || ''}
       />
     </>

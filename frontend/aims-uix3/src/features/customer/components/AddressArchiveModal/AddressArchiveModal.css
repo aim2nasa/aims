@@ -235,39 +235,17 @@
   background-color: var(--color-layout-accent-dark);
 }
 
-.address-item__button {
+/* Current Badge */
+.address-item__current-badge {
   padding: 4px 12px;
   font-size: 11px;
   border: 1px solid var(--color-icon-green);
   background-color: transparent;
   color: var(--color-icon-green);
   border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
   font-weight: 500;
-}
-
-.address-item__button:hover {
-  background-color: var(--color-icon-green);
-  color: white;
-}
-
-.address-item__button.secondary {
-  border-color: var(--color-layout-brb-light);
-  color: var(--color-text-secondary);
-}
-
-[data-theme="dark"] .address-item__button.secondary {
-  border-color: var(--color-layout-brb-dark);
-}
-
-.address-item__button.secondary:hover {
-  background-color: var(--color-layout-accent-light);
-  border-color: var(--color-text-secondary);
-}
-
-[data-theme="dark"] .address-item__button.secondary:hover {
-  background-color: var(--color-layout-accent-dark);
+  cursor: default;
+  pointer-events: none;
 }
 
 /* Address Content */
@@ -303,14 +281,6 @@
   color: white;
   border-radius: 4px;
   font-weight: 600;
-}
-
-/* Current Badge (Not clickable) */
-.address-item__button.current-badge {
-  cursor: default;
-  border-color: var(--color-icon-green);
-  color: var(--color-icon-green);
-  pointer-events: none;
 }
 
 /* Reason & Notes */

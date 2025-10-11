@@ -75,56 +75,6 @@ export class AddressService {
   }
 
   /**
-   * 주소 변경 (새 주소를 현재 주소로 설정)
-   *
-   * @param customerId - 고객 ID
-   * @param addressId - 주소 이력 항목 ID
-   * @returns 업데이트된 고객 정보
-   * @throws {Error} API 호출 실패 시
-   *
-   * @example
-   * ```typescript
-   * await AddressService.setCurrentAddress('customer123', 'address456');
-   * ```
-   */
-  static async setCurrentAddress(customerId: string, addressId: string): Promise<void> {
-    if (!customerId || !addressId) {
-      throw new Error('고객 ID와 주소 ID가 필요합니다');
-    }
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/customers/${customerId}/set-current-address`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ addressId }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || '주소 변경에 실패했습니다');
-      }
-    } catch (error) {
-      console.error('[AddressService] 주소 변경 실패:', error);
-
-      if (error instanceof Error) {
-        throw error;
-      }
-
-      throw new Error('주소 변경 중 오류가 발생했습니다');
-    }
-  }
-
-  /**
    * 주소 포맷팅 유틸리티
    *
    * @param address - 주소 객체

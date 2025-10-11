@@ -29,8 +29,6 @@ interface AddressArchiveModalProps {
   isLoading: boolean;
   /** 에러 메시지 */
   error: string | null;
-  /** 현재 주소로 설정 핸들러 */
-  onSetCurrent: (addressId: string) => Promise<void>;
   /** 고객 이름 */
   customerName: string;
 }
@@ -41,7 +39,6 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
   addressHistory,
   isLoading,
   error,
-  onSetCurrent,
   customerName
 }) => {
   if (!isOpen) return null;
@@ -106,17 +103,8 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
                     </span>
                     {AddressService.formatDate(item.changed_at)}
                   </div>
-                  {!isCurrent && item._id && (
-                    <button
-                      className="address-item__button secondary"
-                      onClick={() => onSetCurrent(item._id!)}
-                      disabled={isLoading}
-                    >
-                      현재 주소로 설정
-                    </button>
-                  )}
                   {isCurrent && (
-                    <span className="address-item__button current-badge">현재 주소</span>
+                    <span className="address-item__current-badge">현재 주소</span>
                   )}
                 </div>
                 <div className="address-item__content">

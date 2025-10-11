@@ -27,7 +27,6 @@ interface AddressArchiveControllerReturn {
   open: () => void;
   close: () => void;
   loadAddressHistory: (customerId: string) => Promise<void>;
-  setCurrentAddress: (addressId: string) => Promise<void>;
 }
 
 /**
@@ -47,7 +46,9 @@ interface AddressArchiveControllerReturn {
  *       isOpen={controller.isOpen}
  *       onClose={controller.close}
  *       addressHistory={controller.addressHistory}
- *       onSetCurrent={controller.setCurrentAddress}
+ *       isLoading={controller.isLoading}
+ *       error={controller.error}
+ *       customerName={customer.personal_info.name}
  *     />
  *   </>
  * );
@@ -107,35 +108,6 @@ export const useAddressArchiveController = (
     }
   }, []);
 
-  /**
-   * 현재 주소로 설정 (실제 API 연동)
-   */
-  const setCurrentAddress = useCallback(async (addressId: string) => {
-    if (!addressId) {
-      setError('주소 ID가 필요합니다');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Service Layer를 통한 실제 API 호출
-      await AddressService.setCurrentAddress(customerId, addressId);
-
-      console.log('[AddressArchiveController] 주소 변경 완료:', addressId);
-
-      // 주소 변경 후 이력 다시 로드
-      await loadAddressHistory(customerId);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '주소 변경에 실패했습니다.';
-      setError(errorMessage);
-      console.error('[AddressArchiveController] 주소 변경 실패:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [customerId, loadAddressHistory]);
-
   return {
     // State
     isOpen,
@@ -146,8 +118,7 @@ export const useAddressArchiveController = (
     // Actions
     open,
     close,
-    loadAddressHistory,
-    setCurrentAddress
+    loadAddressHistory
   };
 };
 
