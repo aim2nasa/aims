@@ -35,6 +35,9 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-modal-light);
   overflow-y: auto;
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-footnote);
+  line-height: var(--line-height-normal);
 }
 
 html[data-theme="dark"] .document-link-modal {
@@ -57,9 +60,10 @@ html[data-theme="dark"] .document-link-modal {
   align-items: center;
 }
 
+
 .document-link-modal__title h2 {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-callout);
   font-weight: var(--font-weight-semibold);
   color: var(--color-modal-text-primary);
 }
@@ -124,12 +128,12 @@ html[data-theme="dark"] .document-link-modal__section--document {
 }
 
 .document-summary__label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-1);
   color: var(--color-text-tertiary);
 }
 
 .document-summary__name {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-subheadline);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   max-width: 360px;
@@ -154,18 +158,18 @@ html[data-theme="dark"] .document-status-chip {
 
 .document-link-modal__description {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-footnote);
   color: var(--color-text-secondary);
 }
 
 .document-link-modal__error {
   margin: 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-1);
   color: var(--color-error-500);
 }
 
 .document-link-modal__hint {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-1);
   color: var(--color-text-tertiary);
 }
 
@@ -299,7 +303,7 @@ html[data-theme="dark"] .document-link-modal__results {
 
 .customer-item__name {
   flex: 1;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   overflow: hidden;
@@ -315,7 +319,7 @@ html[data-theme="dark"] .document-link-modal__results {
   background: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-1);
 }
 
 html[data-theme="dark"] .customer-item__tag {
@@ -326,7 +330,7 @@ html[data-theme="dark"] .customer-item__tag {
 .customer-item__meta {
   display: flex;
   gap: var(--spacing-2);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-caption-1);
   color: var(--color-text-secondary);
 }
 
@@ -413,6 +417,7 @@ html[data-theme="dark"] .selected-customer {
   border: 1px solid var(--color-border-primary);
   background: var(--color-layout-secondary-light);
   color: var(--color-text-primary);
+  font-size: var(--font-size-footnote);
 }
 
 html[data-theme="dark"] .document-link-modal__textarea {
@@ -423,7 +428,7 @@ html[data-theme="dark"] .document-link-modal__textarea {
 
 .document-link-modal__feedback {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-footnote);
   color: var(--color-text-secondary);
 }
 
@@ -480,6 +485,7 @@ html[data-theme="dark"] .document-link-modal .input-container {
 
 .document-link-modal__button {
   min-width: 96px;
+  font-size: var(--font-size-footnote);
 }
 
 .document-link-modal__button--confirm.button--secondary {
