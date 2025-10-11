@@ -141,6 +141,10 @@
   color: var(--color-icon-purple);
 }
 
+.customer-detail-view .form-section__title--relationships svg {
+  color: var(--color-menu-icon-team); /* 관계별 보기와 동일 - purple */
+}
+
 /* Section Content */
 .customer-detail-view .form-section__content {
   flex: 1;

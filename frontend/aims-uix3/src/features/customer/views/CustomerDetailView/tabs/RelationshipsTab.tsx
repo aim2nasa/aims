@@ -139,7 +139,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   const renderState = () => {
     if (isLoading && relationshipsCount === 0) {
       return (
-        <div className="relationships-card__state">
+        <div className="relationships-state">
           <SFSymbol
             name="arrow.triangle.2.circlepath"
             animation={SFSymbolAnimation.ROTATE}
@@ -153,7 +153,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
 
     if (error && relationshipsCount === 0) {
       return (
-        <div className="relationships-card__state relationships-card__state--error">
+        <div className="relationships-state relationships-state--error">
           <SFSymbol
             name="exclamationmark.triangle.fill"
             size={SFSymbolSize.TITLE_3}
@@ -163,7 +163,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
           <span>{error}</span>
           <button
             type="button"
-            className="relationships-card__retry"
+            className="relationships-retry"
             onClick={() => loadRelationships()}
           >
             다시 시도
@@ -174,7 +174,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
 
     if (!isLoading && relationshipsCount === 0) {
       return (
-        <div className="relationships-card__state relationships-card__state--empty">
+        <div className="relationships-state relationships-state--empty">
           <SFSymbol
             name="person.2.slash"
             size={SFSymbolSize.TITLE_3}
@@ -189,16 +189,8 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   };
 
   return (
-    <div className="relationships-tab">
-      <div className="relationships-card">
-        <header className="relationships-card__header">
-          <div className="relationships-card__title">
-            <SFSymbol name="person.2" weight={SFSymbolWeight.SEMIBOLD} size={SFSymbolSize.CALLOUT} />
-            <span>가족 관계</span>
-            <span className="relationships-card__count">{relationshipsCount}</span>
-          </div>
-        </header>
-
+    <div className="form-section">
+      <div className="form-section__content">
         {renderState()}
 
         {rows.length > 0 && (

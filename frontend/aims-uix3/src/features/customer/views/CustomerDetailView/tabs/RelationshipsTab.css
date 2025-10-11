@@ -1,40 +1,4 @@
-.relationships-tab {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
-
-.relationships-card {
-  background-color: var(--color-layout-content-light);
-  border: 1px solid var(--color-layout-brb-light);
-  border-radius: 12px;
-  box-shadow: var(--shadow-base);
-  padding: var(--spacing-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
-
-[data-theme="dark"] .relationships-card {
-  background-color: var(--color-layout-content-dark);
-  border-color: var(--color-layout-brb-dark);
-  box-shadow: var(--shadow-base);
-}
-
-.relationships-card__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.relationships-card__title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-callout);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
+/* 가족 관계 탭 - 기본정보 탭과 통일된 스타일 */
 
 .relationships-card__count {
   display: inline-flex;
@@ -49,12 +13,7 @@
   color: var(--color-text-secondary);
 }
 
-.relationships-card__hint {
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-}
-
-.relationships-card__state {
+.relationships-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,19 +26,19 @@
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-[data-theme="dark"] .relationships-card__state {
+[data-theme="dark"] .relationships-state {
   background-color: rgba(255, 255, 255, 0.04);
 }
 
-.relationships-card__state--error {
+.relationships-state--error {
   color: var(--color-icon-red);
 }
 
-.relationships-card__state--empty {
+.relationships-state--empty {
   color: var(--color-text-secondary);
 }
 
-.relationships-card__retry {
+.relationships-retry {
   margin-left: var(--spacing-3);
   padding: var(--spacing-1) var(--spacing-3);
   border-radius: 999px;
@@ -91,7 +50,7 @@
   transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
 }
 
-.relationships-card__retry:hover {
+.relationships-retry:hover {
   background-color: var(--color-primary-100);
 }
 
@@ -276,10 +235,6 @@
 }
 
 @media (max-width: 640px) {
-  .relationships-card {
-    padding: var(--spacing-3);
-  }
-
   .relationships-table-wrapper {
     border-radius: 8px;
   }
