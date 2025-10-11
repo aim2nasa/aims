@@ -248,6 +248,19 @@
   pointer-events: none;
 }
 
+/* Past Badge */
+.address-item__past-badge {
+  padding: 4px 12px;
+  font-size: 11px;
+  border: 1px solid var(--color-icon-orange);
+  background-color: transparent;
+  color: var(--color-icon-orange);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Address Content */
 .address-item__content {
   display: flex;
@@ -270,17 +283,6 @@
 
 [data-theme="dark"] .address-item__text {
   color: var(--color-text-primary);
-}
-
-.address-item__label {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 6px;
-  font-size: 10px;
-  background-color: var(--color-icon-orange);
-  color: white;
-  border-radius: 4px;
-  font-weight: 600;
 }
 
 /* Reason & Notes */

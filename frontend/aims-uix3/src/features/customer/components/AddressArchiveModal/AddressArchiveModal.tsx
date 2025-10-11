@@ -103,25 +103,18 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
                     </span>
                     {AddressService.formatDate(item.changed_at)}
                   </div>
-                  {isCurrent && (
+                  {isCurrent ? (
                     <span className="address-item__current-badge">현재 주소</span>
+                  ) : (
+                    <span className="address-item__past-badge">과거 주소</span>
                   )}
                 </div>
                 <div className="address-item__content">
                   <div className="address-item__pin">📍</div>
                   <div className="address-item__text">
                     {AddressService.formatAddress(item.address)}
-                    {!isCurrent && (
-                      <span className="address-item__label">과거 보관</span>
-                    )}
                   </div>
                 </div>
-                {/* 변경 사유 표시 */}
-                {item.reason && (
-                  <div className="address-item__reason">
-                    {item.reason}
-                  </div>
-                )}
                 {/* 메모 표시 */}
                 {item.notes && (
                   <div className="address-item__notes">
