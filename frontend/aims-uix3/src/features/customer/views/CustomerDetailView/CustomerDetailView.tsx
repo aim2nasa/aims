@@ -9,7 +9,7 @@
  * - 기본정보 탭만 구현, 나머지는 플레이스홀더
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
 import CustomerEditModal from '../CustomerEditModal';
 import FamilyRelationshipModal from '../../components/FamilyRelationshipModal';
@@ -20,6 +20,7 @@ import { Tabs, type Tab } from '../../../../components/Tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
 import { RelationshipsTab } from './tabs/RelationshipsTab';
 import { EmptyTab } from './tabs/EmptyTab';
+import { DocumentsTab } from './tabs/DocumentsTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
@@ -53,6 +54,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [customerData, setCustomerData] = useState<Customer>(customer);
   const [activeTab, setActiveTab] = useState<string>('info');
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
+  const [documentCount, setDocumentCount] = useState(0);
   const confirmController = useAppleConfirmController();
 
   useEffect(() => {
@@ -250,58 +252,64 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
 
   // 🍎 탭 정의 (순서: 기본정보, 관계(개인만), 문서, 상담이력, 계약)
-  const tabs: Tab[] = [
-    {
-      key: 'info',
-      label: '기본 정보',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <circle cx="8" cy="5" r="2.5"/>
-          <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
-        </svg>
-      )
-    },
-    // 법인 고객이 아닌 경우에만 가족 관계 탭 표시
-    ...(!isBusinessCustomer ? [{
-      key: 'relationships',
-      label: '가족 관계',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
-        </svg>
-      )
-    }] : []),
-    {
-      key: 'documents',
-      label: '문서',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
-        </svg>
-      ),
-      count: 0
-    },
-    {
-      key: 'consultations',
-      label: '상담 이력',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm1-8V4a1 1 0 0 0-2 0v4H4a1 1 0 0 0 0 2h3v4a1 1 0 0 0 2 0v-4h3a1 1 0 0 0 0-2H9z"/>
-        </svg>
-      ),
-      count: 0
-    },
-    {
-      key: 'contracts',
-      label: '계약',
-      icon: (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M3 3.5a.5.5 0 0 1 1 0V4H12V3.5a.5.5 0 0 1 1 0V4h.5A1.5 1.5 0 0 1 15 5.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-8A1.5 1.5 0 0 1 2.5 4H3v-.5zM2.5 5a.5.5 0 0 0-.5.5v1h12v-1a.5.5 0 0 0-.5-.5h-11z"/>
-        </svg>
-      ),
-      count: 0
+  const tabs: Tab[] = useMemo(() => {
+    const baseTabs: Tab[] = [
+      {
+        key: 'info',
+        label: '기본 정보',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="8" cy="5" r="2.5"/>
+            <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
+          </svg>
+        )
+      },
+      {
+        key: 'documents',
+        label: '문서',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
+          </svg>
+        ),
+        count: documentCount
+      },
+      {
+        key: 'consultations',
+        label: '상담 이력',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm1-8V4a1 1 0 0 0-2 0v4H4a1 1 0 0 0 0 2h3v4a1 1 0 0 0 2 0v-4h3a1 1 0 0 0 0-2H9z"/>
+          </svg>
+        ),
+        count: 0
+      },
+      {
+        key: 'contracts',
+        label: '계약',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 3.5a.5.5 0 0 1 1 0V4H12V3.5a.5.5 0 0 1 1 0V4h.5A1.5 1.5 0 0 1 15 5.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-8A1.5 1.5 0 0 1 2.5 4H3v-.5zM2.5 5a.5.5 0 0 0-.5.5v1h12v-1a.5.5 0 0 0-.5-.5h-11z"/>
+          </svg>
+        ),
+        count: 0
+      }
+    ]
+
+    if (!isBusinessCustomer) {
+      baseTabs.splice(1, 0, {
+        key: 'relationships',
+        label: '가족 관계',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
+          </svg>
+        )
+      })
     }
-  ];
+
+    return baseTabs
+  }, [isBusinessCustomer, documentCount]);
 
   // 🍎 탭 내용 렌더링
   const renderTabContent = () => {
@@ -310,14 +318,10 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         return <BasicInfoTab customer={customer} />;
       case 'documents':
         return (
-          <EmptyTab
-            title="문서 탭"
-            description="고객과 연결된 문서 목록이 여기에 표시됩니다."
-            icon={
-              <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
-              </svg>
-            }
+          <DocumentsTab
+            customer={customer}
+            onRefresh={onRefresh}
+            onDocumentCountChange={setDocumentCount}
           />
         );
       case 'relationships':

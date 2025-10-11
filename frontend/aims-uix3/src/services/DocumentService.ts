@@ -29,6 +29,8 @@ const ENDPOINTS = {
   DOCUMENT_UPLOAD: '/api/documents/upload',
   DOCUMENT_DOWNLOAD: (id: string) => `/api/documents/${id}/download`,
   CUSTOMER_DOCUMENTS: (customerId: string) => `/api/customers/${customerId}/documents`,
+  CUSTOMER_DOCUMENT: (customerId: string, documentId: string) =>
+    `/api/customers/${customerId}/documents/${documentId}`,
 } as const;
 
 /**
@@ -293,6 +295,21 @@ export class DocumentService {
     }
 
     await api.post(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId), payload);
+  }
+
+  /**
+   * 고객과 문서 연결 해제
+   */
+  static async unlinkDocumentFromCustomer(customerId: string, documentId: string): Promise<void> {
+    if (!customerId.trim()) {
+      throw new Error('고객 ID가 필요합니다');
+    }
+
+    if (!documentId.trim()) {
+      throw new Error('문서 ID가 필요합니다');
+    }
+
+    await api.delete(ENDPOINTS.CUSTOMER_DOCUMENT(customerId, documentId));
   }
 
   /**
