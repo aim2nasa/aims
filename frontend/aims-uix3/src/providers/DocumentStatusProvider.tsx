@@ -124,7 +124,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     try {
       await DocumentStatusService.checkHealth()
       setApiHealth(true)
-    } catch (err) {
+    } catch {
       setApiHealth(false)
     }
   }, [])

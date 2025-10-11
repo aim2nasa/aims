@@ -90,7 +90,7 @@ export const useDocumentsController = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, documents, searchQuery, searchParams]);
+  }, [isLoading, hasMore, searchQuery, searchParams, loadDocuments]);
 
   /**
    * 검색어 변경 핸들러
@@ -182,7 +182,7 @@ export const useDocumentsController = () => {
     if (documents.length === 0) {
       loadDocuments(searchParams);
     }
-  }, []);
+  }, [documents.length, loadDocuments, searchParams]);
 
   /**
    * 검색어 변경 시 디바운스 적용하여 재로딩
