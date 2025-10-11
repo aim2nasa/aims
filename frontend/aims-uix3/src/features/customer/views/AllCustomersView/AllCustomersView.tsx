@@ -48,7 +48,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // Document-View 패턴: CustomerDocument 구독
     const {
       customers: allCustomers,
-      total,
       isLoading,
       error,
       loadCustomers,

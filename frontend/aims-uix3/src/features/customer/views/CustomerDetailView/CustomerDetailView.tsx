@@ -73,7 +73,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       try {
         // 모든 관계 데이터 로드
         const allData = await RelationshipService.getAllRelationshipsWithCustomers();
-        const { customers, relationships } = allData;
+        const { relationships } = allData;
 
         // 가족 관계 네트워크 구축
         const familyNetworks = new Map<string, Set<string>>();
@@ -215,8 +215,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   // 개인 고객인지 확인 (더 이상 사용하지 않음 - canAddFamilyRelation으로 대체)
   // const isPersonalCustomer = customer.insurance_info?.customer_type === '개인';
-
-  if (!customerData) return null;
 
   // 고객 타입 아이콘 (전체 보기와 동일한 SVG)
   const getCustomerTypeIcon = () => {

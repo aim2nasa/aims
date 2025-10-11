@@ -35,14 +35,6 @@ interface RelationshipsTabProps {
   onRelationshipsUpdated?: () => void;
 }
 
-const CATEGORY_SYMBOLS: Record<string, string> = {
-  family: 'heart.fill',
-  relative: 'person.2.fill',
-  social: 'person.3.fill',
-  professional: 'briefcase.fill',
-  corporate: 'building.2.fill',
-};
-
 const DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   year: 'numeric',
   month: '2-digit',
