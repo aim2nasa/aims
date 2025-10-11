@@ -237,20 +237,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [generateFileId])
 
   /**
-   * 파일 제거 핸들러
-   */
-  const handleRemoveFile = useCallback((fileId: string) => {
-    // 업로드 취소
-    uploadService.cancelUpload(fileId)
-
-    // 상태에서 제거
-    setUploadState(prev => ({
-      ...prev,
-      files: prev.files.filter(f => f.id !== fileId)
-    }))
-  }, [])
-
-  /**
    * 파일 재시도 핸들러
    */
   const handleRetryFile = useCallback((fileId: string) => {
@@ -539,7 +525,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         {uploadState.files.length > 0 && (
           <FileList
             files={uploadState.files}
-            onRemoveFile={handleRemoveFile}
             onRetryFile={handleRetryFile}
             onClearAll={handleClearAll}
             readonly={false}

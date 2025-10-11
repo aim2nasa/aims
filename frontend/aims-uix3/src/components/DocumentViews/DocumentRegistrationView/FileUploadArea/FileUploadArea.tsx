@@ -44,29 +44,18 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
+  const dragCounterRef = useRef(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [dragCounter, setDragCounter] = useState(0)
 
   // 애플 스타일 피드백 상태
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  // TypeScript unused variable fix
-  React.useEffect(() => {
-    if (dragCounter > 0) {
-      // Track drag counter for proper drag state management
-    }
-    // setToastMessage 미래 사용을 위한 더미 참조
-    if (false) setToastMessage('')
-  }, [dragCounter, setToastMessage])
-
   // 기본 옵션 병합
   const {
     multiple = true,
     directory = true,
-    accept,
-    maxFileSize: _maxFileSize, // 주석 처리된 함수용
-    maxFileCount: _maxFileCount // 주석 처리된 함수용
+    accept
   } = options
 
   /*
@@ -111,13 +100,26 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
    * 파일 처리 공통 로직
    */
   const handleFiles = useCallback((files: File[]) => {
-    if (disabled || uploading) return
-
-    // 모든 파일을 상위로 전달 (검증은 DocumentRegistrationView에서)
-    if (files.length > 0) {
-      onFilesSelected(files)
+    if (disabled) {
+      setToastMessage('업로드가 비활성화되었습니다.')
+      setToastVisible(true)
+      return
     }
-  }, [disabled, uploading, onFilesSelected])
+
+    if (uploading) {
+      setToastMessage('업로드가 진행 중입니다. 잠시 후 다시 시도해주세요.')
+      setToastVisible(true)
+      return
+    }
+
+    if (files.length === 0) {
+      setToastMessage('선택된 파일이 없습니다.')
+      setToastVisible(true)
+      return
+    }
+
+    onFilesSelected(files)
+  }, [disabled, onFilesSelected, setToastMessage, setToastVisible, uploading])
 
   /**
    * 드래그 이벤트 핸들러
@@ -126,26 +128,23 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     e.preventDefault()
     e.stopPropagation()
 
-    setDragCounter(prev => {
-      const newCounter = prev + 1
-      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-        setIsDragging(true)
-      }
-      return newCounter
-    })
+    const newCounter = dragCounterRef.current + 1
+    dragCounterRef.current = newCounter
+    if (newCounter > 0 && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true)
+    }
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    setDragCounter(prev => {
-      const newCounter = prev - 1
-      if (newCounter === 0) {
-        setIsDragging(false)
-      }
-      return newCounter
-    })
+    const newCounter = dragCounterRef.current - 1
+    dragCounterRef.current = newCounter
+    if (newCounter <= 0) {
+      dragCounterRef.current = 0
+      setIsDragging(false)
+    }
   }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -158,7 +157,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     e.stopPropagation()
 
     setIsDragging(false)
-    setDragCounter(0)
+    dragCounterRef.current = 0
 
     const items = Array.from(e.dataTransfer.items)
     const files: File[] = []

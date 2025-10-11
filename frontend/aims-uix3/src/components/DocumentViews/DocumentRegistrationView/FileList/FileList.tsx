@@ -11,7 +11,6 @@ import './FileList.css'
 
 interface FileListProps {
   files: UploadFile[]
-  onRemoveFile?: (fileId: string) => void
   onRetryFile?: (fileId: string) => void
   onClearAll?: () => void
   readonly?: boolean
@@ -154,7 +153,6 @@ const getFileTypeClass = (file: File): string => {
  */
 export const FileList: React.FC<FileListProps> = ({
   files,
-  onRemoveFile: _onRemoveFile, // 미래 사용 예정
   onRetryFile,
   onClearAll,
   readonly = false,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 /**
  * 간단한 고객 CRUD 테스트
@@ -9,7 +9,6 @@ import { test, expect } from '@playwright/test';
 test.describe('고객 CRUD 간단 테스트', () => {
   const timestamp = Date.now();
   const testCustomerName = `테스트고객_${timestamp}`;
-  const updatedCustomerName = `수정고객_${timestamp}`;
 
   test('1. 고객 생성 테스트', async ({ page }) => {
     console.log('\n=== 고객 생성 테스트 ===');

@@ -80,7 +80,6 @@ test.describe('UIX3 주소 검색 완전 테스트 (UIX2 방식)', () => {
     console.log('   - 모달 내부 요소 확인');
     const modalTitle = page.locator('.address-search-modal__header h2');
     const modalInput = page.locator('.address-search-modal__input');
-    const modalSearchBtn = page.locator('.address-search-modal__search-btn');
 
     const isTitleVisible = await modalTitle.isVisible();
     const isInputVisible = await modalInput.isVisible();

@@ -14,8 +14,7 @@ import type {
   Customer,
   CreateCustomerData,
   UpdateCustomerData,
-  CustomerSearchQuery,
-  CustomerSearchResponse
+  CustomerSearchQuery
 } from '@/entities/customer';
 
 /**

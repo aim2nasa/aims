@@ -126,7 +126,7 @@ export class UploadService {
   /**
    * 개별 파일 업로드 (자동 재시도 지원)
    */
-  private async uploadFile(uploadFile: UploadFile, _retryCount: number = 0): Promise<void> {
+  private async uploadFile(uploadFile: UploadFile): Promise<void> {
     const { id, file } = uploadFile
     const controller = new AbortController()
 
@@ -224,7 +224,7 @@ export class UploadService {
             error.response = response // 응답 데이터를 에러에 첨부
             reject(error)
           }
-        } catch (parseError) {
+        } catch {
           // JSON 파싱 실패 시 기본 응답으로 처리
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve({}) // 빈 성공 응답
@@ -361,7 +361,8 @@ export const fileValidator = {
   /**
    * 파일 형식 검증 - 모든 파일 허용
    */
-  validateType(_file: File): { valid: boolean; error?: string } { // 매개변수명 변경으로 미사용 표시
+  validateType(file: File): { valid: boolean; error?: string } {
+    void file
     return { valid: true }  // 모든 파일 형식 허용
   },
 
