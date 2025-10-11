@@ -490,6 +490,12 @@ html[data-theme="dark"] .tree-node__badge--success {
   align-items: center;
   gap: 6px;
   padding: 3px 0;
+  cursor: help; /* 툴팁 있음을 표시 */
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+.relation-item:hover {
+  opacity: 0.8;
 }
 
 .relation-item__icon {

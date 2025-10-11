@@ -427,8 +427,39 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                               relation.relationLabel === '자녀' ? '👶' :
                                               relation.relationLabel === '부모' ? '👨‍👩‍👧' :
                                               relation.relationLabel === '형제자매' ? '👫' : '👥';
+
+                                  // 가족 대표 기준 관계 변환
+                                  const getRelationFromRepresentative = () => {
+                                    const rep = groupData.representative;
+                                    const repName = rep.personal_info?.name || '이름없음';
+
+                                    // 이미 대표가 포함된 관계인 경우
+                                    if (relation.fromName === repName) {
+                                      return `${repName}의 ${relation.relationLabel}`;
+                                    } else if (relation.toName === repName) {
+                                      // 역관계 변환
+                                      const reverseRelation: Record<string, string> = {
+                                        '배우자': '배우자',
+                                        '자녀': '부모',
+                                        '부모': '자녀',
+                                        '형제자매': '형제자매'
+                                      };
+                                      return `${repName}의 ${reverseRelation[relation.relationLabel] || relation.relationLabel}`;
+                                    } else {
+                                      // 대표가 직접 관련되지 않은 경우 (예: 자녀들끼리의 관계)
+                                      // 대표와의 관계를 통해 표현
+                                      return `${repName}의 가족 구성원 간 관계`;
+                                    }
+                                  };
+
+                                  const repRelation = getRelationFromRepresentative();
+
                                   return (
-                                    <div key={relation.key} className="relation-item">
+                                    <div
+                                      key={relation.key}
+                                      className="relation-item"
+                                      title={repRelation}
+                                    >
                                       <span className="relation-item__icon">{icon}</span>
                                       <span className="relation-item__text">
                                         {relation.fromName} → {relation.toName}
