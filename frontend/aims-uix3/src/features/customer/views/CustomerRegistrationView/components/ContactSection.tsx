@@ -8,16 +8,14 @@
  */
 
 import React from 'react';
+import type { CustomerRegistrationFormData } from '../../../controllers/useCustomerRegistrationController';
+
+export type ContactFormData = Pick<CustomerRegistrationFormData, 'mobile_phone' | 'home_phone' | 'work_phone' | 'email'>;
 
 interface ContactSectionProps {
-  formData: {
-    mobile_phone?: string;
-    home_phone?: string;
-    work_phone?: string;
-    email?: string;
-  };
-  errors: { [key: string]: string };
-  onChange: (field: string, value: any) => void;
+  formData: ContactFormData;
+  errors: Record<string, string>;
+  onChange: (field: keyof ContactFormData, value: ContactFormData[keyof ContactFormData]) => void;
 }
 
 export const ContactSection: React.FC<ContactSectionProps> = ({

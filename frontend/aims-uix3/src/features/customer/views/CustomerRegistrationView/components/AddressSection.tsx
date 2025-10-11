@@ -9,16 +9,15 @@
 
 import React, { useState } from 'react';
 import { AddressSearchModal } from '../../../components/AddressSearchModal';
-import { FormattedAddress } from '../../../api/addressApi';
+import type { FormattedAddress } from '../../../api/addressApi';
+import type { CustomerRegistrationFormData } from '../../../controllers/useCustomerRegistrationController';
+
+export type AddressFormData = Pick<CustomerRegistrationFormData, 'postal_code' | 'address1' | 'address2'>;
 
 interface AddressSectionProps {
-  formData: {
-    postal_code?: string;
-    address1?: string;
-    address2?: string;
-  };
-  errors: { [key: string]: string };
-  onChange: (field: string, value: any) => void;
+  formData: AddressFormData;
+  errors: Record<string, string>;
+  onChange: (field: keyof AddressFormData, value: AddressFormData[keyof AddressFormData]) => void;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({

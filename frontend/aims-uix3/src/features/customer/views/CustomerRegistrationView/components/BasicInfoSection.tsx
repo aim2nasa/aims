@@ -10,16 +10,14 @@
  */
 
 import React from 'react';
+import type { CustomerRegistrationFormData } from '../../../controllers/useCustomerRegistrationController';
+
+export type BasicInfoFormData = Pick<CustomerRegistrationFormData, 'name' | 'name_en' | 'birth_date' | 'gender'>;
 
 interface BasicInfoSectionProps {
-  formData: {
-    name: string;
-    name_en?: string;
-    birth_date?: string;
-    gender?: 'M' | 'F';
-  };
-  errors: { [key: string]: string };
-  onChange: (field: string, value: any) => void;
+  formData: BasicInfoFormData;
+  errors: Record<string, string>;
+  onChange: (field: keyof BasicInfoFormData, value: BasicInfoFormData[keyof BasicInfoFormData]) => void;
 }
 
 export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({

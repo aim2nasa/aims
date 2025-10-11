@@ -33,6 +33,23 @@ const ENDPOINTS = {
     `/api/customers/${customerId}/documents/${documentId}`,
 } as const;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const toString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined
+
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
 /**
  * 고객 문서 연결 정보
  */
@@ -101,54 +118,82 @@ export class DocumentService {
     }
 
     const url = params.toString() ? `${ENDPOINTS.DOCUMENTS}?${params.toString()}` : ENDPOINTS.DOCUMENTS;
-    const response = await api.get<any>(url);
+    const response = await api.get<unknown>(url);
 
-    // 백엔드 응답 구조: { success: true, data: { documents: [...] } }
-    if (response.success && response.data && Array.isArray(response.data.documents)) {
-      const documents = response.data.documents.map((doc: any) => {
-        // uploadTime에서 'xxx' 제거하고 유효한 ISO 날짜로 변환
-        let uploadDate = doc.uploadTime || doc.uploaded_at || new Date().toISOString();
-        if (uploadDate.includes('xxx')) {
-          uploadDate = uploadDate.replace('xxx', '000Z');
-        }
+    const extractDocuments = (input: unknown): {
+      documents: Record<string, unknown>[];
+      pagination?: Record<string, unknown>;
+    } => {
+      if (!isRecord(input)) {
+        return { documents: [] };
+      }
 
-        return {
-          _id: doc._id,
-          filename: doc.filename,
-          originalName: doc.filename,
-          mimeType: doc.mimeType,
-          size: parseInt(doc.fileSize) || 0,
-          uploadDate: uploadDate,
-          ocrStatus: doc.status === 'completed' ? 'completed' as const : 'pending' as const,
-          status: 'active' as const,
-          createdAt: uploadDate,
-          updatedAt: uploadDate,
-          tags: [],
-        };
-      });
+      const data = isRecord(input.data) ? input.data : null;
+      const directDocuments = Array.isArray((input as { documents?: unknown }).documents)
+        ? (input as { documents?: unknown }).documents
+        : null;
+      const dataDocuments = data && Array.isArray((data as { documents?: unknown }).documents)
+        ? (data as { documents?: unknown }).documents
+        : null;
 
-      // 백엔드 페이지네이션 정보 사용
-      const pagination = response.data.pagination || {};
-      const total = pagination.totalCount || documents.length;
-      const hasMore = pagination.hasNext || false;
+      const documentsSource = dataDocuments ?? directDocuments ?? [];
+      const documents = documentsSource.filter((doc): doc is Record<string, unknown> => isRecord(doc));
 
-      // 백엔드에서 검색이 완료된 결과를 그대로 사용
+      const pagination =
+        (isRecord((data as { pagination?: unknown })?.pagination)
+          ? (data as { pagination?: Record<string, unknown> }).pagination
+          : isRecord((input as { pagination?: unknown }).pagination)
+            ? (input as { pagination?: Record<string, unknown> }).pagination
+            : undefined);
+
+      return { documents, pagination };
+    };
+
+    const { documents: rawDocuments, pagination } = extractDocuments(response);
+
+    const documents: Document[] = rawDocuments.map((doc) => {
+      const generatedId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const id = toString(doc._id) ?? toString(doc.id) ?? generatedId;
+      const filename = toString(doc.filename) ?? '이름 없는 문서';
+      const mimeType = toString(doc.mimeType);
+      const originalName = toString(doc.originalName) ?? filename;
+      const uploadTimeRaw = toString(doc.uploadTime) ?? toString(doc.uploaded_at) ?? new Date().toISOString();
+      const uploadDate = uploadTimeRaw.includes('xxx') ? uploadTimeRaw.replace('xxx', '000Z') : uploadTimeRaw;
+      const fileSize = toNumber(doc.fileSize);
+
+      const rawStatus = toString(doc.status);
+      const status: Document['status'] =
+        rawStatus === 'archived' || rawStatus === 'deleted' ? rawStatus : 'active';
+
+      const rawOcrStatus = toString(doc.ocrStatus);
+      const ocrStatus: Document['ocrStatus'] =
+        rawOcrStatus === 'processing' || rawOcrStatus === 'completed' || rawOcrStatus === 'failed'
+          ? rawOcrStatus
+          : 'pending';
+
       return {
-        documents: documents,
-        total: total,
-        hasMore: hasMore,
-        offset: query.offset || 0,
-        limit: query.limit || 10,
+        _id: id,
+        filename,
+        originalName,
+        mimeType,
+        size: fileSize,
+        uploadDate,
+        status,
+        ocrStatus,
+        createdAt: uploadDate,
+        updatedAt: uploadDate,
+        tags: []
       };
-    }
+    });
 
-    // 빈 응답 반환
+    const total = toNumber(pagination?.totalCount) ?? documents.length;
+    const hasMore = Boolean(pagination?.hasNext);
     return {
-      documents: [],
-      total: 0,
-      hasMore: false,
-      offset: 0,
-      limit: 20,
+      documents,
+      total,
+      hasMore,
+      offset: query.offset || 0,
+      limit: query.limit || 10
     };
   }
 
@@ -260,22 +305,56 @@ export class DocumentService {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    const response = await api.get<any>(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId));
+    const response = await api.get<unknown>(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId));
 
-    if (response && typeof response === 'object') {
-      if ('data' in response && response.data) {
-        return response.data as CustomerDocumentsResult;
+    const collectDocuments = (value: unknown): CustomerDocumentItem[] => {
+      if (!Array.isArray(value)) {
+        return [];
       }
+      return value
+        .map((item): CustomerDocumentItem | null => {
+          if (!isRecord(item)) {
+            return null;
+          }
+          const id = toString(item._id) ?? toString(item.id);
+          if (!id) {
+            return null;
+          }
+          return {
+            _id: id,
+            originalName: toString(item.originalName) ?? toString(item.filename),
+            uploadedAt: toString(item.uploadedAt) ?? toString(item.linkedAt),
+            fileSize: toNumber(item.fileSize),
+            mimeType: toString(item.mimeType),
+            relationship: toString(item.relationship),
+            notes: toString(item.notes),
+            linkedAt: toString(item.linkedAt),
+            status: toString(item.status) ?? undefined,
+            progress: toNumber(item.progress),
+          };
+        })
+        .filter((item): item is CustomerDocumentItem => item !== null);
+    };
 
-      if ('documents' in response) {
-        return response as CustomerDocumentsResult;
-      }
-    }
+    const responseRecord = isRecord(response) ? response : null;
+    const data = responseRecord && isRecord(responseRecord.data) ? responseRecord.data : null;
+    const topLevelDocuments = responseRecord ? (responseRecord as { documents?: unknown }).documents : undefined;
+    const documents = collectDocuments(
+      (data as { documents?: unknown })?.documents ?? topLevelDocuments
+    );
+
+    const total =
+      toNumber((data as { total?: unknown })?.total ?? (responseRecord as { total?: unknown })?.total) ?? documents.length;
+
+    const derivedCustomerId =
+      toString((data as { customer_id?: unknown })?.customer_id) ??
+      toString((responseRecord as { customer_id?: unknown })?.customer_id) ??
+      customerId;
 
     return {
-      customer_id: customerId,
-      documents: [],
-      total: 0,
+      customer_id: derivedCustomerId,
+      documents,
+      total,
     };
   }
 

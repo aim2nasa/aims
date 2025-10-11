@@ -25,7 +25,10 @@ export interface HapticConfig {
 
 export interface UseHapticFeedbackReturn {
   triggerHaptic: (type: string, customIntensity?: number | null) => void;
-  withHaptic: (hapticType: string, originalHandler?: ((event: any) => void) | null) => (event: any) => void;
+  withHaptic: <Args extends unknown[], Return = void>(
+    hapticType: string,
+    originalHandler?: ((...args: Args) => Return) | null
+  ) => (...args: Args) => Return;
   bindHapticToElement: (element: HTMLElement, hapticType: string, eventType?: string) => (() => void) | undefined;
   isHapticEnabled: boolean;
   hapticIntensity: number;

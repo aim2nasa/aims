@@ -17,7 +17,7 @@ interface UseCustomerRegistrationControllerProps {
   onError?: (error: Error) => void | Promise<void>;
 }
 
-interface FormData {
+export interface CustomerRegistrationFormData {
   // Personal Info
   name: string;
   name_en?: string;
@@ -52,7 +52,7 @@ export const useCustomerRegistrationController = ({
   onSuccess,
   onError,
 }: UseCustomerRegistrationControllerProps = {}) => {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<CustomerRegistrationFormData>({
     name: '',
     customer_type: '개인',
   });
@@ -63,7 +63,10 @@ export const useCustomerRegistrationController = ({
   /**
    * 폼 필드 값 변경 핸들러
    */
-  const handleChange = <Field extends keyof FormData>(field: Field, value: FormData[Field]) => {
+  const handleChange = <Field extends keyof CustomerRegistrationFormData>(
+    field: Field,
+    value: CustomerRegistrationFormData[Field]
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -83,7 +86,7 @@ export const useCustomerRegistrationController = ({
   /**
    * 폼 데이터를 API 요청 형식으로 변환
    */
-  const transformToApiFormat = (data: FormData): CreateCustomerData => {
+  const transformToApiFormat = (data: CustomerRegistrationFormData): CreateCustomerData => {
     return {
       personal_info: {
         name: data.name,
@@ -114,7 +117,7 @@ export const useCustomerRegistrationController = ({
   /**
    * 폼 검증
    */
-  const validate = (data: FormData): FormErrors => {
+  const validate = (data: CustomerRegistrationFormData): FormErrors => {
     const apiData = transformToApiFormat(data);
     const validationResult = CreateCustomerSchema.safeParse(apiData);
 

@@ -8,13 +8,14 @@
  */
 
 import React from 'react';
+import type { CustomerRegistrationFormData } from '../../../controllers/useCustomerRegistrationController';
+
+export type InsuranceFormData = Pick<CustomerRegistrationFormData, 'customer_type'>;
 
 interface InsuranceInfoSectionProps {
-  formData: {
-    customer_type: '개인' | '법인';
-  };
-  errors: { [key: string]: string };
-  onChange: (field: string, value: any) => void;
+  formData: InsuranceFormData;
+  errors: Record<string, string>;
+  onChange: (field: keyof InsuranceFormData, value: InsuranceFormData[keyof InsuranceFormData]) => void;
 }
 
 export const InsuranceInfoSection: React.FC<InsuranceInfoSectionProps> = ({

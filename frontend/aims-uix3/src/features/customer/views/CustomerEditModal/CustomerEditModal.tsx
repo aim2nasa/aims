@@ -19,9 +19,13 @@ import { createPortal } from 'react-dom';
 import { Customer } from '@/entities/customer';
 import { useCustomerEditController } from '../../controllers/useCustomerEditController';
 import { BasicInfoSection } from '../CustomerRegistrationView/components/BasicInfoSection';
+import type { BasicInfoFormData } from '../CustomerRegistrationView/components/BasicInfoSection';
 import { ContactSection } from '../CustomerRegistrationView/components/ContactSection';
+import type { ContactFormData } from '../CustomerRegistrationView/components/ContactSection';
 import { AddressSection } from '../CustomerRegistrationView/components/AddressSection';
+import type { AddressFormData } from '../CustomerRegistrationView/components/AddressSection';
 import { InsuranceInfoSection } from '../CustomerRegistrationView/components/InsuranceInfoSection';
+import type { InsuranceFormData } from '../CustomerRegistrationView/components/InsuranceInfoSection';
 import './CustomerEditModal.css';
 
 interface CustomerEditModalProps {
@@ -104,43 +108,53 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     }
   }, [onClose]);
 
-  /**
-   * 필드 변경 핸들러 (섹션 컴포넌트용)
-   */
-  const handleChange = useCallback((field: string, value: any) => {
-    // 필드 경로를 변환: 'name' → 'personal_info.name'
-    const fieldPath = field.includes('.') ? field : `personal_info.${field}`;
-    handleFieldChange(fieldPath, value);
-  }, [handleFieldChange]);
+  const handleBasicInfoChange = useCallback(
+    (field: keyof BasicInfoFormData, value: BasicInfoFormData[keyof BasicInfoFormData]) => {
+      handleFieldChange(`personal_info.${field}`, value)
+    },
+    [handleFieldChange]
+  )
+
+  const handleContactChange = useCallback(
+    (field: keyof ContactFormData, value: ContactFormData[keyof ContactFormData]) => {
+      handleFieldChange(`personal_info.${field}`, value)
+    },
+    [handleFieldChange]
+  )
+
+  const handleInsuranceChange = useCallback(
+    (field: keyof InsuranceFormData, value: InsuranceFormData[keyof InsuranceFormData]) => {
+      handleFieldChange(`insurance_info.${field}`, value)
+    },
+    [handleFieldChange]
+  )
 
   if (!visible) return null;
 
   // 폼 데이터를 섹션 컴포넌트 형식으로 변환
-  const basicInfoData: any = {
-    name: formData.personal_info?.name || '',
+  const basicInfoData: BasicInfoFormData = {
+    name: formData.personal_info?.name ?? ''
   };
   if (formData.personal_info?.name_en !== undefined) basicInfoData.name_en = formData.personal_info.name_en;
   if (formData.personal_info?.birth_date !== undefined) basicInfoData.birth_date = formData.personal_info.birth_date;
   if (formData.personal_info?.gender !== undefined) basicInfoData.gender = formData.personal_info.gender;
 
-  const contactData: any = {
-    mobile_phone: formData.personal_info?.mobile_phone || '',
-    home_phone: formData.personal_info?.home_phone || '',
-    work_phone: formData.personal_info?.work_phone || '',
-    email: formData.personal_info?.email || '',
+  const contactData: ContactFormData = {
+    mobile_phone: formData.personal_info?.mobile_phone ?? '',
+    home_phone: formData.personal_info?.home_phone ?? '',
+    work_phone: formData.personal_info?.work_phone ?? '',
+    email: formData.personal_info?.email ?? ''
   };
 
-  const addressData: any = {};
-  if (formData.personal_info?.address?.postal_code !== undefined) addressData.postal_code = formData.personal_info.address.postal_code;
-  if (formData.personal_info?.address?.address1 !== undefined) addressData.address1 = formData.personal_info.address.address1;
-  if (formData.personal_info?.address?.address2 !== undefined) addressData.address2 = formData.personal_info.address.address2;
-
-  const insuranceData: any = {
-    customer_type: formData.insurance_info?.customer_type || '개인',
+  const addressData: AddressFormData = {
+    postal_code: formData.personal_info?.address?.postal_code,
+    address1: formData.personal_info?.address?.address1,
+    address2: formData.personal_info?.address?.address2
   };
-  if (formData.insurance_info?.risk_level !== undefined) insuranceData.risk_level = formData.insurance_info.risk_level;
-  if (formData.insurance_info?.annual_premium !== undefined) insuranceData.annual_premium = formData.insurance_info.annual_premium;
-  if (formData.insurance_info?.total_coverage !== undefined) insuranceData.total_coverage = formData.insurance_info.total_coverage;
+
+  const insuranceData: InsuranceFormData = {
+    customer_type: formData.insurance_info?.customer_type ?? '개인'
+  };
 
   return createPortal(
     <div
@@ -205,7 +219,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
             <BasicInfoSection
               formData={basicInfoData}
               errors={errors}
-              onChange={handleChange}
+              onChange={handleBasicInfoChange}
             />
           )}
 
@@ -214,7 +228,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
             <ContactSection
               formData={contactData}
               errors={errors}
-              onChange={handleChange}
+              onChange={handleContactChange}
             />
           )}
 
@@ -232,7 +246,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
             <InsuranceInfoSection
               formData={insuranceData}
               errors={errors}
-              onChange={(field, value) => handleFieldChange(`insurance_info.${field}`, value)}
+              onChange={handleInsuranceChange}
             />
           )}
 

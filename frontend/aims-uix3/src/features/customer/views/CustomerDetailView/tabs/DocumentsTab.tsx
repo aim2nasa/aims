@@ -147,11 +147,10 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const handleDownload = useCallback(async () => {
     const preview = previewState.data
     if (!preview?.rawDetail) return
-    const payload = {
+    await DownloadHelper.downloadDocument({
       _id: preview.id,
       ...(preview.rawDetail as Record<string, unknown>)
-    } as any
-    await DownloadHelper.downloadDocument(payload)
+    })
   }, [previewState.data])
 
   const renderState = () => {
