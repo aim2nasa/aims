@@ -62,34 +62,55 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       loadCustomers({ limit: 10000, offset: 0 });
     }, [loadCustomers]);
 
+    // 검색 필터링된 고객 목록
+    const filteredCustomers = useMemo(() => {
+      if (!searchValue.trim()) {
+        return allCustomers;
+      }
+
+      const searchLower = searchValue.toLowerCase().trim();
+      return allCustomers.filter(customer => {
+        const name = customer.personal_info?.name?.toLowerCase() || '';
+        const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
+        const email = customer.personal_info?.email?.toLowerCase() || '';
+
+        return (
+          name.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          email.includes(searchLower)
+        );
+      });
+    }, [allCustomers, searchValue]);
+
     // 로컬 pagination 계산
     const pagination = useMemo(() => {
       const limit = parseInt(itemsPerPage);
-      const totalPages = Math.ceil(total / limit);
+      const filteredTotal = filteredCustomers.length;
+      const totalPages = Math.ceil(filteredTotal / limit);
       return {
         currentPage,
         totalPages,
         limit,
-        total,
+        total: filteredTotal,
       };
-    }, [currentPage, itemsPerPage, total]);
+    }, [currentPage, itemsPerPage, filteredCustomers.length]);
 
     // 현재 페이지에 표시할 고객들
     const customers = useMemo(() => {
       const limit = parseInt(itemsPerPage);
       const offset = (currentPage - 1) * limit;
-      return allCustomers.slice(offset, offset + limit);
-    }, [allCustomers, currentPage, itemsPerPage]);
+      return filteredCustomers.slice(offset, offset + limit);
+    }, [filteredCustomers, currentPage, itemsPerPage]);
 
-    const totalCustomers = total;
-    const isEmpty = allCustomers.length === 0 && !isLoading;
+    const totalCustomers = filteredCustomers.length;
+    const isEmpty = filteredCustomers.length === 0 && !isLoading;
 
-    // 개인/법인 고객 수 계산
+    // 개인/법인 고객 수 계산 (검색 결과 기준)
     const customerTypeCounts = useMemo(() => {
-      const personal = allCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
-      const corporate = allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
+      const personal = filteredCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
+      const corporate = filteredCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
       return { personal, corporate };
-    }, [allCustomers]);
+    }, [filteredCustomers]);
 
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
@@ -99,7 +120,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setSearchValue(value);
-      // TODO: 검색 기능 구현
+      setCurrentPage(1); // 검색 시 첫 페이지로 이동
     };
 
     const handleClearSearch = () => {
@@ -387,9 +408,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           {isEmpty && !isLoading && (
             <div className="customer-list-empty">
               <div className="empty-icon">
-                <SFSymbol name="person.2.slash" size={SFSymbolSize.LARGE_TITLE} />
+                <SFSymbol name={searchValue ? "magnifyingglass" : "person.2.slash"} size={SFSymbolSize.LARGE_TITLE} />
               </div>
-              <p className="empty-message">고객이 없습니다.</p>
+              <p className="empty-message">
+                {searchValue ? `"${searchValue}"에 대한 검색 결과가 없습니다.` : '고객이 없습니다.'}
+              </p>
             </div>
           )}
 
