@@ -8,6 +8,7 @@
 
 import React from 'react'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import RefreshButton from '../../../RefreshButton/RefreshButton'
 import './DocumentStatusHeader.css'
 
 interface DocumentStatusHeaderProps {
@@ -41,22 +42,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   filteredCount,
   lastUpdated
 }) => {
-  // 🍎 Progressive Disclosure: 클릭 피드백 상태
-  const [isRefreshClicked, setIsRefreshClicked] = React.useState(false)
-
-  /**
-   * 새로고침 버튼 클릭 핸들러
-   * 클릭 피드백을 표시한 후 원래 상태로 복원
-   */
-  const handleRefreshClick = () => {
-    setIsRefreshClicked(true)
-    onRefresh()
-
-    // 600ms 후 원래 아이콘으로 복원
-    setTimeout(() => {
-      setIsRefreshClicked(false)
-    }, 600)
-  }
 
   /**
    * 마지막 업데이트 시간 포맷팅
@@ -117,18 +102,14 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
           </button>
         </Tooltip>
 
-        <Tooltip content="새로고침">
-          <button
-            className="refresh-button"
-            onClick={handleRefreshClick}
-            disabled={isLoading}
-            aria-label="새로고침"
-          >
-            <span className={"refresh-icon " + (isLoading ? 'icon-spinning' : isRefreshClicked ? 'icon-clicked' : '')}>
-              {isRefreshClicked ? '✓' : '↻'}
-            </span>
-          </button>
-        </Tooltip>
+        <RefreshButton
+          onClick={async () => {
+            await onRefresh();
+          }}
+          loading={isLoading}
+          tooltip="문서 현황 새로고침"
+          size="small"
+        />
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } 
 import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
 import { Dropdown } from '@/shared/ui';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
+import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
@@ -311,12 +312,23 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         {!isLoading && (
           <div className="customer-library-result-header">
             <div className="result-count">총 {totalCustomers}명 (개인 {customerTypeCounts.personal}, 법인 {customerTypeCounts.corporate})</div>
-            <div className="sort-selector">
-              <Dropdown
-                value={sortBy}
-                options={SORT_OPTIONS}
-                onChange={handleSortChange}
+            <div className="result-controls">
+              <RefreshButton
+                onClick={async () => {
+                  await refresh();
+                  await loadCustomers({ limit: 10000, offset: 0 });
+                }}
+                loading={isLoading}
+                tooltip="고객 목록 새로고침"
+                size="small"
               />
+              <div className="sort-selector">
+                <Dropdown
+                  value={sortBy}
+                  options={SORT_OPTIONS}
+                  onChange={handleSortChange}
+                />
+              </div>
             </div>
           </div>
         )}

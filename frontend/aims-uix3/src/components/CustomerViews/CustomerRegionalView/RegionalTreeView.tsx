@@ -16,6 +16,7 @@
 import React, { useState, useMemo } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import RefreshButton from '../../RefreshButton/RefreshButton'
 import './RegionalTreeView.css'
 
 /**
@@ -87,6 +88,8 @@ interface RegionalTreeViewProps {
   onCustomerSelect?: (customerId: string) => void
   /** 로딩 상태 */
   loading?: boolean
+  /** 새로고침 핸들러 */
+  onRefresh?: () => void | Promise<void>
 }
 
 /**
@@ -116,7 +119,8 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   customers,
   selectedCustomerId,
   onCustomerSelect,
-  loading = false
+  loading = false,
+  onRefresh
 }) => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(['no-address']))
   const [isAllExpanded, setIsAllExpanded] = useState(false)
@@ -399,8 +403,14 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <span className="stat-value">{stats.districtsCount}</span>
         </div>
 
-        {/* 모두 펼치기/접기 토글 버튼 */}
+        {/* 모두 펼치기/접기 토글 버튼 & 새로고침 버튼 */}
         <div className="tree-actions">
+          <RefreshButton
+            onClick={onRefresh}
+            loading={loading}
+            tooltip="지역별 고객 새로고침"
+            size="small"
+          />
           <button
             type="button"
             className="tree-action-btn tree-action-btn--icon-only"

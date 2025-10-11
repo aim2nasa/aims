@@ -13,6 +13,7 @@ import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
+import RefreshButton from '../../RefreshButton/RefreshButton'
 import './DocumentLibraryView.css'
 
 interface DocumentLibraryViewProps {
@@ -209,15 +210,27 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           <div className="document-library-result-header">
             <span className="result-count">{searchResultMessage}</span>
 
-            {/* 🍎 정렬 드롭다운 */}
-            <div className="sort-selector">
-              <Dropdown
-                value={sortValue}
-                options={SORT_OPTIONS}
-                onChange={handleSortSelectChange}
-                aria-label="정렬 기준 선택"
-                minWidth={160}
+            <div className="result-controls">
+              {/* 🍎 새로고침 버튼 */}
+              <RefreshButton
+                onClick={async () => {
+                  await loadDocuments(searchParams, false);
+                }}
+                loading={isLoading}
+                tooltip="문서 목록 새로고침"
+                size="small"
               />
+
+              {/* 🍎 정렬 드롭다운 */}
+              <div className="sort-selector">
+                <Dropdown
+                  value={sortValue}
+                  options={SORT_OPTIONS}
+                  onChange={handleSortSelectChange}
+                  aria-label="정렬 기준 선택"
+                  minWidth={160}
+                />
+              </div>
             </div>
           </div>
         )}

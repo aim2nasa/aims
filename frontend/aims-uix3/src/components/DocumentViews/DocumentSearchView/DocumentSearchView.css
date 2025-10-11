@@ -240,6 +240,10 @@ html[data-theme="dark"] .answer-content {
 /* === 🍎 RESULTS HEADER === */
 
 .search-results-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 16px;
   font-size: 13px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -251,7 +255,11 @@ html[data-theme="dark"] .search-results-header {
   color: var(--color-ios-text-secondary-dark);
 }
 
-.search-results-header p {
+.results-header-text {
+  flex: 1;
+}
+
+.results-header-text p {
   margin: 0 0 4px 0;
 }
 

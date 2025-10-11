@@ -14,6 +14,15 @@
   min-height: 400px;
 }
 
+/* Header with Refresh Button */
+.document-registration-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0;
+  margin: -8px 0 0 0;
+}
+
 /* 🍎 SUCCESS MESSAGE: Ultra-minimal notification */
 .upload-success {
   padding: 8px 0;

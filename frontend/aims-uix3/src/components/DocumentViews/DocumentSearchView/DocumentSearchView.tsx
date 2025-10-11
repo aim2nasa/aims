@@ -15,6 +15,7 @@ import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/searc
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import RefreshButton from '../../RefreshButton/RefreshButton'
 import FullTextModal from './FullTextModal'
 import './DocumentSearchView.css'
 
@@ -230,14 +231,27 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
               {/* 검색 결과 헤더 */}
               <div className="search-results-header">
-                {lastSearchMode === 'semantic' ? (
-                  <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
-                ) : (
-                  <>
-                    <p>총 {results.length}건의 결과가 발견되었습니다.</p>
-                    <p className="results-divider">--- 검색 결과 ---</p>
-                  </>
-                )}
+                <div className="results-header-text">
+                  {lastSearchMode === 'semantic' ? (
+                    <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
+                  ) : (
+                    <>
+                      <p>총 {results.length}건의 결과가 발견되었습니다.</p>
+                      <p className="results-divider">--- 검색 결과 ---</p>
+                    </>
+                  )}
+                </div>
+                <RefreshButton
+                  onClick={async () => {
+                    if (query) {
+                      await handleSearch();
+                    }
+                  }}
+                  loading={isLoading}
+                  tooltip="검색 새로고침"
+                  size="small"
+                  disabled={!query}
+                />
               </div>
 
               {/* 🍎 iOS Table View 스타일 결과 리스트 */}

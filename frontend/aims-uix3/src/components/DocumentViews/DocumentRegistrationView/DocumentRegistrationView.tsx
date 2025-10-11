@@ -9,6 +9,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import RefreshButton from '../../RefreshButton/RefreshButton'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import FileList from './FileList/FileList'
 import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
@@ -499,6 +500,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
+        {/* Header with Refresh Button */}
+        {uploadState.files.length > 0 && (
+          <div className="document-registration-header">
+            <RefreshButton
+              onClick={async () => {
+                const confirmed = await showAppleConfirm(
+                  '모든 업로드 기록을 초기화하시겠습니까?',
+                  '업로드 초기화'
+                );
+                if (confirmed) {
+                  handleClearAll();
+                }
+              }}
+              tooltip="업로드 기록 초기화"
+              size="small"
+            />
+          </div>
+        )}
+
         {/* 파일 업로드 영역 */}
         <FileUploadArea
           onFilesSelected={handleFilesSelected}

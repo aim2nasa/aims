@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import RefreshButton from '../../RefreshButton/RefreshButton';
 import { RelationshipService } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
@@ -342,6 +343,19 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         </div>
       ) : (
         <div className="relationship-tree">
+          {/* 새로고침 버튼 */}
+          <div className="relationship-header">
+            <div className="relationship-title">고객 관계 현황</div>
+            <RefreshButton
+              onClick={async () => {
+                await refresh({ limit: 10000, offset: 0 });
+                await loadRelationshipsData();
+              }}
+              loading={loading}
+              tooltip="관계 데이터 새로고침"
+              size="small"
+            />
+          </div>
           {/* 가족 관계 섹션 */}
           {familyGroups.length > 0 && (
             <div className="tree-section">

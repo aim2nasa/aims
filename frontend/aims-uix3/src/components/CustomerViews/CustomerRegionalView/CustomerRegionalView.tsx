@@ -100,6 +100,9 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
         selectedCustomerId={selectedCustomer?._id || null}
         onCustomerSelect={handleCustomerSelect}
         loading={isLoading}
+        onRefresh={async () => {
+          await refresh({ limit: 10000, offset: 0 })
+        }}
       />
     </CenterPaneView>
   )

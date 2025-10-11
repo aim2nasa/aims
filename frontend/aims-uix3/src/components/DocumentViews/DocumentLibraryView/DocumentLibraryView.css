@@ -172,6 +172,14 @@ html[data-theme="dark"] .result-count {
   color: var(--color-ios-text-secondary-dark);
 }
 
+/* === 🍎 RESULT CONTROLS: Controls group === */
+
+.result-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* === 🍎 SORT SELECTOR: iOS Style Dropdown (커스텀 Dropdown 컴포넌트 사용) === */
 
 .sort-selector {

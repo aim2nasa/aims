@@ -12,6 +12,7 @@ import { useCustomerRegistrationController } from '../../controllers/useCustomer
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Button } from '../../../../shared/ui/Button';
+import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
 import { AddressSection } from './components/AddressSection';
@@ -67,6 +68,15 @@ export const CustomerRegistrationView: React.FC = () => {
     <React.Fragment>
       <div className="customer-registration">
         <div className="customer-registration__inner">
+          {/* Header with Refresh Button */}
+          <div className="customer-registration__header">
+            <RefreshButton
+              onClick={handleReset}
+              tooltip="폼 초기화"
+              size="small"
+            />
+          </div>
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="customer-registration__form">
             {/* Basic Info Section */}

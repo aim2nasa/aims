@@ -31,6 +31,15 @@
   overflow-y: auto;
 }
 
+/* Header with Refresh Button */
+.customer-registration__header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 0;
+  margin-bottom: 4px;
+}
+
 /* Form */
 .customer-registration__form {
   display: flex;

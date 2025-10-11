@@ -16,6 +16,25 @@
  */
 
 /* ==========================================
+   헤더 영역 - Refresh 버튼 포함
+   ========================================== */
+
+.relationship-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px 16px;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.relationship-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-system);
+}
+
+/* ==========================================
    로딩 & 빈 상태
    ========================================== */
 
