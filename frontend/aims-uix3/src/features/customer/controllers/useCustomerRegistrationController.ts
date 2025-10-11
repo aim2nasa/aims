@@ -33,9 +33,6 @@ interface FormData {
 
   // Insurance Info
   customer_type: '개인' | '법인';
-  risk_level?: string;
-  annual_premium?: number;
-  total_coverage?: number;
 }
 
 interface FormErrors {
@@ -106,9 +103,6 @@ export const useCustomerRegistrationController = ({
       },
       insurance_info: {
         customer_type: data.customer_type,
-        risk_level: data.risk_level,
-        annual_premium: data.annual_premium,
-        total_coverage: data.total_coverage,
       },
       contracts: [],
       documents: [],

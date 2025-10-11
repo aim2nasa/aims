@@ -143,28 +143,6 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
             <label className="form-row__label">고객 유형</label>
             <div className="form-row__value">{customer.insurance_info?.customer_type || ''}</div>
           </div>
-
-          {/* 위험도 */}
-          <div className="form-row">
-            <label className="form-row__label">위험도</label>
-            <div className="form-row__value">{customer.insurance_info?.risk_level || ''}</div>
-          </div>
-
-          {/* 연간 보험료 */}
-          <div className="form-row">
-            <label className="form-row__label">연간 보험료</label>
-            <div className="form-row__value">
-              {customer.insurance_info?.annual_premium != null ? `${customer.insurance_info.annual_premium.toLocaleString()}원` : '-'}
-            </div>
-          </div>
-
-          {/* 총 보장액 */}
-          <div className="form-row">
-            <label className="form-row__label">총 보장액</label>
-            <div className="form-row__value">
-              {customer.insurance_info?.total_coverage != null ? `${customer.insurance_info.total_coverage.toLocaleString()}원` : '-'}
-            </div>
-          </div>
         </div>
       </div>
 
