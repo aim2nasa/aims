@@ -20,6 +20,10 @@ import { UserContextService, uploadConfig } from './userContextService'
 type ProgressCallback = (event: UploadProgressEvent) => void
 type StatusCallback = (fileId: string, status: UploadStatus, error?: string) => void
 
+interface ErrorWithResponse extends Error {
+  response?: DocPrepResponse
+}
+
 /**
  * 업로드 서비스 클래스
  *
@@ -167,7 +171,7 @@ export class UploadService {
           console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
           this.statusCallback?.(id, 'cancelled')
         } else {
-          const response = (error as any)?.response as DocPrepResponse | undefined
+          const response = (error as ErrorWithResponse).response
           const errorMessage = this.getErrorMessage(error, response)
           this.statusCallback?.(id, 'error', errorMessage)
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
@@ -220,8 +224,10 @@ export class UploadService {
           }
           // 기타 HTTP 에러
           else {
-            const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`) as any
-            error.response = response // 응답 데이터를 에러에 첨부
+            const error: ErrorWithResponse = Object.assign(
+              new Error(`HTTP ${xhr.status}: ${xhr.statusText}`),
+              { response }
+            )
             reject(error)
           }
         } catch {
@@ -229,8 +235,11 @@ export class UploadService {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve({}) // 빈 성공 응답
           } else {
-            const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`) as any
-            error.response = {} // 빈 응답 첨부
+            const emptyResponse: DocPrepResponse = {}
+            const error: ErrorWithResponse = Object.assign(
+              new Error(`HTTP ${xhr.status}: ${xhr.statusText}`),
+              { response: emptyResponse }
+            )
             reject(error)
           }
         }

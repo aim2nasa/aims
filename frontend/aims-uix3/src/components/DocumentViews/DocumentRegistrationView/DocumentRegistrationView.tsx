@@ -55,37 +55,36 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     try {
       const saved = sessionStorage.getItem(SESSION_KEY)
       if (saved) {
-        const parsed = JSON.parse(saved)
-        // File 객체와 completedAt 복원
-        const restoredFiles = parsed.files?.map((savedFile: any) => {
+        const parsed = JSON.parse(saved) as StoredUploadState
+        const restoredFiles: UploadFile[] = parsed.files?.map((savedFile) => {
           // 더미 File 객체 생성 (실제 파일은 복원 불가)
           const dummyFile = new File(
             [''], // 빈 내용
-            savedFile.fileInfo?.name || 'unknown',
+            savedFile.fileInfo?.name ?? 'unknown',
             {
-              type: savedFile.fileInfo?.type || 'application/octet-stream',
-              lastModified: savedFile.fileInfo?.lastModified || Date.now()
+              type: savedFile.fileInfo?.type ?? 'application/octet-stream',
+              lastModified: savedFile.fileInfo?.lastModified ?? Date.now()
             }
           )
 
           return {
             id: savedFile.id,
             file: dummyFile,
-            fileSize: savedFile.fileSize || savedFile.fileInfo?.size || 0, // fileSize 복원
+            fileSize: savedFile.fileSize ?? savedFile.fileInfo?.size ?? 0,
             status: savedFile.status,
             progress: savedFile.progress,
             error: savedFile.error,
             completedAt: savedFile.completedAt ? new Date(savedFile.completedAt) : undefined,
             relativePath: savedFile.relativePath
           }
-        })
+        }) ?? []
 
         // 업로드 중인 파일이 있으면 uploading 상태 복원
-        const hasUploadingFiles = restoredFiles?.some((f: UploadFile) => f.status === 'uploading') || false
+        const hasUploadingFiles = restoredFiles.some((f) => f.status === 'uploading')
 
         return {
           ...parsed,
-          files: restoredFiles || [],
+          files: restoredFiles,
           uploading: hasUploadingFiles // 업로드 중인 파일이 있으면 true 유지
         }
       }
@@ -159,7 +158,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     files.forEach(file => {
       // 파일 검증
-      const validation = fileValidator.validateFile(file)
+        const validation = fileValidator.validateFile(file)
 
       if (validation.valid) {
         newUploadFiles.push({
@@ -170,7 +169,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           progress: 0,
           error: undefined,
           completedAt: undefined,
-          relativePath: (file as any).webkitRelativePath || undefined
+          relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
         })
       } else {
         // 검증 실패한 파일은 에러로 표시
@@ -572,3 +571,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 }
 
 export default DocumentRegistrationView
+type StoredUploadFile = {
+  id: string
+  status: UploadStatus
+  progress: number
+  error?: string
+  completedAt?: string
+  relativePath?: string
+  fileSize?: number
+  fileInfo?: {
+    name?: string
+    size?: number
+    type?: string
+    lastModified?: number
+  }
+}
+
+type StoredUploadState = Omit<UploadState, 'files'> & {
+  files?: StoredUploadFile[]
+}
+
+type FileWithRelativePath = File & { webkitRelativePath?: string }

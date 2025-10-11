@@ -20,7 +20,7 @@ export interface UploadContext {
   /** 부서 ID (선택적) */
   departmentId?: string | undefined
   /** 추가 메타데이터 (선택적) */
-  metadata?: Record<string, any> | undefined
+  metadata?: Record<string, unknown> | undefined
 }
 
 // 파일 업로드 상태
@@ -67,7 +67,7 @@ export interface UploadResult {
   /** 성공 여부 */
   success: boolean
   /** 서버 응답 데이터 */
-  data?: any
+  data?: unknown
   /** 에러 정보 (실패 시) */
   error?: UploadError | undefined
 }
