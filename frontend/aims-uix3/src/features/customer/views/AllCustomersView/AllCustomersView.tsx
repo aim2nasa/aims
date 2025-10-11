@@ -83,28 +83,76 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       });
     }, [allCustomers, searchValue]);
 
+    // 정렬된 고객 목록 (페이지네이션 적용 전)
+    const sortedCustomers = useMemo(() => {
+      const sorted = [...filteredCustomers];
+
+      switch (sortBy) {
+        case 'latest':
+          // 최신순 (등록일 내림차순)
+          sorted.sort((a, b) => {
+            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+            return dateB - dateA;
+          });
+          break;
+        case 'name':
+          // 이름순 (가나다순)
+          sorted.sort((a, b) => {
+            const nameA = a.personal_info?.name || '';
+            const nameB = b.personal_info?.name || '';
+            return nameA.localeCompare(nameB, 'ko');
+          });
+          break;
+        case 'oldest':
+          // 오래된순 (등록일 오름차순)
+          sorted.sort((a, b) => {
+            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+            return dateA - dateB;
+          });
+          break;
+      }
+
+      return sorted;
+    }, [filteredCustomers, sortBy]);
+
+    const itemsPerPageNumber = useMemo(() => {
+      const parsed = parseInt(itemsPerPage, 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+    }, [itemsPerPage]);
+
+    const totalCustomers = sortedCustomers.length;
+    const isEmpty = totalCustomers === 0 && !isLoading;
+
     // 로컬 pagination 계산
     const pagination = useMemo(() => {
-      const limit = parseInt(itemsPerPage);
-      const filteredTotal = filteredCustomers.length;
-      const totalPages = Math.ceil(filteredTotal / limit);
+      const totalPages = Math.max(1, Math.ceil(totalCustomers / itemsPerPageNumber));
+      const safeCurrentPage = Math.min(currentPage, totalPages);
+
       return {
-        currentPage,
+        currentPage: safeCurrentPage,
         totalPages,
-        limit,
-        total: filteredTotal,
+        limit: itemsPerPageNumber,
+        total: totalCustomers,
       };
-    }, [currentPage, itemsPerPage, filteredCustomers.length]);
+    }, [currentPage, itemsPerPageNumber, totalCustomers]);
+
+    useEffect(() => {
+      const totalPages = Math.max(1, Math.ceil(totalCustomers / itemsPerPageNumber));
+
+      if (currentPage > totalPages) {
+        setCurrentPage(totalPages);
+      }
+    }, [currentPage, itemsPerPageNumber, totalCustomers]);
+
+    const currentPageForView = pagination.currentPage;
 
     // 현재 페이지에 표시할 고객들
-    const customers = useMemo(() => {
-      const limit = parseInt(itemsPerPage);
-      const offset = (currentPage - 1) * limit;
-      return filteredCustomers.slice(offset, offset + limit);
-    }, [filteredCustomers, currentPage, itemsPerPage]);
-
-    const totalCustomers = filteredCustomers.length;
-    const isEmpty = filteredCustomers.length === 0 && !isLoading;
+    const visibleCustomers = useMemo(() => {
+      const offset = (currentPageForView - 1) * itemsPerPageNumber;
+      return sortedCustomers.slice(offset, offset + itemsPerPageNumber);
+    }, [sortedCustomers, currentPageForView, itemsPerPageNumber]);
 
     // 개인/법인 고객 수 계산 (검색 결과 기준)
     const customerTypeCounts = useMemo(() => {
@@ -136,22 +184,22 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     const handleSortChange = (value: string) => {
       setSortBy(value);
-      // TODO: 정렬 기능 구현
+      setCurrentPage(1);
     };
 
     const handlePrevPage = () => {
-      if (currentPage > 1) {
+      if (currentPageForView > 1) {
         setPrevArrowClicked(true);
         setTimeout(() => setPrevArrowClicked(false), 150);
-        setCurrentPage(currentPage - 1);
+        setCurrentPage(currentPageForView - 1);
       }
     };
 
     const handleNextPage = () => {
-      if (currentPage < pagination.totalPages) {
+      if (currentPageForView < pagination.totalPages) {
         setNextArrowClicked(true);
         setTimeout(() => setNextArrowClicked(false), 150);
-        setCurrentPage(currentPage + 1);
+        setCurrentPage(currentPageForView + 1);
       }
     };
 
@@ -229,40 +277,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}.${month}.${day}`;
     };
-
-    // 정렬된 고객 목록
-    const sortedCustomers = useMemo(() => {
-      const sorted = [...customers];
-
-      switch (sortBy) {
-        case 'latest':
-          // 최신순 (등록일 내림차순)
-          sorted.sort((a, b) => {
-            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-            return dateB - dateA;
-          });
-          break;
-        case 'name':
-          // 이름순 (가나다순)
-          sorted.sort((a, b) => {
-            const nameA = a.personal_info?.name || '';
-            const nameB = b.personal_info?.name || '';
-            return nameA.localeCompare(nameB, 'ko');
-          });
-          break;
-        case 'oldest':
-          // 오래된순 (등록일 오름차순)
-          sorted.sort((a, b) => {
-            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-            return dateA - dateB;
-          });
-          break;
-      }
-
-      return sorted;
-    }, [customers, sortBy]);
 
     return (
       <div className="customer-library-container">
@@ -430,7 +444,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
           {!isEmpty &&
             !isLoading &&
-            sortedCustomers.map((customer) => (
+            visibleCustomers.map((customer) => (
               <div
                 key={customer._id}
                 className="customer-item"
