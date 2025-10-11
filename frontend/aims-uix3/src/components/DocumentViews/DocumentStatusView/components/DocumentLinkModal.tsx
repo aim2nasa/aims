@@ -292,6 +292,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           </button>
         </header>
 
+        <div className="document-link-modal__content">
         {/* Document Info */}
         <section className="document-link-modal__section document-link-modal__section--document">
           <div className="document-summary">
@@ -489,6 +490,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             <p className="document-link-modal__feedback">{feedbackMessage}</p>
           </section>
         )}
+        </div>
 
         {/* Footer */}
         <footer className="document-link-modal__footer">
