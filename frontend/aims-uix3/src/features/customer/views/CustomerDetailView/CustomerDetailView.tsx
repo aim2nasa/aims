@@ -246,7 +246,10 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     </span>
   );
 
-  // 🍎 탭 정의 (순서: 기본정보, 관계, 문서, 상담이력, 계약)
+  // 법인 고객 여부 확인
+  const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
+
+  // 🍎 탭 정의 (순서: 기본정보, 관계(개인만), 문서, 상담이력, 계약)
   const tabs: Tab[] = [
     {
       key: 'info',
@@ -258,7 +261,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         </svg>
       )
     },
-    {
+    // 법인 고객이 아닌 경우에만 가족 관계 탭 표시
+    ...(!isBusinessCustomer ? [{
       key: 'relationships',
       label: '가족 관계',
       icon: (
@@ -266,7 +270,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
         </svg>
       )
-    },
+    }] : []),
     {
       key: 'documents',
       label: '문서',
