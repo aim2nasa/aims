@@ -1,21 +1,26 @@
 /**
  * AIMS UIX-3 Customer Detail - Basic Info Tab
  * @since 2025-10-09
- * @version 1.0.0
+ * @version 2.0.0
  *
  * 🍎 고객 기본 정보 탭 컴포넌트
  * - 기본, 연락처, 주소, 보험 정보 섹션
  * - CustomerDetailView에서 추출한 순수 컴포넌트
+ * - Document-Controller-View 패턴 준수
  */
 
 import React from 'react';
 import type { Customer } from '@/entities/customer/model';
+import { AddressArchiveModal } from '../../../components/AddressArchiveModal';
+import { useAddressArchiveController } from '../../../controllers/useAddressArchiveController';
 
 interface BasicInfoTabProps {
   customer: Customer;
 }
 
 export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
+  // 🍎 Controller Hook - 비즈니스 로직 분리
+  const addressArchiveController = useAddressArchiveController(customer._id);
   return (
     <>
       {/* 🍎 기본 정보 섹션 */}
@@ -93,7 +98,11 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
 
       {/* 🍎 주소 정보 섹션 */}
       <div className="form-section">
-        <h3 className="form-section__title form-section__title--address">
+        <h3
+          className="form-section__title form-section__title--address form-section__title--clickable"
+          onClick={addressArchiveController.open}
+          title="클릭하여 주소 보관소 보기"
+        >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
           </svg>
@@ -158,6 +167,17 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
           </div>
         </div>
       </div>
+
+      {/* 🍎 주소 보관소 모달 */}
+      <AddressArchiveModal
+        isOpen={addressArchiveController.isOpen}
+        onClose={addressArchiveController.close}
+        addressHistory={addressArchiveController.addressHistory}
+        isLoading={addressArchiveController.isLoading}
+        error={addressArchiveController.error}
+        onSetCurrent={addressArchiveController.setCurrentAddress}
+        customerName={customer.personal_info?.name || ''}
+      />
     </>
   );
 };

@@ -82,6 +82,38 @@
   gap: 4px;
 }
 
+/* 🍎 클릭 가능한 섹션 타이틀 (주소 보관소) */
+.customer-detail-view .form-section__title--clickable {
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  border-radius: 6px;
+  padding: 8px 4px;
+  margin-left: -4px;
+}
+
+/* 🍎 호버 시 배경 변화 (Progressive Disclosure) */
+.customer-detail-view .form-section__title--clickable:hover {
+  background-color: var(--color-layout-accent-light);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .customer-detail-view .form-section__title--clickable:hover {
+  background-color: var(--color-layout-accent-dark);
+  color: var(--color-text-primary);
+}
+
+/* 🍎 호버 시 아이콘 색상 강조 */
+.customer-detail-view .form-section__title--clickable:hover svg {
+  color: var(--color-icon-orange);
+  transform: scale(1.1);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 🍎 아이콘에 부드러운 트랜지션 */
+.customer-detail-view .form-section__title svg {
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
 [data-theme="dark"] .customer-detail-view .form-section__title {
   color: var(--color-text-secondary);
 }

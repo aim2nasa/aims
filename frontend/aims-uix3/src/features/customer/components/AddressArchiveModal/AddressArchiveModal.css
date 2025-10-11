@@ -1,0 +1,325 @@
+/**
+ * AIMS UIX-3 Address Archive Modal Styles
+ * @version 1.0.0
+ *
+ * 🍎 애플 스타일 주소 보관소 모달
+ */
+
+/* Overlay */
+.address-archive-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+[data-theme="dark"] .address-archive-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.address-archive-modal {
+  background-color: var(--color-layout-content-light);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="dark"] .address-archive-modal {
+  background-color: var(--color-layout-content-dark);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.address-archive-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-layout-brb-light);
+}
+
+[data-theme="dark"] .address-archive-modal__header {
+  border-bottom-color: var(--color-layout-brb-dark);
+}
+
+.address-archive-modal__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+[data-theme="dark"] .address-archive-modal__title {
+  color: var(--color-text-primary);
+}
+
+.address-archive-modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.address-archive-modal__close:hover {
+  background-color: var(--color-layout-accent-light);
+}
+
+[data-theme="dark"] .address-archive-modal__close:hover {
+  background-color: var(--color-layout-accent-dark);
+}
+
+/* Info Section */
+.address-archive-modal__info {
+  padding: 12px 24px;
+  background-color: var(--color-layout-secondary-light);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-layout-brb-light);
+}
+
+[data-theme="dark"] .address-archive-modal__info {
+  background-color: var(--color-layout-secondary-dark);
+  border-bottom-color: var(--color-layout-brb-dark);
+  color: var(--color-text-secondary);
+}
+
+.address-archive-modal__info strong {
+  color: var(--color-icon-blue);
+  font-weight: 600;
+}
+
+/* Content Area */
+.address-archive-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+
+/* Error State */
+.address-archive-modal__error {
+  padding: 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-danger);
+  border-radius: 8px;
+  color: var(--color-danger);
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+[data-theme="dark"] .address-archive-modal__error {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* Loading State */
+.address-archive-modal__loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* Empty State */
+.address-archive-modal__empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
+/* Address Item */
+.address-item {
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: var(--color-layout-secondary-light);
+  border-radius: 10px;
+  border: 1px solid var(--color-layout-brb-light);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+[data-theme="dark"] .address-item {
+  background-color: var(--color-layout-secondary-dark);
+  border-color: var(--color-layout-brb-dark);
+}
+
+.address-item:hover {
+  border-color: var(--color-icon-blue);
+}
+
+.address-item--current {
+  border-color: var(--color-icon-green);
+  background-color: rgba(52, 199, 89, 0.05);
+}
+
+[data-theme="dark"] .address-item--current {
+  background-color: rgba(52, 199, 89, 0.1);
+}
+
+/* Address Item Header */
+.address-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.address-item__date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.address-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.address-item__icon.current {
+  background-color: var(--color-icon-green);
+  color: white;
+}
+
+.address-item__icon.past {
+  background-color: var(--color-layout-accent-light);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .address-item__icon.past {
+  background-color: var(--color-layout-accent-dark);
+}
+
+.address-item__button {
+  padding: 4px 12px;
+  font-size: 11px;
+  border: 1px solid var(--color-icon-green);
+  background-color: transparent;
+  color: var(--color-icon-green);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  font-weight: 500;
+}
+
+.address-item__button:hover {
+  background-color: var(--color-icon-green);
+  color: white;
+}
+
+.address-item__button.secondary {
+  border-color: var(--color-layout-brb-light);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .address-item__button.secondary {
+  border-color: var(--color-layout-brb-dark);
+}
+
+.address-item__button.secondary:hover {
+  background-color: var(--color-layout-accent-light);
+  border-color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .address-item__button.secondary:hover {
+  background-color: var(--color-layout-accent-dark);
+}
+
+/* Address Content */
+.address-item__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.address-item__pin {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.address-item__text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+[data-theme="dark"] .address-item__text {
+  color: var(--color-text-primary);
+}
+
+.address-item__label {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+  background-color: var(--color-icon-orange);
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .address-archive-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .address-archive-modal__header,
+  .address-archive-modal__info,
+  .address-archive-modal__content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .address-item {
+    padding: 12px;
+  }
+}
