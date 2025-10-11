@@ -127,6 +127,8 @@ html[data-theme="dark"] .document-link-modal {
   background: transparent;
   font-size: var(--font-size-footnote);
   color: var(--color-text-primary);
+  width: 100%;
+  max-width: calc(100% - var(--spacing-4));
 }
 
 html[data-theme="dark"] .document-chip {
@@ -135,10 +137,12 @@ html[data-theme="dark"] .document-chip {
 
 .document-chip__icon {
   font-size: var(--font-size-callout);
+  flex-shrink: 0;
 }
 
 .document-chip__name {
-  max-width: 260px;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -146,6 +150,8 @@ html[data-theme="dark"] .document-chip {
 
 .document-chip__status {
   color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-left: var(--spacing-2);
 }
 
 .document-link-modal__error {
