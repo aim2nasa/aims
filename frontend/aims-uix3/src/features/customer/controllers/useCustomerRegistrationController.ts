@@ -63,17 +63,18 @@ export const useCustomerRegistrationController = ({
   /**
    * 폼 필드 값 변경 핸들러
    */
-  const handleChange = (field: keyof FormData, value: any) => {
+  const handleChange = <Field extends keyof FormData>(field: Field, value: FormData[Field]) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
 
     // 필드 변경 시 해당 필드의 에러 제거
-    if (errors[field]) {
+    const fieldKey = String(field);
+    if (errors[fieldKey]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors[field];
+        delete newErrors[fieldKey];
         return newErrors;
       });
     }

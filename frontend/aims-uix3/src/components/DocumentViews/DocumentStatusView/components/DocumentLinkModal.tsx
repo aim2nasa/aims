@@ -358,19 +358,19 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                   return (
                     <li
                       key={customer._id}
-                      className={`customer-item ${isSelected ? 'customer-item--selected' : ''}`}
+                      className={`document-link-modal__customer-item ${isSelected ? 'document-link-modal__customer-item--selected' : ''}`}
                       onClick={() => handleSelectCustomer(customer)}
                       aria-pressed={isSelected}
                       role="option"
                     >
-                      <div className="customer-item__row">
-                        <span className="customer-item__name">{displayName}</span>
-                        <span className="customer-item__info">
-                          <span className="customer-item__phone">{phone}</span>
-                          <span className="customer-item__divider">•</span>
-                          <span className="customer-item__type" title={customerType}>{customerType}</span>
+                      <div className="document-link-modal__customer-item-row">
+                        <span className="document-link-modal__customer-item-name">{displayName}</span>
+                        <span className="document-link-modal__customer-item-info">
+                          <span className="document-link-modal__customer-item-phone">{phone}</span>
+                          <span className="document-link-modal__customer-item-divider">•</span>
+                          <span className="document-link-modal__customer-item-type" title={customerType}>{customerType}</span>
                         </span>
-                        {isSelected && <span className="customer-item__tag">선택됨</span>}
+                        {isSelected && <span className="document-link-modal__customer-item-tag">선택됨</span>}
                       </div>
                     </li>
                   )
