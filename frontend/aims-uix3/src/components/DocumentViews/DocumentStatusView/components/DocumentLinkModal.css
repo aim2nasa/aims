@@ -253,7 +253,7 @@ html[data-theme="dark"] .document-link-modal__results {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-primary);
@@ -276,14 +276,6 @@ html[data-theme="dark"] .document-link-modal__results {
   background: var(--color-bg-hover);
 }
 
-.customer-item:hover .customer-item__name {
-  color: var(--color-text-primary);
-}
-
-[data-theme="dark"] .customer-item:hover {
-  background: var(--color-bg-hover);
-}
-
 .customer-item--selected {
   border-color: var(--color-button-secondary-border);
   background: var(--color-bg-active);
@@ -293,16 +285,16 @@ html[data-theme="dark"] .document-link-modal__results {
   background: var(--color-bg-active);
 }
 
-.customer-item__header {
-  display: flex;
+.customer-item__row {
+  display: grid;
+  grid-template-columns: minmax(200px, 3fr) minmax(160px, 2fr) minmax(80px, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: var(--spacing-2);
   width: 100%;
+  min-width: 100%;
 }
 
 .customer-item__name {
-  flex: 1;
   font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
@@ -311,7 +303,33 @@ html[data-theme="dark"] .document-link-modal__results {
   white-space: nowrap;
 }
 
+.customer-item__info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+  min-width: 0;
+}
+
+.customer-item__phone {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-item__type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-item__divider {
+  opacity: 0.5;
+}
+
 .customer-item__tag {
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -325,17 +343,6 @@ html[data-theme="dark"] .document-link-modal__results {
 html[data-theme="dark"] .customer-item__tag {
   background: var(--color-layout-secondary-dark);
   color: var(--color-text-secondary);
-}
-
-.customer-item__meta {
-  display: flex;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-secondary);
-}
-
-.customer-item__divider {
-  opacity: 0.5;
 }
 
 .document-link-modal__pagination {

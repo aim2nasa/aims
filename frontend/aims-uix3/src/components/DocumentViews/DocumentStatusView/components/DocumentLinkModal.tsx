@@ -371,14 +371,14 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                       aria-pressed={isSelected}
                       role="option"
                     >
-                      <div className="customer-item__header">
+                      <div className="customer-item__row">
                         <span className="customer-item__name">{displayName}</span>
+                        <span className="customer-item__info">
+                          <span className="customer-item__phone">{phone}</span>
+                          <span className="customer-item__divider">•</span>
+                          <span className="customer-item__type" title={customerType}>{customerType}</span>
+                        </span>
                         {isSelected && <span className="customer-item__tag">선택됨</span>}
-                      </div>
-                      <div className="customer-item__meta">
-                        <span>{phone}</span>
-                        <span className="customer-item__divider">•</span>
-                        <span>{customerType}</span>
                       </div>
                     </li>
                   )
