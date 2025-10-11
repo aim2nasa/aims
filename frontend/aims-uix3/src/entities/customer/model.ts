@@ -20,6 +20,18 @@ export const AddressSchema = z.object({
 });
 
 /**
+ * 주소 이력 항목 스키마
+ */
+export const AddressHistoryItemSchema = z.object({
+  _id: z.string().optional(),
+  address: AddressSchema,
+  changed_at: z.string().datetime(),
+  reason: z.string().optional(),
+  notes: z.string().optional(),
+  changed_by: z.string().optional(),
+});
+
+/**
  * 개인 정보 스키마
  */
 export const PersonalInfoSchema = z.object({
@@ -123,6 +135,7 @@ export const CustomerSearchResponseSchema = z.object({
  * TypeScript 타입 추출
  */
 export type Address = z.infer<typeof AddressSchema>;
+export type AddressHistoryItem = z.infer<typeof AddressHistoryItemSchema>;
 export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
 export type InsuranceInfo = z.infer<typeof InsuranceInfoSchema>;
 export type Meta = z.infer<typeof MetaSchema>;

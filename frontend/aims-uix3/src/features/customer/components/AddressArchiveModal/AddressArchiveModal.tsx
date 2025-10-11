@@ -1,16 +1,18 @@
 /**
  * AIMS UIX-3 Address Archive Modal
  * @since 2025-10-11
- * @version 2.0.0
+ * @version 3.0.0
  *
  * 🍎 주소 보관소 모달 컴포넌트
  * - 고객의 모든 주소 이력 표시
- * - Document-Controller-View 패턴 준수
+ * - Document-Controller-View 패턴 준수 (Layer 5: View)
  * - 순수 View 컴포넌트 (비즈니스 로직 없음)
+ * - 실제 API 데이터 구조와 완벽 호환
  */
 
 import React from 'react';
-import type { AddressHistoryItem } from '../../controllers/useAddressArchiveController';
+import type { AddressHistoryItem } from '@/entities/customer/model';
+import { AddressService } from '@/services/addressService';
 import './AddressArchiveModal.css';
 
 /**
@@ -43,6 +45,9 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
   customerName
 }) => {
   if (!isOpen) return null;
+
+  // 현재 주소인지 확인 (첫 번째 항목이 현재 주소)
+  const isCurrentAddress = (index: number) => index === 0 && addressHistory.length > 0;
 
   return (
     <div className="address-archive-modal-overlay" onClick={onClose}>
@@ -78,50 +83,66 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
             </div>
           )}
 
-          {/* 주소 이력 목록 */}
+          {/* 빈 상태 */}
           {!isLoading && !error && addressHistory.length === 0 && (
             <div className="address-archive-modal__empty">
               주소 이력이 없습니다.
             </div>
           )}
 
-          {!isLoading && addressHistory.map((item) => (
-            <div
-              key={item.id}
-              className={`address-item ${item.isCurrent ? 'address-item--current' : ''}`}
-            >
-              <div className="address-item__header">
-                <div className="address-item__date">
-                  <span className={`address-item__icon ${item.isCurrent ? 'current' : 'past'}`}>
-                    {item.isCurrent ? '✓' : '○'}
-                  </span>
-                  {item.date}
-                </div>
-                {!item.isCurrent && (
-                  <button
-                    className="address-item__button secondary"
-                    onClick={() => onSetCurrent(item.id)}
-                    disabled={isLoading}
-                  >
-                    현재 주소로 설정
-                  </button>
-                )}
-                {item.isCurrent && (
-                  <span className="address-item__button">현재 주소</span>
-                )}
-              </div>
-              <div className="address-item__content">
-                <div className="address-item__pin">📍</div>
-                <div className="address-item__text">
-                  [{item.postalCode}] {item.address}
-                  {item.detailAddress && ` ${item.detailAddress}`}
-                  {!item.isCurrent && (
-                    <span className="address-item__label">과거 보관</span>
+          {/* 주소 이력 목록 */}
+          {!isLoading && addressHistory.map((item, index) => {
+            const isCurrent = isCurrentAddress(index);
+
+            return (
+              <div
+                key={item._id || index}
+                className={`address-item ${isCurrent ? 'address-item--current' : ''}`}
+              >
+                <div className="address-item__header">
+                  <div className="address-item__date">
+                    <span className={`address-item__icon ${isCurrent ? 'current' : 'past'}`}>
+                      {isCurrent ? '✓' : '○'}
+                    </span>
+                    {AddressService.formatDate(item.changed_at)}
+                  </div>
+                  {!isCurrent && item._id && (
+                    <button
+                      className="address-item__button secondary"
+                      onClick={() => onSetCurrent(item._id!)}
+                      disabled={isLoading}
+                    >
+                      현재 주소로 설정
+                    </button>
+                  )}
+                  {isCurrent && (
+                    <span className="address-item__button current-badge">현재 주소</span>
                   )}
                 </div>
+                <div className="address-item__content">
+                  <div className="address-item__pin">📍</div>
+                  <div className="address-item__text">
+                    {AddressService.formatAddress(item.address)}
+                    {!isCurrent && (
+                      <span className="address-item__label">과거 보관</span>
+                    )}
+                  </div>
+                </div>
+                {/* 변경 사유 표시 */}
+                {item.reason && (
+                  <div className="address-item__reason">
+                    {item.reason}
+                  </div>
+                )}
+                {/* 메모 표시 */}
+                {item.notes && (
+                  <div className="address-item__notes">
+                    메모: {item.notes}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
