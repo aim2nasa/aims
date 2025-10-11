@@ -11,7 +11,7 @@ import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { AllCustomersView, AllCustomersViewRef } from '@/features/customer/views/AllCustomersView/AllCustomersView';
 import type { Customer } from '@/entities/customer/model';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 
 interface CustomerAllViewProps {
   /** View 표시 여부 */

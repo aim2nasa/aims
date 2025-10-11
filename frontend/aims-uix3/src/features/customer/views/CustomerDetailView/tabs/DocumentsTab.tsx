@@ -16,7 +16,7 @@ import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight
-} from '../../../../../components/SFSymbol/SFSymbol'
+} from '../../../../../components/SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'

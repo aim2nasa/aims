@@ -11,7 +11,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import RefreshButton from '../../RefreshButton/RefreshButton';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';

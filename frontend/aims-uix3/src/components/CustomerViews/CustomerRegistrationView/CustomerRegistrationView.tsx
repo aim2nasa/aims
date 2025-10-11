@@ -10,7 +10,7 @@
 import React from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import { CustomerRegistrationView as RegistrationForm } from '@/features/customer/views/CustomerRegistrationView/CustomerRegistrationView';
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 
 interface CustomerRegistrationViewProps {
   /** View 표시 여부 */

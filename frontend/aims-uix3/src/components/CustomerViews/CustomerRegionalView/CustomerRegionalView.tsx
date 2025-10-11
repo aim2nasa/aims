@@ -11,7 +11,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
 import type { Customer } from '../../../entities/customer/model'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 
 interface CustomerRegionalViewProps {
   /** View 표시 여부 */

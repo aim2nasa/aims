@@ -4,7 +4,7 @@ import { useDynamicType, initializeDynamicType } from './hooks/useDynamicType'
 import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks/useHapticFeedback'
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
-import { DocumentSearchProvider } from './contexts/DocumentSearchContext'
+import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화

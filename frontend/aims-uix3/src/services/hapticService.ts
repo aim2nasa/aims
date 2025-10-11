@@ -220,13 +220,15 @@ export class HapticService {
    * @param message 로그 메시지
    * @param data 추가 데이터
    */
-  private static log(message: string, data?: any): void {
-    if (this.config.debug) {
-      if (data) {
-        console.log(`[HapticService] ${message}`, data)
-      } else {
-        console.log(`[HapticService] ${message}`)
-      }
+  private static log(message: string, data?: unknown): void {
+    if (!this.config.debug) {
+      return
+    }
+
+    if (data !== undefined) {
+      console.log(`[HapticService] ${message}`, data)
+    } else {
+      console.log(`[HapticService] ${message}`)
     }
   }
 }
@@ -262,14 +264,21 @@ export const useHaptic = () => {
  * <button onClick={handleClick}>Click me</button>
  * ```
  */
-export const withHaptic = <T extends (...args: any[]) => any>(
+export function withHaptic<Args extends unknown[]>(
+  hapticType: HapticType
+): (...args: Args) => void
+export function withHaptic<Args extends unknown[], Return>(
   hapticType: HapticType,
-  originalHandler?: T
-): T => {
-  return ((...args: any[]) => {
+  originalHandler: (...args: Args) => Return
+): (...args: Args) => Return
+export function withHaptic<Args extends unknown[], Return>(
+  hapticType: HapticType,
+  originalHandler?: (...args: Args) => Return
+): (...args: Args) => Return | void {
+  return (...args: Args) => {
     HapticService.trigger(hapticType)
     return originalHandler?.(...args)
-  }) as T
+  }
 }
 
 // 기본 내보내기

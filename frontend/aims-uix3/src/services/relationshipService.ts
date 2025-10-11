@@ -6,8 +6,8 @@
  * 고객 간 관계 관리 서비스
  */
 
-import { api } from '@/shared/lib/api';
-import type { Customer } from '@/entities/customer/model';
+import { api } from '@/shared/lib/api'
+import type { Customer } from '@/entities/customer/model'
 
 /**
  * 관계 정보 인터페이스
@@ -40,6 +40,17 @@ export interface Relationship {
   };
   created_at?: string;
   updated_at?: string;
+}
+
+export interface RelationshipTypeEntry {
+  label?: string;
+  [key: string]: unknown;
+}
+
+export interface RelationshipTypeData {
+  all_types?: Record<string, RelationshipTypeEntry>;
+  categories?: Record<string, RelationshipTypeEntry>;
+  [key: string]: unknown;
 }
 
 /**
@@ -78,16 +89,16 @@ export class RelationshipService {
   /**
    * 관계 유형 조회
    */
-  static async getRelationshipTypes(): Promise<Record<string, unknown>> {
-    const response = await api.get<{ success: boolean; data: Record<string, unknown> }>(
+  static async getRelationshipTypes(): Promise<RelationshipTypeData> {
+    const response = await api.get<{ success: boolean; data: RelationshipTypeData }>(
       ENDPOINTS.RELATIONSHIP_TYPES
-    );
+    )
 
     if (!response.success || !response.data) {
-      throw new Error('관계 유형 조회에 실패했습니다');
+      throw new Error('관계 유형 조회에 실패했습니다')
     }
 
-    return response.data;
+    return response.data
   }
 
   /**

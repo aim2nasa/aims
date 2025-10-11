@@ -55,43 +55,32 @@ export const useCustomerEditController = (customer: Customer) => {
   /**
    * 필드 값 변경 핸들러
    */
-  const handleFieldChange = useCallback((field: string, value: any) => {
+  const handleFieldChange = useCallback((field: string, value: unknown) => {
     setFormData((prev) => {
-      const keys = field.split('.');
-      if (keys.length === 1) {
-        return { ...prev, [field]: value };
+      const segments = field.split('.').filter(Boolean);
+      if (segments.length === 0) {
+        return prev;
       }
 
-      // 중첩된 객체 업데이트 (2단계 이상 지원)
-      if (keys.length === 2) {
-        const [parent, child] = keys;
-        const parentKey = parent as keyof UpdateCustomerData;
-        return {
-          ...prev,
-          [parentKey]: {
-            ...(prev[parentKey] as any),
-            [child]: value,
-          },
-        };
-      }
+      const next: UpdateCustomerData = { ...prev };
+      let cursor: Record<string, unknown> = next as unknown as Record<string, unknown>;
 
-      // 3단계 중첩 (personal_info.address.postal_code 등)
-      if (keys.length === 3) {
-        const [parent, middle, child] = keys;
-        const parentKey = parent as keyof UpdateCustomerData;
-        return {
-          ...prev,
-          [parentKey]: {
-            ...(prev[parentKey] as any),
-            [middle]: {
-              ...((prev[parentKey] as any)?.[middle] || {}),
-              [child]: value,
-            },
-          },
-        };
-      }
+      segments.forEach((segment, index) => {
+        if (index === segments.length - 1) {
+          cursor[segment] = value as unknown;
+          return;
+        }
 
-      return prev;
+        const existing = cursor[segment];
+        const nextBranch =
+          typeof existing === 'object' && existing !== null
+            ? { ...(existing as Record<string, unknown>) }
+            : {};
+        cursor[segment] = nextBranch;
+        cursor = nextBranch;
+      });
+
+      return next;
     });
 
     // 에러 클리어
@@ -103,42 +92,6 @@ export const useCustomerEditController = (customer: Customer) => {
       });
     }
   }, [errors]);
-
-  /**
-   * 전화번호 형식 검증
-   */
-  const validatePhoneNumber = (phone: string | undefined): boolean => {
-    if (!phone || phone.trim() === '') return true; // 선택 필드
-
-    // 하이픈 제거 후 검증
-    const cleaned = phone.replace(/-/g, '');
-
-    // 휴대폰: 010/011/016/017/018/019로 시작하는 10~11자리
-    // 일반전화: 02/03x/04x/05x/06x로 시작하는 8~11자리
-    const phoneRegex = /^(01[0-9]{8,9}|0[2-9]{1}[0-9]{7,9})$/;
-    return phoneRegex.test(cleaned);
-  };
-
-  /**
-   * 이메일 형식 검증
-   */
-  const validateEmail = (email: string | undefined): boolean => {
-    if (!email || email.trim() === '') return true; // 선택 필드
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  /**
-   * 생년월일 형식 검증
-   */
-  const validateBirthDate = (date: string | undefined): boolean => {
-    if (!date || date.trim() === '') return true; // 선택 필드
-
-    // YYYY-MM-DD 형식
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    return dateRegex.test(date);
-  };
 
   /**
    * 전체 폼 검증
@@ -170,16 +123,16 @@ export const useCustomerEditController = (customer: Customer) => {
     setIsSubmitting(true);
     try {
       // personal_info에서 null/빈값 제거 및 정리
-      const cleanPersonalInfo: any = {};
+      const cleanPersonalInfo: NonNullable<UpdateCustomerData['personal_info']> = {};
       if (formData.personal_info) {
         Object.entries(formData.personal_info).forEach(([key, value]) => {
           // name은 필수이므로 항상 포함
           if (key === 'name') {
-            cleanPersonalInfo[key] = value;
+            cleanPersonalInfo[key as keyof typeof cleanPersonalInfo] = value;
           }
           // 나머지 필드는 유효한 값만 포함
-          else if (value !== null && value !== '' && value !== undefined) {
-            cleanPersonalInfo[key] = value;
+          else if (value !== null && value !== undefined && value !== '') {
+            cleanPersonalInfo[key as keyof typeof cleanPersonalInfo] = value;
           }
         });
       }

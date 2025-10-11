@@ -61,7 +61,7 @@ const buildFileUrl = (path?: string | null): string | null => {
  * 문서 상세 응답에서 파일 메타데이터 추출
  */
 const extractPreviewInfo = (
-  detail: Record<string, any> | null,
+  detail: Record<string, unknown> | null,
   fallback: CustomerDocumentItem
 ): Omit<PreviewDocumentInfo, 'document' | 'rawDetail'> => {
   const upload = detail?.upload

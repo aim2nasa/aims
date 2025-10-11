@@ -6,7 +6,7 @@
  * 공간 효율성 극대화
  */
 
-import React from 'react'
+import React, { useMemo, useCallback } from 'react'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
 import RefreshButton from '../../../RefreshButton/RefreshButton'
 import './DocumentStatusHeader.css'
@@ -47,7 +47,7 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
    * 마지막 업데이트 시간 포맷팅
    * "오늘 HH:MM:SS" 형식으로 표시
    */
-  const formatLastUpdated = (date: Date | null): string => {
+  const formatLastUpdated = useCallback((date: Date | null): string => {
     if (!date) return ''
 
     const now = new Date()
@@ -64,7 +64,16 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
       const day = String(date.getDate()).padStart(2, '0')
       return `${month}.${day}. ${hours}:${minutes}:${seconds}`
     }
-  }
+  }, [])
+
+  const handleFilterChange = useCallback(
+    (value: string) => {
+      onFilterChange(value as DocumentStatusHeaderProps['statusFilter'])
+    },
+    [onFilterChange]
+  )
+
+  const lastUpdatedLabel = useMemo(() => formatLastUpdated(lastUpdated), [formatLastUpdated, lastUpdated])
 
   return (
     <div className="document-status-header">
@@ -73,7 +82,7 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
         <Dropdown
           value={statusFilter}
           options={FILTER_OPTIONS}
-          onChange={(value) => onFilterChange(value as any)}
+          onChange={handleFilterChange}
           aria-label="상태 필터"
           width={100}
         />
@@ -89,7 +98,7 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
       <div className="header-right">
         {lastUpdated && (
           <span className="last-updated">
-            최근 업데이트: {formatLastUpdated(lastUpdated)}
+            최근 업데이트: {lastUpdatedLabel}
           </span>
         )}
         <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>

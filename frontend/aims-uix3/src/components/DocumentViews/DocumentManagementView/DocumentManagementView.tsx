@@ -8,7 +8,7 @@
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
-import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol/SFSymbol';
+import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 
 interface DocumentManagementViewProps {
   /** View 표시 여부 */

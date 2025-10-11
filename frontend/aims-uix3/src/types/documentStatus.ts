@@ -54,7 +54,7 @@ export interface UploadData {
   destPath?: string
   timestamp?: string
   uploaded_at?: string
-  status?: string
+  status?: StageStatus | string
 }
 
 /**
@@ -69,6 +69,7 @@ export interface MetaData {
   created_at?: string
   filename?: string
   size_bytes?: number
+  status?: StageStatus
 }
 
 /**
@@ -149,7 +150,7 @@ export interface Document {
   docembed?: DocEmbedData | string
   embed?: EmbedData | string
   stages?: StagesData
-  payload?: any
+  payload?: Record<string, unknown>
 
   // 고객 연결 정보
   customer_relation?: DocumentCustomerRelation

@@ -8,7 +8,7 @@
  * React Portal을 사용하여 전체 화면 레벨에서 렌더링
  */
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import './FullTextModal.css'
 
@@ -47,10 +47,8 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
 }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const dragOriginRef = useRef({ x: 0, y: 0 })
   const modalRef = useRef<HTMLDivElement>(null)
-
-  if (!visible) return null
 
   /**
    * 배경 클릭 핸들러 (모달 닫기)
@@ -64,37 +62,37 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
   /**
    * 드래그 시작 핸들러
    */
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true)
-    setDragStart({
+    dragOriginRef.current = {
       x: e.clientX - position.x,
       y: e.clientY - position.y
-    })
-  }
+    }
+  }, [position.x, position.y])
 
   /**
    * 드래그 중 핸들러
    */
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return
 
-    const newX = e.clientX - dragStart.x
-    const newY = e.clientY - dragStart.y
+    const newX = e.clientX - dragOriginRef.current.x
+    const newY = e.clientY - dragOriginRef.current.y
 
     setPosition({ x: newX, y: newY })
-  }
+  }, [isDragging])
 
   /**
    * 드래그 종료 핸들러
    */
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false)
-  }
+  }, [])
 
   /**
    * 드래그 이벤트 리스너 등록
    */
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
@@ -104,12 +102,12 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
       }
     }
     return undefined
-  }, [isDragging, dragStart])
+  }, [isDragging, handleMouseMove, handleMouseUp])
 
   /**
    * ESC 키 핸들러
    */
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && visible) {
         onClose()
@@ -128,11 +126,14 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
   /**
    * 모달이 열릴 때 위치 초기화
    */
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       setPosition({ x: 0, y: 0 })
+      dragOriginRef.current = { x: 0, y: 0 }
     }
   }, [visible])
+
+  if (!visible) return null
 
   const modalContent = (
     <div

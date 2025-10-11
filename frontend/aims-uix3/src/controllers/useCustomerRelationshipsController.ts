@@ -11,9 +11,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   RelationshipService,
   type Relationship,
+  type RelationshipTypeData,
 } from '@/services/relationshipService';
-import type { Customer } from '@/entities/customer/model';
-
 interface UseCustomerRelationshipsControllerOptions {
   /** 대상 고객 ID */
   customerId?: string;
@@ -23,7 +22,7 @@ interface UseCustomerRelationshipsControllerOptions {
 
 export interface CustomerRelationshipsState {
   relationships: Relationship[];
-  relationshipTypes: Record<string, any>;
+  relationshipTypes: RelationshipTypeData;
   isLoading: boolean;
   error: string | null;
 }
@@ -60,7 +59,7 @@ export const useCustomerRelationshipsController = (
   { customerId, autoLoad = true }: UseCustomerRelationshipsControllerOptions,
 ): CustomerRelationshipsController => {
   const [relationships, setRelationships] = useState<Relationship[]>([]);
-  const [relationshipTypes, setRelationshipTypes] = useState<Record<string, any>>({});
+  const [relationshipTypes, setRelationshipTypes] = useState<RelationshipTypeData>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,13 +82,15 @@ export const useCustomerRelationshipsController = (
         }
         setError(null);
 
+        const shouldFetchTypes =
+          !relationshipTypes.all_types && !relationshipTypes.categories;
+
         const [types, relations] = await Promise.all([
-          Object.keys(relationshipTypes).length ? relationshipTypes : loadRelationshipTypes(),
+          shouldFetchTypes ? loadRelationshipTypes() : Promise.resolve(relationshipTypes),
           RelationshipService.getCustomerRelationships(customerId),
         ]);
 
-        // types는 loadRelationshipTypes에서 상태 업데이트 되므로 따로 set 생략 가능
-        if (types !== relationshipTypes) {
+        if (shouldFetchTypes && types !== relationshipTypes) {
           setRelationshipTypes(types);
         }
         setRelationships(relations);

@@ -13,7 +13,7 @@ import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
   SFSymbolWeight
-} from '../../../../../components/SFSymbol/SFSymbol'
+} from '../../../../../components/SFSymbol'
 import { PDFViewer } from '../../../../../components/PDFViewer/PDFViewer'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'

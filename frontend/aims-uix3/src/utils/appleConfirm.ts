@@ -162,8 +162,8 @@ export function showAppleConfirm(
     const handleResize = () => {
       if (currentModal && currentModal.parentNode) {
         // 모달이 여전히 DOM에 있는지 확인하고 스타일 강제 적용
-        overlay.style.cssText = overlay.style.cssText
-        modal.style.cssText = modal.style.cssText
+        overlay.style.cssText = String(overlay.style.cssText)
+        modal.style.cssText = String(modal.style.cssText)
       }
     }
 
@@ -334,8 +334,8 @@ export function showOversizedFilesModal(
 
     const handleResize = () => {
       if (currentModal && currentModal.parentNode) {
-        overlay.style.cssText = overlay.style.cssText
-        modal.style.cssText = modal.style.cssText
+        overlay.style.cssText = String(overlay.style.cssText)
+        modal.style.cssText = String(modal.style.cssText)
       }
     }
 

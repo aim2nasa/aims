@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
-import { useDocumentSearch } from '@/contexts/DocumentSearchContext'
+import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
 import { DocumentUtils } from '@/entities/document'

@@ -18,7 +18,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolVariant,
   SFSymbolWeight,
-} from '../../../../../components/SFSymbol/SFSymbol';
+} from '../../../../../components/SFSymbol';
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import './RelationshipsTab.css';
