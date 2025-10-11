@@ -108,13 +108,26 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       const relatedCustomer =
         (relationship.related_customer as Customer | undefined) ?? undefined;
       const category = relationship.relationship_info?.relationship_category ?? 'default';
+      const relationshipType = relationship.relationship_info?.relationship_type ?? '';
       const createdAt =
         relationship.meta?.created_at ?? relationship.created_at ?? '';
       const createdAtLabel = createdAt ? DATE_FORMATTER.format(new Date(createdAt)) : '-';
 
+      // 관계별 보기와 동일한 이모지 아이콘 사용
+      const getRelationIcon = (type: string) => {
+        switch (type) {
+          case 'spouse': return '❤️';       // 배우자 (하트)
+          case 'child': return '👶';        // 자녀
+          case 'parent': return '👨‍👩';     // 부모 (부모 세대)
+          default: return '👥';             // 기타
+        }
+      };
+
       return {
         key: relationship._id,
         category,
+        relationshipType,
+        relationIcon: getRelationIcon(relationshipType),
         relationship,
         relatedCustomer,
         createdAt: createdAtLabel,
@@ -204,17 +217,12 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
               </thead>
               <tbody>
                 {rows.map((row) => {
-                  const symbolName = CATEGORY_SYMBOLS[row.category] ?? 'person.crop.circle';
                   return (
                     <tr key={row.key}>
                       <td>
                         <div className={`relationships-category relationships-category--${row.category}`}>
-                          <span className="relationships-category__icon">
-                            <SFSymbol
-                              name={symbolName}
-                              size={SFSymbolSize.TITLE_3}
-                              weight={SFSymbolWeight.SEMIBOLD}
-                            />
+                          <span className="relationships-category__icon relationships-category__icon--emoji">
+                            {row.relationIcon}
                           </span>
                           <span className="relationships-category__label">
                             {getRelationshipTypeLabel(row.relationship)}

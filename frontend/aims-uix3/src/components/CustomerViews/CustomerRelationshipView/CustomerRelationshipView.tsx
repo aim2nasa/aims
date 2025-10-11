@@ -423,13 +423,22 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                             {expandedNodes.has(`family-${repName}-relations`) && groupData.relations.length > 0 && (
                               <div className="relation-list">
                                 {groupData.relations.map((relation) => {
-                                  const icon = relation.relationLabel === '배우자' ? '❤️' :
-                                              relation.relationLabel === '자녀' ? '👶' :
-                                              relation.relationLabel === '부모' ? '👨‍👩‍👧' :
-                                              relation.relationLabel === '형제자매' ? '👫' : '👥';
-
                                   // A → B: A의 입장에서 B는 어떤 관계인지 표시
+                                  // relationLabel은 이미 A→B 관계를 나타냄 (from의 입장에서 to의 관계)
                                   const relationFromA = `${relation.fromName}의 ${relation.relationLabel}`;
+
+                                  // 아이콘도 relationLabel(A→B 관계)에 맞춰 표시
+                                  const getRelationIcon = (label: string) => {
+                                    switch (label) {
+                                      case '배우자': return '❤️';       // 대칭 관계 (하트)
+                                      case '자녀': return '👶';         // A의 자녀
+                                      case '부모': return '👨‍👩';       // A의 부모 = 부모 세대
+                                      case '형제자매': return '👫';     // 대칭 관계
+                                      default: return '👥';
+                                    }
+                                  };
+
+                                  const icon = getRelationIcon(relation.relationLabel);
 
                                   return (
                                     <div

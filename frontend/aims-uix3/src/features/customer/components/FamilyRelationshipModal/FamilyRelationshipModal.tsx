@@ -19,12 +19,12 @@ import './FamilyRelationshipModal.css';
 const FAMILY_RELATIONSHIP_TYPES = {
   spouse: {
     label: '배우자',
-    icon: '💑',
+    icon: '❤️',
     description: '결혼 관계, 동일 세대의 핵심 파트너',
   },
   parent: {
     label: '부모',
-    icon: '👨‍👩‍👧‍👦',
+    icon: '👨‍👩',
     description: '상위 세대 보호자 및 법정 대리인',
   },
   child: {

@@ -171,6 +171,12 @@
   background-color: transparent;
 }
 
+/* 이모지 아이콘 스타일 (관계별 보기와 동일) */
+.relationships-category__icon--emoji {
+  font-size: 18px;
+  color: inherit;
+}
+
 .relationships-category--family .relationships-category__icon {
   color: var(--color-icon-red);
   background-color: transparent;
