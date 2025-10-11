@@ -14,7 +14,11 @@
 
 import { useState, useCallback } from 'react'
 import { useDocumentStatusContext } from '../contexts/DocumentStatusContext'
-import type { Document } from '../types/documentStatus'
+import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
+import { DocumentService } from '../services/DocumentService'
+import { CustomerService } from '../services/customerService'
+import { DocumentStatusService } from '../services/DocumentStatusService'
+import type { CustomerSearchResponse } from '@/entities/customer'
 
 /**
  * useDocumentStatusController
@@ -49,6 +53,10 @@ export const useDocumentStatusController = () => {
   // Document Full Text Modal
   const [selectedDocumentForFullText, setSelectedDocumentForFullText] = useState<Document | null>(null)
   const [isFullTextModalVisible, setFullTextModalVisible] = useState(false)
+
+  // Document Link Modal
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState<Document | null>(null)
+  const [isLinkModalVisible, setLinkModalVisible] = useState(false)
 
   // ===== Document Detail Modal Handlers =====
   /**
@@ -110,6 +118,71 @@ export const useDocumentStatusController = () => {
     }, 300)
   }, [])
 
+  // ===== Document Link Modal Handlers =====
+  /**
+   * 문서 고객 연결 모달 열기
+   */
+  const handleDocumentLink = useCallback((document: Document) => {
+    setSelectedDocumentForLink(document)
+    setLinkModalVisible(true)
+  }, [])
+
+  /**
+   * 문서 고객 연결 모달 닫기
+   */
+  const handleLinkModalClose = useCallback(() => {
+    setLinkModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForLink(null)
+    }, 300)
+  }, [])
+
+  /**
+   * 고객 검색
+   */
+  const searchCustomers = useCallback(
+    async (searchTerm: string, page: number = 1, limit: number = 20): Promise<CustomerSearchResponse> => {
+      return CustomerService.searchCustomers(searchTerm, { page, limit })
+    },
+    []
+  )
+
+  /**
+   * 특정 고객과 연결된 문서 목록 조회
+   */
+  const fetchCustomerDocuments = useCallback(async (customerId: string) => {
+    return DocumentService.getCustomerDocuments(customerId)
+  }, [])
+
+  /**
+   * 문서를 고객에게 연결
+   */
+  const linkDocumentToCustomer = useCallback(
+    async (params: {
+      customerId: string
+      documentId: string
+      relationshipType: string
+      notes?: string
+    }): Promise<DocumentCustomerRelation | undefined> => {
+      const { customerId, documentId, relationshipType, notes } = params
+
+      await DocumentService.linkDocumentToCustomer(customerId, {
+        document_id: documentId,
+        relationship_type: relationshipType,
+        notes
+      })
+
+      // 최신 문서 정보 재조회하여 customer_relation 동기화
+      const detailedDoc = await DocumentStatusService.getDocumentStatus(documentId)
+      const relation = detailedDoc.data?.rawDocument?.customer_relation
+
+      actions.updateDocumentCustomerRelation(documentId, relation)
+
+      return relation
+    },
+    [actions]
+  )
+
   // ===== Return Controller Interface =====
   return {
     // Context State
@@ -154,6 +227,15 @@ export const useDocumentStatusController = () => {
     isFullTextModalVisible,
     handleDocumentFullText,
     handleFullTextModalClose,
+
+    // Document Link Modal State & Handlers
+    selectedDocumentForLink,
+    isLinkModalVisible,
+    handleDocumentLink,
+    handleLinkModalClose,
+    searchCustomers,
+    fetchCustomerDocuments,
+    linkDocumentToCustomer
   }
 }
 

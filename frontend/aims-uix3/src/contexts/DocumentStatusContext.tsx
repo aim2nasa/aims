@@ -4,7 +4,7 @@
  */
 
 import { createContext, useContext } from 'react'
-import type { Document } from '../types/documentStatus'
+import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
 /**
  * 문서 처리 현황 상태
@@ -50,6 +50,10 @@ export interface DocumentStatusActions {
   setItemsPerPage: (limit: number) => void
   handlePageChange: (page: number) => void
   handleLimitChange: (limit: number) => void
+  updateDocumentCustomerRelation: (
+    documentId: string,
+    relation: DocumentCustomerRelation | undefined
+  ) => void
 }
 
 /**

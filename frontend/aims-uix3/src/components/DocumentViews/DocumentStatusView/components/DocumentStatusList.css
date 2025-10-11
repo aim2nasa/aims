@@ -122,7 +122,7 @@ html[data-theme="dark"] .empty-message {
     28px           /* 상태 아이콘 */
     minmax(60px, 80px)  /* 진행률/상태 (축소 가능) */
     minmax(130px, 150px) /* 날짜 (2줄 방지 위해 확대) */
-    minmax(60px, 72px); /* 액션 버튼 (축소 가능) */
+    minmax(80px, 104px); /* 액션 버튼 (4개) */
   gap: 10px;
   align-items: center;
   height: 32px;
@@ -283,6 +283,16 @@ html[data-theme="dark"] .action-btn:hover {
   background-color: transparent;
 }
 
+.action-btn[data-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn[data-disabled="true"]:hover {
+  transform: none;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
   .status-item {
@@ -292,7 +302,7 @@ html[data-theme="dark"] .action-btn:hover {
       24px          /* 상태 아이콘 */
       70px          /* 진행률/상태 */
       80px          /* 날짜 */
-      50px;         /* 액션 버튼 */
+      70px;         /* 액션 버튼 */
     gap: 8px;
     padding: 5px 8px;
   }

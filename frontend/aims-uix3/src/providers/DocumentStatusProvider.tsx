@@ -11,7 +11,7 @@ import {
   type DocumentStatusContextValue
 } from '../contexts/DocumentStatusContext'
 import { DocumentStatusService } from '../services/DocumentStatusService'
-import type { Document } from '../types/documentStatus'
+import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
 interface DocumentStatusProviderProps {
   children: React.ReactNode
@@ -243,6 +243,44 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1) // Reset to first page
   }, [])
 
+  /**
+   * 특정 문서의 고객 연결 정보를 업데이트
+   */
+  const updateDocumentCustomerRelation = useCallback(
+    (documentId: string, relation: DocumentCustomerRelation | undefined) => {
+      setDocuments((prevDocs) =>
+        prevDocs.map((doc) => {
+          const docId = doc._id || doc['id']
+          if (!docId) {
+            return doc
+          }
+          if (docId === documentId) {
+            return {
+              ...doc,
+              customer_relation: relation
+            }
+          }
+          return doc
+        })
+      )
+
+      setSelectedDocument((prevSelected) => {
+        if (!prevSelected) {
+          return prevSelected
+        }
+        const prevId = prevSelected._id || prevSelected['id']
+        if (prevId === documentId) {
+          return {
+            ...prevSelected,
+            customer_relation: relation
+          }
+        }
+        return prevSelected
+      })
+    },
+    []
+  )
+
   // 🍎 필터 변경 시 첫 페이지로 리셋
   useEffect(() => {
     setCurrentPage(1)
@@ -304,9 +342,18 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setCurrentPage,
       setItemsPerPage,
       handlePageChange,
-      handleLimitChange
+      handleLimitChange,
+      updateDocumentCustomerRelation
     }),
-    [fetchDocuments, refreshDocuments, togglePolling, checkApiHealth, handlePageChange, handleLimitChange]
+    [
+      fetchDocuments,
+      refreshDocuments,
+      togglePolling,
+      checkApiHealth,
+      handlePageChange,
+      handleLimitChange,
+      updateDocumentCustomerRelation
+    ]
   )
 
   // Context Value

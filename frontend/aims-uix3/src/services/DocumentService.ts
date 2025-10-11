@@ -32,6 +32,36 @@ const ENDPOINTS = {
 } as const;
 
 /**
+ * 고객 문서 연결 정보
+ */
+export interface CustomerDocumentItem {
+  _id: string;
+  originalName?: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+  relationship?: string;
+  notes?: string;
+  linkedAt?: string;
+  status?: string;
+  progress?: number;
+}
+
+export interface CustomerDocumentsResult {
+  customer_id: string;
+  customer_name?: string;
+  documents: CustomerDocumentItem[];
+  total: number;
+}
+
+export interface DocumentCustomerLinkPayload {
+  document_id: string;
+  relationship_type: string;
+  notes?: string;
+  assigned_by?: string | null;
+}
+
+/**
  * 문서 서비스 클래스
  * 모든 문서 관련 비즈니스 로직과 API 호출을 중앙화
  */
@@ -218,6 +248,51 @@ export class DocumentService {
     };
 
     return DocumentService.getDocuments(query);
+  }
+
+  /**
+   * 특정 고객과 연결된 문서 목록 조회
+   */
+  static async getCustomerDocuments(customerId: string): Promise<CustomerDocumentsResult> {
+    if (!customerId.trim()) {
+      throw new Error('고객 ID가 필요합니다');
+    }
+
+    const response = await api.get<any>(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId));
+
+    if (response && typeof response === 'object') {
+      if ('data' in response && response.data) {
+        return response.data as CustomerDocumentsResult;
+      }
+
+      if ('documents' in response) {
+        return response as CustomerDocumentsResult;
+      }
+    }
+
+    return {
+      customer_id: customerId,
+      documents: [],
+      total: 0,
+    };
+  }
+
+  /**
+   * 문서를 고객에게 연결
+   */
+  static async linkDocumentToCustomer(
+    customerId: string,
+    payload: DocumentCustomerLinkPayload
+  ): Promise<void> {
+    if (!customerId.trim()) {
+      throw new Error('고객 ID가 필요합니다');
+    }
+
+    if (!payload.document_id?.trim()) {
+      throw new Error('문서 ID가 필요합니다');
+    }
+
+    await api.post(ENDPOINTS.CUSTOMER_DOCUMENTS(customerId), payload);
   }
 
   /**

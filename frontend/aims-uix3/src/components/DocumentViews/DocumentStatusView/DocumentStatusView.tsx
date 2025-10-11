@@ -19,6 +19,7 @@ import DocumentStatusList from './components/DocumentStatusList'
 import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
+import DocumentLinkModal from './components/DocumentLinkModal'
 import { Dropdown } from '../../../shared/ui'
 import './DocumentStatusView.css'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
@@ -88,6 +89,7 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onDetailClick={controller.handleDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
+        onLinkClick={controller.handleDocumentLink}
       />
 
       {/* 🍎 페이지네이션: DocumentLibrary와 동일한 구조 */}
@@ -157,6 +159,14 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         visible={controller.isFullTextModalVisible}
         onClose={controller.handleFullTextModalClose}
         document={controller.selectedDocumentForFullText}
+      />
+      <DocumentLinkModal
+        visible={controller.isLinkModalVisible}
+        onClose={controller.handleLinkModalClose}
+        document={controller.selectedDocumentForLink}
+        onSearchCustomers={controller.searchCustomers}
+        onFetchCustomerDocuments={controller.fetchCustomerDocuments}
+        onLink={controller.linkDocumentToCustomer}
       />
     </div>
   )

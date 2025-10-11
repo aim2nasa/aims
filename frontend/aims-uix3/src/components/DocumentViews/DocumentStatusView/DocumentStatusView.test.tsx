@@ -46,6 +46,8 @@ const mockController = {
   isSummaryModalVisible: false,
   selectedDocumentForFullText: null,
   isFullTextModalVisible: false,
+  selectedDocumentForLink: null,
+  isLinkModalVisible: false,
 
   // Event Handlers
   handleDocumentClick: vi.fn(),
@@ -54,6 +56,11 @@ const mockController = {
   handleSummaryModalClose: vi.fn(),
   handleDocumentFullText: vi.fn(),
   handleFullTextModalClose: vi.fn(),
+  handleDocumentLink: vi.fn(),
+  handleLinkModalClose: vi.fn(),
+  searchCustomers: vi.fn(),
+  fetchCustomerDocuments: vi.fn(),
+  linkDocumentToCustomer: vi.fn(),
 }
 
 vi.mock('../../../controllers/useDocumentStatusController', () => ({

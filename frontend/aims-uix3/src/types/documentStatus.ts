@@ -152,11 +152,20 @@ export interface Document {
   payload?: any
 
   // 고객 연결 정보
-  customer_relation?: {
-    customer_id: string
-    customer_name?: string
-    linked_at?: string
-  }
+  customer_relation?: DocumentCustomerRelation
+}
+
+/**
+ * 문서-고객 연결 정보
+ */
+export interface DocumentCustomerRelation {
+  customer_id: string
+  customer_name?: string
+  relationship_type?: string
+  assigned_by?: string | null
+  assigned_at?: string
+  notes?: string
+  linked_at?: string
 }
 
 /**

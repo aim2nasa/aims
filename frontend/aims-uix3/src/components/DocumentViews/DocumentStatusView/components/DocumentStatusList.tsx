@@ -22,6 +22,7 @@ interface DocumentStatusListProps {
   onDetailClick?: (document: Document) => void
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
+  onLinkClick?: (document: Document) => void
 }
 
 export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
@@ -32,7 +33,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onDocumentClick,
   onDetailClick,
   onSummaryClick,
-  onFullTextClick
+  onFullTextClick,
+  onLinkClick
 }) => {
   // 로딩 상태
   if (isLoading && isEmpty) {
@@ -64,7 +66,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       <div className="document-status-list">
         <div className="list-empty">
           <span className="empty-icon">📄</span>
-          <p className="empty-message">문서가 없습니다</p>
+          <p className="empty-message">문서가 없습니다.</p>
         </div>
       </div>
     )
@@ -78,6 +80,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         const progress = DocumentStatusService.extractProgress(document)
         const statusLabel = DocumentStatusService.getStatusLabel(status)
         const statusIcon = DocumentStatusService.getStatusIcon(status)
+        const isLinked = Boolean(document.customer_relation)
+        const canLink = status === 'completed' && !isLinked
+        const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 
         return (
           <div
@@ -165,6 +170,23 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   aria-label="전체 텍스트 보기"
                 >
                   📄
+                </button>
+              </Tooltip>
+              <Tooltip content={linkTooltip}>
+                <button
+                  className="action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (canLink) {
+                      onLinkClick?.(document)
+                    }
+                  }}
+                  aria-label={linkTooltip}
+                  aria-disabled={!canLink}
+                  data-disabled={!canLink}
+                  tabIndex={canLink ? 0 : -1}
+                >
+                  🔗
                 </button>
               </Tooltip>
             </div>
