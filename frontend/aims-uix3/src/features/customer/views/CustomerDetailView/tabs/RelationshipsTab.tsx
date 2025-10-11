@@ -194,11 +194,8 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
         <header className="relationships-card__header">
           <div className="relationships-card__title">
             <SFSymbol name="person.2" weight={SFSymbolWeight.SEMIBOLD} size={SFSymbolSize.CALLOUT} />
-            <span>고객 관계</span>
+            <span>가족 관계</span>
             <span className="relationships-card__count">{relationshipsCount}</span>
-          </div>
-          <div className="relationships-card__hint">
-            관계 유형을 클릭하면 관련 고객 상세로 이동할 수 있습니다.
           </div>
         </header>
 
