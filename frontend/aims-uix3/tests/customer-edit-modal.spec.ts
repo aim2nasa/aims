@@ -6,6 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import type { Request } from '@playwright/test';
 
 test.describe('고객 정보 수정 모달', () => {
   test.beforeEach(async ({ page }) => {
@@ -68,8 +69,8 @@ test.describe('고객 정보 수정 모달', () => {
     });
 
     // 네트워크 요청 수집
-    const networkRequests: any[] = [];
-    page.on('request', request => {
+    const networkRequests: { url: string; method: string }[] = [];
+    page.on('request', (request: Request) => {
       if (request.url().includes('customer')) {
         networkRequests.push({
           url: request.url(),
@@ -130,7 +131,7 @@ test.describe('고객 정보 수정 모달', () => {
 
     // onclick 속성 확인
     const onClick = await saveButton.evaluate((el) => {
-      return typeof (el as any).onclick;
+      return typeof (el as HTMLButtonElement).onclick;
     });
     console.log('🔘 onclick 핸들러 타입:', onClick);
   });
