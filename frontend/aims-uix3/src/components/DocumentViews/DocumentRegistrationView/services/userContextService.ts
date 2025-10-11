@@ -8,6 +8,8 @@
 
 import { UploadContext, UserIdentifierType } from '../types/uploadTypes'
 
+type UploadMetadataValue = string | number | boolean | null | undefined
+
 /**
  * 사용자 컨텍스트 관리 클래스
  *
@@ -58,7 +60,7 @@ export class UserContextService {
    * 추가 메타데이터 설정
    * 🔮 미래 확장: 커스텀 분류 정보
    */
-  static setMetadata(key: string, value: any): void {
+  static setMetadata(key: string, value: UploadMetadataValue): void {
     if (!this.context.metadata) {
       this.context.metadata = {}
     }
