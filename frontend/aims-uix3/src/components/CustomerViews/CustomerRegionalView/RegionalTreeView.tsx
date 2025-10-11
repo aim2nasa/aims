@@ -119,6 +119,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   loading = false
 }) => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(['no-address']))
+  const [isAllExpanded, setIsAllExpanded] = useState(false)
 
   // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
   const regionalGroups = useMemo(() => {
@@ -210,6 +211,26 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     return nodes
   }, [regionalGroups])
 
+  // 모두 펼치기/접기 토글 함수
+  const toggleExpandAll = () => {
+    if (isAllExpanded) {
+      // 모두 접기
+      setExpandedKeys(new Set())
+      setIsAllExpanded(false)
+    } else {
+      // 모두 펼치기
+      const allKeys = new Set<string>()
+      treeData.forEach(node => {
+        allKeys.add(node.key)
+        if (node.children) {
+          node.children.forEach(child => allKeys.add(child.key))
+        }
+      })
+      setExpandedKeys(allKeys)
+      setIsAllExpanded(true)
+    }
+  }
+
   // 노드 확장/축소 토글
   const toggleNode = (key: string) => {
     setExpandedKeys(prev => {
@@ -219,6 +240,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       } else {
         newSet.add(key)
       }
+      // 개별 노드 토글 시 전체 확장 상태 업데이트
+      const totalNodes = treeData.reduce((count, node) => {
+        return count + 1 + (node.children ? node.children.length : 0)
+      }, 0)
+      setIsAllExpanded(newSet.size === totalNodes)
       return newSet
     })
   }
@@ -371,6 +397,19 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <span className="stat-icon">📍</span>
           <span className="stat-label">구/군</span>
           <span className="stat-value">{stats.districtsCount}</span>
+        </div>
+
+        {/* 모두 펼치기/접기 토글 버튼 */}
+        <div className="tree-actions">
+          <button
+            type="button"
+            className="tree-action-btn tree-action-btn--icon-only"
+            onClick={toggleExpandAll}
+            title={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
+            aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
+          >
+            {isAllExpanded ? '▲' : '▼'}
+          </button>
         </div>
       </div>
 

@@ -91,6 +91,73 @@
 }
 
 /* ==========================================
+   트리 액션 버튼 (모두 펼치기/접기) - 애플 스타일
+   ========================================== */
+
+.tree-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tree-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-primary-600);
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-system);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  user-select: none;
+}
+
+.tree-action-btn:hover {
+  background-color: rgba(0, 122, 255, 0.08);
+}
+
+.tree-action-btn:active {
+  background-color: rgba(0, 122, 255, 0.15);
+  transform: scale(0.97);
+}
+
+.tree-action-btn svg {
+  flex-shrink: 0;
+}
+
+/* 아이콘 전용 버튼 (정사각형) */
+.tree-action-btn--icon-only {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.tree-action-btn--icon-only svg {
+  margin: 0;
+}
+
+/* 다크모드 */
+html[data-theme="dark"] .tree-action-btn {
+  color: rgb(64, 156, 255);
+}
+
+html[data-theme="dark"] .tree-action-btn:hover {
+  background-color: rgba(0, 122, 255, 0.12);
+}
+
+html[data-theme="dark"] .tree-action-btn:active {
+  background-color: rgba(0, 122, 255, 0.20);
+}
+
+/* ==========================================
    트리 컨테이너
    ========================================== */
 
