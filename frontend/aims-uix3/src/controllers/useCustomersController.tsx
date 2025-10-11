@@ -80,7 +80,7 @@ export const useCustomersController = () => {
     } finally {
       setLoading(false);
     }
-  }, [state.searchQuery, state.searchParams, setLoading, setCustomers, setError]);
+  }, [state.searchParams, setLoading, setCustomers, setError]);
 
   /**
    * 더 많은 고객 로드 (페이지네이션)

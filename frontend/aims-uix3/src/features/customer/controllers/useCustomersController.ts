@@ -7,7 +7,7 @@
  * 페이지네이션, 검색, 필터링 지원
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CustomerSearchQuerySchema, type Customer, type CustomerSearchQuery } from '@/entities/customer/model';
 
 interface UseCustomersControllerProps {
@@ -191,11 +191,15 @@ export const useCustomersController = ({
   /**
    * 초기 로드
    */
+  const initialLoadRef = useRef(false);
+
   useEffect(() => {
-    if (autoLoad) {
-      fetchCustomers(searchQuery, false);
+    if (!autoLoad || initialLoadRef.current) {
+      return;
     }
-  }, []); // 최초 마운트 시에만 실행
+    initialLoadRef.current = true;
+    fetchCustomers(searchQuery, false);
+  }, [autoLoad, fetchCustomers, searchQuery]);
 
   // 계산된 상태
   const hasMore = pagination.currentPage < pagination.totalPages;

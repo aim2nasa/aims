@@ -63,28 +63,11 @@ export const useAddressArchiveController = (
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * 주소 보관소 모달 열기
-   */
-  const open = useCallback(() => {
-    setIsOpen(true);
-    // 모달 열릴 때 주소 이력 자동 로드
-    loadAddressHistory(customerId);
-  }, [customerId]);
-
-  /**
-   * 주소 보관소 모달 닫기
-   */
-  const close = useCallback(() => {
-    setIsOpen(false);
-    setError(null);
-  }, []);
-
-  /**
-   * 주소 이력 로드 (실제 API 연동)
-   */
-  const loadAddressHistory = useCallback(async (customerId: string) => {
-    if (!customerId) {
+ /**
+  * 주소 이력 로드 (실제 API 연동)
+  */
+ const loadAddressHistory = useCallback(async (customerId: string) => {
+   if (!customerId) {
       setError('고객 ID가 필요합니다');
       return;
     }
@@ -106,6 +89,22 @@ export const useAddressArchiveController = (
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  /**
+   * 주소 보관소 모달 열기
+   */
+  const open = useCallback(() => {
+    setIsOpen(true);
+    loadAddressHistory(customerId);
+  }, [customerId, loadAddressHistory]);
+
+  /**
+   * 주소 보관소 모달 닫기
+   */
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setError(null);
   }, []);
 
   return {

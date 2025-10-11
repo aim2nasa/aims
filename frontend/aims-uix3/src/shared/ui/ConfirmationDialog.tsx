@@ -61,26 +61,6 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onCancel,
   onClose
 }) => {
-  // Escape 키로 다이얼로그 닫기
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && open) {
-        handleCancel()
-      }
-    }
-
-    if (open) {
-      document.addEventListener('keydown', handleEscape)
-      // 다이얼로그 오픈 시 바디 스크롤 방지
-      document.body.style.overflow = 'hidden'
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
-    }
-  }, [open])
-
   // 확인 버튼 클릭 (햅틱 피드백 포함)
   const handleConfirm = useCallback(() => {
     // 위험한 액션의 경우 더 강한 햅틱 피드백
@@ -101,6 +81,25 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       handleCancel()
     }
   }, [handleCancel])
+
+  // Escape 키로 다이얼로그 닫기
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && open) {
+        handleCancel()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [open, handleCancel])
 
   if (!open) return null
 

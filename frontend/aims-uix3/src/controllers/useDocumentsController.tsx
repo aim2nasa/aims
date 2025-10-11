@@ -8,7 +8,7 @@
  * Document-Controller-View 분리 구현
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { DocumentService } from '@/services/DocumentService';
 import { handleApiError } from '@/shared/lib/api';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
@@ -90,7 +90,7 @@ export const useDocumentsController = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, searchQuery, searchParams, loadDocuments]);
+  }, [isLoading, hasMore, searchQuery, searchParams]);
 
   /**
    * 검색어 변경 핸들러
@@ -135,20 +135,18 @@ export const useDocumentsController = () => {
    * 정렬 기준 변경 핸들러
    */
   const handleSortChange = useCallback((newSortBy: string, newSortOrder: 'asc' | 'desc') => {
-    setSearchParams(prev => {
-      const validSortBy = newSortBy as 'filename' | 'uploadDate' | 'size' | 'createdAt' | 'updatedAt' | 'fileType';
-      const newParams = {
-        ...prev,
-        sortBy: validSortBy,
-        sortOrder: newSortOrder,
-        offset: 0
-      };
-      // 비동기로 loadDocuments 호출
-      setTimeout(() => loadDocuments(newParams), 0);
-      return newParams;
-    });
+    const validSortBy =
+      newSortBy as 'filename' | 'uploadDate' | 'size' | 'createdAt' | 'updatedAt' | 'fileType';
+    const newParams = {
+      ...searchParams,
+      sortBy: validSortBy,
+      sortOrder: newSortOrder,
+      offset: 0
+    };
+    setSearchParams(newParams);
     setCurrentPage(1);
-  }, [loadDocuments]);
+    loadDocuments(newParams);
+  }, [searchParams, loadDocuments]);
 
   /**
    * 문서 삭제
@@ -178,11 +176,15 @@ export const useDocumentsController = () => {
   /**
    * 초기 데이터 로딩
    */
+  const initialLoadRef = useRef(false);
+
   useEffect(() => {
-    if (documents.length === 0) {
-      loadDocuments(searchParams);
+    if (initialLoadRef.current) {
+      return;
     }
-  }, [documents.length, loadDocuments, searchParams]);
+    initialLoadRef.current = true;
+    loadDocuments(searchParams);
+  }, [loadDocuments, searchParams]);
 
   /**
    * 검색어 변경 시 디바운스 적용하여 재로딩

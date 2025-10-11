@@ -59,12 +59,21 @@ export interface ConfirmationState {
  * )
  * ```
  */
+const INITIAL_STATE: ConfirmationState = {
+  open: false,
+  options: null,
+  resolver: null
+}
+
 export const useConfirmation = () => {
-  const [state, setState] = useState<ConfirmationState>({
-    open: false,
-    options: null,
-    resolver: null
-  })
+  const [state, setState] = useState<ConfirmationState>(INITIAL_STATE)
+
+  const resolveAndReset = useCallback((confirmed: boolean) => {
+    setState((prev) => {
+      prev.resolver?.(confirmed)
+      return INITIAL_STATE
+    })
+  }, [])
 
   /**
    * 확인 다이얼로그 표시
@@ -86,43 +95,22 @@ export const useConfirmation = () => {
    * 확인 버튼 클릭 핸들러
    */
   const handleConfirm = useCallback(() => {
-    if (state.resolver) {
-      state.resolver(true)
-    }
-    setState({
-      open: false,
-      options: null,
-      resolver: null
-    })
-  }, [state.resolver])
+    resolveAndReset(true)
+  }, [resolveAndReset])
 
   /**
    * 취소 버튼 클릭 핸들러
    */
   const handleCancel = useCallback(() => {
-    if (state.resolver) {
-      state.resolver(false)
-    }
-    setState({
-      open: false,
-      options: null,
-      resolver: null
-    })
-  }, [state.resolver])
+    resolveAndReset(false)
+  }, [resolveAndReset])
 
   /**
    * 다이얼로그 닫기 핸들러
    */
   const handleClose = useCallback(() => {
-    if (state.resolver) {
-      state.resolver(false)
-    }
-    setState({
-      open: false,
-      options: null,
-      resolver: null
-    })
-  }, [state.resolver])
+    resolveAndReset(false)
+  }, [resolveAndReset])
 
   return {
     /** 현재 확인 다이얼로그 상태 */
