@@ -28,10 +28,10 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   onCancel,
   className = ''
 }) => {
+  const { files } = uploadState
+
   // 🍎 MINIMAL STATS: Only essentials
   const stats = useMemo(() => {
-    const { files } = uploadState
-
     if (files.length === 0) {
       return {
         totalProgress: 0,
@@ -76,7 +76,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       isUploading,
       errorCount
     }
-  }, [uploadState.files])
+  }, [files])
 
   // 업로드 중이 아니고 파일이 없으면 숨김
   if (!stats.isUploading && stats.totalCount === 0) {

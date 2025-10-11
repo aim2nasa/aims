@@ -6,7 +6,7 @@
  * alert() 대신 사용하는 우아한 알림 시스템
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import './FeedbackToast.css'
 
@@ -40,6 +40,13 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
 }) => {
   const [isAnimating, setIsAnimating] = useState(false)
 
+  const handleClose = useCallback(() => {
+    setIsAnimating(false)
+    setTimeout(() => {
+      onClose()
+    }, 300)
+  }, [onClose])
+
   // 표시/숨김 애니메이션 관리
   useEffect(() => {
     if (visible) {
@@ -55,15 +62,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
       setIsAnimating(false)
     }
     return undefined
-  }, [visible, duration])
-
-  const handleClose = () => {
-    setIsAnimating(false)
-    // 애니메이션 완료 후 실제 닫기
-    setTimeout(() => {
-      onClose()
-    }, 300)
-  }
+  }, [visible, duration, handleClose])
 
   const getIcon = () => {
     switch (type) {

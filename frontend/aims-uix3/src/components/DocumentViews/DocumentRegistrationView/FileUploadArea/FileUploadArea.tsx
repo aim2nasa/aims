@@ -6,12 +6,36 @@
  * 단일/다중 파일 및 폴더 업로드 지원
  */
 
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { FileSelectionOptions } from '../types/uploadTypes'
 // import { uploadHelpers } from '../services/userContextService' // 주석 처리된 함수용
 import { FeedbackToast } from '../FeedbackToast/FeedbackToast'
 import './FileUploadArea.css'
+
+type DirectoryReader = {
+  readEntries: (callback: (entries: FileSystemEntryLike[]) => void) => void
+}
+
+type FileSystemFileEntryLike = {
+  isDirectory: false
+  isFile: true
+  fullPath: string
+  file: (callback: (file: File) => void) => void
+}
+
+type FileSystemDirectoryEntryLike = {
+  isDirectory: true
+  isFile: false
+  fullPath: string
+  createReader: () => DirectoryReader
+}
+
+type FileSystemEntryLike = FileSystemFileEntryLike | FileSystemDirectoryEntryLike
+
+type DataTransferItemWithEntry = DataTransferItem & {
+  webkitGetAsEntry?: () => FileSystemEntryLike | null
+}
 
 interface FileUploadAreaProps {
   /** 파일 선택 시 콜백 */
@@ -152,6 +176,39 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     e.stopPropagation()
   }, [])
 
+  const getAllFilesFromEntry = useCallback(async (entry: FileSystemEntryLike): Promise<File[]> => {
+    if (entry.isFile) {
+      const fileEntry = entry as FileSystemFileEntryLike
+      return new Promise((resolve) => {
+        fileEntry.file((file) => {
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: entry.fullPath.slice(1),
+            writable: false
+          })
+          resolve([file])
+        })
+      })
+    }
+
+    if (entry.isDirectory) {
+      const directoryEntry = entry as FileSystemDirectoryEntryLike
+      const reader = directoryEntry.createReader()
+
+      return new Promise((resolve) => {
+        reader.readEntries(async (entries) => {
+          const collected: File[] = []
+          for (const childEntry of entries) {
+            const childFiles = await getAllFilesFromEntry(childEntry)
+            collected.push(...childFiles)
+          }
+          resolve(collected)
+        })
+      })
+    }
+
+    return []
+  }, [])
+
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -162,59 +219,30 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     const items = Array.from(e.dataTransfer.items)
     const files: File[] = []
 
-    // 폴더와 파일 모두 처리
     for (const item of items) {
-      if (item.kind === 'file') {
-        const entry = item.webkitGetAsEntry()
-        if (entry) {
-          if (entry.isDirectory) {
-            // 폴더인 경우 재귀적으로 파일 수집
-            const folderFiles = await getAllFilesFromEntry(entry)
-            files.push(...folderFiles)
-          } else {
-            // 파일인 경우 직접 추가
-            const file = item.getAsFile()
-            if (file) files.push(file)
-          }
-        }
+      if (item.kind !== 'file') {
+        continue
+      }
+
+      const withEntry = item as DataTransferItemWithEntry
+      const entry = withEntry.webkitGetAsEntry ? withEntry.webkitGetAsEntry() : null
+
+      if (entry) {
+        const extracted = await getAllFilesFromEntry(entry)
+        files.push(...extracted)
+        continue
+      }
+
+      const file = item.getAsFile()
+      if (file) {
+        files.push(file)
       }
     }
 
     if (files.length > 0) {
       handleFiles(files)
     }
-  }, [handleFiles])
-
-  // 폴더에서 모든 파일 추출하는 헬퍼 함수
-  const getAllFilesFromEntry = async (entry: any): Promise<File[]> => {
-    const files: File[] = []
-
-    if (entry.isFile) {
-      return new Promise((resolve) => {
-        entry.file((file: File) => {
-          // 폴더 경로 정보 추가
-          Object.defineProperty(file, 'webkitRelativePath', {
-            value: entry.fullPath.slice(1), // 첫 번째 / 제거
-            writable: false
-          })
-          resolve([file])
-        })
-      })
-    } else if (entry.isDirectory) {
-      const reader = entry.createReader()
-      return new Promise((resolve) => {
-        reader.readEntries(async (entries: any[]) => {
-          for (const childEntry of entries) {
-            const childFiles = await getAllFilesFromEntry(childEntry)
-            files.push(...childFiles)
-          }
-          resolve(files)
-        })
-      })
-    }
-
-    return files
-  }
+  }, [getAllFilesFromEntry, handleFiles])
 
   /**
    * 파일/폴더 선택 버튼 클릭 (통합)
@@ -265,6 +293,19 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     setToastVisible(false)
   }, [])
 
+  useEffect(() => {
+    const folderInput = folderInputRef.current
+    if (!folderInput) {
+      return
+    }
+
+    if (directory) {
+      folderInput.setAttribute('webkitdirectory', 'true')
+    } else {
+      folderInput.removeAttribute('webkitdirectory')
+    }
+  }, [directory])
+
   // CSS 클래스 계산
   const containerClasses = [
     'file-upload-area',
@@ -290,7 +331,6 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         <input
           ref={folderInputRef}
           type="file"
-          {...({ webkitdirectory: 'true' } as any)}
           multiple
           onChange={handleFileInputChange}
           style={{ display: 'none' }}
