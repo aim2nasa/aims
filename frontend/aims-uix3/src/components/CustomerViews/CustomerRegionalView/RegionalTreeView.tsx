@@ -154,8 +154,20 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     const districtsCount = Object.values(groups).reduce(
       (sum, districts) => sum + Object.keys(districts).length, 0
     )
-    return { totalCustomers, citiesCount, districtsCount, noAddressCount: noAddressCustomers.length }
-  }, [regionalGroups, customers.length])
+
+    // 개인/법인 고객 수 계산 (전체보기와 동일한 로직)
+    const personalCount = customers.filter(c => c.insurance_info?.customer_type !== '법인').length
+    const corporateCount = customers.filter(c => c.insurance_info?.customer_type === '법인').length
+
+    return {
+      totalCustomers,
+      personalCount,
+      corporateCount,
+      citiesCount,
+      districtsCount,
+      noAddressCount: noAddressCustomers.length
+    }
+  }, [regionalGroups, customers])
 
   // 트리 데이터 생성
   const treeData = useMemo((): TreeNodeData[] => {
@@ -346,7 +358,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         <div className="stat-item">
           <span className="stat-icon">👥</span>
           <span className="stat-label">전체 고객</span>
-          <span className="stat-value">{stats.totalCustomers}</span>
+          <span className="stat-value">{stats.totalCustomers}명 (개인 {stats.personalCount}, 법인 {stats.corporateCount})</span>
         </div>
         <span className="stat-divider">·</span>
         <div className="stat-item">
