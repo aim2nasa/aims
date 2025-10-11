@@ -293,44 +293,35 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
         </header>
 
         <div className="document-link-modal__content">
-        {/* Document Info */}
-        <section className="document-link-modal__section document-link-modal__section--document">
-          <div className="document-summary">
-            <SFSymbol
-              name="doc.text"
-              size={SFSymbolSize.BODY}
-              weight={SFSymbolWeight.REGULAR}
-              decorative={true}
-            />
-            <div className="document-summary__texts">
-              <span className="document-summary__label">연결할 문서</span>
-              <span className="document-summary__name">{documentName}</span>
+          {/* Document Info */}
+          <section className="document-link-modal__section document-link-modal__section--document">
+            <div className="document-chip">
+              <span className="document-chip__icon" aria-hidden="true">📄</span>
+              <span className="document-chip__name">{documentName}</span>
+              <span className="document-chip__status">
+                {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(document))}
+              </span>
             </div>
-          </div>
-          <div className="document-status-chip">
-            {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(document))}
-          </div>
-        </section>
+          </section>
 
-        {/* Search */}
-        <section className="document-link-modal__section">
-          <h3>고객 검색</h3>
-          <p className="document-link-modal__description">이름 또는 연락처를 입력하면 고객을 찾을 수 있습니다.</p>
-          <Input
-            placeholder="예: 김철수, 010-1234-5678"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            leftIcon={
-              <SFSymbol
-                name="magnifyingglass"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
-            }
-            fullWidth
-          />
-          {searchError && <p className="document-link-modal__error">{searchError}</p>}
+          {/* Search */}
+          <section className="document-link-modal__section">
+            <h3>고객 검색</h3>
+            <Input
+              placeholder="예: 김철수, 010-1234-5678"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              leftIcon={
+                <SFSymbol
+                  name="magnifyingglass"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              }
+              fullWidth
+            />
+            {searchError && <p className="document-link-modal__error">{searchError}</p>}
 
           {/* Search Feedback */}
           {searchTerm && (
