@@ -61,8 +61,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [customerDocumentsLoading, setCustomerDocumentsLoading] = useState(false)
-
   const documentId = useMemo(() => document?._id || (document as Record<string, string | undefined>)?.id || '', [document])
   const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
@@ -129,11 +127,28 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       onSearchCustomers(trimmed, currentPage, SEARCH_LIMIT)
         .then((response) => {
           if (isCancelled) return
-          setSearchResults(response.customers ?? [])
+          const customers = response.customers ?? []
+          const normalize = (value: string) =>
+            value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+          const keyword = normalize(trimmed)
+          const filtered = customers.filter((customer) => {
+            const name = customer.personal_info?.name
+            const phone =
+              customer.personal_info?.phone ??
+              customer.personal_info?.mobile_phone ??
+              customer.personal_info?.home_phone ??
+              customer.personal_info?.work_phone
+            return (
+              (name && normalize(name).includes(keyword)) ||
+              (phone && normalize(phone).includes(keyword))
+            )
+          })
+
+          setSearchResults(filtered)
           setPagination({
-            currentPage: response.pagination?.currentPage ?? 1,
-            totalPages: response.pagination?.totalPages ?? 1,
-            totalCount: response.pagination?.totalCount ?? response.customers.length ?? 0
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: filtered.length
           })
         })
         .catch((error) => {
@@ -175,7 +190,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     if (!documentId) return
 
     try {
-      setCustomerDocumentsLoading(true)
       const customerDocs = await onFetchCustomerDocuments(customer._id)
       const alreadyLinked = customerDocs.documents?.some((doc) => String(doc._id) === documentId)
 
@@ -184,9 +198,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       }
     } catch (error) {
       console.error('고객 문서 조회 오류:', error)
-      setDuplicateWarning('고객 문서를 확인하지 못했습니다. 진행 시 중복 여부를 다시 확인해주세요.')
-    } finally {
-      setCustomerDocumentsLoading(false)
+      setDuplicateWarning(null)
     }
   }
 
@@ -248,6 +260,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   }
 
   const isLinkDisabled = !selectedCustomerId || Boolean(duplicateWarning) || linkLoading
+  const totalResults = pagination?.totalCount ?? searchResults.length
 
   const modalBody = (
     <div
@@ -267,7 +280,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             />
             <div>
               <h2 id="document-link-modal-title">문서를 고객에게 연결</h2>
-              <p className="document-link-modal__subtitle">선택한 문서를 고객 프로필과 연결합니다</p>
             </div>
           </div>
           <button
@@ -320,12 +332,12 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           {searchError && <p className="document-link-modal__error">{searchError}</p>}
 
           {/* Search Feedback */}
-          {searchTerm && pagination && (
+          {searchTerm && (
             <div className="document-link-modal__search-feedback">
               <span>
-                검색 결과 <strong>{pagination.totalCount}</strong>명
+                검색 결과 <strong>{totalResults}</strong>명
               </span>
-              {pagination.totalCount > SEARCH_LIMIT && (
+              {totalResults > SEARCH_LIMIT && (
                 <span className="document-link-modal__hint">더 구체적인 검색어를 입력하면 정확도가 높아집니다.</span>
               )}
             </div>
@@ -343,26 +355,31 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                 {searchResults.map((customer) => {
                   const isSelected = selectedCustomerId === customer._id
                   const displayName = customer.personal_info?.name || '이름 없음'
-                  const phone = customer.personal_info?.mobile_phone || customer.personal_info?.home_phone || '연락처 없음'
-                  const customerType = customer.insurance_info?.customer_type || '유형 미입력'
+                  const phone =
+                    customer.personal_info?.phone ??
+                    customer.personal_info?.mobile_phone ??
+                    customer.personal_info?.home_phone ??
+                    customer.personal_info?.work_phone ??
+                    '연락처 없음'
+                  const customerType = customer.insurance_info?.customer_type || '유형 없음'
 
                   return (
-                    <li key={customer._id} className={isSelected ? 'customer-item customer-item--selected' : 'customer-item'}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectCustomer(customer)}
-                        aria-pressed={isSelected}
-                      >
-                        <div className="customer-item__primary">
-                          <span className="customer-item__name">{displayName}</span>
-                          {isSelected && <span className="customer-item__badge">선택됨</span>}
-                        </div>
-                        <div className="customer-item__meta">
-                          <span>{phone}</span>
-                          <span className="customer-item__divider">•</span>
-                          <span>{customerType}</span>
-                        </div>
-                      </button>
+                    <li
+                      key={customer._id}
+                      className={`customer-item ${isSelected ? 'customer-item--selected' : ''}`}
+                      onClick={() => handleSelectCustomer(customer)}
+                      aria-pressed={isSelected}
+                      role="option"
+                    >
+                      <div className="customer-item__header">
+                        <span className="customer-item__name">{displayName}</span>
+                        {isSelected && <span className="customer-item__tag">선택됨</span>}
+                      </div>
+                      <div className="customer-item__meta">
+                        <span>{phone}</span>
+                        <span className="customer-item__divider">•</span>
+                        <span>{customerType}</span>
+                      </div>
                     </li>
                   )
                 })}
@@ -433,12 +450,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                 선택 해제
               </Button>
             </div>
-            {customerDocumentsLoading && (
-              <p className="document-link-modal__hint">고객의 기존 문서를 확인하는 중입니다...</p>
-            )}
-            {duplicateWarning && (
-              <p className="document-link-modal__warning">{duplicateWarning}</p>
-            )}
           </section>
         )}
 
@@ -482,17 +493,23 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
         {/* Footer */}
         <footer className="document-link-modal__footer">
           <Tooltip content="모달을 닫습니다">
-            <Button variant="secondary" size="md" onClick={onClose}>
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={onClose}
+              className="document-link-modal__button document-link-modal__button--cancel"
+            >
               취소
             </Button>
           </Tooltip>
           <Tooltip content={duplicateWarning ? duplicateWarning : '선택한 고객과 문서를 연결합니다'}>
             <Button
-              variant="primary"
+              variant="secondary"
               size="md"
               onClick={handleLink}
               disabled={isLinkDisabled}
               loading={linkLoading}
+              className="document-link-modal__button document-link-modal__button--confirm"
             >
               연결하기
             </Button>

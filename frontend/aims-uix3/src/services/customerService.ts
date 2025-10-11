@@ -161,7 +161,7 @@ export class CustomerService {
     const validatedOptions = CustomerUtils.validateSearchQuery(options);
     const query: CustomerSearchQuery = {
       ...validatedOptions,
-      q: searchTerm.trim(),
+      search: searchTerm.trim(),
     };
 
     return CustomerService.getCustomers(query);
