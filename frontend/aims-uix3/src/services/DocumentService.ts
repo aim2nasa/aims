@@ -128,55 +128,69 @@ export class DocumentService {
         return { documents: [] };
       }
 
-      const data = isRecord(input.data) ? input.data : null;
-      const directDocuments = Array.isArray((input as { documents?: unknown }).documents)
-        ? (input as { documents?: unknown }).documents
-        : null;
-      const dataDocuments = data && Array.isArray((data as { documents?: unknown }).documents)
-        ? (data as { documents?: unknown }).documents
-        : null;
+      const dataRecord = isRecord(input['data']) ? (input['data'] as Record<string, unknown>) : undefined;
+      const dataDocs = dataRecord?.['documents'];
+      const rootDocs = input['documents'];
 
-      const documentsSource = dataDocuments ?? directDocuments ?? [];
+      const documentsSource = Array.isArray(dataDocs)
+        ? dataDocs
+        : Array.isArray(rootDocs)
+          ? rootDocs
+          : [];
+
       const documents = documentsSource.filter((doc): doc is Record<string, unknown> => isRecord(doc));
 
       const pagination =
-        (isRecord((data as { pagination?: unknown })?.pagination)
-          ? (data as { pagination?: Record<string, unknown> }).pagination
-          : isRecord((input as { pagination?: unknown }).pagination)
-            ? (input as { pagination?: Record<string, unknown> }).pagination
+        (dataRecord && isRecord(dataRecord['pagination'])
+          ? (dataRecord['pagination'] as Record<string, unknown>)
+          : isRecord(input['pagination'])
+            ? (input['pagination'] as Record<string, unknown>)
             : undefined);
 
-      return { documents, pagination };
+      if (pagination) {
+        return { documents, pagination };
+      }
+
+      return { documents };
     };
 
     const { documents: rawDocuments, pagination } = extractDocuments(response);
 
     const documents: Document[] = rawDocuments.map((doc) => {
+      const record = doc as Record<string, unknown>;
       const generatedId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const id = toString(doc._id) ?? toString(doc.id) ?? generatedId;
-      const filename = toString(doc.filename) ?? '이름 없는 문서';
-      const mimeType = toString(doc.mimeType);
-      const originalName = toString(doc.originalName) ?? filename;
-      const uploadTimeRaw = toString(doc.uploadTime) ?? toString(doc.uploaded_at) ?? new Date().toISOString();
-      const uploadDate = uploadTimeRaw.includes('xxx') ? uploadTimeRaw.replace('xxx', '000Z') : uploadTimeRaw;
-      const fileSize = toNumber(doc.fileSize);
 
-      const rawStatus = toString(doc.status);
+      const id =
+        toString(record['_id']) ??
+        toString(record['id']) ??
+        generatedId;
+
+      const filename = toString(record['filename']) ?? '이름 없는 문서';
+      const originalName = toString(record['originalName']) ?? filename;
+      const mimeType = toString(record['mimeType']);
+      const uploadTimeRaw =
+        toString(record['uploadTime']) ??
+        toString(record['uploaded_at']) ??
+        new Date().toISOString();
+      const uploadDate = uploadTimeRaw.includes('xxx')
+        ? uploadTimeRaw.replace('xxx', '000Z')
+        : uploadTimeRaw;
+      const fileSize = toNumber(record['fileSize']);
+
+      const rawStatus = toString(record['status']);
       const status: Document['status'] =
         rawStatus === 'archived' || rawStatus === 'deleted' ? rawStatus : 'active';
 
-      const rawOcrStatus = toString(doc.ocrStatus);
+      const rawOcrStatus = toString(record['ocrStatus']);
       const ocrStatus: Document['ocrStatus'] =
         rawOcrStatus === 'processing' || rawOcrStatus === 'completed' || rawOcrStatus === 'failed'
           ? rawOcrStatus
           : 'pending';
 
-      return {
+      const document: Document = {
         _id: id,
         filename,
         originalName,
-        mimeType,
-        size: fileSize,
         uploadDate,
         status,
         ocrStatus,
@@ -184,6 +198,16 @@ export class DocumentService {
         updatedAt: uploadDate,
         tags: []
       };
+
+      if (mimeType) {
+        document.mimeType = mimeType;
+      }
+
+      if (typeof fileSize === 'number') {
+        document.size = fileSize;
+      }
+
+      return document;
     });
 
     const total = toNumber(pagination?.totalCount) ?? documents.length;
@@ -311,44 +335,63 @@ export class DocumentService {
       if (!Array.isArray(value)) {
         return [];
       }
+
       return value
         .map((item): CustomerDocumentItem | null => {
           if (!isRecord(item)) {
             return null;
           }
-          const id = toString(item._id) ?? toString(item.id);
+
+          const id = toString(item['_id']) ?? toString(item['id']);
           if (!id) {
             return null;
           }
-          return {
-            _id: id,
-            originalName: toString(item.originalName) ?? toString(item.filename),
-            uploadedAt: toString(item.uploadedAt) ?? toString(item.linkedAt),
-            fileSize: toNumber(item.fileSize),
-            mimeType: toString(item.mimeType),
-            relationship: toString(item.relationship),
-            notes: toString(item.notes),
-            linkedAt: toString(item.linkedAt),
-            status: toString(item.status) ?? undefined,
-            progress: toNumber(item.progress),
+
+          const originalName = toString(item['originalName']) ?? toString(item['filename']);
+          const uploadedAt = toString(item['uploadedAt']) ?? toString(item['linkedAt']);
+          const fileSize = toNumber(item['fileSize']);
+          const mimeType = toString(item['mimeType']);
+          const relationship = toString(item['relationship']);
+          const notes = toString(item['notes']);
+          const linkedAt = toString(item['linkedAt']);
+          const status = toString(item['status']) ?? undefined;
+          const progress = toNumber(item['progress']);
+
+          const result: CustomerDocumentItem = {
+            _id: id
           };
+
+          if (originalName) result.originalName = originalName;
+          if (uploadedAt) result.uploadedAt = uploadedAt;
+          if (typeof fileSize === 'number') result.fileSize = fileSize;
+          if (mimeType) result.mimeType = mimeType;
+          if (relationship) result.relationship = relationship;
+          if (notes) result.notes = notes;
+          if (linkedAt) result.linkedAt = linkedAt;
+          if (status) result.status = status;
+          if (typeof progress === 'number') result.progress = progress;
+
+          return result;
         })
         .filter((item): item is CustomerDocumentItem => item !== null);
     };
 
     const responseRecord = isRecord(response) ? response : null;
-    const data = responseRecord && isRecord(responseRecord.data) ? responseRecord.data : null;
-    const topLevelDocuments = responseRecord ? (responseRecord as { documents?: unknown }).documents : undefined;
+    const dataRecord = responseRecord && isRecord(responseRecord['data'])
+      ? (responseRecord['data'] as Record<string, unknown>)
+      : undefined;
+    const topLevelDocuments = responseRecord ? responseRecord['documents'] : undefined;
     const documents = collectDocuments(
-      (data as { documents?: unknown })?.documents ?? topLevelDocuments
+      (dataRecord ? dataRecord['documents'] : undefined) ?? topLevelDocuments
     );
 
     const total =
-      toNumber((data as { total?: unknown })?.total ?? (responseRecord as { total?: unknown })?.total) ?? documents.length;
+      toNumber((dataRecord ? dataRecord['total'] : undefined) ?? (responseRecord ? responseRecord['total'] : undefined)) ??
+      documents.length;
 
     const derivedCustomerId =
-      toString((data as { customer_id?: unknown })?.customer_id) ??
-      toString((responseRecord as { customer_id?: unknown })?.customer_id) ??
+      toString(dataRecord ? dataRecord['customer_id'] : undefined) ??
+      toString(responseRecord ? responseRecord['customer_id'] : undefined) ??
       customerId;
 
     return {

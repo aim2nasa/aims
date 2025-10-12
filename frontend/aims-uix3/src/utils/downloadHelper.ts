@@ -32,27 +32,29 @@ class DownloadHelper {
     const { showMessage = true } = options;
 
     try {
-      // 파일 경로와 원본 이름 추출
       const destPath = doc.upload?.destPath || doc.payload?.dest_path;
-      const originalName = doc.upload?.originalName || doc.payload?.original_name;
+      const originalName =
+        doc.upload?.originalName ||
+        doc.payload?.original_name ||
+        `download-${doc._id}`;
 
-      if (!destPath) {
-        throw new Error('파일 경로를 찾을 수 없습니다.');
-      }
+      const resolvedUrl = (() => {
+        if (doc.fileUrl) {
+          return doc.fileUrl;
+        }
 
-      if (!originalName) {
-        throw new Error('파일명을 찾을 수 없습니다.');
-      }
+        if (destPath) {
+          const normalizedPath = destPath.startsWith('/data')
+            ? destPath.replace('/data', '')
+            : destPath;
+          return `https://tars.giize.com${normalizedPath}`;
+        }
 
-      // 서버 경로 정규화
-      const normalizedPath = destPath.startsWith('/data')
-        ? destPath.replace('/data', '')
-        : destPath;
-
-      const fileUrl = `https://tars.giize.com${normalizedPath}`;
+        throw new Error('다운로드할 파일 경로를 찾을 수 없습니다.');
+      })();
 
       // 파일 다운로드 실행
-      const response = await fetch(fileUrl);
+      const response = await fetch(resolvedUrl);
 
       if (!response.ok) {
         throw new Error(`파일 다운로드 실패: ${response.status} ${response.statusText}`);
