@@ -1,3 +1,5 @@
+
+import { CustomerService } from '@/services/customerService';
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { useGaps } from './hooks/useGaps'
 import { useDynamicType, initializeDynamicType } from './hooks/useDynamicType'
@@ -130,16 +132,16 @@ const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocumentRespo
 
   const record = value as Record<string, unknown>
 
-  const upload = isPlainObject(record['upload']) ? record['upload'] as SmartSearchUploadRaw : undefined
-  const payload = isPlainObject(record['payload']) ? record['payload'] as SmartSearchPayloadRaw : undefined
-  const meta = isPlainObject(record['meta']) ? record['meta'] as SmartSearchMetaRaw : undefined
+  const upload: SmartSearchUploadRaw = isPlainObject(record['upload']) ? (record['upload'] as SmartSearchUploadRaw) : ({} as SmartSearchUploadRaw)
+  const payload: SmartSearchPayloadRaw = isPlainObject(record['payload']) ? (record['payload'] as SmartSearchPayloadRaw) : ({} as SmartSearchPayloadRaw)
+  const meta: SmartSearchMetaRaw = isPlainObject(record['meta']) ? (record['meta'] as SmartSearchMetaRaw) : ({} as SmartSearchMetaRaw)
 
-  return ({ ...(upload && { upload }), ...(payload && { payload }), ...(meta && { meta }) } as SmartSearchDocumentResponse)
+  return { upload, payload, meta }
 }
 
 const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentResponse): SelectedDocument => {
   const originalName =
-    firstNonEmptyString(raw.upload?.originalName, raw.payload?.original_name) ??
+    firstNonEmptyString(raw.upload?.['originalName'], raw.payload?.['originalName']) ??
     '문서'
 
   const destPath = normalizeDestPath(
@@ -154,7 +156,7 @@ const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentRespo
   const metaSize = toFiniteNumber(raw.meta?.size_bytes) ?? toFiniteNumber(raw.payload?.size_bytes)
 
   const payload: SelectedDocumentPayload = {}
-  const payloadOriginalName = toTrimmedString(raw.payload?.original_name)
+  const payloadOriginalName = toTrimmedString(raw.payload?.['originalName'])
   if (payloadOriginalName) payload.originalName = payloadOriginalName
 
   const payloadDestPath = normalizeDestPath(toOptionalString(raw.payload?.dest_path))
@@ -206,15 +208,21 @@ const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentRespo
   return selected
 }
 
-const adaptToDownloadHelper = (doc: SelectedDocument) => ({
-  _id: doc._id,
-  fileUrl: doc.fileUrl ?? '',
-  upload: {
-    originalName: doc.upload.originalName,
-    destPath: (doc.upload.destPath ?? '')
-  },
-  payload: (() => { const out: { original_name?: string; dest_path?: string } = {}; if (doc.payload?.originalName) out.original_name = doc.payload.originalName; if (doc.payload?.destPath) out.dest_path = doc.payload.destPath; return out; })()
-})
+const adaptToDownloadHelper = (doc: SelectedDocument) => {
+  const payload: { original_name?: string; dest_path?: string } = {};
+  if (doc.payload?.['originalName']) payload.original_name = doc.payload['originalName'];
+  if (doc.payload?.['destPath']) payload.dest_path = doc.payload['destPath'];
+
+  return {
+    _id: doc._id,
+    fileUrl: doc.fileUrl ?? '',
+    upload: {
+      originalName: doc.upload?.['originalName'] ?? '',
+      destPath: doc.upload?.['destPath'] ?? ''
+    },
+    payload
+  };
+}
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -559,9 +567,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     if (customerData) {
       setSelectedCustomer(customerData)
     } else {
-      const { CustomerService } = await import('@/services/customerService')
-      const fetchedCustomer = await CustomerService.getCustomer(customerId)
-      setSelectedCustomer(fetchedCustomer)
+      const customer = await CustomerService.getCustomer(customerId)
+      setSelectedCustomer(customer)
     }
     setRightPaneContentType('customer')
 
@@ -575,9 +582,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     try {
       // CustomerService를 동적으로 import
-      const { CustomerService } = await import('@/services/customerService')
-      const updatedCustomer = await CustomerService.getCustomer(selectedCustomer._id)
-      setSelectedCustomer(updatedCustomer)
+      const customer = await CustomerService.getCustomer(selectedCustomer._id)
+      setSelectedCustomer(customer)
       console.log('[App] 고객 상세정보 새로고침 완료')
 
       // 고객 전체보기도 새로고침
@@ -1096,7 +1102,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               >
                 {(() => {
                   const download = () => {
-                    DownloadHelper.downloadDocument(adaptToDownloadHelper(selectedDocument))
+                    DownloadHelper.downloadDocument(adaptToDownloadHelper({ ...selectedDocument, fileUrl: selectedDocument.fileUrl ?? '' } as typeof selectedDocument & { fileUrl: string }))
                   }
 
                   const fileUrl = selectedDocument.fileUrl
