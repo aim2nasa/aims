@@ -228,7 +228,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
       const entry = withEntry.webkitGetAsEntry ? withEntry.webkitGetAsEntry() : null
 
       if (entry) {
-        const extracted = await getAllFilesFromEntry(entry)
+        const extracted = await getAllFilesFromEntry(entry as FileSystemEntryLike)
         files.push(...extracted)
         continue
       }

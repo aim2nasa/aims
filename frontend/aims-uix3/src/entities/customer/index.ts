@@ -10,6 +10,7 @@ export {
   CreateCustomerSchema,
   UpdateCustomerSchema,
   CustomerSearchQuerySchema,
+  CustomerSearchPaginationSchema,
   CustomerSearchResponseSchema,
   CustomerUtils,
   CustomerTypeUtils,
@@ -20,6 +21,7 @@ export type {
   CreateCustomerData,
   UpdateCustomerData,
   CustomerSearchQuery,
+  CustomerSearchPagination,
   CustomerSearchResponse,
 } from './model';
 

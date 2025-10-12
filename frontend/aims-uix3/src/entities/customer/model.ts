@@ -79,6 +79,10 @@ export const CustomerSchema = z.object({
   documents: z.array(z.any()).default([]),
   consultations: z.array(z.any()).default([]),
   meta: MetaSchema,
+  tags: z.array(z.string()).default([]),
+  segments: z.array(z.string()).optional(),
+  labels: z.array(z.string()).optional(),
+  search_metadata: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -116,20 +120,46 @@ export const CustomerSearchQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   hasDocuments: z.boolean().optional(),
+  tags: z.array(z.string()).optional(),
 });
+
+/**
+ * 고객 검색 페이지네이션 스키마
+ */
+export const CustomerSearchPaginationSchema = z.object({
+  currentPage: z.number().optional(),
+  page: z.number().optional(),
+  totalPages: z.number().optional(),
+  totalPage: z.number().optional(),
+  totalCount: z.number().optional(),
+  total: z.number().optional(),
+  count: z.number().optional(),
+  limit: z.number().optional(),
+  pageSize: z.number().optional(),
+  hasMore: z.boolean().optional(),
+  hasNext: z.boolean().optional(),
+  has_next: z.boolean().optional(),
+}).passthrough();
 
 /**
  * 고객 검색 응답 스키마
  */
 export const CustomerSearchResponseSchema = z.object({
   customers: z.array(CustomerSchema),
-  pagination: z.object({
-    currentPage: z.number(),
-    totalPages: z.number(),
-    totalCount: z.number(),
-    limit: z.number(),
-  }),
-});
+  pagination: CustomerSearchPaginationSchema.optional(),
+  tags: z.array(z.string()).optional(),
+  availableTags: z.array(z.string()).optional(),
+  filters: z.object({
+    tags: z.array(z.string()).optional(),
+    regions: z.array(z.string()).optional(),
+    statuses: z.array(z.string()).optional(),
+  }).partial().optional(),
+  metadata: z.object({
+    availableTags: z.array(z.string()).optional(),
+    totalTags: z.number().optional(),
+    totalRegions: z.number().optional(),
+  }).partial().optional(),
+}).passthrough();
 
 /**
  * TypeScript 타입 추출
@@ -143,6 +173,7 @@ export type Customer = z.infer<typeof CustomerSchema>;
 export type CreateCustomerData = z.infer<typeof CreateCustomerSchema>;
 export type UpdateCustomerData = z.infer<typeof UpdateCustomerSchema>;
 export type CustomerSearchQuery = z.infer<typeof CustomerSearchQuerySchema>;
+export type CustomerSearchPagination = z.infer<typeof CustomerSearchPaginationSchema>;
 export type CustomerSearchResponse = z.infer<typeof CustomerSearchResponseSchema>;
 
 /**

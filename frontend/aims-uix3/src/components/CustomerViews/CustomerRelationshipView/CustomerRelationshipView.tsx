@@ -42,7 +42,12 @@ interface FamilyGroup {
 
 interface StructuredData {
   가족그룹: Record<string, FamilyGroup>;
-  법인: Record<string, string[]>;
+  법인: Record<string, CorporateGroup>;
+}
+
+interface CorporateGroup {
+  company: Customer;
+  employees: Customer[];
 }
 
 interface PopulatedRelationship extends Omit<Relationship, 'from_customer' | 'related_customer' | 'family_representative'> {
@@ -71,6 +76,33 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
 
+  const documentCustomerMap = useMemo(() => {
+    const map = new Map<string, Customer>();
+    allCustomers.forEach(customer => {
+      if (customer?._id) {
+        map.set(customer._id, customer);
+      }
+    });
+    return map;
+  }, [allCustomers]);
+
+  const resolvedCustomerMap = useMemo(() => {
+    const map = new Map<string, Customer>(documentCustomerMap);
+    relationships.forEach(relationship => {
+      const { from_customer, related_customer, family_representative } = relationship;
+      if (from_customer?._id) {
+        map.set(from_customer._id, from_customer);
+      }
+      if (related_customer?._id) {
+        map.set(related_customer._id, related_customer);
+      }
+      if (family_representative?._id) {
+        map.set(family_representative._id, family_representative);
+      }
+    });
+    return map;
+  }, [documentCustomerMap, relationships]);
+
   // 초기 데이터 로드
   useEffect(() => {
     console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
@@ -81,10 +113,28 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     try {
       setRelationshipsLoading(true);
       const data = await RelationshipService.getAllRelationshipsWithCustomers();
-      const customerMap = new Map(data.customers.map(customer => [customer._id, customer] as const));
 
-      const resolveCustomer = (value: string | Customer | undefined): Customer | undefined =>
-        typeof value === 'string' ? customerMap.get(value) : value;
+      const combinedCustomerMap = new Map(documentCustomerMap);
+      data.customers.forEach(customer => {
+        if (customer?._id) {
+          combinedCustomerMap.set(customer._id, customer);
+        }
+      });
+
+      const resolveCustomer = (value: string | Customer | undefined): Customer | undefined => {
+        if (!value) {
+          return undefined;
+        }
+
+        if (typeof value === 'string') {
+          return combinedCustomerMap.get(value);
+        }
+
+        if (value._id) {
+          combinedCustomerMap.set(value._id, value);
+        }
+        return value;
+      };
 
       const populated = data.relationships
         .map<PopulatedRelationship | null>((relationship) => {
@@ -119,7 +169,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     } finally {
       setRelationshipsLoading(false);
     }
-  }, []);
+  }, [documentCustomerMap]);
 
   // 관계 데이터 로드 (고객 데이터 로드 후)
   useEffect(() => {
@@ -144,11 +194,15 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   }, [refresh, loadRelationshipsData]);
 
   const loading = customersLoading || relationshipsLoading;
-  const customers = allCustomers;
-
   // 데이터 구조화
   const structuredData = useMemo((): StructuredData => {
-    if (!customers.length || !relationships.length) {
+    if (!relationships.length && documentCustomerMap.size === 0) {
+      return { 가족그룹: {}, 법인: {} };
+    }
+
+    const mergedCustomerMap = new Map(resolvedCustomerMap);
+
+    if (mergedCustomerMap.size === 0) {
       return { 가족그룹: {}, 법인: {} };
     }
 
@@ -157,19 +211,15 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       법인: {}
     };
 
-    const getCustomerId = (customer?: Customer): string | undefined => customer?._id;
-
-    // 가족 관계 네트워크 구축
     const familyNetworks = new Map<string, Set<string>>();
     const processed = new Set<string>();
 
-    // 1단계: 가족 관계 매핑 구축
     relationships.forEach(relationship => {
       const category = relationship.relationship_info?.relationship_category;
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
-      const fromId = getCustomerId(fromCustomer);
-      const toId = getCustomerId(toCustomer);
+      const fromId = fromCustomer?._id;
+      const toId = toCustomer?._id;
 
       if (!fromId || !toId) {
         return;
@@ -178,7 +228,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       if (category === 'family' &&
           fromCustomer?.insurance_info?.customer_type === '개인' &&
           toCustomer?.insurance_info?.customer_type === '개인') {
-
         if (!familyNetworks.has(fromId)) {
           familyNetworks.set(fromId, new Set());
         }
@@ -191,139 +240,151 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       }
     });
 
-    // 2단계: 가족 그룹별로 구성원 수집
     familyNetworks.forEach((_, customerId) => {
-      if (processed.has(customerId)) return;
+      if (processed.has(customerId)) {
+        return;
+      }
 
-      const familyGroup = new Set<string>();
+      const familyGroupIds = new Set<string>();
       const stack = [customerId];
 
       while (stack.length > 0) {
         const currentId = stack.pop()!;
-        if (familyGroup.has(currentId)) continue;
+        if (familyGroupIds.has(currentId)) {
+          continue;
+        }
 
-        familyGroup.add(currentId);
+        familyGroupIds.add(currentId);
         processed.add(currentId);
 
-        const currentConnections = familyNetworks.get(currentId);
-        if (currentConnections) {
-          currentConnections.forEach(connectedId => {
-            if (!familyGroup.has(connectedId)) {
-              stack.push(connectedId);
+        const connections = familyNetworks.get(currentId);
+        if (connections) {
+          connections.forEach(nextId => {
+            if (!familyGroupIds.has(nextId)) {
+              stack.push(nextId);
             }
           });
         }
       }
 
-      const familyMembers = Array.from(familyGroup)
-        .map(id => customers.find(c => c._id === id))
-        .filter((c): c is Customer => c !== undefined);
+      const familyMembers = Array.from(familyGroupIds)
+        .map(id => mergedCustomerMap.get(id))
+        .filter((member): member is Customer => Boolean(member));
 
-      if (familyMembers.length < 2) return;
+      if (familyMembers.length < 2) {
+        return;
+      }
 
-      // 대표자 선정
       const groupRelationships = relationships.filter(rel => {
-        const fromId = rel.from_customer?._id || rel.from_customer;
-        const toId = rel.related_customer?._id || rel.related_customer;
-        return familyGroup.has(fromId) && familyGroup.has(toId);
+        const fromId = rel.from_customer?._id;
+        const toId = rel.related_customer?._id;
+        return !!fromId && !!toId && familyGroupIds.has(fromId) && familyGroupIds.has(toId);
       });
 
       let representative = familyMembers[0];
+      const relationshipWithRep = groupRelationships.find(rel => {
+        const rep = rel.family_representative;
+        const repId = typeof rep === 'object' ? rep?._id : undefined;
+        return repId ? familyGroupIds.has(repId) : false;
+      });
 
-      if (groupRelationships.length > 0) {
-        const relationshipWithRep = groupRelationships.find(rel => rel.family_representative);
-        if (relationshipWithRep) {
-          const repId = getCustomerId(relationshipWithRep.family_representative);
-          representative = familyMembers.find(member => member._id === repId) || representative;
+      if (relationshipWithRep?.family_representative?._id) {
+        const matched = mergedCustomerMap.get(relationshipWithRep.family_representative._id);
+        if (matched) {
+          representative = matched;
         }
       }
 
-      const repName = representative.personal_info?.name || '이름없음';
-
-      // 관계 수집
-      const familyRelations: FamilyGroup['relations'] = [];
       const typeLabels: Record<string, string> = {
         spouse: '배우자',
         parent: '부모',
-        child: '자녀'
+        child: '자녀',
+        sibling: '형제자매',
+        grandparent: '조부모',
+        grandchild: '손자녀'
       };
 
-      relationships.forEach(relationship => {
-        const category = relationship.relationship_info?.relationship_category;
-        const relationshipType = relationship.relationship_info?.relationship_type;
-        const fromCustomer = relationship.from_customer;
-        const toCustomer = relationship.related_customer;
-        const fromId = getCustomerId(fromCustomer);
-        const toId = getCustomerId(toCustomer);
-
-        if (!fromId || !toId) {
+      const familyRelations: FamilyGroup['relations'] = [];
+      groupRelationships.forEach(rel => {
+        if (rel.relationship_info?.relationship_category !== 'family') {
           return;
         }
 
-        if (category === 'family' &&
-            familyGroup.has(fromId) && familyGroup.has(toId) &&
-            fromCustomer?.insurance_info?.customer_type === '개인' &&
-            toCustomer?.insurance_info?.customer_type === '개인') {
+        const fromCustomer = rel.from_customer?._id
+          ? mergedCustomerMap.get(rel.from_customer._id)
+          : undefined;
+        const toCustomer = rel.related_customer?._id
+          ? mergedCustomerMap.get(rel.related_customer._id)
+          : undefined;
 
-          const relationLabel = typeLabels[relationshipType] || relationshipType;
-          const fromName = fromCustomer.personal_info?.name || '이름없음';
-          const toName = toCustomer.personal_info?.name || '이름없음';
-
-          const relationKey = `${fromName}-${toName}-${relationLabel}`;
-          if (!familyRelations.some(r => r.key === relationKey)) {
-            familyRelations.push({
-              key: relationKey,
-              fromName,
-              toName,
-              relationLabel,
-              fromCustomer,
-              toCustomer
-            });
-          }
+        if (!fromCustomer || !toCustomer) {
+          return;
         }
+
+        const relationType = rel.relationship_info?.relationship_type || 'relation';
+        const relationKey = `${fromCustomer._id}-${toCustomer._id}-${relationType}`;
+
+        if (familyRelations.some(relation => relation.key === relationKey)) {
+          return;
+        }
+
+        const relationLabel = typeLabels[relationType] || relationType;
+
+        familyRelations.push({
+          key: relationKey,
+          fromName: fromCustomer.personal_info?.name || '이름없음',
+          toName: toCustomer.personal_info?.name || '이름없음',
+          relationLabel,
+          fromCustomer,
+          toCustomer
+        });
       });
 
-      result.가족그룹[repName] = {
+      result.가족그룹[representative._id] = {
         representative,
         members: familyMembers,
         relations: familyRelations
       };
     });
 
-    // 법인 관계 처리
     relationships.forEach(relationship => {
       const category = relationship.relationship_info?.relationship_category;
+      if (category !== 'professional' && category !== 'corporate') {
+        return;
+      }
+
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
 
-      if (category === 'professional' || category === 'corporate') {
-        let companyName: string | undefined;
-        let employeeName: string | undefined;
+      let company: Customer | undefined;
+      let employee: Customer | undefined;
 
-        if (fromCustomer?.insurance_info?.customer_type === '법인' &&
-            toCustomer?.insurance_info?.customer_type === '개인') {
-          companyName = fromCustomer.personal_info?.name || '회사명없음';
-          employeeName = toCustomer.personal_info?.name || '직원명없음';
-        } else if (fromCustomer?.insurance_info?.customer_type === '개인' &&
-                   toCustomer?.insurance_info?.customer_type === '법인') {
-          companyName = toCustomer.personal_info?.name || '회사명없음';
-          employeeName = fromCustomer.personal_info?.name || '직원명없음';
-        }
+      if (fromCustomer?.insurance_info?.customer_type === '법인' &&
+          toCustomer?.insurance_info?.customer_type !== '법인') {
+        company = mergedCustomerMap.get(fromCustomer._id);
+        employee = toCustomer?._id ? mergedCustomerMap.get(toCustomer._id) : undefined;
+      } else if (toCustomer?.insurance_info?.customer_type === '법인' &&
+                 fromCustomer?.insurance_info?.customer_type !== '법인') {
+        company = mergedCustomerMap.get(toCustomer._id);
+        employee = fromCustomer?._id ? mergedCustomerMap.get(fromCustomer._id) : undefined;
+      }
 
-        if (companyName && employeeName) {
-          if (!result.법인[companyName]) {
-            result.법인[companyName] = [];
-          }
+      if (!company || !employee) {
+        return;
+      }
 
-          if (!result.법인[companyName].includes(employeeName)) {
-            result.법인[companyName].push(employeeName);
-          }
-        }
+      const companyKey = company._id;
+      const corporateGroup =
+        result.법인[companyKey] ??
+        (result.법인[companyKey] = { company, employees: [] });
+
+      if (!corporateGroup.employees.some(e => e._id === employee._id)) {
+        corporateGroup.employees.push(employee);
       }
     });
 
     return result;
-  }, [customers, relationships]);
+  }, [documentCustomerMap, relationships]);
 
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {
@@ -339,11 +400,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const customer = customers.find(c => c._id === customerId);
+    const customer = resolvedCustomerMap.get(customerId);
     if (customer) {
       onCustomerSelect?.(customerId, customer);
     }
-  }, [customers, onCustomerSelect]);
+  }, [resolvedCustomerMap, onCustomerSelect]);
 
   if (loading) {
     return (
@@ -366,9 +427,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     );
   }
 
-  const familyGroups = Object.entries(structuredData.가족그룹);
+  const familyEntries = Object.entries(structuredData.가족그룹);
   const corporateEntries = Object.entries(structuredData.법인);
-  const hasNoData = familyGroups.length === 0 && corporateEntries.length === 0;
+  const hasNoData = familyEntries.length === 0 && corporateEntries.length === 0;
 
   return (
     <CenterPaneView
@@ -397,7 +458,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             <div className="relationship-title">고객 관계 현황</div>
             <RefreshButton
               onClick={async () => {
-                await refresh({ limit: 10000, offset: 0 });
+                await refresh({ limit: 10000 });
                 await loadRelationshipsData();
               }}
               loading={loading}
@@ -406,7 +467,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             />
           </div>
           {/* 가족 관계 섹션 */}
-          {familyGroups.length > 0 && (
+          {familyEntries.length > 0 && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -417,39 +478,48 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 </span>
                 <div className="tree-node__content">
                   <span className="tree-node__label tree-node__label--family">가족</span>
-                  <span className="tree-node__badge">{familyGroups.length}</span>
+                  <span className="tree-node__badge">{familyEntries.length}</span>
                 </div>
               </div>
 
               {expandedNodes.has('family') && (
                 <div className="tree-children">
-                  {familyGroups
-                    .sort(([a], [b]) => a.localeCompare(b, 'ko'))
-                    .map(([repName, groupData]) => (
-                      <div key={`family-${repName}`} className="tree-group">
+                  {familyEntries
+                    .sort(([, a], [, b]) => {
+                      const nameA = a.representative.personal_info?.name || '';
+                      const nameB = b.representative.personal_info?.name || '';
+                      return nameA.localeCompare(nameB, 'ko');
+                    })
+                    .map(([groupId, groupData]) => {
+                      const representativeName = groupData.representative.personal_info?.name || '이름없음';
+                      const groupKey = `family-${groupId}`;
+                      const relationKey = `${groupKey}-relations`;
+
+                      return (
+                        <div key={groupKey} className="tree-group">
                         <div
                           className="tree-node tree-node--group"
-                          onClick={() => toggleNode(`family-${repName}`)}
+                          onClick={() => toggleNode(groupKey)}
                         >
-                          <span className={`tree-node__icon ${expandedNodes.has(`family-${repName}`) ? 'expanded' : ''}`}>
-                            {expandedNodes.has(`family-${repName}`) ? '📂' : '📁'}
+                          <span className={`tree-node__icon ${expandedNodes.has(groupKey) ? 'expanded' : ''}`}>
+                            {expandedNodes.has(groupKey) ? '📂' : '📁'}
                           </span>
                           <div className="tree-node__content">
                             <span
                               className="tree-node__label tree-node__label--clickable"
                               onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
                             >
-                              👑 {repName} (대표)
+                              👑 {representativeName} (대표)
                             </span>
                             {groupData.relations.length > 0 && (
                               <span
                                 className="tree-node__relation-toggle"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  toggleNode(`family-${repName}-relations`);
+                                  toggleNode(relationKey);
                                 }}
                               >
-                                {expandedNodes.has(`family-${repName}-relations`) ? '🔗' : '🔗'}
+                                {expandedNodes.has(relationKey) ? '🔗' : '🔗'}
                               </span>
                             )}
                             <span className="tree-node__badge tree-node__badge--success">
@@ -458,7 +528,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                           </div>
                         </div>
 
-                        {expandedNodes.has(`family-${repName}`) && (
+                        {expandedNodes.has(groupKey) && (
                           <div className="tree-children">
                             {/* 가족 구성원 */}
                             {groupData.members
@@ -483,7 +553,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               ))}
 
                             {/* 관계 정보 - 🔗 클릭 시에만 표시 */}
-                            {expandedNodes.has(`family-${repName}-relations`) && groupData.relations.length > 0 && (
+                            {expandedNodes.has(relationKey) && groupData.relations.length > 0 && (
                               <div className="relation-list">
                                 {groupData.relations.map((relation) => {
                                   // A → B: A의 입장에서 B는 어떤 관계인지 표시
@@ -521,7 +591,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })
                 </div>
               )}
             </div>
@@ -546,60 +617,61 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
               {expandedNodes.has('corporate') && (
                 <div className="tree-children">
                   {corporateEntries
-                    .sort(([a], [b]) => a.localeCompare(b, 'ko'))
-                    .map(([companyName, employees]) => {
-                      const company = customers.find(c => c.personal_info?.name === companyName);
+                    .sort(([, a], [, b]) => {
+                      const nameA = a.company.personal_info?.name || '';
+                      const nameB = b.company.personal_info?.name || '';
+                      return nameA.localeCompare(nameB, 'ko');
+                    })
+                    .map(([companyId, groupData]) => {
+                      const companyName = groupData.company.personal_info?.name || '회사명없음';
+                      const companyKey = `corporate-${companyId}`;
 
                       return (
-                        <div key={`corporate-${companyName}`} className="tree-group">
+                        <div key={companyKey} className="tree-group">
                           <div
                             className="tree-node tree-node--group"
-                            onClick={() => toggleNode(`corporate-${companyName}`)}
+                            onClick={() => toggleNode(companyKey)}
                           >
-                            <span className={`tree-node__icon ${expandedNodes.has(`corporate-${companyName}`) ? 'expanded' : ''}`}>
-                              {expandedNodes.has(`corporate-${companyName}`) ? '📂' : '📁'}
+                            <span className={`tree-node__icon ${expandedNodes.has(companyKey) ? 'expanded' : ''}`}>
+                              {expandedNodes.has(companyKey) ? '📂' : '📁'}
                             </span>
                             <div className="tree-node__content">
                               <span
                                 className="tree-node__label tree-node__label--clickable"
-                                onClick={(e) => company && handleCustomerClick(company._id, e)}
+                                onClick={(e) => handleCustomerClick(groupData.company._id, e)}
                               >
                                 {companyName}
                               </span>
-                              <span className="tree-node__badge">{employees.length}</span>
+                              <span className="tree-node__badge">{groupData.employees.length}</span>
                             </div>
                           </div>
 
-                          {expandedNodes.has(`corporate-${companyName}`) && (
+                          {expandedNodes.has(companyKey) && (
                             <div className="tree-children">
-                              {employees
-                                .sort((a, b) => a.localeCompare(b, 'ko'))
-                                .map((employeeName) => {
-                                  const employee = customers.find(c => c.personal_info?.name === employeeName);
-
-                                  return (
-                                    <div key={`${companyName}-${employeeName}`} className="tree-node tree-node--leaf">
-                                      <span className="tree-node__icon">
-                                        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
-                                          <circle cx="10" cy="10" r="10" opacity="0.2" />
-                                          <circle cx="10" cy="7" r="3" />
-                                          <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                                        </svg>
-                                      </span>
-                                      <span
-                                        className="tree-node__label tree-node__label--clickable"
-                                        onClick={(e) => employee && handleCustomerClick(employee._id, e)}
-                                      >
-                                        {employeeName}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
+                              {groupData.employees
+                                .sort((a, b) => (a.personal_info?.name || '').localeCompare(b.personal_info?.name || '', 'ko'))
+                                .map((employee) => (
+                                  <div key={`${companyId}-${employee._id}`} className="tree-node tree-node--leaf">
+                                    <span className="tree-node__icon">
+                                      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal">
+                                        <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                        <circle cx="10" cy="7" r="3" />
+                                        <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                      </svg>
+                                    </span>
+                                    <span
+                                      className="tree-node__label tree-node__label--clickable"
+                                      onClick={(e) => handleCustomerClick(employee._id, e)}
+                                    >
+                                      {employee.personal_info?.name || '이름없음'}
+                                    </span>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
                       );
-                    })}
+                    })
                 </div>
               )}
             </div>

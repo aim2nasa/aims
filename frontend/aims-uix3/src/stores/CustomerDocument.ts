@@ -14,8 +14,92 @@ import type {
   Customer,
   CreateCustomerData,
   UpdateCustomerData,
-  CustomerSearchQuery
+  CustomerSearchQuery,
+  CustomerSearchPagination
 } from '@/entities/customer';
+
+const toFiniteNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const toMaybeBoolean = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  return undefined;
+};
+
+const normalizeCustomerPagination = (
+  pagination: CustomerSearchPagination | undefined,
+  customersLength: number,
+  queryLimit?: number
+) => {
+  const fallbackLimit =
+    typeof queryLimit === 'number' && Number.isFinite(queryLimit) && queryLimit > 0
+      ? queryLimit
+      : customersLength > 0
+        ? customersLength
+        : 1;
+
+  const limit =
+    toFiniteNumber(pagination?.limit) ??
+    toFiniteNumber(pagination?.pageSize) ??
+    fallbackLimit;
+
+  const safeLimit = limit > 0 ? limit : fallbackLimit;
+
+  const currentPage =
+    toFiniteNumber(pagination?.currentPage) ??
+    toFiniteNumber(pagination?.page) ??
+    1;
+
+  const totalCount =
+    toFiniteNumber(pagination?.totalCount) ??
+    toFiniteNumber(pagination?.total) ??
+    toFiniteNumber(pagination?.count) ??
+    customersLength;
+
+  const totalPagesExplicit =
+    toFiniteNumber(pagination?.totalPages) ??
+    toFiniteNumber(pagination?.totalPage);
+
+  const totalPages =
+    totalPagesExplicit && totalPagesExplicit > 0
+      ? totalPagesExplicit
+      : Math.max(1, Math.ceil(totalCount / Math.max(safeLimit, 1)));
+
+  const hasMore =
+    toMaybeBoolean(pagination?.hasMore) ??
+    toMaybeBoolean(pagination?.hasNext) ??
+    toMaybeBoolean(pagination?.has_next) ??
+    currentPage < totalPages;
+
+  return {
+    limit: safeLimit,
+    currentPage,
+    totalCount,
+    totalPages,
+    hasMore
+  };
+};
 
 /**
  * Observer 콜백 타입
@@ -156,11 +240,15 @@ export class CustomerDocument {
       console.log('[CustomerDocument] 고객 목록 로드 시작:', query);
       const response = await CustomerService.getCustomers(query);
 
-      this.customers = response.customers;
+      this.customers = Array.isArray(response.customers) ? response.customers : [];
 
-      const pagination = response.pagination;
-      this.total = pagination?.totalCount ?? this.customers.length;
-      this.hasMore = pagination ? pagination.currentPage < pagination.totalPages : false;
+      const { totalCount, hasMore } = normalizeCustomerPagination(
+        response.pagination,
+        this.customers.length,
+        query?.limit
+      );
+      this.total = totalCount;
+      this.hasMore = hasMore;
 
       console.log('[CustomerDocument] 고객 목록 로드 완료:', {
         count: this.customers.length,

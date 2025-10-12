@@ -13,7 +13,7 @@ import { DocumentStatusService } from '../../../../services/DocumentStatusServic
 import type { Document } from '../../../../types/documentStatus'
 import './DocumentStatusList.css'
 
-interface DocumentStatusListProps {
+export interface DocumentStatusListProps {
   documents: Document[]
   isLoading: boolean
   isEmpty: boolean
@@ -75,7 +75,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // 리스트 렌더링
   return (
     <div className="document-status-list">
-      {documents.map((document) => {
+      {documents.map((document, index) => {
         const status = DocumentStatusService.extractStatus(document)
         const progress = DocumentStatusService.extractProgress(document)
         const statusLabel = DocumentStatusService.getStatusLabel(status)
@@ -84,17 +84,26 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         const canLink = status === 'completed' && !isLinked
         const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 
+        const documentId = document._id ?? document.id ?? null
+        const key = documentId ?? `${DocumentStatusService.extractFilename(document)}-${index}`
+
         return (
           <div
-            key={document._id}
+            key={key}
             className="status-item"
-            onClick={() => onDocumentClick?.(document._id)}
+            onClick={() => {
+              if (documentId && onDocumentClick) {
+                onDocumentClick(documentId)
+              }
+            }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                onDocumentClick?.(document._id)
+                if (documentId && onDocumentClick) {
+                  onDocumentClick(documentId)
+                }
               }
             }}
           >

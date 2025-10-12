@@ -28,43 +28,198 @@ const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 import DownloadHelper from './utils/downloadHelper'
 
+interface SmartSearchUploadRaw {
+  originalName?: unknown
+  destPath?: unknown
+  uploaded_at?: unknown
+  [key: string]: unknown
+}
+
+interface SmartSearchPayloadRaw {
+  original_name?: unknown
+  dest_path?: unknown
+  mime?: unknown
+  size_bytes?: unknown
+  uploaded_at?: unknown
+  [key: string]: unknown
+}
+
+interface SmartSearchMetaRaw {
+  mime?: unknown
+  size_bytes?: unknown
+  [key: string]: unknown
+}
+
 interface SmartSearchDocumentResponse {
-  upload?: {
-    originalName?: string
-    destPath?: string
-    uploaded_at?: string
-  }
-  payload?: {
-    original_name?: string
-    dest_path?: string
-    mime?: string
-    size_bytes?: number
-    uploaded_at?: string
-  }
-  meta?: {
-    mime?: string
-    size_bytes?: number
-  }
+  upload?: SmartSearchUploadRaw
+  payload?: SmartSearchPayloadRaw
+  meta?: SmartSearchMetaRaw
+}
+
+interface SelectedDocumentUpload {
+  originalName: string
+  destPath?: string
+  uploadedAt?: string
+}
+
+interface SelectedDocumentPayload {
+  originalName?: string
+  destPath?: string
+  uploadedAt?: string
+  mime?: string
+  sizeBytes?: number
+}
+
+interface SelectedDocumentMeta {
+  mime?: string
+  sizeBytes?: number
 }
 
 interface SelectedDocument {
   _id: string
   fileUrl?: string
-  upload: {
-    originalName: string
-    destPath: string
-    uploaded_at: string
-  }
-  payload?: {
-    original_name?: string
-    dest_path?: string
-    uploaded_at?: string
-  }
-  meta: {
-    mime?: string
-    size_bytes?: number
-  }
+  upload: SelectedDocumentUpload
+  payload?: SelectedDocumentPayload
+  meta: SelectedDocumentMeta
 }
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const toOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined
+
+const toTrimmedString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+const toFiniteNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined
+
+const firstNonEmptyString = (...values: unknown[]): string | undefined => {
+  for (const value of values) {
+    const candidate = toTrimmedString(value)
+    if (candidate) {
+      return candidate
+    }
+  }
+  return undefined
+}
+
+const normalizeDestPath = (value?: string): string | undefined => {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+const resolveFileUrl = (destPath?: string): string | undefined => {
+  const normalized = normalizeDestPath(destPath)
+  if (!normalized) return undefined
+  const adjustedPath = normalized.startsWith('/data')
+    ? normalized.replace('/data', '')
+    : normalized
+  return `https://tars.giize.com${adjustedPath}`
+}
+
+const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocumentResponse | null => {
+  if (!isPlainObject(value)) {
+    return null
+  }
+
+  const record = value as Record<string, unknown>
+
+  const upload = isPlainObject(record.upload) ? record.upload as SmartSearchUploadRaw : undefined
+  const payload = isPlainObject(record.payload) ? record.payload as SmartSearchPayloadRaw : undefined
+  const meta = isPlainObject(record.meta) ? record.meta as SmartSearchMetaRaw : undefined
+
+  return { upload, payload, meta }
+}
+
+const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentResponse): SelectedDocument => {
+  const originalName =
+    firstNonEmptyString(raw.upload?.originalName, raw.payload?.original_name) ??
+    '문서'
+
+  const destPath = normalizeDestPath(
+    firstNonEmptyString(raw.upload?.destPath, raw.payload?.dest_path)
+  )
+
+  const uploadedAt =
+    toTrimmedString(raw.upload?.uploaded_at) ??
+    toTrimmedString(raw.payload?.uploaded_at)
+
+  const metaMime = firstNonEmptyString(raw.meta?.mime, raw.payload?.mime)
+  const metaSize = toFiniteNumber(raw.meta?.size_bytes) ?? toFiniteNumber(raw.payload?.size_bytes)
+
+  const payload: SelectedDocumentPayload = {}
+  const payloadOriginalName = toTrimmedString(raw.payload?.original_name)
+  if (payloadOriginalName) payload.originalName = payloadOriginalName
+
+  const payloadDestPath = normalizeDestPath(toOptionalString(raw.payload?.dest_path))
+  if (payloadDestPath) payload.destPath = payloadDestPath
+
+  const payloadUploadedAt = toTrimmedString(raw.payload?.uploaded_at)
+  if (payloadUploadedAt) payload.uploadedAt = payloadUploadedAt
+
+  const payloadMime = toTrimmedString(raw.payload?.mime)
+  if (payloadMime) payload.mime = payloadMime
+
+  const payloadSize = toFiniteNumber(raw.payload?.size_bytes)
+  if (payloadSize !== undefined) payload.sizeBytes = payloadSize
+
+  const hasPayload = Object.keys(payload).length > 0
+
+  const meta: SelectedDocumentMeta = {}
+  if (metaMime) meta.mime = metaMime
+  if (metaSize !== undefined) meta.sizeBytes = metaSize
+
+  const upload: SelectedDocumentUpload = {
+    originalName
+  }
+
+  if (destPath) {
+    upload.destPath = destPath
+  }
+
+  if (uploadedAt) {
+    upload.uploadedAt = uploadedAt
+  }
+
+  const fileUrl = resolveFileUrl(destPath)
+
+  const selected: SelectedDocument = {
+    _id: documentId,
+    upload,
+    meta
+  }
+
+  if (fileUrl) {
+    selected.fileUrl = fileUrl
+  }
+
+  if (hasPayload) {
+    selected.payload = payload
+  }
+
+  return selected
+}
+
+const adaptToDownloadHelper = (doc: SelectedDocument) => ({
+  _id: doc._id,
+  fileUrl: doc.fileUrl,
+  upload: {
+    originalName: doc.upload.originalName,
+    destPath: doc.upload.destPath
+  },
+  payload: doc.payload
+    ? {
+        original_name: doc.payload.originalName,
+        dest_path: doc.payload.destPath
+      }
+    : undefined
+})
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -381,43 +536,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         return
       }
 
-      const destPath = fileData.upload?.destPath ?? fileData.payload?.dest_path ?? ''
-      let fileUrl: string | undefined
-      if (destPath) {
-        const correctPath = destPath.replace('/data', '')
-        fileUrl = `https://tars.giize.com${correctPath}`
+      const rawDocument = toSmartSearchDocumentResponse(fileData)
+      if (!rawDocument) {
+        console.warn('[App] smart search 응답이 예상한 형태가 아닙니다.', fileData)
+        return
       }
 
-      const uploadOriginalName = fileData.upload?.originalName ?? fileData.payload?.original_name ?? '문서'
-      const uploadTimestamp = fileData.upload?.uploaded_at ?? fileData.payload?.uploaded_at ?? new Date().toISOString()
-      const metaMime = fileData.meta?.mime ?? fileData.payload?.mime
-      const metaSize = fileData.meta?.size_bytes ?? fileData.payload?.size_bytes
-
-      const meta: SelectedDocument['meta'] = {}
-      if (metaMime) {
-        meta.mime = metaMime
-      }
-      if (typeof metaSize === 'number') {
-        meta.size_bytes = metaSize
-      }
-
-      const selected: SelectedDocument = {
-        _id: documentId,
-        upload: {
-          originalName: uploadOriginalName,
-          destPath,
-          uploaded_at: uploadTimestamp
-        },
-        meta
-      }
-
-      if (fileUrl) {
-        selected.fileUrl = fileUrl
-      }
-
-      if (fileData.payload) {
-        selected.payload = fileData.payload
-      }
+      const selected = buildSelectedDocument(documentId, rawDocument)
 
       console.log('[App] 구성된 document 객체:', selected)
       console.log('[App] fileUrl:', selected.fileUrl)
@@ -976,7 +1101,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               >
                 {(() => {
                   const download = () => {
-                    DownloadHelper.downloadDocument(selectedDocument)
+                    DownloadHelper.downloadDocument(adaptToDownloadHelper(selectedDocument))
                   }
 
                   const fileUrl = selectedDocument.fileUrl

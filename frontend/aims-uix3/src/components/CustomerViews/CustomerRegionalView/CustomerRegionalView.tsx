@@ -6,7 +6,7 @@
  * Document-Controller-View 패턴 준수
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
@@ -48,6 +48,16 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
+  const customerMap = useMemo(() => {
+    const map = new Map<string, Customer>()
+    customers.forEach(customer => {
+      if (customer?._id) {
+        map.set(customer._id, customer)
+      }
+    })
+    return map
+  }, [customers])
+
   // 초기 데이터 로드
   useEffect(() => {
     console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
@@ -69,19 +79,20 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   }, [refresh])
 
   // 고객 선택 핸들러 (내부 상태 + RightPane 표시)
-  const handleCustomerSelect = (customerId: string) => {
-    const customer = customers.find(c => c._id === customerId)
-    if (customer) {
-      // 내부 선택 상태 업데이트
-      setSelectedCustomerId(customerId)
-      // RightPane 표시 (부모 컴포넌트로 전달)
-      if (onCustomerClick) {
-        onCustomerClick(customerId, customer)
-      }
+  const handleCustomerSelect = useCallback((customerId: string) => {
+    const customer = customerMap.get(customerId)
+    if (!customer) {
+      return
     }
-  }
 
-  const selectedCustomer = customers.find(c => c._id === selectedCustomerId)
+    setSelectedCustomerId(customerId)
+
+    if (onCustomerClick) {
+      onCustomerClick(customerId, customer)
+    }
+  }, [customerMap, onCustomerClick])
+
+  const selectedCustomer = selectedCustomerId ? customerMap.get(selectedCustomerId) ?? null : null
 
   return (
     <CenterPaneView
