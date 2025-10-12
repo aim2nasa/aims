@@ -377,3 +377,7 @@
 /* === DARK THEME OVERRIDES === */
 
 [data-theme="dark"] .button:focus-visible {
+  outline: 2px solid var(--color-border-focus-dark, var(--color-border-focus));
+  outline-offset: 2px;
+  box-shadow: var(--shadow-focus-ring-dark, var(--shadow-focus-ring));
+}
