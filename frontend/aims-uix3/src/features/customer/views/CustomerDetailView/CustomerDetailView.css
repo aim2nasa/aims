@@ -24,7 +24,8 @@
 
 /* Inner Container - 극도로 컴팩트 */
 .customer-detail-view__inner {
-  max-width: 640px;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
   padding: var(--spacing-4) var(--spacing-4);
 }

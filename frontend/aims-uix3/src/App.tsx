@@ -72,6 +72,11 @@ const STORAGE_KEYS = {
   ACTIVE_VIEW: 'aims_active_document_view'
 } as const
 
+// CenterPane과 RightPane의 기본 비율 (0~1 범위)
+const DEFAULT_CENTER_PANE_RATIO = 0.5
+const DEFAULT_CENTER_WIDTH_PERCENT = DEFAULT_CENTER_PANE_RATIO * 100
+const DEFAULT_RIGHT_WIDTH_PERCENT = 100 - DEFAULT_CENTER_WIDTH_PERCENT
+
 const persistentState = {
   layoutControlModalOpen: false,
   activeDocumentView: (() => {
@@ -89,7 +94,7 @@ interface AppProps {
 
 function App({ gaps: initialGaps }: AppProps = {}) {
   const [rightPaneVisible, setRightPaneVisible] = useState(true)
-  const [centerWidth, setCenterWidth] = useState(60)
+  const [centerWidth, setCenterWidth] = useState(DEFAULT_CENTER_WIDTH_PERCENT)
   const [paginationVisible, setPaginationVisible] = useState(true)
 
   // iOS Dynamic Type 시스템 초기화 및 추적
@@ -147,6 +152,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneVisible(true)
     }
   }, [activeDocumentView, selectedDocument, selectedCustomer])
+
+  useEffect(() => {
+    if (rightPaneVisible && centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT) {
+      setCenterWidth(DEFAULT_CENTER_WIDTH_PERCENT)
+    }
+  }, [rightPaneVisible, centerWidth])
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
@@ -495,29 +506,25 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const leftPaneWidthVar = `${leftPaneWidth}px` // 🍎 transition 동기화: 실제 픽셀 값 사용
     const mainPaneWidth = `calc(100vw - ${leftPaneWidthVar})`
 
+    const availableWidth = `calc(${mainPaneWidth} - var(--gap-left) - var(--gap-center) - var(--gap-right))`
+    const centerWidthExpr = `calc(${availableWidth} * ${centerWidth} / 100)`
+    const rightWidthExpr = `calc(${availableWidth} - (${centerWidthExpr}))`
+
+    const centerPaneLeft = `calc(${leftPaneWidthVar} + var(--gap-left))`
+    const rightPaneLeft = `calc(${centerPaneLeft} + ${centerWidthExpr} + var(--gap-center))`
+
     return {
       leftPaneWidth,
       leftPaneWidthVar,
       mainPaneWidth,
-      // CenterPane width calculations
-      centerPaneWidth: rightPaneVisible
-        ? `calc((100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
-        : `calc((100vw - ${leftPaneWidthVar}) - var(--gap-left) - var(--gap-right))`,
-
-      // RightPane width calculation
-      rightPaneWidth: `calc((100vw - ${leftPaneWidthVar}) * ${100 - centerWidth} / 100 - var(--gap-center) - var(--gap-right))`,
-
-      // Pagination width (same as CenterPane)
-      paginationWidth: rightPaneVisible
-        ? `calc((100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left) - var(--gap-center))`
-        : `calc((100vw - ${leftPaneWidthVar}) - var(--gap-left) - var(--gap-right))`,
-
-      // BRB position calculations - CenterPane 우측 경계에 정확히 맞춤
+      centerPaneWidth: rightPaneVisible ? centerWidthExpr : `calc(${mainPaneWidth} - var(--gap-left) - var(--gap-right))`,
+      rightPaneWidth: rightPaneVisible ? rightWidthExpr : '0px',
+      paginationWidth: rightPaneVisible ? centerWidthExpr : `calc(${mainPaneWidth} - var(--gap-left) - var(--gap-right))`,
       brbLeftPosition: rightPaneVisible
-        ? `calc(${leftPaneWidthVar} + var(--gap-left) + (100vw - ${leftPaneWidthVar}) * ${centerWidth} / 100 - var(--gap-left))`
+        ? `calc(${leftPaneWidthVar} + var(--gap-left) + ${centerWidthExpr})`
         : `calc(${leftPaneWidthVar} + (100vw - ${leftPaneWidthVar}) - var(--gap-right))`,
-
-      // Common height calculations - 애플 표준 크기 사용
+      centerPaneLeft,
+      rightPaneLeft,
       mainContentHeight: 'var(--mainpane-height)',
       centerPaneHeight: paginationVisible ? 'var(--centerpane-height-with-pagination)' : 'var(--centerpane-height-no-pagination)',
       layoutContentHeight: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`
@@ -677,7 +684,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           aria-label="메인 콘텐츠 영역"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
-            left: `calc(${layoutDimensions.leftPaneWidthVar} + var(--gap-left))`,
+            left: layoutDimensions.centerPaneLeft,
             width: layoutDimensions.centerPaneWidth,
             height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
             color: 'var(--color-text-primary)'
@@ -804,8 +811,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         style={{
           position: 'absolute',
           top: `calc(var(--header-height-base) + var(--gap-top))`,
-          right: `var(--gap-right)`,
-          width: rightPaneVisible ? `calc(${layoutDimensions.rightPaneWidth} + var(--rightpane-container-offset))` : '0px',
+          left: layoutDimensions.rightPaneLeft,
+          width: rightPaneVisible ? layoutDimensions.rightPaneWidth : '0px',
           height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
           display: 'flex',
           flexDirection: 'row',
@@ -877,17 +884,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             aria-orientation="vertical"
           >
             {/* Layout Reset Button - BRB 내부 */}
-            {centerWidth !== 60 && (
+            {centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT && (
               <button
                 className="layout-brb-reset"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setCenterWidth(60)
+                  setCenterWidth(DEFAULT_CENTER_WIDTH_PERCENT)
                   haptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 aria-label="레이아웃 비율 초기화"
-                title="기본 비율로 초기화 (60:40)"
+                title={`기본 비율로 초기화 (${DEFAULT_CENTER_WIDTH_PERCENT.toFixed(0)}:${DEFAULT_RIGHT_WIDTH_PERCENT.toFixed(0)})`}
               >
                 <span aria-hidden="true">⟲</span>
               </button>
