@@ -11,6 +11,7 @@
 import React, { useCallback } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import RefreshButton from '../../../../../components/RefreshButton/RefreshButton'
+import { Tooltip } from '@/shared/ui'
 import { Button } from '@/shared/ui/Button'
 import SFSymbol, {
   SFSymbolAnimation,
@@ -292,23 +293,45 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     </td>
                     <td>
                       <div className="customer-documents__row-actions">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handlePreview(document)}
-                        >
-                          보기
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          loading={unlinkingId === document._id}
-                          onClick={() => void handleUnlink(document)}
-                        >
-                          해제
-                        </Button>
+                        <Tooltip content="문서 보기">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="customer-documents__action-button"
+                            onClick={() => handlePreview(document)}
+                          >
+                            <SFSymbol
+                              name="eye"
+                              size={SFSymbolSize.BODY}
+                              weight={SFSymbolWeight.REGULAR}
+                              className="customer-documents__action-icon customer-documents__action-icon--view"
+                              decorative
+                            />
+                            <span className="sr-only">보기</span>
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="연결 해제">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="customer-documents__action-button customer-documents__action-button--danger"
+                            loading={unlinkingId === document._id}
+                            onClick={() => void handleUnlink(document)}
+                          >
+                            {unlinkingId !== document._id && (
+                              <SFSymbol
+                                name="trash"
+                                size={SFSymbolSize.BODY}
+                                weight={SFSymbolWeight.REGULAR}
+                                className="customer-documents__action-icon customer-documents__action-icon--danger"
+                                decorative
+                              />
+                            )}
+                            <span className="sr-only">연결 해제</span>
+                          </Button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>

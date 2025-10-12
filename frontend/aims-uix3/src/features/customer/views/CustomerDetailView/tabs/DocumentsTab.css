@@ -218,6 +218,83 @@
   gap: var(--spacing-2);
 }
 
+.customer-documents__action-button {
+  padding: 0;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background-color: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  transition:
+    background-color var(--duration-ios-quick) var(--easing-ios-default),
+    color var(--duration-ios-quick) var(--easing-ios-default),
+    transform var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.customer-documents__action-button .button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-documents__action-icon {
+  color: inherit;
+  transition:
+    color var(--duration-ios-quick) var(--easing-ios-default),
+    transform var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+.customer-documents__action-button:hover:not(:disabled) {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-600);
+}
+
+.customer-documents__action-button:active:not(:disabled) {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  transform: translateY(1px);
+}
+
+.customer-documents__action-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary-200);
+}
+
+.customer-documents__action-button--danger {
+  color: var(--color-icon-red);
+}
+
+.customer-documents__action-button--danger:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-icon-red) 18%, transparent);
+}
+
+.customer-documents__action-button--danger:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-icon-red) 28%, transparent);
+  color: var(--color-icon-red);
+}
+
+.customer-documents__action-button--danger:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-icon-red) 30%, transparent);
+}
+
+.customer-documents__action-icon--danger {
+  color: inherit;
+}
+
+.customer-documents__action-button--danger:hover:not(:disabled) .customer-documents__action-icon--danger {
+  transform: scale(1.05);
+}
+
+.customer-documents__action-button:hover:not(:disabled) .customer-documents__action-icon--view {
+  transform: scale(1.05);
+}
+
+.customer-documents__action-button:active:not(:disabled) .customer-documents__action-icon {
+  transform: scale(0.95);
+}
+
 .customer-documents__actions-header {
   text-align: right;
 }
