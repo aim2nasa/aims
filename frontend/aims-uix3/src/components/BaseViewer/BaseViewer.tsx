@@ -65,11 +65,13 @@ export const BaseViewer: React.FC<BaseViewerProps> = ({
 }) => {
   if (!visible) return null
 
+  const ariaLabel = typeof title === 'string' ? title : '문서 뷰어'
+
   return (
     <div
       className="base-viewer"
       role="dialog"
-      aria-label={title || '문서 뷰어'}
+      aria-label={ariaLabel}
       aria-modal="true"
       style={{
         top: `${gapTop}px`,

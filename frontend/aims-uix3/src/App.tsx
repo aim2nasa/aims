@@ -49,11 +49,11 @@ interface SmartSearchDocumentResponse {
 
 interface SelectedDocument {
   _id: string
-  fileUrl: string | null
+  fileUrl?: string
   upload: {
     originalName: string
     destPath: string
-    uploaded_at?: string
+    uploaded_at: string
   }
   payload?: {
     original_name?: string
@@ -371,46 +371,62 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         body: JSON.stringify({ id: documentId })
       })
 
-      const data = await response.json() as SmartSearchDocumentResponse[]
+      const json = await response.json() as unknown
+      const data = Array.isArray(json) ? json as SmartSearchDocumentResponse[] : json ? [json as SmartSearchDocumentResponse] : []
       console.log('[App] API 응답 데이터:', data)
 
-      if (data && data.length > 0) {
-        const fileData = data[0]
-        console.log('[App] fileData:', fileData)
-
-        // destPath에서 fileUrl 생성 (aims-uix2 패턴)
-        let fileUrl: string | null = null
-        const destPath = fileData.upload?.destPath || fileData.payload?.dest_path
-        if (destPath) {
-          const correctPath = destPath.replace('/data', '')
-          fileUrl = `https://tars.giize.com${correctPath}`
-        }
-
-        // 문서 객체 구성
-        const document: SelectedDocument = {
-          _id: documentId,
-          fileUrl: fileUrl,
-          upload: {
-            originalName: fileData.upload?.originalName || fileData.payload?.original_name || '문서',
-            destPath: destPath || '',
-            uploaded_at: fileData.upload?.uploaded_at || fileData.payload?.uploaded_at || new Date().toISOString()
-          },
-          payload: fileData.payload,
-          meta: {
-            mime: fileData.meta?.mime || fileData.payload?.mime || '',
-            size_bytes: fileData.meta?.size_bytes || fileData.payload?.size_bytes || 0
-          }
-        }
-
-        console.log('[App] 구성된 document 객체:', document)
-        console.log('[App] fileUrl:', document.fileUrl)
-
-        setSelectedDocument(document)
-        setRightPaneContentType('document')
-
-        // RightPane 항상 표시 (조건 없이)
-        setRightPaneVisible(true)
+      const fileData = data[0]
+      if (!fileData) {
+        console.warn('[App] fileData가 비어 있습니다.')
+        return
       }
+
+      const destPath = fileData.upload?.destPath ?? fileData.payload?.dest_path ?? ''
+      let fileUrl: string | undefined
+      if (destPath) {
+        const correctPath = destPath.replace('/data', '')
+        fileUrl = `https://tars.giize.com${correctPath}`
+      }
+
+      const uploadOriginalName = fileData.upload?.originalName ?? fileData.payload?.original_name ?? '문서'
+      const uploadTimestamp = fileData.upload?.uploaded_at ?? fileData.payload?.uploaded_at ?? new Date().toISOString()
+      const metaMime = fileData.meta?.mime ?? fileData.payload?.mime
+      const metaSize = fileData.meta?.size_bytes ?? fileData.payload?.size_bytes
+
+      const meta: SelectedDocument['meta'] = {}
+      if (metaMime) {
+        meta.mime = metaMime
+      }
+      if (typeof metaSize === 'number') {
+        meta.size_bytes = metaSize
+      }
+
+      const selected: SelectedDocument = {
+        _id: documentId,
+        upload: {
+          originalName: uploadOriginalName,
+          destPath,
+          uploaded_at: uploadTimestamp
+        },
+        meta
+      }
+
+      if (fileUrl) {
+        selected.fileUrl = fileUrl
+      }
+
+      if (fileData.payload) {
+        selected.payload = fileData.payload
+      }
+
+      console.log('[App] 구성된 document 객체:', selected)
+      console.log('[App] fileUrl:', selected.fileUrl)
+
+      setSelectedDocument(selected)
+      setRightPaneContentType('document')
+
+      // RightPane 항상 표시 (조건 없이)
+      setRightPaneVisible(true)
     } catch (error) {
       console.error('[App] 문서 로드 오류:', error)
     }
@@ -959,42 +975,57 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 }}
               >
                 {(() => {
-                  const fileUrl = selectedDocument.fileUrl?.toLowerCase() || ''
-                  const isPdf = fileUrl.endsWith('.pdf')
-                  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl)
+                  const download = () => {
+                    DownloadHelper.downloadDocument(selectedDocument)
+                  }
+
+                  const fileUrl = selectedDocument.fileUrl
+                  if (!fileUrl) {
+                    const fileName =
+                      selectedDocument.upload?.originalName ||
+                      selectedDocument.payload?.original_name ||
+                      '파일'
+
+                    return (
+                      <DownloadOnlyViewer
+                        fileName={fileName}
+                        onDownload={download}
+                      />
+                    )
+                  }
+
+                  const normalizedUrl = fileUrl.toLowerCase()
+                  const isPdf = normalizedUrl.endsWith('.pdf')
+                  const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
 
                   if (isPdf) {
                     return (
                       <PDFViewer
-                        file={selectedDocument.fileUrl}
-                        onDownload={() => {
-                          DownloadHelper.downloadDocument(selectedDocument)
-                        }}
-                      />
-                    )
-                  } else if (isImage) {
-                    return (
-                      <ImageViewer
-                        file={selectedDocument.fileUrl}
-                        onDownload={() => {
-                          DownloadHelper.downloadDocument(selectedDocument)
-                        }}
-                      />
-                    )
-                  } else {
-                    // 미리보기를 지원하지 않는 파일 - DownloadOnlyViewer 사용
-                    const fileName = selectedDocument.upload?.originalName ||
-                                     selectedDocument.payload?.original_name ||
-                                     '파일'
-                    return (
-                      <DownloadOnlyViewer
-                        fileName={fileName}
-                        onDownload={() => {
-                          DownloadHelper.downloadDocument(selectedDocument)
-                        }}
+                        file={fileUrl}
+                        onDownload={download}
                       />
                     )
                   }
+
+                  if (isImage) {
+                    return (
+                      <ImageViewer
+                        file={fileUrl}
+                        onDownload={download}
+                      />
+                    )
+                  }
+
+                  const fileName =
+                    selectedDocument.upload?.originalName ||
+                    selectedDocument.payload?.original_name ||
+                    '파일'
+                  return (
+                    <DownloadOnlyViewer
+                      fileName={fileName}
+                      onDownload={download}
+                    />
+                  )
                 })()}
               </BaseViewer>
             </Suspense>
