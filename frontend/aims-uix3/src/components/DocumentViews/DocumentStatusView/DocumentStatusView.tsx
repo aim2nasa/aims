@@ -45,7 +45,7 @@ const ITEMS_PER_PAGE_OPTIONS = [
  * DocumentStatusView 내부 컴포넌트 (Pure View)
  * 🍎 리스트 기반 레이아웃 - 공간 효율성 극대화
  */
-const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: string) => void }> = ({ onDocumentClick }) => {
+const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: string) => void }> = () => {
   const controller = useDocumentStatusController()
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
@@ -91,11 +91,6 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
           onFullTextClick: controller.handleDocumentFullText,
           onLinkClick: controller.handleDocumentLink
         } satisfies DocumentStatusListProps;
-
-        if (onDocumentClick) {
-          listProps.onDocumentClick = onDocumentClick;
-        }
-
         return <DocumentStatusList {...listProps} />
       })()}
 
@@ -197,7 +192,7 @@ export const DocumentStatusView: React.FC<DocumentStatusViewProps> = ({
       className="document-status-view"
     >
       <DocumentStatusProvider>
-        <DocumentStatusViewContent onDocumentClick={onDocumentClick} />
+        <DocumentStatusViewContent {...(onDocumentClick ? { onDocumentClick } : {})} />
       </DocumentStatusProvider>
     </CenterPaneView>
   )

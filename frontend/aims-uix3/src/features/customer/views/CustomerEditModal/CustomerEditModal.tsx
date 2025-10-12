@@ -136,7 +136,7 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     name: formData.personal_info?.name ?? ''
   };
   if (formData.personal_info?.name_en !== undefined) basicInfoData.name_en = formData.personal_info.name_en;
-  if (formData.personal_info?.birth_date !== undefined) basicInfoData.birth_date = formData.personal_info.birth_date;
+  if (formData.personal_info?.birth_date != null) basicInfoData.birth_date = formData.personal_info.birth_date;
   if (formData.personal_info?.gender !== undefined) basicInfoData.gender = formData.personal_info.gender;
 
   const contactData: ContactFormData = {
@@ -147,9 +147,9 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   };
 
   const addressData: AddressFormData = {
-    postal_code: formData.personal_info?.address?.postal_code,
-    address1: formData.personal_info?.address?.address1,
-    address2: formData.personal_info?.address?.address2
+    postal_code: formData.personal_info?.address?.postal_code ?? '',
+    address1: formData.personal_info?.address?.address1 ?? '',
+    address2: formData.personal_info?.address?.address2 ?? ''
   };
 
   const insuranceData: InsuranceFormData = {

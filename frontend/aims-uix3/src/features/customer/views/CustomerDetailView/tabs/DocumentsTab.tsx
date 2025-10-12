@@ -66,7 +66,7 @@ const getRelationshipLabel = (value?: string | null) => {
 }
 
 const getStatusLabel = (value?: string | null) => {
-  if (!value) return STATUS_LABELS.linked
+  if (!value) return STATUS_LABELS['linked']
   return STATUS_LABELS[value] ?? value
 }
 
@@ -110,7 +110,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   } = useCustomerDocumentsController(customer?._id, {
     autoLoad: true,
     enabled: Boolean(customer?._id),
-    onDocumentsChange: onDocumentCountChange
+    ...(onDocumentCountChange ? { onDocumentsChange: onDocumentCountChange } : {}),
   })
 
   const handleRefresh = useCallback(async () => {
@@ -348,8 +348,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         error={previewState.error}
         document={previewState.data}
         onClose={closePreview}
-        onRetry={previewTarget ? () => void retryPreview() : undefined}
-        onDownload={previewState.data?.rawDetail ? handleDownload : undefined}
+        {...(previewTarget ? { onRetry: () => { void retryPreview() } } : {})}
+        {...(previewState.data?.rawDetail ? { onDownload: handleDownload } : {})}
       />
 
       <AppleConfirmModal

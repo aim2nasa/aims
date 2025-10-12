@@ -281,7 +281,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         return !!fromId && !!toId && familyGroupIds.has(fromId) && familyGroupIds.has(toId);
       });
 
-      let representative = familyMembers[0];
+      let representative = familyMembers[0]!;
       const relationshipWithRep = groupRelationships.find(rel => {
         const rep = rel.family_representative;
         const repId = typeof rep === 'object' ? rep?._id : undefined;
@@ -340,7 +340,11 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         });
       });
 
-      result.가족그룹[representative._id] = {
+      const repId = representative?._id;
+      if (!repId) {
+        return;
+      }
+      result.가족그룹[repId] = {
         representative,
         members: familyMembers,
         relations: familyRelations
@@ -593,6 +597,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                       </div>
                       );
                     })
+				}
                 </div>
               )}
             </div>
@@ -672,6 +677,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                         </div>
                       );
                     })
+				}
                 </div>
               )}
             </div>

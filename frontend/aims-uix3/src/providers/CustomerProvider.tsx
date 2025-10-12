@@ -119,7 +119,7 @@ const useCustomerDataManager = () => {
       setCustomers({
         customers: customersData.customers,
         total: pagination?.totalCount ?? customersData.customers.length,
-        hasMore: pagination ? pagination.currentPage < pagination.totalPages : false,
+        hasMore: ((pagination?.currentPage ?? 1) < (pagination?.totalPages ?? 1)),
       });
     }
   }, [customersData, setCustomers]);

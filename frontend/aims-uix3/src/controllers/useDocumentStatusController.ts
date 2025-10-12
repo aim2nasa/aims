@@ -167,10 +167,10 @@ export const useDocumentStatusController = () => {
       const { customerId, documentId, relationshipType, notes } = params
 
       await DocumentService.linkDocumentToCustomer(customerId, {
-        document_id: documentId,
-        relationship_type: relationshipType,
-        notes
-      })
+      document_id: documentId,
+      relationship_type: relationshipType,
+      ...(notes ? { notes } : {}),
+    })
 
       // 최신 문서 정보 재조회하여 customer_relation 동기화
       const detailedDoc = await DocumentStatusService.getDocumentStatus(documentId)

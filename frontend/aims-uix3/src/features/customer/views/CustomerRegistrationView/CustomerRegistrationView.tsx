@@ -108,9 +108,9 @@ export const CustomerRegistrationView: React.FC = () => {
             />
 
             {/* Submit Error */}
-            {errors.submit && (
+            {errors['submit'] && (
               <div className="form-error" role="alert">
-                {errors.submit}
+                {errors['submit']}
               </div>
             )}
 

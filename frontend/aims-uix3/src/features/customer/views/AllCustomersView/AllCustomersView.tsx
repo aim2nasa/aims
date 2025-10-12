@@ -59,7 +59,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // 초기 데이터 로드
     useEffect(() => {
       console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
-      loadCustomers({ limit: 10000, offset: 0 });
+      loadCustomers({ limit: 10000, page: 1 });
     }, [loadCustomers]);
 
     // 검색 필터링된 고객 목록
@@ -329,7 +329,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               <RefreshButton
                 onClick={async () => {
                   await refresh();
-                  await loadCustomers({ limit: 10000, offset: 0 });
+                  await loadCustomers({ limit: 10000, page: 1 });
                 }}
                 loading={isLoading}
                 tooltip="고객 목록 새로고침"

@@ -234,8 +234,9 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
     }
 
     // 마지막으로 payload.summary 시도
-    if (doc.payload?.summary) {
-      return doc.payload.summary
+    const payloadSummary = doc.payload ? (doc.payload as Record<string, unknown>)['summary'] : null
+    if (typeof payloadSummary === 'string' && payloadSummary.trim()) {
+      return payloadSummary
     }
 
     return '문서 요약을 찾을 수 없습니다.'

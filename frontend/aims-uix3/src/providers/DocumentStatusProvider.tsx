@@ -10,7 +10,7 @@ import {
   type DocumentStatusActions,
   type DocumentStatusContextValue
 } from '../contexts/DocumentStatusContext'
-import { DocumentStatusService } from '../services/DocumentStatusService'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
 interface DocumentStatusProviderProps {

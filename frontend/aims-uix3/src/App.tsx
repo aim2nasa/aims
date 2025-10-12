@@ -130,11 +130,11 @@ const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocumentRespo
 
   const record = value as Record<string, unknown>
 
-  const upload = isPlainObject(record.upload) ? record.upload as SmartSearchUploadRaw : undefined
-  const payload = isPlainObject(record.payload) ? record.payload as SmartSearchPayloadRaw : undefined
-  const meta = isPlainObject(record.meta) ? record.meta as SmartSearchMetaRaw : undefined
+  const upload = isPlainObject(record['upload']) ? record['upload'] as SmartSearchUploadRaw : undefined
+  const payload = isPlainObject(record['payload']) ? record['payload'] as SmartSearchPayloadRaw : undefined
+  const meta = isPlainObject(record['meta']) ? record['meta'] as SmartSearchMetaRaw : undefined
 
-  return { upload, payload, meta }
+  return ({ ...(upload && { upload }), ...(payload && { payload }), ...(meta && { meta }) } as SmartSearchDocumentResponse)
 }
 
 const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentResponse): SelectedDocument => {
@@ -208,17 +208,12 @@ const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentRespo
 
 const adaptToDownloadHelper = (doc: SelectedDocument) => ({
   _id: doc._id,
-  fileUrl: doc.fileUrl,
+  fileUrl: doc.fileUrl ?? '',
   upload: {
     originalName: doc.upload.originalName,
-    destPath: doc.upload.destPath
+    destPath: (doc.upload.destPath ?? '')
   },
-  payload: doc.payload
-    ? {
-        original_name: doc.payload.originalName,
-        dest_path: doc.payload.destPath
-      }
-    : undefined
+  payload: (() => { const out: { original_name?: string; dest_path?: string } = {}; if (doc.payload?.originalName) out.original_name = doc.payload.originalName; if (doc.payload?.destPath) out.dest_path = doc.payload.destPath; return out; })()
 })
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
@@ -1091,7 +1086,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               <BaseViewer
                 visible={true}
                 title={selectedDocument.upload?.originalName ||
-                       selectedDocument.payload?.original_name ||
+                       selectedDocument.payload?.originalName ||
                        '파일'}
                 onClose={() => {
                   setSelectedDocument(null)
@@ -1108,7 +1103,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   if (!fileUrl) {
                     const fileName =
                       selectedDocument.upload?.originalName ||
-                      selectedDocument.payload?.original_name ||
+                      selectedDocument.payload?.originalName ||
                       '파일'
 
                     return (
@@ -1143,7 +1138,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
                   const fileName =
                     selectedDocument.upload?.originalName ||
-                    selectedDocument.payload?.original_name ||
+                    selectedDocument.payload?.originalName ||
                     '파일'
                   return (
                     <DownloadOnlyViewer

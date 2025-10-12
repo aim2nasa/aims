@@ -40,7 +40,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onEdit, onDelete 
             {CustomerUtils.getContactInfo(customer)}
           </p>
         </div>
-        <div className={`customer-card__status customer-card__status--${customer.isActive ? 'active' : 'inactive'}`}>
+        <div className="customer-card__status">
           {CustomerUtils.getStatusText(customer)}
         </div>
       </div>
@@ -62,9 +62,9 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onEdit, onDelete 
 
       <div className="customer-card__meta">
         <span className="customer-card__date">
-          {new Date(customer.createdAt).toLocaleDateString('ko-KR')} 등록
+          등록됨
         </span>
-        {customer.birthDate && (
+        {customer.personal_info?.birth_date && (
           <span className="customer-card__age">
             {CustomerUtils.getAge(customer)}세
           </span>
@@ -101,26 +101,36 @@ interface CustomerFormProps {
 }
 
 const CustomerForm: React.FC<CustomerFormProps> = ({ onSubmit, onCancel, isLoading }) => {
-  const [formData, setFormData] = useState<Partial<CreateCustomerData>>({
+  const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
     address: '',
     birthDate: '',
-    gender: undefined,
+    gender: '',
     occupation: '',
     notes: '',
-    tags: [],
+    tags: [] as string[],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) return;
 
-    onSubmit(formData as CreateCustomerData);
+    const payload: Partial<CreateCustomerData> = {
+      personal_info: {
+        name: formData.name.trim(),
+        mobile_phone: formData.phone || undefined,
+        email: formData.email || undefined,
+        address: formData.address ? { address1: formData.address } : undefined,
+        birth_date: formData.birthDate || undefined,
+        gender: (formData.gender === 'M' || formData.gender === 'F') ? (formData.gender as 'M'|'F') : undefined,
+      },
+    };
+    onSubmit(payload as CreateCustomerData);
   };
 
-  const handleChange = (field: keyof CreateCustomerData, value: string | string[]) => {
+  const handleChange = (field: keyof typeof formData, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

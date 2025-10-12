@@ -90,22 +90,23 @@ export const useCustomersController = () => {
 
     const newParams = {
       ...state.searchParams,
-      offset: (state.searchParams.offset || 0) + (state.searchParams.limit || 20),
+      page: (state.searchParams.page || 1) + 1,
     };
 
     try {
       setLoading(true);
-      const result = state.searchQuery.trim()
-        ? await CustomerService.searchCustomers(state.searchQuery, newParams)
-        : await CustomerService.getCustomers(newParams);
+      const document = CustomerDocument.getInstance();
+      await document.loadCustomers(newParams);
+      const customers = document.getCustomers();
+      const total = document.getTotal();
+      const hasMore = document.getHasMore();
 
       // 기존 데이터에 추가
       setCustomers({
-        customers: [...state.customers, ...result.customers],
-        total: result.total,
-        hasMore: result.hasMore,
+        customers: [...state.customers, ...customers],
+        total,
+        hasMore,
       });
-
       // 검색 파라미터 업데이트
       setSearchParams(newParams);
     } catch (error) {
@@ -133,14 +134,14 @@ export const useCustomersController = () => {
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
     // 검색 시 오프셋 리셋
-    setSearchParams({ ...state.searchParams, offset: 0 });
+    setSearchParams({ ...state.searchParams, page: 1 });
   }, [setSearchQuery, setSearchParams, state.searchParams]);
 
   /**
    * 검색 실행
    */
   const handleSearch = useCallback(() => {
-    loadCustomers({ offset: 0 });
+    loadCustomers({ page: 1 });
   }, [loadCustomers]);
 
   // === CRUD 로직 ===
@@ -226,7 +227,7 @@ export const useCustomersController = () => {
   const handleDeleteCustomer = useCallback(async (customer: Customer) => {
     const confirmed = await showConfirmation({
       title: '고객 삭제',
-      message: `${customer.name} 고객을 삭제하시겠습니까?`,
+      message: `\${customer.personal_info?.name ?? '고객'} 고객을 삭제하시겠습니까?`,
       confirmText: '삭제',
       cancelText: '취소',
       destructive: true

@@ -127,7 +127,7 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       return (
         <PDFViewer
           file={fileUrl}
-          onDownload={onDownload}
+          {...(onDownload ? { onDownload } : {})}
         />
       )
     }

@@ -126,17 +126,43 @@ export const useCustomerEditController = (customer: Customer) => {
       const cleanPersonalInfo: NonNullable<UpdateCustomerData['personal_info']> = {};
       if (formData.personal_info) {
         Object.entries(formData.personal_info).forEach(([key, value]) => {
-          // name은 필수이므로 항상 포함
+          // name은 필수이므로 항상 포함 (문자열만)
           if (key === 'name') {
-            cleanPersonalInfo[key as keyof typeof cleanPersonalInfo] = value;
+            if (typeof value === 'string' && value !== '') {
+              cleanPersonalInfo.name = value;
+            }
+            return;
           }
-          // 나머지 필드는 유효한 값만 포함
-          else if (value !== null && value !== undefined && value !== '') {
-            cleanPersonalInfo[key as keyof typeof cleanPersonalInfo] = value;
+
+          // gender: 'M' | 'F' 만 허용
+          if (key === 'gender') {
+            if (value === 'M' || value === 'F') {
+              cleanPersonalInfo.gender = value;
+            }
+            return;
+          }
+
+          // address: 객체만 허용
+          if (key === 'address') {
+            if (value && typeof value === 'object') {
+              const addr = value as { postal_code?: string; address1?: string; address2?: string };
+              const normalized: NonNullable<NonNullable<UpdateCustomerData['personal_info']>['address']> = {};
+              if (addr.postal_code) normalized.postal_code = addr.postal_code;
+              if (addr.address1) normalized.address1 = addr.address1;
+              if (addr.address2) normalized.address2 = addr.address2;
+              if (Object.keys(normalized).length > 0) {
+                cleanPersonalInfo.address = normalized;
+              }
+            }
+            return;
+          }
+
+          // 그 외 문자열 필드: 유효한 문자열만 포함
+          if (typeof value === 'string' && value !== '') {
+            (cleanPersonalInfo as Record<string, unknown>)[key] = value;
           }
         });
       }
-
       // 백엔드로 전송할 데이터 (personal_info와 insurance_info만)
       const updatePayload: UpdateCustomerData = {
         personal_info: cleanPersonalInfo,

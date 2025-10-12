@@ -98,7 +98,10 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
         );
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         e.preventDefault();
-        handleAddressSelect(searchResults[selectedIndex]);
+        const selected = searchResults[selectedIndex];
+        if (selected) {
+          handleAddressSelect(selected);
+        }
       }
     }
   };

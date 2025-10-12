@@ -183,7 +183,7 @@ export const useCustomerRelationshipsController = (
   const controllerActions: CustomerRelationshipsActions = useMemo(
     () => ({
       loadRelationships,
-      refreshRelationshipTypes: loadRelationshipTypes,
+      refreshRelationshipTypes: async () => { await loadRelationshipTypes(); },
       deleteRelationship,
       getRelationshipTypeLabel,
     }),

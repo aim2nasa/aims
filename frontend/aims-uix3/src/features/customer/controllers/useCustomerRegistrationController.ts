@@ -123,9 +123,9 @@ export const useCustomerRegistrationController = ({
 
     if (!validationResult.success) {
       const newErrors: FormErrors = {};
-      validationResult.error.errors.forEach((error) => {
-        const path = error.path.join('.');
-        newErrors[path] = error.message;
+      validationResult.error.issues.forEach((issue) => {
+        const path = issue.path.join('.');
+        newErrors[path] = issue.message;
       });
       return newErrors;
     }

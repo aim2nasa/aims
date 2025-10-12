@@ -85,7 +85,7 @@ const initialState: CustomerState = {
   searchQuery: '',
   searchParams: {
     limit: 20,
-    offset: 0,
+    page: 1,
   },
   showCreateForm: false,
   showEditForm: false,
@@ -157,7 +157,7 @@ function customerReducer(state: CustomerState, action: CustomerAction): Customer
       return {
         ...state,
         searchQuery: action.payload,
-        searchParams: { ...state.searchParams, offset: 0 },
+        searchParams: { ...state.searchParams, page: 1},
       };
 
     case 'SET_SEARCH_PARAMS':

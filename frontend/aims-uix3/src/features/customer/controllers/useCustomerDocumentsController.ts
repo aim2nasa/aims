@@ -12,7 +12,7 @@ import {
   DocumentService,
   type CustomerDocumentItem
 } from '@/services/DocumentService'
-import { DocumentStatusService } from '@/services/documentStatusService'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { handleApiError } from '@/shared/lib/api'
 
 interface UseCustomerDocumentsControllerOptions {
@@ -64,59 +64,67 @@ const extractPreviewInfo = (
   detail: Record<string, unknown> | null,
   fallback: CustomerDocumentItem
 ): Omit<PreviewDocumentInfo, 'document' | 'rawDetail'> => {
-  const upload = detail?.upload
-  const payload = detail?.payload
-  const meta = detail?.meta
+  const asRec = (v: unknown): Record<string, unknown> | undefined =>
+    v && typeof v === 'object' ? (v as Record<string, unknown>) : undefined
+  const rec = detail as Record<string, unknown> | null
+  const upload  = asRec(rec?.['upload'])
+  const payload = asRec(rec?.['payload'])
+  const meta    = asRec(rec?.['meta'])
+  const getStr = (o: Record<string, unknown> | undefined, k: string): string | undefined => {
+    const v = o?.[k]; return typeof v === 'string' ? v : undefined
+  }
+  const getNum = (o: Record<string, unknown> | undefined, k: string): number | undefined => {
+    const v = o?.[k]; return typeof v === 'number' ? v : undefined
+  }
 
   const originalName =
-    upload?.originalName ??
-    payload?.original_name ??
-    meta?.originalName ??
-    detail?.originalName ??
-    detail?.filename ??
+    getStr(upload, 'originalName') ??
+    getStr(payload, 'original_name') ??
+    getStr(meta, 'originalName') ??
+    getStr(rec ?? undefined, 'originalName') ??
+    getStr(rec ?? undefined, 'filename') ??
     fallback.originalName ??
     '이름 없는 문서'
 
   const destPath =
-    upload?.destPath ??
-    payload?.dest_path ??
-    meta?.destPath ??
-    detail?.destPath ??
+    getStr(upload, 'destPath') ??
+    getStr(payload, 'dest_path') ??
+    getStr(meta, 'destPath') ??
+    getStr(rec ?? undefined, 'destPath') ??
     null
 
   const mimeType =
-    upload?.mimeType ??
-    payload?.mime_type ??
-    meta?.mimeType ??
-    meta?.mime ??
-    detail?.mimeType ??
-    detail?.mime ??
+    getStr(upload, 'mimeType') ??
+    getStr(payload, 'mime_type') ??
+    getStr(meta, 'mimeType') ??
+    getStr(meta, 'mime') ??
+    getStr(rec ?? undefined, 'mimeType') ??
+    getStr(rec ?? undefined, 'mime') ??
     fallback.mimeType
 
   const sizeBytes =
-    upload?.fileSize ??
-    upload?.size ??
-    payload?.size_bytes ??
-    meta?.size_bytes ??
-    detail?.size_bytes ??
-    fallback.fileSize ??
-    null
+    getNum(upload, 'fileSize') ??
+    getNum(upload, 'size') ??
+    getNum(payload, 'size_bytes') ??
+    getNum(meta, 'size_bytes') ??
+    getNum(rec ?? undefined, 'size_bytes') ??
+    fallback.fileSize ?? 0
 
   const uploadedAt =
-    upload?.uploaded_at ??
-    payload?.uploaded_at ??
-    meta?.uploaded_at ??
-    detail?.uploaded_at ??
+    getStr(upload, 'uploaded_at') ??
+    getStr(payload, 'uploaded_at') ??
+    getStr(meta, 'uploaded_at') ??
+    getStr(rec ?? undefined, 'uploaded_at') ??
     fallback.uploadedAt ??
     fallback.linkedAt
 
   return {
     id: fallback._id,
     originalName,
-    fileUrl: buildFileUrl(destPath),
-    mimeType,
-    sizeBytes,
-    uploadedAt: uploadedAt ?? undefined
+    fileUrl: buildFileUrl(destPath) ?? '',
+    ...(mimeType ? { mimeType } : {}),
+    ...((sizeBytes ?? null) !== null ? { sizeBytes } : {}),
+    ...(uploadedAt ? { uploadedAt } : {}),
   }
 }
 
@@ -255,7 +263,8 @@ export const useCustomerDocumentsController = (
           return
         }
 
-        const metadata = extractPreviewInfo(detail, document)
+        const recDetail: Record<string, unknown> | null = (detail && typeof detail === 'object' && !('_id' in (detail as any))) ? (detail as Record<string, unknown>) : null
+        const metadata = extractPreviewInfo(recDetail, document)
 
         setPreviewState({
           isOpen: true,
@@ -265,7 +274,7 @@ export const useCustomerDocumentsController = (
           data: {
             ...metadata,
             document,
-            rawDetail: detail
+            rawDetail: recDetail
           }
         })
       } catch (err) {

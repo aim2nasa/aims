@@ -82,7 +82,7 @@ export const CustomerSchema = z.object({
   tags: z.array(z.string()).default([]),
   segments: z.array(z.string()).optional(),
   labels: z.array(z.string()).optional(),
-  search_metadata: z.record(z.unknown()).optional(),
+  search_metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**

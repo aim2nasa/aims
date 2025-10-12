@@ -61,8 +61,11 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const documentId = useMemo(() => document?._id || (document as Record<string, string | undefined>)?.id || '', [document])
-  const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
+  const documentId = useMemo(
+    () => document?._id || (document as Record<string, string | undefined>)?.['id'] || '',
+    [document]
+  );
+const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
   /**
    * 모달이 열릴 때 상태 초기화
@@ -134,7 +137,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           const filtered = customers.filter((customer) => {
             const name = customer.personal_info?.name
             const phone =
-              customer.personal_info?.phone ??
+              customer.personal_info?.mobile_phone ?? customer.personal_info?.home_phone ?? customer.personal_info?.work_phone ??
               customer.personal_info?.mobile_phone ??
               customer.personal_info?.home_phone ??
               customer.personal_info?.work_phone
@@ -225,12 +228,14 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     setFeedbackMessage(null)
 
     try {
-      await onLink({
+      const _params: { customerId: string; documentId: string; relationshipType: string; notes?: string } = {
         customerId: selectedCustomerId,
         documentId,
-        relationshipType,
-        notes: notes.trim() || undefined
-      })
+        relationshipType
+      };
+      const _trimmed = notes.trim();
+      if (_trimmed) { _params.notes = _trimmed; }
+      await onLink(_params)
 
       setFeedbackMessage('문서가 고객에게 성공적으로 연결되었습니다.')
       onClose()
@@ -348,7 +353,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                   const isSelected = selectedCustomerId === customer._id
                   const displayName = customer.personal_info?.name || '이름 없음'
                   const phone =
-                    customer.personal_info?.phone ??
+                    customer.personal_info?.mobile_phone ?? customer.personal_info?.home_phone ?? customer.personal_info?.work_phone ??
                     customer.personal_info?.mobile_phone ??
                     customer.personal_info?.home_phone ??
                     customer.personal_info?.work_phone ??

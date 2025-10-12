@@ -152,8 +152,9 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
     }
 
     // 마지막으로 payload에서 확인
-    if (doc.payload?.full_text) {
-      return doc.payload.full_text
+    const payloadFullText = doc.payload ? (doc.payload as Record<string, unknown>)['full_text'] : null
+    if (typeof payloadFullText === 'string' && payloadFullText.trim()) {
+      return payloadFullText
     }
 
     return '문서의 전체 텍스트를 찾을 수 없습니다.'

@@ -318,16 +318,16 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         return (
           <DocumentsTab
             customer={customer}
-            onRefresh={onRefresh}
             onDocumentCountChange={setDocumentCount}
+            {...(onRefresh ? { onRefresh } : {})}
           />
         );
       case 'relationships':
         return (
           <RelationshipsTab
             customer={customer}
-            onSelectCustomer={onSelectCustomer}
-            onRelationshipsUpdated={onRefresh}
+            {...(onSelectCustomer ? { onSelectCustomer } : {})}
+            {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
           />
         );
       case 'consultations':
