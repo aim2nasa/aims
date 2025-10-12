@@ -45,18 +45,23 @@ export const FormField: React.FC<FormFieldProps> = ({
   required = false,
   helpText,
   errorMessage,
-  error,
+  error = false,
   id,
   ...inputProps
 }) => {
   const inputId = id || `form-field-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  const isRequired = Boolean(required);
+  const hasError = Boolean(error);
+  const normalizedErrorMessage = typeof errorMessage === 'string' ? errorMessage : undefined;
+  const normalizedHelpText = typeof helpText === 'string' ? helpText.trim() : '';
+  const shouldShowHelpText = normalizedHelpText.length > 0 && !hasError;
 
   return (
-    <div className={`form-field${error ? ' form-field--error' : ''}`}>
+    <div className={`form-field${hasError ? ' form-field--error' : ''}`}>
       {/* Label */}
       <label htmlFor={inputId} className="form-field__label">
         {label}
-        {required && <span className="form-field__required" aria-label="필수">*</span>}
+        {isRequired && <span className="form-field__required" aria-label="필수">*</span>}
       </label>
 
       {/* Content */}
@@ -64,18 +69,19 @@ export const FormField: React.FC<FormFieldProps> = ({
         {/* Input */}
         <Input
           id={inputId}
-          error={Boolean(error)}
-          {...(typeof errorMessage === 'string' ? { errorMessage } : {})}
-          aria-required={required}
+          error={hasError}
+          {...(normalizedErrorMessage ? { errorMessage: normalizedErrorMessage } : {})}
+          aria-required={isRequired}
+          required={isRequired}
           fullWidth
           {...inputProps}
         />
       </div>
 
       {/* Help Text */}
-      {helpText && !error && (
+      {shouldShowHelpText && (
         <span className="form-field__help-text">
-          {helpText}
+          {normalizedHelpText}
         </span>
       )}
     </div>

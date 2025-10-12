@@ -38,7 +38,7 @@ interface RefreshButtonProps {
  * ```
  */
 export const RefreshButton: React.FC<RefreshButtonProps> = ({
-  onClick,
+  onClick = () => undefined,
   loading = false,
   className = '',
   size = 'medium',
@@ -48,10 +48,13 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 실제 로딩 상태 (외부 loading prop 또는 내부 isRefreshing)
-  const isLoading = loading || isRefreshing;
+  const externalLoading = Boolean(loading);
+  const isDisabled = Boolean(disabled);
+  const sanitizedClassName = className.trim();
+  const isLoading = externalLoading || isRefreshing;
 
   const handleClick = async () => {
-    if (disabled || isLoading || !onClick) return;
+    if (isDisabled || isLoading) return;
 
     const result = onClick();
 
@@ -76,12 +79,22 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
     large: SFSymbolSize.CALLOUT
   }[size];
 
+  const buttonClasses = [
+    'refresh-button',
+    `refresh-button--${size}`,
+    isLoading && 'refresh-button--loading',
+    isDisabled && 'refresh-button--disabled',
+    sanitizedClassName
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <button
       type="button"
-      className={`refresh-button refresh-button--${size} ${isLoading ? 'refresh-button--loading' : ''} ${disabled ? 'refresh-button--disabled' : ''} ${className}`}
+      className={buttonClasses}
       onClick={handleClick}
-      disabled={disabled}
+      disabled={isDisabled || isLoading}
       title={tooltip}
       aria-label={tooltip}
     >
