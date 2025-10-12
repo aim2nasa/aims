@@ -143,7 +143,16 @@ export class CustomerService {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    return CustomerService.updateCustomer(id, { isActive: true });
+    const response = await api.post<{ success: boolean; data: unknown }>(
+      `${ENDPOINTS.CUSTOMER(id)}/restore`,
+      {}
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error('고객을 복원할 수 없습니다');
+    }
+
+    return CustomerUtils.validate(response.data);
   }
 
   /**

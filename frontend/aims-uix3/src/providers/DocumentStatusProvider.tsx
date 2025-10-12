@@ -254,13 +254,21 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           if (!docId) {
             return doc
           }
-          if (docId === documentId) {
+          if (docId !== documentId) {
+            return doc
+          }
+
+          if (relation) {
             return {
               ...doc,
               customer_relation: relation
             }
           }
-          return doc
+
+          const { customer_relation: _prevRelation, ...rest } = doc as Document & {
+            customer_relation?: DocumentCustomerRelation
+          }
+          return rest
         })
       )
 
@@ -269,13 +277,21 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           return prevSelected
         }
         const prevId = prevSelected._id || prevSelected['id']
-        if (prevId === documentId) {
+        if (prevId !== documentId) {
+          return prevSelected
+        }
+
+        if (relation) {
           return {
             ...prevSelected,
             customer_relation: relation
           }
         }
-        return prevSelected
+
+        const { customer_relation: _prevRelation, ...rest } = prevSelected as Document & {
+          customer_relation?: DocumentCustomerRelation
+        }
+        return rest
       })
     },
     []

@@ -15,6 +15,7 @@ import { useCustomerContext } from '@/contexts/CustomerContextHooks';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { queryKeys, invalidateQueries } from '@/app/queryClient';
 import { handleApiError } from '@/shared/lib/api';
+import { CustomerService } from '@/services/customerService';
 import type { CreateCustomerData, UpdateCustomerData } from '@/entities/customer';
 
 /**
@@ -114,10 +115,11 @@ const useCustomerDataManager = () => {
   // 데이터 동기화
   useEffect(() => {
     if (customersData) {
+      const pagination = customersData.pagination;
       setCustomers({
         customers: customersData.customers,
-        total: customersData.total,
-        hasMore: customersData.hasMore,
+        total: pagination?.totalCount ?? customersData.customers.length,
+        hasMore: pagination ? pagination.currentPage < pagination.totalPages : false,
       });
     }
   }, [customersData, setCustomers]);

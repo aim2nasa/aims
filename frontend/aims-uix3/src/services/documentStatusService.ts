@@ -580,6 +580,10 @@ export class DocumentStatusService {
   static extractSummary(document: Document): string {
     const metaData = parseStage<MetaData>(document.meta)
     const ocrData = parseStage<OcrData>(document.ocr)
+    const payloadData = toRecord(document.payload)
+
+    const ensureString = (value: unknown): string | undefined =>
+      typeof value === 'string' ? value : undefined
 
     // meta에 full_text가 있는 경우 - meta summary 사용
     if (metaData && metaData.full_text && metaData.full_text.trim()) {
@@ -603,8 +607,9 @@ export class DocumentStatusService {
     }
 
     // 마지막으로 payload.summary 시도
-    if (document.payload?.summary) {
-      return document.payload.summary
+    const payloadSummary = ensureString(payloadData?.['summary'])
+    if (payloadSummary) {
+      return payloadSummary
     }
 
     return '문서 요약을 찾을 수 없습니다.'
@@ -617,6 +622,9 @@ export class DocumentStatusService {
     const metaData = parseStage<MetaData>(document.meta)
     const textData = parseStage<TextData>(document.text)
     const ocrData = parseStage<OcrData>(document.ocr)
+    const payloadData = toRecord(document.payload)
+    const ensureString = (value: unknown): string | undefined =>
+      typeof value === 'string' ? value : undefined
 
     // meta에서 full_text 확인 (최우선)
     if (metaData && metaData.full_text && metaData.full_text.trim()) {
@@ -634,8 +642,9 @@ export class DocumentStatusService {
     }
 
     // 마지막으로 payload에서 확인
-    if (document.payload?.full_text) {
-      return document.payload.full_text
+    const payloadFullText = ensureString(payloadData?.['full_text'])
+    if (payloadFullText) {
+      return payloadFullText
     }
 
     return '문서의 전체 텍스트를 찾을 수 없습니다.'

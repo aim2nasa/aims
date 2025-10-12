@@ -45,10 +45,10 @@ interface StructuredData {
   법인: Record<string, string[]>;
 }
 
-interface PopulatedRelationship extends Relationship {
+interface PopulatedRelationship extends Omit<Relationship, 'from_customer' | 'related_customer' | 'family_representative'> {
   from_customer: Customer;
   related_customer: Customer;
-  family_representative?: Customer | string;
+  family_representative?: Customer;
 }
 
 /**
@@ -74,7 +74,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 초기 데이터 로드
   useEffect(() => {
     console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
-    loadCustomers({ limit: 10000, offset: 0 });
+    loadCustomers({ limit: 10000 });
   }, [loadCustomers]);
 
   const loadRelationshipsData = useCallback(async () => {
@@ -83,29 +83,33 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       const data = await RelationshipService.getAllRelationshipsWithCustomers();
       const customerMap = new Map(data.customers.map(customer => [customer._id, customer] as const));
 
+      const resolveCustomer = (value: string | Customer | undefined): Customer | undefined =>
+        typeof value === 'string' ? customerMap.get(value) : value;
+
       const populated = data.relationships
         .map<PopulatedRelationship | null>((relationship) => {
-          const fromCustomer = typeof relationship.from_customer === 'string'
-            ? customerMap.get(relationship.from_customer)
-            : relationship.from_customer;
-          const toCustomer = typeof relationship.related_customer === 'string'
-            ? customerMap.get(relationship.related_customer)
-            : relationship.related_customer;
+          const fromCustomer = resolveCustomer(relationship.from_customer);
+          const toCustomer = resolveCustomer(relationship.related_customer);
 
           if (!fromCustomer || !toCustomer) {
             return null;
           }
 
-          const representative = relationship.family_representative;
-          const resolvedRepresentative =
-            typeof representative === 'string' ? customerMap.get(representative) || representative : representative;
+          const representative = resolveCustomer(relationship.family_representative);
 
-          return {
-            ...relationship,
+          const { family_representative: _ignored, ...rest } = relationship;
+
+          const populatedRelationship: PopulatedRelationship = {
+            ...rest,
             from_customer: fromCustomer,
-            related_customer: toCustomer,
-            family_representative: resolvedRepresentative,
+            related_customer: toCustomer
           };
+
+          if (representative) {
+            populatedRelationship.family_representative = representative;
+          }
+
+          return populatedRelationship;
         })
         .filter((relationship): relationship is PopulatedRelationship => relationship !== null);
 
@@ -129,7 +133,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     const handleRelationshipChange = async () => {
       console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 데이터 새로고침');
       // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
-      await refresh({ limit: 10000, offset: 0 });
+      await refresh({ limit: 10000 });
       await loadRelationshipsData();
     };
 
@@ -153,6 +157,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       법인: {}
     };
 
+    const getCustomerId = (customer?: Customer): string | undefined => customer?._id;
+
     // 가족 관계 네트워크 구축
     const familyNetworks = new Map<string, Set<string>>();
     const processed = new Set<string>();
@@ -162,13 +168,16 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       const category = relationship.relationship_info?.relationship_category;
       const fromCustomer = relationship.from_customer;
       const toCustomer = relationship.related_customer;
+      const fromId = getCustomerId(fromCustomer);
+      const toId = getCustomerId(toCustomer);
+
+      if (!fromId || !toId) {
+        return;
+      }
 
       if (category === 'family' &&
           fromCustomer?.insurance_info?.customer_type === '개인' &&
           toCustomer?.insurance_info?.customer_type === '개인') {
-
-        const fromId = fromCustomer._id;
-        const toId = toCustomer._id;
 
         if (!familyNetworks.has(fromId)) {
           familyNetworks.set(fromId, new Set());
@@ -183,7 +192,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
 
     // 2단계: 가족 그룹별로 구성원 수집
-    familyNetworks.forEach((connections, customerId) => {
+    familyNetworks.forEach((_, customerId) => {
       if (processed.has(customerId)) return;
 
       const familyGroup = new Set<string>();
@@ -224,7 +233,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       if (groupRelationships.length > 0) {
         const relationshipWithRep = groupRelationships.find(rel => rel.family_representative);
         if (relationshipWithRep) {
-          const repId = relationshipWithRep.family_representative._id || relationshipWithRep.family_representative;
+          const repId = getCustomerId(relationshipWithRep.family_representative);
           representative = familyMembers.find(member => member._id === repId) || representative;
         }
       }
@@ -244,9 +253,15 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         const relationshipType = relationship.relationship_info?.relationship_type;
         const fromCustomer = relationship.from_customer;
         const toCustomer = relationship.related_customer;
+        const fromId = getCustomerId(fromCustomer);
+        const toId = getCustomerId(toCustomer);
+
+        if (!fromId || !toId) {
+          return;
+        }
 
         if (category === 'family' &&
-            familyGroup.has(fromCustomer._id) && familyGroup.has(toCustomer._id) &&
+            familyGroup.has(fromId) && familyGroup.has(toId) &&
             fromCustomer?.insurance_info?.customer_type === '개인' &&
             toCustomer?.insurance_info?.customer_type === '개인') {
 

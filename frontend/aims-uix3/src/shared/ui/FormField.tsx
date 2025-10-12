@@ -64,8 +64,8 @@ export const FormField: React.FC<FormFieldProps> = ({
         {/* Input */}
         <Input
           id={inputId}
-          error={error}
-          errorMessage={errorMessage}
+          error={Boolean(error)}
+          {...(typeof errorMessage === 'string' ? { errorMessage } : {})}
           aria-required={required}
           fullWidth
           {...inputProps}

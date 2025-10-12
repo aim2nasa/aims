@@ -210,8 +210,8 @@ export class DocumentService {
       return document;
     });
 
-    const total = toNumber(pagination?.totalCount) ?? documents.length;
-    const hasMore = Boolean(pagination?.hasNext);
+    const total = toNumber(pagination ? pagination['totalCount'] : undefined) ?? documents.length;
+    const hasMore = Boolean(pagination ? pagination['hasNext'] : undefined);
     return {
       documents,
       total,

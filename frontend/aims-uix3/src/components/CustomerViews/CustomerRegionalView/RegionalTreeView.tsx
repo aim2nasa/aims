@@ -192,16 +192,25 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
     // 도시별 노드
     Object.keys(groups).sort().forEach(city => {
-      const districts = groups[city]
-      const cityCustomers = Object.values(districts).flat()
+      const districts = groups[city] ?? {}
+      const districtEntries = Object.entries(districts)
 
-      const districtNodes: TreeNodeData[] = Object.keys(districts).sort().map(district => ({
-        key: `${city}-${district}`,
-        label: district,
-        type: 'district' as const,
-        count: districts[district].length,
-        customers: districts[district]
-      }))
+      const cityCustomers = districtEntries.reduce<Customer[]>((acc, [, list]) => {
+        if (Array.isArray(list)) {
+          acc.push(...list)
+        }
+        return acc
+      }, [])
+
+      const districtNodes: TreeNodeData[] = districtEntries
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([district, list]) => ({
+          key: `${city}-${district}`,
+          label: district,
+          type: 'district' as const,
+          count: Array.isArray(list) ? list.length : 0,
+          customers: Array.isArray(list) ? list : []
+        }))
 
       nodes.push({
         key: city,
@@ -299,7 +308,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           {isExpandable && (
             <SFSymbol
               name={isExpanded ? 'chevron-down' : 'chevron-right'}
-              size={SFSymbolSize.CAPTION1}
+              size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.MEDIUM}
               className="tree-node-chevron"
             />
@@ -345,7 +354,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               >
                 {getCustomerTypeIcon(customer)}
                 <span className="tree-customer-name">
-                  {customer?.personal_info?.name || customer?.name || '이름 없음'}
+                  {customer?.personal_info?.name ?? '이름 없음'}
                 </span>
               </div>
             ))}
@@ -360,7 +369,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     return (
       <div className="regional-tree-view">
         <div className="regional-tree-loading">
-          <SFSymbol name="arrow-clockwise" size={SFSymbolSize.TITLE1} weight={SFSymbolWeight.MEDIUM} />
+          <SFSymbol name="arrow-clockwise" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />
           <span>로딩 중...</span>
         </div>
       </div>
@@ -406,7 +415,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         {/* 모두 펼치기/접기 토글 버튼 & 새로고침 버튼 */}
         <div className="tree-actions">
           <RefreshButton
-            onClick={onRefresh}
+            onClick={onRefresh ?? (() => {})}
             loading={loading}
             tooltip="지역별 고객 새로고침"
             size="small"
