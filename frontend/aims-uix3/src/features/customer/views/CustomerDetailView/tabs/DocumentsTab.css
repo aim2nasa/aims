@@ -248,12 +248,12 @@
 }
 
 .customer-documents__action-button:hover:not(:disabled) {
-  background-color: var(--color-primary-50);
+  background-color: transparent;
   color: var(--color-primary-600);
 }
 
 .customer-documents__action-button:active:not(:disabled) {
-  background-color: var(--color-primary-100);
+  background-color: transparent;
   color: var(--color-primary-700);
   transform: translateY(1px);
 }
@@ -267,16 +267,18 @@
 }
 
 .customer-documents__action-button--danger:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-icon-red) 18%, transparent);
+  background-color: transparent;
+  color: color-mix(in srgb, var(--color-icon-red) 80%, var(--color-text-secondary) 20%);
 }
 
 .customer-documents__action-button--danger:active:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-icon-red) 28%, transparent);
+  background-color: transparent;
   color: var(--color-icon-red);
+  transform: translateY(1px);
 }
 
 .customer-documents__action-button--danger:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-icon-red) 30%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-icon-red) 40%, transparent);
 }
 
 .customer-documents__action-icon--danger {
