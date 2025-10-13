@@ -737,6 +737,25 @@
   --color-icon-doc-search: #007aff;    /* iOS systemBlue - 문서 검색 */
   --color-icon-doc-status: #ff3b30;    /* iOS systemRed - 문서 처리 현황 */
 
+  /* === iOS System Colors - Customer Menu Icons === */
+  /* Light Theme - iOS Human Interface Guidelines 표준 색상 */
+  --color-ios-blue: #007aff;           /* iOS systemBlue */
+  --color-ios-green: #34c759;          /* iOS systemGreen */
+  --color-ios-orange: #ff9500;         /* iOS systemOrange */
+  --color-ios-purple: #af52de;         /* iOS systemPurple */
+  --color-ios-teal: #5ac8fa;           /* iOS systemTeal */
+  --color-ios-indigo: #5856d6;         /* iOS systemIndigo */
+  --color-ios-yellow: #ffcc00;         /* iOS systemYellow */
+
+  /* Dark Theme - iOS 다크모드 전용 색상 */
+  --color-ios-blue-dark: #0a84ff;      /* iOS systemBlue Dark */
+  --color-ios-green-dark: #30d158;     /* iOS systemGreen Dark */
+  --color-ios-orange-dark: #ff9f0a;    /* iOS systemOrange Dark */
+  --color-ios-purple-dark: #bf5af2;    /* iOS systemPurple Dark */
+  --color-ios-teal-dark: #64d2ff;      /* iOS systemTeal Dark */
+  --color-ios-indigo-dark: #5e5ce6;    /* iOS systemIndigo Dark */
+  --color-ios-yellow-dark: #ffd60a;    /* iOS systemYellow Dark */
+
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
 
