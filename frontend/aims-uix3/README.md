@@ -1,11 +1,33 @@
-# React + TypeScript + Vite
+# AIMS UIX3 - React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AIMS (Agent Intelligent Management System) UIX3는 보험 설계사를 위한 지능형 문서 관리 시스템의 프론트엔드입니다.
 
-Currently, two official plugins are available:
+## 기술 스택
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** + **TypeScript** - 타입 안전성과 개발 생산성
+- **Vite** - 빠른 개발 서버와 최적화된 빌드
+- **Tailwind CSS** - 유틸리티 기반 스타일링
+- **Ant Design** - 엔터프라이즈급 UI 컴포넌트
+
+## 개발 지침
+
+### 필수 준수 사항
+
+1. **빌드 무결성 원칙**
+   - `npm run build` 실행 시 오류가 발생하지 않아야 합니다
+   - 모든 TypeScript 타입 오류를 해결한 후 커밋
+   - ESLint 경고를 최소화하고 오류는 반드시 수정
+   - 빌드 전 항상 타입 체크 실행: `npm run typecheck`
+
+2. **코드 품질 관리**
+   - 커밋 전 반드시 빌드 테스트 수행
+   - 미사용 import와 변수 제거
+   - 일관된 코딩 스타일 유지
+
+3. **Git 커밋 규칙**
+   - 사용자의 명시적 승인 후에만 커밋
+   - 작고 집중된 커밋 단위 유지
+   - 명확한 커밋 메시지 작성
 
 ## Expanding the ESLint configuration
 
