@@ -228,6 +228,47 @@ export class DocumentStatusService {
   }
 
   /**
+   * 파일 크기 추출
+   */
+  static extractFileSize(document: Document): number {
+    const uploadData = parseStage<UploadData>(document.upload) as any
+    if (uploadData?.fileSize !== undefined) {
+      return uploadData.fileSize
+    }
+
+    const stageUpload = parseStage<UploadData>(document.stages?.upload) as any
+    if (stageUpload?.fileSize !== undefined) {
+      return stageUpload.fileSize
+    }
+
+    // 기본 필드에서 찾기
+    const doc = document as any
+    if (doc.size !== undefined) {
+      return doc.size
+    }
+
+    if (doc.fileSize !== undefined) {
+      return doc.fileSize
+    }
+
+    if (doc.file_size !== undefined) {
+      return doc.file_size
+    }
+
+    const metaData = parseStage<MetaData>(document.meta) as any
+    if (metaData?.size !== undefined) {
+      return metaData.size
+    }
+
+    const stageMeta = parseStage<MetaData>(document.stages?.meta) as any
+    if (stageMeta?.size !== undefined) {
+      return stageMeta.size
+    }
+
+    return 0
+  }
+
+  /**
    * 문서 상태 추출
    * @deprecated 내부적으로 DocumentProcessingModule 사용
    */

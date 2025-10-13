@@ -306,7 +306,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
                   {/* 🍎 SIZE: Fixed width column */}
                   <span className="document-size">
-                    {DocumentUtils.formatFileSize(document.size)}
+                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document as any))}
                   </span>
 
                   {/* 🍎 DATE: Fixed width column */}
