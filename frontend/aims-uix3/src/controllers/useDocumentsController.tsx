@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DocumentService } from '@/services/DocumentService';
+import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { handleApiError } from '@/shared/lib/api';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
 
@@ -46,14 +47,44 @@ export const useDocumentsController = () => {
       }
       setError(null);
 
-      // params를 그대로 사용 (closure 문제 방지)
-      const result = searchQuery.trim()
-        ? await DocumentService.searchDocuments(searchQuery, params)
-        : await DocumentService.getDocuments(params);
+      // DocumentStatusService를 사용하여 처리 상태 정보도 함께 가져오기
+      const data = await DocumentStatusService.getRecentDocuments(1000);
+      const realDocuments = data.files || data.data?.documents || data.documents || [];
 
-      setDocuments(result.documents);
-      setTotal(result.total);
-      setHasMore(result.hasMore);
+      // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
+      const documentsWithCustomerRelation = await Promise.all(
+        realDocuments.map(async (doc: any) => {
+          try {
+            const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc.id || '');
+            return {
+              ...doc,
+              customer_relation: detailedDoc.data?.rawDocument?.customer_relation
+            };
+          } catch (error) {
+            console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
+            return doc;
+          }
+        })
+      );
+
+      // 검색 필터링
+      let filteredDocs = documentsWithCustomerRelation;
+      if (searchQuery.trim()) {
+        const searchTermLower = searchQuery.toLowerCase();
+        filteredDocs = documentsWithCustomerRelation.filter((doc: any) => {
+          const filename = DocumentStatusService.extractFilename(doc).toLowerCase();
+          return filename.includes(searchTermLower);
+        });
+      }
+
+      // 페이지네이션 적용
+      const limit = params.limit || 10;
+      const offset = params.offset || 0;
+      const paginatedDocs = filteredDocs.slice(offset, offset + limit);
+
+      setDocuments(paginatedDocs);
+      setTotal(filteredDocs.length);
+      setHasMore(offset + limit < filteredDocs.length);
       setIsInitialLoad(false); // 초기 로딩 완료
     } catch (err) {
       setError(handleApiError(err));

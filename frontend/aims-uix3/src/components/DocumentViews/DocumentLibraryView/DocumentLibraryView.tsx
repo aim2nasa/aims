@@ -14,6 +14,7 @@ import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption, Tooltip } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
+import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import './DocumentLibraryView.css'
 
 interface DocumentLibraryViewProps {
@@ -265,8 +266,11 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
           ) : (
             documents.map((document) => {
+              const status = DocumentStatusService.extractStatus(document as any)
+              const statusLabel = DocumentStatusService.getStatusLabel(status)
+              const statusIcon = DocumentStatusService.getStatusIcon(status)
               const isLinked = Boolean((document as any).customer_relation)
-              const canLink = !isLinked
+              const canLink = status === 'completed' && !isLinked
               const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 
               return (
@@ -314,6 +318,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                   <span className="document-type">
                     {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
                   </span>
+
+                  {/* 🍎 STATUS: 문서 처리 상태 아이콘 */}
+                  <Tooltip content={statusLabel}>
+                    <div className={`status-icon status-${status}`}>
+                      {statusIcon}
+                    </div>
+                  </Tooltip>
 
                   {/* 액션 버튼 */}
                   <div className="document-actions">
