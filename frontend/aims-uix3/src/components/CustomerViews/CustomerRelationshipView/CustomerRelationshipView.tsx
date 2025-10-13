@@ -392,7 +392,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
 
     return result;
-  }, [documentCustomerMap, relationships]);
+  }, [documentCustomerMap, relationships, resolvedCustomerMap]);
 
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {

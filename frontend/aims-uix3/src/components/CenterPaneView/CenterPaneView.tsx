@@ -91,7 +91,7 @@ export const CenterPaneView: React.FC<CenterPaneViewProps> = ({
   visible,
   title,
   titleIcon,
-  onClose: _onClose, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onClose: _onClose,
   marginTop = 4,
   marginBottom = 4,
   marginLeft = 4,

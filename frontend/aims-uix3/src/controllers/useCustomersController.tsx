@@ -124,7 +124,6 @@ export const useCustomersController = () => {
     state.isLoading,
     state.hasMore,
     state.customers,
-    state.searchQuery,
     state.searchParams,
     setLoading,
     setCustomers,

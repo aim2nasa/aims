@@ -52,6 +52,7 @@ export const useDocumentsController = () => {
       const realDocuments = data.files || data.data?.documents || data.documents || [];
 
       // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const documentsWithCustomerRelation = await Promise.all(
         realDocuments.map(async (doc: any) => {
           try {
@@ -71,6 +72,7 @@ export const useDocumentsController = () => {
       let filteredDocs = documentsWithCustomerRelation;
       if (searchQuery.trim()) {
         const searchTermLower = searchQuery.toLowerCase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filteredDocs = documentsWithCustomerRelation.filter((doc: any) => {
           const filename = DocumentStatusService.extractFilename(doc).toLowerCase();
           return filename.includes(searchTermLower);

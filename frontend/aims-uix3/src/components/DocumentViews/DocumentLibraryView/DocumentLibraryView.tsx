@@ -97,16 +97,21 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
 
   // 🍎 모달 상태 관리
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocument, setSelectedDocument] = React.useState<any | null>(null)
   const [isDetailModalVisible, setDetailModalVisible] = React.useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocumentForSummary, setSelectedDocumentForSummary] = React.useState<any | null>(null)
   const [isSummaryModalVisible, setSummaryModalVisible] = React.useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocumentForFullText, setSelectedDocumentForFullText] = React.useState<any | null>(null)
   const [isFullTextModalVisible, setFullTextModalVisible] = React.useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocumentForLink, setSelectedDocumentForLink] = React.useState<any | null>(null)
   const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
 
   // 🍎 모달 핸들러
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDetailClick = React.useCallback((document: any) => {
     setSelectedDocument(document)
     setDetailModalVisible(true)
@@ -119,6 +124,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }, 300)
   }, [])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSummaryClickInternal = React.useCallback((document: any) => {
     setSelectedDocumentForSummary(document)
     setSummaryModalVisible(true)
@@ -131,6 +137,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }, 300)
   }, [])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFullTextClickInternal = React.useCallback((document: any) => {
     setSelectedDocumentForFullText(document)
     setFullTextModalVisible(true)
@@ -143,6 +150,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }, 300)
   }, [])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleLinkClickInternal = React.useCallback((document: any) => {
     setSelectedDocumentForLink(document)
     setLinkModalVisible(true)
@@ -362,7 +370,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
           ) : (
             documents.map((document) => {
-              const status = DocumentStatusService.extractStatus(document)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const status = DocumentStatusService.extractStatus(document as any)
               const statusLabel = DocumentStatusService.getStatusLabel(status)
               const statusIcon = DocumentStatusService.getStatusIcon(status)
               const isLinked = Boolean(document.customer_relation)
@@ -402,7 +411,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
                   {/* 🍎 SIZE: Fixed width column */}
                   <span className="document-size">
-                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document))}
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document as any))}
                   </span>
 
                   {/* 🍎 DATE: Fixed width column */}

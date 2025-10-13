@@ -230,7 +230,7 @@ export class DocumentStatusService {
   /**
    * 파일 크기 추출
    */
-  static extractFileSize(document: Partial<Document> | any): number {
+  static extractFileSize(document: Partial<Document>): number {
     const uploadData = parseStage<UploadData>(document.upload)
     if (uploadData?.fileSize !== undefined) {
       return uploadData.fileSize
@@ -271,7 +271,7 @@ export class DocumentStatusService {
    * 문서 상태 추출
    * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
-  static extractStatus(document: Partial<Document> | any): DocumentStatus {
+  static extractStatus(document: Partial<Document>): DocumentStatus {
     return DocumentProcessingModule.getProcessingStatus(document).status
   }
 
