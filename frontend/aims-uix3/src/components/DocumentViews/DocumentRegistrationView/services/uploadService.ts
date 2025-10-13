@@ -154,12 +154,16 @@ export class UploadService {
       if (result.warn) {
         const errorMessage = result.userMessage || '지원하지 않는 파일 형식입니다'
         this.statusCallback?.(id, 'warning', errorMessage)
-        console.log(`[UploadService] 파일 업로드 경고: ${file.name}`, result)
+        if (import.meta.env.DEV) {
+          console.log(`[UploadService] 파일 업로드 경고: ${file.name}`, result)
+        }
       }
       // 성공 케이스: OCR 큐잉, 텍스트 완료, 기본 성공
       else {
         this.statusCallback?.(id, 'completed')
-        console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
+        if (import.meta.env.DEV) {
+          console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
+        }
       }
 
     } catch (error) {
@@ -168,7 +172,9 @@ export class UploadService {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
+          if (import.meta.env.DEV) {
+            console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
+          }
           this.statusCallback?.(id, 'cancelled')
         } else {
           const response = (error as ErrorWithResponse).response
@@ -335,7 +341,9 @@ export class UploadService {
    * 서비스 정리 - 진행 중인 업로드는 유지
    */
   cleanup(): void {
-    console.log('[UploadService] cleanup 호출됨 - 콜백만 정리 (업로드는 계속)')
+    if (import.meta.env.DEV) {
+      console.log('[UploadService] cleanup 호출됨 - 콜백만 정리 (업로드는 계속)')
+    }
     // 콜백만 정리하고 진행 중인 업로드는 그대로 유지
     this.progressCallback = undefined
     this.statusCallback = undefined

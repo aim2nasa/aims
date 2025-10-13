@@ -77,7 +77,9 @@ class DownloadHelper {
       window.URL.revokeObjectURL(url);
 
       if (showMessage) {
-        console.log('파일이 다운로드되었습니다:', originalName);
+        if (import.meta.env.DEV) {
+          console.log('파일이 다운로드되었습니다:', originalName);
+        }
       }
 
       return {

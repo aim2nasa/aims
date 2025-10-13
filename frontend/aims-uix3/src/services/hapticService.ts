@@ -203,15 +203,21 @@ export class HapticService {
     }
 
     const types = Object.values(HapticType)
-    console.log('Starting haptic test sequence...')
+    if (import.meta.env.DEV) {
+      console.log('Starting haptic test sequence...')
+    }
 
     for (const type of types) {
-      console.log(`Testing: ${type}`)
+      if (import.meta.env.DEV) {
+        console.log(`Testing: ${type}`)
+      }
       this.trigger(type, true) // 강제 실행
       await new Promise(resolve => setTimeout(resolve, 1000)) // 1초 간격
     }
 
-    console.log('Haptic test sequence completed')
+    if (import.meta.env.DEV) {
+      console.log('Haptic test sequence completed')
+    }
   }
 
   /**
@@ -225,10 +231,12 @@ export class HapticService {
       return
     }
 
-    if (data !== undefined) {
-      console.log(`[HapticService] ${message}`, data)
-    } else {
-      console.log(`[HapticService] ${message}`)
+    if (import.meta.env.DEV) {
+      if (data !== undefined) {
+        console.log(`[HapticService] ${message}`, data)
+      } else {
+        console.log(`[HapticService] ${message}`)
+      }
     }
   }
 }

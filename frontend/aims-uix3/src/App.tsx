@@ -353,14 +353,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const { isHapticEnabled } = haptic
 
   useEffect(() => {
-    console.log('[App] iOS 네이티브 시스템 초기화 상태', {
-      dynamicType: {
-        currentSize,
-        scaleFactor,
-        isAccessibilitySize
-      },
-      hapticEnabled: isHapticEnabled
-    })
+    if (import.meta.env.DEV) {
+      console.log('[App] iOS 네이티브 시스템 초기화 상태', {
+        dynamicType: {
+          currentSize,
+          scaleFactor,
+          isAccessibilitySize
+        },
+        hapticEnabled: isHapticEnabled
+      })
+    }
   }, [currentSize, scaleFactor, isAccessibilitySize, isHapticEnabled])
 
   // 햅틱 피드백을 전역적으로 사용할 수 있도록 window 객체에 바인딩
@@ -409,11 +411,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       const handleSystemThemeChange = () => {
         // 시스템 설정이 변경되었을 때 재렌더링 트리거
         // CSS는 이미 @media (prefers-color-scheme: dark) 로 처리됨
-        console.log(`[Theme] 시스템 테마 변경 감지: ${mediaQuery.matches ? 'dark' : 'light'}`)
+        if (import.meta.env.DEV) {
+          console.log(`[Theme] 시스템 테마 변경 감지: ${mediaQuery.matches ? 'dark' : 'light'}`)
+        }
       }
 
       // 초기 로그
-      console.log(`[Theme] 시스템 테마 모드 활성화 - 현재: ${mediaQuery.matches ? 'dark' : 'light'}`)
+      if (import.meta.env.DEV) {
+        console.log(`[Theme] 시스템 테마 모드 활성화 - 현재: ${mediaQuery.matches ? 'dark' : 'light'}`)
+      }
 
       mediaQuery.addEventListener('change', handleSystemThemeChange)
 
@@ -517,7 +523,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
   const handleDocumentClick = useCallback(async (documentId: string) => {
-    console.log('[App] 문서 클릭:', documentId)
+    if (import.meta.env.DEV) {
+      console.log('[App] 문서 클릭:', documentId)
+    }
 
     try {
       // n8n webhook을 통해 문서 상세 정보 조회
@@ -531,24 +539,32 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       const json = await response.json() as unknown
       const data = Array.isArray(json) ? json as SmartSearchDocumentResponse[] : json ? [json as SmartSearchDocumentResponse] : []
-      console.log('[App] API 응답 데이터:', data)
+      if (import.meta.env.DEV) {
+        console.log('[App] API 응답 데이터:', data)
+      }
 
       const fileData = data[0]
       if (!fileData) {
-        console.warn('[App] fileData가 비어 있습니다.')
+        if (import.meta.env.DEV) {
+          console.warn('[App] fileData가 비어 있습니다.')
+        }
         return
       }
 
       const rawDocument = toSmartSearchDocumentResponse(fileData)
       if (!rawDocument) {
-        console.warn('[App] smart search 응답이 예상한 형태가 아닙니다.', fileData)
+        if (import.meta.env.DEV) {
+          console.warn('[App] smart search 응답이 예상한 형태가 아닙니다.', fileData)
+        }
         return
       }
 
       const selected = buildSelectedDocument(documentId, rawDocument)
 
-      console.log('[App] 구성된 document 객체:', selected)
-      console.log('[App] fileUrl:', selected.fileUrl)
+      if (import.meta.env.DEV) {
+        console.log('[App] 구성된 document 객체:', selected)
+        console.log('[App] fileUrl:', selected.fileUrl)
+      }
 
       setSelectedDocument(selected)
       setRightPaneContentType('document')
@@ -562,7 +578,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
   const handleCustomerClick = useCallback(async (customerId: string, customerData?: Customer) => {
-    console.log('[App] 고객 클릭:', customerId, customerData)
+    if (import.meta.env.DEV) {
+      console.log('[App] 고객 클릭:', customerId, customerData)
+    }
 
     if (customerData) {
       setSelectedCustomer(customerData)
@@ -584,12 +602,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // CustomerService를 동적으로 import
       const customer = await CustomerService.getCustomer(selectedCustomer._id)
       setSelectedCustomer(customer)
-      console.log('[App] 고객 상세정보 새로고침 완료')
+      if (import.meta.env.DEV) {
+        console.log('[App] 고객 상세정보 새로고침 완료')
+      }
 
       // 고객 전체보기도 새로고침
       if (customerAllViewRefreshRef.current) {
         customerAllViewRefreshRef.current()
-        console.log('[App] 고객 전체보기 새로고침 완료')
+        if (import.meta.env.DEV) {
+          console.log('[App] 고객 전체보기 새로고침 완료')
+        }
       }
     } catch (error) {
       console.error('[App] 고객 정보 새로고침 실패:', error)
@@ -601,7 +623,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // 고객 전체보기만 새로고침 (selectedCustomer는 이미 없음)
     if (customerAllViewRefreshRef.current) {
       customerAllViewRefreshRef.current()
-      console.log('[App] 고객 삭제 후 전체보기 새로고침 완료')
+      if (import.meta.env.DEV) {
+        console.log('[App] 고객 삭제 후 전체보기 새로고침 완료')
+      }
     }
   }, [])
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
@@ -610,12 +634,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       const newCollapsed = !prev
 
       // 애니메이션 상태 설정
-      console.log('[App] 애니메이션 상태 변경:', newCollapsed ? 'collapsing' : 'expanding')
+      if (import.meta.env.DEV) {
+        console.log('[App] 애니메이션 상태 변경:', newCollapsed ? 'collapsing' : 'expanding')
+      }
       setLeftPaneAnimationState(newCollapsed ? 'collapsing' : 'expanding')
 
       // 모든 단계적 애니메이션 완료 후 idle 상태로 복귀
       setTimeout(() => {
-        console.log('[App] 애니메이션 상태 idle로 복귀')
+        if (import.meta.env.DEV) {
+          console.log('[App] 애니메이션 상태 idle로 복귀')
+        }
         setLeftPaneAnimationState('idle')
       }, 1000) // 전체 전동 커튼 효과 완료 시간 (600ms + 충분한 여유)
 

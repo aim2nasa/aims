@@ -47,7 +47,9 @@ export const useCustomersController = () => {
    * 고객 목록 로드
    */
   const loadCustomers = useCallback(async (params?: Partial<CustomerSearchQuery>) => {
-    console.log('[useCustomersController] loadCustomers called with params:', params)
+    if (import.meta.env.DEV) {
+      console.log('[useCustomersController] loadCustomers called with params:', params)
+    }
     try {
       setLoading(true);
       setError(null);
@@ -56,18 +58,22 @@ export const useCustomersController = () => {
       const document = CustomerDocument.getInstance();
       const searchParams = { ...state.searchParams, ...params };
 
-      console.log('[useCustomersController] Document를 통해 고객 목록 로드:', searchParams)
+      if (import.meta.env.DEV) {
+        console.log('[useCustomersController] Document를 통해 고객 목록 로드:', searchParams)
+      }
       await document.loadCustomers(searchParams);
 
       const customers = document.getCustomers();
       const total = document.getTotal();
       const hasMore = document.getHasMore();
 
-      console.log('[useCustomersController] Document 로드 완료:', {
-        customersCount: customers.length,
-        total,
-        hasMore
-      })
+      if (import.meta.env.DEV) {
+        console.log('[useCustomersController] Document 로드 완료:', {
+          customersCount: customers.length,
+          total,
+          hasMore
+        })
+      }
 
       setCustomers({
         customers,
@@ -157,7 +163,9 @@ export const useCustomersController = () => {
       // Document-View 패턴: CustomerDocument를 통해 생성
       const document = CustomerDocument.getInstance();
       const newCustomer = await document.createCustomer(data);
-      console.log('[useCustomersController] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[useCustomersController] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
+      }
 
       addCustomer(newCustomer);
       showCreateForm(false);
@@ -179,7 +187,9 @@ export const useCustomersController = () => {
       // Document-View 패턴: CustomerDocument를 통해 수정
       const document = CustomerDocument.getInstance();
       const updatedCustomer = await document.updateCustomer(id, data);
-      console.log('[useCustomersController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[useCustomersController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      }
 
       updateCustomerInState(updatedCustomer);
       showEditForm(false);
@@ -201,7 +211,9 @@ export const useCustomersController = () => {
       // Document-View 패턴: CustomerDocument를 통해 삭제
       const document = CustomerDocument.getInstance();
       await document.deleteCustomer(id);
-      console.log('[useCustomersController] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[useCustomersController] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+      }
 
       removeCustomer(id);
     } catch (error) {
