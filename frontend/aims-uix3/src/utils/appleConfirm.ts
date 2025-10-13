@@ -59,13 +59,13 @@ export function showAppleConfirm(
         <div style="display: flex; border-top: 0.33px solid rgba(60, 60, 67, 0.18); min-height: 43px; position: relative;">
           <button
             class="apple-confirm-cancel-btn"
-            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 400; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary, #007AFF); transition: background-color 0.12s ease;">
+            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 400; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary); transition: background-color 0.12s ease;">
             취소
           </button>
           <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 0.33px; background-color: var(--color-border, rgba(60, 60, 67, 0.18)); transform: translateX(-50%);"></div>
           <button
             class="apple-confirm-ok-btn"
-            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary, #007AFF); transition: background-color 0.12s ease;">
+            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary); transition: background-color 0.12s ease;">
             확인
           </button>
         </div>
@@ -74,7 +74,7 @@ export function showAppleConfirm(
         <div style="display: flex; border-top: 0.33px solid rgba(60, 60, 67, 0.18); min-height: 43px;">
           <button
             class="apple-confirm-cancel-btn"
-            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary, #007AFF); transition: background-color 0.12s ease;">
+            style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary); transition: background-color 0.12s ease;">
             확인
           </button>
         </div>
@@ -86,7 +86,7 @@ export function showAppleConfirm(
           <div style="margin-bottom: 6px; display: flex; justify-content: center; align-items: center;">
             <div style="font-size: var(--font-size-2xl, 28px); opacity: 0.95; transform: scale(0.9);">⚠️</div>
           </div>
-          <h2 style="font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.25; color: var(--color-text-primary, #000000); margin: 0; letter-spacing: -0.35px; font-family: var(--font-family-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);">
+          <h2 style="font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.25; color: var(--color-text-primary); margin: 0; letter-spacing: -0.35px; font-family: var(--font-family-display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);">
             ${title}
           </h2>
         </div>
@@ -98,7 +98,7 @@ export function showAppleConfirm(
         </div>
       `}
       <div style="padding: 0 20px 18px 20px; text-align: center;">
-        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary, #000000); margin: 0; white-space: pre-wrap; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
+        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary); margin: 0; white-space: pre-wrap; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
           ${processedMessage}
         </p>
       </div>
@@ -265,10 +265,10 @@ export function showOversizedFilesModal(
     const fileListHTML = oversizedFiles
       .map((file, index) => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; ${index < oversizedFiles.length - 1 ? 'border-bottom: 0.33px solid rgba(60, 60, 67, 0.18);' : ''}">
-          <span style="font-size: var(--font-size-footnote, 13px); font-weight: 400; color: var(--color-text-primary, #000000); opacity: 0.85; flex: 1; word-break: break-word; margin-right: 16px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); line-height: 1.3;">
+          <span style="font-size: var(--font-size-footnote, 13px); font-weight: 400; color: var(--color-text-primary); opacity: 0.85; flex: 1; word-break: break-word; margin-right: 16px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); line-height: 1.3;">
             ${file.name}
           </span>
-          <span style="font-size: var(--font-size-footnote, 13px); font-weight: 590; color: var(--color-primary, #007AFF); font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); white-space: nowrap;">
+          <span style="font-size: var(--font-size-footnote, 13px); font-weight: 590; color: var(--color-primary); font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); white-space: nowrap;">
             ${formatFileSize(file.size)}
           </span>
         </div>
@@ -282,7 +282,7 @@ export function showOversizedFilesModal(
         </div>
       </div>
       <div style="padding: 0 20px 16px 20px; text-align: center;">
-        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary, #000000); margin: 0 0 16px 0; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
+        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary); margin: 0 0 16px 0; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
           다음 파일들은 ${formatFileSize(sizeLimit)} 제한을 초과하여 업로드에서 제외됩니다.
         </p>
         <div style="max-height: 320px; overflow-y: auto; border-radius: 10px; background-color: var(--color-bg-secondary, rgba(248, 248, 248, 0.9)); padding: 16px; margin-bottom: 12px; border: 0.33px solid rgba(60, 60, 67, 0.12);">
@@ -292,7 +292,7 @@ export function showOversizedFilesModal(
       <div style="display: flex; border-top: 0.33px solid rgba(60, 60, 67, 0.18); min-height: 43px;">
         <button
           class="apple-confirm-cancel-btn"
-          style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary, #007AFF); transition: background-color 0.12s ease;">
+          style="flex: 1; background: none; border: none; padding: 11px 16px; font-size: var(--font-size-callout, 16px); font-weight: 590; line-height: 1.24; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 43px; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.32px; color: var(--color-primary); transition: background-color 0.12s ease;">
           확인
         </button>
       </div>

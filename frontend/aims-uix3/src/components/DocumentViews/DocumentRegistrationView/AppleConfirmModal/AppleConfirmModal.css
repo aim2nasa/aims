@@ -100,7 +100,7 @@
   font-size: var(--font-size-callout); /* iOS Alert 제목 최적 크기 (16px) */
   font-weight: 590; /* iOS Semibold 최적화 */
   line-height: 1.25; /* iOS 라인 높이 최적화 */
-  color: #000000; /* iOS Label 색상 */
+  color: var(--color-neutral-900); /* iOS Label 색상 */
   margin: 0;
   letter-spacing: -0.35px; /* iOS kerning 최적화 */
   font-family: var(--font-family-display);
@@ -116,7 +116,7 @@
   font-size: var(--font-size-caption-1); /* iOS Alert 메시지 최적 크기 (12px) */
   font-weight: 400; /* iOS Regular */
   line-height: 1.33; /* iOS 라인 높이 최적화 */
-  color: #000000; /* iOS Secondary Label 색상 */
+  color: var(--color-neutral-900); /* iOS Secondary Label 색상 */
   margin: 0;
   white-space: pre-wrap; /* 줄바꿈 지원 */
   font-family: var(--font-family-text);
@@ -168,7 +168,7 @@
 
 /* 🍎 CANCEL BUTTON: 취소 버튼 스타일 */
 .apple-confirm-modal__button--cancel {
-  color: #007AFF; /* iOS systemBlue 정확한 색상 */
+  color: var(--color-ios-blue); /* iOS systemBlue 정확한 색상 */
   font-weight: 400; /* iOS Regular */
   border-radius: 0 0 0 13px; /* 왼쪽 하단 모서리만 둥글게 */
 }
@@ -189,7 +189,7 @@
 
 /* 🍎 PRIMARY CONFIRM: 일반 확인 (파란색) */
 .apple-confirm-modal__button--primary {
-  color: #007AFF; /* iOS systemBlue 정확한 색상 */
+  color: var(--color-ios-blue); /* iOS systemBlue 정확한 색상 */
 }
 
 .apple-confirm-modal__button--primary:hover {
@@ -202,7 +202,7 @@
 
 /* 🍎 DESTRUCTIVE CONFIRM: 위험한 액션 (빨간색) */
 .apple-confirm-modal__button--destructive {
-  color: #FF3B30; /* iOS systemRed 정확한 색상 */
+  color: var(--color-ios-red); /* iOS systemRed 정확한 색상 */
 }
 
 .apple-confirm-modal__button--destructive:hover {
@@ -269,11 +269,11 @@ html[data-theme="dark"] .apple-confirm-modal {
 }
 
 html[data-theme="dark"] .apple-confirm-modal__title {
-  color: #FFFFFF; /* iOS Label 다크 모드 색상 */
+  color: var(--color-neutral-0); /* iOS Label 다크 모드 색상 */
 }
 
 html[data-theme="dark"] .apple-confirm-modal__message {
-  color: #FFFFFF; /* iOS Secondary Label 다크 모드 색상 */
+  color: var(--color-neutral-0); /* iOS Secondary Label 다크 모드 색상 */
 }
 
 html[data-theme="dark"] .apple-confirm-modal__actions {

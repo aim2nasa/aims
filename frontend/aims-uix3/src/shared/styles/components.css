@@ -878,12 +878,12 @@
 
 /* 다크 테마 전용 모달 배경 */
 [data-theme="dark"] .floating-modal {
-  background: #2c2c2e;  /* 다크 테마: iOS systemGray6 */
+  background: var(--color-neutral-700);  /* 다크 테마: iOS systemGray6 */
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="dark"] .floating-modal:hover {
-  background: #3a3a3c;  /* 다크 테마 호버: iOS systemGray5 */
+  background: var(--color-neutral-600);  /* 다크 테마 호버: iOS systemGray5 */
 }
 
 /* 라이트 테마 호버 */

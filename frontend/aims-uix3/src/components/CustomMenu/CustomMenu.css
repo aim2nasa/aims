@@ -559,7 +559,7 @@
 :root,
 [data-theme="light"] {
   /* 기본 메뉴 색상 - iOS systemGray2 기반 */
-  --color-menu-icon-default: #8e8e93;                      /* iOS systemGray2 */
+  --color-menu-icon-default: var(--color-neutral-400);     /* iOS systemGray2 */
   --color-menu-text-default: var(--color-text-primary);
   --color-menu-bg-default: transparent;
 
@@ -572,31 +572,31 @@
   /* 🎨 메뉴별 시맨틱 아이콘 색상 - 애플 스타일 색상 팔레트 */
 
   /* 고객 관리 (User) - iOS systemBlue 계열 */
-  --color-menu-icon-user: #007aff;                         /* iOS systemBlue */
+  --color-menu-icon-user: var(--color-ios-blue);           /* iOS systemBlue */
   --color-menu-icon-user-selected: var(--color-neutral-0);
 
   /* 전체보기 (List) - iOS systemGreen 계열 */
-  --color-menu-icon-list: #34c759;                         /* iOS systemGreen */
+  --color-menu-icon-list: var(--color-ios-green);          /* iOS systemGreen */
   --color-menu-icon-list-selected: var(--color-neutral-0);
 
   /* 지역별 보기 (Location) - iOS systemOrange 계열 */
-  --color-menu-icon-location: #ff9500;                     /* iOS systemOrange */
+  --color-menu-icon-location: var(--color-ios-orange);     /* iOS systemOrange */
   --color-menu-icon-location-selected: var(--color-neutral-0);
 
   /* 관계별 보기 (Team) - iOS systemPurple 계열 */
-  --color-menu-icon-team: #af52de;                         /* iOS systemPurple */
+  --color-menu-icon-team: var(--color-ios-purple);         /* iOS systemPurple */
   --color-menu-icon-team-selected: var(--color-neutral-0);
 
   /* 문서 관리 (Doc) - iOS systemTeal 계열 */
-  --color-menu-icon-doc: #5ac8fa;                          /* iOS systemTeal */
+  --color-menu-icon-doc: var(--color-ios-teal);            /* iOS systemTeal */
   --color-menu-icon-doc-selected: var(--color-neutral-0);
 
   /* 문서 처리 현황 (Dashboard) - iOS systemIndigo 계열 */
-  --color-menu-icon-dashboard: #5856d6;                    /* iOS systemIndigo */
+  --color-menu-icon-dashboard: var(--color-ios-indigo);    /* iOS systemIndigo */
   --color-menu-icon-dashboard-selected: var(--color-neutral-0);
 
   /* 검색 결과 (Search) - iOS systemYellow 계열 */
-  --color-menu-icon-search: #ffcc00;                       /* iOS systemYellow */
+  --color-menu-icon-search: var(--color-ios-yellow);       /* iOS systemYellow */
   --color-menu-icon-search-selected: var(--color-neutral-0);
 
   /* 그림자 및 효과 */
@@ -606,7 +606,7 @@
 /* Dark Theme - iOS/macOS 다크모드 시스템 컬러 */
 [data-theme="dark"] {
   /* 기본 메뉴 색상 - 다크모드 적응 */
-  --color-menu-icon-default: #8e8e93;                      /* iOS systemGray2 (동일) */
+  --color-menu-icon-default: var(--color-neutral-400);     /* iOS systemGray2 (동일) */
   --color-menu-text-default: var(--color-text-primary);
   --color-menu-bg-default: transparent;
 
@@ -619,31 +619,31 @@
   /* 🌙 다크모드 시맨틱 아이콘 색상 - 더 밝고 부드럽게 */
 
   /* 고객 관리 (User) - 다크모드 블루 */
-  --color-menu-icon-user: #0a84ff;                         /* iOS systemBlue (Dark) */
+  --color-menu-icon-user: var(--color-ios-blue-dark);      /* iOS systemBlue (Dark) */
   --color-menu-icon-user-selected: var(--color-neutral-0);
 
   /* 전체보기 (List) - 다크모드 그린 */
-  --color-menu-icon-list: #30d158;                         /* iOS systemGreen (Dark) */
+  --color-menu-icon-list: var(--color-ios-green-dark);     /* iOS systemGreen (Dark) */
   --color-menu-icon-list-selected: var(--color-neutral-0);
 
   /* 지역별 보기 (Location) - 다크모드 오렌지 */
-  --color-menu-icon-location: #ff9f0a;                     /* iOS systemOrange (Dark) */
+  --color-menu-icon-location: var(--color-ios-orange-dark); /* iOS systemOrange (Dark) */
   --color-menu-icon-location-selected: var(--color-neutral-0);
 
   /* 관계별 보기 (Team) - 다크모드 퍼플 */
-  --color-menu-icon-team: #bf5af2;                         /* iOS systemPurple (Dark) */
+  --color-menu-icon-team: var(--color-ios-purple-dark);    /* iOS systemPurple (Dark) */
   --color-menu-icon-team-selected: var(--color-neutral-0);
 
   /* 문서 관리 (Doc) - 다크모드 틸 */
-  --color-menu-icon-doc: #64d2ff;                          /* iOS systemTeal (Dark) */
+  --color-menu-icon-doc: var(--color-ios-teal-dark);       /* iOS systemTeal (Dark) */
   --color-menu-icon-doc-selected: var(--color-neutral-0);
 
   /* 문서 처리 현황 (Dashboard) - 다크모드 인디고 */
-  --color-menu-icon-dashboard: #5e5ce6;                    /* iOS systemIndigo (Dark) */
+  --color-menu-icon-dashboard: var(--color-ios-indigo-dark); /* iOS systemIndigo (Dark) */
   --color-menu-icon-dashboard-selected: var(--color-neutral-0);
 
   /* 검색 결과 (Search) - 다크모드 옐로우 */
-  --color-menu-icon-search: #ffd60a;                       /* iOS systemYellow (Dark) */
+  --color-menu-icon-search: var(--color-ios-yellow-dark);  /* iOS systemYellow (Dark) */
   --color-menu-icon-search-selected: var(--color-neutral-0);
 
   /* 그림자 및 효과 */

@@ -148,7 +148,7 @@
 
 .family-modal__badge--muted {
   background-color: var(--color-bg-secondary);
-  color: var(--color-text-tertiary, #9ca3af);
+  color: var(--color-text-tertiary);
 }
 
 /* 입력 필드 */

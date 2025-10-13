@@ -55,7 +55,7 @@ html body div.apple-confirm-direct-overlay div.apple-confirm-direct-modal {
 
 /* 🍎 클릭 가능한 링크 스타일 */
 html body div.apple-confirm-direct-overlay div.apple-confirm-direct-modal span.apple-confirm-link {
-  color: var(--color-primary, #007AFF);
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
   font-weight: 590;
