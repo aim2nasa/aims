@@ -44,3 +44,11 @@ export {
   uploadDocument,
   downloadDocument,
 } from './api';
+
+// Document Processing Module
+export {
+  DocumentProcessingModule,
+  type ProcessingStatus,
+  type CustomerLinkStatus,
+  type AvailableActions,
+} from './DocumentProcessingModule';

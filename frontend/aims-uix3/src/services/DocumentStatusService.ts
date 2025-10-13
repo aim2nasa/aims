@@ -1,6 +1,7 @@
 /**
  * Document Status Service
  * @description 문서 처리 현황 API 및 비즈니스 로직
+ * @version 2.0.0 - DocumentProcessingModule 사용으로 리팩토링
  */
 
 import type {
@@ -19,6 +20,7 @@ import type {
   DocEmbedData,
   EmbedData
 } from '../types/documentStatus'
+import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || 'http://tars.giize.com:3010'
 const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
@@ -227,143 +229,10 @@ export class DocumentStatusService {
 
   /**
    * 문서 상태 추출
+   * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
   static extractStatus(document: Document): DocumentStatus {
-    if (document.overallStatus) {
-      return document.overallStatus
-    }
-
-    if (document.status) {
-      return document.status
-    }
-
-    const uploadStage = parseStage<UploadData>(document.stages?.upload)
-    const uploadData = parseStage<UploadData>(document.upload)
-    const uploadStatus = uploadStage?.status ?? uploadData?.status
-
-    const embedStage = parseStage<EmbedData>(document.stages?.embed)
-    const embedData = parseStage<EmbedData>(document.embed)
-    const embedStatus = embedStage?.status ?? embedData?.status
-
-    const docEmbedStage = parseStage<DocEmbedData>(document.stages?.docembed)
-    const docEmbedData = parseStage<DocEmbedData>(document.docembed)
-    const docEmbedStatus = docEmbedStage?.status ?? docEmbedData?.status
-
-    const metaStage = parseStage<MetaData>(document.stages?.meta)
-    const metaData = parseStage<MetaData>(document.meta)
-    const metaStageStatus = metaStage?.status
-    const metaStatus = metaData?.meta_status
-    const metaFullText = metaStage?.full_text ?? metaData?.full_text
-
-    const ocrStage = parseStage<OcrData>(document.stages?.ocr)
-    const ocrData = parseStage<OcrData>(document.ocr)
-    const ocrStatus = ocrStage?.status ?? ocrData?.status
-
-    const textData = parseStage<TextData>(document.text)
-
-    if (uploadStatus === 'completed') {
-      if (
-        embedStatus === 'completed' ||
-        docEmbedStatus === 'completed' ||
-        docEmbedStatus === 'done'
-      ) {
-        return 'completed'
-      }
-
-      if (
-        metaFullText &&
-        metaStageStatus === 'completed' &&
-        ocrStatus === 'pending'
-      ) {
-        return 'completed'
-      }
-
-      if (
-        metaStageStatus === 'error' ||
-        embedStatus === 'error' ||
-        docEmbedStatus === 'error' ||
-        docEmbedStatus === 'failed'
-      ) {
-        return 'error'
-      }
-
-      return 'processing'
-    }
-
-    const { pathType } = this.analyzeProcessingPath(document)
-
-    if (!uploadData && !uploadStage) {
-      return 'pending'
-    }
-
-    if (!metaData) {
-      return 'pending'
-    }
-
-    if (metaStatus !== 'ok') {
-      if (metaStatus === 'error') {
-        return 'error'
-      }
-      if (metaStatus === 'pending' || !metaStatus) {
-        return 'pending'
-      }
-      return 'processing'
-    }
-
-    switch (pathType) {
-      case 'unsupported':
-      case 'page_limit_exceeded':
-      case 'ocr_skipped':
-        return 'completed'
-
-      case 'meta_fulltext': {
-        if (docEmbedStatus === 'done' || docEmbedStatus === 'completed') {
-          return 'completed'
-        }
-        if (docEmbedStatus === 'failed' || docEmbedStatus === 'error') {
-          return 'error'
-        }
-        if (metaFullText) {
-          return 'completed'
-        }
-        return 'pending'
-      }
-
-      case 'text_plain': {
-        if (!textData?.full_text) {
-          return 'processing'
-        }
-        if (docEmbedStatus === 'done' || docEmbedStatus === 'completed') {
-          return 'completed'
-        }
-        if (docEmbedStatus === 'failed' || docEmbedStatus === 'error') {
-          return 'error'
-        }
-        return 'pending'
-      }
-
-      case 'ocr_normal': {
-        if (ocrStatus === 'error') {
-          return 'error'
-        }
-        if (ocrStatus === 'done' || ocrStatus === 'completed') {
-          if (docEmbedStatus === 'done' || docEmbedStatus === 'completed') {
-            return 'completed'
-          }
-          if (docEmbedStatus === 'failed' || docEmbedStatus === 'error') {
-            return 'error'
-          }
-          return 'pending'
-        }
-        if (!ocrStatus) {
-          return 'pending'
-        }
-        return 'processing'
-      }
-
-      default:
-        return 'processing'
-    }
+    return DocumentProcessingModule.getProcessingStatus(document).status
   }
 
   /**
@@ -576,114 +445,38 @@ export class DocumentStatusService {
 
   /**
    * 문서 요약 추출
+   * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
   static extractSummary(document: Document): string {
-    const metaData = parseStage<MetaData>(document.meta)
-    const ocrData = parseStage<OcrData>(document.ocr)
-    const payloadData = toRecord(document.payload)
-
-    const ensureString = (value: unknown): string | undefined =>
-      typeof value === 'string' ? value : undefined
-
-    // meta에 full_text가 있는 경우 - meta summary 사용
-    if (metaData && metaData.full_text && metaData.full_text.trim()) {
-      if (metaData.summary && metaData.summary !== 'null') {
-        return metaData.summary
-      }
-      // meta summary가 없으면 meta full_text의 앞부분 사용
-      const cleanText = metaData.full_text.trim()
-      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
-    }
-
-    // meta에 full_text가 없는 경우 - ocr summary 사용
-    if (ocrData && ocrData.summary && ocrData.summary !== 'null') {
-      return ocrData.summary
-    }
-
-    // ocr summary가 없으면 ocr full_text의 앞부분 사용
-    if (ocrData && ocrData.full_text && ocrData.full_text.trim()) {
-      const cleanText = ocrData.full_text.trim()
-      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
-    }
-
-    // 마지막으로 payload.summary 시도
-    const payloadSummary = ensureString(payloadData?.['summary'])
-    if (payloadSummary) {
-      return payloadSummary
-    }
-
-    return '문서 요약을 찾을 수 없습니다.'
+    return DocumentProcessingModule.extractSummary(document) ?? '문서 요약을 찾을 수 없습니다.'
   }
 
   /**
    * 문서 전체 텍스트 추출
+   * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
   static extractFullText(document: Document): string {
-    const metaData = parseStage<MetaData>(document.meta)
-    const textData = parseStage<TextData>(document.text)
-    const ocrData = parseStage<OcrData>(document.ocr)
-    const payloadData = toRecord(document.payload)
-    const ensureString = (value: unknown): string | undefined =>
-      typeof value === 'string' ? value : undefined
-
-    // meta에서 full_text 확인 (최우선)
-    if (metaData && metaData.full_text && metaData.full_text.trim()) {
-      return metaData.full_text
-    }
-
-    // text에서 full_text 확인 (text/plain 파일용)
-    if (textData && textData.full_text && textData.full_text.trim()) {
-      return textData.full_text
-    }
-
-    // ocr에서 full_text 확인
-    if (ocrData && ocrData.full_text && ocrData.full_text.trim()) {
-      return ocrData.full_text
-    }
-
-    // 마지막으로 payload에서 확인
-    const payloadFullText = ensureString(payloadData?.['full_text'])
-    if (payloadFullText) {
-      return payloadFullText
-    }
-
-    return '문서의 전체 텍스트를 찾을 수 없습니다.'
+    return DocumentProcessingModule.extractFullText(document) ?? '문서의 전체 텍스트를 찾을 수 없습니다.'
   }
 
   /**
    * 상태 레이블 반환
+   * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
   static getStatusLabel(status: DocumentStatus): string {
-    switch (status) {
-      case 'completed':
-        return '완료'
-      case 'processing':
-        return '처리중'
-      case 'error':
-        return '오류'
-      case 'pending':
-        return '대기'
-      default:
-        return '알 수 없음'
-    }
+    // 임시 document 객체 생성하여 모듈 호출
+    const tempDoc: Document = { status }
+    return DocumentProcessingModule.getProcessingStatus(tempDoc).label
   }
 
   /**
    * 상태 아이콘 반환
+   * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
   static getStatusIcon(status: DocumentStatus): string {
-    switch (status) {
-      case 'completed':
-        return '✓'
-      case 'processing':
-        return '⟳'
-      case 'error':
-        return '✗'
-      case 'pending':
-        return '○'
-      default:
-        return '?'
-    }
+    // 임시 document 객체 생성하여 모듈 호출
+    const tempDoc: Document = { status }
+    return DocumentProcessingModule.getProcessingStatus(tempDoc).icon
   }
 
   /**
