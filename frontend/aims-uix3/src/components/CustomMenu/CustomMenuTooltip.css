@@ -33,5 +33,5 @@
 /* 다크 테마 지원 */
 html[data-theme="dark"] .custom-menu-item.collapsed[title]:hover::after {
   background-color: rgba(45, 45, 45, 0.95);
-  color: #ffffff;
+  color: var(--color-neutral-0);
 }

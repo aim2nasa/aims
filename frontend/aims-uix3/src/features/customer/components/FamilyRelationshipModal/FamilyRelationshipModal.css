@@ -358,9 +358,9 @@
 }
 
 .family-modal__button--primary:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--color-primary-600);
 }
 
 .family-modal__button--primary:active:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: var(--color-primary-700);
 }
