@@ -361,8 +361,6 @@ python scripts/rag_search.py
 
 ### 색상 시스템
 
-**레퍼런스**: `/mnt/d/Users/rossi/Desktop/color.png`
-
 | 요소 | Light | Dark |
 |------|-------|------|
 | 배경 | #f5f6f7, #ffffff | #374151, #4b5563 |

@@ -385,8 +385,8 @@ View Re-render (UI Update)
 
 ## 📞 References
 
-- [AIMS UIX-3 Claude Code 지침](/mnt/d/aims/docs/aims_uix_3_claude_code_지침.md)
-- [CLAUDE.md 프로젝트 가이드](/mnt/d/aims/CLAUDE.md)
+- [AIMS UIX-3 Claude Code 지침](../../docs/aims_uix_3_claude_code_지침.md)
+- [CLAUDE.md 프로젝트 가이드](../../CLAUDE.md)
 - [React Query Documentation](https://tanstack.com/query/latest)
 - [Feature-Sliced Design](https://feature-sliced.design/)
 
