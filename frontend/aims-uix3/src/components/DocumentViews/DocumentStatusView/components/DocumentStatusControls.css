@@ -50,19 +50,19 @@ html[data-theme='dark'] .controls-container {
 }
 
 .status-dot-connected {
-  background-color: #10b981;
+  background-color: var(--color-success);
 }
 
 html[data-theme='dark'] .status-dot-connected {
-  background-color: #34d399;
+  background-color: var(--color-success-light);
 }
 
 .status-dot-disconnected {
-  background-color: #ef4444;
+  background-color: var(--color-error);
 }
 
 html[data-theme='dark'] .status-dot-disconnected {
-  background-color: #f87171;
+  background-color: var(--color-error-light);
 }
 
 .status-text {
@@ -140,7 +140,7 @@ html[data-theme='dark'] .polling-button {
 
 .polling-button.polling-enabled {
   background-color: var(--color-ios-blue-light);
-  color: #ffffff;
+  color: var(--color-neutral-0);
 }
 
 html[data-theme='dark'] .polling-button.polling-enabled {
@@ -175,7 +175,7 @@ html[data-theme='dark'] .polling-dot {
 }
 
 .polling-dot-active {
-  background-color: #ffffff;
+  background-color: var(--color-neutral-0);
   animation: polling-pulse 2s ease-in-out infinite;
 }
 
@@ -192,7 +192,7 @@ html[data-theme='dark'] .polling-dot {
 /* === 새로고침 버튼 === */
 .refresh-button {
   background-color: var(--color-ios-blue-light);
-  color: #ffffff;
+  color: var(--color-neutral-0);
 }
 
 html[data-theme='dark'] .refresh-button {
@@ -200,22 +200,22 @@ html[data-theme='dark'] .refresh-button {
 }
 
 .refresh-button:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--color-primary-600);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 
 html[data-theme='dark'] .refresh-button:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: var(--color-primary-700);
 }
 
 .refresh-button:active:not(:disabled) {
-  background-color: #1e40af;
+  background-color: var(--color-primary-800);
   transform: translateY(0);
 }
 
 html[data-theme='dark'] .refresh-button:active:not(:disabled) {
-  background-color: #1e3a8a;
+  background-color: var(--color-primary-900);
 }
 
 .refresh-button:disabled {
