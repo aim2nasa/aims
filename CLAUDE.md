@@ -207,11 +207,11 @@ AIMS (Agent Intelligent Management System) is an intelligent document management
 
 The system is organized into functional modules:
 
-- **Frontend Applications**: Multiple React apps in `frontend/`
-  - `aims-uix1`: Main UI application (React + Ant Design + Tailwind)
-  - `doc-status-dashboard`: Document status monitoring (React + Tailwind)  
-  - `aims-web`: Alternative web interface
-  - `document-monitor`: Document tracking interface
+- **Frontend Application**: `frontend/aims-uix3/`
+  - React + TypeScript + Vite
+  - Document-Controller-View architecture
+  - TanStack Query + Zustand state management
+  - Apple design philosophy implementation
 
 - **Backend Services**:
   - Node.js API server in `backend/api/aims_api/` for document status monitoring
@@ -228,19 +228,22 @@ The system is organized into functional modules:
 
 ## Common Development Commands
 
-### Frontend Development
+### Frontend Development (UIX3)
 ```bash
-# Run main UI (port 3005)
-cd frontend/aims-uix1 && PORT=3005 npm start
+# Run development server (port 5177)
+cd frontend/aims-uix3 && npm run dev
 
-# Run document status dashboard  
-cd frontend/doc-status-dashboard && npm start
+# Build for production
+cd frontend/aims-uix3 && npm run build
 
-# Build frontend
-cd frontend/aims-uix1 && npm run build
+# Run tests
+cd frontend/aims-uix3 && npm test
 
-# Test frontend
-cd frontend/aims-uix1 && npm test
+# Type check
+cd frontend/aims-uix3 && npm run typecheck
+
+# E2E tests
+cd frontend/aims-uix3 && npx playwright test
 ```
 
 ### Backend Services
@@ -291,17 +294,17 @@ python scripts/rag_search.py
 
 ## File Structure Notes
 
-- Frontend apps share similar structure but serve different purposes
-- Python modules follow a shared pattern with `__init__.py` and core functionality
-- Sample documents in `samples/` organized by MIME type for testing
-- Tools in `tools/` provide utilities for file analysis and smart search
-- Scripts in `scripts/` handle various processing and API tasks
+- **Frontend (UIX3)**: Feature-Sliced Design architecture in `frontend/aims-uix3/`
+- **Python Modules**: Shared pattern with `__init__.py` in `src/`
+- **Sample Documents**: Organized by MIME type in `samples/`
+- **Tools**: File analysis and smart search utilities in `tools/`
+- **Scripts**: Processing and API tasks in `scripts/`
 
 ## Testing
 
-- Frontend: Jest and React Testing Library (`npm test`)
-- Python: pytest with `make test` or manual pytest commands
-- Sample files available in `samples/` for testing different document types
+- **Frontend**: Vitest + React Testing Library + Playwright E2E
+- **Python**: pytest with `make test` or manual pytest commands
+- **Sample Files**: Available in `samples/` for testing different document types
 
 ## Code Quality and Cleanup Guidelines
 
