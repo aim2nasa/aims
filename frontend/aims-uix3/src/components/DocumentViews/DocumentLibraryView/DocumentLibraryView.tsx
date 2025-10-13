@@ -15,6 +15,10 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption, Tooltip } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
+import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
+import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
+import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
+import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import './DocumentLibraryView.css'
 
 interface DocumentLibraryViewProps {
@@ -95,6 +99,65 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
+
+  // 🍎 모달 상태 관리
+  const [selectedDocument, setSelectedDocument] = React.useState<any | null>(null)
+  const [isDetailModalVisible, setDetailModalVisible] = React.useState(false)
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = React.useState<any | null>(null)
+  const [isSummaryModalVisible, setSummaryModalVisible] = React.useState(false)
+  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = React.useState<any | null>(null)
+  const [isFullTextModalVisible, setFullTextModalVisible] = React.useState(false)
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = React.useState<any | null>(null)
+  const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
+
+  // 🍎 모달 핸들러
+  const handleDetailClick = React.useCallback((document: any) => {
+    setSelectedDocument(document)
+    setDetailModalVisible(true)
+  }, [])
+
+  const handleDetailModalClose = React.useCallback(() => {
+    setDetailModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocument(null)
+    }, 300)
+  }, [])
+
+  const handleSummaryClickInternal = React.useCallback((document: any) => {
+    setSelectedDocumentForSummary(document)
+    setSummaryModalVisible(true)
+  }, [])
+
+  const handleSummaryModalClose = React.useCallback(() => {
+    setSummaryModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForSummary(null)
+    }, 300)
+  }, [])
+
+  const handleFullTextClickInternal = React.useCallback((document: any) => {
+    setSelectedDocumentForFullText(document)
+    setFullTextModalVisible(true)
+  }, [])
+
+  const handleFullTextModalClose = React.useCallback(() => {
+    setFullTextModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForFullText(null)
+    }, 300)
+  }, [])
+
+  const handleLinkClickInternal = React.useCallback((document: any) => {
+    setSelectedDocumentForLink(document)
+    setLinkModalVisible(true)
+  }, [])
+
+  const handleLinkModalClose = React.useCallback(() => {
+    setLinkModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForLink(null)
+    }, 300)
+  }, [])
 
   /**
    * 페이지 변경 핸들러 (클릭 피드백 포함)
@@ -333,7 +396,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         className="action-btn"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onDetailClick?.(document)
+                          handleDetailClick(document)
                         }}
                         aria-label="상세 보기"
                       >
@@ -345,7 +408,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         className="action-btn"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onSummaryClick?.(document)
+                          handleSummaryClickInternal(document)
                         }}
                         aria-label="요약 보기"
                       >
@@ -357,7 +420,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         className="action-btn"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onFullTextClick?.(document)
+                          handleFullTextClickInternal(document)
                         }}
                         aria-label="전체 텍스트 보기"
                       >
@@ -370,7 +433,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         onClick={(e) => {
                           e.stopPropagation()
                           if (canLink) {
-                            onLinkClick?.(document)
+                            handleLinkClickInternal(document)
                           }
                         }}
                         aria-label={linkTooltip}
@@ -440,6 +503,40 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* 모달들 */}
+      <DocumentDetailModal
+        visible={isDetailModalVisible}
+        onClose={handleDetailModalClose}
+        document={selectedDocument}
+      />
+      <DocumentSummaryModal
+        visible={isSummaryModalVisible}
+        onClose={handleSummaryModalClose}
+        document={selectedDocumentForSummary}
+      />
+      <DocumentFullTextModal
+        visible={isFullTextModalVisible}
+        onClose={handleFullTextModalClose}
+        document={selectedDocumentForFullText}
+      />
+      <DocumentLinkModal
+        visible={isLinkModalVisible}
+        onClose={handleLinkModalClose}
+        document={selectedDocumentForLink}
+        onSearchCustomers={async (query: string) => {
+          // TODO: Implement customer search
+          return []
+        }}
+        onFetchCustomerDocuments={async (customerId: string) => {
+          // TODO: Implement fetch customer documents
+          return []
+        }}
+        onLink={async (documentId: string, customerId: string) => {
+          // TODO: Implement link document to customer
+          return true
+        }}
+      />
     </CenterPaneView>
   )
 }
