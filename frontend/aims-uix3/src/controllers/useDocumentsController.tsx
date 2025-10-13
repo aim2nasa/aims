@@ -52,6 +52,8 @@ export const useDocumentsController = () => {
       const realDocuments = data.files || data.data?.documents || data.documents || [];
 
       // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
+      // NOTE: API 응답 타입(types/documentStatus)과 도메인 모델(entities/document)의 불일치로 any 사용
+      // API 응답은 모든 필드가 optional이지만, 도메인 모델은 일부 필드가 required
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const documentsWithCustomerRelation = await Promise.all(
         realDocuments.map(async (doc: any) => {
@@ -72,6 +74,7 @@ export const useDocumentsController = () => {
       let filteredDocs = documentsWithCustomerRelation;
       if (searchQuery.trim()) {
         const searchTermLower = searchQuery.toLowerCase();
+        // NOTE: API 응답 타입 사용으로 any 필요 (상단 documentsWithCustomerRelation과 동일한 이유)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filteredDocs = documentsWithCustomerRelation.filter((doc: any) => {
           const filename = DocumentStatusService.extractFilename(doc).toLowerCase();

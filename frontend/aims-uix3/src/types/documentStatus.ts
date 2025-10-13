@@ -1,6 +1,9 @@
 /**
  * Document Status Types
  * @description 문서 처리 현황 관련 타입 정의
+ *
+ * NOTE: 이 파일의 Document 타입은 API 응답 타입입니다.
+ * 애플리케이션 내부 도메인 모델은 @/entities/document를 사용하세요.
  */
 
 /**
@@ -212,3 +215,9 @@ export interface HealthCheckResponse {
   status: string
   timestamp: string
 }
+
+/**
+ * 타입 별칭: API 응답의 Document 타입을 명시적으로 표현
+ * 이 타입은 API에서 반환되는 문서 데이터 구조입니다.
+ */
+export type ApiDocument = Document

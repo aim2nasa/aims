@@ -97,6 +97,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
 
   // 🍎 모달 상태 관리
+  // NOTE: 모달에 전달하는 document는 API 응답 타입(types/documentStatus)
+  // DocumentStatusService에서 반환되는 구조를 그대로 모달에 전달
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocument, setSelectedDocument] = React.useState<any | null>(null)
   const [isDetailModalVisible, setDetailModalVisible] = React.useState(false)
@@ -111,6 +113,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
 
   // 🍎 모달 핸들러
+  // NOTE: API 응답 타입 사용 (상단 모달 상태와 동일한 이유)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDetailClick = React.useCallback((document: any) => {
     setSelectedDocument(document)
@@ -370,6 +373,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
           ) : (
             documents.map((document) => {
+              // NOTE: DocumentStatusService는 API 응답 타입을 기대하므로 as any 사용
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const status = DocumentStatusService.extractStatus(document as any)
               const statusLabel = DocumentStatusService.getStatusLabel(status)
@@ -411,6 +415,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
                   {/* 🍎 SIZE: Fixed width column */}
                   <span className="document-size">
+                    {/* NOTE: API 응답 타입 사용 (상단 extractStatus와 동일한 이유) */}
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document as any))}
                   </span>
