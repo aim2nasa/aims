@@ -130,7 +130,9 @@ export class CustomerDocument {
    * Private 생성자 (싱글톤 패턴)
    */
   private constructor() {
-    console.log('[CustomerDocument] 싱글톤 인스턴스 생성됨');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 싱글톤 인스턴스 생성됨');
+    }
   }
 
   /**
@@ -152,11 +154,15 @@ export class CustomerDocument {
    */
   subscribe(callback: ObserverCallback): () => void {
     this.observers.add(callback);
-    console.log('[CustomerDocument] 구독자 추가됨. 총:', this.observers.size);
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 구독자 추가됨. 총:', this.observers.size);
+    }
 
     return () => {
       this.observers.delete(callback);
-      console.log('[CustomerDocument] 구독자 제거됨. 총:', this.observers.size);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 구독자 제거됨. 총:', this.observers.size);
+      }
     };
   }
 
@@ -164,7 +170,9 @@ export class CustomerDocument {
    * 모든 구독자에게 변경 알림
    */
   private notify(): void {
-    console.log('[CustomerDocument] 모든 구독자에게 알림 전송. 구독자 수:', this.observers.size);
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 모든 구독자에게 알림 전송. 구독자 수:', this.observers.size);
+    }
     this.lastUpdated = Date.now();
     this.observers.forEach(callback => {
       try {
@@ -237,7 +245,9 @@ export class CustomerDocument {
       this.error = null;
       this.notify(); // 로딩 시작 알림
 
-      console.log('[CustomerDocument] 고객 목록 로드 시작:', query);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 목록 로드 시작:', query);
+      }
       const response = await CustomerService.getCustomers(query);
 
       this.customers = Array.isArray(response.customers) ? response.customers : [];
@@ -250,11 +260,13 @@ export class CustomerDocument {
       this.total = totalCount;
       this.hasMore = hasMore;
 
-      console.log('[CustomerDocument] 고객 목록 로드 완료:', {
-        count: this.customers.length,
-        total: this.total,
-        hasMore: this.hasMore
-      });
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 목록 로드 완료:', {
+          count: this.customers.length,
+          total: this.total,
+          hasMore: this.hasMore
+        });
+      }
 
       this.isLoading = false;
       this.notify(); // 로드 완료 알림
@@ -271,14 +283,18 @@ export class CustomerDocument {
    */
   async createCustomer(data: CreateCustomerData): Promise<Customer> {
     try {
-      console.log('[CustomerDocument] 고객 생성 시작:', data);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 생성 시작:', data);
+      }
       const newCustomer = await CustomerService.createCustomer(data);
 
       // 로컬 상태 업데이트
       this.customers = [newCustomer, ...this.customers];
       this.total += 1;
 
-      console.log('[CustomerDocument] 고객 생성 완료:', newCustomer);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 생성 완료:', newCustomer);
+      }
       this.notify(); // 생성 완료 알림
 
       return newCustomer;
@@ -293,7 +309,9 @@ export class CustomerDocument {
    */
   async updateCustomer(id: string, data: UpdateCustomerData): Promise<Customer> {
     try {
-      console.log('[CustomerDocument] 고객 수정 시작:', { id, data });
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 수정 시작:', { id, data });
+      }
       const updatedCustomer = await CustomerService.updateCustomer(id, data);
 
       // 로컬 상태 업데이트
@@ -306,7 +324,9 @@ export class CustomerDocument {
         ];
       }
 
-      console.log('[CustomerDocument] 고객 수정 완료:', updatedCustomer);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 수정 완료:', updatedCustomer);
+      }
       this.notify(); // 수정 완료 알림
 
       return updatedCustomer;
@@ -321,14 +341,18 @@ export class CustomerDocument {
    */
   async deleteCustomer(id: string): Promise<void> {
     try {
-      console.log('[CustomerDocument] 고객 삭제 시작:', id);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 삭제 시작:', id);
+      }
       await CustomerService.deleteCustomer(id);
 
       // 로컬 상태 업데이트
       this.customers = this.customers.filter(c => c._id !== id);
       this.total -= 1;
 
-      console.log('[CustomerDocument] 고객 삭제 완료:', id);
+      if (import.meta.env.DEV) {
+        console.log('[CustomerDocument] 고객 삭제 완료:', id);
+      }
       this.notify(); // 삭제 완료 알림
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
@@ -340,7 +364,9 @@ export class CustomerDocument {
    * 전체 데이터 새로고침
    */
   async refresh(query?: Partial<CustomerSearchQuery>): Promise<void> {
-    console.log('[CustomerDocument] 전체 데이터 새로고침');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 전체 데이터 새로고침');
+    }
     await this.loadCustomers(query);
   }
 
@@ -348,7 +374,9 @@ export class CustomerDocument {
    * Document 상태 초기화
    */
   reset(): void {
-    console.log('[CustomerDocument] 상태 초기화');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 상태 초기화');
+    }
     this.customers = [];
     this.total = 0;
     this.hasMore = false;
@@ -362,15 +390,17 @@ export class CustomerDocument {
    * 디버깅용: 현재 상태 출력
    */
   debug(): void {
-    console.log('[CustomerDocument] 현재 상태:', {
-      customers: this.customers.length,
-      total: this.total,
-      hasMore: this.hasMore,
-      isLoading: this.isLoading,
-      error: this.error,
-      observers: this.observers.size,
-      lastUpdated: new Date(this.lastUpdated).toISOString()
-    });
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDocument] 현재 상태:', {
+        customers: this.customers.length,
+        total: this.total,
+        hasMore: this.hasMore,
+        isLoading: this.isLoading,
+        error: this.error,
+        observers: this.observers.size,
+        lastUpdated: new Date(this.lastUpdated).toISOString()
+      });
+    }
   }
 }
 
