@@ -1,83 +1,43 @@
-# GEMINI Project Analysis: AIMS
+# AIMS 프로젝트 개요
 
-## 1. Project Overview
+## 시스템 정의
 
-This project, "AIMS" (Agent Intelligent Management System), is a sophisticated document management system designed for insurance agents. Its primary goal is to automate and streamline the handling of documents through features like automatic metadata extraction, OCR, AI-based tagging, and case-based document grouping. The system is built as a monorepo containing multiple distinct but interconnected sub-projects.
+**AIMS** (Agent Intelligent Management System)는 보험 세일즈를 위한 지능형 문서 관리 시스템입니다.
 
-## 2. Core Architecture
+## 핵심 기능
 
-The entire project adheres to a strict **Document/View (MVC-like) architecture**. The fundamental principle is the complete separation of concerns, where the "View" (UI) is kept pure and does not directly fetch or manage data.
+1. **문서 자동화**: 업로드, 분류, OCR, 태깅, 케이스 그룹화
+2. **고객 관계 관리**: 가족 관계, 계약, 상담 이력 추적
+3. **RAG 검색**: Qdrant 벡터 DB 기반 시맨틱 검색
+4. **실시간 동기화**: WebSocket 기반 문서 상태 업데이트
 
-- **Key Principle**: Views receive data and actions from Controllers/Providers. They do not make direct API calls.
-- **Data Flow**: A clear, unidirectional data flow is enforced: `Service (API) -> Document (State) -> Controller -> View`.
-- **Documentation**: The architectural foundation is extensively documented in `docs/ARCHITECTURE.md`, with a specific, practical implementation for the main frontend project detailed in `frontend/aims-uix3/ARCHITECTURE.md`.
+## 기술 스택
 
-## 3. Project Structure
+**Frontend**: React 19, Ant Design, Tailwind CSS
+**Backend**: Node.js (Express), Python (FastAPI)
+**Database**: MongoDB, Qdrant
+**AI/ML**: LangChain, OpenAI API
 
-The repository is a monorepo with the following key directories:
+## 아키텍처 원칙
 
-- `frontend/`: Contains multiple React-based user interface projects. `aims-uix3` is the latest and most architecturally sound version.
-- `backend/`: Houses Python-based API services (likely FastAPI).
-- `src/`: Contains the core Python business logic modules (`docmeta`, `dococr`, `doctag`, `doccase`).
-- `docs/`: Contains crucial architecture and planning documents.
-- `tests/`: Contains tests for various parts of the application.
+**Document-Controller-View** 패턴
+- View는 데이터를 직접 fetch하지 않음
+- 단일 데이터 소스 (Single Source of Truth)
+- 단방향 데이터 플로우
 
-## 4. Backend (Python)
+## 주요 모듈
 
-The backend consists of core data processing libraries and a set of APIs that expose this functionality.
+- `docmeta`: 문서 메타데이터 추출
+- `dococr`: OCR 텍스트 추출
+- `doctag`: AI 기반 문서 태깅
+- `doccase`: 문서 클러스터링
 
-- **Core Modules (`src/`)**:
-    - `docmeta`: Extracts metadata from documents.
-    - `dococr`: Performs OCR on images and PDFs.
-    - `doctag`: Applies AI-based tags for classification.
-    - `doccase`: Groups documents into cases.
-- **APIs (`backend/api/`)**:
-    - The project contains several API services, such as `doc_status_api`. These are likely built with a framework like FastAPI, as suggested by the file structure.
-- **Running Tests**:
-  ```bash
-  # Run the Python test suite
-  make test
-  ```
+## 개발 환경
 
-## 5. Frontend (React: `aims-uix3`)
+- **Backend 서버**: tars (Linux) - `tars.giize.com`
+- **Frontend 개발**: WonderCastle (Windows 10)
+- **Database**: MongoDB on `tars:27017`
 
-The primary frontend is `aims-uix3`, a modern React application built with a focus on scalability and maintainability.
+---
 
-- **Technology Stack**:
-    - **Framework**: React 19
-    - **Build Tool**: Vite
-    - **Language**: TypeScript
-    - **Server State**: React Query
-    - **Client State**: React Context API
-    - **Testing**: Vitest
-
-- **Key Commands** (run from `frontend/aims-uix3`):
-  ```bash
-  # Start the development server
-  npm run dev
-
-  # Build the application for production
-  npm run build
-
-  # Run the linter
-  npm run lint
-
-  # Run unit and integration tests
-  npm run test
-  ```
-
-- **Development Workflow**: Adding a new feature follows a structured, multi-layer process as defined in `frontend/aims-uix3/ARCHITECTURE.md`:
-    1.  **Entity**: Define types and utilities (`src/entities`).
-    2.  **Service**: Implement API business logic (`src/services`).
-    3.  **Context**: Define global state (`src/contexts`).
-    4.  **Provider**: Integrate Context with React Query (`src/providers`).
-    5.  **Controller**: Create a custom hook for business logic (`src/controllers`).
-    6.  **View**: Implement the pure UI component (`src/pages`).
-
-## 6. Development Conventions
-
-- **Separation of Concerns**: Strictly separate UI, state management, and business logic.
-- **Centralized API Logic**: All API calls must be managed within the `Service` layer.
-- **Type Safety**: Use TypeScript for all new code.
-- **Styling**: Use the established CSS Custom Properties and class system. Avoid inline styles.
-- **Immutability**: Treat state as immutable.
+상세 정보는 [CLAUDE.md](CLAUDE.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md) 참조.
