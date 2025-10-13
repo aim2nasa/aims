@@ -58,7 +58,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     // 초기 데이터 로드
     useEffect(() => {
-      console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
+      if (import.meta.env.DEV) {
+        console.log('[AllCustomersView] Document 구독 및 초기 데이터 로드');
+      }
       loadCustomers({ limit: 10000, page: 1 });
     }, [loadCustomers]);
 

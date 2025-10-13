@@ -27,14 +27,18 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddressSelect = (address: FormattedAddress) => {
-    console.log('✅ 주소 선택됨:', address);
+    if (import.meta.env.DEV) {
+      console.log('✅ 주소 선택됨:', address);
+    }
     onChange('postal_code', address.postal_code);
     onChange('address1', address.address1);
     onChange('address2', address.address2);
   };
 
   const handleSearchClick = () => {
-    console.log('🔍 주소 검색 버튼 클릭!');
+    if (import.meta.env.DEV) {
+      console.log('🔍 주소 검색 버튼 클릭!');
+    }
     setIsModalOpen(true);
   };
 

@@ -60,14 +60,18 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
 
   // 초기 데이터 로드
   useEffect(() => {
-    console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
+    if (import.meta.env.DEV) {
+      console.log('[CustomerRegionalView] Document 구독 및 초기 데이터 로드')
+    }
     loadCustomers({ limit: 10000 })
   }, [loadCustomers])
 
   // customerChanged 이벤트 리스너 (고객 생성/수정/삭제 시 즉시 반영)
   useEffect(() => {
     const handleCustomerChange = async () => {
-      console.log('[CustomerRegionalView] customerChanged 이벤트 수신 - 데이터 새로고침')
+      if (import.meta.env.DEV) {
+        console.log('[CustomerRegionalView] customerChanged 이벤트 수신 - 데이터 새로고침')
+      }
       // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
       await refresh({ limit: 10000 })
     }

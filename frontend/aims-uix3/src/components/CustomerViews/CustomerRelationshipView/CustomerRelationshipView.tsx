@@ -105,7 +105,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   // 초기 데이터 로드
   useEffect(() => {
-    console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerRelationshipView] Document 구독 및 초기 데이터 로드');
+    }
     loadCustomers({ limit: 10000 });
   }, [loadCustomers]);
 
@@ -181,7 +183,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // relationshipChanged 이벤트 수신하여 데이터 새로고침
   useEffect(() => {
     const handleRelationshipChange = async () => {
-      console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 데이터 새로고침');
+      if (import.meta.env.DEV) {
+        console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 데이터 새로고침');
+      }
       // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
       await refresh({ limit: 10000 });
       await loadRelationshipsData();

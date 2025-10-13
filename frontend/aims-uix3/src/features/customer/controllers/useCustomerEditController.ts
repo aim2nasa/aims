@@ -172,7 +172,9 @@ export const useCustomerEditController = (customer: Customer) => {
       // Document-View 패턴: CustomerDocument를 통해 업데이트
       const document = CustomerDocument.getInstance();
       await document.updateCustomer(customer._id, updatePayload);
-      console.log('[useCustomerEditController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[useCustomerEditController] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      }
       return true;
     } catch (error) {
       console.error('[Customer Edit] 저장 실패:', error);

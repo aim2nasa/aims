@@ -223,18 +223,24 @@ const CustomMenu = ({
   useEffect(() => {
     if (!collapsed) {
       // 햄버거 버튼으로 펼침: 무조건 모든 서브메뉴 접기에서 시작
-      console.log('[CustomMenu] LeftPane 펼침 - 계층적 애니메이션 시작')
+      if (import.meta.env.DEV) {
+        console.log('[CustomMenu] LeftPane 펼침 - 계층적 애니메이션 시작')
+      }
       setExpandedKeys([]) // 강제로 모든 서브메뉴 접기
 
       // 1단계: 300ms 후 고객관리 펼침
       setTimeout(() => {
-        console.log('[CustomMenu] 1단계 - 고객관리 펼침')
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 1단계 - 고객관리 펼침')
+        }
         setExpandedKeys(['customers'])
       }, 300)
 
       // 2단계: 600ms 후 문서관리도 펼침 (전동 커튼 효과)
       setTimeout(() => {
-        console.log('[CustomMenu] 2단계 - 문서관리 추가 펼침')
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 2단계 - 문서관리 추가 펼침')
+        }
         setExpandedKeys(['customers', 'documents'])
       }, 600)
     }

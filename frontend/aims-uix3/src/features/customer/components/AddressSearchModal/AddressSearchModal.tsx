@@ -36,11 +36,15 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
 
   // 주소 검색
   const searchAddress = async (keyword: string, page: number = 1, append: boolean = false) => {
-    console.log('🔍 주소 검색 시작:', keyword, 'page:', page);
+    if (import.meta.env.DEV) {
+      console.log('🔍 주소 검색 시작:', keyword, 'page:', page);
+    }
     setLoading(true);
 
     const result = await AddressApi.searchAddress(keyword, page, 30);
-    console.log('📡 검색 결과:', result);
+    if (import.meta.env.DEV) {
+      console.log('📡 검색 결과:', result);
+    }
 
     if (result.success && result.data) {
       const newResults = result.data.results;
@@ -76,9 +80,13 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
 
   // 주소 선택
   const handleAddressSelect = (addressData: AddressSearchResult) => {
-    console.log('🏠 선택한 주소 원본 데이터:', addressData);
+    if (import.meta.env.DEV) {
+      console.log('🏠 선택한 주소 원본 데이터:', addressData);
+    }
     const newAddress = AddressApi.formatAddressForForm(addressData);
-    console.log('📋 변환된 주소 데이터:', newAddress);
+    if (import.meta.env.DEV) {
+      console.log('📋 변환된 주소 데이터:', newAddress);
+    }
     onAddressSelect(newAddress);
     onClose();
   };

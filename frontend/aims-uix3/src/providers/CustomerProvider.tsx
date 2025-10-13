@@ -64,7 +64,9 @@ const useCustomerDataManager = () => {
       addCustomer(newCustomer);
       invalidateQueries.customers();
       setError(null);
-      console.log('[CustomerProvider] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[CustomerProvider] Document를 통해 고객 생성 완료 - 모든 View 자동 업데이트됨');
+      }
     },
     onError: (error) => {
       setCreating(false);
@@ -84,7 +86,9 @@ const useCustomerDataManager = () => {
       updateCustomer(updatedCustomer);
       invalidateQueries.customer(updatedCustomer._id);
       setError(null);
-      console.log('[CustomerProvider] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[CustomerProvider] Document를 통해 고객 수정 완료 - 모든 View 자동 업데이트됨');
+      }
     },
     onError: (error) => {
       setUpdating(false);
@@ -104,7 +108,9 @@ const useCustomerDataManager = () => {
       removeCustomer(deletedId);
       invalidateQueries.customers();
       setError(null);
-      console.log('[CustomerProvider] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+      if (import.meta.env.DEV) {
+        console.log('[CustomerProvider] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+      }
     },
     onError: (error) => {
       setDeleting(false);

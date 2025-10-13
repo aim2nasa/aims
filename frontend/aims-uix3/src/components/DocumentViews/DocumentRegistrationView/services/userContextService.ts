@@ -121,7 +121,9 @@ export class UserContextService {
    * 디버그용 컨텍스트 정보 출력
    */
   static debug(): void {
-    console.log('[UserContextService] Current context:', this.context)
+    if (import.meta.env.DEV) {
+      console.log('[UserContextService] Current context:', this.context)
+    }
   }
 }
 

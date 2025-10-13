@@ -172,7 +172,9 @@ export const useCustomerRegistrationController = ({
       const result = await response.json();
       const customerId = result.data?.customer_id;
 
-      console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId);
+      if (import.meta.env.DEV) {
+        console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId);
+      }
 
       // customerChanged 이벤트 발생 (지역별 보기 등 다른 View 동기화)
       window.dispatchEvent(new CustomEvent('customerChanged'));

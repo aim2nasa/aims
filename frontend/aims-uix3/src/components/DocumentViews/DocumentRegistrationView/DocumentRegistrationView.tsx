@@ -402,7 +402,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const autoCleanupTimer = setTimeout(() => {
         try {
           sessionStorage.removeItem(SESSION_KEY)
-          console.log('[DocumentRegistrationView] Auto-cleanup completed upload state')
+          if (import.meta.env.DEV) {
+            console.log('[DocumentRegistrationView] Auto-cleanup completed upload state')
+          }
         } catch (error) {
           console.warn('[DocumentRegistrationView] Failed to auto-clear state:', error)
         }

@@ -182,7 +182,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         // Document-View 패턴: CustomerDocument를 통해 삭제
         const document = CustomerDocument.getInstance();
         await document.deleteCustomer(customer._id);
-        console.log('[CustomerDetailView] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+        if (import.meta.env.DEV) {
+          console.log('[CustomerDetailView] Document를 통해 고객 삭제 완료 - 모든 View 자동 업데이트됨');
+        }
 
         onDelete?.();
         onClose();
@@ -200,14 +202,18 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   }, [customer, onClose, onDelete, confirmController]);
 
   const handleSaveSuccess = useCallback(() => {
-    console.log('[CustomerDetailView] 고객 수정 완료 - Document가 자동으로 모든 View 업데이트함');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDetailView] 고객 수정 완료 - Document가 자동으로 모든 View 업데이트함');
+    }
     // Document-View 패턴: CustomerEditModal이 Document를 통해 저장하므로
     // 여기서는 아무것도 할 필요 없음. Document가 자동으로 모든 View에 알림.
     onRefresh?.();
   }, [onRefresh]);
 
   const handleFamilyRelationshipSuccess = useCallback(() => {
-    console.log('[CustomerDetailView] 가족 관계 추가 완료 - Document가 자동으로 모든 View 업데이트함');
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDetailView] 가족 관계 추가 완료 - Document가 자동으로 모든 View 업데이트함');
+    }
     // Document-View 패턴: FamilyRelationshipModal이 Document를 통해 저장하므로
     // 여기서는 아무것도 할 필요 없음. Document가 자동으로 모든 View에 알림.
     onRefresh?.();

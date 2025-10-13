@@ -79,7 +79,9 @@ export const useAddressArchiveController = (
       // Service Layer를 통한 실제 API 호출
       const history = await AddressService.getAddressHistory(customerId);
 
-      console.log('[AddressArchiveController] 주소 이력 로드 성공:', history.length, '건');
+      if (import.meta.env.DEV) {
+        console.log('[AddressArchiveController] 주소 이력 로드 성공:', history.length, '건');
+      }
       setAddressHistory(history);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '주소 이력을 불러오는데 실패했습니다.';
