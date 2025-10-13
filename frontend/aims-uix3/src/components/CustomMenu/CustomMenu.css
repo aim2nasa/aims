@@ -785,6 +785,36 @@
   transition: none;
 }
 
+/* === 🎨 메뉴 아이콘 색상 클래스 (SFSymbol 래퍼용) === */
+
+/* 문서 업로드 (doc-badge-plus) - iOS systemOrange */
+.menu-icon-orange {
+  color: var(--color-menu-icon-location); /* iOS systemOrange 재사용 */
+}
+
+/* 문서 라이브러리 - iOS systemPurple */
+.menu-icon-purple {
+  color: var(--color-menu-icon-team); /* iOS systemPurple 재사용 */
+}
+
+/* 문서 검색 - iOS systemBlue */
+.menu-icon-blue {
+  color: var(--color-menu-icon-user); /* iOS systemBlue 재사용 */
+}
+
+/* 문서 처리 현황 - iOS systemRed */
+.menu-icon-red {
+  color: var(--color-error); /* iOS systemRed */
+}
+
+/* 선택 상태에서는 모든 아이콘이 흰색으로 통일 */
+.custom-menu-item.selected .menu-icon-orange,
+.custom-menu-item.selected .menu-icon-purple,
+.custom-menu-item.selected .menu-icon-blue,
+.custom-menu-item.selected .menu-icon-red {
+  color: var(--color-neutral-0);
+}
+
 /* === SMOOTH SCROLLING === */
 .custom-menu {
   scroll-behavior: smooth;

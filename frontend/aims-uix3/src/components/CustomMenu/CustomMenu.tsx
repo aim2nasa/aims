@@ -321,25 +321,25 @@ const CustomMenu = ({
       children: collapsed ? undefined : [
         {
           key: 'documents-register',
-          icon: <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM}  style={{ color: '#ff9500' }}/>,
+          icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
           label: '문서 등록',
           tooltipTitle: '새로운 문서를 등록합니다',
         },
         {
           key: 'documents-library',
-          icon: <MenuIcons.Library style={{ color: '#af52de' }} />,
+          icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
           label: '문서 라이브러리',
           tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
         },
         {
           key: 'documents-search',
-          icon: <MenuIcons.SearchBold style={{ color: '#007aff' }} />,
+          icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
           label: '문서 검색',
           tooltipTitle: '문서를 검색합니다',
         },
         {
           key: 'dsd',
-          icon: <MenuIcons.Dashboard style={{ color: '#ff3b30' }} />,
+          icon: <span className="menu-icon-red"><MenuIcons.Dashboard /></span>,
           label: '문서 처리 현황',
           tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
         }
@@ -350,25 +350,25 @@ const CustomMenu = ({
     ...(collapsed ? [
       {
         key: 'documents-register',
-        icon: <SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM}  style={{ color: '#ff9500' }}/>,
+        icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
         label: '',
         tooltipTitle: '새로운 문서를 등록합니다',
       },
       {
         key: 'documents-library',
-        icon: <MenuIcons.Library style={{ color: '#af52de' }} />,
+        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
         label: '',
         tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
       },
       {
         key: 'documents-search',
-        icon: <MenuIcons.SearchBold style={{ color: '#007aff' }} />,
+        icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
         label: '',
         tooltipTitle: '문서를 검색합니다',
       },
       {
         key: 'dsd',
-        icon: <MenuIcons.Dashboard style={{ color: '#ff3b30' }} />,
+        icon: <span className="menu-icon-red"><MenuIcons.Dashboard /></span>,
         label: '',
         tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
       }
