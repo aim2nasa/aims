@@ -43,7 +43,6 @@ export const CustomerRegistrationView: React.FC = () => {
         showCancel: false,
         iconType: 'success'
       });
-      // TODO: 고객 상세 페이지로 이동 또는 목록 새로고침
     },
     onError: async (error) => {
       // 애플 스타일 에러 모달 표시 (취소 버튼 없이)
