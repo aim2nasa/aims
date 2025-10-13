@@ -15,6 +15,10 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption, Tooltip } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
+import { CustomerService } from '../../../services/customerService'
+import { DocumentService } from '../../../services/DocumentService'
+import type { CustomerSearchResponse } from '@/entities/customer'
+import type { DocumentCustomerRelation } from '../../../types/documentStatus'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
@@ -28,10 +32,6 @@ interface DocumentLibraryViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 */
   onDocumentClick?: (documentId: string) => void
-  onDetailClick?: (document: any) => void
-  onSummaryClick?: (document: any) => void
-  onFullTextClick?: (document: any) => void
-  onLinkClick?: (document: any) => void
 }
 
 // 정렬 옵션 정의
@@ -72,10 +72,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
   onDocumentClick,
-  onDetailClick,
-  onSummaryClick,
-  onFullTextClick,
-  onLinkClick,
 }) => {
   const {
     documents,
@@ -158,6 +154,43 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       setSelectedDocumentForLink(null)
     }, 300)
   }, [])
+
+  // 🍎 고객 검색 핸들러
+  const searchCustomers = React.useCallback(
+    async (searchTerm: string, page: number = 1, limit: number = 20): Promise<CustomerSearchResponse> => {
+      return CustomerService.searchCustomers(searchTerm, { page, limit })
+    },
+    []
+  )
+
+  // 🍎 고객별 문서 조회 핸들러
+  const fetchCustomerDocuments = React.useCallback(async (customerId: string) => {
+    return DocumentService.getCustomerDocuments(customerId)
+  }, [])
+
+  // 🍎 문서-고객 연결 핸들러
+  const linkDocumentToCustomer = React.useCallback(
+    async (params: {
+      customerId: string
+      documentId: string
+      relationshipType: string
+      notes?: string
+    }): Promise<DocumentCustomerRelation | undefined> => {
+      const { customerId, documentId, relationshipType, notes } = params
+
+      await DocumentService.linkDocumentToCustomer(customerId, {
+        document_id: documentId,
+        relationship_type: relationshipType,
+        ...(notes ? { notes } : {}),
+      })
+
+      // 문서 목록 새로고침
+      await loadDocuments(searchParams, true)
+
+      return undefined
+    },
+    [loadDocuments, searchParams]
+  )
 
   /**
    * 페이지 변경 핸들러 (클릭 피드백 포함)
@@ -524,18 +557,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         visible={isLinkModalVisible}
         onClose={handleLinkModalClose}
         document={selectedDocumentForLink}
-        onSearchCustomers={async (query: string) => {
-          // TODO: Implement customer search
-          return []
-        }}
-        onFetchCustomerDocuments={async (customerId: string) => {
-          // TODO: Implement fetch customer documents
-          return []
-        }}
-        onLink={async (documentId: string, customerId: string) => {
-          // TODO: Implement link document to customer
-          return true
-        }}
+        onSearchCustomers={searchCustomers}
+        onFetchCustomerDocuments={fetchCustomerDocuments}
+        onLink={linkDocumentToCustomer}
       />
     </CenterPaneView>
   )
