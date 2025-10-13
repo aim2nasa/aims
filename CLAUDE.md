@@ -131,143 +131,18 @@ UX 문제 발견 시:
 
 **기억하라**: 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!
 
-### 인라인 스타일 사용 가이드라인 - 균형잡힌 접근! ⚖️
+### 인라인 스타일 가이드라인 ⚖️
 
-**핵심 원칙: 실용성과 유지보수성의 균형**
+**허용**: 동적 계산값 (`width: ${dynamicValue}px`), 런타임 위치 (`transform: translate()`)
+**금지**: 정적 색상, 하드코딩된 값, 대량 중복 패턴
 
-#### ✅ 권장 사용 사례
+**판단 기준**: "3개월 후에도 유지보수하기 쉬운가?"
 
-1. **동적 계산값**: `width: ${dynamicValue}px`, `opacity: ${fadeLevel}`
-2. **조건부 스타일링**: `display: ${isVisible ? 'block' : 'none'}`
-3. **컴포넌트 고유 속성**: 1-3개 속성까지 허용
-4. **레이아웃 위치 지정**: `position`, `top`, `left`, `right`, `bottom`
-5. **빠른 프로토타이핑**: 개발 초기 단계 임시 스타일
-6. **런타임 상호작용**: 마우스 위치, 스크롤 기반 애니메이션
-7. **드래그앤드롭 위치**: `transform: translate(${x}px, ${y}px)` (CSS로 불가능)
+### 공용 CSS 시스템 ⚡
 
-#### 🟡 신중한 사용 (검토 권장)
-
-- **반복 스타일**: 3회 이상 반복시 CSS 클래스 검토 고려
-- **복잡한 스타일**: 5개 이상 속성시 분리 검토
-- **테마 관련**: CSS 변수 사용 여부 확인
-
-#### ❌ 절대 금지
-
-- **하드코딩된 색상**: `color: '#ff0000'`, `backgroundColor: '#ffffff'`
-- **대량 중복**: 동일 스타일 패턴 10회 이상
-- **테마 시스템 우회**: CSS 변수 무시하고 고정값 사용
-
-#### 🎯 판단 기준
-
-**"이 스타일이 3개월 후에도 유지보수하기 쉬운가?"**
-
-#### 📝 코드 예시
-
-```jsx
-// ✅ 권장: 동적 값과 레이아웃
-<div
-  className="layout-pane"
-  style={{
-    width: `${dynamicWidth}px`,
-    top: `${headerHeight}px`
-  }}
->
-
-// ✅ 권장: 조건부 스타일링 (간단한 경우)
-<div style={{ display: isLoading ? 'none' : 'block' }}>
-
-// 🟡 검토 필요: 복잡한 정적 스타일
-<div style={{
-  padding: '20px',
-  backgroundColor: 'var(--color-bg-primary)',
-  borderRadius: '8px',
-  boxShadow: 'var(--shadow-md)',
-  transition: 'all 0.3s ease'
-}}>  // 5개 속성 → CSS 클래스 고려
-
-// ❌ 금지: 하드코딩 색상
-<div style={{ backgroundColor: '#ff0000' }}>
-
-// ❌ 금지: 대량 중복 패턴
-<div style={{ padding: '20px', borderRadius: '8px' }}>  // 10회 반복됨
-```
-
-#### 🔧 개선 방법
-
-**중복 발견시:**
-```css
-/* 공용 클래스로 추출 */
-.content-card {
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-```
-
-**핵심**: 유연성을 유지하되, 중복과 하드코딩은 방지한다!
-
-### 공용 CSS 시스템 구축 규칙 - 신성한 사명! ⚡
-
-**모든 스타일은 공용화하여 재사용 가능한 시스템으로 구축한다!**
-
-1. **공용 클래스 시스템 구축:**
-   ```css
-   /* styles.css - 공용 클래스 예시 */
-   .main-container {
-     background-color: var(--color-bg-primary);
-     min-height: 100vh;
-     transition: background-color 0.3s ease;
-   }
-
-   .content-pane {
-     background-color: var(--color-bg-secondary);
-     border-radius: 8px;
-     border: 1px solid var(--color-border);
-     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-   }
-
-   .hover-subtle:hover {
-     background-color: var(--color-bg-hover);
-     transition: background-color 0.2s ease;
-   }
-   ```
-
-2. **재사용 원칙:**
-   - 동일한 패턴이 **5회 이상** 나타나면 **공용 클래스로 추출 검토**
-   - 대량 중복 스타일링 **방지**
-   - 핵심 레이아웃, 색상, 간격은 **공용 변수 사용 권장**
-
-3. **컴포넌트 적용 방법:**
-   ```jsx
-   // ✅ 올바른 방법 - 공용 클래스 조합
-   <div className="main-container">
-     <div className="content-pane hover-subtle">
-       <Card className="accent-button">
-
-   // ❌ 절대 금지 - 개별 스타일링
-   <div style={{backgroundColor: '#e8e9eb'}}>
-     <div style={{border: '1px solid #d1d5db'}}>
-   ```
-
-4. **공용 클래스 카테고리:**
-   - **Layout**: `.main-container`, `.content-pane`, `.side-panel`
-   - **Interactive**: `.hover-subtle`, `.selected-item`, `.disabled-state`
-   - **Accent**: `.accent-button`, `.accent-text`, `.accent-border`
-   - **Spacing**: `.p-lg`, `.m-md`, `.gap-sm` (Tailwind 스타일)
-
-5. **중복 제거 프로세스:**
-   - 모든 컴포넌트에서 중복 스타일 패턴 식별
-   - 공용 클래스로 추출하여 `styles.css`에 정의
-   - 모든 컴포넌트를 공용 클래스 사용으로 리팩토링
-   - 테마 호환성 검증
-
-6. **주의 사항:**
-   - 대량 중복 스타일 패턴 방지
-   - 테마 시스템과 분리된 하드코딩 색상 방지
-   - 복잡한 스타일의 무분별한 인라인 사용 지양
-
-**핵심 가치**: 중복 방지와 유연성의 균형! 실용적 개발과 유지보수성 확보! 🎯
+- 5회 이상 반복 패턴 → 공용 클래스 추출
+- 공용 클래스 카테고리: Layout, Interactive, Accent, Spacing
+- CSS 변수 사용 필수
 
 ### React 개발 문제 해결 규칙 - 철칙! ⚠️
 
@@ -473,357 +348,63 @@ python scripts/rag_search.py
 
 ---
 
-## 현재 프로젝트 진행상황 (2025-09-01)
+## 프로젝트 철학
 
-### 최근 완료된 작업
-
-#### Phase 3 완료: AIMS 디자인 시스템 Button 컴포넌트 전환 ✅
-- **목표**: 모든 Ant Design Button → AIMS 커스텀 Button 컴포넌트로 전환
-- **완료 파일들**:
-  - `src/components/common/Button.js` - link, dashed variant 추가
-  - `AddressSearchModal.js` - 모든 버튼 컴포넌트 전환
-  - `DocumentLinkModal.js` - 버튼 API 변경 (type → variant)
-  - `CustomerEditForm.js` - 폼 버튼들 전환
-  - `DocumentManagementPanel.js` - 패널 액션 버튼들 전환
-  - `ConsultationManagementPanel.js` - 상담 관련 버튼들 전환
-  - `ContractManagementPanel.js` - 계약 관련 버튼들 전환
-  - `CustomerManagement.js` - 메인 관리 페이지 버튼들 전환
-  - `ImageViewer.js`, `PDFViewer.js` - 뷰어 컨트롤 버튼들 전환
-  - `RightPane.js` - 우측 패널 버튼들 전환
-  - `CustomerRelationshipTreeView.js` - 관계도 뷰 버튼들 전환
-
-#### "1번 정리 및 최적화" 완료 ✅
-- **1차 정리** (커밋: 944f697):
-  - 미사용 import 제거 (IdcardOutlined, CloseOutlined, Table 등)
-  - 미사용 변수/함수 제거 (loading, setLoading, handleKeyPress 등)
-  - Unicode BOM 제거 (apiService.js)
-
-- **2차 Hook 종속성 최적화** (커밋: 47f4c55):
-  - `CustomerDetailPanel.js`: fetchCustomerDetail, fetchCustomerDocuments useCallback 최적화
-  - `CustomerManagement.js`: pagination Hook 종속성 경고 해결
-  - `ImageViewer.js`: 미사용 변수 제거 (maxImageHeight, containerHeight, paneHeight)
-  - `CustomerRelationshipTreeView.js`: selectFamilyRepresentative useCallback 최적화
-
-- **결과**: 모든 ESLint 경고 해결, 성공적인 빌드 완료
-
-### 다음 단계 옵션들
-
-#### Option 1: Phase 4 - 테마 시스템 통합
-- CSS Variables를 활용한 다크모드 지원
-- `src/styles/themes.css` 파일 생성
-- 색상, 폰트, 간격 등의 디자인 토큰 정의
-- 컴포넌트별 테마 적용
-
-#### Option 2: 성능 최적화 단계
-- React.memo, useMemo, useCallback 추가 최적화
-- 번들 크기 분석 및 코드 스플리팅
-- 이미지 lazy loading 구현
-- API 호출 최적화 (중복 요청 방지, 캐싱)
-
-#### Option 3: 테스트 커버리지 향상
-- Jest 단위 테스트 추가
-- React Testing Library 통합 테스트 구현
-- E2E 테스트 시나리오 작성
-- 테스트 자동화 설정
-
-#### Option 4: 접근성(A11y) 개선
-- ARIA 속성 추가
-- 키보드 네비게이션 개선
-- 스크린 리더 지원 강화
-- 색상 대비 및 포커스 관리
-
-### 재개 시 실행할 명령어
-```bash
-# 개발 서버 시작
-cd frontend/aims-uix1 && PORT=3005 npm start
-
-# 현재 상태 확인
-git status
-git log --oneline -10
-
-# 최근 커밋 확인
-git show --name-only
-```
-
-### 중요한 컨텍스트
-- **현재 브랜치**: main
-- **⚠️ 작업 대상**: frontend/aims-uix2 (절대 잊지 말 것!)
-- **마지막 커밋**: 47f4c55 (Hook 종속성 최적화)
-- **빌드 상태**: 성공 (ESLint 경고 0개)
-- **개발 서버**: aims-uix2에서 실행 중
-- **주요 작업 완료**: Phase 3 + 코드 정리 및 최적화
-
-### ⚠️ 절대 잊지 말 것!
-**작업 대상: frontend/aims-uix2**
-- aims-uix1이 아닌 aims-uix2에서 작업해야 함
-- 모든 파일 수정, 빌드, 테스트는 aims-uix2 기준
-
-### 프로젝트 철학
-- **점진적 개선**: 한 번에 하나씩 체계적으로 개선
-- **품질 우선**: 모든 경고와 오류를 해결한 후 다음 단계 진행  
-- **사용자 승인**: 모든 커밋 전 사용자 확인 필수
-- **문서화**: 모든 변경사항을 상세히 기록
+- **점진적 개선**: 한 번에 하나씩 체계적으로
+- **품질 우선**: 모든 경고 해결 후 진행
+- **사용자 승인**: 커밋 전 확인 필수
+- **문서화**: 변경사항 상세 기록
 
 ---
 
-## AIMS 디자인 시스템 - 공식 색상 가이드 🎨
+## AIMS 디자인 시스템 🎨
 
-### 테마 색상 시스템 (color.png 기준)
+### 색상 시스템
 
-이 섹션은 `/mnt/d/Users/rossi/Desktop/color.png`에서 정의된 Light/Dark 테마를 기반으로 합니다.
+**레퍼런스**: `/mnt/d/Users/rossi/Desktop/color.png`
 
-#### Light Theme 색상
-```css
-/* 배경 색상 */
---color-bg-primary: #f5f6f7;        /* 메인 배경 */
---color-bg-secondary: #ffffff;      /* 카드/패널 배경 */
+| 요소 | Light | Dark |
+|------|-------|------|
+| 배경 | #f5f6f7, #ffffff | #374151, #4b5563 |
+| 텍스트 | #1a1a1a, #6b7280 | #f9fafb, #d1d5db |
+| 액션 | #3b82f6 | #2563eb |
 
-/* 텍스트 색상 */
---color-text-primary: #1a1a1a;      /* 메인 텍스트 */
---color-text-secondary: #6b7280;    /* 보조 텍스트 */
+### 핵심 원칙
 
-/* 버튼 색상 */
---color-primary: #3b82f6;           /* 주요 버튼 (파란색) */
---color-primary-hover: #2563eb;     /* 주요 버튼 호버 */
+- **톤과 분위기** 유지 (경직된 색상코드 금지)
+- CSS 변수 사용 (`var(--color-primary)`)
+- Light/Dark 테마 자연스러운 전환
+- WCAG 2.1 AA 색상 대비 기준
 
-/* 아이콘 색상 */
---color-icon-orange: #f97316;       /* 주황색 아이콘 */
---color-icon-pink: #ec4899;         /* 분홍색 아이콘 */
---color-icon-cyan: #06b6d4;         /* 청록색 아이콘 */
---color-icon-red: #ef4444;          /* 빨간색 아이콘 */
-```
-
-#### Dark Theme 색상
-```css
-/* 배경 색상 */
---color-bg-primary: #374151;        /* 메인 배경 */
---color-bg-secondary: #4b5563;      /* 카드/패널 배경 */
-
-/* 텍스트 색상 */
---color-text-primary: #f9fafb;      /* 메인 텍스트 */
---color-text-secondary: #d1d5db;    /* 보조 텍스트 */
-
-/* 버튼 색상 */
---color-primary: #2563eb;           /* 주요 버튼 (어두운 파란색) */
---color-primary-hover: #1d4ed8;     /* 주요 버튼 호버 */
-
-/* 아이콘 색상 - 다크모드에서 약간 더 밝게 */
---color-icon-orange: #fb923c;       /* 주황색 아이콘 */
---color-icon-pink: #f472b6;         /* 분홍색 아이콘 */
---color-icon-cyan: #22d3ee;         /* 청록색 아이콘 */
---color-icon-red: #f87171;          /* 빨간색 아이콘 */
-```
-
-### 디자인 원칙
-
-1. **방향성 중심**: color.png는 디자인 방향을 제시하는 레퍼런스
-2. **유연한 적용**: 정확한 색상코드보다는 **톤과 분위기** 유지가 중요
-3. **통일성**: 전체적인 색조와 시각적 조화 확보
-4. **접근성**: 충분한 색상 대비 유지 (WCAG 2.1 AA 기준)
-5. **반응성**: 테마 전환 시 모든 요소가 즉시 반영되어야 함
-6. **확장성**: 새로운 색상 추가 시 시스템적 접근
-
-### 색상 적용 철학
-
-#### ✅ 올바른 접근
-- color.png와 **조화로운 색상** 선택
-- 상황에 맞는 **적절한 명도/채도** 조정
-- 전체적인 **일관된 분위기** 유지
-- Light/Dark 테마 간 **자연스러운 전환**
-
-#### ❌ 피해야 할 접근
-- 색상코드에 **경직되게** 얽매이기
-- 레퍼런스 **무시하고** 임의 색상 사용
-- 테마별 **불일치**하는 색조 적용
-- **하드코딩**된 고정 색상 사용
-
-#### 예시: 파란색 버튼 적용
-```css
-/* 상황별 유연한 적용 ✅ */
---color-primary: #3b82f6;        /* 기본 */
---color-primary: #2563eb;        /* 좀 더 진한 톤 */
---color-primary: #1d4ed8;        /* 강조가 필요한 경우 */
-
-/* 경직된 적용 ❌ */
---color-primary: #3b82f6;        /* 오직 이것만 */
-```
-
-### 구현 방법
-
-#### CSS Variables 사용
-```css
-/* 올바른 방법 ✅ */
-.button-primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-primary);
-}
-
-/* 잘못된 방법 ❌ */
-.button-primary {
-  background-color: #3b82f6;
-  color: #1a1a1a;
-}
-```
-
-#### 테마 전환 구조
-```css
-/* 기본 (Light Theme) */
-:root {
-  --color-bg-primary: #f5f6f7;
-  --color-text-primary: #1a1a1a;
-}
-
-/* Dark Theme */
-html[data-theme="dark"] {
-  --color-bg-primary: #374151;
-  --color-text-primary: #f9fafb;
-}
-```
-
-### 색상 적용 우선순위
-
-1. **필수 적용**: 배경, 텍스트, 주요 버튼
-2. **중요 적용**: 테두리, 그림자, 호버 상태
-3. **보조 적용**: 아이콘, 인디케이터, 상태 표시
-
-**중요**: 이 가이드는 color.png의 디자인을 모든 AIMS 컴포넌트에 일관되게 적용하기 위한 표준입니다.
+**자세한 내용**: `frontend/aims-uix3/CSS_SYSTEM.md` 참조
 
 ---
 
-## 🍎 AIMS UIX3 애플 디자인 철학 - 공식 표준 🍎
+## 🍎 애플 디자인 철학 (UIX3 표준)
 
-### 후보6.1 애플 아이폰/맥 스타일 - 영구 표준 적용
+### 3대 핵심 원칙
 
-**이 디자인 철학은 AIMS UIX3의 영구적인 표준이며, 모든 후속 개발에서 일관되게 유지되어야 합니다.**
+1. **Clarity (명확성)**: 정보 계층 구조 명확
+2. **Deference (겸손함)**: UI가 콘텐츠 방해 금지
+3. **Depth (깊이감)**: 자연스러운 시각적 계층
 
-#### 🎯 핵심 디자인 원칙
+### Progressive Disclosure
 
-1. **극도의 미니멀리즘**
-   - 모든 불필요한 장식 요소 완전 제거
-   - iOS 공식 색상 팔레트만 사용
-   - 순수한 기능성에 집중
+- **기본**: 거의 보이지 않는 서브틀한 표현
+- **상호작용**: 필요한 정보만 단계적 표시
+- **철학**: "Invisible until you need it"
 
-2. **Progressive Disclosure (점진적 정보 공개)**
-   - 기본: 거의 보이지 않는 서브틀한 표현
-   - 상호작용 시: 필요한 정보만 단계적 표시
-   - "Invisible until you need it" 철학 구현
+### 금지사항
 
-3. **애플의 3대 디자인 원칙 완벽 구현**
-   - **Clarity (명확성)**: 정보 계층 구조가 명확함
-   - **Deference (겸손함)**: UI가 콘텐츠를 방해하지 않음
-   - **Depth (깊이감)**: 자연스러운 시각적 계층
+- 화려한 그라데이션
+- 강한 색상 강조
+- 과도한 시각적 효과
+- 항상 보이는 인디케이터
 
-#### 🎨 색상 시스템 표준
+### 체크리스트
 
-##### Light Theme 필수 색상
-```css
-/* 메인 배경 */
---color-layout-main-light: #f2f2f7;      /* iOS 라이트 그레이 */
---color-layout-header-light: #ffffff;     /* 순수 화이트 헤더 */
-
-/* 컨텐츠 배경 */
---color-layout-content-light: #ffffff;    /* 순수 화이트 카드형 */
---color-layout-leftpane-light: #e5e5ea;   /* iOS 시스템 그레이 */
---color-layout-secondary-light: #f2f2f7;  /* 시스템 그레이 */
---color-layout-accent-light: #e5e5ea;     /* 라이트 액센트 */
-```
-
-##### Dark Theme 필수 색상
-```css
-/* 메인 배경 */
---color-layout-main-dark: #000000;        /* 순수 블랙 */
---color-layout-header-dark: #1c1c1e;      /* iOS 다크 그레이 헤더 */
-
-/* 컨텐츠 배경 */
---color-layout-content-dark: #1c1c1e;     /* iOS 다크 그레이 카드형 */
---color-layout-leftpane-dark: #1c1c1e;    /* iOS 다크 그레이 */
---color-layout-secondary-dark: #2c2c2e;   /* 세컨더리 다크 */
---color-layout-accent-dark: #3a3a3c;      /* 다크 액센트 */
-```
-
-#### 🔧 BRB (드래그 바) 디자인 표준
-
-**BRB는 애플 디자인 철학의 완벽한 구현체입니다. 이 패턴을 다른 상호작용 요소에도 동일하게 적용해야 합니다.**
-
-##### 기본 상태 (Subtle Presence)
-- Light: #d1d5db (거의 보이지 않는 서브틀함)
-- Dark: #4b5563 (서브틀한 다크 그레이)
-- 사용자의 주의를 끌지 않음
-
-##### 호버 상태 (Progressive Disclosure)
-- Light: #9ca3af (인식 가능한 수준으로 진해짐)
-- Dark: #6b7280 (인식 가능한 다크 그레이)
-- 중앙에 그립 인디케이터(⋮) 부드럽게 페이드인
-
-##### 상호작용 원칙
-```css
-/* 필수 애니메이션 패턴 */
-transition: background-color var(--duration-fast) var(--easing-ease-out);
-transition: opacity var(--duration-fast) var(--easing-ease-out);
-
-/* 그립 인디케이터 패턴 */
-content: '⋮';
-opacity: 0;
-font-size: 12px;
-color: var(--color-layout-brb-icon);
-
-/* 호버 시 */
-opacity: 1;
-```
-
-#### ⚠️ 절대 금지사항 - 애플 스타일 위반
-
-1. **화려한 그라데이션 사용 금지**
-   - 8색 그라데이션 같은 과한 장식
-   - 애플은 단색 또는 매우 서브틀한 그라데이션만 사용
-
-2. **강한 색상 강조 금지**
-   - 눈에 띄는 파란색, 주황색 등 과도한 컬러
-   - 모든 요소는 서브틀하게 표현
-
-3. **복잡한 시각적 효과 금지**
-   - 그림자, 테두리 등의 과도한 장식
-   - 애플은 깔끔함과 단순함 추구
-
-4. **불필요한 상태 표시 금지**
-   - 항상 보이는 인디케이터나 가이드
-   - Progressive Disclosure 원칙 위반
-
-#### 🎯 다른 컴포넌트 적용 원칙
-
-**BRB의 성공적인 패턴을 다른 상호작용 요소에도 동일하게 적용:**
-
-1. **버튼 호버 상태**
-   - 기본: 거의 안보이는 배경
-   - 호버: 서브틀하게 진해지는 배경
-
-2. **드롭다운/모달 트리거**
-   - 기본: 최소한의 시각적 표시
-   - 호버: 필요한 정보만 단계적 표시
-
-3. **네비게이션 요소**
-   - 기본: 텍스트 위주의 깔끔한 표현
-   - 상호작용: 서브틀한 배경 변화
-
-#### 📐 구현 체크리스트
-
-모든 새로운 UI 요소는 다음을 만족해야 함:
-
-- [ ] iOS 공식 색상 팔레트 사용
-- [ ] 기본 상태에서 서브틀함
-- [ ] 호버/포커스 시 Progressive Disclosure
-- [ ] 부드러운 애니메이션 (var(--duration-fast))
-- [ ] Light/Dark 테마 완벽 지원
-- [ ] 접근성 속성 (ARIA) 완비
-- [ ] "Invisible until you need it" 철학 준수
-
-#### 🔮 미래 확장성
-
-**이 디자인 표준은 다음과 같이 확장되어야 함:**
-
-1. **새로운 컴포넌트**: BRB 패턴을 기준으로 설계
-2. **상호작용 개선**: Progressive Disclosure 원칙 적용
-3. **접근성 강화**: 애플의 접근성 가이드라인 준수
-4. **일관성 유지**: 모든 변경사항은 이 철학에 부합해야 함
-
-**⚠️ 중요**: 이 디자인 철학은 변경 불가한 표준입니다. 모든 개발자는 이 원칙을 완벽히 이해하고 일관되게 적용해야 합니다.
+- [ ] iOS 공식 팔레트
+- [ ] 서브틀한 기본 상태
+- [ ] Progressive Disclosure 구현
+- [ ] Light/Dark 테마 지원
+- [ ] ARIA 접근성
