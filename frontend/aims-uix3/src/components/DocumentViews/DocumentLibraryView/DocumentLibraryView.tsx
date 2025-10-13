@@ -12,7 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, type DropdownOption } from '@/shared/ui'
+import { Dropdown, type DropdownOption, Tooltip } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import './DocumentLibraryView.css'
 
@@ -23,6 +23,10 @@ interface DocumentLibraryViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 */
   onDocumentClick?: (documentId: string) => void
+  onDetailClick?: (document: any) => void
+  onSummaryClick?: (document: any) => void
+  onFullTextClick?: (document: any) => void
+  onLinkClick?: (document: any) => void
 }
 
 // 정렬 옵션 정의
@@ -62,7 +66,11 @@ const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
 export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
-  onDocumentClick
+  onDocumentClick,
+  onDetailClick,
+  onSummaryClick,
+  onFullTextClick,
+  onLinkClick,
 }) => {
   const {
     documents,
@@ -256,53 +264,116 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               </p>
             </div>
           ) : (
-            documents.map((document) => (
-              <div
-                key={document._id}
-                className="document-item"
-                onClick={() => onDocumentClick?.(document._id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onDocumentClick?.(document._id);
-                  }
-                }}
-              >
-                {/* 🍎 ICON: File type indicator with color class */}
-                <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
-                  <SFSymbol
-                    name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.REGULAR}
-                    decorative={true}
-                  />
-                </div>
+            documents.map((document) => {
+              const isLinked = Boolean((document as any).customer_relation)
+              const canLink = !isLinked
+              const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 
-                {/* 🍎 NAME: Primary information (flexible width) */}
-                <div className="document-info">
-                  <div className="document-name" title={DocumentUtils.getDisplayName(document)}>
-                    {DocumentUtils.getDisplayName(document)}
+              return (
+                <div
+                  key={document._id}
+                  className="document-item"
+                  onClick={() => onDocumentClick?.(document._id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onDocumentClick?.(document._id);
+                    }
+                  }}
+                >
+                  {/* 🍎 ICON: File type indicator with color class */}
+                  <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
+                    <SFSymbol
+                      name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.REGULAR}
+                      decorative={true}
+                    />
+                  </div>
+
+                  {/* 🍎 NAME: Primary information (flexible width) */}
+                  <div className="document-info">
+                    <div className="document-name" title={DocumentUtils.getDisplayName(document)}>
+                      {DocumentUtils.getDisplayName(document)}
+                    </div>
+                  </div>
+
+                  {/* 🍎 SIZE: Fixed width column */}
+                  <span className="document-size">
+                    {DocumentUtils.formatFileSize(document.size)}
+                  </span>
+
+                  {/* 🍎 DATE: Fixed width column */}
+                  <span className="document-date">
+                    {DocumentUtils.formatUploadDate(document.uploadDate)}
+                  </span>
+
+                  {/* 🍎 TYPE: Fixed width column */}
+                  <span className="document-type">
+                    {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
+                  </span>
+
+                  {/* 액션 버튼 */}
+                  <div className="document-actions">
+                    <Tooltip content="상세 보기">
+                      <button
+                        className="action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDetailClick?.(document)
+                        }}
+                        aria-label="상세 보기"
+                      >
+                        👁️
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="요약 보기">
+                      <button
+                        className="action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSummaryClick?.(document)
+                        }}
+                        aria-label="요약 보기"
+                      >
+                        📋
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="전체 텍스트 보기">
+                      <button
+                        className="action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onFullTextClick?.(document)
+                        }}
+                        aria-label="전체 텍스트 보기"
+                      >
+                        📄
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={linkTooltip}>
+                      <button
+                        className="action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (canLink) {
+                            onLinkClick?.(document)
+                          }
+                        }}
+                        aria-label={linkTooltip}
+                        aria-disabled={!canLink}
+                        data-disabled={!canLink}
+                        tabIndex={canLink ? 0 : -1}
+                      >
+                        🔗
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
-
-                {/* 🍎 SIZE: Fixed width column */}
-                <span className="document-size">
-                  {DocumentUtils.formatFileSize(document.size)}
-                </span>
-
-                {/* 🍎 DATE: Fixed width column */}
-                <span className="document-date">
-                  {DocumentUtils.formatUploadDate(document.uploadDate)}
-                </span>
-
-                {/* 🍎 TYPE: Fixed width column */}
-                <span className="document-type">
-                  {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
-                </span>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 
