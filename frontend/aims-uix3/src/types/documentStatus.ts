@@ -55,6 +55,10 @@ export interface UploadData {
   timestamp?: string
   uploaded_at?: string
   status?: StageStatus | string
+  fileSize?: number
+  size?: number
+  file_size?: number
+  mimeType?: string
 }
 
 /**
@@ -69,7 +73,9 @@ export interface MetaData {
   created_at?: string
   filename?: string
   size_bytes?: number
+  size?: number
   status?: StageStatus
+  mimeType?: string
 }
 
 /**
@@ -141,6 +147,11 @@ export interface Document {
   uploaded_at?: string
   created_at?: string
   timestamp?: string
+
+  // 파일 크기 필드들 (다양한 소스에서 올 수 있음)
+  size?: number
+  fileSize?: number
+  file_size?: number
 
   // 데이터 구조들
   upload?: UploadData | string

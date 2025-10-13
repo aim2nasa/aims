@@ -230,37 +230,36 @@ export class DocumentStatusService {
   /**
    * 파일 크기 추출
    */
-  static extractFileSize(document: Document): number {
-    const uploadData = parseStage<UploadData>(document.upload) as any
+  static extractFileSize(document: Partial<Document> | any): number {
+    const uploadData = parseStage<UploadData>(document.upload)
     if (uploadData?.fileSize !== undefined) {
       return uploadData.fileSize
     }
 
-    const stageUpload = parseStage<UploadData>(document.stages?.upload) as any
+    const stageUpload = parseStage<UploadData>(document.stages?.upload)
     if (stageUpload?.fileSize !== undefined) {
       return stageUpload.fileSize
     }
 
     // 기본 필드에서 찾기
-    const doc = document as any
-    if (doc.size !== undefined) {
-      return doc.size
+    if (document.size !== undefined) {
+      return document.size
     }
 
-    if (doc.fileSize !== undefined) {
-      return doc.fileSize
+    if (document.fileSize !== undefined) {
+      return document.fileSize
     }
 
-    if (doc.file_size !== undefined) {
-      return doc.file_size
+    if (document.file_size !== undefined) {
+      return document.file_size
     }
 
-    const metaData = parseStage<MetaData>(document.meta) as any
+    const metaData = parseStage<MetaData>(document.meta)
     if (metaData?.size !== undefined) {
       return metaData.size
     }
 
-    const stageMeta = parseStage<MetaData>(document.stages?.meta) as any
+    const stageMeta = parseStage<MetaData>(document.stages?.meta)
     if (stageMeta?.size !== undefined) {
       return stageMeta.size
     }
@@ -272,7 +271,7 @@ export class DocumentStatusService {
    * 문서 상태 추출
    * @deprecated 내부적으로 DocumentProcessingModule 사용
    */
-  static extractStatus(document: Document): DocumentStatus {
+  static extractStatus(document: Partial<Document> | any): DocumentStatus {
     return DocumentProcessingModule.getProcessingStatus(document).status
   }
 

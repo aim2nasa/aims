@@ -263,7 +263,7 @@ export const useCustomerDocumentsController = (
           return
         }
 
-        const recDetail: Record<string, unknown> | null = (detail && typeof detail === 'object' && !('_id' in (detail as any))) ? (detail as Record<string, unknown>) : null
+        const recDetail: Record<string, unknown> | null = (detail && typeof detail === 'object' && !('_id' in detail)) ? (detail as Record<string, unknown>) : null
         const metadata = extractPreviewInfo(recDetail, document)
 
         setPreviewState({

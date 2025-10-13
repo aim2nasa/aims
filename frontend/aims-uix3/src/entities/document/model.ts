@@ -33,6 +33,15 @@ export const DocumentSchema = z.object({
   // 고객 연결 정보
   customerId: z.string().optional(),
   customerName: z.string().optional(),
+  customer_relation: z.object({
+    customer_id: z.string(),
+    customer_name: z.string().optional(),
+    relationship_type: z.string().optional(),
+    assigned_by: z.string().nullable().optional(),
+    assigned_at: z.string().optional(),
+    notes: z.string().optional(),
+    linked_at: z.string().optional(),
+  }).optional(),
 
   // 상태 정보
   status: z.enum(['active', 'archived', 'deleted']).default('active'),

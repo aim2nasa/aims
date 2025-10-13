@@ -362,10 +362,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
           ) : (
             documents.map((document) => {
-              const status = DocumentStatusService.extractStatus(document as any)
+              const status = DocumentStatusService.extractStatus(document)
               const statusLabel = DocumentStatusService.getStatusLabel(status)
               const statusIcon = DocumentStatusService.getStatusIcon(status)
-              const isLinked = Boolean((document as any).customer_relation)
+              const isLinked = Boolean(document.customer_relation)
               const canLink = status === 'completed' && !isLinked
               const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 
@@ -402,7 +402,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
                   {/* 🍎 SIZE: Fixed width column */}
                   <span className="document-size">
-                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document as any))}
+                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document))}
                   </span>
 
                   {/* 🍎 DATE: Fixed width column */}
