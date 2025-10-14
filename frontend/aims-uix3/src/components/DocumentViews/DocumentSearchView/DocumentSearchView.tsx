@@ -7,16 +7,24 @@
  * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService } from '@/services/searchService'
 import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/search'
-import { DocumentUtils } from '@/entities/document'
+import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import FullTextModal from './FullTextModal'
+import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
+import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
+import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
+import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
+import { CustomerService } from '@/services/customerService'
+import { DocumentService } from '@/services/DocumentService'
+import type { CustomerSearchResponse } from '@/entities/customer'
+import type { DocumentCustomerRelation } from '../../../types/documentStatus'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -75,12 +83,26 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleKeywordModeChange,
   } = useDocumentSearch()
 
-  // Full Text 모달 상태
+  // Full Text 모달 상태 (기존 - 검색 결과용)
   const [isFullTextModalVisible, setIsFullTextModalVisible] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<{
     name: string
     fullText: string
   } | null>(null)
+
+  // 🍎 새로운 모달 상태 관리 (DocumentLibrary와 동일한 구조)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedDocumentForDetail, setSelectedDocumentForDetail] = useState<any | null>(null)
+  const [isDetailModalVisible, setDetailModalVisible] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<any | null>(null)
+  const [isSummaryModalVisible, setSummaryModalVisible] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedDocumentForFullTextNew, setSelectedDocumentForFullTextNew] = useState<any | null>(null)
+  const [isFullTextModalVisibleNew, setFullTextModalVisibleNew] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState<any | null>(null)
+  const [isLinkModalVisible, setLinkModalVisible] = useState(false)
 
   /**
    * Enter 키 입력 핸들러
@@ -102,28 +124,108 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   }
 
   /**
-   * Full Text 보기 핸들러
-   */
-  const handleShowFullText = (item: SearchResultItem, e: React.MouseEvent) => {
-    e.stopPropagation() // 부모 클릭 이벤트 방지
-
-    const fullText = item.meta?.full_text || item.ocr?.full_text || ''
-    const documentName = SearchService.getOriginalName(item)
-
-    setSelectedDocument({
-      name: documentName,
-      fullText: fullText
-    })
-    setIsFullTextModalVisible(true)
-  }
-
-  /**
-   * Full Text 모달 닫기 핸들러
+   * Full Text 모달 닫기 핸들러 (기존 - 더 이상 사용하지 않음)
    */
   const handleCloseFullTextModal = () => {
     setIsFullTextModalVisible(false)
     setSelectedDocument(null)
   }
+
+  /**
+   * 🍎 새로운 모달 핸들러들 (DocumentLibrary와 동일)
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDetailClick = useCallback((document: any) => {
+    setSelectedDocumentForDetail(document)
+    setDetailModalVisible(true)
+  }, [])
+
+  const handleDetailModalClose = useCallback(() => {
+    setDetailModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForDetail(null)
+    }, 300)
+  }, [])
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSummaryClickInternal = useCallback((document: any) => {
+    setSelectedDocumentForSummary(document)
+    setSummaryModalVisible(true)
+  }, [])
+
+  const handleSummaryModalClose = useCallback(() => {
+    setSummaryModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForSummary(null)
+    }, 300)
+  }, [])
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFullTextClickInternal = useCallback((document: any) => {
+    setSelectedDocumentForFullTextNew(document)
+    setFullTextModalVisibleNew(true)
+  }, [])
+
+  const handleFullTextModalCloseNew = useCallback(() => {
+    setFullTextModalVisibleNew(false)
+    setTimeout(() => {
+      setSelectedDocumentForFullTextNew(null)
+    }, 300)
+  }, [])
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleLinkClickInternal = useCallback((document: any) => {
+    setSelectedDocumentForLink(document)
+    setLinkModalVisible(true)
+  }, [])
+
+  const handleLinkModalClose = useCallback(() => {
+    setLinkModalVisible(false)
+    setTimeout(() => {
+      setSelectedDocumentForLink(null)
+    }, 300)
+  }, [])
+
+  /**
+   * 🍎 고객 검색 핸들러
+   */
+  const searchCustomers = useCallback(
+    async (searchTerm: string, page: number = 1, limit: number = 20): Promise<CustomerSearchResponse> => {
+      return CustomerService.searchCustomers(searchTerm, { page, limit })
+    },
+    []
+  )
+
+  /**
+   * 🍎 고객별 문서 조회 핸들러
+   */
+  const fetchCustomerDocuments = useCallback(async (customerId: string) => {
+    return DocumentService.getCustomerDocuments(customerId)
+  }, [])
+
+  /**
+   * 🍎 문서-고객 연결 핸들러
+   */
+  const linkDocumentToCustomer = useCallback(
+    async (params: {
+      customerId: string
+      documentId: string
+      relationshipType: string
+      notes?: string
+    }): Promise<DocumentCustomerRelation | undefined> => {
+      const { customerId, documentId, relationshipType, notes } = params
+
+      await DocumentService.linkDocumentToCustomer(customerId, {
+        document_id: documentId,
+        relationship_type: relationshipType,
+        ...(notes ? { notes } : {}),
+      })
+
+      // 검색 결과 새로고침은 필요시 추가
+      return undefined
+    },
+    []
+  )
 
   /**
    * 유사도 점수를 5단계로 분류
@@ -263,6 +365,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   const score = 'score' in item ? item.score : null
                   const mimeType = SearchService.getMimeType(item)
 
+                  // 🍎 문서 처리 상태 정보 추출
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const status = DocumentProcessingModule.getProcessingStatus(item as any)
+                  const linkStatus = DocumentProcessingModule.getCustomerLinkStatus(item as any)
+                  const canLink = linkStatus.canLink
+                  const linkTooltip = linkStatus.isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
+
                   return (
                     <div
                       key={index}
@@ -300,20 +409,76 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="row-subtitle">{summary}</div>
                       </div>
 
-                      {/* Trailing: Full Text 버튼 + 점수 + 화살표 */}
+                      {/* Trailing: 액션 버튼들 + 점수 + 화살표 */}
                       <div className="row-trailing">
-                        {/* Full Text 보기 버튼 */}
-                        {(item.meta?.full_text || item.ocr?.full_text) && (
-                          <Tooltip content="전체 텍스트 보기">
-                            <button
-                              className="fulltext-button"
-                              onClick={(e) => handleShowFullText(item, e)}
-                              aria-label="전체 텍스트 보기"
-                            >
-                              📄
-                            </button>
-                          </Tooltip>
-                        )}
+                        {/* 🍎 문서 처리 상태 아이콘 */}
+                        <Tooltip content={status.label}>
+                          <div className={`status-icon status-${status.status}`}>
+                            {status.icon}
+                          </div>
+                        </Tooltip>
+
+                        {/* 🍎 상세 보기 버튼 */}
+                        <Tooltip content="상세 보기">
+                          <button
+                            className="action-button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDetailClick(item)
+                            }}
+                            aria-label="상세 보기"
+                          >
+                            👁️
+                          </button>
+                        </Tooltip>
+
+                        {/* 🍎 요약 보기 버튼 */}
+                        <Tooltip content="요약 보기">
+                          <button
+                            className="action-button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleSummaryClickInternal(item)
+                            }}
+                            aria-label="요약 보기"
+                          >
+                            📋
+                          </button>
+                        </Tooltip>
+
+                        {/* 🍎 전체 텍스트 보기 버튼 */}
+                        <Tooltip content="전체 텍스트 보기">
+                          <button
+                            className="action-button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleFullTextClickInternal(item)
+                            }}
+                            aria-label="전체 텍스트 보기"
+                          >
+                            📄
+                          </button>
+                        </Tooltip>
+
+                        {/* 🍎 고객에게 연결 버튼 */}
+                        <Tooltip content={linkTooltip}>
+                          <button
+                            className="action-button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (canLink) {
+                                handleLinkClickInternal(item)
+                              }
+                            }}
+                            aria-label={linkTooltip}
+                            aria-disabled={!canLink}
+                            data-disabled={!canLink}
+                            tabIndex={canLink ? 0 : -1}
+                          >
+                            🔗
+                          </button>
+                        </Tooltip>
+
                         {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (
                           <div
@@ -347,7 +512,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         </div>
       </div>
 
-      {/* Full Text 모달 */}
+      {/* Full Text 모달 (기존 - 더 이상 사용하지 않음) */}
       {selectedDocument && (
         <FullTextModal
           visible={isFullTextModalVisible}
@@ -356,6 +521,31 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           fullText={selectedDocument.fullText}
         />
       )}
+
+      {/* 🍎 새로운 모달들 (DocumentLibrary와 동일) */}
+      <DocumentDetailModal
+        visible={isDetailModalVisible}
+        onClose={handleDetailModalClose}
+        document={selectedDocumentForDetail}
+      />
+      <DocumentSummaryModal
+        visible={isSummaryModalVisible}
+        onClose={handleSummaryModalClose}
+        document={selectedDocumentForSummary}
+      />
+      <DocumentFullTextModal
+        visible={isFullTextModalVisibleNew}
+        onClose={handleFullTextModalCloseNew}
+        document={selectedDocumentForFullTextNew}
+      />
+      <DocumentLinkModal
+        visible={isLinkModalVisible}
+        onClose={handleLinkModalClose}
+        document={selectedDocumentForLink}
+        onSearchCustomers={searchCustomers}
+        onFetchCustomerDocuments={fetchCustomerDocuments}
+        onLink={linkDocumentToCustomer}
+      />
     </CenterPaneView>
   )
 }
