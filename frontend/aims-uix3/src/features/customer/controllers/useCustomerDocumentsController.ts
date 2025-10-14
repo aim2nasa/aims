@@ -64,16 +64,16 @@ const extractPreviewInfo = (
   detail: Record<string, any> | null,
   fallback: CustomerDocumentItem
 ): Omit<PreviewDocumentInfo, 'document' | 'rawDetail'> => {
-  const upload = detail?.upload
-  const payload = detail?.payload
-  const meta = detail?.meta
+  const upload = detail?.['upload']
+  const payload = detail?.['payload']
+  const meta = detail?.['meta']
 
   const originalName =
     upload?.originalName ??
     payload?.original_name ??
     meta?.originalName ??
-    detail?.originalName ??
-    detail?.filename ??
+    detail?.['originalName'] ??
+    detail?.['filename'] ??
     fallback.originalName ??
     '이름 없는 문서'
 
@@ -81,7 +81,7 @@ const extractPreviewInfo = (
     upload?.destPath ??
     payload?.dest_path ??
     meta?.destPath ??
-    detail?.destPath ??
+    detail?.['destPath'] ??
     null
 
   const mimeType =
@@ -89,8 +89,8 @@ const extractPreviewInfo = (
     payload?.mime_type ??
     meta?.mimeType ??
     meta?.mime ??
-    detail?.mimeType ??
-    detail?.mime ??
+    detail?.['mimeType'] ??
+    detail?.['mime'] ??
     fallback.mimeType
 
   const sizeBytes =
@@ -98,7 +98,7 @@ const extractPreviewInfo = (
     upload?.size ??
     payload?.size_bytes ??
     meta?.size_bytes ??
-    detail?.size_bytes ??
+    detail?.['size_bytes'] ??
     fallback.fileSize ??
     null
 
@@ -106,7 +106,7 @@ const extractPreviewInfo = (
     upload?.uploaded_at ??
     payload?.uploaded_at ??
     meta?.uploaded_at ??
-    detail?.uploaded_at ??
+    detail?.['uploaded_at'] ??
     fallback.uploadedAt ??
     fallback.linkedAt
 

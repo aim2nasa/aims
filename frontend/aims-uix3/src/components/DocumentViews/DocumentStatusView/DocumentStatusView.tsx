@@ -15,7 +15,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import DocumentStatusHeader from './components/DocumentStatusHeader'
-import DocumentStatusList, { type DocumentStatusListProps } from './components/DocumentStatusList'
+import DocumentStatusList from './components/DocumentStatusList'
 import DocumentDetailModal from './components/DocumentDetailModal'
 import DocumentSummaryModal from './components/DocumentSummaryModal'
 import DocumentFullTextModal from './components/DocumentFullTextModal'
@@ -80,20 +80,17 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
       />
 
       {/* 🍎 리스트: DocumentLibrary와 동일한 구조 */}
-      {(() => {
-        const listProps = {
-          documents: controller.paginatedDocuments,
-          isLoading: controller.isLoading,
-          isEmpty: controller.filteredDocuments.length === 0,
-          error: controller.error,
-          onDocumentClick: onDocumentClick,
-          onDetailClick: controller.handleDocumentClick,
-          onSummaryClick: controller.handleDocumentSummary,
-          onFullTextClick: controller.handleDocumentFullText,
-          onLinkClick: controller.handleDocumentLink
-        } satisfies DocumentStatusListProps;
-        return <DocumentStatusList {...listProps} />
-      })()}
+      <DocumentStatusList
+        documents={controller.paginatedDocuments}
+        isLoading={controller.isLoading}
+        isEmpty={controller.filteredDocuments.length === 0}
+        error={controller.error}
+        {...(onDocumentClick ? { onDocumentClick } : {})}
+        onDetailClick={controller.handleDocumentClick}
+        onSummaryClick={controller.handleDocumentSummary}
+        onFullTextClick={controller.handleDocumentFullText}
+        onLinkClick={controller.handleDocumentLink}
+      />
 
       {/* 🍎 페이지네이션: DocumentLibrary와 동일한 구조 */}
       {!controller.isLoading && controller.filteredDocuments.length > 0 && (
