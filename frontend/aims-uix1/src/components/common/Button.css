@@ -1,0 +1,211 @@
+/**
+ * AIMS Design System - Button Styles
+ * CSS Variables 기반 버튼 스타일
+ */
+
+/* Base Button Styles */
+.aims-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-default);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-default) var(--transition-easing-smooth);
+  position: relative;
+  white-space: nowrap;
+  user-select: none;
+  text-decoration: none;
+  outline: none;
+}
+
+/* Size Variants */
+.aims-btn-small {
+  height: var(--button-height-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.aims-btn-default {
+  height: var(--button-height-default);
+}
+
+.aims-btn-large {
+  height: var(--button-height-lg);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+}
+
+/* Color Variants */
+.aims-btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
+}
+
+.aims-btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.aims-btn-primary:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+  transform: translateY(0);
+}
+
+.aims-btn-secondary {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-dark);
+}
+
+.aims-btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+}
+
+.aims-btn-danger {
+  background-color: var(--color-error);
+  color: var(--color-text-white);
+}
+
+.aims-btn-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.aims-btn-success {
+  background-color: var(--color-success);
+  color: var(--color-text-white);
+}
+
+.aims-btn-success:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.aims-btn-ghost {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.aims-btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
+}
+
+.aims-btn-link {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: none;
+  padding: 0;
+  height: auto;
+  font-weight: var(--font-weight-normal);
+  text-decoration: underline;
+}
+
+.aims-btn-link:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+  background-color: transparent;
+  text-decoration: none;
+}
+
+.aims-btn-dashed {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border-dark);
+}
+
+.aims-btn-dashed:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  border-style: dashed;
+}
+
+/* Block Button */
+.aims-btn-block {
+  width: 100%;
+}
+
+/* Disabled State */
+.aims-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Loading State */
+.aims-btn-loading {
+  pointer-events: none;
+  position: relative;
+}
+
+.aims-btn-loading .aims-btn-text {
+  opacity: 0.6;
+}
+
+.aims-btn-loading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.aims-btn-spinner {
+  animation: spin 1s linear infinite;
+  width: 14px;
+  height: 14px;
+}
+
+.aims-btn-spinner-circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 42;
+  stroke-dashoffset: 10;
+  stroke-linecap: round;
+  animation: spinner-dash 1.5s ease-in-out infinite;
+}
+
+/* Icon Support */
+.aims-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: inherit;
+}
+
+/* Focus State */
+.aims-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-primary);
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinner-dash {
+  0% {
+    stroke-dashoffset: 42;
+  }
+  50% {
+    stroke-dashoffset: 10;
+  }
+  100% {
+    stroke-dashoffset: 42;
+  }
+}
