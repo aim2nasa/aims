@@ -58,73 +58,65 @@ const buildFileUrl = (path?: string | null): string | null => {
 }
 
 /**
- * 문서 상세 응답에서 파일 메타데이터 추출
+ * 문서 상세 응답에서 파일 메타데이터 추출 (원본 방식 복원)
  */
 const extractPreviewInfo = (
-  detail: Record<string, unknown> | null,
+  detail: Record<string, any> | null,
   fallback: CustomerDocumentItem
 ): Omit<PreviewDocumentInfo, 'document' | 'rawDetail'> => {
-  const asRec = (v: unknown): Record<string, unknown> | undefined =>
-    v && typeof v === 'object' ? (v as Record<string, unknown>) : undefined
-  const rec = detail as Record<string, unknown> | null
-  const upload  = asRec(rec?.['upload'])
-  const payload = asRec(rec?.['payload'])
-  const meta    = asRec(rec?.['meta'])
-  const getStr = (o: Record<string, unknown> | undefined, k: string): string | undefined => {
-    const v = o?.[k]; return typeof v === 'string' ? v : undefined
-  }
-  const getNum = (o: Record<string, unknown> | undefined, k: string): number | undefined => {
-    const v = o?.[k]; return typeof v === 'number' ? v : undefined
-  }
+  const upload = detail?.upload
+  const payload = detail?.payload
+  const meta = detail?.meta
 
   const originalName =
-    getStr(upload, 'originalName') ??
-    getStr(payload, 'original_name') ??
-    getStr(meta, 'originalName') ??
-    getStr(rec ?? undefined, 'originalName') ??
-    getStr(rec ?? undefined, 'filename') ??
+    upload?.originalName ??
+    payload?.original_name ??
+    meta?.originalName ??
+    detail?.originalName ??
+    detail?.filename ??
     fallback.originalName ??
     '이름 없는 문서'
 
   const destPath =
-    getStr(upload, 'destPath') ??
-    getStr(payload, 'dest_path') ??
-    getStr(meta, 'destPath') ??
-    getStr(rec ?? undefined, 'destPath') ??
+    upload?.destPath ??
+    payload?.dest_path ??
+    meta?.destPath ??
+    detail?.destPath ??
     null
 
   const mimeType =
-    getStr(upload, 'mimeType') ??
-    getStr(payload, 'mime_type') ??
-    getStr(meta, 'mimeType') ??
-    getStr(meta, 'mime') ??
-    getStr(rec ?? undefined, 'mimeType') ??
-    getStr(rec ?? undefined, 'mime') ??
+    upload?.mimeType ??
+    payload?.mime_type ??
+    meta?.mimeType ??
+    meta?.mime ??
+    detail?.mimeType ??
+    detail?.mime ??
     fallback.mimeType
 
   const sizeBytes =
-    getNum(upload, 'fileSize') ??
-    getNum(upload, 'size') ??
-    getNum(payload, 'size_bytes') ??
-    getNum(meta, 'size_bytes') ??
-    getNum(rec ?? undefined, 'size_bytes') ??
-    fallback.fileSize ?? 0
+    upload?.fileSize ??
+    upload?.size ??
+    payload?.size_bytes ??
+    meta?.size_bytes ??
+    detail?.size_bytes ??
+    fallback.fileSize ??
+    null
 
   const uploadedAt =
-    getStr(upload, 'uploaded_at') ??
-    getStr(payload, 'uploaded_at') ??
-    getStr(meta, 'uploaded_at') ??
-    getStr(rec ?? undefined, 'uploaded_at') ??
+    upload?.uploaded_at ??
+    payload?.uploaded_at ??
+    meta?.uploaded_at ??
+    detail?.uploaded_at ??
     fallback.uploadedAt ??
     fallback.linkedAt
 
   return {
     id: fallback._id,
     originalName,
-    fileUrl: buildFileUrl(destPath) ?? '',
-    ...(mimeType ? { mimeType } : {}),
-    ...((sizeBytes ?? null) !== null ? { sizeBytes } : {}),
-    ...(uploadedAt ? { uploadedAt } : {}),
+    fileUrl: buildFileUrl(destPath),
+    mimeType,
+    sizeBytes,
+    uploadedAt: uploadedAt ?? undefined
   }
 }
 
@@ -263,7 +255,8 @@ export const useCustomerDocumentsController = (
           return
         }
 
-        const recDetail: Record<string, unknown> | null = (detail && typeof detail === 'object' && !('_id' in detail)) ? (detail as Record<string, unknown>) : null
+        // detail을 Record<string, any>로 직접 사용
+        const recDetail = detail as Record<string, any>
         const metadata = extractPreviewInfo(recDetail, document)
 
         setPreviewState({

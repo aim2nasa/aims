@@ -29,16 +29,15 @@ interface CustomerDocumentPreviewModalProps {
   onDownload?: () => void
 }
 
-const isPdfFile = (mime?: string, url?: string | null) => {
-  if (mime && mime.toLowerCase().includes('pdf')) return true
-  if (!url) return false
-  return /\.pdf($|\?)/i.test(url)
+// App.tsx와 완전히 동일한 방식
+const isPdfFile = (url: string) => {
+  const normalizedUrl = url.toLowerCase()
+  return normalizedUrl.endsWith('.pdf')
 }
 
-const isImageFile = (mime?: string, url?: string | null) => {
-  if (mime && mime.toLowerCase().startsWith('image/')) return true
-  if (!url) return false
-  return /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(url)
+const isImageFile = (url: string) => {
+  const normalizedUrl = url.toLowerCase()
+  return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(normalizedUrl)
 }
 
 export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModalProps> = ({
@@ -72,9 +71,11 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   }
 
   const fileUrl = previewDocument?.fileUrl ?? null
-  const mimeType = previewDocument?.mimeType
-  const isPdf = previewDocument && isPdfFile(mimeType, fileUrl)
-  const isImage = previewDocument && !isPdf && isImageFile(mimeType, fileUrl)
+
+  // App.tsx와 완전히 동일한 방식
+  const isPdf = fileUrl ? isPdfFile(fileUrl) : false
+  const isImage = fileUrl && !isPdf ? isImageFile(fileUrl) : false
+
   const sizeLabel = previewDocument?.sizeBytes ? DocumentUtils.formatFileSize(previewDocument.sizeBytes) : null
 
   const renderContent = () => {
@@ -127,7 +128,7 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       return (
         <PDFViewer
           file={fileUrl}
-          {...(onDownload ? { onDownload } : {})}
+          onDownload={onDownload}
         />
       )
     }
