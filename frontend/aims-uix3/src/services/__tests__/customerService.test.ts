@@ -114,7 +114,7 @@ describe('CustomerService', () => {
         expect.stringContaining('/api/customers?')
       )
       expect(result.customers).toHaveLength(2)
-      expect(result.customers[0]._id).toBe(mockCustomer._id)
+      expect(result.customers?.[0]?._id).toBe(mockCustomer._id)
     })
 
     it('검색 쿼리 파라미터를 URL에 포함해야 함', async () => {
@@ -164,7 +164,7 @@ describe('CustomerService', () => {
       const result = await CustomerService.getCustomers()
 
       expect(result.customers).toHaveLength(1)
-      expect(result.customers[0]._id).toBe(mockCustomer._id)
+      expect(result.customers?.[0]?._id).toBe(mockCustomer._id)
     })
 
     it('빈 배열을 반환하는 경우를 처리해야 함', async () => {
@@ -288,6 +288,9 @@ describe('CustomerService', () => {
         personal_info: {
           name: '최소정',
         },
+        contracts: [],
+        documents: [],
+        consultations: [],
       }
 
       const createdCustomer: Customer = {
@@ -825,8 +828,8 @@ describe('CustomerService', () => {
 
       expect(api.post).toHaveBeenCalledTimes(2)
       expect(result).toHaveLength(2)
-      expect(result[0]._id).toBe('507f1f77bcf86cd799439011')
-      expect(result[1]._id).toBe('507f1f77bcf86cd799439022')
+      expect(result[0]?._id).toBe('507f1f77bcf86cd799439011')
+      expect(result[1]?._id).toBe('507f1f77bcf86cd799439022')
     })
 
     it('빈 배열에 대해 에러를 던져야 함', async () => {

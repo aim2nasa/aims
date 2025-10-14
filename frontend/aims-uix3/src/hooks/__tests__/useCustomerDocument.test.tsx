@@ -68,6 +68,7 @@ vi.mock('@/stores/CustomerDocument', () => {
                 updated_at: '2025-01-01T00:00:00.000Z',
                 status: 'active',
               },
+              tags: [],
             },
           ] as Customer[];
           mockTotal = 1;
@@ -82,14 +83,15 @@ vi.mock('@/stores/CustomerDocument', () => {
             _id: 'new-customer-id',
             personal_info: data.personal_info,
             insurance_info: data.insurance_info || { customer_type: '개인' },
-            contracts: [],
-            documents: [],
-            consultations: [],
+            contracts: data.contracts || [],
+            documents: data.documents || [],
+            consultations: data.consultations || [],
             meta: {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               status: 'active',
             },
+            tags: [],
           };
           mockCustomers = [...mockCustomers, newCustomer];
           mockTotal += 1;
@@ -106,11 +108,18 @@ vi.mock('@/stores/CustomerDocument', () => {
             throw new Error(mockError);
           }
 
+          const existingCustomer = mockCustomers[index];
+          if (!existingCustomer) {
+            mockError = '고객을 찾을 수 없습니다';
+            mockSubscribers.forEach(cb => cb());
+            throw new Error(mockError);
+          }
+
           const updatedCustomer: Customer = {
-            ...mockCustomers[index],
-            personal_info: { ...mockCustomers[index].personal_info, ...data.personal_info },
+            ...existingCustomer,
+            personal_info: { ...existingCustomer.personal_info, ...data.personal_info },
             meta: {
-              ...mockCustomers[index].meta,
+              ...existingCustomer.meta,
               updated_at: new Date().toISOString(),
             },
           };
@@ -229,7 +238,7 @@ describe('useCustomerDocument', () => {
 
       await waitFor(() => {
         expect(result.current.customers).toHaveLength(1);
-        expect(result.current.customers[0].personal_info.name).toBe('홍길동');
+        expect(result.current.customers?.[0]?.personal_info.name).toBe('홍길동');
         expect(result.current.total).toBe(1);
         expect(result.current.isLoading).toBe(false);
       });
@@ -287,6 +296,9 @@ describe('useCustomerDocument', () => {
           birth_date: '1985-05-15',
           gender: 'M' as const,
         },
+        contracts: [],
+        documents: [],
+        consultations: [],
       };
 
       let createdCustomer: Customer | undefined;
@@ -318,7 +330,8 @@ describe('useCustomerDocument', () => {
         expect(result.current.customers).toHaveLength(1);
       });
 
-      const customerId = result.current.customers[0]._id;
+      const customerId = result.current.customers?.[0]?._id;
+      if (!customerId) throw new Error('Customer ID not found');
 
       await act(async () => {
         await result.current.updateCustomer(customerId, {
@@ -358,7 +371,8 @@ describe('useCustomerDocument', () => {
         expect(result.current.customers).toHaveLength(1);
       });
 
-      const customerId = result.current.customers[0]._id;
+      const customerId = result.current.customers?.[0]?._id;
+      if (!customerId) throw new Error('Customer ID not found');
 
       await act(async () => {
         await result.current.deleteCustomer(customerId);

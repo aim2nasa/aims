@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DocumentStatusService } from '../DocumentStatusService'
-import type { Document } from '../types/documentStatus'
+import type { Document } from '../../types/documentStatus'
 
 // Fetch API 모킹
 global.fetch = vi.fn()

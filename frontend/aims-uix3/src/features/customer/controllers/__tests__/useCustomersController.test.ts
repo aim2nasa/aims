@@ -144,7 +144,7 @@ describe('useCustomersController (Features)', () => {
       });
 
       await waitFor(() => {
-        const callUrl = vi.mocked(global.fetch).mock.calls[0][0] as string;
+        const callUrl = vi.mocked(global.fetch).mock.calls?.[0]?.[0] as string;
         expect(callUrl).toContain('search=%ED%99%8D%EA%B8%B8%EB%8F%99');
         expect(callUrl).toContain('status=active');
         expect(callUrl).toContain('customerType=%EA%B0%9C%EC%9D%B8');
@@ -223,13 +223,13 @@ describe('useCustomersController (Features)', () => {
         expect(result.current.customers).toHaveLength(2);
       });
 
-      const callCountBefore = vi.mocked(global.fetch).mock.calls.length;
+      const callCountBefore = vi.mocked(global.fetch).mock.calls?.length ?? 0;
 
       await act(async () => {
         result.current.loadMore();
       });
 
-      expect(vi.mocked(global.fetch).mock.calls.length).toBe(callCountBefore);
+      expect(vi.mocked(global.fetch).mock.calls?.length ?? 0).toBe(callCountBefore);
     });
   });
 
@@ -301,13 +301,13 @@ describe('useCustomersController (Features)', () => {
         expect(result.current.customers).toHaveLength(2);
       });
 
-      const callCountBefore = vi.mocked(global.fetch).mock.calls.length;
+      const callCountBefore = vi.mocked(global.fetch).mock.calls?.length ?? 0;
 
       await act(async () => {
         result.current.goToPage(10); // totalPages는 3
       });
 
-      expect(vi.mocked(global.fetch).mock.calls.length).toBe(callCountBefore);
+      expect(vi.mocked(global.fetch).mock.calls?.length ?? 0).toBe(callCountBefore);
     });
   });
 
@@ -337,7 +337,7 @@ describe('useCustomersController (Features)', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      const callUrl = vi.mocked(global.fetch).mock.calls[0][0] as string;
+      const callUrl = vi.mocked(global.fetch).mock.calls?.[0]?.[0] as string;
       expect(callUrl).toContain('search=%ED%99%8D%EA%B8%B8%EB%8F%99');
     });
   });

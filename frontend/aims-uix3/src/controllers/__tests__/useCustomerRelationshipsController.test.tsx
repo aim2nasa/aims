@@ -39,30 +39,24 @@ describe('useCustomerRelationshipsController', () => {
   const mockRelationships: Relationship[] = [
     {
       _id: 'rel1',
+      from_customer: 'cust1',
       relationship_info: {
         relationship_type: 'spouse',
-        notes: '배우자 관계',
+        relationship_category: 'family',
       },
-      related_customer: {
-        _id: 'cust2',
-        name: '김영희',
-        mobile_phone: '010-1234-5678',
-      },
+      related_customer: 'cust2',
       display_relationship_label: '배우자',
-    },
+    } as Relationship,
     {
       _id: 'rel2',
+      from_customer: 'cust1',
       relationship_info: {
         relationship_type: 'child',
-        notes: '자녀 관계',
+        relationship_category: 'family',
       },
-      related_customer: {
-        _id: 'cust3',
-        name: '홍길순',
-        mobile_phone: '010-9876-5432',
-      },
+      related_customer: 'cust3',
       display_relationship_label: '자녀',
-    },
+    } as Relationship,
   ]
 
   beforeEach(() => {
@@ -129,7 +123,7 @@ describe('useCustomerRelationshipsController', () => {
     it('customerId가 없을 때 로드하지 않아야 함', async () => {
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
-          customerId: undefined,
+          customerId: '',
           autoLoad: true,
         })
       )
@@ -157,7 +151,7 @@ describe('useCustomerRelationshipsController', () => {
       })
 
       expect(result.current.state.relationships).toHaveLength(2)
-      expect(result.current.state.relationships[0]._id).toBe('rel1')
+      expect(result.current.state.relationships[0]?._id).toBe('rel1')
     })
 
     it('관계 타입도 함께 로드해야 함', async () => {
@@ -214,7 +208,7 @@ describe('useCustomerRelationshipsController', () => {
     it('customerId가 없으면 빈 배열을 설정하고 API를 호출하지 않아야 함', async () => {
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
-          customerId: undefined,
+          customerId: '',
           autoLoad: false,
         })
       )
@@ -244,9 +238,12 @@ describe('useCustomerRelationshipsController', () => {
       })
 
       // 삭제 후 1개만 남도록 모킹 변경
-      vi.mocked(RelationshipService.getCustomerRelationships).mockResolvedValueOnce([
-        mockRelationships[1],
-      ])
+      const secondRel = mockRelationships[1];
+      if (secondRel) {
+        vi.mocked(RelationshipService.getCustomerRelationships).mockResolvedValueOnce([
+          secondRel,
+        ])
+      }
 
       await act(async () => {
         await result.current.actions.deleteRelationship('rel1')
@@ -254,7 +251,7 @@ describe('useCustomerRelationshipsController', () => {
 
       expect(RelationshipService.deleteRelationship).toHaveBeenCalledWith('cust1', 'rel1')
       expect(result.current.state.relationships).toHaveLength(1)
-      expect(result.current.state.relationships[0]._id).toBe('rel2')
+      expect(result.current.state.relationships[0]?._id).toBe('rel2')
     })
 
     it('삭제 실패 시 에러를 설정해야 함', async () => {
@@ -279,7 +276,7 @@ describe('useCustomerRelationshipsController', () => {
     it('customerId가 없으면 실행하지 않아야 함', async () => {
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
-          customerId: undefined,
+          customerId: '',
           autoLoad: false,
         })
       )
@@ -307,21 +304,23 @@ describe('useCustomerRelationshipsController', () => {
         expect(result.current.state.relationships).toHaveLength(2)
       })
 
-      const label = result.current.actions.getRelationshipTypeLabel(mockRelationships[0])
-      expect(label).toBe('배우자')
+      const firstRel = mockRelationships[0];
+      if (firstRel) {
+        const label = result.current.actions.getRelationshipTypeLabel(firstRel)
+        expect(label).toBe('배우자')
+      }
     })
 
     it('all_types에서 라벨을 찾아야 함', async () => {
       const relationshipWithoutLabel: Relationship = {
         _id: 'rel3',
+        from_customer: 'cust1',
         relationship_info: {
           relationship_type: 'parent',
+          relationship_category: 'family',
         },
-        related_customer: {
-          _id: 'cust4',
-          name: '홍부모',
-        },
-      }
+        related_customer: 'cust4',
+      } as Relationship
 
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
@@ -341,14 +340,13 @@ describe('useCustomerRelationshipsController', () => {
     it('fallback 라벨을 사용해야 함', async () => {
       const relationshipWithUnknownType: Relationship = {
         _id: 'rel4',
+        from_customer: 'cust1',
         relationship_info: {
           relationship_type: 'friend',
+          relationship_category: 'other',
         },
-        related_customer: {
-          _id: 'cust5',
-          name: '친구',
-        },
-      }
+        related_customer: 'cust5',
+      } as Relationship
 
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
@@ -368,12 +366,13 @@ describe('useCustomerRelationshipsController', () => {
     it('relationship_type이 없으면 "관계"를 반환해야 함', async () => {
       const relationshipWithoutType: Relationship = {
         _id: 'rel5',
-        relationship_info: {},
-        related_customer: {
-          _id: 'cust6',
-          name: '관계없음',
+        from_customer: 'cust1',
+        relationship_info: {
+          relationship_type: '',
+          relationship_category: '',
         },
-      }
+        related_customer: 'cust6',
+      } as Relationship
 
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
@@ -393,14 +392,13 @@ describe('useCustomerRelationshipsController', () => {
     it('알 수 없는 타입은 타입 키를 그대로 반환해야 함', async () => {
       const relationshipWithUnknownKey: Relationship = {
         _id: 'rel6',
+        from_customer: 'cust1',
         relationship_info: {
           relationship_type: 'unknown_type',
+          relationship_category: 'other',
         },
-        related_customer: {
-          _id: 'cust7',
-          name: '알 수 없음',
-        },
-      }
+        related_customer: 'cust7',
+      } as Relationship
 
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
@@ -481,7 +479,7 @@ describe('useCustomerRelationshipsController', () => {
     it('customerId가 없으면 이벤트 리스너를 등록하지 않아야 함', async () => {
       const { result } = renderHook(() =>
         useCustomerRelationshipsController({
-          customerId: undefined,
+          customerId: '',
           autoLoad: false,
         })
       )

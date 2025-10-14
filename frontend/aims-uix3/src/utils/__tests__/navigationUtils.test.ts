@@ -18,21 +18,25 @@ const mockMenuItems: MenuItem[] = [
     key: 'home',
     label: '홈',
     icon: 'HomeIcon',
+    tooltipTitle: '홈',
   },
   {
     key: 'customers',
     label: '고객',
     icon: 'UsersIcon',
+    tooltipTitle: '고객',
     children: [
       {
         key: 'customer-list',
         label: '고객 목록',
         icon: 'ListIcon',
+        tooltipTitle: '고객 목록',
       },
       {
         key: 'customer-add',
         label: '고객 추가',
         icon: 'PlusIcon',
+        tooltipTitle: '고객 추가',
       },
     ],
   },
@@ -40,26 +44,31 @@ const mockMenuItems: MenuItem[] = [
     key: 'documents',
     label: '문서',
     icon: 'FileIcon',
+    tooltipTitle: '문서',
     children: [
       {
         key: 'document-list',
         label: '문서 목록',
         icon: 'ListIcon',
+        tooltipTitle: '문서 목록',
       },
       {
         key: 'document-upload',
         label: '문서 업로드',
         icon: 'UploadIcon',
+        tooltipTitle: '문서 업로드',
         children: [
           {
             key: 'document-upload-single',
             label: '단일 업로드',
             icon: 'FileIcon',
+            tooltipTitle: '단일 업로드',
           },
           {
             key: 'document-upload-bulk',
             label: '대량 업로드',
             icon: 'FolderIcon',
+            tooltipTitle: '대량 업로드',
           },
         ],
       },
@@ -69,6 +78,7 @@ const mockMenuItems: MenuItem[] = [
     key: 'settings',
     label: '설정',
     icon: 'SettingsIcon',
+    tooltipTitle: '설정',
   },
 ];
 

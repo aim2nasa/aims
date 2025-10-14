@@ -72,8 +72,6 @@ global.URL.revokeObjectURL = mockRevokeObjectURL;
 // DOM mock
 let mockLink: any = null;
 const originalCreateElement = document.createElement.bind(document);
-const originalAppendChild = document.body.appendChild.bind(document.body);
-const originalRemoveChild = document.body.removeChild.bind(document.body);
 
 beforeEach(() => {
   // Reset all mocks

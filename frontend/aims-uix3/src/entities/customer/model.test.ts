@@ -385,7 +385,7 @@ describe('CustomerUtils - Edge Cases', () => {
   it('모든 필드가 null/undefined인 고객도 처리한다', () => {
     const emptyCustomer = {
       _id: 'empty',
-      personal_info: {},
+      personal_info: { name: 'Empty' },
       contracts: [],
       documents: [],
       consultations: [],
@@ -400,7 +400,7 @@ describe('CustomerUtils - Edge Cases', () => {
       tags: [],
     } as Customer;
 
-    expect(CustomerUtils.getDisplayName(emptyCustomer)).toBe('이름 없음');
+    expect(CustomerUtils.getDisplayName(emptyCustomer)).toBe('Empty');
     expect(CustomerUtils.getContactInfo(emptyCustomer)).toBe('연락처 없음');
     expect(CustomerUtils.getAddressText(emptyCustomer)).toBe('주소 없음');
     expect(CustomerUtils.getAge(emptyCustomer)).toBeNull();

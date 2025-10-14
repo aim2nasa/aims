@@ -17,7 +17,7 @@ describe('useCustomerEditController', () => {
     _id: 'customer-123',
     personal_info: {
       name: '홍길동',
-      phone: '010-1234-5678',
+      mobile_phone: '010-1234-5678',
       email: 'hong@example.com',
       birth_date: '1990-01-01',
       gender: 'M',
@@ -28,15 +28,16 @@ describe('useCustomerEditController', () => {
       }
     },
     insurance_info: {
-      company: '삼성생명',
-      policy_number: 'POLICY-123'
+      customer_type: '개인'
     },
     contracts: [],
     documents: [],
     consultations: [],
+    tags: [],
     meta: {
       created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
+      updated_at: '2025-01-01T00:00:00Z',
+      status: 'active'
     }
   };
 
@@ -120,10 +121,10 @@ describe('useCustomerEditController', () => {
       const { result } = renderHook(() => useCustomerEditController(mockCustomer));
 
       act(() => {
-        result.current.handleFieldChange('insurance_info.company', 'KB생명');
+        result.current.handleFieldChange('insurance_info.customer_type', '법인');
       });
 
-      expect(result.current.formData.insurance_info?.company).toBe('KB생명');
+      expect(result.current.formData.insurance_info?.customer_type).toBe('법인');
     });
 
     it('필드 변경 시 해당 필드의 에러를 제거해야 함', () => {
@@ -235,7 +236,7 @@ describe('useCustomerEditController', () => {
       });
 
       expect(isValid).toBe(false);
-      expect(result.current.errors['personal_info.name']).toBe('고객명은 필수입니다');
+      expect(result.current.errors?.['personal_info.name']).toBe('고객명은 필수입니다');
     });
 
     it('고객명이 공백만 있으면 유효성 검증 실패해야 함', () => {
@@ -251,14 +252,14 @@ describe('useCustomerEditController', () => {
       });
 
       expect(isValid).toBe(false);
-      expect(result.current.errors['personal_info.name']).toBeTruthy();
+      expect(result.current.errors?.['personal_info.name']).toBeTruthy();
     });
 
     it('고객명 외의 필드는 검증하지 않아야 함', () => {
       const { result } = renderHook(() => useCustomerEditController(mockCustomer));
 
       act(() => {
-        result.current.handleFieldChange('personal_info.phone', '');
+        result.current.handleFieldChange('personal_info.mobile_phone', '');
         result.current.handleFieldChange('personal_info.email', '');
       });
 
@@ -349,7 +350,7 @@ describe('useCustomerEditController', () => {
       });
 
       expect(success).toBe(false);
-      expect(result.current.errors.submit).toBeTruthy();
+      expect(result.current.errors?.['submit']).toBeTruthy();
       expect(result.current.isSubmitting).toBe(false);
     });
 
@@ -359,7 +360,7 @@ describe('useCustomerEditController', () => {
       const { result } = renderHook(() => useCustomerEditController(mockCustomer));
 
       act(() => {
-        result.current.handleFieldChange('personal_info.phone', '');
+        result.current.handleFieldChange('personal_info.mobile_phone', '');
         result.current.handleFieldChange('personal_info.email', '');
       });
 
@@ -367,9 +368,9 @@ describe('useCustomerEditController', () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.personal_info?.phone).toBeUndefined();
-      expect(callArgs.personal_info?.email).toBeUndefined();
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.personal_info?.mobile_phone).toBeUndefined();
+      expect(callArgs?.personal_info?.email).toBeUndefined();
     });
 
     it('gender는 "M" 또는 "F"만 허용해야 함', async () => {
@@ -385,8 +386,8 @@ describe('useCustomerEditController', () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.personal_info?.gender).toBeUndefined();
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.personal_info?.gender).toBeUndefined();
     });
 
     it('유효한 gender("M")는 포함해야 함', async () => {
@@ -402,8 +403,8 @@ describe('useCustomerEditController', () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.personal_info?.gender).toBe('F');
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.personal_info?.gender).toBe('F');
     });
 
     it('빈 주소 필드는 제거해야 함', async () => {
@@ -421,8 +422,8 @@ describe('useCustomerEditController', () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.personal_info?.address).toBeUndefined();
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.personal_info?.address).toBeUndefined();
     });
 
     it('일부만 채워진 주소는 채워진 필드만 포함해야 함', async () => {
@@ -440,8 +441,8 @@ describe('useCustomerEditController', () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.personal_info?.address).toEqual({
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.personal_info?.address).toEqual({
         postal_code: '54321'
       });
     });
@@ -452,15 +453,15 @@ describe('useCustomerEditController', () => {
       const { result } = renderHook(() => useCustomerEditController(mockCustomer));
 
       act(() => {
-        result.current.handleFieldChange('insurance_info.company', 'KB생명');
+        result.current.handleFieldChange('insurance_info.customer_type', '법인');
       });
 
       await act(async () => {
         await result.current.handleSave();
       });
 
-      const callArgs = mockDocument.updateCustomer.mock.calls[0][1];
-      expect(callArgs.insurance_info?.company).toBe('KB생명');
+      const callArgs = mockDocument.updateCustomer.mock.calls?.[0]?.[1];
+      expect(callArgs?.insurance_info?.customer_type).toBe('법인');
     });
   });
 
@@ -473,7 +474,7 @@ describe('useCustomerEditController', () => {
       // 1. 필드 변경
       act(() => {
         result.current.handleFieldChange('personal_info.name', '김철수');
-        result.current.handleFieldChange('personal_info.phone', '010-9876-5432');
+        result.current.handleFieldChange('personal_info.mobile_phone', '010-9876-5432');
       });
 
       expect(result.current.formData.personal_info?.name).toBe('김철수');
@@ -510,7 +511,7 @@ describe('useCustomerEditController', () => {
 
       // 2. 필드 수정
       act(() => {
-        result.current.handleFieldChange('personal_info.phone', '010-9999-9999');
+        result.current.handleFieldChange('personal_info.mobile_phone', '010-9999-9999');
       });
 
       // 3. 저장

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DocumentService } from '../DocumentService'
 import { api } from '@/shared/lib/api'
-import type { Document, DocumentSearchQuery, DocumentSearchResponse } from '@/entities/document'
+import type { DocumentSearchQuery } from '@/entities/document'
 
 // API 모듈 모킹
 vi.mock('@/shared/lib/api', () => ({
@@ -89,7 +89,7 @@ describe('DocumentService', () => {
       vi.mocked(api.get).mockResolvedValue(mockResponse)
 
       const query: Partial<DocumentSearchQuery> = {
-        sortBy: 'time',
+        sortBy: 'uploadDate',
         sortOrder: 'desc',
       }
 
@@ -102,9 +102,9 @@ describe('DocumentService', () => {
       const mockResponse = { documents: [], pagination: {} }
       vi.mocked(api.get).mockResolvedValue(mockResponse)
 
-      const testCases: Array<{ sortBy: string; expected: string }> = [
-        { sortBy: 'time', expected: 'uploadTime_asc' },
-        { sortBy: 'name', expected: 'filename_asc' },
+      const testCases: Array<{ sortBy: DocumentSearchQuery['sortBy']; expected: string }> = [
+        { sortBy: 'uploadDate', expected: 'uploadTime_asc' },
+        { sortBy: 'filename', expected: 'filename_asc' },
         { sortBy: 'size', expected: 'size_asc' },
         { sortBy: 'fileType', expected: 'fileType_asc' },
       ]
@@ -129,7 +129,7 @@ describe('DocumentService', () => {
       const result = await DocumentService.getDocuments()
 
       expect(result.documents).toHaveLength(1)
-      expect(result.documents[0]._id).toBe('doc1')
+      expect(result.documents?.[0]?._id).toBe('doc1')
     })
 
     it('루트 documents 응답 구조를 처리해야 함', async () => {
@@ -143,7 +143,7 @@ describe('DocumentService', () => {
       const result = await DocumentService.getDocuments()
 
       expect(result.documents).toHaveLength(1)
-      expect(result.documents[0]._id).toBe('doc2')
+      expect(result.documents?.[0]?._id).toBe('doc2')
     })
 
     it('문서에 _id가 없으면 임시 ID를 생성해야 함', async () => {
@@ -155,7 +155,7 @@ describe('DocumentService', () => {
 
       const result = await DocumentService.getDocuments()
 
-      expect(result.documents[0]._id).toMatch(/^temp-/)
+      expect(result.documents?.[0]?._id).toMatch(/^temp-/)
     })
 
     it('uploadTime에 xxx가 있으면 000Z로 치환해야 함', async () => {
@@ -173,7 +173,7 @@ describe('DocumentService', () => {
 
       const result = await DocumentService.getDocuments()
 
-      expect(result.documents[0].uploadDate).toBe('2025-10-14T10:00:00.123000Z')
+      expect(result.documents?.[0]?.uploadDate).toBe('2025-10-14T10:00:00.123000Z')
     })
 
     it('status가 active/archived/deleted가 아니면 active로 설정해야 함', async () => {
@@ -189,9 +189,9 @@ describe('DocumentService', () => {
 
       const result = await DocumentService.getDocuments()
 
-      expect(result.documents[0].status).toBe('active')
-      expect(result.documents[1].status).toBe('archived')
-      expect(result.documents[2].status).toBe('deleted')
+      expect(result.documents?.[0]?.status).toBe('active')
+      expect(result.documents?.[1]?.status).toBe('archived')
+      expect(result.documents?.[2]?.status).toBe('deleted')
     })
 
     it('ocrStatus가 유효하지 않으면 pending으로 설정해야 함', async () => {
@@ -207,9 +207,9 @@ describe('DocumentService', () => {
 
       const result = await DocumentService.getDocuments()
 
-      expect(result.documents[0].ocrStatus).toBe('pending')
-      expect(result.documents[1].ocrStatus).toBe('processing')
-      expect(result.documents[2].ocrStatus).toBe('completed')
+      expect(result.documents?.[0]?.ocrStatus).toBe('pending')
+      expect(result.documents?.[1]?.ocrStatus).toBe('processing')
+      expect(result.documents?.[2]?.ocrStatus).toBe('completed')
     })
 
     it('빈 응답을 처리해야 함', async () => {
@@ -230,11 +230,11 @@ describe('DocumentService', () => {
         limit: 50,
         offset: 100,
         q: 'test',
-        sortBy: 'name',
+        sortBy: 'filename',
         sortOrder: 'asc',
       })
 
-      const url = vi.mocked(api.get).mock.calls[0][0] as string
+      const url = vi.mocked(api.get).mock.calls?.[0]?.[0] as string
       expect(url).toContain('limit=50')
       expect(url).toContain('offset=100')
       expect(url).toContain('search=test')
@@ -428,7 +428,7 @@ describe('DocumentService', () => {
 
       vi.mocked(api.get).mockResolvedValue(mockResponse)
 
-      const result = await DocumentService.searchDocuments('')
+      void await DocumentService.searchDocuments('')
 
       expect(api.get).toHaveBeenCalledWith('/api/documents')
     })
@@ -448,7 +448,7 @@ describe('DocumentService', () => {
 
       await DocumentService.searchDocuments('test', { limit: 20, offset: 10 })
 
-      const url = vi.mocked(api.get).mock.calls[0][0] as string
+      const url = vi.mocked(api.get).mock.calls?.[0]?.[0] as string
       expect(url).toContain('search=test')
       expect(url).toContain('limit=20')
       expect(url).toContain('offset=10')
@@ -554,7 +554,7 @@ describe('DocumentService', () => {
       const result = await DocumentService.getCustomerDocuments('customer1')
 
       expect(result.documents).toHaveLength(1)
-      expect(result.documents[0]._id).toBe('doc1')
+      expect(result.documents[0]!._id).toBe('doc1')
     })
 
     it('빈 응답을 처리해야 함', async () => {
@@ -795,7 +795,7 @@ describe('DocumentService', () => {
 
       await DocumentService.uploadDocument(file, metadata)
 
-      const formData = vi.mocked(api.post).mock.calls[0][1] as FormData
+      const formData = vi.mocked(api.post).mock.calls[0]![1] as FormData
       expect(formData.get('file')).toBe(file)
     })
 

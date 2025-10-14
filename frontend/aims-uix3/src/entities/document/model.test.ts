@@ -433,8 +433,8 @@ describe('DocumentUtils 정렬 함수', () => {
       ];
 
       docs.sort(DocumentUtils.sortByUploadDate);
-      expect(docs[0].uploadDate).toBe('2025-01-02T00:00:00Z');
-      expect(docs[2].uploadDate).toBe(undefined);
+      expect(docs[0]!.uploadDate).toBe('2025-01-02T00:00:00Z');
+      expect(docs[2]!.uploadDate).toBe(undefined);
     });
   });
 
@@ -458,8 +458,8 @@ describe('DocumentUtils 정렬 함수', () => {
       ];
 
       docs.sort(DocumentUtils.sortBySize);
-      expect(docs[0].size).toBe(2000);
-      expect(docs[2].size).toBe(undefined);
+      expect(docs[0]!.size).toBe(2000);
+      expect(docs[2]!.size).toBe(undefined);
     });
   });
 
@@ -472,9 +472,9 @@ describe('DocumentUtils 정렬 함수', () => {
       ];
 
       docs.sort(DocumentUtils.sortByFileType);
-      expect(docs[0].filename).toBe('doc.pdf');
-      expect(docs[1].filename).toBe('sheet.xlsx');
-      expect(docs[2].filename).toBe('image.jpg');
+      expect(docs[0]!.filename).toBe('doc.pdf');
+      expect(docs[1]!.filename).toBe('sheet.xlsx');
+      expect(docs[2]!.filename).toBe('image.jpg');
     });
 
     it('같은 타입은 파일명으로 정렬한다', () => {

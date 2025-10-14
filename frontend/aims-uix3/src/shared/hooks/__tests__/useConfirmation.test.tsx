@@ -3,7 +3,7 @@
  * @since 2025-10-15
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useConfirmation } from '../useConfirmation';
 

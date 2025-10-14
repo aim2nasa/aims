@@ -177,21 +177,32 @@ describe('CustomerDocument', () => {
       const mockCustomers: Customer[] = [
         {
           _id: 'customer1',
-          name: '홍길동',
-          birth: '1990-01-01',
-          gender: 'M',
-          phone: '010-1234-5678',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
+          personal_info: {
+            name: '홍길동',
+            birth_date: '1990-01-01',
+            gender: 'M',
+            mobile_phone: '010-1234-5678',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
+          meta: {
+            created_at: '2025-10-14T10:00:00Z',
+            updated_at: '2025-10-14T10:00:00Z',
+            status: 'active',
+          },
+          tags: [],
         },
       ]
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: mockCustomers,
-        total: 1,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: {
+          total: 1,
+          hasMore: false,
+          page: 1,
+          limit: 10,
+        },
       })
 
       await document.loadCustomers()
@@ -205,7 +216,10 @@ describe('CustomerDocument', () => {
       vi.mocked(CustomerService.getCustomers).mockImplementationOnce(() => {
         // 로딩 중 상태 확인
         expect(document.getIsLoading()).toBe(true)
-        return Promise.resolve({ customers: [], total: 0, hasMore: false, offset: 0, limit: 10 })
+        return Promise.resolve({
+          customers: [],
+          pagination: { total: 0, hasMore: false, page: 1, limit: 10 },
+        })
       })
 
       await document.loadCustomers()
@@ -216,10 +230,7 @@ describe('CustomerDocument', () => {
     it('로딩 완료 후 isLoading을 false로 설정해야 함', async () => {
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [],
-        total: 0,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 0, hasMore: false, page: 1, limit: 10 },
       })
 
       await document.loadCustomers()
@@ -240,15 +251,12 @@ describe('CustomerDocument', () => {
     it('쿼리 파라미터를 전달해야 함', async () => {
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [],
-        total: 0,
-        hasMore: false,
-        offset: 0,
-        limit: 20,
+        pagination: { total: 0, hasMore: false, page: 2, limit: 20 },
       })
 
-      await document.loadCustomers({ limit: 20, offset: 10 })
+      await document.loadCustomers({ limit: 20, page: 2 })
 
-      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20, offset: 10 })
+      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20, page: 2 })
     })
 
     it('구독자에게 알림을 보내야 함', async () => {
@@ -257,10 +265,7 @@ describe('CustomerDocument', () => {
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [],
-        total: 0,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 0, hasMore: false, page: 1, limit: 10 },
       })
 
       await document.loadCustomers()
@@ -274,10 +279,7 @@ describe('CustomerDocument', () => {
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [],
-        total: 0,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 0, hasMore: false, page: 1, limit: 10 },
       })
 
       await document.loadCustomers()
@@ -297,21 +299,35 @@ describe('CustomerDocument', () => {
     it('새 고객을 생성하고 목록에 추가해야 함', async () => {
       const newCustomer: Customer = {
         _id: 'new-customer',
-        name: '김철수',
-        birth: '1985-05-15',
-        gender: 'M',
-        phone: '010-9876-5432',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T10:00:00Z',
+        personal_info: {
+          name: '김철수',
+          birth_date: '1985-05-15',
+          gender: 'M',
+          mobile_phone: '010-9876-5432',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       }
 
       vi.mocked(CustomerService.createCustomer).mockResolvedValueOnce(newCustomer)
 
       const result = await document.createCustomer({
-        name: '김철수',
-        birth: '1985-05-15',
-        gender: 'M',
-        phone: '010-9876-5432',
+        personal_info: {
+          name: '김철수',
+          birth_date: '1985-05-15',
+          gender: 'M',
+          mobile_phone: '010-9876-5432',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
       })
 
       expect(result).toEqual(newCustomer)
@@ -325,19 +341,33 @@ describe('CustomerDocument', () => {
 
       vi.mocked(CustomerService.createCustomer).mockResolvedValueOnce({
         _id: 'new-customer',
-        name: '김철수',
-        birth: '1985-05-15',
-        gender: 'M',
-        phone: '010-9876-5432',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T10:00:00Z',
+        personal_info: {
+          name: '김철수',
+          birth_date: '1985-05-15',
+          gender: 'M',
+          mobile_phone: '010-9876-5432',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       })
 
       await document.createCustomer({
-        name: '김철수',
-        birth: '1985-05-15',
-        gender: 'M',
-        phone: '010-9876-5432',
+        personal_info: {
+          name: '김철수',
+          birth_date: '1985-05-15',
+          gender: 'M',
+          mobile_phone: '010-9876-5432',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
       })
 
       expect(callback).toHaveBeenCalled()
@@ -350,10 +380,15 @@ describe('CustomerDocument', () => {
 
       await expect(
         document.createCustomer({
-          name: '김철수',
-          birth: '1985-05-15',
-          gender: 'M',
-          phone: '010-9876-5432',
+          personal_info: {
+            name: '김철수',
+            birth_date: '1985-05-15',
+            gender: 'M',
+            mobile_phone: '010-9876-5432',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
         })
       ).rejects.toThrow('Create failed')
     })
@@ -366,52 +401,77 @@ describe('CustomerDocument', () => {
     it('고객 정보를 수정하고 목록을 업데이트해야 함', async () => {
       const existingCustomer: Customer = {
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-1234-5678',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T10:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       }
 
       // 기존 고객 추가
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [existingCustomer],
-        total: 1,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 1, hasMore: false, page: 1, limit: 10 },
       })
       await document.loadCustomers()
 
       const updatedCustomer: Customer = {
         ...existingCustomer,
-        phone: '010-9999-9999',
-        updatedAt: '2025-10-14T11:00:00Z',
+        personal_info: {
+          ...existingCustomer.personal_info,
+          mobile_phone: '010-9999-9999',
+        },
+        meta: {
+          ...existingCustomer.meta,
+          updated_at: '2025-10-14T11:00:00Z',
+        },
       }
 
       vi.mocked(CustomerService.updateCustomer).mockResolvedValueOnce(updatedCustomer)
 
-      const result = await document.updateCustomer('customer1', { phone: '010-9999-9999' })
+      const result = await document.updateCustomer('customer1', {
+        personal_info: { mobile_phone: '010-9999-9999' },
+      })
 
       expect(result).toEqual(updatedCustomer)
-      expect(document.getCustomers()[0].phone).toBe('010-9999-9999')
+      expect(document.getCustomers()?.[0]?.personal_info.mobile_phone).toBe('010-9999-9999')
     })
 
     it('존재하지 않는 고객 수정 시에도 처리해야 함', async () => {
       const updatedCustomer: Customer = {
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-9999-9999',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T11:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-9999-9999',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T11:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       }
 
       vi.mocked(CustomerService.updateCustomer).mockResolvedValueOnce(updatedCustomer)
 
-      const result = await document.updateCustomer('customer1', { phone: '010-9999-9999' })
+      const result = await document.updateCustomer('customer1', {
+        personal_info: { mobile_phone: '010-9999-9999' },
+      })
 
       expect(result).toEqual(updatedCustomer)
     })
@@ -422,15 +482,26 @@ describe('CustomerDocument', () => {
 
       vi.mocked(CustomerService.updateCustomer).mockResolvedValueOnce({
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-9999-9999',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T11:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-9999-9999',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T11:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       })
 
-      await document.updateCustomer('customer1', { phone: '010-9999-9999' })
+      await document.updateCustomer('customer1', {
+        personal_info: { mobile_phone: '010-9999-9999' },
+      })
 
       expect(callback).toHaveBeenCalled()
     })
@@ -441,7 +512,9 @@ describe('CustomerDocument', () => {
       )
 
       await expect(
-        document.updateCustomer('customer1', { phone: '010-9999-9999' })
+        document.updateCustomer('customer1', {
+          personal_info: { mobile_phone: '010-9999-9999' },
+        })
       ).rejects.toThrow('Update failed')
     })
   })
@@ -454,30 +527,45 @@ describe('CustomerDocument', () => {
       const customers: Customer[] = [
         {
           _id: 'customer1',
-          name: '홍길동',
-          birth: '1990-01-01',
-          gender: 'M',
-          phone: '010-1234-5678',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
+          personal_info: {
+            name: '홍길동',
+            birth_date: '1990-01-01',
+            gender: 'M',
+            mobile_phone: '010-1234-5678',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
+          meta: {
+            created_at: '2025-10-14T10:00:00Z',
+            updated_at: '2025-10-14T10:00:00Z',
+            status: 'active',
+          },
+          tags: [],
         },
         {
           _id: 'customer2',
-          name: '김철수',
-          birth: '1985-05-15',
-          gender: 'M',
-          phone: '010-9876-5432',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
+          personal_info: {
+            name: '김철수',
+            birth_date: '1985-05-15',
+            gender: 'M',
+            mobile_phone: '010-9876-5432',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
+          meta: {
+            created_at: '2025-10-14T10:00:00Z',
+            updated_at: '2025-10-14T10:00:00Z',
+            status: 'active',
+          },
+          tags: [],
         },
       ]
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers,
-        total: 2,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 2, hasMore: false, page: 1, limit: 10 },
       })
       await document.loadCustomers()
 
@@ -486,7 +574,7 @@ describe('CustomerDocument', () => {
       await document.deleteCustomer('customer1')
 
       expect(document.getCustomers()).toHaveLength(1)
-      expect(document.getCustomers()[0]._id).toBe('customer2')
+      expect(document.getCustomers()?.[0]?._id).toBe('customer2')
       expect(document.getTotal()).toBe(1)
     })
 
@@ -518,21 +606,27 @@ describe('CustomerDocument', () => {
       const customers: Customer[] = [
         {
           _id: 'customer1',
-          name: '홍길동',
-          birth: '1990-01-01',
-          gender: 'M',
-          phone: '010-1234-5678',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
+          personal_info: {
+            name: '홍길동',
+            birth_date: '1990-01-01',
+            gender: 'M',
+            mobile_phone: '010-1234-5678',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
+          meta: {
+            created_at: '2025-10-14T10:00:00Z',
+            updated_at: '2025-10-14T10:00:00Z',
+            status: 'active',
+          },
+          tags: [],
         },
       ]
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers,
-        total: 1,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 1, hasMore: false, page: 1, limit: 10 },
       })
       await document.loadCustomers()
 
@@ -557,21 +651,27 @@ describe('CustomerDocument', () => {
       const mockCustomers: Customer[] = [
         {
           _id: 'customer1',
-          name: '홍길동',
-          birth: '1990-01-01',
-          gender: 'M',
-          phone: '010-1234-5678',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T10:00:00Z',
+          personal_info: {
+            name: '홍길동',
+            birth_date: '1990-01-01',
+            gender: 'M',
+            mobile_phone: '010-1234-5678',
+          },
+          contracts: [],
+          documents: [],
+          consultations: [],
+          meta: {
+            created_at: '2025-10-14T10:00:00Z',
+            updated_at: '2025-10-14T10:00:00Z',
+            status: 'active',
+          },
+          tags: [],
         },
       ]
 
       vi.mocked(CustomerService.getCustomers).mockResolvedValue({
         customers: mockCustomers,
-        total: 1,
-        hasMore: false,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 1, hasMore: false, page: 1, limit: 10 },
       })
 
       await document.refresh()
@@ -583,10 +683,7 @@ describe('CustomerDocument', () => {
     it('쿼리 파라미터를 전달할 수 있어야 함', async () => {
       vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
         customers: [],
-        total: 0,
-        hasMore: false,
-        offset: 0,
-        limit: 20,
+        pagination: { total: 0, hasMore: false, page: 1, limit: 20 },
       })
 
       await document.refresh({ limit: 20 })
@@ -605,18 +702,24 @@ describe('CustomerDocument', () => {
         customers: [
           {
             _id: 'customer1',
-            name: '홍길동',
-            birth: '1990-01-01',
-            gender: 'M',
-            phone: '010-1234-5678',
-            createdAt: '2025-10-14T10:00:00Z',
-            updatedAt: '2025-10-14T10:00:00Z',
+            personal_info: {
+              name: '홍길동',
+              birth_date: '1990-01-01',
+              gender: 'M',
+              mobile_phone: '010-1234-5678',
+            },
+            contracts: [],
+            documents: [],
+            consultations: [],
+            meta: {
+              created_at: '2025-10-14T10:00:00Z',
+              updated_at: '2025-10-14T10:00:00Z',
+              status: 'active',
+            },
+            tags: [],
           },
         ],
-        total: 1,
-        hasMore: true,
-        offset: 0,
-        limit: 10,
+        pagination: { total: 1, hasMore: true, page: 1, limit: 10 },
       })
       await document.loadCustomers()
 
@@ -661,19 +764,33 @@ describe('CustomerDocument', () => {
       // Create
       vi.mocked(CustomerService.createCustomer).mockResolvedValueOnce({
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-1234-5678',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T10:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       })
 
       await document.createCustomer({
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-1234-5678',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
       })
 
       expect(document.getCustomers()).toHaveLength(1)
@@ -681,17 +798,28 @@ describe('CustomerDocument', () => {
       // Update
       vi.mocked(CustomerService.updateCustomer).mockResolvedValueOnce({
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-9999-9999',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T11:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-9999-9999',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T11:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       })
 
-      await document.updateCustomer('customer1', { phone: '010-9999-9999' })
+      await document.updateCustomer('customer1', {
+        personal_info: { mobile_phone: '010-9999-9999' },
+      })
 
-      expect(document.getCustomers()[0].phone).toBe('010-9999-9999')
+      expect(document.getCustomers()?.[0]?.personal_info.mobile_phone).toBe('010-9999-9999')
 
       // Delete
       vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
@@ -712,19 +840,33 @@ describe('CustomerDocument', () => {
 
       vi.mocked(CustomerService.createCustomer).mockResolvedValueOnce({
         _id: 'customer1',
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-1234-5678',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T10:00:00Z',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
+        meta: {
+          created_at: '2025-10-14T10:00:00Z',
+          updated_at: '2025-10-14T10:00:00Z',
+          status: 'active',
+        },
+        tags: [],
       })
 
       await document.createCustomer({
-        name: '홍길동',
-        birth: '1990-01-01',
-        gender: 'M',
-        phone: '010-1234-5678',
+        personal_info: {
+          name: '홍길동',
+          birth_date: '1990-01-01',
+          gender: 'M',
+          mobile_phone: '010-1234-5678',
+        },
+        contracts: [],
+        documents: [],
+        consultations: [],
       })
 
       expect(callback1).toHaveBeenCalled()

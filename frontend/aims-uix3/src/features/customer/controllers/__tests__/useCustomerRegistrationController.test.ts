@@ -290,7 +290,7 @@ describe('useCustomerRegistrationController', () => {
       });
 
       expect(onError).toHaveBeenCalled();
-      expect(result.current.errors.submit).toBeTruthy();
+      expect(result.current.errors?.['submit']).toBeTruthy();
     });
 
     it('네트워크 에러 시 onError 콜백을 호출해야 함', async () => {
@@ -311,7 +311,7 @@ describe('useCustomerRegistrationController', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
-      expect(result.current.errors.submit).toBe('네트워크 에러');
+      expect(result.current.errors?.['submit']).toBe('네트워크 에러');
     });
 
     it('올바른 API 엔드포인트와 메서드로 요청해야 함', async () => {
@@ -361,8 +361,8 @@ describe('useCustomerRegistrationController', () => {
         await result.current.handleSubmit();
       });
 
-      const callArgs = vi.mocked(global.fetch).mock.calls[0];
-      const body = JSON.parse(callArgs[1]?.body as string);
+      const callArgs = vi.mocked(global.fetch).mock.calls?.[0];
+      const body = JSON.parse(callArgs?.[1]?.body as string);
 
       expect(body).toEqual({
         personal_info: {
@@ -399,8 +399,8 @@ describe('useCustomerRegistrationController', () => {
         await result.current.handleSubmit();
       });
 
-      const callArgs = vi.mocked(global.fetch).mock.calls[0];
-      const body = JSON.parse(callArgs[1]?.body as string);
+      const callArgs = vi.mocked(global.fetch).mock.calls?.[0];
+      const body = JSON.parse(callArgs?.[1]?.body as string);
 
       expect(body.personal_info.address).toBeUndefined();
     });
@@ -501,7 +501,7 @@ describe('useCustomerRegistrationController', () => {
 
       // 3. 에러 검증
       expect(onError).toHaveBeenCalled();
-      expect(result.current.errors.submit).toBe('서버 에러');
+      expect(result.current.errors?.['submit']).toBe('서버 에러');
       expect(result.current.isSubmitting).toBe(false);
     });
 
@@ -524,7 +524,7 @@ describe('useCustomerRegistrationController', () => {
         await result.current.handleSubmit();
       });
 
-      expect(result.current.errors.submit).toBeTruthy();
+      expect(result.current.errors?.['submit']).toBeTruthy();
 
       // 두 번째 제출은 성공
       vi.mocked(global.fetch).mockResolvedValue({

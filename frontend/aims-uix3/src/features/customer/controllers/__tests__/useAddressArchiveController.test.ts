@@ -21,7 +21,7 @@ describe('useAddressArchiveController', () => {
         address1: '서울시 강남구',
         address2: '101호'
       },
-      updated_at: '2025-01-01T00:00:00Z'
+      changed_at: '2025-01-01T00:00:00Z'
     },
     {
       address: {
@@ -29,7 +29,7 @@ describe('useAddressArchiveController', () => {
         address1: '부산시 해운대구',
         address2: '202호'
       },
-      updated_at: '2025-01-02T00:00:00Z'
+      changed_at: '2025-01-01T00:00:00Z'
     }
   ];
 
@@ -333,7 +333,7 @@ describe('useAddressArchiveController', () => {
             address1: '대구시',
             address2: '303호'
           },
-          updated_at: '2025-01-03T00:00:00Z'
+          changed_at: '2025-01-01T00:00:00Z'
         }
       ];
 

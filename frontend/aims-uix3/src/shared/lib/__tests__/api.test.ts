@@ -116,7 +116,7 @@ describe('apiRequest', () => {
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
         json: async () => mockData
-      } as Response);
+      } as unknown as Response);
 
       const result = await apiRequest('/test');
 
@@ -243,11 +243,11 @@ describe('apiRequest', () => {
         body: formData
       });
 
-      const fetchCall = vi.mocked(global.fetch).mock.calls[0];
-      const headers = fetchCall[1]?.headers as Record<string, string>;
+      const fetchCall = vi.mocked(global.fetch).mock.calls?.[0];
+      const headers = fetchCall?.[1]?.headers as Record<string, string> | undefined;
 
-      expect(headers['Content-Type']).toBeUndefined();
-      expect(fetchCall[1]?.body).toBe(formData);
+      expect(headers?.['Content-Type']).toBeUndefined();
+      expect(fetchCall?.[1]?.body).toBe(formData);
     });
   });
 
@@ -335,7 +335,7 @@ describe('apiRequest', () => {
         json: async () => {
           throw new Error('Invalid JSON');
         }
-      } as Response);
+      } as unknown as Response);
 
       await expect(
         apiRequest('/test')

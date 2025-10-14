@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useCustomersController } from './useCustomersController';
 import type { Customer, CreateCustomerData, UpdateCustomerData } from '@/entities/customer';
 
@@ -32,7 +32,7 @@ const mockSetError = vi.fn();
 
 const mockCustomerContextValue = {
   state: {
-    customers: [],
+    customers: [] as Customer[],
     selectedCustomer: null,
     searchQuery: '',
     searchParams: { page: 1, limit: 20 },
@@ -120,14 +120,22 @@ const mockCustomer: Customer = {
   personal_info: {
     name: '홍길동',
     birth_date: '1990-01-01',
-    gender: 'male',
-  },
-  contact_info: {
-    phone: '010-1234-5678',
+    gender: 'M' as const,
+    mobile_phone: '010-1234-5678',
     email: 'hong@example.com',
   },
-  created_at: '2025-01-01T00:00:00Z',
-  updated_at: '2025-01-01T00:00:00Z',
+  contracts: [],
+  documents: [],
+  consultations: [],
+  meta: {
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    status: 'active' as const,
+    created_by: null,
+    last_modified_by: null,
+    original_name: null,
+  },
+  tags: [],
 };
 
 const mockCustomers: Customer[] = [
@@ -137,13 +145,21 @@ const mockCustomers: Customer[] = [
     personal_info: {
       name: '김철수',
       birth_date: '1985-05-15',
-      gender: 'male',
+      gender: 'M' as const,
+      mobile_phone: '010-9876-5432',
     },
-    contact_info: {
-      phone: '010-9876-5432',
+    contracts: [],
+    documents: [],
+    consultations: [],
+    meta: {
+      created_at: '2025-01-02T00:00:00Z',
+      updated_at: '2025-01-02T00:00:00Z',
+      status: 'active' as const,
+      created_by: null,
+      last_modified_by: null,
+      original_name: null,
     },
-    created_at: '2025-01-02T00:00:00Z',
-    updated_at: '2025-01-02T00:00:00Z',
+    tags: [],
   },
 ];
 
@@ -152,7 +168,7 @@ beforeEach(() => {
 
   // Reset state
   mockCustomerContextValue.state = {
-    customers: [],
+    customers: [] as Customer[],
     selectedCustomer: null,
     searchQuery: '',
     searchParams: { page: 1, limit: 20 },
@@ -344,18 +360,28 @@ describe('useCustomersController - createCustomer', () => {
       personal_info: {
         name: '이영희',
         birth_date: '1995-03-20',
-        gender: 'female',
+        gender: 'F' as const,
       },
-      contact_info: {
-        phone: '010-5555-6666',
-      },
+      contracts: [],
+      documents: [],
+      consultations: [],
     };
 
     const createdCustomer: Customer = {
       _id: 'customer-new',
-      ...newCustomerData,
-      created_at: '2025-01-03T00:00:00Z',
-      updated_at: '2025-01-03T00:00:00Z',
+      personal_info: newCustomerData.personal_info,
+      contracts: [],
+      documents: [],
+      consultations: [],
+      meta: {
+        created_at: '2025-01-03T00:00:00Z',
+        updated_at: '2025-01-03T00:00:00Z',
+        status: 'active' as const,
+        created_by: null,
+        last_modified_by: null,
+        original_name: null,
+      },
+      tags: [],
     };
 
     mockCreateCustomer.mockResolvedValueOnce(createdCustomer);
@@ -393,14 +419,17 @@ describe('useCustomersController - createCustomer', () => {
 describe('useCustomersController - updateCustomer', () => {
   it('고객을 성공적으로 수정한다', async () => {
     const updateData: UpdateCustomerData = {
-      contact_info: {
-        phone: '010-9999-8888',
+      personal_info: {
+        mobile_phone: '010-9999-8888',
       },
     };
 
     const updatedCustomer: Customer = {
       ...mockCustomer,
-      contact_info: updateData.contact_info!,
+      personal_info: {
+        ...mockCustomer.personal_info,
+        mobile_phone: '010-9999-8888',
+      },
     };
 
     mockUpdateCustomerDoc.mockResolvedValueOnce(updatedCustomer);

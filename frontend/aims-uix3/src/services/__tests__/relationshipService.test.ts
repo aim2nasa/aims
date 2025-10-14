@@ -107,7 +107,7 @@ describe('RelationshipService', () => {
         '/api/customers/cust1/relationships?include_details=true'
       )
       expect(result).toHaveLength(1)
-      expect(result[0]._id).toBe('rel1')
+      expect(result?.[0]?._id).toBe('rel1')
     })
 
     it('빈 고객 ID에 대해 에러를 던져야 함', async () => {

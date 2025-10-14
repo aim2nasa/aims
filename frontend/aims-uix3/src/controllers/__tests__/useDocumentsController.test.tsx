@@ -83,8 +83,9 @@ describe('useDocumentsController', () => {
     })
 
     vi.mocked(DocumentStatusService.getDocumentStatus).mockImplementation(async (id) => {
-      const doc = [mockDocument1, mockDocument2, mockDocument3].find(d => d._id === id)
+      const doc = [mockDocument1, mockDocument2, mockDocument3].find(d => d._id === id)!
       return {
+        success: true,
         data: {
           rawDocument: doc,
         },

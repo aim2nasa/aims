@@ -283,8 +283,8 @@ describe('useAppleConfirmController - handleOverlayClick', () => {
     const mockEvent = {
       target: document.createElement('div'),
       currentTarget: document.createElement('div'),
-    } as React.MouseEvent;
-    mockEvent.currentTarget = mockEvent.target;
+    } as unknown as React.MouseEvent;
+    (mockEvent as any).currentTarget = mockEvent.target;
 
     act(() => {
       result.current.actions.handleOverlayClick(mockEvent);
@@ -307,8 +307,8 @@ describe('useAppleConfirmController - handleOverlayClick', () => {
     const mockEvent = {
       target: document.createElement('div'),
       currentTarget: document.createElement('div'),
-    } as React.MouseEvent;
-    mockEvent.currentTarget = mockEvent.target;
+    } as unknown as React.MouseEvent;
+    (mockEvent as any).currentTarget = mockEvent.target;
 
     act(() => {
       result.current.actions.handleOverlayClick(mockEvent);
@@ -327,7 +327,7 @@ describe('useAppleConfirmController - handleOverlayClick', () => {
     const mockEvent = {
       target: document.createElement('button'),
       currentTarget: document.createElement('div'),
-    } as React.MouseEvent;
+    } as unknown as React.MouseEvent;
 
     act(() => {
       result.current.actions.handleOverlayClick(mockEvent);
