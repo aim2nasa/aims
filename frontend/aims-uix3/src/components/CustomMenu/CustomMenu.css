@@ -575,6 +575,9 @@
   --color-menu-icon-location: var(--color-ios-orange);     /* location - iOS systemOrange */
   --color-menu-icon-team: var(--color-ios-purple);         /* person-2 - iOS systemPurple */
 
+  /* 🎨 문서 관리 섹션 - SF Symbol 아이콘 색상 */
+  --color-menu-icon-doc: var(--color-ios-teal);            /* doc - iOS systemTeal */
+
   /* 그림자 및 효과 */
   --color-menu-shadow: rgba(0, 0, 0, 0.1);
 }
@@ -597,6 +600,9 @@
   --color-menu-icon-list: var(--color-ios-green-dark);     /* list-bullet - iOS systemGreen (Dark) */
   --color-menu-icon-location: var(--color-ios-orange-dark); /* location - iOS systemOrange (Dark) */
   --color-menu-icon-team: var(--color-ios-purple-dark);    /* person-2 - iOS systemPurple (Dark) */
+
+  /* 🌙 문서 관리 섹션 - 다크모드 SF Symbol 아이콘 색상 */
+  --color-menu-icon-doc: var(--color-ios-teal-dark);       /* doc - iOS systemTeal (Dark) */
 
   /* 그림자 및 효과 */
   --color-menu-shadow: rgba(0, 0, 0, 0.3);
