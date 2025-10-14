@@ -66,9 +66,9 @@
 
 .customer-document-preview__content {
   flex: 1;
-  min-height: 420px;
-  max-height: calc(92vh - 140px);
-  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-ios-bg-secondary-light);
 }
 
