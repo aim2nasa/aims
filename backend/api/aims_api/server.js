@@ -134,7 +134,16 @@ MongoClient.connect(MONGO_URI)
  * 문서의 처리 상태를 분석하는 함수
  */
 function analyzeDocumentStatus(doc) {
-  const stages = {
+  // meta.full_text 존재 여부에 따라 stages 구조를 다르게 생성
+  const hasMetaText = doc.meta && doc.meta.full_text;
+
+  const stages = hasMetaText ? {
+    // meta에서 텍스트 추출된 경우: OCR 단계 제외
+    upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
+    meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null },
+    docembed: { name: '임베딩', status: 'pending', message: '대기 중', timestamp: null }
+  } : {
+    // OCR이 필요한 경우: 모든 단계 포함
     upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
     meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null },
     ocr_prep: { name: 'OCR 준비', status: 'pending', message: '대기 중', timestamp: null },
@@ -162,7 +171,7 @@ function analyzeDocumentStatus(doc) {
       stages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
       stages.meta.timestamp = doc.meta.created_at;
       currentStage = 2;
-      progress = 40;
+      progress = hasMetaText ? 50 : 40;
     } else {
       stages.meta.status = 'error';
       stages.meta.message = '메타데이터 추출 실패';
@@ -171,39 +180,16 @@ function analyzeDocumentStatus(doc) {
     }
   }
 
-  // 3. OCR 준비 단계
-  if (doc.meta && doc.meta.meta_status === 'ok') {
+  // 3. OCR 준비/처리 단계 (meta.full_text가 없는 경우만)
+  if (!hasMetaText && doc.meta && doc.meta.meta_status === 'ok') {
     stages.ocr_prep.status = 'completed';
     stages.ocr_prep.message = 'OCR 준비 완료';
     currentStage = 3;
     progress = 60;
-
-    // 지원하지 않는 MIME 타입 체크
-    const unsupportedMimes = ['application/postscript', 'application/zip', 'application/octet-stream'];
-    if (unsupportedMimes.includes(doc.meta.mime)) {
-      stages.ocr.status = 'skipped';
-      stages.ocr.message = '지원하지 않는 문서 형식';
-      stages.docembed.status = 'skipped';
-      stages.docembed.message = 'OCR 생략으로 인한 건너뜀';
-      overallStatus = 'completed_with_skip';
-      progress = 100;
-      return { stages, currentStage, overallStatus, progress };
-    }
-
-    // PDF 페이지 수 초과 체크
-    if (doc.meta.pdf_pages && doc.meta.pdf_pages > 30) {
-      stages.ocr.status = 'skipped';
-      stages.ocr.message = `페이지 수 초과 (${doc.meta.pdf_pages} > 30)`;
-      stages.docembed.status = 'skipped';
-      stages.docembed.message = 'OCR 생략으로 인한 건너뜀';
-      overallStatus = 'completed_with_skip';
-      progress = 100;
-      return { stages, currentStage, overallStatus, progress };
-    }
   }
 
-  // 4. OCR 처리 단계
-  if (doc.ocr) {
+  // 4. OCR 처리 단계 (meta.full_text가 없는 경우만)
+  if (!hasMetaText && doc.ocr) {
     if (doc.ocr.warn) {
       stages.ocr.status = 'skipped';
       stages.ocr.message = doc.ocr.warn;
@@ -243,8 +229,8 @@ function analyzeDocumentStatus(doc) {
     }
   }
 
-  // text 필드가 있는 경우 (text/plain 직접 처리)
-  if (doc.text && doc.text.full_text) {
+  // text 필드가 있는 경우 (text/plain 직접 처리) - meta.full_text가 없는 경우만
+  if (!hasMetaText && doc.text && doc.text.full_text) {
     stages.ocr.status = 'completed';
     stages.ocr.message = '텍스트 파일 직접 처리 완료';
     currentStage = 4;
@@ -257,7 +243,7 @@ function analyzeDocumentStatus(doc) {
       stages.docembed.status = 'completed';
       stages.docembed.message = `임베딩 완료 (${doc.docembed.chunks}개 청크, ${doc.docembed.dims}차원)`;
       stages.docembed.timestamp = doc.docembed.updated_at;
-      currentStage = 5;
+      currentStage = hasMetaText ? 3 : 5;
       progress = 100;
       overallStatus = 'completed';
     } else if (doc.docembed.status === 'failed') {
@@ -268,7 +254,7 @@ function analyzeDocumentStatus(doc) {
     } else if (doc.docembed.status === 'processing') {
       stages.docembed.status = 'processing';
       stages.docembed.message = '임베딩 처리 중';
-      currentStage = 5;
+      currentStage = hasMetaText ? 3 : 5;
       progress = 90;
       overallStatus = 'processing';
     }
