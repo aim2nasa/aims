@@ -186,9 +186,13 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
             <div>
               <h2>{previewDocument?.originalName ?? '문서 미리보기'}</h2>
               <p>
-                {previewDocument?.uploadedAt
-                  ? new Date(previewDocument.uploadedAt).toLocaleString('ko-KR')
-                  : '업로드 정보 없음'}
+                {(() => {
+                  if (!previewDocument?.uploadedAt) return '업로드 정보 없음'
+                  // 날짜 문자열 정리 (xxx 같은 잘못된 밀리초 제거)
+                  const cleanDateStr = previewDocument.uploadedAt.replace(/(\.\d{3})[^\d+Z]*/, '$1')
+                  const date = new Date(cleanDateStr)
+                  return isNaN(date.getTime()) ? '업로드 정보 없음' : date.toLocaleString('ko-KR')
+                })()}
                 {sizeLabel && ` · ${sizeLabel}`}
               </p>
             </div>
