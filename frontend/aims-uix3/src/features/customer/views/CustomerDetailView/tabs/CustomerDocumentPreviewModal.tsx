@@ -198,11 +198,6 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
             </div>
           </div>
           <div className="customer-document-preview__header-actions">
-            {onDownload && (
-              <Button variant="secondary" size="sm" onClick={onDownload}>
-                다운로드
-              </Button>
-            )}
             <Button variant="ghost" size="sm" onClick={onClose}>
               닫기
             </Button>
