@@ -569,35 +569,11 @@
   --color-menu-selected-bg: var(--color-primary-600);      /* iOS systemBlue */
   --color-menu-selected-bg-subtle: var(--color-primary-600);
 
-  /* 🎨 메뉴별 시맨틱 아이콘 색상 - 애플 스타일 색상 팔레트 */
-
-  /* 고객 관리 (User) - iOS systemBlue 계열 */
-  --color-menu-icon-user: var(--color-ios-blue);           /* iOS systemBlue */
-  --color-menu-icon-user-selected: var(--color-neutral-0);
-
-  /* 전체보기 (List) - iOS systemGreen 계열 */
-  --color-menu-icon-list: var(--color-ios-green);          /* iOS systemGreen */
-  --color-menu-icon-list-selected: var(--color-neutral-0);
-
-  /* 지역별 보기 (Location) - iOS systemOrange 계열 */
-  --color-menu-icon-location: var(--color-ios-orange);     /* iOS systemOrange */
-  --color-menu-icon-location-selected: var(--color-neutral-0);
-
-  /* 관계별 보기 (Team) - iOS systemPurple 계열 */
-  --color-menu-icon-team: var(--color-ios-purple);         /* iOS systemPurple */
-  --color-menu-icon-team-selected: var(--color-neutral-0);
-
-  /* 문서 관리 (Doc) - iOS systemTeal 계열 */
-  --color-menu-icon-doc: var(--color-ios-teal);            /* iOS systemTeal */
-  --color-menu-icon-doc-selected: var(--color-neutral-0);
-
-  /* 문서 처리 현황 (Dashboard) - iOS systemIndigo 계열 */
-  --color-menu-icon-dashboard: var(--color-ios-indigo);    /* iOS systemIndigo */
-  --color-menu-icon-dashboard-selected: var(--color-neutral-0);
-
-  /* 검색 결과 (Search) - iOS systemYellow 계열 */
-  --color-menu-icon-search: var(--color-ios-yellow);       /* iOS systemYellow */
-  --color-menu-icon-search-selected: var(--color-neutral-0);
+  /* 🎨 고객 관리 섹션 - SF Symbol 아이콘 색상 */
+  --color-menu-icon-user: var(--color-ios-blue);           /* person - iOS systemBlue */
+  --color-menu-icon-list: var(--color-ios-green);          /* list-bullet - iOS systemGreen */
+  --color-menu-icon-location: var(--color-ios-orange);     /* location - iOS systemOrange */
+  --color-menu-icon-team: var(--color-ios-purple);         /* person-2 - iOS systemPurple */
 
   /* 그림자 및 효과 */
   --color-menu-shadow: rgba(0, 0, 0, 0.1);
@@ -616,35 +592,11 @@
   --color-menu-selected-bg: var(--color-primary-500);      /* 다크모드에서 더 밝게 */
   --color-menu-selected-bg-subtle: var(--color-primary-500);
 
-  /* 🌙 다크모드 시맨틱 아이콘 색상 - 더 밝고 부드럽게 */
-
-  /* 고객 관리 (User) - 다크모드 블루 */
-  --color-menu-icon-user: var(--color-ios-blue-dark);      /* iOS systemBlue (Dark) */
-  --color-menu-icon-user-selected: var(--color-neutral-0);
-
-  /* 전체보기 (List) - 다크모드 그린 */
-  --color-menu-icon-list: var(--color-ios-green-dark);     /* iOS systemGreen (Dark) */
-  --color-menu-icon-list-selected: var(--color-neutral-0);
-
-  /* 지역별 보기 (Location) - 다크모드 오렌지 */
-  --color-menu-icon-location: var(--color-ios-orange-dark); /* iOS systemOrange (Dark) */
-  --color-menu-icon-location-selected: var(--color-neutral-0);
-
-  /* 관계별 보기 (Team) - 다크모드 퍼플 */
-  --color-menu-icon-team: var(--color-ios-purple-dark);    /* iOS systemPurple (Dark) */
-  --color-menu-icon-team-selected: var(--color-neutral-0);
-
-  /* 문서 관리 (Doc) - 다크모드 틸 */
-  --color-menu-icon-doc: var(--color-ios-teal-dark);       /* iOS systemTeal (Dark) */
-  --color-menu-icon-doc-selected: var(--color-neutral-0);
-
-  /* 문서 처리 현황 (Dashboard) - 다크모드 인디고 */
-  --color-menu-icon-dashboard: var(--color-ios-indigo-dark); /* iOS systemIndigo (Dark) */
-  --color-menu-icon-dashboard-selected: var(--color-neutral-0);
-
-  /* 검색 결과 (Search) - 다크모드 옐로우 */
-  --color-menu-icon-search: var(--color-ios-yellow-dark);  /* iOS systemYellow (Dark) */
-  --color-menu-icon-search-selected: var(--color-neutral-0);
+  /* 🌙 고객 관리 섹션 - 다크모드 SF Symbol 아이콘 색상 */
+  --color-menu-icon-user: var(--color-ios-blue-dark);      /* person - iOS systemBlue (Dark) */
+  --color-menu-icon-list: var(--color-ios-green-dark);     /* list-bullet - iOS systemGreen (Dark) */
+  --color-menu-icon-location: var(--color-ios-orange-dark); /* location - iOS systemOrange (Dark) */
+  --color-menu-icon-team: var(--color-ios-purple-dark);    /* person-2 - iOS systemPurple (Dark) */
 
   /* 그림자 및 효과 */
   --color-menu-shadow: rgba(0, 0, 0, 0.3);
