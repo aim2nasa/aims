@@ -112,18 +112,30 @@ src/services/__tests__/customerService.test.ts ✅ 존재
 
 ---
 
-## 🟡 Phase 2: MEDIUM Priority (미착수)
+## 🟡 Phase 2: MEDIUM Priority
 
-### 예상 작업량: ~118개 테스트
+### ✅ 완료된 작업 (5/6개 파일)
 
-| 파일 | LOC | 예상 테스트 | 복잡도 |
-|------|-----|------------|--------|
-| appleConfirm.ts | 395 | 25개 | ★★★★☆ |
-| useNavigation.ts | 227 | 22개 | ★★★☆☆ |
-| useCustomerRelationshipsController.ts | 200 | 20개 | ★★★☆☆ |
-| relationshipService.ts | 244 | 18개 | ★★★☆☆ |
-| useCustomerDocument.ts | 164 | 18개 | ★★★☆☆ |
-| addressService.ts | 123 | 15개 | ★★☆☆☆ |
+| 파일 | LOC | 예상 | 실제 | 상태 |
+|------|-----|------|------|------|
+| useNavigation.ts | 227 | 22개 | 24개 | ✅ 완료 |
+| useCustomerRelationshipsController.ts | 200 | 20개 | 21개 | ✅ 완료 |
+| relationshipService.ts | 244 | 18개 | 21개 | ✅ 완료 |
+| useCustomerDocument.ts | 164 | 18개 | 20개 | ✅ 완료 |
+| addressService.ts | 123 | 15개 | 19개 | ✅ 완료 |
+| **소계** | **958** | **93개** | **105개** | **100% 통과** |
+
+**완료일**: 2025-10-15 (이전 세션에서 작성됨)
+**실행 결과**: 105개 테스트 모두 통과
+
+### 🔴 미완료 작업 (1/6개 파일)
+
+| 파일 | LOC | 예상 테스트 | 복잡도 | 상태 |
+|------|-----|------------|--------|------|
+| appleConfirm.ts | 395 | 25개 | ★★★★★ | ❌ 미착수 |
+
+**미완료 이유**: DOM 직접 조작 유틸리티로 테스트 작성이 복잡함
+**우선순위**: LOW (Phase 3로 이동 권장)
 
 ---
 
@@ -335,7 +347,8 @@ e3f6b7d - test: CustomerDocument 유닛 테스트 추가 (39개)
 | 2025-10-14 | customerService.ts 이슈 기록, 삭제된 파일 정보 추가 | Claude |
 | 2025-10-15 | customerService.ts 검증 완료, 43개 테스트 통과 확인 | Claude |
 | 2025-10-15 | useDocumentsController.tsx 검증 완료, 26개 테스트 통과 확인 | Claude |
+| 2025-10-15 | Phase 2 검증 완료, 5/6개 파일 105개 테스트 통과 | Claude |
 
 ---
 
-**마지막 업데이트**: 2025-10-15 14:35 KST
+**마지막 업데이트**: 2025-10-15 14:40 KST
