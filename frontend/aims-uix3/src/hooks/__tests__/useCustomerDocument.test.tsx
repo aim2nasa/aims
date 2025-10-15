@@ -663,10 +663,10 @@ describe('useCustomerDocument', () => {
 
       // 추가 로드 시도
       await act(async () => {
-        await result.current.loadCustomers({ skip: 10, limit: 10 });
+        await result.current.loadCustomers({ page: 2, limit: 10 });
       });
 
-      expect(document.loadCustomers).toHaveBeenCalledWith({ skip: 10, limit: 10 });
+      expect(document.loadCustomers).toHaveBeenCalledWith({ page: 2, limit: 10 });
     });
 
     it('total이 올바르게 업데이트되어야 함', async () => {
@@ -716,7 +716,7 @@ describe('useCustomerDocument', () => {
     });
 
     it('Document 인스턴스가 안정적이어야 함', () => {
-      const { result, rerender } = renderHook(() => useCustomerDocument());
+      const { rerender } = renderHook(() => useCustomerDocument());
 
       const initialDocument = CustomerDocument.getInstance();
 
