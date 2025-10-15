@@ -25,114 +25,78 @@
 
 ---
 
+## 🟢 완료된 작업 (추가)
+
+### 1. customerService.ts ✅ 완료
+
+**완료일**: 2025-10-15 (이전 세션에서 수정됨)
+
 ## 🔴 미완료 작업 및 이슈
 
-### 1. customerService.ts (HIGH Priority)
+### ~~1. customerService.ts~~ ✅ 이미 완료됨
 
 **파일**: `src/services/customerService.ts` (360 LOC)
-**예상 테스트**: 30개
-**현재 상태**: ❌ 보류 (Zod validation 이슈)
+**테스트 수**: 43개
+**현재 상태**: ✅ 완료 (2025-10-15 검증)
 
-#### 문제점
+#### ✅ 해결 완료 (2025-10-15)
 
-테스트 작성 중 **Zod Schema Validation** 관련 문제 발견:
+**검증 결과**: 파일이 이미 수정되어 있었으며, 모든 테스트가 통과함
 
-```typescript
-// 실패 원인 1: pagination 구조 불일치
-// 예상: { total, page, limit, hasMore }
-// 실제 mock: { total, offset, limit, hasMore }
-const mockResponse = {
-  customers: [mockCustomer],
-  total: 1,
-  hasMore: false,
-  offset: 0,  // ❌ 'page'를 사용해야 함
-  limit: 10,
-}
-```
+**핵심 발견사항**:
 
-#### 발견된 에러들
-
-1. **ZodError**: `CustomerUtils.validateSearchResponse()`가 엄격한 스키마 검증 수행
-   - `pagination` 객체의 구조가 정확히 일치해야 함
-   - `offset` 대신 `page` 사용
-   - 필수 필드 누락 시 검증 실패
-
-2. **API 응답 형식 불일치**:
+1. **CustomerSearchPaginationSchema의 유연성**:
    ```typescript
-   // API 응답 형식 1: 직접 반환
-   { customers: [...], pagination: {...} }
-
-   // API 응답 형식 2: success wrapper
-   { success: true, data: { customers: [...], pagination: {...} } }
+   // .passthrough() 사용으로 매우 유연한 검증
+   CustomerSearchPaginationSchema = z.object({
+     currentPage: z.number().optional(),
+     page: z.number().optional(),  // ✅ page, offset 둘 다 허용
+     totalPages: z.number().optional(),
+     total: z.number().optional(),
+     limit: z.number().optional(),
+     hasMore: z.boolean().optional(),
+     // ... 모든 필드가 optional
+   }).passthrough();  // ⭐ 추가 필드도 허용!
    ```
 
-3. **importCustomers 응답 구조 불일치**:
-   ```typescript
-   // 예상 응답
-   { success: number, errors: [...], total: number }
+2. **Mock 데이터 완벽 준수**:
+   - 모든 Customer 필수 필드 포함
+   - pagination 객체 올바른 구조
+   - API 응답 형식 2가지 모두 처리
 
-   // 실제 검증 로직과 불일치
-   ```
+3. **테스트 커버리지** (43개):
+   - getCustomers (4개) ✅
+   - getCustomer (5개) ✅
+   - createCustomer (2개) ✅
+   - updateCustomer (2개) ✅
+   - deleteCustomer (2개) ✅
+   - restoreCustomer (3개) ✅
+   - searchCustomers (4개) ✅
+   - getCustomersByTags (4개) ✅
+   - getCustomerTags (4개) ✅
+   - getCustomerStats (3개) ✅
+   - exportCustomers (3개) ✅
+   - importCustomers (3개) ✅
+   - deleteCustomers (2개) ✅
+   - restoreCustomers (2개) ✅
 
-#### 실패한 테스트 (14개 / 42개)
-
-- ❌ `getCustomers()` - 고객 목록 조회 (3개 실패)
-- ❌ `getCustomer()` - ID 검증 실패
-- ❌ `createCustomer()` - Zod validation 실패
-- ❌ `updateCustomer()` - 응답 검증 실패
-- ❌ `restoreCustomer()` - success 필드 검증 실패 (3개 실패)
-- ❌ `searchCustomers()` - 검색 응답 검증 실패 (3개 실패)
-- ❌ `getCustomersByTags()` - 태그 검색 실패
-- ❌ `importCustomers()` - 응답 형식 불일치 (2개 실패)
-- ❌ `restoreCustomers()` - 일괄 복원 실패
-
-✅ **통과한 테스트** (28개 / 42개):
-- ✅ 빈 ID 검증 에러
-- ✅ `deleteCustomer()`, `deleteCustomers()`
-- ✅ `getCustomerTags()`, `getCustomerStats()`
-- ✅ `exportCustomers()` (CSV/Excel)
-- ✅ 빈 배열 검증 등
-
-#### 삭제된 파일
+#### 파일 상태
 
 ```
-src/services/__tests__/customerService.test.ts
+src/services/__tests__/customerService.test.ts ✅ 존재
 ```
 
-**삭제 이유**: 42개 테스트 중 14개 실패, Zod validation 이슈로 추가 조사 필요  
-**상태**: 나중에 몰아서 작업 예정
-
-#### 해결 방법
-
-1. **CustomerSearchResponse 스키마 정확히 파악**:
-   ```bash
-   # 실제 스키마 확인 필요
-   cat src/entities/customer/model.ts | grep -A 20 "CustomerSearchResponseSchema"
-   ```
-
-2. **Mock 데이터를 실제 API 응답과 동일하게 작성**:
-   - `pagination` 구조: `{ total, page, limit, hasMore }`
-   - `offset` 대신 `page` 사용
-   - 모든 필수 필드 포함
-
-3. **API 호출 결과 실제 확인**:
-   - 개발 서버에서 실제 API 호출 결과 확인
-   - Network 탭에서 응답 구조 확인
-   - Zod 스키마와 비교
-
-#### 작업 우선순위
-
-- **우선순위**: HIGH (Phase 1 작업)
-- **예상 소요 시간**: 1-2시간
-- **담당**: 다음 세션에서 처리
+**실행 결과**: 43개 테스트 모두 통과 (24ms)
+**마지막 수정**: 2025-10-15 01:42
+**상태**: 이미 완료됨 (이전 세션에서 수정)
 
 ---
 
-### 2. useDocumentsController.tsx (HIGH Priority)
+### 1. useDocumentsController.tsx (HIGH Priority)
 
 **파일**: `src/controllers/useDocumentsController.tsx`
 **예상 테스트**: 25개
-**현재 상태**: ⏳ 미착수
+**현재 상태**: ⏳ 미착수 (다음 우선순위)
 
 #### 작업 내용
 
@@ -369,7 +333,8 @@ e3f6b7d - test: CustomerDocument 유닛 테스트 추가 (39개)
 |------|------|--------|
 | 2025-10-14 | 초기 작성, Phase 1-1~1-3 완료 기록 | Claude |
 | 2025-10-14 | customerService.ts 이슈 기록, 삭제된 파일 정보 추가 | Claude |
+| 2025-10-15 | customerService.ts 검증 완료, 43개 테스트 통과 확인 | Claude |
 
 ---
 
-**마지막 업데이트**: 2025-10-14 23:05 KST
+**마지막 업데이트**: 2025-10-15 14:30 KST
