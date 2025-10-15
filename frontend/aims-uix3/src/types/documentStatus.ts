@@ -198,14 +198,54 @@ export interface DocumentStatusResponse {
 }
 
 /**
- * 문서 상세 조회 응답
+ * DB 원본 데이터 구조 (조작되지 않은 MongoDB 문서)
+ */
+export interface RawDocumentData {
+  _id: string
+  upload: UploadData | null
+  meta: MetaData | null
+  ocr: OcrData | null
+  text: TextData | null
+  docembed: DocEmbedData | null
+  customer_relation?: DocumentCustomerRelation
+}
+
+/**
+ * UI용 계산된 데이터 구조
+ */
+export interface ComputedDocumentData {
+  uiStages: StagesData
+  currentStage: number
+  overallStatus: DocumentStatus
+  progress: number
+  displayMessages: Record<string, string>
+  processingPath: ProcessingPathType
+}
+
+/**
+ * 문서 상세 조회 응답 (NEW: raw + computed 구조)
  */
 export interface DocumentDetailResponse {
   success: boolean
   data: {
-    rawDocument: Document
+    // 📦 DB 원본 데이터 (투명하게 전달)
+    raw: RawDocumentData
+
+    // 🧮 UI용 계산값 (프론트엔드 편의)
+    computed: ComputedDocumentData
+
+    // 📋 기본 메타 정보 (하위 호환성)
+    _id: string
+    originalName: string
+    uploadedAt?: string
+    fileSize?: number
+    mimeType?: string
+    filePath?: string
+
+    // ⚠️ DEPRECATED: 하위 호환성 유지용 (raw 또는 computed 사용 권장)
+    rawDocument?: Document
+    stages?: StagesData
   }
-  stages?: StagesData
 }
 
 /**

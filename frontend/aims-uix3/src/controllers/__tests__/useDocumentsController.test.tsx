@@ -72,6 +72,7 @@ describe('useDocumentsController', () => {
       size: 512000,
     },
     uploadDate: '2025-01-03T00:00:00.000Z',
+    // customer_relation 없음
   }
 
   beforeEach(() => {
@@ -87,6 +88,29 @@ describe('useDocumentsController', () => {
       return {
         success: true,
         data: {
+          // ✅ NEW: raw + computed 구조
+          raw: {
+            _id: doc._id,
+            upload: doc.upload || null,
+            meta: null,
+            ocr: null,
+            text: null,
+            docembed: null,
+            customer_relation: (doc as any).customer_relation,
+          },
+          computed: {
+            uiStages: {},
+            currentStage: 5,
+            overallStatus: 'completed' as const,
+            progress: 100,
+            displayMessages: {},
+            processingPath: 'meta_fulltext' as const,
+          },
+          _id: doc._id,
+          originalName: doc.filename,
+          uploadedAt: doc.uploadDate,
+          fileSize: doc.upload?.size,
+          // 하위 호환성
           rawDocument: doc,
         },
       }

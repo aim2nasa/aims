@@ -196,7 +196,68 @@ describe('DocumentStatusService', () => {
   })
 
   // ============================================================================
-  // 2. extractFilename() - 복잡한 fallback 체인
+  // 2. NEW: extractFilenameFromRaw() - raw 필드에서 파일명 추출
+  // ============================================================================
+  describe('extractFilenameFromRaw', () => {
+    it('raw가 없으면 null을 반환해야 함', () => {
+      expect(DocumentStatusService.extractFilenameFromRaw(undefined)).toBeNull()
+    })
+
+    it('raw.upload.originalName을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { originalName: 'test.pdf' },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFilenameFromRaw(raw)).toBe('test.pdf')
+    })
+
+    it('raw.meta.filename을 fallback으로 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: { filename: 'meta-file.pdf' },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFilenameFromRaw(raw)).toBe('meta-file.pdf')
+    })
+
+    it('upload.originalName이 우선순위가 높아야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { originalName: 'upload.pdf' },
+        meta: { filename: 'meta.pdf' },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFilenameFromRaw(raw)).toBe('upload.pdf')
+    })
+
+    it('파일명이 없으면 null을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFilenameFromRaw(raw)).toBeNull()
+    })
+  })
+
+  // ============================================================================
+  // 3. extractFilename() - 복잡한 fallback 체인
   // ============================================================================
   describe('extractFilename', () => {
     it('upload.originalName을 최우선으로 반환해야 함', () => {
@@ -322,7 +383,68 @@ describe('DocumentStatusService', () => {
   })
 
   // ============================================================================
-  // 4. extractFileSize()
+  // 4. NEW: extractFileSizeFromRaw() - raw 필드에서 파일 크기 추출
+  // ============================================================================
+  describe('extractFileSizeFromRaw', () => {
+    it('raw가 없으면 null을 반환해야 함', () => {
+      expect(DocumentStatusService.extractFileSizeFromRaw(undefined)).toBeNull()
+    })
+
+    it('raw.meta.size_bytes를 우선 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { fileSize: 1024 },
+        meta: { size_bytes: 2048 },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFileSizeFromRaw(raw)).toBe(2048)
+    })
+
+    it('raw.upload.fileSize를 fallback으로 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { fileSize: 4096 },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFileSizeFromRaw(raw)).toBe(4096)
+    })
+
+    it('파일 크기가 없으면 null을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFileSizeFromRaw(raw)).toBeNull()
+    })
+
+    it('size_bytes가 0이면 0을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: { size_bytes: 0 },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractFileSizeFromRaw(raw)).toBe(0)
+    })
+  })
+
+  // ============================================================================
+  // 5. extractFileSize()
   // ============================================================================
   describe('extractFileSize', () => {
     it('upload.fileSize를 반환해야 함', () => {
@@ -467,7 +589,110 @@ describe('DocumentStatusService', () => {
   })
 
   // ============================================================================
-  // 6. extractUploadedDate()
+  // 6. NEW: extractUploadedDateFromRaw() - raw 필드에서 업로드 날짜 추출
+  // ============================================================================
+  describe('extractUploadedDateFromRaw', () => {
+    it('raw가 없으면 null을 반환해야 함', () => {
+      expect(DocumentStatusService.extractUploadedDateFromRaw(undefined)).toBeNull()
+    })
+
+    it('raw.upload.uploaded_at을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { uploaded_at: '2025-10-14T10:00:00Z' },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T10:00:00Z')
+    })
+
+    it('raw.upload.timestamp를 fallback으로 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { timestamp: '2025-10-14T11:00:00Z' },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T11:00:00Z')
+    })
+
+    it('raw.meta.created_at을 두 번째 fallback으로 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: { created_at: '2025-10-14T12:00:00Z' },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T12:00:00Z')
+    })
+
+    it('xxx 접미사를 제거해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { uploaded_at: '2025-10-14T10:00:00.123xxx' },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T10:00:00.123')
+    })
+
+    it('밀리초 + xxx 접미사를 제거해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: { uploaded_at: '2025-10-14T10:00:00.999xxx' },
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T10:00:00.999')
+    })
+
+    it('날짜 정보가 없으면 null을 반환해야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: null,
+        meta: null,
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBeNull()
+    })
+
+    it('uploaded_at이 우선순위가 가장 높아야 함', () => {
+      const raw = {
+        _id: 'doc1',
+        upload: {
+          uploaded_at: '2025-10-14T10:00:00Z',
+          timestamp: '2025-10-14T11:00:00Z'
+        },
+        meta: { created_at: '2025-10-14T12:00:00Z' },
+        ocr: null,
+        text: null,
+        docembed: null,
+      }
+
+      expect(DocumentStatusService.extractUploadedDateFromRaw(raw)).toBe('2025-10-14T10:00:00Z')
+    })
+  })
+
+  // ============================================================================
+  // 7. extractUploadedDate()
   // ============================================================================
   describe('extractUploadedDate', () => {
     it('upload.timestamp를 반환해야 함', () => {

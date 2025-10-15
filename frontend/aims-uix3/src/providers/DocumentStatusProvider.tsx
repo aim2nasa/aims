@@ -62,9 +62,15 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           realDocuments.map(async (doc: Document): Promise<Document> => {
             try {
               const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc['id'] || '')
+
+              // ✅ NEW: raw 필드 우선 사용, 하위 호환성 유지
+              const customerRelation =
+                detailedDoc.data?.raw?.customer_relation ||
+                detailedDoc.data?.rawDocument?.customer_relation
+
               return {
                 ...doc,
-                customer_relation: detailedDoc.data?.rawDocument?.customer_relation
+                customer_relation: customerRelation
               } as Document
             } catch (error) {
               console.error(`Failed to fetch detailed info for document ${doc._id}:`, error)

@@ -18,7 +18,8 @@ import type {
   OcrData,
   TextData,
   DocEmbedData,
-  EmbedData
+  EmbedData,
+  RawDocumentData
 } from '../types/documentStatus'
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 
@@ -158,7 +159,27 @@ export class DocumentStatusService {
   }
 
   /**
+   * 📦 NEW: raw 필드에서 파일명 추출 (투명성 보장)
+   */
+  static extractFilenameFromRaw(raw: RawDocumentData | undefined): string | null {
+    if (!raw) return null
+
+    // raw.upload.originalName 우선
+    if (raw.upload?.originalName) {
+      return raw.upload.originalName
+    }
+
+    // raw.meta.filename fallback
+    if (raw.meta?.filename) {
+      return raw.meta.filename
+    }
+
+    return null
+  }
+
+  /**
    * MongoDB 구조에서 파일명 추출
+   * @deprecated raw 필드 사용 권장 (extractFilenameFromRaw)
    */
   static extractFilename(document: Document): string {
     const uploadData = parseStage<UploadData>(document.upload)
@@ -228,7 +249,27 @@ export class DocumentStatusService {
   }
 
   /**
+   * 📦 NEW: raw 필드에서 파일 크기 추출 (투명성 보장)
+   */
+  static extractFileSizeFromRaw(raw: RawDocumentData | undefined): number | null {
+    if (!raw) return null
+
+    // raw.meta.size_bytes 우선
+    if (raw.meta?.size_bytes !== undefined) {
+      return raw.meta.size_bytes
+    }
+
+    // raw.upload.fileSize fallback
+    if (raw.upload?.fileSize !== undefined) {
+      return raw.upload.fileSize
+    }
+
+    return null
+  }
+
+  /**
    * 파일 크기 추출
+   * @deprecated raw 필드 사용 권장 (extractFileSizeFromRaw)
    */
   static extractFileSize(document: Partial<Document>): number {
     const uploadData = parseStage<UploadData>(document.upload)
@@ -339,7 +380,31 @@ export class DocumentStatusService {
   }
 
   /**
+   * 📦 NEW: raw 필드에서 업로드 날짜 추출 (투명성 보장)
+   */
+  static extractUploadedDateFromRaw(raw: RawDocumentData | undefined): string | null {
+    if (!raw) return null
+
+    // raw.upload.uploaded_at 우선
+    let dateString = raw.upload?.uploaded_at ?? raw.upload?.timestamp ?? null
+
+    // raw.meta.created_at fallback
+    if (!dateString) {
+      dateString = raw.meta?.created_at ?? null
+    }
+
+    // 날짜 문자열 정리 (잘못된 밀리초 형식 제거)
+    if (dateString && typeof dateString === 'string') {
+      dateString = dateString.replace(/xxx$/, '')
+      dateString = dateString.replace(/\.\d{3}xxx$/, '')
+    }
+
+    return dateString
+  }
+
+  /**
    * 업로드 날짜 추출
+   * @deprecated raw 필드 사용 권장 (extractUploadedDateFromRaw)
    */
   static extractUploadedDate(document: Document): string | null {
     const uploadData = parseStage<UploadData>(document.upload)

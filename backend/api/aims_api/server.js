@@ -131,19 +131,47 @@ MongoClient.connect(MONGO_URI)
   .catch(error => console.error('MongoDB 연결 실패:', error));
 
 /**
- * 문서의 처리 상태를 분석하는 함수
+ * 🔴 DEPRECATED: 기존 analyzeDocumentStatus() 함수
+ * → prepareDocumentResponse()로 대체됨
+ *
+ * 하위 호환성을 위해 잠시 유지하지만, 곧 제거될 예정
  */
 function analyzeDocumentStatus(doc) {
-  // meta.full_text 존재 여부에 따라 stages 구조를 다르게 생성
+  const response = prepareDocumentResponse(doc);
+  // 기존 API 응답 형식 유지 (computed만 반환)
+  return {
+    stages: response.computed.uiStages,
+    currentStage: response.computed.currentStage,
+    overallStatus: response.computed.overallStatus,
+    progress: response.computed.progress
+  };
+}
+
+/**
+ * 📦 NEW: DB 원본 데이터와 계산된 UI 값을 분리하여 반환
+ *
+ * @param {Object} doc - MongoDB에서 조회한 원본 문서
+ * @returns {Object} { raw, computed } 구조
+ */
+function prepareDocumentResponse(doc) {
+  // 📦 1. 원본 데이터 (DB 그대로 복사)
+  const raw = {
+    _id: doc._id,
+    upload: doc.upload || null,
+    meta: doc.meta || null,
+    ocr: doc.ocr || null,
+    text: doc.text || null,
+    docembed: doc.docembed || null
+  };
+
+  // 🧮 2. 계산된 UI 값
   const hasMetaText = doc.meta && doc.meta.full_text;
 
-  const stages = hasMetaText ? {
-    // meta에서 텍스트 추출된 경우: OCR 단계 제외
+  const uiStages = hasMetaText ? {
     upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
     meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null },
     docembed: { name: '임베딩', status: 'pending', message: '대기 중', timestamp: null }
   } : {
-    // OCR이 필요한 경우: 모든 단계 포함
     upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
     meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null },
     ocr_prep: { name: 'OCR 준비', status: 'pending', message: '대기 중', timestamp: null },
@@ -154,118 +182,143 @@ function analyzeDocumentStatus(doc) {
   let currentStage = 0;
   let overallStatus = 'pending';
   let progress = 0;
+  const displayMessages = {};
 
-  // 1. Upload 단계
+  // Upload 단계
   if (doc.upload) {
-    stages.upload.status = 'completed';
-    stages.upload.message = '업로드 완료';
-    stages.upload.timestamp = doc.upload.uploaded_at;
+    uiStages.upload.status = 'completed';
+    uiStages.upload.message = '업로드 완료';
+    uiStages.upload.timestamp = doc.upload.uploaded_at;
+    displayMessages.upload = '업로드 완료';
     currentStage = 1;
     progress = 20;
   }
 
-  // 2. Meta 단계
+  // Meta 단계
   if (doc.meta) {
     if (doc.meta.meta_status === 'ok') {
-      stages.meta.status = 'completed';
-      stages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
-      stages.meta.timestamp = doc.meta.created_at;
+      uiStages.meta.status = 'completed';
+      uiStages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
+      uiStages.meta.timestamp = doc.meta.created_at;
+      displayMessages.meta = `메타데이터 추출 완료 (${doc.meta.mime})`;
       currentStage = 2;
       progress = hasMetaText ? 50 : 40;
     } else {
-      stages.meta.status = 'error';
-      stages.meta.message = '메타데이터 추출 실패';
+      uiStages.meta.status = 'error';
+      uiStages.meta.message = '메타데이터 추출 실패';
+      displayMessages.meta = '메타데이터 추출 실패';
       overallStatus = 'error';
-      return { stages, currentStage: 1, overallStatus, progress };
+      return {
+        raw,
+        computed: { uiStages, currentStage: 1, overallStatus, progress, displayMessages }
+      };
     }
   }
 
-  // 3. OCR 준비/처리 단계 (meta.full_text가 없는 경우만)
+  // OCR 준비 (가상 단계)
   if (!hasMetaText && doc.meta && doc.meta.meta_status === 'ok') {
-    stages.ocr_prep.status = 'completed';
-    stages.ocr_prep.message = 'OCR 준비 완료';
+    uiStages.ocr_prep.status = 'completed';
+    uiStages.ocr_prep.message = 'OCR 준비 완료';
     currentStage = 3;
     progress = 60;
   }
 
-  // 4. OCR 처리 단계 (meta.full_text가 없는 경우만)
+  // OCR 처리
   if (!hasMetaText && doc.ocr) {
     if (doc.ocr.warn) {
-      stages.ocr.status = 'skipped';
-      stages.ocr.message = doc.ocr.warn;
-      stages.docembed.status = 'skipped';
-      stages.docembed.message = 'OCR 생략으로 인한 건너뜀';
+      uiStages.ocr.status = 'skipped';
+      uiStages.ocr.message = doc.ocr.warn;
+      displayMessages.ocr = '생략됨: ' + doc.ocr.warn;
+      uiStages.docembed.status = 'skipped';
+      uiStages.docembed.message = 'OCR 생략으로 인한 건너뜀';
       overallStatus = 'completed_with_skip';
       progress = 100;
-      return { stages, currentStage, overallStatus, progress };
     } else if (doc.ocr.queue) {
-      stages.ocr.status = 'processing';
-      stages.ocr.message = 'OCR 대기열에서 처리 대기 중';
-      stages.ocr.timestamp = doc.ocr.queue_at;
+      uiStages.ocr.status = 'processing';
+      uiStages.ocr.message = 'OCR 대기열에서 처리 대기 중';
+      displayMessages.ocr = 'OCR 대기 중';
       currentStage = 4;
       progress = 70;
       overallStatus = 'processing';
     } else if (doc.ocr.status === 'running') {
-      stages.ocr.status = 'processing';
-      stages.ocr.message = 'OCR 처리 중';
-      stages.ocr.timestamp = doc.ocr.started_at;
+      uiStages.ocr.status = 'processing';
+      uiStages.ocr.message = 'OCR 처리 중';
+      displayMessages.ocr = 'OCR 처리 중';
       currentStage = 4;
       progress = 75;
       overallStatus = 'processing';
     } else if (doc.ocr.status === 'done') {
-      stages.ocr.status = 'completed';
-      stages.ocr.message = `OCR 완료 (신뢰도: ${doc.ocr.confidence})`;
-      stages.ocr.timestamp = doc.ocr.done_at;
+      uiStages.ocr.status = 'completed';
+      uiStages.ocr.message = `OCR 완료 (신뢰도: ${doc.ocr.confidence})`;
+      displayMessages.ocr = `OCR 완료 (신뢰도: ${doc.ocr.confidence || 'N/A'})`;
       currentStage = 4;
       progress = 80;
     } else if (doc.ocr.status === 'error') {
-      stages.ocr.status = 'error';
-      stages.ocr.message = `OCR 실패: ${doc.ocr.statusMessage || '알 수 없는 오류'}`;
-      stages.ocr.timestamp = doc.ocr.failed_at;
-      stages.docembed.status = 'blocked';
-      stages.docembed.message = 'OCR 실패로 인한 차단';
+      uiStages.ocr.status = 'error';
+      // ⚠️ 원본 값 그대로 전달 (statusMessage === null이면 null로 표시)
+      const errorMsg = doc.ocr.statusMessage
+        ? `OCR 실패: ${doc.ocr.statusMessage}`
+        : `OCR 실패 (${doc.ocr.statusCode || '알 수 없는 오류'})`;
+      uiStages.ocr.message = errorMsg;
+      displayMessages.ocr = errorMsg;
       overallStatus = 'error';
-      return { stages, currentStage, overallStatus, progress };
+      currentStage = 4;
+      return {
+        raw,
+        computed: { uiStages, currentStage, overallStatus, progress, displayMessages }
+      };
     }
   }
 
-  // text 필드가 있는 경우 (text/plain 직접 처리) - meta.full_text가 없는 경우만
+  // text/plain 직접 처리
   if (!hasMetaText && doc.text && doc.text.full_text) {
-    stages.ocr.status = 'completed';
-    stages.ocr.message = '텍스트 파일 직접 처리 완료';
+    uiStages.ocr.status = 'completed';
+    uiStages.ocr.message = '텍스트 파일 직접 처리 완료';
+    displayMessages.ocr = '텍스트 직접 처리 완료';
     currentStage = 4;
     progress = 80;
   }
 
-  // 5. DocEmbed 단계
+  // DocEmbed 단계
   if (doc.docembed) {
     if (doc.docembed.status === 'done') {
-      stages.docembed.status = 'completed';
-      stages.docembed.message = `임베딩 완료 (${doc.docembed.chunks}개 청크, ${doc.docembed.dims}차원)`;
-      stages.docembed.timestamp = doc.docembed.updated_at;
+      uiStages.docembed.status = 'completed';
+      uiStages.docembed.message = `임베딩 완료 (${doc.docembed.chunks}개 청크, ${doc.docembed.dims}차원)`;
+      displayMessages.docembed = `임베딩 완료 (${doc.docembed.chunks}개 청크)`;
       currentStage = hasMetaText ? 3 : 5;
       progress = 100;
       overallStatus = 'completed';
     } else if (doc.docembed.status === 'failed') {
-      stages.docembed.status = 'error';
-      stages.docembed.message = `임베딩 실패: ${doc.docembed.error_message}`;
-      stages.docembed.timestamp = doc.docembed.updated_at;
+      uiStages.docembed.status = 'error';
+      uiStages.docembed.message = `임베딩 실패: ${doc.docembed.error_message}`;
+      displayMessages.docembed = `임베딩 실패: ${doc.docembed.error_message}`;
       overallStatus = 'error';
     } else if (doc.docembed.status === 'processing') {
-      stages.docembed.status = 'processing';
-      stages.docembed.message = '임베딩 처리 중';
+      uiStages.docembed.status = 'processing';
+      uiStages.docembed.message = '임베딩 처리 중';
+      displayMessages.docembed = '임베딩 처리 중';
       currentStage = hasMetaText ? 3 : 5;
       progress = 90;
       overallStatus = 'processing';
     }
   }
 
-  // 전체 상태가 아직 결정되지 않은 경우
+  // 전체 상태 최종 결정
   if (overallStatus === 'pending' && currentStage > 0) {
     overallStatus = 'processing';
   }
 
-  return { stages, currentStage, overallStatus, progress };
+  return {
+    raw,
+    computed: {
+      uiStages,
+      currentStage,
+      overallStatus,
+      progress,
+      displayMessages,
+      processingPath: hasMetaText ? 'meta_fulltext' : 'ocr_normal'
+    }
+  };
 }
 
 /**
@@ -634,20 +687,25 @@ app.get('/api/documents/:id/status', async (req, res) => {
       });
     }
 
-    const statusInfo = analyzeDocumentStatus(document);
+    // ✅ NEW: raw + computed 구조 사용
+    const response = prepareDocumentResponse(document);
 
     res.json({
       success: true,
       data: {
+        // 📦 DB 원본 데이터 (투명하게 전달)
+        raw: response.raw,
+
+        // 🧮 UI용 계산값 (프론트엔드 편의)
+        computed: response.computed,
+
+        // 📋 기본 메타 정보 (하위 호환성)
         _id: document._id,
         originalName: document.upload?.originalName || 'Unknown File',
         uploadedAt: document.upload?.uploaded_at,
         fileSize: document.meta?.size_bytes,
         mimeType: document.meta?.mime,
-        filePath: document.upload?.destPath,
-        ...statusInfo,
-        // 원본 문서 데이터도 포함 (디버깅용)
-        rawDocument: document
+        filePath: document.upload?.destPath
       }
     });
   } catch (error) {
