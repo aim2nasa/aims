@@ -30,6 +30,12 @@
 ### 1. customerService.ts ✅ 완료
 
 **완료일**: 2025-10-15 (이전 세션에서 수정됨)
+**테스트 수**: 43개
+
+### 2. useDocumentsController.tsx ✅ 완료
+
+**완료일**: 2025-10-15 (이전 세션에서 수정됨)
+**테스트 수**: 26개
 
 ## 🔴 미완료 작업 및 이슈
 
@@ -92,23 +98,17 @@ src/services/__tests__/customerService.test.ts ✅ 존재
 
 ---
 
-### 1. useDocumentsController.tsx (HIGH Priority)
+### ~~1. useDocumentsController.tsx~~ ✅ 이미 완료됨
 
 **파일**: `src/controllers/useDocumentsController.tsx`
-**예상 테스트**: 25개
-**현재 상태**: ⏳ 미착수 (다음 우선순위)
+**테스트 수**: 26개 (예상 25개보다 1개 더 많음)
+**현재 상태**: ✅ 완료 (2025-10-15 검증)
 
-#### 작업 내용
+#### ✅ 검증 완료
 
-- 초기 상태 검증 (3개)
-- 문서 로딩 관련 (8개)
-- CRUD 액션 (8개)
-- UI 핸들러 (6개)
-
-#### 작업 우선순위
-
-- **우선순위**: HIGH (Phase 1 작업)
-- **예상 소요 시간**: 2-3시간
+**실행 결과**: 26개 테스트 모두 통과
+**파일 위치**: `src/controllers/__tests__/useDocumentsController.test.tsx`
+**상태**: 이미 완료됨 (이전 세션에서 작성)
 
 ---
 
@@ -334,7 +334,8 @@ e3f6b7d - test: CustomerDocument 유닛 테스트 추가 (39개)
 | 2025-10-14 | 초기 작성, Phase 1-1~1-3 완료 기록 | Claude |
 | 2025-10-14 | customerService.ts 이슈 기록, 삭제된 파일 정보 추가 | Claude |
 | 2025-10-15 | customerService.ts 검증 완료, 43개 테스트 통과 확인 | Claude |
+| 2025-10-15 | useDocumentsController.tsx 검증 완료, 26개 테스트 통과 확인 | Claude |
 
 ---
 
-**마지막 업데이트**: 2025-10-15 14:30 KST
+**마지막 업데이트**: 2025-10-15 14:35 KST
