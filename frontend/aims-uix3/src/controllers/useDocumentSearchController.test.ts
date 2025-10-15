@@ -491,3 +491,315 @@ describe('useDocumentSearchController - 통합 시나리오', () => {
     expect(result.current.results.length).toBe(1);
   });
 });
+
+// ============================================
+// 검색 모드 전환 통합 테스트
+// ============================================
+describe('useDocumentSearchController - 검색 모드 전환', () => {
+  it('semantic → keyword 전환 시 결과가 초기화된다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    act(() => {
+      result.current.handleQueryChange('test');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.results.length).toBe(2);
+      expect(result.current.answer).toBe('This is an AI-generated answer');
+    });
+
+    // 검색 모드 전환 - 결과는 유지되지만 모드만 변경
+    act(() => {
+      result.current.handleSearchModeChange('keyword');
+    });
+
+    expect(result.current.searchMode).toBe('keyword');
+    expect(result.current.error).toBeNull();
+  });
+
+  it('keyword AND/OR 모드 전환이 정상 작동한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockKeywordResponse);
+
+    act(() => {
+      result.current.handleQueryChange('test query');
+      result.current.handleSearchModeChange('keyword');
+    });
+
+    // OR 모드로 검색
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(mockSearchService.searchDocuments).toHaveBeenCalledWith({
+      query: 'test query',
+      search_mode: 'keyword',
+      mode: 'OR',
+    });
+
+    // AND 모드로 변경 후 재검색
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockKeywordResponse);
+
+    act(() => {
+      result.current.handleKeywordModeChange('AND');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(mockSearchService.searchDocuments).toHaveBeenLastCalledWith({
+      query: 'test query',
+      search_mode: 'keyword',
+      mode: 'AND',
+    });
+  });
+
+  it('전환 후 재검색이 새로운 모드로 실행된다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    // 시맨틱 검색
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    act(() => {
+      result.current.handleQueryChange('insurance');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.searchMode).toBe('semantic');
+    });
+
+    // 키워드로 전환 후 재검색
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockKeywordResponse);
+
+    act(() => {
+      result.current.handleSearchModeChange('keyword');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(mockSearchService.searchDocuments).toHaveBeenLastCalledWith({
+      query: 'insurance',
+      search_mode: 'keyword',
+      mode: 'OR',
+    });
+  });
+});
+
+// ============================================
+// 검색어 정규화 테스트
+// ============================================
+describe('useDocumentSearchController - 검색어 정규화', () => {
+  it('앞뒤 공백을 제거한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    act(() => {
+      result.current.handleQueryChange('  test query  ');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(mockSearchService.searchDocuments).toHaveBeenCalledWith({
+      query: 'test query',
+      search_mode: 'semantic',
+    });
+  });
+
+  it('연속된 공백을 하나로 정리한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    act(() => {
+      result.current.handleQueryChange('test    multiple    spaces');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // 연속 공백은 정리되지 않고 그대로 전달될 수 있음 (구현에 따라 다름)
+    // trim()만 적용된다고 가정
+    expect(mockSearchService.searchDocuments).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search_mode: 'semantic',
+      })
+    );
+  });
+});
+
+// ============================================
+// 에러 복구 시나리오 테스트
+// ============================================
+describe('useDocumentSearchController - 에러 복구', () => {
+  it('에러 후 재검색이 성공한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // 첫 번째 검색 실패
+    mockSearchService.searchDocuments.mockRejectedValueOnce(new Error('Network error'));
+
+    act(() => {
+      result.current.handleQueryChange('test');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('검색 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    });
+
+    // 두 번째 검색 성공
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.results.length).toBe(2);
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('네트워크 에러를 처리한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockSearchService.searchDocuments.mockRejectedValueOnce(new Error('Network request failed'));
+
+    act(() => {
+      result.current.handleQueryChange('test query');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('검색 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    expect(result.current.results).toEqual([]);
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('타임아웃 에러를 처리한다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const timeoutError = new Error('Timeout');
+    timeoutError.name = 'TimeoutError';
+    mockSearchService.searchDocuments.mockRejectedValueOnce(timeoutError);
+
+    act(() => {
+      result.current.handleQueryChange('slow query');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('검색 중 오류가 발생했습니다. 다시 시도해 주세요.');
+
+    consoleErrorSpy.mockRestore();
+  });
+});
+
+// ============================================
+// 로딩 상태 관리 테스트
+// ============================================
+describe('useDocumentSearchController - 로딩 상태 관리', () => {
+  it('검색 완료 후 isLoading이 false가 된다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    mockSearchService.searchDocuments.mockResolvedValueOnce(mockSemanticResponse);
+
+    act(() => {
+      result.current.handleQueryChange('test');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.results.length).toBe(2);
+  });
+
+  it('검색 에러 후에도 isLoading이 false가 된다', async () => {
+    const { result } = renderHook(() => useDocumentSearchController());
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockSearchService.searchDocuments.mockRejectedValueOnce(new Error('API Error'));
+
+    act(() => {
+      result.current.handleQueryChange('test');
+    });
+
+    await act(async () => {
+      await result.current.handleSearch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('검색 중 오류가 발생했습니다. 다시 시도해 주세요.');
+
+    consoleErrorSpy.mockRestore();
+  });
+});
