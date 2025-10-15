@@ -220,45 +220,117 @@ Response:
 ## 🤖 AI 파싱 로직
 
 ### 기존 코드 활용
-- `tools/annual_report/parse_pdf_with_ai.py` 참고
-- OpenAI GPT-4.1 Responses API 사용
+- **참고 파일**: `tools/annual_report/parse_pdf_with_ai.py`
+- **OpenAI API**: GPT-4.1 Responses API 사용
+- **테스트 샘플 PDF**: `tools/annual_report/` 폴더 내 4개 파일
+  - `안영미annual report202508_p2p3.pdf`
+  - `김보성보유계약현황202508_p2p3.pdf`
+  - `신상철보유계약현황2025081_p2p3.pdf`
+  - `정부균보유계약현황202508_p2p3.pdf`
 
-### 프롬프트 개선 방향
+### 기존 프롬프트 (검증된 버전)
+
+`tools/annual_report/parse_pdf_with_ai.py`에서 사용 중인 프롬프트:
+
 ```python
 {
   "role": "system",
   "content": """
-  당신은 보험 Annual Report PDF 파서입니다.
+  You are a strict document parsing assistant.
+  Extract '보유계약 현황' and '부활가능 실효계약' tables from the PDF.
 
-  1. 첫 페이지에서 고객명과 발행기준일을 추출하세요.
-  2. "주요 보장내용 현황 (요약)" 이전 페이지까지 찾으세요.
-  3. "보유계약 현황" 표를 JSON으로 변환하세요.
-
-  JSON Schema:
-  {
-    "customer_name": "안영미",
-    "issue_date": "2025-08-27",
-    "contracts": [
-      {
-        "순번": 1,
-        "증권번호": "0004164025",
-        "보험상품": "무배당 마스터플랜 변액유니버셜종신Ⅱ보험",
-        "계약자": "김보성",
-        "피보험자": "안영미",
-        "계약일": "2009-06-28",
-        "계약상태": "정상",
-        "가입금액": 3000,
-        "보험기간": "종신",
-        "납입기간": "80세",
-        "보험료": 81750
-      }
-    ]
-  }
-
-  반드시 순수 JSON만 반환하세요.
+  Rules:
+  1. 반드시 JSON만 반환. (마크다운, 주석, 설명 절대 금지)
+  2. JSON Schema:
+     {
+       "보유계약 현황": [
+         {
+           "순번": number,
+           "증권번호": string,
+           "보험상품": string,
+           "계약자": string,
+           "피보험자": string,
+           "계약일": "YYYY-MM-DD",
+           "계약상태": string,
+           "가입금액(만원)": number,
+           "보험기간": string,
+           "납입기간": string,
+           "보험료(원)": number
+         }
+       ],
+       "부활가능 실효계약": [ ... ]
+     }
+  3. 보험상품:
+     - 반드시 PDF 표 셀 내부의 텍스트만 기록
+     - 표 외부 텍스트(머리말, 각주, 회사명, 마케팅 문구 등)는 절대 포함하지 말 것
+     - 상품명은 "보험", "종신", "연금", "플랜", "Plus" 등 보험 관련 키워드로 끝나야 함
+     - 줄바꿈으로 나뉜 경우 합쳐서 하나의 문자열로 작성
+     - 의미 없는 단어, 문구, 회사명은 절대 포함하지 않는다
+  4. 계약자/피보험자:
+     - 반드시 사람 이름만 기록
+     - 불필요한 텍스트는 제거
   """
 }
 ```
+
+### 파싱 코드 구조
+
+```python
+from openai import OpenAI
+import json
+import re
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def parse_pdf_with_ai(pdf_path):
+    # 1. PDF 업로드
+    file = client.files.create(
+        file=open(pdf_path, "rb"),
+        purpose="assistants"
+    )
+
+    # 2. Responses API 호출 (위의 프롬프트 사용)
+    response = client.responses.create(
+        model="gpt-4.1",
+        input=[...]
+    )
+
+    # 3. 출력 텍스트 추출
+    output_text = response.output[0].content[0].text.strip()
+
+    # 4. 마크다운 코드블록 제거 (```json ... ``` 형식)
+    output_text = re.sub(r"^```json\s*", "", output_text)
+    output_text = re.sub(r"^```", "", output_text)
+    output_text = re.sub(r"```$", "", output_text)
+
+    # 5. JSON 파싱
+    try:
+        return json.loads(output_text)
+    except Exception:
+        return {"raw_output": output_text}
+```
+
+### 구현 시 확장 방향
+
+기존 코드는 **2~3페이지만 추출된 PDF**를 대상으로 작동합니다. 실제 구현 시에는:
+
+1. **전체 PDF 업로드**
+   - 1페이지: 고객명, 발행기준일 추출
+   - 2~N페이지: "주요 보장내용 현황" 이전까지 동적 탐지
+
+2. **프롬프트 확장**
+   ```python
+   content = """
+   1단계: 1페이지에서 고객명과 발행기준일 추출
+   2단계: "주요 보장내용 현황 (요약)" 섹션 찾기
+   3단계: 해당 섹션 이전 페이지까지를 보유계약 현황으로 인식
+   4단계: 기존 프롬프트 규칙에 따라 JSON 변환
+   """
+   ```
+
+3. **에러 핸들링**
+   - JSON 파싱 실패 → `raw_output` 필드에 원본 텍스트 저장
+   - AI가 마크다운 코드블록으로 감싼 경우 자동 제거
 
 ---
 
@@ -322,9 +394,23 @@ Response:
 
 ## 📎 참고 자료
 
-- 기존 코드: `tools/annual_report/parse_pdf_with_ai.py`
-- 샘플 PDF: `tools/annual_report/안영미annual report202508_p2p3.pdf`
-- OpenAI Responses API 문서
+### 기존 구현 코드
+- **파싱 스크립트**: `tools/annual_report/parse_pdf_with_ai.py`
+  - OpenAI GPT-4.1 Responses API 사용
+  - 검증된 프롬프트 포함
+  - JSON 파싱 및 에러 핸들링 로직
+- **실행 스크립트**: `tools/annual_report/run.sh`
+  - 샘플 PDF 일괄 테스트용
+
+### 테스트 샘플 PDF (2~3페이지만 추출됨)
+- `tools/annual_report/안영미annual report202508_p2p3.pdf`
+- `tools/annual_report/김보성보유계약현황202508_p2p3.pdf`
+- `tools/annual_report/신상철보유계약현황2025081_p2p3.pdf`
+- `tools/annual_report/정부균보유계약현황202508_p2p3.pdf`
+
+### 외부 문서
+- OpenAI Responses API: https://platform.openai.com/docs/api-reference/responses
+- OpenAI Files API: https://platform.openai.com/docs/api-reference/files
 
 ---
 
