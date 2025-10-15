@@ -582,5 +582,370 @@ describe('useNavigation', () => {
 
       expect(result.current.currentIndex).toBe(-1)
     })
+
+    it('빈 items 배열일 때 휠 네비게이션도 동작하지 않음', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: [],
+          selectedKey: '',
+          onSelectionChange: mockOnSelectionChange,
+        })
+      )
+
+      const event = {
+        deltaY: 100,
+        deltaX: 0,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.WheelEvent
+
+      act(() => {
+        result.current.onWheel(event)
+      })
+
+      act(() => {
+        vi.runAllTimers()
+      })
+
+      expect(event.preventDefault).not.toHaveBeenCalled()
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+    })
+
+    it('빈 items 배열일 때 canNavigateUp/Down이 false', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: [],
+          selectedKey: '',
+          onSelectionChange: mockOnSelectionChange,
+          circular: true,
+        })
+      )
+
+      expect(result.current.canNavigateUp).toBe(false)
+      expect(result.current.canNavigateDown).toBe(false)
+    })
+
+    it('단일 항목일 때 circular: false면 이동 불가', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: ['single'],
+          selectedKey: 'single',
+          onSelectionChange: mockOnSelectionChange,
+          circular: false,
+        })
+      )
+
+      expect(result.current.canNavigateUp).toBe(false)
+      expect(result.current.canNavigateDown).toBe(false)
+    })
+  })
+
+  // ===== 7. 접근성 (prefers-reduced-motion) 테스트 =====
+
+  describe('접근성: prefers-reduced-motion', () => {
+    it('prefers-reduced-motion: reduce일 때 휠 네비게이션을 무시해야 함', () => {
+      // matchMedia를 모킹하여 prefers-reduced-motion: reduce 반환
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation(query => ({
+          matches: query === '(prefers-reduced-motion: reduce)',
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      })
+
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+        })
+      )
+
+      const event = {
+        deltaY: 100,
+        deltaX: 0,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.WheelEvent
+
+      act(() => {
+        result.current.onWheel(event)
+      })
+
+      act(() => {
+        vi.runAllTimers()
+      })
+
+      // prefers-reduced-motion이 활성화되어 있으면 휠 네비게이션 무시
+      expect(event.preventDefault).not.toHaveBeenCalled()
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+    })
+
+    it('prefers-reduced-motion이 활성화되어도 키보드 네비게이션은 정상 동작', () => {
+      // matchMedia를 모킹하여 prefers-reduced-motion: reduce 반환
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation(query => ({
+          matches: query === '(prefers-reduced-motion: reduce)',
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      })
+
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+        })
+      )
+
+      const event = {
+        key: 'ArrowDown',
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent
+
+      act(() => {
+        result.current.onKeyDown(event)
+      })
+
+      // 키보드 네비게이션은 정상 동작
+      expect(event.preventDefault).toHaveBeenCalled()
+      expect(mockOnSelectionChange).toHaveBeenCalledWith('item2')
+    })
+  })
+
+  // ===== 8. Debounce & 타이머 관리 테스트 =====
+
+  describe('Debounce & 타이머', () => {
+    it('scrollSensitivity에 따라 debounce가 적용되어야 함', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          scrollSensitivity: 100,
+        })
+      )
+
+      const event = {
+        deltaY: 100,
+        deltaX: 0,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.WheelEvent
+
+      act(() => {
+        result.current.onWheel(event)
+      })
+
+      // 타이머가 실행되기 전에는 호출되지 않음
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+
+      // 100ms 후에 호출됨
+      act(() => {
+        vi.advanceTimersByTime(100)
+      })
+
+      expect(mockOnSelectionChange).toHaveBeenCalledWith('item2')
+    })
+
+    it('빠른 연속 스크롤 시 마지막 스크롤만 처리되어야 함', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          scrollSensitivity: 100,
+        })
+      )
+
+      // 첫 번째 스크롤 (down)
+      act(() => {
+        result.current.onWheel({
+          deltaY: 100,
+          deltaX: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        } as unknown as React.WheelEvent)
+      })
+
+      // 50ms 후 두 번째 스크롤 (down)
+      act(() => {
+        vi.advanceTimersByTime(50)
+      })
+
+      act(() => {
+        result.current.onWheel({
+          deltaY: 100,
+          deltaX: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        } as unknown as React.WheelEvent)
+      })
+
+      // 첫 번째 타이머는 클리어되고 두 번째만 실행됨
+      act(() => {
+        vi.advanceTimersByTime(100)
+      })
+
+      // 마지막 스크롤만 처리되어 item2로 이동 (1번만 호출)
+      expect(mockOnSelectionChange).toHaveBeenCalledTimes(1)
+      expect(mockOnSelectionChange).toHaveBeenCalledWith('item2')
+    })
+
+    it('언마운트 시 타이머가 정리되어야 함', () => {
+      const { result, unmount } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          scrollSensitivity: 100,
+        })
+      )
+
+      act(() => {
+        result.current.onWheel({
+          deltaY: 100,
+          deltaX: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        } as unknown as React.WheelEvent)
+      })
+
+      // unmount 전에 타이머가 실행되지 않음
+      unmount()
+
+      // unmount 후 타이머를 진행해도 호출되지 않음
+      act(() => {
+        vi.runAllTimers()
+      })
+
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+    })
+  })
+
+  // ===== 9. 동일 키 선택 방지 테스트 =====
+
+  describe('동일 키 선택 방지', () => {
+    it('키보드로 동일한 항목 선택 시 onSelectionChange가 호출되지 않음', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          circular: false,
+        })
+      )
+
+      const event = {
+        key: 'ArrowUp',
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent
+
+      act(() => {
+        result.current.onKeyDown(event)
+      })
+
+      // 첫 항목에서 위로 가면 그대로 item1 (circular: false)
+      // 동일 키이므로 onSelectionChange 호출 안 됨
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+    })
+
+    it('휠로 동일한 항목 선택 시 onSelectionChange가 호출되지 않음', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          scrollSensitivity: 0,
+          circular: false,
+        })
+      )
+
+      const event = {
+        deltaY: -100, // 위로 스크롤
+        deltaX: 0,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.WheelEvent
+
+      act(() => {
+        result.current.onWheel(event)
+      })
+
+      act(() => {
+        vi.runAllTimers()
+      })
+
+      // 첫 항목에서 위로 가면 그대로 item1 (circular: false)
+      // 동일 키이므로 onSelectionChange 호출 안 됨
+      expect(mockOnSelectionChange).not.toHaveBeenCalled()
+    })
+  })
+
+  // ===== 10. 콜백 미제공 시 동작 테스트 =====
+
+  describe('콜백 미제공 시 동작', () => {
+    it('onEnter가 없을 때 Enter 키가 preventDefault만 호출하지 않음', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          // onEnter 미제공
+        })
+      )
+
+      const event = {
+        key: 'Enter',
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent
+
+      act(() => {
+        result.current.onKeyDown(event)
+      })
+
+      // onEnter가 없으면 처리되지 않음
+      expect(event.preventDefault).not.toHaveBeenCalled()
+    })
+
+    it('onEscape가 없을 때 Escape 키가 preventDefault만 호출하지 않음', () => {
+      const { result } = renderHook(() =>
+        useNavigation({
+          items: mockItems,
+          selectedKey: 'item1',
+          onSelectionChange: mockOnSelectionChange,
+          // onEscape 미제공
+        })
+      )
+
+      const event = {
+        key: 'Escape',
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent
+
+      act(() => {
+        result.current.onKeyDown(event)
+      })
+
+      // onEscape가 없으면 처리되지 않음
+      expect(event.preventDefault).not.toHaveBeenCalled()
+    })
   })
 })
