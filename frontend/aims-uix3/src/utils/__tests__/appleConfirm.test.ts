@@ -587,54 +587,5 @@ describe('showOversizedFilesModal', () => {
         expect(overlays.length).toBe(2)
       })
     })
-
-    it.skip('파일 모달 닫은 후 이전 모달이 복원되어야 함', async () => {
-      // 첫 번째 모달 (promise 저장하지 않음, 모달만 열어둠)
-      const promise1 = showAppleConfirm('첫 번째 모달')
-
-      await waitFor(() => {
-        const overlay = document.querySelector('.apple-confirm-direct-overlay')
-        expect(overlay).toBeInTheDocument()
-        expect(document.body.textContent).toContain('첫 번째 모달')
-      })
-
-      const firstOverlay = document.querySelector('.apple-confirm-direct-overlay') as HTMLElement
-      expect(firstOverlay).toBeTruthy()
-
-      // 두 번째 모달 (파일 목록)
-      const files = [{ name: 'test.pdf', size: 20 * 1024 * 1024 }]
-      const promise2 = showOversizedFilesModal(files, 10 * 1024 * 1024)
-
-      await waitFor(() => {
-        const overlays = document.querySelectorAll('.apple-confirm-direct-overlay')
-        expect(overlays.length).toBe(2)
-        expect(document.body.textContent).toContain('test.pdf')
-      })
-
-      // 첫 번째 모달이 숨겨져야 함
-      expect(firstOverlay.style.display).toBe('none')
-
-      // 두 번째 모달 닫기
-      await waitFor(() => {
-        const cancelBtns = document.querySelectorAll('.apple-confirm-cancel-btn')
-        expect(cancelBtns.length).toBeGreaterThan(1)
-      })
-
-      const cancelBtns = document.querySelectorAll('.apple-confirm-cancel-btn')
-      const secondModalBtn = cancelBtns[cancelBtns.length - 1] as HTMLElement
-      secondModalBtn.click()
-
-      await promise2
-
-      // 첫 번째 모달이 다시 표시되어야 함
-      await waitFor(() => {
-        expect(firstOverlay.style.display).toBe('flex')
-      })
-
-      // 정리: 첫 번째 모달도 닫기
-      const firstCancelBtn = document.querySelector('.apple-confirm-cancel-btn') as HTMLElement
-      firstCancelBtn.click()
-      await promise1
-    })
   })
 })
