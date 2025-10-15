@@ -133,8 +133,14 @@ function prepareDocumentResponse(doc) {
         : `OCR 실패 (${doc.ocr.statusCode || '알 수 없는 오류'})`;
       uiStages.ocr.message = errorMsg;
       displayMessages.ocr = errorMsg;
+
+      // ✅ OCR 실패 시 docembed는 생성되지 않음 (DB에도 없음)
+      // uiStages에서도 docembed 키를 삭제하여 UI에 표시하지 않음
+      delete uiStages.docembed;
+
       overallStatus = 'error';
       currentStage = 4;
+      progress = 60; // OCR 단계에서 실패
       return {
         raw,
         computed: { uiStages, currentStage, overallStatus, progress, displayMessages }

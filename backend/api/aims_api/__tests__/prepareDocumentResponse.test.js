@@ -296,6 +296,68 @@ describe('prepareDocumentResponse', () => {
 
   describe('실제 버그 케이스 (GitHub Issue)', () => {
 
+    test('캐치업사업비내역서.pdf 케이스 - OCR 504 에러, docembed는 skipped여야 함', () => {
+      const doc = {
+        _id: '68dc951e7b81761c98c4b48e',
+        upload: {
+          originalName: '캐치업사업비내역서.pdf',
+          saveName: '251001024238_olbro94y.pdf',
+          destPath: '/data/files/2025/10/251001024238_olbro94y.pdf',
+          uploaded_at: '2025-10-01T11:42:38.380xxx',
+          sourcePath: ''
+        },
+        meta: {
+          filename: '251001024238_olbro94y.pdf',
+          extension: '.pdf',
+          mime: 'application/pdf',
+          size_bytes: '92126',
+          created_at: '2025-10-01T02:42:38.367Z',
+          meta_status: 'ok',
+          exif: '{}',
+          pdf_pages: '8',
+          full_text: null,  // 이미지 PDF (텍스트 없음)
+          pdf_text_ratio: '{"total_pages":8,"text_pages":0,"text_ratio":0}',
+          summary: 'null',
+          length: 0,
+          truncated: false
+        },
+        ocr: {
+          status: 'error',  // ❌ OCR 실패
+          queued_at: '2025-10-01T11:42:40.116+09:00',
+          started_at: '2025-10-01T11:42:40.814+09:00',
+          failed_at: '2025-10-01T11:43:41.139+09:00',
+          statusCode: '504',
+          statusMessage: null,
+          errorBody: null
+        }
+        // docembed 서브도큐먼트 없음 (OCR 실패로 생성되지 않음)
+      };
+
+      const result = prepareDocumentResponse(doc);
+
+      // ✅ 기대값: meta completed, OCR error, docembed는 존재하지 않음
+      expect(result.computed.uiStages.meta.status).toBe('completed');
+      expect(result.computed.uiStages.ocr.status).toBe('error');
+      expect(result.computed.uiStages.ocr.message).toContain('OCR 실패');
+      expect(result.computed.uiStages.ocr.message).toContain('504');
+
+      // ✅ docembed는 아예 존재하지 않음 (DB에도 없고 UI에도 표시 안 함)
+      expect(result.computed.uiStages.docembed).toBeUndefined();
+
+      expect(result.computed.overallStatus).toBe('error');
+      expect(result.computed.currentStage).toBe(4);
+      expect(result.computed.progress).toBe(60);
+
+      // ✅ uiStages에 docembed 키가 없으므로 UI에서 표시되지 않음
+      expect(Object.keys(result.computed.uiStages)).toEqual([
+        'upload', 'meta', 'ocr_prep', 'ocr'
+      ]);
+
+      // ❌ 버그 수정 전에는 이렇게 나왔음:
+      // - docembed.status = 'pending' (마치 대기 중인 것처럼 보임)
+      // - 사용자가 "처리 중"이라고 오해할 수 있음
+    });
+
     test('김보성님운전자보험청약서.pdf 케이스 - meta_status: null, ocr: done, docembed: done', () => {
       const doc = {
         _id: '68ee01bd7b81761c98c4b48f',
