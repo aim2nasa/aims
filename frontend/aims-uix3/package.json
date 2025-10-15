@@ -18,7 +18,8 @@
     "clean": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf dist",
     "clean:deps": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf node_modules/.cache",
     "clean:all": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf node_modules/.cache && rm -rf node_modules && rm -rf dist",
-    "reset": "npm run clean:all && npm install"
+    "reset": "npm run clean:all && npm install",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.87.4",
@@ -44,7 +45,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
-    "husky": "^9.1.7",
     "jsdom": "^27.0.0",
     "lint-staged": "^16.1.6",
     "playwright": "^1.55.1",

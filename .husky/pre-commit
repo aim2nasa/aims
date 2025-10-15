@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Frontend 디렉토리로 이동하여 빌드 및 테스트 실행
+cd frontend/aims-uix3 || exit 1
+
+echo "📦 Building..."
+npm run build || exit 1
+
+echo "🧪 Running tests..."
+npm test -- --run || exit 1
+
+echo "✅ All checks passed!"
