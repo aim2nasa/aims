@@ -3,7 +3,7 @@
  * @since 1.0.0
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import React from 'react'
 import { CustomerContextProvider } from '../CustomerContext'
@@ -17,20 +17,42 @@ describe('CustomerContext', () => {
 
   const mockCustomer: Customer = {
     _id: '1',
-    name: '홍길동',
-    phone: '010-1234-5678',
-    address: {
-      current: '서울시 강남구'
-    }
+    personal_info: {
+      name: '홍길동',
+      mobile_phone: '010-1234-5678',
+      address: {
+        address1: '서울시 강남구'
+      }
+    },
+    meta: {
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active'
+    },
+    contracts: [],
+    documents: [],
+    consultations: [],
+    tags: []
   }
 
   const mockCustomer2: Customer = {
     _id: '2',
-    name: '김철수',
-    phone: '010-9876-5432',
-    address: {
-      current: '서울시 서초구'
-    }
+    personal_info: {
+      name: '김철수',
+      mobile_phone: '010-9876-5432',
+      address: {
+        address1: '서울시 서초구'
+      }
+    },
+    meta: {
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active'
+    },
+    contracts: [],
+    documents: [],
+    consultations: [],
+    tags: []
   }
 
   describe('초기 상태', () => {
@@ -200,13 +222,19 @@ describe('CustomerContext', () => {
         })
       })
 
-      const updatedCustomer = { ...mockCustomer, name: '홍길동(수정)' }
+      const updatedCustomer = {
+        ...mockCustomer,
+        personal_info: {
+          ...mockCustomer.personal_info,
+          name: '홍길동(수정)'
+        }
+      }
 
       act(() => {
         result.current.updateCustomer(updatedCustomer)
       })
 
-      expect(result.current.state.customers[0].name).toBe('홍길동(수정)')
+      expect(result.current.state.customers[0]?.personal_info?.name).toBe('홍길동(수정)')
       expect(result.current.state.customers[1]).toEqual(mockCustomer2) // 다른 고객은 변경 없음
       expect(result.current.state.isUpdating).toBe(false)
       expect(result.current.state.showEditForm).toBe(false)
@@ -229,13 +257,19 @@ describe('CustomerContext', () => {
         result.current.selectCustomer(mockCustomer)
       })
 
-      const updatedCustomer = { ...mockCustomer, name: '홍길동(수정)' }
+      const updatedCustomer = {
+        ...mockCustomer,
+        personal_info: {
+          ...mockCustomer.personal_info,
+          name: '홍길동(수정)'
+        }
+      }
 
       act(() => {
         result.current.updateCustomer(updatedCustomer)
       })
 
-      expect(result.current.state.selectedCustomer?.name).toBe('홍길동(수정)')
+      expect(result.current.state.selectedCustomer?.personal_info.name).toBe('홍길동(수정)')
     })
 
     it('선택되지 않은 고객을 수정하면 selectedCustomer는 변경 없어야 함', () => {
@@ -589,19 +623,25 @@ describe('CustomerContext', () => {
       expect(result.current.state.customers).toHaveLength(2)
 
       // 3. 고객 수정
-      const updatedCustomer = { ...mockCustomer2, name: '김철수(수정)' }
+      const updatedCustomer = {
+        ...mockCustomer2,
+        personal_info: {
+          ...mockCustomer2.personal_info,
+          name: '김철수(수정)'
+        }
+      }
       act(() => {
         result.current.updateCustomer(updatedCustomer)
       })
 
-      expect(result.current.state.customers[0].name).toBe('김철수(수정)')
+      expect(result.current.state.customers[0]?.personal_info?.name).toBe('김철수(수정)')
 
       // 4. 고객 선택
       act(() => {
         result.current.selectCustomer(updatedCustomer)
       })
 
-      expect(result.current.state.selectedCustomer?.name).toBe('김철수(수정)')
+      expect(result.current.state.selectedCustomer?.personal_info.name).toBe('김철수(수정)')
 
       // 5. 고객 삭제
       act(() => {

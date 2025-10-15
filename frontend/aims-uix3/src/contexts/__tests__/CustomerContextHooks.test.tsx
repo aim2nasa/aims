@@ -23,11 +23,22 @@ describe('CustomerContextHooks', () => {
 
   const mockCustomer: Customer = {
     _id: '1',
-    name: '홍길동',
-    phone: '010-1234-5678',
-    address: {
-      current: '서울시 강남구'
-    }
+    personal_info: {
+      name: '홍길동',
+      mobile_phone: '010-1234-5678',
+      address: {
+        address1: '서울시 강남구'
+      }
+    },
+    meta: {
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active'
+    },
+    contracts: [],
+    documents: [],
+    consultations: [],
+    tags: []
   }
 
   describe('useCustomerContext', () => {
@@ -161,7 +172,7 @@ describe('CustomerContextHooks', () => {
       })
 
       expect(result.current.state.customers).toHaveLength(1)
-      expect(result.current.state.customers[0]._id).toBe('1')
+      expect(result.current.state.customers[0]?._id).toBe('1')
     })
 
     it('updateCustomer 액션이 동작해야 함', () => {
@@ -175,13 +186,19 @@ describe('CustomerContextHooks', () => {
       expect(result.current.state.customers).toHaveLength(1)
 
       // 고객 정보 수정
-      const updatedCustomer = { ...mockCustomer, name: '김철수' }
+      const updatedCustomer = {
+        ...mockCustomer,
+        personal_info: {
+          ...mockCustomer.personal_info,
+          name: '김철수'
+        }
+      }
 
       act(() => {
         result.current.updateCustomer(updatedCustomer)
       })
 
-      expect(result.current.state.customers[0].name).toBe('김철수')
+      expect(result.current.state.customers[0]?.personal_info?.name).toBe('김철수')
     })
 
     it('removeCustomer 액션이 동작해야 함', () => {
