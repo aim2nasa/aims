@@ -360,8 +360,6 @@ describe('showAppleConfirm', () => {
         expect(document.body.textContent).toContain('첫 번째 모달')
       })
 
-      const firstOverlay = document.querySelector('.apple-confirm-direct-overlay')
-
       showAppleConfirm('두 번째 모달')
 
       await waitFor(() => {
