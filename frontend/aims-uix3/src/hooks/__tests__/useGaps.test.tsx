@@ -221,4 +221,125 @@ describe('useGaps', () => {
       });
     });
   });
+
+  describe('음수 값 처리', () => {
+    it('음수 갭 값도 처리해야 함 (CSS에서는 음수 마진 가능)', () => {
+      const customGaps = {
+        gapLeft: -5,
+        gapCenter: -10
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.cssVariables['--gap-left']).toBe('-5px');
+      expect(result.current.cssVariables['--gap-center']).toBe('-10px');
+      expect(result.current.gapValues.gapLeft).toBe(-5);
+      expect(result.current.gapValues.gapCenter).toBe(-10);
+    });
+
+    it('모든 갭이 음수여도 올바르게 처리해야 함', () => {
+      const customGaps = {
+        gapLeft: -1,
+        gapCenter: -2,
+        gapRight: -3,
+        gapTop: -4,
+        gapBottom: -5
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.cssVariables).toEqual({
+        '--gap-left': '-1px',
+        '--gap-center': '-2px',
+        '--gap-right': '-3px',
+        '--gap-top': '-4px',
+        '--gap-bottom': '-5px'
+      });
+    });
+  });
+
+  describe('소수점 값 처리', () => {
+    it('소수점 갭 값을 처리해야 함', () => {
+      const customGaps = {
+        gapLeft: 1.5,
+        gapCenter: 2.75,
+        gapRight: 3.25
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.cssVariables['--gap-left']).toBe('1.5px');
+      expect(result.current.cssVariables['--gap-center']).toBe('2.75px');
+      expect(result.current.cssVariables['--gap-right']).toBe('3.25px');
+    });
+
+    it('매우 작은 소수점 값도 처리해야 함', () => {
+      const customGaps = {
+        gapLeft: 0.1,
+        gapCenter: 0.01
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.cssVariables['--gap-left']).toBe('0.1px');
+      expect(result.current.cssVariables['--gap-center']).toBe('0.01px');
+    });
+  });
+
+  describe('undefined/null 엣지 케이스', () => {
+    it('undefined를 전달해도 기본값을 사용해야 함', () => {
+      const { result } = renderHook(() => useGaps(undefined));
+
+      expect(result.current.mergedGaps).toEqual(DEFAULT_GAPS);
+      expect(result.current.cssVariables).toEqual({
+        '--gap-left': `${DEFAULT_GAPS.gapLeft}px`,
+        '--gap-center': `${DEFAULT_GAPS.gapCenter}px`,
+        '--gap-right': `${DEFAULT_GAPS.gapRight}px`,
+        '--gap-top': `${DEFAULT_GAPS.gapTop}px`,
+        '--gap-bottom': `${DEFAULT_GAPS.gapBottom}px`
+      });
+    });
+
+    it('일부 값만 제공하면 나머지는 기본값으로 대체되어야 함', () => {
+      const customGaps = {
+        gapLeft: 10
+        // gapCenter는 제공하지 않음
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.mergedGaps.gapLeft).toBe(10);
+      // 제공하지 않은 값은 기본값 사용
+      expect(result.current.mergedGaps.gapCenter).toBe(DEFAULT_GAPS.gapCenter);
+      expect(result.current.mergedGaps.gapRight).toBe(DEFAULT_GAPS.gapRight);
+      expect(result.current.mergedGaps.gapTop).toBe(DEFAULT_GAPS.gapTop);
+      expect(result.current.mergedGaps.gapBottom).toBe(DEFAULT_GAPS.gapBottom);
+    });
+  });
+
+  describe('타입 안정성', () => {
+    it('반환되는 모든 숫자 값이 number 타입이어야 함', () => {
+      const { result } = renderHook(() => useGaps({ gapLeft: 10 }));
+
+      expect(typeof result.current.gapValues.gapLeft).toBe('number');
+      expect(typeof result.current.gapValues.gapCenter).toBe('number');
+      expect(typeof result.current.gapValues.gapRight).toBe('number');
+      expect(typeof result.current.gapValues.gapTop).toBe('number');
+      expect(typeof result.current.gapValues.gapBottom).toBe('number');
+    });
+  });
+
+  describe('극단적 값 처리', () => {
+    it('매우 큰 값도 올바르게 처리해야 함', () => {
+      const customGaps = {
+        gapLeft: 999999,
+        gapCenter: 1000000
+      };
+
+      const { result } = renderHook(() => useGaps(customGaps));
+
+      expect(result.current.cssVariables['--gap-left']).toBe('999999px');
+      expect(result.current.cssVariables['--gap-center']).toBe('1000000px');
+    });
+  });
 });
