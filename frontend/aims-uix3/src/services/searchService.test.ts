@@ -6,7 +6,7 @@
  * 다양한 스키마 지원 및 fallback 로직 검증
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SearchService } from './searchService';
 import type { SearchResultItem, SemanticSearchResultItem, KeywordSearchResultItem } from '@/entities/search';
 
@@ -496,5 +496,259 @@ describe('SearchService - 엣지 케이스', () => {
 
     expect(SearchService.getDocumentId(item)).toBe(longText);
     expect(SearchService.getSummary(item)).toBe(longText);
+  });
+});
+
+// ============================================
+// searchDocuments API 테스트
+// ============================================
+describe('SearchService.searchDocuments', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('키워드 검색을 성공적으로 수행한다', async () => {
+    const mockResponse = {
+      search_results: [
+        { _id: 'doc1', filename: 'test.pdf' },
+        { _id: 'doc2', filename: 'test2.pdf' }
+      ],
+      answer: '검색 결과'
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword',
+      mode: 'AND'
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://tars.giize.com/search_api',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: '테스트',
+          search_mode: 'keyword',
+          mode: 'AND'
+        })
+      }
+    );
+
+    expect(result.search_results).toHaveLength(2);
+    expect(result.answer).toBe('검색 결과');
+    expect(result.search_mode).toBe('keyword');
+  });
+
+  it('시맨틱 검색을 수행하고 문서 상세 정보를 보강한다', async () => {
+    const mockSearchResponse = {
+      search_results: [
+        {
+          id: 'semantic1',
+          score: 0.95,
+          payload: { doc_id: 'doc123' }
+        }
+      ],
+      answer: 'AI 답변'
+    };
+
+    const mockDetailResponse = [
+      {
+        upload: { originalName: 'enriched.pdf' },
+        meta: { summary: 'Enriched summary' }
+      }
+    ];
+
+    vi.mocked(global.fetch)
+      // 첫 번째 호출: searchDocuments
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response)
+      // 두 번째 호출: getDocumentDetails
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDetailResponse
+      } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '시맨틱 테스트',
+      search_mode: 'semantic'
+    });
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result.search_results).toHaveLength(1);
+    expect(result.search_results[0]).toHaveProperty('upload');
+    expect(result.search_mode).toBe('semantic');
+  });
+
+  it('API 호출 실패 시 에러를 던진다', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500
+    } as Response);
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      SearchService.searchDocuments({
+        query: '테스트',
+        search_mode: 'keyword'
+      })
+    ).rejects.toThrow('검색 API 호출 실패: 500');
+
+    consoleError.mockRestore();
+  });
+
+  it('네트워크 오류 시 에러를 던진다', async () => {
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      SearchService.searchDocuments({
+        query: '테스트',
+        search_mode: 'keyword'
+      })
+    ).rejects.toThrow('Network error');
+
+    consoleError.mockRestore();
+  });
+
+  it('answer가 없으면 null을 반환한다', async () => {
+    const mockResponse = {
+      search_results: [{ _id: 'doc1' }]
+      // answer 필드 없음
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    expect(result.answer).toBeNull();
+  });
+
+  it('search_results가 없으면 빈 배열을 반환한다', async () => {
+    const mockResponse = {
+      answer: '답변만 있음'
+      // search_results 필드 없음
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    const result = await SearchService.searchDocuments({
+      query: '테스트',
+      search_mode: 'keyword'
+    });
+
+    expect(result.search_results).toEqual([]);
+  });
+});
+
+// ============================================
+// getDocumentDetails API 테스트
+// ============================================
+describe('SearchService.getDocumentDetails', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('문서 상세 정보를 성공적으로 가져온다', async () => {
+    const mockDetailResponse = [
+      {
+        _id: 'doc123',
+        upload: { originalName: 'test.pdf' },
+        meta: { summary: 'Test summary' }
+      }
+    ];
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockDetailResponse
+    } as Response);
+
+    const result = await SearchService.getDocumentDetails('doc123');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://n8nd.giize.com/webhook/smartsearch',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'doc123' })
+      }
+    );
+
+    expect(result).toEqual(mockDetailResponse[0]);
+  });
+
+  it('API 호출 실패 시 null을 반환한다', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 404
+    } as Response);
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await SearchService.getDocumentDetails('nonexistent');
+
+    expect(result).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('네트워크 오류 시 null을 반환한다', async () => {
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await SearchService.getDocumentDetails('doc123');
+
+    expect(result).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('빈 배열 응답 시 null을 반환한다', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => []
+    } as Response);
+
+    const result = await SearchService.getDocumentDetails('doc123');
+
+    expect(result).toBeNull();
+  });
+
+  it('null 응답 시 null을 반환한다', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => null
+    } as Response);
+
+    const result = await SearchService.getDocumentDetails('doc123');
+
+    expect(result).toBeNull();
   });
 });
