@@ -529,4 +529,314 @@ describe('useCustomerDocument', () => {
       });
     });
   });
+
+  describe('동시 작업 처리', () => {
+    it('여러 개의 고객을 동시에 생성할 수 있어야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      const customer1Data = {
+        personal_info: { name: '김철수', birth_date: '1990-01-01', gender: 'M' as const },
+        contracts: [],
+        documents: [],
+        consultations: [],
+      };
+
+      const customer2Data = {
+        personal_info: { name: '이영희', birth_date: '1992-05-15', gender: 'F' as const },
+        contracts: [],
+        documents: [],
+        consultations: [],
+      };
+
+      await act(async () => {
+        await Promise.all([
+          result.current.createCustomer(customer1Data),
+          result.current.createCustomer(customer2Data),
+        ]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
+    it('로드와 생성을 동시에 수행할 수 있어야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      const newCustomerData = {
+        personal_info: { name: '박민수', birth_date: '1988-03-20', gender: 'M' as const },
+        contracts: [],
+        documents: [],
+        consultations: [],
+      };
+
+      await act(async () => {
+        await Promise.all([
+          result.current.loadCustomers(),
+          result.current.createCustomer(newCustomerData),
+        ]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('에러 복구 시나리오', () => {
+    it('에러 발생 후 재시도가 성공해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+      const document = CustomerDocument.getInstance();
+
+      // 첫 번째 시도: 에러 발생
+      act(() => {
+        (document as any).__setError('네트워크 에러');
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe('네트워크 에러');
+      });
+
+      // 에러 해제
+      act(() => {
+        (document as any).__setError(null);
+      });
+
+      // 두 번째 시도: 성공
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(null);
+        expect(result.current.customers).toHaveLength(1);
+      });
+    });
+
+    it('부분 실패 시 전체 상태가 일관성을 유지해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      // 먼저 고객 로드
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers).toHaveLength(1);
+      });
+
+      const initialTotal = result.current.total;
+
+      // 존재하지 않는 고객 수정 시도 (실패)
+      try {
+        await act(async () => {
+          await result.current.updateCustomer('non-existent-id', {
+            personal_info: { name: '테스트' },
+          });
+        });
+      } catch (error) {
+        // 에러 예상됨
+      }
+
+      // 기존 데이터는 유지되어야 함
+      await waitFor(() => {
+        expect(result.current.customers).toHaveLength(1);
+        expect(result.current.total).toBe(initialTotal);
+      });
+    });
+  });
+
+  describe('페이지네이션 로직', () => {
+    it('hasMore가 true일 때 추가 로드가 가능해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+      const document = CustomerDocument.getInstance();
+
+      // Mock hasMore = true
+      vi.spyOn(document, 'getHasMore').mockReturnValue(true);
+      act(() => {
+        (document as any).__triggerStateChange();
+      });
+
+      await waitFor(() => {
+        expect(result.current.hasMore).toBe(true);
+      });
+
+      // 추가 로드 시도
+      await act(async () => {
+        await result.current.loadCustomers({ skip: 10, limit: 10 });
+      });
+
+      expect(document.loadCustomers).toHaveBeenCalledWith({ skip: 10, limit: 10 });
+    });
+
+    it('total이 올바르게 업데이트되어야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      expect(result.current.total).toBe(0);
+
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.total).toBe(1);
+      });
+
+      // 새 고객 생성
+      await act(async () => {
+        await result.current.createCustomer({
+          personal_info: { name: '신규고객', birth_date: '2000-01-01', gender: 'M' },
+          contracts: [],
+          documents: [],
+          consultations: [],
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.total).toBe(2);
+      });
+    });
+  });
+
+  describe('메모이제이션 검증', () => {
+    it('메서드 참조가 안정적이어야 함 (useCallback)', () => {
+      const { result, rerender } = renderHook(() => useCustomerDocument());
+
+      const initialLoadCustomers = result.current.loadCustomers;
+      const initialCreateCustomer = result.current.createCustomer;
+      const initialUpdateCustomer = result.current.updateCustomer;
+
+      // 리렌더링
+      rerender();
+
+      // 메서드 참조가 동일해야 함
+      expect(result.current.loadCustomers).toBe(initialLoadCustomers);
+      expect(result.current.createCustomer).toBe(initialCreateCustomer);
+      expect(result.current.updateCustomer).toBe(initialUpdateCustomer);
+    });
+
+    it('Document 인스턴스가 안정적이어야 함', () => {
+      const { result, rerender } = renderHook(() => useCustomerDocument());
+
+      const initialDocument = CustomerDocument.getInstance();
+
+      // 리렌더링
+      rerender();
+
+      const afterRerenderDocument = CustomerDocument.getInstance();
+
+      // Document 인스턴스는 싱글톤이므로 동일해야 함
+      expect(afterRerenderDocument).toBe(initialDocument);
+    });
+  });
+
+  describe('복합 시나리오', () => {
+    it('전체 CRUD 플로우가 순차적으로 동작해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      // 1. 로드
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers).toHaveLength(1);
+      });
+
+      // 2. 생성
+      await act(async () => {
+        await result.current.createCustomer({
+          personal_info: { name: '신규고객', birth_date: '1995-06-10', gender: 'F' },
+          contracts: [],
+          documents: [],
+          consultations: [],
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers.length).toBeGreaterThan(1);
+      });
+
+      // 3. 수정
+      const customerId = result.current.customers?.[0]?._id;
+      if (!customerId) throw new Error('Customer ID not found');
+
+      await act(async () => {
+        await result.current.updateCustomer(customerId, {
+          personal_info: { name: '수정된이름' },
+        });
+      });
+
+      await waitFor(() => {
+        const updatedCustomer = result.current.customers.find(c => c._id === customerId);
+        expect(updatedCustomer?.personal_info.name).toBe('수정된이름');
+      });
+
+      // 4. 삭제
+      await act(async () => {
+        await result.current.deleteCustomer(customerId);
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers.find(c => c._id === customerId)).toBeUndefined();
+      });
+    });
+
+    it('리셋 후 재로드가 정상 동작해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      // 1. 데이터 로드
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers).toHaveLength(1);
+      });
+
+      // 2. 리셋
+      await act(async () => {
+        result.current.reset();
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers).toEqual([]);
+        expect(result.current.total).toBe(0);
+      });
+
+      // 3. 재로드
+      await act(async () => {
+        await result.current.loadCustomers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.customers).toHaveLength(1);
+        expect(result.current.total).toBe(1);
+      });
+    });
+  });
+
+  describe('엣지 케이스', () => {
+    it('빈 쿼리로 로드해도 동작해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      await act(async () => {
+        await result.current.loadCustomers({});
+      });
+
+      const document = CustomerDocument.getInstance();
+      expect(document.loadCustomers).toHaveBeenCalledWith({});
+    });
+
+    it('undefined 쿼리로 refresh해도 동작해야 함', async () => {
+      const { result } = renderHook(() => useCustomerDocument());
+
+      await act(async () => {
+        await result.current.refresh(undefined);
+      });
+
+      const document = CustomerDocument.getInstance();
+      expect(document.refresh).toHaveBeenCalledWith(undefined);
+    });
+  });
 });
