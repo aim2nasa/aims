@@ -444,3 +444,143 @@ describe('useAppleConfirmController - 통합 시나리오', () => {
     expect(resolvedValue).toBe(false);
   });
 });
+
+// ============================================
+// 고급 옵션 테스트
+// ============================================
+describe('useAppleConfirmController - 고급 옵션', () => {
+  it('제목이 있을 때 제목을 표시한다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '메시지',
+        title: '중요 알림',
+      });
+    });
+
+    expect(result.current.state.title).toBe('중요 알림');
+  });
+
+  it('제목이 없을 때 기본 제목을 사용한다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '메시지',
+      });
+    });
+
+    expect(result.current.state.title).toBe('확인');
+  });
+
+  it('confirmStyle을 올바르게 설정한다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '삭제하시겠습니까?',
+        confirmStyle: 'destructive',
+      });
+    });
+
+    expect(result.current.state.confirmStyle).toBe('destructive');
+  });
+
+  it('iconType을 올바르게 설정한다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '성공했습니다',
+        iconType: 'success',
+      });
+    });
+
+    expect(result.current.state.iconType).toBe('success');
+  });
+
+  it('showCancel을 false로 설정할 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '알림',
+        showCancel: false,
+      });
+    });
+
+    expect(result.current.state.showCancel).toBe(false);
+  });
+
+  it('confirmText를 커스텀할 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '삭제하시겠습니까?',
+        confirmText: '삭제',
+      });
+    });
+
+    expect(result.current.state.confirmText).toBe('삭제');
+  });
+
+  it('cancelText를 커스텀할 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '작업을 취소하시겠습니까?',
+        cancelText: '아니오',
+      });
+    });
+
+    expect(result.current.state.cancelText).toBe('아니오');
+  });
+});
+
+// ============================================
+// 에러 처리 테스트
+// ============================================
+describe('useAppleConfirmController - 에러 처리', () => {
+  it('빈 메시지로 모달을 열 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+
+    act(() => {
+      result.current.actions.openModal({
+        message: '',
+      });
+    });
+
+    expect(result.current.state.isOpen).toBe(true);
+    expect(result.current.state.message).toBe('');
+  });
+
+  it('매우 긴 메시지를 처리할 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+    const longMessage = 'A'.repeat(1000);
+
+    act(() => {
+      result.current.actions.openModal({
+        message: longMessage,
+      });
+    });
+
+    expect(result.current.state.isOpen).toBe(true);
+    expect(result.current.state.message).toBe(longMessage);
+  });
+
+  it('특수 문자가 포함된 메시지를 처리할 수 있다', () => {
+    const { result } = renderHook(() => useAppleConfirmController());
+    const specialMessage = '<script>alert("XSS")</script>\n\t특수문자: @#$%^&*()';
+
+    act(() => {
+      result.current.actions.openModal({
+        message: specialMessage,
+      });
+    });
+
+    expect(result.current.state.message).toBe(specialMessage);
+  });
+});
