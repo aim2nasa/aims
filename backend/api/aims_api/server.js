@@ -195,24 +195,30 @@ function prepareDocumentResponse(doc) {
   }
 
   // Meta 단계
-  if (doc.meta) {
-    if (doc.meta.meta_status === 'ok') {
-      uiStages.meta.status = 'completed';
-      uiStages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
-      uiStages.meta.timestamp = doc.meta.created_at;
-      displayMessages.meta = `메타데이터 추출 완료 (${doc.meta.mime})`;
-      currentStage = 2;
-      progress = hasMetaText ? 50 : 40;
-    } else {
-      uiStages.meta.status = 'error';
-      uiStages.meta.message = '메타데이터 추출 실패';
-      displayMessages.meta = '메타데이터 추출 실패';
-      overallStatus = 'error';
-      return {
-        raw,
-        computed: { uiStages, currentStage: 1, overallStatus, progress, displayMessages }
-      };
-    }
+  if (doc.meta && doc.meta.meta_status === 'ok') {
+    uiStages.meta.status = 'completed';
+    uiStages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
+    uiStages.meta.timestamp = doc.meta.created_at;
+    displayMessages.meta = `메타데이터 추출 완료 (${doc.meta.mime})`;
+    currentStage = 2;
+    progress = hasMetaText ? 50 : 40;
+  } else if (doc.meta && doc.meta.meta_status === 'error') {
+    // meta_status가 명시적으로 'error'인 경우에만 에러 처리
+    uiStages.meta.status = 'error';
+    uiStages.meta.message = '메타데이터 추출 실패';
+    displayMessages.meta = '메타데이터 추출 실패';
+    overallStatus = 'error';
+    return {
+      raw,
+      computed: { uiStages, currentStage: 1, overallStatus, progress, displayMessages }
+    };
+  } else if (doc.meta && doc.meta.meta_status === null) {
+    // ✅ NEW: meta_status가 null이면 meta 단계 스킵 (OCR로 직접 처리)
+    uiStages.meta.status = 'skipped';
+    uiStages.meta.message = 'Meta 단계 생략 (OCR 직접 처리)';
+    displayMessages.meta = 'Meta 단계 생략';
+    currentStage = 1;
+    progress = 20;
   }
 
   // OCR 준비 (가상 단계)
