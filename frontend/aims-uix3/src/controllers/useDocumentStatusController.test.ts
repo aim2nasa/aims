@@ -5,11 +5,19 @@
  * COMPONENT_GUIDE.md 준수: Controller Hook Testing (라인 614-667)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useDocumentStatusController } from './useDocumentStatusController'
 import * as DocumentStatusContext from '../contexts/DocumentStatusContext'
 import type { Document } from '../types/documentStatus'
+import { DocumentService } from '../services/DocumentService'
+import { CustomerService } from '../services/customerService'
+import { DocumentStatusService } from '../services/DocumentStatusService'
+
+// Mock Services
+vi.mock('../services/DocumentService')
+vi.mock('../services/customerService')
+vi.mock('../services/DocumentStatusService')
 
 // Mock Context
 const mockContextValue = {
@@ -24,11 +32,18 @@ const mockContextValue = {
     selectedDocument: null,
     searchTerm: '',
     apiHealth: true,
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 10,
+    paginatedDocuments: [] as Document[],
   },
   actions: {
     setStatusFilter: vi.fn(),
     togglePolling: vi.fn(),
     refreshDocuments: vi.fn(),
+    handlePageChange: vi.fn(),
+    handleLimitChange: vi.fn(),
+    updateDocumentCustomerRelation: vi.fn(),
   },
 }
 
@@ -281,6 +296,304 @@ describe('useDocumentStatusController', () => {
 
       expect(result.current.selectedDocumentForFullText).toEqual(doc3)
       expect(result.current.isFullTextModalVisible).toBe(true)
+    })
+  })
+
+  describe('Document Link Modal', () => {
+    it('handleDocumentLink가 모달을 올바르게 연다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const mockDocument: Document = {
+        _id: 'test-doc-link',
+        filename: 'link-test.pdf',
+      } as Document
+
+      act(() => {
+        result.current.handleDocumentLink(mockDocument)
+      })
+
+      expect(result.current.selectedDocumentForLink).toEqual(mockDocument)
+      expect(result.current.isLinkModalVisible).toBe(true)
+    })
+
+    it('handleLinkModalClose가 모달을 올바르게 닫는다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const mockDocument: Document = {
+        _id: 'test-doc-link',
+        filename: 'link-test.pdf',
+      } as Document
+
+      act(() => {
+        result.current.handleDocumentLink(mockDocument)
+      })
+
+      act(() => {
+        result.current.handleLinkModalClose()
+      })
+
+      expect(result.current.isLinkModalVisible).toBe(false)
+    })
+
+    it('searchCustomers가 CustomerService를 호출한다', async () => {
+      const mockSearchResponse = {
+        customers: [
+          { _id: 'cust1', name: '홍길동' },
+          { _id: 'cust2', name: '김철수' },
+        ],
+        pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
+      }
+
+      vi.mocked(CustomerService.searchCustomers).mockResolvedValue(mockSearchResponse as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const response = await result.current.searchCustomers('홍길동', 1, 20)
+
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith('홍길동', { page: 1, limit: 20 })
+      expect(response).toEqual(mockSearchResponse)
+    })
+
+    it('searchCustomers가 기본값으로 호출된다', async () => {
+      const mockSearchResponse = {
+        customers: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      }
+
+      vi.mocked(CustomerService.searchCustomers).mockResolvedValue(mockSearchResponse as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      await result.current.searchCustomers('test')
+
+      expect(CustomerService.searchCustomers).toHaveBeenCalledWith('test', { page: 1, limit: 20 })
+    })
+  })
+
+  describe('linkDocumentToCustomer', () => {
+    it('문서를 고객에게 성공적으로 연결한다', async () => {
+      const mockRelation = {
+        customer_id: 'cust1',
+        document_id: 'doc1',
+        relationship_type: 'policy',
+      }
+
+      vi.mocked(DocumentService.linkDocumentToCustomer).mockResolvedValue(undefined)
+      vi.mocked(DocumentStatusService.getDocumentStatus).mockResolvedValue({
+        data: {
+          rawDocument: {
+            customer_relation: mockRelation,
+          },
+        },
+      } as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const response = await result.current.linkDocumentToCustomer({
+        customerId: 'cust1',
+        documentId: 'doc1',
+        relationshipType: 'policy',
+      })
+
+      expect(DocumentService.linkDocumentToCustomer).toHaveBeenCalledWith('cust1', {
+        document_id: 'doc1',
+        relationship_type: 'policy',
+      })
+      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc1')
+      expect(mockContextValue.actions.updateDocumentCustomerRelation).toHaveBeenCalledWith('doc1', mockRelation)
+      expect(response).toEqual(mockRelation)
+    })
+
+    it('notes를 포함하여 문서를 고객에게 연결한다', async () => {
+      const mockRelation = {
+        customer_id: 'cust1',
+        document_id: 'doc1',
+        relationship_type: 'claim',
+      }
+
+      vi.mocked(DocumentService.linkDocumentToCustomer).mockResolvedValue(undefined)
+      vi.mocked(DocumentStatusService.getDocumentStatus).mockResolvedValue({
+        data: {
+          rawDocument: {
+            customer_relation: mockRelation,
+          },
+        },
+      } as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      await result.current.linkDocumentToCustomer({
+        customerId: 'cust1',
+        documentId: 'doc1',
+        relationshipType: 'claim',
+        notes: '보험 청구서',
+      })
+
+      expect(DocumentService.linkDocumentToCustomer).toHaveBeenCalledWith('cust1', {
+        document_id: 'doc1',
+        relationship_type: 'claim',
+        notes: '보험 청구서',
+      })
+    })
+
+    it('notes가 없을 때 notes 필드를 포함하지 않는다', async () => {
+      vi.mocked(DocumentService.linkDocumentToCustomer).mockResolvedValue(undefined)
+      vi.mocked(DocumentStatusService.getDocumentStatus).mockResolvedValue({
+        data: { rawDocument: { customer_relation: {} } },
+      } as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      await result.current.linkDocumentToCustomer({
+        customerId: 'cust1',
+        documentId: 'doc1',
+        relationshipType: 'policy',
+      })
+
+      expect(DocumentService.linkDocumentToCustomer).toHaveBeenCalledWith('cust1', {
+        document_id: 'doc1',
+        relationship_type: 'policy',
+      })
+    })
+
+    it('API 호출 실패 시 에러를 throw한다', async () => {
+      vi.mocked(DocumentService.linkDocumentToCustomer).mockRejectedValue(new Error('Network error'))
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      await expect(
+        result.current.linkDocumentToCustomer({
+          customerId: 'cust1',
+          documentId: 'doc1',
+          relationshipType: 'policy',
+        })
+      ).rejects.toThrow('Network error')
+    })
+  })
+
+  describe('fetchCustomerDocuments', () => {
+    it('고객의 문서 목록을 성공적으로 조회한다', async () => {
+      const mockDocuments = [
+        { _id: 'doc1', filename: 'test1.pdf' },
+        { _id: 'doc2', filename: 'test2.pdf' },
+      ]
+
+      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue(mockDocuments as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const documents = await result.current.fetchCustomerDocuments('cust1')
+
+      expect(DocumentService.getCustomerDocuments).toHaveBeenCalledWith('cust1')
+      expect(documents).toEqual(mockDocuments)
+    })
+
+    it('문서가 없을 때 빈 배열을 반환한다', async () => {
+      const emptyResult = {
+        customer_id: 'cust-no-docs',
+        documents: [],
+        total: 0,
+      }
+      vi.mocked(DocumentService.getCustomerDocuments).mockResolvedValue(emptyResult as any)
+
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const documents = await result.current.fetchCustomerDocuments('cust-no-docs')
+
+      expect(documents).toEqual(emptyResult)
+    })
+  })
+
+  describe('Pagination 통합', () => {
+    it('Pagination 상태를 올바르게 노출한다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      expect(result.current.currentPage).toBe(1)
+      expect(result.current.totalPages).toBe(1)
+      expect(result.current.itemsPerPage).toBe(10)
+      expect(result.current.paginatedDocuments).toEqual([])
+    })
+
+    it('handlePageChange를 올바르게 호출한다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      act(() => {
+        result.current.handlePageChange(2)
+      })
+
+      expect(mockContextValue.actions.handlePageChange).toHaveBeenCalledWith(2)
+    })
+
+    it('handleLimitChange를 올바르게 호출한다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      act(() => {
+        result.current.handleLimitChange(20)
+      })
+
+      expect(mockContextValue.actions.handleLimitChange).toHaveBeenCalledWith(20)
+    })
+  })
+
+  describe('Modal 애니메이션 timeout', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('Detail Modal 닫기 후 300ms 후에 selectedDocument가 null이 된다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const mockDocument: Document = { _id: 'doc1', filename: 'test.pdf' } as Document
+
+      act(() => {
+        result.current.handleDocumentClick(mockDocument)
+      })
+
+      expect(result.current.selectedDocument).toEqual(mockDocument)
+
+      act(() => {
+        result.current.handleDetailModalClose()
+      })
+
+      expect(result.current.isDetailModalVisible).toBe(false)
+      expect(result.current.selectedDocument).toEqual(mockDocument) // 아직 null이 아님
+
+      act(() => {
+        vi.advanceTimersByTime(300)
+      })
+
+      expect(result.current.selectedDocument).toBeNull() // 300ms 후 null
+    })
+
+    it('여러 모달을 동시에 닫을 수 있다', () => {
+      const { result } = renderHook(() => useDocumentStatusController())
+
+      const doc1: Document = { _id: 'doc1', filename: 'test1.pdf' } as Document
+      const doc2: Document = { _id: 'doc2', filename: 'test2.pdf' } as Document
+
+      act(() => {
+        result.current.handleDocumentClick(doc1)
+        result.current.handleDocumentSummary(doc2)
+      })
+
+      act(() => {
+        result.current.handleDetailModalClose()
+        result.current.handleSummaryModalClose()
+      })
+
+      expect(result.current.isDetailModalVisible).toBe(false)
+      expect(result.current.isSummaryModalVisible).toBe(false)
+
+      act(() => {
+        vi.advanceTimersByTime(300)
+      })
+
+      expect(result.current.selectedDocument).toBeNull()
+      expect(result.current.selectedDocumentForSummary).toBeNull()
     })
   })
 })
