@@ -9,7 +9,7 @@ import React from 'react'
 import { DocumentSearchProvider } from '../DocumentSearchProvider'
 import { useDocumentSearch } from '../useDocumentSearch'
 import { SearchService } from '@/services/searchService'
-import type { SearchResultItem } from '@/entities/search'
+import type { SearchResultItem, SemanticSearchResultItem } from '@/entities/search'
 
 // Mock SearchService
 vi.mock('@/services/searchService', () => ({
@@ -170,18 +170,18 @@ describe('useDocumentSearch', () => {
     it('키워드 검색을 성공적으로 수행해야 함', async () => {
       const mockResults: SearchResultItem[] = [
         {
-          id: '1',
-          file_path: '/path/to/file.pdf',
-          original_name: 'test.pdf',
-          metadata: {},
-          matched_content: '테스트 내용',
-          score: 0.95
+          _id: '1',
+          upload: {
+            originalName: 'test.pdf',
+            destPath: '/path/to/file.pdf'
+          }
         }
       ]
 
       const mockResponse = {
         search_results: mockResults,
-        answer: '검색 결과 답변'
+        answer: '검색 결과 답변',
+        search_mode: 'keyword' as const
       }
 
       vi.mocked(SearchService.searchDocuments).mockResolvedValueOnce(mockResponse)
@@ -215,17 +215,17 @@ describe('useDocumentSearch', () => {
       const mockResults: SearchResultItem[] = [
         {
           id: '2',
-          file_path: '/path/to/doc.pdf',
-          original_name: 'doc.pdf',
-          metadata: {},
-          matched_content: '시맨틱 내용',
-          score: 0.88
+          score: 0.88,
+          payload: {
+            original_name: 'doc.pdf',
+            dest_path: '/path/to/doc.pdf'
+          }
         }
       ]
 
       const mockResponse = {
         search_results: mockResults,
-        answer: null
+        search_mode: 'semantic' as const
       }
 
       vi.mocked(SearchService.searchDocuments).mockResolvedValueOnce(mockResponse)
@@ -258,7 +258,7 @@ describe('useDocumentSearch', () => {
     it('검색어를 trim 처리해야 함', async () => {
       const mockResponse = {
         search_results: [],
-        answer: null
+        search_mode: 'keyword' as const
       }
 
       vi.mocked(SearchService.searchDocuments).mockResolvedValueOnce(mockResponse)
@@ -289,28 +289,30 @@ describe('useDocumentSearch', () => {
         search_results: [
           {
             id: '1',
-            file_path: '/path1.pdf',
-            original_name: 'doc1.pdf',
-            metadata: {},
-            matched_content: '내용1',
-            score: 0.9
+            score: 0.9,
+            payload: {
+              original_name: 'doc1.pdf',
+              dest_path: '/path1.pdf'
+            }
           }
         ],
-        answer: '답변1'
+        answer: '답변1',
+        search_mode: 'semantic' as const
       }
 
       const mockResponse2 = {
         search_results: [
           {
             id: '2',
-            file_path: '/path2.pdf',
-            original_name: 'doc2.pdf',
-            metadata: {},
-            matched_content: '내용2',
-            score: 0.8
+            score: 0.8,
+            payload: {
+              original_name: 'doc2.pdf',
+              dest_path: '/path2.pdf'
+            }
           }
         ],
-        answer: '답변2'
+        answer: '답변2',
+        search_mode: 'semantic' as const
       }
 
       vi.mocked(SearchService.searchDocuments)
@@ -343,9 +345,12 @@ describe('useDocumentSearch', () => {
 
       await waitFor(() => {
         expect(result.current.results).toHaveLength(1)
-        expect(result.current.results[0].id).toBe('2')
         expect(result.current.answer).toBe('답변2')
       })
+
+      // 시맨틱 검색 결과이므로 id로 확인
+      const secondResult = result.current.results[0] as SemanticSearchResultItem
+      expect(secondResult.id).toBe('2')
     })
   })
 
@@ -451,14 +456,15 @@ describe('useDocumentSearch', () => {
         search_results: [
           {
             id: '1',
-            file_path: '/test.pdf',
-            original_name: 'test.pdf',
-            metadata: {},
-            matched_content: '통합 테스트',
-            score: 0.9
+            score: 0.9,
+            payload: {
+              original_name: 'test.pdf',
+              dest_path: '/test.pdf'
+            }
           }
         ],
-        answer: '통합 테스트 답변'
+        answer: '통합 테스트 답변',
+        search_mode: 'semantic' as const
       }
 
       vi.mocked(SearchService.searchDocuments).mockResolvedValueOnce(mockResponse)
@@ -514,29 +520,30 @@ describe('useDocumentSearch', () => {
       const mockKeywordResponse = {
         search_results: [
           {
-            id: 'k1',
-            file_path: '/keyword.pdf',
-            original_name: 'keyword.pdf',
-            metadata: {},
-            matched_content: '키워드',
-            score: 0.9
+            _id: 'k1',
+            upload: {
+              originalName: 'keyword.pdf',
+              destPath: '/keyword.pdf'
+            }
           }
         ],
-        answer: '키워드 답변'
+        answer: '키워드 답변',
+        search_mode: 'keyword' as const
       }
 
       const mockSemanticResponse = {
         search_results: [
           {
             id: 's1',
-            file_path: '/semantic.pdf',
-            original_name: 'semantic.pdf',
-            metadata: {},
-            matched_content: '시맨틱',
-            score: 0.85
+            score: 0.85,
+            payload: {
+              original_name: 'semantic.pdf',
+              dest_path: '/semantic.pdf'
+            }
           }
         ],
-        answer: '시맨틱 답변'
+        answer: '시맨틱 답변',
+        search_mode: 'semantic' as const
       }
 
       vi.mocked(SearchService.searchDocuments)
@@ -555,9 +562,12 @@ describe('useDocumentSearch', () => {
       })
 
       await waitFor(() => {
-        expect(result.current.results[0].id).toBe('k1')
         expect(result.current.lastSearchMode).toBe('keyword')
       })
+
+      // 키워드 검색 결과 확인
+      const keywordResult = result.current.results[0] as { _id: string }
+      expect(keywordResult._id).toBe('k1')
 
       // 시맨틱 모드로 변경 후 재검색
       act(() => {
@@ -569,9 +579,12 @@ describe('useDocumentSearch', () => {
       })
 
       await waitFor(() => {
-        expect(result.current.results[0].id).toBe('s1')
         expect(result.current.lastSearchMode).toBe('semantic')
       })
+
+      // 시맨틱 검색 결과 확인
+      const semanticResult = result.current.results[0] as SemanticSearchResultItem
+      expect(semanticResult.id).toBe('s1')
 
       // 두 번의 API 호출 확인
       expect(SearchService.searchDocuments).toHaveBeenCalledTimes(2)
