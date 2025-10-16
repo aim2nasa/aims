@@ -112,7 +112,157 @@
   line-height: 1.6;
 }
 
-/* ==================== Summary Section ==================== */
+/* ==================== Header ==================== */
+
+.annual-report-tab__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.annual-report-tab__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* ==================== List Container ==================== */
+
+.annual-report-tab__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ==================== Annual Report Card ==================== */
+
+.annual-report-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.annual-report-card:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.annual-report-card--latest {
+  border-color: var(--color-primary-light);
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg-secondary),
+    var(--color-bg-primary)
+  );
+}
+
+/* Card Header */
+
+.annual-report-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.annual-report-card__date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.annual-report-card__date-icon {
+  font-size: 18px;
+}
+
+.annual-report-card__date-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.annual-report-card__badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: white;
+}
+
+/* Card Stats */
+
+.annual-report-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.annual-report-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.annual-report-card__stat-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.annual-report-card__stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.annual-report-card__stat-value--premium {
+  color: var(--color-primary);
+}
+
+.annual-report-card__stat-value--coverage {
+  color: var(--color-accent);
+}
+
+/* Card Footer */
+
+.annual-report-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.annual-report-card__footer-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.annual-report-card__footer-icon {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.annual-report-card:hover .annual-report-card__footer-icon {
+  transform: translateX(4px);
+  color: var(--color-primary);
+}
+
+/* ==================== Summary Section (Legacy) ==================== */
 
 .annual-report-tab__summary {
   max-width: 700px;
@@ -277,6 +427,16 @@
 @media (max-width: 768px) {
   .annual-report-tab {
     padding: 16px;
+  }
+
+  .annual-report-tab__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .annual-report-card__stats {
+    grid-template-columns: 1fr;
   }
 
   .annual-report-tab__stats {

@@ -21,54 +21,75 @@ interface AnnualReportTabProps {
 
 export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [latestReport, setLatestReport] = useState<AnnualReport | null>(null);
+  const [reports, setReports] = useState<AnnualReport[]>([]);
+  const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 최신 Annual Report 로드
+  // Annual Report 목록 로드
   useEffect(() => {
-    loadLatestReport();
+    loadAnnualReports();
   }, [customer._id]);
 
-  const loadLatestReport = async () => {
+  const loadAnnualReports = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await AnnualReportApi.getLatestAnnualReport(customer._id);
+      const response = await AnnualReportApi.getAnnualReports(customer._id, 20);
 
       if (response.success && response.data) {
-        // API 응답 구조: { success: true, data: { customer_name, total_contracts, contracts, ... } }
-        const rawData = response.data as any;
+        // 각 report를 AnnualReport 타입으로 변환
+        const transformedReports: AnnualReport[] = await Promise.all(
+          response.data.reports.map(async (summary) => {
+            // 각 report의 상세 정보 가져오기 (현재는 summary만 있으므로 latestAnnualReport API 활용)
+            // TODO: 개별 report 조회 API 추가 필요 시 수정
+            const detailResponse = await AnnualReportApi.getLatestAnnualReport(customer._id);
 
-        // 계약 데이터 변환 (한글 필드명 → 영어 필드명)
-        const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
-          insurance_company: '메트라이프', // Annual Report는 메트라이프 고정
-          contract_number: contract['증권번호'] || '',
-          product_name: contract['보험상품'] || '',
-          monthly_premium: contract['보험료(원)'] || 0,
-          coverage_amount: (contract['가입금액(만원)'] || 0) * 10000, // 만원 → 원 변환
-          contract_date: contract['계약일'] || '',
-          maturity_date: undefined,
-          premium_payment_period: contract['납입기간'] || '',
-          insurance_period: contract['보험기간'] || '',
-          status: contract['계약상태'] || ''
-        }));
+            if (detailResponse.success && detailResponse.data) {
+              const rawData = detailResponse.data as any;
 
-        // 프론트엔드 타입에 맞게 변환
-        const transformedReport: AnnualReport = {
-          report_id: rawData.file_id || 'unknown',
-          issue_date: rawData.issue_date || '',
-          customer_name: rawData.customer_name || customer.personal_info?.name || '',
-          total_monthly_premium: rawData.total_monthly_premium || 0,
-          total_coverage: rawData.total_coverage || 0,
-          contract_count: rawData.total_contracts || 0,
-          contracts: transformedContracts,
-          source_file_id: rawData.file_id,
-          created_at: rawData.uploaded_at || new Date().toISOString()
-        };
+              const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
+                insurance_company: '메트라이프',
+                contract_number: contract['증권번호'] || '',
+                product_name: contract['보험상품'] || '',
+                monthly_premium: contract['보험료(원)'] || 0,
+                coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
+                contract_date: contract['계약일'] || '',
+                maturity_date: undefined,
+                premium_payment_period: contract['납입기간'] || '',
+                insurance_period: contract['보험기간'] || '',
+                status: contract['계약상태'] || ''
+              }));
 
-        setLatestReport(transformedReport);
+              return {
+                report_id: rawData.file_id || summary.report_id,
+                issue_date: rawData.issue_date || summary.issue_date,
+                customer_name: rawData.customer_name || customer.personal_info?.name || '',
+                total_monthly_premium: rawData.total_monthly_premium || summary.total_monthly_premium,
+                total_coverage: rawData.total_coverage || summary.total_coverage,
+                contract_count: rawData.total_contracts || summary.contract_count,
+                contracts: transformedContracts,
+                source_file_id: rawData.file_id,
+                created_at: rawData.uploaded_at || summary.created_at
+              };
+            }
+
+            // 상세 정보 조회 실패 시 summary만 사용
+            return {
+              report_id: summary.report_id,
+              issue_date: summary.issue_date,
+              customer_name: summary.customer_name,
+              total_monthly_premium: summary.total_monthly_premium,
+              total_coverage: summary.total_coverage,
+              contract_count: summary.contract_count,
+              contracts: [],
+              created_at: summary.created_at
+            };
+          })
+        );
+
+        setReports(transformedReports);
       } else {
         setError(response.error || 'Annual Report 조회에 실패했습니다.');
       }
@@ -79,12 +100,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
     }
   };
 
-  const handleViewReport = () => {
+  const handleViewReport = (report: AnnualReport) => {
+    setSelectedReport(report);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setSelectedReport(null);
   };
 
   // 로딩 상태
@@ -106,7 +129,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         <div className="annual-report-tab__error">
           <div className="annual-report-tab__error-icon">⚠️</div>
           <p>{error}</p>
-          <Button variant="secondary" size="sm" onClick={loadLatestReport}>
+          <Button variant="secondary" size="sm" onClick={loadAnnualReports}>
             다시 시도
           </Button>
         </div>
@@ -115,7 +138,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   }
 
   // Annual Report 없음
-  if (!latestReport) {
+  if (reports.length === 0) {
     return (
       <div className="annual-report-tab">
         <div className="annual-report-tab__empty">
@@ -144,93 +167,77 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
     );
   }
 
-  // Annual Report 있음
+  // Annual Report 목록 있음
   return (
     <div className="annual-report-tab">
-      <div className="annual-report-tab__summary">
-        <h3 className="annual-report-tab__summary-title">최신 Annual Report</h3>
+      <div className="annual-report-tab__header">
+        <h3 className="annual-report-tab__title">Annual Report 목록</h3>
+        <Button variant="secondary" size="sm" onClick={loadAnnualReports} leftIcon={<span>🔄</span>}>
+          새로고침
+        </Button>
+      </div>
 
-        {/* 발행일 */}
-        <div className="annual-report-tab__info-row">
-          <span className="annual-report-tab__info-label">발행일</span>
-          <span className="annual-report-tab__info-value">
-            {AnnualReportApi.formatDate(latestReport.issue_date)}
-          </span>
-        </div>
+      {/* Annual Report 카드 목록 */}
+      <div className="annual-report-tab__list">
+        {reports.map((report, index) => {
+          const isLatest = index === 0; // 첫 번째를 최신으로 간주
 
-        {/* 보험료 및 보장금액 */}
-        <div className="annual-report-tab__stats">
-          <div className="annual-report-tab__stat-item">
-            <span className="annual-report-tab__stat-label">총 월 보험료</span>
-            <span className="annual-report-tab__stat-value annual-report-tab__stat-value--premium">
-              {AnnualReportApi.formatCurrency(latestReport.total_monthly_premium)}
-            </span>
-          </div>
-          <div className="annual-report-tab__stat-item">
-            <span className="annual-report-tab__stat-label">총 보장금액</span>
-            <span className="annual-report-tab__stat-value annual-report-tab__stat-value--coverage">
-              {AnnualReportApi.formatCurrency(latestReport.total_coverage)}
-            </span>
-          </div>
-          <div className="annual-report-tab__stat-item">
-            <span className="annual-report-tab__stat-label">계약 건수</span>
-            <span className="annual-report-tab__stat-value">
-              {AnnualReportApi.formatContractCount(latestReport.contract_count)}
-            </span>
-          </div>
-        </div>
-
-        {/* 상세 보기 버튼 */}
-        <div className="annual-report-tab__actions">
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleViewReport}
-            leftIcon={<span>📊</span>}
-          >
-            상세 보기
-          </Button>
-          <Button variant="secondary" size="md" onClick={loadLatestReport} leftIcon={<span>🔄</span>}>
-            새로고침
-          </Button>
-        </div>
-
-        {/* 계약 미리보기 (처음 3개만) */}
-        {latestReport.contracts && latestReport.contracts.length > 0 && (
-          <div className="annual-report-tab__preview">
-            <h4 className="annual-report-tab__preview-title">계약 미리보기</h4>
-            {latestReport.contracts.slice(0, 3).map((contract, index) => (
-              <div key={index} className="annual-report-tab__contract-preview">
-                <div className="annual-report-tab__contract-header">
-                  <span className="annual-report-tab__contract-company">
-                    {contract.insurance_company}
+          return (
+            <div
+              key={report.report_id}
+              className={`annual-report-card ${isLatest ? 'annual-report-card--latest' : ''}`}
+              onClick={() => handleViewReport(report)}
+            >
+              {/* 카드 헤더 */}
+              <div className="annual-report-card__header">
+                <div className="annual-report-card__date">
+                  <span className="annual-report-card__date-icon">📊</span>
+                  <span className="annual-report-card__date-text">
+                    {AnnualReportApi.formatDate(report.issue_date)}
                   </span>
-                  {contract.status && (
-                    <span className="annual-report-tab__contract-status">{contract.status}</span>
-                  )}
                 </div>
-                <div className="annual-report-tab__contract-product">{contract.product_name}</div>
-                <div className="annual-report-tab__contract-details">
-                  <span>월 {AnnualReportApi.formatCurrency(contract.monthly_premium)}</span>
-                  <span>·</span>
-                  <span>보장 {AnnualReportApi.formatCurrency(contract.coverage_amount)}</span>
+                {isLatest && <span className="annual-report-card__badge">최신</span>}
+              </div>
+
+              {/* 카드 내용 */}
+              <div className="annual-report-card__stats">
+                <div className="annual-report-card__stat">
+                  <span className="annual-report-card__stat-label">총 월 보험료</span>
+                  <span className="annual-report-card__stat-value annual-report-card__stat-value--premium">
+                    {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
+                  </span>
+                </div>
+                <div className="annual-report-card__stat">
+                  <span className="annual-report-card__stat-label">총 보장금액</span>
+                  <span className="annual-report-card__stat-value annual-report-card__stat-value--coverage">
+                    {AnnualReportApi.formatCurrency(report.total_coverage)}
+                  </span>
+                </div>
+                <div className="annual-report-card__stat">
+                  <span className="annual-report-card__stat-label">계약 건수</span>
+                  <span className="annual-report-card__stat-value">
+                    {AnnualReportApi.formatContractCount(report.contract_count)}
+                  </span>
                 </div>
               </div>
-            ))}
-            {latestReport.contracts.length > 3 && (
-              <div className="annual-report-tab__preview-more">
-                외 {latestReport.contracts.length - 3}건 더 보기...
+
+              {/* 카드 푸터 */}
+              <div className="annual-report-card__footer">
+                <span className="annual-report-card__footer-text">
+                  클릭하여 상세 정보 보기
+                </span>
+                <span className="annual-report-card__footer-icon">→</span>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Annual Report Modal */}
       <AnnualReportModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        report={latestReport}
+        report={selectedReport}
         isLoading={false}
         error={null}
         customerName={customer.personal_info?.name || '고객'}
