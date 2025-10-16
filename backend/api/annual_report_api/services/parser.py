@@ -111,12 +111,12 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None) -> D
 
         logger.info(f"✅ 파일 업로드 완료: {uploaded_file.id}")
 
-        # 2. Chat Completions API 호출 (Vision 지원)
+        # 2. Responses API 호출 (검증된 방식)
         logger.info("🔍 OpenAI API 호출 중 (약 25초 소요)...")
 
-        response = ai_client.chat.completions.create(
+        response = ai_client.responses.create(
             model=settings.OPENAI_MODEL,
-            messages=[
+            input=[
                 {
                     "role": "system",
                     "content": """You are a strict document parsing assistant.
@@ -165,16 +165,18 @@ Rules:
                 },
                 {
                     "role": "user",
-                    "content": f"Parse the attached Annual Report PDF (file_id: {uploaded_file.id}) into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
+                    "content": [
+                        {"type": "input_text", "text": f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"},
+                        {"type": "input_file", "file_id": uploaded_file.id}
+                    ]
                 }
-            ],
-            temperature=0
+            ]
         )
 
         logger.info("✅ OpenAI API 응답 수신 완료")
 
         # 3. 응답 텍스트 추출
-        output_text = response.choices[0].message.content.strip()
+        output_text = response.output[0].content[0].text.strip()
 
         # 4. 마크다운 코드블록 제거
         cleaned_output = clean_json_output(output_text)
