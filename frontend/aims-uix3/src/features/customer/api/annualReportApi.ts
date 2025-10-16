@@ -430,7 +430,8 @@ export class AnnualReportApi {
       }
 
       const data = await response.json();
-      return data.customers || [];
+      // 백엔드 응답 구조: { success: true, data: { customers: [...] } }
+      return data.data?.customers || [];
     } catch (error) {
       console.error('AnnualReportApi.searchCustomersByName:', error);
       return [];

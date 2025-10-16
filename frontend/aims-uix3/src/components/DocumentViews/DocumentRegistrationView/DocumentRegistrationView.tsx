@@ -384,7 +384,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (!annualReportFile) return;
 
     try {
-      // Annual Report 파싱 요청
+      // Annual Report 파싱 요청 (백그라운드 AI 처리)
       const parseResult = await AnnualReportApi.parseAnnualReportFile(
         annualReportFile.file,
         customerId
@@ -392,12 +392,34 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       if (parseResult.success) {
         console.log('[DocumentRegistrationView] Annual Report 파싱 요청 성공:', parseResult);
-        // TODO: 파싱 진행 상태를 표시할 수 있으면 좋음 (현재는 백그라운드 처리)
       } else {
         console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', parseResult.message);
       }
+
+      // 📤 Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
+      const uploadFile: UploadFile = {
+        id: generateFileId(),
+        file: annualReportFile.file,
+        fileSize: annualReportFile.file.size,
+        status: 'pending',
+        progress: 0,
+        error: undefined,
+        completedAt: undefined,
+      };
+
+      // 업로드 상태에 추가
+      setUploadState(prev => ({
+        ...prev,
+        files: [uploadFile, ...prev.files]
+      }));
+
+      // 업로드 큐에 추가
+      uploadService.queueFiles([uploadFile]);
+
+      console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
+
     } catch (error) {
-      console.error('[DocumentRegistrationView] Annual Report 파싱 중 오류:', error);
+      console.error('[DocumentRegistrationView] Annual Report 처리 중 오류:', error);
     } finally {
       // 모달 닫기
       setIsCustomerModalOpen(false);
@@ -405,7 +427,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       setAnnualReportCustomers([]);
       setAnnualReportFile(null);
     }
-  }, [annualReportFile]);
+  }, [annualReportFile, generateFileId]);
 
   /**
    * 고객 식별 모달 닫기
