@@ -142,7 +142,7 @@
 
 .annual-report-table-header {
   display: grid;
-  grid-template-columns: 120px 1fr 100px 80px;
+  grid-template-columns: 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -215,7 +215,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 .annual-report-row {
   display: grid;
-  grid-template-columns: 120px 1fr 100px 80px;
+  grid-template-columns: 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -273,6 +273,17 @@ html[data-theme="dark"] .annual-report-row--latest {
 
 html[data-theme="dark"] .row-issue-date {
   color: var(--color-ios-text-primary-dark);
+}
+
+.row-parsed-at {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-ios-text-secondary-light);
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .row-parsed-at {
+  color: var(--color-ios-text-secondary-dark);
 }
 
 .row-premium {

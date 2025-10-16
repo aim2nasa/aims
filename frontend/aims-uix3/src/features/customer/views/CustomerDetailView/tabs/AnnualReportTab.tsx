@@ -49,57 +49,36 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
       const response = await AnnualReportApi.getAnnualReports(customer._id, 20);
 
       if (response.success && response.data) {
-        // 각 report를 AnnualReport 타입으로 변환
-        const transformedReports: AnnualReport[] = await Promise.all(
-          response.data.reports.map(async (summary) => {
-            // 각 report의 상세 정보 가져오기 (현재는 summary만 있으므로 latestAnnualReport API 활용)
-            // TODO: 개별 report 조회 API 추가 필요 시 수정
-            const detailResponse = await AnnualReportApi.getLatestAnnualReport(customer._id);
+        // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환
+        const transformedReports: AnnualReport[] = response.data.reports.map((rawData: any) => {
+          const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
+            insurance_company: '메트라이프',
+            contract_number: contract['증권번호'] || '',
+            product_name: contract['보험상품'] || '',
+            contractor_name: contract['계약자'] || '',
+            insured_name: contract['피보험자'] || '',
+            monthly_premium: contract['보험료(원)'] || 0,
+            coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
+            contract_date: contract['계약일'] || '',
+            maturity_date: undefined,
+            premium_payment_period: contract['납입기간'] || '',
+            insurance_period: contract['보험기간'] || '',
+            status: contract['계약상태'] || ''
+          }));
 
-            if (detailResponse.success && detailResponse.data) {
-              const rawData = detailResponse.data as any;
-
-              const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
-                insurance_company: '메트라이프',
-                contract_number: contract['증권번호'] || '',
-                product_name: contract['보험상품'] || '',
-                contractor_name: contract['계약자'] || '',
-                insured_name: contract['피보험자'] || '',
-                monthly_premium: contract['보험료(원)'] || 0,
-                coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
-                contract_date: contract['계약일'] || '',
-                maturity_date: undefined,
-                premium_payment_period: contract['납입기간'] || '',
-                insurance_period: contract['보험기간'] || '',
-                status: contract['계약상태'] || ''
-              }));
-
-              return {
-                report_id: rawData.file_id || summary.report_id,
-                issue_date: rawData.issue_date || summary.issue_date,
-                customer_name: rawData.customer_name || customer.personal_info?.name || '',
-                total_monthly_premium: rawData.total_monthly_premium || summary.total_monthly_premium,
-                total_coverage: rawData.total_coverage || summary.total_coverage,
-                contract_count: rawData.total_contracts || summary.contract_count,
-                contracts: transformedContracts,
-                source_file_id: rawData.file_id,
-                created_at: rawData.uploaded_at || summary.created_at
-              };
-            }
-
-            // 상세 정보 조회 실패 시 summary만 사용
-            return {
-              report_id: summary.report_id,
-              issue_date: summary.issue_date,
-              customer_name: summary.customer_name,
-              total_monthly_premium: summary.total_monthly_premium,
-              total_coverage: summary.total_coverage,
-              contract_count: summary.contract_count,
-              contracts: [],
-              created_at: summary.created_at
-            };
-          })
-        );
+          return {
+            report_id: rawData.file_id || `report_${rawData.parsed_at}`,
+            issue_date: rawData.issue_date || '',
+            customer_name: rawData.customer_name || customer.personal_info?.name || '',
+            total_monthly_premium: rawData.total_monthly_premium || 0,
+            total_coverage: rawData.total_coverage || 0,
+            contract_count: rawData.total_contracts || rawData.contract_count || 0,
+            contracts: transformedContracts,
+            source_file_id: rawData.file_id,
+            created_at: rawData.uploaded_at || '',
+            parsed_at: rawData.parsed_at || ''
+          };
+        });
 
         setReports(transformedReports);
       } else {
@@ -216,6 +195,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         {/* 테이블 헤더 */}
         <div className="annual-report-table-header">
           <div className="header-issue-date">발행일</div>
+          <div className="header-parsed-at">파싱일시</div>
           <div className="header-premium">총 월보험료</div>
           <div className="header-count">계약 수</div>
           <div className="header-status">상태</div>
@@ -234,6 +214,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
                 onClick={() => handleViewReport(report)}
               >
                 <div className="row-issue-date">{formattedDate}</div>
+                <div className="row-parsed-at">{AnnualReportApi.formatDateTime(report.parsed_at)}</div>
                 <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>
                 <div className="row-count">{report.contract_count}건</div>
                 <div className="row-status">

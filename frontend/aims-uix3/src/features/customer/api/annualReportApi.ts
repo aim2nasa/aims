@@ -40,6 +40,7 @@ export interface AnnualReport {
   contracts: InsuranceContract[];  // 계약 목록
   source_file_id?: string;         // 원본 파일 ID
   created_at: string;              // 생성일시 (ISO 8601)
+  parsed_at?: string;              // 파싱일시 (ISO 8601)
 }
 
 /**
@@ -53,6 +54,7 @@ export interface AnnualReportSummary {
   total_coverage: number;
   contract_count: number;
   created_at: string;
+  parsed_at?: string;
 }
 
 /**
@@ -358,6 +360,29 @@ export class AnnualReportApi {
   static formatContractCount(count: number | undefined | null): string {
     if (count === undefined || count === null) return '-';
     return `${count}건`;
+  }
+
+  /**
+   * 일시 포맷 (ISO 8601 → YYYY-MM-DD HH:mm:ss)
+   *
+   * @param dateTimeString ISO 8601 날짜 문자열
+   * @returns 포맷된 문자열 (예: "2025-10-16 21:30:08")
+   */
+  static formatDateTime(dateTimeString: string | undefined | null): string {
+    if (!dateTimeString) return '-';
+
+    try {
+      const date = new Date(dateTimeString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    } catch {
+      return dateTimeString;
+    }
   }
 
   /**
