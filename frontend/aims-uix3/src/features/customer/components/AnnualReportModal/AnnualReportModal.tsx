@@ -181,12 +181,6 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             </span>
           </div>
           <div className="annual-report-summary__item">
-            <span className="annual-report-summary__label">총 보장금액</span>
-            <span className="annual-report-summary__value annual-report-summary__value--accent">
-              {AnnualReportApi.formatCurrency(report.total_coverage)}
-            </span>
-          </div>
-          <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">계약 건수</span>
             <span className="annual-report-summary__value">
               {AnnualReportApi.formatContractCount(report.contract_count)}
