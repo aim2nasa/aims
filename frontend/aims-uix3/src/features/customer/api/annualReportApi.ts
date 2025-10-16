@@ -353,7 +353,7 @@ export class AnnualReportApi {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://tars.giize.com:8081/annual-report/check', {
+      const response = await fetch('http://tars.giize.com:8004/annual-report/check', {
         method: 'POST',
         body: formData,
       });
@@ -393,7 +393,7 @@ export class AnnualReportApi {
       formData.append('file', file);
       formData.append('customer_id', customerId);
 
-      const response = await fetch('http://tars.giize.com:8081/annual-report/parse', {
+      const response = await fetch('http://tars.giize.com:8004/annual-report/parse', {
         method: 'POST',
         body: formData,
       });
