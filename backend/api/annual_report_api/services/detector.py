@@ -44,7 +44,7 @@ def is_annual_report(pdf_path: str) -> Dict[str, any]:
 
         # 2. 1페이지 텍스트 추출
         try:
-            first_page_text = extract_text_from_page(pdf_path, page=0)
+            first_page_text = extract_text_from_page(pdf_path, page_num=0)
         except Exception as e:
             logger.error(f"1페이지 텍스트 추출 실패: {e}")
             return {
@@ -141,7 +141,7 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
         }
     """
     try:
-        first_page_text = extract_text_from_page(pdf_path, page=0)
+        first_page_text = extract_text_from_page(pdf_path, page_num=0)
 
         result = {}
 

@@ -4,6 +4,10 @@ Annual Report API 설정 파일
 """
 import os
 from typing import Optional
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
 
 class Settings:
     """API 설정"""
@@ -16,7 +20,7 @@ class Settings:
 
     # OpenAI API 설정
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
-    OPENAI_MODEL: str = "gpt-4.1"
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4.1")
 
     # API 설정
     API_TITLE: str = "Annual Report API"

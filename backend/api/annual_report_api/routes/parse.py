@@ -179,7 +179,7 @@ async def parse_annual_report_endpoint(
 
         # MongoDB 연결 확인
         from main import db
-        if not db:
+        if db is None:
             raise HTTPException(
                 status_code=500,
                 detail="데이터베이스 연결 오류"
