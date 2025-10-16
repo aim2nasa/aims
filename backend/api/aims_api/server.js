@@ -3,12 +3,17 @@ const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
 const axios = require('axios');
+const multer = require('multer');
+const FormData = require('form-data');
 const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ charset: 'utf-8' }));
 app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
+
+// Multer 설정 (메모리 저장 - 프록시용)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // UTF-8 응답 헤더 설정
 app.use((req, res, next) => {
@@ -1735,7 +1740,122 @@ app.get('/api/address/search', async (req, res) => {
   }
 });
 
-// ==================== Annual Report API ====================
+// ==================== Annual Report API (Phase 2 프록시) ====================
+
+/**
+ * Annual Report 체크 프록시 (Phase 2 - 파일 업로드 시 자동 감지)
+ * 프론트엔드 → Node.js (3010) → Python (8004)
+ */
+app.post('/api/annual-report/check', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        is_annual_report: false,
+        confidence: 0,
+        metadata: null,
+        error: 'No file uploaded'
+      });
+    }
+
+    console.log(`📄 [Annual Report Check] 파일: ${req.file.originalname}, 크기: ${req.file.size} bytes`);
+
+    // Python API로 전달할 FormData 생성
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    const pythonApiUrl = 'http://localhost:8004/annual-report/check';
+    console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
+
+    const response = await axios.post(pythonApiUrl, formData, {
+      headers: formData.getHeaders(),
+      timeout: 10000 // 10초 타임아웃
+    });
+
+    console.log(`✅ [Annual Report Check] 결과:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Annual Report Check] 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        is_annual_report: false,
+        confidence: 0,
+        metadata: null,
+        error: 'Python API 서버에 연결할 수 없습니다. (포트 8004)'
+      });
+    }
+
+    // 에러 시에도 조용히 실패 (모달이 나타나지 않도록)
+    res.json({
+      is_annual_report: false,
+      confidence: 0,
+      metadata: null
+    });
+  }
+});
+
+/**
+ * Annual Report 파싱 프록시 (Phase 2 - 고객 선택 후 파싱)
+ * 프론트엔드 → Node.js (3010) → Python (8004)
+ */
+app.post('/api/annual-report/parse-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    if (!req.body.customer_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'customer_id is required'
+      });
+    }
+
+    console.log(`📄 [Annual Report Parse] 파일: ${req.file.originalname}, 고객: ${req.body.customer_id}`);
+
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+    formData.append('customer_id', req.body.customer_id);
+
+    const pythonApiUrl = 'http://localhost:8004/annual-report/parse';
+    console.log(`🐍 Python API 호출: ${pythonApiUrl}`);
+
+    const response = await axios.post(pythonApiUrl, formData, {
+      headers: formData.getHeaders(),
+      timeout: 10000
+    });
+
+    console.log(`✅ [Annual Report Parse] 결과:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Annual Report Parse] 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Python API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// ==================== Annual Report API (기존 - MongoDB 기반) ====================
 
 /**
  * Annual Report 파싱 요청 프록시 (Python FastAPI로 전달)
