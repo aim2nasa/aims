@@ -4,6 +4,7 @@
  * 메트라이프 Annual Review Report PDF 파싱 및 조회 API
  */
 
+// Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
 const ANNUAL_REPORT_API_URL = 'http://tars.giize.com:3010/api';
 
 // ==================== 타입 정의 ====================
@@ -280,14 +281,29 @@ export class AnnualReportApi {
         `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest`
       );
 
-      const data = await response.json();
-
-      if (response.ok && data.success !== false) {
+      // 404는 데이터 없음 (정상 케이스)
+      if (response.status === 404) {
         return {
           success: true,
           data: {
-            customer_id: data.customer_id || customerId,
-            report: data.report || null,
+            customer_id: customerId,
+            report: null,
+          },
+        };
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          success: true,
+          data: {
+            customer_id: customerId,
+            report: data.data || null,  // 백엔드: { success: true, data: {...} }
           },
         };
       }
@@ -421,8 +437,9 @@ export class AnnualReportApi {
    */
   static async searchCustomersByName(name: string): Promise<any[]> {
     try {
+      // 고객 검색은 Node.js API (3010)를 사용
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers?search=${encodeURIComponent(name)}`
+        `http://tars.giize.com:3010/api/customers?search=${encodeURIComponent(name)}`
       );
 
       if (!response.ok) {

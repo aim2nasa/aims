@@ -31,7 +31,8 @@ class Settings:
     # CORS 설정
     CORS_ORIGINS: list = [
         "http://localhost:3005",  # Frontend dev server
-        "http://localhost:5177",  # Vite dev server
+        "http://localhost:5176",  # Vite dev server
+        "http://localhost:5177",  # Vite dev server (alternative port)
         "http://tars.giize.com:3005",
         "*"  # 개발용 - 프로덕션에서는 제거
     ]
