@@ -176,7 +176,12 @@ Rules:
         logger.info("✅ OpenAI API 응답 수신 완료")
 
         # 3. 응답 텍스트 추출
+        logger.info(f"DEBUG: response object type = {type(response)}")
+        logger.info(f"DEBUG: response.output = {getattr(response, 'output', 'NO OUTPUT ATTR')}")
+
         output_text = response.output[0].content[0].text.strip()
+        logger.info(f"📝 응답 텍스트 길이: {len(output_text)} 문자")
+        logger.info(f"DEBUG: output_text[:200] = {output_text[:200]}")
 
         # 4. 마크다운 코드블록 제거
         cleaned_output = clean_json_output(output_text)
