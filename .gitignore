@@ -21,3 +21,7 @@ dist/
 
 # VSCode settings (개인 개발 환경)
 .vscode/
+
+# Environment variables (API keys, secrets)
+backend/api/annual_report_api/.env
+backend/api/*/.env
