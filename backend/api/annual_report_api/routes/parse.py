@@ -193,13 +193,23 @@ async def parse_annual_report_endpoint(
         from bson.errors import InvalidId
         try:
             customer_oid = ObjectId(customer_id)
+            logger.info(f"🔍 고객 검증 중: {customer_oid}")
+            logger.info(f"📊 DB 객체: {db}, 컬렉션: {db.customers if db else 'None'}")
+
+            # 전체 고객 수 확인
+            total = db.customers.count_documents({})
+            logger.info(f"📊 전체 고객 수: {total}")
+
             customer = db.customers.find_one({"_id": customer_oid})
+            logger.info(f"🔎 조회 결과: {'Found' if customer else 'Not Found'}")
+
             if not customer:
-                logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
+                logger.warning(f"❌ 고객을 찾을 수 없습니다: {customer_id}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"유효하지 않은 customer_id (존재하지 않음): {customer_id}"
                 )
+            logger.info(f"✅ 고객 확인됨: {customer.get('personal_info', {}).get('name', 'Unknown')}")
         except InvalidId as e:
             logger.error(f"잘못된 ObjectId 형식: {customer_id} - {e}")
             raise HTTPException(
