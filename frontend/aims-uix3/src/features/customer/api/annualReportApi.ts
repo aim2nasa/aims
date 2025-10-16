@@ -125,8 +125,9 @@ export interface CheckAnnualReportResponse {
 
 /**
  * Annual Report 파싱 요청 (백엔드 /parse API)
+ * Note: 기존 ParseAnnualReportRequest와 충돌 방지를 위해 별도 타입 사용
  */
-export interface ParseAnnualReportRequest {
+export interface ParseAnnualReportFileRequest {
   file: File;
   customer_id: string;
 }

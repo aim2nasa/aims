@@ -1,0 +1,290 @@
+/**
+ * Customer Identification Modal Styles
+ * Apple Design Philosophy: Progressive Disclosure, Subtle Interaction
+ */
+
+/* Overlay */
+.customer-identification-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.customer-identification-modal {
+  background: var(--color-bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.customer-identification-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.customer-identification-modal__icon {
+  font-size: 24px;
+}
+
+.customer-identification-modal__title {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.customer-identification-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.customer-identification-modal__close:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* Content */
+.customer-identification-modal__content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* File Info */
+.customer-identification-modal__file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.customer-identification-modal__file-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.customer-identification-modal__file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-identification-modal__file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-identification-modal__file-type {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* Metadata */
+.customer-identification-modal__metadata {
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.customer-identification-modal__metadata-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.customer-identification-modal__metadata-row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.customer-identification-modal__metadata-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.customer-identification-modal__metadata-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* Customer Section */
+.customer-identification-modal__customer-section {
+  margin-top: 20px;
+}
+
+.customer-identification-modal__message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+/* Single Customer */
+.customer-identification-modal__customer-card {
+  padding: 16px;
+  background: var(--color-bg-accent-subtle);
+  border: 1px solid var(--color-accent-primary);
+  border-radius: 8px;
+}
+
+.customer-identification-modal__customer-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.customer-identification-modal__customer-contact {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* Multiple Customers */
+.customer-identification-modal__customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customer-identification-modal__customer-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.customer-identification-modal__customer-option:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border);
+}
+
+.customer-identification-modal__customer-option.selected {
+  background: var(--color-bg-accent-subtle);
+  border-color: var(--color-accent-primary);
+}
+
+.customer-identification-modal__radio {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-accent-primary);
+}
+
+.customer-identification-modal__customer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* No Customer */
+.customer-identification-modal__none {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.customer-identification-modal__empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.customer-identification-modal__hint {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  margin: 8px 0 0 0;
+}
+
+/* Footer */
+.customer-identification-modal__footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+/* Dark Mode Adjustments */
+html[data-theme='dark'] .customer-identification-modal__overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme='dark'] .customer-identification-modal {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme='dark'] .customer-identification-modal__customer-option.selected {
+  background: var(--color-bg-accent-subtle);
+  border-color: var(--color-accent-primary);
+}

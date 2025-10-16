@@ -17,6 +17,9 @@ import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleC
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
+import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
+import { AnnualReportApi, type CheckAnnualReportResponse } from '@/features/customer/api/annualReportApi'
+import type { Customer } from '@/entities/customer/model'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -110,6 +113,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 자동 성공 메시지 숨김 타이머
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Annual Report 고객 식별 모달 상태
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [annualReportMetadata, setAnnualReportMetadata] = useState<CheckAnnualReportResponse['metadata'] | null>(null)
+  const [annualReportCustomers, setAnnualReportCustomers] = useState<Customer[]>([])
+  const [annualReportFile, setAnnualReportFile] = useState<{ file: File; fileName: string } | null>(null)
 
   /**
    * 상태를 sessionStorage에 저장
@@ -308,6 +317,74 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
+   * Annual Report 체크 및 고객 식별
+   */
+  const checkAnnualReport = useCallback(async (file: File, fileName: string) => {
+    try {
+      // 1. Annual Report 체크
+      const checkResult = await AnnualReportApi.checkAnnualReport(file);
+
+      // Annual Report가 아니면 조용히 종료
+      if (!checkResult.is_annual_report || !checkResult.metadata) {
+        return;
+      }
+
+      // 2. 고객명으로 검색
+      const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
+
+      // 3. 모달 상태 설정
+      setAnnualReportMetadata(checkResult.metadata);
+      setAnnualReportCustomers(customers);
+      setAnnualReportFile({ file, fileName });
+      setIsCustomerModalOpen(true);
+
+    } catch (error) {
+      console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
+      // 조용히 실패 - 일반 문서 업로드로 처리
+    }
+  }, []);
+
+  /**
+   * 고객 선택 완료 핸들러
+   */
+  const handleCustomerSelected = useCallback(async (customerId: string) => {
+    if (!annualReportFile) return;
+
+    try {
+      // Annual Report 파싱 요청
+      const parseResult = await AnnualReportApi.parseAnnualReportFile(
+        annualReportFile.file,
+        customerId
+      );
+
+      if (parseResult.success) {
+        console.log('[DocumentRegistrationView] Annual Report 파싱 요청 성공:', parseResult);
+        // TODO: 파싱 진행 상태를 표시할 수 있으면 좋음 (현재는 백그라운드 처리)
+      } else {
+        console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', parseResult.message);
+      }
+    } catch (error) {
+      console.error('[DocumentRegistrationView] Annual Report 파싱 중 오류:', error);
+    } finally {
+      // 모달 닫기
+      setIsCustomerModalOpen(false);
+      setAnnualReportMetadata(null);
+      setAnnualReportCustomers([]);
+      setAnnualReportFile(null);
+    }
+  }, [annualReportFile]);
+
+  /**
+   * 고객 식별 모달 닫기
+   */
+  const handleCustomerModalClose = useCallback(() => {
+    setIsCustomerModalOpen(false);
+    setAnnualReportMetadata(null);
+    setAnnualReportCustomers([]);
+    setAnnualReportFile(null);
+  }, []);
+
+  /**
    * 업로드 상태 변경 콜백
    */
   const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
@@ -318,6 +395,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           if (status === 'completed' || status === 'warning') {
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
+
+            // 🍎 Annual Report 자동 감지 (PDF 파일만)
+            if (status === 'completed' && f.file.type === 'application/pdf') {
+              checkAnnualReport(f.file, f.file.name);
+            }
           }
           return updatedFile
         }
@@ -338,7 +420,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         completedCount
       }
     })
-  }, [])
+  }, [checkAnnualReport])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지
@@ -567,6 +649,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         )}
 
         {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
+
+        {/* Annual Report 고객 식별 모달 */}
+        <CustomerIdentificationModal
+          isOpen={isCustomerModalOpen}
+          onClose={handleCustomerModalClose}
+          metadata={annualReportMetadata}
+          customers={annualReportCustomers}
+          onCustomerSelected={handleCustomerSelected}
+          fileName={annualReportFile?.fileName || ''}
+        />
       </div>
     </CenterPaneView>
   )
