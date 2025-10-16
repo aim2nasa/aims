@@ -198,10 +198,44 @@ AIMS (Agent Intelligent Management System) is an intelligent document management
 - **Database**: MongoDB on `tars:27017`
 
 ### ⚠️ 중요: 백엔드 수정 규칙
-- **백엔드 API 서버는 tars Linux 서버에서 운영 중**
-- **Claude는 백엔드 코드를 직접 수정할 수 없음**
-- **백엔드 수정이 필요한 경우 반드시 사용자에게 수정 요청**
-- **프론트엔드(WonderCastle)만 직접 수정 가능**
+
+**백엔드 API 서버는 tars Linux 서버에서 운영 중이며, SSH를 통해 직접 수정 가능합니다.**
+
+#### 백엔드 수정 절차
+
+1. **SSH로 서버 접속하여 코드 직접 수정**
+   - tars 서버에 SSH 접속하여 백엔드 코드 수정 가능
+   - 수정 후 반드시 배포 스크립트를 사용하여 서버 재시작
+
+2. **로컬 저장소 동기화 (필수!)**
+   - **서버 변경사항을 로컬에 100% 동일하게 반영**
+   - 커밋은 대부분 로컬에서 진행하므로 반드시 동기화 필요
+   - 로컬과 서버가 불일치하면 이후 배포 시 문제 발생
+
+3. **서버 재시작 규칙 (절대 준수!)**
+   - **반드시 배포 스크립트를 사용하여 서버 실행**
+   - 직접 서버 실행 절대 금지 (환경변수, 로그 설정 누락 가능)
+
+   **배포 스크립트 목록:**
+   ```bash
+   # Node.js API 서버 (포트 3010)
+   ./deploy_aims_api.sh
+
+   # Python RAG API 서버
+   ./deploy_aims_rag_api.sh
+
+   # Python Annual Report API 서버 (포트 8004)
+   ./deploy_annual_report_api.sh
+   ```
+
+4. **백엔드 수정 체크리스트**
+   - [ ] tars 서버에서 코드 수정 완료
+   - [ ] 배포 스크립트로 서버 재시작
+   - [ ] 로컬 저장소에 동일한 변경사항 반영
+   - [ ] `git diff`로 로컬-서버 일치 확인
+   - [ ] API 테스트로 정상 작동 확인
+
+**중요**: 로컬과 서버의 코드가 일치하지 않으면 이후 커밋과 배포에서 충돌 발생!
 
 ## Architecture
 
