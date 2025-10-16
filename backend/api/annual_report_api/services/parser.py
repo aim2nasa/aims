@@ -176,12 +176,18 @@ Rules:
         logger.info("✅ OpenAI API 응답 수신 완료")
 
         # 3. 응답 텍스트 추출
-        logger.info(f"DEBUG: response object type = {type(response)}")
-        logger.info(f"DEBUG: response.output = {getattr(response, 'output', 'NO OUTPUT ATTR')}")
+        try:
+            logger.info(f"DEBUG: response type = {type(response)}")
+            logger.info(f"DEBUG: response dir = {[attr for attr in dir(response) if not attr.startswith('_')][:20]}")
+            logger.info(f"DEBUG: has output? {hasattr(response, 'output')}")
+            logger.info(f"DEBUG: has choices? {hasattr(response, 'choices')}")
 
-        output_text = response.output[0].content[0].text.strip()
-        logger.info(f"📝 응답 텍스트 길이: {len(output_text)} 문자")
-        logger.info(f"DEBUG: output_text[:200] = {output_text[:200]}")
+            output_text = response.output[0].content[0].text.strip()
+            logger.info(f"📝 응답 텍스트 길이: {len(output_text)} 문자")
+        except Exception as e:
+            logger.error(f"DEBUG: 응답 텍스트 추출 실패: {type(e).__name__}: {e}")
+            logger.error(f"DEBUG: response = {response}")
+            raise
 
         # 4. 마크다운 코드블록 제거
         cleaned_output = clean_json_output(output_text)
