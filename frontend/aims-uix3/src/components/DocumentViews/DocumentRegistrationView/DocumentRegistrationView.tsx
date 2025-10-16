@@ -18,7 +18,8 @@ import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './ty
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
-import { AnnualReportApi, type CheckAnnualReportResponse } from '@/features/customer/api/annualReportApi'
+import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
+import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import './DocumentRegistrationView.css'
 
@@ -116,7 +117,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // Annual Report 고객 식별 모달 상태
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
-  const [annualReportMetadata, setAnnualReportMetadata] = useState<CheckAnnualReportResponse['metadata'] | null>(null)
+  const [annualReportMetadata, setAnnualReportMetadata] = useState<CheckAnnualReportResult['metadata']>(null)
   const [annualReportCustomers, setAnnualReportCustomers] = useState<Customer[]>([])
   const [annualReportFile, setAnnualReportFile] = useState<{ file: File; fileName: string } | null>(null)
 
@@ -163,17 +164,49 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 파일 선택 핸들러
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
+    console.log('🚨🚨🚨 handleFilesSelected 실행! files:', files.length);
     const newUploadFiles: UploadFile[] = []
 
-    files.forEach(file => {
+    // 🔍 PDF 파일 중 Annual Report 체크 (파일 선택 직후, 업로드 전!)
+    for (const file of files) {
       // 파일 검증
-        const validation = fileValidator.validateFile(file)
+      const validation = fileValidator.validateFile(file)
 
       if (validation.valid) {
+        // PDF 파일이면 Annual Report 체크
+        if (file.type === 'application/pdf') {
+          try {
+            console.log('[DocumentRegistrationView] 🔍 PDF 파일 감지, Annual Report 체크:', file.name);
+            const checkResult = await checkAnnualReportFromPDF(file);
+
+            if (checkResult.is_annual_report && checkResult.metadata) {
+              console.log('[DocumentRegistrationView] ✅ Annual Report 감지!', checkResult.metadata);
+
+              // 고객명으로 검색
+              const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
+              console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
+
+              // 모달 표시
+              setAnnualReportMetadata(checkResult.metadata);
+              setAnnualReportCustomers(customers);
+              setAnnualReportFile({ file, fileName: file.name });
+              setIsCustomerModalOpen(true);
+
+              // Annual Report는 업로드 큐에 추가하지 않음 (사용자가 고객 선택 후 처리)
+              console.log('[DocumentRegistrationView] Annual Report는 업로드 큐에서 제외');
+              continue;
+            }
+          } catch (error) {
+            console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
+            // 체크 실패 시 일반 문서로 처리
+          }
+        }
+
+        // 일반 문서 또는 Annual Report가 아닌 PDF
         newUploadFiles.push({
           id: generateFileId(),
           file,
-          fileSize: file.size, // 파일 크기 보존
+          fileSize: file.size,
           status: 'pending',
           progress: 0,
           error: undefined,
@@ -185,14 +218,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         const errorFile: UploadFile = {
           id: generateFileId(),
           file,
-          fileSize: file.size, // 파일 크기 보존
+          fileSize: file.size,
           status: 'error',
           progress: 0,
           error: validation.errors.join(', ')
         }
         newUploadFiles.push(errorFile)
       }
-    })
+    }
 
     // 크기 초과 파일 개수 확인 및 팝업 표시
     const oversizedFiles = newUploadFiles.filter(f =>

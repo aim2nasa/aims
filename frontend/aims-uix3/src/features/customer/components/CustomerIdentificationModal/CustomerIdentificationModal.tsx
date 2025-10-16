@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
-import type { CheckAnnualReportResponse } from '@/features/customer/api/annualReportApi';
+import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 import './CustomerIdentificationModal.css';
 
 export interface CustomerIdentificationModalProps {
@@ -21,7 +21,7 @@ export interface CustomerIdentificationModalProps {
   /** 모달 닫기 핸들러 */
   onClose: () => void;
   /** Annual Report 메타데이터 */
-  metadata: CheckAnnualReportResponse['metadata'];
+  metadata: CheckAnnualReportResult['metadata'];
   /** 검색된 고객 목록 */
   customers: Customer[];
   /** 고객 선택 완료 핸들러 (customerId 전달) */
@@ -109,11 +109,11 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
                   {metadata.issue_date}
                 </span>
               </div>
-              {metadata.fsr_name && (
+              {metadata.report_title && (
                 <div className="customer-identification-modal__metadata-row">
-                  <span className="customer-identification-modal__metadata-label">FSR</span>
+                  <span className="customer-identification-modal__metadata-label">보고서</span>
                   <span className="customer-identification-modal__metadata-value">
-                    {metadata.fsr_name}
+                    {metadata.report_title}
                   </span>
                 </div>
               )}

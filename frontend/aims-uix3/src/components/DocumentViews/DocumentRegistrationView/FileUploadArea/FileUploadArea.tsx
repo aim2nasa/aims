@@ -124,24 +124,30 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
    * 파일 처리 공통 로직
    */
   const handleFiles = useCallback((files: File[]) => {
+    console.log('🔥 FileUploadArea handleFiles 실행! files:', files.length, 'disabled:', disabled, 'uploading:', uploading);
+
     if (disabled) {
+      console.log('❌ disabled=true, 차단됨');
       setToastMessage('업로드가 비활성화되었습니다.')
       setToastVisible(true)
       return
     }
 
     if (uploading) {
+      console.log('❌ uploading=true, 차단됨');
       setToastMessage('업로드가 진행 중입니다. 잠시 후 다시 시도해주세요.')
       setToastVisible(true)
       return
     }
 
     if (files.length === 0) {
+      console.log('❌ files.length=0, 차단됨');
       setToastMessage('선택된 파일이 없습니다.')
       setToastVisible(true)
       return
     }
 
+    console.log('✅ onFilesSelected 호출!');
     onFilesSelected(files)
   }, [disabled, onFilesSelected, setToastMessage, setToastVisible, uploading])
 
