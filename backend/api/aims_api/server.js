@@ -1758,7 +1758,8 @@ app.post('/api/annual-report/parse', async (req, res) => {
     }
 
     // Python FastAPI (포트 8004)로 프록시
-    const pythonApiUrl = 'http://localhost:8004/annual-report/parse';
+    // Docker 컨테이너에서 호스트 접근: host.docker.internal 사용
+    const pythonApiUrl = 'http://host.docker.internal:8004/annual-report/parse';
 
     console.log(`🐍 Python FastAPI 호출: ${pythonApiUrl}`);
 
@@ -1803,7 +1804,7 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
 
     console.log(`🔍 [Annual Report] 상태 조회 요청: ${file_id}`);
 
-    const pythonApiUrl = `http://localhost:8004/annual-report/status/${file_id}`;
+    const pythonApiUrl = `http://host.docker.internal:8004/annual-report/status/${file_id}`;
 
     const response = await axios.get(pythonApiUrl, {
       timeout: 3000
@@ -1839,7 +1840,7 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
 
     console.log(`📋 [Annual Report] 고객 Annual Reports 조회: ${customerId}`);
 
-    const pythonApiUrl = `http://localhost:8004/customers/${customerId}/annual-reports`;
+    const pythonApiUrl = `http://host.docker.internal:8004/customers/${customerId}/annual-reports`;
 
     const response = await axios.get(pythonApiUrl, {
       params: { limit },
@@ -1874,7 +1875,7 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
 
     console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}`);
 
-    const pythonApiUrl = `http://localhost:8004/customers/${customerId}/annual-reports/latest`;
+    const pythonApiUrl = `http://host.docker.internal:8004/customers/${customerId}/annual-reports/latest`;
 
     const response = await axios.get(pythonApiUrl, {
       timeout: 3000
