@@ -25,6 +25,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 페이지네이션 상태
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -169,28 +172,112 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
     );
   }
 
+  // 페이지네이션 계산
+  const totalPages = Math.max(1, Math.ceil(reports.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  // 현재 페이지에 표시할 리포트들
+  const visibleReports = reports.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage
+  );
+
+  // 페이지 변경 핸들러
+  const handlePrevPage = () => {
+    if (safeCurrentPage > 1) {
+      setCurrentPage(safeCurrentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (safeCurrentPage < totalPages) {
+      setCurrentPage(safeCurrentPage + 1);
+    }
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(parseInt(value, 10));
+    setCurrentPage(1);
+  };
+
   // Annual Report 목록 있음
   return (
     <div className="annual-report-tab">
-      {/* Table List - 전체보기 스타일 */}
-      <div className="annual-report-list">
-        {reports.map((report, index) => {
-          const isLatest = index === 0;
-          const formattedDate = report.issue_date.split('T')[0];
+      {/* 테이블 컨테이너 */}
+      <div className="annual-report-table-container">
+        {/* 테이블 헤더 */}
+        <div className="annual-report-table-header">
+          <div className="header-issue-date">발행일</div>
+          <div className="header-premium">총 월보험료</div>
+          <div className="header-count">계약 수</div>
+          <div className="header-status">상태</div>
+        </div>
 
-          return (
-            <div
-              key={report.report_id}
-              className={`annual-report-item ${isLatest ? 'annual-report-item--latest' : ''}`}
-              onClick={() => handleViewReport(report)}
-            >
-              <div className="annual-report-item__date">{formattedDate}</div>
-              <div className="annual-report-item__premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>
-              <div className="annual-report-item__count">{report.contract_count}건</div>
-              {isLatest && <div className="annual-report-item__badge">최신</div>}
-            </div>
-          );
-        })}
+        {/* 테이블 바디 */}
+        <div className="annual-report-table-body">
+          {visibleReports.map((report) => {
+            const isLatest = reports.indexOf(report) === 0;
+            const formattedDate = report.issue_date.split('T')[0];
+
+            return (
+              <div
+                key={report.report_id}
+                className={`annual-report-row ${isLatest ? 'annual-report-row--latest' : ''}`}
+                onClick={() => handleViewReport(report)}
+              >
+                <div className="row-issue-date">{formattedDate}</div>
+                <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>
+                <div className="row-count">{report.contract_count}건</div>
+                <div className="row-status">
+                  {isLatest && <span className="status-badge">최신</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 페이지네이션 - 항상 표시 (전체보기와 동일) */}
+      <div className="annual-report-pagination">
+        {/* 페이지당 항목 수 선택 */}
+        <div className="pagination-limit">
+          <select
+            className="items-per-page-select"
+            value={itemsPerPage}
+            onChange={(e) => handleItemsPerPageChange(e.target.value)}
+          >
+            <option value="10">10개씩</option>
+            <option value="20">20개씩</option>
+            <option value="50">50개씩</option>
+          </select>
+        </div>
+
+        {/* 페이지 네비게이션 - 항상 표시 */}
+        <div className="pagination-controls">
+          <button
+            className="pagination-button pagination-button--prev"
+            onClick={handlePrevPage}
+            disabled={safeCurrentPage === 1}
+            aria-label="이전 페이지"
+          >
+            <span className="pagination-arrow">‹</span>
+          </button>
+
+          <div className="pagination-info">
+            <span className="pagination-current">{safeCurrentPage}</span>
+            <span className="pagination-separator">/</span>
+            <span className="pagination-total">{totalPages}</span>
+          </div>
+
+          <button
+            className="pagination-button pagination-button--next"
+            onClick={handleNextPage}
+            disabled={safeCurrentPage === totalPages}
+            aria-label="다음 페이지"
+          >
+            <span className="pagination-arrow">›</span>
+          </button>
+        </div>
       </div>
 
       {/* Annual Report Modal */}

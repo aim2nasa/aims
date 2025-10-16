@@ -128,20 +128,93 @@
   margin: 0;
 }
 
-/* ==================== List Container - Table Style ==================== */
+/* ==================== 🍎 TABLE CONTAINER - 전체보기 스타일 통일 ==================== */
 
-.annual-report-list {
+.annual-report-table-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ==================== 🍎 TABLE HEADER - macOS Finder 스타일 ==================== */
+
+.annual-report-table-header {
+  display: grid;
+  grid-template-columns: 120px 1fr 100px 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  min-height: 32px;
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  font-size: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+html[data-theme="dark"] .annual-report-table-header {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.annual-report-table-header > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ==================== 🍎 TABLE BODY ==================== */
+
+.annual-report-table-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
-/* ==================== Annual Report Item - Table Row ==================== */
+/* 🍎 SCROLLBAR: Apple-style subtle */
+.annual-report-table-body::-webkit-scrollbar {
+  width: 8px;
+}
 
-.annual-report-item {
+.annual-report-table-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.annual-report-table-body::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+.annual-report-table-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-light);
+}
+
+html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-dark);
+}
+
+/* ==================== 🍎 TABLE ROW - iOS table row 스타일 ==================== */
+
+.annual-report-row {
   display: grid;
-  grid-template-columns: 120px 1fr 80px 60px;
+  grid-template-columns: 120px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -151,62 +224,83 @@
   cursor: pointer;
   transition: all 0.2s ease-out;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--color-ios-text-primary-light);
+  animation: rowFadeIn 0.3s ease-out;
 }
 
-html[data-theme="dark"] .annual-report-item {
+/* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html[data-theme="dark"] .annual-report-row {
   background: var(--color-ios-bg-primary-dark);
-  color: var(--color-ios-text-primary-dark);
 }
 
-.annual-report-item:hover {
+.annual-report-row:hover {
   background: var(--color-ios-bg-hover-light);
   transform: translateY(-1px);
 }
 
-html[data-theme="dark"] .annual-report-item:hover {
+html[data-theme="dark"] .annual-report-row:hover {
   background: var(--color-ios-bg-hover-dark);
 }
 
-.annual-report-item--latest {
+/* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
+.annual-report-row--latest {
   background: var(--color-ios-bg-selected-light);
 }
 
-html[data-theme="dark"] .annual-report-item--latest {
+html[data-theme="dark"] .annual-report-row--latest {
   background: var(--color-ios-bg-selected-dark);
 }
 
-.annual-report-item__date {
+/* ==================== 🍎 ROW CELLS ==================== */
+
+.row-issue-date {
   font-size: 13px;
+  font-weight: 400;
   color: var(--color-ios-text-primary-light);
   white-space: nowrap;
 }
 
-html[data-theme="dark"] .annual-report-item__date {
+html[data-theme="dark"] .row-issue-date {
   color: var(--color-ios-text-primary-dark);
 }
 
-.annual-report-item__premium {
+.row-premium {
   font-size: 13px;
+  font-weight: 400;
   color: var(--color-primary);
   text-align: right;
   white-space: nowrap;
 }
 
-.annual-report-item__count {
-  font-size: 13px;
+.row-count {
+  font-size: 11px;
+  font-weight: 400;
   color: var(--color-ios-text-secondary-light);
   text-align: center;
   white-space: nowrap;
 }
 
-html[data-theme="dark"] .annual-report-item__count {
+html[data-theme="dark"] .row-count {
   color: var(--color-ios-text-secondary-dark);
 }
 
-.annual-report-item__badge {
+.row-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-badge {
   font-size: 11px;
   font-weight: 500;
   padding: 2px 6px;
@@ -215,6 +309,186 @@ html[data-theme="dark"] .annual-report-item__count {
   color: white;
   text-align: center;
   white-space: nowrap;
+}
+
+/* ==================== 🍎 PAGINATION - iOS Style (전체보기와 통일) ==================== */
+
+.annual-report-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-ios-separator-subtle-light);
+}
+
+html[data-theme="dark"] .annual-report-pagination {
+  border-top-color: var(--color-ios-separator-subtle-dark);
+}
+
+/* 🍎 PAGINATION LIMIT - iOS Native Style */
+.pagination-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.items-per-page-select {
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  padding: 4px 24px 4px 8px;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 6px;
+  background: var(--color-ios-bg-primary-light);
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease-out;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+html[data-theme="dark"] .items-per-page-select {
+  border-color: var(--color-ios-separator-dark);
+  background-color: var(--color-ios-bg-primary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.items-per-page-select:hover {
+  border-color: var(--color-ios-interactive-light);
+}
+
+html[data-theme="dark"] .items-per-page-select:hover {
+  border-color: var(--color-ios-interactive-dark);
+}
+
+/* 🍎 PAGINATION CONTROLS - Center group */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 🍎 PAGINATION SPACER - 페이지가 1개일 때 레이아웃 유지 */
+.pagination-spacer {
+  flex: 1;
+}
+
+/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-theme="dark"] .pagination-button {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-700);
+  transform: scale(1.15);
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-300);
+}
+
+.pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-tertiary-light);
+  transform: scale(0.96);
+}
+
+html[data-theme="dark"] .pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* 🍎 PAGINATION ARROW - Large and Clear */
+.pagination-arrow {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  color: inherit;
+  user-select: none;
+  display: inline-block;
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .pagination-arrow {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  justify-content: center;
+}
+
+html[data-theme="dark"] .pagination-info {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.pagination-current {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .pagination-current {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-separator {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-separator {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.pagination-total {
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .pagination-total {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* ==================== Summary Section (Legacy) ==================== */
