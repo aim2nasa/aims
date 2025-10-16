@@ -1,0 +1,396 @@
+/**
+ * Annual Report Modal Styles
+ * @since 2025-10-16
+ *
+ * 🍎 애플 디자인 시스템 준수
+ * - Progressive Disclosure
+ * - Subtle Interactions
+ * - AIMS CSS 변수 사용
+ */
+
+/* ==================== Overlay ==================== */
+
+.annual-report-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==================== Modal Container ==================== */
+
+.annual-report-modal {
+  background: var(--color-bg-primary);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==================== Header ==================== */
+
+.annual-report-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.annual-report-modal__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.annual-report-modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.annual-report-modal__close:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* ==================== Content ==================== */
+
+.annual-report-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  min-height: 0;
+}
+
+/* ==================== States (Error, Loading, Empty) ==================== */
+
+.annual-report-modal__error {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.annual-report-modal__loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}
+
+.annual-report-modal__empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.annual-report-modal__empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.annual-report-modal__empty-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.annual-report-modal__empty-hint {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ==================== Summary Section ==================== */
+
+.annual-report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 10px;
+}
+
+.annual-report-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.annual-report-summary__label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.annual-report-summary__value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.annual-report-summary__value--primary {
+  color: var(--color-primary);
+}
+
+.annual-report-summary__value--accent {
+  color: var(--color-accent);
+}
+
+/* ==================== Contracts List ==================== */
+
+.annual-report-contracts__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
+}
+
+/* ==================== Contract Item ==================== */
+
+.contract-item {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.contract-item:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.contract-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Contract Header */
+
+.contract-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.contract-item__company {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.contract-item__status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.contract-item__status--active {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.contract-item__status--inactive {
+  background: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.contract-item__status--default {
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+}
+
+/* Contract Body */
+
+.contract-item__body {
+  margin-bottom: 16px;
+}
+
+.contract-item__product {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.contract-item__number {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono, 'SF Mono', 'Courier New', monospace);
+}
+
+/* Contract Details */
+
+.contract-item__details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+}
+
+.contract-item__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contract-item__detail-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.contract-item__detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.contract-item__detail-value--premium {
+  color: var(--color-primary);
+}
+
+.contract-item__detail-value--coverage {
+  color: var(--color-accent);
+}
+
+/* Contract Dates */
+
+.contract-item__dates {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.contract-item__date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contract-item__date-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.contract-item__date-value {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* Contract Periods */
+
+.contract-item__periods {
+  display: flex;
+  gap: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.contract-item__period {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contract-item__period-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.contract-item__period-value {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* ==================== Footer ==================== */
+
+.annual-report-modal__footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.annual-report-modal__footer-text {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 768px) {
+  .annual-report-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .annual-report-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .contract-item__details {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-item__dates,
+  .contract-item__periods {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

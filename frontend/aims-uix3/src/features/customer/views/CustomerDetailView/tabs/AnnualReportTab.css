@@ -1,0 +1,289 @@
+/**
+ * Annual Report Tab Styles
+ * @since 2025-10-16
+ *
+ * 🍎 애플 디자인 시스템 준수
+ * - Progressive Disclosure
+ * - Subtle Interactions
+ */
+
+/* ==================== Container ==================== */
+
+.annual-report-tab {
+  padding: 20px;
+  min-height: 400px;
+}
+
+/* ==================== States (Loading, Error, Empty) ==================== */
+
+.annual-report-tab__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.annual-report-tab__loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.annual-report-tab__loading p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.annual-report-tab__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  text-align: center;
+}
+
+.annual-report-tab__error-icon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.annual-report-tab__error p {
+  color: var(--color-danger);
+  font-size: 14px;
+  max-width: 400px;
+}
+
+.annual-report-tab__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.annual-report-tab__empty-icon {
+  font-size: 64px;
+  opacity: 0.5;
+  margin-bottom: 20px;
+}
+
+.annual-report-tab__empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.annual-report-tab__empty-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.annual-report-tab__empty-hint {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  max-width: 500px;
+}
+
+.annual-report-tab__empty-hint-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ==================== Summary Section ==================== */
+
+.annual-report-tab__summary {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.annual-report-tab__summary-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 20px 0;
+}
+
+.annual-report-tab__info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.annual-report-tab__info-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.annual-report-tab__info-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* ==================== Stats ==================== */
+
+.annual-report-tab__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 10px;
+}
+
+.annual-report-tab__stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.annual-report-tab__stat-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.annual-report-tab__stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.annual-report-tab__stat-value--premium {
+  color: var(--color-primary);
+}
+
+.annual-report-tab__stat-value--coverage {
+  color: var(--color-accent);
+}
+
+/* ==================== Actions ==================== */
+
+.annual-report-tab__actions {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+/* ==================== Contract Preview ==================== */
+
+.annual-report-tab__preview {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.annual-report-tab__preview-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.annual-report-tab__contract-preview {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.annual-report-tab__contract-preview:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.annual-report-tab__contract-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.annual-report-tab__contract-company {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.annual-report-tab__contract-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+}
+
+.annual-report-tab__contract-product {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.annual-report-tab__contract-details {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: flex;
+  gap: 8px;
+}
+
+.annual-report-tab__preview-more {
+  text-align: center;
+  padding: 12px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.annual-report-tab__preview-more:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 768px) {
+  .annual-report-tab {
+    padding: 16px;
+  }
+
+  .annual-report-tab__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .annual-report-tab__actions {
+    flex-direction: column;
+  }
+}

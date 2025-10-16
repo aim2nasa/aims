@@ -21,6 +21,7 @@ import { BasicInfoTab } from './tabs/BasicInfoTab';
 import { RelationshipsTab } from './tabs/RelationshipsTab';
 import { EmptyTab } from './tabs/EmptyTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
+import { AnnualReportTab } from './tabs/AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 import { CustomerDocument } from '@/stores/CustomerDocument';
 import { RelationshipService } from '@/services/relationshipService';
@@ -289,14 +290,13 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         count: 0
       },
       {
-        key: 'contracts',
-        label: '계약',
+        key: 'annual_report',
+        label: 'Annual Report',
         icon: (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M3 3.5a.5.5 0 0 1 1 0V4H12V3.5a.5.5 0 0 1 1 0V4h.5A1.5 1.5 0 0 1 15 5.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-8A1.5 1.5 0 0 1 2.5 4H3v-.5zM2.5 5a.5.5 0 0 0-.5.5v1h12v-1a.5.5 0 0 0-.5-.5h-11z"/>
+            <path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm2 0v12h8V2H4zm1 2h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z"/>
           </svg>
-        ),
-        count: 0
+        )
       }
     ]
 
@@ -348,18 +348,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             }
           />
         );
-      case 'contracts':
-        return (
-          <EmptyTab
-            title="계약 탭"
-            description="고객의 보험 계약 정보가 여기에 표시됩니다."
-            icon={
-              <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M3 3.5a.5.5 0 0 1 1 0V4H12V3.5a.5.5 0 0 1 1 0V4h.5A1.5 1.5 0 0 1 15 5.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-8A1.5 1.5 0 0 1 2.5 4H3v-.5zM2.5 5a.5.5 0 0 0-.5.5v1h12v-1a.5.5 0 0 0-.5-.5h-11z"/>
-              </svg>
-            }
-          />
-        );
+      case 'annual_report':
+        return <AnnualReportTab customer={customer} />;
       default:
         return <BasicInfoTab customer={customer} />;
     }
