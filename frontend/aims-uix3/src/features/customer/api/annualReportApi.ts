@@ -299,12 +299,11 @@ export class AnnualReportApi {
       const data = await response.json();
 
       if (data.success) {
+        // 백엔드 응답: { success: true, data: { report_date, parsed_data: {...} } }
+        // data.data가 이미 report 객체 자체
         return {
           success: true,
-          data: {
-            customer_id: customerId,
-            report: data.data || null,  // 백엔드: { success: true, data: {...} }
-          },
+          data: data.data || null,  // report를 감싸지 않음
         };
       }
 

@@ -38,7 +38,23 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
       const response = await AnnualReportApi.getLatestAnnualReport(customer._id);
 
       if (response.success && response.data) {
-        setLatestReport(response.data.report);
+        // MongoDB 구조: { report_date, parsed_data: { customer_name, total_contracts, ... } }
+        const rawData = response.data as any;
+
+        // 프론트엔드 타입에 맞게 변환
+        const transformedReport: AnnualReport = {
+          report_id: rawData.file_id || 'unknown',
+          issue_date: rawData.report_date || rawData.parsed_data?.report_period || '',
+          customer_name: rawData.parsed_data?.customer_name || customer.personal_info?.name || '',
+          total_monthly_premium: rawData.parsed_data?.total_monthly_premium || 0,
+          total_coverage: rawData.parsed_data?.total_coverage || 0,
+          contract_count: rawData.parsed_data?.total_contracts || 0,
+          contracts: rawData.parsed_data?.contracts || [],
+          source_file_id: rawData.file_id,
+          created_at: rawData.uploaded_at || new Date().toISOString()
+        };
+
+        setLatestReport(transformedReport);
       } else {
         setError(response.error || 'Annual Report 조회에 실패했습니다.');
       }
