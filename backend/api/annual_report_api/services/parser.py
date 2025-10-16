@@ -111,16 +111,15 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None) -> D
 
         logger.info(f"✅ 파일 업로드 완료: {uploaded_file.id}")
 
-        # 2. Responses API 호출 (검증된 프롬프트)
+        # 2. Chat Completions API 호출 (Vision 지원)
         logger.info("🔍 OpenAI API 호출 중 (약 25초 소요)...")
 
-        response = ai_client.responses.create(
+        response = ai_client.chat.completions.create(
             model=settings.OPENAI_MODEL,
-            input=[
+            messages=[
                 {
                     "role": "system",
-                    "content": """
-You are a strict document parsing assistant.
+                    "content": """You are a strict document parsing assistant.
 Extract customer information and contract tables from the Annual Report PDF.
 
 Rules:
@@ -162,29 +161,20 @@ Rules:
    - "YYYY-MM-DD" 형식으로 변환
 7. 보험료(원):
    - 숫자만 추출 (쉼표 제거)
-   - 정수형으로 변환
-                    """
+   - 정수형으로 변환"""
                 },
                 {
                     "role": "user",
-                    "content": [
-                        {
-                            "type": "input_text",
-                            "text": f"Parse the attached Annual Report PDF into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
-                        },
-                        {
-                            "type": "input_file",
-                            "file_id": uploaded_file.id
-                        }
-                    ]
+                    "content": f"Parse the attached Annual Report PDF (file_id: {uploaded_file.id}) into JSON. {'Customer name should be: ' + customer_name if customer_name else ''}"
                 }
-            ]
+            ],
+            temperature=0
         )
 
         logger.info("✅ OpenAI API 응답 수신 완료")
 
         # 3. 응답 텍스트 추출
-        output_text = response.output[0].content[0].text.strip()
+        output_text = response.choices[0].message.content.strip()
 
         # 4. 마크다운 코드블록 제거
         cleaned_output = clean_json_output(output_text)
