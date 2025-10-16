@@ -53,6 +53,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
                 insurance_company: '메트라이프',
                 contract_number: contract['증권번호'] || '',
                 product_name: contract['보험상품'] || '',
+                contractor_name: contract['계약자'] || '',
+                insured_name: contract['피보험자'] || '',
                 monthly_premium: contract['보험료(원)'] || 0,
                 coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
                 contract_date: contract['계약일'] || '',

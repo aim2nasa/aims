@@ -16,6 +16,8 @@ export interface InsuranceContract {
   insurance_company: string;      // 보험사명
   contract_number: string;         // 계약번호
   product_name: string;            // 상품명
+  contractor_name?: string;        // 계약자
+  insured_name?: string;           // 피보험자
   monthly_premium: number;         // 월 보험료
   coverage_amount: number;         // 보장금액
   contract_date: string;           // 계약일 (YYYY-MM-DD)
