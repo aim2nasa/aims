@@ -72,10 +72,8 @@ def save_annual_report(
         contracts = report_data.get("보유계약 현황", [])
         lapsed_contracts = report_data.get("부활가능 실효계약", [])
 
-        # 요약 정보 계산
-        total_monthly_premium = sum(
-            int(c.get("보험료(원)", 0)) for c in contracts
-        )
+        # 요약 정보 - PDF에서 읽은 값 그대로 사용 (계산 금지!)
+        total_monthly_premium = report_data.get("총_월보험료", 0)
         total_contracts = len(contracts)
 
         # 1페이지 메타데이터 처리 (명세: AI 불사용, 토큰 절약)

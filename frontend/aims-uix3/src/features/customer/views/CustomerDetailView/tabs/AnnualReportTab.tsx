@@ -38,18 +38,32 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
       const response = await AnnualReportApi.getLatestAnnualReport(customer._id);
 
       if (response.success && response.data) {
-        // MongoDB 구조: { report_date, parsed_data: { customer_name, total_contracts, ... } }
+        // API 응답 구조: { success: true, data: { customer_name, total_contracts, contracts, ... } }
         const rawData = response.data as any;
+
+        // 계약 데이터 변환 (한글 필드명 → 영어 필드명)
+        const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
+          insurance_company: '메트라이프', // Annual Report는 메트라이프 고정
+          contract_number: contract['증권번호'] || '',
+          product_name: contract['보험상품'] || '',
+          monthly_premium: contract['보험료(원)'] || 0,
+          coverage_amount: (contract['가입금액(만원)'] || 0) * 10000, // 만원 → 원 변환
+          contract_date: contract['계약일'] || '',
+          maturity_date: undefined,
+          premium_payment_period: contract['납입기간'] || '',
+          insurance_period: contract['보험기간'] || '',
+          status: contract['계약상태'] || ''
+        }));
 
         // 프론트엔드 타입에 맞게 변환
         const transformedReport: AnnualReport = {
           report_id: rawData.file_id || 'unknown',
-          issue_date: rawData.report_date || rawData.parsed_data?.report_period || '',
-          customer_name: rawData.parsed_data?.customer_name || customer.personal_info?.name || '',
-          total_monthly_premium: rawData.parsed_data?.total_monthly_premium || 0,
-          total_coverage: rawData.parsed_data?.total_coverage || 0,
-          contract_count: rawData.parsed_data?.total_contracts || 0,
-          contracts: rawData.parsed_data?.contracts || [],
+          issue_date: rawData.issue_date || '',
+          customer_name: rawData.customer_name || customer.personal_info?.name || '',
+          total_monthly_premium: rawData.total_monthly_premium || 0,
+          total_coverage: rawData.total_coverage || 0,
+          contract_count: rawData.total_contracts || 0,
+          contracts: transformedContracts,
           source_file_id: rawData.file_id,
           created_at: rawData.uploaded_at || new Date().toISOString()
         };

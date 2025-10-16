@@ -167,12 +167,13 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
                 {
                     "role": "system",
                     "content": """You are a strict document parsing assistant.
-Extract contract tables from the Annual Report PDF (pages 2~N only, page 1 excluded).
+Extract contract tables AND summary totals from the Annual Report PDF (pages 2~N only, page 1 excluded).
 
 Rules:
 1. 반드시 JSON만 반환. (마크다운, 주석, 설명 절대 금지)
 2. JSON Schema:
    {
+     "총_월보험료": number,  // ⚠️ PDF에 적힌 값 그대로 읽기 (계산 금지!)
      "보유계약 현황": [
        {
          "순번": number,
@@ -190,18 +191,23 @@ Rules:
      ],
      "부활가능 실효계약": [ ... ]  // 있는 경우만
    }
-3. 보험상품:
+3. 총_월보험료:
+   - ⚠️ 반드시 PDF에 적힌 값을 그대로 읽을 것 (계산 금지!)
+   - "총 월보험료", "월보험료 합계" 등의 표현 찾기
+   - 숫자만 추출 (쉼표 제거)
+   - 정수형으로 변환
+4. 보험상품:
    - 반드시 PDF 표 셀 내부의 텍스트만 기록
    - 표 외부 텍스트(머리말, 각주, 회사명, 마케팅 문구 등)는 절대 포함하지 말 것
    - 상품명은 "보험", "종신", "연금", "플랜", "Plus" 등 보험 관련 키워드로 끝나야 함
    - 줄바꿈으로 나뉜 경우 합쳐서 하나의 문자열로 작성
    - 의미 없는 단어, 문구, 회사명은 절대 포함하지 않는다
-4. 계약자/피보험자:
+5. 계약자/피보험자:
    - 반드시 사람 이름만 기록
    - 불필요한 텍스트는 제거
-5. 계약일:
+6. 계약일:
    - "YYYY-MM-DD" 형식으로 변환
-6. 보험료(원):
+7. 보험료(원):
    - 숫자만 추출 (쉼표 제거)
    - 정수형으로 변환
 
