@@ -40,11 +40,17 @@
 
   annual_reports: [  // 신규 필드 (배열로 이력 관리)
     {
-      issue_date: ISODate("2025-08-27"),      // 발행기준일
+      // 1페이지 메타데이터 (AI 불사용, 토큰 절약)
+      customer_name: "안영미",                // 1페이지에서 추출
+      report_title: "Annual Review Report",  // 1페이지에서 추출
+      issue_date: ISODate("2025-08-27"),      // 발행기준일 (1페이지)
+      fsr_name: "홍길동",                     // FSR 이름 (1페이지)
+
       uploaded_at: ISODate("2025-10-15"),     // 업로드 시점
       parsed_at: ISODate("2025-10-15"),       // 파싱 완료 시점
       source_file_id: ObjectId,                // docupload.files 참조 (선택)
 
+      // 2~N페이지 계약 데이터 (AI 사용)
       contracts: [
         {
           순번: 1,
@@ -90,31 +96,51 @@
    ↓
 4. 백엔드 (Node.js) → Python API: Annual Report 판단 요청 (비동기)
    ↓
-5. Python API:
-   - PDF 1페이지 읽기
+5. Python API - 1페이지 처리 (AI 불필요, 토큰 절약):
+   - PDF 1페이지만 텍스트 추출
    - "Annual Review Report" 문구 확인
-   - "보유계약 현황" 표 존재 확인
+   - 고객명, Annual Report 제목, 발행(기준)일, FSR이름 추출
+   - 추출된 메타데이터 DB 저장 (임시)
    ↓
 6-A. Annual Report가 아닌 경우:
    → 종료 (기존 문서로만 처리)
 
 6-B. Annual Report인 경우:
    ↓
-7. Python API: N페이지 판단
-   - "주요 보장내용 현황 (요약)" 이전까지 찾기
-   - 대부분 N=2, 최대 N=4 정도
+7. Python API → 프론트엔드: 1페이지 메타데이터 반환
+   - 고객명, 발행기준일, FSR이름 등
    ↓
-8. Python API: 2~N페이지 추출 → AI 파싱 요청
-   - OpenAI API 사용 (기존 parse_pdf_with_ai.py 활용)
-   - 프롬프트: 보유계약 현황 표를 JSON으로 변환
+8. 프론트엔드: 고객 식별 로직
+   - DB에서 고객명으로 검색
+   - 고객 1명: 자동 선택
+   - 동명이인: 사용자에게 선택 모달
+   - 고객 없음: 신규 생성 모달
+   - customer_id 결정
    ↓
-9. Python API: 파싱 결과를 DB 저장
-   - customers 컬렉션의 annual_reports 필드에 추가
+9. 프론트엔드 → Python API: 파싱 요청 (customer_id 포함)
    ↓
-10. 프론트엔드:
-   - WebSocket 또는 폴링으로 파싱 완료 감지
+10. Python API - 2~N페이지 처리 (AI 사용):
+   - N페이지 동적 탐지 ("주요 보장내용 현황" 이전까지)
+   - 2~N페이지만 추출 (1페이지 제외로 토큰 절약)
+   - OpenAI API로 보유계약 현황 표 파싱
+   ↓
+11. Python API: 파싱 결과 DB 저장
+   - 프론트엔드가 전달한 customer_id의 annual_reports에 추가
+   - 1페이지 메타데이터 + 2~N페이지 계약 데이터 결합
+   ↓
+12. 프론트엔드:
+   - 파싱 완료 알림
    - 고객 상세 페이지 → 계약 탭 업데이트
 ```
+
+### 주요 최적화 포인트
+
+**토큰 절약 전략:**
+1. **1페이지 처리**: AI 사용 안 함 (단순 텍스트 추출)
+   - 고객명, 제목, 발행일, FSR이름은 정형화되어 있어 AI 불필요
+2. **2~N페이지 처리**: AI 사용 (1페이지 제외)
+   - OpenAI API에 2~N페이지만 전송
+   - 평균 50% 토큰 절약
 
 ---
 
@@ -160,42 +186,54 @@
 
 ### API 엔드포인트 (예시)
 
-#### 1. Annual Report 판단 API
+#### 1. Annual Report 판단 및 1페이지 메타데이터 추출 API
 ```
 POST /api/annual-report/check
 Request:
 {
-  "file_id": "ObjectId",
-  "customer_id": "ObjectId"  // 사용자가 선택한 고객
+  "file_path": "/data/uploads/xxx.pdf"  // 또는 file upload
 }
 
 Response:
 {
   "is_annual_report": true,
-  "confidence": 0.95
+  "confidence": 0.95,
+  "metadata": {  // 1페이지에서 추출 (AI 불사용)
+    "customer_name": "안영미",
+    "report_title": "Annual Review Report",
+    "issue_date": "2025-08-27",
+    "fsr_name": "홍길동"
+  }
 }
 ```
 
-#### 2. Annual Report 파싱 API
+**설명:**
+- 1페이지만 읽어서 Annual Report 판단 + 메타데이터 추출
+- AI 사용 안 함 (토큰 절약)
+- 프론트엔드는 이 정보로 고객 식별 로직 실행
+
+#### 2. Annual Report 파싱 API (2~N페이지)
 ```
 POST /api/annual-report/parse
 Request:
 {
-  "file_id": "ObjectId",
-  "customer_id": "ObjectId"
+  "file_path": "/data/uploads/xxx.pdf",
+  "customer_id": "ObjectId",  // 프론트엔드가 결정한 고객 ID
+  "end_page": 3  // 선택사항 (자동 탐지 가능)
 }
 
 Response:
 {
   "success": true,
-  "data": {
-    "issue_date": "2025-08-27",
-    "contracts": [...],
-    "total_monthly_premium": 14102137,
-    "total_contracts": 10
-  }
+  "message": "파싱 시작됨. 약 25초 후 완료됩니다.",
+  "job_id": "temp_xxx"
 }
 ```
+
+**설명:**
+- 2~N페이지만 OpenAI API로 파싱 (1페이지 제외)
+- 비동기 처리 (백그라운드 작업)
+- customer_id의 annual_reports에 저장
 
 #### 3. Annual Report 조회 API
 ```
@@ -337,8 +375,39 @@ def parse_pdf_with_ai(pdf_path):
 ## 📌 추가 고려사항
 
 ### 1. 고객 식별 (동명이인 처리)
-- **해결책**: 업로드 시 사용자가 고객을 직접 선택
-- UI에서 드롭다운 또는 검색으로 고객 선택 제공
+
+**프론트엔드 고객 식별 로직:**
+
+1. **PDF 첫 페이지에서 고객명 추출**
+   - Annual Report 업로드 시 자동으로 첫 페이지에서 이름 파싱
+
+2. **DB에서 해당 이름으로 고객 검색**
+
+3. **시나리오별 처리:**
+   - **고객 1명 발견**: 자동으로 해당 고객의 annual_reports에 등록
+   - **동명이인 (2명 이상)**: 모달 띄워서 사용자에게 선택 요청
+     ```
+     "안영미" 고객이 2명 있습니다.
+     어느 고객의 Annual Report입니까?
+     [ ] 안영미 (010-1234-5678)
+     [ ] 안영미 (010-9876-5432)
+     [선택] [취소]
+     ```
+   - **고객 없음 (0명)**: 신규 고객 생성 모달 표시
+     ```
+     "안영미" 고객이 등록되지 않았습니다.
+     새로운 고객으로 등록하시겠습니까?
+
+     고객명: 안영미 (자동 입력)
+     전화번호: [          ]
+     [등록 후 Annual Report 저장] [취소]
+     ```
+
+4. **백엔드 API 호출**
+   - 프론트엔드가 결정한 `customer_id`와 함께 파싱 요청
+   - 백엔드는 받은 `customer_id`의 annual_reports에 저장
+
+**중요:** 고객 식별 로직은 **프론트엔드 책임**. 백엔드는 전달받은 customer_id를 신뢰하고 저장만 수행.
 
 ### 2. 이력 관리
 - `customers.annual_reports` 배열로 여러 시점의 리포트 저장

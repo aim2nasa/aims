@@ -129,7 +129,7 @@ def is_annual_report(pdf_path: str) -> Dict[str, any]:
 
 def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
     """
-    1페이지에서 고객명과 발행기준일 추출 (간단한 텍스트 파싱)
+    1페이지에서 메타데이터 추출 (AI 불사용, 간단한 텍스트 파싱)
 
     Args:
         pdf_path: PDF 파일 경로
@@ -137,24 +137,36 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
     Returns:
         dict: {
             "customer_name": str (optional),
-            "issue_date": str (optional, YYYY-MM-DD 형식)
+            "report_title": str (optional),
+            "issue_date": str (optional, YYYY-MM-DD 형식),
+            "fsr_name": str (optional)
         }
     """
     try:
         first_page_text = extract_text_from_page(pdf_path, page_num=0)
 
         result = {}
-
-        # 고객명 추출 (예: "고객님: 안영미")
         import re
 
-        # 패턴 1: "고객님: XXX"
+        # 1. 고객명 추출 (예: "고객님: 안영미")
         customer_pattern = r"고객님[:\s]*([가-힣]{2,4})"
         customer_match = re.search(customer_pattern, first_page_text)
         if customer_match:
             result["customer_name"] = customer_match.group(1).strip()
 
-        # 발행기준일 추출 (예: "2025년 8월 27일")
+        # 2. Report 제목 추출 (예: "Annual Review Report")
+        title_pattern = r"(Annual\s+Review\s+Report)"
+        title_match = re.search(title_pattern, first_page_text, re.IGNORECASE)
+        if title_match:
+            result["report_title"] = title_match.group(1).strip()
+        else:
+            # fallback: 한글 제목 (예: "보유계약 현황")
+            title_pattern_kr = r"(보유계약\s*현황)"
+            title_match_kr = re.search(title_pattern_kr, first_page_text)
+            if title_match_kr:
+                result["report_title"] = title_match_kr.group(1).strip()
+
+        # 3. 발행기준일 추출 (예: "2025년 8월 27일")
         date_pattern = r"(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일"
         date_match = re.search(date_pattern, first_page_text)
         if date_match:
@@ -162,9 +174,15 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
             # YYYY-MM-DD 형식으로 변환
             result["issue_date"] = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-        logger.debug(f"1페이지 정보 추출: {result}")
+        # 4. FSR 이름 추출 (예: "FSR: 홍길동" 또는 "담당자: 홍길동")
+        fsr_pattern = r"(?:FSR|담당자|설계사)[:\s]*([가-힣]{2,4})"
+        fsr_match = re.search(fsr_pattern, first_page_text)
+        if fsr_match:
+            result["fsr_name"] = fsr_match.group(1).strip()
+
+        logger.info(f"📄 1페이지 메타데이터 추출: {result}")
         return result
 
     except Exception as e:
-        logger.warning(f"고객 정보 추출 실패 (1페이지): {e}")
+        logger.warning(f"1페이지 메타데이터 추출 실패: {e}")
         return {}

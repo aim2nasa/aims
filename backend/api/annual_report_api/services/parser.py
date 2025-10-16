@@ -51,12 +51,15 @@ def clean_json_output(output_text: str) -> str:
     return cleaned.strip()
 
 
-def extract_pdf_pages(pdf_path: str, end_page: int) -> str:
+def extract_pdf_pages(pdf_path: str, start_page: int, end_page: int) -> str:
     """
-    PDF의 1~N페이지만 추출하여 임시 파일로 저장
+    PDF의 start_page~end_page만 추출하여 임시 파일로 저장
+
+    명세: 1페이지는 AI 없이 처리하므로 2~N페이지만 추출 (토큰 절약)
 
     Args:
         pdf_path: 원본 PDF 파일 경로
+        start_page: 시작 페이지 번호 (1-based, inclusive) - 보통 2
         end_page: 마지막 페이지 번호 (1-based, inclusive)
 
     Returns:
@@ -65,8 +68,11 @@ def extract_pdf_pages(pdf_path: str, end_page: int) -> str:
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
-    # 1페이지부터 end_page까지 추출 (0-based index이므로 end_page는 그대로 사용)
-    for page_num in range(min(end_page, len(reader.pages))):
+    # start_page~end_page 추출 (0-based index 변환)
+    start_idx = start_page - 1  # 1-based → 0-based
+    end_idx = min(end_page, len(reader.pages))  # 1-based 그대로 사용 (range는 exclusive)
+
+    for page_num in range(start_idx, end_idx):
         writer.add_page(reader.pages[page_num])
 
     # 임시 파일 생성
@@ -76,7 +82,7 @@ def extract_pdf_pages(pdf_path: str, end_page: int) -> str:
     with open(temp_path, 'wb') as output_file:
         writer.write(output_file)
 
-    logger.info(f"📄 PDF 추출 완료: 1~{end_page}페이지 → {temp_path}")
+    logger.info(f"📄 PDF 추출 완료: {start_page}~{end_page}페이지 → {temp_path}")
     return temp_path
 
 
@@ -133,12 +139,14 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
         # OpenAI 클라이언트 가져오기
         ai_client = get_openai_client()
 
-        # 0. PDF 페이지 추출 (end_page가 있으면)
+        # 0. PDF 페이지 추출 (2~N페이지만, 1페이지 제외로 토큰 절약)
         actual_pdf_path = pdf_path
-        if end_page and end_page > 0:
-            logger.info(f"📄 PDF 페이지 추출: 1~{end_page + 1}페이지만 사용 (토큰 절약)")
-            extracted_pdf_path = extract_pdf_pages(pdf_path, end_page + 1)
+        if end_page and end_page > 1:
+            logger.info(f"📄 PDF 페이지 추출: 2~{end_page}페이지만 사용 (1페이지 제외, 토큰 절약)")
+            extracted_pdf_path = extract_pdf_pages(pdf_path, start_page=2, end_page=end_page)
             actual_pdf_path = extracted_pdf_path
+        else:
+            logger.warning("end_page가 없거나 1 이하입니다. 전체 PDF 사용 (비권장)")
 
         # 1. PDF 파일 업로드
         logger.info("📤 PDF 파일 업로드 중...")
@@ -159,14 +167,12 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_
                 {
                     "role": "system",
                     "content": """You are a strict document parsing assistant.
-Extract customer information and contract tables from the Annual Report PDF.
+Extract contract tables from the Annual Report PDF (pages 2~N only, page 1 excluded).
 
 Rules:
 1. 반드시 JSON만 반환. (마크다운, 주석, 설명 절대 금지)
 2. JSON Schema:
    {
-     "고객명": string,
-     "발행기준일": "YYYY-MM-DD",
      "보유계약 현황": [
        {
          "순번": number,
@@ -184,23 +190,23 @@ Rules:
      ],
      "부활가능 실효계약": [ ... ]  // 있는 경우만
    }
-3. 고객명과 발행기준일:
-   - 1페이지 상단에서 추출
-   - 발행기준일은 "YYYY년 MM월 DD일" 형식을 "YYYY-MM-DD"로 변환
-4. 보험상품:
+3. 보험상품:
    - 반드시 PDF 표 셀 내부의 텍스트만 기록
    - 표 외부 텍스트(머리말, 각주, 회사명, 마케팅 문구 등)는 절대 포함하지 말 것
    - 상품명은 "보험", "종신", "연금", "플랜", "Plus" 등 보험 관련 키워드로 끝나야 함
    - 줄바꿈으로 나뉜 경우 합쳐서 하나의 문자열로 작성
    - 의미 없는 단어, 문구, 회사명은 절대 포함하지 않는다
-5. 계약자/피보험자:
+4. 계약자/피보험자:
    - 반드시 사람 이름만 기록
    - 불필요한 텍스트는 제거
-6. 계약일:
+5. 계약일:
    - "YYYY-MM-DD" 형식으로 변환
-7. 보험료(원):
+6. 보험료(원):
    - 숫자만 추출 (쉼표 제거)
-   - 정수형으로 변환"""
+   - 정수형으로 변환
+
+NOTE: This PDF contains only pages 2~N (page 1 was excluded for token optimization).
+Customer name and issue date are already extracted from page 1."""
                 },
                 {
                     "role": "user",

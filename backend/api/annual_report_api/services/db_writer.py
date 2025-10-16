@@ -15,6 +15,7 @@ def save_annual_report(
     db,
     customer_id: str,
     report_data: Dict,
+    metadata: Optional[Dict] = None,
     source_file_id: Optional[str] = None
 ) -> Dict[str, any]:
     """
@@ -23,14 +24,16 @@ def save_annual_report(
     Args:
         db: MongoDB database 객체
         customer_id: 고객 ObjectId (문자열)
-        report_data: parse_annual_report() 결과
+        report_data: parse_annual_report() 결과 (2~N페이지 계약 데이터)
+        metadata: 1페이지 메타데이터 (customer_name, report_title, issue_date, fsr_name)
         source_file_id: 원본 PDF 파일 ID (선택)
 
     Returns:
         dict: {
             "success": bool,
             "message": str,
-            "report_id": str (optional, 저장된 리포트의 인덱스)
+            "report_id": str (optional, 저장된 리포트의 인덱스),
+            "summary": dict (저장된 데이터 요약)
         }
 
     Raises:
@@ -75,8 +78,21 @@ def save_annual_report(
         )
         total_contracts = len(contracts)
 
+        # 1페이지 메타데이터 처리 (명세: AI 불사용, 토큰 절약)
+        # metadata가 제공되면 우선 사용, 없으면 report_data에서 fallback
+        if metadata:
+            customer_name = metadata.get("customer_name")
+            report_title = metadata.get("report_title")
+            issue_date_str = metadata.get("issue_date")
+            fsr_name = metadata.get("fsr_name")
+        else:
+            # fallback: 기존 report_data (AI가 추출한 경우 - 비권장)
+            customer_name = report_data.get("고객명")
+            report_title = None
+            issue_date_str = report_data.get("발행기준일")
+            fsr_name = None
+
         # 발행기준일 파싱
-        issue_date_str = report_data.get("발행기준일")
         try:
             # "YYYY-MM-DD" → datetime
             issue_date = datetime.strptime(issue_date_str, "%Y-%m-%d") if issue_date_str else None
@@ -85,14 +101,23 @@ def save_annual_report(
             issue_date = None
 
         annual_report = {
+            # 1페이지 메타데이터 (AI 불사용, 토큰 절약)
+            "customer_name": customer_name,
+            "report_title": report_title,
             "issue_date": issue_date,
-            "uploaded_at": datetime.now(),
-            "parsed_at": datetime.now(),
+            "fsr_name": fsr_name,
+
+            # 2~N페이지 계약 데이터 (AI 사용)
             "contracts": contracts,
             "lapsed_contracts": lapsed_contracts,
+
+            # 요약 정보
             "total_monthly_premium": total_monthly_premium,
             "total_contracts": total_contracts,
-            "customer_name": report_data.get("고객명"),  # 검증용
+
+            # 타임스탬프
+            "uploaded_at": datetime.now(),
+            "parsed_at": datetime.now(),
         }
 
         # 원본 파일 ID 추가 (있는 경우)
@@ -115,7 +140,7 @@ def save_annual_report(
         # 6. 결과 확인
         if result.modified_count > 0:
             logger.info(
-                f"✅ Annual Report 저장 성공: customer={report_data.get('고객명')}, "
+                f"✅ Annual Report 저장 성공: customer={customer_name}, "
                 f"계약={total_contracts}건, 월보험료={total_monthly_premium:,}원"
             )
 
@@ -123,8 +148,10 @@ def save_annual_report(
                 "success": True,
                 "message": "Annual Report 저장 완료",
                 "summary": {
-                    "customer_name": report_data.get("고객명"),
+                    "customer_name": customer_name,
+                    "report_title": report_title,
                     "issue_date": issue_date_str,
+                    "fsr_name": fsr_name,
                     "total_contracts": total_contracts,
                     "total_monthly_premium": total_monthly_premium
                 }

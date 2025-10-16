@@ -53,6 +53,124 @@ class ParseResponse(BaseModel):
         }
 
 
+class CheckResponse(BaseModel):
+    """Annual Report 판단 + 1페이지 메타데이터 응답"""
+    is_annual_report: bool
+    confidence: float
+    metadata: Optional[dict] = None  # customer_name, report_title, issue_date, fsr_name
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "is_annual_report": True,
+                "confidence": 0.95,
+                "metadata": {
+                    "customer_name": "안영미",
+                    "report_title": "Annual Review Report",
+                    "issue_date": "2025-08-27",
+                    "fsr_name": "홍길동"
+                }
+            }
+        }
+
+
+@router.post("/check", response_model=CheckResponse)
+async def check_annual_report_endpoint(
+    file: UploadFile = File(...)
+):
+    """
+    Annual Report 판단 및 1페이지 메타데이터 추출 API
+
+    - AI 사용 안 함 (토큰 절약)
+    - 1페이지만 텍스트 추출
+    - 프론트엔드는 이 정보로 고객 식별 로직 실행
+
+    Args:
+        file: PDF 파일 (multipart/form-data)
+
+    Returns:
+        CheckResponse: {
+            "is_annual_report": bool,
+            "confidence": float,
+            "metadata": {
+                "customer_name": str,
+                "report_title": str,
+                "issue_date": str,
+                "fsr_name": str
+            }
+        }
+
+    Raises:
+        HTTPException 400: 파일이 PDF가 아니거나 유효하지 않을 때
+        HTTPException 500: 서버 오류
+    """
+    logger.info(f"📥 Annual Report 체크 요청: filename={file.filename}")
+
+    temp_file_path = None
+    try:
+        # PDF 파일 검증
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(
+                status_code=400,
+                detail="PDF 파일만 업로드 가능합니다"
+            )
+
+        # 임시 파일로 저장
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        temp_file_path = temp_file.name
+
+        with open(temp_file_path, 'wb') as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        logger.info(f"📁 임시 파일 저장: {temp_file_path}")
+
+        # 1. Annual Report 판단
+        check_result = is_annual_report(temp_file_path)
+
+        if not check_result["is_annual_report"]:
+            logger.info(
+                f"❌ Annual Report 아님 (confidence: {check_result['confidence']}): "
+                f"{check_result['reason']}"
+            )
+            return CheckResponse(
+                is_annual_report=False,
+                confidence=check_result["confidence"],
+                metadata=None
+            )
+
+        logger.info(
+            f"✅ Annual Report 확인됨 (confidence: {check_result['confidence']})"
+        )
+
+        # 2. 1페이지 메타데이터 추출 (AI 불사용)
+        metadata = extract_customer_info_from_first_page(temp_file_path)
+
+        logger.info(f"📄 메타데이터 추출 완료: {metadata}")
+
+        return CheckResponse(
+            is_annual_report=True,
+            confidence=check_result["confidence"],
+            metadata=metadata if metadata else None
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Annual Report 체크 중 오류: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"서버 오류: {str(e)}"
+        )
+    finally:
+        # 임시 파일 정리
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+                logger.info(f"🗑️  임시 파일 삭제: {temp_file_path}")
+            except Exception as cleanup_error:
+                logger.warning(f"임시 파일 삭제 실패: {cleanup_error}")
+
+
 def do_parsing_in_background(
     db,
     file_path: str,
@@ -88,17 +206,19 @@ def do_parsing_in_background(
             f"✅ Annual Report 확인됨 (confidence: {check_result['confidence']})"
         )
 
-        # 2. N페이지 동적 탐지 (1초)
-        logger.info("Step 2: N페이지 탐지 중...")
+        # 2. 1페이지 메타데이터 추출 (AI 불사용, 토큰 절약)
+        logger.info("Step 2: 1페이지 메타데이터 추출 중...")
+        metadata = extract_customer_info_from_first_page(file_path)
+        customer_name = metadata.get("customer_name")
+        logger.info(f"📄 메타데이터: {metadata}")
+
+        # 3. N페이지 동적 탐지 (1초)
+        logger.info("Step 3: N페이지 탐지 중...")
         end_page = find_contract_table_end_page(file_path)
-        logger.info(f"📄 계약 테이블 범위: 1 ~ {end_page + 1}페이지")
+        logger.info(f"📄 계약 테이블 범위: 2 ~ {end_page + 1}페이지 (1페이지 제외)")
 
-        # 3. 고객 정보 추출 (선택)
-        customer_info = extract_customer_info_from_first_page(file_path)
-        customer_name = customer_info.get("customer_name")
-
-        # 4. OpenAI API 파싱 (평균 25초)
-        logger.info("Step 3: OpenAI API 파싱 중 (약 25초 소요)...")
+        # 4. OpenAI API 파싱 (평균 25초, 2~N페이지만)
+        logger.info("Step 4: OpenAI API 파싱 중 (약 25초 소요, 2~N페이지만)...")
         result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
 
         # 5. 파싱 결과 확인
@@ -108,11 +228,12 @@ def do_parsing_in_background(
             return
 
         # 6. MongoDB 저장 (1초)
-        logger.info("Step 4: MongoDB 저장 중...")
+        logger.info("Step 5: MongoDB 저장 중...")
         save_result = save_annual_report(
             db=db,
             customer_id=customer_id,
             report_data=result,
+            metadata=metadata,  # 1페이지 메타데이터 전달
             source_file_id=file_id
         )
 
