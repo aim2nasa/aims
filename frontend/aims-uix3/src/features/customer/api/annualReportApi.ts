@@ -249,12 +249,13 @@ export class AnnualReportApi {
       const data = await response.json();
 
       if (response.ok && data.success !== false) {
+        // 백엔드 응답: { success: true, data: [...], count: 2, total: 2 }
         return {
           success: true,
           data: {
-            customer_id: data.customer_id || customerId,
-            reports: data.reports || [],
-            total_count: data.total_count || 0,
+            customer_id: customerId,
+            reports: data.data || [],  // data 배열을 reports로 매핑
+            total_count: data.total || data.count || 0,
           },
         };
       }
