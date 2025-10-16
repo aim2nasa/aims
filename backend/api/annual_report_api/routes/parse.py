@@ -194,7 +194,7 @@ async def parse_annual_report_endpoint(
         try:
             customer_oid = ObjectId(customer_id)
             logger.info(f"🔍 고객 검증 중: {customer_oid}")
-            logger.info(f"📊 DB 객체: {db}, 컬렉션: {db.customers if db else 'None'}")
+            logger.info(f"📊 DB 객체: {db}, 컬렉션: {db.customers}")
 
             # 전체 고객 수 확인
             total = db.customers.count_documents({})
@@ -214,7 +214,7 @@ async def parse_annual_report_endpoint(
             logger.error(f"잘못된 ObjectId 형식: {customer_id} - {e}")
             raise HTTPException(
                 status_code=400,
-                detail=f"잘못된 customer_id 형식: {customer_id}"
+                detail=f"잘못된 ObjectId 형식: {customer_id}"
             )
         except HTTPException:
             raise
