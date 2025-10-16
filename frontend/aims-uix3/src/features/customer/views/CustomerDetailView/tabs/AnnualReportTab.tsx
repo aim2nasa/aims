@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui/Button';
+import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
 import type { Customer } from '@/entities/customer/model';
@@ -19,6 +20,12 @@ interface AnnualReportTabProps {
   customer: Customer;
 }
 
+const ITEMS_PER_PAGE_OPTIONS = [
+  { value: '10', label: '10개씩' },
+  { value: '20', label: '20개씩' },
+  { value: '50', label: '50개씩' },
+];
+
 export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reports, setReports] = useState<AnnualReport[]>([]);
@@ -26,7 +33,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // 페이지네이션 상태
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState('10');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Annual Report 목록 로드
@@ -173,13 +180,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   }
 
   // 페이지네이션 계산
-  const totalPages = Math.max(1, Math.ceil(reports.length / itemsPerPage));
+  const itemsPerPageNumber = parseInt(itemsPerPage, 10);
+  const totalPages = Math.max(1, Math.ceil(reports.length / itemsPerPageNumber));
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
   // 현재 페이지에 표시할 리포트들
   const visibleReports = reports.slice(
-    (safeCurrentPage - 1) * itemsPerPage,
-    safeCurrentPage * itemsPerPage
+    (safeCurrentPage - 1) * itemsPerPageNumber,
+    safeCurrentPage * itemsPerPageNumber
   );
 
   // 페이지 변경 핸들러
@@ -196,7 +204,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   };
 
   const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value, 10));
+    setItemsPerPage(value);
     setCurrentPage(1);
   };
 
@@ -241,15 +249,12 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
       <div className="annual-report-pagination">
         {/* 페이지당 항목 수 선택 */}
         <div className="pagination-limit">
-          <select
-            className="items-per-page-select"
+          <Dropdown
             value={itemsPerPage}
-            onChange={(e) => handleItemsPerPageChange(e.target.value)}
-          >
-            <option value="10">10개씩</option>
-            <option value="20">20개씩</option>
-            <option value="50">50개씩</option>
-          </select>
+            options={ITEMS_PER_PAGE_OPTIONS}
+            onChange={handleItemsPerPageChange}
+            aria-label="페이지당 항목 수"
+          />
         </div>
 
         {/* 페이지 네비게이션 - 항상 표시 */}

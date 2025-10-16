@@ -327,43 +327,11 @@ html[data-theme="dark"] .annual-report-pagination {
   border-top-color: var(--color-ios-separator-subtle-dark);
 }
 
-/* 🍎 PAGINATION LIMIT - iOS Native Style */
+/* 🍎 PAGINATION LIMIT - Dropdown 컴포넌트 사용 */
 .pagination-limit {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.items-per-page-select {
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 400;
-  padding: 4px 24px 4px 8px;
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: 6px;
-  background: var(--color-ios-bg-primary-light);
-  color: var(--color-ios-text-primary-light);
-  cursor: pointer;
-  outline: none;
-  transition: all 0.15s ease-out;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-}
-
-html[data-theme="dark"] .items-per-page-select {
-  border-color: var(--color-ios-separator-dark);
-  background-color: var(--color-ios-bg-primary-dark);
-  color: var(--color-ios-text-primary-dark);
-}
-
-.items-per-page-select:hover {
-  border-color: var(--color-ios-interactive-light);
-}
-
-html[data-theme="dark"] .items-per-page-select:hover {
-  border-color: var(--color-ios-interactive-dark);
 }
 
 /* 🍎 PAGINATION CONTROLS - Center group */
