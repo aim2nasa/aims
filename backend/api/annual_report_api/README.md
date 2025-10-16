@@ -40,17 +40,60 @@ API_PORT=8081
 
 ### 3. 서버 실행
 
+#### 방법 1: 배포 스크립트 사용 (권장)
+
+```bash
+# 기존 프로세스 종료 + 새 프로세스 시작
+./deploy_annual_report_api.sh
+```
+
+이 스크립트는 자동으로:
+- 기존 실행 중인 프로세스 종료
+- 가상환경 확인 (없으면 생성)
+- 백그라운드로 새 프로세스 시작
+- 로그 파일에 출력 기록 (`logs/api.log`)
+
+**출력 예시:**
+```
+🚫 기존 프로세스 중지...
+   기존 프로세스 종료됨
+✅ 가상환경 확인 완료
+🚀 새 프로세스 시작...
+✅ Annual Report API 재배포 완료
+
+📊 프로세스 정보:
+  PID: 12345
+  포트: 8004
+
+📖 로그 확인:
+  tail -f logs/api.log
+
+📊 상태 확인:
+  ps aux | grep python | grep main.py
+
+🌍 헬스체크:
+  curl http://localhost:8004/health
+
+🛑 프로세스 종료:
+  pkill -f 'python.*main.py'
+```
+
+#### 방법 2: 직접 실행
+
 ```bash
 # 개발 모드 (자동 리로드)
 python main.py
 
 # 또는 uvicorn 직접 실행
-uvicorn main:app --host 0.0.0.0 --port 8081 --reload
+uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+
+# 백그라운드 실행
+nohup python main.py >> logs/api.log 2>&1 &
 ```
 
 서버가 시작되면 다음 URL에서 접근 가능:
-- API 문서: http://localhost:8081/docs
-- 헬스 체크: http://localhost:8081/health
+- API 문서: http://localhost:8004/docs
+- 헬스 체크: http://localhost:8004/health
 
 ## 🤖 자동 파싱 스크립트
 

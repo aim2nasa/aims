@@ -1,0 +1,71 @@
+#!/bin/bash
+# deploy_annual_report_api.sh
+# Annual Report API 프로세스 재배포 스크립트
+
+set -e  # 오류 발생 시 즉시 종료
+
+PROCESS_NAME="annual_report_api"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN_PY="$SCRIPT_DIR/main.py"
+VENV_PYTHON="$SCRIPT_DIR/venv/bin/python"
+LOG_DIR="$SCRIPT_DIR/logs"
+LOG_FILE="$LOG_DIR/api.log"
+
+# 로그 디렉토리 생성
+mkdir -p "$LOG_DIR"
+
+# 1. 기존 프로세스 중지
+echo "🚫 기존 프로세스 중지..."
+pkill -f "python.*$MAIN_PY" 2>/dev/null && echo "   기존 프로세스 종료됨" || echo "   실행 중인 프로세스 없음"
+
+# 잠시 대기 (프로세스 완전 종료 대기)
+sleep 2
+
+# 2. 가상환경 확인
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "⚠️  가상환경이 없습니다. 생성 중..."
+    cd "$SCRIPT_DIR"
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    echo "✅ 가상환경 생성 완료"
+else
+    echo "✅ 가상환경 확인 완료"
+fi
+
+# 3. 환경 변수 확인
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
+    echo "⚠️  .env 파일이 없습니다!"
+    echo "   다음 환경 변수를 설정해주세요:"
+    echo "   - MONGO_URI"
+    echo "   - DB_NAME"
+    echo "   - OPENAI_API_KEY"
+    echo "   - OPENAI_MODEL"
+    exit 1
+fi
+
+# 4. 새 프로세스 시작 (백그라운드)
+echo "🚀 새 프로세스 시작..."
+cd "$SCRIPT_DIR"
+
+# .env 파일 로드 후 실행
+nohup $VENV_PYTHON $MAIN_PY >> "$LOG_FILE" 2>&1 &
+PID=$!
+
+echo "✅ Annual Report API 재배포 완료"
+echo ""
+echo "📊 프로세스 정보:"
+echo "  PID: $PID"
+echo "  포트: 8004"
+echo ""
+echo "📖 로그 확인:"
+echo "  tail -f $LOG_FILE"
+echo ""
+echo "📊 상태 확인:"
+echo "  ps aux | grep python | grep $MAIN_PY"
+echo ""
+echo "🌍 헬스체크:"
+echo "  curl http://localhost:8004/health"
+echo ""
+echo "🛑 프로세스 종료:"
+echo "  pkill -f 'python.*$MAIN_PY'"
