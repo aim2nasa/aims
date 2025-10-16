@@ -118,10 +118,19 @@ async def health_check():
             "error": str(e)
         }
 
-# TODO: 라우터 등록 (Phase 3에서 구현)
-# from routes import parse, query
-# app.include_router(parse.router, prefix="/annual-report", tags=["Parse"])
-# app.include_router(query.router, prefix="/customers", tags=["Query"])
+# 라우터 등록
+from routes import parse, query
+
+app.include_router(
+    parse.router,
+    prefix="/annual-report",
+    tags=["Annual Report - Parse"]
+)
+
+app.include_router(
+    query.router,
+    tags=["Annual Report - Query"]
+)
 
 if __name__ == "__main__":
     import uvicorn
