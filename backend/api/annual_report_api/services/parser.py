@@ -7,8 +7,10 @@ import json
 import re
 import logging
 from typing import Dict, Optional
+import tempfile
 
 from openai import OpenAI
+from PyPDF2 import PdfReader, PdfWriter
 
 from config import settings
 
@@ -49,7 +51,36 @@ def clean_json_output(output_text: str) -> str:
     return cleaned.strip()
 
 
-def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None) -> Dict:
+def extract_pdf_pages(pdf_path: str, end_page: int) -> str:
+    """
+    PDF의 1~N페이지만 추출하여 임시 파일로 저장
+
+    Args:
+        pdf_path: 원본 PDF 파일 경로
+        end_page: 마지막 페이지 번호 (1-based, inclusive)
+
+    Returns:
+        str: 추출된 PDF의 임시 파일 경로
+    """
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+
+    # 1페이지부터 end_page까지 추출 (0-based index이므로 end_page는 그대로 사용)
+    for page_num in range(min(end_page, len(reader.pages))):
+        writer.add_page(reader.pages[page_num])
+
+    # 임시 파일 생성
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    temp_path = temp_file.name
+
+    with open(temp_path, 'wb') as output_file:
+        writer.write(output_file)
+
+    logger.info(f"📄 PDF 추출 완료: 1~{end_page}페이지 → {temp_path}")
+    return temp_path
+
+
+def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None, end_page: Optional[int] = None) -> Dict:
     """
     Annual Report PDF를 OpenAI API로 파싱
 
@@ -97,13 +128,21 @@ def parse_annual_report(pdf_path: str, customer_name: Optional[str] = None) -> D
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"PDF 파일을 찾을 수 없습니다: {pdf_path}")
 
+    extracted_pdf_path = None
     try:
         # OpenAI 클라이언트 가져오기
         ai_client = get_openai_client()
 
+        # 0. PDF 페이지 추출 (end_page가 있으면)
+        actual_pdf_path = pdf_path
+        if end_page and end_page > 0:
+            logger.info(f"📄 PDF 페이지 추출: 1~{end_page + 1}페이지만 사용 (토큰 절약)")
+            extracted_pdf_path = extract_pdf_pages(pdf_path, end_page + 1)
+            actual_pdf_path = extracted_pdf_path
+
         # 1. PDF 파일 업로드
         logger.info("📤 PDF 파일 업로드 중...")
-        with open(pdf_path, 'rb') as file:
+        with open(actual_pdf_path, 'rb') as file:
             uploaded_file = ai_client.files.create(
                 file=file,
                 purpose="assistants"
@@ -221,3 +260,11 @@ Rules:
             "error": f"파싱 실패: {str(e)}",
             "raw_output": ""
         }
+    finally:
+        # 임시 PDF 파일 정리
+        if extracted_pdf_path and os.path.exists(extracted_pdf_path):
+            try:
+                os.unlink(extracted_pdf_path)
+                logger.info(f"🗑️  임시 PDF 파일 삭제: {extracted_pdf_path}")
+            except Exception as cleanup_error:
+                logger.warning(f"임시 파일 삭제 실패: {cleanup_error}")

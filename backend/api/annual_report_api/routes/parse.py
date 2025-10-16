@@ -97,7 +97,7 @@ def do_parsing_in_background(
 
         # 4. OpenAI API 파싱 (평균 25초)
         logger.info("Step 3: OpenAI API 파싱 중 (약 25초 소요)...")
-        result = parse_annual_report(file_path, customer_name=customer_name)
+        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
 
         # 5. 파싱 결과 확인
         if "error" in result:
