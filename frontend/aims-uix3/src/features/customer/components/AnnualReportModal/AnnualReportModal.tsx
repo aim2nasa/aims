@@ -36,6 +36,12 @@ interface AnnualReportModalProps {
   customerName: string;
 }
 
+// 정렬 설정 타입
+type SortConfig = {
+  key: keyof InsuranceContract;
+  direction: 'asc' | 'desc';
+} | null;
+
 export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   isOpen,
   onClose,
@@ -49,6 +55,9 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // 정렬 상태
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   // 모달이 열릴 때 위치 초기화
   useEffect(() => {
@@ -129,6 +138,65 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
     }
   };
 
+  /**
+   * 정렬 핸들러 - 컬럼 클릭 시 오름차순/내림차순 토글
+   */
+  const handleSort = (key: keyof InsuranceContract) => {
+    let direction: 'asc' | 'desc' = 'asc';
+
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+
+    setSortConfig({ key, direction });
+  };
+
+  /**
+   * 정렬된 계약 목록 생성
+   */
+  const getSortedContracts = (contracts: InsuranceContract[]): InsuranceContract[] => {
+    if (!sortConfig) return contracts;
+
+    const sortedContracts = [...contracts];
+
+    sortedContracts.sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      // null/undefined 처리
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      // 숫자 비교
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // 문자열 비교
+      const aStr = String(aValue);
+      const bStr = String(bValue);
+      const comparison = aStr.localeCompare(bStr, 'ko-KR');
+
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
+    });
+
+    return sortedContracts;
+  };
+
+  /**
+   * 정렬 아이콘 렌더링
+   */
+  const renderSortIcon = (columnKey: keyof InsuranceContract) => {
+    if (!sortConfig || sortConfig.key !== columnKey) {
+      return <SFSymbol name="chevron.up.chevron.down" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} />;
+    }
+
+    return sortConfig.direction === 'asc'
+      ? <SFSymbol name="chevron.up" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} />
+      : <SFSymbol name="chevron.down" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} />;
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -199,21 +267,54 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               <thead>
                 <tr>
                   <th>순번</th>
-                  <th>보험사</th>
-                  <th>증권번호</th>
-                  <th>보험상품</th>
-                  <th>계약자</th>
-                  <th>피보험자</th>
-                  <th>계약일</th>
-                  <th>계약상태</th>
-                  <th>가입금액(만원)</th>
-                  <th>보험기간</th>
-                  <th>납입기간</th>
-                  <th>보험료(원)</th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insurance_company')}>
+                    <span>보험사</span>
+                    {renderSortIcon('insurance_company')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contract_number')}>
+                    <span>증권번호</span>
+                    {renderSortIcon('contract_number')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('product_name')}>
+                    <span>보험상품</span>
+                    {renderSortIcon('product_name')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contractor_name')}>
+                    <span>계약자</span>
+                    {renderSortIcon('contractor_name')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insured_name')}>
+                    <span>피보험자</span>
+                    {renderSortIcon('insured_name')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contract_date')}>
+                    <span>계약일</span>
+                    {renderSortIcon('contract_date')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('status')}>
+                    <span>계약상태</span>
+                    {renderSortIcon('status')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('coverage_amount')}>
+                    <span>가입금액(만원)</span>
+                    {renderSortIcon('coverage_amount')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insurance_period')}>
+                    <span>보험기간</span>
+                    {renderSortIcon('insurance_period')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('premium_payment_period')}>
+                    <span>납입기간</span>
+                    {renderSortIcon('premium_payment_period')}
+                  </th>
+                  <th className="contracts-table__th--sortable" onClick={() => handleSort('monthly_premium')}>
+                    <span>보험료(원)</span>
+                    {renderSortIcon('monthly_premium')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {report.contracts.map((contract: InsuranceContract, index: number) => (
+                {getSortedContracts(report.contracts).map((contract: InsuranceContract, index: number) => (
                   <tr key={index}>
                     <td className="contracts-table__cell--number">{index + 1}</td>
                     <td className="contracts-table__cell--company">{contract.insurance_company}</td>
