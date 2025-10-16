@@ -52,6 +52,65 @@ uvicorn main:app --host 0.0.0.0 --port 8081 --reload
 - API 문서: http://localhost:8081/docs
 - 헬스 체크: http://localhost:8081/health
 
+## 🤖 자동 파싱 스크립트
+
+MongoDB를 모니터링하여 새로 업로드된 Annual Report를 자동으로 파싱하는 독립 스크립트입니다.
+
+### 사용법
+
+```bash
+# 1. 한 번 실행 (최근 24시간 파일 처리)
+python auto_parse_annual_reports.py
+
+# 2. 특정 시간 범위 지정
+python auto_parse_annual_reports.py --hours 48
+
+# 3. 모든 파일 재처리
+python auto_parse_annual_reports.py --all
+
+# 4. 지속 모니터링 (30초마다 체크)
+python auto_parse_annual_reports.py --watch
+
+# 5. 지속 모니터링 (60초마다 체크)
+python auto_parse_annual_reports.py --watch --interval 60
+```
+
+### Cronjob 설정 (5분마다 자동 실행)
+
+**Linux/Mac:**
+```bash
+crontab -e
+
+# 다음 줄 추가
+*/5 * * * * cd /path/to/annual_report_api && python auto_parse_annual_reports.py >> logs/auto_parse.log 2>&1
+```
+
+**Windows Task Scheduler:**
+1. Task Scheduler 열기
+2. Create Basic Task → Trigger: Repeat every 5 minutes
+3. Action: Start a program
+   - Program: `D:\aims\backend\api\annual_report_api\venv\Scripts\python.exe`
+   - Arguments: `auto_parse_annual_reports.py`
+   - Start in: `D:\aims\backend\api\annual_report_api`
+
+### 로그 확인
+
+```bash
+tail -f logs/auto_parse.log
+```
+
+### 처리 상태 추적
+
+스크립트는 `annual_report_processing` 컬렉션에 처리 이력을 저장하여 중복 처리를 방지합니다.
+
+```javascript
+// MongoDB 쿼리: 처리 중인 파일 확인
+db.annual_report_processing.find({ status: "processing" })
+
+// 실패한 파일 확인
+db.annual_report_processing.find({ status: "failed" })
+```
+
 ## 📚 API 엔드포인트
 
 ### 기본 엔드포인트

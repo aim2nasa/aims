@@ -1735,6 +1735,170 @@ app.get('/api/address/search', async (req, res) => {
   }
 });
 
+// ==================== Annual Report API ====================
+
+/**
+ * Annual Report 파싱 요청 프록시 (Python FastAPI로 전달)
+ */
+app.post('/api/annual-report/parse', async (req, res) => {
+  try {
+    const { file_path, file_id, customer_id } = req.body;
+
+    console.log(`📄 [Annual Report] 파싱 요청 받음:`, {
+      file_path,
+      file_id,
+      customer_id
+    });
+
+    if (!file_path || !file_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'file_path와 file_id는 필수 파라미터입니다.'
+      });
+    }
+
+    // Python FastAPI (포트 8004)로 프록시
+    const pythonApiUrl = 'http://localhost:8004/annual-report/parse';
+
+    console.log(`🐍 Python FastAPI 호출: ${pythonApiUrl}`);
+
+    const response = await axios.post(pythonApiUrl, {
+      file_path,
+      file_id,
+      customer_id
+    }, {
+      timeout: 5000 // 백그라운드 처리이므로 5초 타임아웃
+    });
+
+    console.log(`✅ [Annual Report] Python API 응답:`, response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ [Annual Report] 파싱 요청 오류:', error.message);
+
+    // Python API 서버가 다운되었거나 응답 없음
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.',
+        error: 'Python FastAPI 서버가 실행 중이 아닙니다. (포트 8004)',
+        hint: 'cd backend/api/annual_report_api && python main.py'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Annual Report 파싱 요청 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Annual Report 파싱 상태 조회 프록시
+ */
+app.get('/api/annual-report/status/:file_id', async (req, res) => {
+  try {
+    const { file_id } = req.params;
+
+    console.log(`🔍 [Annual Report] 상태 조회 요청: ${file_id}`);
+
+    const pythonApiUrl = `http://localhost:8004/annual-report/status/${file_id}`;
+
+    const response = await axios.get(pythonApiUrl, {
+      timeout: 3000
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ [Annual Report] 상태 조회 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.',
+        error: 'Python FastAPI 서버가 실행 중이 아닙니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Annual Report 상태 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 고객의 Annual Reports 목록 조회 프록시
+ */
+app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { limit } = req.query;
+
+    console.log(`📋 [Annual Report] 고객 Annual Reports 조회: ${customerId}`);
+
+    const pythonApiUrl = `http://localhost:8004/customers/${customerId}/annual-reports`;
+
+    const response = await axios.get(pythonApiUrl, {
+      params: { limit },
+      timeout: 3000
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ [Annual Report] 조회 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Annual Report 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 고객의 최신 Annual Report 조회 프록시
+ */
+app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}`);
+
+    const pythonApiUrl = `http://localhost:8004/customers/${customerId}/annual-reports/latest`;
+
+    const response = await axios.get(pythonApiUrl, {
+      timeout: 3000
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ [Annual Report] 최신 조회 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: '최신 Annual Report 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
 // ==================== 주소 보관소 관리 API ====================
 
 /**
@@ -1909,6 +2073,12 @@ app.listen(PORT, '0.0.0.0', () => {
 
   console.log(`\n🏠 Address Search API:`);
   console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
+
+  console.log(`\n📊 Annual Report APIs:`);
+  console.log(`  POST /api/annual-report/parse - Annual Report 파싱 요청`);
+  console.log(`  GET  /api/annual-report/status/:file_id - 파싱 상태 조회`);
+  console.log(`  GET  /api/customers/:customerId/annual-reports - 고객 Annual Reports 목록`);
+  console.log(`  GET  /api/customers/:customerId/annual-reports/latest - 최신 Annual Report 조회`);
 
   console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
   console.log(`=============================================\n`);
