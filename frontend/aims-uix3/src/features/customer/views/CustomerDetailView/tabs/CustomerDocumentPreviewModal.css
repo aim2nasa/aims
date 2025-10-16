@@ -15,15 +15,17 @@
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-ios-bg-primary-light);
+  background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  opacity: 1;
 }
 
 [data-theme="dark"] .customer-document-preview {
-  background: var(--color-ios-bg-primary-dark);
+  background: #1f2937;
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+  opacity: 1;
 }
 
 .customer-document-preview__header {
@@ -69,11 +71,13 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: #f5f6f7;
+  opacity: 1;
 }
 
 [data-theme="dark"] .customer-document-preview__content {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: #374151;
+  opacity: 1;
 }
 
 .customer-document-preview__center {
