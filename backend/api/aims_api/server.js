@@ -1990,9 +1990,9 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
  * 고객의 최신 Annual Report 조회 프록시
  */
 app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => {
-  try {
-    const { customerId } = req.params;
+  const { customerId } = req.params; // catch 블록에서도 접근 가능하도록 밖으로 이동
 
+  try {
     console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}`);
 
     const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports/latest`;
@@ -2004,6 +2004,17 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
     res.json(response.data);
   } catch (error) {
     console.error('❌ [Annual Report] 최신 조회 오류:', error.message);
+
+    // 404는 정상 케이스 (데이터 없음) - 프론트엔드에 빈 데이터로 전달
+    if (error.response?.status === 404) {
+      return res.json({
+        success: true,
+        data: {
+          customer_id: customerId,
+          report: null
+        }
+      });
+    }
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
