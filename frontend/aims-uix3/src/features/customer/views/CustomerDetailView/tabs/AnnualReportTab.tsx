@@ -172,64 +172,22 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // Annual Report 목록 있음
   return (
     <div className="annual-report-tab">
-      <div className="annual-report-tab__header">
-        <h3 className="annual-report-tab__title">Annual Report 목록</h3>
-        <Button variant="secondary" size="sm" onClick={loadAnnualReports} leftIcon={<span>🔄</span>}>
-          새로고침
-        </Button>
-      </div>
-
-      {/* Annual Report 카드 목록 */}
-      <div className="annual-report-tab__list">
+      {/* Table List - 전체보기 스타일 */}
+      <div className="annual-report-list">
         {reports.map((report, index) => {
-          const isLatest = index === 0; // 첫 번째를 최신으로 간주
+          const isLatest = index === 0;
+          const formattedDate = report.issue_date.split('T')[0];
 
           return (
             <div
               key={report.report_id}
-              className={`annual-report-card ${isLatest ? 'annual-report-card--latest' : ''}`}
+              className={`annual-report-item ${isLatest ? 'annual-report-item--latest' : ''}`}
               onClick={() => handleViewReport(report)}
             >
-              {/* 카드 헤더 */}
-              <div className="annual-report-card__header">
-                <div className="annual-report-card__date">
-                  <span className="annual-report-card__date-icon">📊</span>
-                  <span className="annual-report-card__date-text">
-                    {AnnualReportApi.formatDate(report.issue_date)}
-                  </span>
-                </div>
-                {isLatest && <span className="annual-report-card__badge">최신</span>}
-              </div>
-
-              {/* 카드 내용 */}
-              <div className="annual-report-card__stats">
-                <div className="annual-report-card__stat">
-                  <span className="annual-report-card__stat-label">총 월 보험료</span>
-                  <span className="annual-report-card__stat-value annual-report-card__stat-value--premium">
-                    {AnnualReportApi.formatCurrency(report.total_monthly_premium)}
-                  </span>
-                </div>
-                <div className="annual-report-card__stat">
-                  <span className="annual-report-card__stat-label">총 보장금액</span>
-                  <span className="annual-report-card__stat-value annual-report-card__stat-value--coverage">
-                    {AnnualReportApi.formatCurrency(report.total_coverage)}
-                  </span>
-                </div>
-                <div className="annual-report-card__stat">
-                  <span className="annual-report-card__stat-label">계약 건수</span>
-                  <span className="annual-report-card__stat-value">
-                    {AnnualReportApi.formatContractCount(report.contract_count)}
-                  </span>
-                </div>
-              </div>
-
-              {/* 카드 푸터 */}
-              <div className="annual-report-card__footer">
-                <span className="annual-report-card__footer-text">
-                  클릭하여 상세 정보 보기
-                </span>
-                <span className="annual-report-card__footer-icon">→</span>
-              </div>
+              <div className="annual-report-item__date">{formattedDate}</div>
+              <div className="annual-report-item__premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>
+              <div className="annual-report-item__count">{report.contract_count}건</div>
+              {isLatest && <div className="annual-report-item__badge">최신</div>}
             </div>
           );
         })}
