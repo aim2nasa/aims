@@ -169,6 +169,7 @@ html[data-theme="dark"] .annual-report-table-header {
 .annual-report-table-header > div {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   min-width: 0;
 }
