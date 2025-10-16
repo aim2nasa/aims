@@ -182,7 +182,7 @@
   color: var(--color-accent);
 }
 
-/* ==================== Contracts List ==================== */
+/* ==================== Contracts Table ==================== */
 
 .annual-report-contracts__title {
   font-size: 16px;
@@ -191,7 +191,144 @@
   margin: 0 0 16px 0;
 }
 
-/* ==================== Contract Item ==================== */
+.contracts-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+}
+
+.contracts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1200px;
+}
+
+.contracts-table thead {
+  background: var(--color-bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.contracts-table th {
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.contracts-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+}
+
+.contracts-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.contracts-table tbody tr:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.contracts-table td {
+  padding: 10px 8px;
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+/* Cell Specific Styles */
+
+.contracts-table__cell--number {
+  text-align: center;
+  font-weight: 500;
+  width: 50px;
+}
+
+.contracts-table__cell--company {
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.contracts-table__cell--contract-number {
+  font-family: var(--font-mono, 'SF Mono', 'Courier New', monospace);
+  font-size: 12px;
+  min-width: 100px;
+}
+
+.contracts-table__cell--product {
+  min-width: 150px;
+  max-width: 200px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.contracts-table__cell--contractor,
+.contracts-table__cell--insured {
+  min-width: 70px;
+}
+
+.contracts-table__cell--date {
+  font-size: 12px;
+  min-width: 90px;
+}
+
+.contracts-table__cell--status {
+  text-align: center;
+  min-width: 70px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-badge.contract-item__status--active {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.status-badge.contract-item__status--inactive {
+  background: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.status-badge.contract-item__status--default {
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+}
+
+.contracts-table__cell--coverage {
+  text-align: right;
+  font-weight: 500;
+  color: var(--color-accent);
+  min-width: 80px;
+}
+
+.contracts-table__cell--period,
+.contracts-table__cell--payment {
+  font-size: 12px;
+  min-width: 70px;
+}
+
+.contracts-table__cell--premium {
+  text-align: right;
+  font-weight: 600;
+  min-width: 90px;
+}
+
+.contracts-table__cell--premium-highlight {
+  color: var(--color-primary);
+}
+
+/* ==================== Legacy Contract Item (for reference) ==================== */
 
 .contract-item {
   background: var(--color-bg-secondary);

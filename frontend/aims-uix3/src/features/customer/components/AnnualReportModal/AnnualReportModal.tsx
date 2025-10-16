@@ -131,93 +131,58 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                 </div>
               </div>
 
-              {/* Contracts List */}
+              {/* Contracts Table */}
               <div className="annual-report-contracts">
                 <h3 className="annual-report-contracts__title">
                   보험 계약 목록 ({report.contract_count}건)
                 </h3>
 
-                {report.contracts.map((contract: InsuranceContract, index: number) => (
-                  <div key={index} className="contract-item">
-                    {/* Contract Header */}
-                    <div className="contract-item__header">
-                      <div className="contract-item__company">
-                        {contract.insurance_company}
-                      </div>
-                      {contract.status && (
-                        <span className={`contract-item__status ${getStatusBadgeClass(contract.status)}`}>
-                          {contract.status}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Contract Body */}
-                    <div className="contract-item__body">
-                      <div className="contract-item__product">
-                        {contract.product_name}
-                      </div>
-                      <div className="contract-item__number">
-                        계약번호: {contract.contract_number}
-                      </div>
-                    </div>
-
-                    {/* Contract Details */}
-                    <div className="contract-item__details">
-                      <div className="contract-item__detail">
-                        <span className="contract-item__detail-label">월 보험료</span>
-                        <span className="contract-item__detail-value contract-item__detail-value--premium">
-                          {AnnualReportApi.formatCurrency(contract.monthly_premium)}
-                        </span>
-                      </div>
-                      <div className="contract-item__detail">
-                        <span className="contract-item__detail-label">보장금액</span>
-                        <span className="contract-item__detail-value contract-item__detail-value--coverage">
-                          {AnnualReportApi.formatCurrency(contract.coverage_amount)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Contract Dates */}
-                    <div className="contract-item__dates">
-                      <div className="contract-item__date">
-                        <span className="contract-item__date-label">계약일</span>
-                        <span className="contract-item__date-value">
-                          {AnnualReportApi.formatDate(contract.contract_date)}
-                        </span>
-                      </div>
-                      {contract.maturity_date && (
-                        <div className="contract-item__date">
-                          <span className="contract-item__date-label">만기일</span>
-                          <span className="contract-item__date-value">
-                            {AnnualReportApi.formatDate(contract.maturity_date)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Optional Fields */}
-                    {(contract.premium_payment_period || contract.insurance_period) && (
-                      <div className="contract-item__periods">
-                        {contract.premium_payment_period && (
-                          <div className="contract-item__period">
-                            <span className="contract-item__period-label">납입기간</span>
-                            <span className="contract-item__period-value">
-                              {contract.premium_payment_period}
+                <div className="contracts-table-wrapper">
+                  <table className="contracts-table">
+                    <thead>
+                      <tr>
+                        <th>순번</th>
+                        <th>보험사</th>
+                        <th>증권번호</th>
+                        <th>보험상품</th>
+                        <th>계약자</th>
+                        <th>피보험자</th>
+                        <th>계약일</th>
+                        <th>계약상태</th>
+                        <th>가입금액(만원)</th>
+                        <th>보험기간</th>
+                        <th>납입기간</th>
+                        <th>보험료(원)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {report.contracts.map((contract: InsuranceContract, index: number) => (
+                        <tr key={index}>
+                          <td className="contracts-table__cell--number">{index + 1}</td>
+                          <td className="contracts-table__cell--company">{contract.insurance_company}</td>
+                          <td className="contracts-table__cell--contract-number">{contract.contract_number}</td>
+                          <td className="contracts-table__cell--product">{contract.product_name}</td>
+                          <td className="contracts-table__cell--contractor">{contract.contractor_name || '-'}</td>
+                          <td className="contracts-table__cell--insured">{contract.insured_name || '-'}</td>
+                          <td className="contracts-table__cell--date">{contract.contract_date}</td>
+                          <td className="contracts-table__cell--status">
+                            <span className={`status-badge ${getStatusBadgeClass(contract.status)}`}>
+                              {contract.status || '-'}
                             </span>
-                          </div>
-                        )}
-                        {contract.insurance_period && (
-                          <div className="contract-item__period">
-                            <span className="contract-item__period-label">보험기간</span>
-                            <span className="contract-item__period-value">
-                              {contract.insurance_period}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                          </td>
+                          <td className="contracts-table__cell--coverage">
+                            {(contract.coverage_amount / 10000).toLocaleString('ko-KR')}
+                          </td>
+                          <td className="contracts-table__cell--period">{contract.insurance_period || '-'}</td>
+                          <td className="contracts-table__cell--payment">{contract.premium_payment_period || '-'}</td>
+                          <td className="contracts-table__cell--premium contracts-table__cell--premium-highlight">
+                            {contract.monthly_premium.toLocaleString('ko-KR')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Footer Info */}
