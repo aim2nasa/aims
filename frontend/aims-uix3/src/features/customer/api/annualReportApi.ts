@@ -109,6 +109,47 @@ export interface LatestAnnualReportResponse {
   error?: string;
 }
 
+/**
+ * Annual Report 체크 응답 (백엔드 /check API)
+ */
+export interface CheckAnnualReportResponse {
+  is_annual_report: boolean;
+  confidence: number;
+  metadata: {
+    customer_name: string;
+    report_title: string;
+    issue_date: string; // YYYY-MM-DD
+    fsr_name: string;
+  } | null;
+}
+
+/**
+ * Annual Report 파싱 요청 (백엔드 /parse API)
+ */
+export interface ParseAnnualReportRequest {
+  file: File;
+  customer_id: string;
+}
+
+/**
+ * Annual Report 파싱 응답 (백엔드 /parse API)
+ */
+export interface ParseAnnualReportApiResponse {
+  success: boolean;
+  message: string;
+  job_id?: string;
+  file_id?: string;
+}
+
+/**
+ * 고객 식별 결과
+ */
+export interface CustomerIdentificationResult {
+  scenario: 'single' | 'multiple' | 'none';
+  customers: any[]; // Customer 타입 (임포트 필요시 수정)
+  metadata: CheckAnnualReportResponse['metadata'];
+}
+
 // ==================== API 클래스 ====================
 
 export class AnnualReportApi {
@@ -296,5 +337,102 @@ export class AnnualReportApi {
    */
   static formatContractCount(count: number): string {
     return `${count}건`;
+  }
+
+  /**
+   * Annual Report 체크 API (백엔드 Python /check)
+   * - PDF가 Annual Report인지 판단
+   * - 1페이지 메타데이터 추출 (AI 불사용)
+   *
+   * @param file PDF 파일
+   * @returns Annual Report 체크 결과
+   */
+  static async checkAnnualReport(file: File): Promise<CheckAnnualReportResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://tars.giize.com:8081/annual-report/check', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('AnnualReportApi.checkAnnualReport:', error);
+      // 에러 시에도 is_annual_report: false로 반환 (조용히 실패)
+      return {
+        is_annual_report: false,
+        confidence: 0,
+        metadata: null,
+      };
+    }
+  }
+
+  /**
+   * Annual Report 파싱 API (백엔드 Python /parse)
+   * - 2~N페이지 AI 파싱 (백그라운드 처리)
+   * - customer_id 필수
+   *
+   * @param file PDF 파일
+   * @param customerId 고객 ID
+   * @returns 파싱 요청 응답 (즉시 반환)
+   */
+  static async parseAnnualReportFile(
+    file: File,
+    customerId: string
+  ): Promise<ParseAnnualReportApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('customer_id', customerId);
+
+      const response = await fetch('http://tars.giize.com:8081/annual-report/parse', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('AnnualReportApi.parseAnnualReportFile:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Annual Report 파싱 요청에 실패했습니다.',
+      };
+    }
+  }
+
+  /**
+   * 고객명으로 고객 검색
+   *
+   * @param name 고객명
+   * @returns 고객 목록
+   */
+  static async searchCustomersByName(name: string): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${ANNUAL_REPORT_API_URL}/customers?search=${encodeURIComponent(name)}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.customers || [];
+    } catch (error) {
+      console.error('AnnualReportApi.searchCustomersByName:', error);
+      return [];
+    }
   }
 }
