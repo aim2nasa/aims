@@ -11,7 +11,7 @@
 }
 
 .customer-document-preview {
-  width: min(960px, 92vw);
+  width: min(1400px, 95vw);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
