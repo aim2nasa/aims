@@ -325,7 +325,8 @@ export class AnnualReportApi {
    * @param amount 금액
    * @returns 포맷된 문자열 (예: "1,234,567원")
    */
-  static formatCurrency(amount: number): string {
+  static formatCurrency(amount: number | undefined | null): string {
+    if (amount === undefined || amount === null) return '-';
     return `${amount.toLocaleString('ko-KR')}원`;
   }
 
@@ -352,7 +353,8 @@ export class AnnualReportApi {
    * @param count 계약 건수
    * @returns 포맷된 문자열 (예: "3건")
    */
-  static formatContractCount(count: number): string {
+  static formatContractCount(count: number | undefined | null): string {
+    if (count === undefined || count === null) return '-';
     return `${count}건`;
   }
 

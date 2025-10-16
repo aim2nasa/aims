@@ -166,7 +166,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         </div>
 
         {/* 계약 미리보기 (처음 3개만) */}
-        {latestReport.contracts.length > 0 && (
+        {latestReport.contracts && latestReport.contracts.length > 0 && (
           <div className="annual-report-tab__preview">
             <h4 className="annual-report-tab__preview-title">계약 미리보기</h4>
             {latestReport.contracts.slice(0, 3).map((contract, index) => (
