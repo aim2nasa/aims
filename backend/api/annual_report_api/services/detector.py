@@ -148,11 +148,18 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
         result = {}
         import re
 
-        # 1. 고객명 추출 (예: "고객님: 안영미")
-        customer_pattern = r"고객님[:\s]*([가-힣]{2,4})"
-        customer_match = re.search(customer_pattern, first_page_text)
-        if customer_match:
-            result["customer_name"] = customer_match.group(1).strip()
+        # 1. 고객명 추출
+        # 패턴 1: "안영미 고객님을 위한" (이름이 앞에 오는 경우)
+        customer_pattern1 = r"([가-힣]{2,4})\s*고객님을\s*위한"
+        customer_match1 = re.search(customer_pattern1, first_page_text)
+        if customer_match1:
+            result["customer_name"] = customer_match1.group(1).strip()
+        else:
+            # 패턴 2: "고객님: 안영미" (이름이 뒤에 오는 경우)
+            customer_pattern2 = r"고객님[:\s]*([가-힣]{2,4})"
+            customer_match2 = re.search(customer_pattern2, first_page_text)
+            if customer_match2:
+                result["customer_name"] = customer_match2.group(1).strip()
 
         # 2. Report 제목 추출 (예: "Annual Review Report")
         title_pattern = r"(Annual\s+Review\s+Report)"
@@ -174,11 +181,19 @@ def extract_customer_info_from_first_page(pdf_path: str) -> Dict[str, str]:
             # YYYY-MM-DD 형식으로 변환
             result["issue_date"] = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-        # 4. FSR 이름 추출 (예: "FSR: 홍길동" 또는 "담당자: 홍길동")
-        fsr_pattern = r"(?:FSR|담당자|설계사)[:\s]*([가-힣]{2,4})"
-        fsr_match = re.search(fsr_pattern, first_page_text)
-        if fsr_match:
-            result["fsr_name"] = fsr_match.group(1).strip()
+        # 4. FSR 이름 추출
+        # 패턴 1: "송 유 미\nFSR" (이름이 FSR 위에 있는 경우, 공백 포함)
+        fsr_pattern1 = r"([가-힣]\s*[가-힣]\s*[가-힣])\s*\n\s*FSR"
+        fsr_match1 = re.search(fsr_pattern1, first_page_text)
+        if fsr_match1:
+            # 공백 제거: "송 유 미" -> "송유미"
+            result["fsr_name"] = fsr_match1.group(1).replace(" ", "").strip()
+        else:
+            # 패턴 2: "FSR: 홍길동" 또는 "담당자: 홍길동" (이름이 FSR 뒤에 있는 경우)
+            fsr_pattern2 = r"(?:FSR|담당자|설계사)[:\s]*([가-힣]{2,4})"
+            fsr_match2 = re.search(fsr_pattern2, first_page_text)
+            if fsr_match2:
+                result["fsr_name"] = fsr_match2.group(1).strip()
 
         logger.info(f"📄 1페이지 메타데이터 추출: {result}")
         return result

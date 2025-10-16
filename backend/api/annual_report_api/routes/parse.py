@@ -190,36 +190,53 @@ def do_parsing_in_background(
     logger.info(f"🚀 백그라운드 파싱 시작: file_id={file_id}, customer_id={customer_id}")
 
     try:
-        # 1. Annual Report 판단 (1초)
-        logger.info("Step 1: Annual Report 판단 중...")
-        check_result = is_annual_report(file_path)
+        # ⚠️ customer_id가 제공되면 프론트엔드에서 이미 Annual Report 검증을 했다고 간주
+        # (한글 파일명 인코딩 문제로 백엔드 체크가 실패할 수 있음)
+        if customer_id:
+            logger.info("✅ customer_id 제공됨 - Annual Report 체크 건너뛰기 (프론트엔드에서 검증 완료)")
+        else:
+            # 1. Annual Report 판단 (1초)
+            logger.info("Step 1: Annual Report 판단 중...")
+            check_result = is_annual_report(file_path)
 
-        if not check_result["is_annual_report"]:
-            logger.warning(
-                f"⚠️  Annual Report 아님 (confidence: {check_result['confidence']}): "
-                f"{check_result['reason']}"
+            if not check_result["is_annual_report"]:
+                logger.warning(
+                    f"⚠️  Annual Report 아님 (confidence: {check_result['confidence']}): "
+                    f"{check_result['reason']}"
+                )
+                # TODO: 파일 메타데이터에 is_annual_report=False 기록
+                return
+
+            logger.info(
+                f"✅ Annual Report 확인됨 (confidence: {check_result['confidence']})"
             )
-            # TODO: 파일 메타데이터에 is_annual_report=False 기록
-            return
-
-        logger.info(
-            f"✅ Annual Report 확인됨 (confidence: {check_result['confidence']})"
-        )
 
         # 2. 1페이지 메타데이터 추출 (AI 불사용, 토큰 절약)
         logger.info("Step 2: 1페이지 메타데이터 추출 중...")
         metadata = extract_customer_info_from_first_page(file_path)
+
+        # ⚠️ customer_id가 제공되면 DB에서 실제 고객명 가져오기 (OCR 오류 방지)
+        if customer_id:
+            from bson import ObjectId
+            customer = db.customers.find_one({"_id": ObjectId(customer_id)})
+            if customer:
+                actual_customer_name = customer.get('personal_info', {}).get('name')
+                if actual_customer_name:
+                    logger.info(f"✅ DB에서 실제 고객명 사용: {actual_customer_name} (OCR: {metadata.get('customer_name')})")
+                    metadata["customer_name"] = actual_customer_name
+
         customer_name = metadata.get("customer_name")
         logger.info(f"📄 메타데이터: {metadata}")
 
         # 3. N페이지 동적 탐지 (1초)
         logger.info("Step 3: N페이지 탐지 중...")
-        end_page = find_contract_table_end_page(file_path)
-        logger.info(f"📄 계약 테이블 범위: 2 ~ {end_page + 1}페이지 (1페이지 제외)")
+        end_page_0indexed = find_contract_table_end_page(file_path)  # 0-indexed 반환 (예: 2 = 3페이지)
+        end_page_1indexed = end_page_0indexed + 1  # 1-based로 변환 (예: 3 = 3페이지)
+        logger.info(f"📄 계약 테이블 범위: 2 ~ {end_page_1indexed}페이지 (1페이지 제외)")
 
         # 4. OpenAI API 파싱 (평균 25초, 2~N페이지만)
         logger.info("Step 4: OpenAI API 파싱 중 (약 25초 소요, 2~N페이지만)...")
-        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page)
+        result = parse_annual_report(file_path, customer_name=customer_name, end_page=end_page_1indexed)
 
         # 5. 파싱 결과 확인
         if "error" in result:

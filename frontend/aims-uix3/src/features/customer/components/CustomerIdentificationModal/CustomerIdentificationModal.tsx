@@ -9,7 +9,7 @@
  * - 고객 없음: 신규 생성 안내
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
@@ -38,9 +38,22 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   onCustomerSelected,
   fileName,
 }) => {
+  console.log('[CustomerIdentificationModal] 🔍 받은 고객 목록:', customers);
+  console.log('[CustomerIdentificationModal] 🔍 첫 번째 고객:', customers[0]);
+  console.log('[CustomerIdentificationModal] 🔍 첫 번째 고객 _id:', customers[0]?._id);
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(
     customers.length === 1 ? customers[0]?._id || '' : ''
   );
+
+  // ✅ customers prop이 변경될 때 selectedCustomerId 업데이트
+  useEffect(() => {
+    if (customers.length === 1) {
+      const customerId = customers[0]?._id || '';
+      console.log('[CustomerIdentificationModal] useEffect - customerId 설정:', customerId);
+      setSelectedCustomerId(customerId);
+    }
+  }, [customers]);
 
   if (!isOpen) return null;
 
@@ -48,8 +61,12 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   const scenario = customers.length === 1 ? 'single' : customers.length > 1 ? 'multiple' : 'none';
 
   const handleConfirm = () => {
-    if (scenario === 'single' || (scenario === 'multiple' && selectedCustomerId)) {
-      onCustomerSelected(selectedCustomerId);
+    // ⚠️ 중요: selectedCustomerId를 즉시 복사 (state 초기화 전에)
+    const customerIdToSend = selectedCustomerId;
+    console.log('[CustomerIdentificationModal] 🚀 확인 버튼 클릭, customerId:', customerIdToSend);
+
+    if (scenario === 'single' || (scenario === 'multiple' && customerIdToSend)) {
+      onCustomerSelected(customerIdToSend);
     }
   };
 
