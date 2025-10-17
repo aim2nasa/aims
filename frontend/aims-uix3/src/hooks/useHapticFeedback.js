@@ -57,6 +57,11 @@ export function useHapticFeedback() {
 
   // 시스템 설정 감지
   useEffect(() => {
+    // 브라우저 환경 체크
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
+
     // 모션 감소 설정 감지
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setIsReducedMotion(motionQuery.matches);
@@ -158,6 +163,11 @@ export function useHapticFeedback() {
    * @param {number} intensity - 강도
    */
   const triggerVisualHaptic = (type, intensity) => {
+    // 브라우저 환경 체크
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     // CSS 애니메이션을 통한 시각적 피드백
     document.documentElement.style.setProperty(
       '--haptic-intensity',
@@ -167,9 +177,14 @@ export function useHapticFeedback() {
     document.body.classList.add(`haptic-${type}`);
 
     // 햅틱 지속시간 후 클래스 제거
-    setTimeout(() => {
-      document.body.classList.remove(`haptic-${type}`);
+    const timerId = setTimeout(() => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove(`haptic-${type}`);
+      }
     }, HAPTIC_CONFIG[type].duration);
+
+    // 타이머 ID 반환 (필요시 정리용)
+    return timerId;
   };
 
   /**
@@ -220,9 +235,11 @@ export function useHapticFeedback() {
     setIsHapticEnabled(enabled);
     setHapticIntensity(intensity);
 
-    // 설정 저장
-    localStorage.setItem('aims-haptic-enabled', JSON.stringify(enabled));
-    localStorage.setItem('aims-haptic-intensity', intensity.toString());
+    // 설정 저장 (브라우저 환경에서만)
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('aims-haptic-enabled', JSON.stringify(enabled));
+      localStorage.setItem('aims-haptic-intensity', intensity.toString());
+    }
 
     console.log(`[Haptic] 설정 업데이트 - 활성화: ${enabled}, 강도: ${intensity}`);
   }, [hapticIntensity]);
@@ -269,6 +286,11 @@ export function useHapticFeedback() {
  * App.js에서 한 번만 호출
  */
 export function initializeHapticStyles() {
+  // 브라우저 환경 체크
+  if (typeof document === 'undefined') {
+    return;
+  }
+
   const style = document.createElement('style');
   style.textContent = `
     /* 햅틱 피드백 시각적 표현 */
