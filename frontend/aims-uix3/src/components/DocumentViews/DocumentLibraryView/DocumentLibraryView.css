@@ -384,12 +384,17 @@ html[data-theme="dark"] .document-item:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
-  height: 12px;
+  min-width: 18px;
+  height: 14px;
+  padding: 0 3px;
   background-color: var(--color-primary-500);
-  border-radius: 50%;
+  border-radius: 6px;
   border: 1.5px solid var(--color-ios-bg-primary-light);
   color: white;
+  font-size: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   transition: all 0.2s ease-out;
 }
 

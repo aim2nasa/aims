@@ -410,12 +410,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     {document.is_annual_report && (
                       <Tooltip content="Annual Report">
                         <div className="document-ar-badge">
-                          <SFSymbol
-                            name="chart.bar.doc.horizontal.fill"
-                            size={SFSymbolSize.CAPTION_2}
-                            weight={SFSymbolWeight.SEMIBOLD}
-                            decorative={true}
-                          />
+                          AR
                         </div>
                       </Tooltip>
                     )}
