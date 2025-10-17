@@ -2033,6 +2033,58 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
   }
 });
 
+/**
+ * 고객의 Annual Reports 삭제 프록시
+ */
+app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { indices } = req.body;
+
+    console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, indices=${JSON.stringify(indices)}`);
+
+    if (!indices || !Array.isArray(indices) || indices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '삭제할 항목을 선택해주세요'
+      });
+    }
+
+    const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports`;
+
+    const response = await axios.delete(pythonApiUrl, {
+      data: { indices },
+      timeout: 5000
+    });
+
+    console.log(`✅ [Annual Report] 삭제 완료:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Annual Report] 삭제 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        success: false,
+        message: error.response.data?.message || '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Annual Report 삭제 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
 // ==================== 주소 보관소 관리 API ====================
 
 /**

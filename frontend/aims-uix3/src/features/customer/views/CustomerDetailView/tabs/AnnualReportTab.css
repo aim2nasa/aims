@@ -14,6 +14,15 @@
   min-height: 400px;
 }
 
+/* ==================== Actions (Delete Button) ==================== */
+
+.annual-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
 /* ==================== States (Loading, Error, Empty) ==================== */
 
 .annual-report-tab__loading {
@@ -142,7 +151,7 @@
 
 .annual-report-table-header {
   display: grid;
-  grid-template-columns: 110px 160px 1fr 100px 80px;
+  grid-template-columns: 40px 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -215,7 +224,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 .annual-report-row {
   display: grid;
-  grid-template-columns: 110px 160px 1fr 100px 80px;
+  grid-template-columns: 40px 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -260,6 +269,35 @@ html[data-theme="dark"] .annual-report-row:hover {
 
 html[data-theme="dark"] .annual-report-row--latest {
   background: var(--color-ios-bg-selected-dark);
+}
+
+.annual-report-row--selected {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+html[data-theme="dark"] .annual-report-row--selected {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* ==================== 🍎 CHECKBOX CELLS ==================== */
+
+.header-checkbox,
+.row-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-checkbox {
+  cursor: pointer;
+}
+
+.header-checkbox input[type="checkbox"],
+.row-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
 }
 
 /* ==================== 🍎 ROW CELLS ==================== */

@@ -263,3 +263,103 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
             "message": f"조회 실패: {str(e)}",
             "data": []
         }
+
+
+def delete_annual_reports(
+    db,
+    customer_id: str,
+    report_indices: list[int]
+) -> Dict[str, any]:
+    """
+    고객의 Annual Reports 삭제 (배열 인덱스 기반)
+
+    Args:
+        db: MongoDB database 객체
+        customer_id: 고객 ObjectId (문자열)
+        report_indices: 삭제할 리포트의 인덱스 리스트 (최신순 기준)
+
+    Returns:
+        dict: {
+            "success": bool,
+            "message": str,
+            "deleted_count": int
+        }
+    """
+    logger.info(f"Annual Reports 삭제: customer_id={customer_id}, indices={report_indices}")
+
+    try:
+        # ObjectId 변환
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except Exception as e:
+            raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
+
+        # 고객 조회
+        customers_collection = db["customers"]
+        customer = customers_collection.find_one(
+            {"_id": customer_obj_id},
+            {"annual_reports": 1}
+        )
+
+        if not customer:
+            logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
+            return {
+                "success": False,
+                "message": "고객을 찾을 수 없습니다",
+                "deleted_count": 0
+            }
+
+        # annual_reports 배열 가져오기
+        reports = customer.get("annual_reports", [])
+
+        # 최신순 정렬 (uploaded_at 기준)
+        sorted_reports = sorted(
+            reports,
+            key=lambda r: r.get("uploaded_at", datetime.min),
+            reverse=True
+        )
+
+        # 삭제할 리포트 선택
+        reports_to_keep = [
+            report for idx, report in enumerate(sorted_reports)
+            if idx not in report_indices
+        ]
+
+        # 고객 문서 업데이트 (annual_reports 배열 교체)
+        result = customers_collection.update_one(
+            {"_id": customer_obj_id},
+            {"$set": {"annual_reports": reports_to_keep}}
+        )
+
+        deleted_count = len(reports) - len(reports_to_keep)
+
+        if result.modified_count > 0:
+            logger.info(f"✅ Annual Reports 삭제 성공: {deleted_count}건")
+            return {
+                "success": True,
+                "message": f"{deleted_count}건의 Annual Report가 삭제되었습니다",
+                "deleted_count": deleted_count
+            }
+        else:
+            logger.warning(f"⚠️  삭제할 항목이 없거나 변경사항이 없습니다")
+            return {
+                "success": False,
+                "message": "삭제할 항목이 없거나 변경사항이 없습니다",
+                "deleted_count": 0
+            }
+
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise
+
+    except PyMongoError as e:
+        logger.error(f"❌ MongoDB 오류: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"❌ Annual Reports 삭제 중 오류: {e}")
+        return {
+            "success": False,
+            "message": f"삭제 실패: {str(e)}",
+            "deleted_count": 0
+        }

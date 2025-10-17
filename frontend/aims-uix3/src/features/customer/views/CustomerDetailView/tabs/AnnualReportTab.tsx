@@ -35,6 +35,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // 페이지네이션 상태
   const [itemsPerPage, setItemsPerPage] = useState('10');
   const [currentPage, setCurrentPage] = useState(1);
+  // 삭제 기능 상태
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -99,6 +102,64 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedReport(null);
+  };
+
+  // 체크박스 전체 선택/해제
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIndices = new Set(visibleReports.map((_, idx) => (currentPage - 1) * parseInt(itemsPerPage) + idx));
+      setSelectedIndices(allIndices);
+    } else {
+      setSelectedIndices(new Set());
+    }
+  };
+
+  // 개별 체크박스 선택/해제
+  const handleSelectReport = (globalIndex: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // 행 클릭 이벤트 방지
+    setSelectedIndices((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(globalIndex)) {
+        newSet.delete(globalIndex);
+      } else {
+        newSet.add(globalIndex);
+      }
+      return newSet;
+    });
+  };
+
+  // Annual Reports 삭제
+  const handleDeleteSelected = async () => {
+    if (selectedIndices.size === 0) {
+      alert('삭제할 항목을 선택해주세요.');
+      return;
+    }
+
+    const confirmMessage = `선택한 ${selectedIndices.size}개의 Annual Report를 삭제하시겠습니까?`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const result = await AnnualReportApi.deleteAnnualReports(
+        customer._id,
+        Array.from(selectedIndices)
+      );
+
+      if (result.success) {
+        alert(result.message);
+        setSelectedIndices(new Set());
+        await loadAnnualReports(); // 목록 새로고침
+      } else {
+        alert(`삭제 실패: ${result.message}`);
+      }
+    } catch (err) {
+      alert('Annual Report 삭제 중 오류가 발생했습니다.');
+      console.error('Delete error:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // 로딩 상태
@@ -187,13 +248,41 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
     setCurrentPage(1);
   };
 
+  // 전체 선택 여부 (현재 페이지 기준)
+  const isAllSelected = visibleReports.length > 0 && visibleReports.every((_, idx) => {
+    const globalIndex = (safeCurrentPage - 1) * itemsPerPageNumber + idx;
+    return selectedIndices.has(globalIndex);
+  });
+
   // Annual Report 목록 있음
   return (
     <div className="annual-report-tab">
+      {/* 삭제 버튼 */}
+      {selectedIndices.size > 0 && (
+        <div className="annual-report-actions">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteSelected}
+            disabled={isDeleting}
+          >
+            {isDeleting ? '삭제 중...' : `선택 항목 삭제 (${selectedIndices.size})`}
+          </Button>
+        </div>
+      )}
+
       {/* 테이블 컨테이너 */}
       <div className="annual-report-table-container">
         {/* 테이블 헤더 */}
         <div className="annual-report-table-header">
+          <div className="header-checkbox">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={handleSelectAll}
+              aria-label="전체 선택"
+            />
+          </div>
           <div className="header-issue-date">발행일</div>
           <div className="header-parsed-at">파싱일시</div>
           <div className="header-premium">총 월보험료</div>
@@ -204,15 +293,25 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         {/* 테이블 바디 */}
         <div className="annual-report-table-body">
           {visibleReports.map((report) => {
-            const isLatest = reports.indexOf(report) === 0;
+            const globalIndex = reports.indexOf(report);
+            const isLatest = globalIndex === 0;
             const formattedDate = report.issue_date.split('T')[0];
+            const isSelected = selectedIndices.has(globalIndex);
 
             return (
               <div
                 key={report.report_id}
-                className={`annual-report-row ${isLatest ? 'annual-report-row--latest' : ''}`}
+                className={`annual-report-row ${isLatest ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''}`}
                 onClick={() => handleViewReport(report)}
               >
+                <div className="row-checkbox" onClick={(e) => handleSelectReport(globalIndex, e)}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => {}}
+                    aria-label={`${formattedDate} 리포트 선택`}
+                  />
+                </div>
                 <div className="row-issue-date">{formattedDate}</div>
                 <div className="row-parsed-at">{AnnualReportApi.formatDateTime(report.parsed_at)}</div>
                 <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>

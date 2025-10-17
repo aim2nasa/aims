@@ -483,4 +483,47 @@ export class AnnualReportApi {
       return [];
     }
   }
+
+  /**
+   * Annual Reports 삭제 (복수 선택 가능)
+   *
+   * @param customerId 고객 ID
+   * @param indices 삭제할 리포트 인덱스 배열 (최신순 기준)
+   * @returns 삭제 결과
+   */
+  static async deleteAnnualReports(
+    customerId: string,
+    indices: number[]
+  ): Promise<{ success: boolean; message: string; deleted_count?: number }> {
+    try {
+      const response = await fetch(
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ indices }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return {
+          success: true,
+          message: data.message || 'Annual Reports가 삭제되었습니다',
+          deleted_count: data.deleted_count,
+        };
+      }
+
+      throw new Error(data.message || 'Annual Reports 삭제에 실패했습니다');
+    } catch (error) {
+      console.error('AnnualReportApi.deleteAnnualReports:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다',
+      };
+    }
+  }
 }
