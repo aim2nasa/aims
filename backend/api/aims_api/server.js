@@ -393,7 +393,8 @@ app.get('/api/documents', async (req, res) => {
         uploadTime: doc.upload?.uploaded_at || doc.createdAt,
         status: status,
         progress: progress,
-        filePath: doc.upload?.destPath
+        filePath: doc.upload?.destPath,
+        is_annual_report: doc.is_annual_report
       };
     });
 
