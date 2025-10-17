@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
     proxy: {
+      // API 요청을 백엔드 서버로 프록시
       '/api': {
         target: 'http://tars.giize.com:3010',
         changeOrigin: true

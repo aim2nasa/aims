@@ -101,7 +101,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           setDocuments([])
         }
       } finally {
-        if (isInitialLoad) {
+        if (isInitialLoad && typeof window !== 'undefined') {
           setLoading(false)
         }
       }
