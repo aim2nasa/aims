@@ -13,6 +13,8 @@ import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
+import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
+import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import type { Customer } from '@/entities/customer/model';
 import './AnnualReportTab.css';
 
@@ -38,6 +40,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // 삭제 기능 상태
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Apple Confirm Modal 컨트롤러
+  const confirmModal = useAppleConfirmController();
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -131,12 +136,27 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // Annual Reports 삭제
   const handleDeleteSelected = async () => {
     if (selectedIndices.size === 0) {
-      alert('삭제할 항목을 선택해주세요.');
+      await confirmModal.actions.openModal({
+        title: '선택 항목 없음',
+        message: '삭제할 항목을 선택해주세요.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'warning'
+      });
       return;
     }
 
-    const confirmMessage = `선택한 ${selectedIndices.size}개의 Annual Report를 삭제하시겠습니까?`;
-    if (!confirm(confirmMessage)) {
+    const confirmed = await confirmModal.actions.openModal({
+      title: 'Annual Report 삭제',
+      message: `${selectedIndices.size}개 항목을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'warning'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -147,18 +167,40 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         Array.from(selectedIndices)
       );
 
+      // 삭제 작업 완료 후 즉시 isDeleting을 false로 설정
+      setIsDeleting(false);
+
       if (result.success) {
-        alert(result.message);
         setSelectedIndices(new Set());
         await loadAnnualReports(); // 목록 새로고침
+
+        // 성공 모달은 마지막에 표시
+        await confirmModal.actions.openModal({
+          title: '완료',
+          message: `${result.deleted_count}건 삭제되었습니다.`,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'success'
+        });
       } else {
-        alert(`삭제 실패: ${result.message}`);
+        await confirmModal.actions.openModal({
+          title: '실패',
+          message: result.message,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'error'
+        });
       }
     } catch (err) {
-      alert('Annual Report 삭제 중 오류가 발생했습니다.');
-      console.error('Delete error:', err);
-    } finally {
       setIsDeleting(false);
+      await confirmModal.actions.openModal({
+        title: '오류',
+        message: '삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error'
+      });
+      console.error('Delete error:', err);
     }
   };
 
@@ -373,6 +415,12 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         isLoading={false}
         error={null}
         customerName={customer.personal_info?.name || '고객'}
+      />
+
+      {/* Apple Confirm Modal */}
+      <AppleConfirmModal
+        state={confirmModal.state}
+        actions={confirmModal.actions}
       />
     </div>
   );

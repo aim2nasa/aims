@@ -243,15 +243,7 @@ export const useAppleConfirmController = () => {
               shouldRender: true
             }
           }
-          if (prev.isOpen && !prev.isAnimating) {
-            console.warn('🔒 Modal animation lost, restoring...')
-            return {
-              ...prev,
-              isOpen: true,
-              isAnimating: true,
-              shouldRender: true
-            }
-          }
+          // isAnimating false는 정상적인 닫기 과정이므로 복원하지 않음
           return prev
         })
       }, 500) // 더 빠른 복원을 위해 500ms로 단축
