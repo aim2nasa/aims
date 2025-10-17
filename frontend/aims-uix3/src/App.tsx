@@ -441,25 +441,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 브라우저 리사이즈 상태 관리
   const [isResizing, setIsResizing] = useState(false)
   const [resizeTimer, setResizeTimer] = useState<NodeJS.Timeout | null>(null)
-  const [forceUpdate, setForceUpdate] = useState(0)
 
   // 브라우저 리사이즈 이벤트 핸들러
   useEffect(() => {
     const handleResize = () => {
       setIsResizing(true)
-
-      // 모달 상태 보호: 모달이 열려있거나 클릭 보호 중일 때는 리마운트 지연
-      if (!modalStateRef.current && !modalClickProtection) {
-        // 즉시 레이아웃 강제 업데이트 (Gap 계산 포함)
-        setForceUpdate(prev => prev + 1)
-      } else {
-        // 모달 상태 보호를 위해 리마운트를 지연
-        setTimeout(() => {
-          if (!modalStateRef.current && !modalClickProtection) {
-            setForceUpdate(prev => prev + 1)
-          }
-        }, 100)
-      }
 
       // 기존 타이머가 있으면 클리어
       if (resizeTimer) {
@@ -482,7 +468,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         clearTimeout(resizeTimer)
       }
     }
-  }, [resizeTimer, modalClickProtection])
+  }, [resizeTimer])
 
   // 이벤트 핸들러들 메모이제이션 (성능 최적화, 기존 동작 보존)
   const toggleHeader = useCallback(() => setHeaderVisible(prev => !prev), [])
@@ -729,7 +715,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   return (
     <div
-      key={forceUpdate} // 브라우저 리사이즈 시 강제 리렌더링
       className="layout-main"
       style={{
         width: '100vw',
