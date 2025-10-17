@@ -116,6 +116,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
 
   // 🍎 삭제 기능 상태
+  const [isDeleteMode, setIsDeleteMode] = React.useState(false) // 삭제 모드 토글
   const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = React.useState(false)
 
@@ -237,6 +238,15 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     })
   }, [])
 
+  // 🍎 삭제 모드 토글 핸들러
+  const handleToggleDeleteMode = React.useCallback(() => {
+    if (isDeleteMode) {
+      // 삭제 모드 종료 시 선택 초기화
+      setSelectedDocumentIds(new Set())
+    }
+    setIsDeleteMode(!isDeleteMode)
+  }, [isDeleteMode])
+
   // 🍎 문서 삭제 핸들러
   const handleDeleteSelected = React.useCallback(async () => {
     if (selectedDocumentIds.size === 0) {
@@ -272,6 +282,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
       if (result.success) {
         setSelectedDocumentIds(new Set())
+        setIsDeleteMode(false) // 삭제 완료 후 삭제 모드 종료
         await loadDocuments(searchParams, true) // 목록 새로고침
 
         await confirmModal.actions.openModal({
@@ -357,7 +368,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       marginBottom={6}
       marginLeft={6}
       marginRight={6}
-      className="document-library-view"
+      className={`document-library-view ${isDeleteMode ? 'document-library-view--delete-mode' : ''}`}
     >
       <div className="document-library-container">
         {/* 검색 바 */}
@@ -393,6 +404,16 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               </button>
             )}
           </div>
+
+          {/* 🍎 편집 버튼 */}
+          <Button
+            variant={isDeleteMode ? "secondary" : "ghost"}
+            size="sm"
+            onClick={handleToggleDeleteMode}
+            aria-label={isDeleteMode ? "편집 완료" : "편집"}
+          >
+            {isDeleteMode ? "완료" : "편집"}
+          </Button>
         </div>
 
         {/* 에러 메시지 */}
@@ -421,17 +442,26 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 삭제 버튼 */}
-        {selectedDocumentIds.size > 0 && (
+        {/* 삭제 모드 액션 바 */}
+        {isDeleteMode && (
           <div className="document-library-actions">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteSelected}
-              disabled={isDeleting}
-            >
-              {isDeleting ? '삭제 중...' : `선택 항목 삭제 (${selectedDocumentIds.size})`}
-            </Button>
+            <div className="actions-left">
+              {selectedDocumentIds.size > 0 && (
+                <span className="selected-count">{selectedDocumentIds.size}개 선택됨</span>
+              )}
+            </div>
+            <div className="actions-right">
+              {selectedDocumentIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -439,13 +469,15 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         {!isLoading && !isEmpty && (
           <div className="document-library-result-header">
             <div className="result-header-left">
-              <input
-                type="checkbox"
-                checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id))}
-                onChange={handleSelectAll}
-                aria-label="전체 선택"
-                className="document-select-all-checkbox"
-              />
+              {isDeleteMode && (
+                <input
+                  type="checkbox"
+                  checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id))}
+                  onChange={handleSelectAll}
+                  aria-label="전체 선택"
+                  className="document-select-all-checkbox"
+                />
+              )}
               <span className="result-count">{searchResultMessage}</span>
             </div>
 
@@ -520,16 +552,18 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     }
                   }}
                 >
-                  {/* 🍎 CHECKBOX: Document selection */}
-                  <div className="document-checkbox-wrapper" onClick={(e) => handleSelectDocument(document._id, e)}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => {}}
-                      aria-label={`${document.filename} 선택`}
-                      className="document-checkbox"
-                    />
-                  </div>
+                  {/* 🍎 CHECKBOX: Document selection - 삭제 모드일 때만 표시 */}
+                  {isDeleteMode && (
+                    <div className="document-checkbox-wrapper" onClick={(e) => handleSelectDocument(document._id, e)}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        aria-label={`${document.filename} 선택`}
+                        className="document-checkbox"
+                      />
+                    </div>
+                  )}
 
                   {/* 🍎 ICON: File type indicator with color class */}
                   <div className="document-icon-wrapper">

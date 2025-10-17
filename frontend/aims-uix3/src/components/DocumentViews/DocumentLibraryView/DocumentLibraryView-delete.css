@@ -3,13 +3,51 @@
  * Annual Report 스타일 패턴 준수
  */
 
-/* === 🍎 DELETE ACTIONS: 선택 항목 삭제 버튼 === */
+/* === 🍎 SEARCH BAR LAYOUT: 편집 버튼 포함 === */
+
+.document-library-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.document-library-bar .search-input-wrapper {
+  flex: 1;
+}
+
+/* === 🍎 DELETE ACTIONS: 삭제 모드 액션 바 === */
 
 .document-library-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
-  padding: 8px 0;
+  padding: 8px 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+}
+
+html[data-theme="dark"] .document-library-actions {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.actions-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-count {
+  font-size: var(--font-size-callout);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* === 🍎 RESULT HEADER LEFT: 체크박스 + 결과 카운트 === */
@@ -64,7 +102,20 @@ html[data-theme="dark"] .document-item--selected:hover {
 
 /* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
 
+/* 🍎 삭제 모드 아닐 때: 기본 레이아웃 (체크박스 없음) */
 .document-item {
+  grid-template-columns:
+    24px      /* 아이콘 고정 */
+    1fr       /* 파일명 (가변) */
+    80px      /* 크기 고정 */
+    120px     /* 날짜 고정 */
+    50px      /* 타입 고정 */
+    28px      /* 상태 아이콘 */
+    104px;    /* 액션 버튼 */
+}
+
+/* 🍎 삭제 모드일 때만: 체크박스 열 추가 */
+.document-library-view--delete-mode .document-item {
   grid-template-columns:
     20px      /* 체크박스 */
     24px      /* 아이콘 고정 */

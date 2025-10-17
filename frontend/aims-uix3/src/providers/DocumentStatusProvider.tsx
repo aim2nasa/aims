@@ -95,9 +95,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
         setLastUpdated(new Date())
       } catch (err) {
-        setError('문서 목록을 불러올 수 없습니다.')
+        if (typeof window !== 'undefined') {
+          setError('문서 목록을 불러올 수 없습니다.')
+        }
         console.error('Fetch documents error:', err)
-        if (isInitialLoad) {
+        if (isInitialLoad && typeof window !== 'undefined') {
           setDocuments([])
         }
       } finally {
