@@ -34,7 +34,7 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 500px;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--color-border);
   position: relative;
 }
@@ -101,7 +101,7 @@
 
 /* Content */
 .customer-identification-modal__content {
-  padding: 24px;
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
 }
@@ -111,10 +111,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   background: var(--color-bg-secondary);
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .customer-identification-modal__file-icon {
@@ -144,10 +144,10 @@
 
 /* Metadata */
 .customer-identification-modal__metadata {
-  padding: 16px;
+  padding: 12px;
   background: var(--color-bg-secondary);
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .customer-identification-modal__metadata-row {
@@ -175,7 +175,7 @@
 
 /* Customer Section */
 .customer-identification-modal__customer-section {
-  margin-top: 20px;
+  margin-top: 12px;
 }
 
 .customer-identification-modal__message {
@@ -250,8 +250,7 @@
 
 /* No Customer */
 .customer-identification-modal__none {
-  text-align: center;
-  padding: 32px 16px;
+  padding: 16px 0;
 }
 
 .customer-identification-modal__empty-icon {
@@ -262,7 +261,61 @@
 .customer-identification-modal__hint {
   font-size: 13px;
   color: var(--color-text-tertiary);
+  margin: 8px 0 20px 0;
+}
+
+/* New Customer Form */
+.customer-identification-modal__new-customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.customer-identification-modal__form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customer-identification-modal__form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.customer-identification-modal__form-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.customer-identification-modal__form-input:read-only {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.customer-identification-modal__form-input:focus:not(:read-only) {
+  border-color: var(--color-accent-primary);
+  background: var(--color-bg-primary);
+}
+
+.customer-identification-modal__form-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.customer-identification-modal__form-hint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
   margin: 8px 0 0 0;
+  font-style: italic;
 }
 
 /* Footer */

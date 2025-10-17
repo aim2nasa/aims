@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
+import { api } from '@/shared/lib/api';
 import './CustomerIdentificationModal.css';
 
 export interface CustomerIdentificationModalProps {
@@ -46,6 +47,11 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
     customers.length === 1 ? customers[0]?._id || '' : ''
   );
 
+  // 신규 고객 등록 폼 상태
+  const [newCustomerPhone, setNewCustomerPhone] = useState<string>('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState<string>('');
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState<boolean>(false);
+
   // ✅ customers prop이 변경될 때 selectedCustomerId 업데이트
   useEffect(() => {
     if (customers.length === 1) {
@@ -60,13 +66,58 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   // 시나리오 판단
   const scenario = customers.length === 1 ? 'single' : customers.length > 1 ? 'multiple' : 'none';
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // ⚠️ 중요: selectedCustomerId를 즉시 복사 (state 초기화 전에)
     const customerIdToSend = selectedCustomerId;
     console.log('[CustomerIdentificationModal] 🚀 확인 버튼 클릭, customerId:', customerIdToSend);
 
+    // 기존 고객 선택 시나리오
     if (scenario === 'single' || (scenario === 'multiple' && customerIdToSend)) {
       onCustomerSelected(customerIdToSend);
+      return;
+    }
+
+    // 신규 고객 생성 시나리오
+    if (scenario === 'none') {
+      try {
+        setIsCreatingCustomer(true);
+        console.log('[CustomerIdentificationModal] 🆕 신규 고객 생성 시작:', {
+          name: metadata?.customer_name,
+          phone: newCustomerPhone,
+          email: newCustomerEmail,
+        });
+
+        // 고객 생성 - validate 건너뛰고 직접 API 호출
+        const response = await api.post<{ success: boolean; data: { customer_id: string } }>('/api/customers', {
+          type: 'individual',
+          personal_info: {
+            name: metadata?.customer_name || '',
+            mobile_phone: newCustomerPhone.trim() || undefined,
+            email: newCustomerEmail.trim() || undefined,
+          },
+          insurance_info: {
+            customer_type: '개인'
+          },
+        });
+
+        console.log('[CustomerIdentificationModal] 📦 API 응답 원본:', response);
+
+        if (!response.success || !response.data?.customer_id) {
+          throw new Error('고객 생성에 실패했습니다');
+        }
+
+        const customerId = response.data.customer_id;
+        console.log('[CustomerIdentificationModal] ✅ 신규 고객 생성 완료, ID:', customerId);
+
+        // 생성된 고객의 ID로 Annual Report 파싱 요청
+        onCustomerSelected(customerId);
+      } catch (error) {
+        console.error('[CustomerIdentificationModal] ❌ 신규 고객 생성 실패:', error);
+        console.error('[CustomerIdentificationModal] ❌ 에러 상세:', JSON.stringify(error, null, 2));
+        alert('고객 생성에 실패했습니다. 다시 시도해주세요.');
+      } finally {
+        setIsCreatingCustomer(false);
+      }
     }
   };
 
@@ -194,13 +245,45 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
 
             {scenario === 'none' && (
               <div className="customer-identification-modal__none">
-                <div className="customer-identification-modal__empty-icon">👤</div>
                 <p className="customer-identification-modal__message">
-                  "{metadata?.customer_name}" 이름으로 등록된 고객이 없습니다.
+                  ⚠️ "{metadata?.customer_name}" 고객이 등록되지 않았습니다.
                 </p>
                 <p className="customer-identification-modal__hint">
-                  고객을 먼저 생성한 후 다시 업로드해주세요.
+                  신규 고객으로 등록하시겠습니까?
                 </p>
+
+                {/* 신규 고객 등록 폼 */}
+                <div className="customer-identification-modal__new-customer-form">
+                  <div className="customer-identification-modal__form-field">
+                    <label className="customer-identification-modal__form-label">고객명</label>
+                    <input
+                      type="text"
+                      className="customer-identification-modal__form-input"
+                      value={metadata?.customer_name || ''}
+                      readOnly
+                    />
+                  </div>
+                  <div className="customer-identification-modal__form-field">
+                    <label className="customer-identification-modal__form-label">전화번호 (선택)</label>
+                    <input
+                      type="tel"
+                      className="customer-identification-modal__form-input"
+                      placeholder="010-0000-0000"
+                      value={newCustomerPhone}
+                      onChange={(e) => setNewCustomerPhone(e.target.value)}
+                    />
+                  </div>
+                  <div className="customer-identification-modal__form-field">
+                    <label className="customer-identification-modal__form-label">이메일 (선택)</label>
+                    <input
+                      type="email"
+                      className="customer-identification-modal__form-input"
+                      placeholder="example@email.com"
+                      value={newCustomerEmail}
+                      onChange={(e) => setNewCustomerEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -208,19 +291,23 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
 
         {/* Footer */}
         <div className="customer-identification-modal__footer">
-          <Button variant="secondary" size="md" onClick={handleCancel}>
+          <Button variant="secondary" size="md" onClick={handleCancel} disabled={isCreatingCustomer}>
             취소
           </Button>
-          {scenario !== 'none' && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleConfirm}
-              disabled={scenario === 'multiple' && !selectedCustomerId}
-            >
-              {scenario === 'single' ? '확인' : '선택 완료'}
-            </Button>
-          )}
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleConfirm}
+            disabled={
+              isCreatingCustomer ||
+              (scenario === 'multiple' && !selectedCustomerId)
+            }
+          >
+            {isCreatingCustomer && '고객 생성 중...'}
+            {!isCreatingCustomer && scenario === 'single' && '확인'}
+            {!isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
+            {!isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
+          </Button>
         </div>
       </div>
     </div>
