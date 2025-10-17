@@ -43,6 +43,9 @@ export const DocumentSchema = z.object({
     linked_at: z.string().optional(),
   }).optional(),
 
+  // Annual Report 여부
+  is_annual_report: z.boolean().optional(),
+
   // 상태 정보
   status: z.enum(['active', 'archived', 'deleted']).default('active'),
 

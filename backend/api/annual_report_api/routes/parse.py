@@ -259,6 +259,37 @@ def do_parsing_in_background(
                 f"✅ 파싱 완료: {save_result['summary']['customer_name']} - "
                 f"{save_result['summary']['total_contracts']}건 계약"
             )
+
+            # 7. docupload.files 컬렉션 업데이트: is_annual_report 필드 설정
+            try:
+                from bson import ObjectId
+                # file_id가 temp_로 시작하는 경우 파일명으로 검색
+                if file_id.startswith(temp_):
+                    # 파일명으로 documents 찾기
+                    filename = os.path.basename(file_path)
+                    logger.info(f"🔍 파일명으로 문서 검색: {filename}")
+                    files_collection = db["docupload.files"]
+                    doc = files_collection.find_one({"filename": filename})
+                    if doc:
+                        file_oid = doc["_id"]
+                        files_collection.update_one(
+                            {"_id": file_oid},
+                            {"$set": {"is_annual_report": True}}
+                        )
+                        logger.info(f"✅ is_annual_report=True 설정 완료: {file_oid}")
+                    else:
+                        logger.warning(f"⚠️  문서를 찾을 수 없음: {filename}")
+                else:
+                    # ObjectId로 직접 검색
+                    file_oid = ObjectId(file_id)
+                    files_collection = db["docupload.files"]
+                    files_collection.update_one(
+                        {"_id": file_oid},
+                        {"$set": {"is_annual_report": True}}
+                    )
+                    logger.info(f"✅ is_annual_report=True 설정 완료: {file_oid}")
+            except Exception as update_error:
+                logger.warning(f"⚠️  is_annual_report 필드 업데이트 실패: {update_error}")
         else:
             logger.error(f"❌ DB 저장 실패: {save_result['message']}")
 

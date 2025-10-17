@@ -356,6 +356,16 @@ html[data-theme="dark"] .document-item:active {
 
 /* === 🍎 DOCUMENT ICON: File type colors - Compact === */
 
+.document-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 .document-icon {
   display: flex;
   align-items: center;
@@ -364,6 +374,37 @@ html[data-theme="dark"] .document-item:active {
   height: 24px;
   flex-shrink: 0;
   transition: color 0.2s ease-out;
+}
+
+/* === 🍎 AR BADGE: Annual Report indicator === */
+.document-ar-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-primary-500);
+  border-radius: 50%;
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  color: white;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-ar-badge {
+  background-color: var(--color-primary-400);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.document-item:hover .document-ar-badge {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+html[data-theme="dark"] .document-item:hover .document-ar-badge {
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
 }
 
 /* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */

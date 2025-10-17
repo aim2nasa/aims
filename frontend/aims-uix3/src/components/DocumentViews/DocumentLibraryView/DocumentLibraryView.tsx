@@ -397,13 +397,28 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                   }}
                 >
                   {/* 🍎 ICON: File type indicator with color class */}
-                  <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
-                    <SFSymbol
-                      name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.REGULAR}
-                      decorative={true}
-                    />
+                  <div className="document-icon-wrapper">
+                    <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
+                      <SFSymbol
+                        name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.REGULAR}
+                        decorative={true}
+                      />
+                    </div>
+                    {/* 🍎 AR BADGE: Annual Report 표시 */}
+                    {document.is_annual_report && (
+                      <Tooltip content="Annual Report">
+                        <div className="document-ar-badge">
+                          <SFSymbol
+                            name="chart.bar.doc.horizontal.fill"
+                            size={SFSymbolSize.CAPTION_2}
+                            weight={SFSymbolWeight.SEMIBOLD}
+                            decorative={true}
+                          />
+                        </div>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* 🍎 NAME: Primary information (flexible width) */}

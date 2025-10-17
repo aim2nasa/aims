@@ -168,6 +168,9 @@ export interface Document {
 
   // 고객 연결 정보
   customer_relation?: DocumentCustomerRelation
+
+  // Annual Report 여부
+  is_annual_report?: boolean
 }
 
 /**

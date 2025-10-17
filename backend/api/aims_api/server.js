@@ -454,6 +454,7 @@ app.get('/api/documents/status', async (req, res) => {
         uploadedAt: doc.upload?.uploaded_at,
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
+        is_annual_report: doc.is_annual_report,
         ...statusInfo
       };
     });
