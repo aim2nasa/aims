@@ -262,7 +262,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
     const confirmed = await confirmModal.actions.openModal({
       title: '문서 삭제',
-      message: `${selectedDocumentIds.size}개 문서를 삭제하시겠습니까?\n\n⚠️ DB와 서버의 물리적 파일이 모두 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.`,
+      message: `${selectedDocumentIds.size}개 문서를 삭제하시겠습니까?\n\nDB와 서버의 물리적 파일이 모두 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.`,
       confirmText: '삭제',
       cancelText: '취소',
       confirmStyle: 'destructive',
