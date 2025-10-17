@@ -514,15 +514,35 @@ export class DocumentService {
   }
 
   /**
-   * 문서 일괄 삭제 (소프트 삭제)
+   * 문서 일괄 삭제 (하드 삭제 - DB + 물리적 파일)
    */
-  static async deleteDocuments(ids: string[]): Promise<void> {
+  static async deleteDocuments(ids: string[]): Promise<DeleteDocumentsResult> {
     if (ids.length === 0) {
       throw new Error('삭제할 문서 ID가 필요합니다');
     }
 
-    // 병렬로 삭제 처리
-    await Promise.all(ids.map(id => DocumentService.deleteDocument(id)));
+    // DELETE 요청은 body를 직접 전달
+    const response = await fetch(`/api/documents`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ document_ids: ids })
+    });
+
+    if (!response.ok) {
+      throw new Error(`삭제 실패: ${response.statusText}`);
+    }
+
+    const data: DeleteDocumentsResponse = await response.json();
+
+    return {
+      success: data.success,
+      message: data.message,
+      deletedCount: data.deleted_count,
+      failedCount: data.failed_count,
+      errors: data.errors || []
+    };
   }
 
   /**
@@ -570,6 +590,28 @@ export interface UploadDocumentResult {
   success: boolean;
   document?: Document;
   error?: string;
+}
+
+/**
+ * 문서 삭제 결과 인터페이스
+ */
+export interface DeleteDocumentsResult {
+  success: boolean;
+  message: string;
+  deletedCount: number;
+  failedCount: number;
+  errors: Array<{ document_id: string; error: string }>;
+}
+
+/**
+ * 백엔드 API 응답 (내부용)
+ */
+interface DeleteDocumentsResponse {
+  success: boolean;
+  message: string;
+  deleted_count: number;
+  failed_count: number;
+  errors?: Array<{ document_id: string; error: string }>;
 }
 
 /**

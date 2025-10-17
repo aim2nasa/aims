@@ -836,21 +836,28 @@ describe('DocumentService', () => {
   // ============================================================================
   describe('deleteDocuments', () => {
     it('여러 문서를 병렬로 삭제해야 함', async () => {
-      vi.mocked(api.put).mockResolvedValue({
-        _id: 'doc1',
-        filename: 'test.pdf',
-        originalName: 'test.pdf',
-        uploadDate: '2025-10-14T10:00:00Z',
-        status: 'deleted',
-        ocrStatus: 'completed',
-        createdAt: '2025-10-14T10:00:00Z',
-        updatedAt: '2025-10-14T11:00:00Z',
-        tags: [],
+      // fetch 모킹
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          message: '3건 삭제되었습니다',
+          deleted_count: 3,
+          failed_count: 0,
+          errors: []
+        })
       })
 
-      await DocumentService.deleteDocuments(['doc1', 'doc2', 'doc3'])
+      const result = await DocumentService.deleteDocuments(['doc1', 'doc2', 'doc3'])
 
-      expect(api.put).toHaveBeenCalledTimes(3)
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/documents',
+        expect.objectContaining({
+          method: 'DELETE',
+          body: JSON.stringify({ document_ids: ['doc1', 'doc2', 'doc3'] })
+        })
+      )
+      expect(result.success).toBe(true)
     })
 
     it('빈 배열로 호출 시 에러를 던져야 함', async () => {
@@ -860,27 +867,23 @@ describe('DocumentService', () => {
     })
 
     it('일부 삭제 실패해도 나머지는 계속 처리해야 함', async () => {
-      vi.mocked(api.put)
-        .mockResolvedValueOnce({
-          _id: 'doc1',
-          filename: 'test.pdf',
-          status: 'deleted',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T11:00:00Z',
-          tags: [],
+      // fetch 모킹 - 일부 실패 케이스
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          message: '2건 삭제되었습니다 (1건 실패)',
+          deleted_count: 2,
+          failed_count: 1,
+          errors: [{ document_id: 'doc2', error: 'Failed' }]
         })
-        .mockRejectedValueOnce(new Error('Failed'))
-        .mockResolvedValueOnce({
-          _id: 'doc3',
-          filename: 'test.pdf',
-          status: 'deleted',
-          createdAt: '2025-10-14T10:00:00Z',
-          updatedAt: '2025-10-14T11:00:00Z',
-          tags: [],
-        })
+      })
 
-      // Promise.all은 하나라도 실패하면 전체가 실패하므로 에러가 발생
-      await expect(DocumentService.deleteDocuments(['doc1', 'doc2', 'doc3'])).rejects.toThrow()
+      const result = await DocumentService.deleteDocuments(['doc1', 'doc2', 'doc3'])
+
+      expect(result.success).toBe(true)
+      expect(result.deletedCount).toBe(2)
+      expect(result.failedCount).toBe(1)
     })
   })
 

@@ -674,6 +674,127 @@ async def websocket_stats():
         "timestamp": datetime.utcnow().isoformat()
     }
 
+
+# ===== 문서 삭제 API =====
+
+class DeleteDocumentsRequest(BaseModel):
+    """문서 삭제 요청 모델"""
+    document_ids: List[str]
+
+
+class DeleteDocumentsResponse(BaseModel):
+    """문서 삭제 응답 모델"""
+    success: bool
+    message: str
+    deleted_count: int
+    failed_count: int
+    errors: List[Dict[str, str]] = []
+
+
+@app.delete("/documents", response_model=DeleteDocumentsResponse)
+async def delete_documents(request: DeleteDocumentsRequest):
+    """
+    문서 삭제 (DB + 물리적 파일)
+
+    Args:
+        request: 삭제할 문서 ID 리스트
+
+    Returns:
+        삭제 결과 (성공/실패 개수, 에러 목록)
+    """
+    import os
+
+    if not request.document_ids:
+        raise HTTPException(status_code=400, detail="삭제할 문서 ID가 필요합니다")
+
+    deleted_count = 0
+    failed_count = 0
+    errors = []
+
+    for doc_id in request.document_ids:
+        try:
+            # ObjectId 변환
+            try:
+                obj_id = ObjectId(doc_id)
+            except InvalidId:
+                errors.append({
+                    "document_id": doc_id,
+                    "error": "유효하지 않은 문서 ID 형식"
+                })
+                failed_count += 1
+                continue
+
+            # MongoDB에서 문서 조회
+            document = collection.find_one({"_id": obj_id})
+
+            if not document:
+                errors.append({
+                    "document_id": doc_id,
+                    "error": "문서를 찾을 수 없습니다"
+                })
+                failed_count += 1
+                continue
+
+            # 물리적 파일 경로 추출
+            upload_info = document.get('upload', {})
+            dest_path = upload_info.get('destPath')
+
+            # 물리적 파일 삭제
+            if dest_path and os.path.exists(dest_path):
+                try:
+                    os.remove(dest_path)
+                    print(f"✅ 파일 삭제 성공: {dest_path}")
+                except Exception as e:
+                    print(f"⚠️ 파일 삭제 실패: {dest_path} - {e}")
+                    # 파일 삭제 실패해도 DB는 삭제 진행
+
+            # MongoDB에서 문서 삭제
+            result = collection.delete_one({"_id": obj_id})
+
+            if result.deleted_count > 0:
+                deleted_count += 1
+                print(f"✅ DB 문서 삭제 성공: {doc_id}")
+
+                # WebSocket으로 삭제 알림 브로드캐스트
+                await manager.broadcast({
+                    "type": "document_deleted",
+                    "data": {
+                        "id": doc_id,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                })
+            else:
+                errors.append({
+                    "document_id": doc_id,
+                    "error": "DB 삭제 실패"
+                })
+                failed_count += 1
+
+        except Exception as e:
+            errors.append({
+                "document_id": doc_id,
+                "error": str(e)
+            })
+            failed_count += 1
+            print(f"❌ 문서 삭제 중 오류: {doc_id} - {e}")
+
+    # 응답 생성
+    if deleted_count > 0:
+        message = f"{deleted_count}건 삭제되었습니다"
+        if failed_count > 0:
+            message += f" ({failed_count}건 실패)"
+    else:
+        message = "삭제된 문서가 없습니다"
+
+    return DeleteDocumentsResponse(
+        success=deleted_count > 0,
+        message=message,
+        deleted_count=deleted_count,
+        failed_count=failed_count,
+        errors=errors
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

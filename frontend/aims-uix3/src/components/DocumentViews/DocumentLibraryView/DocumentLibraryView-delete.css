@@ -1,0 +1,77 @@
+/**
+ * Document Library Delete Feature Styles
+ * Annual Report 스타일 패턴 준수
+ */
+
+/* === 🍎 DELETE ACTIONS: 선택 항목 삭제 버튼 === */
+
+.document-library-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+/* === 🍎 RESULT HEADER LEFT: 체크박스 + 결과 카운트 === */
+
+.result-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.document-select-all-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+/* === 🍎 DOCUMENT CHECKBOX === */
+
+.document-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.document-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+/* === 🍎 SELECTED STATE: 선택된 문서 하이라이트 === */
+
+.document-item--selected {
+  background: var(--color-ios-bg-selected-light) !important;
+}
+
+html[data-theme="dark"] .document-item--selected {
+  background: var(--color-ios-bg-selected-dark) !important;
+}
+
+.document-item--selected:hover {
+  background: var(--color-ios-bg-selected-light) !important;
+}
+
+html[data-theme="dark"] .document-item--selected:hover {
+  background: var(--color-ios-bg-selected-dark) !important;
+}
+
+/* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
+
+.document-item {
+  grid-template-columns:
+    20px      /* 체크박스 */
+    24px      /* 아이콘 고정 */
+    1fr       /* 파일명 (가변) */
+    80px      /* 크기 고정 */
+    120px     /* 날짜 고정 */
+    50px      /* 타입 고정 */
+    28px      /* 상태 아이콘 */
+    104px;    /* 액션 버튼 */
+}

@@ -12,7 +12,7 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, type DropdownOption, Tooltip } from '@/shared/ui'
+import { Dropdown, type DropdownOption, Tooltip, Button } from '@/shared/ui'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import { CustomerService } from '../../../services/customerService'
@@ -23,7 +23,10 @@ import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetail
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
+import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
+import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import './DocumentLibraryView.css'
+import './DocumentLibraryView-delete.css'
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -111,6 +114,13 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedDocumentForLink, setSelectedDocumentForLink] = React.useState<any | null>(null)
   const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
+
+  // 🍎 삭제 기능 상태
+  const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  // 🍎 Apple Confirm Modal 컨트롤러
+  const confirmModal = useAppleConfirmController()
 
   // 🍎 모달 핸들러
   // NOTE: API 응답 타입 사용 (상단 모달 상태와 동일한 이유)
@@ -202,6 +212,96 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     },
     [loadDocuments, searchParams]
   )
+
+  // 🍎 체크박스 전체 선택/해제
+  const handleSelectAll = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIds = new Set(documents.map(doc => doc._id))
+      setSelectedDocumentIds(allIds)
+    } else {
+      setSelectedDocumentIds(new Set())
+    }
+  }, [documents])
+
+  // 🍎 개별 체크박스 선택/해제
+  const handleSelectDocument = React.useCallback((documentId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(documentId)) {
+        newSet.delete(documentId)
+      } else {
+        newSet.add(documentId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // 🍎 문서 삭제 핸들러
+  const handleDeleteSelected = React.useCallback(async () => {
+    if (selectedDocumentIds.size === 0) {
+      await confirmModal.actions.openModal({
+        title: '선택 항목 없음',
+        message: '삭제할 문서를 선택해주세요.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'warning'
+      })
+      return
+    }
+
+    const confirmed = await confirmModal.actions.openModal({
+      title: '문서 삭제',
+      message: `${selectedDocumentIds.size}개 문서를 삭제하시겠습니까?\n\n⚠️ DB와 서버의 물리적 파일이 모두 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      showCancel: true,
+      iconType: 'warning'
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const result = await DocumentService.deleteDocuments(Array.from(selectedDocumentIds))
+
+      setIsDeleting(false)
+
+      if (result.success) {
+        setSelectedDocumentIds(new Set())
+        await loadDocuments(searchParams, true) // 목록 새로고침
+
+        await confirmModal.actions.openModal({
+          title: '완료',
+          message: `${result.deletedCount}건 삭제되었습니다.${result.failedCount > 0 ? `\n(${result.failedCount}건 실패)` : ''}`,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'success'
+        })
+      } else {
+        await confirmModal.actions.openModal({
+          title: '실패',
+          message: result.message,
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'error'
+        })
+      }
+    } catch (err) {
+      setIsDeleting(false)
+      await confirmModal.actions.openModal({
+        title: '오류',
+        message: '삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'error'
+      })
+      console.error('Delete error:', err)
+    }
+  }, [selectedDocumentIds, confirmModal.actions, loadDocuments, searchParams])
 
   /**
    * 페이지 변경 핸들러 (클릭 피드백 포함)
@@ -321,10 +421,33 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
+        {/* 삭제 버튼 */}
+        {selectedDocumentIds.size > 0 && (
+          <div className="document-library-actions">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '삭제 중...' : `선택 항목 삭제 (${selectedDocumentIds.size})`}
+            </Button>
+          </div>
+        )}
+
         {/* 검색 결과 헤더 */}
         {!isLoading && !isEmpty && (
           <div className="document-library-result-header">
-            <span className="result-count">{searchResultMessage}</span>
+            <div className="result-header-left">
+              <input
+                type="checkbox"
+                checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id))}
+                onChange={handleSelectAll}
+                aria-label="전체 선택"
+                className="document-select-all-checkbox"
+              />
+              <span className="result-count">{searchResultMessage}</span>
+            </div>
 
             <div className="result-controls">
               {/* 🍎 새로고침 버튼 */}
@@ -381,11 +504,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               const isLinked = Boolean(document.customer_relation)
               const canLink = status === 'completed' && !isLinked
               const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
+              const isSelected = selectedDocumentIds.has(document._id)
 
               return (
                 <div
                   key={document._id}
-                  className="document-item"
+                  className={`document-item ${isSelected ? 'document-item--selected' : ''}`}
                   onClick={() => onDocumentClick?.(document._id)}
                   role="button"
                   tabIndex={0}
@@ -396,6 +520,17 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     }
                   }}
                 >
+                  {/* 🍎 CHECKBOX: Document selection */}
+                  <div className="document-checkbox-wrapper" onClick={(e) => handleSelectDocument(document._id, e)}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      aria-label={`${document.filename} 선택`}
+                      className="document-checkbox"
+                    />
+                  </div>
+
                   {/* 🍎 ICON: File type indicator with color class */}
                   <div className="document-icon-wrapper">
                     <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
@@ -585,6 +720,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         onSearchCustomers={searchCustomers}
         onFetchCustomerDocuments={fetchCustomerDocuments}
         onLink={linkDocumentToCustomer}
+      />
+
+      {/* Apple Confirm Modal */}
+      <AppleConfirmModal
+        state={confirmModal.state}
+        actions={confirmModal.actions}
       />
     </CenterPaneView>
   )

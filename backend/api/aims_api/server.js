@@ -751,7 +751,7 @@ app.get('/api/documents/status/live', async (req, res) => {
 });
 
 /**
- * 문서 삭제 API
+ * 문서 삭제 API (단일 문서)
  */
 app.delete('/api/documents/:id', async (req, res) => {
   try {
@@ -801,6 +801,60 @@ app.delete('/api/documents/:id', async (req, res) => {
       success: false,
       error: '문서 삭제에 실패했습니다.',
       details: error.message
+    });
+  }
+});
+
+/**
+ * 문서 복수 삭제 API (Python API 프록시)
+ */
+app.delete('/api/documents', async (req, res) => {
+  try {
+    const { document_ids } = req.body;
+
+    console.log(`🗑️  [문서 삭제] 복수 삭제 요청: ${document_ids?.length}건`);
+
+    if (!document_ids || !Array.isArray(document_ids) || document_ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '삭제할 문서 ID가 필요합니다'
+      });
+    }
+
+    // Python API (포트 8080)로 프록시
+    const pythonApiUrl = 'http://172.17.0.1:8080/documents';
+
+    const response = await axios.delete(pythonApiUrl, {
+      data: { document_ids },
+      timeout: 30000 // 30초 타임아웃 (대량 삭제 고려)
+    });
+
+    console.log(`✅ [문서 삭제] 삭제 완료:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [문서 삭제] 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Document Status API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    if (error.response?.status) {
+      return res.status(error.response.status).json(
+        error.response.data || {
+          success: false,
+          message: '문서 삭제 중 오류가 발생했습니다.'
+        }
+      );
+    }
+
+    res.status(500).json({
+      success: false,
+      message: '문서 삭제 중 오류가 발생했습니다.',
+      error: error.message
     });
   }
 });
