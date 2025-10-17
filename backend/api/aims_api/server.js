@@ -394,7 +394,7 @@ app.get('/api/documents', async (req, res) => {
         status: status,
         progress: progress,
         filePath: doc.upload?.destPath,
-        is_annual_report: doc.is_annual_report
+        is_annual_report: doc.is_annual_report || false
       };
     });
 
@@ -746,6 +746,63 @@ app.get('/api/documents/status/live', async (req, res) => {
     res.status(500).json({
       success: false,
       error: '실시간 상태 조회에 실패했습니다.'
+    });
+  }
+});
+
+/**
+ * 문서에 Annual Report 플래그 설정 API
+ */
+app.patch('/api/documents/set-annual-report', async (req, res) => {
+  try {
+    const { filename } = req.body;
+
+    console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}`);
+
+    if (!filename) {
+      return res.status(400).json({
+        success: false,
+        error: 'filename is required'
+      });
+    }
+
+    // 파일명으로 문서 찾기 (최신 업로드 우선 - 동일 파일명 대응)
+    const document = await db.collection(COLLECTION_NAME)
+      .find({ 'upload.originalName': filename })
+      .sort({ 'upload.uploaded_at': -1 })
+      .limit(1)
+      .toArray()
+      .then(docs => docs[0]);
+
+    if (!document) {
+      console.log(`❌ [Set AR Flag] 문서를 찾을 수 없음: ${filename}`);
+      return res.status(404).json({
+        success: false,
+        error: '문서를 찾을 수 없습니다.'
+      });
+    }
+
+    // is_annual_report 필드 설정
+    await db.collection(COLLECTION_NAME)
+      .updateOne(
+        { _id: document._id },
+        { $set: { is_annual_report: true } }
+      );
+
+    console.log(`✅ [Set AR Flag] is_annual_report=true 설정 완료: ${document._id}`);
+
+    res.json({
+      success: true,
+      message: 'is_annual_report 필드가 설정되었습니다.',
+      document_id: document._id
+    });
+
+  } catch (error) {
+    console.error('❌ [Set AR Flag] 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'is_annual_report 설정에 실패했습니다.',
+      details: error.message
     });
   }
 });

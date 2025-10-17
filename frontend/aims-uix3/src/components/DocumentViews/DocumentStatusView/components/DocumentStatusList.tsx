@@ -108,13 +108,23 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             }}
           >
             {/* 파일 타입 아이콘 */}
-            <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, DocumentStatusService.extractFilename(document))}`}>
-              <SFSymbol
-                name={DocumentUtils.getFileIcon(document.mimeType, DocumentStatusService.extractFilename(document))}
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
+            <div className="document-icon-wrapper">
+              <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, DocumentStatusService.extractFilename(document))}`}>
+                <SFSymbol
+                  name={DocumentUtils.getFileIcon(document.mimeType, DocumentStatusService.extractFilename(document))}
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              </div>
+              {/* 🍎 AR BADGE: Annual Report 표시 */}
+              {document.is_annual_report && (
+                <Tooltip content="Annual Report">
+                  <div className="document-ar-badge">
+                    AR
+                  </div>
+                </Tooltip>
+              )}
             </div>
 
             {/* 파일명 */}

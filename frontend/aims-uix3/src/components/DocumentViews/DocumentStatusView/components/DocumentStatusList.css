@@ -369,6 +369,13 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
 }
 
 /* === 파일 타입 아이콘 === */
+.document-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .document-icon {
   display: flex;
   align-items: center;
@@ -377,6 +384,41 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   height: 24px;
   flex-shrink: 0;
   transition: color 0.2s ease-out;
+}
+
+/* === 🍎 AR BADGE: Annual Report indicator === */
+.document-ar-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: #ffffff;
+  background-color: var(--color-primary-500);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-ar-badge {
+  background-color: var(--color-primary-400);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.status-item:hover .document-ar-badge {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+html[data-theme="dark"] .status-item:hover .document-ar-badge {
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
 }
 
 /* === 🍎 FILE TYPE ICON COLORS (DocumentLibrary와 동일) === */

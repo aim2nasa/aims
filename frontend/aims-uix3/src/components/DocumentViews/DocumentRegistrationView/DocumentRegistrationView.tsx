@@ -124,6 +124,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // Annual Report 자동 등록 로그 메시지
   const [autoRegistrationLog, setAutoRegistrationLog] = useState<string | null>(null)
 
+  // 🏷️ AR 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
+  const arFilenamesRef = useRef<Set<string>>(new Set())
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -193,6 +196,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               if (customers.length === 1) {
                 const customer = customers[0];
                 console.log('[DocumentRegistrationView] 🚀 고객 1명 감지, 자동 진행:', customer.personal_info?.name);
+
+                // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
+                arFilenamesRef.current.add(file.name);
+                console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가: ${file.name}`);
 
                 // 로그 메시지 설정 (UI에 표시)
                 const logMessage = `Annual Report 자동 등록: ${customer.personal_info?.name} (발행일: ${checkResult.metadata.issue_date})`;
@@ -387,30 +394,21 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
-   * Annual Report 체크 및 고객 식별
+   * 업로드 완료 후 AR DB 플래그 설정
    */
-  const checkAnnualReport = useCallback(async (file: File, fileName: string) => {
+  const setAnnualReportFlag = useCallback(async (fileName: string) => {
+    console.log(`🔥 [setAnnualReportFlag] START: fileName=${fileName}`);
     try {
-      // 1. Annual Report 체크
-      const checkResult = await AnnualReportApi.checkAnnualReport(file);
-
-      // Annual Report가 아니면 조용히 종료
-      if (!checkResult.is_annual_report || !checkResult.metadata) {
-        return;
-      }
-
-      // 2. 고객명으로 검색
-      const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
-
-      // 3. 모달 상태 설정
-      setAnnualReportMetadata(checkResult.metadata);
-      setAnnualReportCustomers(customers);
-      setAnnualReportFile({ file, fileName });
-      setIsCustomerModalOpen(true);
-
-    } catch (error) {
-      console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
-      // 조용히 실패 - 일반 문서 업로드로 처리
+      console.log(`📡 [setAnnualReportFlag] Sending PATCH to /api/documents/set-annual-report`);
+      const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: fileName })
+      });
+      const responseData = await response.json();
+      console.log(`✅ [AR] is_annual_report=true 설정 완료:`, responseData);
+    } catch (setFlagError) {
+      console.error(`❌ [AR] is_annual_report 설정 실패:`, setFlagError);
     }
   }, []);
 
@@ -421,6 +419,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (!annualReportFile) return;
 
     try {
+      // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
+      arFilenamesRef.current.add(annualReportFile.fileName);
+      console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);
+
       // Annual Report 파싱 요청 (백그라운드 AI 처리)
       const parseResult = await AnnualReportApi.parseAnnualReportFile(
         annualReportFile.file,
@@ -480,17 +482,22 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 업로드 상태 변경 콜백
    */
   const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
+    console.log(`🔍 [handleStatusChange] fileId=${fileId}, status=${status}`);
     setUploadState(prev => {
       const updatedFiles = prev.files.map(f => {
         if (f.id === fileId) {
+          console.log(`🔍 [handleStatusChange] Matched file: name=${f.file.name}, type=${f.file.type}`);
           const updatedFile = { ...f, status, error }
           if (status === 'completed' || status === 'warning') {
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
 
-            // 🍎 Annual Report 자동 감지 (PDF 파일만)
-            if (status === 'completed' && f.file.type === 'application/pdf') {
-              checkAnnualReport(f.file, f.file.name);
+            // 🏷️ Annual Report 파일이면 DB 플래그 설정
+            if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
+              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정: ${f.file.name}`);
+              setAnnualReportFlag(f.file.name);
+              // 추적 목록에서 제거
+              arFilenamesRef.current.delete(f.file.name);
             }
           }
           return updatedFile
@@ -512,7 +519,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         completedCount
       }
     })
-  }, [checkAnnualReport])
+  }, [setAnnualReportFlag])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지

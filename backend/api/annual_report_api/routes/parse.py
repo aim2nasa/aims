@@ -264,12 +264,12 @@ def do_parsing_in_background(
             try:
                 from bson import ObjectId
                 # file_id가 temp_로 시작하는 경우 파일명으로 검색
-                if file_id.startswith(temp_):
+                if file_id.startswith("temp_"):
                     # 파일명으로 documents 찾기
                     filename = os.path.basename(file_path)
                     logger.info(f"🔍 파일명으로 문서 검색: {filename}")
                     files_collection = db["docupload.files"]
-                    doc = files_collection.find_one({"filename": filename})
+                    doc = files_collection.find_one({"upload.originalName": filename})
                     if doc:
                         file_oid = doc["_id"]
                         files_collection.update_one(

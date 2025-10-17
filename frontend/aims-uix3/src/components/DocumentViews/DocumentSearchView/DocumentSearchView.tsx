@@ -396,13 +396,23 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       <div className="row-content">
                         <div className="row-title-wrapper">
                           {/* 🍎 파일 타입 아이콘 */}
-                          <div className={`document-icon ${DocumentUtils.getFileTypeClass(mimeType, originalName)}`}>
-                            <SFSymbol
-                              name={DocumentUtils.getFileIcon(mimeType, originalName)}
-                              size={SFSymbolSize.CAPTION_1}
-                              weight={SFSymbolWeight.REGULAR}
-                              decorative={true}
-                            />
+                          <div className="document-icon-wrapper">
+                            <div className={`document-icon ${DocumentUtils.getFileTypeClass(mimeType, originalName)}`}>
+                              <SFSymbol
+                                name={DocumentUtils.getFileIcon(mimeType, originalName)}
+                                size={SFSymbolSize.CAPTION_1}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </div>
+                            {/* 🍎 AR BADGE: Annual Report 표시 */}
+                            {('is_annual_report' in item && item.is_annual_report) ? (
+                              <Tooltip content="Annual Report">
+                                <div className="document-ar-badge">
+                                  AR
+                                </div>
+                              </Tooltip>
+                            ) : null}
                           </div>
                           <span className="row-title">{originalName}</span>
                         </div>
