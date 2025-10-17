@@ -13,30 +13,6 @@ import { FileSelectionOptions } from '../types/uploadTypes'
 import { FeedbackToast } from '../FeedbackToast/FeedbackToast'
 import './FileUploadArea.css'
 
-type DirectoryReader = {
-  readEntries: (callback: (entries: FileSystemEntryLike[]) => void) => void
-}
-
-type FileSystemFileEntryLike = {
-  isDirectory: false
-  isFile: true
-  fullPath: string
-  file: (callback: (file: File) => void) => void
-}
-
-type FileSystemDirectoryEntryLike = {
-  isDirectory: true
-  isFile: false
-  fullPath: string
-  createReader: () => DirectoryReader
-}
-
-type FileSystemEntryLike = FileSystemFileEntryLike | FileSystemDirectoryEntryLike
-
-type DataTransferItemWithEntry = DataTransferItem & {
-  webkitGetAsEntry?: () => FileSystemEntryLike | null
-}
-
 interface FileUploadAreaProps {
   /** 파일 선택 시 콜백 */
   onFilesSelected: (files: File[]) => void
@@ -124,30 +100,24 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
    * 파일 처리 공통 로직
    */
   const handleFiles = useCallback((files: File[]) => {
-    console.log('🔥 FileUploadArea handleFiles 실행! files:', files.length, 'disabled:', disabled, 'uploading:', uploading);
-
     if (disabled) {
-      console.log('❌ disabled=true, 차단됨');
       setToastMessage('업로드가 비활성화되었습니다.')
       setToastVisible(true)
       return
     }
 
     if (uploading) {
-      console.log('❌ uploading=true, 차단됨');
       setToastMessage('업로드가 진행 중입니다. 잠시 후 다시 시도해주세요.')
       setToastVisible(true)
       return
     }
 
     if (files.length === 0) {
-      console.log('❌ files.length=0, 차단됨');
       setToastMessage('선택된 파일이 없습니다.')
       setToastVisible(true)
       return
     }
 
-    console.log('✅ onFilesSelected 호출!');
     onFilesSelected(files)
   }, [disabled, onFilesSelected, setToastMessage, setToastVisible, uploading])
 
@@ -182,73 +152,20 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     e.stopPropagation()
   }, [])
 
-  const getAllFilesFromEntry = useCallback(async (entry: FileSystemEntryLike): Promise<File[]> => {
-    if (entry.isFile) {
-      const fileEntry = entry as FileSystemFileEntryLike
-      return new Promise((resolve) => {
-        fileEntry.file((file) => {
-          Object.defineProperty(file, 'webkitRelativePath', {
-            value: entry.fullPath.slice(1),
-            writable: false
-          })
-          resolve([file])
-        })
-      })
-    }
-
-    if (entry.isDirectory) {
-      const directoryEntry = entry as FileSystemDirectoryEntryLike
-      const reader = directoryEntry.createReader()
-
-      return new Promise((resolve) => {
-        reader.readEntries(async (entries) => {
-          const collected: File[] = []
-          for (const childEntry of entries) {
-            const childFiles = await getAllFilesFromEntry(childEntry)
-            collected.push(...childFiles)
-          }
-          resolve(collected)
-        })
-      })
-    }
-
-    return []
-  }, [])
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
     setIsDragging(false)
     dragCounterRef.current = 0
 
-    const items = Array.from(e.dataTransfer.items)
-    const files: File[] = []
+    // 🔧 FIX: dataTransfer.items가 신뢰할 수 없으므로 dataTransfer.files 직접 사용
+    const droppedFiles = Array.from(e.dataTransfer.files)
 
-    for (const item of items) {
-      if (item.kind !== 'file') {
-        continue
-      }
-
-      const withEntry = item as DataTransferItemWithEntry
-      const entry = withEntry.webkitGetAsEntry ? withEntry.webkitGetAsEntry() : null
-
-      if (entry) {
-        const extracted = await getAllFilesFromEntry(entry as unknown as FileSystemEntryLike)
-        files.push(...extracted)
-        continue
-      }
-
-      const file = item.getAsFile()
-      if (file) {
-        files.push(file)
-      }
+    if (droppedFiles.length > 0) {
+      handleFiles(droppedFiles)
     }
-
-    if (files.length > 0) {
-      handleFiles(files)
-    }
-  }, [getAllFilesFromEntry, handleFiles])
+  }, [handleFiles])
 
   /**
    * 파일/폴더 선택 버튼 클릭 (통합)
