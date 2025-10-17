@@ -315,7 +315,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     if (rightPaneVisible && centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT) {
       setCenterWidth(DEFAULT_CENTER_WIDTH_PERCENT)
     }
-  }, [rightPaneVisible, centerWidth])
+  }, [rightPaneVisible])
 
   // 🍎 Progressive Disclosure: LeftPane 애니메이션 상태 추적
   const [leftPaneAnimationState, setLeftPaneAnimationState] = useState<'idle' | 'expanding' | 'collapsing'>('idle')
