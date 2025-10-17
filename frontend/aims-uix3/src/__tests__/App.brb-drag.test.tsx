@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, act } from '@testing-library/react'
 import App from '../App'
 
 // ============================================
@@ -217,14 +217,35 @@ describe('App - BRB 드래그 회귀 테스트 (commit 4a88007)', () => {
     expect(centerPane.classList.contains('no-transition')).toBe(false)
   })
 
-  it('[회귀 방지] 브라우저 리사이즈와 BRB 드래그가 독립적으로 작동해야 함', () => {
+  it('[회귀 방지] 브라우저 리사이즈 시 CenterPane과 RightPane이 동기화되어야 함 (commit 0b19ed7)', () => {
+    vi.useFakeTimers()
     const { container } = render(<App />)
 
     const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
 
-    // 브라우저 리사이즈 시에는 no-transition 클래스가 적용되지 않아야 함
-    fireEvent(window, new Event('resize'))
+    // 브라우저 리사이즈 시작
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+
+    // 리사이즈 중에는 no-transition 클래스가 적용되어야 함 (CenterPane과 RightPane 동기화)
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 100ms 후 리사이즈 완료 (타이머에서 isResizing이 false로 변경됨)
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    // 리사이즈 완료 후에는 no-transition 클래스가 제거되어야 함
     expect(centerPane.classList.contains('no-transition')).toBe(false)
+
+    vi.useRealTimers()
+  })
+
+  it('[회귀 방지] 브라우저 리사이즈와 BRB 드래그가 독립적으로 작동해야 함', () => {
+    const { container } = render(<App />)
+
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
 
     // BRB 드래그 시에만 no-transition 클래스가 적용되어야 함
     const brb = container.querySelector('.layout-brb')
@@ -405,5 +426,108 @@ describe('App - BRB 드래그 통합 시나리오', () => {
       fireEvent.mouseUp(document)
       expect(centerPane.classList.contains('no-transition')).toBe(false)
     })
+  })
+
+  it('브라우저 리사이즈 중 BRB 드래그를 시작해도 정상 작동해야 함 (commit 0b19ed7)', () => {
+    vi.useFakeTimers()
+    const { container } = render(<App />)
+
+    const brb = container.querySelector('.layout-brb')
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
+
+    // 1. 브라우저 리사이즈 시작
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 2. 리사이즈 중에 BRB 드래그 시작 (두 조건 모두 true)
+    fireEvent.mouseDown(brb!, { clientX: 960 })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 3. 드래그 이동
+    fireEvent.mouseMove(document, { clientX: 800 })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 4. 드래그 종료 (리사이즈는 여전히 진행 중)
+    fireEvent.mouseUp(document)
+    expect(centerPane.classList.contains('no-transition')).toBe(true) // isResizing이 여전히 true
+
+    // 5. 리사이즈 완료 (100ms 후)
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(false)
+
+    vi.useRealTimers()
+  })
+
+  it('BRB 드래그 중 브라우저 리사이즈가 발생해도 동기화 유지되어야 함 (commit 0b19ed7)', () => {
+    vi.useFakeTimers()
+    const { container } = render(<App />)
+
+    const brb = container.querySelector('.layout-brb')
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
+
+    // 1. BRB 드래그 시작
+    fireEvent.mouseDown(brb!, { clientX: 960 })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 2. 드래그 중 브라우저 리사이즈 발생
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(true) // 여전히 true (isDraggingBRB || isResizing)
+
+    // 3. 드래그 계속
+    fireEvent.mouseMove(document, { clientX: 800 })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 4. 드래그 종료 (리사이즈는 여전히 진행 중)
+    fireEvent.mouseUp(document)
+    expect(centerPane.classList.contains('no-transition')).toBe(true) // isResizing이 여전히 true
+
+    // 5. 리사이즈 완료
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(false)
+
+    vi.useRealTimers()
+  })
+
+  it('연속 브라우저 리사이즈 이벤트가 발생해도 안정적으로 작동해야 함 (commit 0b19ed7)', () => {
+    vi.useFakeTimers()
+    const { container } = render(<App />)
+
+    const centerPane = container.querySelector('.layout-centerpane') as HTMLElement
+
+    // 1. 첫 번째 리사이즈
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 2. 50ms 후 두 번째 리사이즈 (타이머 리셋됨)
+    act(() => {
+      vi.advanceTimersByTime(50)
+      fireEvent(window, new Event('resize'))
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 3. 50ms 후 세 번째 리사이즈 (타이머 다시 리셋됨)
+    act(() => {
+      vi.advanceTimersByTime(50)
+      fireEvent(window, new Event('resize'))
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(true)
+
+    // 4. 마지막 리사이즈 후 100ms 대기 (총 타이머 완료)
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+    expect(centerPane.classList.contains('no-transition')).toBe(false)
+
+    vi.useRealTimers()
   })
 })
