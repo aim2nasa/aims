@@ -835,7 +835,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {centerPaneVisible && (
         <main
           id="main-content"
-          className={`layout-pane layout-centerpane ${isDraggingBRB ? 'no-transition' : ''}`}
+          className={`layout-pane layout-centerpane ${isDraggingBRB || isResizing ? 'no-transition' : ''}`}
           role="main"
           aria-label="메인 콘텐츠 영역"
           style={{
