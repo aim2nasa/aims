@@ -285,13 +285,14 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         setIsDeleteMode(false) // 삭제 완료 후 삭제 모드 종료
         await loadDocuments(searchParams, true) // 목록 새로고침
 
-        await confirmModal.actions.openModal({
-          title: '완료',
-          message: `${result.deletedCount}건 삭제되었습니다.${result.failedCount > 0 ? `\n(${result.failedCount}건 실패)` : ''}`,
-          confirmText: '확인',
-          showCancel: false,
-          iconType: 'success'
-        })
+        // 🍎 삭제 완료 모달 제거: 조용히 삭제 처리
+        // await confirmModal.actions.openModal({
+        //   title: '완료',
+        //   message: `${result.deletedCount}건 삭제되었습니다.${result.failedCount > 0 ? `\n(${result.failedCount}건 실패)` : ''}`,
+        //   confirmText: '확인',
+        //   showCancel: false,
+        //   iconType: 'success'
+        // })
       } else {
         await confirmModal.actions.openModal({
           title: '실패',
