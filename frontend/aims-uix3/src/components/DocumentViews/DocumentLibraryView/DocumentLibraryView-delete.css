@@ -16,6 +16,41 @@
   flex: 1;
 }
 
+/* === 🍎 EDIT MODE BUTTON: 편집 아이콘 버튼 === */
+
+.edit-mode-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.edit-mode-button:hover {
+  background: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .edit-mode-button:hover {
+  background: var(--color-ios-bg-hover-dark);
+}
+
+.edit-mode-button--active {
+  background: var(--color-primary-500);
+  color: white;
+}
+
+.edit-mode-button--active:hover {
+  background: var(--color-primary-600);
+}
+
 /* === 🍎 DELETE ACTIONS: 삭제 모드 액션 바 === */
 
 .document-library-actions {

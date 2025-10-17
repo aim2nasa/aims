@@ -405,15 +405,15 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             )}
           </div>
 
-          {/* 🍎 편집 버튼 */}
-          <Button
-            variant={isDeleteMode ? "secondary" : "ghost"}
-            size="sm"
+          {/* 🍎 편집 버튼 - 아이콘 버튼 */}
+          <button
+            className={`edit-mode-button ${isDeleteMode ? 'edit-mode-button--active' : ''}`}
             onClick={handleToggleDeleteMode}
             aria-label={isDeleteMode ? "편집 완료" : "편집"}
+            title={isDeleteMode ? "편집 완료" : "편집"}
           >
-            {isDeleteMode ? "완료" : "편집"}
-          </Button>
+            {isDeleteMode ? "✓" : "✏️"}
+          </button>
         </div>
 
         {/* 에러 메시지 */}
