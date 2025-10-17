@@ -121,6 +121,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [annualReportCustomers, setAnnualReportCustomers] = useState<Customer[]>([])
   const [annualReportFile, setAnnualReportFile] = useState<{ file: File; fileName: string } | null>(null)
 
+  // Annual Report 자동 등록 로그 메시지
+  const [autoRegistrationLog, setAutoRegistrationLog] = useState<string | null>(null)
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -186,14 +189,48 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
 
-              // 모달 표시
+              // ✨ UX 개선: 고객이 1명이면 자동 진행 (모달 없이)
+              if (customers.length === 1) {
+                const customer = customers[0];
+                console.log('[DocumentRegistrationView] 🚀 고객 1명 감지, 자동 진행:', customer.personal_info?.name);
+
+                // 로그 메시지 설정 (UI에 표시)
+                const logMessage = `Annual Report 자동 등록: ${customer.personal_info?.name} (발행일: ${checkResult.metadata.issue_date})`;
+                setAutoRegistrationLog(logMessage);
+                console.log(`[DocumentRegistrationView] 📝 ${logMessage}`);
+
+                // Annual Report 파싱 요청 (백그라운드 AI 처리)
+                try {
+                  const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customer._id);
+                  console.log('[DocumentRegistrationView] Annual Report 파싱 요청 완료:', parseResult);
+                } catch (error) {
+                  console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', error);
+                }
+
+                // Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
+                const uploadFile: UploadFile = {
+                  id: generateFileId(),
+                  file,
+                  fileSize: file.size,
+                  status: 'pending',
+                  progress: 0,
+                  error: undefined,
+                  completedAt: undefined,
+                };
+
+                newUploadFiles.push(uploadFile);
+                console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가');
+                continue;
+              }
+
+              // 동명이인(2명 이상) 또는 고객 없음: 모달 표시
               setAnnualReportMetadata(checkResult.metadata);
               setAnnualReportCustomers(customers);
               setAnnualReportFile({ file, fileName: file.name });
               setIsCustomerModalOpen(true);
 
               // Annual Report는 업로드 큐에 추가하지 않음 (사용자가 고객 선택 후 처리)
-              console.log('[DocumentRegistrationView] Annual Report는 업로드 큐에서 제외');
+              console.log('[DocumentRegistrationView] Annual Report는 업로드 큐에서 제외 (모달 대기 중)');
               continue;
             }
           } catch (error) {
@@ -577,6 +614,21 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [uploadState.files, uploadState.uploading])
 
   /**
+   * Annual Report 자동 등록 로그 자동 숨김
+   */
+  useEffect(() => {
+    if (autoRegistrationLog) {
+      // 5초 후 로그 메시지 숨김
+      const timer = setTimeout(() => {
+        setAutoRegistrationLog(null)
+      }, 5000)
+
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [autoRegistrationLog])
+
+  /**
    * 파일 선택 옵션
    */
   const fileSelectionOptions = useMemo(() => ({
@@ -699,6 +751,33 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   />
                 </button>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* 🍎 Annual Report 자동 등록 로그 메시지 */}
+        {autoRegistrationLog && (
+          <div className="upload-success">
+            <div className="upload-success__content">
+              <SFSymbol
+                name="checkmark.circle.fill"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                className="upload-success__icon"
+              />
+              <span className="upload-success__text">{autoRegistrationLog}</span>
+              <button
+                type="button"
+                onClick={() => setAutoRegistrationLog(null)}
+                className="upload-success__button"
+                aria-label="Close notification"
+              >
+                <SFSymbol
+                  name="xmark"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                />
+              </button>
             </div>
           </div>
         )}
