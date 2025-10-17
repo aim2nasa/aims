@@ -254,6 +254,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [rightPaneVisible, setRightPaneVisible] = useState(true)
   const [centerWidth, setCenterWidth] = useState(DEFAULT_CENTER_WIDTH_PERCENT)
   const [paginationVisible, setPaginationVisible] = useState(true)
+  const [isDraggingBRB, setIsDraggingBRB] = useState(false)
 
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
@@ -834,7 +835,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {centerPaneVisible && (
         <main
           id="main-content"
-          className="layout-pane layout-centerpane"
+          className={`layout-pane layout-centerpane ${isDraggingBRB ? 'no-transition' : ''}`}
           role="main"
           aria-label="메인 콘텐츠 영역"
           style={{
@@ -996,6 +997,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               // iOS 16+ 셀렉션 햅틱 피드백 - 드래그 시작
               haptic.triggerHaptic(HAPTIC_TYPES.SELECTION)
 
+              // 🎯 드래그 시작: transition 비활성화
+              setIsDraggingBRB(true)
+
               const startX = e.clientX
               const startWidth = centerWidth
 
@@ -1024,6 +1028,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               const handleMouseUp = () => {
                 // iOS 16+ 라이트 햅틱 피드백 - 드래그 완료
                 haptic.triggerHaptic(HAPTIC_TYPES.LIGHT)
+
+                // 🎯 드래그 종료: transition 복원
+                setIsDraggingBRB(false)
 
                 document.removeEventListener('mousemove', handleMouseMove)
                 document.removeEventListener('mouseup', handleMouseUp)
