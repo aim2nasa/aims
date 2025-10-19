@@ -15,6 +15,12 @@ import type { SearchResultItem, SearchMode, KeywordMode } from '@/entities/searc
 import { DocumentUtils, DocumentProcessingModule } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import {
+  DocumentIcon,
+  EyeIcon,
+  LinkIcon,
+  SummaryIcon
+} from '../components/DocumentActionIcons'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import FullTextModal from './FullTextModal'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
@@ -432,46 +438,46 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <Tooltip content="상세 보기">
                           <button
                             className="action-button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDetailClick(item)
-                            }}
-                            aria-label="상세 보기"
-                          >
-                            👁️
-                          </button>
-                        </Tooltip>
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDetailClick(item)
+                        }}
+                        aria-label="상세 보기"
+                      >
+                        <EyeIcon />
+                      </button>
+                    </Tooltip>
 
-                        {/* 🍎 요약 보기 버튼 */}
-                        <Tooltip content="요약 보기">
+                    {/* 🍎 요약 보기 버튼 */}
+                    <Tooltip content="요약 보기">
                           <button
                             className="action-button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleSummaryClickInternal(item)
-                            }}
-                            aria-label="요약 보기"
-                          >
-                            📋
-                          </button>
-                        </Tooltip>
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSummaryClickInternal(item)
+                        }}
+                        aria-label="요약 보기"
+                      >
+                        <SummaryIcon />
+                      </button>
+                    </Tooltip>
 
-                        {/* 🍎 전체 텍스트 보기 버튼 */}
-                        <Tooltip content="전체 텍스트 보기">
+                    {/* 🍎 전체 텍스트 보기 버튼 */}
+                    <Tooltip content="전체 텍스트 보기">
                           <button
                             className="action-button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleFullTextClickInternal(item)
-                            }}
-                            aria-label="전체 텍스트 보기"
-                          >
-                            📄
-                          </button>
-                        </Tooltip>
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleFullTextClickInternal(item)
+                        }}
+                        aria-label="전체 텍스트 보기"
+                      >
+                        <DocumentIcon />
+                      </button>
+                    </Tooltip>
 
-                        {/* 🍎 고객에게 연결 버튼 */}
-                        <Tooltip content={linkTooltip}>
+                    {/* 🍎 고객에게 연결 버튼 */}
+                    <Tooltip content={linkTooltip}>
                           <button
                             className="action-button"
                             onClick={(e) => {
@@ -480,14 +486,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                 handleLinkClickInternal(item)
                               }
                             }}
-                            aria-label={linkTooltip}
-                            aria-disabled={!canLink}
-                            data-disabled={!canLink}
-                            tabIndex={canLink ? 0 : -1}
-                          >
-                            🔗
-                          </button>
-                        </Tooltip>
+                          aria-label={linkTooltip}
+                          aria-disabled={!canLink}
+                          data-disabled={!canLink}
+                          tabIndex={canLink ? 0 : -1}
+                      >
+                        <LinkIcon />
+                      </button>
+                    </Tooltip>
 
                         {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (

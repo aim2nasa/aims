@@ -11,6 +11,12 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
+import {
+  DocumentIcon,
+  EyeIcon,
+  LinkIcon,
+  SummaryIcon
+} from '../../components/DocumentActionIcons'
 import './DocumentStatusList.css'
 
 export interface DocumentStatusListProps {
@@ -164,7 +170,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }}
                   aria-label="상세 보기"
                 >
-                  👁️
+                  <EyeIcon />
                 </button>
               </Tooltip>
               <Tooltip content="요약 보기">
@@ -176,7 +182,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }}
                   aria-label="요약 보기"
                 >
-                  📋
+                  <SummaryIcon />
                 </button>
               </Tooltip>
               <Tooltip content="전체 텍스트 보기">
@@ -188,7 +194,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   }}
                   aria-label="전체 텍스트 보기"
                 >
-                  📄
+                  <DocumentIcon />
                 </button>
               </Tooltip>
               <Tooltip content={linkTooltip}>
@@ -205,7 +211,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   data-disabled={!canLink}
                   tabIndex={canLink ? 0 : -1}
                 >
-                  🔗
+                  <LinkIcon />
                 </button>
               </Tooltip>
             </div>

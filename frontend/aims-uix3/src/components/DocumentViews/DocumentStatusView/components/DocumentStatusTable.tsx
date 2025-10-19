@@ -13,6 +13,11 @@ import React, { useMemo, useState } from 'react'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Document } from '../../../../types/documentStatus'
 import { Dropdown, type DropdownOption } from '@/shared/ui'
+import {
+  DocumentIcon,
+  EyeIcon,
+  SummaryIcon
+} from '../../components/DocumentActionIcons'
 import './DocumentStatusTable.css'
 
 interface DocumentStatusTableProps {
@@ -202,39 +207,39 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                       <div className="action-buttons">
                         <button
                           className="action-button action-button-detail"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onDocumentClick?.(doc)
-                          }}
-                          aria-label="상세 보기"
-                          title="상세 보기"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          className="action-button action-button-summary"
-                          onClick={(e) => {
-                            e.stopPropagation()
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDocumentClick?.(doc)
+                        }}
+                        aria-label="상세 보기"
+                        title="상세 보기"
+                      >
+                        <EyeIcon />
+                      </button>
+                      <button
+                        className="action-button action-button-summary"
+                        onClick={(e) => {
+                          e.stopPropagation()
                             if (isCompleted) onSummaryClick?.(doc)
-                          }}
-                          disabled={!isCompleted}
-                          aria-label="요약 보기"
-                          title={isCompleted ? '요약 보기' : '완료된 문서만 가능'}
-                        >
-                          📝
-                        </button>
-                        <button
-                          className="action-button action-button-fulltext"
-                          onClick={(e) => {
-                            e.stopPropagation()
+                        }}
+                        disabled={!isCompleted}
+                        aria-label="요약 보기"
+                        title={isCompleted ? '요약 보기' : '완료된 문서만 가능'}
+                      >
+                        <SummaryIcon />
+                      </button>
+                      <button
+                        className="action-button action-button-fulltext"
+                        onClick={(e) => {
+                          e.stopPropagation()
                             if (isCompleted) onFullTextClick?.(doc)
-                          }}
-                          disabled={!isCompleted}
-                          aria-label="전체 텍스트 보기"
-                          title={isCompleted ? '전체 텍스트 보기' : '완료된 문서만 가능'}
-                        >
-                          📄
-                        </button>
+                        }}
+                        disabled={!isCompleted}
+                        aria-label="전체 텍스트 보기"
+                        title={isCompleted ? '전체 텍스트 보기' : '완료된 문서만 가능'}
+                      >
+                        <DocumentIcon />
+                      </button>
                       </div>
                     </td>
                   </tr>

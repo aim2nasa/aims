@@ -13,6 +13,12 @@ import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Dropdown, type DropdownOption, Tooltip, Button } from '@/shared/ui'
+import {
+  DocumentIcon,
+  EyeIcon,
+  LinkIcon,
+  SummaryIcon
+} from '../components/DocumentActionIcons'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import { CustomerService } from '../../../services/customerService'
@@ -628,7 +634,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         }}
                         aria-label="상세 보기"
                       >
-                        👁️
+                        <EyeIcon />
                       </button>
                     </Tooltip>
                     <Tooltip content="요약 보기">
@@ -640,7 +646,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         }}
                         aria-label="요약 보기"
                       >
-                        📋
+                        <SummaryIcon />
                       </button>
                     </Tooltip>
                     <Tooltip content="전체 텍스트 보기">
@@ -652,7 +658,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         }}
                         aria-label="전체 텍스트 보기"
                       >
-                        📄
+                        <DocumentIcon />
                       </button>
                     </Tooltip>
                     <Tooltip content={linkTooltip}>
@@ -669,7 +675,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                         data-disabled={!canLink}
                         tabIndex={canLink ? 0 : -1}
                       >
-                        🔗
+                        <LinkIcon />
                       </button>
                     </Tooltip>
                   </div>
