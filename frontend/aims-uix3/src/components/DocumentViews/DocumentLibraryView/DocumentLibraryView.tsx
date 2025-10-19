@@ -627,7 +627,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                   <div className="document-actions">
                     <Tooltip content="상세 보기">
                       <button
-                        className="action-btn"
+                        className="action-btn action-btn--detail"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDetailClick(document)
@@ -639,7 +639,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     </Tooltip>
                     <Tooltip content="요약 보기">
                       <button
-                        className="action-btn"
+                        className="action-btn action-btn--summary"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleSummaryClickInternal(document)
@@ -651,7 +651,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     </Tooltip>
                     <Tooltip content="전체 텍스트 보기">
                       <button
-                        className="action-btn"
+                        className="action-btn action-btn--full"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleFullTextClickInternal(document)
@@ -663,7 +663,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     </Tooltip>
                     <Tooltip content={linkTooltip}>
                       <button
-                        className="action-btn"
+                        className="action-btn action-btn--link"
                         onClick={(e) => {
                           e.stopPropagation()
                           if (canLink) {

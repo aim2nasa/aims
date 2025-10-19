@@ -206,7 +206,7 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                     <td className="col-actions">
                       <div className="action-buttons">
                         <button
-                          className="action-button action-button-detail"
+                          className="action-button action-button--detail"
                         onClick={(e) => {
                           e.stopPropagation()
                           onDocumentClick?.(doc)
@@ -216,8 +216,8 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                       >
                         <EyeIcon />
                       </button>
-                      <button
-                        className="action-button action-button-summary"
+                        <button
+                          className="action-button action-button--summary"
                         onClick={(e) => {
                           e.stopPropagation()
                             if (isCompleted) onSummaryClick?.(doc)
@@ -228,8 +228,8 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
                       >
                         <SummaryIcon />
                       </button>
-                      <button
-                        className="action-button action-button-fulltext"
+                        <button
+                          className="action-button action-button--full"
                         onClick={(e) => {
                           e.stopPropagation()
                             if (isCompleted) onFullTextClick?.(doc)

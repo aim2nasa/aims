@@ -163,7 +163,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <div className="status-actions">
               <Tooltip content="상세 보기">
                 <button
-                  className="action-btn"
+                  className="action-btn action-btn--detail"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDetailClick?.(document)
@@ -175,7 +175,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               </Tooltip>
               <Tooltip content="요약 보기">
                 <button
-                  className="action-btn"
+                  className="action-btn action-btn--summary"
                   onClick={(e) => {
                     e.stopPropagation()
                     onSummaryClick?.(document)
@@ -187,7 +187,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               </Tooltip>
               <Tooltip content="전체 텍스트 보기">
                 <button
-                  className="action-btn"
+                  className="action-btn action-btn--full"
                   onClick={(e) => {
                     e.stopPropagation()
                     onFullTextClick?.(document)
@@ -199,7 +199,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               </Tooltip>
               <Tooltip content={linkTooltip}>
                 <button
-                  className="action-btn"
+                  className="action-btn action-btn--link"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (canLink) {

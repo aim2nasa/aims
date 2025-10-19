@@ -304,7 +304,7 @@ html[data-theme="dark"] .document-list-empty {
     120px     /* 날짜 고정 */
     50px      /* 타입 고정 */
     28px      /* 상태 아이콘 */
-    104px;    /* 액션 버튼 */
+    124px;    /* 액션 버튼 */
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -954,96 +954,70 @@ html[data-theme="dark"] .pagination-total {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 6px;
-  background-color: var(--color-ios-bg-secondary-light);
-  color: var(--color-ios-text-primary-light);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  border: none;
+  background: transparent;
   font-size: 0;
   line-height: 1;
   cursor: pointer;
-  transition:
-    transform 0.18s var(--easing-micro-instant),
-    box-shadow 0.18s var(--easing-micro-smooth),
-    background-color 0.18s var(--easing-micro-smooth),
-    color 0.18s var(--easing-micro-smooth);
+  color: var(--color-ios-text-secondary-light);
+  transition: color 0.18s var(--easing-micro-smooth), transform 0.18s var(--easing-micro-instant);
 }
 
 .action-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   pointer-events: none;
 }
 
 html[data-theme="dark"] .action-btn {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: var(--color-ios-text-primary-dark);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  color: var(--color-ios-text-secondary-dark);
 }
 
-/* 🍎 고객 연결 상태 CSS 변수 정의 */
-.document-actions {
-  --opacity-link-base: 0.85;
-  --opacity-link-base-dark: 1;
-  --opacity-link-disabled: 0.25;
-  --opacity-link-disabled-dark: 0.15;
-  --filter-link-base: brightness(1);
-  --filter-link-base-dark: brightness(1.3) saturate(1.2);
-  --filter-link-active: brightness(1) saturate(1.1);
-  --filter-link-active-dark: brightness(1.5) saturate(1.5) contrast(1.2);
-  --filter-link-disabled: grayscale(0.5);
-  --filter-link-disabled-dark: grayscale(0.8) brightness(0.5);
-  --shadow-link-glow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
+.action-btn--detail { color: var(--color-primary-600); }
+html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
 
-/* 🍎 다크 테마 고객 연결 상태 강화 - 라이트 테마 */
-.action-btn:last-child { /* 링크 버튼 (마지막 버튼) */
-  opacity: var(--opacity-link-base);
-  filter: var(--filter-link-base);
-}
+.action-btn--summary { color: var(--color-ios-orange); }
+html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
 
-/* 🍎 다크 테마 고객 연결 상태 강화 - 다크 테마에서 더 강렬한 대비 */
-html[data-theme="dark"] .action-btn:last-child { /* 링크 버튼 (마지막 버튼) */
-  opacity: var(--opacity-link-base-dark);
-  filter: var(--filter-link-base-dark);
-}
+.action-btn--full { color: var(--color-primary-700); }
+html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
 
-/* 연결 가능 상태 (활성) - 라이트 테마 */
-.action-btn:last-child:not([data-disabled="true"]) {
-  filter: var(--filter-link-active);
-}
-
-/* 연결 가능 상태 (활성) - 다크 테마에서 더욱 밝게 */
-html[data-theme="dark"] .action-btn:last-child:not([data-disabled="true"]) {
-  filter: var(--filter-link-active-dark);
-  text-shadow: var(--shadow-link-glow);
-}
+.action-btn--link { color: var(--color-success-600); }
+html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
 
 .action-btn:hover {
   transform: translateY(-1px);
-  background-color: var(--color-ios-bg-tertiary-light);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
-  opacity: 1;
 }
 
-html[data-theme="dark"] .action-btn:hover {
-  background-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+.action-btn--summary:hover {
+  color: var(--color-ios-orange-strong, #ff8a3d);
+}
+
+html[data-theme="dark"] .action-btn--summary:hover {
+  color: var(--color-ios-orange-light, #ffb97a);
+}
+
+.action-btn--full:hover {
+  color: var(--color-primary-800);
+}
+
+html[data-theme="dark"] .action-btn--full:hover {
+  color: var(--color-primary-100);
+}
+
+.action-btn--link:hover {
+  color: var(--color-success-700);
+}
+
+html[data-theme="dark"] .action-btn--link:hover {
+  color: var(--color-success-200);
 }
 
 .action-btn:active {
   transform: translateY(0);
-  background-color: rgba(0, 0, 0, 0.08);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
-}
-
-html[data-theme="dark"] .action-btn:active {
-  background-color: rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 .action-btn:focus-visible {
@@ -1055,30 +1029,25 @@ html[data-theme="dark"] .action-btn:focus-visible {
   outline-color: var(--color-primary-300);
 }
 
-/* 비활성 상태 (이미 연결됨) - 라이트 테마 */
 .action-btn[data-disabled="true"] {
-  opacity: var(--opacity-link-disabled);
+  opacity: 0.25;
   cursor: not-allowed;
   transform: none;
-  filter: var(--filter-link-disabled);
   color: var(--color-ios-text-tertiary-light);
-  background-color: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.04);
-  box-shadow: none;
 }
 
-/* 비활성 상태 (이미 연결됨) - 다크 테마에서 더 어둡게 */
 html[data-theme="dark"] .action-btn[data-disabled="true"] {
-  opacity: var(--opacity-link-disabled-dark);
-  filter: var(--filter-link-disabled-dark);
-  text-shadow: none;
   color: var(--color-ios-text-tertiary-dark);
-  background-color: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.08);
+  opacity: 0.2;
 }
 
 .action-btn[data-disabled="true"]:hover {
   transform: none;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .action-btn[data-disabled="true"]:hover {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* 🍎 MOTION REDUCTION: Respect user preferences */

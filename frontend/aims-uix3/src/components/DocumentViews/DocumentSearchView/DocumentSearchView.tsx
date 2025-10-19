@@ -437,7 +437,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         {/* 🍎 상세 보기 버튼 */}
                         <Tooltip content="상세 보기">
                           <button
-                            className="action-button"
+                            className="action-button action-button--detail"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDetailClick(item)
@@ -451,7 +451,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     {/* 🍎 요약 보기 버튼 */}
                     <Tooltip content="요약 보기">
                           <button
-                            className="action-button"
+                            className="action-button action-button--summary"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleSummaryClickInternal(item)
@@ -465,7 +465,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     {/* 🍎 전체 텍스트 보기 버튼 */}
                     <Tooltip content="전체 텍스트 보기">
                           <button
-                            className="action-button"
+                            className="action-button action-button--full"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleFullTextClickInternal(item)
@@ -479,7 +479,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     {/* 🍎 고객에게 연결 버튼 */}
                     <Tooltip content={linkTooltip}>
                           <button
-                            className="action-button"
+                            className="action-button action-button--link"
                             onClick={(e) => {
                               e.stopPropagation()
                               if (canLink) {
