@@ -394,7 +394,8 @@ app.get('/api/documents', async (req, res) => {
         status: status,
         progress: progress,
         filePath: doc.upload?.destPath,
-        is_annual_report: doc.is_annual_report || false
+        is_annual_report: doc.is_annual_report || false,
+        customer_relation: doc.customer_relation || null
       };
     });
 
@@ -456,6 +457,7 @@ app.get('/api/documents/status', async (req, res) => {
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
+        customer_relation: doc.customer_relation || null,
         ...statusInfo
       };
     });

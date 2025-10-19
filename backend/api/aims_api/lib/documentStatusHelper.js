@@ -28,7 +28,8 @@ function prepareDocumentResponse(doc) {
     meta: doc.meta || null,
     ocr: doc.ocr || null,
     text: doc.text || null,
-    docembed: doc.docembed || null
+    docembed: doc.docembed || null,
+    customer_relation: doc.customer_relation || null
   };
 
   // 🧮 2. 계산된 UI 값

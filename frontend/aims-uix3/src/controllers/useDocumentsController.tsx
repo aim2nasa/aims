@@ -61,7 +61,7 @@ export const useDocumentsController = () => {
             const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc.id || '');
             return {
               ...doc,
-              customer_relation: detailedDoc.data?.rawDocument?.customer_relation
+              customer_relation: detailedDoc.data?.raw?.customer_relation
             };
           } catch (error) {
             console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
