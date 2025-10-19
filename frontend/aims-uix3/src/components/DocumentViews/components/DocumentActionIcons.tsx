@@ -10,54 +10,58 @@ const baseProps: SVGProps<SVGSVGElement> = {
 
 const strokeProps = {
   stroke: 'currentColor',
-  strokeWidth: 1.8,
+  strokeWidth: 1.5,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const
 }
 
+// 🍎 Eye Icon - SF Symbols 스타일의 부드러운 곡선
 export const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
     <path
-      d="M2.25 12s3.25-6 9.75-6 9.75 6 9.75 6-3.25 6-9.75 6-9.75-6-9.75-6z"
+      d="M2.5 12C2.5 12 5.5 6 12 6s9.5 6 9.5 6-3 6-9.5 6-9.5-6-9.5-6z"
       {...strokeProps}
     />
-    <circle cx={12} cy={12} r={3.25} {...strokeProps} />
+    <circle cx={12} cy={12} r={2.5} {...strokeProps} />
+    <circle cx={12} cy={12} r={1} fill="currentColor" opacity={0.3} />
   </svg>
 )
 
+// 🍎 Summary Icon - 세련된 리스트 스타일
 export const SummaryIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
-    <path d="M6.5 7.5h11" {...strokeProps} />
-    <path d="M6.5 12h11" {...strokeProps} />
-    <path d="M6.5 16.5H14" {...strokeProps} />
-    <circle cx={4.75} cy={7.5} r={0.9} fill="currentColor" />
-    <circle cx={4.75} cy={12} r={0.9} fill="currentColor" />
-    <circle cx={4.75} cy={16.5} r={0.9} fill="currentColor" />
+    <path d="M7 7h10" {...strokeProps} />
+    <path d="M7 12h10" {...strokeProps} />
+    <path d="M7 17h7" {...strokeProps} />
+    <circle cx={4.5} cy={7} r={0.75} fill="currentColor" />
+    <circle cx={4.5} cy={12} r={0.75} fill="currentColor" />
+    <circle cx={4.5} cy={17} r={0.75} fill="currentColor" />
   </svg>
 )
 
+// 🍎 Document Icon - 우아한 문서 아이콘
 export const DocumentIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
     <path
-      d="M8.25 3h5.25L19.5 9v10.5a1.5 1.5 0 0 1-1.5 1.5h-9a1.5 1.5 0 0 1-1.5-1.5V4.5A1.5 1.5 0 0 1 8.25 3z"
+      d="M8 3h6l5 5v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
       {...strokeProps}
     />
-    <path d="M13.5 3v5.25H19.5" {...strokeProps} />
-    <path d="M9.75 12h4.5" {...strokeProps} />
-    <path d="M9.75 15.75h4.5" {...strokeProps} />
+    <path d="M14 3v5h5" {...strokeProps} />
+    <path d="M10 13h4" {...strokeProps} strokeWidth={1.5} />
+    <path d="M10 16h4" {...strokeProps} strokeWidth={1.5} />
   </svg>
 )
 
+// 🍎 Link Icon - 매끄러운 체인 링크
 export const LinkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
     <path
-      d="M9.75 14.25 6.5 17.5a3 3 0 0 1-4.25-4.25l3.25-3.25"
+      d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
       {...strokeProps}
     />
     <path
-      d="M14.25 9.75 17.5 6.5a3 3 0 0 1 4.25 4.25l-3.25 3.25"
+      d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
       {...strokeProps}
     />
-    <path d="M9 15c3 3 6 3 9 0" {...strokeProps} />
   </svg>
 )
