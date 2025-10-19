@@ -1,12 +1,17 @@
+#!/bin/sh
+
 echo "🔍 Running pre-commit checks..."
 
-# Frontend 디렉토리로 이동하여 빌드 및 테스트 실행
-cd frontend/aims-uix3 || exit 1
+# Staged 파일 중 aims-uix3 변경이 없으면 빌드/테스트 생략
+if ! git diff --cached --name-only | grep -q '^frontend/aims-uix3/'; then
+  echo "ℹ️  Skipping aims-uix3 build/tests (no staged changes)."
+  exit 0
+fi
 
-echo "📦 Building..."
-npm run build || exit 1
+echo "📦 Building frontend/aims-uix3..."
+(cd frontend/aims-uix3 && npm run build) || exit 1
 
-echo "🧪 Running tests..."
-npm test -- --run || exit 1
+echo "🧪 Running frontend/aims-uix3 tests..."
+(cd frontend/aims-uix3 && npm test -- --run) || exit 1
 
 echo "✅ All checks passed!"
