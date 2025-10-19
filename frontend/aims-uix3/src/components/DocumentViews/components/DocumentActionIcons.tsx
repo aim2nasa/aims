@@ -8,60 +8,187 @@ const baseProps: SVGProps<SVGSVGElement> = {
   xmlns: 'http://www.w3.org/2000/svg'
 }
 
-const strokeProps = {
-  stroke: 'currentColor',
-  strokeWidth: 1.5,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const
-}
-
-// 🍎 Eye Icon - SF Symbols 스타일의 부드러운 곡선
+// 🍎 Eye Icon - 파란색 톤의 세련된 스타일
 export const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
+    <defs>
+      <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.2} />
+        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.08} />
+      </linearGradient>
+      <linearGradient id="irisGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
+        <stop offset="100%" stopColor="#2563eb" stopOpacity={0.25} />
+      </linearGradient>
+    </defs>
+    {/* 눈 외곽 - 파란색 그라데이션 */}
     <path
       d="M2.5 12C2.5 12 5.5 6 12 6s9.5 6 9.5 6-3 6-9.5 6-9.5-6-9.5-6z"
-      {...strokeProps}
+      fill="url(#eyeGradient)"
     />
-    <circle cx={12} cy={12} r={2.5} {...strokeProps} />
-    <circle cx={12} cy={12} r={1} fill="currentColor" opacity={0.3} />
+    <path
+      d="M2.5 12C2.5 12 5.5 6 12 6s9.5 6 9.5 6-3 6-9.5 6-9.5-6-9.5-6z"
+      stroke="#3b82f6"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* 홍채 - 파란색 톤 */}
+    <circle cx={12} cy={12} r={2.5} fill="url(#irisGradient)" />
+    <circle cx={12} cy={12} r={2.5} stroke="#2563eb" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    {/* 동공 */}
+    <circle cx={12} cy={12} r={1} fill="#1e40af" opacity={0.4} />
   </svg>
 )
 
-// 🍎 Summary Icon - 세련된 리스트 스타일
+// 🍎 Summary Icon - 화려한 멀티 컬러 스타일
 export const SummaryIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
-    <path d="M7 7h10" {...strokeProps} />
-    <path d="M7 12h10" {...strokeProps} />
-    <path d="M7 17h7" {...strokeProps} />
-    <circle cx={4.5} cy={7} r={0.75} fill="currentColor" />
-    <circle cx={4.5} cy={12} r={0.75} fill="currentColor" />
-    <circle cx={4.5} cy={17} r={0.75} fill="currentColor" />
+    <defs>
+      {/* 첫 번째 라인 - 주황-노랑 그라데이션 */}
+      <linearGradient id="line1Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#fb923c" />
+        <stop offset="30%" stopColor="#ff9f0a" />
+        <stop offset="70%" stopColor="#fbbf24" />
+        <stop offset="100%" stopColor="#fde047" />
+      </linearGradient>
+      {/* 두 번째 라인 - 주황-빨강 그라데이션 */}
+      <linearGradient id="line2Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#f97316" />
+        <stop offset="30%" stopColor="#ff9f0a" />
+        <stop offset="70%" stopColor="#fb923c" />
+        <stop offset="100%" stopColor="#f59e0b" />
+      </linearGradient>
+      {/* 세 번째 라인 - 노랑-주황 그라데이션 */}
+      <linearGradient id="line3Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#fbbf24" />
+        <stop offset="50%" stopColor="#ff9f0a" />
+        <stop offset="100%" stopColor="#fb923c" />
+      </linearGradient>
+      {/* 불릿 1 - 주황 방사형 */}
+      <radialGradient id="bullet1Gradient" cx="30%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#fef3c7" />
+        <stop offset="40%" stopColor="#fde047" />
+        <stop offset="100%" stopColor="#ff9f0a" />
+      </radialGradient>
+      {/* 불릿 2 - 노랑 방사형 */}
+      <radialGradient id="bullet2Gradient" cx="30%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#fef9c3" />
+        <stop offset="40%" stopColor="#fbbf24" />
+        <stop offset="100%" stopColor="#f59e0b" />
+      </radialGradient>
+      {/* 불릿 3 - 진한 주황 방사형 */}
+      <radialGradient id="bullet3Gradient" cx="30%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#fed7aa" />
+        <stop offset="40%" stopColor="#fb923c" />
+        <stop offset="100%" stopColor="#f97316" />
+      </radialGradient>
+    </defs>
+
+    {/* 첫 번째 리스트 라인 - 배경 글로우 */}
+    <path d="M7 7h10" stroke="#fde047" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 7h10" stroke="url(#line1Gradient)" strokeWidth={1.5} strokeLinecap="round" />
+
+    {/* 두 번째 리스트 라인 - 배경 글로우 */}
+    <path d="M7 12h10" stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 12h10" stroke="url(#line2Gradient)" strokeWidth={1.5} strokeLinecap="round" />
+
+    {/* 세 번째 리스트 라인 - 배경 글로우 */}
+    <path d="M7 17h7" stroke="#fbbf24" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 17h7" stroke="url(#line3Gradient)" strokeWidth={1.5} strokeLinecap="round" />
+
+    {/* 불릿 포인트 1 - 외곽 글로우 */}
+    <circle cx={4.5} cy={7} r={1.4} fill="#fde047" opacity={0.4} />
+    <circle cx={4.5} cy={7} r={0.9} fill="url(#bullet1Gradient)" />
+    <circle cx={3.8} cy={6.3} r={0.3} fill="#fef3c7" opacity={0.8} />
+
+    {/* 불릿 포인트 2 - 외곽 글로우 */}
+    <circle cx={4.5} cy={12} r={1.4} fill="#fbbf24" opacity={0.4} />
+    <circle cx={4.5} cy={12} r={0.9} fill="url(#bullet2Gradient)" />
+    <circle cx={3.8} cy={11.3} r={0.3} fill="#fef9c3" opacity={0.8} />
+
+    {/* 불릿 포인트 3 - 외곽 글로우 */}
+    <circle cx={4.5} cy={17} r={1.4} fill="#fb923c" opacity={0.4} />
+    <circle cx={4.5} cy={17} r={0.9} fill="url(#bullet3Gradient)" />
+    <circle cx={3.8} cy={16.3} r={0.3} fill="#fed7aa" opacity={0.8} />
   </svg>
 )
 
-// 🍎 Document Icon - 우아한 문서 아이콘
+// 🍎 Document Icon - 보라색 톤의 세련된 스타일
 export const DocumentIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
+    <defs>
+      <linearGradient id="docGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.2} />
+        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.08} />
+      </linearGradient>
+      <linearGradient id="foldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#c4b5fd" stopOpacity={0.4} />
+        <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.2} />
+      </linearGradient>
+    </defs>
+    {/* 문서 본체 - 보라색 그라데이션 */}
     <path
       d="M8 3h6l5 5v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
-      {...strokeProps}
+      fill="url(#docGradient)"
     />
-    <path d="M14 3v5h5" {...strokeProps} />
-    <path d="M10 13h4" {...strokeProps} strokeWidth={1.5} />
-    <path d="M10 16h4" {...strokeProps} strokeWidth={1.5} />
+    <path
+      d="M8 3h6l5 5v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+      stroke="#8b5cf6"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* 페이지 접힘 - 보라색 톤 */}
+    <path d="M14 3v5h5" fill="url(#foldGradient)" />
+    <path d="M14 3v5h5" stroke="#a78bfa" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    {/* 텍스트 라인 - 보라색 */}
+    <path d="M10 13h4" stroke="#a78bfa" strokeWidth={1.5} strokeLinecap="round" opacity={0.7} />
+    <path d="M10 16h4" stroke="#a78bfa" strokeWidth={1.5} strokeLinecap="round" opacity={0.7} />
   </svg>
 )
 
-// 🍎 Link Icon - 매끄러운 체인 링크
+// 🍎 Link Icon - 초록색 톤의 세련된 스타일
 export const LinkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
+    <defs>
+      <linearGradient id="linkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#34d399" />
+        <stop offset="50%" stopColor="#10b981" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+    </defs>
+    {/* 체인 링크 상단 - 초록색 배경 */}
     <path
       d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-      {...strokeProps}
+      stroke="#34d399"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity={0.2}
+    />
+    <path
+      d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+      stroke="url(#linkGradient)"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* 체인 링크 하단 - 초록색 배경 */}
+    <path
+      d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+      stroke="#34d399"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity={0.2}
     />
     <path
       d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-      {...strokeProps}
+      stroke="url(#linkGradient)"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 )
