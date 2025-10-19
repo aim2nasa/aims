@@ -154,6 +154,67 @@ UX 문제 발견 시:
 
 **철칙**: `!important`를 써야겠다는 생각이 들면, CSS 구조를 재설계해야 할 시점!
 
+### 아이콘 크기 규칙 - 절대 준수! 📏
+
+**LeftPane CustomMenu 아이콘이 모든 아이콘의 기준이다!**
+
+1. **기준 크기:**
+   - LeftPane CustomMenu 아이콘: **16px** (SFSymbolSize.CALLOUT)
+   - 이것이 AIMS 프로젝트의 **최대 아이콘 크기**
+
+2. **절대 규칙:**
+   - **어떠한 아이콘도 LeftPane CustomMenu 아이콘(16px)보다 커서는 안 된다**
+   - 모든 아이콘은 16px **이하**여야 함
+   - 16px과 **같거나 작아야** 함
+
+3. **허용 크기:**
+   ```
+   ✅ 12px (SFSymbolSize.CAPTION_2)
+   ✅ 13px (SFSymbolSize.CAPTION_1)
+   ✅ 15px (SFSymbolSize.FOOTNOTE)
+   ✅ 16px (SFSymbolSize.CALLOUT) - 최대 크기
+   ❌ 17px (SFSymbolSize.BODY) - 금지
+   ❌ 20px - 금지
+   ❌ 24px - 금지
+   ```
+
+4. **적용 범위:**
+   - 모든 SVG 아이콘 (width, height)
+   - 모든 SFSymbol 컴포넌트 (size 속성)
+   - 모든 커스텀 아이콘 컴포넌트
+   - 버튼 내부 아이콘
+   - 리스트 아이템 아이콘
+   - 액션 버튼 아이콘
+
+5. **위반 예시 및 수정:**
+   ```tsx
+   // ❌ 잘못된 예 - 20px는 16px보다 큼
+   const baseProps = {
+     width: 20,
+     height: 20
+   }
+
+   // ✅ 올바른 예 - 16px 이하
+   const baseProps = {
+     width: 16,
+     height: 16
+   }
+
+   // ❌ 잘못된 예 - BODY(17px)는 CALLOUT(16px)보다 큼
+   <SFSymbol name="icon" size={SFSymbolSize.BODY} />
+
+   // ✅ 올바른 예 - CALLOUT(16px) 이하
+   <SFSymbol name="icon" size={SFSymbolSize.CALLOUT} />
+   ```
+
+6. **이유:**
+   - LeftPane은 UI의 핵심 네비게이션
+   - 모든 아이콘의 시각적 일관성 유지
+   - 사용자 경험의 통일성 확보
+   - 애플 디자인 가이드라인 준수
+
+**기억하라**: LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
+
 ### 인라인 스타일 가이드라인 ⚖️
 
 **허용**: 동적 계산값 (`width: ${dynamicValue}px`), 런타임 위치 (`transform: translate()`)
