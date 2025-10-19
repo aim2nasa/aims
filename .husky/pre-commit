@@ -2,9 +2,17 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Staged 파일 중 aims-uix3 변경이 없으면 빌드/테스트 생략
-if ! git diff --cached --name-only | grep -q '^frontend/aims-uix3/'; then
-  echo "ℹ️  Skipping aims-uix3 build/tests (no staged changes)."
+# Staged 파일 중 aims-uix3 변경이 없으면 종료
+STAGED_FRONTEND_FILES=$(git diff --cached --name-only -- 'frontend/aims-uix3/*')
+
+if [ -z "$STAGED_FRONTEND_FILES" ]; then
+  echo "ℹ️  Skipping aims-uix3 checks (no staged changes)."
+  exit 0
+fi
+
+# JS/TS 소스가 변경되지 않았다면 CSS/자원만 수정된 것으로 보고 빌드/테스트 생략
+if ! printf '%s\n' "$STAGED_FRONTEND_FILES" | grep -Eq '\.(ts|tsx|js|jsx|cjs|mjs|json)$'; then
+  echo "ℹ️  Skipping aims-uix3 build/tests (no JS/TS changes detected)."
   exit 0
 fi
 
