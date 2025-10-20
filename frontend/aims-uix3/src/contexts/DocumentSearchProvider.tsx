@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { KeywordMode, SearchMode } from '@/entities/search'
 import { SearchService } from '@/services/searchService'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import {
   DocumentSearchContext,
   type DocumentSearchContextValue
@@ -12,14 +13,17 @@ interface DocumentSearchProviderProps {
 }
 
 export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ children }) => {
-  const [query, setQuery] = useState<string>('')
-  const [searchMode, setSearchMode] = useState<SearchMode>('keyword')
-  const [keywordMode, setKeywordMode] = useState<KeywordMode>('AND')
-  const [results, setResults] = useState<DocumentSearchContextValue['results']>([])
-  const [answer, setAnswer] = useState<string | null>(null)
+  // F5 이후에도 유지되는 검색 상태들
+  const [query, setQuery] = usePersistedState<string>('document-search-query', '')
+  const [searchMode, setSearchMode] = usePersistedState<SearchMode>('document-search-mode', 'keyword')
+  const [keywordMode, setKeywordMode] = usePersistedState<KeywordMode>('document-search-keyword-mode', 'AND')
+  const [results, setResults] = usePersistedState<DocumentSearchContextValue['results']>('document-search-results', [])
+  const [answer, setAnswer] = usePersistedState<string | null>('document-search-answer', null)
+  const [lastSearchMode, setLastSearchMode] = usePersistedState<SearchMode | null>('document-search-last-mode', null)
+
+  // 임시 상태들 (새로고침 시 초기화되어도 됨)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastSearchMode, setLastSearchMode] = useState<SearchMode | null>(null)
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) {
