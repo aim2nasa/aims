@@ -452,10 +452,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         files: [uploadFile, ...prev.files]
       }));
 
-      // 업로드 큐에 추가
+      // 업로드 큐에 추가 및 즉시 시작
       uploadService.queueFiles([uploadFile]);
 
+      // ⚠️ 업로드가 자동 시작되지 않는 경우를 위해 명시적으로 업로드 시작 트리거
       console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
+
+      // 업로드 서비스가 이미 실행 중이 아니면 시작
+      if (!uploadState.uploading) {
+        setUploadState(prev => ({ ...prev, uploading: true }));
+      }
 
     } catch (error) {
       console.error('[DocumentRegistrationView] Annual Report 처리 중 오류:', error);
