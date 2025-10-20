@@ -20,8 +20,6 @@
 
   /* 애플 표준 백드롭 */
   background-color: var(--backdrop-modal-dimming);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 
   /* 부드러운 나타남 애니메이션 */
   animation: backdropAppear var(--duration-moderate) var(--easing-ease-out);
@@ -40,13 +38,9 @@
 @keyframes backdropAppear {
   from {
     opacity: 0;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 }
 

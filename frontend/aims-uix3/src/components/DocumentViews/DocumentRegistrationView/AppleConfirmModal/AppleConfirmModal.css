@@ -6,7 +6,7 @@
  * 애플 디자인 철학: Clarity, Deference, Depth
  */
 
-/* 🍎 OVERLAY: 블러 배경 효과 */
+/* 🍎 OVERLAY */
 .apple-confirm-modal-overlay {
   position: fixed;
   top: 0;
@@ -14,8 +14,6 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(25px) saturate(1.8);
-  -webkit-backdrop-filter: blur(25px) saturate(1.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,10 +40,8 @@
 
 /* 🍎 MODAL CONTAINER: iOS Alert 카드 */
 .apple-confirm-modal {
-  background-color: rgba(255, 255, 255, 0.78); /* iOS 라이트 모드 최신 스타일 */
+  background-color: rgba(255, 255, 255, 0.95); /* iOS 라이트 모드 최신 스타일 */
   border-radius: 13px; /* iOS 15+ 표준 둥근 모서리 */
-  backdrop-filter: blur(60px) saturate(1.5);
-  -webkit-backdrop-filter: blur(60px) saturate(1.5);
   box-shadow:
     inset 0 0 0 0.25px rgba(255, 255, 255, 0.8),
     0 0.5px 1px rgba(0, 0, 0, 0.01),
