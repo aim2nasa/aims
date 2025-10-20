@@ -21,6 +21,7 @@ import { CustomerIdentificationModal } from '@/features/customer/components/Cust
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
+import { DocumentService } from '@/services/DocumentService'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -127,6 +128,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🏷️ AR 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
   const arFilenamesRef = useRef<Set<string>>(new Set())
 
+  // 🔗 AR 파일명 → 고객 ID 매핑 (자동 연결용)
+  const arCustomerMappingRef = useRef<Map<string, string>>(new Map())
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -200,6 +204,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
                 arFilenamesRef.current.add(file.name);
                 console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가: ${file.name}`);
+
+                // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
+                arCustomerMappingRef.current.set(file.name, customer._id);
+                console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장 (자동): ${file.name} → ${customer._id}`);
 
                 // 로그 메시지 설정 (UI에 표시)
                 const logMessage = `Annual Report 자동 등록: ${customer.personal_info?.name} (발행일: ${checkResult.metadata.issue_date})`;
@@ -394,12 +402,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
-   * 업로드 완료 후 AR DB 플래그 설정
+   * 업로드 완료 후 AR DB 플래그 설정 + 문서 처리 완료 대기 후 자동 연결
    */
   const setAnnualReportFlag = useCallback(async (fileName: string) => {
-    console.log(`🔥 [setAnnualReportFlag] START: fileName=${fileName}`);
     try {
-      console.log(`📡 [setAnnualReportFlag] Sending PATCH to /api/documents/set-annual-report`);
       const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -407,8 +413,53 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       });
       const responseData = await response.json();
       console.log(`✅ [AR] is_annual_report=true 설정 완료:`, responseData);
-    } catch (setFlagError) {
-      console.error(`❌ [AR] is_annual_report 설정 실패:`, setFlagError);
+
+      // 🔗 문서 처리 완료 대기 후 자동 연결
+      const customerId = arCustomerMappingRef.current.get(fileName);
+      const documentId = responseData.document_id;
+
+      if (customerId && documentId) {
+        console.log(`⏳ [AR] 문서 처리 완료 대기 시작: ${documentId}`);
+
+        // 문서 처리 완료될 때까지 polling
+        const checkInterval = 5000; // 5초마다 체크
+        const maxAttempts = 36; // 최대 180초 (3분)
+        let attempts = 0;
+
+        const checkAndLink = setInterval(async () => {
+          attempts++;
+
+          try {
+            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+            const response = await docResponse.json();
+
+            // 문서 처리 완료 확인 (overallStatus === 'completed')
+            if (response.success && response.data?.computed?.overallStatus === 'completed') {
+              clearInterval(checkAndLink);
+
+              console.log(`🔗 [AR 자동 연결] 문서 처리 완료 확인, 연결 시작`);
+
+              await DocumentService.linkDocumentToCustomer(customerId, {
+                document_id: documentId,
+                relationship_type: 'annual_report'
+              });
+
+              console.log(`✅ [AR 자동 연결] 완료`);
+              arCustomerMappingRef.current.delete(fileName);
+            } else if (attempts >= maxAttempts) {
+              clearInterval(checkAndLink);
+              console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
+              arCustomerMappingRef.current.delete(fileName);
+            } else {
+              console.log(`⏳ [AR] 대기 중... (${attempts}/${maxAttempts})`);
+            }
+          } catch (error) {
+            console.error(`❌ [AR] 문서 상태 확인 실패:`, error);
+          }
+        }, checkInterval);
+      }
+    } catch (error) {
+      console.error(`❌ [AR] 처리 실패:`, error);
     }
   }, []);
 
@@ -422,6 +473,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
       arFilenamesRef.current.add(annualReportFile.fileName);
       console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);
+
+      // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
+      arCustomerMappingRef.current.set(annualReportFile.fileName, customerId);
+      console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${annualReportFile.fileName} → ${customerId}`);
 
       // Annual Report 파싱 요청 (백그라운드 AI 처리)
       const parseResult = await AnnualReportApi.parseAnnualReportFile(

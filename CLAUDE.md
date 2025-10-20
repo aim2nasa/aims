@@ -269,6 +269,65 @@ UX 문제 발견 시:
 
 **기억하세요: React 화면 업데이트 문제 = 캐시 삭제 + 서버 재시작!**
 
+### 백엔드 API 연동 규칙 - 절대 준수! ⚠️
+
+**추측 금지, 실제 데이터 확인 필수!**
+
+1. **API 응답 구조 확인 절차:**
+   ```bash
+   # 1단계: 반드시 실제 API 호출
+   ssh tars.giize.com 'curl -s "http://localhost:3010/api/endpoint" | python3 -m json.tool'
+
+   # 2단계: 응답 JSON 구조 완벽 파악
+   # 3단계: 정확한 경로로 코드 작성
+   # 4단계: 테스트
+   ```
+
+2. **절대 금지사항:**
+   - ❌ API 응답 구조를 추측으로 코드 작성
+   - ❌ 실패 후 또 다시 추측으로 수정
+   - ❌ 사용자가 실제 데이터 보여줘도 제대로 안 보기
+   - ❌ 같은 실수 반복하기
+
+3. **올바른 순서:**
+   ```
+   ✅ 실제 API 응답 확인
+   ✅ JSON 경로 정확히 파악
+   ✅ 코드 작성
+   ✅ 테스트
+
+   실패 시:
+   ✅ 다시 실제 API 응답 확인 (추측 금지!)
+   ✅ 사용자가 제공한 실제 데이터 정밀 분석
+   ```
+
+4. **실제 사례: 응답 경로 착각**
+   ```typescript
+   // ❌ 추측으로 작성한 잘못된 경로들
+   response.data.overallStatus
+   response.data.computed.uiStages.overallStatus
+   response.data.raw.uiStages.overallStatus
+
+   // ✅ 실제 백엔드 응답 구조 확인 후 정답
+   {
+     "success": true,
+     "data": {
+       "computed": {
+         "overallStatus": "completed"  // ← 여기!
+       }
+     }
+   }
+   response.data.computed.overallStatus
+   ```
+
+5. **이것이 중요한 이유:**
+   - 10분이면 끝날 작업이 1시간 이상 소요
+   - 사용자의 시간과 인내심 낭비
+   - 코드 품질 저하
+   - 신뢰 상실
+
+**기억하라**: 확실하지 않으면 반드시 실제 데이터부터 확인! 추측은 시간 낭비!
+
 ---
 
 ## System Overview

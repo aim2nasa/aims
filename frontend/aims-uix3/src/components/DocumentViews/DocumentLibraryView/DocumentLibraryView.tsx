@@ -541,7 +541,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               const statusLabel = DocumentStatusService.getStatusLabel(status)
               const statusIcon = DocumentStatusService.getStatusIcon(status)
               const isLinked = Boolean(document.customer_relation)
-              const canLink = status === 'completed' && !isLinked
+              const isAnnualReport = document.is_annual_report === true
+              // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
+              const canLink = status === 'completed' && !isLinked && !isAnnualReport
               const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
               const isSelected = selectedDocumentIds.has(document._id)
 
