@@ -49,6 +49,7 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   medical: '의료서류',
   general: '일반',
   policy: '증권',
+  annual_report: 'Annual Report',
   others: '기타'
 }
 

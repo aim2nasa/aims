@@ -29,14 +29,21 @@ interface DocumentLinkModalProps {
   }) => Promise<DocumentCustomerRelation | undefined>
 }
 
-const RELATIONSHIP_OPTIONS: DropdownOption[] = [
+// 전체 문서 유형 (시스템 자동 부여 포함)
+const ALL_RELATIONSHIP_TYPES: DropdownOption[] = [
   { value: 'general', label: '일반 문서' },
   { value: 'contract', label: '계약서' },
   { value: 'claim', label: '보험금청구서' },
   { value: 'proposal', label: '제안서' },
   { value: 'id_verification', label: '신분증명서' },
-  { value: 'medical', label: '의료서류' }
+  { value: 'medical', label: '의료서류' },
+  { value: 'annual_report', label: 'Annual Report' } // 시스템 자동 부여 전용
 ]
+
+// 사용자에게 표시할 문서 유형 (Annual Report 제외)
+const RELATIONSHIP_OPTIONS: DropdownOption[] = ALL_RELATIONSHIP_TYPES.filter(
+  option => option.value !== 'annual_report'
+)
 
 const SEARCH_LIMIT = 20
 
