@@ -53,7 +53,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
-  const [activeTab, setActiveTab] = useState<string>('info');
+
+  // URL에서 활성 탭 복원 (초기 마운트 시에만)
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    return urlTab || 'info';
+  });
+
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
   const [documentCount, setDocumentCount] = useState(0);
   const confirmController = useAppleConfirmController();
@@ -61,6 +68,17 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   useEffect(() => {
     setCustomerData(customer);
   }, [customer]);
+
+  // 활성 탭 변경 시 URL 동기화
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (activeTab && activeTab !== 'info') {
+      url.searchParams.set('tab', activeTab);
+    } else {
+      url.searchParams.delete('tab');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, [activeTab]);
 
   // 가족 관계 추가 가능 여부 확인 (aims-uix2 로직 적용)
   useEffect(() => {

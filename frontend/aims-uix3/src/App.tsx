@@ -287,6 +287,37 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
 
+  // URL 상태 동기화 헬퍼 함수들
+  const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null }) => {
+    const url = new URL(window.location.href)
+
+    if (params.view !== undefined) {
+      if (params.view) {
+        url.searchParams.set('view', params.view)
+      } else {
+        url.searchParams.delete('view')
+      }
+    }
+
+    if (params.customerId !== undefined) {
+      if (params.customerId) {
+        url.searchParams.set('customerId', params.customerId)
+      } else {
+        url.searchParams.delete('customerId')
+      }
+    }
+
+    if (params.documentId !== undefined) {
+      if (params.documentId) {
+        url.searchParams.set('documentId', params.documentId)
+      } else {
+        url.searchParams.delete('documentId')
+      }
+    }
+
+    window.history.replaceState({}, '', url.toString())
+  }, [])
+
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 숨김
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
@@ -331,16 +362,75 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [modalClickProtection, setModalClickProtection] = useState(false)
   const modalStateRef = useRef(false)
 
-  // 컴포넌트 마운트 시 이전 상태 복원 (모달 + 활성 View)
+  // 컴포넌트 마운트 시 이전 상태 복원 (모달 + 활성 View + URL 기반 상태)
   useEffect(() => {
     if (persistentState.layoutControlModalOpen) {
       setLayoutControlModalOpen(true)
       modalStateRef.current = true
     }
 
-    // 활성 View 상태 복원
-    if (persistentState.activeDocumentView) {
-      setActiveDocumentView(persistentState.activeDocumentView)
+    // URL에서 상태 복원
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlView = urlParams.get('view')
+    const urlCustomerId = urlParams.get('customerId')
+    const urlDocumentId = urlParams.get('documentId')
+
+    // 활성 View 복원 (URL 우선, 그 다음 LocalStorage)
+    const viewToRestore = urlView || persistentState.activeDocumentView
+    if (viewToRestore) {
+      setActiveDocumentView(viewToRestore)
+    }
+
+    // 고객 ID가 URL에 있으면 고객 정보 로드
+    if (urlCustomerId) {
+      // 비동기 로딩을 즉시 실행
+      CustomerService.getCustomer(urlCustomerId)
+        .then(customer => {
+          setSelectedCustomer(customer)
+          setRightPaneContentType('customer')
+          setRightPaneVisible(true)
+          if (import.meta.env.DEV) {
+            console.log('[App] URL에서 고객 정보 복원 완료:', customer)
+          }
+        })
+        .catch(error => {
+          console.error('[App] URL에서 고객 정보 복원 실패:', error)
+          // URL에서 잘못된 고객 ID 제거
+          updateURLParams({ customerId: null })
+        })
+    }
+
+    // 문서 ID가 URL에 있으면 문서 정보 로드
+    if (urlDocumentId && !urlCustomerId) {
+      // handleDocumentClick 로직 재사용
+      fetch('https://n8nd.giize.com/webhook/smartsearch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: urlDocumentId })
+      })
+        .then(response => response.json())
+        .then(json => {
+          const data = Array.isArray(json) ? json as SmartSearchDocumentResponse[] : json ? [json as SmartSearchDocumentResponse] : []
+          const fileData = data[0]
+          if (!fileData) return
+
+          const rawDocument = toSmartSearchDocumentResponse(fileData)
+          if (!rawDocument) return
+
+          const selected = buildSelectedDocument(urlDocumentId, rawDocument)
+          setSelectedDocument(selected)
+          setRightPaneContentType('document')
+          setRightPaneVisible(true)
+          if (import.meta.env.DEV) {
+            console.log('[App] URL에서 문서 정보 복원 완료:', selected)
+          }
+        })
+        .catch(error => {
+          console.error('[App] URL에서 문서 정보 복원 실패:', error)
+          updateURLParams({ documentId: null })
+        })
     }
   }, [])
 
@@ -384,7 +474,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     modalStateRef.current = layoutControlModalOpen
   }, [layoutControlModalOpen])
 
-  // 활성 View 상태 변경 시 전역 저장소 + LocalStorage 동기화
+  // 활성 View 상태 변경 시 전역 저장소 + LocalStorage + URL 동기화
   useEffect(() => {
     persistentState.activeDocumentView = activeDocumentView
 
@@ -396,7 +486,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_VIEW)
       }
     }
-  }, [activeDocumentView])
+
+    // URL에도 동기화
+    updateURLParams({ view: activeDocumentView })
+  }, [activeDocumentView, updateURLParams])
 
   // 테마 시스템
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
@@ -501,8 +594,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setSelectedCustomer(null)
       setRightPaneContentType(null)
       setRightPaneVisible(false)
+
+      // URL에서 고객/문서 ID 제거
+      updateURLParams({ customerId: null, documentId: null })
     }
-  }, [])
+  }, [updateURLParams])
 
   const closeDocumentView = useCallback(() => {
     setActiveDocumentView(null)
@@ -558,10 +654,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       // RightPane 항상 표시 (조건 없이)
       setRightPaneVisible(true)
+
+      // URL에 문서 ID 저장
+      updateURLParams({ documentId, customerId: null })
     } catch (error) {
       console.error('[App] 문서 로드 오류:', error)
     }
-  }, [])
+  }, [updateURLParams])
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
   const handleCustomerClick = useCallback(async (customerId: string, customerData?: Customer) => {
@@ -579,7 +678,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // RightPane이 숨겨져 있으면 표시
     setRightPaneVisible(true)
-  }, [])
+
+    // URL에 고객 ID 저장
+    updateURLParams({ customerId, documentId: null })
+  }, [updateURLParams])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
   const handleCustomerRefresh = useCallback(async () => {
@@ -1094,6 +1196,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   setSelectedCustomer(null)
                   setRightPaneContentType(null)
                   setRightPaneVisible(false)
+                  updateURLParams({ customerId: null })
                 }}
                 onRefresh={handleCustomerRefresh}
                 onDelete={handleCustomerDelete}
@@ -1118,6 +1221,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                   setSelectedDocument(null)
                   setRightPaneContentType(null)
                   setRightPaneVisible(false)
+                  updateURLParams({ documentId: null })
                 }}
               >
                 {(() => {

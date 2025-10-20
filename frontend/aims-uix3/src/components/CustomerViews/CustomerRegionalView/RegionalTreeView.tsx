@@ -17,6 +17,7 @@ import React, { useState, useMemo } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import RefreshButton from '../../RefreshButton/RefreshButton'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import './RegionalTreeView.css'
 
 /**
@@ -122,7 +123,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   loading = false,
   onRefresh
 }) => {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(['no-address']))
+  // F5 이후에도 트리 확장 상태 유지
+  const [expandedKeys, setExpandedKeys] = usePersistedState<string[]>('customer-regional-expanded', ['no-address'])
+  const expandedKeysSet = useMemo(() => new Set(expandedKeys), [expandedKeys])
+
   const [isAllExpanded, setIsAllExpanded] = useState(false)
 
   // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
@@ -228,15 +232,15 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   const toggleExpandAll = () => {
     if (isAllExpanded) {
       // 모두 접기
-      setExpandedKeys(new Set())
+      setExpandedKeys([])
       setIsAllExpanded(false)
     } else {
       // 모두 펼치기
-      const allKeys = new Set<string>()
+      const allKeys: string[] = []
       treeData.forEach(node => {
-        allKeys.add(node.key)
+        allKeys.push(node.key)
         if (node.children) {
-          node.children.forEach(child => allKeys.add(child.key))
+          node.children.forEach(child => allKeys.push(child.key))
         }
       })
       setExpandedKeys(allKeys)
@@ -258,7 +262,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         return count + 1 + (node.children ? node.children.length : 0)
       }, 0)
       setIsAllExpanded(newSet.size === totalNodes)
-      return newSet
+      return Array.from(newSet)
     })
   }
 
@@ -293,7 +297,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
   // 재귀적 트리 렌더링
   const renderTreeNode = (node: TreeNodeData, level: number = 0): React.ReactNode => {
-    const isExpanded = expandedKeys.has(node.key)
+    const isExpanded = expandedKeysSet.has(node.key)
     const hasChildren = node.children && node.children.length > 0
     const hasCustomers = node.customers && node.customers.length > 0
     const isExpandable = hasChildren || hasCustomers

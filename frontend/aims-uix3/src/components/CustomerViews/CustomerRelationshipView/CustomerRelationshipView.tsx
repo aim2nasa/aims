@@ -74,7 +74,30 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const [relationships, setRelationships] = useState<PopulatedRelationship[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['family', 'corporate']));
+
+  // LocalStorage에서 트리 확장 상태 복원
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('aims_relationship_expanded_nodes');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return new Set(Array.isArray(parsed) ? parsed : ['family', 'corporate']);
+      }
+    } catch (error) {
+      console.error('[CustomerRelationshipView] 확장 상태 복원 실패:', error);
+    }
+    return new Set(['family', 'corporate']);
+  });
+
+  // 트리 확장 상태 변경 시 LocalStorage에 저장
+  useEffect(() => {
+    try {
+      const array = Array.from(expandedNodes);
+      localStorage.setItem('aims_relationship_expanded_nodes', JSON.stringify(array));
+    } catch (error) {
+      console.error('[CustomerRelationshipView] 확장 상태 저장 실패:', error);
+    }
+  }, [expandedNodes]);
 
   const documentCustomerMap = useMemo(() => {
     const map = new Map<string, Customer>();

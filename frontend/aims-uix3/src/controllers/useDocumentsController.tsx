@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { DocumentService } from '@/services/DocumentService';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { handleApiError } from '@/shared/lib/api';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import type { Document, DocumentSearchQuery } from '@/entities/document';
 
 /**
@@ -19,21 +20,23 @@ import type { Document, DocumentSearchQuery } from '@/entities/document';
  * 모든 비즈니스 로직과 이벤트 핸들링을 담당
  */
 export const useDocumentsController = () => {
-  // 상태 관리
+  // F5 이후에도 유지되는 상태들
+  const [searchQuery, setSearchQuery] = usePersistedState('document-library-search', '');
+  const [searchParams, setSearchParams] = usePersistedState<Partial<DocumentSearchQuery>>('document-library-params', {
+    limit: 10,
+    offset: 0,
+    sortBy: 'uploadDate',
+    sortOrder: 'desc',
+  });
+  const [currentPage, setCurrentPage] = usePersistedState('document-library-page', 1);
+
+  // 임시 상태들 (새로고침 시 초기화되어도 됨)
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // 초기 로딩 상태
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchParams, setSearchParams] = useState<Partial<DocumentSearchQuery>>({
-    limit: 10,
-    offset: 0,
-    sortBy: 'uploadDate',
-    sortOrder: 'desc',
-  });
-  const [currentPage, setCurrentPage] = useState(1);
 
   /**
    * 문서 목록 로드

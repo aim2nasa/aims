@@ -11,6 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } 
 import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
 import { Dropdown } from '@/shared/ui';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
@@ -39,9 +40,13 @@ const SORT_OPTIONS = [
 
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
-    const [itemsPerPage, setItemsPerPage] = useState('10');
-    const [sortBy, setSortBy] = useState('latest');
-    const [searchValue, setSearchValue] = useState('');
+    // F5 이후에도 유지되는 상태들
+    const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '10');
+    const [sortBy, setSortBy] = usePersistedState('customer-all-sort', 'latest');
+    const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
+    const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
+
+    // UI 상태 (새로고침 시 초기화되어도 됨)
     const [prevArrowClicked, setPrevArrowClicked] = useState(false);
     const [nextArrowClicked, setNextArrowClicked] = useState(false);
 
@@ -53,8 +58,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       loadCustomers,
       refresh,
     } = useCustomerDocument();
-
-    const [currentPage, setCurrentPage] = useState(1);
 
     // 초기 데이터 로드
     useEffect(() => {
