@@ -96,6 +96,8 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     if (success) {
       onSuccess?.();
       onClose();
+      // 페이지 새로고침으로 모든 View 업데이트
+      window.location.reload();
     }
   }, [handleSave, onSuccess, onClose]);
 

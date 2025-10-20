@@ -218,6 +218,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       // 문서 목록 새로고침
       await loadDocuments(searchParams, true)
 
+      // 페이지 새로고침으로 모든 View 업데이트
+      window.location.reload();
+
       return undefined
     },
     [loadDocuments, searchParams]
@@ -307,6 +310,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         onDocumentDeleted?.()
 
         await loadDocuments(searchParams, true) // 목록 새로고침
+
+        // 페이지 새로고침으로 모든 View 업데이트
+        window.location.reload();
 
         // 🍎 삭제 완료 모달 제거: 조용히 삭제 처리
         // await confirmModal.actions.openModal({

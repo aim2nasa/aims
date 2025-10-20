@@ -43,6 +43,8 @@ export const CustomerRegistrationView: React.FC = () => {
         showCancel: false,
         iconType: 'success'
       });
+      // 페이지 새로고침으로 모든 View 업데이트
+      window.location.reload();
     },
     onError: async (error) => {
       // 애플 스타일 에러 모달 표시 (취소 버튼 없이)
