@@ -444,12 +444,23 @@ html[data-theme="dark"] .layout-brb-reset:hover {
   -ms-user-select: none;
 }
 
-/* 기존 RightPane + BRB 통합 컨테이너 - 더 이상 사용하지 않음 */
+/* 🍎 미닫이문 UX: RightPane + BRB 통합 컨테이너 */
 .layout-rightpane-container {
   z-index: var(--z-index-elevated);
   overflow: hidden;
   background-color: transparent;
-  /* transition 제거 - BRB 드래그 시 직접 DOM 조작과 충돌 방지 */
+
+  /* 🎯 미닫이문 효과: transform + width + opacity 동시 애니메이션 */
+  transition:
+    transform var(--duration-apple-graceful) var(--easing-ease-in-out),
+    width var(--duration-apple-graceful) var(--easing-ease-in-out),
+    opacity var(--duration-apple-graceful) var(--easing-ease-in-out);
+
+  /* 🍎 Performance: GPU 가속 최적화 */
+  will-change: transform, width, opacity;
+  transform: translateZ(0) translateX(0); /* 보임 상태: 제자리 */
+  backface-visibility: hidden;
+
   /* 프로페셔널 UI: 텍스트 선택 방지 */
   user-select: none;
   -webkit-user-select: none;
@@ -457,10 +468,11 @@ html[data-theme="dark"] .layout-brb-reset:hover {
   -ms-user-select: none;
 }
 
+/* 🎯 미닫이문 닫힘: 우측으로 슬라이드 아웃 */
 .layout-rightpane-container--hidden {
   width: 0px !important;
   opacity: 0;
-  transform: translateX(100px); /* BRB와 RightPane이 함께 슬라이드 */
+  transform: translateZ(0) translateX(100%); /* 완전히 우측 밖으로 */
 }
 
 .layout-rightpane-content {

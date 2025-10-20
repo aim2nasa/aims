@@ -1062,9 +1062,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         </div>
       )}
 
-      {/* RightPane + BRB 통합 컨테이너 - Header-CBR 연동 완벽 동기화 */}
+      {/* RightPane + BRB 통합 컨테이너 - 미닫이문 UX */}
       <aside
-        className="layout-rightpane-container"
+        className={`layout-rightpane-container ${!rightPaneVisible ? 'layout-rightpane-container--hidden' : ''}`}
         role="complementary"
         aria-label="보조 정보 패널"
         style={{
@@ -1075,9 +1075,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
           display: 'flex',
           flexDirection: 'row',
-          opacity: rightPaneVisible ? 1 : 0,
           overflow: 'hidden',
-          // transition 제거: CSS에서 Header-CBR 연동 전용 transition 사용
           zIndex: 10,
         }}
       >
