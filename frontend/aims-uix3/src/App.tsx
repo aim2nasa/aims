@@ -984,6 +984,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'documents-library'}
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
+              onDocumentDeleted={() => setRightPaneVisible(false)}
             />
           </Suspense>
 

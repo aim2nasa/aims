@@ -41,6 +41,8 @@ interface DocumentLibraryViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 */
   onDocumentClick?: (documentId: string) => void
+  /** 문서 삭제 완료 핸들러 */
+  onDocumentDeleted?: () => void
 }
 
 // 정렬 옵션 정의
@@ -81,6 +83,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
   onDocumentClick,
+  onDocumentDeleted,
 }) => {
   const {
     documents,
@@ -289,6 +292,20 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       if (result.success) {
         setSelectedDocumentIds(new Set())
         setIsDeleteMode(false) // 삭제 완료 후 삭제 모드 종료
+
+        // 🍎 프리뷰 창 닫기: 삭제된 문서가 프리뷰 중이면 닫기
+        setDetailModalVisible(false)
+        setSummaryModalVisible(false)
+        setFullTextModalVisible(false)
+        setLinkModalVisible(false)
+        setSelectedDocument(null)
+        setSelectedDocumentForSummary(null)
+        setSelectedDocumentForFullText(null)
+        setSelectedDocumentForLink(null)
+
+        // 🍎 RightPane 프리뷰도 닫기
+        onDocumentDeleted?.()
+
         await loadDocuments(searchParams, true) // 목록 새로고침
 
         // 🍎 삭제 완료 모달 제거: 조용히 삭제 처리
