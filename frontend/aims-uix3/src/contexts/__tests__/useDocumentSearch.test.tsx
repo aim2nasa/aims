@@ -25,10 +25,14 @@ describe('useDocumentSearch', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // persistent state 초기화 (usePersistedState는 localStorage 사용)
+    localStorage.clear()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+    // persistent state 정리
+    localStorage.clear()
   })
 
   describe('초기 상태', () => {
