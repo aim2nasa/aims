@@ -1,4 +1,5 @@
 // server.js - 문서 상태 모니터링 API 서버
+require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
@@ -1855,6 +1856,77 @@ app.get('/api/address/search', async (req, res) => {
   }
 });
 
+/**
+ * 네이버 Geocoding API - 주소를 좌표로 변환
+ */
+app.post('/api/geocode', async (req, res) => {
+  try {
+    const { address } = req.body;
+
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        error: '주소 정보가 필요합니다.'
+      });
+    }
+
+    console.log(`🗺️ [Geocoding] 주소 → 좌표 변환 요청: "${address}"`);
+
+    // 네이버 Geocoding API 호출
+    const response = await axios.get('https://maps.apigw.ntruss.com/map-geocode/v2/geocode', {
+      params: {
+        query: address
+      },
+      headers: {
+        'x-ncp-apigw-api-key-id': process.env.NAVER_MAP_ACCESS_KEY?.trim(),
+        'x-ncp-apigw-api-key': process.env.NAVER_MAP_SECRET_KEY?.trim()
+      },
+      timeout: 5000
+    });
+
+    console.log(`📡 [Geocoding] 네이버 API 응답:`, JSON.stringify(response.data, null, 2));
+
+    if (response.data && response.data.addresses && response.data.addresses.length > 0) {
+      const firstResult = response.data.addresses[0];
+      const latitude = parseFloat(firstResult.y);
+      const longitude = parseFloat(firstResult.x);
+
+      console.log(`✅ [Geocoding] 좌표 변환 성공: ${address} → (${latitude}, ${longitude})`);
+
+      res.json({
+        success: true,
+        data: {
+          address: address,
+          latitude: latitude,
+          longitude: longitude,
+          roadAddress: firstResult.roadAddress || '',
+          jibunAddress: firstResult.jibunAddress || '',
+          addressElements: firstResult.addressElements || []
+        }
+      });
+    } else {
+      console.log(`⚠️ [Geocoding] 주소를 찾을 수 없음: ${address}`);
+      res.json({
+        success: false,
+        error: '주소를 찾을 수 없습니다.',
+        address: address
+      });
+    }
+  } catch (error) {
+    console.error('❌ [Geocoding] API 오류:', error.message);
+
+    if (error.response?.status === 401) {
+      console.error('🚨 [Geocoding] 인증 실패 - API 키 확인 필요');
+    }
+
+    res.status(500).json({
+      success: false,
+      error: '좌표 변환 중 오류가 발생했습니다.',
+      details: error.message
+    });
+  }
+});
+
 // ==================== Annual Report API (Phase 2 프록시) ====================
 
 /**
@@ -2372,6 +2444,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
   console.log(`\n🏠 Address Search API:`);
   console.log(`  GET  /api/address/search - 한국 주소 검색 (정부 API 프록시)`);
+  console.log(`  POST /api/geocode - 주소 → 좌표 변환 (네이버 Geocoding API)`);
 
   console.log(`\n📊 Annual Report APIs:`);
   console.log(`  POST /api/annual-report/parse - Annual Report 파싱 요청`);

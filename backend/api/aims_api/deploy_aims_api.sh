@@ -7,6 +7,11 @@ set -e  # 오류 발생 시 즉시 종료
 CONTAINER_NAME="aims-api"
 IMAGE_NAME="aims-api"
 
+# .env 파일에서 환경변수 읽기
+if [ -f .env ]; then
+  export $(cat .env | grep -v '^#' | xargs)
+fi
+
 # 1. 기존 컨테이너 중지 및 제거
 echo "🚫 기존 컨테이너 중지 및 제거..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
@@ -16,14 +21,9 @@ docker rm $CONTAINER_NAME 2>/dev/null || true
 echo "📦 새 이미지 빌드 중..."
 docker build -t $IMAGE_NAME .
 
-# 3. 컨테이너 실행
+# 3. 컨테이너 실행 (환경변수 전달)
 echo "🚀 새 컨테이너 실행..."
-docker run -d --network host \
-  -e PORT="3010" \
-  -e MONGO_URI="mongodb://tars:27017/" \
-  -e DB_NAME="docupload" \
-  --name $CONTAINER_NAME \
-  $IMAGE_NAME
+docker run -d --network host   -e PORT="3010"   -e MONGO_URI="mongodb://tars:27017/"   -e DB_NAME="docupload"   -e NAVER_MAP_ACCESS_KEY="${NAVER_MAP_ACCESS_KEY}"   -e NAVER_MAP_SECRET_KEY="${NAVER_MAP_SECRET_KEY}"   --name $CONTAINER_NAME   $IMAGE_NAME
 
 echo "✅ AIMS Main API 재배포 완료"
 echo ""

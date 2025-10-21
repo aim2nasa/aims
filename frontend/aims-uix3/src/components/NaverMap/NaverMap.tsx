@@ -8,6 +8,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import type { Customer } from '@/entities/customer/model'
+import { geocodeAddress } from '@/shared/api/geocode'
 import './NaverMap.css'
 
 declare global {
@@ -43,7 +44,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 }) => {
   const mapElement = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
-  const markers = useRef<any[]>([])
+  const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
   const [isMapReady, setIsMapReady] = useState(false)
 
   // 지도 초기화
@@ -91,9 +92,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     // 기존 마커 제거
     markers.current.forEach(marker => marker.setMap(null))
-    markers.current = []
+    markers.current.clear()
 
-    // 주소가 있는 고객만 필터링 (임시로 주소만 표시, 좌표 변환은 Geocoding API 필요)
+    // 주소가 있는 고객만 필터링
     const customersWithAddress = customers.filter(c => c.personal_info?.address?.address1)
 
     if (customersWithAddress.length === 0) {
@@ -103,13 +104,75 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
-    // TODO: Geocoding API를 사용하여 주소 → 좌표 변환 후 마커 표시
-    // 현재는 Geocoding API가 구독되지 않아 마커를 표시할 수 없음
+    // Geocoding API로 주소 → 좌표 변환 후 마커 표시
+    const createMarkers = async () => {
+      if (import.meta.env.DEV) {
+        console.log(`[NaverMap] 마커 생성 시작: ${customersWithAddress.length}명의 고객`)
+      }
 
-    if (import.meta.env.DEV) {
-      console.log(`[NaverMap] 주소가 있는 고객 ${customersWithAddress.length}명 (Geocoding API 구독 필요)`)
+      for (const customer of customersWithAddress) {
+        const address = customer.personal_info?.address?.address1
+        if (!address || !customer._id) {
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] 주소 없음: ${customer.personal_info?.name}`)
+          }
+          continue
+        }
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] Geocoding 요청: ${customer.personal_info?.name} - ${address}`)
+        }
+
+        const result = await geocodeAddress(address)
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] Geocoding 결과:`, result)
+        }
+
+        if (!result) {
+          if (import.meta.env.DEV) {
+            console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
+          }
+          continue
+        }
+
+        const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
+
+        const isSelected = customer._id === selectedCustomerId
+
+        const marker = new window.naver.maps.Marker({
+          position,
+          map: mapInstance.current,
+          title: customer.personal_info?.name || '고객',
+          icon: {
+            content: `<div style="
+              background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
+              width: ${isSelected ? '14px' : '10px'};
+              height: ${isSelected ? '14px' : '10px'};
+              border-radius: 50%;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            "></div>`,
+            anchor: new window.naver.maps.Point(7, 7)
+          }
+        })
+
+        markers.current.set(customer._id, marker)
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] 마커 생성 완료: ${customer.personal_info?.name} (${result.latitude}, ${result.longitude})`)
+        }
+      }
+
+      if (import.meta.env.DEV) {
+        console.log(`[NaverMap] 총 ${markers.current.size}개의 마커 생성됨`)
+      }
     }
-  }, [customers, isMapReady])
+
+    createMarkers().catch(error => {
+      console.error('[NaverMap] 마커 생성 중 오류:', error)
+    })
+  }, [customers, isMapReady, selectedCustomerId])
 
   // 선택된 고객으로 지도 이동
   useEffect(() => {
@@ -122,11 +185,24 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
-    // TODO: Geocoding API로 주소 → 좌표 변환 후 지도 이동
-    if (import.meta.env.DEV) {
-      console.log('[NaverMap] 선택된 고객:', selectedCustomer.personal_info.name)
-      console.log('[NaverMap] Geocoding API 구독 필요')
+    // Geocoding API로 주소 → 좌표 변환 후 지도 이동
+    const moveToCustomer = async () => {
+      const address = selectedCustomer.personal_info?.address?.address1
+      if (!address) return
+
+      const result = await geocodeAddress(address)
+      if (!result) return
+
+      const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
+      mapInstance.current.setCenter(position)
+      mapInstance.current.setZoom(15) // 확대
+
+      if (import.meta.env.DEV) {
+        console.log(`[NaverMap] 선택된 고객으로 이동: ${selectedCustomer.personal_info.name}`)
+      }
     }
+
+    moveToCustomer()
   }, [selectedCustomerId, customers, isMapReady])
 
   return (
