@@ -58,12 +58,12 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return // 이미 초기화됨
     }
 
-    // 대한민국 중심 좌표 (서울)
-    const center = new window.naver.maps.LatLng(37.5665, 126.9780)
+    // 남한 중심 좌표 (대전 부근 - 남한 전체가 균형있게 보이도록)
+    const center = new window.naver.maps.LatLng(36.5, 127.5)
 
     const mapOptions = {
       center: center,
-      zoom: 7, // 대한민국 전체가 보이는 줌 레벨
+      zoom: 7, // 남한 전체가 보이는 줌 레벨
       minZoom: 6,
       maxZoom: 18,
       zoomControl: true,
