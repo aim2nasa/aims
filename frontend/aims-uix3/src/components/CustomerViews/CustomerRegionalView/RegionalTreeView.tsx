@@ -19,6 +19,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import './RegionalTreeView.css'
+import NaverMap from '../../NaverMap/NaverMap'
 
 /**
  * 광역시/도 이름 정규화 맵
@@ -436,9 +437,21 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         </div>
       </div>
 
-      {/* 트리 */}
-      <div className="regional-tree-container">
-        {treeData.map(node => renderTreeNode(node))}
+      {/* 왼쪽: 트리, 오른쪽: 지도 */}
+      <div className="regional-tree-content">
+        {/* 트리 */}
+        <div className="regional-tree-container">
+          {treeData.map(node => renderTreeNode(node))}
+        </div>
+
+        {/* 지도 */}
+        <div className="regional-map-container">
+          <NaverMap
+            customers={customers}
+            selectedCustomerId={selectedCustomerId}
+            height="100%"
+          />
+        </div>
       </div>
     </div>
   )
