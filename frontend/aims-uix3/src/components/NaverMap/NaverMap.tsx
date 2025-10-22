@@ -206,14 +206,24 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           map: mapInstance.current,
           icon: {
             content: `<div style="
-              background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
-              width: ${isSelected ? '14px' : '10px'};
-              height: ${isSelected ? '14px' : '10px'};
-              border-radius: 50%;
-              border: 2px solid white;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            "></div>`,
-            anchor: new window.naver.maps.Point(7, 7)
+              width: 24px;
+              height: 24px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+            ">
+              <div style="
+                background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
+                width: ${isSelected ? '14px' : '10px'};
+                height: ${isSelected ? '14px' : '10px'};
+                border-radius: 50%;
+                border: 2px solid white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                pointer-events: none;
+              "></div>
+            </div>`,
+            anchor: new window.naver.maps.Point(12, 12)
           }
         })
 
@@ -283,14 +293,24 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
       marker.setIcon({
         content: `<div style="
-          background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
-          width: ${isSelected ? '14px' : '10px'};
-          height: ${isSelected ? '14px' : '10px'};
-          border-radius: 50%;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        "></div>`,
-        anchor: new window.naver.maps.Point(7, 7)
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        ">
+          <div style="
+            background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
+            width: ${isSelected ? '14px' : '10px'};
+            height: ${isSelected ? '14px' : '10px'};
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            pointer-events: none;
+          "></div>
+        </div>`,
+        anchor: new window.naver.maps.Point(12, 12)
       })
     })
 
