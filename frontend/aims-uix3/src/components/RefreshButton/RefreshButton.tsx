@@ -103,6 +103,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         size={symbolSize}
         weight={SFSymbolWeight.MEDIUM}
         className="refresh-button__icon"
+        decorative={true}
       />
     </button>
   );

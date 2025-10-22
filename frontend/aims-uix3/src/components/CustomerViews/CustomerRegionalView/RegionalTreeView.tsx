@@ -455,7 +455,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <RefreshButton
             onClick={onRefresh ?? (() => {})}
             loading={loading}
-            tooltip="지역별 고객 새로고침"
+            tooltip="새로고침"
             size="small"
           />
         </div>
