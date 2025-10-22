@@ -130,6 +130,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
   const [isAllExpanded, setIsAllExpanded] = useState(false)
 
+  // 같은 고객 재선택을 감지하기 위한 타임스탬프
+  const [selectionTimestamp, setSelectionTimestamp] = useState(0)
+
   // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
   const regionalGroups = useMemo(() => {
     const groups: { [city: string]: { [district: string]: Customer[] } } = {}
@@ -271,6 +274,8 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   const handleCustomerClick = (customer: Customer) => {
     if (onCustomerSelect && customer._id) {
       onCustomerSelect(customer._id)
+      // 같은 고객을 다시 선택해도 지도가 이동하도록 타임스탬프 업데이트
+      setSelectionTimestamp(Date.now())
     }
   }
 
@@ -449,6 +454,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <NaverMap
             customers={customers}
             selectedCustomerId={selectedCustomerId}
+            selectionTimestamp={selectionTimestamp}
             height="100%"
           />
         </div>

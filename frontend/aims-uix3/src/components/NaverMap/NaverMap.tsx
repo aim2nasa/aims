@@ -24,6 +24,8 @@ interface NaverMapProps {
   selectedCustomerId?: string | null | undefined
   /** 지도 높이 (기본값: 100%) */
   height?: string | number
+  /** 선택 타임스탬프 (같은 고객 재선택 감지용) */
+  selectionTimestamp?: number
 }
 
 /**
@@ -40,7 +42,8 @@ interface NaverMapProps {
 export const NaverMap: React.FC<NaverMapProps> = ({
   customers = [],
   selectedCustomerId = null,
-  height = '100%'
+  height = '100%',
+  selectionTimestamp = 0
 }) => {
   const mapElement = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
@@ -218,6 +221,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   }, [selectedCustomerId, isMapReady])
 
   // 선택된 고객으로 지도 이동
+  // selectionTimestamp를 의존성에 추가하여 같은 고객 재선택도 감지
   useEffect(() => {
     if (!isMapReady || !mapInstance.current || !selectedCustomerId) {
       return
@@ -246,7 +250,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
 
     moveToCustomer()
-  }, [selectedCustomerId, customers, isMapReady])
+  }, [selectedCustomerId, customers, isMapReady, selectionTimestamp])
 
   // 지도를 초기 상태로 리셋
   const handleReset = () => {
