@@ -626,3 +626,44 @@ python scripts/rag_search.py
 - [ ] Progressive Disclosure 구현
 - [ ] Light/Dark 테마 지원
 - [ ] ARIA 접근성
+
+---
+
+## 🎨 AIMS-UIX3 툴팁 표준
+
+**위치**: `@/shared/ui/Tooltip` (iOS 스타일, 다크모드 지원)
+
+### 사용법
+
+```tsx
+import Tooltip from '@/shared/ui/Tooltip'
+
+// 기본 사용
+<Tooltip content="새로고침">
+  <button onClick={handleClick} aria-label="새로고침">
+    <RefreshIcon />
+  </button>
+</Tooltip>
+
+// 컴포넌트 감싸기 (이벤트 전달용)
+<Tooltip content="새로고침">
+  <div style={{ display: 'inline-block' }}>
+    <RefreshButton onClick={handleRefresh} />
+  </div>
+</Tooltip>
+```
+
+### 규칙
+
+- ✅ `@/shared/ui/Tooltip` 사용, `aria-label` 유지
+- ❌ 브라우저 `title` 속성 금지, 커스텀 툴팁 구현 금지
+
+### 마이그레이션
+
+1. `import Tooltip from '@/shared/ui/Tooltip'`
+2. `title` 제거, `aria-label` 유지
+3. 컴포넌트 감싸기 (`<Tooltip><div>...</div></Tooltip>`)
+
+**참고**: DocumentLibraryView, CustomerRegionalView 적용 완료 (커밋 140d821)
+
+---
