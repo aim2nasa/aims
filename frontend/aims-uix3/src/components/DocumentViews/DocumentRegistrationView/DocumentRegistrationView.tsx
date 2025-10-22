@@ -196,56 +196,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
 
-              // ✨ UX 개선: 고객이 1명이면 자동 진행 (모달 없이)
-              if (customers.length === 1) {
-                const customer = customers[0];
-                console.log('[DocumentRegistrationView] 🚀 고객 1명 감지, 자동 진행:', customer.personal_info?.name);
-
-                // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
-                arFilenamesRef.current.add(file.name);
-                console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가: ${file.name}`);
-
-                // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
-                arCustomerMappingRef.current.set(file.name, customer._id);
-                console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장 (자동): ${file.name} → ${customer._id}`);
-
-                // 로그 메시지 설정 (UI에 표시)
-                const logMessage = `Annual Report 자동 등록: ${customer.personal_info?.name} (발행일: ${checkResult.metadata.issue_date})`;
-                setAutoRegistrationLog(logMessage);
-                console.log(`[DocumentRegistrationView] 📝 ${logMessage}`);
-
-                // Annual Report 파싱 요청 (백그라운드 AI 처리)
-                try {
-                  const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customer._id);
-                  console.log('[DocumentRegistrationView] Annual Report 파싱 요청 완료:', parseResult);
-                } catch (error) {
-                  console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', error);
-                }
-
-                // Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
-                const uploadFile: UploadFile = {
-                  id: generateFileId(),
-                  file,
-                  fileSize: file.size,
-                  status: 'pending',
-                  progress: 0,
-                  error: undefined,
-                  completedAt: undefined,
-                };
-
-                newUploadFiles.push(uploadFile);
-                console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가');
-                continue;
-              }
-
-              // 동명이인(2명 이상) 또는 고객 없음: 모달 표시
+              // ✨ 고객이 1명 또는 여러 명: 모달 표시 (중복 검사 포함)
+              // 중복 검사는 CustomerIdentificationModal에서 수행됨
               setAnnualReportMetadata(checkResult.metadata);
               setAnnualReportCustomers(customers);
               setAnnualReportFile({ file, fileName: file.name });
               setIsCustomerModalOpen(true);
 
               // Annual Report는 업로드 큐에 추가하지 않음 (사용자가 고객 선택 후 처리)
-              console.log('[DocumentRegistrationView] Annual Report는 업로드 큐에서 제외 (모달 대기 중)');
+              console.log('[DocumentRegistrationView] Annual Report 감지, 모달 표시 (고객:', customers.length, '명)');
               continue;
             }
           } catch (error) {
