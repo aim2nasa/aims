@@ -22,6 +22,8 @@ interface NaverMapProps {
   customers?: Customer[]
   /** 선택된 고객 ID */
   selectedCustomerId?: string | null | undefined
+  /** 고객 선택 콜백 */
+  onCustomerSelect?: ((customerId: string) => void) | undefined
   /** 지도 높이 (기본값: 100%) */
   height?: string | number
   /** 선택 타임스탬프 (같은 고객 재선택 감지용) */
@@ -42,6 +44,7 @@ interface NaverMapProps {
 export const NaverMap: React.FC<NaverMapProps> = ({
   customers = [],
   selectedCustomerId = null,
+  onCustomerSelect,
   height = '100%',
   selectionTimestamp = 0
 }) => {
@@ -239,6 +242,16 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
         window.naver.maps.Event.addListener(marker, 'mouseout', () => {
           infoWindow.close()
+        })
+
+        // 마커 클릭 이벤트 - 고객 선택
+        window.naver.maps.Event.addListener(marker, 'click', () => {
+          if (onCustomerSelect && customer._id) {
+            onCustomerSelect(customer._id)
+            if (import.meta.env.DEV) {
+              console.log(`[NaverMap] 마커 클릭: ${customer.personal_info?.name}`)
+            }
+          }
         })
 
         markers.current.set(customer._id, marker)

@@ -454,6 +454,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <NaverMap
             customers={customers}
             selectedCustomerId={selectedCustomerId}
+            onCustomerSelect={onCustomerSelect}
             selectionTimestamp={selectionTimestamp}
             height="100%"
           />
