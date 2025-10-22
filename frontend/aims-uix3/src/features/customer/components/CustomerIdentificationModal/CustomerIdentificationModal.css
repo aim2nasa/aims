@@ -40,6 +40,12 @@
   flex-direction: column;
   animation: slideUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   user-select: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.customer-identification-modal--dragging {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  cursor: grabbing;
 }
 
 @keyframes slideUp {
@@ -426,6 +432,10 @@ html[data-theme='dark'] .customer-identification-modal__overlay {
 
 html[data-theme='dark'] .customer-identification-modal {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme='dark'] .customer-identification-modal--dragging {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
 }
 
 html[data-theme='dark'] .customer-identification-modal__customer-option:hover {
