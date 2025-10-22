@@ -48,6 +48,10 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   height = '100%',
   selectionTimestamp = 0
 }) => {
+  // 초기 지도 중심 좌표 (남한 전체 보기)
+  const initialCenter = { lat: 36.5, lng: 127.5 }
+  const initialZoom = 7
+
   const mapElement = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
@@ -59,9 +63,11 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // 마커 로딩 진행률 상태
   const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number } | null>(null)
 
-  // 초기 지도 중심 좌표 (남한 전체 보기)
-  const initialCenter = { lat: 36.5, lng: 127.5 }
-  const initialZoom = 7
+  // 주소별 고객 그룹 정보 저장 (줌 변경 시 마커 업데이트용)
+  const addressGroups = useRef<Map<string, Array<{ customer: Customer; result: { latitude: number; longitude: number } }>>>(new Map())
+
+  // 현재 줌 레벨 (마커 디자인 결정용)
+  const [currentZoom, setCurrentZoom] = useState<number>(initialZoom)
 
   // 지도 초기화
   useEffect(() => {
@@ -94,6 +100,12 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     mapInstance.current = new window.naver.maps.Map(mapElement.current, mapOptions)
     setIsMapReady(true)
+
+    // 줌 변경 이벤트 리스너
+    window.naver.maps.Event.addListener(mapInstance.current, 'zoom_changed', () => {
+      const zoom = mapInstance.current.getZoom()
+      setCurrentZoom(zoom)
+    })
 
     if (import.meta.env.DEV) {
       console.log('[NaverMap] 지도 초기화 완료')
@@ -184,7 +196,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       // 진행률 완료 후 숨김 (약간의 딜레이 후)
       setTimeout(() => setLoadingProgress(null), 500)
 
-      // 2단계: 성공한 결과들로 마커 생성
+      // 2단계: 주소별로 고객 그룹화 (address1 기준)
+      addressGroups.current.clear()
+
       for (const item of geocodingResults) {
         if (!item) continue
 
@@ -199,13 +213,33 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           continue
         }
 
-        const isSelected = customer._id === selectedCustomerId
+        const address1 = customer.personal_info?.address?.address1 || ''
+        if (!addressGroups.current.has(address1)) {
+          addressGroups.current.set(address1, [])
+        }
+        addressGroups.current.get(address1)!.push({ customer, result })
+      }
 
-        const marker = new window.naver.maps.Marker({
-          position,
-          map: mapInstance.current,
-          icon: {
-            content: `<div style="
+      // 3단계: 그룹별로 마커 생성
+      const zoom = mapInstance.current.getZoom()
+      const showNumbers = zoom >= 11 // 줌 레벨 11 이상일 때만 숫자 표시
+
+      for (const [address1, group] of addressGroups.current.entries()) {
+        const { result } = group[0] // 첫 번째 고객의 좌표 사용
+        const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
+        const isGrouped = group.length > 1
+
+        // 그룹에 선택된 고객이 있는지 확인
+        const hasSelectedCustomer = group.some(item => item.customer._id === selectedCustomerId)
+
+        let markerContent: string
+        let infoContent: string
+
+        if (isGrouped) {
+          // 그룹 마커: 줌 레벨에 따라 다른 디자인
+          if (showNumbers) {
+            // 줌 레벨 높음: 숫자 표시 (빨간색, 단일 고객과 동일 크기)
+            markerContent = `<div style="
               width: 24px;
               height: 24px;
               display: flex;
@@ -214,22 +248,95 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               cursor: pointer;
             ">
               <div style="
-                background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
-                width: ${isSelected ? '14px' : '10px'};
-                height: ${isSelected ? '14px' : '10px'};
+                background-color: ${hasSelectedCustomer ? '#007AFF' : '#FF3B30'};
+                width: 14px;
+                height: 14px;
                 border-radius: 50%;
                 border: 2px solid white;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 8px;
+                font-weight: 700;
+                pointer-events: none;
+              ">${group.length}</div>
+            </div>`
+          } else {
+            // 줌 레벨 낮음: 이중 원 디자인 (빨간색, 단일 고객과 동일 크기)
+            markerContent = `<div style="
+              width: 24px;
+              height: 24px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+            ">
+              <div style="
+                background-color: ${hasSelectedCustomer ? '#007AFF' : '#FF3B30'};
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                border: 3px solid ${hasSelectedCustomer ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)'};
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 pointer-events: none;
               "></div>
-            </div>`,
-            anchor: new window.naver.maps.Point(12, 12)
+            </div>`
           }
-        })
 
-        // 마우스 hover 시 고객 이름 툴팁 표시
-        const infoWindow = new window.naver.maps.InfoWindow({
-          content: `<div style="
+          // 그룹 툴팁 (각 고객의 상세주소와 이름)
+          const customerList = group.map(item => {
+            const name = item.customer.personal_info?.name || '고객'
+            const address2 = item.customer.personal_info?.address?.address2 || ''
+            return `<div style="padding: 2px 0;">
+              <span style="font-weight: 600;">${name}</span>
+              ${address2 ? `<span style="color: #ccc; margin-left: 6px;">${address2}</span>` : ''}
+            </div>`
+          }).join('')
+
+          infoContent = `<div style="
+            padding: 10px 14px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            max-width: 280px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+          ">
+            <div style="font-weight: 500; margin-bottom: 6px; color: #FF3B30;">${group.length}명의 고객</div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 6px;">
+              ${customerList}
+            </div>
+          </div>`
+        } else {
+          // 단일 고객 마커 (기존 디자인)
+          const customer = group[0].customer
+          const isSelected = customer._id === selectedCustomerId
+
+          markerContent = `<div style="
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          ">
+            <div style="
+              background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
+              width: ${isSelected ? '14px' : '10px'};
+              height: ${isSelected ? '14px' : '10px'};
+              border-radius: 50%;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              pointer-events: none;
+            "></div>
+          </div>`
+
+          const name = customer.personal_info?.name || '고객'
+          const address2 = customer.personal_info?.address?.address2 || ''
+
+          infoContent = `<div style="
             padding: 8px 12px;
             background-color: rgba(0, 0, 0, 0.8);
             color: white;
@@ -238,14 +345,30 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             font-weight: 500;
             white-space: nowrap;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          ">${customer.personal_info?.name || '고객'}</div>`,
+          ">
+            <span style="font-weight: 600;">${name}</span>
+            ${address2 ? `<span style="color: #ccc; margin-left: 6px;">${address2}</span>` : ''}
+          </div>`
+        }
+
+        const marker = new window.naver.maps.Marker({
+          position,
+          map: mapInstance.current,
+          icon: {
+            content: markerContent,
+            anchor: new window.naver.maps.Point(12, 12)
+          }
+        })
+
+        // 마우스 hover 시 툴팁 표시
+        const infoWindow = new window.naver.maps.InfoWindow({
+          content: infoContent,
           borderWidth: 0,
           backgroundColor: 'transparent',
           disableAnchor: true,
           pixelOffset: new window.naver.maps.Point(0, -15)
         })
 
-        // 마우스 hover 이벤트
         window.naver.maps.Event.addListener(marker, 'mouseover', () => {
           infoWindow.open(mapInstance.current, marker)
         })
@@ -254,25 +377,49 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           infoWindow.close()
         })
 
-        // 마커 클릭 이벤트 - 고객 선택
+        // 마커 클릭 이벤트
         window.naver.maps.Event.addListener(marker, 'click', () => {
-          if (onCustomerSelect && customer._id) {
-            onCustomerSelect(customer._id)
-            if (import.meta.env.DEV) {
-              console.log(`[NaverMap] 마커 클릭: ${customer.personal_info?.name}`)
+          if (onCustomerSelect) {
+            if (isGrouped) {
+              // 그룹 마커 클릭 시 첫 번째 고객 선택
+              const firstCustomerId = group[0].customer._id
+              if (firstCustomerId) {
+                onCustomerSelect(firstCustomerId)
+                if (import.meta.env.DEV) {
+                  console.log(`[NaverMap] 그룹 마커 클릭: ${group.length}명 중 첫 번째 고객 선택`)
+                }
+              }
+            } else {
+              // 단일 고객 마커 클릭
+              const customerId = group[0].customer._id
+              if (customerId) {
+                onCustomerSelect(customerId)
+                if (import.meta.env.DEV) {
+                  console.log(`[NaverMap] 마커 클릭: ${group[0].customer.personal_info?.name}`)
+                }
+              }
             }
           }
         })
 
-        markers.current.set(customer._id, marker)
+        // 그룹의 모든 고객 ID로 마커 저장
+        for (const item of group) {
+          if (item.customer._id) {
+            markers.current.set(item.customer._id, marker)
+          }
+        }
 
         if (import.meta.env.DEV) {
-          console.log(`[NaverMap] 마커 생성 완료: ${customer.personal_info?.name} (${result.latitude}, ${result.longitude})`)
+          if (isGrouped) {
+            console.log(`[NaverMap] 그룹 마커 생성 완료: ${group.length}명 (${result.latitude}, ${result.longitude})`)
+          } else {
+            console.log(`[NaverMap] 마커 생성 완료: ${group[0].customer.personal_info?.name} (${result.latitude}, ${result.longitude})`)
+          }
         }
       }
 
       if (import.meta.env.DEV) {
-        console.log(`[NaverMap] 총 ${markers.current.size}개의 마커 생성됨`)
+        console.log(`[NaverMap] 총 ${addressGroups.current.size}개의 마커 생성됨 (고객 ${markers.current.size}명)`)
       }
     }
 
@@ -281,18 +428,86 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     })
   }, [customers, isMapReady])
 
-  // 선택된 고객 변경 시 마커 아이콘 업데이트
+  // 줌 레벨 또는 선택된 고객 변경 시 마커 아이콘 업데이트
   useEffect(() => {
-    if (!isMapReady || !mapInstance.current || !window.naver || markers.current.size === 0) {
+    if (!isMapReady || !mapInstance.current || !window.naver || addressGroups.current.size === 0) {
       return
     }
 
-    // 모든 마커의 아이콘 업데이트
-    markers.current.forEach((marker, customerId) => {
-      const isSelected = customerId === selectedCustomerId
+    const showNumbers = currentZoom >= 11
+    const processedMarkers = new Set<any>()
 
-      marker.setIcon({
-        content: `<div style="
+    // 각 그룹별로 마커 업데이트
+    for (const [address1, group] of addressGroups.current.entries()) {
+      const isGrouped = group.length > 1
+      const hasSelectedCustomer = group.some(item => item.customer._id === selectedCustomerId)
+
+      // 그룹의 첫 번째 고객 마커 가져오기 (모든 고객이 같은 마커 공유)
+      const firstCustomerId = group[0].customer._id
+      if (!firstCustomerId) continue
+
+      const marker = markers.current.get(firstCustomerId)
+      if (!marker || processedMarkers.has(marker)) continue
+
+      processedMarkers.add(marker)
+
+      let markerContent: string
+
+      if (isGrouped) {
+        // 그룹 마커: 줌 레벨에 따라 다른 디자인
+        if (showNumbers) {
+          // 줌 레벨 높음: 숫자 표시 (빨간색, 단일 고객과 동일 크기)
+          markerContent = `<div style="
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          ">
+            <div style="
+              background-color: ${hasSelectedCustomer ? '#007AFF' : '#FF3B30'};
+              width: 14px;
+              height: 14px;
+              border-radius: 50%;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 8px;
+              font-weight: 700;
+              pointer-events: none;
+            ">${group.length}</div>
+          </div>`
+        } else {
+          // 줌 레벨 낮음: 이중 원 디자인 (빨간색, 단일 고객과 동일 크기)
+          markerContent = `<div style="
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          ">
+            <div style="
+              background-color: ${hasSelectedCustomer ? '#007AFF' : '#FF3B30'};
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              border: 3px solid ${hasSelectedCustomer ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)'};
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              pointer-events: none;
+            "></div>
+          </div>`
+        }
+      } else {
+        // 단일 고객 마커
+        const customer = group[0].customer
+        const isSelected = customer._id === selectedCustomerId
+
+        markerContent = `<div style="
           width: 24px;
           height: 24px;
           display: flex;
@@ -309,15 +524,19 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             pointer-events: none;
           "></div>
-        </div>`,
+        </div>`
+      }
+
+      marker.setIcon({
+        content: markerContent,
         anchor: new window.naver.maps.Point(12, 12)
       })
-    })
+    }
 
     if (import.meta.env.DEV) {
-      console.log(`[NaverMap] 선택 상태 업데이트: ${selectedCustomerId}`)
+      console.log(`[NaverMap] 마커 아이콘 업데이트: zoom=${currentZoom}, showNumbers=${showNumbers}, selected=${selectedCustomerId}`)
     }
-  }, [selectedCustomerId, isMapReady])
+  }, [selectedCustomerId, currentZoom, isMapReady])
 
   // 선택된 고객으로 지도 이동
   // selectionTimestamp를 의존성에 추가하여 같은 고객 재선택도 감지
