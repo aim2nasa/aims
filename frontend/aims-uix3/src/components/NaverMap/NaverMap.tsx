@@ -47,6 +47,10 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
   const [isMapReady, setIsMapReady] = useState(false)
 
+  // 초기 지도 중심 좌표 (남한 전체 보기)
+  const initialCenter = { lat: 36.5, lng: 127.5 }
+  const initialZoom = 7
+
   // 지도 초기화
   useEffect(() => {
     if (!mapElement.current || !window.naver) {
@@ -59,11 +63,11 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
 
     // 남한 중심 좌표 (대전 부근 - 남한 전체가 균형있게 보이도록)
-    const center = new window.naver.maps.LatLng(36.5, 127.5)
+    const center = new window.naver.maps.LatLng(initialCenter.lat, initialCenter.lng)
 
     const mapOptions = {
       center: center,
-      zoom: 7, // 남한 전체가 보이는 줌 레벨
+      zoom: initialZoom, // 남한 전체가 보이는 줌 레벨
       minZoom: 6,
       maxZoom: 18,
       zoomControl: true,
@@ -244,6 +248,19 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     moveToCustomer()
   }, [selectedCustomerId, customers, isMapReady])
 
+  // 지도를 초기 상태로 리셋
+  const handleReset = () => {
+    if (!mapInstance.current || !window.naver) return
+
+    const center = new window.naver.maps.LatLng(initialCenter.lat, initialCenter.lng)
+    mapInstance.current.setCenter(center)
+    mapInstance.current.setZoom(initialZoom)
+
+    if (import.meta.env.DEV) {
+      console.log('[NaverMap] 지도를 초기 상태로 리셋')
+    }
+  }
+
   return (
     <div className="naver-map-wrapper" style={{ height }}>
       <div ref={mapElement} className="naver-map-container" style={{ width: '100%', height: '100%' }} />
@@ -251,6 +268,21 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         <div className="naver-map-loading">
           <span>지도 로딩 중...</span>
         </div>
+      )}
+      {isMapReady && (
+        <button
+          className="naver-map-reset-button"
+          onClick={handleReset}
+          title="초기 위치로 이동"
+          aria-label="지도 초기 위치로 이동"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+        </button>
       )}
     </div>
   )

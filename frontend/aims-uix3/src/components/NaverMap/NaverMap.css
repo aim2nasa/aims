@@ -39,3 +39,48 @@
 html[data-theme="dark"] .naver-map-wrapper {
   background-color: var(--color-bg-tertiary);
 }
+
+/* 지도 리셋 버튼 - 애플 스타일 */
+.naver-map-reset-button {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+  color: var(--color-text-primary);
+}
+
+.naver-map-reset-button:hover {
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.naver-map-reset-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.naver-map-reset-button svg {
+  flex-shrink: 0;
+}
+
+/* 다크모드 */
+html[data-theme="dark"] .naver-map-reset-button {
+  background-color: rgba(44, 44, 46, 0.95);
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .naver-map-reset-button:hover {
+  background-color: rgba(44, 44, 46, 1);
+}
