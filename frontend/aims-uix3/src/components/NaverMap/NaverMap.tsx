@@ -253,7 +253,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
                 width: 14px;
                 height: 14px;
                 border-radius: 50%;
-                border: 2px solid white;
+                border: 2px solid ${hasSelectedCustomer ? '#FF3B30' : 'white'};
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 display: flex;
                 align-items: center;
@@ -279,7 +279,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
                 width: 10px;
                 height: 10px;
                 border-radius: 50%;
-                border: 3px solid ${hasSelectedCustomer ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)'};
+                border: 3px solid rgba(255, 59, 48, 0.3);
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 pointer-events: none;
               "></div>
@@ -329,7 +329,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               width: ${isSelected ? '14px' : '10px'};
               height: ${isSelected ? '14px' : '10px'};
               border-radius: 50%;
-              border: 2px solid white;
+              border: 2px solid ${isSelected ? '#FF3B30' : 'white'};
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);
               pointer-events: none;
             "></div>
@@ -472,7 +472,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               width: 14px;
               height: 14px;
               border-radius: 50%;
-              border: 2px solid white;
+              border: 2px solid ${hasSelectedCustomer ? '#FF3B30' : 'white'};
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);
               display: flex;
               align-items: center;
@@ -498,7 +498,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               width: 10px;
               height: 10px;
               border-radius: 50%;
-              border: 3px solid ${hasSelectedCustomer ? 'rgba(0, 122, 255, 0.3)' : 'rgba(255, 59, 48, 0.3)'};
+              border: 3px solid rgba(255, 59, 48, 0.3);
               box-shadow: 0 2px 4px rgba(0,0,0,0.3);
               pointer-events: none;
             "></div>
@@ -523,7 +523,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             width: ${isSelected ? '14px' : '10px'};
             height: ${isSelected ? '14px' : '10px'};
             border-radius: 50%;
-            border: 2px solid white;
+            border: 2px solid ${isSelected ? '#FF3B30' : 'white'};
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             pointer-events: none;
           "></div>
