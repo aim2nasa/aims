@@ -273,6 +273,34 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 고객 선택 핸들러
   const handleCustomerClick = (customer: Customer) => {
     if (onCustomerSelect && customer._id) {
+      // 해당 고객이 속한 폴더들을 자동으로 펼치기
+      const address = customer.personal_info?.address?.address1
+      if (address) {
+        const parts = address.split(' ')
+        const rawCity = parts[0] || ''
+        const district = parts[1] || ''
+
+        if (rawCity && district) {
+          const city = normalizeProvinceName(rawCity)
+          const districtKey = `${city}-${district}`
+
+          // 시/도와 시/군/구 노드를 expandedKeys에 추가
+          setExpandedKeys(prev => {
+            const newSet = new Set(prev)
+            newSet.add(city) // 시/도 펼치기
+            newSet.add(districtKey) // 시/군/구 펼치기
+            return Array.from(newSet)
+          })
+        }
+      } else {
+        // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
+        setExpandedKeys(prev => {
+          const newSet = new Set(prev)
+          newSet.add('no-address')
+          return Array.from(newSet)
+        })
+      }
+
       onCustomerSelect(customer._id)
       // 같은 고객을 다시 선택해도 지도가 이동하도록 타임스탬프 업데이트
       setSelectionTimestamp(Date.now())
@@ -454,7 +482,13 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <NaverMap
             customers={customers}
             selectedCustomerId={selectedCustomerId}
-            onCustomerSelect={onCustomerSelect}
+            onCustomerSelect={(customerId) => {
+              // 고객 ID로 고객 객체 찾기
+              const customer = customers.find(c => c._id === customerId)
+              if (customer) {
+                handleCustomerClick(customer)
+              }
+            }}
             selectionTimestamp={selectionTimestamp}
             height="100%"
           />
