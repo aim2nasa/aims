@@ -84,7 +84,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
   }, [])
 
-  // 고객 마커 업데이트
+  // 고객 마커 생성 (customers가 변경될 때만)
   useEffect(() => {
     if (!isMapReady || !mapInstance.current || !window.naver) {
       return
@@ -183,7 +183,35 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     createMarkers().catch(error => {
       console.error('[NaverMap] 마커 생성 중 오류:', error)
     })
-  }, [customers, isMapReady, selectedCustomerId])
+  }, [customers, isMapReady])
+
+  // 선택된 고객 변경 시 마커 아이콘 업데이트
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current || !window.naver || markers.current.size === 0) {
+      return
+    }
+
+    // 모든 마커의 아이콘 업데이트
+    markers.current.forEach((marker, customerId) => {
+      const isSelected = customerId === selectedCustomerId
+
+      marker.setIcon({
+        content: `<div style="
+          background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
+          width: ${isSelected ? '14px' : '10px'};
+          height: ${isSelected ? '14px' : '10px'};
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        "></div>`,
+        anchor: new window.naver.maps.Point(7, 7)
+      })
+    })
+
+    if (import.meta.env.DEV) {
+      console.log(`[NaverMap] 선택 상태 업데이트: ${selectedCustomerId}`)
+    }
+  }, [selectedCustomerId, isMapReady])
 
   // 선택된 고객으로 지도 이동
   useEffect(() => {
