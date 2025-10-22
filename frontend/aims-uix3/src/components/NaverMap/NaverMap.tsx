@@ -201,7 +201,6 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         const marker = new window.naver.maps.Marker({
           position,
           map: mapInstance.current,
-          title: customer.personal_info?.name || '고객',
           icon: {
             content: `<div style="
               background-color: ${isSelected ? '#007AFF' : '#FF3B30'};
