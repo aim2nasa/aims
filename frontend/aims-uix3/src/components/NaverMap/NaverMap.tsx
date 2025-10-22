@@ -114,7 +114,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
-    // Geocoding API로 주소 → 좌표 변환 후 마커 표시
+    // Geocoding API로 주소 → 좌표 변환 후 마커 표시 (병렬 처리로 성능 최적화)
     const createMarkers = async () => {
       if (import.meta.env.DEV) {
         console.log(`[NaverMap] 마커 생성 시작: ${customersWithAddress.length}명의 고객`)
@@ -123,46 +123,48 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       // 지도의 현재 경계 가져오기
       const bounds = mapInstance.current.getBounds()
 
-      for (const customer of customersWithAddress) {
+      // 1단계: 모든 Geocoding 요청을 병렬로 실행 (캐시 우선 사용)
+      const geocodingTasks = customersWithAddress.map(async (customer) => {
         const address = customer.personal_info?.address?.address1
         if (!address || !customer._id) {
-          if (import.meta.env.DEV) {
-            console.log(`[NaverMap] 주소 없음: ${customer.personal_info?.name}`)
-          }
-          continue
+          return null
         }
 
         // 캐시에서 먼저 확인
         let result = geocodeCache.current.get(address)
 
         if (result) {
-          if (import.meta.env.DEV) {
-            console.log(`[NaverMap] 캐시에서 좌표 사용: ${customer.personal_info?.name} - ${address}`)
-          }
-        } else {
-          // 캐시에 없으면 API 호출
-          if (import.meta.env.DEV) {
-            console.log(`[NaverMap] Geocoding API 요청: ${customer.personal_info?.name} - ${address}`)
-          }
-
-          const apiResult = await geocodeAddress(address)
-
-          if (import.meta.env.DEV) {
-            console.log(`[NaverMap] Geocoding 결과:`, apiResult)
-          }
-
-          if (!apiResult) {
-            if (import.meta.env.DEV) {
-              console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
-            }
-            continue
-          }
-
-          // 성공하면 캐시에 저장
-          geocodeCache.current.set(address, apiResult)
-          result = apiResult
+          // 캐시 히트 - 즉시 반환
+          return { customer, result }
         }
 
+        // 캐시 미스 - API 호출
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] Geocoding API 요청: ${customer.personal_info?.name}`)
+        }
+
+        const apiResult = await geocodeAddress(address)
+
+        if (!apiResult) {
+          if (import.meta.env.DEV) {
+            console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
+          }
+          return null
+        }
+
+        // 성공하면 캐시에 저장
+        geocodeCache.current.set(address, apiResult)
+        return { customer, result: apiResult }
+      })
+
+      // 모든 Geocoding 요청을 동시에 실행하고 결과 대기
+      const geocodingResults = await Promise.all(geocodingTasks)
+
+      // 2단계: 성공한 결과들로 마커 생성
+      for (const item of geocodingResults) {
+        if (!item) continue
+
+        const { customer, result } = item
         const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
 
         // 지도 범위 밖이면 마커 생성하지 않음
