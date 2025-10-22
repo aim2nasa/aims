@@ -251,12 +251,13 @@ export class AnnualReportApi {
       const data = await response.json();
 
       if (response.ok && data.success !== false) {
-        // 백엔드 응답: { success: true, data: [...], count: 2, total: 2 }
+        // 백엔드 응답: { success: true, data: [...], count: 1, total: 1 }
+        // data는 이미 배열이고, 각 요소가 AnnualReportSummary
         return {
           success: true,
           data: {
             customer_id: customerId,
-            reports: data.data || [],  // data 배열을 reports로 매핑
+            reports: Array.isArray(data.data) ? data.data : [],  // data 배열을 reports로 매핑
             total_count: data.total || data.count || 0,
           },
         };
