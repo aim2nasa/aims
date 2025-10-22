@@ -131,6 +131,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 파일명 → 고객 ID 매핑 (자동 연결용)
   const arCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
+  // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
+  const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -377,7 +380,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const customerId = arCustomerMappingRef.current.get(fileName);
       const documentId = responseData.document_id;
 
+      console.log(`🔍 [AR] 매핑 조회: fileName="${fileName}", customerId="${customerId}", documentId="${documentId}"`);
+      console.log(`🔍 [AR] 전체 매핑:`, Array.from(arCustomerMappingRef.current.entries()));
+
       if (customerId && documentId) {
+        // 문서 ID 기반 매핑 저장 (더 확실함)
+        arDocumentCustomerMappingRef.current.set(documentId, customerId);
+        console.log(`🔗 [AR] 문서 ID → 고객 ID 매핑 저장: ${documentId} → ${customerId}`);
         console.log(`⏳ [AR] 문서 처리 완료 대기 시작: ${documentId}`);
 
         // 문서 처리 완료될 때까지 polling
@@ -405,10 +414,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
               console.log(`✅ [AR 자동 연결] 완료`);
               arCustomerMappingRef.current.delete(fileName);
+              arDocumentCustomerMappingRef.current.delete(documentId);
             } else if (attempts >= maxAttempts) {
               clearInterval(checkAndLink);
               console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
               arCustomerMappingRef.current.delete(fileName);
+              arDocumentCustomerMappingRef.current.delete(documentId);
             } else {
               console.log(`⏳ [AR] 대기 중... (${attempts}/${maxAttempts})`);
             }
@@ -416,6 +427,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             console.error(`❌ [AR] 문서 상태 확인 실패:`, error);
           }
         }, checkInterval);
+      } else {
+        console.warn(`⚠️ [AR] 매핑을 찾을 수 없어서 자동 연결을 건너뜁니다. customerId=${customerId}, documentId=${documentId}`);
       }
     } catch (error) {
       console.error(`❌ [AR] 처리 실패:`, error);
