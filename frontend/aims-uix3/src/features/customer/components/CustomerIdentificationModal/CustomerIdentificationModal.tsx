@@ -10,7 +10,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 import { api } from '@/shared/lib/api';
@@ -374,12 +373,15 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
 
         {/* Footer */}
         <div className="customer-identification-modal__footer">
-          <Button variant="secondary" size="md" onClick={handleCancel} disabled={isCreatingCustomer}>
+          <button
+            className="customer-identification-modal__button customer-identification-modal__button--secondary"
+            onClick={handleCancel}
+            disabled={isCreatingCustomer}
+          >
             취소
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
+          </button>
+          <button
+            className="customer-identification-modal__button customer-identification-modal__button--primary"
             onClick={handleConfirm}
             disabled={
               isCreatingCustomer ||
@@ -393,7 +395,7 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
             {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'single' && '선택 완료'}
             {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
             {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
