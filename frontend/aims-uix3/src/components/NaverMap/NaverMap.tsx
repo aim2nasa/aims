@@ -99,6 +99,26 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
 
     mapInstance.current = new window.naver.maps.Map(mapElement.current, mapOptions)
+
+    // ⭐⭐⭐ 하얀 공백 제거: 지도 생성 직후 다중 시도로 viewport 강제 재계산
+    const forceMapResize = () => {
+      window.dispatchEvent(new Event('resize'))
+      mapInstance.current.setCenter(center)
+      mapInstance.current.setZoom(initialZoom)
+    }
+
+    // 즉시 실행
+    setTimeout(forceMapResize, 0)
+    // 50ms 후 재시도
+    setTimeout(forceMapResize, 50)
+    // 100ms 후 최종 확인
+    setTimeout(() => {
+      forceMapResize()
+      if (import.meta.env.DEV) {
+        console.log('[NaverMap] ⭐ viewport 재설정 완료 - 하얀 공백 제거')
+      }
+    }, 100)
+
     setIsMapReady(true)
 
     // 줌 변경 이벤트 리스너
