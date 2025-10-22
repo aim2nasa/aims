@@ -50,6 +50,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
   const [isMapReady, setIsMapReady] = useState(false)
 
+  // Geocoding 캐시: 주소 → 좌표 매핑 (메모리에 저장하여 재사용)
+  const geocodeCache = useRef<Map<string, { latitude: number; longitude: number }>>(new Map())
+
   // 초기 지도 중심 좌표 (남한 전체 보기)
   const initialCenter = { lat: 36.5, lng: 127.5 }
   const initialZoom = 7
@@ -129,21 +132,35 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           continue
         }
 
-        if (import.meta.env.DEV) {
-          console.log(`[NaverMap] Geocoding 요청: ${customer.personal_info?.name} - ${address}`)
-        }
+        // 캐시에서 먼저 확인
+        let result = geocodeCache.current.get(address)
 
-        const result = await geocodeAddress(address)
-
-        if (import.meta.env.DEV) {
-          console.log(`[NaverMap] Geocoding 결과:`, result)
-        }
-
-        if (!result) {
+        if (result) {
           if (import.meta.env.DEV) {
-            console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
+            console.log(`[NaverMap] 캐시에서 좌표 사용: ${customer.personal_info?.name} - ${address}`)
           }
-          continue
+        } else {
+          // 캐시에 없으면 API 호출
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] Geocoding API 요청: ${customer.personal_info?.name} - ${address}`)
+          }
+
+          const apiResult = await geocodeAddress(address)
+
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] Geocoding 결과:`, apiResult)
+          }
+
+          if (!apiResult) {
+            if (import.meta.env.DEV) {
+              console.warn(`[NaverMap] Geocoding 실패: ${customer.personal_info?.name}`)
+            }
+            continue
+          }
+
+          // 성공하면 캐시에 저장
+          geocodeCache.current.set(address, apiResult)
+          result = apiResult
         }
 
         const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
@@ -259,13 +276,23 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
-    // Geocoding API로 주소 → 좌표 변환 후 지도 이동
+    // Geocoding API로 주소 → 좌표 변환 후 지도 이동 (캐시 사용)
     const moveToCustomer = async () => {
       const address = selectedCustomer.personal_info?.address?.address1
       if (!address) return
 
-      const result = await geocodeAddress(address)
-      if (!result) return
+      // 캐시에서 먼저 확인
+      let result = geocodeCache.current.get(address)
+
+      if (!result) {
+        // 캐시에 없으면 API 호출
+        const apiResult = await geocodeAddress(address)
+        if (!apiResult) return
+
+        // 성공하면 캐시에 저장
+        geocodeCache.current.set(address, apiResult)
+        result = apiResult
+      }
 
       const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
       mapInstance.current.setCenter(position)
