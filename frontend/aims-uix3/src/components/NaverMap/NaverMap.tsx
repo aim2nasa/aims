@@ -110,6 +110,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         console.log(`[NaverMap] 마커 생성 시작: ${customersWithAddress.length}명의 고객`)
       }
 
+      // 지도의 현재 경계 가져오기
+      const bounds = mapInstance.current.getBounds()
+
       for (const customer of customersWithAddress) {
         const address = customer.personal_info?.address?.address1
         if (!address || !customer._id) {
@@ -137,6 +140,14 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
 
         const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
+
+        // 지도 범위 밖이면 마커 생성하지 않음
+        if (!bounds.hasLatLng(position)) {
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] 범위 밖: ${customer.personal_info?.name} - 마커 생성 안 함`)
+          }
+          continue
+        }
 
         const isSelected = customer._id === selectedCustomerId
 
