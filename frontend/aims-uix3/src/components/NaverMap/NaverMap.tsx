@@ -53,6 +53,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // Geocoding 캐시: 주소 → 좌표 매핑 (메모리에 저장하여 재사용)
   const geocodeCache = useRef<Map<string, { latitude: number; longitude: number }>>(new Map())
 
+  // 마커 로딩 진행률 상태
+  const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number } | null>(null)
+
   // 초기 지도 중심 좌표 (남한 전체 보기)
   const initialCenter = { lat: 36.5, lng: 127.5 }
   const initialZoom = 7
@@ -116,17 +119,26 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     // Geocoding API로 주소 → 좌표 변환 후 마커 표시 (병렬 처리로 성능 최적화)
     const createMarkers = async () => {
+      const totalCount = customersWithAddress.length
+
       if (import.meta.env.DEV) {
-        console.log(`[NaverMap] 마커 생성 시작: ${customersWithAddress.length}명의 고객`)
+        console.log(`[NaverMap] 마커 생성 시작: ${totalCount}명의 고객`)
       }
+
+      // 진행률 초기화
+      setLoadingProgress({ current: 0, total: totalCount })
 
       // 지도의 현재 경계 가져오기
       const bounds = mapInstance.current.getBounds()
 
       // 1단계: 모든 Geocoding 요청을 병렬로 실행 (캐시 우선 사용)
+      let completedCount = 0
+
       const geocodingTasks = customersWithAddress.map(async (customer) => {
         const address = customer.personal_info?.address?.address1
         if (!address || !customer._id) {
+          completedCount++
+          setLoadingProgress({ current: completedCount, total: totalCount })
           return null
         }
 
@@ -135,6 +147,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
         if (result) {
           // 캐시 히트 - 즉시 반환
+          completedCount++
+          setLoadingProgress({ current: completedCount, total: totalCount })
           return { customer, result }
         }
 
@@ -144,6 +158,10 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
 
         const apiResult = await geocodeAddress(address)
+
+        // 진행률 업데이트
+        completedCount++
+        setLoadingProgress({ current: completedCount, total: totalCount })
 
         if (!apiResult) {
           if (import.meta.env.DEV) {
@@ -159,6 +177,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
       // 모든 Geocoding 요청을 동시에 실행하고 결과 대기
       const geocodingResults = await Promise.all(geocodingTasks)
+
+      // 진행률 완료 후 숨김 (약간의 딜레이 후)
+      setTimeout(() => setLoadingProgress(null), 500)
 
       // 2단계: 성공한 결과들로 마커 생성
       for (const item of geocodingResults) {
@@ -324,11 +345,30 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   return (
     <div className="naver-map-wrapper" style={{ height }}>
       <div ref={mapElement} className="naver-map-container" style={{ width: '100%', height: '100%' }} />
+
+      {/* 지도 로딩 중 */}
       {!isMapReady && (
         <div className="naver-map-loading">
           <span>지도 로딩 중...</span>
         </div>
       )}
+
+      {/* 마커 로딩 프로그레스바 */}
+      {loadingProgress && (
+        <div className="naver-map-progress">
+          <div className="naver-map-progress-bar">
+            <div
+              className="naver-map-progress-fill"
+              style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
+            />
+          </div>
+          <div className="naver-map-progress-text">
+            마커 로딩 중... {loadingProgress.current} / {loadingProgress.total}
+          </div>
+        </div>
+      )}
+
+      {/* 초기 위치로 복귀 버튼 */}
       {isMapReady && (
         <button
           className="naver-map-reset-button"
