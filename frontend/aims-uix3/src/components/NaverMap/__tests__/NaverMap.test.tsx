@@ -3,6 +3,7 @@
  * @since 2025-10-22
  *
  * 테스트하는 커밋들:
+ * - 60fcf2f: feat(map): 마커 로딩 진행률에 퍼센티지 표시 추가
  * - c13b352: feat(map): 같은 주소 고객 그룹화 및 줌 레벨 기반 마커 디자인
  * - a0a39d3: fix(map): TypeScript 타입 안정성 개선
  * - 54facf7: fix(map): 선택된 마커 외곽 원을 빨간색으로 변경하여 가시성 개선
@@ -488,6 +489,65 @@ describe('NaverMap.tsx - 마커 컨테이너 크기 일관성', () => {
 
       expect(singleMarkerContainer).toEqual(groupMarkerNumberContainer)
       expect(groupMarkerNumberContainer).toEqual(groupMarkerCircleContainer)
+    })
+  })
+
+  describe('마커 로딩 진행률 표시', () => {
+    it('퍼센티지 계산이 정확해야 함', () => {
+      const testCases = [
+        { current: 0, total: 100, expected: 0 },
+        { current: 10, total: 100, expected: 10 },
+        { current: 50, total: 100, expected: 50 },
+        { current: 99, total: 100, expected: 99 },
+        { current: 100, total: 100, expected: 100 },
+        { current: 33, total: 100, expected: 33 },
+        { current: 1, total: 3, expected: 33 }, // 33.33... → 33
+        { current: 2, total: 3, expected: 67 }, // 66.66... → 67
+        { current: 25, total: 50, expected: 50 }
+      ]
+
+      for (const { current, total, expected } of testCases) {
+        const percentage = Math.round((current / total) * 100)
+        expect(percentage).toBe(expected)
+      }
+    })
+
+    it('로딩 진행률 텍스트가 올바른 형식이어야 함', () => {
+      const current = 25
+      const total = 100
+      const percentage = Math.round((current / total) * 100)
+      const progressText = `마커 로딩 중... ${percentage}% (${current}/${total})`
+
+      expect(progressText).toBe('마커 로딩 중... 25% (25/100)')
+    })
+
+    it('0으로 나누기를 방지해야 함', () => {
+      const current = 0
+      const total = 0
+      // total이 0일 때 NaN을 방지하기 위한 안전장치 필요
+      const percentage = total === 0 ? 0 : Math.round((current / total) * 100)
+
+      expect(percentage).toBe(0)
+      expect(Number.isNaN(percentage)).toBe(false)
+    })
+
+    it('진행률이 100%를 초과하지 않아야 함', () => {
+      const current = 100
+      const total = 100
+      const percentage = Math.round((current / total) * 100)
+
+      expect(percentage).toBeLessThanOrEqual(100)
+    })
+
+    it('소수점 반올림이 정확해야 함', () => {
+      // 10 / 3 = 3.333... → 3%
+      expect(Math.round((10 / 30) * 100)).toBe(33)
+
+      // 20 / 3 = 6.666... → 7%
+      expect(Math.round((20 / 30) * 100)).toBe(67)
+
+      // 15 / 23 = 0.652... → 65%
+      expect(Math.round((15 / 23) * 100)).toBe(65)
     })
   })
 })

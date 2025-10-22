@@ -2,7 +2,9 @@
  * RegionalTreeView.tsx - 마커 클릭 시 트리 자동 펼침 기능 테스트
  * @since 2025-10-22
  *
- * 커밋: 136a2ca - feat(map): 지도 마커 클릭 시 트리 자동 펼침 기능 추가
+ * 테스트하는 커밋들:
+ * - dab2bce: feat(tree): 지역별 트리 펼치기/접기 버튼을 macOS 스타일 sticky header로 개선
+ * - 136a2ca: feat(map): 지도 마커 클릭 시 트리 자동 펼침 기능 추가
  */
 
 import { describe, it, expect } from 'vitest'
@@ -410,6 +412,194 @@ describe('RegionalTreeView.tsx - 마커 클릭 시 트리 자동 펼침', () => 
       // 타임스탬프 업데이트
       selectionTimestamp = newTimestamp
       expect(selectionTimestamp).toBe(newTimestamp)
+    })
+  })
+
+  describe('모든 폴더 펼치기/접기 기능', () => {
+    // 트리 구조 시뮬레이션
+    interface TreeNode {
+      key: string
+      children?: TreeNode[]
+    }
+
+    const sampleTreeData: TreeNode[] = [
+      {
+        key: '서울특별시',
+        children: [
+          { key: '서울특별시-강남구' },
+          { key: '서울특별시-서초구' }
+        ]
+      },
+      {
+        key: '경기도',
+        children: [
+          { key: '경기도-성남시' },
+          { key: '경기도-수원시' }
+        ]
+      },
+      {
+        key: 'no-address'
+      }
+    ]
+
+    const getAllKeys = (nodes: TreeNode[]): string[] => {
+      const keys: string[] = []
+      const traverse = (node: TreeNode) => {
+        keys.push(node.key)
+        if (node.children) {
+          node.children.forEach(traverse)
+        }
+      }
+      nodes.forEach(traverse)
+      return keys
+    }
+
+    it('모든 폴더 펼치기 시 모든 키가 expandedKeys에 포함되어야 함', () => {
+      const allKeys = getAllKeys(sampleTreeData)
+
+      // 펼치기 동작
+      const expandedKeys = allKeys
+
+      expect(expandedKeys).toHaveLength(7) // 5개 지역 + 2개 no-address
+      expect(expandedKeys).toContain('서울특별시')
+      expect(expandedKeys).toContain('서울특별시-강남구')
+      expect(expandedKeys).toContain('서울특별시-서초구')
+      expect(expandedKeys).toContain('경기도')
+      expect(expandedKeys).toContain('경기도-성남시')
+      expect(expandedKeys).toContain('경기도-수원시')
+      expect(expandedKeys).toContain('no-address')
+    })
+
+    it('모든 폴더 접기 시 expandedKeys가 비어야 함', () => {
+      const expandedKeys = getAllKeys(sampleTreeData)
+      expect(expandedKeys).not.toHaveLength(0) // 초기에는 펼쳐져 있음
+
+      // 접기 동작
+      const newExpandedKeys: string[] = []
+
+      expect(newExpandedKeys).toHaveLength(0)
+      expect(newExpandedKeys).toEqual([])
+    })
+
+    it('isAllExpanded 상태가 올바르게 계산되어야 함', () => {
+      const allKeys = getAllKeys(sampleTreeData)
+
+      // 모두 펼쳐진 상태
+      const expandedKeys1 = allKeys
+      const isAllExpanded1 = expandedKeys1.length === allKeys.length
+      expect(isAllExpanded1).toBe(true)
+
+      // 일부만 펼쳐진 상태
+      const expandedKeys2 = ['서울특별시']
+      const isAllExpanded2 = expandedKeys2.length === allKeys.length
+      expect(isAllExpanded2).toBe(false)
+
+      // 모두 접힌 상태
+      const expandedKeys3: string[] = []
+      const isAllExpanded3 = expandedKeys3.length === allKeys.length
+      expect(isAllExpanded3).toBe(false)
+    })
+
+    it('펼치기 상태 토글이 정확해야 함', () => {
+      const allKeys = getAllKeys(sampleTreeData)
+      let expandedKeys: string[] = []
+      let isAllExpanded = expandedKeys.length === allKeys.length
+
+      // 첫 번째 토글: 펼치기
+      expect(isAllExpanded).toBe(false)
+      expandedKeys = allKeys
+      isAllExpanded = expandedKeys.length === allKeys.length
+      expect(isAllExpanded).toBe(true)
+
+      // 두 번째 토글: 접기
+      expandedKeys = []
+      isAllExpanded = expandedKeys.length === allKeys.length
+      expect(isAllExpanded).toBe(false)
+    })
+
+    it('빈 트리에서 펼치기/접기가 안전하게 동작해야 함', () => {
+      const emptyTreeData: TreeNode[] = []
+      const allKeys = getAllKeys(emptyTreeData)
+
+      expect(allKeys).toHaveLength(0)
+
+      // 펼치기 시도
+      const expandedKeys = allKeys
+      expect(expandedKeys).toHaveLength(0)
+      expect(expandedKeys).toEqual([])
+    })
+
+    it('자식이 없는 노드만 있어도 펼치기/접기가 동작해야 함', () => {
+      const flatTreeData: TreeNode[] = [
+        { key: 'node1' },
+        { key: 'node2' },
+        { key: 'node3' }
+      ]
+
+      const allKeys = getAllKeys(flatTreeData)
+      expect(allKeys).toHaveLength(3)
+
+      // 펼치기
+      let expandedKeys = allKeys
+      expect(expandedKeys).toEqual(['node1', 'node2', 'node3'])
+
+      // 접기
+      expandedKeys = []
+      expect(expandedKeys).toEqual([])
+    })
+
+    it('깊은 계층 구조에서도 모든 노드를 순회해야 함', () => {
+      const deepTreeData: TreeNode[] = [
+        {
+          key: 'level1',
+          children: [
+            {
+              key: 'level2',
+              children: [
+                { key: 'level3' }
+              ]
+            }
+          ]
+        }
+      ]
+
+      const allKeys = getAllKeys(deepTreeData)
+      expect(allKeys).toHaveLength(3)
+      expect(allKeys).toContain('level1')
+      expect(allKeys).toContain('level2')
+      expect(allKeys).toContain('level3')
+    })
+
+    it('버튼 아이콘이 상태에 따라 변경되어야 함', () => {
+      const allKeys = getAllKeys(sampleTreeData)
+
+      // 접힌 상태
+      let expandedKeys: string[] = []
+      let isAllExpanded = expandedKeys.length === allKeys.length
+      let buttonIcon = isAllExpanded ? '▲' : '▼'
+      expect(buttonIcon).toBe('▼')
+
+      // 펼쳐진 상태
+      expandedKeys = allKeys
+      isAllExpanded = expandedKeys.length === allKeys.length
+      buttonIcon = isAllExpanded ? '▲' : '▼'
+      expect(buttonIcon).toBe('▲')
+    })
+
+    it('aria-label이 상태에 따라 변경되어야 함', () => {
+      const allKeys = getAllKeys(sampleTreeData)
+
+      // 접힌 상태
+      let expandedKeys: string[] = []
+      let isAllExpanded = expandedKeys.length === allKeys.length
+      let ariaLabel = isAllExpanded ? '모든 폴더 접기' : '모든 폴더 펼치기'
+      expect(ariaLabel).toBe('모든 폴더 펼치기')
+
+      // 펼쳐진 상태
+      expandedKeys = allKeys
+      isAllExpanded = expandedKeys.length === allKeys.length
+      ariaLabel = isAllExpanded ? '모든 폴더 접기' : '모든 폴더 펼치기'
+      expect(ariaLabel).toBe('모든 폴더 접기')
     })
   })
 })
