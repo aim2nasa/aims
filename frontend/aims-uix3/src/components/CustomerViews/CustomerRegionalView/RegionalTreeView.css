@@ -82,7 +82,7 @@
 
 .stat-value {
   color: var(--color-neutral-900);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-normal);
   font-size: var(--font-size-footnote);
 }
 
@@ -211,18 +211,9 @@ html[data-theme="dark"] .tree-action-btn:active {
 
 .tree-header-actions::before {
   content: "지역별 트리";
-  font-size: 11px; /* macOS 사이드바 스타일 - 작고 가벼운 폰트 */
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.02em; /* 약간의 자간으로 가독성 향상 */
-  text-transform: uppercase; /* macOS 사이드바 헤더 스타일 */
-  color: var(--color-neutral-500); /* 서브틀한 회색 */
-  opacity: 0.75; /* 부드러운 존재감 */
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-}
-
-/* 호버 시 제목이 살짝 강조됨 */
-.tree-header-actions:hover::before {
-  opacity: 0.9;
+  font-size: var(--font-size-caption-1); /* 12px - 다른 텍스트와 일관성 (제목 20px보다 작음) */
+  font-weight: var(--font-weight-normal); /* normal - 통계 영역과 동일한 weight */
+  color: var(--color-neutral-600); /* 통계 라벨과 동일한 색상 */
 }
 
 /* 다크모드 */
