@@ -319,10 +319,30 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
   }, [selectedCustomerId, isMapReady])
 
+  // RP가 열려있는지 추적 (닫힐 때 지도 위치 복원용)
+  const isRightPaneOpenRef = useRef(false)
+
   // 선택된 고객으로 지도 이동
   // selectionTimestamp를 의존성에 추가하여 같은 고객 재선택도 감지
   useEffect(() => {
-    if (!isMapReady || !mapInstance.current || !selectedCustomerId) {
+    if (!isMapReady || !mapInstance.current) {
+      return
+    }
+
+    const map = mapInstance.current
+
+    // RP 닫힐 때: 지도를 왼쪽으로 250px 이동 (마커가 화면 중앙에 오도록)
+    if (!selectedCustomerId && isRightPaneOpenRef.current) {
+      map.panBy(new window.naver.maps.Point(-250, 0))
+      isRightPaneOpenRef.current = false
+
+      if (import.meta.env.DEV) {
+        console.log('[NaverMap] RP 닫힘 - 지도를 중앙으로 복원')
+      }
+      return
+    }
+
+    if (!selectedCustomerId) {
       return
     }
 
@@ -330,6 +350,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     if (!selectedCustomer?.personal_info?.address?.address1) {
       return
     }
+
+    // RP가 열림을 표시
+    isRightPaneOpenRef.current = true
 
     // Geocoding API로 주소 → 좌표 변환 후 지도 이동 (캐시 사용)
     const moveToCustomer = async () => {
@@ -350,11 +373,19 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       }
 
       const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
-      mapInstance.current.setCenter(position)
-      mapInstance.current.setZoom(15) // 확대
+      const map = mapInstance.current
+
+      map.setCenter(position)
+      map.setZoom(15) // 확대
+
+      // RP가 열릴 때 지도를 오른쪽으로 250px 이동 (마커가 왼쪽 화면 중앙에 보이도록)
+      // panBy()는 픽셀 단위로 이동: 양수 x = 오른쪽, 양수 y = 아래
+      setTimeout(() => {
+        map.panBy(new window.naver.maps.Point(250, 0))
+      }, 100)
 
       if (import.meta.env.DEV) {
-        console.log(`[NaverMap] 선택된 고객으로 이동: ${selectedCustomer.personal_info.name}`)
+        console.log(`[NaverMap] 선택된 고객으로 이동 (RP 보정): ${selectedCustomer.personal_info.name}`)
       }
     }
 

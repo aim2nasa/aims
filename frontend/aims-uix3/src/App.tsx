@@ -1035,6 +1035,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-regional'}
               onClose={closeDocumentView}
               onCustomerClick={handleCustomerClick}
+              selectedCustomer={selectedCustomer}
             />
           </Suspense>
 

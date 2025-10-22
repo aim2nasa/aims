@@ -6,7 +6,7 @@
  * Document-Controller-View 패턴 준수
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
@@ -20,6 +20,8 @@ interface CustomerRegionalViewProps {
   onClose: () => void
   /** 고객 클릭 핸들러 (RightPane 표시용) */
   onCustomerClick?: (customerId: string, customer: Customer) => void
+  /** RightPane에 표시 중인 선택된 고객 (App.tsx로부터 전달) */
+  selectedCustomer?: Customer | null
 }
 
 /**
@@ -42,11 +44,11 @@ interface CustomerRegionalViewProps {
 export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   visible,
   onClose,
-  onCustomerClick
+  onCustomerClick,
+  selectedCustomer
 }) => {
   // Document-View 패턴: CustomerDocument 구독
   const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
 
   const customerMap = useMemo(() => {
     const map = new Map<string, Customer>()
@@ -82,21 +84,18 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     }
   }, [refresh])
 
-  // 고객 선택 핸들러 (내부 상태 + RightPane 표시)
+  // 고객 선택 핸들러 (RightPane 표시)
   const handleCustomerSelect = useCallback((customerId: string) => {
     const customer = customerMap.get(customerId)
     if (!customer) {
       return
     }
 
-    setSelectedCustomerId(customerId)
-
+    // App.tsx의 handleCustomerClick을 호출하여 RightPane 열기
     if (onCustomerClick) {
       onCustomerClick(customerId, customer)
     }
   }, [customerMap, onCustomerClick])
-
-  const selectedCustomer = selectedCustomerId ? customerMap.get(selectedCustomerId) ?? null : null
 
   return (
     <CenterPaneView
