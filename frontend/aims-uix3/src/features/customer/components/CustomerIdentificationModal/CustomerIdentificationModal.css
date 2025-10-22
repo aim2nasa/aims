@@ -27,99 +27,82 @@
   }
 }
 
-/* Modal Container */
+/* Modal Container - 🍎 Elevated Card */
 .customer-identification-modal {
   background: var(--color-bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 500px;
+  max-width: 520px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  user-select: none;
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(20px);
+    transform: translateY(30px) scale(0.96);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
 
-/* Header */
+/* Header - 🍎 iOS Title Bar (Compact) */
 .customer-identification-modal__header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 14px 20px;
+  border-bottom: 0.5px solid var(--color-border);
   position: relative;
+  user-select: none;
 }
 
 .customer-identification-modal__icon {
-  font-size: 24px;
+  display: none; /* 🍎 애플 스타일: 이모지 제거 */
 }
 
 .customer-identification-modal__title {
   flex: 1;
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   color: var(--color-text-primary);
+  letter-spacing: -0.3px;
+  user-select: none;
 }
 
-.customer-identification-modal__close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 28px;
-  line-height: 1;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
 
-.customer-identification-modal__close:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-}
-
-/* Content */
+/* Content (Compact) */
 .customer-identification-modal__content {
-  padding: 20px 24px;
+  padding: 14px 20px;
   overflow-y: auto;
   flex: 1;
 }
 
-/* File Info */
+/* File Info - 🍎 iOS Card Style (Compact) */
 .customer-identification-modal__file-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--color-bg-secondary);
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  border: 0.5px solid var(--color-border);
 }
 
 .customer-identification-modal__file-icon {
-  font-size: 32px;
+  font-size: 28px;
   flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .customer-identification-modal__file-details {
@@ -128,110 +111,136 @@
 }
 
 .customer-identification-modal__file-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 
 .customer-identification-modal__file-type {
-  font-size: 12px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
+  letter-spacing: 0.1px;
 }
 
-/* Metadata */
+/* Metadata - 🍎 iOS List Style (Ultra Compact) */
 .customer-identification-modal__metadata {
-  padding: 12px;
+  padding: 8px 16px;
   background: var(--color-bg-secondary);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  border: 0.5px solid var(--color-border);
 }
 
 .customer-identification-modal__metadata-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 1px 0;
 }
 
 .customer-identification-modal__metadata-row:not(:last-child) {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 .customer-identification-modal__metadata-label {
   font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 400;
+  letter-spacing: -0.1px;
 }
 
 .customer-identification-modal__metadata-value {
-  font-size: 14px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   font-weight: 500;
+  letter-spacing: -0.2px;
 }
 
-/* Customer Section */
+/* Customer Section (Compact) */
 .customer-identification-modal__customer-section {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .customer-identification-modal__message {
-  font-size: 14px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
-  margin: 0 0 16px 0;
+  margin: 0 0 10px 0;
   line-height: 1.5;
+  letter-spacing: -0.1px;
 }
 
-/* Single Customer */
+/* Single Customer - 🍎 iOS Highlighted Card (Compact) */
 .customer-identification-modal__customer-card {
-  padding: 16px;
+  padding: 10px 14px;
   background: var(--color-bg-accent-subtle);
-  border: 1px solid var(--color-accent-primary);
+  border: 1.5px solid var(--color-accent-primary);
   border-radius: 8px;
 }
 
 .customer-identification-modal__customer-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   margin-bottom: 4px;
+  letter-spacing: -0.3px;
 }
 
 .customer-identification-modal__customer-contact {
   font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
+  letter-spacing: -0.1px;
 }
 
-/* Multiple Customers */
+.customer-identification-modal__customer-contact-inline {
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  margin-left: 8px;
+  letter-spacing: -0.1px;
+}
+
+/* Multiple Customers - 🍎 iOS List Selection (Ultra Compact) */
 .customer-identification-modal__customer-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .customer-identification-modal__customer-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 6px 12px;
   background: var(--color-bg-secondary);
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .customer-identification-modal__customer-option:hover {
   background: var(--color-bg-hover);
-  border-color: var(--color-border);
+  border-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.01);
 }
 
 .customer-identification-modal__customer-option.selected {
   background: var(--color-bg-accent-subtle);
   border-color: var(--color-accent-primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
 .customer-identification-modal__radio {
@@ -248,34 +257,34 @@
   min-width: 0;
 }
 
-/* No Customer */
+/* No Customer (Compact) */
 .customer-identification-modal__none {
-  padding: 16px 0;
+  padding: 10px 0;
 }
 
 .customer-identification-modal__empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 .customer-identification-modal__hint {
   font-size: 13px;
   color: var(--color-text-tertiary);
-  margin: 8px 0 20px 0;
+  margin: 6px 0 12px 0;
 }
 
-/* New Customer Form */
+/* New Customer Form (Compact) */
 .customer-identification-modal__new-customer-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .customer-identification-modal__form-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .customer-identification-modal__form-label {
@@ -286,8 +295,8 @@
 
 .customer-identification-modal__form-input {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
   color: var(--color-text-primary);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
@@ -318,43 +327,49 @@
   font-style: italic;
 }
 
-/* Duplicate Warning */
+/* Duplicate Warning (Compact) */
 .customer-identification-modal__duplicate-warning {
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: var(--color-warning-bg, #fff3cd);
   border: 1px solid var(--color-warning-border, #ffc107);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--color-warning-text, #856404);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* Footer */
+/* Footer - 🍎 iOS Action Bar (Compact) */
 .customer-identification-modal__footer {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border);
+  padding: 14px 20px;
+  border-top: 0.5px solid var(--color-border);
   background: var(--color-bg-secondary);
+  border-radius: 0 0 16px 16px;
 }
 
-/* Dark Mode Adjustments */
+/* Dark Mode Adjustments - 🍎 Enhanced Depth */
 html[data-theme='dark'] .customer-identification-modal__overlay {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 html[data-theme='dark'] .customer-identification-modal {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme='dark'] .customer-identification-modal__customer-option:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 html[data-theme='dark'] .customer-identification-modal__customer-option.selected {
   background: var(--color-bg-accent-subtle);
   border-color: var(--color-accent-primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 html[data-theme='dark'] .customer-identification-modal__duplicate-warning {

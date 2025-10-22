@@ -218,15 +218,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
     onClose();
   };
 
-  // 고객 정보 표시용 함수
-  const getCustomerDisplayInfo = (customer: Customer): string => {
-    const name = customer.personal_info?.name || '이름 없음';
-    const phone = customer.personal_info?.mobile_phone || '';
-    const email = customer.personal_info?.email || '';
-    const contact = phone || email || '연락처 없음';
-    return `${name} (${contact})`;
-  };
-
   return (
     <div className="customer-identification-modal__overlay">
       <div className="customer-identification-modal">
@@ -234,14 +225,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
         <div className="customer-identification-modal__header">
           <div className="customer-identification-modal__icon">📊</div>
           <h2 className="customer-identification-modal__title">Annual Report 감지</h2>
-          <button
-            type="button"
-            className="customer-identification-modal__close"
-            onClick={handleCancel}
-            aria-label="닫기"
-          >
-            ×
-          </button>
         </div>
 
         {/* Content */}
@@ -332,9 +315,9 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
                       <div className="customer-identification-modal__customer-info">
                         <div className="customer-identification-modal__customer-name">
                           {customer.personal_info?.name || '이름 없음'}
-                        </div>
-                        <div className="customer-identification-modal__customer-contact">
-                          {getCustomerDisplayInfo(customer)}
+                          <span className="customer-identification-modal__customer-contact-inline">
+                            ({customer.personal_info?.mobile_phone || customer.personal_info?.email || '연락처 없음'})
+                          </span>
                         </div>
                       </div>
                     </label>
