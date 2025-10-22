@@ -319,9 +319,6 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
   }, [selectedCustomerId, isMapReady])
 
-  // RP가 열려있는지 추적 (닫힐 때 지도 위치 복원용)
-  const isRightPaneOpenRef = useRef(false)
-
   // 선택된 고객으로 지도 이동
   // selectionTimestamp를 의존성에 추가하여 같은 고객 재선택도 감지
   useEffect(() => {
@@ -329,19 +326,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
-    const map = mapInstance.current
-
-    // RP 닫힐 때: 지도를 왼쪽으로 250px 이동 (마커가 화면 중앙에 오도록)
-    if (!selectedCustomerId && isRightPaneOpenRef.current) {
-      map.panBy(new window.naver.maps.Point(-250, 0))
-      isRightPaneOpenRef.current = false
-
-      if (import.meta.env.DEV) {
-        console.log('[NaverMap] RP 닫힘 - 지도를 중앙으로 복원')
-      }
-      return
-    }
-
+    // selectedCustomerId가 없으면 아무것도 안함
     if (!selectedCustomerId) {
       return
     }
@@ -350,9 +335,6 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     if (!selectedCustomer?.personal_info?.address?.address1) {
       return
     }
-
-    // RP가 열림을 표시
-    isRightPaneOpenRef.current = true
 
     // Geocoding API로 주소 → 좌표 변환 후 지도 이동 (캐시 사용)
     const moveToCustomer = async () => {
@@ -375,17 +357,64 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
       const map = mapInstance.current
 
-      map.setCenter(position)
-      map.setZoom(15) // 확대
+      // RP가 열려있을 때만 사용자 지도 중앙으로 조정
+      const tree = document.querySelector('.regional-tree-container')
+      const rp = document.querySelector('.layout-rightpane-container')
 
-      // RP가 열릴 때 지도를 오른쪽으로 250px 이동 (마커가 왼쪽 화면 중앙에 보이도록)
-      // panBy()는 픽셀 단위로 이동: 양수 x = 오른쪽, 양수 y = 아래
-      setTimeout(() => {
-        map.panBy(new window.naver.maps.Point(250, 0))
-      }, 100)
+      if (tree && rp) {
+        const treeRect = tree.getBoundingClientRect()
+        const rpRect = rp.getBoundingClientRect()
+
+        // 사용자 지도 영역 계산 (Tree 오른쪽부터 RP 왼쪽까지)
+        const userMapCenter = (treeRect.right + rpRect.left) / 2
+
+        // 일단 기본 위치로 setCenter
+        map.setCenter(position)
+        map.setZoom(15)
+
+        // setCenter 완료 후 실제 마커 위치 기반으로 조정
+        setTimeout(() => {
+          const mapContainer = map.getElement()
+          const allDivs = mapContainer.querySelectorAll('div')
+          let markerScreenX = null
+
+          // 파란색 배경을 가진 div 찾기
+          for (const div of allDivs) {
+            const style = window.getComputedStyle(div)
+            const bgColor = style.backgroundColor
+
+            if (bgColor.includes('0, 122, 255') || bgColor.includes('rgb(0, 100')) {
+              const rect = div.getBoundingClientRect()
+              if (rect.width > 0 && rect.height > 0) {
+                markerScreenX = rect.left + rect.width / 2
+                break
+              }
+            }
+          }
+
+          if (markerScreenX) {
+            const actualOffset = userMapCenter - markerScreenX
+
+            if (Math.abs(actualOffset) > 5) {
+              map.panBy(new window.naver.maps.Point(-actualOffset, 0))
+
+              if (import.meta.env.DEV) {
+                console.log(`[NaverMap] RP 열림: 마커 위치 조정`)
+                console.log(`  사용자 지도 중앙: ${Math.round(userMapCenter)}px`)
+                console.log(`  마커 실제 위치: ${Math.round(markerScreenX)}px`)
+                console.log(`  panBy(${Math.round(-actualOffset)}, 0)`)
+              }
+            }
+          }
+        }, 300)
+      } else {
+        // RP 없으면 기본 동작
+        map.setCenter(position)
+        map.setZoom(15)
+      }
 
       if (import.meta.env.DEV) {
-        console.log(`[NaverMap] 선택된 고객으로 이동 (RP 보정): ${selectedCustomer.personal_info.name}`)
+        console.log(`[NaverMap] 선택된 고객으로 이동: ${selectedCustomer.personal_info.name}`)
       }
     }
 
