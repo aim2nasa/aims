@@ -84,3 +84,17 @@ html[data-theme="dark"] .naver-map-reset-button {
 html[data-theme="dark"] .naver-map-reset-button:hover {
   background-color: rgba(44, 44, 46, 1);
 }
+
+/* 네이버 로고 숨김 (척도 표시는 유지) */
+.naver-map-container a[href*="naver.com/maps"] {
+  display: none !important;
+}
+
+.naver-map-container img[alt*="NAVER"] {
+  display: none !important;
+}
+
+/* 네이버 지도 로고 컨테이너 숨김 */
+.naver-map-container div[style*="absolute"][style*="left"][style*="bottom"] > a {
+  display: none !important;
+}
