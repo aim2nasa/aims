@@ -224,7 +224,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       const zoom = mapInstance.current.getZoom()
       const showNumbers = zoom >= 11 // 줌 레벨 11 이상일 때만 숫자 표시
 
-      for (const [address1, group] of addressGroups.current.entries()) {
+      for (const [, group] of addressGroups.current.entries()) {
+        if (!group[0]?.result) continue
         const { result } = group[0] // 첫 번째 고객의 좌표 사용
         const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
         const isGrouped = group.length > 1
@@ -311,7 +312,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           </div>`
         } else {
           // 단일 고객 마커 (기존 디자인)
-          const customer = group[0].customer
+          const customer = group[0]?.customer
+          if (!customer) continue
           const isSelected = customer._id === selectedCustomerId
 
           markerContent = `<div style="
@@ -382,7 +384,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           if (onCustomerSelect) {
             if (isGrouped) {
               // 그룹 마커 클릭 시 첫 번째 고객 선택
-              const firstCustomerId = group[0].customer._id
+              const firstCustomerId = group[0]?.customer?._id
               if (firstCustomerId) {
                 onCustomerSelect(firstCustomerId)
                 if (import.meta.env.DEV) {
@@ -391,11 +393,11 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               }
             } else {
               // 단일 고객 마커 클릭
-              const customerId = group[0].customer._id
+              const customerId = group[0]?.customer?._id
               if (customerId) {
                 onCustomerSelect(customerId)
                 if (import.meta.env.DEV) {
-                  console.log(`[NaverMap] 마커 클릭: ${group[0].customer.personal_info?.name}`)
+                  console.log(`[NaverMap] 마커 클릭: ${group[0]?.customer?.personal_info?.name}`)
                 }
               }
             }
@@ -413,7 +415,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           if (isGrouped) {
             console.log(`[NaverMap] 그룹 마커 생성 완료: ${group.length}명 (${result.latitude}, ${result.longitude})`)
           } else {
-            console.log(`[NaverMap] 마커 생성 완료: ${group[0].customer.personal_info?.name} (${result.latitude}, ${result.longitude})`)
+            console.log(`[NaverMap] 마커 생성 완료: ${group[0]?.customer?.personal_info?.name} (${result.latitude}, ${result.longitude})`)
           }
         }
       }
@@ -438,12 +440,12 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     const processedMarkers = new Set<any>()
 
     // 각 그룹별로 마커 업데이트
-    for (const [address1, group] of addressGroups.current.entries()) {
+    for (const [, group] of addressGroups.current.entries()) {
       const isGrouped = group.length > 1
       const hasSelectedCustomer = group.some(item => item.customer._id === selectedCustomerId)
 
       // 그룹의 첫 번째 고객 마커 가져오기 (모든 고객이 같은 마커 공유)
-      const firstCustomerId = group[0].customer._id
+      const firstCustomerId = group[0]?.customer?._id
       if (!firstCustomerId) continue
 
       const marker = markers.current.get(firstCustomerId)
@@ -504,7 +506,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
       } else {
         // 단일 고객 마커
-        const customer = group[0].customer
+        const customer = group[0]?.customer
+        if (!customer) continue
         const isSelected = customer._id === selectedCustomerId
 
         markerContent = `<div style="
