@@ -2,6 +2,7 @@ import { useState, ReactNode, useMemo, memo, useEffect } from 'react'
 import { useNavigation } from '../../hooks/useNavigation'
 import { getAllNavigableKeys } from '../../utils/navigationUtils'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+import Tooltip from '../../shared/ui/Tooltip'
 import './CustomMenu.css'
 import './CustomMenuTooltip.css'
 
@@ -155,7 +156,7 @@ const CustomMenuItem = ({
     isSelected ? 'selected' : ''
   } ${hasChildren ? 'has-children' : ''}`
 
-  const content = (
+  const menuContent = (
     <div
       className={className}
       onClick={handleMainMenuClick}
@@ -169,7 +170,6 @@ const CustomMenuItem = ({
       aria-haspopup={hasChildren ? 'menu' : undefined}
       aria-current={isSelected ? 'page' : undefined}
       tabIndex={-1}
-      title={collapsed ? item.tooltipTitle : ''}
     >
       {item.icon}
       {!collapsed && <span className="custom-menu-item-text">{item.label}</span>}
@@ -179,6 +179,14 @@ const CustomMenuItem = ({
         </div>
       )}
     </div>
+  )
+
+  const content = collapsed ? (
+    <Tooltip content={item.tooltipTitle}>
+      {menuContent}
+    </Tooltip>
+  ) : (
+    menuContent
   )
 
   return (

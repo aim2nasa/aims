@@ -9,6 +9,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
+import Tooltip from '../../shared/ui/Tooltip'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import './PDFViewer.css'
@@ -203,14 +204,15 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
         {/* Left - Reset Button */}
         <div className="controls-left">
           {isModified && (
-            <button
-              className="control-button control-button--ghost"
-              onClick={resetView}
-              aria-label="원래 크기로 되돌리기"
-              title="100% 크기로 중앙 정렬"
-            >
-              <span aria-hidden="true">⟲</span>
-            </button>
+            <Tooltip content="원래 크기로 리셋">
+              <button
+                className="control-button control-button--ghost"
+                onClick={resetView}
+                aria-label="원래 크기로 되돌리기"
+              >
+                <span aria-hidden="true">⟲</span>
+              </button>
+            </Tooltip>
           )}
         </div>
 
@@ -218,58 +220,67 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
         <div className="controls-center">
           {/* Page Navigation */}
           <div className="controls-section">
-            <button
-              className="control-button"
-              disabled={pageNumber <= 1}
-              onClick={previousPage}
-              aria-label="이전 페이지"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
+            <Tooltip content="이전 페이지">
+              <button
+                className="control-button"
+                disabled={pageNumber <= 1}
+                onClick={previousPage}
+                aria-label="이전 페이지"
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
+            </Tooltip>
             <span className="page-info">
               {pageNumber} / {numPages || '--'}
             </span>
-            <button
-              className="control-button"
-              disabled={pageNumber >= (numPages || 0)}
-              onClick={nextPage}
-              aria-label="다음 페이지"
-            >
-              <span aria-hidden="true">›</span>
-            </button>
+            <Tooltip content="다음 페이지">
+              <button
+                className="control-button"
+                disabled={pageNumber >= (numPages || 0)}
+                onClick={nextPage}
+                aria-label="다음 페이지"
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+            </Tooltip>
           </div>
 
           {/* Zoom Controls */}
           <div className="controls-section">
-            <button
-              className="control-button"
-              onClick={zoomOut}
-              aria-label="축소"
-            >
-              <span aria-hidden="true">−</span>
-            </button>
+            <Tooltip content="축소">
+              <button
+                className="control-button"
+                onClick={zoomOut}
+                aria-label="축소"
+              >
+                <span aria-hidden="true">−</span>
+              </button>
+            </Tooltip>
             <span className="zoom-info">{Math.round(scale * 100)}%</span>
-            <button
-              className="control-button"
-              onClick={zoomIn}
-              aria-label="확대"
-            >
-              <span aria-hidden="true">+</span>
-            </button>
+            <Tooltip content="확대">
+              <button
+                className="control-button"
+                onClick={zoomIn}
+                aria-label="확대"
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+            </Tooltip>
           </div>
         </div>
 
         {/* Right - Download Button */}
         <div className="controls-right">
           {onDownload && (
-            <button
-              className="control-button control-button--primary"
-              onClick={onDownload}
-              aria-label="다운로드"
-              title="다운로드"
-            >
-              <span aria-hidden="true">↓</span>
-            </button>
+            <Tooltip content="다운로드">
+              <button
+                className="control-button control-button--primary"
+                onClick={onDownload}
+                aria-label="다운로드"
+              >
+                <span aria-hidden="true">↓</span>
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

@@ -14,6 +14,7 @@ import HeaderTooltip from './HeaderTooltip'
 import useHeaderTooltip from './useHeaderTooltip'
 import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
+import Tooltip from '../../shared/ui/Tooltip'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -121,22 +122,24 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
       {/* 제어 요소들 - Progressive Disclosure */}
       <div className="header-controls">
         {/* 레이아웃 제어 버튼 */}
-        <button
-          onClick={handleLayoutControlClick}
-          className="header-control-button haptic-enabled micro-button micro-haptic-medium"
-          aria-label="레이아웃 제어"
-          title="레이아웃 제어"
-          style={{
-            opacity: state.showControls ? 1 : 0,
-            transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
-          }}
-        >
-          <SFSymbol
-            name="gear"
-            size={SFSymbolSize.CALLOUT}
-            weight={SFSymbolWeight.MEDIUM}
-          />
-        </button>
+        <Tooltip content="레이아웃 제어">
+          <button
+            onClick={handleLayoutControlClick}
+            className="header-control-button haptic-enabled micro-button micro-haptic-medium"
+            aria-label="레이아웃 제어"
+            style={{
+              opacity: state.showControls ? 1 : 0,
+              transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+            }}
+          >
+            <SFSymbol
+              name="gear"
+              size={SFSymbolSize.CALLOUT}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+          </button>
+        </Tooltip>
 
         {/* 테마 토글 */}
         <div

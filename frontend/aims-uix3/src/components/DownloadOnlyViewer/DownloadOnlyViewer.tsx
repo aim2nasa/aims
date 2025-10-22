@@ -8,6 +8,7 @@
  */
 
 import React from 'react'
+import Tooltip from '../../shared/ui/Tooltip'
 import './DownloadOnlyViewer.css'
 
 interface DownloadOnlyViewerProps {
@@ -49,16 +50,17 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
           </p>
 
           {/* 파일명 - 클릭 가능 */}
-          <button
-            className="file-name-badge file-name-badge--clickable"
-            onClick={onDownload}
-            aria-label={`${fileName} 다운로드`}
-            title="클릭하여 다운로드"
-          >
-            <span className="file-name-text">
-              {fileName}
-            </span>
-          </button>
+          <Tooltip content="클릭하여 다운로드">
+            <button
+              className="file-name-badge file-name-badge--clickable"
+              onClick={onDownload}
+              aria-label={`${fileName} 다운로드`}
+            >
+              <span className="file-name-text">
+                {fileName}
+              </span>
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -71,14 +73,15 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
         <div className="controls-spacer" />
 
         {/* 오른쪽 - 다운로드 버튼 */}
-        <button
-          className="control-button control-button--primary"
-          onClick={onDownload}
-          aria-label={`${fileName} 다운로드`}
-          title="다운로드"
-        >
-          <span aria-hidden="true">↓</span>
-        </button>
+        <Tooltip content="다운로드">
+          <button
+            className="control-button control-button--primary"
+            onClick={onDownload}
+            aria-label={`${fileName} 다운로드`}
+          >
+            <span aria-hidden="true">↓</span>
+          </button>
+        </Tooltip>
       </div>
     </div>
   )

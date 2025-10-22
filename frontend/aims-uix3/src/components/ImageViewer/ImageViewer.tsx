@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
+import Tooltip from '../../shared/ui/Tooltip'
 import './ImageViewer.css'
 
 interface ImageViewerProps {
@@ -180,53 +181,57 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, onDownload }) =>
         {/* 왼쪽 - 리셋 버튼 */}
         <div className="controls-left">
           {isModified && (
-            <button
-              className="control-button control-button--ghost"
-              onClick={resetView}
-              aria-label="원래 크기로 되돌리기"
-              title="100% 크기로 중앙 정렬"
-            >
-              <span aria-hidden="true">⟲</span>
-            </button>
+            <Tooltip content="원래 크기로 리셋">
+              <button
+                className="control-button control-button--ghost"
+                onClick={resetView}
+                aria-label="원래 크기로 되돌리기"
+              >
+                <span aria-hidden="true">⟲</span>
+              </button>
+            </Tooltip>
           )}
         </div>
 
         {/* 중앙 - 확대/축소 컨트롤 */}
         <div className="zoom-controls">
-          <button
-            className="control-button control-button--ghost"
-            onClick={zoomOut}
-            disabled={scale <= 0.2}
-            aria-label="이미지 축소"
-            title="이미지를 축소합니다"
-          >
-            <span aria-hidden="true">−</span>
-          </button>
+          <Tooltip content="축소">
+            <button
+              className="control-button control-button--ghost"
+              onClick={zoomOut}
+              disabled={scale <= 0.2}
+              aria-label="이미지 축소"
+            >
+              <span aria-hidden="true">−</span>
+            </button>
+          </Tooltip>
           <span className="zoom-text" aria-live="polite">
             {Math.round(scale * 100)}%
           </span>
-          <button
-            className="control-button control-button--ghost"
-            onClick={zoomIn}
-            disabled={scale >= 3.0}
-            aria-label="이미지 확대"
-            title="이미지를 확대합니다"
-          >
-            <span aria-hidden="true">+</span>
-          </button>
+          <Tooltip content="확대">
+            <button
+              className="control-button control-button--ghost"
+              onClick={zoomIn}
+              disabled={scale >= 3.0}
+              aria-label="이미지 확대"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+          </Tooltip>
         </div>
 
         {/* 오른쪽 - 다운로드 버튼 */}
         <div className="controls-right">
           {onDownload && (
-            <button
-              className="control-button control-button--primary"
-              onClick={onDownload}
-              aria-label="이미지 다운로드"
-              title="다운로드"
-            >
-              <span aria-hidden="true">↓</span>
-            </button>
+            <Tooltip content="다운로드">
+              <button
+                className="control-button control-button--primary"
+                onClick={onDownload}
+                aria-label="이미지 다운로드"
+              >
+                <span aria-hidden="true">↓</span>
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>
