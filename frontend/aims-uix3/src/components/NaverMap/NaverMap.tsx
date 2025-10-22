@@ -175,6 +175,33 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           }
         })
 
+        // 마우스 hover 시 고객 이름 툴팁 표시
+        const infoWindow = new window.naver.maps.InfoWindow({
+          content: `<div style="
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          ">${customer.personal_info?.name || '고객'}</div>`,
+          borderWidth: 0,
+          backgroundColor: 'transparent',
+          disableAnchor: true,
+          pixelOffset: new window.naver.maps.Point(0, -15)
+        })
+
+        // 마우스 hover 이벤트
+        window.naver.maps.Event.addListener(marker, 'mouseover', () => {
+          infoWindow.open(mapInstance.current, marker)
+        })
+
+        window.naver.maps.Event.addListener(marker, 'mouseout', () => {
+          infoWindow.close()
+        })
+
         markers.current.set(customer._id, marker)
 
         if (import.meta.env.DEV) {
