@@ -178,6 +178,70 @@ html[data-theme="dark"] .tree-action-btn:active {
   flex: 0 0 240px;
   overflow-y: auto;
   padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🍎 트리 상단 액션 버튼 영역 - Apple 스타일 sticky header */
+.tree-header-actions {
+  position: sticky;
+  top: -1px; /* 경계선이 스크롤 시 자연스럽게 사라지도록 */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px 12px;
+  margin: -8px -8px 8px -8px; /* 컨테이너 padding 상쇄 */
+  background: linear-gradient(
+    to bottom,
+    var(--color-ios-bg-secondary-light) 0%,
+    var(--color-ios-bg-secondary-light) 85%,
+    rgba(0, 0, 0, 0.02) 100%
+  ); /* 서브틀한 그라데이션으로 깊이감 */
+  backdrop-filter: blur(8px); /* macOS 블러 효과 */
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08); /* 얇고 부드러운 경계선 */
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 스크롤 시 경계선 강조 */
+.regional-tree-container:not(:hover) .tree-header-actions {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+.tree-header-actions::before {
+  content: "지역별 트리";
+  font-size: 11px; /* macOS 사이드바 스타일 - 작고 가벼운 폰트 */
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em; /* 약간의 자간으로 가독성 향상 */
+  text-transform: uppercase; /* macOS 사이드바 헤더 스타일 */
+  color: var(--color-neutral-500); /* 서브틀한 회색 */
+  opacity: 0.75; /* 부드러운 존재감 */
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+/* 호버 시 제목이 살짝 강조됨 */
+.tree-header-actions:hover::before {
+  opacity: 0.9;
+}
+
+/* 다크모드 */
+html[data-theme="dark"] .tree-header-actions {
+  background: linear-gradient(
+    to bottom,
+    var(--color-ios-bg-secondary-dark) 0%,
+    var(--color-ios-bg-secondary-dark) 85%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .regional-tree-container:not(:hover) .tree-header-actions {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"] .tree-header-actions::before {
+  color: var(--color-neutral-400);
 }
 
 /* ==========================================

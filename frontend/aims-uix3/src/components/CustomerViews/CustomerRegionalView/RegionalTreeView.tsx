@@ -450,7 +450,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <span className="stat-value">{stats.districtsCount}</span>
         </div>
 
-        {/* 모두 펼치기/접기 토글 버튼 & 새로고침 버튼 */}
+        {/* 새로고침 버튼 */}
         <div className="tree-actions">
           <RefreshButton
             onClick={onRefresh ?? (() => {})}
@@ -458,15 +458,6 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
             tooltip="지역별 고객 새로고침"
             size="small"
           />
-          <button
-            type="button"
-            className="tree-action-btn tree-action-btn--icon-only"
-            onClick={toggleExpandAll}
-            title={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
-            aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
-          >
-            {isAllExpanded ? '▲' : '▼'}
-          </button>
         </div>
       </div>
 
@@ -474,6 +465,18 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       <div className="regional-tree-content">
         {/* 트리 */}
         <div className="regional-tree-container">
+          {/* 모든 폴더 펼치기/접기 버튼 */}
+          <div className="tree-header-actions">
+            <button
+              type="button"
+              className="tree-action-btn tree-action-btn--icon-only"
+              onClick={toggleExpandAll}
+              title={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
+              aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
+            >
+              {isAllExpanded ? '▲' : '▼'}
+            </button>
+          </div>
           {treeData.map(node => renderTreeNode(node))}
         </div>
 
