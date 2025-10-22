@@ -698,7 +698,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             />
           </div>
           <div className="naver-map-progress-text">
-            마커 로딩 중... {loadingProgress.current} / {loadingProgress.total}
+            마커 로딩 중... {Math.round((loadingProgress.current / loadingProgress.total) * 100)}% ({loadingProgress.current}/{loadingProgress.total})
           </div>
         </div>
       )}
