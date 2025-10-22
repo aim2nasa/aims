@@ -95,7 +95,6 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
       className={buttonClasses}
       onClick={handleClick}
       disabled={isDisabled || isLoading}
-      title={tooltip}
       aria-label={tooltip}
     >
       <SFSymbol

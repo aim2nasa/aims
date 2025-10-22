@@ -9,6 +9,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import { geocodeAddress } from '@/shared/api/geocode'
+import Tooltip from '@/shared/ui/Tooltip'
 import './NaverMap.css'
 
 declare global {
@@ -704,19 +705,20 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
       {/* 초기 위치로 복귀 버튼 */}
       {isMapReady && (
-        <button
-          className="naver-map-reset-button"
-          onClick={handleReset}
-          title="지도 리셋"
-          aria-label="지도 리셋"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-            <path d="M3 21v-5h5" />
-          </svg>
-        </button>
+        <Tooltip content="지도 리셋">
+          <button
+            className="naver-map-reset-button"
+            onClick={handleReset}
+            aria-label="지도 리셋"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M3 21v-5h5" />
+            </svg>
+          </button>
+        </Tooltip>
       )}
     </div>
   )

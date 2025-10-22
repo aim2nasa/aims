@@ -18,6 +18,7 @@ import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import RefreshButton from '../../RefreshButton/RefreshButton'
 import { usePersistedState } from '@/hooks/usePersistedState'
+import Tooltip from '@/shared/ui/Tooltip'
 import './RegionalTreeView.css'
 import NaverMap from '../../NaverMap/NaverMap'
 
@@ -452,12 +453,15 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
 
         {/* 새로고침 버튼 */}
         <div className="tree-actions">
-          <RefreshButton
-            onClick={onRefresh ?? (() => {})}
-            loading={loading}
-            tooltip="새로고침"
-            size="small"
-          />
+          <Tooltip content="새로고침">
+            <div style={{ display: 'inline-block' }}>
+              <RefreshButton
+                onClick={onRefresh ?? (() => {})}
+                loading={loading}
+                size="small"
+              />
+            </div>
+          </Tooltip>
         </div>
       </div>
 
@@ -467,15 +471,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         <div className="regional-tree-container">
           {/* 모든 폴더 펼치기/접기 버튼 */}
           <div className="tree-header-actions">
-            <button
-              type="button"
-              className="tree-action-btn tree-action-btn--icon-only"
-              onClick={toggleExpandAll}
-              title={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
-              aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
-            >
-              {isAllExpanded ? '▲' : '▼'}
-            </button>
+            <Tooltip content={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}>
+              <button
+                type="button"
+                className="tree-action-btn tree-action-btn--icon-only"
+                onClick={toggleExpandAll}
+                aria-label={isAllExpanded ? "모든 폴더 접기" : "모든 폴더 펼치기"}
+              >
+                {isAllExpanded ? '▲' : '▼'}
+              </button>
+            </Tooltip>
           </div>
           {treeData.map(node => renderTreeNode(node))}
         </div>
