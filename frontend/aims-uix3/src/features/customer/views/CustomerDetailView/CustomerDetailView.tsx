@@ -301,13 +301,23 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         key: 'annual_report',
         label: 'Annual Report',
         icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              '--icon-bg': 'var(--color-success-overlay-bg)',
+              '--icon-color': 'var(--color-success-overlay-icon)'
+            } as React.CSSProperties}
+          >
             {/* Document background */}
-            <rect x="2" y="1" width="12" height="14" rx="1.5" fill="#34C759" opacity="0.15"/>
+            <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--icon-bg)"/>
             {/* Chart bars */}
-            <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="#34C759"/>
-            <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="#34C759"/>
-            <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="#34C759"/>
+            <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--icon-color)"/>
+            <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--icon-color)"/>
+            <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--icon-color)"/>
           </svg>
         )
       },
