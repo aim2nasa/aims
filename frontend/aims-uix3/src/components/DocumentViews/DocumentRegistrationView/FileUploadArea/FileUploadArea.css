@@ -14,9 +14,9 @@
 .file-upload-area__actions {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px; /* 간격 축소 */
   justify-content: center;
-  height: 44px; /* 고정 높이 - 처리로그 위치 고정을 위해 */
+  height: 36px; /* 고정 높이 축소 */
   align-items: center;
 }
 
@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px; /* 패딩 축소 */
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -85,7 +85,7 @@ html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) 
 
 /* 🍎 CLEAN DROPZONE: Simple drag area */
 .file-upload-area__dropzone {
-  height: 60px; /* 고정 높이 - 처리로그 위치 고정을 위해 */
+  height: 52px; /* 고정 높이 축소 */
   background: rgba(0, 0, 0, 0.01);
   border: 1px dashed rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -95,7 +95,7 @@ html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) 
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 12px;
+  padding: 10px; /* 패딩 축소 */
 
   transition: all 0.15s ease;
 }
@@ -127,7 +127,7 @@ html[data-theme="dark"] .file-upload-area__dropzone {
 }
 
 .file-upload-area__hint-text {
-  font-size: 12px;
+  font-size: 11px; /* 폰트 크기 축소 */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: rgba(0, 0, 0, 0.5);

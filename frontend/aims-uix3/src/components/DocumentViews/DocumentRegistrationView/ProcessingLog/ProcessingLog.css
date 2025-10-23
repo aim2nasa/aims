@@ -12,7 +12,7 @@
   border: 1px solid var(--color-section-border);
   border-radius: 8px;
   overflow: hidden;
-  margin-top: 16px;
+  height: 100%; /* 부모 높이 100% 사용 */
 }
 
 /* Header - Collapsible */

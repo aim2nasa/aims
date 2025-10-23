@@ -10,7 +10,7 @@
 .document-registration-content {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* 8의 배수 그리드 */
+  gap: 16px; /* 간격 축소 */
   height: 100%;
   overflow: hidden; /* 전체 페이지 스크롤 방지 */
 }
@@ -18,10 +18,10 @@
 /* FileUploadArea 고정 높이 */
 .document-registration-content .file-upload-area {
   flex-shrink: 0; /* 크기 고정 */
-  height: 120px; /* 버튼 + 드롭존 고정 높이 */
+  height: 100px; /* 버튼 + 드롭존 고정 높이 축소 */
 }
 
-/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 */
+/* 파일 목록 & 처리 로그 컨테이너 - 5:5 비율 고정 */
 .file-log-container {
   display: flex;
   flex-direction: column;
@@ -30,15 +30,15 @@
   gap: 16px;
 }
 
-/* 파일 목록 영역 - 60% */
+/* 파일 목록 영역 - 50% */
 .file-log-container > .file-list-section {
-  flex: 6;
+  flex: 5;
   min-height: 0; /* flex 자식이 overflow 되도록 */
 }
 
-/* 처리 로그 영역 - 40% */
+/* 처리 로그 영역 - 50% */
 .processing-log-area {
-  flex: 4;
+  flex: 5;
   min-height: 0; /* flex 자식이 overflow 되도록 */
   overflow: hidden; /* ProcessingLog 내부에서 스크롤 처리 */
   display: flex;
