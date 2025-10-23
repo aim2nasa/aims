@@ -50,22 +50,34 @@ export const useDocumentsController = () => {
       }
       setError(null);
 
-      // DocumentStatusService를 사용하여 처리 상태 정보도 함께 가져오기
-      const data = await DocumentStatusService.getRecentDocuments(1000);
-      const realDocuments = data.files || data.data?.documents || data.documents || [];
+      // DocumentService를 사용하여 모든 문서 가져오기 (문서 라이브러리용)
+      // limit을 지정하지 않아 모든 문서를 가져옴
+      const queryParams = { ...params };
+      delete queryParams.limit; // 모든 문서를 가져오기 위해 limit 제거
 
-      // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
-      // NOTE: API 응답 타입(types/documentStatus)과 도메인 모델(entities/document)의 불일치로 any 사용
-      // API 응답은 모든 필드가 optional이지만, 도메인 모델은 일부 필드가 required
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const documentsWithCustomerRelation = await Promise.all(
-        realDocuments.map(async (doc: any) => {
+      // 검색어를 params에 추가 (백엔드가 처리)
+      if (searchQuery.trim()) {
+        queryParams.q = searchQuery.trim();
+      }
+
+      const data = await DocumentService.getDocuments(queryParams);
+      const realDocuments = data.documents || [];
+
+      // 각 문서의 상세 처리 상태 정보를 가져오기 위해 개별 문서 조회
+      const documentsWithStatus = await Promise.all(
+        realDocuments.map(async (doc: Document) => {
           try {
-            const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc.id || '');
+            const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id);
+
+            // 처리 상태 정보를 문서 최상위 레벨에 평평하게 추가
+            // extractStatus()가 document.overallStatus를 찾도록 함
             return {
               ...doc,
-              customer_relation: detailedDoc.data?.raw?.customer_relation
-            };
+              customer_relation: detailedDoc.data?.raw?.customer_relation,
+              stages: detailedDoc.data?.stages,
+              computed: detailedDoc.data?.computed,
+              overallStatus: detailedDoc.data?.computed?.overallStatus,
+            } as any;
           } catch (error) {
             console.error(`Failed to fetch detailed info for document ${doc._id}:`, error);
             return doc;
@@ -73,81 +85,10 @@ export const useDocumentsController = () => {
         })
       );
 
-      // 검색 필터링
-      let filteredDocs = documentsWithCustomerRelation;
-      if (searchQuery.trim()) {
-        const searchTermLower = searchQuery.toLowerCase();
-        // NOTE: API 응답 타입 사용으로 any 필요 (상단 documentsWithCustomerRelation과 동일한 이유)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        filteredDocs = documentsWithCustomerRelation.filter((doc: any) => {
-          const filename = DocumentStatusService.extractFilename(doc).toLowerCase();
-          return filename.includes(searchTermLower);
-        });
-      }
-
-      // 정렬 적용
-      const sortBy = params.sortBy || 'uploadDate';
-      const sortOrder = params.sortOrder || 'desc';
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      filteredDocs.sort((a: any, b: any) => {
-        let aValue: any;
-        let bValue: any;
-
-        switch (sortBy) {
-          case 'filename':
-            aValue = DocumentStatusService.extractFilename(a).toLowerCase();
-            bValue = DocumentStatusService.extractFilename(b).toLowerCase();
-            break;
-          case 'uploadDate':
-            // DocumentStatusService의 extractUploadedDate 사용 (여러 필드에서 날짜 추출)
-            const aDate = DocumentStatusService.extractUploadedDate(a);
-            const bDate = DocumentStatusService.extractUploadedDate(b);
-            aValue = aDate ? new Date(aDate).getTime() : 0;
-            bValue = bDate ? new Date(bDate).getTime() : 0;
-            break;
-          case 'size':
-            aValue = DocumentStatusService.extractFileSize(a);
-            bValue = DocumentStatusService.extractFileSize(b);
-            break;
-          case 'fileType':
-            // 파일 확장자로 정렬 (MIME 타입보다 일관성 있음)
-            const aFilename = DocumentStatusService.extractFilename(a).toLowerCase();
-            const bFilename = DocumentStatusService.extractFilename(b).toLowerCase();
-            const aExt = aFilename.substring(aFilename.lastIndexOf('.') + 1);
-            const bExt = bFilename.substring(bFilename.lastIndexOf('.') + 1);
-
-            // 확장자로 먼저 정렬
-            if (aExt !== bExt) {
-              aValue = aExt;
-              bValue = bExt;
-            } else {
-              // 같은 확장자면 파일명으로 2차 정렬
-              aValue = aFilename;
-              bValue = bFilename;
-            }
-            break;
-          default:
-            // 기본값도 extractUploadedDate 사용
-            const aDateDefault = DocumentStatusService.extractUploadedDate(a);
-            const bDateDefault = DocumentStatusService.extractUploadedDate(b);
-            aValue = aDateDefault ? new Date(aDateDefault).getTime() : 0;
-            bValue = bDateDefault ? new Date(bDateDefault).getTime() : 0;
-        }
-
-        if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-        return 0;
-      });
-
-      // 페이지네이션 적용
-      const limit = params.limit || 10;
-      const offset = params.offset || 0;
-      const paginatedDocs = filteredDocs.slice(offset, offset + limit);
-
-      setDocuments([...paginatedDocs]);
-      setTotal(filteredDocs.length);
-      setHasMore(offset + limit < filteredDocs.length);
+      // 백엔드에서 이미 검색/정렬/페이지네이션 처리된 데이터 사용
+      setDocuments(documentsWithStatus);
+      setTotal(data.total || 0);
+      setHasMore(data.hasMore || false);
       setIsInitialLoad(false); // 초기 로딩 완료
     } catch (err) {
       setError(handleApiError(err));

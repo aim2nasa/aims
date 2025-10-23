@@ -24,7 +24,6 @@ vi.mock('@/services/DocumentService', () => ({
 
 vi.mock('@/services/DocumentStatusService', () => ({
   DocumentStatusService: {
-    getRecentDocuments: vi.fn(),
     getDocumentStatus: vi.fn(),
     extractFilename: vi.fn((doc) => doc.filename || doc.upload?.originalName || 'unknown.pdf'),
     extractUploadedDate: vi.fn((doc) => doc.upload?.uploaded_at || doc.upload?.timestamp || doc.uploadDate || null),
@@ -88,13 +87,48 @@ describe('useDocumentsController', () => {
     // persistent state 초기화 (usePersistedState는 localStorage 사용)
     localStorage.clear()
 
-    // 기본 모킹 설정
-    vi.mocked(DocumentStatusService.getRecentDocuments).mockResolvedValue({
-      files: [mockDocument1, mockDocument2, mockDocument3],
+    // 기본 모킹 설정 - DocumentService.getDocuments
+    vi.mocked(DocumentService.getDocuments).mockResolvedValue({
+      documents: [mockDocument1, mockDocument2, mockDocument3] as any,
+      total: 3,
+      hasMore: false,
+      offset: 0,
+      limit: 10,
     })
 
+    // DocumentStatusService.getDocumentStatus 모킹
     vi.mocked(DocumentStatusService.getDocumentStatus).mockImplementation(async (id) => {
-      const doc = [mockDocument1, mockDocument2, mockDocument3].find(d => d._id === id)!
+      const doc = [mockDocument1, mockDocument2, mockDocument3].find(d => d._id === id)
+      if (!doc) {
+        // 모든 문서에 대해 기본 응답 생성
+        return {
+          success: true,
+          data: {
+            raw: {
+              _id: id,
+              upload: null,
+              meta: null,
+              ocr: null,
+              text: null,
+              docembed: null,
+              customer_relation: null,
+            },
+            computed: {
+              uiStages: {},
+              currentStage: 5,
+              overallStatus: 'completed' as const,
+              progress: 100,
+              displayMessages: {},
+              processingPath: 'meta_fulltext' as const,
+            },
+            _id: id,
+            originalName: 'unknown.pdf',
+            uploadedAt: null,
+            fileSize: 0,
+            rawDocument: null,
+          },
+        } as any
+      }
       return {
         success: true,
         data: {
@@ -123,7 +157,7 @@ describe('useDocumentsController', () => {
           // 하위 호환성
           rawDocument: doc,
         },
-      }
+      } as any
     })
   })
 
@@ -157,7 +191,7 @@ describe('useDocumentsController', () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
-        expect(DocumentStatusService.getRecentDocuments).toHaveBeenCalled()
+        expect(DocumentService.getDocuments).toHaveBeenCalled()
         expect(result.current.documents.length).toBeGreaterThan(0)
       })
     })
@@ -191,7 +225,7 @@ describe('useDocumentsController', () => {
     })
 
     it('에러 발생 시 에러 메시지를 설정해야 함', async () => {
-      vi.mocked(DocumentStatusService.getRecentDocuments).mockRejectedValueOnce(
+      vi.mocked(DocumentService.getDocuments).mockRejectedValueOnce(
         new Error('Network error')
       )
 
@@ -443,12 +477,16 @@ describe('useDocumentsController', () => {
         expect(result.current.hasMore).toBe(false)
       })
 
+      // 초기 로드 호출 횟수 저장
+      const initialCallCount = vi.mocked(DocumentService.getDocuments).mock.calls.length
+
       await act(async () => {
         await result.current.loadMoreDocuments()
       })
 
+      // loadMoreDocuments()가 추가로 호출하지 않았는지 확인
+      expect(vi.mocked(DocumentService.getDocuments).mock.calls.length).toBe(initialCallCount)
       expect(DocumentService.searchDocuments).not.toHaveBeenCalled()
-      expect(DocumentService.getDocuments).not.toHaveBeenCalled()
     })
   })
 
@@ -456,7 +494,7 @@ describe('useDocumentsController', () => {
 
   describe('clearError', () => {
     it('에러를 해제해야 함', async () => {
-      vi.mocked(DocumentStatusService.getRecentDocuments).mockRejectedValueOnce(
+      vi.mocked(DocumentService.getDocuments).mockRejectedValueOnce(
         new Error('Network error')
       )
 
@@ -478,8 +516,12 @@ describe('useDocumentsController', () => {
 
   describe('계산된 값', () => {
     it('isEmpty는 문서가 없고 로딩 중이 아닐 때 true여야 함', async () => {
-      vi.mocked(DocumentStatusService.getRecentDocuments).mockResolvedValueOnce({
-        files: [],
+      vi.mocked(DocumentService.getDocuments).mockResolvedValueOnce({
+        documents: [],
+        total: 0,
+        hasMore: false,
+        offset: 0,
+        limit: 10,
       })
 
       const { result } = renderHook(() => useDocumentsController())
@@ -561,15 +603,19 @@ describe('useDocumentsController', () => {
         uploadDate: `2025-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z`,
       }))
 
-      vi.mocked(DocumentStatusService.getRecentDocuments).mockResolvedValueOnce({
-        files: manyDocuments,
+      vi.mocked(DocumentService.getDocuments).mockResolvedValueOnce({
+        documents: manyDocuments as any,
+        total: 20,
+        hasMore: true, // 백엔드에서 hasMore를 직접 반환
+        offset: 0,
+        limit: 10,
       })
 
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
         expect(result.current.isInitialLoad).toBe(false)
-        // limit = 10, total = 20이므로 hasMore = true
+        // 백엔드에서 반환한 hasMore = true
         expect(result.current.hasMore).toBe(true)
       })
     })
