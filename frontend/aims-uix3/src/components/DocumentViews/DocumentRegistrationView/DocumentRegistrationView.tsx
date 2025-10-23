@@ -853,14 +853,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           />
         )}
 
-        {/* 처리 로그 */}
-        <ProcessingLog
-          logs={processingLogs}
-          maxHeight={300}
-          onClear={() => setProcessingLogs([])}
-        />
-
-        {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification */}
+        {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification - 파일 목록 바로 아래 */}
         {showSuccessMessage && stats.completed > 0 && (
           <div className="upload-success">
             <div className="upload-success__content">
@@ -894,7 +887,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </div>
         )}
 
-        {/* 🍎 Annual Report 자동 등록 로그 메시지 */}
+        {/* 🍎 Annual Report 자동 등록 로그 메시지 - 파일 목록 바로 아래 */}
         {autoRegistrationLog && (
           <div className="upload-success">
             <div className="upload-success__content">
@@ -920,6 +913,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             </div>
           </div>
         )}
+
+        {/* 처리 로그 */}
+        <ProcessingLog
+          logs={processingLogs}
+          maxHeight={300}
+          onClear={() => setProcessingLogs([])}
+        />
 
         {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
 
