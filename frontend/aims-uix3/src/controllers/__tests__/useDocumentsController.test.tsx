@@ -27,6 +27,8 @@ vi.mock('@/services/DocumentStatusService', () => ({
     getRecentDocuments: vi.fn(),
     getDocumentStatus: vi.fn(),
     extractFilename: vi.fn((doc) => doc.filename || doc.upload?.originalName || 'unknown.pdf'),
+    extractUploadedDate: vi.fn((doc) => doc.upload?.uploaded_at || doc.upload?.timestamp || doc.uploadDate || null),
+    extractFileSize: vi.fn((doc) => doc.upload?.size || 0),
   },
 }))
 
@@ -40,6 +42,8 @@ describe('useDocumentsController', () => {
     upload: {
       originalName: 'document1.pdf',
       size: 1024000,
+      uploaded_at: '2025-01-01T00:00:00.000Z',
+      timestamp: '2025-01-01T00:00:00.000Z',
     },
     uploadDate: '2025-01-01T00:00:00.000Z',
     customer_relation: {
@@ -55,6 +59,8 @@ describe('useDocumentsController', () => {
     upload: {
       originalName: 'document2.pdf',
       size: 2048000,
+      uploaded_at: '2025-01-02T00:00:00.000Z',
+      timestamp: '2025-01-02T00:00:00.000Z',
     },
     uploadDate: '2025-01-02T00:00:00.000Z',
     customer_relation: {
@@ -70,6 +76,8 @@ describe('useDocumentsController', () => {
     upload: {
       originalName: 'report.pdf',
       size: 512000,
+      uploaded_at: '2025-01-03T00:00:00.000Z',
+      timestamp: '2025-01-03T00:00:00.000Z',
     },
     uploadDate: '2025-01-03T00:00:00.000Z',
     // customer_relation 없음
