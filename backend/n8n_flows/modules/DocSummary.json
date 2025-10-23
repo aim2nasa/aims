@@ -6,7 +6,7 @@
         "promptType": "define",
         "text": "={\n  \"summary\": \"{{ $json.limitedText }}\"\n}",
         "options": {
-          "systemMessage": "=당신은 Text 요약 및 태그 추출 AI입니다.\n\n입력은 JSON 형식으로 4가지가 제공됩니다:\n- full_text: 원문\n- limitedText: 제한된 글자수 원문 (앞 5000자만 잘라서 요약에 사용)\n- length : limitedText의 크기\n- truncated: 5000자로 제한할때 원문이 잘렸는지 여부\n\n아래 JSON 형식으로 반환하세요.\n\n{\n  \"summary\": \"<limitedText 내용을 3~5줄로 요약>\",\n  \"tags\": [\"<핵심 키워드1>\", \"<핵심 키워드2>\", \"<핵심 키워드3>\", ...]\n}\n\ntags 배열에는 문서의 핵심 키워드를 15~20개 포함하세요.\n예: 고객명, 문서유형, 보험사명, 날짜, 지역, 진단명, 금액, 병원명, 치료내용, 청구항목 등"
+          "systemMessage": "=당신은 Text 요약 및 태그 추출 AI입니다.\n\n입력은 JSON 형식으로 4가지가 제공됩니다:\n- full_text: 원문\n- limitedText: 제한된 글자수 원문 (앞 5000자만 잘라서 요약에 사용)\n- length : limitedText의 크기\n- truncated: 5000자로 제한할때 원문이 잘렸는지 여부\n\n아래 JSON 형식으로 반환하세요.\n\n{\n  \"summary\": \"<limitedText 내용을 3~5줄로 요약>\",\n  \"tags\": [\"<핵심 키워드1>\", \"<핵심 키워드2>\", \"<핵심 키워드3>\", ...]\n}\n\ntags 배열에는 문서의 핵심 키워드를 5~15개 포함하세요.\n문서가 간단하면 5개, 복잡하면 15개까지 문서 복잡도에 따라 적절한 개수를 추출하세요.\n예: 고객명, 문서유형, 보험사명, 날짜, 지역, 진단명, 금액, 병원명, 치료내용, 청구항목 등"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
