@@ -121,6 +121,13 @@ describe('useDocumentsController', () => {
               displayMessages: {},
               processingPath: 'meta_fulltext' as const,
             },
+            stages: {
+              upload: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' },
+              meta: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' },
+              ocr: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' },
+              text: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' },
+              docembed: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' },
+            },
             _id: id,
             originalName: 'unknown.pdf',
             uploadedAt: null,
@@ -132,7 +139,7 @@ describe('useDocumentsController', () => {
       return {
         success: true,
         data: {
-          // ✅ NEW: raw + computed 구조
+          // ✅ NEW: raw + computed + stages 구조
           raw: {
             _id: doc._id,
             upload: doc.upload || null,
@@ -149,6 +156,13 @@ describe('useDocumentsController', () => {
             progress: 100,
             displayMessages: {},
             processingPath: 'meta_fulltext' as const,
+          },
+          stages: {
+            upload: { status: 'completed', timestamp: doc.uploadDate },
+            meta: { status: 'completed', timestamp: doc.uploadDate },
+            ocr: { status: 'completed', timestamp: doc.uploadDate },
+            text: { status: 'completed', timestamp: doc.uploadDate },
+            docembed: { status: 'completed', timestamp: doc.uploadDate },
           },
           _id: doc._id,
           originalName: doc.filename,
@@ -654,6 +668,359 @@ describe('useDocumentsController', () => {
 
       expect(result.current.searchParams.sortBy).toBe('filename')
       expect(result.current.currentPage).toBe(1) // 정렬 변경 시 1페이지로 초기화
+    })
+  })
+
+  // ===== 15. 처리 상태 복원 기능 테스트 (Processing Status Restoration) =====
+
+  describe('처리 상태 복원 기능', () => {
+    it('각 문서에 대해 DocumentStatusService.getDocumentStatus()를 호출해야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 3개 문서에 대해 각각 getDocumentStatus 호출 확인
+      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledTimes(3)
+      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc1')
+      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc2')
+      expect(DocumentStatusService.getDocumentStatus).toHaveBeenCalledWith('doc3')
+    })
+
+    it('overallStatus 필드가 문서 최상위 레벨에 추가되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 모든 문서에 overallStatus 필드가 있는지 확인
+      result.current.documents.forEach((doc: any) => {
+        expect(doc.overallStatus).toBe('completed')
+      })
+    })
+
+    it('stages와 computed 필드가 보존되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 모든 문서에 stages와 computed 필드가 있는지 확인
+      result.current.documents.forEach((doc: any) => {
+        expect(doc.stages).toBeDefined()
+        expect(doc.computed).toBeDefined()
+        expect(doc.computed.overallStatus).toBe('completed')
+        expect(doc.computed.progress).toBe(100)
+      })
+    })
+
+    it('customer_relation 필드가 보존되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // doc1과 doc2는 customer_relation이 있어야 함
+      const doc1 = result.current.documents.find((d: any) => d._id === 'doc1')
+      const doc2 = result.current.documents.find((d: any) => d._id === 'doc2')
+      const doc3 = result.current.documents.find((d: any) => d._id === 'doc3')
+
+      expect(doc1?.customer_relation).toBeDefined()
+      expect(doc1?.customer_relation?.customer_id).toBe('cust1')
+      expect(doc2?.customer_relation).toBeDefined()
+      expect(doc2?.customer_relation?.customer_id).toBe('cust2')
+      expect(doc3?.customer_relation).toBeUndefined()
+    })
+
+    it('getDocumentStatus() 실패 시 원본 문서를 유지해야 함', async () => {
+      // 첫 번째 문서에서만 에러 발생
+      vi.mocked(DocumentStatusService.getDocumentStatus).mockImplementation(async (id) => {
+        if (id === 'doc1') {
+          throw new Error('Network error')
+        }
+        // doc2, doc3는 정상 응답
+        const doc = [mockDocument2, mockDocument3].find(d => d._id === id)
+        if (!doc) {
+          return {
+            success: true,
+            data: {
+              raw: { _id: id, upload: null, meta: null, ocr: null, text: null, docembed: null, customer_relation: null },
+              computed: { uiStages: {}, currentStage: 5, overallStatus: 'completed' as const, progress: 100, displayMessages: {}, processingPath: 'meta_fulltext' as const },
+              stages: { upload: { status: 'completed', timestamp: '2025-01-01T00:00:00.000Z' } },
+              _id: id, originalName: 'unknown.pdf', uploadedAt: null, fileSize: 0, rawDocument: null,
+            },
+          } as any
+        }
+        return {
+          success: true,
+          data: {
+            raw: { _id: doc._id, upload: doc.upload || null, meta: null, ocr: null, text: null, docembed: null, customer_relation: (doc as any).customer_relation },
+            computed: { uiStages: {}, currentStage: 5, overallStatus: 'completed' as const, progress: 100, displayMessages: {}, processingPath: 'meta_fulltext' as const },
+            stages: { upload: { status: 'completed', timestamp: doc.uploadDate } },
+            _id: doc._id, originalName: doc.filename, uploadedAt: doc.uploadDate, fileSize: doc.upload?.size, rawDocument: doc,
+          },
+        } as any
+      })
+
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // doc1은 에러가 발생했지만 원본 데이터는 유지되어야 함
+      const doc1 = result.current.documents.find((d: any) => d._id === 'doc1')
+      expect(doc1).toBeDefined()
+      expect(doc1?._id).toBe('doc1')
+      expect(doc1?.filename).toBe('document1.pdf')
+
+      // doc2, doc3는 정상적으로 처리되어야 함
+      const doc2 = result.current.documents.find((d: any) => d._id === 'doc2')
+      const doc3 = result.current.documents.find((d: any) => d._id === 'doc3')
+      expect((doc2 as any)?.overallStatus).toBe('completed')
+      expect((doc3 as any)?.overallStatus).toBe('completed')
+    })
+  })
+
+  // ===== 16. 문서 정렬 백엔드 연동 테스트 (Backend Sorting Integration) =====
+
+  describe('문서 정렬 백엔드 연동', () => {
+    it('정렬 파라미터가 DocumentService.getDocuments()에 올바르게 전달되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 초기 호출 모킹 확인
+      const initialCalls = vi.mocked(DocumentService.getDocuments).mock.calls
+      expect(initialCalls.length).toBeGreaterThan(0)
+
+      // 정렬 변경
+      await act(async () => {
+        result.current.handleSortChange('filename', 'asc')
+      })
+
+      // 정렬 파라미터가 전달되었는지 확인
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'filename',
+        sortOrder: 'asc',
+      })
+    })
+
+    it('파일명순 정렬 파라미터를 올바르게 전달해야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      await act(async () => {
+        result.current.handleSortChange('filename', 'desc')
+      })
+
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'filename',
+        sortOrder: 'desc',
+      })
+    })
+
+    it('업로드일순 정렬 파라미터를 올바르게 전달해야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      await act(async () => {
+        result.current.handleSortChange('uploadDate', 'desc')
+      })
+
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'uploadDate',
+        sortOrder: 'desc',
+      })
+    })
+
+    it('파일 크기순 정렬 파라미터를 올바르게 전달해야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      await act(async () => {
+        result.current.handleSortChange('size', 'asc')
+      })
+
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'size',
+        sortOrder: 'asc',
+      })
+    })
+
+    it('파일 형식순 정렬 파라미터를 올바르게 전달해야 함 (확장자 기반)', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      await act(async () => {
+        result.current.handleSortChange('fileType', 'asc')
+      })
+
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'fileType',
+        sortOrder: 'asc',
+      })
+    })
+
+    it('정렬 변경 시 페이지를 1로 초기화하고 정렬 파라미터를 전달해야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 먼저 2페이지로 이동
+      await act(async () => {
+        result.current.handlePageChange(2)
+      })
+      expect(result.current.currentPage).toBe(2)
+
+      // 정렬 변경
+      await act(async () => {
+        result.current.handleSortChange('size', 'desc')
+      })
+
+      // 페이지가 1로 초기화되었는지 확인
+      expect(result.current.currentPage).toBe(1)
+      expect(result.current.searchParams.offset).toBe(0)
+
+      // 정렬 파라미터가 전달되었는지 확인
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall![0]).toMatchObject({
+        sortBy: 'size',
+        sortOrder: 'desc',
+        offset: 0,
+      })
+    })
+
+    it('검색어와 정렬 파라미터가 함께 전달되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 검색어 입력
+      act(() => {
+        result.current.handleSearchChange('document1')
+      })
+
+      // 정렬 변경
+      await act(async () => {
+        result.current.handleSortChange('filename', 'asc')
+      })
+
+      // 디바운스 대기
+      await waitFor(() => {
+        const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+          vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+        ]
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toMatchObject({
+          q: 'document1',
+          sortBy: 'filename',
+          sortOrder: 'asc',
+        })
+      }, { timeout: 1000 })
+    })
+  })
+
+  // ===== 17. limit 파라미터 제거 테스트 (Document Library - All Documents) =====
+
+  describe('문서 라이브러리 - 모든 문서 가져오기', () => {
+    it('loadDocuments() 호출 시 limit 파라미터가 제거되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 초기 호출에서 limit이 제거되었는지 확인
+      const initialCall = vi.mocked(DocumentService.getDocuments).mock.calls[0]
+      expect(initialCall).toBeDefined()
+      expect(initialCall?.[0]?.limit).toBeUndefined()
+    })
+
+    it('검색 시에도 limit 파라미터가 제거되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      // 검색어 입력
+      act(() => {
+        result.current.handleSearchChange('document')
+      })
+
+      // 디바운스 대기
+      await waitFor(() => {
+        const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+          vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+        ]
+        expect(lastCall).toBeDefined()
+        expect(lastCall?.[0]?.limit).toBeUndefined()
+        expect(lastCall?.[0]?.q).toBe('document')
+      }, { timeout: 1000 })
+    })
+
+    it('정렬 변경 시에도 limit 파라미터가 제거되어야 함', async () => {
+      const { result } = renderHook(() => useDocumentsController())
+
+      await waitFor(() => {
+        expect(result.current.isInitialLoad).toBe(false)
+      })
+
+      await act(async () => {
+        result.current.handleSortChange('filename', 'asc')
+      })
+
+      const lastCall = vi.mocked(DocumentService.getDocuments).mock.calls[
+        vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
+      ]
+      expect(lastCall).toBeDefined()
+      expect(lastCall?.[0]?.limit).toBeUndefined()
     })
   })
 })
