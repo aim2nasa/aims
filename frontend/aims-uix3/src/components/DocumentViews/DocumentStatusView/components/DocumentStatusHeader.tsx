@@ -56,6 +56,12 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   fetchLimit,
   onFetchLimitChange
 }) => {
+  // 🍎 설정 패널 토글 상태
+  const [isSettingsOpen, setSettingsOpen] = React.useState(false)
+
+  const handleToggleSettings = useCallback(() => {
+    setSettingsOpen((prev) => !prev)
+  }, [])
 
   /**
    * 마지막 업데이트 시간 포맷팅
@@ -98,65 +104,86 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
 
   return (
     <div className="document-status-header">
-      {/* 왼쪽: 필터 드롭다운 + 가져오기 개수 드롭다운 + 결과 카운트 */}
-      <div className="header-left">
-        <div className="filter-group">
-          <span className="filter-label">상태 필터:</span>
-          <Dropdown
-            value={statusFilter}
-            options={FILTER_OPTIONS}
-            onChange={handleFilterChange}
-            aria-label="상태 필터"
-            width={100}
-          />
+      {/* 메인 행 */}
+      <div className="header-main-row">
+        {/* 왼쪽: 필터 드롭다운 + 결과 카운트 */}
+        <div className="header-left">
+          <div className="filter-group">
+            <span className="filter-label">상태 필터:</span>
+            <Dropdown
+              value={statusFilter}
+              options={FILTER_OPTIONS}
+              onChange={handleFilterChange}
+              aria-label="상태 필터"
+              width={100}
+            />
+          </div>
+          <div className="filter-group">
+            <span className="filter-label">결과:</span>
+            <span className="result-count">
+              {statusFilter === 'all' ? documentsCount : filteredCount}개
+            </span>
+          </div>
         </div>
-        <div className="filter-group">
-          <span className="filter-label">최대 표시:</span>
-          <Dropdown
-            value={String(fetchLimit)}
-            options={FETCH_LIMIT_OPTIONS}
-            onChange={handleFetchLimitChange}
-            aria-label="가져올 문서 개수"
-            width={100}
+
+        {/* 중앙: 여백 */}
+        <div className="header-spacer" />
+
+        {/* 오른쪽: Last Updated + 설정 버튼 + 폴링 토글 + 새로고침 */}
+        <div className="header-right">
+          {lastUpdated && (
+            <span className="last-updated">
+              최근 업데이트: {lastUpdatedLabel}
+            </span>
+          )}
+
+          <Tooltip content="설정">
+            <button
+              className={"settings-toggle " + (isSettingsOpen ? 'settings-active' : '')}
+              onClick={handleToggleSettings}
+              aria-label="설정"
+              aria-expanded={isSettingsOpen}
+            >
+              ⚙
+            </button>
+          </Tooltip>
+
+          <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+            <button
+              className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}
+              onClick={onTogglePolling}
+              aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+            >
+              <span className={"polling-dot " + (isPollingEnabled ? 'dot-active' : 'dot-inactive')}>●</span>
+            </button>
+          </Tooltip>
+
+          <RefreshButton
+            onClick={async () => {
+              await onRefresh();
+            }}
+            loading={isLoading}
+            tooltip="문서 현황 새로고침"
+            size="small"
           />
-        </div>
-        <div className="filter-group">
-          <span className="filter-label">결과:</span>
-          <span className="result-count">
-            {statusFilter === 'all' ? documentsCount : filteredCount}개
-          </span>
         </div>
       </div>
 
-      {/* 중앙: 여백 */}
-      <div className="header-spacer" />
-
-      {/* 오른쪽: Last Updated + 폴링 토글 + 새로고침 */}
-      <div className="header-right">
-        {lastUpdated && (
-          <span className="last-updated">
-            최근 업데이트: {lastUpdatedLabel}
-          </span>
-        )}
-        <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
-          <button
-            className={"polling-toggle " + (isPollingEnabled ? 'polling-active' : 'polling-inactive')}
-            onClick={onTogglePolling}
-            aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-          >
-            <span className={"polling-dot " + (isPollingEnabled ? 'dot-active' : 'dot-inactive')}>●</span>
-          </button>
-        </Tooltip>
-
-        <RefreshButton
-          onClick={async () => {
-            await onRefresh();
-          }}
-          loading={isLoading}
-          tooltip="문서 현황 새로고침"
-          size="small"
-        />
-      </div>
+      {/* 🍎 설정 패널: 최대 표시 드롭다운 */}
+      {isSettingsOpen && (
+        <div className="settings-panel">
+          <div className="filter-group">
+            <span className="filter-label">최대 표시:</span>
+            <Dropdown
+              value={String(fetchLimit)}
+              options={FETCH_LIMIT_OPTIONS}
+              onChange={handleFetchLimitChange}
+              aria-label="가져올 문서 개수"
+              width={100}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

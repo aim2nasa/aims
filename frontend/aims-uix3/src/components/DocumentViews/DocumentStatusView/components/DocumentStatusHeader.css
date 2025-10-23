@@ -5,8 +5,8 @@
 
 .document-status-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0;
   padding: 8px 12px;
   margin-bottom: 4px;
   background-color: var(--color-ios-bg-secondary-light);
@@ -15,6 +15,13 @@
 
 html[data-theme="dark"] .document-status-header {
   background-color: var(--color-ios-bg-secondary-dark);
+}
+
+/* === HEADER MAIN ROW === */
+.header-main-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* === LEFT: 필터 + 카운트 === */
@@ -77,6 +84,75 @@ html[data-theme="dark"] .result-count {
 
 html[data-theme="dark"] .last-updated {
   color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === SETTINGS TOGGLE BUTTON === */
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-ios-text-secondary-light);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  font-size: 14px;
+}
+
+html[data-theme="dark"] .settings-toggle {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.settings-toggle:hover {
+  background-color: var(--color-ios-bg-hover-light);
+  color: var(--color-primary);
+  transform: rotate(45deg);
+}
+
+html[data-theme="dark"] .settings-toggle:hover {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.settings-toggle.settings-active {
+  background-color: var(--color-ios-bg-tertiary-light);
+  color: var(--color-primary);
+  transform: rotate(90deg);
+}
+
+html[data-theme="dark"] .settings-toggle.settings-active {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+/* === SETTINGS PANEL === */
+.settings-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background-color: var(--color-ios-bg-primary-light);
+  border-radius: 6px;
+  border: 1px solid var(--color-ios-separator-light);
+  animation: settingsPanelSlideDown 0.2s ease-out;
+}
+
+html[data-theme="dark"] .settings-panel {
+  background-color: var(--color-ios-bg-primary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+@keyframes settingsPanelSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .polling-toggle {
