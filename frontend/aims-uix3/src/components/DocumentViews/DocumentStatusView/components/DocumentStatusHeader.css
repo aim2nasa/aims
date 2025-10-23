@@ -107,23 +107,23 @@ html[data-theme="dark"] .settings-toggle {
 }
 
 .settings-toggle:hover {
-  background-color: var(--color-ios-bg-hover-light);
+  background-color: transparent;
   color: var(--color-primary);
-  transform: rotate(45deg);
+  transform: scale(1.1) rotate(45deg);
 }
 
 html[data-theme="dark"] .settings-toggle:hover {
-  background-color: var(--color-ios-bg-hover-dark);
+  background-color: transparent;
 }
 
 .settings-toggle.settings-active {
-  background-color: var(--color-ios-bg-tertiary-light);
+  background-color: transparent;
   color: var(--color-primary);
-  transform: rotate(90deg);
+  transform: scale(1.1) rotate(90deg);
 }
 
 html[data-theme="dark"] .settings-toggle.settings-active {
-  background-color: var(--color-ios-bg-tertiary-dark);
+  background-color: transparent;
 }
 
 /* === SETTINGS PANEL === */
