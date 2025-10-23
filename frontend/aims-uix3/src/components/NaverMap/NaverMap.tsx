@@ -18,6 +18,10 @@ declare global {
   }
 }
 
+// 컴포넌트 외부에 캐시 저장 (unmount되어도 유지)
+const globalGeocodeCache = new Map<string, { latitude: number; longitude: number }>()
+const globalCustomerDataCache = new Map<string, string>() // customerId -> address1
+
 interface NaverMapProps {
   /** 표시할 고객 목록 */
   customers?: Customer[]
@@ -57,9 +61,6 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   const mapInstance = useRef<any>(null)
   const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
   const [isMapReady, setIsMapReady] = useState(false)
-
-  // Geocoding 캐시: 주소 → 좌표 매핑 (메모리에 저장하여 재사용)
-  const geocodeCache = useRef<Map<string, { latitude: number; longitude: number }>>(new Map())
 
   // 마커 로딩 진행률 상태
   const [loadingProgress, setLoadingProgress] = useState<{ current: number; total: number } | null>(null)
@@ -139,6 +140,36 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
+    // 고객 목록이 실제로 변경되었는지 확인 (최적화)
+    // ID와 주소를 함께 비교하여 주소 변경, 고객 추가/삭제 모두 감지
+    const currentCustomerData = new Map<string, string>()
+    customers.forEach(c => {
+      if (c._id) {
+        currentCustomerData.set(c._id, c.personal_info?.address?.address1 || '')
+      }
+    })
+
+    let hasChanged = currentCustomerData.size !== globalCustomerDataCache.size
+
+    if (!hasChanged) {
+      // 크기가 같으면 각 고객의 주소가 변경되었는지 확인
+      for (const [id, address] of currentCustomerData.entries()) {
+        if (globalCustomerDataCache.get(id) !== address) {
+          hasChanged = true
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] 주소 변경 감지: ${id} (${globalCustomerDataCache.get(id)} → ${address})`)
+          }
+          break
+        }
+      }
+    }
+
+    // 고객 목록 캐시 업데이트
+    globalCustomerDataCache.clear()
+    currentCustomerData.forEach((address, id) => {
+      globalCustomerDataCache.set(id, address)
+    })
+
     // 기존 마커 제거
     markers.current.forEach(marker => marker.setMap(null))
     markers.current.clear()
@@ -161,8 +192,14 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         console.log(`[NaverMap] 마커 생성 시작: ${totalCount}명의 고객`)
       }
 
-      // 진행률 초기화
-      setLoadingProgress({ current: 0, total: totalCount })
+      // 진행률 초기화 (캐싱 사용 시에는 표시하지 않음)
+      if (hasChanged) {
+        setLoadingProgress({ current: 0, total: totalCount })
+      } else {
+        if (import.meta.env.DEV) {
+          console.log('[NaverMap] ⚡ 캐싱된 Geocoding 데이터 사용 - 로딩 메시지 없이 빠른 마커 생성')
+        }
+      }
 
       // 지도의 현재 경계 가져오기
       const bounds = mapInstance.current.getBounds()
@@ -174,17 +211,21 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         const address = customer.personal_info?.address?.address1
         if (!address || !customer._id) {
           completedCount++
-          setLoadingProgress({ current: completedCount, total: totalCount })
+          if (hasChanged) {
+            setLoadingProgress({ current: completedCount, total: totalCount })
+          }
           return null
         }
 
         // 캐시에서 먼저 확인
-        let result = geocodeCache.current.get(address)
+        let result = globalGeocodeCache.get(address)
 
         if (result) {
           // 캐시 히트 - 즉시 반환
           completedCount++
-          setLoadingProgress({ current: completedCount, total: totalCount })
+          if (hasChanged) {
+            setLoadingProgress({ current: completedCount, total: totalCount })
+          }
           return { customer, result }
         }
 
@@ -197,7 +238,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
         // 진행률 업데이트
         completedCount++
-        setLoadingProgress({ current: completedCount, total: totalCount })
+        if (hasChanged) {
+          setLoadingProgress({ current: completedCount, total: totalCount })
+        }
 
         if (!apiResult) {
           if (import.meta.env.DEV) {
@@ -207,7 +250,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
 
         // 성공하면 캐시에 저장
-        geocodeCache.current.set(address, apiResult)
+        globalGeocodeCache.set(address, apiResult)
         return { customer, result: apiResult }
       })
 
@@ -585,7 +628,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       if (!address) return
 
       // 캐시에서 먼저 확인
-      let result = geocodeCache.current.get(address)
+      let result = globalGeocodeCache.get(address)
 
       if (!result) {
         // 캐시에 없으면 API 호출
@@ -593,7 +636,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         if (!apiResult) return
 
         // 성공하면 캐시에 저장
-        geocodeCache.current.set(address, apiResult)
+        globalGeocodeCache.set(address, apiResult)
         result = apiResult
       }
 
