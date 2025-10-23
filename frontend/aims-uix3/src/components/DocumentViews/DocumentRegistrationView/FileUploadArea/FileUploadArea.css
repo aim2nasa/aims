@@ -14,8 +14,10 @@
 .file-upload-area__actions {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   justify-content: center;
+  height: 44px; /* 고정 높이 - 처리로그 위치 고정을 위해 */
+  align-items: center;
 }
 
 .file-upload-area__button {
@@ -83,7 +85,7 @@ html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) 
 
 /* 🍎 CLEAN DROPZONE: Simple drag area */
 .file-upload-area__dropzone {
-  min-height: 80px;
+  height: 60px; /* 고정 높이 - 처리로그 위치 고정을 위해 */
   background: rgba(0, 0, 0, 0.01);
   border: 1px dashed rgba(0, 0, 0, 0.1);
   border-radius: 8px;
@@ -93,7 +95,7 @@ html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) 
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 24px;
+  padding: 12px;
 
   transition: all 0.15s ease;
 }

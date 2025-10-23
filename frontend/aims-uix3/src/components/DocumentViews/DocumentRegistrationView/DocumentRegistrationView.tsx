@@ -843,83 +843,90 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           />
         )}
 
-        {/* 파일 목록 */}
-        {uploadState.files.length > 0 && (
-          <FileList
-            files={uploadState.files}
-            onRetryFile={handleRetryFile}
-            onClearAll={handleClearAll}
-            readonly={false}
-          />
-        )}
-
-        {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification - 파일 목록 바로 아래 */}
-        {showSuccessMessage && stats.completed > 0 && (
-          <div className="upload-success">
-            <div className="upload-success__content">
-              <SFSymbol
-                name="checkmark"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                className="upload-success__icon"
+        {/* 파일 목록 & 처리 로그 컨테이너 - 7:3 비율 고정 */}
+        <div className="file-log-container">
+          {/* 파일 목록 영역 - 70% */}
+          <div className="file-list-area">
+            {uploadState.files.length > 0 && (
+              <FileList
+                files={uploadState.files}
+                onRetryFile={handleRetryFile}
+                onClearAll={handleClearAll}
+                readonly={false}
               />
-              <span className="upload-success__text">
-                {stats.errors > 0
-                  ? `${stats.completed} uploaded, ${stats.errors} errors`
-                  : `${stats.completed} files uploaded`
-                }
-              </span>
-              {!uploadState.uploading && (
-                <button
-                  type="button"
-                  onClick={handleClearAll}
-                  className="upload-success__button"
-                  aria-label="Clear completed uploads"
-                >
+            )}
+
+            {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification - 파일 목록 바로 아래 */}
+            {showSuccessMessage && stats.completed > 0 && (
+              <div className="upload-success">
+                <div className="upload-success__content">
                   <SFSymbol
-                    name="xmark"
+                    name="checkmark"
                     size={SFSymbolSize.CAPTION_1}
                     weight={SFSymbolWeight.MEDIUM}
+                    className="upload-success__icon"
                   />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+                  <span className="upload-success__text">
+                    {stats.errors > 0
+                      ? `${stats.completed} uploaded, ${stats.errors} errors`
+                      : `${stats.completed} files uploaded`
+                    }
+                  </span>
+                  {!uploadState.uploading && (
+                    <button
+                      type="button"
+                      onClick={handleClearAll}
+                      className="upload-success__button"
+                      aria-label="Clear completed uploads"
+                    >
+                      <SFSymbol
+                        name="xmark"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                      />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* 🍎 Annual Report 자동 등록 로그 메시지 - 파일 목록 바로 아래 */}
-        {autoRegistrationLog && (
-          <div className="upload-success">
-            <div className="upload-success__content">
-              <SFSymbol
-                name="checkmark.circle.fill"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                className="upload-success__icon"
-              />
-              <span className="upload-success__text">{autoRegistrationLog}</span>
-              <button
-                type="button"
-                onClick={() => setAutoRegistrationLog(null)}
-                className="upload-success__button"
-                aria-label="Close notification"
-              >
-                <SFSymbol
-                  name="xmark"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                />
-              </button>
-            </div>
+            {/* 🍎 Annual Report 자동 등록 로그 메시지 - 파일 목록 바로 아래 */}
+            {autoRegistrationLog && (
+              <div className="upload-success">
+                <div className="upload-success__content">
+                  <SFSymbol
+                    name="checkmark.circle.fill"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    className="upload-success__icon"
+                  />
+                  <span className="upload-success__text">{autoRegistrationLog}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAutoRegistrationLog(null)}
+                    className="upload-success__button"
+                    aria-label="Close notification"
+                  >
+                    <SFSymbol
+                      name="xmark"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {/* 처리 로그 */}
-        <ProcessingLog
-          logs={processingLogs}
-          maxHeight={300}
-          onClear={() => setProcessingLogs([])}
-        />
+          {/* 처리 로그 영역 - 30% */}
+          <div className="processing-log-area">
+            <ProcessingLog
+              logs={processingLogs}
+              maxHeight={9999}
+              onClear={() => setProcessingLogs([])}
+            />
+          </div>
+        </div>
 
         {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
 

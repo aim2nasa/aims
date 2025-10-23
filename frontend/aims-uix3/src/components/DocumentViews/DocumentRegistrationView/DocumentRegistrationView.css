@@ -6,21 +6,91 @@
  * 업로드 완료 메시지 및 레이아웃
  */
 
-/* 메인 콘텐츠 영역 */
+/* 메인 콘텐츠 영역 - 전체 페이지 스크롤 방지 */
 .document-registration-content {
   display: flex;
   flex-direction: column;
   gap: 24px; /* 8의 배수 그리드 */
-  min-height: 400px;
+  height: 100%;
+  overflow: hidden; /* 전체 페이지 스크롤 방지 */
 }
 
-/* Header with Refresh Button */
+/* Header with Refresh Button - 고정 높이 */
 .document-registration-header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding: 0;
   margin: -8px 0 0 0;
+  height: 32px; /* 고정 높이 */
+  flex-shrink: 0; /* 크기 고정 */
+}
+
+/* FileUploadArea 고정 높이 */
+.document-registration-content .file-upload-area {
+  flex-shrink: 0; /* 크기 고정 */
+  height: 120px; /* 버튼 + 드롭존 고정 높이 */
+}
+
+/* ProgressIndicator 고정 높이 */
+.document-registration-content .progress-indicator {
+  flex-shrink: 0; /* 크기 고정 */
+  height: 60px; /* 진행률 표시 고정 높이 */
+}
+
+/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 */
+.file-log-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 남은 공간을 모두 차지 */
+  min-height: 0; /* flex 자식이 overflow 되도록 */
+  gap: 16px;
+}
+
+/* 파일 목록 영역 - 60% */
+.file-list-area {
+  flex: 6;
+  min-height: 0; /* flex 자식이 overflow 되도록 */
+  overflow-y: auto; /* 파일 목록만 스크롤 */
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 처리 로그 영역 - 40% */
+.processing-log-area {
+  flex: 4;
+  min-height: 0; /* flex 자식이 overflow 되도록 */
+  overflow: hidden; /* ProcessingLog 내부에서 스크롤 처리 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* macOS-style scrollbar for file list area */
+.file-list-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.file-list-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.file-list-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.file-list-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .file-list-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+html[data-theme="dark"] .file-list-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* 🍎 SUCCESS MESSAGE: Ultra-minimal notification */
