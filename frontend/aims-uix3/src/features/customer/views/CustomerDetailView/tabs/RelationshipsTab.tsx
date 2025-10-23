@@ -21,6 +21,7 @@ import SFSymbol, {
 } from '../../../../../components/SFSymbol';
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
+import Tooltip from '@/shared/ui/Tooltip';
 import './RelationshipsTab.css';
 
 
@@ -228,19 +229,20 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                       </td>
                       <td>{row.createdAt}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="relationships-action relationships-action--danger"
-                          onClick={() => handleDelete(row.key)}
-                          aria-label="정말로 이 관계를 삭제하시겠습니까?"
-                          title="정말로 이 관계를 삭제하시겠습니까?"
-                        >
-                          <SFSymbol
-                            name="trash"
-                            size={SFSymbolSize.TITLE_3}
-                            weight={SFSymbolWeight.SEMIBOLD}
-                          />
-                        </button>
+                        <Tooltip content="관계 삭제">
+                          <button
+                            type="button"
+                            className="relationships-action relationships-action--danger"
+                            onClick={() => handleDelete(row.key)}
+                            aria-label="관계 삭제"
+                          >
+                            <SFSymbol
+                              name="trash"
+                              size={SFSymbolSize.TITLE_3}
+                              weight={SFSymbolWeight.SEMIBOLD}
+                            />
+                          </button>
+                        </Tooltip>
                       </td>
                     </tr>
                   );

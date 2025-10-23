@@ -201,13 +201,8 @@
   background-color: transparent;
   color: var(--color-icon-red);
   cursor: pointer;
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out),
-    color var(--duration-micro-quick) var(--easing-ease-out),
+  transition: color var(--duration-micro-quick) var(--easing-ease-out),
     transform var(--duration-micro-quick) var(--easing-ease-out);
-}
-
-[data-theme="dark"] .relationships-action {
-  background-color: transparent;
 }
 
 .relationships-action--danger {
@@ -215,12 +210,7 @@
 }
 
 .relationships-action--danger:hover {
-  background-color: rgba(255, 59, 48, 0.18);
   transform: scale(1.05);
-}
-
-[data-theme="dark"] .relationships-action--danger:hover {
-  background-color: rgba(255, 59, 48, 0.25);
 }
 
 .relationships-action:focus-visible {
