@@ -239,7 +239,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
           <div className="annual-report-tab__empty-icon">📄</div>
           <h3 className="annual-report-tab__empty-title">Annual Report가 없습니다</h3>
           <p className="annual-report-tab__empty-description">
-            Annual Report PDF를 업로드하면 자동으로 파싱되어 여기에 표시됩니다.
+            Annual Report를 업로드하면 자동 분석하여 여기에 표시됩니다.
           </p>
           <div className="annual-report-tab__empty-hint">
             <p className="annual-report-tab__empty-hint-text">

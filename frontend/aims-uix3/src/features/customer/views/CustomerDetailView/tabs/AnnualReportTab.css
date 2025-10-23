@@ -101,9 +101,10 @@
 .annual-report-tab__empty-description {
   font-size: 14px;
   color: var(--color-text-secondary);
-  max-width: 400px;
+  max-width: 600px;
   margin: 0 0 20px 0;
   line-height: 1.5;
+  white-space: nowrap;
 }
 
 .annual-report-tab__empty-hint {
