@@ -274,7 +274,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 법인 고객 여부 확인
   const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
 
-  // 🍎 탭 정의 (순서: 기본정보, 관계(개인만), 문서, 상담이력, 계약)
+  // 🍎 탭 정의 (순서: 기본정보, 관계(개인만), 문서, Annual Report, 상담이력)
   const tabs: Tab[] = useMemo(() => {
     const baseTabs: Tab[] = [
       {
@@ -298,6 +298,15 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         count: documentCount
       },
       {
+        key: 'annual_report',
+        label: 'Annual Report',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm2 0v12h8V2H4zm1 2h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z"/>
+          </svg>
+        )
+      },
+      {
         key: 'consultations',
         label: '상담 이력',
         icon: (
@@ -306,15 +315,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           </svg>
         ),
         count: 0
-      },
-      {
-        key: 'annual_report',
-        label: 'Annual Report',
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm2 0v12h8V2H4zm1 2h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z"/>
-          </svg>
-        )
       }
     ]
 
