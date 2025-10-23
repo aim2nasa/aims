@@ -51,8 +51,8 @@ const SORT_OPTIONS: DropdownOption[] = [
   { value: 'uploadDate_asc', label: '오래된순' },
   { value: 'filename_asc', label: '이름순 (가나다)' },
   { value: 'filename_desc', label: '이름순 (하파타)' },
-  { value: 'size_desc', label: '크기순 (큰 것부터)' },
-  { value: 'size_asc', label: '크기순 (작은 것부터)' },
+  { value: 'size_asc', label: '크기순 (큰 것부터)' },
+  { value: 'size_desc', label: '크기순 (작은 것부터)' },
   { value: 'fileType_asc', label: '파일 형식순' },
 ]
 
