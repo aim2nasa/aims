@@ -111,8 +111,21 @@ export const useDocumentsController = () => {
             bValue = DocumentStatusService.extractFileSize(b);
             break;
           case 'fileType':
-            aValue = (a.meta?.mime || '').toLowerCase();
-            bValue = (b.meta?.mime || '').toLowerCase();
+            // 파일 확장자로 정렬 (MIME 타입보다 일관성 있음)
+            const aFilename = DocumentStatusService.extractFilename(a).toLowerCase();
+            const bFilename = DocumentStatusService.extractFilename(b).toLowerCase();
+            const aExt = aFilename.substring(aFilename.lastIndexOf('.') + 1);
+            const bExt = bFilename.substring(bFilename.lastIndexOf('.') + 1);
+
+            // 확장자로 먼저 정렬
+            if (aExt !== bExt) {
+              aValue = aExt;
+              bValue = bExt;
+            } else {
+              // 같은 확장자면 파일명으로 2차 정렬
+              aValue = aFilename;
+              bValue = bFilename;
+            }
             break;
           default:
             // 기본값도 extractUploadedDate 사용
