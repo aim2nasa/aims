@@ -301,8 +301,13 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         key: 'annual_report',
         label: 'Annual Report',
         icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm2 0v12h8V2H4zm1 2h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z"/>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Document background */}
+            <rect x="2" y="1" width="12" height="14" rx="1.5" fill="#34C759" opacity="0.15"/>
+            {/* Chart bars */}
+            <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="#34C759"/>
+            <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="#34C759"/>
+            <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="#34C759"/>
           </svg>
         )
       },
