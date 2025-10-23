@@ -372,21 +372,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }
 
-  // View가 열려있는 동안 주기적으로 데이터 새로고침 (3초마다)
-  // Silent refresh: 초기 로딩 후에는 백그라운드에서 조용히 업데이트
-  React.useEffect(() => {
-    if (!visible) return
-
-    // 즉시 로드 (초기 로딩)
-    loadDocuments(searchParams, false)
-
-    // 3초마다 자동 새로고침 (silent mode)
-    const intervalId = setInterval(() => {
-      loadDocuments(searchParams, true) // silent=true로 깜빡임 방지
-    }, 3000)
-
-    return () => clearInterval(intervalId)
-  }, [visible, loadDocuments, searchParams])
+  // 🍎 View 초기 로딩은 controller에서 처리하므로 여기서는 아무것도 하지 않음
+  // NOTE: useDocumentsController의 useEffect가 초기 로딩을 담당
+  // View에서 추가 로딩을 하면 정렬이 덮어씌워지는 문제 발생
 
   return (
     <CenterPaneView

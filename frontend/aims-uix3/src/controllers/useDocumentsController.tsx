@@ -85,12 +85,54 @@ export const useDocumentsController = () => {
         });
       }
 
+      // 정렬 적용
+      const sortBy = params.sortBy || 'uploadDate';
+      const sortOrder = params.sortOrder || 'desc';
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      filteredDocs.sort((a: any, b: any) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortBy) {
+          case 'filename':
+            aValue = DocumentStatusService.extractFilename(a).toLowerCase();
+            bValue = DocumentStatusService.extractFilename(b).toLowerCase();
+            break;
+          case 'uploadDate':
+            // DocumentStatusService의 extractUploadedDate 사용 (여러 필드에서 날짜 추출)
+            const aDate = DocumentStatusService.extractUploadedDate(a);
+            const bDate = DocumentStatusService.extractUploadedDate(b);
+            aValue = aDate ? new Date(aDate).getTime() : 0;
+            bValue = bDate ? new Date(bDate).getTime() : 0;
+            break;
+          case 'size':
+            aValue = DocumentStatusService.extractFileSize(a);
+            bValue = DocumentStatusService.extractFileSize(b);
+            break;
+          case 'fileType':
+            aValue = (a.meta?.mime || '').toLowerCase();
+            bValue = (b.meta?.mime || '').toLowerCase();
+            break;
+          default:
+            // 기본값도 extractUploadedDate 사용
+            const aDateDefault = DocumentStatusService.extractUploadedDate(a);
+            const bDateDefault = DocumentStatusService.extractUploadedDate(b);
+            aValue = aDateDefault ? new Date(aDateDefault).getTime() : 0;
+            bValue = bDateDefault ? new Date(bDateDefault).getTime() : 0;
+        }
+
+        if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+
       // 페이지네이션 적용
       const limit = params.limit || 10;
       const offset = params.offset || 0;
       const paginatedDocs = filteredDocs.slice(offset, offset + limit);
 
-      setDocuments(paginatedDocs);
+      setDocuments([...paginatedDocs]);
       setTotal(filteredDocs.length);
       setHasMore(offset + limit < filteredDocs.length);
       setIsInitialLoad(false); // 초기 로딩 완료
