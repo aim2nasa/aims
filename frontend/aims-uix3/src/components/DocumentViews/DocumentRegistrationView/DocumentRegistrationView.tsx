@@ -124,6 +124,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [annualReportCustomers, setAnnualReportCustomers] = useState<Customer[]>([])
   const [annualReportFile, setAnnualReportFile] = useState<{ file: File; fileName: string } | null>(null)
 
+  // 🎯 AR 파일 큐 (여러 AR을 순차 처리)
+  const arQueueRef = useRef<Array<{
+    file: File
+    fileName: string
+    metadata: CheckAnnualReportResult['metadata']
+    customers: Customer[]
+  }>>([])
+
   // Annual Report 자동 등록 로그 메시지
   const [autoRegistrationLog, setAutoRegistrationLog] = useState<string | null>(null)
 
@@ -193,6 +201,31 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔒 절대 신뢰성 모달 함수는 utils에서 import
 
   /**
+   * 🎯 AR 큐에서 다음 파일을 꺼내서 모달 표시 (isProcessingArQueue 체크 없음!)
+   */
+  const processNextArInQueue = useCallback(() => {
+    console.log('🔥 [processNextArInQueue] 큐 길이:', arQueueRef.current.length)
+
+    if (arQueueRef.current.length === 0) {
+      console.log('✅ [processNextArInQueue] 큐 비어있음 - AR 처리 완료')
+      addLog('success', 'Annual Report 처리 완료', '모든 AR 파일이 처리되었습니다')
+      return
+    }
+
+    const nextAr = arQueueRef.current.shift()
+    if (!nextAr) return
+
+    console.log('✅ [processNextArInQueue] 다음 AR:', nextAr.fileName, '| 남은:', arQueueRef.current.length)
+
+    setAnnualReportMetadata(nextAr.metadata)
+    setAnnualReportCustomers(nextAr.customers)
+    setAnnualReportFile({ file: nextAr.file, fileName: nextAr.fileName })
+    setIsCustomerModalOpen(true)
+
+    addLog('ar-detect', `AR 모달: ${nextAr.metadata?.customer_name}`, `남은 AR: ${arQueueRef.current.length}개`)
+  }, [addLog])
+
+  /**
    * 파일 선택 핸들러
    */
   const handleFilesSelected = useCallback(async (files: File[]) => {
@@ -225,15 +258,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨`
               )
 
-              // ✨ 고객이 1명 또는 여러 명: 모달 표시 (중복 검사 포함)
-              // 중복 검사는 CustomerIdentificationModal에서 수행됨
-              setAnnualReportMetadata(checkResult.metadata);
-              setAnnualReportCustomers(customers);
-              setAnnualReportFile({ file, fileName: file.name });
-              setIsCustomerModalOpen(true);
+              // 🎯 AR 큐에 추가
+              arQueueRef.current.push({
+                file,
+                fileName: file.name,
+                metadata: checkResult.metadata,
+                customers
+              })
 
-              // Annual Report는 업로드 큐에 추가하지 않음 (사용자가 고객 선택 후 처리)
-              console.log('[DocumentRegistrationView] Annual Report 감지, 모달 표시 (고객:', customers.length, '명)');
+              console.log('🔥 [handleFilesSelected] AR 큐 추가:', file.name, '| 큐:', arQueueRef.current.length);
               continue;
             } else {
               addLog('info', `일반 PDF 문서: ${file.name}`)
@@ -317,8 +350,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const validFiles = newUploadFiles.filter(f => f.status === 'pending')
     if (validFiles.length > 0) {
       uploadService.queueFiles(validFiles)
+      addLog('info', `일반 문서 ${validFiles.length}개 업로드 시작`)
     }
-  }, [generateFileId])
+
+    // 🎯 AR 큐 처리 시작
+    if (arQueueRef.current.length > 0) {
+      console.log('🔥 [handleFilesSelected] AR 큐 처리 시작, 큐:', arQueueRef.current.length)
+      processNextArInQueue()
+    }
+  }, [generateFileId, addLog, processNextArInQueue])
 
   /**
    * 파일 재시도 핸들러
@@ -527,18 +567,28 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       setAnnualReportMetadata(null);
       setAnnualReportCustomers([]);
       setAnnualReportFile(null);
+
+      // 🎯 다음 AR 처리
+      setTimeout(() => processNextArInQueue(), 100)
     }
-  }, [annualReportFile, generateFileId]);
+  }, [annualReportFile, generateFileId, processNextArInQueue]);
 
   /**
-   * 고객 식별 모달 닫기
+   * 고객 식별 모달 닫기 (취소)
    */
   const handleCustomerModalClose = useCallback(() => {
+    if (annualReportFile) {
+      addLog('warning', `AR 등록 취소: ${annualReportFile.fileName}`)
+    }
+
     setIsCustomerModalOpen(false);
     setAnnualReportMetadata(null);
     setAnnualReportCustomers([]);
     setAnnualReportFile(null);
-  }, []);
+
+    // 🎯 취소해도 다음 AR 처리
+    setTimeout(() => processNextArInQueue(), 100)
+  }, [annualReportFile, addLog, processNextArInQueue]);
 
   /**
    * 업로드 상태 변경 콜백
