@@ -18,7 +18,7 @@
 /* FileUploadArea 고정 높이 */
 .document-registration-content .file-upload-area {
   flex-shrink: 0; /* 크기 고정 */
-  height: 100px; /* 버튼 + 드롭존 고정 높이 축소 */
+  /* height는 FileUploadArea 자체 CSS에서 100px로 설정됨 */
 }
 
 /* 파일 목록 & 처리 로그 컨테이너 - 5:5 비율 고정 */

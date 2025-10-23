@@ -1354,6 +1354,27 @@
   /* Button Hover Colors - Dark Theme */
   --color-button-hover-bg-dark: rgba(255, 255, 255, 0.1);   /* 다크 버튼 호버 배경 */
 
+  /* Upload Zone Colors - Light Theme */
+  --color-upload-zone-bg-light: rgba(0, 122, 255, 0.03);           /* 업로드 영역 배경 */
+  --color-upload-zone-bg-hover-light: rgba(0, 122, 255, 0.08);     /* 업로드 영역 호버 배경 */
+  --color-upload-zone-bg-dragging-light: rgba(0, 122, 255, 0.12);  /* 업로드 영역 드래그 배경 */
+  --color-upload-zone-border-light: rgba(0, 122, 255, 0.2);        /* 업로드 영역 테두리 */
+  --color-upload-zone-border-hover-light: rgba(0, 122, 255, 0.4);  /* 업로드 영역 호버 테두리 */
+  --color-upload-zone-border-dragging-light: rgba(0, 122, 255, 0.6); /* 업로드 영역 드래그 테두리 */
+  --color-upload-zone-icon-light: rgba(0, 122, 255, 0.8);          /* 업로드 + 아이콘 */
+  --color-upload-zone-icon-hover-light: rgba(0, 122, 255, 1);      /* 업로드 + 아이콘 호버 */
+  --color-upload-zone-focus-light: rgba(0, 122, 255, 0.2);         /* 업로드 영역 포커스 */
+
+  /* Upload Zone Colors - Dark Theme */
+  --color-upload-zone-bg-dark: rgba(0, 122, 255, 0.05);            /* 다크 업로드 영역 배경 */
+  --color-upload-zone-bg-hover-dark: rgba(0, 122, 255, 0.1);       /* 다크 업로드 영역 호버 배경 */
+  --color-upload-zone-bg-dragging-dark: rgba(0, 122, 255, 0.15);   /* 다크 업로드 영역 드래그 배경 */
+  --color-upload-zone-border-dark: rgba(0, 122, 255, 0.3);         /* 다크 업로드 영역 테두리 */
+  --color-upload-zone-border-hover-dark: rgba(0, 122, 255, 0.5);   /* 다크 업로드 영역 호버 테두리 */
+  --color-upload-zone-border-dragging-dark: rgba(0, 122, 255, 0.7); /* 다크 업로드 영역 드래그 테두리 */
+  --color-upload-zone-icon-dark: rgba(0, 122, 255, 0.9);           /* 다크 업로드 + 아이콘 */
+  --color-upload-zone-icon-hover-dark: rgba(0, 122, 255, 1);       /* 다크 업로드 + 아이콘 호버 */
+
   /* Default Theme Mapping (Light) */
   --color-section-bg: var(--color-section-bg-light);
   --color-section-border: var(--color-section-border-light);
@@ -1373,6 +1394,15 @@
   --color-success-overlay-button-bg: var(--color-success-overlay-button-bg-light);
   --color-success-overlay-button-hover: var(--color-success-overlay-button-hover-light);
   --color-button-hover-bg: var(--color-button-hover-bg-light);
+  --color-upload-zone-bg: var(--color-upload-zone-bg-light);
+  --color-upload-zone-bg-hover: var(--color-upload-zone-bg-hover-light);
+  --color-upload-zone-bg-dragging: var(--color-upload-zone-bg-dragging-light);
+  --color-upload-zone-border: var(--color-upload-zone-border-light);
+  --color-upload-zone-border-hover: var(--color-upload-zone-border-hover-light);
+  --color-upload-zone-border-dragging: var(--color-upload-zone-border-dragging-light);
+  --color-upload-zone-icon: var(--color-upload-zone-icon-light);
+  --color-upload-zone-icon-hover: var(--color-upload-zone-icon-hover-light);
+  --color-upload-zone-focus: var(--color-upload-zone-focus-light);
 }
 
 [data-theme="dark"] {
@@ -1390,4 +1420,12 @@
   --color-success-overlay-bg: var(--color-success-overlay-bg-dark);
   --color-success-overlay-border: var(--color-success-overlay-border-dark);
   --color-button-hover-bg: var(--color-button-hover-bg-dark);
+  --color-upload-zone-bg: var(--color-upload-zone-bg-dark);
+  --color-upload-zone-bg-hover: var(--color-upload-zone-bg-hover-dark);
+  --color-upload-zone-bg-dragging: var(--color-upload-zone-bg-dragging-dark);
+  --color-upload-zone-border: var(--color-upload-zone-border-dark);
+  --color-upload-zone-border-hover: var(--color-upload-zone-border-hover-dark);
+  --color-upload-zone-border-dragging: var(--color-upload-zone-border-dragging-dark);
+  --color-upload-zone-icon: var(--color-upload-zone-icon-dark);
+  --color-upload-zone-icon-hover: var(--color-upload-zone-icon-hover-dark);
 }

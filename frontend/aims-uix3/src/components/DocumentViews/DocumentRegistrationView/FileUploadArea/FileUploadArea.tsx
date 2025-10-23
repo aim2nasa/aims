@@ -260,38 +260,24 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         />
       )}
 
-      {/* 🍎 MINIMAL BUTTON: Pure Apple style */}
-      <div className="file-upload-area__actions">
-        <button
-          type="button"
-          className="file-upload-area__button file-upload-area__button--minimal"
-          onClick={handleFileSelect}
-          disabled={disabled || uploading}
-          aria-label="Add files"
-        >
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>+</span>
-        </button>
-      </div>
-
-      {/* 🍎 DROPZONE: Clean drag area */}
+      {/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop */}
       <div
-        className={`file-upload-area__dropzone ${isDragging ? 'file-upload-area__dropzone--dragging' : ''}`}
+        className={`file-upload-area__unified-zone ${isDragging ? 'file-upload-area__unified-zone--dragging' : ''}`}
+        onClick={handleFileSelect}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        aria-label="Drag and drop files here"
+        role="button"
+        tabIndex={disabled || uploading ? -1 : 0}
+        aria-label="파일 업로드: 클릭하거나 파일을 드래그하세요"
+        aria-disabled={disabled || uploading}
       >
         {!uploading && !isDragging && (
-          <div className="file-upload-area__drop-hint">
-            <SFSymbol
-              name="arrow.down.circle"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.ULTRALIGHT}
-              decorative={true}
-            />
+          <div className="file-upload-area__unified-content">
+            <div className="file-upload-area__plus-icon">+</div>
             <span className="file-upload-area__hint-text">
-              또는 파일을 여기에 끌어오세요
+              파일 선택 또는 드래그
             </span>
           </div>
         )}
@@ -304,7 +290,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
               weight={SFSymbolWeight.LIGHT}
               decorative={true}
             />
-            <span>Drop to upload</span>
+            <span>여기에 놓으세요</span>
           </div>
         )}
 
@@ -316,7 +302,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
               weight={SFSymbolWeight.LIGHT}
               decorative={true}
             />
-            <span>Uploading...</span>
+            <span>업로드 중...</span>
           </div>
         )}
       </div>

@@ -10,106 +10,77 @@
   padding: 0;
 }
 
-/* 🍎 CLEAR ACTIONS: Explicit buttons */
-.file-upload-area__actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px; /* 간격 축소 */
-  justify-content: center;
-  height: 36px; /* 고정 높이 축소 */
-  align-items: center;
-}
-
-.file-upload-area__button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px; /* 패딩 축소 */
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s ease;
-  outline: none;
-}
-
-.file-upload-area__button:focus {
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
-}
-
-.file-upload-area__button--primary {
-  background: rgba(0, 122, 255, 1);
-  color: white;
-}
-
-.file-upload-area__button--primary:hover:not(:disabled) {
-  background: rgba(0, 122, 255, 0.8);
-  transform: translateY(-1px);
-}
-
-.file-upload-area__button--minimal {
-  background: rgba(0, 122, 255, 0.8);
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
-}
-
-html[data-theme="dark"] .file-upload-area__button--minimal {
-  background: rgba(0, 122, 255, 0.9);
-  color: white;
-}
-
-.file-upload-area__button--minimal:hover:not(:disabled) {
-  background: rgba(0, 122, 255, 1);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-}
-
-html[data-theme="dark"] .file-upload-area__button--minimal:hover:not(:disabled) {
-  background: rgba(0, 122, 255, 1);
-}
-
-.file-upload-area__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-/* 🍎 CLEAN DROPZONE: Simple drag area */
-.file-upload-area__dropzone {
-  height: 52px; /* 고정 높이 축소 */
-  background: rgba(0, 0, 0, 0.01);
-  border: 1px dashed rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop */
+.file-upload-area__unified-zone {
+  height: 100px; /* 전체 영역 */
+  background: var(--color-upload-zone-bg);
+  border: 2px dashed var(--color-upload-zone-border);
+  border-radius: 12px;
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 10px; /* 패딩 축소 */
+  padding: 16px;
 
-  transition: all 0.15s ease;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
 }
 
-html[data-theme="dark"] .file-upload-area__dropzone {
-  background: rgba(255, 255, 255, 0.01);
-  border-color: rgba(255, 255, 255, 0.1);
+/* Hover State */
+.file-upload-area__unified-zone:hover:not([aria-disabled="true"]) {
+  background: var(--color-upload-zone-bg-hover);
+  border-color: var(--color-upload-zone-border-hover);
+  transform: translateY(-1px);
 }
 
-/* 🍎 DRAG STATES: Clear visual feedback */
-.file-upload-area__dropzone--dragging {
-  background: rgba(0, 122, 255, 0.05);
-  border-color: rgba(0, 122, 255, 0.3);
+/* Focus State */
+.file-upload-area__unified-zone:focus {
+  box-shadow: 0 0 0 3px var(--color-upload-zone-focus);
+}
+
+/* Disabled State */
+.file-upload-area__unified-zone[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dragging State */
+.file-upload-area__unified-zone--dragging {
+  background: var(--color-upload-zone-bg-dragging);
+  border-color: var(--color-upload-zone-border-dragging);
   border-style: solid;
+  transform: scale(1.02);
+}
+
+/* Unified Content */
+.file-upload-area__unified-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Plus Icon */
+.file-upload-area__plus-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: var(--color-upload-zone-icon);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 300;
+  transition: all 0.2s ease;
+}
+
+.file-upload-area__unified-zone:hover:not([aria-disabled="true"]) .file-upload-area__plus-icon {
+  background: var(--color-upload-zone-icon-hover);
+  transform: scale(1.1);
 }
 
 /* 🍎 DROP HINTS: Subtle guidance */
