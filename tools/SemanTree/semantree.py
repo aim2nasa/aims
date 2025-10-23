@@ -1,0 +1,337 @@
+#!/usr/bin/env python3
+"""
+SemanTree - Semantic Tree Document Viewer
+AIMS 문서 뷰어 및 시맨틱 트리 분석 도구
+
+MongoDB에서 문서를 읽어서 GUI로 표시하는 테스트 애플리케이션
+"""
+
+import sys
+import json
+import subprocess
+import time
+import threading
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+from bson import ObjectId
+from pymongo import MongoClient
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox
+
+
+class SSHTunnel:
+    """SSH 터널 관리 클래스"""
+
+    def __init__(self, remote_host: str = "tars.giize.com", local_port: int = 27017, remote_port: int = 27017):
+        self.remote_host = remote_host
+        self.local_port = local_port
+        self.remote_port = remote_port
+        self.process: Optional[subprocess.Popen] = None
+        self.is_connected = False
+
+    def start(self) -> bool:
+        """SSH 터널 시작"""
+        if self.process is not None:
+            return True
+
+        try:
+            print(f"Starting SSH tunnel: {self.remote_host}:{self.remote_port} -> localhost:{self.local_port}")
+
+            # SSH 터널 프로세스 시작 (백그라운드)
+            self.process = subprocess.Popen(
+                ["ssh", "-N", "-L", f"{self.local_port}:localhost:{self.remote_port}", self.remote_host],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+
+            # 터널이 준비될 때까지 대기
+            time.sleep(2)
+
+            # 프로세스가 살아있는지 확인
+            if self.process.poll() is None:
+                self.is_connected = True
+                print("SSH tunnel started successfully")
+                return True
+            else:
+                print("SSH tunnel failed to start")
+                return False
+
+        except Exception as e:
+            print(f"SSH tunnel error: {e}")
+            return False
+
+    def stop(self):
+        """SSH 터널 종료"""
+        if self.process:
+            print("Stopping SSH tunnel...")
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+            self.process = None
+            self.is_connected = False
+
+
+class MongoDBConnection:
+    """MongoDB 연결 관리 클래스"""
+
+    def __init__(self, host: str = "localhost", port: int = 27017, db_name: str = "docupload"):
+        self.host = host
+        self.port = port
+        self.db_name = db_name
+        self.client: Optional[MongoClient] = None
+        self.db = None
+        self.ssh_tunnel: Optional[SSHTunnel] = None
+
+    def connect(self, use_ssh_tunnel: bool = True) -> bool:
+        """MongoDB 연결"""
+        try:
+            # SSH 터널 시작
+            if use_ssh_tunnel:
+                self.ssh_tunnel = SSHTunnel()
+                if not self.ssh_tunnel.start():
+                    print("SSH tunnel failed, trying direct connection...")
+
+            # MongoDB 연결
+            self.client = MongoClient(
+                self.host,
+                self.port,
+                serverSelectionTimeoutMS=5000,
+                directConnection=True
+            )
+            # 연결 테스트
+            self.client.server_info()
+            self.db = self.client[self.db_name]
+            return True
+        except Exception as e:
+            print(f"MongoDB connection failed: {e}")
+            return False
+
+    def disconnect(self):
+        """MongoDB 연결 종료"""
+        if self.client:
+            self.client.close()
+
+        # SSH 터널 종료
+        if self.ssh_tunnel:
+            self.ssh_tunnel.stop()
+
+    def get_files_collection(self):
+        """files 컬렉션 반환"""
+        if self.db is not None:
+            return self.db.files
+        return None
+
+
+class DocumentViewer:
+    """문서 뷰어 GUI 클래스"""
+
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title("SemanTree - AIMS Document Viewer")
+        self.root.geometry("1200x800")
+
+        # MongoDB 연결
+        self.mongo = MongoDBConnection()
+        self.documents: List[Dict[str, Any]] = []
+        self.current_index: int = 0
+
+        # UI 구성
+        self.setup_ui()
+
+        # 초기 연결 및 데이터 로드
+        self.connect_and_load()
+
+    def setup_ui(self):
+        """UI 구성"""
+        # 상단 프레임: 연결 상태 및 컨트롤
+        top_frame = ttk.Frame(self.root, padding="10")
+        top_frame.pack(fill=tk.X)
+
+        # 연결 상태 레이블
+        self.status_label = ttk.Label(top_frame, text="연결 중...", font=("Arial", 10))
+        self.status_label.pack(side=tk.LEFT, padx=5)
+
+        # 새로고침 버튼
+        ttk.Button(top_frame, text="새로고침", command=self.reload_documents).pack(side=tk.LEFT, padx=5)
+
+        # 문서 개수 레이블
+        self.count_label = ttk.Label(top_frame, text="문서: 0개", font=("Arial", 10))
+        self.count_label.pack(side=tk.RIGHT, padx=5)
+
+        # 중앙 프레임: 네비게이션
+        nav_frame = ttk.Frame(self.root, padding="10")
+        nav_frame.pack(fill=tk.X)
+
+        # 이전 버튼
+        self.prev_button = ttk.Button(nav_frame, text="◀ 이전", command=self.prev_document)
+        self.prev_button.pack(side=tk.LEFT, padx=5)
+
+        # 문서 번호 입력
+        ttk.Label(nav_frame, text="문서 번호:").pack(side=tk.LEFT, padx=5)
+        self.doc_number_var = tk.StringVar(value="1")
+        self.doc_number_entry = ttk.Entry(nav_frame, textvariable=self.doc_number_var, width=10)
+        self.doc_number_entry.pack(side=tk.LEFT, padx=5)
+        self.doc_number_entry.bind('<Return>', lambda e: self.goto_document())
+
+        ttk.Button(nav_frame, text="이동", command=self.goto_document).pack(side=tk.LEFT, padx=5)
+
+        # 다음 버튼
+        self.next_button = ttk.Button(nav_frame, text="다음 ▶", command=self.next_document)
+        self.next_button.pack(side=tk.LEFT, padx=5)
+
+        # 현재 문서 정보
+        self.current_doc_label = ttk.Label(nav_frame, text="", font=("Arial", 10, "bold"))
+        self.current_doc_label.pack(side=tk.RIGHT, padx=5)
+
+        # 문서 내용 표시 영역
+        content_frame = ttk.Frame(self.root, padding="10")
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 스크롤 가능한 텍스트 영역
+        self.text_area = scrolledtext.ScrolledText(
+            content_frame,
+            wrap=tk.WORD,
+            font=("Consolas", 10),
+            bg="#1e1e1e",
+            fg="#d4d4d4",
+            insertbackground="white"
+        )
+        self.text_area.pack(fill=tk.BOTH, expand=True)
+
+    def connect_and_load(self):
+        """MongoDB 연결 및 문서 로드"""
+        self.status_label.config(text="SSH tunnel connecting...", foreground="orange")
+        self.root.update()
+
+        if self.mongo.connect(use_ssh_tunnel=True):
+            self.status_label.config(text=f"✓ Connected: localhost:{self.mongo.port} (via SSH)", foreground="green")
+            self.reload_documents()
+        else:
+            self.status_label.config(text="✗ Connection Failed", foreground="red")
+            messagebox.showerror("Connection Error", "Failed to connect to MongoDB.\n\nMake sure you can SSH to tars.giize.com")
+
+    def reload_documents(self):
+        """문서 목록 새로고침"""
+        collection = self.mongo.get_files_collection()
+        if collection is None:
+            return
+
+        try:
+            # 모든 문서 로드 (업로드 시간 역순)
+            self.documents = list(collection.find().sort("upload.uploaded_at", -1))
+            self.count_label.config(text=f"문서: {len(self.documents)}개")
+
+            if self.documents:
+                self.current_index = 0
+                self.display_current_document()
+            else:
+                self.text_area.delete(1.0, tk.END)
+                self.text_area.insert(1.0, "문서가 없습니다.")
+        except Exception as e:
+            messagebox.showerror("오류", f"문서 로드 실패: {e}")
+
+    def display_current_document(self):
+        """현재 문서 표시"""
+        if not self.documents or self.current_index < 0 or self.current_index >= len(self.documents):
+            return
+
+        doc = self.documents[self.current_index]
+
+        # 문서 번호 업데이트
+        self.doc_number_var.set(str(self.current_index + 1))
+
+        # 현재 문서 정보 업데이트
+        original_name = doc.get("upload", {}).get("originalName", "알 수 없음")
+        self.current_doc_label.config(text=f"{self.current_index + 1} / {len(self.documents)}: {original_name}")
+
+        # 문서 내용을 보기 좋게 포맷팅
+        formatted_doc = self.format_document(doc)
+
+        # 텍스트 영역 업데이트
+        self.text_area.delete(1.0, tk.END)
+        self.text_area.insert(1.0, formatted_doc)
+
+        # 버튼 상태 업데이트
+        self.prev_button.config(state=tk.NORMAL if self.current_index > 0 else tk.DISABLED)
+        self.next_button.config(state=tk.NORMAL if self.current_index < len(self.documents) - 1 else tk.DISABLED)
+
+    def format_document(self, doc: Dict[str, Any]) -> str:
+        """문서를 읽기 쉬운 형태로 포맷팅"""
+
+        def format_value(value, indent=0):
+            """값을 재귀적으로 포맷팅"""
+            prefix = "  " * indent
+
+            if isinstance(value, ObjectId):
+                return f"ObjectId('{value}')"
+            elif isinstance(value, datetime):
+                return value.isoformat()
+            elif isinstance(value, dict):
+                lines = ["{"]
+                for k, v in value.items():
+                    formatted_v = format_value(v, indent + 1)
+                    lines.append(f"{prefix}  {k}: {formatted_v},")
+                lines.append(f"{prefix}}}")
+                return "\n".join(lines)
+            elif isinstance(value, list):
+                if not value:
+                    return "[]"
+                lines = ["["]
+                for item in value:
+                    formatted_item = format_value(item, indent + 1)
+                    lines.append(f"{prefix}  {formatted_item},")
+                lines.append(f"{prefix}]")
+                return "\n".join(lines)
+            elif isinstance(value, str):
+                # 긴 문자열은 줄바꿈 처리
+                if len(value) > 100:
+                    preview = value[:200] + "..." if len(value) > 200 else value
+                    return f"'{preview}'"
+                return f"'{value}'"
+            else:
+                return str(value)
+
+        return format_value(doc)
+
+    def prev_document(self):
+        """이전 문서로 이동"""
+        if self.current_index > 0:
+            self.current_index -= 1
+            self.display_current_document()
+
+    def next_document(self):
+        """다음 문서로 이동"""
+        if self.current_index < len(self.documents) - 1:
+            self.current_index += 1
+            self.display_current_document()
+
+    def goto_document(self):
+        """특정 문서 번호로 이동"""
+        try:
+            doc_num = int(self.doc_number_var.get())
+            if 1 <= doc_num <= len(self.documents):
+                self.current_index = doc_num - 1
+                self.display_current_document()
+            else:
+                messagebox.showwarning("범위 오류", f"1부터 {len(self.documents)} 사이의 숫자를 입력하세요.")
+        except ValueError:
+            messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
+
+    def on_closing(self):
+        """애플리케이션 종료"""
+        self.mongo.disconnect()
+        self.root.destroy()
+
+
+def main():
+    """메인 함수"""
+    root = tk.Tk()
+    app = DocumentViewer(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
