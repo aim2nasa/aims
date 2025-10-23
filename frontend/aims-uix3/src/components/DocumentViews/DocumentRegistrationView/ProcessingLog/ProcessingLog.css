@@ -1,0 +1,203 @@
+/**
+ * Processing Log Styles
+ * @since 2025-10-23
+ *
+ * 🍎 Apple-style 처리 로그 UI
+ */
+
+.processing-log {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+/* Header - Collapsible */
+.processing-log__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.processing-log__header:hover {
+  background: var(--color-bg-hover);
+}
+
+.processing-log__header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.processing-log__chevron {
+  color: var(--color-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.processing-log__title {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-primary);
+  letter-spacing: -0.2px;
+}
+
+.processing-log__count {
+  font-size: 11px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.processing-log__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.processing-log__clear:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+/* Log Container */
+.processing-log__container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 🍎 macOS-style scrollbar */
+.processing-log__container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.processing-log__container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.processing-log__container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.processing-log__container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Log Item */
+.processing-log__item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  background: var(--color-bg-secondary);
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+  animation: logFadeIn 0.3s ease-out;
+}
+
+@keyframes logFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.processing-log__item:hover {
+  background: var(--color-bg-hover);
+}
+
+.processing-log__item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.processing-log__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.processing-log__time {
+  font-size: 11px;
+  font-weight: 400;
+  font-family: "SF Mono", "Consolas", monospace;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  min-width: 60px;
+  letter-spacing: 0.3px;
+}
+
+.processing-log__message {
+  font-size: 12px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  flex: 1;
+  line-height: 1.4;
+  letter-spacing: -0.1px;
+}
+
+.processing-log__details {
+  font-size: 11px;
+  font-weight: 400;
+  font-family: "SF Mono", "Consolas", monospace;
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+  margin-left: 36px;
+  padding: 4px 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+/* Dark Mode Adjustments */
+html[data-theme="dark"] .processing-log {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="dark"] .processing-log__header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}

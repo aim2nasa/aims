@@ -13,8 +13,10 @@ import RefreshButton from '../../RefreshButton/RefreshButton'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import FileList from './FileList/FileList'
 import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
+import ProcessingLog from './ProcessingLog/ProcessingLog'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
+import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
@@ -134,6 +136,23 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
+  // 📝 처리 로그 상태
+  const [processingLogs, setProcessingLogs] = useState<Log[]>([])
+
+  /**
+   * 로그 추가 헬퍼 함수
+   */
+  const addLog = useCallback((level: LogLevel, message: string, details?: string) => {
+    const newLog: Log = {
+      id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date(),
+      level,
+      message,
+      details
+    }
+    setProcessingLogs(prev => [newLog, ...prev]) // 최신 로그를 맨 위에
+  }, [])
+
   /**
    * 상태를 sessionStorage에 저장
    */
@@ -189,6 +208,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         // PDF 파일이면 Annual Report 체크
         if (file.type === 'application/pdf') {
           try {
+            addLog('info', `PDF 분석 중: ${file.name}`)
             console.log('[DocumentRegistrationView] 🔍 PDF 파일 감지, Annual Report 체크:', file.name);
             const checkResult = await checkAnnualReportFromPDF(file);
 
@@ -198,6 +218,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // 고객명으로 검색
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
+
+              addLog(
+                'ar-detect',
+                `Annual Report 감지: ${checkResult.metadata.customer_name}`,
+                `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨`
+              )
 
               // ✨ 고객이 1명 또는 여러 명: 모달 표시 (중복 검사 포함)
               // 중복 검사는 CustomerIdentificationModal에서 수행됨
@@ -209,9 +235,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               // Annual Report는 업로드 큐에 추가하지 않음 (사용자가 고객 선택 후 처리)
               console.log('[DocumentRegistrationView] Annual Report 감지, 모달 표시 (고객:', customers.length, '명)');
               continue;
+            } else {
+              addLog('info', `일반 PDF 문서: ${file.name}`)
             }
           } catch (error) {
             console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
+            addLog('warning', `PDF 분석 실패: ${file.name}`, error instanceof Error ? error.message : String(error))
             // 체크 실패 시 일반 문서로 처리
           }
         }
@@ -521,6 +550,18 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         if (f.id === fileId) {
           console.log(`🔍 [handleStatusChange] Matched file: name=${f.file.name}, type=${f.file.type}`);
           const updatedFile = { ...f, status, error }
+
+          // 로그 추가
+          if (status === 'uploading') {
+            addLog('info', `업로드 시작: ${f.file.name}`)
+          } else if (status === 'completed') {
+            addLog('success', `업로드 완료: ${f.file.name}`)
+          } else if (status === 'error') {
+            addLog('error', `업로드 실패: ${f.file.name}`, error)
+          } else if (status === 'warning') {
+            addLog('warning', `업로드 경고: ${f.file.name}`, error)
+          }
+
           if (status === 'completed' || status === 'warning') {
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
@@ -528,6 +569,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             // 🏷️ Annual Report 파일이면 DB 플래그 설정
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
               console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정: ${f.file.name}`);
+              addLog('ar-detect', `AR 문서 처리 중: ${f.file.name}`, '고객과 자동 연결 대기 중...')
               setAnnualReportFlag(f.file.name);
               // 추적 목록에서 제거
               arFilenamesRef.current.delete(f.file.name);
@@ -552,7 +594,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         completedCount
       }
     })
-  }, [setAnnualReportFlag])
+  }, [setAnnualReportFlag, addLog])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지
@@ -758,6 +800,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             onRetryFile={handleRetryFile}
             onClearAll={handleClearAll}
             readonly={false}
+          />
+        )}
+
+        {/* 처리 로그 */}
+        {processingLogs.length > 0 && (
+          <ProcessingLog
+            logs={processingLogs}
+            maxHeight={300}
+            onClear={() => setProcessingLogs([])}
           />
         )}
 
