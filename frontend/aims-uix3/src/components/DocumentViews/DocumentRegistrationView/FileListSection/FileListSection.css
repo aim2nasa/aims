@@ -1,0 +1,217 @@
+/**
+ * File List Section Styles
+ * @since 2025-10-23
+ *
+ * 🍎 Apple-style 업로드 목록 UI
+ * - 처리로그와 시각적 일관성 유지
+ */
+
+.file-list-section {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Header */
+.file-list-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.file-list-section__header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.file-list-section__header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.file-list-section__title {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-primary);
+  letter-spacing: -0.2px;
+}
+
+.file-list-section__count {
+  font-size: 11px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Content Area */
+.file-list-section__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 🍎 macOS-style scrollbar */
+.file-list-section__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.file-list-section__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.file-list-section__content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.file-list-section__content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .file-list-section__content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+html[data-theme="dark"] .file-list-section__content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Progress Indicator Area */
+.file-list-section__progress {
+  flex-shrink: 0;
+}
+
+/* Empty State */
+.file-list-section__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 12px;
+  flex: 1;
+}
+
+.file-list-section__empty-icon {
+  color: var(--color-text-tertiary);
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+.file-list-section__empty-title {
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-secondary);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.file-list-section__empty-hint {
+  font-size: 12px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-tertiary);
+  margin: 0;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+/* Success Messages (기존 스타일 재사용) */
+.upload-success {
+  padding: 8px 0;
+  margin: 8px 0;
+  animation: successFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.upload-success__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(52, 199, 89, 0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(52, 199, 89, 0.1);
+}
+
+html[data-theme="dark"] .upload-success__content {
+  background: rgba(52, 199, 89, 0.06);
+  border-color: rgba(52, 199, 89, 0.15);
+}
+
+.upload-success__icon {
+  color: rgba(52, 199, 89, 0.8);
+  flex-shrink: 0;
+}
+
+.upload-success__text {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(52, 199, 89, 0.9);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  flex: 1;
+}
+
+.upload-success__button {
+  background: none;
+  border: none;
+  padding: 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: rgba(52, 199, 89, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.upload-success__button:hover {
+  background: rgba(52, 199, 89, 0.1);
+  color: rgba(52, 199, 89, 0.9);
+}
+
+@keyframes successFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .upload-success {
+    animation: none;
+  }
+
+  .upload-success__button {
+    transition: none;
+  }
+}

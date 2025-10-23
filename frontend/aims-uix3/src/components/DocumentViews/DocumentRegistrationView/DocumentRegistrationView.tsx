@@ -9,10 +9,8 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import RefreshButton from '../../RefreshButton/RefreshButton'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
-import FileList from './FileList/FileList'
-import ProgressIndicator from './ProgressIndicator/ProgressIndicator'
+import FileListSection from './FileListSection/FileListSection'
 import ProcessingLog from './ProcessingLog/ProcessingLog'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
@@ -808,25 +806,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
-        {/* Header with Refresh Button */}
-        {uploadState.files.length > 0 && (
-          <div className="document-registration-header">
-            <RefreshButton
-              onClick={async () => {
-                const confirmed = await showAppleConfirm(
-                  '모든 업로드 기록을 초기화하시겠습니까?',
-                  '업로드 초기화'
-                );
-                if (confirmed) {
-                  handleClearAll();
-                }
-              }}
-              tooltip="업로드 기록 초기화"
-              size="small"
-            />
-          </div>
-        )}
-
         {/* 파일 업로드 영역 */}
         <FileUploadArea
           onFilesSelected={handleFilesSelected}
@@ -835,90 +814,30 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           disabled={false}
         />
 
-        {/* 진행률 표시 - 업로드 중인 파일이 있으면 항상 표시 */}
-        {(uploadState.uploading || showSuccessMessage || stats.uploading > 0) && (
-          <ProgressIndicator
-            uploadState={uploadState}
-            onCancel={(uploadState.uploading || stats.uploading > 0) ? handleCancelAll : (() => {})}
-          />
-        )}
-
-        {/* 파일 목록 & 처리 로그 컨테이너 - 7:3 비율 고정 */}
+        {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 */}
         <div className="file-log-container">
-          {/* 파일 목록 영역 - 70% */}
-          <div className="file-list-area">
-            {uploadState.files.length > 0 && (
-              <FileList
-                files={uploadState.files}
-                onRetryFile={handleRetryFile}
-                onClearAll={handleClearAll}
-                readonly={false}
-              />
-            )}
+          {/* 업로드 목록 영역 - 60% */}
+          <FileListSection
+            uploadState={uploadState}
+            showSuccessMessage={showSuccessMessage}
+            stats={stats}
+            autoRegistrationLog={autoRegistrationLog}
+            onRetryFile={handleRetryFile}
+            onClearAll={async () => {
+              const confirmed = await showAppleConfirm(
+                '모든 업로드 기록을 초기화하시겠습니까?',
+                '업로드 초기화'
+              )
+              if (confirmed) {
+                handleClearAll()
+              }
+            }}
+            onCancelAll={handleCancelAll}
+            onDismissSuccess={() => setShowSuccessMessage(false)}
+            onDismissAutoRegistration={() => setAutoRegistrationLog(null)}
+          />
 
-            {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification - 파일 목록 바로 아래 */}
-            {showSuccessMessage && stats.completed > 0 && (
-              <div className="upload-success">
-                <div className="upload-success__content">
-                  <SFSymbol
-                    name="checkmark"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    className="upload-success__icon"
-                  />
-                  <span className="upload-success__text">
-                    {stats.errors > 0
-                      ? `${stats.completed} uploaded, ${stats.errors} errors`
-                      : `${stats.completed} files uploaded`
-                    }
-                  </span>
-                  {!uploadState.uploading && (
-                    <button
-                      type="button"
-                      onClick={handleClearAll}
-                      className="upload-success__button"
-                      aria-label="Clear completed uploads"
-                    >
-                      <SFSymbol
-                        name="xmark"
-                        size={SFSymbolSize.CAPTION_1}
-                        weight={SFSymbolWeight.MEDIUM}
-                      />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 🍎 Annual Report 자동 등록 로그 메시지 - 파일 목록 바로 아래 */}
-            {autoRegistrationLog && (
-              <div className="upload-success">
-                <div className="upload-success__content">
-                  <SFSymbol
-                    name="checkmark.circle.fill"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    className="upload-success__icon"
-                  />
-                  <span className="upload-success__text">{autoRegistrationLog}</span>
-                  <button
-                    type="button"
-                    onClick={() => setAutoRegistrationLog(null)}
-                    className="upload-success__button"
-                    aria-label="Close notification"
-                  >
-                    <SFSymbol
-                      name="xmark"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 처리 로그 영역 - 30% */}
+          {/* 처리 로그 영역 - 40% */}
           <div className="processing-log-area">
             <ProcessingLog
               logs={processingLogs}
