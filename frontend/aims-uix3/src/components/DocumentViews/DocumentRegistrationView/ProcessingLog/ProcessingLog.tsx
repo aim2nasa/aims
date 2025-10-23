@@ -64,10 +64,6 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     return `${hours}:${minutes}:${seconds}`
   }
 
-  if (logs.length === 0) {
-    return null
-  }
-
   return (
     <div className={`processing-log ${className}`}>
       {/* Header */}

@@ -854,13 +854,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         )}
 
         {/* 처리 로그 */}
-        {processingLogs.length > 0 && (
-          <ProcessingLog
-            logs={processingLogs}
-            maxHeight={300}
-            onClear={() => setProcessingLogs([])}
-          />
-        )}
+        <ProcessingLog
+          logs={processingLogs}
+          maxHeight={300}
+          onClear={() => setProcessingLogs([])}
+        />
 
         {/* 🍎 SUCCESS MESSAGE: Ultra-minimal notification */}
         {showSuccessMessage && stats.completed > 0 && (
