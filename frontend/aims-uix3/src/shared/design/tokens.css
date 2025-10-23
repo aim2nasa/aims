@@ -1290,3 +1290,104 @@
   --color-button-destructive-bg: var(--color-button-destructive-bg-dark);
   --color-button-destructive-hover: var(--color-button-destructive-hover-dark);
 }
+
+/* === DOCUMENT REGISTRATION VIEW COLORS === */
+/* FileListSection & ProcessingLog 전용 색상 시스템 */
+
+:root {
+  /* Section Background Colors - Light Theme */
+  --color-section-bg-light: #ffffff;                    /* iOS 표준 화이트 배경 */
+  --color-section-border-light: rgba(0, 0, 0, 0.1);     /* 서브틀한 테두리 */
+  --color-section-header-bg-light: rgba(0, 0, 0, 0.03); /* 헤더 배경 */
+  --color-section-header-border-light: rgba(0, 0, 0, 0.1); /* 헤더 테두리 */
+
+  /* Section Background Colors - Dark Theme */
+  --color-section-bg-dark: #2c2c2e;                        /* iOS systemGray6 */
+  --color-section-border-dark: rgba(255, 255, 255, 0.1);   /* 다크 테두리 */
+  --color-section-header-bg-dark: rgba(255, 255, 255, 0.05); /* 다크 헤더 배경 */
+  --color-section-header-border-dark: rgba(255, 255, 255, 0.1); /* 다크 헤더 테두리 */
+
+  /* Section Item Colors - Light Theme */
+  --color-section-item-bg-light: rgba(0, 0, 0, 0.03);      /* 아이템 배경 */
+  --color-section-item-bg-hover-light: rgba(0, 0, 0, 0.06); /* 아이템 호버 */
+
+  /* Section Item Colors - Dark Theme */
+  --color-section-item-bg-dark: rgba(255, 255, 255, 0.06);    /* 다크 아이템 배경 */
+  --color-section-item-bg-hover-dark: rgba(255, 255, 255, 0.1); /* 다크 아이템 호버 */
+
+  /* Badge/Count Colors - Light Theme */
+  --color-badge-bg-light: rgba(0, 0, 0, 0.08);            /* 배지 배경 */
+
+  /* Badge/Count Colors - Dark Theme */
+  --color-badge-bg-dark: rgba(255, 255, 255, 0.1);         /* 다크 배지 배경 */
+
+  /* Scrollbar Colors - Light Theme */
+  --color-section-scrollbar-light: rgba(0, 0, 0, 0.2);          /* 스크롤바 */
+  --color-section-scrollbar-hover-light: rgba(0, 0, 0, 0.3);    /* 스크롤바 호버 */
+
+  /* Scrollbar Colors - Dark Theme */
+  --color-section-scrollbar-dark: rgba(255, 255, 255, 0.2);        /* 다크 스크롤바 */
+  --color-section-scrollbar-hover-dark: rgba(255, 255, 255, 0.3);  /* 다크 스크롤바 호버 */
+
+  /* Details/Secondary Background - Light Theme */
+  --color-section-details-bg-light: rgba(0, 0, 0, 0.05);   /* 상세 정보 배경 */
+
+  /* Details/Secondary Background - Dark Theme */
+  --color-section-details-bg-dark: rgba(255, 255, 255, 0.05); /* 다크 상세 정보 배경 */
+
+  /* Success Message Colors - Light Theme */
+  --color-success-overlay-bg-light: rgba(52, 199, 89, 0.04);       /* iOS systemGreen 배경 */
+  --color-success-overlay-border-light: rgba(52, 199, 89, 0.1);    /* iOS systemGreen 테두리 */
+  --color-success-overlay-icon-light: rgba(52, 199, 89, 0.8);      /* iOS systemGreen 아이콘 */
+  --color-success-overlay-text-light: rgba(52, 199, 89, 0.9);      /* iOS systemGreen 텍스트 */
+  --color-success-overlay-button-light: rgba(52, 199, 89, 0.6);    /* iOS systemGreen 버튼 */
+  --color-success-overlay-button-bg-light: rgba(52, 199, 89, 0.1); /* iOS systemGreen 버튼 배경 */
+  --color-success-overlay-button-hover-light: rgba(52, 199, 89, 0.9); /* iOS systemGreen 버튼 호버 */
+
+  /* Success Message Colors - Dark Theme */
+  --color-success-overlay-bg-dark: rgba(52, 199, 89, 0.06);           /* 다크 배경 */
+  --color-success-overlay-border-dark: rgba(52, 199, 89, 0.15);       /* 다크 테두리 */
+
+  /* Button Hover Colors - Light Theme */
+  --color-button-hover-bg-light: rgba(0, 0, 0, 0.08);      /* 버튼 호버 배경 */
+
+  /* Button Hover Colors - Dark Theme */
+  --color-button-hover-bg-dark: rgba(255, 255, 255, 0.1);   /* 다크 버튼 호버 배경 */
+
+  /* Default Theme Mapping (Light) */
+  --color-section-bg: var(--color-section-bg-light);
+  --color-section-border: var(--color-section-border-light);
+  --color-section-header-bg: var(--color-section-header-bg-light);
+  --color-section-header-border: var(--color-section-header-border-light);
+  --color-section-item-bg: var(--color-section-item-bg-light);
+  --color-section-item-bg-hover: var(--color-section-item-bg-hover-light);
+  --color-badge-bg: var(--color-badge-bg-light);
+  --color-section-scrollbar: var(--color-section-scrollbar-light);
+  --color-section-scrollbar-hover: var(--color-section-scrollbar-hover-light);
+  --color-section-details-bg: var(--color-section-details-bg-light);
+  --color-success-overlay-bg: var(--color-success-overlay-bg-light);
+  --color-success-overlay-border: var(--color-success-overlay-border-light);
+  --color-success-overlay-icon: var(--color-success-overlay-icon-light);
+  --color-success-overlay-text: var(--color-success-overlay-text-light);
+  --color-success-overlay-button: var(--color-success-overlay-button-light);
+  --color-success-overlay-button-bg: var(--color-success-overlay-button-bg-light);
+  --color-success-overlay-button-hover: var(--color-success-overlay-button-hover-light);
+  --color-button-hover-bg: var(--color-button-hover-bg-light);
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Mapping */
+  --color-section-bg: var(--color-section-bg-dark);
+  --color-section-border: var(--color-section-border-dark);
+  --color-section-header-bg: var(--color-section-header-bg-dark);
+  --color-section-header-border: var(--color-section-header-border-dark);
+  --color-section-item-bg: var(--color-section-item-bg-dark);
+  --color-section-item-bg-hover: var(--color-section-item-bg-hover-dark);
+  --color-badge-bg: var(--color-badge-bg-dark);
+  --color-section-scrollbar: var(--color-section-scrollbar-dark);
+  --color-section-scrollbar-hover: var(--color-section-scrollbar-hover-dark);
+  --color-section-details-bg: var(--color-section-details-bg-dark);
+  --color-success-overlay-bg: var(--color-success-overlay-bg-dark);
+  --color-success-overlay-border: var(--color-success-overlay-border-dark);
+  --color-button-hover-bg: var(--color-button-hover-bg-dark);
+}

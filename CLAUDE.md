@@ -147,29 +147,145 @@ UX 문제 발견 시:
 
 ### 하드코딩 금지 규칙 - 절대 준수! ⚠️
 
-**테스트를 위한 임시코드를 제외하고는 하드코딩을 절대 금지한다!**
+**CSS 하드코딩은 절대 금지! CSS 변수 하드코딩도 절대 금지!**
 
-1. **스타일 하드코딩 금지:**
-   - inline style에 색상값 직접 입력 금지 (`backgroundColor: '#ffffff'` ❌)
-   - CSS 변수나 클래스 사용 필수 (`var(--color-bg-primary)` ✅)
-   - 테마 시스템과 연동되지 않는 고정값 사용 금지
+테스트를 위한 임시코드를 제외하고는 하드코딩을 절대 금지한다!
 
-2. **동적 테마 반응 필수:**
+#### 1. CSS 색상값 하드코딩 절대 금지
+
+**❌ 절대 금지되는 하드코딩 예시:**
+```css
+/* CSS 파일에서 직접 색상값 입력 금지 */
+.component {
+  background: #ffffff;  /* ❌ 절대 금지 */
+  color: #2c2c2e;  /* ❌ 절대 금지 */
+  border: 1px solid rgba(0, 0, 0, 0.1);  /* ❌ 절대 금지 */
+}
+
+html[data-theme="dark"] .component {
+  background: #2c2c2e;  /* ❌ 절대 금지 */
+  color: #ffffff;  /* ❌ 절대 금지 */
+}
+```
+
+```tsx
+/* JSX inline style에서 색상값 직접 입력 금지 */
+<div style={{ backgroundColor: '#ffffff' }}>  {/* ❌ 절대 금지 */}
+<div style={{ color: 'rgba(0, 0, 0, 0.8)' }}>  {/* ❌ 절대 금지 */}
+```
+
+**✅ 올바른 방법 - CSS 변수 사용:**
+```css
+/* CSS 파일에서 변수 사용 */
+.component {
+  background: var(--color-bg-primary);  /* ✅ 올바름 */
+  color: var(--color-text-primary);  /* ✅ 올바름 */
+  border: 1px solid var(--color-border);  /* ✅ 올바름 */
+}
+```
+
+```tsx
+/* JSX에서는 className 사용 (inline style 금지) */
+<div className="component">  {/* ✅ 올바름 */}
+```
+
+#### 2. CSS 변수 하드코딩도 금지
+
+**❌ CSS 변수를 CSS 파일에 직접 정의하는 것도 금지:**
+```css
+/* 컴포넌트별 CSS 파일에서 변수 정의 금지 */
+.component {
+  --custom-color: #ffffff;  /* ❌ 절대 금지 */
+  background: var(--custom-color);
+}
+```
+
+**✅ 올바른 방법 - 중앙 집중식 CSS 변수 시스템 사용:**
+- `frontend/aims-uix3/src/styles/variables.css`에 정의된 변수만 사용
+- 새로운 색상이 필요하면 `variables.css`에 추가 후 사용
+- 모든 컴포넌트는 기존 변수 재사용
+
+#### 3. 스타일 하드코딩 금지 원칙
+
+1. **CSS 파일:**
+   - 색상, 크기, 간격 등 모든 값은 CSS 변수 사용
+   - `#ffffff`, `rgba()`, `16px` 등 직접 입력 금지
+   - 예외: 계산식 (`calc()`)에서 숫자는 허용
+
+2. **JSX inline style:**
+   - 정적 색상값 절대 금지
+   - 동적 계산값만 허용 (`width: ${dynamicValue}px`)
+   - 런타임 위치만 허용 (`transform: translate()`)
+
+3. **테마 시스템과 연동:**
    - 라이트/다크 모드 전환시 즉시 반영되어야 함
-   - `html[data-theme="dark"]` CSS 규칙으로 테마별 스타일 정의
+   - CSS 변수는 `variables.css`에서 테마별로 정의
    - JS에서는 클래스명만 조건부로 적용
 
-3. **허용되는 하드코딩:**
-   - **테스트 목적**의 임시 코드만 허용
-   - 개발 중 빠른 확인을 위한 디버깅 코드
-   - **단, 커밋 전에 반드시 제거하거나 CSS로 리팩토링**
+#### 4. 허용되는 하드코딩 (매우 제한적)
 
-4. **위반시 조치:**
-   - 하드코딩 발견시 즉시 CSS 변수/클래스로 리팩토링
-   - 테마 시스템과 연동되도록 수정
-   - 동적 반응 가능하도록 구조 개선
+**오직 테스트 목적의 임시 코드만 허용:**
+- 개발 중 빠른 확인을 위한 디버깅 코드
+- **단, 커밋 전에 반드시 제거하거나 CSS 변수로 리팩토링**
 
-**기억하라**: 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!
+**테스트 중에도 가능하면 CSS 변수 사용 권장!**
+
+#### 5. 위반시 조치
+
+1. 하드코딩 발견시 **즉시 CSS 변수로 리팩토링**
+2. 필요한 변수가 없으면 `variables.css`에 추가
+3. 테마 시스템과 연동되도록 수정
+4. 동적 반응 가능하도록 구조 개선
+
+#### 6. 실제 위반 사례와 수정 예시
+
+**❌ 위반 사례 (FileListSection.css):**
+```css
+.file-list-section {
+  background: #ffffff;  /* ❌ 하드코딩 */
+  border: 1px solid rgba(0, 0, 0, 0.1);  /* ❌ 하드코딩 */
+}
+
+html[data-theme="dark"] .file-list-section {
+  background: #2c2c2e;  /* ❌ 하드코딩 */
+  border-color: rgba(255, 255, 255, 0.1);  /* ❌ 하드코딩 */
+}
+```
+
+**✅ 올바른 수정:**
+```css
+/* variables.css에 변수 정의 */
+:root {
+  --color-bg-section: #ffffff;
+  --color-border-section: rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] {
+  --color-bg-section: #2c2c2e;
+  --color-border-section: rgba(255, 255, 255, 0.1);
+}
+
+/* FileListSection.css에서 변수 사용 */
+.file-list-section {
+  background: var(--color-bg-section);  /* ✅ 올바름 */
+  border: 1px solid var(--color-border-section);  /* ✅ 올바름 */
+}
+```
+
+#### 7. 체크리스트
+
+커밋 전 반드시 확인:
+- [ ] CSS 파일에 `#` 색상코드가 없는가?
+- [ ] CSS 파일에 `rgba()`, `rgb()` 직접 사용이 없는가?
+- [ ] inline style에 색상값이 없는가?
+- [ ] 새로운 CSS 변수를 컴포넌트에서 정의하지 않았는가?
+- [ ] 모든 색상이 `var(--color-*)`로 정의되어 있는가?
+- [ ] 테마 전환시 모든 색상이 즉시 변경되는가?
+
+**기억하라**:
+- **CSS 하드코딩은 유지보수성을 떨어뜨리고 테마 시스템을 파괴한다!**
+- **CSS 변수도 중앙에서만 정의! 각 컴포넌트에서 변수 정의 금지!**
+- **"variables.css에 없으면 추가 → 사용" 이것이 유일한 방법!**
 
 ### CSS !important 사용 금지 규칙 - 절대 준수! 🚫
 

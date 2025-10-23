@@ -8,8 +8,8 @@
 .processing-log {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
+  background: var(--color-section-bg);
+  border: 1px solid var(--color-section-border);
   border-radius: 8px;
   overflow: hidden;
   margin-top: 16px;
@@ -21,8 +21,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-section-header-bg);
+  border-bottom: 1px solid var(--color-section-header-border);
   user-select: none;
   transition: background-color 0.15s ease;
 }
@@ -65,7 +65,7 @@
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-tertiary);
-  background: var(--color-bg-tertiary);
+  background: var(--color-badge-bg);
   padding: 2px 6px;
   border-radius: 10px;
   min-width: 20px;
@@ -99,7 +99,7 @@
 
 .processing-log__sort:hover,
 .processing-log__clear:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-button-hover-bg);
 }
 
 .processing-log__sort:hover .processing-log__sort-icon,
@@ -133,20 +133,12 @@
 }
 
 .processing-log__container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-section-scrollbar);
   border-radius: 4px;
 }
 
 .processing-log__container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-section-scrollbar-hover);
 }
 
 /* Log Item */
@@ -154,7 +146,7 @@ html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb:hove
   display: flex;
   flex-direction: column;
   padding: 6px 8px;
-  background: var(--color-bg-secondary);
+  background: var(--color-section-item-bg);
   border-radius: 6px;
   transition: background-color 0.15s ease;
   animation: logFadeIn 0.3s ease-out;
@@ -172,7 +164,7 @@ html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb:hove
 }
 
 .processing-log__item:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-section-item-bg-hover);
 }
 
 .processing-log__item-header {
@@ -218,17 +210,8 @@ html[data-theme="dark"] .processing-log__container::-webkit-scrollbar-thumb:hove
   margin-top: 4px;
   margin-left: 36px;
   padding: 4px 6px;
-  background: var(--color-bg-tertiary);
+  background: var(--color-section-details-bg);
   border-radius: 4px;
   line-height: 1.5;
   overflow-wrap: break-word;
-}
-
-/* Dark Mode Adjustments */
-html[data-theme="dark"] .processing-log {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-html[data-theme="dark"] .processing-log__header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
