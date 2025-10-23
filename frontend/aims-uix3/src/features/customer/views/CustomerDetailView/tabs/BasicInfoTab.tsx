@@ -13,6 +13,7 @@ import React from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { AddressArchiveModal } from '../../../components/AddressArchiveModal';
 import { useAddressArchiveController } from '../../../controllers/useAddressArchiveController';
+import Tooltip from '@/shared/ui/Tooltip';
 
 interface BasicInfoTabProps {
   customer: Customer;
@@ -98,16 +99,18 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
 
       {/* 🍎 주소 정보 섹션 */}
       <div className="form-section">
-        <h3
-          className="form-section__title form-section__title--address form-section__title--clickable"
-          onClick={addressArchiveController.open}
-          title="클릭하여 주소 보관소 보기"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
-          </svg>
-          <span>주소</span>
-        </h3>
+        <Tooltip content="주소 보관소 보기">
+          <h3
+            className="form-section__title form-section__title--address form-section__title--clickable"
+            onClick={addressArchiveController.open}
+            aria-label="주소 보관소 보기"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+            <span>주소</span>
+          </h3>
+        </Tooltip>
         <div className="form-section__content">
           {/* 우편번호 */}
           <div className="form-row">
