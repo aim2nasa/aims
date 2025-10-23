@@ -968,21 +968,21 @@ describe('useDocumentsController', () => {
 
   // ===== 17. limit 파라미터 제거 테스트 (Document Library - All Documents) =====
 
-  describe('문서 라이브러리 - 모든 문서 가져오기', () => {
-    it('loadDocuments() 호출 시 limit 파라미터가 제거되어야 함', async () => {
+  describe('문서 라이브러리 - 페이지네이션 limit 파라미터', () => {
+    it('loadDocuments() 호출 시 limit 파라미터가 유지되어야 함', async () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
         expect(result.current.isInitialLoad).toBe(false)
       })
 
-      // 초기 호출에서 limit이 제거되었는지 확인
+      // 초기 호출에서 limit이 유지되었는지 확인 (기본값 10)
       const initialCall = vi.mocked(DocumentService.getDocuments).mock.calls[0]
       expect(initialCall).toBeDefined()
-      expect(initialCall?.[0]?.limit).toBeUndefined()
+      expect(initialCall?.[0]?.limit).toBe(10)
     })
 
-    it('검색 시에도 limit 파라미터가 제거되어야 함', async () => {
+    it('검색 시에도 limit 파라미터가 유지되어야 함', async () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
@@ -1000,12 +1000,12 @@ describe('useDocumentsController', () => {
           vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
         ]
         expect(lastCall).toBeDefined()
-        expect(lastCall?.[0]?.limit).toBeUndefined()
+        expect(lastCall?.[0]?.limit).toBe(10)
         expect(lastCall?.[0]?.q).toBe('document')
       }, { timeout: 1000 })
     })
 
-    it('정렬 변경 시에도 limit 파라미터가 제거되어야 함', async () => {
+    it('정렬 변경 시에도 limit 파라미터가 유지되어야 함', async () => {
       const { result } = renderHook(() => useDocumentsController())
 
       await waitFor(() => {
@@ -1020,7 +1020,7 @@ describe('useDocumentsController', () => {
         vi.mocked(DocumentService.getDocuments).mock.calls.length - 1
       ]
       expect(lastCall).toBeDefined()
-      expect(lastCall?.[0]?.limit).toBeUndefined()
+      expect(lastCall?.[0]?.limit).toBe(10)
     })
   })
 })

@@ -50,10 +50,9 @@ export const useDocumentsController = () => {
       }
       setError(null);
 
-      // DocumentService를 사용하여 모든 문서 가져오기 (문서 라이브러리용)
-      // limit을 지정하지 않아 모든 문서를 가져옴
+      // DocumentService를 사용하여 문서 가져오기 (문서 라이브러리용)
+      // 사용자가 선택한 limit 값을 백엔드에 전달
       const queryParams = { ...params };
-      delete queryParams.limit; // 모든 문서를 가져오기 위해 limit 제거
 
       // 검색어를 params에 추가 (백엔드가 처리)
       if (searchQuery.trim()) {
