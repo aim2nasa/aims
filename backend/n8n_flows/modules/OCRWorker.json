@@ -337,6 +337,12 @@
               "type": "string"
             },
             {
+              "id": "1a2b3c4d-5e6f-7890-abcd-ef1234567890",
+              "name": "ocr.tags",
+              "value": "={{ $json.body.tags }}",
+              "type": "array"
+            },
+            {
               "id": "4bfd1590-ed9d-4055-a4a6-cfcf1de07c60",
               "name": "_id",
               "value": "={{ $('Pasre').item.json.file_id }}",

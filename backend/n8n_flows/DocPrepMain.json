@@ -163,6 +163,12 @@
               "type": "boolean"
             },
             {
+              "id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+              "name": "meta.tags",
+              "value": "={{ $json.body.tags }}",
+              "type": "array"
+            },
+            {
               "id": "dbc183dd-ac7c-4628-b2a2-38b4a0e5ed5f",
               "name": "_id",
               "value": "={{ $('Save File Info').item.json._id }}",
