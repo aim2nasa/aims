@@ -617,9 +617,17 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                     onClick={expandAll}
                     aria-label="전체 펼치기"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M4 2l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="8" cy="3" r="2"/>
+                      <line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                      <line x1="8" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                      <line x1="8" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="4" cy="11" r="1.5"/>
+                      <circle cx="12" cy="11" r="1.5"/>
+                      <circle cx="2" cy="14" r="1"/>
+                      <circle cx="6" cy="14" r="1"/>
+                      <circle cx="10" cy="14" r="1"/>
+                      <circle cx="14" cy="14" r="1"/>
                     </svg>
                   </button>
                 </Tooltip>
@@ -630,8 +638,13 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                     onClick={expandToRepresentatives}
                     aria-label="대표만 보기"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="8" cy="4" r="2.5"/>
+                      <line x1="8" y1="6.5" x2="8" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                      <line x1="8" y1="10" x2="4" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+                      <line x1="8" y1="10" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+                      <circle cx="4" cy="13" r="1" opacity="0.3"/>
+                      <circle cx="12" cy="13" r="1" opacity="0.3"/>
                     </svg>
                   </button>
                 </Tooltip>
@@ -642,9 +655,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                     onClick={collapseAll}
                     aria-label="전체 접기"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 10l4-4 4 4" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M4 14l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <circle cx="8" cy="8" r="3"/>
                     </svg>
                   </button>
                 </Tooltip>
