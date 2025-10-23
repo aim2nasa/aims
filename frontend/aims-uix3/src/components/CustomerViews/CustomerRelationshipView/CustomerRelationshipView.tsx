@@ -75,6 +75,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const [relationships, setRelationships] = useState<PopulatedRelationship[]>([]);
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
 
+  // 검색어 상태
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   // LocalStorage에서 트리 확장 상태 복원
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
     try {
@@ -417,6 +420,66 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return result;
   }, [documentCustomerMap, relationships, resolvedCustomerMap]);
 
+  // 검색어 필터링 및 자동 트리 펼치기
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const newExpandedNodes = new Set<string>(['family', 'corporate']);
+
+    // 가족 그룹 검색
+    Object.entries(structuredData.가족그룹).forEach(([groupId, groupData]) => {
+      const groupKey = `family-${groupId}`;
+
+      // 대표자 이름 확인
+      const representativeName = groupData.representative.personal_info?.name || '';
+      if (representativeName.toLowerCase().includes(query)) {
+        newExpandedNodes.add('family');
+        newExpandedNodes.add(groupKey);
+        return;
+      }
+
+      // 구성원 이름 확인
+      const hasMatch = groupData.members.some(member => {
+        const memberName = member.personal_info?.name || '';
+        return memberName.toLowerCase().includes(query);
+      });
+
+      if (hasMatch) {
+        newExpandedNodes.add('family');
+        newExpandedNodes.add(groupKey);
+      }
+    });
+
+    // 법인 그룹 검색
+    Object.entries(structuredData.법인).forEach(([companyId, groupData]) => {
+      const companyKey = `corporate-${companyId}`;
+
+      // 회사명 확인
+      const companyName = groupData.company.personal_info?.name || '';
+      if (companyName.toLowerCase().includes(query)) {
+        newExpandedNodes.add('corporate');
+        newExpandedNodes.add(companyKey);
+        return;
+      }
+
+      // 직원 이름 확인
+      const hasMatch = groupData.employees.some(employee => {
+        const employeeName = employee.personal_info?.name || '';
+        return employeeName.toLowerCase().includes(query);
+      });
+
+      if (hasMatch) {
+        newExpandedNodes.add('corporate');
+        newExpandedNodes.add(companyKey);
+      }
+    });
+
+    setExpandedNodes(newExpandedNodes);
+  }, [searchQuery, structuredData]);
+
   const toggleNode = useCallback((nodeKey: string) => {
     setExpandedNodes(prev => {
       const newSet = new Set(prev);
@@ -436,6 +499,33 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       onCustomerSelect?.(customerId, customer);
     }
   }, [resolvedCustomerMap, onCustomerSelect]);
+
+  // 검색어 하이라이트 함수
+  const highlightText = useCallback((text: string) => {
+    if (!searchQuery.trim()) {
+      return text;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const lowerText = text.toLowerCase();
+    const index = lowerText.indexOf(query);
+
+    if (index === -1) {
+      return text;
+    }
+
+    const before = text.substring(0, index);
+    const match = text.substring(index, index + searchQuery.length);
+    const after = text.substring(index + searchQuery.length);
+
+    return (
+      <>
+        {before}
+        <span className="search-highlight">{match}</span>
+        {after}
+      </>
+    );
+  }, [searchQuery]);
 
   if (loading) {
     return (
@@ -484,18 +574,44 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
         </div>
       ) : (
         <div className="relationship-tree">
-          {/* 새로고침 버튼 */}
+          {/* 헤더: 제목 + 검색 + 새로고침 */}
           <div className="relationship-header">
             <div className="relationship-title">고객 관계 현황</div>
-            <RefreshButton
-              onClick={async () => {
-                await refresh({ limit: 10000 });
-                await loadRelationshipsData();
-              }}
-              loading={loading}
-              tooltip="관계 데이터 새로고침"
-              size="small"
-            />
+            <div className="relationship-header-actions">
+              <div className="relationship-search">
+                <input
+                  type="text"
+                  className="relationship-search-input"
+                  placeholder="고객 이름 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="고객 이름 검색"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="relationship-search-clear"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="검색어 지우기"
+                  >
+                    <SFSymbol
+                      name="xmark.circle.fill"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                )}
+              </div>
+              <RefreshButton
+                onClick={async () => {
+                  await refresh({ limit: 10000 });
+                  await loadRelationshipsData();
+                }}
+                loading={loading}
+                tooltip="관계 데이터 새로고침"
+                size="small"
+              />
+            </div>
           </div>
           {/* 가족 관계 섹션 */}
           {familyEntries.length > 0 && (
@@ -540,7 +656,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               className="tree-node__label tree-node__label--clickable"
                               onClick={(e) => handleCustomerClick(groupData.representative._id, e)}
                             >
-                              👑 {representativeName} (대표)
+                              👑 {highlightText(representativeName)} (대표)
                             </span>
                             {groupData.relations.length > 0 && (
                               <span
@@ -578,7 +694,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                     className="tree-node__label tree-node__label--clickable"
                                     onClick={(e) => handleCustomerClick(member._id, e)}
                                   >
-                                    {member.personal_info?.name || '이름없음'}
+                                    {highlightText(member.personal_info?.name || '이름없음')}
                                   </span>
                                 </div>
                               ))}
@@ -672,7 +788,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 className="tree-node__label tree-node__label--clickable"
                                 onClick={(e) => handleCustomerClick(groupData.company._id, e)}
                               >
-                                {companyName}
+                                {highlightText(companyName)}
                               </span>
                               <span className="tree-node__badge">{groupData.employees.length}</span>
                             </div>
@@ -695,7 +811,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                       className="tree-node__label tree-node__label--clickable"
                                       onClick={(e) => handleCustomerClick(employee._id, e)}
                                     >
-                                      {employee.personal_info?.name || '이름없음'}
+                                      {highlightText(employee.personal_info?.name || '이름없음')}
                                     </span>
                                   </div>
                                 ))}

@@ -16,7 +16,7 @@
  */
 
 /* ==========================================
-   헤더 영역 - Refresh 버튼 포함
+   헤더 영역 - 검색 + Refresh 버튼 포함
    ========================================== */
 
 .relationship-header {
@@ -25,6 +25,7 @@
   justify-content: space-between;
   padding: 12px 16px 8px 16px;
   border-bottom: 1px solid var(--color-border-primary);
+  gap: 12px;
 }
 
 .relationship-title {
@@ -32,6 +33,90 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-family: var(--font-family-system);
+  flex-shrink: 0;
+}
+
+.relationship-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* ==========================================
+   검색 입력란 - macOS 스타일
+   ========================================== */
+
+.relationship-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 200px;
+}
+
+.relationship-search-input {
+  width: 100%;
+  padding: 6px 32px 6px 12px;
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-system);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+  outline: none;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.relationship-search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.relationship-search-input:focus {
+  border-color: var(--color-icon-blue);
+  background-color: var(--color-bg-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.relationship-search-clear {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.relationship-search-clear:hover {
+  color: var(--color-text-secondary);
+}
+
+.relationship-search-clear:active {
+  transform: scale(0.9);
+}
+
+/* ==========================================
+   검색 하이라이트
+   ========================================== */
+
+.search-highlight {
+  background-color: var(--color-highlight-bg);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+html[data-theme="dark"] .search-highlight {
+  background-color: var(--color-highlight-bg-dark);
+  color: var(--color-text-primary);
 }
 
 /* ==========================================

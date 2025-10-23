@@ -52,6 +52,14 @@
   --color-success-text: #16a34a;
   --color-neutral-text: #6b7280;
 
+  /* Search Highlight Colors */
+  --color-highlight-bg: rgba(255, 204, 0, 0.4);
+  --color-highlight-bg-dark: rgba(255, 214, 10, 0.3);
+
+  /* Focus Ring Colors */
+  --color-focus-ring: rgba(0, 122, 255, 0.1);
+  --color-focus-ring-dark: rgba(100, 170, 255, 0.15);
+
   /* === OPACITY VALUES === */
   --opacity-overlay: 0.5;
   --opacity-overlay-strong: 0.75;
