@@ -8,9 +8,10 @@
  * - 자동 스크롤 (최신 로그)
  */
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { ProcessingLog as Log, LOG_CONFIG } from '../types/logTypes'
+import Tooltip from '@/shared/ui/Tooltip'
 import './ProcessingLog.css'
 
 interface ProcessingLogProps {
@@ -20,6 +21,8 @@ interface ProcessingLogProps {
   onClear?: () => void
 }
 
+type SortOrder = 'oldest-first' | 'newest-first'
+
 export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   logs,
   maxHeight = 300,
@@ -27,14 +30,32 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   onClear
 }) => {
   const [isExpanded, setIsExpanded] = useState(true)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('oldest-first') // 기본값: 오래된순 (위→아래로 최신 추가)
   const logContainerRef = useRef<HTMLDivElement>(null)
+  const prevLogsLengthRef = useRef(logs.length)
+
+  // 정렬된 로그 목록
+  const sortedLogs = useMemo(() => {
+    if (sortOrder === 'newest-first') {
+      return [...logs] // 이미 최신순으로 추가되므로 그대로
+    } else {
+      return [...logs].reverse() // 오래된순으로 뒤집기
+    }
+  }, [logs, sortOrder])
 
   // 새 로그 추가 시 자동 스크롤
   useEffect(() => {
-    if (isExpanded && logContainerRef.current) {
-      logContainerRef.current.scrollTop = 0 // 최신 로그가 위에 있으므로 top으로 스크롤
+    if (isExpanded && logContainerRef.current && logs.length > prevLogsLengthRef.current) {
+      if (sortOrder === 'oldest-first') {
+        // 오래된순: 맨 아래로 스크롤 (최신 로그가 아래에 추가됨)
+        logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
+      } else {
+        // 최신순: 맨 위로 스크롤 (최신 로그가 위에 있음)
+        logContainerRef.current.scrollTop = 0
+      }
     }
-  }, [logs.length, isExpanded])
+    prevLogsLengthRef.current = logs.length
+  }, [logs.length, isExpanded, sortOrder])
 
   const formatTime = (date: Date): string => {
     const hours = date.getHours().toString().padStart(2, '0')
@@ -50,11 +71,11 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   return (
     <div className={`processing-log ${className}`}>
       {/* Header */}
-      <div
-        className="processing-log__header"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="processing-log__header-left">
+      <div className="processing-log__header">
+        <div
+          className="processing-log__header-left"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <SFSymbol
             name={isExpanded ? 'chevron.down' : 'chevron.right'}
             size={SFSymbolSize.CAPTION_1}
@@ -64,20 +85,43 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           <span className="processing-log__title">처리 로그</span>
           <span className="processing-log__count">{logs.length}</span>
         </div>
-        <button
-          className="processing-log__clear"
-          onClick={(e) => {
-            e.stopPropagation()
-            onClear?.()
-          }}
-          aria-label="로그 지우기"
-        >
-          <SFSymbol
-            name="trash"
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.REGULAR}
-          />
-        </button>
+        <div className="processing-log__header-right">
+          <Tooltip content={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}>
+            <div style={{ display: 'inline-block' }}>
+              <button
+                className="processing-log__sort"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSortOrder(prev => prev === 'oldest-first' ? 'newest-first' : 'oldest-first')
+                }}
+                aria-label={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}
+              >
+                <span className="processing-log__sort-icon">
+                  {sortOrder === 'oldest-first' ? '↓' : '↑'}
+                </span>
+              </button>
+            </div>
+          </Tooltip>
+          <Tooltip content="로그 지우기">
+            <div style={{ display: 'inline-block' }}>
+              <button
+                className="processing-log__clear"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClear?.()
+                }}
+                aria-label="로그 지우기"
+              >
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.FOOTNOTE}
+                  weight={SFSymbolWeight.SEMIBOLD}
+                  decorative={true}
+                />
+              </button>
+            </div>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Log List */}
@@ -87,7 +131,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           className="processing-log__container"
           style={{ maxHeight: `${maxHeight}px` }}
         >
-          {logs.map((log) => {
+          {sortedLogs.map((log) => {
             const config = LOG_CONFIG[log.level]
 
             return (
