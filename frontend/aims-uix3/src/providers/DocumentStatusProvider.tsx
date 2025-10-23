@@ -43,6 +43,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(10)
 
+  // 🍎 Fetch Limit State (가져올 문서 개수)
+  const [fetchLimit, setFetchLimit] = useState<number>(100)
+
   /**
    * 문서 목록 가져오기
    */
@@ -54,7 +57,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
         setError(null)
 
-        const data = await DocumentStatusService.getRecentDocuments(1000)
+        const data = await DocumentStatusService.getRecentDocuments(fetchLimit)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
@@ -108,7 +111,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    []
+    [fetchLimit]
   )
 
   /**
@@ -270,6 +273,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1) // Reset to first page
   }, [])
 
+  // 🍎 Fetch Limit Handler
+  const handleFetchLimitChange = useCallback((limit: number) => {
+    setFetchLimit(limit)
+    setCurrentPage(1) // Reset to first page
+  }, [])
+
   /**
    * 특정 문서의 고객 연결 정보를 업데이트
    */
@@ -329,6 +338,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1)
   }, [statusFilter, searchTerm])
 
+  // 🍎 fetchLimit 변경 시 문서 다시 가져오기
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    fetchDocuments(false)
+  }, [fetchLimit, fetchDocuments])
+
   // State 객체
   const state: DocumentStatusState = useMemo(
     () => ({
@@ -345,7 +360,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       currentPage,
       itemsPerPage,
       totalPages,
-      paginatedDocuments
+      paginatedDocuments,
+      fetchLimit
     }),
     [
       documents,
@@ -361,7 +377,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       currentPage,
       itemsPerPage,
       totalPages,
-      paginatedDocuments
+      paginatedDocuments,
+      fetchLimit
     ]
   )
 
@@ -386,6 +403,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setItemsPerPage,
       handlePageChange,
       handleLimitChange,
+      setFetchLimit,
+      handleFetchLimitChange,
       updateDocumentCustomerRelation
     }),
     [
@@ -395,6 +414,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       checkApiHealth,
       handlePageChange,
       handleLimitChange,
+      handleFetchLimitChange,
       updateDocumentCustomerRelation
     ]
   )

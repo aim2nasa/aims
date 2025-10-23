@@ -25,6 +25,8 @@ export interface DocumentStatusState {
   itemsPerPage: number
   totalPages: number
   paginatedDocuments: Document[]
+  // 🍎 Fetch Limit State
+  fetchLimit: number
 }
 
 /**
@@ -50,6 +52,9 @@ export interface DocumentStatusActions {
   setItemsPerPage: (limit: number) => void
   handlePageChange: (page: number) => void
   handleLimitChange: (limit: number) => void
+  // 🍎 Fetch Limit Actions
+  setFetchLimit: (limit: number) => void
+  handleFetchLimitChange: (limit: number) => void
   updateDocumentCustomerRelation: (
     documentId: string,
     relation: DocumentCustomerRelation | undefined

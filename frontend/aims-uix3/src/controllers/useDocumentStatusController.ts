@@ -201,6 +201,9 @@ export const useDocumentStatusController = () => {
     itemsPerPage: state.itemsPerPage,
     paginatedDocuments: state.paginatedDocuments,
 
+    // 🍎 Fetch Limit State
+    fetchLimit: state.fetchLimit,
+
     // Context Actions
     setStatusFilter: actions.setStatusFilter,
     togglePolling: actions.togglePolling,
@@ -209,6 +212,9 @@ export const useDocumentStatusController = () => {
     // 🍎 Pagination Actions
     handlePageChange: actions.handlePageChange,
     handleLimitChange: actions.handleLimitChange,
+
+    // 🍎 Fetch Limit Actions
+    handleFetchLimitChange: actions.handleFetchLimitChange,
 
     // Document Detail Modal State & Handlers
     selectedDocument,

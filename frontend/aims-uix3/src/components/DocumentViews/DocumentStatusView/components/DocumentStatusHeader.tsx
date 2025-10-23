@@ -21,6 +21,9 @@ interface DocumentStatusHeaderProps {
   documentsCount: number
   filteredCount: number
   lastUpdated: Date | null
+  // 🍎 Fetch Limit Props
+  fetchLimit: number
+  onFetchLimitChange: (limit: number) => void
 }
 
 const FILTER_OPTIONS: DropdownOption[] = [
@@ -29,6 +32,15 @@ const FILTER_OPTIONS: DropdownOption[] = [
   { value: 'processing', label: '처리중' },
   { value: 'error', label: '오류' },
   { value: 'pending', label: '대기' },
+]
+
+const FETCH_LIMIT_OPTIONS: DropdownOption[] = [
+  { value: '50', label: '50개' },
+  { value: '100', label: '100개' },
+  { value: '200', label: '200개' },
+  { value: '300', label: '300개' },
+  { value: '400', label: '400개' },
+  { value: '500', label: '500개' },
 ]
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
@@ -40,7 +52,9 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   onFilterChange,
   documentsCount,
   filteredCount,
-  lastUpdated
+  lastUpdated,
+  fetchLimit,
+  onFetchLimitChange
 }) => {
 
   /**
@@ -73,22 +87,45 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
     [onFilterChange]
   )
 
+  const handleFetchLimitChange = useCallback(
+    (value: string) => {
+      onFetchLimitChange(Number(value))
+    },
+    [onFetchLimitChange]
+  )
+
   const lastUpdatedLabel = useMemo(() => formatLastUpdated(lastUpdated), [formatLastUpdated, lastUpdated])
 
   return (
     <div className="document-status-header">
-      {/* 왼쪽: 필터 드롭다운 + 결과 카운트 */}
+      {/* 왼쪽: 필터 드롭다운 + 가져오기 개수 드롭다운 + 결과 카운트 */}
       <div className="header-left">
-        <Dropdown
-          value={statusFilter}
-          options={FILTER_OPTIONS}
-          onChange={handleFilterChange}
-          aria-label="상태 필터"
-          width={100}
-        />
-        <span className="result-count">
-          {statusFilter === 'all' ? documentsCount : filteredCount}개
-        </span>
+        <div className="filter-group">
+          <span className="filter-label">상태 필터:</span>
+          <Dropdown
+            value={statusFilter}
+            options={FILTER_OPTIONS}
+            onChange={handleFilterChange}
+            aria-label="상태 필터"
+            width={100}
+          />
+        </div>
+        <div className="filter-group">
+          <span className="filter-label">최대 표시:</span>
+          <Dropdown
+            value={String(fetchLimit)}
+            options={FETCH_LIMIT_OPTIONS}
+            onChange={handleFetchLimitChange}
+            aria-label="가져올 문서 개수"
+            width={100}
+          />
+        </div>
+        <div className="filter-group">
+          <span className="filter-label">결과:</span>
+          <span className="result-count">
+            {statusFilter === 'all' ? documentsCount : filteredCount}개
+          </span>
+        </div>
       </div>
 
       {/* 중앙: 여백 */}
