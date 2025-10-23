@@ -45,6 +45,43 @@
 }
 
 /* ==========================================
+   트리 전체 펼치기/접기 버튼
+   ========================================== */
+
+.relationship-tree-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tree-control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.6;
+}
+
+.tree-control-button:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-icon-blue);
+  opacity: 1;
+}
+
+.tree-control-button:active {
+  transform: scale(0.92);
+  opacity: 0.8;
+}
+
+/* ==========================================
    검색 입력란 - macOS 스타일
    ========================================== */
 

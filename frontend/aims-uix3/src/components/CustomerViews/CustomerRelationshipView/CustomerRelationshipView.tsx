@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import RefreshButton from '../../RefreshButton/RefreshButton';
+import Tooltip from '@/shared/ui/Tooltip';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
@@ -492,6 +493,35 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
   }, []);
 
+  // 전체 펼치기
+  const expandAll = useCallback(() => {
+    const allNodes = new Set<string>(['family', 'corporate']);
+
+    // 가족 그룹 노드 추가
+    Object.keys(structuredData.가족그룹).forEach(groupId => {
+      allNodes.add(`family-${groupId}`);
+    });
+
+    // 법인 그룹 노드 추가
+    Object.keys(structuredData.법인).forEach(companyId => {
+      allNodes.add(`corporate-${companyId}`);
+    });
+
+    setExpandedNodes(allNodes);
+  }, [structuredData]);
+
+  // 전체 접기
+  const collapseAll = useCallback(() => {
+    setExpandedNodes(new Set());
+  }, []);
+
+  // 대표만 보기 (가족/법인 루트만 펼침, 각 그룹은 접힌 상태)
+  const expandToRepresentatives = useCallback(() => {
+    // 가족/법인 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
+    const representativeNodes = new Set<string>(['family', 'corporate']);
+    setExpandedNodes(representativeNodes);
+  }, []);
+
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const customer = resolvedCustomerMap.get(customerId);
@@ -578,6 +608,47 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <div className="relationship-header">
             <div className="relationship-title">고객 관계 현황</div>
             <div className="relationship-header-actions">
+              {/* 트리 전체 펼치기/접기 버튼 */}
+              <div className="relationship-tree-controls">
+                <Tooltip content="전체 펼치기">
+                  <button
+                    type="button"
+                    className="tree-control-button"
+                    onClick={expandAll}
+                    aria-label="전체 펼치기"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M4 2l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+                <Tooltip content="대표만 보기">
+                  <button
+                    type="button"
+                    className="tree-control-button"
+                    onClick={expandToRepresentatives}
+                    aria-label="대표만 보기"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+                <Tooltip content="전체 접기">
+                  <button
+                    type="button"
+                    className="tree-control-button"
+                    onClick={collapseAll}
+                    aria-label="전체 접기"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 10l4-4 4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M4 14l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+              </div>
               <div className="relationship-search">
                 <input
                   type="text"
