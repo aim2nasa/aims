@@ -505,6 +505,12 @@
               "type": "boolean"
             },
             {
+              "id": "f8c3a9d1-2e4b-4c5f-a6d7-8e9f0a1b2c3d",
+              "name": "tags",
+              "value": "={{ $json.body.tags }}",
+              "type": "array"
+            },
+            {
               "id": "e0e5fdab-2cb6-42bf-abd4-b2a880ffcb3f",
               "name": "error",
               "value": "={{ $json.error }}",

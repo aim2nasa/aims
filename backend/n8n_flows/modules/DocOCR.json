@@ -124,6 +124,12 @@
               "type": "string"
             },
             {
+              "id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+              "name": "tags",
+              "value": "={{ $json.body.tags }}",
+              "type": "array"
+            },
+            {
               "id": "036c0855-0625-4fc1-b215-829de0cca462",
               "name": "full_text",
               "value": "={{ $('Normalize DocOCR Response').item.json.full_text }}",
@@ -144,7 +150,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $json;\n\n// 기본값 (정상 응답)\nlet error = false;\nlet status = 200;\nlet userMessage = \"OCR 성공\";\nlet confidence = response.body.confidence ?? null;\nlet summary = response.body.summary ?? null;\nlet full_text = response.body.text ?? null;\nlet num_pages = response.body.numBilledPages ?? null;\n\n// 에러 구조가 들어온 경우 (객체/true)\nif (response.error && response.error !== false) {\n  error = true;\n  status = response.status ?? response.error.status ?? 500;\n  let msg = response.error.message ?? response.userMessage ?? \"❌ OCR 처리 실패\";\n  try {\n    const match = msg.match(/{.*}/);\n    if (match) {\n      const parsed = JSON.parse(match[0]);\n      if (parsed.error && parsed.error.message) {\n        msg = parsed.error.message;\n      }\n    }\n  } catch(e) {}\n  userMessage = msg;\n\n  // 에러일 땐 데이터 필드만 null로 (정상값 절대 날리지 않음)\n  confidence = null;\n  summary = null;\n  full_text = null;\n  num_pages = null;\n}\n\nreturn [{\n  json: {\n    error,        // boolean\n    status,       // int\n    userMessage,  // string\n    confidence,   // float|null\n    summary,      // string|null\n    full_text,    // string|null\n    num_pages,    // int|null\n\n    // 반드시 pages 필드 포함!\n    pages: response.body.pages ?? (response.body.metadata?.pages ?? []),\n  }\n}];\n"
+        "jsCode": "const response = $json;\n\n// 기본값 (정상 응답)\nlet error = false;\nlet status = 200;\nlet userMessage = \"OCR 성공\";\nlet confidence = response.body.confidence ?? null;\nlet summary = response.body.summary ?? null;\nlet tags = response.body.tags ?? [];\nlet full_text = response.body.text ?? null;\nlet num_pages = response.body.numBilledPages ?? null;\n\n// 에러 구조가 들어온 경우 (객체/true)\nif (response.error && response.error !== false) {\n  error = true;\n  status = response.status ?? response.error.status ?? 500;\n  let msg = response.error.message ?? response.userMessage ?? \"❌ OCR 처리 실패\";\n  try {\n    const match = msg.match(/{.*}/);\n    if (match) {\n      const parsed = JSON.parse(match[0]);\n      if (parsed.error && parsed.error.message) {\n        msg = parsed.error.message;\n      }\n    }\n  } catch(e) {}\n  userMessage = msg;\n\n  // 에러일 땐 데이터 필드만 null로 (정상값 절대 날리지 않음)\n  confidence = null;\n  summary = null;\n  tags = [];\n  full_text = null;\n  num_pages = null;\n}\n\nreturn [{\n  json: {\n    error,        // boolean\n    status,       // int\n    userMessage,  // string\n    confidence,   // float|null\n    summary,      // string|null\n    tags,         // array\n    full_text,    // string|null\n    num_pages,    // int|null\n\n    // 반드시 pages 필드 포함!\n    pages: response.body.pages ?? (response.body.metadata?.pages ?? []),\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
