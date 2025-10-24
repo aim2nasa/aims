@@ -372,9 +372,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }
 
-  // 🍎 View 초기 로딩은 controller에서 처리하므로 여기서는 아무것도 하지 않음
-  // NOTE: useDocumentsController의 useEffect가 초기 로딩을 담당
-  // View에서 추가 로딩을 하면 정렬이 덮어씌워지는 문제 발생
+  // 🍎 View가 표시될 때마다 문서 목록 새로고침
+  React.useEffect(() => {
+    if (visible) {
+      loadDocuments(searchParams, false);
+    }
+  }, [visible]);
 
   return (
     <CenterPaneView
