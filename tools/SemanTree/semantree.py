@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.4.2 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.4.3 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -162,6 +162,9 @@ class DocumentViewer:
 
         # 기타 분류 최소 기준
         self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
+
+        # 다중 선택 모드
+        self.multi_select_mode: tk.StringVar = tk.StringVar(value="AND")  # AND 또는 OR
 
         # UI 구성
         self.setup_ui()
@@ -263,6 +266,15 @@ class DocumentViewer:
         ttk.Label(date_row2, text="(예: 2024-01-01)", font=("Arial", 8)).pack(side=tk.LEFT, padx=5)
         ttk.Button(date_row2, text="적용", width=6, command=self.apply_date_filter).pack(side=tk.RIGHT)
 
+        # 좌측: 다중 선택 모드
+        multi_select_frame = ttk.LabelFrame(left_frame, text="다중 선택 모드", padding="10")
+        multi_select_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        ttk.Radiobutton(multi_select_frame, text="AND (모든 태그 포함)", variable=self.multi_select_mode,
+                       value="AND", command=self.on_multi_select_mode_change).pack(anchor=tk.W)
+        ttk.Radiobutton(multi_select_frame, text="OR (하나라도 포함)", variable=self.multi_select_mode,
+                       value="OR", command=self.on_multi_select_mode_change).pack(anchor=tk.W)
+
         # 좌측 중앙: 트리뷰
         tree_frame = ttk.Frame(left_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -271,8 +283,8 @@ class DocumentViewer:
         tree_scrollbar = ttk.Scrollbar(tree_frame)
         tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # 트리뷰 (태그별 그룹)
-        self.tag_tree = ttk.Treeview(tree_frame, show="tree", yscrollcommand=tree_scrollbar.set)
+        # 트리뷰 (태그별 그룹) - 다중 선택 가능
+        self.tag_tree = ttk.Treeview(tree_frame, show="tree", yscrollcommand=tree_scrollbar.set, selectmode='extended')
         tree_scrollbar.config(command=self.tag_tree.yview)
         self.tag_tree.pack(fill=tk.BOTH, expand=True)
 
@@ -711,12 +723,25 @@ class DocumentViewer:
         except ValueError:
             messagebox.showwarning("입력 오류", "숫자를 입력해주세요.")
 
+    def on_multi_select_mode_change(self):
+        """다중 선택 모드 변경 시 (AND/OR)"""
+        selected = self.tag_tree.selection()
+        if len(selected) > 1:
+            # 현재 다중 선택 상태라면 즉시 문서 목록 업데이트
+            self.display_documents_by_multiple_tags(selected)
+
     def on_tree_select(self, event):
         """트리 노드 선택 시 이벤트 핸들러"""
         selected = self.tag_tree.selection()
         if not selected:
             return
 
+        # 다중 선택 처리
+        if len(selected) > 1:
+            self.display_documents_by_multiple_tags(selected)
+            return
+
+        # 단일 선택 처리
         # 선택된 노드 정보 가져오기
         item = self.tag_tree.item(selected[0])
         values = item["values"]
@@ -740,6 +765,41 @@ class DocumentViewer:
         elif node_type == "other":
             # 기타 폴더 선택: 문서 목록 표시 안 함 (단순 묶음 폴더)
             pass
+
+    def display_documents_by_multiple_tags(self, selected_items):
+        """다중 태그 선택 시 문서 표시 (AND/OR 모드)"""
+        # 선택된 태그들 추출 (tag 노드만)
+        selected_tags = []
+        for item_id in selected_items:
+            item = self.tag_tree.item(item_id)
+            values = item["values"]
+            if values and len(values) >= 2 and values[0] == "tag":
+                selected_tags.append(values[1])
+
+        if not selected_tags:
+            return
+
+        # AND/OR 모드에 따라 문서 필터링
+        mode = self.multi_select_mode.get()
+        matching_docs = []
+
+        for doc in self.documents:
+            # 문서의 모든 태그 수집
+            meta_tags = doc.get("meta", {}).get("tags") or []
+            ocr_tags = doc.get("ocr", {}).get("tags") or []
+            doc_tags = set(meta_tags + ocr_tags)
+
+            if mode == "AND":
+                # AND: 선택된 모든 태그를 포함해야 함
+                if all(tag in doc_tags for tag in selected_tags):
+                    matching_docs.append(doc)
+            else:  # OR
+                # OR: 선택된 태그 중 하나라도 포함하면 됨
+                if any(tag in doc_tags for tag in selected_tags):
+                    matching_docs.append(doc)
+
+        # 문서 리스트 표시
+        self.display_document_list_from_docs(matching_docs)
 
     def display_documents_by_tag(self, tag, filter_key=""):
         """태그별 문서 표시 (필터 적용 가능)"""
