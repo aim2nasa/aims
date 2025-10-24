@@ -98,8 +98,9 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
         <div className="processing-log__header-left">
           <span className="processing-log__title">처리 로그</span>
           <span className="processing-log__count">{logs.length}</span>
+          <span className="processing-log__separator">·</span>
           <span className="processing-log__sort-status">
-            {sortOrder === 'oldest-first' ? '오래된순 ↓' : '최신순 ↑'}
+            {sortOrder === 'oldest-first' ? '오래된순' : '최신순'}
           </span>
         </div>
         <div className="processing-log__header-right">
