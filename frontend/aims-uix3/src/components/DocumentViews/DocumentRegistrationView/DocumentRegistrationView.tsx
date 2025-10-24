@@ -142,8 +142,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
-  // 📝 처리 로그 상태
-  const [processingLogs, setProcessingLogs] = useState<Log[]>([])
+  // 📝 처리 로그 상태 (sessionStorage에서 복원)
+  const getInitialLogs = (): Log[] => {
+    try {
+      const LOGS_KEY = 'document-upload-logs'
+      const saved = sessionStorage.getItem(LOGS_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Log[]
+        // timestamp를 Date 객체로 변환
+        return parsed.map(log => ({
+          ...log,
+          timestamp: new Date(log.timestamp)
+        }))
+      }
+    } catch (error) {
+      console.warn('[DocumentRegistrationView] Failed to restore logs:', error)
+    }
+    return []
+  }
+
+  const [processingLogs, setProcessingLogs] = useState<Log[]>(getInitialLogs)
   const logCounterRef = useRef(0) // 로그 카운터 (고유 ID 보장)
 
   /**
@@ -193,6 +211,18 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.warn('[DocumentRegistrationView] Failed to save state:', error)
     }
   }, [uploadState, SESSION_KEY])
+
+  /**
+   * 처리 로그를 sessionStorage에 저장
+   */
+  useEffect(() => {
+    try {
+      const LOGS_KEY = 'document-upload-logs'
+      sessionStorage.setItem(LOGS_KEY, JSON.stringify(processingLogs))
+    } catch (error) {
+      console.warn('[DocumentRegistrationView] Failed to save logs:', error)
+    }
+  }, [processingLogs])
 
   /**
    * 고유 ID 생성
