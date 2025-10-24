@@ -198,13 +198,13 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                     style={{ color: config.color }}
                   >
                     {log.message}
+                    {log.details && (
+                      <span className="processing-log__details">
+                        {log.details}
+                      </span>
+                    )}
                   </span>
                 </div>
-                {log.details && (
-                  <div className="processing-log__details">
-                    {log.details}
-                  </div>
-                )}
               </div>
             )
           })}

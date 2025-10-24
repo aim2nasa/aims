@@ -144,12 +144,16 @@
 /* Log Item */
 .processing-log__item {
   display: flex;
-  flex-direction: column;
-  padding: 6px 8px;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 8px;
   background: var(--color-section-item-bg);
   border-radius: 6px;
   transition: background-color 0.15s ease;
   animation: logFadeIn 0.3s ease-out;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 32px;
 }
 
 @keyframes logFadeIn {
@@ -171,6 +175,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .processing-log__icon {
@@ -198,8 +205,14 @@
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   flex: 1;
-  line-height: 1.4;
+  line-height: 1.6;
   letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .processing-log__details {
@@ -207,11 +220,13 @@
   font-weight: 400;
   font-family: "SF Mono", "Consolas", monospace;
   color: var(--color-text-tertiary);
-  margin-top: 4px;
-  margin-left: 36px;
-  padding: 4px 6px;
+  margin-left: 8px;
+  padding: 2px 6px;
   background: var(--color-section-details-bg);
   border-radius: 4px;
-  line-height: 1.5;
-  overflow-wrap: break-word;
+  display: inline;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
 }
