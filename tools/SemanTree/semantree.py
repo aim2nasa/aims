@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.2.0 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.2.1 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -146,6 +146,9 @@ class DocumentViewer:
         # 태그 트리 데이터
         self.tag_to_docs: Dict[str, List[str]] = {}  # {tag: [doc_id1, doc_id2, ...]}
         self.doc_id_to_doc: Dict[str, Dict[str, Any]] = {}  # {doc_id: document}
+
+        # 트리 분류 기준
+        self.tree_mode = tk.StringVar(value="by_tag")  # "by_tag", "by_year", "by_month"
 
         # UI 구성
         self.setup_ui()
@@ -185,8 +188,19 @@ class DocumentViewer:
         left_top_frame = ttk.Frame(left_frame, padding="5")
         left_top_frame.pack(fill=tk.X)
 
-        ttk.Label(left_top_frame, text="🌲 태그 트리", font=("Arial", 11, "bold")).pack(side=tk.LEFT, padx=5)
-        ttk.Button(left_top_frame, text="트리 새로고침", command=self.reload_tag_tree).pack(side=tk.RIGHT, padx=5)
+        ttk.Label(left_top_frame, text="🌲 문서 트리", font=("Arial", 11, "bold")).pack(side=tk.LEFT, padx=5)
+        ttk.Button(left_top_frame, text="새로고침", command=self.reload_tag_tree).pack(side=tk.RIGHT, padx=5)
+
+        # 좌측: 분류 기준 선택
+        mode_frame = ttk.LabelFrame(left_frame, text="분류 기준", padding="10")
+        mode_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        ttk.Radiobutton(mode_frame, text="태그별", variable=self.tree_mode,
+                       value="by_tag", command=self.on_mode_change).pack(anchor=tk.W)
+        ttk.Radiobutton(mode_frame, text="연도별 → 태그별", variable=self.tree_mode,
+                       value="by_year", command=self.on_mode_change).pack(anchor=tk.W)
+        ttk.Radiobutton(mode_frame, text="월별 → 태그별", variable=self.tree_mode,
+                       value="by_month", command=self.on_mode_change).pack(anchor=tk.W)
 
         # 좌측 중앙: 트리뷰
         tree_frame = ttk.Frame(left_frame)
@@ -273,50 +287,178 @@ class DocumentViewer:
 
     def build_tag_tree(self):
         """태그 트리 데이터 구축"""
-        from collections import Counter
-
-        # 초기화
-        self.tag_to_docs = {}
+        # doc_id_to_doc 맵핑 구축
         self.doc_id_to_doc = {}
-
-        # 모든 문서의 태그 수집
         for doc in self.documents:
             doc_id = str(doc["_id"])
             self.doc_id_to_doc[doc_id] = doc
-
-            # meta.tags 수집
-            meta_tags = doc.get("meta", {}).get("tags") or []
-            # ocr.tags 수집
-            ocr_tags = doc.get("ocr", {}).get("tags") or []
-
-            # 모든 태그 합치기 (중복 제거)
-            all_tags = list(set(meta_tags + ocr_tags))
-
-            for tag in all_tags:
-                if tag not in self.tag_to_docs:
-                    self.tag_to_docs[tag] = []
-                self.tag_to_docs[tag].append(doc_id)
 
         # 트리뷰 업데이트
         self.update_tag_tree_view()
 
     def update_tag_tree_view(self):
-        """태그 트리뷰 갱신"""
+        """태그 트리뷰 갱신 (모드에 따라)"""
         # 기존 트리 클리어
         for item in self.tag_tree.get_children():
             self.tag_tree.delete(item)
 
+        mode = self.tree_mode.get()
+
+        if mode == "by_tag":
+            self.build_tree_by_tag()
+        elif mode == "by_year":
+            self.build_tree_by_year()
+        elif mode == "by_month":
+            self.build_tree_by_month()
+
+    def build_tree_by_tag(self):
+        """태그별 트리 구축 (Phase 1)"""
+        tag_to_docs = {}
+
+        # 모든 문서의 태그 수집
+        for doc in self.documents:
+            doc_id = str(doc["_id"])
+
+            # meta.tags + ocr.tags
+            meta_tags = doc.get("meta", {}).get("tags") or []
+            ocr_tags = doc.get("ocr", {}).get("tags") or []
+            all_tags = list(set(meta_tags + ocr_tags))
+
+            for tag in all_tags:
+                if tag not in tag_to_docs:
+                    tag_to_docs[tag] = []
+                tag_to_docs[tag].append(doc_id)
+
         # 빈도수 높은 순으로 정렬
-        sorted_tags = sorted(self.tag_to_docs.items(), key=lambda x: len(x[1]), reverse=True)
+        sorted_tags = sorted(tag_to_docs.items(), key=lambda x: len(x[1]), reverse=True)
 
         # 트리에 노드 삽입
         for tag, doc_ids in sorted_tags:
             count = len(doc_ids)
-            self.tag_tree.insert("", "end", text=f"📁 {tag} ({count}건)", values=(tag,))
+            node_id = self.tag_tree.insert("", "end", text=f"📁 {tag} ({count}건)",
+                                          values=("tag", tag, "", ""))
+
+    def build_tree_by_year(self):
+        """연도별 → 태그별 트리 구축"""
+        from collections import defaultdict
+
+        # 연도별로 문서 그룹화
+        year_to_docs = defaultdict(list)
+
+        for doc in self.documents:
+            doc_id = str(doc["_id"])
+            uploaded_at = doc.get("upload", {}).get("uploaded_at")
+
+            if uploaded_at:
+                if isinstance(uploaded_at, datetime):
+                    year = uploaded_at.year
+                else:
+                    # 문자열인 경우 파싱
+                    try:
+                        year = int(str(uploaded_at)[:4])
+                    except:
+                        year = "알 수 없음"
+            else:
+                year = "알 수 없음"
+
+            year_to_docs[year].append(doc_id)
+
+        # 연도 정렬 (최신순)
+        sorted_years = sorted(year_to_docs.keys(), reverse=True, key=lambda x: x if isinstance(x, int) else 0)
+
+        # 연도별 노드 생성
+        for year in sorted_years:
+            doc_ids = year_to_docs[year]
+            year_count = len(doc_ids)
+            year_node = self.tag_tree.insert("", "end", text=f"📅 {year}년 ({year_count}건)",
+                                            values=("year", str(year), "", ""))
+
+            # 해당 연도의 문서들에서 태그 수집
+            tag_to_docs_in_year = defaultdict(list)
+            for doc_id in doc_ids:
+                doc = self.doc_id_to_doc.get(doc_id)
+                if not doc:
+                    continue
+
+                meta_tags = doc.get("meta", {}).get("tags") or []
+                ocr_tags = doc.get("ocr", {}).get("tags") or []
+                all_tags = list(set(meta_tags + ocr_tags))
+
+                for tag in all_tags:
+                    tag_to_docs_in_year[tag].append(doc_id)
+
+            # 태그별 하위 노드 생성 (빈도수 높은 순)
+            sorted_tags = sorted(tag_to_docs_in_year.items(), key=lambda x: len(x[1]), reverse=True)
+            for tag, tag_doc_ids in sorted_tags:
+                tag_count = len(tag_doc_ids)
+                self.tag_tree.insert(year_node, "end", text=f"📁 {tag} ({tag_count}건)",
+                                    values=("tag", tag, str(year), ""))
+
+    def build_tree_by_month(self):
+        """월별 → 태그별 트리 구축"""
+        from collections import defaultdict
+
+        # 연월별로 문서 그룹화
+        month_to_docs = defaultdict(list)
+
+        for doc in self.documents:
+            doc_id = str(doc["_id"])
+            uploaded_at = doc.get("upload", {}).get("uploaded_at")
+
+            if uploaded_at:
+                if isinstance(uploaded_at, datetime):
+                    month_key = f"{uploaded_at.year}-{uploaded_at.month:02d}"
+                else:
+                    # 문자열인 경우 파싱
+                    try:
+                        month_key = str(uploaded_at)[:7]  # "2024-01"
+                    except:
+                        month_key = "알 수 없음"
+            else:
+                month_key = "알 수 없음"
+
+            month_to_docs[month_key].append(doc_id)
+
+        # 연월 정렬 (최신순)
+        sorted_months = sorted([m for m in month_to_docs.keys() if m != "알 수 없음"], reverse=True)
+        if "알 수 없음" in month_to_docs:
+            sorted_months.append("알 수 없음")
+
+        # 연월별 노드 생성
+        for month in sorted_months:
+            doc_ids = month_to_docs[month]
+            month_count = len(doc_ids)
+            month_node = self.tag_tree.insert("", "end", text=f"📅 {month} ({month_count}건)",
+                                             values=("month", month, "", ""))
+
+            # 해당 월의 문서들에서 태그 수집
+            tag_to_docs_in_month = defaultdict(list)
+            for doc_id in doc_ids:
+                doc = self.doc_id_to_doc.get(doc_id)
+                if not doc:
+                    continue
+
+                meta_tags = doc.get("meta", {}).get("tags") or []
+                ocr_tags = doc.get("ocr", {}).get("tags") or []
+                all_tags = list(set(meta_tags + ocr_tags))
+
+                for tag in all_tags:
+                    tag_to_docs_in_month[tag].append(doc_id)
+
+            # 태그별 하위 노드 생성 (빈도수 높은 순)
+            sorted_tags = sorted(tag_to_docs_in_month.items(), key=lambda x: len(x[1]), reverse=True)
+            for tag, tag_doc_ids in sorted_tags:
+                tag_count = len(tag_doc_ids)
+                self.tag_tree.insert(month_node, "end", text=f"📁 {tag} ({tag_count}건)",
+                                    values=("tag", tag, month, ""))
 
     def reload_tag_tree(self):
         """태그 트리 새로고침"""
         self.reload_documents()
+
+    def on_mode_change(self):
+        """분류 기준 변경 시"""
+        self.update_tag_tree_view()
 
     def on_tree_select(self, event):
         """트리 노드 선택 시 이벤트 핸들러"""
@@ -324,32 +466,113 @@ class DocumentViewer:
         if not selected:
             return
 
-        # 선택된 태그 가져오기
+        # 선택된 노드 정보 가져오기
         item = self.tag_tree.item(selected[0])
-        tag = item["values"][0] if item["values"] else None
+        values = item["values"]
 
-        if tag and tag in self.tag_to_docs:
-            # 우측 제목 업데이트
-            doc_count = len(self.tag_to_docs[tag])
-            self.doc_list_title.config(text=f"📄 문서 목록: {tag} ({doc_count}건)")
+        if not values or len(values) < 2:
+            return
 
-            # 문서 리스트 표시
-            self.display_document_list(tag)
+        node_type = values[0]  # "tag", "year", "month"
+        node_value = values[1]  # 태그명, 연도, 월
 
-    def display_document_list(self, tag):
-        """선택된 태그의 문서 리스트 표시"""
+        # 노드 타입에 따라 처리
+        if node_type == "tag":
+            # 태그 노드 선택: 해당 태그의 문서 표시
+            self.display_documents_by_tag(node_value, values[2] if len(values) > 2 else "")
+        elif node_type == "year":
+            # 연도 노드 선택: 해당 연도의 모든 문서 표시
+            self.display_documents_by_year(node_value)
+        elif node_type == "month":
+            # 월 노드 선택: 해당 월의 모든 문서 표시
+            self.display_documents_by_month(node_value)
+
+    def display_documents_by_tag(self, tag, filter_key=""):
+        """태그별 문서 표시 (필터 적용 가능)"""
+        # 해당 태그를 가진 문서 수집
+        matching_docs = []
+        for doc in self.documents:
+            doc_id = str(doc["_id"])
+
+            # 필터 적용 (연도 또는 월)
+            if filter_key:
+                uploaded_at = doc.get("upload", {}).get("uploaded_at")
+                if uploaded_at:
+                    if isinstance(uploaded_at, datetime):
+                        if filter_key.count("-") == 1:  # 월별
+                            doc_key = f"{uploaded_at.year}-{uploaded_at.month:02d}"
+                        else:  # 연도별
+                            doc_key = str(uploaded_at.year)
+                    else:
+                        doc_key = str(uploaded_at)[:7] if filter_key.count("-") == 1 else str(uploaded_at)[:4]
+
+                    if doc_key != filter_key:
+                        continue
+
+            # 태그 확인
+            meta_tags = doc.get("meta", {}).get("tags") or []
+            ocr_tags = doc.get("ocr", {}).get("tags") or []
+            all_tags = list(set(meta_tags + ocr_tags))
+
+            if tag in all_tags:
+                matching_docs.append(doc)
+
+        # 우측 제목 업데이트
+        filter_text = f" ({filter_key})" if filter_key else ""
+        self.doc_list_title.config(text=f"📄 문서 목록: {tag}{filter_text} ({len(matching_docs)}건)")
+
+        # 문서 리스트 표시
+        self.display_document_list_from_docs(matching_docs)
+
+    def display_documents_by_year(self, year):
+        """연도별 문서 표시"""
+        matching_docs = []
+        for doc in self.documents:
+            uploaded_at = doc.get("upload", {}).get("uploaded_at")
+            if uploaded_at:
+                if isinstance(uploaded_at, datetime):
+                    doc_year = uploaded_at.year
+                else:
+                    try:
+                        doc_year = int(str(uploaded_at)[:4])
+                    except:
+                        doc_year = None
+
+                if str(doc_year) == str(year):
+                    matching_docs.append(doc)
+
+        self.doc_list_title.config(text=f"📄 문서 목록: {year}년 ({len(matching_docs)}건)")
+        self.display_document_list_from_docs(matching_docs)
+
+    def display_documents_by_month(self, month):
+        """월별 문서 표시"""
+        matching_docs = []
+        for doc in self.documents:
+            uploaded_at = doc.get("upload", {}).get("uploaded_at")
+            if uploaded_at:
+                if isinstance(uploaded_at, datetime):
+                    doc_month = f"{uploaded_at.year}-{uploaded_at.month:02d}"
+                else:
+                    try:
+                        doc_month = str(uploaded_at)[:7]
+                    except:
+                        doc_month = None
+
+                if doc_month == month:
+                    matching_docs.append(doc)
+
+        self.doc_list_title.config(text=f"📄 문서 목록: {month} ({len(matching_docs)}건)")
+        self.display_document_list_from_docs(matching_docs)
+
+    def display_document_list_from_docs(self, docs):
+        """문서 리스트로부터 테이블 표시"""
         # 기존 리스트 클리어
         for item in self.doc_list.get_children():
             self.doc_list.delete(item)
 
-        # 해당 태그의 문서 ID 리스트
-        doc_ids = self.tag_to_docs.get(tag, [])
-
         # 문서 정보 표시
-        for doc_id in doc_ids:
-            doc = self.doc_id_to_doc.get(doc_id)
-            if not doc:
-                continue
+        for doc in docs:
+            doc_id = str(doc["_id"])
 
             # 파일명
             filename = doc.get("upload", {}).get("originalName", "알 수 없음")
