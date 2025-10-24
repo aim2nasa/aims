@@ -43,11 +43,12 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     }
   }, [logs, sortOrder])
 
-  // 새 로그 추가 시 자동 스크롤
+  // 새 로그 추가 시 또는 정렬 순서 변경 시 자동 스크롤
   useEffect(() => {
-    if (isExpanded && logContainerRef.current && logs.length > prevLogsLengthRef.current) {
+    if (isExpanded && logContainerRef.current && logs.length > 0) {
+      // 로그가 추가되거나 정렬 순서가 변경되면 최신 로그로 스크롤
       if (sortOrder === 'oldest-first') {
-        // 오래된순: 맨 아래로 스크롤 (최신 로그가 아래에 추가됨)
+        // 오래된순: 맨 아래로 스크롤 (최신 로그가 아래에 있음)
         logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
       } else {
         // 최신순: 맨 위로 스크롤 (최신 로그가 위에 있음)
