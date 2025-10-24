@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.3.0 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.4.0 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -155,6 +155,9 @@ class DocumentViewer:
         self.date_from = tk.StringVar(value="")
         self.date_to = tk.StringVar(value="")
         self.is_filtered = False  # 필터 활성화 여부
+
+        # Raw 데이터 뷰어 상태
+        self.current_raw_index: int = 0
 
         # UI 구성
         self.setup_ui()
@@ -256,19 +259,20 @@ class DocumentViewer:
         # 트리 선택 이벤트
         self.tag_tree.bind("<<TreeviewSelect>>", self.on_tree_select)
 
-        # ========== 우측 패널: 문서 리스트 ==========
+        # ========== 우측 패널: 탭 (문서 리스트 + Raw 데이터) ==========
         right_frame = ttk.Frame(paned_window)
         paned_window.add(right_frame, width=900)
 
-        # 우측 상단: 제목
-        right_top_frame = ttk.Frame(right_frame, padding="5")
-        right_top_frame.pack(fill=tk.X)
+        # Notebook (탭) 생성
+        self.notebook = ttk.Notebook(right_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        self.doc_list_title = ttk.Label(right_top_frame, text="📄 문서 목록", font=("Arial", 11, "bold"))
-        self.doc_list_title.pack(side=tk.LEFT, padx=5)
+        # ===== 탭 1: 문서 리스트 =====
+        doc_list_tab = ttk.Frame(self.notebook)
+        self.notebook.add(doc_list_tab, text="📄 문서 목록")
 
-        # 우측 중앙: 문서 리스트
-        doc_list_frame = ttk.Frame(right_frame)
+        # 문서 리스트 프레임
+        doc_list_frame = ttk.Frame(doc_list_tab)
         doc_list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # 스크롤바
@@ -293,6 +297,51 @@ class DocumentViewer:
 
         # 문서 더블클릭 이벤트
         self.doc_list.bind("<Double-1>", self.on_document_double_click)
+
+        # ===== 탭 2: Raw 데이터 =====
+        raw_data_tab = ttk.Frame(self.notebook)
+        self.notebook.add(raw_data_tab, text="📋 Raw 데이터")
+
+        # Raw 데이터 네비게이션 프레임
+        raw_nav_frame = ttk.Frame(raw_data_tab, padding="10")
+        raw_nav_frame.pack(fill=tk.X)
+
+        # 이전 버튼
+        self.raw_prev_button = ttk.Button(raw_nav_frame, text="◀ 이전", command=self.prev_raw_document)
+        self.raw_prev_button.pack(side=tk.LEFT, padx=5)
+
+        # 현재 문서 번호
+        self.raw_doc_label = ttk.Label(raw_nav_frame, text="0 / 0", font=("Arial", 12, "bold"))
+        self.raw_doc_label.pack(side=tk.LEFT, padx=10)
+
+        # 다음 버튼
+        self.raw_next_button = ttk.Button(raw_nav_frame, text="다음 ▶", command=self.next_raw_document)
+        self.raw_next_button.pack(side=tk.LEFT, padx=5)
+
+        # 문서 이동
+        ttk.Label(raw_nav_frame, text="문서 이동:").pack(side=tk.LEFT, padx=(20, 5))
+        self.raw_doc_number_var = tk.StringVar(value="1")
+        raw_doc_entry = ttk.Entry(raw_nav_frame, textvariable=self.raw_doc_number_var, width=10)
+        raw_doc_entry.pack(side=tk.LEFT, padx=5)
+        raw_doc_entry.bind('<Return>', lambda e: self.goto_raw_document())
+        ttk.Button(raw_nav_frame, text="이동", command=self.goto_raw_document).pack(side=tk.LEFT, padx=5)
+
+        # 전체 복사 버튼
+        ttk.Button(raw_nav_frame, text="📋 전체 복사", command=self.copy_raw_to_clipboard).pack(side=tk.RIGHT, padx=5)
+
+        # Raw 데이터 텍스트 영역
+        raw_text_frame = ttk.Frame(raw_data_tab)
+        raw_text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+        self.raw_text_area = scrolledtext.ScrolledText(
+            raw_text_frame,
+            wrap=tk.WORD,
+            font=("Consolas", 10),
+            bg="#1e1e1e",
+            fg="#d4d4d4",
+            insertbackground="white"
+        )
+        self.raw_text_area.pack(fill=tk.BOTH, expand=True)
 
     def connect_and_load(self):
         """MongoDB 연결 및 문서 로드"""
@@ -319,6 +368,10 @@ class DocumentViewer:
 
             # 태그 트리 구축
             self.build_tag_tree()
+
+            # Raw 데이터 뷰어 초기화
+            self.current_raw_index = 0
+            self.update_raw_viewer()
 
         except Exception as e:
             messagebox.showerror("오류", f"문서 로드 실패: {e}")
@@ -899,6 +952,105 @@ class DocumentViewer:
 
         return format_value(doc)
 
+    # ========== Raw 데이터 뷰어 메서드 ==========
+
+    def update_raw_viewer(self):
+        """Raw 데이터 뷰어 업데이트"""
+        if not self.documents or self.current_raw_index < 0 or self.current_raw_index >= len(self.documents):
+            self.raw_text_area.delete(1.0, tk.END)
+            self.raw_text_area.insert(1.0, "문서가 없습니다.")
+            self.raw_doc_label.config(text="0 / 0")
+            self.raw_prev_button.config(state=tk.DISABLED)
+            self.raw_next_button.config(state=tk.DISABLED)
+            return
+
+        # 현재 문서
+        doc = self.documents[self.current_raw_index]
+
+        # 문서 번호 업데이트
+        self.raw_doc_number_var.set(str(self.current_raw_index + 1))
+        self.raw_doc_label.config(text=f"{self.current_raw_index + 1} / {len(self.documents)}")
+
+        # Raw JSON 데이터 포맷팅
+        raw_json = self.format_raw_json(doc)
+
+        # 텍스트 영역 업데이트
+        self.raw_text_area.delete(1.0, tk.END)
+        self.raw_text_area.insert(1.0, raw_json)
+
+        # 버튼 상태 업데이트
+        self.raw_prev_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
+        self.raw_next_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
+
+    def format_raw_json(self, doc: Dict[str, Any]) -> str:
+        """MongoDB 문서를 Raw JSON으로 변환"""
+        def convert_to_serializable(obj):
+            """BSON 타입을 JSON 직렬화 가능한 형태로 변환"""
+            if isinstance(obj, ObjectId):
+                return f"ObjectId('{str(obj)}')"
+            elif isinstance(obj, datetime):
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {k: convert_to_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_serializable(item) for item in obj]
+            else:
+                return obj
+
+        # BSON 타입 변환
+        serializable_doc = convert_to_serializable(doc)
+
+        # JSON 포맷팅 (들여쓰기 2칸)
+        return json.dumps(serializable_doc, indent=2, ensure_ascii=False)
+
+    def prev_raw_document(self):
+        """이전 문서로 이동 (wrap around)"""
+        if not self.documents:
+            return
+
+        if self.current_raw_index > 0:
+            self.current_raw_index -= 1
+        else:
+            # 처음에서 이전 누르면 마지막으로
+            self.current_raw_index = len(self.documents) - 1
+
+        self.update_raw_viewer()
+
+    def next_raw_document(self):
+        """다음 문서로 이동 (wrap around)"""
+        if not self.documents:
+            return
+
+        if self.current_raw_index < len(self.documents) - 1:
+            self.current_raw_index += 1
+        else:
+            # 마지막에서 다음 누르면 처음으로
+            self.current_raw_index = 0
+
+        self.update_raw_viewer()
+
+    def goto_raw_document(self):
+        """특정 문서 번호로 이동"""
+        try:
+            doc_num = int(self.raw_doc_number_var.get())
+            if 1 <= doc_num <= len(self.documents):
+                self.current_raw_index = doc_num - 1
+                self.update_raw_viewer()
+            else:
+                messagebox.showwarning("범위 오류", f"1부터 {len(self.documents)} 사이의 숫자를 입력하세요.")
+        except ValueError:
+            messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
+
+    def copy_raw_to_clipboard(self):
+        """Raw 데이터를 클립보드에 복사"""
+        try:
+            content = self.raw_text_area.get(1.0, tk.END)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(content)
+            self.root.update()
+            messagebox.showinfo("복사 완료", "Raw 데이터가 클립보드에 복사되었습니다.")
+        except Exception as e:
+            messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
 
     def on_closing(self):
         """애플리케이션 종료"""
