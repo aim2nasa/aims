@@ -156,14 +156,12 @@
 .processing-log__item {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   padding: 8px 8px;
   background: var(--color-section-item-bg);
   border-radius: 6px;
   transition: background-color 0.15s ease;
   animation: logFadeIn 0.3s ease-out;
-  white-space: nowrap;
-  overflow: hidden;
   min-height: 32px;
 }
 
@@ -218,12 +216,11 @@
   flex: 1;
   line-height: 1.6;
   letter-spacing: -0.1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
   min-width: 0;
-  display: flex;
-  align-items: center;
+  display: block;
 }
 
 .processing-log__details {
@@ -236,8 +233,7 @@
   background: var(--color-section-details-bg);
   border-radius: 4px;
   display: inline;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
