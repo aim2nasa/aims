@@ -61,7 +61,34 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     const hours = date.getHours().toString().padStart(2, '0')
     const minutes = date.getMinutes().toString().padStart(2, '0')
     const seconds = date.getSeconds().toString().padStart(2, '0')
-    return `${hours}:${minutes}:${seconds}`
+    const milliseconds = date.getMilliseconds().toString().padStart(3, '0')
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`
+  }
+
+  const downloadLogsAsText = () => {
+    // 로그를 텍스트로 변환
+    const logText = sortedLogs.map(log => {
+      const time = formatTime(log.timestamp)
+      const level = log.level.toUpperCase()
+      const message = log.message
+      const details = log.details ? ` - ${log.details}` : ''
+      return `[${time}] [${level}] ${message}${details}`
+    }).join('\n')
+
+    // 현재 시간을 파일명에 포함
+    const now = new Date()
+    const filename = `processing-log-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}.txt`
+
+    // Blob 생성 및 다운로드
+    const blob = new Blob([logText], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -94,6 +121,22 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
               >
                 <span className="processing-log__sort-icon">
                   {sortOrder === 'oldest-first' ? '↓' : '↑'}
+                </span>
+              </button>
+            </div>
+          </Tooltip>
+          <Tooltip content="로그 다운로드">
+            <div style={{ display: 'inline-block' }}>
+              <button
+                className="processing-log__sort"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  downloadLogsAsText()
+                }}
+                aria-label="로그 다운로드"
+              >
+                <span className="processing-log__sort-icon">
+                  💾
                 </span>
               </button>
             </div>

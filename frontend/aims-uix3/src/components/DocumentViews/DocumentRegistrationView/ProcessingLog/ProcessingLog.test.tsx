@@ -266,9 +266,9 @@ describe('ProcessingLog Component', () => {
     it('시간이 HH:MM:SS 형식으로 표시되어야 한다', () => {
       render(<ProcessingLog logs={mockLogs} />);
 
-      expect(screen.getByText('10:00:00')).toBeInTheDocument();
-      expect(screen.getByText('10:01:00')).toBeInTheDocument();
-      expect(screen.getByText('10:02:00')).toBeInTheDocument();
+      expect(screen.getByText('10:00:00.000')).toBeInTheDocument();
+      expect(screen.getByText('10:01:00.000')).toBeInTheDocument();
+      expect(screen.getByText('10:02:00.000')).toBeInTheDocument();
     });
 
     it('한 자리 숫자는 0으로 패딩되어야 한다', () => {
@@ -283,7 +283,7 @@ describe('ProcessingLog Component', () => {
 
       render(<ProcessingLog logs={singleDigitLogs} />);
 
-      expect(screen.getByText('09:05:03')).toBeInTheDocument();
+      expect(screen.getByText('09:05:03.000')).toBeInTheDocument();
     });
   });
 
