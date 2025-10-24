@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.2.1 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.3.0 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -149,6 +149,12 @@ class DocumentViewer:
 
         # 트리 분류 기준
         self.tree_mode = tk.StringVar(value="by_tag")  # "by_tag", "by_year", "by_month"
+
+        # 검색 및 필터 상태
+        self.search_query = tk.StringVar(value="")
+        self.date_from = tk.StringVar(value="")
+        self.date_to = tk.StringVar(value="")
+        self.is_filtered = False  # 필터 활성화 여부
 
         # UI 구성
         self.setup_ui()
@@ -201,6 +207,38 @@ class DocumentViewer:
                        value="by_year", command=self.on_mode_change).pack(anchor=tk.W)
         ttk.Radiobutton(mode_frame, text="월별 → 태그별", variable=self.tree_mode,
                        value="by_month", command=self.on_mode_change).pack(anchor=tk.W)
+
+        # 좌측: 검색 및 필터
+        filter_frame = ttk.LabelFrame(left_frame, text="🔍 검색 및 필터", padding="10")
+        filter_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        # 검색어 입력
+        search_row = ttk.Frame(filter_frame)
+        search_row.pack(fill=tk.X, pady=(0, 5))
+
+        ttk.Label(search_row, text="검색:", width=6).pack(side=tk.LEFT)
+        search_entry = ttk.Entry(search_row, textvariable=self.search_query, width=15)
+        search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        search_entry.bind('<Return>', lambda e: self.apply_search())
+
+        ttk.Button(search_row, text="검색", width=6, command=self.apply_search).pack(side=tk.LEFT, padx=2)
+        ttk.Button(search_row, text="초기화", width=6, command=self.clear_filters).pack(side=tk.LEFT)
+
+        # 날짜 범위 필터
+        date_row1 = ttk.Frame(filter_frame)
+        date_row1.pack(fill=tk.X, pady=(0, 2))
+
+        ttk.Label(date_row1, text="기간:", width=6).pack(side=tk.LEFT)
+        ttk.Entry(date_row1, textvariable=self.date_from, width=10).pack(side=tk.LEFT, padx=2)
+        ttk.Label(date_row1, text="~").pack(side=tk.LEFT)
+        ttk.Entry(date_row1, textvariable=self.date_to, width=10).pack(side=tk.LEFT, padx=2)
+
+        date_row2 = ttk.Frame(filter_frame)
+        date_row2.pack(fill=tk.X)
+
+        ttk.Label(date_row2, text="", width=6).pack(side=tk.LEFT)  # 정렬용 빈 공간
+        ttk.Label(date_row2, text="(예: 2024-01-01)", font=("Arial", 8)).pack(side=tk.LEFT, padx=5)
+        ttk.Button(date_row2, text="적용", width=6, command=self.apply_date_filter).pack(side=tk.RIGHT)
 
         # 좌측 중앙: 트리뷰
         tree_frame = ttk.Frame(left_frame)
@@ -285,15 +323,95 @@ class DocumentViewer:
         except Exception as e:
             messagebox.showerror("오류", f"문서 로드 실패: {e}")
 
+    def get_filtered_documents(self):
+        """필터링된 문서 목록 반환"""
+        filtered_docs = self.documents
+
+        # 검색어 필터
+        search_query = self.search_query.get().strip().lower()
+        if search_query:
+            filtered_docs = []
+            for doc in self.documents:
+                # 파일명 검색
+                filename = doc.get("upload", {}).get("originalName", "").lower()
+                if search_query in filename:
+                    filtered_docs.append(doc)
+                    continue
+
+                # 태그 검색
+                meta_tags = doc.get("meta", {}).get("tags") or []
+                ocr_tags = doc.get("ocr", {}).get("tags") or []
+                all_tags = [tag.lower() for tag in list(set(meta_tags + ocr_tags))]
+
+                if any(search_query in tag for tag in all_tags):
+                    filtered_docs.append(doc)
+
+        # 날짜 범위 필터
+        date_from_str = self.date_from.get().strip()
+        date_to_str = self.date_to.get().strip()
+
+        if date_from_str or date_to_str:
+            from datetime import datetime as dt
+            temp_filtered = []
+
+            for doc in filtered_docs:
+                uploaded_at = doc.get("upload", {}).get("uploaded_at")
+                if not uploaded_at:
+                    continue
+
+                # 날짜 추출
+                if isinstance(uploaded_at, datetime):
+                    doc_date = uploaded_at
+                else:
+                    try:
+                        doc_date = dt.fromisoformat(str(uploaded_at)[:10])
+                    except:
+                        continue
+
+                # 날짜 범위 체크
+                if date_from_str:
+                    try:
+                        date_from = dt.fromisoformat(date_from_str)
+                        if doc_date < date_from:
+                            continue
+                    except:
+                        pass
+
+                if date_to_str:
+                    try:
+                        date_to = dt.fromisoformat(date_to_str)
+                        # 종료일 포함 (23:59:59까지)
+                        from datetime import timedelta
+                        date_to_end = date_to + timedelta(days=1)
+                        if doc_date >= date_to_end:
+                            continue
+                    except:
+                        pass
+
+                temp_filtered.append(doc)
+
+            filtered_docs = temp_filtered
+
+        return filtered_docs
+
     def build_tag_tree(self):
         """태그 트리 데이터 구축"""
+        # 필터링된 문서 사용
+        filtered_docs = self.get_filtered_documents()
+
         # doc_id_to_doc 맵핑 구축
         self.doc_id_to_doc = {}
-        for doc in self.documents:
+        for doc in filtered_docs:
             doc_id = str(doc["_id"])
             self.doc_id_to_doc[doc_id] = doc
 
-        # 트리뷰 업데이트
+        # 필터 상태 업데이트
+        self.is_filtered = (self.search_query.get().strip() or
+                           self.date_from.get().strip() or
+                           self.date_to.get().strip())
+
+        # 트리뷰 업데이트 (필터링된 문서 기준)
+        self.filtered_documents = filtered_docs
         self.update_tag_tree_view()
 
     def update_tag_tree_view(self):
@@ -311,12 +429,29 @@ class DocumentViewer:
         elif mode == "by_month":
             self.build_tree_by_month()
 
+    def apply_search(self):
+        """검색 적용"""
+        self.build_tag_tree()
+
+    def apply_date_filter(self):
+        """날짜 필터 적용"""
+        self.build_tag_tree()
+
+    def clear_filters(self):
+        """모든 필터 초기화"""
+        self.search_query.set("")
+        self.date_from.set("")
+        self.date_to.set("")
+        self.is_filtered = False
+        self.build_tag_tree()
+
     def build_tree_by_tag(self):
         """태그별 트리 구축 (Phase 1)"""
         tag_to_docs = {}
 
-        # 모든 문서의 태그 수집
-        for doc in self.documents:
+        # 필터링된 문서의 태그 수집
+        docs_to_use = self.filtered_documents if hasattr(self, 'filtered_documents') else self.documents
+        for doc in docs_to_use:
             doc_id = str(doc["_id"])
 
             # meta.tags + ocr.tags
@@ -345,7 +480,8 @@ class DocumentViewer:
         # 연도별로 문서 그룹화
         year_to_docs = defaultdict(list)
 
-        for doc in self.documents:
+        docs_to_use = self.filtered_documents if hasattr(self, 'filtered_documents') else self.documents
+        for doc in docs_to_use:
             doc_id = str(doc["_id"])
             uploaded_at = doc.get("upload", {}).get("uploaded_at")
 
@@ -401,7 +537,8 @@ class DocumentViewer:
         # 연월별로 문서 그룹화
         month_to_docs = defaultdict(list)
 
-        for doc in self.documents:
+        docs_to_use = self.filtered_documents if hasattr(self, 'filtered_documents') else self.documents
+        for doc in docs_to_use:
             doc_id = str(doc["_id"])
             uploaded_at = doc.get("upload", {}).get("uploaded_at")
 
