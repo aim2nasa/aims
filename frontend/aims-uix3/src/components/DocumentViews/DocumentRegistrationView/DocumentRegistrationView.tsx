@@ -150,11 +150,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 로그 추가 헬퍼 함수
    */
   const addLog = useCallback((level: LogLevel, message: string, details?: string) => {
-    // 🔍 호출 스택 추적
-    const stack = new Error().stack
-    console.log(`[addLog 호출됨] [${level.toUpperCase()}] ${message}${details ? ` - ${details}` : ''}`)
-    console.log('호출 스택:', stack)
-
     logCounterRef.current += 1
     const counter = logCounterRef.current
 
@@ -641,22 +636,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    */
   const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
     console.log(`🔍 [handleStatusChange] fileId=${fileId}, status=${status}`);
+
+    // 🔍 상태 업데이트 전에 파일 정보 미리 찾기 (로그용)
+    const currentFile = uploadState.files.find(f => f.id === fileId);
+
     setUploadState(prev => {
       const updatedFiles = prev.files.map(f => {
         if (f.id === fileId) {
           console.log(`🔍 [handleStatusChange] Matched file: name=${f.file.name}, type=${f.file.type}`);
           const updatedFile = { ...f, status, error }
-
-          // 로그 추가
-          if (status === 'uploading') {
-            addLog('info', `업로드 시작: ${f.file.name}`)
-          } else if (status === 'completed') {
-            addLog('success', `업로드 완료: ${f.file.name}`)
-          } else if (status === 'error') {
-            addLog('error', `업로드 실패: ${f.file.name}`, error)
-          } else if (status === 'warning') {
-            addLog('warning', `업로드 경고: ${f.file.name}`, error)
-          }
 
           if (status === 'completed' || status === 'warning') {
             updatedFile.completedAt = new Date()
@@ -665,7 +653,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             // 🏷️ Annual Report 파일이면 DB 플래그 설정
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
               console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정: ${f.file.name}`);
-              addLog('ar-detect', `AR 문서 처리 중: ${f.file.name}`, '고객과 자동 연결 대기 중...')
+              // 로그와 DB 플래그 설정은 상태 업데이트 후 실행 (useEffect에서 처리)
               setAnnualReportFlag(f.file.name);
               // 추적 목록에서 제거
               arFilenamesRef.current.delete(f.file.name);
@@ -690,7 +678,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         completedCount
       }
     })
-  }, [setAnnualReportFlag, addLog])
+
+    // ✅ 로그는 상태 업데이트 함수 밖에서 호출 (부작용 제거)
+    if (currentFile) {
+      if (status === 'uploading') {
+        addLog('info', `업로드 시작: ${currentFile.file.name}`)
+      } else if (status === 'completed') {
+        addLog('success', `업로드 완료: ${currentFile.file.name}`)
+
+        // AR 파일 로그
+        if (arFilenamesRef.current.has(currentFile.file.name)) {
+          addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객과 자동 연결 대기 중...')
+        }
+      } else if (status === 'error') {
+        addLog('error', `업로드 실패: ${currentFile.file.name}`, error)
+      } else if (status === 'warning') {
+        addLog('warning', `업로드 경고: ${currentFile.file.name}`, error)
+      }
+    }
+  }, [uploadState.files, setAnnualReportFlag, addLog])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지
