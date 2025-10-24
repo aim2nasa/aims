@@ -713,10 +713,6 @@ class DocumentViewer:
             if tag in all_tags:
                 matching_docs.append(doc)
 
-        # 우측 제목 업데이트
-        filter_text = f" ({filter_key})" if filter_key else ""
-        self.doc_list_title.config(text=f"📄 문서 목록: {tag}{filter_text} ({len(matching_docs)}건)")
-
         # 문서 리스트 표시
         self.display_document_list_from_docs(matching_docs)
 
@@ -737,7 +733,6 @@ class DocumentViewer:
                 if str(doc_year) == str(year):
                     matching_docs.append(doc)
 
-        self.doc_list_title.config(text=f"📄 문서 목록: {year}년 ({len(matching_docs)}건)")
         self.display_document_list_from_docs(matching_docs)
 
     def display_documents_by_month(self, month):
@@ -757,7 +752,6 @@ class DocumentViewer:
                 if doc_month == month:
                     matching_docs.append(doc)
 
-        self.doc_list_title.config(text=f"📄 문서 목록: {month} ({len(matching_docs)}건)")
         self.display_document_list_from_docs(matching_docs)
 
     def display_document_list_from_docs(self, docs):
