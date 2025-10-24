@@ -255,6 +255,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
 
+              addLog('success', `PDF 분석 완료: ${file.name}`)
               addLog(
                 'ar-detect',
                 `Annual Report 감지: ${checkResult.metadata.customer_name}`,
