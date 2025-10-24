@@ -20,6 +20,7 @@ import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
+import { calculateFileHash } from '@/features/customer/utils/fileHash'
 import type { Customer } from '@/entities/customer/model'
 import { DocumentService } from '@/services/DocumentService'
 import './DocumentRegistrationView.css'
@@ -346,14 +347,131 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   arFilenamesRef.current.add(file.name);
                   arCustomerMappingRef.current.set(file.name, customerId);
 
-                  // Annual Report 파싱 요청 (백그라운드 AI 처리)
+                  // 📊 Annual Report 파싱 요청 먼저 실행 (새로운 AR 등록)
                   try {
                     const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
                     if (parseResult.success) {
                       console.log('[DocumentRegistrationView] AR 파싱 요청 성공 (자동):', parseResult);
+                      addLog('success', `AR 파싱 시작: ${file.name}`, 'Annual Report 분석이 시작되었습니다.');
+
+                      // 🔄 AR 파싱 완료 확인 (즉시 체크 + 폴링)
+                      let isPollingActive = true; // 폴링 활성화 플래그
+
+                      const checkArParsing = async () => {
+                        if (!isPollingActive) return false; // 폴링 종료됨
+
+                        const targetIssueDate = checkResult.metadata?.issue_date;
+                        if (!targetIssueDate) return false;
+
+                        console.log('[AR 파싱] 완료 확인 중:', targetIssueDate);
+
+                        try {
+                          const arListResponse = await AnnualReportApi.getAnnualReports(customerId, 100);
+
+                          if (arListResponse.success && arListResponse.data) {
+                            console.log('[AR 파싱] AR 목록 조회 성공:', arListResponse.data.reports.length, '건');
+                            const matchingAr = arListResponse.data.reports.find(
+                              ar => ar.issue_date && ar.issue_date.startsWith(targetIssueDate)
+                            );
+
+                            if (matchingAr && isPollingActive) {
+                              console.log('✅ [AR 파싱] 완료 확인됨:', matchingAr);
+                              addLog('success', `AR 파싱 완료: ${file.name}`, `발행일: ${targetIssueDate}`);
+                              isPollingActive = false; // 폴링 종료
+                              return true;
+                            } else {
+                              console.log('[AR 파싱] 아직 완료 안 됨. 대기 중...');
+                            }
+                          }
+                        } catch (error) {
+                          console.error('❌ [AR 파싱] 체크 실패:', error);
+                        }
+                        return false;
+                      };
+
+                      // 1초 후 즉시 체크 (파싱이 빠르면 이미 완료됨)
+                      console.log('[AR 파싱] 1초 후 즉시 체크 시작');
+                      setTimeout(async () => {
+                        console.log('[AR 파싱] 첫 번째 체크 실행');
+                        const found = await checkArParsing();
+                        if (found) {
+                          console.log('[AR 파싱] 첫 체크에서 완료 확인됨');
+                          return; // 이미 완료됨
+                        }
+
+                        // 아직 완료 안 됐으면 2초마다 폴링 시작
+                        console.log('[AR 파싱] 폴링 시작 (2초 간격, 최대 90회)');
+                        let attempts = 0;
+                        const maxAttempts = 90; // 2초 * 90회 = 3분
+
+                        const checkInterval = setInterval(async () => {
+                          if (!isPollingActive) {
+                            clearInterval(checkInterval);
+                            return;
+                          }
+
+                          attempts++;
+                          console.log(`[AR 파싱] 폴링 ${attempts}/${maxAttempts}`);
+                          const found = await checkArParsing();
+
+                          if (found) {
+                            console.log('[AR 파싱] 폴링 중 완료 확인됨. 종료.');
+                            isPollingActive = false;
+                            clearInterval(checkInterval);
+                          } else if (attempts >= maxAttempts) {
+                            console.error('[AR 파싱] 폴링 시간 초과');
+                            isPollingActive = false; // 플래그 비활성화
+                            clearInterval(checkInterval);
+                            addLog('warning', `AR 파싱 시간 초과: ${file.name}`, '파싱이 완료되지 않았습니다.');
+                          }
+                        }, 2000); // 5초 → 2초로 변경
+                      }, 1000);
                     }
                   } catch (error) {
                     console.error('[DocumentRegistrationView] AR 파싱 요청 실패 (자동):', error);
+                  }
+
+                  // 🔍 문서 중복 검사: 해당 고객의 documents에서 file_hash 조회
+                  addLog('info', `문서 중복 검사 중: ${file.name}`);
+                  const uploadFileHash = await calculateFileHash(file);
+                  console.log('[DocumentRegistrationView] 업로드 파일 해시:', uploadFileHash);
+
+                  // 고객의 문서 목록 조회
+                  const customerDocs = await DocumentService.getCustomerDocuments(customerId);
+                  let isDuplicateDocument = false;
+
+                  if (customerDocs.documents && customerDocs.documents.length > 0) {
+                    // 각 document_id로 file_hash 조회
+                    console.log('[DocumentRegistrationView] 고객 문서 수:', customerDocs.documents.length);
+
+                    for (const doc of customerDocs.documents) {
+                      try {
+                        const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`);
+                        const docData = await docStatus.json();
+
+                        if (docData.success && docData.data?.raw?.meta?.file_hash) {
+                          const existingHash = docData.data.raw.meta.file_hash;
+                          console.log('[DocumentRegistrationView] 기존 문서 해시:', existingHash);
+
+                          if (uploadFileHash === existingHash) {
+                            isDuplicateDocument = true;
+                            addLog(
+                              'info',
+                              `중복 문서 감지: ${file.name}`,
+                              `AR은 새로 등록되었으나, 파일은 이미 존재하므로 업로드를 건너뜁니다.`
+                            );
+                            break;
+                          }
+                        }
+                      } catch (error) {
+                        console.error('[DocumentRegistrationView] 문서 해시 조회 실패:', doc._id, error);
+                      }
+                    }
+                  }
+
+                  // 중복 문서면 업로드만 건너뛰기 (AR은 이미 등록됨)
+                  if (isDuplicateDocument) {
+                    continue;
                   }
 
                   // 업로드 큐에 추가
