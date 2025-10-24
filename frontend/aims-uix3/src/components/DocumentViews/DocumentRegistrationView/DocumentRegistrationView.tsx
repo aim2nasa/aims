@@ -306,17 +306,61 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   console.log('[DocumentRegistrationView] 🔍 중복 여부:', isArDuplicate);
 
                   if (isArDuplicate) {
-                    // 🚫 중복 발견 - AR 파싱만 건너뛰고 일반 문서로 등록 + 고객 연결
+                    // 🚫 AR 중복 발견 - AR 파싱은 건너뛰고 문서 중복 검사 진행
                     console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지:', file.name);
                     addLog(
                       'error',
                       `중복 Annual Report 감지: ${file.name}`,
-                      `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다. 일반 문서로 등록합니다.`
+                      `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다.`
                     );
 
                     // 중복 AR도 고객과 연결하기 위해 매핑 저장
                     arCustomerMappingRef.current.set(file.name, customerId);
                     console.log(`[DocumentRegistrationView] 🔗 중복 AR 고객 매핑 저장: ${file.name} → ${customerId}`);
+
+                    // 🔍 문서 중복 검사 (AR 중복이어도 문서는 체크해야 함)
+                    addLog('info', `문서 중복 검사 중: ${file.name}`);
+                    const uploadFileHash = await calculateFileHash(file);
+                    console.log('[DocumentRegistrationView] 업로드 파일 해시:', uploadFileHash);
+
+                    const customerDocs = await DocumentService.getCustomerDocuments(customerId);
+                    let isDuplicateDocument = false;
+
+                    if (customerDocs.documents && customerDocs.documents.length > 0) {
+                      console.log('[DocumentRegistrationView] 고객 문서 수:', customerDocs.documents.length);
+
+                      for (const doc of customerDocs.documents) {
+                        try {
+                          const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`);
+                          const docData = await docStatus.json();
+
+                          if (docData.success && docData.data?.raw?.meta?.file_hash) {
+                            const existingHash = docData.data.raw.meta.file_hash;
+                            console.log('[DocumentRegistrationView] 기존 문서 해시:', existingHash);
+
+                            if (uploadFileHash === existingHash) {
+                              isDuplicateDocument = true;
+                              addLog(
+                                'info',
+                                `중복 문서 감지: ${file.name}`,
+                                `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
+                              );
+                              break;
+                            }
+                          }
+                        } catch (error) {
+                          console.error('[DocumentRegistrationView] 문서 해시 조회 실패:', doc._id, error);
+                        }
+                      }
+                    }
+
+                    // 문서 중복이면 업로드 건너뛰기
+                    if (isDuplicateDocument) {
+                      continue;
+                    }
+
+                    // 문서 중복 아니면 일반 문서로 업로드
+                    addLog('info', `AR은 중복이나 파일은 새 파일. 일반 문서로 등록: ${file.name}`);
                   } else {
                     console.log('[DocumentRegistrationView] ✅ 중복 아님, AR 처리 진행');
                   }
