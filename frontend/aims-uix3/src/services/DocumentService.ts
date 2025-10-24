@@ -207,6 +207,11 @@ export class DocumentService {
         document.size = fileSize;
       }
 
+      // Annual Report 정보 추가
+      if (typeof record['is_annual_report'] === 'boolean') {
+        document.is_annual_report = record['is_annual_report'];
+      }
+
       return document;
     });
 
