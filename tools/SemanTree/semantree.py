@@ -136,15 +136,16 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.1.2 - AIMS Document Viewer")
-        self.root.geometry("1200x800")
+        self.root.title("SemanTree v0.2.0 - AIMS Document Viewer")
+        self.root.geometry("1400x900")
 
         # MongoDB 연결
         self.mongo = MongoDBConnection()
         self.documents: List[Dict[str, Any]] = []
-        self.current_index: int = 0
-        self.sort_order: int = -1  # -1: 최신순, 1: 오래된순
-        self.full_text_mode: bool = False  # False: 요약 보기, True: 전체 보기
+
+        # 태그 트리 데이터
+        self.tag_to_docs: Dict[str, List[str]] = {}  # {tag: [doc_id1, doc_id2, ...]}
+        self.doc_id_to_doc: Dict[str, Dict[str, Any]] = {}  # {doc_id: document}
 
         # UI 구성
         self.setup_ui()
@@ -163,15 +164,7 @@ class DocumentViewer:
         self.status_label.pack(side=tk.LEFT, padx=5)
 
         # 새로고침 버튼
-        ttk.Button(top_frame, text="새로고침", command=self.reload_documents).pack(side=tk.LEFT, padx=5)
-
-        # 정렬 순서 버튼
-        self.sort_button = ttk.Button(top_frame, text="정렬: 최신순", command=self.toggle_sort_order)
-        self.sort_button.pack(side=tk.LEFT, padx=5)
-
-        # 텍스트 표시 모드 버튼
-        self.text_mode_button = ttk.Button(top_frame, text="표시: 요약", command=self.toggle_text_mode)
-        self.text_mode_button.pack(side=tk.LEFT, padx=5)
+        ttk.Button(top_frame, text="🔄 새로고침", command=self.reload_documents).pack(side=tk.LEFT, padx=5)
 
         # 태그 통계 버튼
         ttk.Button(top_frame, text="📊 태그 통계", command=self.show_tag_statistics).pack(side=tk.LEFT, padx=5)
@@ -180,57 +173,74 @@ class DocumentViewer:
         self.count_label = ttk.Label(top_frame, text="문서: 0개", font=("Arial", 10))
         self.count_label.pack(side=tk.RIGHT, padx=5)
 
-        # 중앙 프레임: 네비게이션
-        nav_frame = ttk.Frame(self.root, padding="10")
-        nav_frame.pack(fill=tk.X)
+        # PanedWindow로 좌우 분할
+        paned_window = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, sashwidth=5, bg="#cccccc")
+        paned_window.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # 왼쪽: 네비게이션 버튼
-        nav_left_frame = ttk.Frame(nav_frame)
-        nav_left_frame.pack(side=tk.LEFT)
+        # ========== 좌측 패널: 태그 트리 뷰 ==========
+        left_frame = ttk.Frame(paned_window)
+        paned_window.add(left_frame, width=400)
 
-        # 이전 버튼
-        self.prev_button = ttk.Button(nav_left_frame, text="◀ 이전", command=self.prev_document)
-        self.prev_button.pack(side=tk.LEFT, padx=5)
+        # 좌측 상단: 제목
+        left_top_frame = ttk.Frame(left_frame, padding="5")
+        left_top_frame.pack(fill=tk.X)
 
-        # 현재 문서 번호 텍스트
-        self.current_doc_label = ttk.Label(nav_left_frame, text="", font=("Arial", 12, "bold"))
-        self.current_doc_label.pack(side=tk.LEFT, padx=10)
+        ttk.Label(left_top_frame, text="🌲 태그 트리", font=("Arial", 11, "bold")).pack(side=tk.LEFT, padx=5)
+        ttk.Button(left_top_frame, text="트리 새로고침", command=self.reload_tag_tree).pack(side=tk.RIGHT, padx=5)
 
-        # 다음 버튼
-        self.next_button = ttk.Button(nav_left_frame, text="다음 ▶", command=self.next_document)
-        self.next_button.pack(side=tk.LEFT, padx=5)
+        # 좌측 중앙: 트리뷰
+        tree_frame = ttk.Frame(left_frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # 중앙: 문서 이동
-        nav_center_frame = ttk.Frame(nav_frame)
-        nav_center_frame.pack(side=tk.LEFT, padx=20)
+        # 스크롤바
+        tree_scrollbar = ttk.Scrollbar(tree_frame)
+        tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        ttk.Label(nav_center_frame, text="문서 이동:").pack(side=tk.LEFT, padx=5)
-        self.doc_number_var = tk.StringVar(value="1")
-        self.doc_number_entry = ttk.Entry(nav_center_frame, textvariable=self.doc_number_var, width=10)
-        self.doc_number_entry.pack(side=tk.LEFT, padx=5)
-        self.doc_number_entry.bind('<Return>', lambda e: self.goto_document())
-        ttk.Button(nav_center_frame, text="이동", command=self.goto_document).pack(side=tk.LEFT, padx=5)
+        # 트리뷰 (태그별 그룹)
+        self.tag_tree = ttk.Treeview(tree_frame, show="tree", yscrollcommand=tree_scrollbar.set)
+        tree_scrollbar.config(command=self.tag_tree.yview)
+        self.tag_tree.pack(fill=tk.BOTH, expand=True)
 
-        # 오른쪽: 복사 버튼
-        nav_right_frame = ttk.Frame(nav_frame)
-        nav_right_frame.pack(side=tk.RIGHT)
+        # 트리 선택 이벤트
+        self.tag_tree.bind("<<TreeviewSelect>>", self.on_tree_select)
 
-        ttk.Button(nav_right_frame, text="📋 전체 복사", command=self.copy_to_clipboard).pack(side=tk.LEFT, padx=5)
+        # ========== 우측 패널: 문서 리스트 ==========
+        right_frame = ttk.Frame(paned_window)
+        paned_window.add(right_frame, width=900)
 
-        # 문서 내용 표시 영역
-        content_frame = ttk.Frame(self.root, padding="10")
-        content_frame.pack(fill=tk.BOTH, expand=True)
+        # 우측 상단: 제목
+        right_top_frame = ttk.Frame(right_frame, padding="5")
+        right_top_frame.pack(fill=tk.X)
 
-        # 스크롤 가능한 텍스트 영역
-        self.text_area = scrolledtext.ScrolledText(
-            content_frame,
-            wrap=tk.WORD,
-            font=("Consolas", 10),
-            bg="#1e1e1e",
-            fg="#d4d4d4",
-            insertbackground="white"
-        )
-        self.text_area.pack(fill=tk.BOTH, expand=True)
+        self.doc_list_title = ttk.Label(right_top_frame, text="📄 문서 목록", font=("Arial", 11, "bold"))
+        self.doc_list_title.pack(side=tk.LEFT, padx=5)
+
+        # 우측 중앙: 문서 리스트
+        doc_list_frame = ttk.Frame(right_frame)
+        doc_list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # 스크롤바
+        doc_scrollbar = ttk.Scrollbar(doc_list_frame)
+        doc_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 문서 리스트 (Treeview)
+        columns = ("파일명", "업로드날짜", "태그")
+        self.doc_list = ttk.Treeview(doc_list_frame, columns=columns, show="headings", yscrollcommand=doc_scrollbar.set)
+        doc_scrollbar.config(command=self.doc_list.yview)
+
+        # 컬럼 설정
+        self.doc_list.heading("파일명", text="파일명")
+        self.doc_list.heading("업로드날짜", text="업로드 날짜")
+        self.doc_list.heading("태그", text="태그")
+
+        self.doc_list.column("파일명", width=300, anchor=tk.W)
+        self.doc_list.column("업로드날짜", width=150, anchor=tk.CENTER)
+        self.doc_list.column("태그", width=400, anchor=tk.W)
+
+        self.doc_list.pack(fill=tk.BOTH, expand=True)
+
+        # 문서 더블클릭 이벤트
+        self.doc_list.bind("<Double-1>", self.on_document_double_click)
 
     def connect_and_load(self):
         """MongoDB 연결 및 문서 로드"""
@@ -252,42 +262,170 @@ class DocumentViewer:
 
         try:
             # 모든 문서 로드 (정렬 순서에 따라)
-            self.documents = list(collection.find().sort("upload.uploaded_at", self.sort_order))
+            self.documents = list(collection.find().sort("upload.uploaded_at", -1))
             self.count_label.config(text=f"문서: {len(self.documents)}개")
 
-            if self.documents:
-                self.current_index = 0
-                self.display_current_document()
-            else:
-                self.text_area.delete(1.0, tk.END)
-                self.text_area.insert(1.0, "문서가 없습니다.")
+            # 태그 트리 구축
+            self.build_tag_tree()
+
         except Exception as e:
             messagebox.showerror("오류", f"문서 로드 실패: {e}")
 
-    def toggle_sort_order(self):
-        """정렬 순서 토글 (최신순 ↔ 오래된순)"""
-        self.sort_order = 1 if self.sort_order == -1 else -1
-        sort_text = "오래된순" if self.sort_order == 1 else "최신순"
-        self.sort_button.config(text=f"정렬: {sort_text}")
+    def build_tag_tree(self):
+        """태그 트리 데이터 구축"""
+        from collections import Counter
+
+        # 초기화
+        self.tag_to_docs = {}
+        self.doc_id_to_doc = {}
+
+        # 모든 문서의 태그 수집
+        for doc in self.documents:
+            doc_id = str(doc["_id"])
+            self.doc_id_to_doc[doc_id] = doc
+
+            # meta.tags 수집
+            meta_tags = doc.get("meta", {}).get("tags") or []
+            # ocr.tags 수집
+            ocr_tags = doc.get("ocr", {}).get("tags") or []
+
+            # 모든 태그 합치기 (중복 제거)
+            all_tags = list(set(meta_tags + ocr_tags))
+
+            for tag in all_tags:
+                if tag not in self.tag_to_docs:
+                    self.tag_to_docs[tag] = []
+                self.tag_to_docs[tag].append(doc_id)
+
+        # 트리뷰 업데이트
+        self.update_tag_tree_view()
+
+    def update_tag_tree_view(self):
+        """태그 트리뷰 갱신"""
+        # 기존 트리 클리어
+        for item in self.tag_tree.get_children():
+            self.tag_tree.delete(item)
+
+        # 빈도수 높은 순으로 정렬
+        sorted_tags = sorted(self.tag_to_docs.items(), key=lambda x: len(x[1]), reverse=True)
+
+        # 트리에 노드 삽입
+        for tag, doc_ids in sorted_tags:
+            count = len(doc_ids)
+            self.tag_tree.insert("", "end", text=f"📁 {tag} ({count}건)", values=(tag,))
+
+    def reload_tag_tree(self):
+        """태그 트리 새로고침"""
         self.reload_documents()
 
-    def toggle_text_mode(self):
-        """텍스트 표시 모드 토글 (요약 ↔ 전체)"""
-        self.full_text_mode = not self.full_text_mode
-        mode_text = "전체" if self.full_text_mode else "요약"
-        self.text_mode_button.config(text=f"표시: {mode_text}")
-        self.display_current_document()
+    def on_tree_select(self, event):
+        """트리 노드 선택 시 이벤트 핸들러"""
+        selected = self.tag_tree.selection()
+        if not selected:
+            return
 
-    def copy_to_clipboard(self):
-        """텍스트 영역의 내용을 클립보드에 복사"""
-        try:
-            content = self.text_area.get(1.0, tk.END)
-            self.root.clipboard_clear()
-            self.root.clipboard_append(content)
-            self.root.update()  # 클립보드 업데이트
-            messagebox.showinfo("복사 완료", "문서 내용이 클립보드에 복사되었습니다.")
-        except Exception as e:
-            messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
+        # 선택된 태그 가져오기
+        item = self.tag_tree.item(selected[0])
+        tag = item["values"][0] if item["values"] else None
+
+        if tag and tag in self.tag_to_docs:
+            # 우측 제목 업데이트
+            doc_count = len(self.tag_to_docs[tag])
+            self.doc_list_title.config(text=f"📄 문서 목록: {tag} ({doc_count}건)")
+
+            # 문서 리스트 표시
+            self.display_document_list(tag)
+
+    def display_document_list(self, tag):
+        """선택된 태그의 문서 리스트 표시"""
+        # 기존 리스트 클리어
+        for item in self.doc_list.get_children():
+            self.doc_list.delete(item)
+
+        # 해당 태그의 문서 ID 리스트
+        doc_ids = self.tag_to_docs.get(tag, [])
+
+        # 문서 정보 표시
+        for doc_id in doc_ids:
+            doc = self.doc_id_to_doc.get(doc_id)
+            if not doc:
+                continue
+
+            # 파일명
+            filename = doc.get("upload", {}).get("originalName", "알 수 없음")
+
+            # 업로드 날짜
+            uploaded_at = doc.get("upload", {}).get("uploaded_at")
+            if uploaded_at:
+                if isinstance(uploaded_at, datetime):
+                    date_str = uploaded_at.strftime("%Y-%m-%d %H:%M")
+                else:
+                    date_str = str(uploaded_at)[:16]
+            else:
+                date_str = "-"
+
+            # 태그 (최대 3개까지만 표시)
+            meta_tags = doc.get("meta", {}).get("tags") or []
+            ocr_tags = doc.get("ocr", {}).get("tags") or []
+            all_tags = list(set(meta_tags + ocr_tags))
+            tags_preview = ", ".join(all_tags[:3])
+            if len(all_tags) > 3:
+                tags_preview += f" 외 {len(all_tags) - 3}개"
+
+            # 리스트에 추가 (doc_id를 values에 저장)
+            self.doc_list.insert("", "end", values=(filename, date_str, tags_preview, doc_id))
+
+    def on_document_double_click(self, event):
+        """문서 더블클릭 시 상세 보기"""
+        selected = self.doc_list.selection()
+        if not selected:
+            return
+
+        # 선택된 문서의 doc_id 가져오기
+        item = self.doc_list.item(selected[0])
+        values = item["values"]
+        if len(values) >= 4:
+            doc_id = values[3]
+            doc = self.doc_id_to_doc.get(doc_id)
+            if doc:
+                self.show_document_detail(doc)
+
+    def show_document_detail(self, doc):
+        """문서 상세 보기 창"""
+        detail_window = tk.Toplevel(self.root)
+        detail_window.title("문서 상세 보기")
+        detail_window.geometry("1000x700")
+
+        # 상단: 파일명
+        top_frame = ttk.Frame(detail_window, padding="10")
+        top_frame.pack(fill=tk.X)
+
+        filename = doc.get("upload", {}).get("originalName", "알 수 없음")
+        ttk.Label(top_frame, text=filename, font=("Arial", 12, "bold")).pack(side=tk.LEFT)
+
+        # 문서 내용 표시
+        text_frame = ttk.Frame(detail_window, padding="10")
+        text_frame.pack(fill=tk.BOTH, expand=True)
+
+        text_area = scrolledtext.ScrolledText(
+            text_frame,
+            wrap=tk.WORD,
+            font=("Consolas", 10),
+            bg="#1e1e1e",
+            fg="#d4d4d4"
+        )
+        text_area.pack(fill=tk.BOTH, expand=True)
+
+        # 문서 내용 포맷팅
+        formatted_doc = self.format_document(doc)
+        text_area.insert(1.0, formatted_doc)
+        text_area.config(state=tk.DISABLED)
+
+        # 닫기 버튼
+        button_frame = ttk.Frame(detail_window, padding="10")
+        button_frame.pack(fill=tk.X)
+        ttk.Button(button_frame, text="닫기", command=detail_window.destroy).pack(side=tk.RIGHT)
+
 
     def show_tag_statistics(self):
         """태그 통계 창 표시"""
@@ -365,29 +503,6 @@ class DocumentViewer:
         button_frame.pack(fill=tk.X)
         ttk.Button(button_frame, text="닫기", command=stats_window.destroy).pack(side=tk.RIGHT)
 
-    def display_current_document(self):
-        """현재 문서 표시"""
-        if not self.documents or self.current_index < 0 or self.current_index >= len(self.documents):
-            return
-
-        doc = self.documents[self.current_index]
-
-        # 문서 번호 업데이트
-        self.doc_number_var.set(str(self.current_index + 1))
-
-        # 현재 문서 번호 텍스트 업데이트
-        self.current_doc_label.config(text=f"{self.current_index + 1} / {len(self.documents)}")
-
-        # 문서 내용을 보기 좋게 포맷팅
-        formatted_doc = self.format_document(doc)
-
-        # 텍스트 영역 업데이트
-        self.text_area.delete(1.0, tk.END)
-        self.text_area.insert(1.0, formatted_doc)
-
-        # 버튼 상태 업데이트 (wrap around이므로 항상 활성화)
-        self.prev_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
-        self.next_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
 
     def format_document(self, doc: Dict[str, Any]) -> str:
         """문서를 읽기 쉬운 형태로 포맷팅"""
@@ -417,57 +532,13 @@ class DocumentViewer:
                 lines.append(f"{prefix}]")
                 return "\n".join(lines)
             elif isinstance(value, str):
-                # 전체 모드일 때는 모든 텍스트 표시
-                if self.full_text_mode:
-                    return f"'{value}'"
-
-                # 요약 모드일 때는 긴 문자열 축약
-                if len(value) > 100:
-                    preview = value[:200] + "..." if len(value) > 200 else value
-                    return f"'{preview}'"
+                # 문서 상세 보기에서는 전체 텍스트 표시
                 return f"'{value}'"
             else:
                 return str(value)
 
         return format_value(doc)
 
-    def prev_document(self):
-        """이전 문서로 이동 (wrap around)"""
-        if not self.documents:
-            return
-
-        if self.current_index > 0:
-            self.current_index -= 1
-        else:
-            # 처음에서 이전 누르면 마지막으로
-            self.current_index = len(self.documents) - 1
-
-        self.display_current_document()
-
-    def next_document(self):
-        """다음 문서로 이동 (wrap around)"""
-        if not self.documents:
-            return
-
-        if self.current_index < len(self.documents) - 1:
-            self.current_index += 1
-        else:
-            # 마지막에서 다음 누르면 처음으로
-            self.current_index = 0
-
-        self.display_current_document()
-
-    def goto_document(self):
-        """특정 문서 번호로 이동"""
-        try:
-            doc_num = int(self.doc_number_var.get())
-            if 1 <= doc_num <= len(self.documents):
-                self.current_index = doc_num - 1
-                self.display_current_document()
-            else:
-                messagebox.showwarning("범위 오류", f"1부터 {len(self.documents)} 사이의 숫자를 입력하세요.")
-        except ValueError:
-            messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
 
     def on_closing(self):
         """애플리케이션 종료"""
