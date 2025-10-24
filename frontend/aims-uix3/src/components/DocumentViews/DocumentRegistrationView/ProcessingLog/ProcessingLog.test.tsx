@@ -5,9 +5,8 @@
  * 테스트 범위 (74fbc13, 1c06e77):
  * 1. 정렬 기능 (오래된순/최신순)
  * 2. 자동 스크롤 (정렬 상태에 따라)
- * 3. 접기/펼치기 토글
- * 4. 로그 포맷팅
- * 5. 로그 지우기
+ * 3. 로그 포맷팅
+ * 4. 로그 지우기
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -70,62 +69,6 @@ describe('ProcessingLog Component', () => {
     });
   });
 
-  describe('접기/펼치기 기능', () => {
-    it('초기 상태는 펼쳐진 상태여야 한다', () => {
-      render(<ProcessingLog logs={mockLogs} />);
-
-      expect(screen.getByText('첫 번째 로그')).toBeInTheDocument();
-    });
-
-    it('헤더 클릭 시 로그 목록이 접혀야 한다', async () => {
-      const user = userEvent.setup();
-      render(<ProcessingLog logs={mockLogs} />);
-
-      const headerLeft = screen.getByText('처리 로그').parentElement!;
-      await user.click(headerLeft);
-
-      await waitFor(() => {
-        expect(screen.queryByText('첫 번째 로그')).not.toBeInTheDocument();
-      });
-    });
-
-    it('접힌 상태에서 헤더 클릭 시 다시 펼쳐져야 한다', async () => {
-      const user = userEvent.setup();
-      render(<ProcessingLog logs={mockLogs} />);
-
-      const headerLeft = screen.getByText('처리 로그').parentElement!;
-
-      // 접기
-      await user.click(headerLeft);
-      await waitFor(() => {
-        expect(screen.queryByText('첫 번째 로그')).not.toBeInTheDocument();
-      });
-
-      // 다시 펼치기
-      await user.click(headerLeft);
-      await waitFor(() => {
-        expect(screen.getByText('첫 번째 로그')).toBeInTheDocument();
-      });
-    });
-
-    it('접기/펼치기에 따라 chevron 아이콘이 변경되어야 한다', async () => {
-      const user = userEvent.setup();
-      render(<ProcessingLog logs={mockLogs} />);
-
-      // 초기 상태: chevron.down
-      const chevronContainer = document.querySelector('.processing-log__chevron');
-      expect(chevronContainer).toBeInTheDocument();
-
-      const headerLeft = screen.getByText('처리 로그').parentElement!;
-      await user.click(headerLeft);
-
-      // 접힌 후에는 chevron이 변경됨 (렌더링 확인)
-      await waitFor(() => {
-        const updatedChevron = document.querySelector('.processing-log__chevron');
-        expect(updatedChevron).toBeInTheDocument();
-      });
-    });
-  });
 
   describe('정렬 기능 (74fbc13)', () => {
     it('정렬 버튼이 렌더링되어야 한다', () => {
@@ -231,35 +174,6 @@ describe('ProcessingLog Component', () => {
       });
     });
 
-    it('접힌 상태에서는 자동 스크롤이 발생하지 않아야 한다', async () => {
-      const user = userEvent.setup();
-      const { rerender } = render(<ProcessingLog logs={mockLogs} />);
-
-      // 로그 접기
-      const headerLeft = screen.getByText('처리 로그').parentElement!;
-      await user.click(headerLeft);
-
-      await waitFor(() => {
-        expect(screen.queryByText('첫 번째 로그')).not.toBeInTheDocument();
-      });
-
-      // 새 로그 추가
-      const newLogs: Log[] = [
-        ...mockLogs,
-        {
-          id: 'log4',
-          timestamp: new Date('2025-10-23T10:03:00'),
-          level: 'info',
-          message: '네 번째 로그'
-        }
-      ];
-
-      rerender(<ProcessingLog logs={newLogs} />);
-
-      // 접힌 상태이므로 컨테이너가 렌더링되지 않음
-      const container = document.querySelector('.processing-log__container');
-      expect(container).not.toBeInTheDocument();
-    });
   });
 
   describe('시간 포맷팅', () => {

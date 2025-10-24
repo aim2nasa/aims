@@ -29,7 +29,6 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   className = '',
   onClear
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true)
   const [sortOrder, setSortOrder] = useState<SortOrder>('oldest-first') // 기본값: 오래된순 (위→아래로 최신 추가)
   const logContainerRef = useRef<HTMLDivElement>(null)
   const prevLogsLengthRef = useRef(logs.length)
@@ -45,7 +44,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
 
   // 새 로그 추가 시 또는 정렬 순서 변경 시 자동 스크롤
   useEffect(() => {
-    if (isExpanded && logContainerRef.current && logs.length > 0) {
+    if (logContainerRef.current && logs.length > 0) {
       // 로그가 추가되거나 정렬 순서가 변경되면 최신 로그로 스크롤
       if (sortOrder === 'oldest-first') {
         // 오래된순: 맨 아래로 스크롤 (최신 로그가 아래에 있음)
@@ -56,7 +55,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
       }
     }
     prevLogsLengthRef.current = logs.length
-  }, [logs.length, isExpanded, sortOrder])
+  }, [logs.length, sortOrder])
 
   const formatTime = (date: Date): string => {
     const hours = date.getHours().toString().padStart(2, '0')
@@ -96,16 +95,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     <div className={`processing-log ${className}`}>
       {/* Header */}
       <div className="processing-log__header">
-        <div
-          className="processing-log__header-left"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <SFSymbol
-            name={isExpanded ? 'chevron.down' : 'chevron.right'}
-            size={SFSymbolSize.CAPTION_1}
-            weight={SFSymbolWeight.MEDIUM}
-            className="processing-log__chevron"
-          />
+        <div className="processing-log__header-left">
           <span className="processing-log__title">처리 로그</span>
           <span className="processing-log__count">{logs.length}</span>
           <span className="processing-log__sort-status">
@@ -168,12 +158,11 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
       </div>
 
       {/* Log List */}
-      {isExpanded && (
-        <div
-          ref={logContainerRef}
-          className="processing-log__container"
-          style={{ maxHeight: `${maxHeight}px` }}
-        >
+      <div
+        ref={logContainerRef}
+        className="processing-log__container"
+        style={{ maxHeight: `${maxHeight}px` }}
+      >
           {sortedLogs.map((log) => {
             const config = LOG_CONFIG[log.level]
 
@@ -211,8 +200,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
               </div>
             )
           })}
-        </div>
-      )}
+      </div>
     </div>
   )
 }
