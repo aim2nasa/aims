@@ -150,6 +150,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 로그 추가 헬퍼 함수
    */
   const addLog = useCallback((level: LogLevel, message: string, details?: string) => {
+    // 🔍 호출 스택 추적
+    const stack = new Error().stack
+    console.log(`[addLog 호출됨] [${level.toUpperCase()}] ${message}${details ? ` - ${details}` : ''}`)
+    console.log('호출 스택:', stack)
+
     logCounterRef.current += 1
     const counter = logCounterRef.current
 
@@ -868,7 +873,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             onRetryFile={handleRetryFile}
             onClearAll={async () => {
               const confirmed = await showAppleConfirm(
-                '모든 업로드 기록을 초기화하시겠습니까?',
+                '업로드 기록을 초기화하시겠습니까?',
                 '업로드 초기화'
               )
               if (confirmed) {
