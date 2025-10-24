@@ -65,15 +65,30 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     return `${hours}:${minutes}:${seconds}.${milliseconds}`
   }
 
-  const downloadLogsAsText = () => {
+  const getLogsAsText = () => {
     // 로그를 텍스트로 변환
-    const logText = sortedLogs.map(log => {
+    return sortedLogs.map(log => {
       const time = formatTime(log.timestamp)
       const level = log.level.toUpperCase()
       const message = log.message
       const details = log.details ? ` - ${log.details}` : ''
       return `[${time}] [${level}] ${message}${details}`
     }).join('\n')
+  }
+
+  const copyLogsToClipboard = async () => {
+    const logText = getLogsAsText()
+    try {
+      await navigator.clipboard.writeText(logText)
+      // 복사 성공 피드백 (필요시 토스트 메시지 추가 가능)
+      console.log('로그가 클립보드에 복사되었습니다.')
+    } catch (error) {
+      console.error('클립보드 복사 실패:', error)
+    }
+  }
+
+  const downloadLogsAsText = () => {
+    const logText = getLogsAsText()
 
     // 현재 시간을 파일명에 포함
     const now = new Date()
@@ -116,6 +131,22 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
               >
                 <span className="processing-log__sort-icon">
                   {sortOrder === 'oldest-first' ? '↓' : '↑'}
+                </span>
+              </button>
+            </div>
+          </Tooltip>
+          <Tooltip content="로그 복사">
+            <div style={{ display: 'inline-block' }}>
+              <button
+                className="processing-log__sort"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyLogsToClipboard()
+                }}
+                aria-label="로그 복사"
+              >
+                <span className="processing-log__sort-icon">
+                  📋
                 </span>
               </button>
             </div>
