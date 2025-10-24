@@ -55,6 +55,7 @@ export interface AnnualReportSummary {
   contract_count: number;
   created_at: string;
   parsed_at?: string;
+  file_hash?: string;  // 파일 해시 (SHA-256)
 }
 
 /**

@@ -20,6 +20,7 @@ import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
+import { calculateFileHash, isDuplicateHash } from '@/features/customer/utils/fileHash'
 import type { Customer } from '@/entities/customer/model'
 import { DocumentService } from '@/services/DocumentService'
 import './DocumentRegistrationView.css'
@@ -281,9 +282,45 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (checkResult.is_annual_report && checkResult.metadata) {
               console.log('[DocumentRegistrationView] ✅ Annual Report 감지!', checkResult.metadata);
 
+              // 🔐 파일 해시 계산
+              addLog('info', `파일 해시 계산 중: ${file.name}`);
+              const fileHash = await calculateFileHash(file);
+              console.log('[DocumentRegistrationView] 파일 해시 계산 완료:', fileHash);
+
               // 고객명으로 검색
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
+
+              // 🔍 중복 체크: 고객의 기존 Annual Report 목록에서 해시 확인
+              if (customers.length > 0) {
+                const customerId = customers[0]._id;
+                console.log('[DocumentRegistrationView] 🔍 중복 체크 시작: customerId=', customerId);
+                const existingReports = await AnnualReportApi.getAnnualReports(customerId, 100);
+                console.log('[DocumentRegistrationView] 🔍 기존 AR 조회 결과:', existingReports);
+
+                if (existingReports.success && existingReports.data) {
+                  const existingHashes = existingReports.data.reports.map(r => r.file_hash);
+                  console.log('[DocumentRegistrationView] 🔍 기존 해시 목록:', existingHashes);
+                  console.log('[DocumentRegistrationView] 🔍 현재 파일 해시:', fileHash);
+                  const isDuplicate = isDuplicateHash(fileHash, existingHashes);
+                  console.log('[DocumentRegistrationView] 🔍 중복 여부:', isDuplicate);
+
+                  if (isDuplicate) {
+                    // 🚫 중복 발견 - 업로드 차단
+                    console.warn('[DocumentRegistrationView] ⚠️ 중복 파일 감지:', file.name);
+                    addLog(
+                      'error',
+                      `중복 파일 감지: ${file.name}`,
+                      `이미 등록된 Annual Report입니다. 업로드가 차단되었습니다.`
+                    );
+                    continue; // 이 파일은 업로드하지 않음
+                  } else {
+                    console.log('[DocumentRegistrationView] ✅ 중복 아님, 업로드 진행');
+                  }
+                } else {
+                  console.log('[DocumentRegistrationView] ⚠️ 기존 AR 조회 실패 또는 데이터 없음');
+                }
+              }
 
               addLog('success', `PDF 분석 완료: ${file.name}`)
               addLog(
@@ -583,6 +620,36 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (!annualReportFile) return;
 
     try {
+      // 🔍 중복 체크: 선택된 고객의 기존 Annual Report 목록에서 해시 확인
+      addLog('info', `중복 체크 중: ${annualReportFile.fileName}`);
+      const fileHash = await calculateFileHash(annualReportFile.file);
+      const existingReports = await AnnualReportApi.getAnnualReports(customerId, 100);
+
+      if (existingReports.success && existingReports.data) {
+        const existingHashes = existingReports.data.reports.map(r => r.file_hash);
+        const isDuplicate = isDuplicateHash(fileHash, existingHashes);
+
+        if (isDuplicate) {
+          // 🚫 중복 발견 - 업로드 차단
+          console.warn('[DocumentRegistrationView] ⚠️ 중복 파일 감지 (모달):', annualReportFile.fileName);
+          addLog(
+            'error',
+            `중복 파일 감지: ${annualReportFile.fileName}`,
+            `이미 등록된 Annual Report입니다. 업로드가 차단되었습니다.`
+          );
+
+          // 모달 닫기
+          setIsCustomerModalOpen(false);
+          setAnnualReportMetadata(null);
+          setAnnualReportCustomers([]);
+          setAnnualReportFile(null);
+
+          // 다음 AR 처리
+          setTimeout(() => processNextArInQueue(), 100);
+          return;
+        }
+      }
+
       // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
       arFilenamesRef.current.add(annualReportFile.fileName);
       console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);

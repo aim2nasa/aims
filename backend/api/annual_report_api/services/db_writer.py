@@ -230,10 +230,43 @@ def get_annual_reports(db, customer_id: str, limit: int = 10) -> Dict[str, any]:
         # limit 적용
         limited_reports = sorted_reports[:limit]
 
+        # files 컬렉션 참조 (file_hash 조회용)
+        files_collection = db["files"]
+
         # ObjectId를 문자열로 변환 (JSON 직렬화를 위해)
         for report in limited_reports:
+            source_file_id = None
             if "source_file_id" in report and isinstance(report["source_file_id"], ObjectId):
-                report["source_file_id"] = str(report["source_file_id"])
+                source_file_id = report["source_file_id"]
+                report["source_file_id"] = str(source_file_id)
+
+            # source_file_id가 있으면 files 컬렉션에서 file_hash 조회
+            if source_file_id:
+                try:
+                    file_doc = files_collection.find_one(
+                        {"_id": source_file_id},
+                        {"meta.file_hash": 1}
+                    )
+                    if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
+                        report["file_hash"] = file_doc["meta"]["file_hash"]
+                except Exception as e:
+                    logger.warning(f"file_hash 조회 실패: source_file_id={source_file_id}, 오류={e}")
+
+            # source_file_id가 없으면 customer_id로 files 조회 (Annual Report 파일 찾기)
+            else:
+                try:
+                    file_doc = files_collection.find_one(
+                        {
+                            "customer_relation.customer_id": customer_obj_id,
+                            "is_annual_report": True
+                        },
+                        {"meta.file_hash": 1},
+                        sort=[("upload.uploaded_at", -1)]
+                    )
+                    if file_doc and "meta" in file_doc and "file_hash" in file_doc["meta"]:
+                        report["file_hash"] = file_doc["meta"]["file_hash"]
+                except Exception as e:
+                    logger.warning(f"file_hash 조회 실패 (customer_id 기반): 오류={e}")
 
             # datetime을 ISO 형식 문자열로 변환
             if "issue_date" in report and isinstance(report["issue_date"], datetime):
