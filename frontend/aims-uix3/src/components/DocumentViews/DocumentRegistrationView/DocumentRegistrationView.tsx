@@ -144,19 +144,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 📝 처리 로그 상태
   const [processingLogs, setProcessingLogs] = useState<Log[]>([])
+  const logCounterRef = useRef(0) // 로그 카운터 (고유 ID 보장)
 
   /**
    * 로그 추가 헬퍼 함수
    */
   const addLog = useCallback((level: LogLevel, message: string, details?: string) => {
+    logCounterRef.current += 1
+    const counter = logCounterRef.current
+
     const newLog: Log = {
-      id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `log_${Date.now()}_${counter}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       level,
       message,
       details
     }
-    setProcessingLogs(prev => [newLog, ...prev]) // 최신 로그를 맨 위에
+
+    setProcessingLogs(prev => [newLog, ...prev])
   }, [])
 
   /**
@@ -256,7 +261,45 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨`
               )
 
-              // 🎯 AR 큐에 추가
+              // 🎯 고객이 1명이면 자동 선택 (모달 띄우지 않음)
+              if (customers.length === 1) {
+                const customerId = customers[0]._id;
+                addLog(
+                  'ar-auto',
+                  `AR 자동 등록: ${checkResult.metadata.customer_name}`,
+                  `고객 1명 → 자동 선택`
+                );
+
+                // AR 파일로 추적
+                arFilenamesRef.current.add(file.name);
+                arCustomerMappingRef.current.set(file.name, customerId);
+
+                // Annual Report 파싱 요청 (백그라운드 AI 처리)
+                try {
+                  const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
+                  if (parseResult.success) {
+                    console.log('[DocumentRegistrationView] AR 파싱 요청 성공 (자동):', parseResult);
+                  }
+                } catch (error) {
+                  console.error('[DocumentRegistrationView] AR 파싱 요청 실패 (자동):', error);
+                }
+
+                // 업로드 큐에 추가
+                newUploadFiles.push({
+                  id: generateFileId(),
+                  file,
+                  fileSize: file.size,
+                  status: 'pending',
+                  progress: 0,
+                  error: undefined,
+                  completedAt: undefined,
+                  relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
+                });
+
+                continue;
+              }
+
+              // 🎯 고객이 0명 또는 2명 이상이면 AR 큐에 추가 (모달 표시)
               arQueueRef.current.push({
                 file,
                 fileName: file.name,
