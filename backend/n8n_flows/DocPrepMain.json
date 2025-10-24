@@ -169,6 +169,12 @@
               "type": "array"
             },
             {
+              "id": "f1e2d3c4-b5a6-7890-f1e2-d3c4b5a67890",
+              "name": "meta.file_hash",
+              "value": "={{ $json.body.file_hash }}",
+              "type": "string"
+            },
+            {
               "id": "dbc183dd-ac7c-4628-b2a2-38b4a0e5ed5f",
               "name": "_id",
               "value": "={{ $('Save File Info').item.json._id }}",

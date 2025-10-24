@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const mime = require('mime-types');
 const pdfParse = require('pdf-parse');
 const exif = require('exif-parser');
@@ -29,6 +30,23 @@ const EXTENSION_MIME_MAP = {
 const DEFAULT_MAX_PAGES = 30;
 let ALL_PAGES = false;
 let VERBOSE = false;
+
+/**
+ * 파일의 SHA-256 해시 계산
+ * @param {string} filePath - 해시를 계산할 파일 경로
+ * @returns {string|null} 64자 hex string (SHA-256), 오류 시 null
+ */
+function calculateFileHash(filePath) {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    const hash = crypto.createHash('sha256');
+    hash.update(buffer);
+    return hash.digest('hex');
+  } catch (error) {
+    console.error(`[file_hash] 해시 계산 실패: ${filePath}, 오류: ${error.message}`);
+    return null;
+  }
+}
 
 /**
  * PDF 텍스트 비율 분석
@@ -349,7 +367,8 @@ async function getFileMetadata(filePath, extractText = true) {
     exif: {},
     pdf_pages: null,
     extracted_text: null,
-    error: null
+    error: null,
+    file_hash: null
   };
 
   // 파일 존재 확인
@@ -362,6 +381,9 @@ async function getFileMetadata(filePath, extractText = true) {
   meta.size_bytes = stat.size;
   meta.created_at = new Date(stat.ctimeMs).toISOString();
   meta.status = "ok";
+
+  // 파일 해시 계산 (SHA-256)
+  meta.file_hash = calculateFileHash(filePath);
 
   // 확장자 기반 MIME 매핑
   let mimeType = mime.lookup(filePath);
