@@ -128,10 +128,10 @@
 .processing-log__container {
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 /* 🍎 macOS-style scrollbar */
@@ -157,12 +157,12 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  padding: 8px 8px;
+  padding: 4px 6px;
   background: var(--color-section-item-bg);
   border-radius: 6px;
   transition: background-color 0.15s ease;
   animation: logFadeIn 0.3s ease-out;
-  min-height: 32px;
+  min-height: 24px;
 }
 
 @keyframes logFadeIn {
@@ -214,7 +214,7 @@
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   flex: 1;
-  line-height: 1.6;
+  line-height: 1.4;
   letter-spacing: -0.1px;
   word-wrap: break-word;
   word-break: break-word;
