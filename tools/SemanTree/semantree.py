@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.1 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.1.1 - AIMS Document Viewer")
         self.root.geometry("1200x800")
 
         # MongoDB 연결
@@ -144,6 +144,7 @@ class DocumentViewer:
         self.documents: List[Dict[str, Any]] = []
         self.current_index: int = 0
         self.sort_order: int = -1  # -1: 최신순, 1: 오래된순
+        self.full_text_mode: bool = False  # False: 요약 보기, True: 전체 보기
 
         # UI 구성
         self.setup_ui()
@@ -167,6 +168,10 @@ class DocumentViewer:
         # 정렬 순서 버튼
         self.sort_button = ttk.Button(top_frame, text="정렬: 최신순", command=self.toggle_sort_order)
         self.sort_button.pack(side=tk.LEFT, padx=5)
+
+        # 텍스트 표시 모드 버튼
+        self.text_mode_button = ttk.Button(top_frame, text="표시: 요약", command=self.toggle_text_mode)
+        self.text_mode_button.pack(side=tk.LEFT, padx=5)
 
         # 문서 개수 레이블
         self.count_label = ttk.Label(top_frame, text="문서: 0개", font=("Arial", 10))
@@ -263,6 +268,13 @@ class DocumentViewer:
         self.sort_button.config(text=f"정렬: {sort_text}")
         self.reload_documents()
 
+    def toggle_text_mode(self):
+        """텍스트 표시 모드 토글 (요약 ↔ 전체)"""
+        self.full_text_mode = not self.full_text_mode
+        mode_text = "전체" if self.full_text_mode else "요약"
+        self.text_mode_button.config(text=f"표시: {mode_text}")
+        self.display_current_document()
+
     def copy_to_clipboard(self):
         """텍스트 영역의 내용을 클립보드에 복사"""
         try:
@@ -326,7 +338,11 @@ class DocumentViewer:
                 lines.append(f"{prefix}]")
                 return "\n".join(lines)
             elif isinstance(value, str):
-                # 긴 문자열은 줄바꿈 처리
+                # 전체 모드일 때는 모든 텍스트 표시
+                if self.full_text_mode:
+                    return f"'{value}'"
+
+                # 요약 모드일 때는 긴 문자열 축약
                 if len(value) > 100:
                     preview = value[:200] + "..." if len(value) > 200 else value
                     return f"'{preview}'"
