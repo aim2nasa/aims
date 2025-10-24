@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.1.1 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.1.2 - AIMS Document Viewer")
         self.root.geometry("1200x800")
 
         # MongoDB 연결
@@ -172,6 +172,9 @@ class DocumentViewer:
         # 텍스트 표시 모드 버튼
         self.text_mode_button = ttk.Button(top_frame, text="표시: 요약", command=self.toggle_text_mode)
         self.text_mode_button.pack(side=tk.LEFT, padx=5)
+
+        # 태그 통계 버튼
+        ttk.Button(top_frame, text="📊 태그 통계", command=self.show_tag_statistics).pack(side=tk.LEFT, padx=5)
 
         # 문서 개수 레이블
         self.count_label = ttk.Label(top_frame, text="문서: 0개", font=("Arial", 10))
@@ -285,6 +288,82 @@ class DocumentViewer:
             messagebox.showinfo("복사 완료", "문서 내용이 클립보드에 복사되었습니다.")
         except Exception as e:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
+
+    def show_tag_statistics(self):
+        """태그 통계 창 표시"""
+        if not self.documents:
+            messagebox.showinfo("태그 통계", "문서가 없습니다.")
+            return
+
+        # 태그 빈도수 수집
+        from collections import Counter
+        tag_counter = Counter()
+
+        for doc in self.documents:
+            # meta.tags 수집
+            meta_tags = doc.get("meta", {}).get("tags", [])
+            if isinstance(meta_tags, list):
+                tag_counter.update(meta_tags)
+
+            # ocr.tags 수집
+            ocr_tags = doc.get("ocr", {}).get("tags", [])
+            if isinstance(ocr_tags, list):
+                tag_counter.update(ocr_tags)
+
+        if not tag_counter:
+            messagebox.showinfo("태그 통계", "태그가 없습니다.")
+            return
+
+        # 새 창 생성
+        stats_window = tk.Toplevel(self.root)
+        stats_window.title("태그 통계")
+        stats_window.geometry("800x600")
+
+        # 상단 정보
+        info_frame = ttk.Frame(stats_window, padding="10")
+        info_frame.pack(fill=tk.X)
+
+        total_tags = sum(tag_counter.values())
+        unique_tags = len(tag_counter)
+        ttk.Label(info_frame, text=f"총 태그 수: {total_tags}개 | 고유 태그: {unique_tags}개",
+                  font=("Arial", 11, "bold")).pack()
+
+        # Treeview를 사용한 테이블 컨트롤
+        table_frame = ttk.Frame(stats_window, padding="10")
+        table_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 스크롤바 추가
+        scrollbar = ttk.Scrollbar(table_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Treeview 생성
+        columns = ("순위", "태그", "빈도수", "비율")
+        tree = ttk.Treeview(table_frame, columns=columns, show="headings", yscrollcommand=scrollbar.set)
+        scrollbar.config(command=tree.yview)
+
+        # 컬럼 헤더 설정
+        tree.heading("순위", text="순위")
+        tree.heading("태그", text="태그")
+        tree.heading("빈도수", text="빈도수")
+        tree.heading("비율", text="비율")
+
+        # 컬럼 너비 및 정렬 설정
+        tree.column("순위", width=80, anchor=tk.CENTER)
+        tree.column("태그", width=400, anchor=tk.W)
+        tree.column("빈도수", width=120, anchor=tk.E)
+        tree.column("비율", width=120, anchor=tk.E)
+
+        # 데이터 삽입
+        for rank, (tag, count) in enumerate(tag_counter.most_common(), 1):
+            percentage = (count / total_tags) * 100
+            tree.insert("", tk.END, values=(rank, tag, f"{count}회", f"{percentage:.1f}%"))
+
+        tree.pack(fill=tk.BOTH, expand=True)
+
+        # 닫기 버튼
+        button_frame = ttk.Frame(stats_window, padding="10")
+        button_frame.pack(fill=tk.X)
+        ttk.Button(button_frame, text="닫기", command=stats_window.destroy).pack(side=tk.RIGHT)
 
     def display_current_document(self):
         """현재 문서 표시"""
