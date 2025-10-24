@@ -309,7 +309,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     // 🚫 AR 중복 발견 - AR 파싱은 건너뛰고 문서 중복 검사 진행
                     console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지:', file.name);
                     addLog(
-                      'error',
+                      'warning',
                       `중복 Annual Report 감지: ${file.name}`,
                       `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다.`
                     );
@@ -341,7 +341,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                             if (uploadFileHash === existingHash) {
                               isDuplicateDocument = true;
                               addLog(
-                                'info',
+                                'warning',
                                 `중복 문서 감지: ${file.name}`,
                                 `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
                               );
@@ -500,7 +500,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                           if (uploadFileHash === existingHash) {
                             isDuplicateDocument = true;
                             addLog(
-                              'info',
+                              'warning',
                               `중복 문서 감지: ${file.name}`,
                               `AR은 새로 등록되었으나, 파일은 이미 존재하므로 업로드를 건너뜁니다.`
                             );
@@ -805,7 +805,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           // 🚫 중복 발견 - 업로드 차단
           console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지 (모달):', annualReportFile.fileName);
           addLog(
-            'error',
+            'warning',
             `중복 Annual Report 감지: ${annualReportFile.fileName}`,
             `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다.`
           );
