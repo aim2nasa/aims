@@ -37,11 +37,18 @@ class SSHTunnel:
         try:
             print(f"Starting SSH tunnel: {self.remote_host}:{self.remote_port} -> localhost:{self.local_port}")
 
+            # Windows에서 콘솔 창 숨기기 위한 플래그
+            import platform
+            creation_flags = 0
+            if platform.system() == 'Windows':
+                creation_flags = subprocess.CREATE_NO_WINDOW
+
             # SSH 터널 프로세스 시작 (백그라운드)
             self.process = subprocess.Popen(
                 ["ssh", "-N", "-L", f"{self.local_port}:localhost:{self.remote_port}", self.remote_host],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                creationflags=creation_flags
             )
 
             # 터널이 준비될 때까지 대기
@@ -129,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree - AIMS Document Viewer")
+        self.root.title("SemanTree v0.1 - AIMS Document Viewer")
         self.root.geometry("1200x800")
 
         # MongoDB 연결
