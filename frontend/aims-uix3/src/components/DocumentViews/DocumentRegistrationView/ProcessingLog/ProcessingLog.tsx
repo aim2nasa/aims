@@ -29,7 +29,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   className = '',
   onClear
 }) => {
-  const [sortOrder, setSortOrder] = useState<SortOrder>('oldest-first') // 기본값: 오래된순 (위→아래로 최신 추가)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest-first') // 기본값: 최신순 (위→아래로 최신이 맨 위)
   const logContainerRef = useRef<HTMLDivElement>(null)
   const prevLogsLengthRef = useRef(logs.length)
 

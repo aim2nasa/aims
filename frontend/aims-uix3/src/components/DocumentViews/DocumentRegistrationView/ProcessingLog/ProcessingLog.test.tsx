@@ -74,73 +74,73 @@ describe('ProcessingLog Component', () => {
     it('정렬 버튼이 렌더링되어야 한다', () => {
       render(<ProcessingLog logs={mockLogs} />);
 
-      const sortButton = screen.getByLabelText('최신순 정렬');
+      const sortButton = screen.getByLabelText('오래된순 정렬'); // 기본값이 newest-first
       expect(sortButton).toBeInTheDocument();
     });
 
-    it('초기 정렬 순서는 오래된순이어야 한다', () => {
+    it('초기 정렬 순서는 최신순이어야 한다', () => {
       render(<ProcessingLog logs={mockLogs} />);
 
-      const sortButton = screen.getByLabelText('최신순 정렬');
+      const sortButton = screen.getByLabelText('오래된순 정렬'); // 기본값이 newest-first
       expect(sortButton).toBeInTheDocument();
-      expect(sortButton.textContent).toBe('↓');
+      expect(sortButton.textContent).toBe('↑');
     });
 
-    it('정렬 버튼 클릭 시 최신순으로 변경되어야 한다', async () => {
+    it('정렬 버튼 클릭 시 오래된순으로 변경되어야 한다', async () => {
       const user = userEvent.setup();
       render(<ProcessingLog logs={mockLogs} />);
 
-      const sortButton = screen.getByLabelText('최신순 정렬');
-      await user.click(sortButton);
-
-      await waitFor(() => {
-        const updatedButton = screen.getByLabelText('오래된순 정렬');
-        expect(updatedButton).toBeInTheDocument();
-        expect(updatedButton.textContent).toBe('↑');
-      });
-    });
-
-    it('정렬 버튼 두 번 클릭 시 다시 오래된순으로 변경되어야 한다', async () => {
-      const user = userEvent.setup();
-      render(<ProcessingLog logs={mockLogs} />);
-
-      let sortButton = screen.getByLabelText('최신순 정렬');
-      await user.click(sortButton);
-
-      await waitFor(() => {
-        sortButton = screen.getByLabelText('오래된순 정렬');
-      });
-
+      const sortButton = screen.getByLabelText('오래된순 정렬');
       await user.click(sortButton);
 
       await waitFor(() => {
         const updatedButton = screen.getByLabelText('최신순 정렬');
         expect(updatedButton).toBeInTheDocument();
+        expect(updatedButton.textContent).toBe('↓');
       });
     });
 
-    it('오래된순 정렬 시 로그가 시간 역순으로 표시되어야 한다', () => {
+    it('정렬 버튼 두 번 클릭 시 다시 최신순으로 변경되어야 한다', async () => {
+      const user = userEvent.setup();
+      render(<ProcessingLog logs={mockLogs} />);
+
+      let sortButton = screen.getByLabelText('오래된순 정렬');
+      await user.click(sortButton);
+
+      await waitFor(() => {
+        sortButton = screen.getByLabelText('최신순 정렬');
+      });
+
+      await user.click(sortButton);
+
+      await waitFor(() => {
+        const updatedButton = screen.getByLabelText('오래된순 정렬');
+        expect(updatedButton).toBeInTheDocument();
+      });
+    });
+
+    it('최신순 정렬 시 로그가 시간 순서대로 표시되어야 한다', () => {
       render(<ProcessingLog logs={mockLogs} />);
 
       // .processing-log__message 클래스를 가진 요소만 조회
       const logMessages = document.querySelectorAll('.processing-log__message');
-      expect(logMessages[0]).toHaveTextContent('세 번째 로그');
+      expect(logMessages[0]).toHaveTextContent('첫 번째 로그');
       expect(logMessages[1]).toHaveTextContent('두 번째 로그');
-      expect(logMessages[2]).toHaveTextContent('첫 번째 로그');
+      expect(logMessages[2]).toHaveTextContent('세 번째 로그');
     });
 
-    it('최신순 정렬 시 로그가 시간 순서대로 표시되어야 한다', async () => {
+    it('오래된순 정렬 시 로그가 시간 역순으로 표시되어야 한다', async () => {
       const user = userEvent.setup();
       render(<ProcessingLog logs={mockLogs} />);
 
-      const sortButton = screen.getByLabelText('최신순 정렬');
+      const sortButton = screen.getByLabelText('오래된순 정렬');
       await user.click(sortButton);
 
       await waitFor(() => {
         const logMessages = document.querySelectorAll('.processing-log__message');
-        expect(logMessages[0]).toHaveTextContent('첫 번째 로그');
+        expect(logMessages[0]).toHaveTextContent('세 번째 로그');
         expect(logMessages[1]).toHaveTextContent('두 번째 로그');
-        expect(logMessages[2]).toHaveTextContent('세 번째 로그');
+        expect(logMessages[2]).toHaveTextContent('첫 번째 로그');
       });
     });
   });
@@ -151,8 +151,6 @@ describe('ProcessingLog Component', () => {
 
       const container = document.querySelector('.processing-log__container') as HTMLDivElement;
       expect(container).toBeInTheDocument();
-
-      const initialScrollTop = container.scrollTop;
 
       // 새 로그 추가
       const newLogs: Log[] = [
@@ -168,9 +166,9 @@ describe('ProcessingLog Component', () => {
       rerender(<ProcessingLog logs={newLogs} />);
 
       await waitFor(() => {
-        // 오래된순 정렬에서는 맨 아래로 스크롤
-        // scrollTop이 변경되었을 것으로 예상 (실제 값은 DOM 환경에 따라 다름)
-        expect(container.scrollTop).toBeGreaterThanOrEqual(initialScrollTop);
+        // 최신순 정렬(기본값)에서는 맨 위로 스크롤
+        // scrollTop이 0으로 설정될 것으로 예상
+        expect(container.scrollTop).toBe(0);
       });
     });
 
@@ -319,7 +317,7 @@ describe('ProcessingLog Component', () => {
     it('로그가 없을 때 정렬/지우기 버튼은 여전히 표시되어야 한다', () => {
       render(<ProcessingLog logs={[]} onClear={vi.fn()} />);
 
-      expect(screen.getByLabelText('최신순 정렬')).toBeInTheDocument();
+      expect(screen.getByLabelText('오래된순 정렬')).toBeInTheDocument(); // 기본값이 newest-first이므로
       expect(screen.getByLabelText('로그 지우기')).toBeInTheDocument();
     });
   });
