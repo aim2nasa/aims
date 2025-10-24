@@ -810,17 +810,18 @@ class DocumentViewer:
 
             # 필터 적용 (연도 또는 월)
             if filter_key:
+                filter_key_str = str(filter_key)
                 uploaded_at = doc.get("upload", {}).get("uploaded_at")
                 if uploaded_at:
                     if isinstance(uploaded_at, datetime):
-                        if filter_key.count("-") == 1:  # 월별
+                        if filter_key_str.count("-") == 1:  # 월별
                             doc_key = f"{uploaded_at.year}-{uploaded_at.month:02d}"
                         else:  # 연도별
                             doc_key = str(uploaded_at.year)
                     else:
-                        doc_key = str(uploaded_at)[:7] if filter_key.count("-") == 1 else str(uploaded_at)[:4]
+                        doc_key = str(uploaded_at)[:7] if filter_key_str.count("-") == 1 else str(uploaded_at)[:4]
 
-                    if doc_key != filter_key:
+                    if doc_key != filter_key_str:
                         continue
 
             # 태그 확인
