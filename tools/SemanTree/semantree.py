@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.4.0 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.4.1 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -158,6 +158,7 @@ class DocumentViewer:
 
         # Raw 데이터 뷰어 상태
         self.current_raw_index: int = 0
+        self.raw_full_text_mode: bool = False  # False: 요약 보기, True: 전체 보기
 
         # UI 구성
         self.setup_ui()
@@ -326,8 +327,13 @@ class DocumentViewer:
         raw_doc_entry.bind('<Return>', lambda e: self.goto_raw_document())
         ttk.Button(raw_nav_frame, text="이동", command=self.goto_raw_document).pack(side=tk.LEFT, padx=5)
 
+        # 우측: 요약/전체 토글 및 복사 버튼
         # 전체 복사 버튼
         ttk.Button(raw_nav_frame, text="📋 전체 복사", command=self.copy_raw_to_clipboard).pack(side=tk.RIGHT, padx=5)
+
+        # 요약/전체 토글 버튼
+        self.raw_text_mode_button = ttk.Button(raw_nav_frame, text="표시: 요약", command=self.toggle_raw_text_mode)
+        self.raw_text_mode_button.pack(side=tk.RIGHT, padx=5)
 
         # Raw 데이터 텍스트 영역
         raw_text_frame = ttk.Frame(raw_data_tab)
@@ -994,6 +1000,11 @@ class DocumentViewer:
                 return {k: convert_to_serializable(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [convert_to_serializable(item) for item in obj]
+            elif isinstance(obj, str):
+                # 요약 모드일 때는 긴 문자열 축약
+                if not self.raw_full_text_mode and len(obj) > 200:
+                    return obj[:200] + "..."
+                return obj
             else:
                 return obj
 
@@ -1040,6 +1051,13 @@ class DocumentViewer:
                 messagebox.showwarning("범위 오류", f"1부터 {len(self.documents)} 사이의 숫자를 입력하세요.")
         except ValueError:
             messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
+
+    def toggle_raw_text_mode(self):
+        """Raw 데이터 텍스트 표시 모드 토글 (요약 ↔ 전체)"""
+        self.raw_full_text_mode = not self.raw_full_text_mode
+        mode_text = "전체" if self.raw_full_text_mode else "요약"
+        self.raw_text_mode_button.config(text=f"표시: {mode_text}")
+        self.update_raw_viewer()
 
     def copy_raw_to_clipboard(self):
         """Raw 데이터를 클립보드에 복사"""
