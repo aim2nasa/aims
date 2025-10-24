@@ -136,7 +136,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.4.1 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.4.2 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -159,6 +159,9 @@ class DocumentViewer:
         # Raw 데이터 뷰어 상태
         self.current_raw_index: int = 0
         self.raw_full_text_mode: bool = False  # False: 요약 보기, True: 전체 보기
+
+        # 기타 분류 최소 기준
+        self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
 
         # UI 구성
         self.setup_ui()
@@ -211,6 +214,22 @@ class DocumentViewer:
                        value="by_year", command=self.on_mode_change).pack(anchor=tk.W)
         ttk.Radiobutton(mode_frame, text="월별 → 태그별", variable=self.tree_mode,
                        value="by_month", command=self.on_mode_change).pack(anchor=tk.W)
+
+        # 기타 분류 기준 설정
+        min_count_frame = ttk.Frame(mode_frame)
+        min_count_frame.pack(fill=tk.X, pady=(10, 0))
+
+        ttk.Label(min_count_frame, text="기타 분류 기준:", font=("Arial", 9, "bold")).pack(anchor=tk.W, pady=(0, 5))
+
+        min_count_control = ttk.Frame(min_count_frame)
+        min_count_control.pack(fill=tk.X)
+
+        ttk.Label(min_count_control, text="최소:", width=5).pack(side=tk.LEFT)
+        self.min_count_spinbox = ttk.Spinbox(min_count_control, from_=1, to=20, width=5, command=self.apply_min_count)
+        self.min_count_spinbox.set("2")
+        self.min_count_spinbox.pack(side=tk.LEFT, padx=5)
+
+        ttk.Label(min_count_control, text="건 미만은 기타").pack(side=tk.LEFT, padx=(0, 5))
 
         # 좌측: 검색 및 필터
         filter_frame = ttk.LabelFrame(left_frame, text="🔍 검색 및 필터", padding="10")
@@ -526,11 +545,34 @@ class DocumentViewer:
         # 빈도수 높은 순으로 정렬
         sorted_tags = sorted(tag_to_docs.items(), key=lambda x: len(x[1]), reverse=True)
 
-        # 트리에 노드 삽입
+        # 기타 폴더에 들어갈 태그와 일반 태그 분리
+        main_tags = []
+        other_tags = []
+
         for tag, doc_ids in sorted_tags:
             count = len(doc_ids)
-            node_id = self.tag_tree.insert("", "end", text=f"📁 {tag} ({count}건)",
-                                          values=("tag", tag, "", ""))
+            if count >= self.min_tag_count:
+                main_tags.append((tag, doc_ids))
+            else:
+                other_tags.append((tag, doc_ids))
+
+        # 일반 태그 노드 삽입
+        for tag, doc_ids in main_tags:
+            count = len(doc_ids)
+            self.tag_tree.insert("", "end", text=f"📁 {tag} ({count}건)",
+                                values=("tag", tag, "", ""))
+
+        # 기타 폴더 생성 (기타 태그가 있는 경우)
+        if other_tags:
+            # 기타 폴더 노드 (건수 표시 안 함)
+            other_node = self.tag_tree.insert("", "end", text="📂 기타",
+                                             values=("other", "기타", "", ""))
+
+            # 기타 폴더 하위에 태그 추가
+            for tag, doc_ids in other_tags:
+                count = len(doc_ids)
+                self.tag_tree.insert(other_node, "end", text=f"📁 {tag} ({count}건)",
+                                   values=("tag", tag, "", ""))
 
     def build_tree_by_year(self):
         """연도별 → 태그별 트리 구축"""
@@ -656,6 +698,19 @@ class DocumentViewer:
         """분류 기준 변경 시"""
         self.update_tag_tree_view()
 
+    def apply_min_count(self):
+        """기타 분류 최소 기준 적용"""
+        try:
+            new_value = int(self.min_count_spinbox.get())
+            if new_value < 1:
+                messagebox.showwarning("입력 오류", "최소 기준은 1 이상이어야 합니다.")
+                return
+
+            self.min_tag_count = new_value
+            self.update_tag_tree_view()
+        except ValueError:
+            messagebox.showwarning("입력 오류", "숫자를 입력해주세요.")
+
     def on_tree_select(self, event):
         """트리 노드 선택 시 이벤트 핸들러"""
         selected = self.tag_tree.selection()
@@ -682,6 +737,9 @@ class DocumentViewer:
         elif node_type == "month":
             # 월 노드 선택: 해당 월의 모든 문서 표시
             self.display_documents_by_month(node_value)
+        elif node_type == "other":
+            # 기타 폴더 선택: 문서 목록 표시 안 함 (단순 묶음 폴더)
+            pass
 
     def display_documents_by_tag(self, tag, filter_key=""):
         """태그별 문서 표시 (필터 적용 가능)"""
