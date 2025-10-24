@@ -745,8 +745,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
     console.log(`🔍 [handleStatusChange] fileId=${fileId}, status=${status}`);
 
-    // 🔍 상태 업데이트 전에 파일 정보 미리 찾기 (로그용)
+    // 🔍 상태 업데이트 전에 파일 정보 미리 찾기
     const currentFile = uploadState.files.find(f => f.id === fileId);
+    let shouldSetArFlag = false;
+    let arFileName: string | null = null;
 
     setUploadState(prev => {
       const updatedFiles = prev.files.map(f => {
@@ -758,18 +760,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
 
-            // 🏷️ Annual Report 파일이면 DB 플래그 설정
+            // 🏷️ Annual Report 파일이면 DB 플래그 설정 준비
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정: ${f.file.name}`);
-              // 로그와 DB 플래그 설정은 상태 업데이트 후 실행 (useEffect에서 처리)
-              setAnnualReportFlag(f.file.name);
+              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정 예약: ${f.file.name}`);
+              shouldSetArFlag = true;
+              arFileName = f.file.name;
               // 추적 목록에서 제거
               arFilenamesRef.current.delete(f.file.name);
             }
             // 🔗 중복 AR도 고객 연결 필요 (arCustomerMappingRef에 있으면)
             else if (status === 'completed' && arCustomerMappingRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] 중복 AR 파일 업로드 완료, 고객 자동 연결: ${f.file.name}`);
-              setAnnualReportFlag(f.file.name);
+              console.log(`✅ [handleStatusChange] 중복 AR 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
+              shouldSetArFlag = true;
+              arFileName = f.file.name;
             }
           }
           return updatedFile
@@ -791,6 +794,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         completedCount
       }
     })
+
+    // 🏷️ AR 플래그 설정 (setState 밖에서 실행하여 중복 호출 방지)
+    if (shouldSetArFlag && arFileName) {
+      console.log(`🏷️ [handleStatusChange] AR 플래그 설정 실행: ${arFileName}`);
+      setAnnualReportFlag(arFileName);
+    }
 
     // ✅ 로그는 상태 업데이트 함수 밖에서 호출 (부작용 제거)
     if (currentFile) {
