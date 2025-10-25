@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { DocumentService } from '@/services/DocumentService'
 import * as fileHashModule from '@/features/customer/utils/fileHash'
+import { processAnnualReportFile } from '../utils/annualReportProcessor'
 
 describe('AR Duplicate Prevention', () => {
   const mockCustomerId = 'customer123'
@@ -47,20 +48,18 @@ describe('AR Duplicate Prevention', () => {
 
       vi.spyOn(fileHashModule, 'calculateFileHash').mockResolvedValue(mockFileHash)
 
-      // When: AR 파일 업로드 시도
-      const arCheckResult = await AnnualReportApi.getAnnualReports(mockCustomerId, 100)
-      const docCheckResult = await DocumentService.getCustomerDocuments(mockCustomerId)
+      // When: processAnnualReportFile 함수 호출
+      const result = await processAnnualReportFile(
+        new File([], mockFileName),
+        mockCustomerId,
+        { issue_date: mockIssueDate, customer_name: '김보성' }
+      )
 
-      // Then: 중복 없음 확인
-      expect(arCheckResult.data?.reports.length).toBe(0)
-      expect(docCheckResult.documents?.length).toBe(0)
-
-      // AR 파싱 및 문서 업로드 진행해야 함
-      const shouldParseAr = true
-      const shouldUploadDoc = true
-
-      expect(shouldParseAr).toBe(true)
-      expect(shouldUploadDoc).toBe(true)
+      // Then: AR 파싱 및 문서 업로드 모두 진행
+      expect(result.isDuplicateAr).toBe(false)
+      expect(result.isDuplicateDoc).toBe(false)
+      expect(result.shouldParseAr).toBe(true)
+      expect(result.shouldUploadDoc).toBe(true)
     })
   })
 
@@ -94,23 +93,18 @@ describe('AR Duplicate Prevention', () => {
 
       vi.spyOn(fileHashModule, 'calculateFileHash').mockResolvedValue(mockFileHash)
 
-      // When: AR 파일 업로드 시도
-      const arCheckResult = await AnnualReportApi.getAnnualReports(mockCustomerId, 100)
-      const existingIssueDates = arCheckResult.data?.reports.map(r => r.issue_date?.substring(0, 10)) || []
-      const isArDuplicate = existingIssueDates.includes(mockIssueDate)
+      // When: processAnnualReportFile 함수 호출
+      const result = await processAnnualReportFile(
+        new File([], mockFileName),
+        mockCustomerId,
+        { issue_date: mockIssueDate, customer_name: '김보성' }
+      )
 
-      const isDocDuplicate = false // 문서 없으므로 중복 아님
-
-      // Then: AR은 중복, 문서는 중복 아님
-      expect(isArDuplicate).toBe(true)
-      expect(isDocDuplicate).toBe(false)
-
-      // AR 파싱은 건너뛰고, 문서 업로드만 진행
-      const shouldParseAr = false
-      const shouldUploadDoc = true
-
-      expect(shouldParseAr).toBe(false)
-      expect(shouldUploadDoc).toBe(true)
+      // Then: AR 중복, 문서는 중복 아님
+      expect(result.isDuplicateAr).toBe(true)
+      expect(result.isDuplicateDoc).toBe(false)
+      expect(result.shouldParseAr).toBe(false)
+      expect(result.shouldUploadDoc).toBe(true)
     })
   })
 
@@ -155,25 +149,18 @@ describe('AR Duplicate Prevention', () => {
 
       vi.spyOn(fileHashModule, 'calculateFileHash').mockResolvedValue(mockFileHash)
 
-      // When: AR 파일 업로드 시도
-      const isArDuplicate = false // AR 없음
-
-      const uploadFileHash = await fileHashModule.calculateFileHash(new File([], mockFileName))
-      const docStatusResponse = await fetch(`http://tars.giize.com:3010/api/documents/${mockDocId}/status`)
-      const docData = await docStatusResponse.json()
-      const existingHash = docData.data?.raw?.meta?.file_hash
-      const isDocDuplicate = uploadFileHash === existingHash
+      // When: processAnnualReportFile 함수 호출
+      const result = await processAnnualReportFile(
+        new File([], mockFileName),
+        mockCustomerId,
+        { issue_date: mockIssueDate, customer_name: '김보성' }
+      )
 
       // Then: AR은 중복 아님, 문서는 중복
-      expect(isArDuplicate).toBe(false)
-      expect(isDocDuplicate).toBe(true)
-
-      // AR 파싱은 진행, 문서 업로드는 건너뛰기
-      const shouldParseAr = true
-      const shouldUploadDoc = false
-
-      expect(shouldParseAr).toBe(true)
-      expect(shouldUploadDoc).toBe(false)
+      expect(result.isDuplicateAr).toBe(false)
+      expect(result.isDuplicateDoc).toBe(true)
+      expect(result.shouldParseAr).toBe(true)
+      expect(result.shouldUploadDoc).toBe(false)
     })
   })
 
@@ -228,27 +215,18 @@ describe('AR Duplicate Prevention', () => {
 
       vi.spyOn(fileHashModule, 'calculateFileHash').mockResolvedValue(mockFileHash)
 
-      // When: AR 파일 업로드 시도
-      const arCheckResult = await AnnualReportApi.getAnnualReports(mockCustomerId, 100)
-      const existingIssueDates = arCheckResult.data?.reports.map(r => r.issue_date?.substring(0, 10)) || []
-      const isArDuplicate = existingIssueDates.includes(mockIssueDate)
-
-      const uploadFileHash = await fileHashModule.calculateFileHash(new File([], mockFileName))
-      const docStatusResponse = await fetch(`http://tars.giize.com:3010/api/documents/${mockDocId}/status`)
-      const docData = await docStatusResponse.json()
-      const existingHash = docData.data?.raw?.meta?.file_hash
-      const isDocDuplicate = uploadFileHash === existingHash
+      // When: processAnnualReportFile 함수 호출
+      const result = await processAnnualReportFile(
+        new File([], mockFileName),
+        mockCustomerId,
+        { issue_date: mockIssueDate, customer_name: '김보성' }
+      )
 
       // Then: AR도 중복, 문서도 중복
-      expect(isArDuplicate).toBe(true)
-      expect(isDocDuplicate).toBe(true)
-
-      // AR 파싱도 건너뛰고, 문서 업로드도 건너뛰기
-      const shouldParseAr = false
-      const shouldUploadDoc = false
-
-      expect(shouldParseAr).toBe(false)
-      expect(shouldUploadDoc).toBe(false)
+      expect(result.isDuplicateAr).toBe(true)
+      expect(result.isDuplicateDoc).toBe(true)
+      expect(result.shouldParseAr).toBe(false)
+      expect(result.shouldUploadDoc).toBe(false)
     })
   })
 })
