@@ -23,6 +23,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
   let filesCollection;
   let customersCollection;
 
+  // 테스트에서 생성한 ID 추적
+  let createdDocumentIds = [];
+  let createdCustomerIds = [];
+
   // 각 테스트 전에 MongoDB 연결 및 테스트 데이터 준비
   beforeAll(async () => {
     client = await MongoClient.connect(TEST_MONGO_URI);
@@ -31,15 +35,31 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
     customersCollection = db.collection(CUSTOMERS_COLLECTION);
   });
 
-  // 모든 테스트 후 연결 해제
-  afterAll(async () => {
-    await client.close();
+  // 각 테스트 전에 ID 추적 배열 초기화
+  beforeEach(() => {
+    createdDocumentIds = [];
+    createdCustomerIds = [];
   });
 
   // 각 테스트 후 테스트 데이터 정리
   afterEach(async () => {
-    await filesCollection.deleteMany({ _id: { $regex: /^test-/ } });
-    await customersCollection.deleteMany({ _id: { $regex: /^test-/ } });
+    // 생성된 문서 삭제
+    if (createdDocumentIds.length > 0) {
+      await filesCollection.deleteMany({ _id: { $in: createdDocumentIds } });
+    }
+
+    // 생성된 고객 삭제
+    if (createdCustomerIds.length > 0) {
+      await customersCollection.deleteMany({ _id: { $in: createdCustomerIds } });
+    }
+
+    // 혹시 모를 이름 패턴으로 남은 테스트 데이터 정리
+    await customersCollection.deleteMany({ 'personal_info.name': { $regex: /^테스트고객/ } });
+  });
+
+  // 모든 테스트 후 연결 해제
+  afterAll(async () => {
+    await client.close();
   });
 
   describe('1:1 관계 - 한 문서를 한 명의 고객이 참조', () => {
@@ -48,6 +68,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       // Given: 문서와 고객 생성
       const documentId = new ObjectId();
       const customerId = new ObjectId();
+
+      // ID 추적
+      createdDocumentIds.push(documentId);
+      createdCustomerIds.push(customerId);
 
       await filesCollection.insertOne({
         _id: documentId,
@@ -110,6 +134,9 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       // Given: 고객 참조가 없는 문서
       const documentId = new ObjectId();
 
+      // ID 추적
+      createdDocumentIds.push(documentId);
+
       await filesCollection.insertOne({
         _id: documentId,
         upload: {
@@ -147,6 +174,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       const customer1Id = new ObjectId();
       const customer2Id = new ObjectId();
       const customer3Id = new ObjectId();
+
+      // ID 추적
+      createdDocumentIds.push(documentId);
+      createdCustomerIds.push(customer1Id, customer2Id, customer3Id);
 
       await filesCollection.insertOne({
         _id: documentId,
@@ -244,6 +275,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       const document2Id = new ObjectId();
       const customerId = new ObjectId();
 
+      // ID 추적
+      createdDocumentIds.push(document1Id, document2Id);
+      createdCustomerIds.push(customerId);
+
       await filesCollection.insertMany([
         {
           _id: document1Id,
@@ -310,6 +345,9 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       const customerCount = 10;
       const customers = [];
 
+      // ID 추적
+      createdDocumentIds.push(documentId);
+
       await filesCollection.insertOne({
         _id: documentId,
         upload: {
@@ -319,8 +357,11 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       });
 
       for (let i = 0; i < customerCount; i++) {
+        const customerId = new ObjectId();
+        createdCustomerIds.push(customerId);  // ID 추적
+
         customers.push({
-          _id: new ObjectId(),
+          _id: customerId,
           personal_info: { name: `테스트고객${i + 1}` },
           documents: [
             {
@@ -376,6 +417,10 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       const documentId = new ObjectId();
       const customerId = new ObjectId();
       const initialUpdateTime = new Date('2025-01-01T00:00:00Z');
+
+      // ID 추적
+      createdDocumentIds.push(documentId);
+      createdCustomerIds.push(customerId);
 
       await filesCollection.insertOne({
         _id: documentId,

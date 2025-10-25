@@ -47,25 +47,42 @@ def customers_collection(db):
     return db[CUSTOMERS_COLLECTION]
 
 
+@pytest.fixture
+def created_ids():
+    """테스트에서 생성한 ID 추적"""
+    return {"documents": [], "customers": []}
+
+
 @pytest.fixture(autouse=True)
-def cleanup(files_collection, customers_collection):
+def cleanup(files_collection, customers_collection, created_ids):
     """각 테스트 후 테스트 데이터 정리"""
     yield
-    # 테스트 데이터만 삭제 (실제 데이터 보호)
-    files_collection.delete_many({"_id": {"$regex": "^test-"}})
-    customers_collection.delete_many({"_id": {"$regex": "^test-"}})
+    # 생성된 문서 삭제
+    if created_ids["documents"]:
+        files_collection.delete_many({"_id": {"$in": created_ids["documents"]}})
+
+    # 생성된 고객 삭제
+    if created_ids["customers"]:
+        customers_collection.delete_many({"_id": {"$in": created_ids["customers"]}})
+
+    # 혹시 모를 이름 패턴으로 남은 테스트 데이터 정리
+    customers_collection.delete_many({"personal_info.name": {"$regex": "^테스트고객"}})
 
 
 class TestDocumentDeletionOneToOne:
     """1:1 관계 - 한 문서를 한 명의 고객이 참조"""
 
     def test_delete_document_removes_customer_reference(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """문서 삭제 시 해당 고객의 documents 배열에서 참조 제거"""
         # Given: 문서와 고객 생성
         document_id = ObjectId()
         customer_id = ObjectId()
+
+        # ID 추적
+        created_ids["documents"].append(document_id)
+        created_ids["customers"].append(customer_id)
 
         files_collection.insert_one({
             "_id": document_id,
@@ -124,11 +141,14 @@ class TestDocumentDeletionOneToOne:
         assert document is None
 
     def test_delete_document_without_reference(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """참조가 없는 문서 삭제 시 오류 없이 정상 처리"""
         # Given: 고객 참조가 없는 문서
         document_id = ObjectId()
+
+        # ID 추적
+        created_ids["documents"].append(document_id)
 
         files_collection.insert_one({
             "_id": document_id,
@@ -162,7 +182,7 @@ class TestDocumentDeletionOneToMany:
     """1:N 관계 - 한 문서를 여러 명의 고객이 참조"""
 
     def test_delete_document_removes_all_customer_references(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """문서 삭제 시 모든 고객의 documents 배열에서 참조 제거"""
         # Given: 하나의 문서를 3명의 고객이 참조
@@ -170,6 +190,10 @@ class TestDocumentDeletionOneToMany:
         customer1_id = ObjectId()
         customer2_id = ObjectId()
         customer3_id = ObjectId()
+
+        # ID 추적
+        created_ids["documents"].append(document_id)
+        created_ids["customers"].extend([customer1_id, customer2_id, customer3_id])
 
         files_collection.insert_one({
             "_id": document_id,
@@ -261,13 +285,17 @@ class TestDocumentDeletionOneToMany:
         assert document is None
 
     def test_delete_one_document_keeps_other_references(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """여러 문서를 참조하는 고객에서 특정 문서만 제거"""
         # Given: 한 고객이 2개의 문서를 참조, 그 중 1개만 삭제
         document1_id = ObjectId()
         document2_id = ObjectId()
         customer_id = ObjectId()
+
+        # ID 추적
+        created_ids["documents"].extend([document1_id, document2_id])
+        created_ids["customers"].append(customer_id)
 
         files_collection.insert_many([
             {
@@ -329,13 +357,16 @@ class TestDocumentDeletionOneToMany:
         assert doc2 is not None
 
     def test_delete_document_with_many_customers(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """10명 이상의 고객이 참조하는 문서 삭제 (대량 처리)"""
         # Given: 하나의 문서를 10명의 고객이 참조
         document_id = ObjectId()
         customer_count = 10
         customer_ids = []
+
+        # ID 추적
+        created_ids["documents"].append(document_id)
 
         files_collection.insert_one({
             "_id": document_id,
@@ -349,6 +380,7 @@ class TestDocumentDeletionOneToMany:
         for i in range(customer_count):
             customer_id = ObjectId()
             customer_ids.append(customer_id)
+            created_ids["customers"].append(customer_id)  # ID 추적
             customers.append({
                 "_id": customer_id,
                 "personal_info": {"name": f"테스트고객{i + 1}"},
@@ -400,13 +432,17 @@ class TestMetaUpdatedAt:
     """meta.updated_at 갱신 확인"""
 
     def test_meta_updated_at_is_refreshed(
-        self, files_collection, customers_collection
+        self, files_collection, customers_collection, created_ids
     ):
         """고객 참조 정리 시 meta.updated_at이 갱신되는지 확인"""
         # Given: 문서와 고객 생성 (초기 updated_at 설정)
         document_id = ObjectId()
         customer_id = ObjectId()
         initial_update_time = datetime(2025, 1, 1, 0, 0, 0)
+
+        # ID 추적
+        created_ids["documents"].append(document_id)
+        created_ids["customers"].append(customer_id)
 
         files_collection.insert_one({
             "_id": document_id,
