@@ -1412,6 +1412,9 @@ class DocumentViewer:
         if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             return
 
+        # 현재 스크롤 위치 저장
+        scroll_position = self.raw_text_area.yview()
+
         # 현재 문서
         doc = docs_to_use[self.current_raw_index]
 
@@ -1421,6 +1424,9 @@ class DocumentViewer:
         # 텍스트 영역 업데이트
         self.raw_text_area.delete(1.0, tk.END)
         self.raw_text_area.insert(1.0, raw_json)
+
+        # 스크롤 위치 복원
+        self.raw_text_area.yview_moveto(scroll_position[0])
 
     def toggle_raw_auto_refresh(self):
         """Raw 데이터 자동 새로고침 토글"""
@@ -1457,7 +1463,8 @@ class DocumentViewer:
         """자동 새로고침 콜백"""
         # 현재 문서 새로고침
         self.refresh_current_raw_document()
-        # 다음 새로고침 스케줄링 (refresh_current_raw_document 내부의 update_raw_viewer가 호출됨)
+        # 다음 새로고침 스케줄링
+        self.schedule_raw_auto_refresh()
 
     def delete_by_pattern(self):
         """패턴 기반 문서 일괄 삭제"""
