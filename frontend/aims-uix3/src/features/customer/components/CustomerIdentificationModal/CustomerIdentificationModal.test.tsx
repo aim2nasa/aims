@@ -317,7 +317,7 @@ describe('CustomerIdentificationModal Component', () => {
       });
     });
 
-    it('중복 시 선택 완료 버튼이 비활성화되어야 한다', async () => {
+    it('중복 시에도 선택 완료 버튼이 활성화되어야 한다', async () => {
       vi.mocked(AnnualReportApi.getAnnualReports).mockResolvedValue({
         success: true,
         data: {
@@ -344,7 +344,7 @@ describe('CustomerIdentificationModal Component', () => {
 
       await waitFor(() => {
         const confirmButton = screen.getByText('선택 완료');
-        expect(confirmButton).toBeDisabled();
+        expect(confirmButton).not.toBeDisabled();
       });
     });
 

@@ -6,6 +6,9 @@
 
 import { DocumentService } from '@/services/DocumentService';
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
+import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
+import type { UploadFile } from '../types/uploadTypes';
+import type { LogLevel } from '../types/logTypes';
 
 export interface ProcessAnnualReportFileResult {
   /** 문서 업로드를 진행해야 하는가 */
@@ -72,4 +75,64 @@ export async function processAnnualReportFile(
     shouldUploadDoc,
     isDuplicateDoc
   };
+}
+
+/**
+ * AR 문서 등록 처리
+ *
+ * 중복 검사 → AR 파싱 → 문서 업로드를 일괄 처리
+ *
+ * @param file - 업로드할 AR 파일
+ * @param customerId - 대상 고객 ID
+ * @param callbacks - 외부 함수 콜백 객체
+ * @returns 처리 결과 (성공 여부, 중복 여부)
+ */
+export async function registerArDocument(
+  file: File,
+  customerId: string,
+  callbacks: {
+    addLog: (level: LogLevel, message: string, details?: string) => void;
+    generateFileId: () => string;
+    addToUploadQueue: (uploadFile: UploadFile) => void;
+    trackArFile: (fileName: string, customerId: string) => void;
+  }
+): Promise<{ success: boolean; isDuplicate: boolean }> {
+  const { addLog, generateFileId, addToUploadQueue, trackArFile } = callbacks;
+
+  // 1. 문서 중복 검사
+  const checkResult = await processAnnualReportFile(file, customerId);
+
+  if (checkResult.isDuplicateDoc) {
+    // 중복이면 경고 후 종료
+    addLog('warning', `중복 문서 감지: ${file.name}`, '이미 존재하는 파일이므로 업로드를 건너뜁니다.');
+    return { success: false, isDuplicate: true };
+  }
+
+  // 2. AR 파일 추적 등록
+  trackArFile(file.name, customerId);
+
+  // 3. AR 파싱 요청
+  try {
+    const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
+    if (parseResult.success) {
+      addLog('success', `AR 파싱 시작: ${file.name}`, 'Annual Report 분석이 시작되었습니다.');
+    }
+  } catch (error) {
+    console.error('[registerArDocument] AR 파싱 요청 실패:', error);
+    addLog('error', `AR 파싱 실패: ${file.name}`, 'Annual Report 분석 요청에 실패했습니다.');
+  }
+
+  // 4. 문서 업로드 큐에 추가
+  const uploadFile: UploadFile = {
+    id: generateFileId(),
+    file,
+    fileSize: file.size,
+    status: 'pending',
+    progress: 0,
+    error: undefined,
+    completedAt: undefined,
+  };
+  addToUploadQueue(uploadFile);
+
+  return { success: true, isDuplicate: false };
 }

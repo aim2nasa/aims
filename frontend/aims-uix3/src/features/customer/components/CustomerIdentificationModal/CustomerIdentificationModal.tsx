@@ -53,7 +53,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   const [isCreatingCustomer, setIsCreatingCustomer] = useState<boolean>(false);
 
   // 중복 검사 상태
-  const [isDuplicate, setIsDuplicate] = useState<boolean>(false);
   const [duplicateMessage, setDuplicateMessage] = useState<string>('');
   const [isCheckingDuplicate, setIsCheckingDuplicate] = useState<boolean>(false);
 
@@ -82,7 +81,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
    */
   const checkDuplicate = async (customerId: string) => {
     if (!metadata?.issue_date || !customerId) {
-      setIsDuplicate(false);
       setDuplicateMessage('');
       return;
     }
@@ -123,17 +121,14 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
 
       // 중복 검사
       if (issueDates.includes(currentIssueDate)) {
-        setIsDuplicate(true);
         setDuplicateMessage(`⚠️ 이미 등록된 Annual Report입니다. (발행일: ${currentIssueDate})`);
         console.log('[CustomerIdentificationModal] ❌ 중복 발견:', currentIssueDate);
       } else {
-        setIsDuplicate(false);
         setDuplicateMessage('');
         console.log('[CustomerIdentificationModal] ✅ 중복 없음:', currentIssueDate);
       }
     } catch (error) {
       console.error('[CustomerIdentificationModal] ❌ 중복 검사 오류:', error);
-      setIsDuplicate(false);
       setDuplicateMessage('');
     } finally {
       setIsCheckingDuplicate(false);
@@ -145,7 +140,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
     if (selectedCustomerId) {
       checkDuplicate(selectedCustomerId);
     } else {
-      setIsDuplicate(false);
       setDuplicateMessage('');
     }
   }, [selectedCustomerId, metadata?.issue_date]);
@@ -154,7 +148,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   useEffect(() => {
     if (!isOpen) {
       customerReportsCacheRef.current.clear();
-      setIsDuplicate(false);
       setDuplicateMessage('');
       setPosition({ x: 0, y: 0 });
     }
@@ -437,8 +430,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
             onClick={handleConfirm}
             disabled={
               isCreatingCustomer ||
-              isCheckingDuplicate ||
-              isDuplicate ||
               (scenario === 'multiple' && !selectedCustomerId)
             }
           >
