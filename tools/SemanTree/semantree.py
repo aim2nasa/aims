@@ -170,7 +170,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.5.1 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.5.2 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -201,6 +201,12 @@ class DocumentViewer:
         self.raw_auto_refresh_enabled: bool = True  # 기본값: 자동 새로고침 활성화
         self.raw_auto_refresh_interval: int = 3000  # 3초 (밀리초)
         self.raw_refresh_timer_id: Optional[str] = None  # 타이머 ID
+
+        # 패턴 삭제 마지막 설정값 (컬렉션별)
+        self.last_delete_patterns: Dict[str, Dict[str, str]] = {
+            "customers": {"field": "personal_info.name", "pattern": "테스트고객*"},
+            "files": {"field": "upload.destPath", "pattern": "/tmp/test-*"}
+        }
 
         # 기타 분류 최소 기준
         self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
@@ -404,6 +410,9 @@ class DocumentViewer:
         # 문서 개수 표시
         self.raw_count_label = ttk.Label(collection_row, text="문서: 0개", font=("Arial", 10))
         self.raw_count_label.pack(side=tk.LEFT, padx=10)
+
+        # 패턴 기반 문서 삭제 버튼 (모든 컬렉션에서 사용 가능)
+        ttk.Button(collection_row, text="🗑️ 패턴 삭제", command=self.delete_by_pattern).pack(side=tk.LEFT, padx=10)
 
         # Raw 데이터 네비게이션 프레임
         raw_nav_frame = ttk.Frame(raw_data_tab, padding="10")
@@ -1449,6 +1458,172 @@ class DocumentViewer:
         # 현재 문서 새로고침
         self.refresh_current_raw_document()
         # 다음 새로고침 스케줄링 (refresh_current_raw_document 내부의 update_raw_viewer가 호출됨)
+
+    def delete_by_pattern(self):
+        """패턴 기반 문서 일괄 삭제"""
+        try:
+            # 현재 DB/Collection 확인
+            selected_db = self.current_db.get()
+            selected_collection = self.current_collection.get()
+
+            if not selected_db or not selected_collection:
+                messagebox.showwarning("경고", "DB와 Collection을 먼저 선택해주세요.")
+                return
+
+            # 패턴 입력 다이얼로그
+            pattern_window = tk.Toplevel(self.root)
+            pattern_window.title("패턴 기반 삭제")
+            pattern_window.geometry("500x300")
+            pattern_window.transient(self.root)
+            pattern_window.grab_set()
+
+            # 상단 설명
+            info_frame = ttk.Frame(pattern_window, padding="10")
+            info_frame.pack(fill=tk.X)
+
+            ttk.Label(info_frame, text="삭제할 문서의 패턴을 입력하세요", font=("Arial", 11, "bold")).pack(anchor=tk.W)
+            ttk.Label(info_frame, text=f"대상: {selected_db}.{selected_collection}", font=("Arial", 9)).pack(anchor=tk.W, pady=(5, 0))
+
+            # 패턴 입력 영역
+            pattern_frame = ttk.LabelFrame(pattern_window, text="패턴 설정", padding="10")
+            pattern_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+            # 마지막 설정값 불러오기
+            last_settings = self.last_delete_patterns.get(selected_collection, {"field": "", "pattern": ""})
+
+            # 필드명 입력
+            field_row = ttk.Frame(pattern_frame)
+            field_row.pack(fill=tk.X, pady=(0, 5))
+
+            ttk.Label(field_row, text="필드명:", width=12).pack(side=tk.LEFT)
+            field_var = tk.StringVar(value=last_settings.get("field", ""))
+            field_entry = ttk.Entry(field_row, textvariable=field_var, width=40)
+            field_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+            ttk.Label(pattern_frame, text="예: personal_info.name, upload.destPath, upload.originalName",
+                     font=("Arial", 8), foreground="gray").pack(anchor=tk.W, padx=(85, 0))
+
+            # 패턴 입력
+            pattern_row = ttk.Frame(pattern_frame)
+            pattern_row.pack(fill=tk.X, pady=(10, 5))
+
+            ttk.Label(pattern_row, text="패턴:", width=12).pack(side=tk.LEFT)
+            pattern_var = tk.StringVar(value=last_settings.get("pattern", ""))
+            pattern_entry = ttk.Entry(pattern_row, textvariable=pattern_var, width=40)
+            pattern_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+            ttk.Label(pattern_frame, text="* = 임의 문자열, ? = 한 글자 (예: 테스트고객*, test*, *임시*)",
+                     font=("Arial", 8), foreground="gray").pack(anchor=tk.W, padx=(85, 0))
+
+            # 대소문자 구분 옵션
+            case_var = tk.BooleanVar(value=False)
+            ttk.Checkbutton(pattern_frame, text="대소문자 구분", variable=case_var).pack(anchor=tk.W, pady=(10, 0), padx=85)
+
+            # 결과 저장용
+            result_container = {"confirmed": False, "field": None, "pattern": None, "case_sensitive": False}
+
+            def on_confirm():
+                field = field_var.get().strip()
+                pattern = pattern_var.get().strip()
+
+                if not field:
+                    messagebox.showwarning("입력 오류", "필드명을 입력해주세요.", parent=pattern_window)
+                    return
+
+                if not pattern:
+                    messagebox.showwarning("입력 오류", "패턴을 입력해주세요.", parent=pattern_window)
+                    return
+
+                # 마지막 설정값 저장
+                self.last_delete_patterns[selected_collection] = {
+                    "field": field,
+                    "pattern": pattern
+                }
+
+                result_container["confirmed"] = True
+                result_container["field"] = field
+                result_container["pattern"] = pattern
+                result_container["case_sensitive"] = case_var.get()
+                pattern_window.destroy()
+
+            def on_cancel():
+                pattern_window.destroy()
+
+            # 버튼
+            button_frame = ttk.Frame(pattern_window, padding="10")
+            button_frame.pack(fill=tk.X)
+
+            ttk.Button(button_frame, text="취소", command=on_cancel).pack(side=tk.RIGHT, padx=5)
+            ttk.Button(button_frame, text="확인", command=on_confirm).pack(side=tk.RIGHT)
+
+            # 다이얼로그 대기
+            self.root.wait_window(pattern_window)
+
+            # 사용자가 취소한 경우
+            if not result_container["confirmed"]:
+                return
+
+            # 패턴 변환 (* → .*, ? → .)
+            field = result_container["field"]
+            pattern = result_container["pattern"]
+            case_sensitive = result_container["case_sensitive"]
+
+            # 와일드카드를 정규표현식으로 변환
+            import re
+            regex_pattern = pattern.replace("*", ".*").replace("?", ".")
+            regex_pattern = f"^{regex_pattern}$"
+
+            # DB/Collection 가져오기
+            self.mongo.switch_database(selected_db)
+            collection = self.mongo.get_collection(selected_collection)
+
+            if collection is None:
+                messagebox.showerror("오류", "컬렉션을 가져올 수 없습니다.")
+                return
+
+            # 쿼리 생성
+            if case_sensitive:
+                query = {field: {"$regex": regex_pattern}}
+            else:
+                query = {field: {"$regex": regex_pattern, "$options": "i"}}
+
+            # 매칭 문서 수 확인
+            count = collection.count_documents(query)
+
+            if count == 0:
+                messagebox.showinfo("정보", f"패턴 '{pattern}'에 맞는 문서가 없습니다.")
+                return
+
+            # 삭제 확인 다이얼로그
+            response = messagebox.askyesno(
+                "삭제 확인",
+                f"'{selected_db}.{selected_collection}' 컬렉션에서\n"
+                f"총 {count}개의 문서를 삭제하시겠습니까?\n\n"
+                f"필드: {field}\n"
+                f"패턴: {pattern}\n"
+                f"대소문자 구분: {'예' if case_sensitive else '아니오'}\n\n"
+                f"⚠️ 이 작업은 되돌릴 수 없습니다!",
+                icon='warning'
+            )
+
+            if not response:
+                return
+
+            # 삭제 실행
+            result = collection.delete_many(query)
+            deleted_count = result.deleted_count
+
+            # 결과 메시지
+            messagebox.showinfo(
+                "삭제 완료",
+                f"{deleted_count}개의 문서가 삭제되었습니다."
+            )
+
+            # Raw 데이터 목록 새로고침 (삭제 후 자동 로드)
+            self.load_raw_collection_data()
+
+        except Exception as e:
+            messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
 
     def on_closing(self):
         """애플리케이션 종료"""
