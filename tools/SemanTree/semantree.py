@@ -170,7 +170,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.5.0 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.5.1 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -196,6 +196,11 @@ class DocumentViewer:
         self.current_db: tk.StringVar = tk.StringVar(value="docupload")  # 현재 선택된 DB
         self.current_collection: tk.StringVar = tk.StringVar(value="files")  # 현재 선택된 Collection
         self.raw_documents: List[Dict[str, Any]] = []  # Raw 탭 전용 문서 목록
+
+        # Raw 데이터 자동 새로고침 상태
+        self.raw_auto_refresh_enabled: bool = True  # 기본값: 자동 새로고침 활성화
+        self.raw_auto_refresh_interval: int = 3000  # 3초 (밀리초)
+        self.raw_refresh_timer_id: Optional[str] = None  # 타이머 ID
 
         # 기타 분류 최소 기준
         self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
@@ -427,6 +432,13 @@ class DocumentViewer:
         # 우측: 요약/전체 토글 및 복사 버튼
         # 전체 복사 버튼
         ttk.Button(raw_nav_frame, text="📋 전체 복사", command=self.copy_raw_to_clipboard).pack(side=tk.RIGHT, padx=5)
+
+        # 자동 새로고침 토글 버튼
+        self.raw_auto_refresh_button = ttk.Button(raw_nav_frame, text="🔄 자동 (3초)", command=self.toggle_raw_auto_refresh)
+        self.raw_auto_refresh_button.pack(side=tk.RIGHT, padx=5)
+
+        # 수동 새로고침 버튼
+        ttk.Button(raw_nav_frame, text="🔃 새로고침", command=self.refresh_current_raw_document).pack(side=tk.RIGHT, padx=5)
 
         # 요약/전체 토글 버튼
         self.raw_text_mode_button = ttk.Button(raw_nav_frame, text="표시: 요약", command=self.toggle_raw_text_mode)
@@ -1152,6 +1164,8 @@ class DocumentViewer:
             self.raw_doc_label.config(text="0 / 0")
             self.raw_prev_button.config(state=tk.DISABLED)
             self.raw_next_button.config(state=tk.DISABLED)
+            # 자동 새로고침 중지
+            self.stop_raw_auto_refresh()
             return
 
         # 현재 문서
@@ -1171,6 +1185,9 @@ class DocumentViewer:
         # 버튼 상태 업데이트
         self.raw_prev_button.config(state=tk.NORMAL if len(docs_to_use) > 1 else tk.DISABLED)
         self.raw_next_button.config(state=tk.NORMAL if len(docs_to_use) > 1 else tk.DISABLED)
+
+        # 자동 새로고침 스케줄링
+        self.schedule_raw_auto_refresh()
 
     def format_raw_json(self, doc: Dict[str, Any]) -> str:
         """MongoDB 문서를 Raw JSON으로 변환"""
@@ -1204,6 +1221,9 @@ class DocumentViewer:
         if not docs_to_use:
             return
 
+        # 자동 새로고침 타이머 중지 (새 문서로 이동하므로)
+        self.stop_raw_auto_refresh()
+
         if self.current_raw_index > 0:
             self.current_raw_index -= 1
         else:
@@ -1217,6 +1237,9 @@ class DocumentViewer:
         docs_to_use = self.raw_documents if self.raw_documents else self.documents
         if not docs_to_use:
             return
+
+        # 자동 새로고침 타이머 중지 (새 문서로 이동하므로)
+        self.stop_raw_auto_refresh()
 
         if self.current_raw_index < len(docs_to_use) - 1:
             self.current_raw_index += 1
@@ -1232,6 +1255,8 @@ class DocumentViewer:
         try:
             doc_num = int(self.raw_doc_number_var.get())
             if 1 <= doc_num <= len(docs_to_use):
+                # 자동 새로고침 타이머 중지 (새 문서로 이동하므로)
+                self.stop_raw_auto_refresh()
                 self.current_raw_index = doc_num - 1
                 self.update_raw_viewer()
             else:
@@ -1330,8 +1355,105 @@ class DocumentViewer:
         except Exception as e:
             print(f"Failed to initialize raw selectors: {e}")
 
+    def refresh_current_raw_document(self):
+        """현재 표시 중인 Raw 문서를 DB에서 다시 조회"""
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+            return
+
+        try:
+            # 현재 문서의 _id 가져오기
+            current_doc = docs_to_use[self.current_raw_index]
+            doc_id = current_doc.get("_id")
+
+            if not doc_id:
+                return
+
+            # DB에서 해당 문서 다시 조회
+            selected_db = self.current_db.get()
+            selected_collection = self.current_collection.get()
+
+            if not selected_db or not selected_collection:
+                return
+
+            # DB/Collection 가져오기
+            self.mongo.switch_database(selected_db)
+            collection = self.mongo.get_collection(selected_collection)
+
+            if collection is None:
+                return
+
+            # 문서 조회
+            refreshed_doc = collection.find_one({"_id": doc_id})
+
+            if refreshed_doc:
+                # 로컬 목록 업데이트
+                docs_to_use[self.current_raw_index] = refreshed_doc
+                # 화면 업데이트 (자동 새로고침 스케줄링 제외)
+                self.update_raw_viewer_without_scheduling()
+
+        except Exception as e:
+            print(f"현재 문서 새로고침 실패: {e}")
+
+    def update_raw_viewer_without_scheduling(self):
+        """Raw 데이터 뷰어 업데이트 (자동 새로고침 스케줄링 제외)"""
+        # Raw 탭 전용 문서 목록 사용
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+
+        if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+            return
+
+        # 현재 문서
+        doc = docs_to_use[self.current_raw_index]
+
+        # Raw JSON 데이터 포맷팅
+        raw_json = self.format_raw_json(doc)
+
+        # 텍스트 영역 업데이트
+        self.raw_text_area.delete(1.0, tk.END)
+        self.raw_text_area.insert(1.0, raw_json)
+
+    def toggle_raw_auto_refresh(self):
+        """Raw 데이터 자동 새로고침 토글"""
+        self.raw_auto_refresh_enabled = not self.raw_auto_refresh_enabled
+
+        if self.raw_auto_refresh_enabled:
+            self.raw_auto_refresh_button.config(text="🔄 자동 (3초)")
+            # 즉시 새로고침 시작
+            self.schedule_raw_auto_refresh()
+        else:
+            self.raw_auto_refresh_button.config(text="⏸ 중지됨")
+            # 타이머 중지
+            self.stop_raw_auto_refresh()
+
+    def schedule_raw_auto_refresh(self):
+        """자동 새로고침 스케줄링"""
+        # 기존 타이머 취소
+        self.stop_raw_auto_refresh()
+
+        # 자동 새로고침이 활성화된 경우에만 스케줄링
+        if self.raw_auto_refresh_enabled:
+            self.raw_refresh_timer_id = self.root.after(
+                self.raw_auto_refresh_interval,
+                self.auto_refresh_callback
+            )
+
+    def stop_raw_auto_refresh(self):
+        """자동 새로고침 타이머 중지"""
+        if self.raw_refresh_timer_id:
+            self.root.after_cancel(self.raw_refresh_timer_id)
+            self.raw_refresh_timer_id = None
+
+    def auto_refresh_callback(self):
+        """자동 새로고침 콜백"""
+        # 현재 문서 새로고침
+        self.refresh_current_raw_document()
+        # 다음 새로고침 스케줄링 (refresh_current_raw_document 내부의 update_raw_viewer가 호출됨)
+
     def on_closing(self):
         """애플리케이션 종료"""
+        # 자동 새로고침 타이머 중지
+        self.stop_raw_auto_refresh()
         self.mongo.disconnect()
         self.root.destroy()
 
