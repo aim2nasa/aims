@@ -807,20 +807,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             updatedFile.completedAt = new Date()
             updatedFile.progress = 100
 
-            // 🏷️ Annual Report 파일이면 DB 플래그 설정 즉시 실행
+            // 🏷️ Annual Report 파일이면 DB 플래그 설정 및 고객 자동 연결
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, DB 플래그 설정 즉시 실행: ${f.file.name}`);
+              console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
               const fileName = f.file.name;
-              // 추적 목록에서 제거
+              // 추적 목록에서 제거 (중복 실행 방지)
               arFilenamesRef.current.delete(f.file.name);
-              // 즉시 실행 (클로저 밖으로 빼지 않고 직접 호출)
-              setTimeout(() => setAnnualReportFlag(fileName), 0);
-            }
-            // 🔗 중복 AR도 고객 연결 필요 (arCustomerMappingRef에 있으면)
-            else if (status === 'completed' && arCustomerMappingRef.current.has(f.file.name)) {
-              console.log(`✅ [handleStatusChange] 중복 AR 파일 업로드 완료, 고객 자동 연결 즉시 실행: ${f.file.name}`);
-              const fileName = f.file.name;
-              // 즉시 실행 (클로저 밖으로 빼지 않고 직접 호출)
+              // 즉시 실행 (arCustomerMappingRef는 setAnnualReportFlag 내부에서 사용됨)
               setTimeout(() => setAnnualReportFlag(fileName), 0);
             }
           }
