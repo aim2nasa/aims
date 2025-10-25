@@ -143,6 +143,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
+  // 👤 고객 ID → 고객명 매핑 (로그 표시용)
+  const customerNameMappingRef = useRef<Map<string, string>>(new Map())
+
   // 📊 AR 처리 성공 카운터 (중복 건너뛴 건 제외)
   const arProcessedCountRef = useRef<number>(0)
 
@@ -170,16 +173,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   /**
    * 로그 추가 헬퍼 함수
+   * 고객명이 지정되면 메시지 앞에 [고객명]을 자동으로 추가
+   *
+   * @param level - 로그 레벨
+   * @param message - 로그 메시지
+   * @param details - 상세 정보 (선택)
+   * @param customerName - 고객명 (선택)
    */
-  const addLog = useCallback((level: LogLevel, message: string, details?: string) => {
+  const addLog = useCallback((level: LogLevel, message: string, details?: string, customerName?: string) => {
     logCounterRef.current += 1
     const counter = logCounterRef.current
+
+    // 고객명이 있으면 메시지 앞에 [고객명] 추가
+    const finalMessage = customerName ? `[${customerName}] ${message}` : message
 
     const newLog: Log = {
       id: `log_${Date.now()}_${counter}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       level,
-      message,
+      message: finalMessage,
       details
     }
 
@@ -572,8 +584,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (response.success && response.data?.computed?.overallStatus === 'completed') {
               clearInterval(checkAndLink);
 
+              // 👤 고객명 가져오기
+              const customerName = customerNameMappingRef.current.get(customerId);
+
               console.log(`🔗 [AR 자동 연결] 문서 처리 완료 확인, 연결 시작`);
-              addLog('info', `문서-고객 자동 연결 시작: ${fileName}`);
+              addLog('info', `문서-고객 자동 연결 시작: ${fileName}`, undefined, customerName);
 
               await DocumentService.linkDocumentToCustomer(customerId, {
                 document_id: documentId,
@@ -581,7 +596,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               });
 
               console.log(`✅ [AR 자동 연결] 완료`);
-              addLog('success', `문서-고객 자동 연결 완료: ${fileName}`);
+              addLog('success', `문서-고객 자동 연결 완료: ${fileName}`, undefined, customerName);
               arCustomerMappingRef.current.delete(fileName);
               arDocumentCustomerMappingRef.current.delete(documentId);
             } else if (attempts >= maxAttempts) {
@@ -610,12 +625,20 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const handleCustomerSelected = useCallback(async (customerId: string) => {
     if (!annualReportFile) return;
 
+    // 👤 선택된 고객의 이름 (DB에 저장된 이름 그대로 사용)
+    const selectedCustomer = annualReportCustomers.find(c => c._id === customerId);
+    const customerName = selectedCustomer?.personal_info?.name || annualReportMetadata?.customer_name || '알 수 없음';
+
+    // 👤 고객 ID → 고객명 매핑 저장 (나중에 자동 연결 로그에서 사용)
+    customerNameMappingRef.current.set(customerId, customerName);
+
     try {
       // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
-      addLog('info', `중복 체크 중: ${annualReportFile.fileName}`);
+      // customerName을 명시적으로 전달 (state는 사용하지 않음)
+      addLog('info', `중복 체크 중: ${annualReportFile.fileName}`, undefined, customerName);
 
       const result = await registerArDocument(annualReportFile.file, customerId, annualReportMetadata?.issue_date, {
-        addLog,
+        addLog: (level, message, details) => addLog(level, message, details, customerName), // 고객명 포함
         generateFileId,
         addToUploadQueue: (uploadFile) => {
           // 업로드 상태에 추가
@@ -661,7 +684,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 🎯 다음 AR 처리
       setTimeout(() => processNextArInQueue(), 100)
     }
-  }, [annualReportFile, annualReportMetadata, generateFileId, processNextArInQueue, uploadState.uploading, addLog]);
+  }, [annualReportFile, annualReportMetadata, annualReportCustomers, generateFileId, processNextArInQueue, uploadState.uploading, addLog]);
 
   /**
    * 고객 식별 모달 닫기 (취소)
@@ -731,19 +754,23 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     // ✅ 로그는 상태 업데이트 함수 밖에서 호출 (부작용 제거)
     if (currentFile) {
+      // 👤 AR 파일이면 고객명 가져오기
+      const customerId = arCustomerMappingRef.current.get(currentFile.file.name);
+      const customerName = customerId ? customerNameMappingRef.current.get(customerId) : undefined;
+
       if (status === 'uploading') {
-        addLog('info', `업로드 시작: ${currentFile.file.name}`)
+        addLog('info', `업로드 시작: ${currentFile.file.name}`, undefined, customerName)
       } else if (status === 'completed') {
-        addLog('success', `업로드 완료: ${currentFile.file.name}`)
+        addLog('success', `업로드 완료: ${currentFile.file.name}`, undefined, customerName)
 
         // AR 파일 로그
         if (arFilenamesRef.current.has(currentFile.file.name)) {
-          addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객과 자동 연결 대기 중...')
+          addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객과 자동 연결 대기 중...', customerName)
         }
       } else if (status === 'error') {
-        addLog('error', `업로드 실패: ${currentFile.file.name}`, error)
+        addLog('error', `업로드 실패: ${currentFile.file.name}`, error, customerName)
       } else if (status === 'warning') {
-        addLog('warning', `업로드 경고: ${currentFile.file.name}`, error)
+        addLog('warning', `업로드 경고: ${currentFile.file.name}`, error, customerName)
       }
     }
   }, [uploadState.files, setAnnualReportFlag, addLog])
