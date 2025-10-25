@@ -1,64 +1,179 @@
-# SemanTree - AIMS Document Viewer
+# SemanTree v0.5.0 - AIMS Document Viewer
 
 AIMS MongoDB 문서 뷰어 및 시맨틱 트리 분석 도구
 
-## 기능
+## 주요 기능
 
-### v0.1.0 - 초기 버전
-- MongoDB `docupload.files` 컬렉션 연결
-- 전체 문서 목록 조회
-- 문서 네비게이션 (이전/다음/번호 입력)
-- 문서 내용 JSON 포맷 표시
-- 다크 테마 텍스트 에디터
+### 1. 문서 트리 뷰
+- **태그별 분류**: 문서를 태그로 그룹화하여 트리 형태로 표시
+- **연도/월별 분류**: 업로드 날짜 기준으로 연도별/월별 그룹화
+- **검색 및 필터**: 파일명, 태그, 날짜 범위로 문서 검색
+- **다중 선택 모드**: AND/OR 조건으로 여러 태그 선택 가능
 
-## 설치
+### 2. 문서 목록
+- 선택한 태그/날짜의 문서 목록 표시
+- 파일명, 업로드 날짜, 태그 정보 표시
+- 더블클릭으로 문서 상세 보기
+
+### 3. Raw 데이터 뷰어 ✨ NEW in v0.5.0
+- **DB/Collection 선택**: MongoDB의 모든 DB와 Collection 탐색
+- **문서 네비게이션**: 이전/다음 버튼으로 문서 이동
+- **요약/전체 보기**: JSON 데이터 요약 또는 전체 표시 토글
+- **클립보드 복사**: Raw JSON 데이터 복사
+
+### 4. 태그 통계
+- 전체 태그 빈도수 및 비율 통계
+- 태그별 사용 현황 분석
+
+## 시스템 요구사항
+
+- Windows 10/11
+- SSH 접속 가능한 환경 (tars.giize.com)
+- MongoDB 접근 권한
+
+## 설치 및 실행
+
+### 방법 1: Windows 실행 파일 (권장) ⭐
+
+1. `dist/SemanTree.exe` 다운로드
+2. 더블클릭으로 실행
+3. SSH 터널이 자동으로 연결됨 (백그라운드)
+
+**특징:**
+- ✅ Python 설치 불필요
+- ✅ SSH 콘솔 창 숨김 처리
+- ✅ 단일 파일로 배포 가능
+- ✅ 파일 크기: 약 19MB
+
+### 방법 2: Python 스크립트 실행
 
 ```bash
-# 가상환경 생성 (선택사항)
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# 필수 패키지 설치
+pip install pymongo tkinter
 
-# 의존성 설치
-pip install -r requirements.txt
-```
-
-## 실행
-
-```bash
-# 간단하게 실행 (SSH 터널 자동 연결)
-py semantree.py
+# 실행
+python semantree.py
 ```
 
 **참고**: SSH 터널이 자동으로 시작됩니다. tars.giize.com SSH 접속 권한이 필요합니다.
 
-## 사용법
+## EXE 빌드 방법
 
-1. **연결**: 자동으로 `tars.giize.com:27017`의 `docupload` DB에 연결
-2. **네비게이션**:
-   - `◀ 이전` / `다음 ▶` 버튼으로 문서 이동
-   - 문서 번호 입력 후 `Enter` 또는 `이동` 버튼
-3. **새로고침**: 상단 `새로고침` 버튼으로 문서 목록 갱신
+새로운 버전을 빌드하려면:
+
+```bash
+# Windows 배치 파일 사용
+build_exe.bat
+
+# 또는 직접 PyInstaller 사용
+py -3 -m PyInstaller --name=SemanTree --onefile --windowed --noconfirm semantree.py
+```
+
+빌드 옵션:
+- `--onefile`: 단일 실행 파일 생성
+- `--windowed`: 콘솔 창 숨김 (GUI만 표시)
+- `--noconfirm`: 기존 빌드 자동 덮어쓰기
+
+## 사용 방법
+
+### 1. 초기 연결
+- 앱 시작 시 자동으로 SSH 터널 연결
+- MongoDB 연결 성공 시 상단에 녹색 체크 표시
+
+### 2. 문서 탐색
+1. 좌측 트리에서 분류 기준 선택 (태그별/연도별/월별)
+2. 태그 또는 날짜 노드 클릭
+3. 우측에 해당 문서 목록 표시
+4. 문서 더블클릭으로 상세 보기
+
+### 3. Raw 데이터 탐색 ✨ NEW
+1. "📋 Raw 데이터" 탭 선택
+2. Database 드롭다운에서 DB 선택
+3. Collection 드롭다운에서 컬렉션 선택
+4. "🔄 로드" 버튼 클릭
+5. 이전/다음 버튼으로 문서 탐색
+6. "표시: 요약/전체" 버튼으로 JSON 표시 모드 전환
+
+### 4. 검색 및 필터
+- **검색**: 파일명 또는 태그로 검색
+- **날짜 필터**: 시작일~종료일 범위 지정 (예: 2024-01-01)
+- **다중 선택**: Ctrl 키로 여러 태그 선택, AND/OR 모드 선택
+
+### 5. 태그 통계
+- "📊 태그 통계" 버튼 클릭
+- 전체 태그 사용 현황 확인
+
+### 6. 기타 분류 기준
+- 문서 개수가 적은 태그를 "기타" 폴더로 그룹화
+- 기본값: 2건 미만은 기타로 분류
+- 좌측 패널에서 최소 기준 조정 가능
 
 ## 구조
 
 ```
 SemanTree/
-├── semantree.py        # 메인 애플리케이션
-├── requirements.txt    # Python 의존성
-└── README.md          # 이 파일
+├── semantree.py          # 메인 애플리케이션
+├── build_exe.bat         # Windows EXE 빌드 스크립트
+├── requirements.txt      # Python 의존성
+├── README.md            # 이 파일
+├── dist/
+│   └── SemanTree.exe    # 빌드된 실행 파일 (19MB)
+├── build/               # 빌드 임시 파일
+└── SemanTree.spec       # PyInstaller 설정
 ```
 
-## 향후 계획
+## 버전 히스토리
 
-- [ ] 시맨틱 트리 시각화
-- [ ] 문서 검색 기능
-- [ ] 필드별 필터링
-- [ ] JSON 하이라이팅
-- [ ] 문서 비교 기능
-- [ ] Export/Import 기능
+### v0.5.0 (2025-10-26)
+- ✨ Raw 데이터 탭에 DB/Collection 선택 기능 추가
+- ✨ MongoDB 전체 DB 탐색 가능
+- ✨ 독립적인 Raw 문서 목록 관리
+- 🏗️ Windows EXE 빌드 스크립트 추가
+- 🐛 SSH 콘솔 창 숨김 처리
+
+### v0.4.3 (2024-10-24)
+- Raw 데이터 뷰어 추가
+- 요약/전체 보기 모드
+- 클립보드 복사 기능
+
+### v0.4.0 (2024-10-23)
+- 다중 선택 모드 (AND/OR)
+- 기타 분류 기준 설정
+- 검색 및 필터 기능
+
+### v0.3.0 (2024-10-22)
+- 연도/월별 분류 추가
+- 태그 통계 기능
+
+### v0.1.0 (2024-10-21)
+- 초기 릴리스
+- MongoDB 연결 및 문서 탐색
+
+## 문제 해결
+
+### SSH 연결 실패
+- tars.giize.com에 SSH 접속 가능한지 확인
+- SSH 키가 등록되어 있는지 확인
+
+### MongoDB 연결 실패
+- SSH 터널이 정상적으로 시작되었는지 확인
+- localhost:27017 포트가 사용 중인지 확인
+
+### EXE 실행 시 오류
+- Windows Defender 또는 백신 프로그램에서 차단 여부 확인
+- 신뢰할 수 있는 앱으로 추가
 
 ## 기술 스택
 
 - **GUI**: tkinter (Python 표준 라이브러리)
 - **DB**: pymongo (MongoDB 드라이버)
-- **언어**: Python 3.8+
+- **빌드**: PyInstaller 6.16.0
+- **언어**: Python 3.13+
+
+## 라이선스
+
+AIMS 프로젝트 내부 도구
+
+---
+
+**개발**: Rossi (with Claude Code)
