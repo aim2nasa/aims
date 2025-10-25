@@ -9,7 +9,7 @@ test_document_deletion.py
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, UTC
 from bson import ObjectId
 from pymongo import MongoClient
 import os
@@ -71,7 +71,7 @@ class TestDocumentDeletionOneToOne:
             "_id": document_id,
             "upload": {
                 "destPath": "/tmp/test-file.pdf",
-                "uploaded_at": datetime.utcnow()
+                "uploaded_at": datetime.now(UTC)
             },
             "meta": {
                 "mime": "application/pdf",
@@ -88,13 +88,13 @@ class TestDocumentDeletionOneToOne:
                 {
                     "document_id": document_id,
                     "relationship": "annual_report",
-                    "upload_date": datetime.utcnow(),
+                    "upload_date": datetime.now(UTC),
                     "notes": ""
                 }
             ],
             "meta": {
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC)
             }
         })
 
@@ -104,7 +104,7 @@ class TestDocumentDeletionOneToOne:
             {"documents.document_id": document_id},
             {
                 "$pull": {"documents": {"document_id": document_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
@@ -134,7 +134,7 @@ class TestDocumentDeletionOneToOne:
             "_id": document_id,
             "upload": {
                 "destPath": "/tmp/test-file-no-ref.pdf",
-                "uploaded_at": datetime.utcnow()
+                "uploaded_at": datetime.now(UTC)
             }
         })
 
@@ -143,7 +143,7 @@ class TestDocumentDeletionOneToOne:
             {"documents.document_id": document_id},
             {
                 "$pull": {"documents": {"document_id": document_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
@@ -175,11 +175,11 @@ class TestDocumentDeletionOneToMany:
             "_id": document_id,
             "upload": {
                 "destPath": "/tmp/test-shared-file.pdf",
-                "uploaded_at": datetime.utcnow()
+                "uploaded_at": datetime.now(UTC)
             }
         })
 
-        upload_date = datetime.utcnow()
+        upload_date = datetime.now(UTC)
 
         customers_collection.insert_many([
             {
@@ -194,8 +194,8 @@ class TestDocumentDeletionOneToMany:
                     }
                 ],
                 "meta": {
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(UTC),
+                    "updated_at": datetime.now(UTC)
                 }
             },
             {
@@ -210,8 +210,8 @@ class TestDocumentDeletionOneToMany:
                     }
                 ],
                 "meta": {
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(UTC),
+                    "updated_at": datetime.now(UTC)
                 }
             },
             {
@@ -226,8 +226,8 @@ class TestDocumentDeletionOneToMany:
                     }
                 ],
                 "meta": {
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(UTC),
+                    "updated_at": datetime.now(UTC)
                 }
             }
         ])
@@ -237,7 +237,7 @@ class TestDocumentDeletionOneToMany:
             {"documents.document_id": document_id},
             {
                 "$pull": {"documents": {"document_id": document_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
@@ -272,11 +272,11 @@ class TestDocumentDeletionOneToMany:
         files_collection.insert_many([
             {
                 "_id": document1_id,
-                "upload": {"destPath": "/tmp/test-doc1.pdf", "uploaded_at": datetime.utcnow()}
+                "upload": {"destPath": "/tmp/test-doc1.pdf", "uploaded_at": datetime.now(UTC)}
             },
             {
                 "_id": document2_id,
-                "upload": {"destPath": "/tmp/test-doc2.pdf", "uploaded_at": datetime.utcnow()}
+                "upload": {"destPath": "/tmp/test-doc2.pdf", "uploaded_at": datetime.now(UTC)}
             }
         ])
 
@@ -287,19 +287,19 @@ class TestDocumentDeletionOneToMany:
                 {
                     "document_id": document1_id,
                     "relationship": "annual_report",
-                    "upload_date": datetime.utcnow(),
+                    "upload_date": datetime.now(UTC),
                     "notes": ""
                 },
                 {
                     "document_id": document2_id,
                     "relationship": "contract",
-                    "upload_date": datetime.utcnow(),
+                    "upload_date": datetime.now(UTC),
                     "notes": ""
                 }
             ],
             "meta": {
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC)
             }
         })
 
@@ -308,7 +308,7 @@ class TestDocumentDeletionOneToMany:
             {"documents.document_id": document1_id},
             {
                 "$pull": {"documents": {"document_id": document1_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
@@ -341,7 +341,7 @@ class TestDocumentDeletionOneToMany:
             "_id": document_id,
             "upload": {
                 "destPath": "/tmp/test-large-ref.pdf",
-                "uploaded_at": datetime.utcnow()
+                "uploaded_at": datetime.now(UTC)
             }
         })
 
@@ -356,13 +356,13 @@ class TestDocumentDeletionOneToMany:
                     {
                         "document_id": document_id,
                         "relationship": "annual_report",
-                        "upload_date": datetime.utcnow(),
+                        "upload_date": datetime.now(UTC),
                         "notes": ""
                     }
                 ],
                 "meta": {
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(UTC),
+                    "updated_at": datetime.now(UTC)
                 }
             })
 
@@ -373,7 +373,7 @@ class TestDocumentDeletionOneToMany:
             {"documents.document_id": document_id},
             {
                 "$pull": {"documents": {"document_id": document_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
@@ -410,7 +410,7 @@ class TestMetaUpdatedAt:
 
         files_collection.insert_one({
             "_id": document_id,
-            "upload": {"destPath": "/tmp/test-file.pdf", "uploaded_at": datetime.utcnow()}
+            "upload": {"destPath": "/tmp/test-file.pdf", "uploaded_at": datetime.now(UTC)}
         })
 
         customers_collection.insert_one({
@@ -420,7 +420,7 @@ class TestMetaUpdatedAt:
                 {
                     "document_id": document_id,
                     "relationship": "annual_report",
-                    "upload_date": datetime.utcnow(),
+                    "upload_date": datetime.now(UTC),
                     "notes": ""
                 }
             ],
@@ -435,7 +435,7 @@ class TestMetaUpdatedAt:
             {"documents.document_id": document_id},
             {
                 "$pull": {"documents": {"document_id": document_id}},
-                "$set": {"meta.updated_at": datetime.utcnow()}
+                "$set": {"meta.updated_at": datetime.now(UTC)}
             }
         )
 
