@@ -143,6 +143,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
+  // 📊 AR 처리 성공 카운터 (중복 건너뛴 건 제외)
+  const arProcessedCountRef = useRef<number>(0)
+
   // 📝 처리 로그 상태 (sessionStorage에서 복원)
   const getInitialLogs = (): Log[] => {
     try {
@@ -242,7 +245,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     if (arQueueRef.current.length === 0) {
       console.log('✅ [processNextArInQueue] 큐 비어있음 - AR 처리 완료')
-      addLog('success', 'Annual Report 처리 완료', '모든 AR 파일이 처리되었습니다')
+      // 실제로 처리된 파일이 있을 때만 완료 로그 출력
+      if (arProcessedCountRef.current > 0) {
+        addLog('success', 'Annual Report 처리 완료', `${arProcessedCountRef.current}건의 AR 파일이 처리되었습니다`)
+      }
+      // 카운터 리셋
+      arProcessedCountRef.current = 0
       return
     }
 
@@ -321,7 +329,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 );
 
                 // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
-                const result = await registerArDocument(file, customerId, {
+                const result = await registerArDocument(file, customerId, checkResult.metadata?.issue_date, {
                   addLog,
                   generateFileId,
                   addToUploadQueue: (uploadFile) => {
@@ -335,18 +343,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
                 if (result.success) {
                   console.log('[DocumentRegistrationView] AR 문서 등록 성공:', file.name);
+                  arProcessedCountRef.current += 1;
                 }
 
                 continue;
               }
 
               // 🎯 고객이 0명 또는 2명 이상이면 AR 큐에 추가 (모달 표시)
+              const isFirstArFile = arQueueRef.current.length === 0;
+
               arQueueRef.current.push({
                 file,
                 fileName: file.name,
                 metadata: checkResult.metadata,
                 customers
               })
+
+              // 첫 AR 파일일 때 처리 시작 로그 출력
+              if (isFirstArFile) {
+                addLog('info', 'Annual Report 처리 시작', 'AR 파일 감지 - 고객 선택 대기 중');
+              }
 
               console.log('🔥 [handleFilesSelected] AR 큐 추가:', file.name, '| 큐:', arQueueRef.current.length);
               continue;
@@ -595,73 +611,42 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (!annualReportFile) return;
 
     try {
-      // 🔍 문서 중복 검사만 실행
+      // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
       addLog('info', `중복 체크 중: ${annualReportFile.fileName}`);
-      const processResult = await processAnnualReportFile(
-        annualReportFile.file,
-        customerId
-      );
 
-      // 문서 중복 경고
-      if (processResult.isDuplicateDoc) {
-        addLog(
-          'warning',
-          `중복 문서 감지: ${annualReportFile.fileName}`,
-          '이미 존재하는 파일이므로 업로드를 건너뜁니다.'
-        );
-      }
+      const result = await registerArDocument(annualReportFile.file, customerId, annualReportMetadata?.issue_date, {
+        addLog,
+        generateFileId,
+        addToUploadQueue: (uploadFile) => {
+          // 업로드 상태에 추가
+          setUploadState(prev => ({
+            ...prev,
+            files: [uploadFile, ...prev.files]
+          }));
 
-      // AR 파싱 진행 (항상 실행)
-      // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
-      arFilenamesRef.current.add(annualReportFile.fileName);
-      console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);
+          // 업로드 큐에 추가 및 즉시 시작
+          uploadService.queueFiles([uploadFile]);
 
-      // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
-      arCustomerMappingRef.current.set(annualReportFile.fileName, customerId);
-      console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${annualReportFile.fileName} → ${customerId}`);
+          console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
 
-      // Annual Report 파싱 요청 (백그라운드 AI 처리)
-      const parseResult = await AnnualReportApi.parseAnnualReportFile(
-        annualReportFile.file,
-        customerId
-      );
-
-      if (parseResult.success) {
-        console.log('[DocumentRegistrationView] Annual Report 파싱 요청 성공:', parseResult);
-        addLog('success', `AR 파싱 시작: ${annualReportFile.fileName}`, 'Annual Report 분석이 시작되었습니다.');
-      } else {
-        console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', parseResult.message);
-      }
-
-      // 문서 업로드 진행 (문서 중복이 아닐 때만)
-      if (processResult.shouldUploadDoc) {
-        // 📤 Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
-        const uploadFile: UploadFile = {
-          id: generateFileId(),
-          file: annualReportFile.file,
-          fileSize: annualReportFile.file.size,
-          status: 'pending',
-          progress: 0,
-          error: undefined,
-          completedAt: undefined,
-        };
-
-        // 업로드 상태에 추가
-        setUploadState(prev => ({
-          ...prev,
-          files: [uploadFile, ...prev.files]
-        }));
-
-        // 업로드 큐에 추가 및 즉시 시작
-        uploadService.queueFiles([uploadFile]);
-
-        // ⚠️ 업로드가 자동 시작되지 않는 경우를 위해 명시적으로 업로드 시작 트리거
-        console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
-
-        // 업로드 서비스가 이미 실행 중이 아니면 시작
-        if (!uploadState.uploading) {
-          setUploadState(prev => ({ ...prev, uploading: true }));
+          // 업로드 서비스가 이미 실행 중이 아니면 시작
+          if (!uploadState.uploading) {
+            setUploadState(prev => ({ ...prev, uploading: true }));
+          }
+        },
+        trackArFile: (fileName, custId) => {
+          arFilenamesRef.current.add(fileName);
+          arCustomerMappingRef.current.set(fileName, custId);
+          console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${fileName}`);
+          console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${fileName} → ${custId}`);
         }
+      });
+
+      if (result.isDuplicate) {
+        console.log('[DocumentRegistrationView] 중복 문서로 인해 AR 처리 건너뜀:', annualReportFile.fileName);
+      } else if (result.success) {
+        console.log('[DocumentRegistrationView] AR 문서 등록 성공 (모달):', annualReportFile.fileName);
+        arProcessedCountRef.current += 1;
       }
 
     } catch (error) {

@@ -90,6 +90,7 @@ export async function processAnnualReportFile(
 export async function registerArDocument(
   file: File,
   customerId: string,
+  issueDate: string | undefined,
   callbacks: {
     addLog: (level: LogLevel, message: string, details?: string) => void;
     generateFileId: () => string;
@@ -116,6 +117,46 @@ export async function registerArDocument(
     const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
     if (parseResult.success) {
       addLog('success', `AR 파싱 시작: ${file.name}`, 'Annual Report 분석이 시작되었습니다.');
+
+      // AR 파싱 완료 확인 (백그라운드 폴링)
+      if (issueDate) {
+        const checkArParsing = async () => {
+          try {
+            const arListResponse = await AnnualReportApi.getAnnualReports(customerId, 100);
+            if (arListResponse.success && arListResponse.data) {
+              const matchingAr = arListResponse.data.reports.find(
+                ar => ar.issue_date && ar.issue_date.startsWith(issueDate)
+              );
+              if (matchingAr) {
+                addLog('success', `AR 파싱 완료: ${file.name}`, `발행일: ${issueDate}`);
+                return true;
+              }
+            }
+          } catch (error) {
+            console.error('[registerArDocument] AR 파싱 체크 실패:', error);
+          }
+          return false;
+        };
+
+        // 1초 후 즉시 체크 → 2초 간격 폴링 (최대 90회 = 3분)
+        setTimeout(async () => {
+          const found = await checkArParsing();
+          if (found) return;
+
+          let attempts = 0;
+          const maxAttempts = 90;
+          const interval = setInterval(async () => {
+            attempts++;
+            const found = await checkArParsing();
+            if (found || attempts >= maxAttempts) {
+              clearInterval(interval);
+              if (!found) {
+                addLog('warning', `AR 파싱 시간 초과: ${file.name}`, '파싱이 완료되지 않았습니다.');
+              }
+            }
+          }, 2000);
+        }, 1000);
+      }
     }
   } catch (error) {
     console.error('[registerArDocument] AR 파싱 요청 실패:', error);
