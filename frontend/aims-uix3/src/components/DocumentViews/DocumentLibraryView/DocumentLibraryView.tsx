@@ -375,7 +375,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 View가 표시될 때마다 문서 목록 새로고침
   React.useEffect(() => {
     if (visible) {
-      loadDocuments(searchParams, false);
+      // offset을 0으로 초기화하여 첫 페이지부터 시작
+      loadDocuments({ ...searchParams, offset: 0 }, false);
     }
   }, [visible]);
 
