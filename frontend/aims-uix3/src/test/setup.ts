@@ -30,3 +30,12 @@ if (typeof navigator.clipboard === 'undefined') {
     configurable: true
   })
 }
+
+// DOMMatrix stub (테스트 환경에서 pdfjs-dist가 필요로 함)
+if (typeof DOMMatrix === 'undefined') {
+  (global as any).DOMMatrix = class DOMMatrix {
+    constructor() {
+      // Mock implementation
+    }
+  }
+}
