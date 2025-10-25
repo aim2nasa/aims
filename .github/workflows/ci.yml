@@ -12,6 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,6 +35,13 @@ jobs:
           cache-dependency-path: |
             frontend/aims-uix3/package-lock.json
             backend/api/aims_api/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/api/doc_status_api/requirements.txt
 
       # 프론트엔드 테스트
       - name: Install frontend dependencies
@@ -67,3 +85,18 @@ jobs:
       - name: Check backend test results
         run: |
           echo "✅ Backend tests passed"
+
+      # Python API 테스트
+      - name: Install Python API dependencies
+        run: |
+          cd backend/api/doc_status_api
+          pip install -r requirements.txt
+
+      - name: Run Python API tests
+        run: |
+          cd backend/api/doc_status_api
+          python -m pytest -v
+
+      - name: Check Python API test results
+        run: |
+          echo "✅ Python API tests passed"
