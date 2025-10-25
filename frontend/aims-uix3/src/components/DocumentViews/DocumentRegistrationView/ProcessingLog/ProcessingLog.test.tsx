@@ -2,11 +2,13 @@
  * ProcessingLog Component Unit Tests
  * @since 2025-10-23
  *
- * 테스트 범위 (74fbc13, 1c06e77):
+ * 테스트 범위 (74fbc13, 1c06e77, bb4f0df, e22b548):
  * 1. 정렬 기능 (오래된순/최신순)
  * 2. 자동 스크롤 (정렬 상태에 따라)
- * 3. 로그 포맷팅
+ * 3. 로그 포맷팅 (밀리초 포함)
  * 4. 로그 지우기
+ * 5. 로그 복사 (클립보드)
+ * 6. 로그 다운로드 (텍스트 파일)
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -319,6 +321,93 @@ describe('ProcessingLog Component', () => {
 
       expect(screen.getByLabelText('오래된순 정렬')).toBeInTheDocument(); // 기본값이 newest-first이므로
       expect(screen.getByLabelText('로그 지우기')).toBeInTheDocument();
+    });
+  });
+
+  describe('로그 복사 기능 (e22b548)', () => {
+    it('로그 복사 버튼이 렌더링되어야 한다', () => {
+      render(<ProcessingLog logs={mockLogs} />);
+
+      const copyButton = screen.getByLabelText('로그 복사');
+      expect(copyButton).toBeInTheDocument();
+      expect(copyButton.textContent).toBe('📋');
+    });
+
+    it('로그 복사 버튼이 클릭 가능해야 한다', async () => {
+      const user = userEvent.setup();
+      render(<ProcessingLog logs={mockLogs} />);
+
+      const copyButton = screen.getByLabelText('로그 복사');
+
+      // 버튼이 클릭 가능한지만 확인 (실제 clipboard API는 테스트 환경에서 제한적)
+      await expect(user.click(copyButton)).resolves.not.toThrow();
+    });
+  });
+
+  describe('로그 다운로드 기능 (bb4f0df)', () => {
+    it('로그 다운로드 버튼이 렌더링되어야 한다', () => {
+      render(<ProcessingLog logs={mockLogs} />);
+
+      const downloadButton = screen.getByLabelText('로그 다운로드');
+      expect(downloadButton).toBeInTheDocument();
+      expect(downloadButton.textContent).toBe('💾');
+    });
+
+    it('로그 다운로드 버튼이 클릭 가능해야 한다', async () => {
+      const user = userEvent.setup();
+      render(<ProcessingLog logs={mockLogs} />);
+
+      const downloadButton = screen.getByLabelText('로그 다운로드');
+
+      // 버튼이 클릭 가능한지만 확인 (실제 파일 다운로드는 테스트 환경에서 제한적)
+      await expect(user.click(downloadButton)).resolves.not.toThrow();
+    });
+  });
+
+  describe('밀리초 표시 기능 (bb4f0df)', () => {
+    it('밀리초가 3자리로 표시되어야 한다', () => {
+      const testLogs: Log[] = [
+        {
+          id: 'log1',
+          timestamp: new Date('2025-10-25T14:30:45.123'),
+          level: 'info',
+          message: '테스트'
+        }
+      ];
+
+      render(<ProcessingLog logs={testLogs} />);
+
+      expect(screen.getByText('14:30:45.123')).toBeInTheDocument();
+    });
+
+    it('밀리초가 0인 경우 000으로 표시되어야 한다', () => {
+      const testLogs: Log[] = [
+        {
+          id: 'log1',
+          timestamp: new Date('2025-10-25T14:30:45.000'),
+          level: 'info',
+          message: '테스트'
+        }
+      ];
+
+      render(<ProcessingLog logs={testLogs} />);
+
+      expect(screen.getByText('14:30:45.000')).toBeInTheDocument();
+    });
+
+    it('밀리초가 한 자리인 경우 0으로 패딩되어야 한다', () => {
+      const testLogs: Log[] = [
+        {
+          id: 'log1',
+          timestamp: new Date('2025-10-25T14:30:45.005'),
+          level: 'info',
+          message: '테스트'
+        }
+      ];
+
+      render(<ProcessingLog logs={testLogs} />);
+
+      expect(screen.getByText('14:30:45.005')).toBeInTheDocument();
     });
   });
 });
