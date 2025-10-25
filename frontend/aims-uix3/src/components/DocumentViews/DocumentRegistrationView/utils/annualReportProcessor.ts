@@ -1,21 +1,15 @@
 /**
  * Annual Report 처리 유틸리티
  *
- * AR과 문서의 중복 검사 및 처리 로직을 독립 함수로 제공
+ * 문서 중복 검사 로직을 제공
  */
 
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
 import { DocumentService } from '@/services/DocumentService';
 import { calculateFileHash } from '@/features/customer/utils/fileHash';
-import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 
 export interface ProcessAnnualReportFileResult {
-  /** AR 파싱을 진행해야 하는가 */
-  shouldParseAr: boolean;
   /** 문서 업로드를 진행해야 하는가 */
   shouldUploadDoc: boolean;
-  /** AR 중복 여부 */
-  isDuplicateAr: boolean;
   /** 문서 중복 여부 */
   isDuplicateDoc: boolean;
 }
@@ -23,44 +17,21 @@ export interface ProcessAnnualReportFileResult {
 /**
  * Annual Report 파일 처리
  *
- * AR 중복 검사와 문서 중복 검사를 수행하여
- * AR 파싱 및 문서 업로드 진행 여부를 결정
+ * 문서 중복 검사를 수행하여 문서 업로드 진행 여부를 결정
+ * AR은 중복 여부와 관계없이 무조건 등록 진행
  *
  * @param file - 업로드할 파일
  * @param customerId - 대상 고객 ID
- * @param metadata - AR 메타데이터 (PDF 파싱 결과)
- * @returns 처리 결과 (파싱/업로드 여부, 중복 여부)
+ * @returns 처리 결과 (업로드 여부, 중복 여부)
  */
 export async function processAnnualReportFile(
   file: File,
-  customerId: string,
-  metadata?: CheckAnnualReportResult['metadata']
+  customerId: string
 ): Promise<ProcessAnnualReportFileResult> {
   // 기본값
-  let isDuplicateAr = false;
   let isDuplicateDoc = false;
 
-  // 1. AR 중복 검사 (메타데이터가 있는 경우에만)
-  if (metadata?.issue_date) {
-    try {
-      const existingReports = await AnnualReportApi.getAnnualReports(customerId, 100);
-
-      if (existingReports.success && existingReports.data) {
-        const existingIssueDates = existingReports.data.reports
-          .map(r => r.issue_date?.substring(0, 10))
-          .filter(date => date); // 빈 문자열 제거
-
-        const currentIssueDate = metadata.issue_date;
-        isDuplicateAr = existingIssueDates.includes(currentIssueDate);
-      }
-    } catch (error) {
-      console.error('[processAnnualReportFile] AR 중복 검사 실패:', error);
-      // 에러 발생 시 중복 아닌 것으로 처리 (안전하게 진행)
-      isDuplicateAr = false;
-    }
-  }
-
-  // 2. 문서 중복 검사 (파일 해시 기반)
+  // 문서 중복 검사 (파일 해시 기반)
   try {
     const uploadFileHash = await calculateFileHash(file);
 
@@ -94,14 +65,11 @@ export async function processAnnualReportFile(
     isDuplicateDoc = false;
   }
 
-  // 3. 처리 결정
-  const shouldParseAr = !isDuplicateAr;
+  // 처리 결정
   const shouldUploadDoc = !isDuplicateDoc;
 
   return {
-    shouldParseAr,
     shouldUploadDoc,
-    isDuplicateAr,
     isDuplicateDoc
   };
 }
