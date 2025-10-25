@@ -124,8 +124,42 @@ class MongoDBConnection:
         if self.ssh_tunnel:
             self.ssh_tunnel.stop()
 
+    def get_database_list(self) -> List[str]:
+        """MongoDB 데이터베이스 목록 반환"""
+        if self.client is not None:
+            try:
+                return sorted(self.client.list_database_names())
+            except Exception as e:
+                print(f"Failed to get database list: {e}")
+                return []
+        return []
+
+    def get_collection_list(self, db_name: str = None) -> List[str]:
+        """특정 데이터베이스의 컬렉션 목록 반환"""
+        if self.client is not None:
+            try:
+                target_db = self.client[db_name] if db_name else self.db
+                if target_db is not None:
+                    return sorted(target_db.list_collection_names())
+            except Exception as e:
+                print(f"Failed to get collection list: {e}")
+                return []
+        return []
+
+    def switch_database(self, db_name: str):
+        """데이터베이스 전환"""
+        if self.client is not None:
+            self.db_name = db_name
+            self.db = self.client[db_name]
+
+    def get_collection(self, collection_name: str):
+        """특정 컬렉션 반환"""
+        if self.db is not None:
+            return self.db[collection_name]
+        return None
+
     def get_files_collection(self):
-        """files 컬렉션 반환"""
+        """files 컬렉션 반환 (하위 호환성)"""
         if self.db is not None:
             return self.db.files
         return None
@@ -136,7 +170,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.4.3 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.5.0 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -159,6 +193,9 @@ class DocumentViewer:
         # Raw 데이터 뷰어 상태
         self.current_raw_index: int = 0
         self.raw_full_text_mode: bool = False  # False: 요약 보기, True: 전체 보기
+        self.current_db: tk.StringVar = tk.StringVar(value="docupload")  # 현재 선택된 DB
+        self.current_collection: tk.StringVar = tk.StringVar(value="files")  # 현재 선택된 Collection
+        self.raw_documents: List[Dict[str, Any]] = []  # Raw 탭 전용 문서 목록
 
         # 기타 분류 최소 기준
         self.min_tag_count: int = 2  # 기본값: 2개 미만은 기타로 분류
@@ -334,6 +371,35 @@ class DocumentViewer:
         raw_data_tab = ttk.Frame(self.notebook)
         self.notebook.add(raw_data_tab, text="📋 Raw 데이터")
 
+        # DB/Collection 선택 프레임
+        raw_select_frame = ttk.LabelFrame(raw_data_tab, text="🗄️ DB & Collection 선택", padding="10")
+        raw_select_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+        # DB 선택
+        db_row = ttk.Frame(raw_select_frame)
+        db_row.pack(fill=tk.X, pady=(0, 5))
+
+        ttk.Label(db_row, text="Database:", width=12).pack(side=tk.LEFT)
+        self.db_combo = ttk.Combobox(db_row, textvariable=self.current_db, width=20, state="readonly")
+        self.db_combo.pack(side=tk.LEFT, padx=5)
+        self.db_combo.bind("<<ComboboxSelected>>", self.on_db_changed)
+
+        # Collection 선택
+        collection_row = ttk.Frame(raw_select_frame)
+        collection_row.pack(fill=tk.X, pady=(0, 5))
+
+        ttk.Label(collection_row, text="Collection:", width=12).pack(side=tk.LEFT)
+        self.collection_combo = ttk.Combobox(collection_row, textvariable=self.current_collection, width=20, state="readonly")
+        self.collection_combo.pack(side=tk.LEFT, padx=5)
+        self.collection_combo.bind("<<ComboboxSelected>>", self.on_collection_changed)
+
+        # 로드 버튼
+        ttk.Button(collection_row, text="🔄 로드", command=self.load_raw_collection_data).pack(side=tk.LEFT, padx=10)
+
+        # 문서 개수 표시
+        self.raw_count_label = ttk.Label(collection_row, text="문서: 0개", font=("Arial", 10))
+        self.raw_count_label.pack(side=tk.LEFT, padx=10)
+
         # Raw 데이터 네비게이션 프레임
         raw_nav_frame = ttk.Frame(raw_data_tab, padding="10")
         raw_nav_frame.pack(fill=tk.X)
@@ -388,6 +454,8 @@ class DocumentViewer:
         if self.mongo.connect(use_ssh_tunnel=True):
             self.status_label.config(text=f"✓ Connected: localhost:{self.mongo.port} (via SSH)", foreground="green")
             self.reload_documents()
+            # Raw 탭의 DB/Collection 선택기 초기화
+            self.initialize_raw_selectors()
         else:
             self.status_label.config(text="✗ Connection Failed", foreground="red")
             messagebox.showerror("Connection Error", "Failed to connect to MongoDB.\n\nMake sure you can SSH to tars.giize.com")
@@ -1075,7 +1143,10 @@ class DocumentViewer:
 
     def update_raw_viewer(self):
         """Raw 데이터 뷰어 업데이트"""
-        if not self.documents or self.current_raw_index < 0 or self.current_raw_index >= len(self.documents):
+        # Raw 탭 전용 문서 목록 사용
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+
+        if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             self.raw_text_area.delete(1.0, tk.END)
             self.raw_text_area.insert(1.0, "문서가 없습니다.")
             self.raw_doc_label.config(text="0 / 0")
@@ -1084,11 +1155,11 @@ class DocumentViewer:
             return
 
         # 현재 문서
-        doc = self.documents[self.current_raw_index]
+        doc = docs_to_use[self.current_raw_index]
 
         # 문서 번호 업데이트
         self.raw_doc_number_var.set(str(self.current_raw_index + 1))
-        self.raw_doc_label.config(text=f"{self.current_raw_index + 1} / {len(self.documents)}")
+        self.raw_doc_label.config(text=f"{self.current_raw_index + 1} / {len(docs_to_use)}")
 
         # Raw JSON 데이터 포맷팅
         raw_json = self.format_raw_json(doc)
@@ -1098,8 +1169,8 @@ class DocumentViewer:
         self.raw_text_area.insert(1.0, raw_json)
 
         # 버튼 상태 업데이트
-        self.raw_prev_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
-        self.raw_next_button.config(state=tk.NORMAL if len(self.documents) > 1 else tk.DISABLED)
+        self.raw_prev_button.config(state=tk.NORMAL if len(docs_to_use) > 1 else tk.DISABLED)
+        self.raw_next_button.config(state=tk.NORMAL if len(docs_to_use) > 1 else tk.DISABLED)
 
     def format_raw_json(self, doc: Dict[str, Any]) -> str:
         """MongoDB 문서를 Raw JSON으로 변환"""
@@ -1129,23 +1200,25 @@ class DocumentViewer:
 
     def prev_raw_document(self):
         """이전 문서로 이동 (wrap around)"""
-        if not self.documents:
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        if not docs_to_use:
             return
 
         if self.current_raw_index > 0:
             self.current_raw_index -= 1
         else:
             # 처음에서 이전 누르면 마지막으로
-            self.current_raw_index = len(self.documents) - 1
+            self.current_raw_index = len(docs_to_use) - 1
 
         self.update_raw_viewer()
 
     def next_raw_document(self):
         """다음 문서로 이동 (wrap around)"""
-        if not self.documents:
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        if not docs_to_use:
             return
 
-        if self.current_raw_index < len(self.documents) - 1:
+        if self.current_raw_index < len(docs_to_use) - 1:
             self.current_raw_index += 1
         else:
             # 마지막에서 다음 누르면 처음으로
@@ -1155,13 +1228,14 @@ class DocumentViewer:
 
     def goto_raw_document(self):
         """특정 문서 번호로 이동"""
+        docs_to_use = self.raw_documents if self.raw_documents else self.documents
         try:
             doc_num = int(self.raw_doc_number_var.get())
-            if 1 <= doc_num <= len(self.documents):
+            if 1 <= doc_num <= len(docs_to_use):
                 self.current_raw_index = doc_num - 1
                 self.update_raw_viewer()
             else:
-                messagebox.showwarning("범위 오류", f"1부터 {len(self.documents)} 사이의 숫자를 입력하세요.")
+                messagebox.showwarning("범위 오류", f"1부터 {len(docs_to_use)} 사이의 숫자를 입력하세요.")
         except ValueError:
             messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
 
@@ -1182,6 +1256,79 @@ class DocumentViewer:
             messagebox.showinfo("복사 완료", "Raw 데이터가 클립보드에 복사되었습니다.")
         except Exception as e:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
+
+    def on_db_changed(self, event=None):
+        """DB 선택 변경 시 이벤트 핸들러"""
+        selected_db = self.current_db.get()
+        if selected_db:
+            # 선택된 DB의 컬렉션 목록 로드
+            collection_list = self.mongo.get_collection_list(selected_db)
+            self.collection_combo['values'] = collection_list
+            if collection_list:
+                self.current_collection.set(collection_list[0])
+
+    def on_collection_changed(self, event=None):
+        """Collection 선택 변경 시 이벤트 핸들러"""
+        # 선택만 변경되고 자동 로드하지 않음
+        pass
+
+    def load_raw_collection_data(self):
+        """선택된 DB/Collection의 데이터 로드"""
+        selected_db = self.current_db.get()
+        selected_collection = self.current_collection.get()
+
+        if not selected_db or not selected_collection:
+            messagebox.showwarning("선택 오류", "DB와 Collection을 선택해주세요.")
+            return
+
+        try:
+            # DB 전환
+            self.mongo.switch_database(selected_db)
+
+            # Collection 가져오기
+            collection = self.mongo.get_collection(selected_collection)
+            if collection is None:
+                messagebox.showerror("오류", "Collection을 가져올 수 없습니다.")
+                return
+
+            # 문서 로드
+            self.raw_documents = list(collection.find().sort("_id", -1).limit(1000))
+            self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}개")
+
+            # 첫 문서로 이동
+            self.current_raw_index = 0
+            self.update_raw_viewer()
+
+            messagebox.showinfo("로드 완료", f"{len(self.raw_documents)}개의 문서를 로드했습니다.\n(최대 1000개 제한)")
+
+        except Exception as e:
+            messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
+
+    def initialize_raw_selectors(self):
+        """Raw 탭의 DB/Collection 선택기 초기화"""
+        try:
+            # DB 목록 로드
+            db_list = self.mongo.get_database_list()
+            self.db_combo['values'] = db_list
+
+            # 기본 DB 설정
+            if "docupload" in db_list:
+                self.current_db.set("docupload")
+            elif db_list:
+                self.current_db.set(db_list[0])
+
+            # Collection 목록 로드
+            if self.current_db.get():
+                collection_list = self.mongo.get_collection_list(self.current_db.get())
+                self.collection_combo['values'] = collection_list
+
+                if "files" in collection_list:
+                    self.current_collection.set("files")
+                elif collection_list:
+                    self.current_collection.set(collection_list[0])
+
+        except Exception as e:
+            print(f"Failed to initialize raw selectors: {e}")
 
     def on_closing(self):
         """애플리케이션 종료"""
