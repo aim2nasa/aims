@@ -33,7 +33,7 @@
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 520px;
+  max-width: 460px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
@@ -88,7 +88,7 @@
 
 /* Content (Compact) */
 .customer-identification-modal__content {
-  padding: 14px 20px;
+  padding: 12px 18px;
   overflow-y: auto;
   flex: 1;
 }
@@ -183,6 +183,7 @@
   margin: 0 0 10px 0;
   line-height: 1.5;
   letter-spacing: -0.1px;
+  text-align: center;
 }
 
 /* Single Customer - 🍎 iOS Highlighted Card (Compact) */
@@ -333,27 +334,12 @@
   font-style: italic;
 }
 
-/* Duplicate Warning (Compact) */
-.customer-identification-modal__duplicate-warning {
-  padding: 8px 12px;
-  background: var(--color-warning-bg, #fff3cd);
-  border: 1px solid var(--color-warning-border, #ffc107);
-  border-radius: 6px;
-  color: var(--color-warning-text, #856404);
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* Footer - 🍎 iOS Action Bar (Compact) */
 .customer-identification-modal__footer {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-  padding: 20px 28px 24px 28px;
+  padding: 14px 20px 16px 20px;
   border-top: 0.5px solid var(--color-border);
   background: var(--color-bg-primary);
   border-radius: 0 0 16px 16px;
@@ -364,8 +350,8 @@
 /* Button Styles - 다른 모달과 동일한 스타일 */
 .customer-identification-modal__button {
   border: none;
-  border-radius: 12px;
-  padding: 12px 32px;
+  border-radius: 10px;
+  padding: 10px 24px;
   font-size: 13px;
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -447,10 +433,4 @@ html[data-theme='dark'] .customer-identification-modal__customer-option.selected
   background: var(--color-bg-accent-subtle);
   border-color: var(--color-accent-primary);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-}
-
-html[data-theme='dark'] .customer-identification-modal__duplicate-warning {
-  background: rgba(255, 193, 7, 0.15);
-  border-color: rgba(255, 193, 7, 0.4);
-  color: #ffc107;
 }

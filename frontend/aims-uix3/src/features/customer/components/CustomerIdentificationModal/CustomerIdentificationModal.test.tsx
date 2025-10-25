@@ -2,12 +2,11 @@
  * CustomerIdentificationModal Component Unit Tests
  * @since 2025-10-23
  *
- * 테스트 범위 (9f585c7, 8e72230, 1ad58dc, 2de98cc):
- * 1. 중복 검사 기능 + API 캐싱
- * 2. 드래그 기능
- * 3. 고객 자동 선택 (1명일 때)
- * 4. 고객 선택 (여러명일 때)
- * 5. 신규 고객 생성
+ * 테스트 범위:
+ * 1. 드래그 기능
+ * 2. 고객 자동 선택 (1명일 때)
+ * 3. 고객 선택 (여러명일 때)
+ * 4. 신규 고객 생성
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -15,16 +14,9 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CustomerIdentificationModal from './CustomerIdentificationModal';
 import type { Customer } from '@/entities/customer/model';
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
 import { api } from '@/shared/lib/api';
 
 // Mock dependencies
-vi.mock('@/features/customer/api/annualReportApi', () => ({
-  AnnualReportApi: {
-    getAnnualReports: vi.fn()
-  }
-}));
-
 vi.mock('@/shared/lib/api', () => ({
   api: {
     post: vi.fn()
@@ -60,14 +52,6 @@ describe('CustomerIdentificationModal Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // AnnualReportApi.getAnnualReports 기본 mock 설정
-    vi.mocked(AnnualReportApi.getAnnualReports).mockResolvedValue({
-      success: true,
-      data: {
-        reports: []
-      }
-    } as any);
   });
 
   afterEach(() => {
@@ -169,12 +153,6 @@ describe('CustomerIdentificationModal Component', () => {
         />
       );
 
-      // 중복 검사 완료 대기
-      await waitFor(() => {
-        const confirmButton = screen.getByText('선택 완료');
-        expect(confirmButton).not.toBeDisabled();
-      });
-
       const confirmButton = screen.getByText('선택 완료');
       await user.click(confirmButton);
 
@@ -262,136 +240,6 @@ describe('CustomerIdentificationModal Component', () => {
         const confirmButton = screen.getByText('선택 완료');
         expect(confirmButton).not.toBeDisabled();
       });
-    });
-  });
-
-  describe('중복 검사 기능 (9f585c7)', () => {
-    it('고객 선택 시 중복 검사 API가 호출되어야 한다', async () => {
-      const user = userEvent.setup();
-      render(
-        <CustomerIdentificationModal
-          isOpen={true}
-          onClose={mockOnClose}
-          metadata={mockMetadata}
-          customers={mockCustomers}
-          onCustomerSelected={mockOnCustomerSelected}
-          fileName="test.pdf"
-        />
-      );
-
-      const radioButtons = screen.getAllByRole('radio');
-      await user.click(radioButtons[0]!);
-
-      await waitFor(() => {
-        expect(AnnualReportApi.getAnnualReports).toHaveBeenCalledWith('customer1', 100);
-      });
-    });
-
-    it('중복된 AR이 있을 때 경고 메시지가 표시되어야 한다', async () => {
-      vi.mocked(AnnualReportApi.getAnnualReports).mockResolvedValue({
-        success: true,
-        data: {
-          reports: [
-            { issue_date: '2025-01-15T00:00:00Z' }
-          ]
-        }
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <CustomerIdentificationModal
-          isOpen={true}
-          onClose={mockOnClose}
-          metadata={mockMetadata}
-          customers={mockCustomers}
-          onCustomerSelected={mockOnCustomerSelected}
-          fileName="test.pdf"
-        />
-      );
-
-      const radioButtons = screen.getAllByRole('radio');
-      await user.click(radioButtons[0]!);
-
-      await waitFor(() => {
-        expect(screen.getByText(/이미 등록된 Annual Report입니다/)).toBeInTheDocument();
-      });
-    });
-
-    it('중복 시에도 선택 완료 버튼이 활성화되어야 한다', async () => {
-      vi.mocked(AnnualReportApi.getAnnualReports).mockResolvedValue({
-        success: true,
-        data: {
-          reports: [
-            { issue_date: '2025-01-15T00:00:00Z' }
-          ]
-        }
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <CustomerIdentificationModal
-          isOpen={true}
-          onClose={mockOnClose}
-          metadata={mockMetadata}
-          customers={mockCustomers}
-          onCustomerSelected={mockOnCustomerSelected}
-          fileName="test.pdf"
-        />
-      );
-
-      const radioButtons = screen.getAllByRole('radio');
-      await user.click(radioButtons[0]!);
-
-      await waitFor(() => {
-        const confirmButton = screen.getByText('선택 완료');
-        expect(confirmButton).not.toBeDisabled();
-      });
-    });
-
-    it('캐싱: 동일 고객 재선택 시 API 호출 안 해야 한다', async () => {
-      const user = userEvent.setup();
-      const callCounts: number[] = [];
-
-      // API 호출 횟수 추적
-      vi.mocked(AnnualReportApi.getAnnualReports).mockImplementation(async () => {
-        callCounts.push(callCounts.length + 1);
-        return {
-          success: true,
-          data: { reports: [] }
-        } as any;
-      });
-
-      render(
-        <CustomerIdentificationModal
-          isOpen={true}
-          onClose={mockOnClose}
-          metadata={mockMetadata}
-          customers={mockCustomers}
-          onCustomerSelected={mockOnCustomerSelected}
-          fileName="test.pdf"
-        />
-      );
-
-      const radioButtons = screen.getAllByRole('radio');
-
-      // 첫 번째 선택
-      await user.click(radioButtons[0]!);
-      await waitFor(() => {
-        expect(callCounts.length).toBe(1);
-      });
-
-      // 두 번째 고객 선택
-      await user.click(radioButtons[1]!);
-      await waitFor(() => {
-        expect(callCounts.length).toBe(2);
-      });
-
-      // 첫 번째 고객 다시 선택 (캐시 사용 - API 호출 없음)
-      await user.click(radioButtons[0]!);
-
-      // 약간의 지연 후에도 API 호출 횟수가 증가하지 않아야 함
-      await new Promise(resolve => setTimeout(resolve, 200));
-      expect(callCounts.length).toBe(2); // 여전히 2번
     });
   });
 
@@ -589,18 +437,7 @@ describe('CustomerIdentificationModal Component', () => {
   });
 
   describe('모달 닫힐 때 초기화', () => {
-    it('모달이 닫히면 캐시가 초기화되어야 한다', async () => {
-      const callCounts: number[] = [];
-
-      // API 호출 횟수 추적
-      vi.mocked(AnnualReportApi.getAnnualReports).mockImplementation(async () => {
-        callCounts.push(callCounts.length + 1);
-        return {
-          success: true,
-          data: { reports: [] }
-        } as any;
-      });
-
+    it('모달이 닫히면 위치가 초기화되어야 한다', async () => {
       const { rerender } = render(
         <CustomerIdentificationModal
           isOpen={true}
@@ -612,13 +449,11 @@ describe('CustomerIdentificationModal Component', () => {
         />
       );
 
-      const user = userEvent.setup();
-      const radioButtons = screen.getAllByRole('radio');
-      await user.click(radioButtons[0]!);
-
-      await waitFor(() => {
-        expect(callCounts.length).toBe(1);
-      });
+      // 헤더를 드래그하여 위치 변경
+      const header = screen.getByText('Annual Report 감지').parentElement!;
+      fireEvent.mouseDown(header, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(document, { clientX: 200, clientY: 200 });
+      fireEvent.mouseUp(document);
 
       // 모달 닫기
       rerender(
@@ -632,23 +467,21 @@ describe('CustomerIdentificationModal Component', () => {
         />
       );
 
-      // 모달 다시 열기 (다른 고객 목록으로)
-      const differentCustomers = [mockCustomers[1]!]; // 다른 고객
+      // 모달 다시 열기
       rerender(
         <CustomerIdentificationModal
           isOpen={true}
           onClose={mockOnClose}
           metadata={mockMetadata}
-          customers={differentCustomers}
+          customers={mockCustomers}
           onCustomerSelected={mockOnCustomerSelected}
           fileName="test.pdf"
         />
       );
 
-      // 새로운 고객이 자동 선택되어 중복 검사 API가 호출됨 (캐시 초기화 확인)
-      await waitFor(() => {
-        expect(callCounts.length).toBe(2);
-      });
+      // 위치가 초기화되었는지 확인
+      const reopenedModal = document.querySelector('.customer-identification-modal') as HTMLElement;
+      expect(reopenedModal.style.transform).toBe('translate(0px, 0px)');
     });
   });
 });

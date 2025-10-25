@@ -13,7 +13,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 import { api } from '@/shared/lib/api';
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi';
 import './CustomerIdentificationModal.css';
 
 export interface CustomerIdentificationModalProps {
@@ -52,10 +51,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   const [newCustomerEmail, setNewCustomerEmail] = useState<string>('');
   const [isCreatingCustomer, setIsCreatingCustomer] = useState<boolean>(false);
 
-  // 중복 검사 상태
-  const [duplicateMessage, setDuplicateMessage] = useState<string>('');
-  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState<boolean>(false);
-
   // 고객별 Annual Report 목록 캐시 (customerId -> issue_date[])
   const customerReportsCacheRef = useRef<Map<string, string[]>>(new Map());
 
@@ -74,81 +69,10 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
     }
   }, [customers]);
 
-  /**
-   * 중복 검사 함수
-   * - 선택된 고객의 Annual Report 목록을 조회하여 발행일 중복 확인
-   * - 캐싱을 통해 동일 고객 재선택 시 API 호출 최적화
-   */
-  const checkDuplicate = async (customerId: string) => {
-    if (!metadata?.issue_date || !customerId) {
-      setDuplicateMessage('');
-      return;
-    }
-
-    setIsCheckingDuplicate(true);
-
-    try {
-      // 캐시에서 먼저 확인
-      let issueDates = customerReportsCacheRef.current.get(customerId);
-
-      if (!issueDates) {
-        // 캐시에 없으면 API 호출
-        console.log('[CustomerIdentificationModal] 📡 고객 AR 목록 조회:', customerId);
-        const response = await AnnualReportApi.getAnnualReports(customerId, 100);
-
-        if (response.success && response.data) {
-          // issue_date만 추출하여 캐시에 저장
-          issueDates = response.data.reports
-            .map(report => {
-              // ISO 날짜에서 YYYY-MM-DD 부분만 추출
-              const dateStr = report.issue_date?.split('T')[0];
-              return dateStr || '';
-            })
-            .filter(date => date !== ''); // 빈 문자열 제거
-          customerReportsCacheRef.current.set(customerId, issueDates);
-          console.log('[CustomerIdentificationModal] ✅ 캐시 저장 완료:', issueDates);
-        } else {
-          console.warn('[CustomerIdentificationModal] ⚠️ AR 목록 조회 실패:', response.error);
-          issueDates = [];
-          customerReportsCacheRef.current.set(customerId, issueDates);
-        }
-      } else {
-        console.log('[CustomerIdentificationModal] 🎯 캐시 사용:', issueDates);
-      }
-
-      // 현재 업로드 문서의 발행일 (metadata.issue_date는 "YYYY-MM-DD" 형식)
-      const currentIssueDate = metadata.issue_date;
-
-      // 중복 검사
-      if (issueDates.includes(currentIssueDate)) {
-        setDuplicateMessage(`⚠️ 이미 등록된 Annual Report입니다. (발행일: ${currentIssueDate})`);
-        console.log('[CustomerIdentificationModal] ❌ 중복 발견:', currentIssueDate);
-      } else {
-        setDuplicateMessage('');
-        console.log('[CustomerIdentificationModal] ✅ 중복 없음:', currentIssueDate);
-      }
-    } catch (error) {
-      console.error('[CustomerIdentificationModal] ❌ 중복 검사 오류:', error);
-      setDuplicateMessage('');
-    } finally {
-      setIsCheckingDuplicate(false);
-    }
-  };
-
-  // 선택된 고객이 변경될 때마다 중복 검사
-  useEffect(() => {
-    if (selectedCustomerId) {
-      checkDuplicate(selectedCustomerId);
-    } else {
-      setDuplicateMessage('');
-    }
-  }, [selectedCustomerId, metadata?.issue_date]);
-
   // 모달이 닫힐 때 캐시 초기화 및 위치 리셋
   useEffect(() => {
     if (!isOpen) {
       customerReportsCacheRef.current.clear();
-      setDuplicateMessage('');
       setPosition({ x: 0, y: 0 });
     }
   }, [isOpen]);
@@ -308,13 +232,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
             </div>
           )}
 
-          {/* Duplicate Warning */}
-          {duplicateMessage && (
-            <div className="customer-identification-modal__duplicate-warning">
-              {duplicateMessage}
-            </div>
-          )}
-
           {/* Customer Selection */}
           <div className="customer-identification-modal__customer-section">
             {scenario === 'single' && (
@@ -433,11 +350,10 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
               (scenario === 'multiple' && !selectedCustomerId)
             }
           >
-            {isCheckingDuplicate && '중복 검사 중...'}
-            {!isCheckingDuplicate && isCreatingCustomer && '고객 생성 중...'}
-            {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'single' && '선택 완료'}
-            {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
-            {!isCheckingDuplicate && !isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
+            {isCreatingCustomer && '고객 생성 중...'}
+            {!isCreatingCustomer && scenario === 'single' && '선택 완료'}
+            {!isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
+            {!isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
           </button>
         </div>
       </div>
