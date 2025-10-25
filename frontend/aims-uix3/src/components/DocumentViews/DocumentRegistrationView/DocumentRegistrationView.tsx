@@ -20,9 +20,9 @@ import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
-import { calculateFileHash } from '@/features/customer/utils/fileHash'
 import type { Customer } from '@/entities/customer/model'
 import { DocumentService } from '@/services/DocumentService'
+import { processAnnualReportFile } from './utils/annualReportProcessor'
 import './DocumentRegistrationView.css'
 
 interface DocumentRegistrationViewProps {
@@ -286,91 +286,58 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
 
-              // 🔍 중복 체크: 고객의 기존 Annual Report 목록에서 발행일 확인
-              let isArDuplicate = false;
+              // 🔍 고객이 있을 때 중복 체크 (리팩토링된 함수 사용)
+              let shouldProcessAr = true; // 기본적으로 AR 처리 진행
+              let shouldUploadDoc = true; // 기본적으로 문서 업로드 진행
 
               if (customers.length > 0) {
                 const customerId = customers[0]._id;
+                const processResult = await processAnnualReportFile(file, customerId, checkResult.metadata);
 
-                console.log('[DocumentRegistrationView] 🔍 중복 체크 시작: customerId=', customerId);
-                const existingReports = await AnnualReportApi.getAnnualReports(customerId, 100);
-                console.log('[DocumentRegistrationView] 🔍 기존 AR 조회 결과:', existingReports);
+                // AR 중복 경고
+                if (processResult.isDuplicateAr) {
+                  console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지:', file.name);
+                  addLog(
+                    'warning',
+                    `중복 Annual Report 감지: ${file.name}`,
+                    `발행일 ${checkResult.metadata.issue_date}의 Annual Report가 이미 등록되어 있습니다.`
+                  );
 
-                if (existingReports.success && existingReports.data) {
-                  // 발행일(issue_date)로 중복 판단
-                  const existingIssueDates = existingReports.data.reports.map(r => r.issue_date?.substring(0, 10));
-                  const currentIssueDate = checkResult.metadata.issue_date;
-                  console.log('[DocumentRegistrationView] 🔍 기존 발행일 목록:', existingIssueDates);
-                  console.log('[DocumentRegistrationView] 🔍 현재 발행일:', currentIssueDate);
-                  isArDuplicate = currentIssueDate ? existingIssueDates.includes(currentIssueDate) : false;
-                  console.log('[DocumentRegistrationView] 🔍 중복 여부:', isArDuplicate);
+                  // 중복 AR도 고객과 연결하기 위해 매핑 저장
+                  arCustomerMappingRef.current.set(file.name, customerId);
+                  console.log(`[DocumentRegistrationView] 🔗 중복 AR 고객 매핑 저장: ${file.name} → ${customerId}`);
 
-                  if (isArDuplicate) {
-                    // 🚫 AR 중복 발견 - AR 파싱은 건너뛰고 문서 중복 검사 진행
-                    console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지:', file.name);
-                    addLog(
-                      'warning',
-                      `중복 Annual Report 감지: ${file.name}`,
-                      `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다.`
-                    );
+                  shouldProcessAr = false; // AR 처리 건너뛰기
+                }
 
-                    // 중복 AR도 고객과 연결하기 위해 매핑 저장
-                    arCustomerMappingRef.current.set(file.name, customerId);
-                    console.log(`[DocumentRegistrationView] 🔗 중복 AR 고객 매핑 저장: ${file.name} → ${customerId}`);
+                // 문서 중복 경고
+                if (processResult.isDuplicateDoc) {
+                  addLog(
+                    'warning',
+                    `중복 문서 감지: ${file.name}`,
+                    `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
+                  );
+                  shouldUploadDoc = false; // 문서 업로드 건너뛰기
+                }
 
-                    // 🔍 문서 중복 검사 (AR 중복이어도 문서는 체크해야 함)
-                    addLog('info', `문서 중복 검사 중: ${file.name}`);
-                    const uploadFileHash = await calculateFileHash(file);
-                    console.log('[DocumentRegistrationView] 업로드 파일 해시:', uploadFileHash);
+                // 문서 중복 아니면 일반 문서로 업로드
+                if (processResult.isDuplicateAr && !processResult.isDuplicateDoc) {
+                  addLog('info', `AR은 중복이나 파일은 새 파일. 일반 문서로 등록: ${file.name}`);
+                }
 
-                    const customerDocs = await DocumentService.getCustomerDocuments(customerId);
-                    let isDuplicateDocument = false;
-
-                    if (customerDocs.documents && customerDocs.documents.length > 0) {
-                      console.log('[DocumentRegistrationView] 고객 문서 수:', customerDocs.documents.length);
-
-                      for (const doc of customerDocs.documents) {
-                        try {
-                          const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`);
-                          const docData = await docStatus.json();
-
-                          if (docData.success && docData.data?.raw?.meta?.file_hash) {
-                            const existingHash = docData.data.raw.meta.file_hash;
-                            console.log('[DocumentRegistrationView] 기존 문서 해시:', existingHash);
-
-                            if (uploadFileHash === existingHash) {
-                              isDuplicateDocument = true;
-                              addLog(
-                                'warning',
-                                `중복 문서 감지: ${file.name}`,
-                                `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
-                              );
-                              break;
-                            }
-                          }
-                        } catch (error) {
-                          console.error('[DocumentRegistrationView] 문서 해시 조회 실패:', doc._id, error);
-                        }
-                      }
-                    }
-
-                    // 문서 중복이면 업로드 건너뛰기
-                    if (isDuplicateDocument) {
-                      continue;
-                    }
-
-                    // 문서 중복 아니면 일반 문서로 업로드
-                    addLog('info', `AR은 중복이나 파일은 새 파일. 일반 문서로 등록: ${file.name}`);
-                  } else {
-                    console.log('[DocumentRegistrationView] ✅ 중복 아님, AR 처리 진행');
-                  }
-                } else {
-                  console.log('[DocumentRegistrationView] ⚠️ 기존 AR 조회 실패 또는 데이터 없음');
+                // AR 중복 아니고 문서만 중복인 경우 → AR 파싱만 진행, 문서 업로드는 건너뜀
+                if (!processResult.isDuplicateAr && processResult.isDuplicateDoc) {
+                  addLog('info', `문서는 중복이나 AR은 새 것. AR 파싱만 진행: ${file.name}`);
                 }
               }
 
+              // AR도 문서도 중복이면 완전히 건너뛰기
+              if (!shouldProcessAr && !shouldUploadDoc) {
+                continue;
+              }
+
               // 중복이 아닐 때만 AR 처리
-              if (!isArDuplicate) {
+              if (shouldProcessAr) {
                 addLog('success', `PDF 분석 완료: ${file.name}`)
                 addLog(
                   'ar-detect',
@@ -387,148 +354,138 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                     `고객 1명 → 자동 선택`
                   );
 
-                  // AR 파일로 추적
-                  arFilenamesRef.current.add(file.name);
-                  arCustomerMappingRef.current.set(file.name, customerId);
+                  // 🔍 중복 검사 실행 (리팩토링된 함수 사용)
+                  const processResult = await processAnnualReportFile(file, customerId, checkResult.metadata);
 
-                  // 📊 Annual Report 파싱 요청 먼저 실행 (새로운 AR 등록)
-                  try {
-                    const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
-                    if (parseResult.success) {
-                      console.log('[DocumentRegistrationView] AR 파싱 요청 성공 (자동):', parseResult);
-                      addLog('success', `AR 파싱 시작: ${file.name}`, 'Annual Report 분석이 시작되었습니다.');
+                  // AR 중복 경고
+                  if (processResult.isDuplicateAr) {
+                    addLog(
+                      'warning',
+                      `중복 Annual Report 감지: ${file.name}`,
+                      `발행일 ${checkResult.metadata.issue_date}의 Annual Report가 이미 등록되어 있습니다.`
+                    );
+                  }
 
-                      // 🔄 AR 파싱 완료 확인 (즉시 체크 + 폴링)
-                      let isPollingActive = true; // 폴링 활성화 플래그
+                  // 문서 중복 경고
+                  if (processResult.isDuplicateDoc) {
+                    addLog(
+                      'warning',
+                      `중복 문서 감지: ${file.name}`,
+                      processResult.isDuplicateAr
+                        ? '이미 존재하는 파일이므로 업로드를 건너뜁니다.'
+                        : 'AR은 새로 등록되었으나, 파일은 이미 존재하므로 업로드를 건너뜁니다.'
+                    );
+                  }
 
-                      const checkArParsing = async () => {
-                        if (!isPollingActive) return false; // 폴링 종료됨
+                  // AR 파싱 진행
+                  if (processResult.shouldParseAr) {
+                    // AR 파일로 추적
+                    arFilenamesRef.current.add(file.name);
+                    arCustomerMappingRef.current.set(file.name, customerId);
 
-                        const targetIssueDate = checkResult.metadata?.issue_date;
-                        if (!targetIssueDate) return false;
+                    // 📊 Annual Report 파싱 요청 먼저 실행 (새로운 AR 등록)
+                    try {
+                      const parseResult = await AnnualReportApi.parseAnnualReportFile(file, customerId);
+                      if (parseResult.success) {
+                        console.log('[DocumentRegistrationView] AR 파싱 요청 성공 (자동):', parseResult);
+                        addLog('success', `AR 파싱 시작: ${file.name}`, 'Annual Report 분석이 시작되었습니다.');
 
-                        console.log('[AR 파싱] 완료 확인 중:', targetIssueDate);
+                        // 🔄 AR 파싱 완료 확인 (즉시 체크 + 폴링)
+                        let isPollingActive = true; // 폴링 활성화 플래그
 
-                        try {
-                          const arListResponse = await AnnualReportApi.getAnnualReports(customerId, 100);
+                        const checkArParsing = async () => {
+                          if (!isPollingActive) return false; // 폴링 종료됨
 
-                          if (arListResponse.success && arListResponse.data) {
-                            console.log('[AR 파싱] AR 목록 조회 성공:', arListResponse.data.reports.length, '건');
-                            const matchingAr = arListResponse.data.reports.find(
-                              ar => ar.issue_date && ar.issue_date.startsWith(targetIssueDate)
-                            );
+                          const targetIssueDate = checkResult.metadata?.issue_date;
+                          if (!targetIssueDate) return false;
 
-                            if (matchingAr && isPollingActive) {
-                              console.log('✅ [AR 파싱] 완료 확인됨:', matchingAr);
-                              addLog('success', `AR 파싱 완료: ${file.name}`, `발행일: ${targetIssueDate}`);
-                              isPollingActive = false; // 폴링 종료
-                              return true;
-                            } else {
-                              console.log('[AR 파싱] 아직 완료 안 됨. 대기 중...');
+                          console.log('[AR 파싱] 완료 확인 중:', targetIssueDate);
+
+                          try {
+                            const arListResponse = await AnnualReportApi.getAnnualReports(customerId, 100);
+
+                            if (arListResponse.success && arListResponse.data) {
+                              console.log('[AR 파싱] AR 목록 조회 성공:', arListResponse.data.reports.length, '건');
+                              const matchingAr = arListResponse.data.reports.find(
+                                ar => ar.issue_date && ar.issue_date.startsWith(targetIssueDate)
+                              );
+
+                              if (matchingAr && isPollingActive) {
+                                console.log('✅ [AR 파싱] 완료 확인됨:', matchingAr);
+                                addLog('success', `AR 파싱 완료: ${file.name}`, `발행일: ${targetIssueDate}`);
+                                isPollingActive = false; // 폴링 종료
+                                return true;
+                              } else {
+                                console.log('[AR 파싱] 아직 완료 안 됨. 대기 중...');
+                              }
                             }
+                          } catch (error) {
+                            console.error('❌ [AR 파싱] 체크 실패:', error);
                           }
-                        } catch (error) {
-                          console.error('❌ [AR 파싱] 체크 실패:', error);
-                        }
-                        return false;
-                      };
+                          return false;
+                        };
 
-                      // 1초 후 즉시 체크 (파싱이 빠르면 이미 완료됨)
-                      console.log('[AR 파싱] 1초 후 즉시 체크 시작');
-                      setTimeout(async () => {
-                        console.log('[AR 파싱] 첫 번째 체크 실행');
-                        const found = await checkArParsing();
-                        if (found) {
-                          console.log('[AR 파싱] 첫 체크에서 완료 확인됨');
-                          return; // 이미 완료됨
-                        }
-
-                        // 아직 완료 안 됐으면 2초마다 폴링 시작
-                        console.log('[AR 파싱] 폴링 시작 (2초 간격, 최대 90회)');
-                        let attempts = 0;
-                        const maxAttempts = 90; // 2초 * 90회 = 3분
-
-                        const checkInterval = setInterval(async () => {
-                          if (!isPollingActive) {
-                            clearInterval(checkInterval);
-                            return;
-                          }
-
-                          attempts++;
-                          console.log(`[AR 파싱] 폴링 ${attempts}/${maxAttempts}`);
+                        // 1초 후 즉시 체크 (파싱이 빠르면 이미 완료됨)
+                        console.log('[AR 파싱] 1초 후 즉시 체크 시작');
+                        setTimeout(async () => {
+                          console.log('[AR 파싱] 첫 번째 체크 실행');
                           const found = await checkArParsing();
-
                           if (found) {
-                            console.log('[AR 파싱] 폴링 중 완료 확인됨. 종료.');
-                            isPollingActive = false;
-                            clearInterval(checkInterval);
-                          } else if (attempts >= maxAttempts) {
-                            console.error('[AR 파싱] 폴링 시간 초과');
-                            isPollingActive = false; // 플래그 비활성화
-                            clearInterval(checkInterval);
-                            addLog('warning', `AR 파싱 시간 초과: ${file.name}`, '파싱이 완료되지 않았습니다.');
+                            console.log('[AR 파싱] 첫 체크에서 완료 확인됨');
+                            return; // 이미 완료됨
                           }
-                        }, 2000); // 5초 → 2초로 변경
-                      }, 1000);
-                    }
-                  } catch (error) {
-                    console.error('[DocumentRegistrationView] AR 파싱 요청 실패 (자동):', error);
-                  }
 
-                  // 🔍 문서 중복 검사: 해당 고객의 documents에서 file_hash 조회
-                  addLog('info', `문서 중복 검사 중: ${file.name}`);
-                  const uploadFileHash = await calculateFileHash(file);
-                  console.log('[DocumentRegistrationView] 업로드 파일 해시:', uploadFileHash);
+                          // 아직 완료 안 됐으면 2초마다 폴링 시작
+                          console.log('[AR 파싱] 폴링 시작 (2초 간격, 최대 90회)');
+                          let attempts = 0;
+                          const maxAttempts = 90; // 2초 * 90회 = 3분
 
-                  // 고객의 문서 목록 조회
-                  const customerDocs = await DocumentService.getCustomerDocuments(customerId);
-                  let isDuplicateDocument = false;
+                          const checkInterval = setInterval(async () => {
+                            if (!isPollingActive) {
+                              clearInterval(checkInterval);
+                              return;
+                            }
 
-                  if (customerDocs.documents && customerDocs.documents.length > 0) {
-                    // 각 document_id로 file_hash 조회
-                    console.log('[DocumentRegistrationView] 고객 문서 수:', customerDocs.documents.length);
+                            attempts++;
+                            console.log(`[AR 파싱] 폴링 ${attempts}/${maxAttempts}`);
+                            const found = await checkArParsing();
 
-                    for (const doc of customerDocs.documents) {
-                      try {
-                        const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`);
-                        const docData = await docStatus.json();
-
-                        if (docData.success && docData.data?.raw?.meta?.file_hash) {
-                          const existingHash = docData.data.raw.meta.file_hash;
-                          console.log('[DocumentRegistrationView] 기존 문서 해시:', existingHash);
-
-                          if (uploadFileHash === existingHash) {
-                            isDuplicateDocument = true;
-                            addLog(
-                              'warning',
-                              `중복 문서 감지: ${file.name}`,
-                              `AR은 새로 등록되었으나, 파일은 이미 존재하므로 업로드를 건너뜁니다.`
-                            );
-                            break;
-                          }
-                        }
-                      } catch (error) {
-                        console.error('[DocumentRegistrationView] 문서 해시 조회 실패:', doc._id, error);
+                            if (found) {
+                              console.log('[AR 파싱] 폴링 중 완료 확인됨. 종료.');
+                              isPollingActive = false;
+                              clearInterval(checkInterval);
+                            } else if (attempts >= maxAttempts) {
+                              console.error('[AR 파싱] 폴링 시간 초과');
+                              isPollingActive = false; // 플래그 비활성화
+                              clearInterval(checkInterval);
+                              addLog('warning', `AR 파싱 시간 초과: ${file.name}`, '파싱이 완료되지 않았습니다.');
+                            }
+                          }, 2000); // 5초 → 2초로 변경
+                        }, 1000);
                       }
+                    } catch (error) {
+                      console.error('[DocumentRegistrationView] AR 파싱 요청 실패 (자동):', error);
                     }
+                  } else if (processResult.isDuplicateAr) {
+                    // AR 중복이지만 문서는 아닐 수 있으므로 매핑 저장
+                    arCustomerMappingRef.current.set(file.name, customerId);
+                    console.log(`[DocumentRegistrationView] 🔗 중복 AR 고객 매핑 저장: ${file.name} → ${customerId}`);
                   }
 
-                  // 중복 문서면 업로드만 건너뛰기 (AR은 이미 등록됨)
-                  if (isDuplicateDocument) {
-                    continue;
+                  // 문서 업로드 진행
+                  if (processResult.shouldUploadDoc) {
+                    // 업로드 큐에 추가
+                    newUploadFiles.push({
+                      id: generateFileId(),
+                      file,
+                      fileSize: file.size,
+                      status: 'pending',
+                      progress: 0,
+                      error: undefined,
+                      completedAt: undefined,
+                      relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
+                    });
                   }
-
-                  // 업로드 큐에 추가
-                  newUploadFiles.push({
-                    id: generateFileId(),
-                    file,
-                    fileSize: file.size,
-                    status: 'pending',
-                    progress: 0,
-                    error: undefined,
-                    completedAt: undefined,
-                    relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
-                  });
 
                   continue;
                 }
@@ -791,83 +748,92 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (!annualReportFile) return;
 
     try {
-      // 🔍 중복 체크: 선택된 고객의 기존 Annual Report 목록에서 발행일 확인
+      // 🔍 중복 검사 실행 (리팩토링된 함수 사용)
       addLog('info', `중복 체크 중: ${annualReportFile.fileName}`);
-      const existingReports = await AnnualReportApi.getAnnualReports(customerId, 100);
-
-      if (existingReports.success && existingReports.data && annualReportMetadata) {
-        // 발행일(issue_date)로 중복 판단
-        const existingIssueDates = existingReports.data.reports.map(r => r.issue_date?.substring(0, 10));
-        const currentIssueDate = annualReportMetadata.issue_date;
-        const isDuplicate = currentIssueDate ? existingIssueDates.includes(currentIssueDate) : false;
-
-        if (isDuplicate) {
-          // 🚫 중복 발견 - 업로드 차단
-          console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지 (모달):', annualReportFile.fileName);
-          addLog(
-            'warning',
-            `중복 Annual Report 감지: ${annualReportFile.fileName}`,
-            `발행일 ${currentIssueDate}의 Annual Report가 이미 등록되어 있습니다.`
-          );
-
-          // 모달 닫기
-          setIsCustomerModalOpen(false);
-          setAnnualReportMetadata(null);
-          setAnnualReportCustomers([]);
-          setAnnualReportFile(null);
-
-          // 다음 AR 처리
-          setTimeout(() => processNextArInQueue(), 100);
-          return;
-        }
-      }
-
-      // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
-      arFilenamesRef.current.add(annualReportFile.fileName);
-      console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);
-
-      // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
-      arCustomerMappingRef.current.set(annualReportFile.fileName, customerId);
-      console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${annualReportFile.fileName} → ${customerId}`);
-
-      // Annual Report 파싱 요청 (백그라운드 AI 처리)
-      const parseResult = await AnnualReportApi.parseAnnualReportFile(
+      const processResult = await processAnnualReportFile(
         annualReportFile.file,
-        customerId
+        customerId,
+        annualReportMetadata
       );
 
-      if (parseResult.success) {
-        console.log('[DocumentRegistrationView] Annual Report 파싱 요청 성공:', parseResult);
-      } else {
-        console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', parseResult.message);
+      // AR 중복 경고
+      if (processResult.isDuplicateAr) {
+        console.warn('[DocumentRegistrationView] ⚠️ 중복 Annual Report 감지 (모달):', annualReportFile.fileName);
+        addLog(
+          'warning',
+          `중복 Annual Report 감지: ${annualReportFile.fileName}`,
+          `발행일 ${annualReportMetadata?.issue_date}의 Annual Report가 이미 등록되어 있습니다.`
+        );
       }
 
-      // 📤 Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
-      const uploadFile: UploadFile = {
-        id: generateFileId(),
-        file: annualReportFile.file,
-        fileSize: annualReportFile.file.size,
-        status: 'pending',
-        progress: 0,
-        error: undefined,
-        completedAt: undefined,
-      };
+      // 문서 중복 경고
+      if (processResult.isDuplicateDoc) {
+        addLog(
+          'warning',
+          `중복 문서 감지: ${annualReportFile.fileName}`,
+          processResult.isDuplicateAr
+            ? '이미 존재하는 파일이므로 업로드를 건너뜁니다.'
+            : 'AR은 새로 등록되었으나, 파일은 이미 존재하므로 업로드를 건너뜁니다.'
+        );
+      }
 
-      // 업로드 상태에 추가
-      setUploadState(prev => ({
-        ...prev,
-        files: [uploadFile, ...prev.files]
-      }));
+      // AR 파싱 진행
+      if (processResult.shouldParseAr) {
+        // 🏷️ AR 파일로 추적 (업로드 완료 후 DB 플래그 설정용)
+        arFilenamesRef.current.add(annualReportFile.fileName);
+        console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${annualReportFile.fileName}`);
 
-      // 업로드 큐에 추가 및 즉시 시작
-      uploadService.queueFiles([uploadFile]);
+        // 🔗 AR 파일명 → 고객 ID 매핑 저장 (문서 처리 완료 후 자동 연결용)
+        arCustomerMappingRef.current.set(annualReportFile.fileName, customerId);
+        console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${annualReportFile.fileName} → ${customerId}`);
 
-      // ⚠️ 업로드가 자동 시작되지 않는 경우를 위해 명시적으로 업로드 시작 트리거
-      console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
+        // Annual Report 파싱 요청 (백그라운드 AI 처리)
+        const parseResult = await AnnualReportApi.parseAnnualReportFile(
+          annualReportFile.file,
+          customerId
+        );
 
-      // 업로드 서비스가 이미 실행 중이 아니면 시작
-      if (!uploadState.uploading) {
-        setUploadState(prev => ({ ...prev, uploading: true }));
+        if (parseResult.success) {
+          console.log('[DocumentRegistrationView] Annual Report 파싱 요청 성공:', parseResult);
+          addLog('success', `AR 파싱 시작: ${annualReportFile.fileName}`, 'Annual Report 분석이 시작되었습니다.');
+        } else {
+          console.error('[DocumentRegistrationView] Annual Report 파싱 요청 실패:', parseResult.message);
+        }
+      } else if (processResult.isDuplicateAr) {
+        // AR 중복이지만 문서는 아닐 수 있으므로 매핑 저장
+        arCustomerMappingRef.current.set(annualReportFile.fileName, customerId);
+        console.log(`[DocumentRegistrationView] 🔗 중복 AR 고객 매핑 저장: ${annualReportFile.fileName} → ${customerId}`);
+      }
+
+      // 문서 업로드 진행
+      if (processResult.shouldUploadDoc) {
+        // 📤 Annual Report PDF를 일반 문서처럼 업로드 큐에 추가
+        const uploadFile: UploadFile = {
+          id: generateFileId(),
+          file: annualReportFile.file,
+          fileSize: annualReportFile.file.size,
+          status: 'pending',
+          progress: 0,
+          error: undefined,
+          completedAt: undefined,
+        };
+
+        // 업로드 상태에 추가
+        setUploadState(prev => ({
+          ...prev,
+          files: [uploadFile, ...prev.files]
+        }));
+
+        // 업로드 큐에 추가 및 즉시 시작
+        uploadService.queueFiles([uploadFile]);
+
+        // ⚠️ 업로드가 자동 시작되지 않는 경우를 위해 명시적으로 업로드 시작 트리거
+        console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
+
+        // 업로드 서비스가 이미 실행 중이 아니면 시작
+        if (!uploadState.uploading) {
+          setUploadState(prev => ({ ...prev, uploading: true }));
+        }
       }
 
     } catch (error) {
@@ -882,7 +848,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 🎯 다음 AR 처리
       setTimeout(() => processNextArInQueue(), 100)
     }
-  }, [annualReportFile, generateFileId, processNextArInQueue]);
+  }, [annualReportFile, annualReportMetadata, generateFileId, processNextArInQueue, uploadState.uploading, addLog]);
 
   /**
    * 고객 식별 모달 닫기 (취소)
