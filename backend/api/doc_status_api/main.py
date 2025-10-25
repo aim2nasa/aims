@@ -694,7 +694,7 @@ class DeleteDocumentsResponse(BaseModel):
 @app.delete("/documents", response_model=DeleteDocumentsResponse)
 async def delete_documents(request: DeleteDocumentsRequest):
     """
-    문서 삭제 (DB + 물리적 파일)
+    문서 삭제 (DB + 물리적 파일 + 고객 참조)
 
     Args:
         request: 삭제할 문서 ID 리스트
@@ -734,6 +734,24 @@ async def delete_documents(request: DeleteDocumentsRequest):
                 })
                 failed_count += 1
                 continue
+
+            # ========== 고객 참조 정리 추가 ==========
+            # 문서 삭제 전에 이 문서를 참조하는 모든 고객의 documents 배열에서 제거
+            try:
+                customers_collection = db['customers']
+                customers_update_result = customers_collection.update_many(
+                    {"documents.document_id": obj_id},
+                    {
+                        "$pull": {"documents": {"document_id": obj_id}},
+                        "$set": {"meta.updated_at": datetime.utcnow()}
+                    }
+                )
+                if customers_update_result.modified_count > 0:
+                    print(f"✅ 고객 참조 정리: {customers_update_result.modified_count}명의 고객에서 문서 참조 제거")
+            except Exception as customer_error:
+                print(f"⚠️ 고객 참조 정리 실패: {customer_error}")
+                # 고객 참조 정리 실패해도 문서 삭제는 진행
+            # ========================================
 
             # 물리적 파일 경로 추출
             upload_info = document.get('upload', {})

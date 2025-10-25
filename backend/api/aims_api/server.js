@@ -834,6 +834,25 @@ app.delete('/api/documents/:id', async (req, res) => {
       });
     }
 
+    // ========== 고객 참조 정리 추가 ==========
+    // 문서 삭제 전에 이 문서를 참조하는 모든 고객의 documents 배열에서 제거
+    try {
+      const customersUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
+        { 'documents.document_id': new ObjectId(id) },
+        {
+          $pull: { documents: { document_id: new ObjectId(id) } },
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+      if (customersUpdateResult.modifiedCount > 0) {
+        console.log(`✅ 고객 참조 정리: ${customersUpdateResult.modifiedCount}명의 고객에서 문서 참조 제거`);
+      }
+    } catch (customerError) {
+      console.warn('⚠️ 고객 참조 정리 실패:', customerError.message);
+      // 고객 참조 정리 실패해도 문서 삭제는 진행
+    }
+    // ========================================
+
     // 파일 시스템에서 파일 삭제
     const fs = require('fs').promises;
     if (document.upload?.destPath) {
