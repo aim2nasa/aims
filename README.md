@@ -21,7 +21,20 @@ AIMS는 보험설계사를 위한 지능형 문서 관리 시스템입니다.
 
 ```bash
 python scripts/run_docmeta.py --file ./samples/pdf/보험청구서.pdf
-````
+```
+
+## 테스트
+
+전체 테스트 실행 (Node.js + Python):
+```bash
+# Windows
+scripts\test-all.bat
+
+# Linux/Mac
+./scripts/test-all.sh
+```
+
+자세한 테스트 가이드는 [`docs/TESTING.md`](./docs/TESTING.md)를 참고하세요.
 
 ## 사용 조건
 
