@@ -20,33 +20,33 @@ export interface ProcessingLog {
  */
 export const LOG_CONFIG = {
   info: {
-    icon: 'info.circle',
-    color: 'var(--color-text-secondary)',
-    bgColor: 'rgba(142, 142, 147, 0.08)'
+    icon: '●',
+    color: 'rgba(142, 142, 147, 0.8)',
+    bgColor: 'transparent'
   },
   success: {
-    icon: 'checkmark.circle',
-    color: 'rgba(52, 199, 89, 0.9)',
-    bgColor: 'rgba(52, 199, 89, 0.08)'
+    icon: '●',
+    color: 'rgba(52, 199, 89, 1)',
+    bgColor: 'transparent'
   },
   warning: {
-    icon: 'exclamationmark.triangle',
-    color: 'rgba(255, 149, 0, 0.9)',
-    bgColor: 'rgba(255, 149, 0, 0.08)'
+    icon: '●',
+    color: 'rgba(255, 149, 0, 1)',
+    bgColor: 'transparent'
   },
   error: {
-    icon: 'xmark.circle',
-    color: 'rgba(255, 59, 48, 0.9)',
-    bgColor: 'rgba(255, 59, 48, 0.08)'
+    icon: '●',
+    color: 'rgba(255, 59, 48, 1)',
+    bgColor: 'transparent'
   },
   'ar-detect': {
-    icon: 'doc.text.magnifyingglass',
-    color: 'rgba(10, 132, 255, 0.9)',
-    bgColor: 'rgba(10, 132, 255, 0.08)'
+    icon: '●',
+    color: 'rgba(10, 132, 255, 1)',
+    bgColor: 'transparent'
   },
   'ar-auto': {
-    icon: 'checkmark.circle.fill',
-    color: 'rgba(52, 199, 89, 0.9)',
-    bgColor: 'rgba(52, 199, 89, 0.08)'
+    icon: '●',
+    color: 'rgba(52, 199, 89, 1)',
+    bgColor: 'transparent'
   }
 } as const

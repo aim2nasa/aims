@@ -83,7 +83,7 @@ describe('ProcessingLog Component', () => {
 
       const sortButton = screen.getByLabelText('오래된순 정렬'); // 기본값이 newest-first
       expect(sortButton).toBeInTheDocument();
-      expect(sortButton.textContent).toBe('↑');
+      expect(sortButton.textContent).toBe('↓');
     });
 
     it('정렬 버튼 클릭 시 오래된순으로 변경되어야 한다', async () => {
@@ -96,7 +96,7 @@ describe('ProcessingLog Component', () => {
       await waitFor(() => {
         const updatedButton = screen.getByLabelText('최신순 정렬');
         expect(updatedButton).toBeInTheDocument();
-        expect(updatedButton.textContent).toBe('↓');
+        expect(updatedButton.textContent).toBe('↑');
       });
     });
 

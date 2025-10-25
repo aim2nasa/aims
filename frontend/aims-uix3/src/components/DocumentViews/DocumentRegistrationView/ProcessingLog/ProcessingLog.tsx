@@ -9,7 +9,6 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { ProcessingLog as Log, LOG_CONFIG } from '../types/logTypes'
 import Tooltip from '@/shared/ui/Tooltip'
 import './ProcessingLog.css'
@@ -122,15 +121,15 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           <Tooltip content={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}>
             <div style={{ display: 'inline-block' }}>
               <button
-                className="processing-log__sort"
+                className="processing-log__sort processing-log__sort--primary"
                 onClick={(e) => {
                   e.stopPropagation()
                   setSortOrder(prev => prev === 'oldest-first' ? 'newest-first' : 'oldest-first')
                 }}
                 aria-label={sortOrder === 'oldest-first' ? '최신순 정렬' : '오래된순 정렬'}
               >
-                <span className="processing-log__sort-icon">
-                  {sortOrder === 'oldest-first' ? '↓' : '↑'}
+                <span className="processing-log__button-icon">
+                  {sortOrder === 'oldest-first' ? '↑' : '↓'}
                 </span>
               </button>
             </div>
@@ -138,14 +137,14 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           <Tooltip content="로그 복사">
             <div style={{ display: 'inline-block' }}>
               <button
-                className="processing-log__sort"
+                className="processing-log__sort processing-log__sort--success"
                 onClick={(e) => {
                   e.stopPropagation()
                   copyLogsToClipboard()
                 }}
                 aria-label="로그 복사"
               >
-                <span className="processing-log__sort-icon">
+                <span className="processing-log__button-icon">
                   📋
                 </span>
               </button>
@@ -154,14 +153,14 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           <Tooltip content="로그 다운로드">
             <div style={{ display: 'inline-block' }}>
               <button
-                className="processing-log__sort"
+                className="processing-log__sort processing-log__sort--info"
                 onClick={(e) => {
                   e.stopPropagation()
                   downloadLogsAsText()
                 }}
                 aria-label="로그 다운로드"
               >
-                <span className="processing-log__sort-icon">
+                <span className="processing-log__button-icon">
                   💾
                 </span>
               </button>
@@ -170,19 +169,16 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
           <Tooltip content="로그 지우기">
             <div style={{ display: 'inline-block' }}>
               <button
-                className="processing-log__clear"
+                className="processing-log__clear processing-log__clear--danger"
                 onClick={(e) => {
                   e.stopPropagation()
                   onClear?.()
                 }}
                 aria-label="로그 지우기"
               >
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.FOOTNOTE}
-                  weight={SFSymbolWeight.SEMIBOLD}
-                  decorative={true}
-                />
+                <span className="processing-log__button-icon">
+                  🗑️
+                </span>
               </button>
             </div>
           </Tooltip>
@@ -208,11 +204,9 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                       backgroundColor: config.bgColor
                     }}
                   >
-                    <SFSymbol
-                      name={config.icon}
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
+                    <span className="processing-log__icon-symbol">
+                      {config.icon}
+                    </span>
                   </div>
                   <span className="processing-log__time">
                     {formatTime(log.timestamp)}
