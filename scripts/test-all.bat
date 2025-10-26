@@ -17,7 +17,7 @@ REM ========================================
 echo [1/4] Running Frontend tests...
 echo ----------------------------------------
 cd frontend\aims-uix3
-call npm test
+call npm test -- --run
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [FAILED] Frontend tests failed!
