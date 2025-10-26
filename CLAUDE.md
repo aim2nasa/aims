@@ -496,9 +496,27 @@ AIMS (Agent Intelligent Management System) is an intelligent document management
 - **Frontend Development**: WonderCastle (Windows 10 PC)
 - **Database**: MongoDB on `tars:27017`
 
+### 📂 프로젝트 경로 (절대 경로)
+
+**⚠️ 중요: 경로 오인 방지를 위해 항상 정확한 경로 사용!**
+
+- **tars 서버 프로젝트 루트**: `/home/rossi/aims`
+- **로컬 프로젝트 루트**: `D:\aims`
+
+**배포 스크립트 위치 예시:**
+```bash
+# tars 서버에서 실행시
+cd /home/rossi/aims/backend/api/aims_api
+./deploy_aims_api.sh
+
+# 또는 홈 디렉토리 기준
+cd ~/aims/backend/api/aims_api
+./deploy_aims_api.sh
+```
+
 ### ⚠️ 중요: 백엔드 수정 규칙
 
-**백엔드 API 서버는 tars Linux 서버에서 운영 중이며, SSH를 통해 직접 수정 가능합니다.**
+**백엔드 API 서버는 tars Linux 서버(`/home/rossi/aims`)에서 운영 중이며, SSH를 통해 직접 수정 가능합니다.**
 
 #### 백엔드 수정 절차
 
@@ -520,7 +538,10 @@ AIMS (Agent Intelligent Management System) is an intelligent document management
    # Node.js API 서버 (포트 3010)
    ./deploy_aims_api.sh
 
-   # Python RAG API 서버
+   # Python Document Status API 서버 (포트 8000)
+   ./deploy_doc_status_api.sh
+
+   # Python RAG API 서버 (포트 8000, host network mode)
    ./deploy_aims_rag_api.sh
 
    # Python Annual Report API 서버 (포트 8004)
