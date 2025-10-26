@@ -262,7 +262,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.log('✅ [processNextArInQueue] 큐 비어있음 - AR 처리 완료')
       // 실제로 처리된 파일이 있을 때만 완료 로그 출력
       if (arProcessedCountRef.current > 0) {
-        addLog('success', 'Annual Report 처리 완료', `${arProcessedCountRef.current}건의 AR 파일이 처리되었습니다`)
+        addLog('success', '고객 선택 완료', `${arProcessedCountRef.current}건의 AR 파일 - 업로드 및 자동 연결 진행 중`)
       }
       // 카운터 리셋
       arProcessedCountRef.current = 0
@@ -298,7 +298,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         // PDF 파일이면 Annual Report 체크
         if (file.type === 'application/pdf') {
           try {
-            addLog('info', `PDF 분석 중: ${file.name}`)
+            addLog('info', `[1/5] PDF 분석 중: ${file.name}`)
             console.log('[DocumentRegistrationView] 🔍 PDF 파일 감지, Annual Report 체크:', file.name);
             const checkResult = await checkAnnualReportFromPDF(file);
 
@@ -327,10 +327,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }
 
               // AR 처리 (항상 실행)
-              addLog('success', `PDF 분석 완료: ${file.name}`)
+              addLog('success', `[1/5] PDF 분석 완료: ${file.name}`)
               addLog(
                 'ar-detect',
-                `Annual Report 감지: ${checkResult.metadata.customer_name}`,
+                `[2/5] Annual Report 감지: ${checkResult.metadata.customer_name}`,
                 `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨`
               )
 
@@ -605,7 +605,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               const customerName = customerNameMappingRef.current.get(customerId);
 
               console.log(`🔗 [AR 자동 연결] 문서 처리 완료 확인, 연결 시작`);
-              addLog('info', `문서-고객 자동 연결 시작: ${fileName}`, undefined, customerName);
+              addLog('info', `[5/5] 문서-고객 자동 연결 시작: ${fileName}`, undefined, customerName);
 
               await DocumentService.linkDocumentToCustomer(customerId, {
                 document_id: documentId,
@@ -613,7 +613,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               });
 
               console.log(`✅ [AR 자동 연결] 완료`);
-              addLog('success', `문서-고객 자동 연결 완료: ${fileName}`, undefined, customerName);
+              addLog('success', `[5/5] 문서-고객 자동 연결 완료 - AR 처리 최종 완료: ${fileName}`, undefined, customerName);
 
               // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
               try {
@@ -672,7 +672,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     try {
       // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
       // customerName을 명시적으로 전달 (state는 사용하지 않음)
-      addLog('info', `중복 체크 중: ${annualReportFile.fileName}`, undefined, customerName);
+      addLog('info', `[3/5] 중복 확인 중: ${annualReportFile.fileName}`, undefined, customerName);
 
       const result = await registerArDocument(annualReportFile.file, customerId, annualReportMetadata?.issue_date, {
         addLog: (level, message, details) => addLog(level, message, details, customerName), // 고객명 포함
@@ -797,13 +797,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const customerName = customerId ? customerNameMappingRef.current.get(customerId) : undefined;
 
       if (status === 'uploading') {
-        addLog('info', `업로드 시작: ${currentFile.file.name}`, undefined, customerName)
-      } else if (status === 'completed') {
-        addLog('success', `업로드 완료: ${currentFile.file.name}`, undefined, customerName)
-
-        // AR 파일 로그
+        // AR 파일이면 단계 표시
         if (arFilenamesRef.current.has(currentFile.file.name)) {
-          addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객과 자동 연결 대기 중...', customerName)
+          addLog('info', `[4/5] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
+        } else {
+          addLog('info', `업로드 시작: ${currentFile.file.name}`, undefined, customerName)
+        }
+      } else if (status === 'completed') {
+        // AR 파일이면 단계 표시
+        if (arFilenamesRef.current.has(currentFile.file.name)) {
+          addLog('success', `[4/5] 문서 업로드 완료: ${currentFile.file.name}`, undefined, customerName)
+          addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객 자동 연결 대기 중...', customerName)
+        } else {
+          addLog('success', `업로드 완료: ${currentFile.file.name}`, undefined, customerName)
         }
       } else if (status === 'error') {
         addLog('error', `업로드 실패: ${currentFile.file.name}`, error, customerName)
