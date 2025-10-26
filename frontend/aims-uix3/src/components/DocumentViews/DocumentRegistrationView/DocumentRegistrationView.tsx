@@ -152,6 +152,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 📊 AR 처리 성공 카운터 (중복 건너뛴 건 제외)
   const arProcessedCountRef = useRef<number>(0)
 
+  // 📄 일반 문서 파일명 → 문서 ID 매핑 (백그라운드 처리 완료 확인용)
+  const normalDocumentMappingRef = useRef<Map<string, string>>(new Map())
+
   // 📝 처리 로그 상태 (sessionStorage에서 복원)
   const getInitialLogs = (): Log[] => {
     try {
@@ -298,7 +301,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         // PDF 파일이면 Annual Report 체크
         if (file.type === 'application/pdf') {
           try {
-            addLog('info', `[1/5] PDF 분석 중: ${file.name}`)
+            addLog('info', `[1/4] PDF 분석 중: ${file.name}`)
             console.log('[DocumentRegistrationView] 🔍 PDF 파일 감지, Annual Report 체크:', file.name);
             const checkResult = await checkAnnualReportFromPDF(file);
 
@@ -327,11 +330,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }
 
               // AR 처리 (항상 실행)
-              addLog('success', `[1/5] PDF 분석 완료: ${file.name}`)
+              addLog('success', `[1/4] PDF 분석 완료: ${file.name}`)
               addLog(
                 'ar-detect',
                 `[2/5] Annual Report 감지: ${checkResult.metadata.customer_name}`,
-                `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨`
+                `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨 → AR 전용 처리로 전환`
               )
 
               // 🎯 고객이 1명이면 자동 선택 (모달 띄우지 않음)
@@ -383,13 +386,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               console.log('🔥 [handleFilesSelected] AR 큐 추가:', file.name, '| 큐:', arQueueRef.current.length);
               continue;
             } else {
-              addLog('info', `일반 PDF 문서: ${file.name}`)
+              addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report 아님 - 일반 문서로 처리')
             }
           } catch (error) {
             console.error('[DocumentRegistrationView] Annual Report 체크 실패:', error);
             addLog('warning', `PDF 분석 실패: ${file.name}`, error instanceof Error ? error.message : String(error))
             // 체크 실패 시 일반 문서로 처리
           }
+        } else {
+          // 이미지 등 PDF가 아닌 일반 파일
+          addLog('info', `[1/4] 일반 파일 감지: ${file.name}`, file.type || '알 수 없는 형식')
         }
 
         // 일반 문서 또는 Annual Report가 아닌 PDF
@@ -464,7 +470,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const validFiles = newUploadFiles.filter(f => f.status === 'pending')
     if (validFiles.length > 0) {
       uploadService.queueFiles(validFiles)
-      addLog('info', `일반 문서 ${validFiles.length}개 업로드 시작`)
+      addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
     }
 
     // 🎯 AR 큐 처리 시작
@@ -657,6 +663,71 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, []);
 
   /**
+   * 일반 문서 백그라운드 처리 완료 확인 (polling)
+   */
+  const checkNormalDocumentCompletion = useCallback(async (fileName: string) => {
+    try {
+      // 1. 파일명으로 문서 조회 (/api/documents에서 최근 문서 목록 조회)
+      const searchResponse = await fetch(`http://tars.giize.com:3010/api/documents?limit=100`);
+      const searchData = await searchResponse.json();
+
+      if (!searchData.success || !searchData.data || !searchData.data.documents) {
+        console.warn(`⚠️ [일반 문서] 문서 목록 조회 실패`);
+        return;
+      }
+
+      // 파일명으로 문서 찾기 (filename 필드 사용)
+      const document = searchData.data.documents.find((doc: any) => doc.filename === fileName);
+      if (!document) {
+        console.warn(`⚠️ [일반 문서] 문서를 찾을 수 없음: ${fileName}`);
+        return;
+      }
+
+      const documentId = document._id;
+      console.log(`🔍 [일반 문서] 문서 ID 확인: ${fileName} → ${documentId}`);
+
+      // 2. overallStatus가 completed가 될 때까지 polling
+      const checkInterval = 5000; // 5초마다 체크
+      const maxAttempts = 36; // 최대 180초 (3분)
+      let attempts = 0;
+
+      const checkStatus = setInterval(async () => {
+        attempts++;
+
+        try {
+          const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+          const response = await docResponse.json();
+
+          // 문서 처리 완료 확인 (overallStatus === 'completed')
+          if (response.success && response.data?.computed?.overallStatus === 'completed') {
+            clearInterval(checkStatus);
+
+            console.log(`✅ [일반 문서] 백그라운드 처리 완료: ${fileName}`);
+            addLog('success', `[4/4] 백그라운드 처리 완료 - 일반 문서 처리 최종 완료: ${fileName}`);
+
+            // 매핑에서 제거
+            normalDocumentMappingRef.current.delete(fileName);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkStatus);
+            console.warn(`⚠️ [일반 문서] 처리 대기 시간 초과: ${fileName}`);
+            addLog('warning', `백그라운드 처리 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 확인해주세요.');
+            normalDocumentMappingRef.current.delete(fileName);
+          } else {
+            console.log(`⏳ [일반 문서] 대기 중... (${attempts}/${maxAttempts}) - ${fileName}`);
+          }
+        } catch (error) {
+          console.error(`❌ [일반 문서] 상태 확인 실패:`, error);
+        }
+      }, checkInterval);
+
+      // 매핑에 추가
+      normalDocumentMappingRef.current.set(fileName, documentId);
+    } catch (error) {
+      console.error(`❌ [일반 문서] 처리 실패:`, error);
+    }
+  }, [addLog]);
+
+  /**
    * 고객 선택 완료 핸들러
    */
   const handleCustomerSelected = useCallback(async (customerId: string) => {
@@ -797,19 +868,27 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       const customerName = customerId ? customerNameMappingRef.current.get(customerId) : undefined;
 
       if (status === 'uploading') {
-        // AR 파일이면 단계 표시
+        // AR 파일이면 AR 단계 표시, 일반 파일이면 일반 단계 표시
         if (arFilenamesRef.current.has(currentFile.file.name)) {
           addLog('info', `[4/5] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
         } else {
-          addLog('info', `업로드 시작: ${currentFile.file.name}`, undefined, customerName)
+          addLog('info', `[2/4] 문서 업로드 중: ${currentFile.file.name}`, undefined, customerName)
         }
       } else if (status === 'completed') {
-        // AR 파일이면 단계 표시
+        // AR 파일이면 AR 단계 표시, 일반 파일이면 일반 단계 표시
         if (arFilenamesRef.current.has(currentFile.file.name)) {
           addLog('success', `[4/5] 문서 업로드 완료: ${currentFile.file.name}`, undefined, customerName)
           addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객 자동 연결 대기 중...', customerName)
         } else {
-          addLog('success', `업로드 완료: ${currentFile.file.name}`, undefined, customerName)
+          addLog('success', `[3/4] 문서 업로드 완료: ${currentFile.file.name}`, '메타데이터 추출 및 임베딩 진행 중...', customerName)
+
+          // ✅ 일반 문서도 백그라운드 처리 완료 확인 시작
+          console.log(`🚀 [일반 문서] 백그라운드 처리 확인 시작: ${currentFile.file.name}`);
+          // 파일명으로부터 문서 ID를 얻어야 하므로 약간의 딜레이 후 polling 시작
+          setTimeout(() => {
+            console.log(`🔍 [일반 문서] checkNormalDocumentCompletion 호출: ${currentFile.file.name}`);
+            checkNormalDocumentCompletion(currentFile.file.name);
+          }, 1000);
         }
       } else if (status === 'error') {
         addLog('error', `업로드 실패: ${currentFile.file.name}`, error, customerName)
