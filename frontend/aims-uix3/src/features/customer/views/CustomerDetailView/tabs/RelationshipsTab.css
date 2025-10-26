@@ -6,8 +6,8 @@
   justify-content: center;
   min-width: 1.5rem;
   padding: 0 var(--spacing-2);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-caption-1); () */
+  /* font-weight: var(--font-weight-semibold); () */
   background-color: var(--color-layout-accent-light);
   border-radius: 999px;
   color: var(--color-text-secondary);
@@ -19,7 +19,7 @@
   justify-content: center;
   gap: var(--spacing-2);
   padding: var(--spacing-6) var(--spacing-4);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */
+  /* font-size: var(--font-size-callout); () */
   color: var(--color-text-secondary);
   text-align: center;
   border-radius: 12px;
@@ -45,7 +45,7 @@
   border: 1px solid var(--color-primary-200);
   background-color: transparent;
   color: var(--color-primary-600);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   cursor: pointer;
   transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
 }
@@ -68,7 +68,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   color: var(--color-text-primary);
   min-width: 520px;
 }
@@ -91,7 +91,7 @@
 
 .relationships-table__delete-header {
   color: var(--color-icon-red);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-weight: var(--font-weight-semibold); () */
 }
 
 [data-theme="dark"] .relationships-table th,
@@ -111,7 +111,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-2);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-weight: var(--font-weight-medium); () */
   color: var(--color-text-primary);
 }
 
@@ -132,7 +132,7 @@
 
 /* 이모지 아이콘 스타일 (관계별 보기와 동일) */
 .relationships-category__icon--emoji {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 18px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
   color: inherit;
 }
 
@@ -163,7 +163,7 @@
 
 .relationships-category__reverse {
   margin-left: var(--spacing-1);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-text-secondary);
 }
 
@@ -186,7 +186,7 @@
 
 .relationships-link__type {
   margin-left: var(--spacing-1);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-text-secondary);
 }
 

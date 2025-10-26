@@ -27,8 +27,8 @@
   color: var(--color-ios-tooltip-text-light);
   padding: 6px 12px;
   border-radius: 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-caption-1); () */
+  /* font-weight: var(--font-weight-medium); () */
   white-space: nowrap;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);

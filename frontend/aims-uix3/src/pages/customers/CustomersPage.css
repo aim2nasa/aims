@@ -43,8 +43,8 @@
 }
 
 .customer-form__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xl)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-xl); () */
+  /* font-weight: var(--font-weight-semibold); () */
   margin: 0 0 var(--spacing-6) 0;
   color: var(--color-text-primary);
 }
@@ -52,7 +52,7 @@
 /* === CUSTOMER SPECIFIC CARDS === */
 
 .customer-card__contact {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-text-secondary);
   margin: 0;
   overflow: hidden;
@@ -72,8 +72,8 @@
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
   border-radius: var(--radius-sm);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xs)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-xs); () */
+  /* font-weight: var(--font-weight-medium); () */
 }
 
 .customer-card__tag--more {
@@ -92,7 +92,7 @@
 
 .customer-card__date,
 .customer-card__age {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xs)); */
+  /* font-size: var(--font-size-xs); () */
   color: var(--color-text-tertiary);
 }
 
@@ -119,15 +119,15 @@
 
 .customers-error h3,
 .customers-empty h3 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xl)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-xl); () */
+  /* font-weight: var(--font-weight-semibold); () */
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-2) 0;
 }
 
 .customers-error p,
 .customers-empty p {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-base)); */
+  /* font-size: var(--font-size-base); () */
   color: var(--color-text-secondary);
   margin: 0 0 var(--spacing-6) 0;
   max-width: 400px;

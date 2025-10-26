@@ -66,9 +66,9 @@ html[data-theme='dark'] .status-dot-disconnected {
 }
 
 .status-text {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption1)); */
+  /* font-size: var(--font-size-caption1); () */
   color: var(--color-text-secondary-light);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-weight: var(--font-weight-medium); () */
 }
 
 html[data-theme='dark'] .status-text {
@@ -83,7 +83,7 @@ html[data-theme='dark'] .status-text {
 }
 
 .update-time-label {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption2)); */
+  /* font-size: var(--font-size-caption2); () */
   color: var(--color-text-tertiary-light);
 }
 
@@ -92,9 +92,9 @@ html[data-theme='dark'] .update-time-label {
 }
 
 .update-time-value {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption1)); */
+  /* font-size: var(--font-size-caption1); () */
   color: var(--color-text-secondary-light);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-weight: var(--font-weight-medium); () */
   font-variant-numeric: tabular-nums;
 }
 
@@ -117,8 +117,8 @@ html[data-theme='dark'] .update-time-value {
   padding: var(--spacing-2) var(--spacing-3);
   border: none;
   border-radius: var(--radius-md);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption1)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-caption1); () */
+  /* font-weight: var(--font-weight-medium); () */
   cursor: pointer;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
 }
@@ -225,7 +225,7 @@ html[data-theme='dark'] .refresh-button:active:not(:disabled) {
 
 /* === 새로고침 아이콘 === */
 .refresh-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 18px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
   line-height: 1;
   display: inline-block;
   transition: transform var(--duration-ios-normal) var(--easing-ease-out);

@@ -19,20 +19,20 @@
 }
 
 .empty-tab__icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xxlarge-symbol)); */ /* 48px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_RULES.md: 아이콘/심볼 ) */
   margin-bottom: var(--spacing-md);
   opacity: 0.3;
 }
 
 .empty-tab__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-lg)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-lg); () */
+  /* font-weight: var(--font-weight-semibold); () */
   color: var(--color-text-secondary);
   margin-bottom: var(--spacing-sm);
 }
 
 .empty-tab__description {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-text-tertiary);
   max-width: 400px;
   line-height: 1.5;

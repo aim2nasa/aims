@@ -43,61 +43,61 @@
 /* === SF SYMBOL SIZES === */
 
 .sf-symbol--size-caption-2 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px */
+  /* font-size: var(--font-size-caption-2); (11px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-caption-1 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px */
+  /* font-size: var(--font-size-caption-1); (12px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-footnote {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px */
+  /* font-size: var(--font-size-footnote); (13px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-callout {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */ /* 16px */
+  /* font-size: var(--font-size-callout); (16px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-body {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */ /* 17px */
+  /* font-size: var(--font-size-body); (17px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-headline {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-headline)); */ /* 17px */
+  /* font-size: var(--font-size-headline); (17px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-title-3 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-3)); */ /* 20px */
+  /* font-size: var(--font-size-title-3); (20px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-title-2 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-2)); */ /* 22px */
+  /* font-size: var(--font-size-title-2); (22px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-title-1 {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-1)); */ /* 28px */
+  /* font-size: var(--font-size-title-1); (28px ) */
   width: 1em;
   height: 1em;
 }
 
 .sf-symbol--size-large-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-title)); */ /* 34px */
+  /* font-size: var(--font-size-large-title); (34px ) */
   width: 1em;
   height: 1em;
 }

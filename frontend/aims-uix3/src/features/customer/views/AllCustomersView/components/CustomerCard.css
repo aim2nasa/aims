@@ -42,7 +42,7 @@
 }
 
 .customer-card__icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
   line-height: 1;
 }
 
@@ -52,8 +52,8 @@
 }
 
 .customer-card__name {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-lg)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-lg); () */
+  /* font-weight: var(--font-weight-semibold); () */
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-xs) 0;
 
@@ -63,14 +63,14 @@
 }
 
 .customer-card__type {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-text-secondary);
   margin: 0;
 }
 
 .customer-card__status {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-sm); () */
+  /* font-weight: var(--font-weight-medium); () */
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
 }
@@ -87,7 +87,7 @@
 
 /* ===== Contact Info ===== */
 .customer-card__contact {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-text-secondary);
   margin-bottom: var(--spacing-md);
 
@@ -106,7 +106,7 @@
   align-items: center;
   gap: var(--spacing-md);
 
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-text-tertiary);
 
   padding-top: var(--spacing-md);
@@ -130,10 +130,10 @@ html[data-theme="dark"] .customer-card:hover {
   }
 
   .customer-card__icon {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
+    /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
   }
 
   .customer-card__name {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-base)); */
+    /* font-size: var(--font-size-base); () */
   }
 }

@@ -58,8 +58,8 @@
 /* Section Title - 왼쪽 고정 */
 .form-section__title {
   flex: 0 0 60px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-footnote); () */
+  /* font-weight: var(--font-weight-medium); () */
   text-transform: none;
   letter-spacing: 0;
   color: var(--color-text-secondary);
@@ -137,8 +137,8 @@
 /* Form Row Label */
 .form-row__label {
   flex: 0 0 80px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-size: var(--font-size-footnote); () */
+  /* font-weight: var(--font-weight-regular); () */
   color: var(--color-text-secondary);
   margin-right: 12px;
   line-height: var(--line-height-normal);
@@ -169,9 +169,9 @@
   max-height: 18px;
   padding: 0;
   margin: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-family: var(--font-family-system);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-weight: var(--font-weight-regular); () */
   line-height: 1.2;
   color: var(--color-text-primary);
   background-color: transparent;
@@ -189,8 +189,8 @@
 .form-row__input input::placeholder {
   color: var(--color-text-tertiary);
   text-align: left;
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-weight: var(--font-weight-regular); () */
+  /* font-size: var(--font-size-footnote); () */
   opacity: 0.4;
 }
 
@@ -201,9 +201,9 @@
 
 /* Error Message */
 .form-row__error {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   font-family: var(--font-family-system);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-weight: var(--font-weight-regular); () */
   line-height: 1.2;
   color: var(--color-error-light);
   margin: 2px 0 0 80px;
@@ -223,9 +223,9 @@
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-family: var(--font-family-system);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-weight: var(--font-weight-regular); () */
   line-height: var(--line-height-normal);
   color: var(--color-text-primary);
 }
@@ -275,7 +275,7 @@
 
 /* 이모지 캘린더 아이콘 - 항상 눈에 띄게 */
 .date-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
   line-height: 1;
   cursor: pointer;
   user-select: none;
@@ -318,9 +318,9 @@
   padding-left: 10px;
   background-color: transparent;
   color: var(--color-error-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-family: var(--font-family-system);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-weight: var(--font-weight-regular); () */
   line-height: var(--line-height-normal);
   opacity: 0.8;
 }
@@ -369,8 +369,8 @@
   border: none;
   border-radius: var(--radius-sm);
   padding: var(--spacing-2) var(--spacing-4);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-footnote); () */
+  /* font-weight: var(--font-weight-medium); () */
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--easing-ease-out);
   white-space: nowrap;
@@ -396,7 +396,7 @@
   border: 1px solid var(--color-layout-accent);
   border-radius: var(--radius-sm);
   color: var(--color-text-tertiary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   text-align: center;
 }
 

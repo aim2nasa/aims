@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
   color: white;
 }
 
@@ -58,7 +58,7 @@
 .feedback-toast__message {
   color: white;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md ) */
   font-weight: 500;
   line-height: 1.2;
   text-align: center;
@@ -93,7 +93,7 @@
   justify-content: center;
 
   color: white;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   transition: all 0.15s ease;
 }
 
@@ -116,11 +116,11 @@
   }
 
   .feedback-toast__message {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   }
 
   .feedback-toast__icon {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 28px → 32px */
+    /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 28px → 32px ) */
   }
 }
 

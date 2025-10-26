@@ -84,7 +84,7 @@
 }
 
 .apple-confirm-modal__icon-display {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-2xl)); */ /* 이모지 아이콘 크기 (28px) */
+  /* font-size: var(--font-size-2xl); (이모지 아이콘 크기 (28px) ) */
   opacity: 0.95;
   transform: scale(0.9); /* 아이콘 크기를 미세하게 줄여서 더 세련되게 */
   display: flex;
@@ -93,7 +93,7 @@
 }
 
 .apple-confirm-modal__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */ /* iOS Alert 제목 최적 크기 (16px) */
+  /* font-size: var(--font-size-callout); (iOS Alert 제목 최적 크기 (16px) ) */
   font-weight: 590; /* iOS Semibold 최적화 */
   line-height: 1.25; /* iOS 라인 높이 최적화 */
   color: var(--color-neutral-900); /* iOS Label 색상 */
@@ -109,7 +109,7 @@
 }
 
 .apple-confirm-modal__message {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* iOS Alert 메시지 최적 크기 (12px) */
+  /* font-size: var(--font-size-caption-1); (iOS Alert 메시지 최적 크기 (12px) ) */
   font-weight: 400; /* iOS Regular */
   line-height: 1.33; /* iOS 라인 높이 최적화 */
   color: var(--color-neutral-900); /* iOS Secondary Label 색상 */
@@ -132,7 +132,7 @@
   background: none;
   border: none;
   padding: 11px 16px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */ /* iOS 버튼 텍스트 최적 크기 (16px) */
+  /* font-size: var(--font-size-callout); (iOS 버튼 텍스트 최적 크기 (16px) ) */
   font-weight: 400; /* iOS Regular */
   line-height: 1.24; /* iOS 표준 라인 높이 최적화 */
   cursor: pointer;
@@ -248,7 +248,7 @@
   }
 
   .apple-confirm-modal__message {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */ /* 모바일에서 약간 더 크게 */
+    /* font-size: var(--font-size-body); (모바일에서 약간 더 크게 ) */
   }
 }
 

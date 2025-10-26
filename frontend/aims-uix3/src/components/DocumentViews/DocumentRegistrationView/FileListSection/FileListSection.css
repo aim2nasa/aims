@@ -43,7 +43,7 @@
 }
 
 .file-list-section__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -51,7 +51,7 @@
 }
 
 .file-list-section__count {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-tertiary);
@@ -115,7 +115,7 @@
 }
 
 .file-list-section__empty-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
@@ -124,7 +124,7 @@
 }
 
 .file-list-section__empty-hint {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-tertiary);
@@ -156,7 +156,7 @@
 }
 
 .upload-success__text {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 400;
   color: var(--color-success-overlay-text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;

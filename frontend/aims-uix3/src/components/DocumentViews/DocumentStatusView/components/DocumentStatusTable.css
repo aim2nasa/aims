@@ -29,7 +29,7 @@
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-family-system);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
 }
 
 /* === 테이블 헤더 === */
@@ -41,9 +41,9 @@
 .document-status-table thead th {
   padding: var(--spacing-3) var(--spacing-4);
   text-align: left;
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-weight: var(--font-weight-semibold); () */
   color: var(--color-ios-text-secondary-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -97,7 +97,7 @@
 }
 
 .filename-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
+  /* font-size: var(--font-size-body); () */
   flex-shrink: 0;
 }
 
@@ -105,7 +105,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-weight: var(--font-weight-medium); () */
   color: var(--color-ios-text-primary-light);
 }
 
@@ -116,12 +116,12 @@
   gap: var(--spacing-1);
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-caption-1); () */
+  /* font-weight: var(--font-weight-medium); () */
 }
 
 .status-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
 }
 
 .status-text {
@@ -191,7 +191,7 @@
 }
 
 .progress-text {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-ios-text-secondary-light);
   font-variant-numeric: tabular-nums;
   min-width: 40px;
@@ -200,7 +200,7 @@
 
 /* === 날짜 셀 === */
 .date-text {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-ios-text-secondary-light);
   font-variant-numeric: tabular-nums;
 }
@@ -380,7 +380,7 @@ html[data-theme='dark'] .action-button:disabled {
 
 /* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
   font-weight: 300;
   line-height: 1;
   color: var(--color-ios-text-primary-light);
@@ -395,7 +395,7 @@ html[data-theme='dark'] .action-button:disabled {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
@@ -520,7 +520,7 @@ html[data-theme="dark"] .pagination-total {
 /* === 반응형 === */
 @media (max-width: 768px) {
   .document-status-table {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */
+    /* font-size: var(--font-size-caption-2); () */
   }
 
   .document-status-table thead th,

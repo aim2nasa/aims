@@ -54,8 +54,8 @@ html[data-theme="dark"] .center-pane-view__header {
 /* 제목 스타일 - 애플 정제된 타이포그래피 */
 .center-pane-view__title {
   margin: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 페이지 제목 */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */ /* semibold - 제목 강조 */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 페이지 제목 ) */
+  /* font-weight: var(--font-weight-semibold); (semibold - 제목 강조 ) */
   color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
   font-family: var(--font-family-display);
   line-height: var(--line-height-tight);
@@ -119,8 +119,8 @@ html[data-theme="dark"] .center-pane-view__content::-webkit-scrollbar-thumb:hove
 
 .center-pane-view__placeholder p {
   margin: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */ /* 애플 스타일 작은 설명 텍스트 */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */ /* 애플 스타일 작은 설명 텍스트 */
+  /* font-weight: var(--font-weight-regular); () */
   font-family: var(--font-family-text);
   line-height: 1.4;
   letter-spacing: 0.02px; /* 가독성 향상 */
@@ -163,7 +163,7 @@ html[data-theme="dark"] .center-pane-view__placeholder {
   }
 
   .center-pane-view__title {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */ /* 모바일에서 더 작게 */
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */ /* 모바일에서 더 작게 */
     letter-spacing: -0.02px;
   }
 
@@ -173,7 +173,7 @@ html[data-theme="dark"] .center-pane-view__placeholder {
   }
 
   .center-pane-view__placeholder p {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   }
 }
 
@@ -185,7 +185,7 @@ html[data-theme="dark"] .center-pane-view__placeholder {
 
   .center-pane-view__title {
     color: var(--color-text-primary);
-    /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+    /* font-weight: var(--font-weight-semibold); () */
   }
 }
 

@@ -74,7 +74,7 @@ html[data-theme="dark"] .document-library-actions {
 }
 
 .selected-count {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */
+  /* font-size: var(--font-size-callout); () */
   color: var(--color-text-primary);
   font-weight: 500;
 }

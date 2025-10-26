@@ -15,8 +15,8 @@
   color: var(--color-tooltip-text);
   border-radius: var(--radius-lg);
   padding: var(--spacing-2) var(--spacing-3);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-sm); () */
+  /* font-weight: var(--font-weight-medium); () */
   white-space: nowrap;
 
   /* iOS 스타일 블러 효과 */

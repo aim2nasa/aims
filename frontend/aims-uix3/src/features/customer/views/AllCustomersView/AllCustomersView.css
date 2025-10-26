@@ -57,7 +57,7 @@ html[data-theme="dark"] .search-icon {
   flex: 1;
   border: none;
   background: transparent;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 검색 입력 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 검색 입력 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
@@ -117,7 +117,7 @@ html[data-theme="dark"] .search-clear-button:hover {
   border-left: 3px solid var(--color-ios-error-border-light);
   border-radius: 8px;
   color: var(--color-ios-error-text-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 에러 메시지 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 에러 메시지 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -164,7 +164,7 @@ html[data-theme="dark"] .customer-library-result-header {
 }
 
 .result-count {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 결과 카운트 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 결과 카운트 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
   font-weight: 500;
@@ -223,7 +223,7 @@ html[data-theme="dark"] .result-count {
   min-height: 32px;
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 테이블 헤더 */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 테이블 헤더 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
@@ -337,7 +337,7 @@ html[data-theme="dark"] .customer-list::-webkit-scrollbar-thumb:hover {
   gap: 12px;
   height: 200px;
   color: var(--color-ios-text-quaternary-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 로딩 텍스트 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 로딩 텍스트 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -386,7 +386,7 @@ html[data-theme="dark"] .customer-list-empty {
 }
 
 .empty-message {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 빈 상태 메시지 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 빈 상태 메시지 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   margin: 0;
@@ -487,7 +487,7 @@ html[data-theme="dark"] .customer-item:active {
 }
 
 .customer-name {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 테이블 메인 데이터 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 테이블 메인 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
@@ -503,7 +503,7 @@ html[data-theme="dark"] .customer-name {
 
 /* 🍎 CUSTOMER BIRTH: 생년월일 */
 .customer-birth {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 테이블 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 테이블 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
@@ -517,7 +517,7 @@ html[data-theme="dark"] .customer-birth {
 
 /* 🍎 CUSTOMER GENDER: 성별 */
 .customer-gender {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-quaternary-light);
@@ -531,7 +531,7 @@ html[data-theme="dark"] .customer-gender {
 
 /* 🍎 CUSTOMER PHONE: 전화번호 */
 .customer-phone {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
@@ -547,7 +547,7 @@ html[data-theme="dark"] .customer-phone {
 
 /* 🍎 CUSTOMER EMAIL: 이메일 */
 .customer-email {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
@@ -563,7 +563,7 @@ html[data-theme="dark"] .customer-email {
 
 /* 🍎 CUSTOMER ADDRESS: 주소 */
 .customer-address {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-quaternary-light);
@@ -579,7 +579,7 @@ html[data-theme="dark"] .customer-address {
 
 /* 🍎 CUSTOMER TYPE: 고객 타입 */
 .customer-type {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-quaternary-light);
@@ -593,7 +593,7 @@ html[data-theme="dark"] .customer-type {
 
 /* 🍎 CUSTOMER STATUS: 상태 */
 .customer-status {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
@@ -607,7 +607,7 @@ html[data-theme="dark"] .customer-status {
 
 /* 🍎 CUSTOMER CREATED: 등록일 */
 .customer-created {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-tertiary-light);
@@ -634,12 +634,12 @@ html[data-theme="dark"] .customer-created {
   }
 
   .customer-name {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   }
 
   .customer-size,
   .customer-date {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 보조 데이터 */
+    /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
   }
 }
 
@@ -745,7 +745,7 @@ html[data-theme="dark"] .pagination-button:active:not(:disabled) {
 
 /* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
   font-weight: 300;
   line-height: 1;
   color: inherit;
@@ -788,7 +788,7 @@ html[data-theme="dark"] .pagination-arrow--clicked {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 페이지네이션 정보 */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 페이지네이션 정보 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);

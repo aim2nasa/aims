@@ -151,8 +151,8 @@
 
 .header-title {
   margin: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-lg)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-lg); () */
+  /* font-weight: var(--font-weight-medium); () */
   color: var(--color-header-title);
 
   /* 타이틀은 항상 보임 */
@@ -198,8 +198,8 @@
   justify-content: center;
 
   /* 폰트 */
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-base)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-base); () */
+  /* font-weight: var(--font-weight-medium); () */
 
   /* iOS 17+ 정밀 Progressive Disclosure 전환 */
   transition:
@@ -279,7 +279,7 @@
   transform: translate(-50%, -50%);
 
   /* 스타일링 */
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* font-size: var(--font-size-sm); () */
   color: var(--color-header-indicator);
   opacity: 0.7; /* 원래보다 훨씬 더 명확하게 */
 
@@ -324,7 +324,7 @@
   }
 
   .header-title {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-base)); */
+    /* font-size: var(--font-size-base); () */
   }
 
   .header-controls {
@@ -334,7 +334,7 @@
   .header-control-button {
     width: 32px;
     height: 32px;
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   }
 }
 
@@ -387,7 +387,7 @@
 /* 🍎 SF Symbols: gear 아이콘 - 간단한 기어 모양 */
 .sf-symbol--gear .sf-symbol__shape::before {
   content: '⚙';
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
   line-height: 1;
   color: inherit;
 }

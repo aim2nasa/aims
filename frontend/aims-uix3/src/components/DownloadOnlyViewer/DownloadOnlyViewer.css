@@ -48,7 +48,7 @@ html[data-theme="dark"] .download-only-viewer {
 /* === 🍎 FILE ICON === */
 
 .file-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-jumbo-symbol)); */ /* 80px - FONT_RULES.md: 특대형 이모지 */
+  /* font-size: var(--font-size-jumbo-symbol); (80px - FONT_RULES.md: 특대형 이모지 ) */
   line-height: 1;
   opacity: 0.3;
   margin-bottom: 8px;
@@ -59,7 +59,7 @@ html[data-theme="dark"] .download-only-viewer {
 .preview-message {
   margin: 0;
   color: var(--color-ios-text-secondary-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   line-height: 1.5;
@@ -114,7 +114,7 @@ html[data-theme="dark"] .file-name-badge--clickable:hover {
 .file-name-text {
   display: block;
   color: var(--color-ios-text-primary-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   white-space: nowrap;
@@ -162,7 +162,7 @@ html[data-theme="dark"] .controls-container {
   color: var(--color-ios-interactive-light);
   border: 1px solid transparent;
   border-radius: 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 20px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -201,7 +201,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 .control-button--primary {
   background-color: var(--color-primary-600);
   color: white;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 600;
   gap: 4px;
   padding: 6px 12px;
@@ -210,7 +210,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 }
 
 .control-button--primary span[aria-hidden] {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   line-height: 1;
 }
 
@@ -278,15 +278,15 @@ html[data-theme="dark"] .download-only-content::-webkit-scrollbar-thumb:hover {
   }
 
   .file-icon {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xxxlarge-symbol)); */ /* 64px - FONT_RULES.md: 이모지 */
+    /* font-size: var(--font-size-xxxlarge-symbol); (64px - FONT_RULES.md: 이모지 ) */
   }
 
   .preview-message {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+    /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   }
 
   .file-name-text {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+    /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
     max-width: 280px;
   }
 }

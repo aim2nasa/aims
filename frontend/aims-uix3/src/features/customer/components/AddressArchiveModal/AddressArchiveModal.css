@@ -77,7 +77,7 @@
 }
 
 .address-archive-modal__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 17px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 17px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -91,7 +91,7 @@
 .address-archive-modal__close {
   background: none;
   border: none;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
   color: var(--color-text-secondary);
   cursor: pointer;
   padding: 4px 8px;
@@ -111,7 +111,7 @@
 .address-archive-modal__info {
   padding: 12px 24px;
   background-color: var(--color-layout-secondary-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   color: var(--color-text-secondary);
   border-bottom: 1px solid var(--color-layout-brb-light);
 }
@@ -141,7 +141,7 @@
   border: 1px solid var(--color-danger);
   border-radius: 8px;
   color: var(--color-danger);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   text-align: center;
   margin-bottom: 16px;
 }
@@ -155,7 +155,7 @@
   padding: 40px;
   text-align: center;
   color: var(--color-text-secondary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
 }
 
 /* Empty State */
@@ -163,7 +163,7 @@
   padding: 40px;
   text-align: center;
   color: var(--color-text-tertiary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
 }
 
 /* Address Item */
@@ -206,7 +206,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   color: var(--color-text-secondary);
 }
 
@@ -217,7 +217,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   font-weight: 600;
 }
 
@@ -238,7 +238,7 @@
 /* Current Badge */
 .address-item__current-badge {
   padding: 4px 12px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   border: 1px solid var(--color-icon-green);
   background-color: transparent;
   color: var(--color-icon-green);
@@ -251,7 +251,7 @@
 /* Past Badge */
 .address-item__past-badge {
   padding: 4px 12px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   border: 1px solid var(--color-icon-orange);
   background-color: transparent;
   color: var(--color-icon-orange);
@@ -269,13 +269,13 @@
 }
 
 .address-item__pin {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
   flex-shrink: 0;
 }
 
 .address-item__text {
   flex: 1;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   line-height: 1.5;
   color: var(--color-text-primary);
   font-weight: 500;
@@ -290,7 +290,7 @@
 .address-item__notes {
   margin-top: 8px;
   padding: 6px 10px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   border-radius: 4px;
 }
 

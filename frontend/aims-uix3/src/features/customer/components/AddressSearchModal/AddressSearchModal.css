@@ -81,7 +81,7 @@ html[data-theme="dark"] .address-search-modal__header {
 
 .address-search-modal__header h2 {
   margin: 0;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: -0.2px;
@@ -100,7 +100,7 @@ html[data-theme="dark"] .address-search-modal__header {
   right: 12px;
   background: none;
   border: none;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 22px → 24px */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 22px → 24px ) */
   font-weight: 300;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -172,7 +172,7 @@ html[data-theme="dark"] .address-search-modal__search-icon {
   padding: 8px 10px 8px 30px;
   border: none;
   background: transparent;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   color: var(--color-text-primary);
   transition: all var(--duration-fast) var(--easing-ease-out);
   font-family: var(--font-family-system);
@@ -188,7 +188,7 @@ html[data-theme="dark"] .address-search-modal__search-icon {
 
 .address-search-modal__input::placeholder {
   color: var(--color-ios-text-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
 }
 
 html[data-theme="dark"] .address-search-modal__input::placeholder {
@@ -218,7 +218,7 @@ html[data-theme="dark"] .address-search-modal__content {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px 4px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */
+  /* font-size: var(--font-size-caption-2); () */
   font-weight: 400;
   color: var(--color-text-tertiary);
   text-transform: uppercase;
@@ -229,12 +229,12 @@ html[data-theme="dark"] .address-search-modal__content {
   background: none;
   border: none;
   color: var(--color-primary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption)); */
+  /* font-size: var(--font-size-caption); () */
   cursor: pointer;
   padding: var(--spacing-xs);
   border-radius: var(--radius-sm);
   transition: background-color var(--duration-fast) var(--easing-ease-out);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-weight: var(--font-weight-medium); () */
 }
 
 .address-search-modal__more-btn:hover:not(:disabled) {
@@ -293,7 +293,7 @@ html[data-theme="dark"] .address-search-modal__item:active {
 }
 
 .address-search-modal__item-main {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-weight: 500;
   color: var(--color-text-primary);
   margin-bottom: 3px;
@@ -302,7 +302,7 @@ html[data-theme="dark"] .address-search-modal__item:active {
 }
 
 .address-search-modal__item-sub {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-text-secondary);
   margin-bottom: 2px;
   line-height: 1.3;
@@ -310,7 +310,7 @@ html[data-theme="dark"] .address-search-modal__item:active {
 }
 
 .address-search-modal__item-building {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */
+  /* font-size: var(--font-size-caption-2); () */
   color: var(--color-text-tertiary);
   line-height: 1.3;
   letter-spacing: 0;
@@ -324,7 +324,7 @@ html[data-theme="dark"] .address-search-modal__item:active {
   border: none;
   border-top: 0.5px solid var(--color-ios-border-light);
   color: var(--color-primary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-weight: 500;
   cursor: pointer;
   transition: background-color 150ms ease;
@@ -390,7 +390,7 @@ html[data-theme="dark"] .address-search-modal__guide-content {
 }
 
 .address-search-modal__guide div:first-of-type > div:first-child {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-weight: 500;
   margin-bottom: 4px;
   color: var(--color-text-primary);
@@ -399,7 +399,7 @@ html[data-theme="dark"] .address-search-modal__guide-content {
 }
 
 .address-search-modal__guide-example {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-text-tertiary);
   letter-spacing: 0;
   line-height: 1.3;
@@ -413,7 +413,7 @@ html[data-theme="dark"] .address-search-modal__guide-content {
 }
 
 .address-search-modal__empty div:first-child {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* font-size: var(--font-size-footnote); () */
   font-weight: 500;
   margin-bottom: 6px;
   color: var(--color-text-primary);
@@ -421,7 +421,7 @@ html[data-theme="dark"] .address-search-modal__guide-content {
 }
 
 .address-search-modal__empty-sub {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   color: var(--color-text-tertiary);
   margin-top: 4px;
   letter-spacing: 0;

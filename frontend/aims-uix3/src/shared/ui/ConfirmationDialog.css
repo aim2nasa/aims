@@ -133,8 +133,8 @@
 }
 
 .confirmation-dialog__title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-headline)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-headline); () */
+  /* font-weight: var(--font-weight-semibold); () */
   line-height: var(--line-height-tight);
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-2) 0;
@@ -145,8 +145,8 @@
 }
 
 .confirmation-dialog__message {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
+  /* font-size: var(--font-size-body); () */
+  /* font-weight: var(--font-weight-normal); () */
   line-height: var(--line-height-relaxed);
   color: var(--color-text-secondary);
   margin: 0;
@@ -196,8 +196,8 @@
   border-radius: var(--radius-lg);
 
   /* 텍스트 스타일 */
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-body); () */
+  /* font-weight: var(--font-weight-semibold); () */
   line-height: var(--line-height-normal);
   text-align: center;
 

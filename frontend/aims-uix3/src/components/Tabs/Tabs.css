@@ -35,8 +35,8 @@ html[data-theme="dark"] .tabs-bar {
   border: none;
   background-color: transparent;
   color: var(--color-text-secondary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-sm); () */
+  /* font-weight: var(--font-weight-medium); () */
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -63,7 +63,7 @@ html[data-theme="dark"] .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.ta
   background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-weight: var(--font-weight-semibold); () */
 }
 
 html[data-theme="dark"] .tabs-bar__tab--active {
@@ -81,7 +81,7 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 /* === 탭 아이콘 === */
 .tabs-bar__tab-icon {
   display: inline-flex;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-md)); */
+  /* font-size: var(--font-size-md); () */
 }
 
 /* === 탭 라벨 === */
@@ -93,7 +93,7 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 /* === 탭 카운트 (선택사항) === */
 .tabs-bar__tab-count {
   opacity: 0.6;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xs)); */
+  /* font-size: var(--font-size-xs); () */
   margin-left: 2px;
 }
 
@@ -115,7 +115,7 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 @media (max-width: 640px) {
   .tabs-bar__tab {
     padding: var(--spacing-xs) var(--spacing-sm);
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xs)); */
+    /* font-size: var(--font-size-xs); () */
   }
 
   .tabs-bar__tab-label {
@@ -123,6 +123,6 @@ html[data-theme="dark"] .tabs-bar__tab--active {
   }
 
   .tabs-bar__tab-icon {
-    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-lg)); */
+    /* font-size: var(--font-size-lg); () */
   }
 }

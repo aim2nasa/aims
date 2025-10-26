@@ -84,7 +84,7 @@ html[data-theme="dark"] .customer-edit-modal-header {
 }
 
 .customer-edit-modal-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   color: var(--color-text-primary);
@@ -103,7 +103,7 @@ html[data-theme="dark"] .customer-edit-modal-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 18px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
   transition: all var(--duration-fast) var(--easing-ease-out);
   flex-shrink: 0;
 }
@@ -137,7 +137,7 @@ html[data-theme="dark"] .customer-edit-modal-tabs {
   border: none;
   background-color: transparent;
   color: var(--color-text-secondary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -197,7 +197,7 @@ html[data-theme="dark"] .customer-edit-modal-content {
 }
 
 .customer-edit-modal-section-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -229,7 +229,7 @@ html[data-theme="dark"] .customer-edit-modal-content {
 
 /* ===== 라벨 ===== */
 .customer-edit-modal-label {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   color: var(--color-text-secondary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -251,7 +251,7 @@ html[data-theme="dark"] .customer-edit-modal-label--required::after {
   border-radius: 8px;
   background-color: var(--color-layout-secondary-light);
   color: var(--color-text-primary);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   transition: all var(--duration-fast) var(--easing-ease-out);
   outline: none;
@@ -289,7 +289,7 @@ html[data-theme="dark"] .customer-edit-modal-input--error {
 
 /* ===== 에러 메시지 ===== */
 .customer-edit-modal-error {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   color: var(--color-ios-red-light);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   margin-top: -2px;
@@ -305,7 +305,7 @@ html[data-theme="dark"] .customer-edit-modal-error {
   border: 1px solid var(--color-ios-red-light);
   border-radius: 8px;
   color: var(--color-ios-red-light);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   margin-top: 12px;
 }
 
@@ -335,7 +335,7 @@ html[data-theme="dark"] .customer-edit-modal-footer {
   padding: 12px 24px;
   border: none;
   border-radius: 10px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;

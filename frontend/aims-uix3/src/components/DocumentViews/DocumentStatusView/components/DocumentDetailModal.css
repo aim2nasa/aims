@@ -87,7 +87,7 @@ html[data-theme="dark"] .fulltext-modal-header {
 }
 
 .fulltext-modal-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   color: var(--color-text-primary);
@@ -103,7 +103,7 @@ html[data-theme="dark"] .fulltext-modal-header {
 .fulltext-modal-close {
   background-color: var(--color-layout-accent-light);
   border: none;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 20px deprecated */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
   color: var(--color-text-primary);
   cursor: pointer;
   padding: 0;
@@ -176,7 +176,7 @@ html[data-theme="dark"] .detail-section {
 }
 
 .detail-section-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -262,7 +262,7 @@ html[data-theme="dark"] .detail-progress-bar-fill.status-pending {
   gap: 4px;
   padding: 4px 10px;
   border-radius: 100px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   letter-spacing: -0.2px;
@@ -295,11 +295,11 @@ html[data-theme="dark"] .detail-status-badge.status-pending {
 }
 
 .detail-status-icon {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
 }
 
 .detail-progress-text {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -366,7 +366,7 @@ html[data-theme="dark"] .detail-info-card:hover {
 }
 
 .detail-info-card-label {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
@@ -376,7 +376,7 @@ html[data-theme="dark"] .detail-info-card:hover {
 }
 
 .detail-info-card-value {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -391,7 +391,7 @@ html[data-theme="dark"] .detail-info-card:hover {
 .detail-info-card-value--wrap {
   white-space: pre-wrap;
   word-break: break-all;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   font-family: "SF Mono", Monaco, "Courier New", monospace;
   line-height: 1.2;
 }
@@ -402,7 +402,7 @@ html[data-theme="dark"] .detail-info-card:hover {
   border: none;
   border-radius: 6px;
   padding: 4px 6px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -498,7 +498,7 @@ html[data-theme="dark"] .detail-code-block {
 /* 원본 데이터 코드 블록 */
 .detail-code-text--raw {
   font-family: "SF Mono", Monaco, "Courier New", monospace;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   line-height: 1.4;
   color: var(--color-text-primary);
   background-color: transparent;
@@ -536,7 +536,7 @@ html[data-theme="dark"] .fulltext-modal-footer {
   border: none;
   border-radius: 12px;
   padding: 12px 32px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
+  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;

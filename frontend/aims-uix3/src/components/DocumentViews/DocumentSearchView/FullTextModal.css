@@ -68,8 +68,8 @@ html[data-theme="dark"] .fulltext-modal-container {
 }
 
 .fulltext-modal-title {
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
+  /* font-size: var(--font-size-body); () */
+  /* font-weight: var(--font-weight-semibold); () */
   color: var(--color-text-primary);
   margin: 0;
   flex: 1;
@@ -81,7 +81,7 @@ html[data-theme="dark"] .fulltext-modal-container {
 .fulltext-modal-close {
   background: none;
   border: none;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
   color: var(--color-text-secondary);
   cursor: pointer;
   padding: 0;
@@ -118,7 +118,7 @@ html[data-theme="dark"] .fulltext-modal-body {
 
 .fulltext-content {
   font-family: var(--font-mono);
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* font-size: var(--font-size-caption-1); () */
   line-height: 1.6;
   color: var(--color-text-primary);
   margin: 0;
@@ -140,8 +140,8 @@ html[data-theme="dark"] .fulltext-modal-body {
   border: none;
   border-radius: 8px;
   padding: 10px 24px;
-  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
-  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
+  /* font-size: var(--font-size-body); () */
+  /* font-weight: var(--font-weight-medium); () */
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
