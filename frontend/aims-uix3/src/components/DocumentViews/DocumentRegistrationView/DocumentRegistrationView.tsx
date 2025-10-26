@@ -140,6 +140,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 🔗 AR 파일명 → 고객 ID 매핑 (자동 연결용)
   const arCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
+  // 📝 AR 파일명 → metadata 매핑 (발행일, 고객명 등 DB 저장용)
+  const arMetadataMappingRef = useRef<Map<string, { customer_name: string; issue_date?: string; report_title?: string }>>(new Map())
+
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
@@ -350,6 +353,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   trackArFile: (fileName, custId) => {
                     arFilenamesRef.current.add(fileName);
                     arCustomerMappingRef.current.set(fileName, custId);
+                    arMetadataMappingRef.current.set(fileName, checkResult.metadata!);
                   }
                 });
 
@@ -557,13 +561,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     console.log(`🔒 [AR] 추적 목록에서 제거: ${fileName}, 남은 파일: ${arFilenamesRef.current.size}`);
 
     try {
+      // 매핑된 metadata 가져오기
+      const metadata = arMetadataMappingRef.current.get(fileName);
+
       const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: fileName })
+        body: JSON.stringify({ filename: fileName, metadata })
       });
       const responseData = await response.json();
-      console.log(`✅ [AR] is_annual_report=true 설정 완료:`, responseData);
+      console.log(`✅ [AR] is_annual_report=true 설정 완료 (metadata 포함):`, responseData);
 
       // 🔗 문서 처리 완료 대기 후 자동 연결
       const customerId = arCustomerMappingRef.current.get(fileName);
@@ -626,11 +633,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               }
 
               arCustomerMappingRef.current.delete(fileName);
+              arMetadataMappingRef.current.delete(fileName);
               arDocumentCustomerMappingRef.current.delete(documentId);
             } else if (attempts >= maxAttempts) {
               clearInterval(checkAndLink);
               console.warn(`⚠️ [AR] 문서 처리 대기 시간 초과`);
               arCustomerMappingRef.current.delete(fileName);
+              arMetadataMappingRef.current.delete(fileName);
               arDocumentCustomerMappingRef.current.delete(documentId);
             } else {
               console.log(`⏳ [AR] 대기 중... (${attempts}/${maxAttempts})`);
@@ -688,6 +697,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         trackArFile: (fileName, custId) => {
           arFilenamesRef.current.add(fileName);
           arCustomerMappingRef.current.set(fileName, custId);
+          arMetadataMappingRef.current.set(fileName, annualReportMetadata!);
           console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${fileName}`);
           console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${fileName} → ${custId}`);
         }
