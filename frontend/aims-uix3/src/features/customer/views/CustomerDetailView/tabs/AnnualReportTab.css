@@ -14,6 +14,138 @@
   min-height: 400px;
 }
 
+/* ==================== Parsing Notice ==================== */
+
+.annual-report-parsing-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--color-ios-bg-tertiary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 12px;
+  animation: noticeSlideIn 0.3s ease-out;
+}
+
+html[data-theme="dark"] .annual-report-parsing-notice {
+  background: var(--color-ios-bg-tertiary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+@keyframes noticeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.parsing-notice-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.parsing-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--color-ios-separator-light);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+html[data-theme="dark"] .parsing-spinner {
+  border-color: var(--color-ios-separator-dark);
+  border-top-color: var(--color-primary);
+}
+
+.parsing-notice-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.parsing-notice-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  margin-bottom: 4px;
+}
+
+html[data-theme="dark"] .parsing-notice-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.parsing-notice-description {
+  font-size: 13px;
+  color: var(--color-ios-text-secondary-light);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+html[data-theme="dark"] .parsing-notice-description {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.parsing-notice-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+html[data-theme="dark"] .parsing-notice-files {
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.parsing-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 6px;
+}
+
+html[data-theme="dark"] .parsing-file-item {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.parsing-file-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ios-text-primary-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .parsing-file-name {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.parsing-file-status {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
 /* ==================== Actions (Delete Button) ==================== */
 
 .annual-report-actions {

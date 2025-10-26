@@ -119,7 +119,7 @@ async def health_check():
         }
 
 # 라우터 등록
-from routes import parse, query
+from routes import parse, query, background
 
 app.include_router(
     parse.router,
@@ -130,6 +130,12 @@ app.include_router(
 app.include_router(
     query.router,
     tags=["Annual Report - Query"]
+)
+
+app.include_router(
+    background.router,
+    prefix="/ar-background",
+    tags=["Annual Report - Background"]
 )
 
 if __name__ == "__main__":

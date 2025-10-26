@@ -754,13 +754,13 @@ app.get('/api/documents/status/live', async (req, res) => {
 });
 
 /**
- * 문서에 Annual Report 플래그 설정 API
+ * 문서에 Annual Report 플래그 및 메타데이터 설정 API
  */
 app.patch('/api/documents/set-annual-report', async (req, res) => {
   try {
-    const { filename } = req.body;
+    const { filename, metadata } = req.body;
 
-    console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}`);
+    console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}, metadata:`, metadata);
 
     if (!filename) {
       return res.status(400).json({
@@ -785,14 +785,28 @@ app.patch('/api/documents/set-annual-report', async (req, res) => {
       });
     }
 
-    // is_annual_report 필드 설정
+    // is_annual_report 필드 및 메타데이터 설정
+    const updateFields = { is_annual_report: true };
+
+    // 메타데이터가 제공된 경우 추가
+    if (metadata) {
+      updateFields.ar_metadata = {
+        issue_date: metadata.issue_date || null,
+        customer_name: metadata.customer_name || null,
+        fsr_name: metadata.fsr_name || null,
+        report_title: metadata.report_title || null
+      };
+      // AR 파싱 상태 초기화
+      updateFields.ar_parsing_status = 'pending';
+    }
+
     await db.collection(COLLECTION_NAME)
       .updateOne(
         { _id: document._id },
-        { $set: { is_annual_report: true } }
+        { $set: updateFields }
       );
 
-    console.log(`✅ [Set AR Flag] is_annual_report=true 설정 완료: ${document._id}`);
+    console.log(`✅ [Set AR Flag] is_annual_report=true 설정 완료: ${document._id}`, updateFields);
 
     res.json({
       success: true,
@@ -2193,6 +2207,56 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
 });
 
 /**
+ * 고객의 AR 파싱 대기/진행 중인 문서 목록 조회
+ */
+app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    console.log(`📋 [Annual Report] AR 파싱 대기 문서 조회: ${customerId}`);
+
+    // AR 파싱 대기 또는 진행 중인 문서 조회
+    const pendingDocs = await db.collection(COLLECTION_NAME).find({
+      'customer_relation.customer_id': new ObjectId(customerId),
+      is_annual_report: true,
+      $or: [
+        { ar_parsing_status: { $exists: false } },
+        { ar_parsing_status: 'pending' },
+        { ar_parsing_status: 'processing' }
+      ]
+    }).project({
+      _id: 1,
+      'upload.originalName': 1,
+      'upload.uploaded_at': 1,
+      ar_parsing_status: 1,
+      'ar_metadata.issue_date': 1
+    }).toArray();
+
+    res.json({
+      success: true,
+      data: {
+        pending_count: pendingDocs.length,
+        documents: pendingDocs.map(doc => ({
+          file_id: doc._id.toString(),
+          filename: doc.upload?.originalName || 'Unknown',
+          uploaded_at: doc.upload?.uploaded_at,
+          status: doc.ar_parsing_status || 'pending',
+          issue_date: doc.ar_metadata?.issue_date
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('❌ [Annual Report] 대기 문서 조회 오류:', error.message);
+
+    res.status(500).json({
+      success: false,
+      message: 'AR 파싱 대기 문서 조회 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
  * 고객의 최신 Annual Report 조회 프록시
  */
 app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => {
@@ -2473,6 +2537,37 @@ app.listen(PORT, '0.0.0.0', () => {
 
   console.log(`\n🔍 디버깅 활성화: 모든 HTTP 요청/응답 로깅 중...`);
   console.log(`=============================================\n`);
+});
+
+// ==================== AR Background Parsing Proxy ====================
+/**
+ * AR 백그라운드 파싱 프록시 엔드포인트
+ * 포트 8004 방화벽 문제 우회용
+ */
+app.post("/api/ar-background/trigger-parsing", async (req, res) => {
+  try {
+    console.log("🚀 [AR 백그라운드 파싱 프록시] 요청 수신");
+
+    // localhost:8004로 요청 전달
+    const response = await axios.post(
+      "http://localhost:8004/ar-background/trigger-parsing",
+      req.body,
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 5000
+      }
+    );
+
+    console.log("✅ [AR 백그라운드 파싱 프록시] 성공:", response.data);
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ [AR 백그라운드 파싱 프록시] 실패:", error.message);
+    res.status(500).json({
+      success: false,
+      error: "백그라운드 파싱 트리거 실패",
+      details: error.message
+    });
+  }
 });
 
 module.exports = app;

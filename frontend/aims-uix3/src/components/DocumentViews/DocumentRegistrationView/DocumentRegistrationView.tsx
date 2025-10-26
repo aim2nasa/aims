@@ -607,6 +607,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
               console.log(`✅ [AR 자동 연결] 완료`);
               addLog('success', `문서-고객 자동 연결 완료: ${fileName}`, undefined, customerName);
+
+              // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
+              try {
+                console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}`);
+                const bgParseResponse = await fetch('http://tars.giize.com:3010/api/ar-background/trigger-parsing', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customer_id: customerId,
+                    file_id: documentId
+                  })
+                });
+                const bgParseData = await bgParseResponse.json();
+                console.log(`✅ [AR 백그라운드 파싱] 트리거 완료:`, bgParseData);
+              } catch (bgError) {
+                console.error(`❌ [AR 백그라운드 파싱] 트리거 실패:`, bgError);
+              }
+
               arCustomerMappingRef.current.delete(fileName);
               arDocumentCustomerMappingRef.current.delete(documentId);
             } else if (attempts >= maxAttempts) {

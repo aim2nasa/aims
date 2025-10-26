@@ -40,6 +40,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // 삭제 기능 상태
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  // AR 파싱 대기/진행 중인 문서 상태
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingDocs, setPendingDocs] = useState<any[]>([]);
 
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
@@ -47,7 +50,34 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // Annual Report 목록 로드
   useEffect(() => {
     loadAnnualReports();
+    loadPendingDocuments();
   }, [customer._id]);
+
+  // 주기적으로 파싱 대기 문서 확인 (10초마다)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (pendingCount > 0) {
+        loadPendingDocuments();
+        loadAnnualReports(); // 파싱 완료된 것이 있을 수 있으므로
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [pendingCount, customer._id]);
+
+  const loadPendingDocuments = async () => {
+    try {
+      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/annual-reports/pending`);
+      const data = await response.json();
+
+      if (data.success) {
+        setPendingCount(data.data.pending_count);
+        setPendingDocs(data.data.documents);
+      }
+    } catch (err) {
+      console.error('Failed to load pending AR documents:', err);
+    }
+  };
 
   const loadAnnualReports = async () => {
     setIsLoading(true);
@@ -235,17 +265,52 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   if (reports.length === 0) {
     return (
       <div className="annual-report-tab">
+        {/* AR 파싱 진행 중 알림 (빈 상태에서도 표시) */}
+        {pendingCount > 0 && (
+          <div className="annual-report-parsing-notice">
+            <div className="parsing-notice-icon">
+              <div className="parsing-spinner"></div>
+            </div>
+            <div className="parsing-notice-content">
+              <div className="parsing-notice-title">
+                Annual Report 분석 중
+              </div>
+              <div className="parsing-notice-description">
+                {pendingCount}개의 문서를 백그라운드에서 분석하고 있습니다. 완료되면 자동으로 목록에 추가됩니다.
+              </div>
+              {pendingDocs.length > 0 && (
+                <div className="parsing-notice-files">
+                  {pendingDocs.map(doc => (
+                    <div key={doc.file_id} className="parsing-file-item">
+                      <span className="parsing-file-name">{doc.filename}</span>
+                      <span className="parsing-file-status">
+                        {doc.status === 'processing' ? '분석 중...' : '대기 중...'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="annual-report-tab__empty">
           <div className="annual-report-tab__empty-icon">📄</div>
-          <h3 className="annual-report-tab__empty-title">Annual Report가 없습니다</h3>
+          <h3 className="annual-report-tab__empty-title">
+            {pendingCount > 0 ? '분석이 완료되면 여기에 표시됩니다' : 'Annual Report가 없습니다'}
+          </h3>
           <p className="annual-report-tab__empty-description">
-            Annual Report를 업로드하면 자동 분석하여 여기에 표시됩니다.
+            {pendingCount > 0
+              ? '백그라운드에서 문서를 분석하고 있습니다. 잠시만 기다려주세요.'
+              : 'Annual Report를 업로드하면 자동 분석하여 여기에 표시됩니다.'}
           </p>
-          <div className="annual-report-tab__empty-hint">
-            <p className="annual-report-tab__empty-hint-text">
-              💡 Annual Report는 보험 계약 현황을 요약한 문서입니다.
-            </p>
-          </div>
+          {pendingCount === 0 && (
+            <div className="annual-report-tab__empty-hint">
+              <p className="annual-report-tab__empty-hint-text">
+                💡 Annual Report는 보험 계약 현황을 요약한 문서입니다.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Annual Report Modal */}
@@ -299,6 +364,35 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   // Annual Report 목록 있음
   return (
     <div className="annual-report-tab">
+      {/* AR 파싱 진행 중 알림 */}
+      {pendingCount > 0 && (
+        <div className="annual-report-parsing-notice">
+          <div className="parsing-notice-icon">
+            <div className="parsing-spinner"></div>
+          </div>
+          <div className="parsing-notice-content">
+            <div className="parsing-notice-title">
+              Annual Report 분석 중
+            </div>
+            <div className="parsing-notice-description">
+              {pendingCount}개의 문서를 백그라운드에서 분석하고 있습니다. 완료되면 자동으로 목록에 추가됩니다.
+            </div>
+            {pendingDocs.length > 0 && (
+              <div className="parsing-notice-files">
+                {pendingDocs.map(doc => (
+                  <div key={doc.file_id} className="parsing-file-item">
+                    <span className="parsing-file-name">{doc.filename}</span>
+                    <span className="parsing-file-status">
+                      {doc.status === 'processing' ? '분석 중...' : '대기 중...'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 삭제 버튼 */}
       {selectedIndices.size > 0 && (
         <div className="annual-report-actions">
