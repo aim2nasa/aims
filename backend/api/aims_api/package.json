@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "pretest": "bash scripts/setup-test-env.sh || true",
+    "test": "MONGO_URI=mongodb://localhost:27017 jest",
+    "posttest": "bash scripts/teardown-test-env.sh || true",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "start": "node server.js"
