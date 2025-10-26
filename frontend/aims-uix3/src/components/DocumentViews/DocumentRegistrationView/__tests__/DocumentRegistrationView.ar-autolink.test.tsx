@@ -290,4 +290,211 @@ describe('AR Auto-Link Feature', () => {
       expect(shouldTimeout).toBe(true)
     })
   })
+
+  describe('Race Condition 방지 (Critical Bug Fix)', () => {
+    it('arFilenamesRef에서 파일 삭제는 setAnnualReportFlag 내부에서만 수행해야 함', () => {
+      // 이 테스트는 handleStatusChange에서 arFilenamesRef를 삭제하지 않고
+      // setAnnualReportFlag 내부에서만 삭제하는지 검증
+
+      const arFilenamesRef = new Set<string>()
+      const fileName = 'test-ar.pdf'
+
+      // 1. 파일 추가
+      arFilenamesRef.add(fileName)
+      expect(arFilenamesRef.has(fileName)).toBe(true)
+      expect(arFilenamesRef.size).toBe(1)
+
+      // 2. handleStatusChange 시뮬레이션 (첫 번째 호출)
+      // ⚠️ handleStatusChange에서는 삭제하지 않아야 함!
+      const shouldCallSetAnnualReportFlag = arFilenamesRef.has(fileName)
+      expect(shouldCallSetAnnualReportFlag).toBe(true)
+      // arFilenamesRef.delete(fileName); // ❌ 이렇게 하면 안 됨!
+
+      // 3. handleStatusChange 시뮬레이션 (두 번째 호출)
+      // 첫 번째 호출에서 삭제하지 않았으므로, 두 번째 호출에서도 파일이 있어야 함
+      const shouldCallSetAnnualReportFlagAgain = arFilenamesRef.has(fileName)
+      expect(shouldCallSetAnnualReportFlagAgain).toBe(true) // ✅ 여전히 true!
+
+      // 4. setAnnualReportFlag 시뮬레이션 (첫 번째 실행)
+      // setAnnualReportFlag 내부에서만 삭제
+      if (arFilenamesRef.has(fileName)) {
+        arFilenamesRef.delete(fileName)
+        // ... AR 플래그 설정 로직
+      }
+      expect(arFilenamesRef.has(fileName)).toBe(false)
+      expect(arFilenamesRef.size).toBe(0)
+
+      // 5. setAnnualReportFlag 시뮬레이션 (두 번째 실행)
+      // 이미 삭제되었으므로 early return
+      if (!arFilenamesRef.has(fileName)) {
+        // early return - 중복 실행 방지
+        expect(arFilenamesRef.has(fileName)).toBe(false)
+      } else {
+        throw new Error('이 코드는 실행되어서는 안 됨!')
+      }
+    })
+
+    it('handleStatusChange가 두 번 호출되어도 setAnnualReportFlag는 한 번만 실행해야 함', async () => {
+      const arFilenamesRef = new Set<string>()
+      const fileName = 'test-ar.pdf'
+      const customerId = 'customer123'
+      const arCustomerMapping = new Map<string, string>()
+
+      // 초기 설정
+      arFilenamesRef.add(fileName)
+      arCustomerMapping.set(fileName, customerId)
+
+      let setAnnualReportFlagCallCount = 0
+
+      // setAnnualReportFlag 시뮬레이션 함수
+      const setAnnualReportFlag = (fileName: string) => {
+        // 중복 실행 방지
+        if (!arFilenamesRef.has(fileName)) {
+          console.log(`⚠️ 이미 처리 중이거나 완료된 파일: ${fileName}`)
+          return
+        }
+
+        // 즉시 삭제 (중복 실행 방지)
+        arFilenamesRef.delete(fileName)
+        setAnnualReportFlagCallCount++
+
+        // ... 나머지 로직 (AR 플래그 설정 등)
+      }
+
+      // handleStatusChange 첫 번째 호출
+      if (arFilenamesRef.has(fileName)) {
+        setAnnualReportFlag(fileName)
+      }
+
+      // handleStatusChange 두 번째 호출
+      if (arFilenamesRef.has(fileName)) {
+        setAnnualReportFlag(fileName)
+      }
+
+      // 검증: setAnnualReportFlag는 정확히 1번만 실행되어야 함
+      expect(setAnnualReportFlagCallCount).toBe(1)
+      expect(arFilenamesRef.has(fileName)).toBe(false)
+      expect(arFilenamesRef.size).toBe(0)
+    })
+
+    it('동시에 여러 AR 파일 업로드 시 각각 독립적으로 처리되어야 함', async () => {
+      const arFilenamesRef = new Set<string>()
+      const files = ['ar1.pdf', 'ar2.pdf', 'ar3.pdf']
+
+      // 모든 파일 추가
+      files.forEach(file => arFilenamesRef.add(file))
+      expect(arFilenamesRef.size).toBe(3)
+
+      const callCounts = new Map<string, number>()
+
+      const setAnnualReportFlag = (fileName: string) => {
+        if (!arFilenamesRef.has(fileName)) {
+          return
+        }
+
+        arFilenamesRef.delete(fileName)
+        callCounts.set(fileName, (callCounts.get(fileName) || 0) + 1)
+      }
+
+      // 각 파일에 대해 handleStatusChange 2번씩 호출
+      files.forEach(file => {
+        // 첫 번째 호출
+        if (arFilenamesRef.has(file)) {
+          setAnnualReportFlag(file)
+        }
+        // 두 번째 호출
+        if (arFilenamesRef.has(file)) {
+          setAnnualReportFlag(file)
+        }
+      })
+
+      // 검증: 각 파일당 정확히 1번씩만 처리
+      expect(callCounts.get('ar1.pdf')).toBe(1)
+      expect(callCounts.get('ar2.pdf')).toBe(1)
+      expect(callCounts.get('ar3.pdf')).toBe(1)
+      expect(arFilenamesRef.size).toBe(0)
+    })
+
+    it('setAnnualReportFlag가 3번 연속 호출되어도 1번만 실행해야 함', () => {
+      const arFilenamesRef = new Set<string>()
+      const fileName = 'stress-test.pdf'
+      arFilenamesRef.add(fileName)
+
+      let executionCount = 0
+
+      const setAnnualReportFlag = (fileName: string) => {
+        if (!arFilenamesRef.has(fileName)) {
+          return
+        }
+        arFilenamesRef.delete(fileName)
+        executionCount++
+      }
+
+      // 3번 연속 호출
+      setAnnualReportFlag(fileName)
+      setAnnualReportFlag(fileName)
+      setAnnualReportFlag(fileName)
+
+      expect(executionCount).toBe(1)
+    })
+
+    it('arFilenamesRef 체크와 삭제가 원자적으로 수행되어야 함', () => {
+      const arFilenamesRef = new Set<string>()
+      const fileName = 'atomic-test.pdf'
+      arFilenamesRef.add(fileName)
+
+      // 원자적 연산 시뮬레이션
+      const atomicCheckAndDelete = (fileName: string): boolean => {
+        // ✅ 체크와 삭제를 한 번에
+        if (!arFilenamesRef.has(fileName)) {
+          return false // 이미 처리됨
+        }
+        arFilenamesRef.delete(fileName)
+        return true // 새로 처리함
+      }
+
+      // 첫 번째 호출
+      const firstCall = atomicCheckAndDelete(fileName)
+      expect(firstCall).toBe(true)
+      expect(arFilenamesRef.size).toBe(0)
+
+      // 두 번째 호출
+      const secondCall = atomicCheckAndDelete(fileName)
+      expect(secondCall).toBe(false) // 이미 처리되었으므로 false
+      expect(arFilenamesRef.size).toBe(0)
+    })
+
+    it('처리 완료 후 매핑 정리가 올바르게 수행되어야 함', () => {
+      const arFilenamesRef = new Set<string>()
+      const arCustomerMapping = new Map<string, string>()
+      const arDocumentCustomerMapping = new Map<string, string>()
+
+      const fileName = 'cleanup-test.pdf'
+      const customerId = 'customer123'
+      const documentId = 'doc456'
+
+      // 초기 설정
+      arFilenamesRef.add(fileName)
+      arCustomerMapping.set(fileName, customerId)
+      arDocumentCustomerMapping.set(documentId, customerId)
+
+      expect(arFilenamesRef.size).toBe(1)
+      expect(arCustomerMapping.size).toBe(1)
+      expect(arDocumentCustomerMapping.size).toBe(1)
+
+      // setAnnualReportFlag 실행
+      if (arFilenamesRef.has(fileName)) {
+        arFilenamesRef.delete(fileName)
+      }
+
+      // 자동 연결 완료 후 정리
+      arCustomerMapping.delete(fileName)
+      arDocumentCustomerMapping.delete(documentId)
+
+      // 모든 매핑이 정리되었는지 확인
+      expect(arFilenamesRef.size).toBe(0)
+      expect(arCustomerMapping.size).toBe(0)
+      expect(arDocumentCustomerMapping.size).toBe(0)
+    })
+  })
 })

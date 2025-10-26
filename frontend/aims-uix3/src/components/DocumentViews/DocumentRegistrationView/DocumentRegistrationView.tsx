@@ -546,6 +546,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
    * 업로드 완료 후 AR DB 플래그 설정 + 문서 처리 완료 대기 후 자동 연결
    */
   const setAnnualReportFlag = useCallback(async (fileName: string) => {
+    // 🔒 중복 실행 방지: 이미 처리 중이면 건너뛰기
+    if (!arFilenamesRef.current.has(fileName)) {
+      console.log(`⚠️ [AR] 이미 처리 중이거나 완료된 파일: ${fileName}`);
+      return;
+    }
+
+    // 🔒 즉시 추적 목록에서 제거 (중복 실행 방지)
+    arFilenamesRef.current.delete(fileName);
+    console.log(`🔒 [AR] 추적 목록에서 제거: ${fileName}, 남은 파일: ${arFilenamesRef.current.size}`);
+
     try {
       const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
         method: 'PATCH',
@@ -726,8 +736,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (status === 'completed' && arFilenamesRef.current.has(f.file.name)) {
               console.log(`✅ [handleStatusChange] AR 파일 업로드 완료, 고객 자동 연결 예약: ${f.file.name}`);
               const fileName = f.file.name;
-              // 추적 목록에서 제거 (중복 실행 방지)
-              arFilenamesRef.current.delete(f.file.name);
+              // ⚠️ 중요: arFilenamesRef 삭제를 setAnnualReportFlag로 이동
+              // (handleStatusChange가 두 번 호출될 때 race condition 방지)
               // 즉시 실행 (arCustomerMappingRef는 setAnnualReportFlag 내부에서 사용됨)
               setTimeout(() => setAnnualReportFlag(fileName), 0);
             }
