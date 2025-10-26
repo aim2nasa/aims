@@ -1,8 +1,118 @@
 # AIMS 스크립트 사용 가이드
 
 ## 📋 목차
+- [테스트 실행 스크립트](#테스트-실행-스크립트)
 - [고객 생성 스크립트](#고객-생성-스크립트)
 - [고객 삭제 스크립트](#고객-삭제-스크립트)
+
+---
+
+## 🧪 테스트 실행 스크립트
+
+### 파일명
+- `test-all.sh` (Linux/Mac/WSL)
+- `test-all.bat` (Windows)
+
+### 기능
+AIMS 프로젝트의 모든 테스트를 자동으로 실행합니다:
+1. Frontend Tests (aims-uix3) - 1,703개 테스트
+2. Node.js API Tests (aims_api) - 23개 테스트
+3. Python API Tests (doc_status_api) - 43개 테스트
+
+### 사전 준비 (WSL/Linux/Mac)
+
+#### 1. SSH 키 인증 설정 (필수)
+
+테스트 실행 시 tars 서버에 자동으로 SSH 터널을 생성하므로, 비밀번호 없이 SSH 접속할 수 있도록 키 인증을 설정해야 합니다.
+
+```bash
+# 1단계: SSH 키 생성 (이미 있으면 스킵)
+ssh-keygen -t ed25519 -C "rossi@WonderCastle"
+# 엔터 3번 (기본 경로, 비밀번호 없음)
+
+# 2단계: 공개키를 tars 서버에 복사 (마지막으로 비밀번호 한 번만 입력)
+ssh-copy-id rossi@tars.giize.com
+
+# 또는 수동으로:
+cat ~/.ssh/id_ed25519.pub | ssh rossi@tars.giize.com "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+# 3단계: 테스트 (비밀번호 없이 접속되면 성공)
+ssh tars.giize.com "echo SSH key authentication works"
+```
+
+**참고**: WSL과 Ubuntu는 같은 홈 디렉토리(`~/.ssh/`)를 공유하므로 한 번만 설정하면 됩니다.
+
+#### 2. Python 의존성 설치
+
+```bash
+# 옵션 1: 전역 환경에 설치 (간단)
+pip install pytest pytest-asyncio
+
+# 옵션 2: Ubuntu/Debian 패키지 관리자
+sudo apt update
+sudo apt install python3-pytest python3-pytest-asyncio
+```
+
+### 사용법
+
+#### Linux/Mac/WSL
+```bash
+# 프로젝트 루트에서 실행
+./scripts/test-all.sh
+```
+
+#### Windows
+```bash
+# PowerShell 또는 cmd에서 실행
+.\scripts\test-all.bat
+```
+
+### 실행 결과
+```
+========================================
+  AIMS All Tests Runner
+========================================
+
+[1/4] Running Frontend tests...
+✅ 1703 passed
+
+[0/4] Setting up SSH tunnel to MongoDB...
+✅ SSH tunnel established
+
+[2/4] Running Node.js API tests...
+✅ 23 passed
+
+[3/4] Running Python API tests...
+✅ 43 passed
+
+[4/4] Closing SSH tunnel...
+✅ SSH tunnel closed
+
+[SUCCESS] All tests passed!
+```
+
+### 개별 API 테스트 실행
+
+각 API는 단독으로도 테스트 가능합니다 (SSH 터널 자동 설정):
+
+```bash
+# Node.js API (aims_api)
+cd backend/api/aims_api
+npm test  # SSH 터널 자동 시작 → 테스트 → 터널 종료
+
+# Python API (doc_status_api)
+cd backend/api/doc_status_api
+python3 -m pytest -v
+```
+
+### SSH 터널링 동작 방식
+
+test-all.sh는 자동으로 다음을 수행합니다:
+1. **SSH 터널 시작**: `localhost:27017` → `tars.giize.com:27017`
+2. **MongoDB 연결**: 모든 테스트가 `localhost:27017`로 연결
+3. **SSH 터널 종료**: 테스트 완료 후 자동 정리
+
+개별 API 테스트(`npm test`)도 동일한 방식으로 SSH 터널을 자동 관리합니다.
 
 ---
 
