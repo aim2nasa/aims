@@ -261,3 +261,16 @@ input:disabled, textarea:disabled, select:disabled {
     --color-border-secondary: var(--color-neutral-200);
   }
 }
+
+/* === DEVELOPER MODE === */
+
+@keyframes devBadgePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+}

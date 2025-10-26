@@ -15,6 +15,7 @@ import { AnnualReportModal } from '@/features/customer/components/AnnualReportMo
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
+import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import type { Customer } from '@/entities/customer/model';
 import './AnnualReportTab.css';
 
@@ -44,8 +45,18 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingDocs, setPendingDocs] = useState<any[]>([]);
 
+  // 개발자 모드 - 전역 상태 사용
+  const { isDevMode } = useDevModeStore();
+
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
+
+  // 개발자 모드 OFF시 선택 초기화
+  useEffect(() => {
+    if (!isDevMode) {
+      setSelectedIndices(new Set());
+    }
+  }, [isDevMode]);
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -393,16 +404,17 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
         </div>
       )}
 
-      {/* 삭제 버튼 */}
-      {selectedIndices.size > 0 && (
+      {/* 삭제 버튼 (개발자 모드 전용) */}
+      {isDevMode && selectedIndices.size > 0 && (
         <div className="annual-report-actions">
           <Button
             variant="destructive"
             size="sm"
             onClick={handleDeleteSelected}
             disabled={isDeleting}
+            title="개발자 전용 기능 (Ctrl+Shift+D)"
           >
-            {isDeleting ? '삭제 중...' : `선택 항목 삭제 (${selectedIndices.size})`}
+            {isDeleting ? '삭제 중...' : `🗑️ 선택 항목 삭제 (${selectedIndices.size})`}
           </Button>
         </div>
       )}
@@ -411,14 +423,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
       <div className="annual-report-table-container">
         {/* 테이블 헤더 */}
         <div className="annual-report-table-header">
-          <div className="header-checkbox">
-            <input
-              type="checkbox"
-              checked={isAllSelected}
-              onChange={handleSelectAll}
-              aria-label="전체 선택"
-            />
-          </div>
+          {isDevMode && (
+            <div className="header-checkbox">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                onChange={handleSelectAll}
+                aria-label="전체 선택"
+              />
+            </div>
+          )}
           <div className="header-issue-date">발행일</div>
           <div className="header-parsed-at">파싱일시</div>
           <div className="header-premium">총 월보험료</div>
@@ -440,14 +454,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
                 className={`annual-report-row ${isLatest ? 'annual-report-row--latest' : ''} ${isSelected ? 'annual-report-row--selected' : ''}`}
                 onClick={() => handleViewReport(report)}
               >
-                <div className="row-checkbox" onClick={(e) => handleSelectReport(globalIndex, e)}>
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}}
-                    aria-label={`${formattedDate} 리포트 선택`}
-                  />
-                </div>
+                {isDevMode && (
+                  <div className="row-checkbox" onClick={(e) => handleSelectReport(globalIndex, e)}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      aria-label={`${formattedDate} 리포트 선택`}
+                    />
+                  </div>
+                )}
                 <div className="row-issue-date">{formattedDate}</div>
                 <div className="row-parsed-at">{AnnualReportApi.formatDateTime(report.parsed_at)}</div>
                 <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>

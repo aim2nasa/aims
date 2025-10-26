@@ -7,6 +7,7 @@ import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
+import { useDevModeStore } from './shared/store/useDevModeStore'
 import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화
@@ -256,6 +257,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [paginationVisible, setPaginationVisible] = useState(true)
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
 
+  // Developer Mode - Global State
+  const { isDevMode, toggleDevMode } = useDevModeStore()
+
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
 
@@ -342,6 +346,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       setRightPaneVisible(true)
     }
   }, [activeDocumentView, selectedDocument, selectedCustomer])
+
+  // Developer Mode - Global Keyboard Handler (Ctrl+Shift+D)
+  useEffect(() => {
+    const handleDevMode = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        toggleDevMode()
+      }
+    }
+    window.addEventListener('keydown', handleDevMode)
+    return () => window.removeEventListener('keydown', handleDevMode)
+  }, [toggleDevMode])
 
   useEffect(() => {
     if (rightPaneVisible && centerWidth !== DEFAULT_CENTER_WIDTH_PERCENT) {
@@ -884,6 +900,34 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onLayoutControlOpen={handleModalOpen}
         onThemeToggle={toggleTheme}
       />
+
+      {/* Developer Mode Badge - Global (Header Center) */}
+      {isDevMode && (
+        <div
+          className="dev-mode-badge-global"
+          style={{
+            position: 'fixed',
+            top: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            background: 'rgba(255, 149, 0, 0.15)',
+            border: '1px solid rgba(255, 149, 0, 0.3)',
+            borderRadius: '12px',
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#ff9500',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            animation: 'devBadgePulse 2s ease-in-out infinite'
+          }}
+        >
+          🔧 개발자 모드
+        </div>
+      )}
 
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (
