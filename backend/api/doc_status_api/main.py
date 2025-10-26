@@ -753,6 +753,49 @@ async def delete_documents(request: DeleteDocumentsRequest):
                 # 고객 참조 정리 실패해도 문서 삭제는 진행
             # ========================================
 
+            # ========== AR 파싱 삭제 추가 ==========
+            # AR 문서인 경우 customers.annual_reports 배열에서 동일 발행일 파싱 삭제
+            if document.get('is_annual_report') == True:
+                ar_metadata = document.get('ar_metadata', {})
+                issue_date = ar_metadata.get('issue_date')
+                customer_relation = document.get('customer_relation', {})
+                customer_id = customer_relation.get('customer_id')
+
+                if issue_date and customer_id:
+                    try:
+                        # issue_date가 문자열이면 datetime으로 변환 (MongoDB 비교용)
+                        if isinstance(issue_date, str):
+                            from datetime import datetime as dt
+                            try:
+                                # ISO 형식 파싱 (YYYY-MM-DD)
+                                issue_date_obj = dt.fromisoformat(issue_date.replace('Z', '+00:00'))
+                            except:
+                                # 파싱 실패하면 문자열 그대로 사용
+                                issue_date_obj = issue_date
+                        else:
+                            issue_date_obj = issue_date
+
+                        # customers.annual_reports 배열에서 동일 발행일 항목 삭제
+                        ar_delete_result = customers_collection.update_one(
+                            {"_id": customer_id},
+                            {
+                                "$pull": {
+                                    "annual_reports": {"issue_date": issue_date_obj}
+                                },
+                                "$set": {"meta.updated_at": datetime.utcnow()}
+                            }
+                        )
+
+                        if ar_delete_result.modified_count > 0:
+                            print(f"✅ [AR 파싱 삭제] 고객 {customer_id}, 발행일 {issue_date}")
+                        else:
+                            print(f"⚠️ [AR 파싱 삭제] 삭제할 항목 없음: 발행일 {issue_date}")
+
+                    except Exception as ar_error:
+                        print(f"❌ [AR 파싱 삭제] 실패: {ar_error}")
+                        # 실패해도 문서 삭제는 계속 진행
+            # ========================================
+
             # 물리적 파일 경로 추출
             upload_info = document.get('upload', {})
             dest_path = upload_info.get('destPath')
