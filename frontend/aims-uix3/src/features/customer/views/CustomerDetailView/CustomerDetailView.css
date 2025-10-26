@@ -68,8 +68,8 @@
 /* Section Title - 왼쪽 고정 */
 .customer-detail-view .form-section__title {
   flex: 0 0 60px;
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-medium);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
   text-transform: none;
   letter-spacing: 0;
   color: var(--color-text-secondary);
@@ -179,8 +179,8 @@
 /* Form Row Label */
 .customer-detail-view .form-row__label {
   flex: 0 0 80px;
-  font-size: var(--font-size-footnote);
-  font-weight: var(--font-weight-regular);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
   color: var(--color-text-secondary);
   margin-right: 12px;
   line-height: var(--line-height-normal);
@@ -198,9 +198,9 @@
   height: auto;
   padding: 0;
   margin: 0;
-  font-size: var(--font-size-footnote);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
   font-family: var(--font-family-system);
-  font-weight: var(--font-weight-regular);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
   line-height: 1.2;
   color: var(--color-text-primary);
   background-color: transparent;
@@ -260,7 +260,7 @@
 }
 
 .customer-detail-name {
-  font-size: 15px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
 }

@@ -80,8 +80,8 @@
 
 /* 햄버거 아이콘 SVG 스타일 */
 .hamburger-icon {
-  width: var(--font-size-sm);  /* 14px */
-  height: var(--font-size-sm); /* 14px */
+  width: var(--font-size-sm)); */  /* 14px */
+  height: var(--font-size-sm)); */ /* 14px */
   color: inherit;
   transition: color var(--duration-fast) var(--easing-ease-out),
               transform var(--duration-ios-quick) var(--easing-ios-default);

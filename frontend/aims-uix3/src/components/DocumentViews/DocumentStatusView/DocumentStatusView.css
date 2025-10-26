@@ -108,7 +108,7 @@ html[data-theme="dark"] .pagination-button:active:not(:disabled) {
 
 /* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  font-size: 24px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-large-symbol)); */ /* 24px - FONT_RULES.md: 아이콘/심볼 */
   font-weight: 300;
   line-height: 1;
   color: inherit;
@@ -151,7 +151,7 @@ html[data-theme="dark"] .pagination-arrow--clicked {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);

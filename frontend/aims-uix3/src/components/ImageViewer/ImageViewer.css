@@ -117,7 +117,7 @@ html[data-theme="dark"] .loading-spinner {
 .loading-text {
   margin: 0;
   color: var(--color-ios-text-secondary-light);
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -151,7 +151,7 @@ html[data-theme="dark"] .image-viewer-error {
 }
 
 .error-icon {
-  font-size: 32px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 아이콘/심볼 */
   color: var(--color-ios-system-red-light);
 }
 
@@ -162,7 +162,7 @@ html[data-theme="dark"] .error-icon {
 .error-title {
   margin: 0;
   color: var(--color-ios-text-primary-light);
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
@@ -174,7 +174,7 @@ html[data-theme="dark"] .error-title {
 .error-message {
   margin: 0;
   color: var(--color-ios-text-secondary-light);
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -224,7 +224,7 @@ html[data-theme="dark"] .controls-container {
 }
 
 .zoom-text {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
@@ -248,7 +248,7 @@ html[data-theme="dark"] .zoom-text {
   color: var(--color-ios-interactive-light);
   border: 1px solid transparent;
   border-radius: 6px;
-  font-size: 20px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 20px deprecated */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -293,7 +293,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 .control-button--primary {
   background-color: var(--color-primary-600);
   color: white;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 600;
   gap: 4px;
   padding: 6px 12px;
@@ -302,7 +302,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 }
 
 .control-button--primary span[aria-hidden] {
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   line-height: 1;
 }
 

@@ -53,7 +53,7 @@ html[data-theme="dark"] .search-input-wrapper:focus-within {
   margin-right: 8px;
   color: var(--color-ios-text-quaternary-light);
   flex-shrink: 0;
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
 }
 
 html[data-theme="dark"] .search-icon {
@@ -65,7 +65,7 @@ html[data-theme="dark"] .search-icon {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
@@ -94,7 +94,7 @@ html[data-theme="dark"] .search-input::placeholder {
   border: none;
   background-color: transparent;
   color: var(--color-ios-text-tertiary-light);
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   cursor: pointer;
   border-radius: 6px;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
@@ -126,7 +126,7 @@ html[data-theme="dark"] .fulltext-button:hover {
   border: none;
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -161,7 +161,7 @@ html[data-theme="dark"] .fulltext-button:hover {
   color: var(--color-ios-error-text-light);
   border-left: 3px solid var(--color-ios-error-border-light);
   border-radius: 8px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   animation: fadeInSlide var(--duration-ios-standard) var(--easing-ease-out);
 }
@@ -192,7 +192,7 @@ html[data-theme="dark"] .search-error {
   padding: var(--spacing-12) var(--spacing-6);
   text-align: center;
   color: var(--color-ios-empty-light);
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
 }
@@ -218,7 +218,7 @@ html[data-theme="dark"] .search-answer {
 
 .answer-title {
   margin: 0 0 8px 0;
-  font-size: 15px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md */
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-primary-500);
@@ -226,7 +226,7 @@ html[data-theme="dark"] .search-answer {
 
 .answer-content {
   margin: 0;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-primary-light);
   line-height: 1.5;
@@ -245,7 +245,7 @@ html[data-theme="dark"] .answer-content {
   justify-content: space-between;
   gap: 12px;
   padding: 8px 16px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
   font-weight: 400;
@@ -338,7 +338,7 @@ html[data-theme="dark"] .search-result-row[data-selected="true"] {
 }
 
 .row-index {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-tertiary-light);
@@ -390,7 +390,7 @@ html[data-theme="dark"] .row-index {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  font-size: 7px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 7px deprecated (접근성) */
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: #ffffff;
@@ -430,7 +430,7 @@ html[data-theme="dark"] .search-result-row:hover .document-ar-badge {
 .document-icon.file-type-unknown { background-color: var(--color-file-unknown); color: var(--color-neutral-600); }
 
 .row-title {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
@@ -446,7 +446,7 @@ html[data-theme="dark"] .row-title {
 }
 
 .row-subtitle {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
   font-weight: 400;
@@ -476,7 +476,7 @@ html[data-theme="dark"] .row-subtitle {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   flex-shrink: 0;
   cursor: help;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
@@ -613,7 +613,7 @@ html[data-theme="dark"] .row-trailing .action-button[data-disabled="true"] {
 
 /* 유사도 인디케이터 (색상 원) */
 .similarity-indicator {
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   line-height: 1;
   white-space: nowrap;
   cursor: help;
@@ -648,7 +648,7 @@ html[data-theme="dark"] .row-trailing .action-button[data-disabled="true"] {
 }
 
 .row-detail {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-tertiary-light);
   font-weight: 400;
@@ -660,7 +660,7 @@ html[data-theme="dark"] .row-detail {
 }
 
 .row-chevron {
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   color: var(--color-ios-text-quaternary-light);
   opacity: 0.3;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);

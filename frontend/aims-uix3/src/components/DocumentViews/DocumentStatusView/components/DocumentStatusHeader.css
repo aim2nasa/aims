@@ -38,7 +38,7 @@ html[data-theme="dark"] .document-status-header {
 }
 
 .filter-label {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
@@ -50,7 +50,7 @@ html[data-theme="dark"] .filter-label {
 }
 
 .result-count {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-tertiary-light);
@@ -74,7 +74,7 @@ html[data-theme="dark"] .result-count {
 }
 
 .last-updated {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-quaternary-light);
@@ -99,7 +99,7 @@ html[data-theme="dark"] .last-updated {
   color: var(--color-ios-text-secondary-light);
   cursor: pointer;
   transition: all 0.15s ease-out;
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
 }
 
 html[data-theme="dark"] .settings-toggle {
@@ -179,7 +179,7 @@ html[data-theme="dark"] .polling-toggle:hover {
 }
 
 .polling-dot {
-  font-size: 8px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 8px deprecated (접근성) */
   line-height: 1;
 }
 
@@ -244,7 +244,7 @@ html[data-theme="dark"] .refresh-button:hover:not(:disabled) .refresh-icon {
 }
 
 .refresh-icon {
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   line-height: 1;
   display: inline-block;
   color: inherit;
@@ -277,7 +277,7 @@ html[data-theme="dark"] .icon-clicked {
   }
 
   .result-count {
-    font-size: 11px;
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   }
 }
 

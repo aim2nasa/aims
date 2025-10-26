@@ -53,7 +53,7 @@
 }
 
 .processing-log__title {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -61,7 +61,7 @@
 }
 
 .processing-log__count {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-tertiary);
@@ -73,7 +73,7 @@
 }
 
 .processing-log__sort-status {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-accent);
@@ -97,7 +97,7 @@
 }
 
 .processing-log__button-icon {
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   font-weight: 400;
   line-height: 1;
   display: flex;
@@ -209,7 +209,7 @@
 }
 
 .processing-log__icon-symbol {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   font-weight: 700;
   line-height: 1;
   display: flex;
@@ -218,7 +218,7 @@
 }
 
 .processing-log__time {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-weight: 400;
   font-family: "SF Mono", "Consolas", monospace;
   color: var(--color-text-tertiary);
@@ -228,7 +228,7 @@
 }
 
 .processing-log__message {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   flex: 1;
@@ -242,7 +242,7 @@
 }
 
 .processing-log__details {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-weight: 400;
   font-family: "SF Mono", "Consolas", monospace;
   color: var(--color-text-tertiary);

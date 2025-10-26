@@ -77,7 +77,7 @@
 .customer-identification-modal__title {
   flex: 1;
   margin: 0;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -106,7 +106,7 @@
 }
 
 .customer-identification-modal__file-icon {
-  font-size: 28px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 28px → 32px */
   flex-shrink: 0;
   opacity: 0.9;
 }
@@ -117,7 +117,7 @@
 }
 
 .customer-identification-modal__file-name {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -128,7 +128,7 @@
 }
 
 .customer-identification-modal__file-type {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   margin-top: 3px;
@@ -156,7 +156,7 @@
 }
 
 .customer-identification-modal__metadata-label {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   font-weight: 400;
@@ -164,7 +164,7 @@
 }
 
 .customer-identification-modal__metadata-value {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
   font-weight: 500;
@@ -177,7 +177,7 @@
 }
 
 .customer-identification-modal__message {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   margin: 0 0 10px 0;
@@ -195,7 +195,7 @@
 }
 
 .customer-identification-modal__customer-name {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -204,14 +204,14 @@
 }
 
 .customer-identification-modal__customer-contact {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   letter-spacing: -0.1px;
 }
 
 .customer-identification-modal__customer-contact-inline {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
   font-weight: 400;
@@ -270,12 +270,12 @@
 }
 
 .customer-identification-modal__empty-icon {
-  font-size: 40px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xxlarge-symbol)); */ /* 48px - FONT_RULES.md: 40px → 48px */
   margin-bottom: 12px;
 }
 
 .customer-identification-modal__hint {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   color: var(--color-text-tertiary);
   margin: 6px 0 12px 0;
 }
@@ -295,7 +295,7 @@
 }
 
 .customer-identification-modal__form-label {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   color: var(--color-text-secondary);
 }
@@ -303,7 +303,7 @@
 .customer-identification-modal__form-input {
   width: 100%;
   padding: 8px 12px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   color: var(--color-text-primary);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
@@ -328,7 +328,7 @@
 }
 
 .customer-identification-modal__form-hint {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   color: var(--color-text-tertiary);
   margin: 8px 0 0 0;
   font-style: italic;
@@ -352,7 +352,7 @@
   border: none;
   border-radius: 10px;
   padding: 10px 24px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;

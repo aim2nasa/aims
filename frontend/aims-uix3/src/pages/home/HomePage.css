@@ -22,8 +22,8 @@
   background-color: var(--color-overlay-backdrop);
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
 }
 
 .system-status__indicator {
@@ -78,8 +78,8 @@
 }
 
 .stat-card__trend {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-lg)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-bold)); */
 }
 
 .stat-card__trend--up {
@@ -91,15 +91,15 @@
 }
 
 .stat-card__value {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-3xl)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-bold)); */
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-2);
 }
 
 .stat-card__description {
-  font-size: var(--font-size-sm);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */
   color: var(--color-text-tertiary);
   margin: 0;
 }
@@ -142,7 +142,7 @@
 }
 
 .quick-action-card__description {
-  font-size: var(--font-size-base);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-base)); */
   color: var(--color-text-secondary);
   line-height: var(--line-height-relaxed);
   margin: 0 0 var(--spacing-4) 0;
@@ -189,7 +189,7 @@
 
 @media (max-width: 480px) {
   .stat-card__value {
-    font-size: var(--font-size-2xl);
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-2xl)); */
   }
 }
 

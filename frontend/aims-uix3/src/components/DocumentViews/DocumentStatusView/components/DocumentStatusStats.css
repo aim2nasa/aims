@@ -76,7 +76,7 @@
 
 /* === 아이콘 === */
 .status-card-icon {
-  font-size: var(--font-size-title-3);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-3)); */
   line-height: 1;
   opacity: 0.7;
   transition: opacity var(--duration-ios-quick) var(--easing-ease-out);
@@ -95,15 +95,15 @@
 }
 
 .status-card-label {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-medium);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */
   color: var(--color-ios-text-secondary-light);
   line-height: var(--line-height-tight);
 }
 
 .status-card-count {
-  font-size: var(--font-size-title-2);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-2)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   color: var(--color-ios-text-primary-light);
   line-height: var(--line-height-tight);
   font-variant-numeric: tabular-nums;
@@ -199,10 +199,10 @@ html[data-theme="dark"] .status-card-count {
   }
 
   .status-card-icon {
-    font-size: var(--font-size-title-3);
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-3)); */
   }
 
   .status-card-count {
-    font-size: var(--font-size-title-3);
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-3)); */
   }
 }

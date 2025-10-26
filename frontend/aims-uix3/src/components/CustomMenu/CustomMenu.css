@@ -14,7 +14,7 @@
   background: transparent;
   border: none;
   color: var(--color-text-primary);
-  font-size: var(--font-size-sm); /* 14px → CSS 변수 */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-sm)); */ /* 14px → CSS 변수 */
   line-height: var(--line-height-relaxed);
   padding: 0;
   margin: 0;
@@ -54,9 +54,9 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-primary);
-  font-size: var(--font-size-footnote); /* 14px → iOS Footnote */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 14px → iOS Footnote */
   line-height: var(--line-height-normal); /* 20px → CSS variable */
-  font-weight: var(--font-weight-medium); /* 500 → iOS Medium */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */ /* 500 → iOS Medium */
   position: relative;
 
   /* color.png 기반 기본 상태 */
@@ -71,8 +71,8 @@
 /* === SUB-MENU STYLES === */
 .custom-menu-item.sub-menu {
   padding-left: var(--spacing-11);        /* 44px - iOS 최소 터치 영역 표준 */
-  font-size: var(--font-size-footnote);   /* 13px - iOS Footnote */
-  font-weight: var(--font-weight-normal);  /* 400 - iOS Normal */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */   /* 13px - iOS Footnote */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */  /* 400 - iOS Normal */
   color: var(--color-text-secondary);
 }
 
@@ -482,7 +482,7 @@
   /* 애플 표준: 단순한 배경색 변화만 (iOS Settings/Finder 스타일) */
   background: var(--color-menu-selected-bg-subtle);
   color: var(--color-menu-selected-text);
-  font-weight: var(--font-weight-semibold); /* 600 → iOS Semibold - 선택 상태 강조 */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */ /* 600 → iOS Semibold - 선택 상태 강조 */
 
   /* 애플 스타일: 그림자/변형 효과 완전 제거 */
   border-radius: 8px;
@@ -524,7 +524,7 @@
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   border-radius: 6px;
-  font-size: var(--font-size-caption-1); /* 12px → iOS Caption 1 */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px → iOS Caption 1 */
   white-space: nowrap;
   z-index: var(--z-index-tooltip);
   opacity: 0.95;

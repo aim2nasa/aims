@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-3);
-  font-size: var(--font-size-subheadline);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */
   color: var(--color-text-secondary);
   text-align: center;
   min-height: 400px;
@@ -63,7 +63,7 @@
 }
 
 .annual-report-summary__label {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   color: var(--color-text-secondary);
   font-weight: 500;
   text-transform: uppercase;
@@ -72,7 +72,7 @@
 }
 
 .annual-report-summary__value {
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   font-weight: 600;
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -93,7 +93,7 @@
 }
 
 .annual-report-contracts__title {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 12px 0;
@@ -115,7 +115,7 @@
 .contracts-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   min-width: 1200px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
@@ -138,7 +138,7 @@
   color: var(--color-text-primary);
   border-bottom: 2px solid rgba(0, 0, 0, 0.06);
   white-space: nowrap;
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -193,7 +193,7 @@
   padding: 6px 6px;
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
 }
 
 /* Cell Specific Styles */
@@ -211,7 +211,7 @@
 
 .contracts-table__cell--contract-number {
   font-family: var(--font-mono, 'SF Mono', 'Courier New', monospace);
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   min-width: 100px;
 }
 
@@ -228,7 +228,7 @@
 }
 
 .contracts-table__cell--date {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   min-width: 90px;
 }
 
@@ -241,7 +241,7 @@
   display: inline-block;
   padding: 2px 6px;
   border-radius: 6px;
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   font-weight: 500;
 }
 
@@ -269,7 +269,7 @@
 
 .contracts-table__cell--period,
 .contracts-table__cell--payment {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   min-width: 70px;
 }
 
@@ -297,7 +297,7 @@
 }
 
 .annual-report-modal__footer-text {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   color: var(--color-text-tertiary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
@@ -310,7 +310,7 @@
   }
 
   .contracts-table {
-    font-size: 10px;
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   }
 
   .contracts-table th,

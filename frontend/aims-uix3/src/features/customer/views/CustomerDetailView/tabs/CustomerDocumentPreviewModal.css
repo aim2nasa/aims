@@ -48,14 +48,14 @@
 
 .customer-document-preview__title h2 {
   margin: 0;
-  font-size: var(--font-size-title-3);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-title-3)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   color: var(--color-text-primary);
 }
 
 .customer-document-preview__title p {
   margin: 0;
-  font-size: var(--font-size-caption-1);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
   color: var(--color-text-secondary);
 }
 
@@ -86,7 +86,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-3);
-  font-size: var(--font-size-subheadline);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */
   color: var(--color-text-secondary);
   text-align: center;
 }

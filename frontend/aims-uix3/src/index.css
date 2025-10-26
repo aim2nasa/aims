@@ -11,6 +11,9 @@
 @import './shared/design/theme.css';
 @import './shared/design/system.css';
 
+/* Typography System - FONT_RULES.md */
+@import './shared/styles/typography.css';
+
 /* Component Styles */
 @import './components/Header/Header.css';
 

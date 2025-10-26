@@ -31,7 +31,7 @@
   justify-content: center;
   background-color: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-body);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
   z-index: 10;
 }
 
@@ -131,7 +131,7 @@ html[data-theme="dark"] .naver-map-reset-button:hover {
 }
 
 .naver-map-progress-text {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   color: var(--color-text-primary);
   text-align: center;

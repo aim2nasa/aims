@@ -59,7 +59,7 @@ html[data-theme="dark"] .progress-indicator__current {
 }
 
 .progress-indicator__filename {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-weight: 500;
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -69,14 +69,14 @@ html[data-theme="dark"] .progress-indicator__current {
 }
 
 .progress-indicator__size {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   color: var(--color-text-secondary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
 .progress-indicator__progress-text {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-weight: 500;
   color: var(--color-ios-system-blue);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -96,7 +96,7 @@ html[data-theme="dark"] .progress-indicator__current {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   color: var(--color-text-secondary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-variant-numeric: tabular-nums;

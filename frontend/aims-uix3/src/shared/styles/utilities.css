@@ -77,9 +77,9 @@
 
 /* === TEXT UTILITIES === */
 
-.text-xs { font-size: 11px; }
-.text-sm { font-size: 12px; }
-.text-md { font-size: 14px; }
+.text-xs { font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */ }
+.text-sm { font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */ }
+.text-md { font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */ }
 
 /* === DISPLAY UTILITIES === */
 

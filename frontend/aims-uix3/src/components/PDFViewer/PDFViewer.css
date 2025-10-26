@@ -71,7 +71,7 @@ html[data-theme="dark"] .pdf-page-container {
   gap: 12px;
   padding: 40px 20px;
   color: var(--color-ios-text-secondary-light);
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -112,7 +112,7 @@ html[data-theme="dark"] .loading-spinner {
 }
 
 .error-icon {
-  font-size: 32px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 아이콘/심볼 */
   color: var(--color-ios-system-red-light);
 }
 
@@ -123,7 +123,7 @@ html[data-theme="dark"] .error-icon {
 .error-message {
   margin: 0;
   color: var(--color-ios-text-secondary-light);
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -137,7 +137,7 @@ html[data-theme="dark"] .error-message {
   color: var(--color-ios-bg-primary-light);
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -209,7 +209,7 @@ html[data-theme="dark"] .pdf-viewer-controls {
   color: var(--color-ios-interactive-light);
   border: 1px solid transparent;
   border-radius: 6px;
-  font-size: 20px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 20px deprecated */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -248,7 +248,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 .control-button--primary {
   background-color: var(--color-primary-600);
   color: white;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 600;
   gap: 4px;
   padding: 6px 12px;
@@ -257,7 +257,7 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
 }
 
 .control-button--primary span[aria-hidden] {
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   line-height: 1;
 }
 
@@ -291,7 +291,7 @@ html[data-theme="dark"] .control-button.control-button--primary:active {
 
 .page-info,
 .zoom-info {
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);

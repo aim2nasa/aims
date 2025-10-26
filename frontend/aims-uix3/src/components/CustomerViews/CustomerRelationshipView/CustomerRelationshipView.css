@@ -29,8 +29,8 @@
 }
 
 .relationship-title {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   color: var(--color-text-primary);
   font-family: var(--font-family-system);
   flex-shrink: 0;
@@ -95,7 +95,7 @@
 .relationship-search-input {
   width: 100%;
   padding: 6px 32px 6px 12px;
-  font-size: var(--font-size-caption-1);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
   font-family: var(--font-family-system);
   color: var(--color-text-primary);
   background-color: var(--color-bg-secondary);
@@ -146,7 +146,7 @@
 .search-highlight {
   background-color: var(--color-highlight-bg);
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   border-radius: 2px;
   padding: 1px 2px;
 }
@@ -183,9 +183,9 @@ html[data-theme="dark"] .search-highlight {
 }
 
 .loading-text {
-  font-size: var(--font-size-footnote);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
   font-family: var(--font-family-system);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
   color: var(--color-text-secondary);
 }
 
@@ -197,9 +197,9 @@ html[data-theme="dark"] .search-highlight {
   padding: 60px 20px;
   gap: 16px;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-footnote);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */
   font-family: var(--font-family-system);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
 }
 
 /* ==========================================
@@ -250,8 +250,8 @@ html[data-theme="dark"] .search-highlight {
 
 /* Root 노드 (가족, 법인) - Level 0 */
 .tree-node.tree-node--root {
-  font-weight: var(--font-weight-normal);
-  font-size: var(--font-size-caption-1); /* 12px - 제목보다 작게 */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - 제목보다 작게 */
   line-height: 1.3;
   padding-top: 8px;
   padding-bottom: 8px;
@@ -261,16 +261,16 @@ html[data-theme="dark"] .search-highlight {
 
 /* Group 노드 (대표, 회사명) - Level 1 */
 .tree-node.tree-node--group {
-  font-weight: var(--font-weight-normal);
-  font-size: var(--font-size-caption-1); /* 12px - 제목보다 작게 */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - 제목보다 작게 */
   line-height: 1.3;
   padding-left: 28px; /* Level 1: 28px 들여쓰기 (Root + 20px) */
 }
 
 /* Leaf 노드 (구성원, 직원) - Level 2 */
 .tree-node.tree-node--leaf {
-  font-size: var(--font-size-caption-1); /* 12px - 제목보다 작게 */
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - 제목보다 작게 */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
   line-height: 1.3;
   padding-left: 48px; /* Level 2: 48px 들여쓰기 (Group + 20px) */
   opacity: 0.9;
@@ -282,8 +282,8 @@ html[data-theme="dark"] .search-highlight {
 
 /* Relation 노드 (관계 정보) - Level 2 */
 .tree-node.tree-node--relation {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
   line-height: 1.3;
   padding-left: 48px; /* Level 2: 48px 들여쓰기 (Leaf와 동일) */
   background-color: rgba(0, 0, 0, 0.02);
@@ -297,8 +297,8 @@ html[data-theme="dark"] .search-highlight {
 
 /* Empty 노드 - Level 2 */
 .tree-node.tree-node--empty {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
   line-height: 1.3;
   padding-left: 48px; /* Level 2: 48px 들여쓰기 (Leaf와 동일) */
   font-style: italic;
@@ -324,7 +324,7 @@ html[data-theme="dark"] .search-highlight {
   height: 18px;
   flex-shrink: 0;
   transition: transform var(--duration-fast) var(--easing-ease-out);
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
 }
 
 /* 🍎 Folder 아이콘 회전 애니메이션 (macOS 스타일) */
@@ -370,12 +370,12 @@ html[data-theme="dark"] .search-highlight {
 /* 🍎 카테고리 라벨 색상 - macOS Finder 스타일 */
 .tree-node__label--family {
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
 }
 
 .tree-node__label--corporate {
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-normal);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-normal)); */
 }
 
 /* 🍎 클릭 가능한 라벨 - 서브틀한 언더라인 */
@@ -412,9 +412,9 @@ html[data-theme="dark"] .search-highlight {
    ========================================== */
 
 .tree-node__badge {
-  font-size: var(--font-size-caption-2);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */
   font-family: var(--font-family-system);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   line-height: 1;
   padding: 3px 7px;
   margin-left: 6px;
@@ -436,7 +436,7 @@ html[data-theme="dark"] .search-highlight {
 .tree-node__badge--success {
   background-color: rgba(52, 199, 89, 0.15);
   color: rgb(30, 130, 76);
-  font-weight: var(--font-weight-bold);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-bold)); */
 }
 
 .tree-node:hover .tree-node__badge--success {
@@ -448,9 +448,9 @@ html[data-theme="dark"] .search-highlight {
    ========================================== */
 
 .tree-node__relation-badge {
-  font-size: var(--font-size-caption-2);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */
   font-family: var(--font-family-system);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   line-height: 1;
   padding: 3px 8px;
   background: linear-gradient(135deg, rgb(255, 59, 48), rgb(255, 45, 85));
@@ -601,7 +601,7 @@ html[data-theme="dark"] .tree-node__badge--success {
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   opacity: 0.5;
   cursor: pointer;
   transition: opacity var(--duration-fast) var(--easing-ease-out),
@@ -640,13 +640,13 @@ html[data-theme="dark"] .tree-node__badge--success {
 }
 
 .relation-item__icon {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   flex-shrink: 0;
   opacity: 0.8;
 }
 
 .relation-item__text {
-  font-size: 10px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   color: var(--color-text-secondary);
   line-height: 1.4;
   white-space: nowrap;

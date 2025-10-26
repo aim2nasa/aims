@@ -144,7 +144,7 @@
   background-color: var(--color-layout-leftpane-bg);
   /* 🍎 애플 사이드바 디자인 - 정교한 Typography */
   font-family: var(--font-family-text); /* 텍스트 전용 폰트 사용 */
-  font-size: var(--font-size-subheadline-dynamic); /* iOS Dynamic Type 지원 */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline-dynamic)); */ /* iOS Dynamic Type 지원 */
 
   /* 🍎 Safe Area 대응 - 노치/Dynamic Island 완벽 지원 */
   padding-left: max(20px, env(safe-area-inset-left));
@@ -250,8 +250,8 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-family-text); /* 텍스트 전용 폰트 */
-  font-size: var(--font-size-footnote-dynamic); /* iOS Dynamic Type 지원 */
-  font-weight: var(--font-weight-medium); /* San Francisco Medium */
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote-dynamic)); */ /* iOS Dynamic Type 지원 */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-medium)); */ /* San Francisco Medium */
   letter-spacing: -0.08px; /* San Francisco 표준 자간 */
   box-sizing: border-box;
   z-index: var(--z-index-elevated);
@@ -380,7 +380,7 @@ html[data-theme="dark"] .layout-brb:hover {
   background-color: var(--color-ios-bg-secondary-light);
   border: 2px solid var(--color-ios-separator-light);
   border-radius: 50%;
-  font-size: 18px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 18px deprecated */
   cursor: pointer;
   opacity: 0.5;
   transition: all 0.2s ease-out;

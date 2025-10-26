@@ -201,6 +201,13 @@
   --font-size-title-1: 1.75rem;       /* 28px - iOS Title 1 */
   --font-size-large-title: 2.125rem;  /* 34px - iOS Large Title */
 
+  /* Symbol & Icon Sizes - FONT_RULES.md */
+  --font-size-large-symbol: 1.5rem;     /* 24px - 아이콘/심볼 */
+  --font-size-xlarge-symbol: 2rem;      /* 32px - 큰 아이콘/심볼 */
+  --font-size-xxlarge-symbol: 3rem;     /* 48px - 특대형 아이콘/심볼 */
+  --font-size-xxxlarge-symbol: 4rem;    /* 64px - 이모지 */
+  --font-size-jumbo-symbol: 5rem;       /* 80px - 특대형 이모지 */
+
   /* Legacy sizes (하위 호환용) */
   --font-size-xs: var(--font-size-caption-1);   /* 12px */
   --font-size-sm: var(--font-size-footnote);    /* 13px */
@@ -1182,7 +1189,7 @@
   position: absolute;
   top: -20px;
   left: 0;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_RULES.md */
   color: transparent;
   pointer-events: none;
 }

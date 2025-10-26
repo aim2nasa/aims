@@ -1,0 +1,263 @@
+/**
+ * AIMS UIX3 Typography System
+ * @version 1.0.0
+ * @description 프로젝트 전역에서 사용하는 일관된 타이포그래피 클래스
+ * @reference FONT_RULES.md
+ *
+ * ✅ 모든 페이지, 탭, 모달은 이 클래스들을 사용해야 합니다
+ * ✅ 커스텀 폰트 크기 정의 금지
+ *
+ * 📌 자동 적용:
+ * - 컴포넌트 CSS에서 font-size/font-weight가 주석 처리되면
+ * - 이 파일의 기본값이 자동으로 적용됩니다
+ */
+
+/* ========================================
+   🌍 전역 기본값 (Fallback)
+   컴포넌트 CSS에서 폰트가 정의되지 않으면 자동 적용
+   ======================================== */
+
+/* 모든 텍스트 요소의 기본값 */
+body, div, span, p, a, button, input, textarea, select {
+  font-size: var(--font-size-footnote); /* 13px - 기본 본문 크기 */
+  font-weight: var(--font-weight-regular); /* 400 */
+}
+
+/* 제목 요소의 기본값 */
+h1, h2, h3 {
+  font-size: var(--font-size-subheadline); /* 15px - 기본 제목 크기 */
+  font-weight: var(--font-weight-semibold); /* 600 */
+}
+
+h4, h5, h6 {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+}
+
+/* ========================================
+   🎯 Tier 1: 페이지/섹션 제목 (15px)
+   ======================================== */
+
+.typography-page-title {
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.typography-section-title {
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.typography-modal-title {
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.typography-tab-title {
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+/* ========================================
+   📝 Tier 2: 본문 및 메인 컨텐츠 (13px)
+   ======================================== */
+
+.typography-body {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+}
+
+.typography-body-emphasis {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+}
+
+.typography-input {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-primary);
+}
+
+.typography-button {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-medium); /* 500 */
+}
+
+.typography-message {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.typography-error {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  color: var(--color-error);
+}
+
+.typography-count {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   📌 Tier 3: 보조 정보 (12px)
+   ======================================== */
+
+.typography-table-header {
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.typography-label {
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  color: var(--color-text-secondary);
+}
+
+.typography-tooltip {
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-primary);
+}
+
+.typography-placeholder {
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   🔍 Tier 4: 미세 정보 (11px)
+   ======================================== */
+
+.typography-caption {
+  font-size: var(--font-size-caption-2); /* 11px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-tertiary);
+}
+
+.typography-metadata {
+  font-size: var(--font-size-caption-2); /* 11px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-tertiary);
+}
+
+.typography-table-cell {
+  font-size: var(--font-size-caption-2); /* 11px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-secondary);
+}
+
+.typography-badge {
+  font-size: var(--font-size-caption-2); /* 11px */
+  font-weight: var(--font-weight-medium); /* 500 */
+}
+
+/* ========================================
+   📐 Tier 5: 심볼 및 아이콘
+   ======================================== */
+
+.typography-symbol-large {
+  font-size: var(--font-size-large-symbol); /* 24px */
+  font-weight: var(--font-weight-light); /* 300 */
+}
+
+.typography-symbol-xlarge {
+  font-size: var(--font-size-xlarge-symbol); /* 32px */
+  font-weight: var(--font-weight-light); /* 300 */
+}
+
+.typography-symbol-xxlarge {
+  font-size: var(--font-size-xxlarge-symbol); /* 48px */
+  font-weight: var(--font-weight-light); /* 300 */
+}
+
+.typography-symbol-xxxlarge {
+  font-size: var(--font-size-xxxlarge-symbol); /* 64px */
+  font-weight: var(--font-weight-light); /* 300 */
+}
+
+.typography-symbol-jumbo {
+  font-size: var(--font-size-jumbo-symbol); /* 80px */
+  font-weight: var(--font-weight-light); /* 300 */
+}
+
+/* ========================================
+   🎨 특수 스타일 조합
+   ======================================== */
+
+/* 빈 상태 제목 */
+.typography-empty-title {
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* 빈 상태 메시지 */
+.typography-empty-message {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-regular); /* 400 */
+  color: var(--color-text-tertiary);
+  text-align: center;
+  line-height: var(--line-height-relaxed);
+}
+
+/* 링크 */
+.typography-link {
+  font-size: var(--font-size-footnote); /* 13px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.typography-link:hover {
+  text-decoration: underline;
+}
+
+/* 강조 레이블 */
+.typography-label-strong {
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+}
+
+/* ========================================
+   ⚠️ 사용 금지 경고
+   ======================================== */
+
+/**
+ * 🚫 절대 하지 마세요:
+ *
+ * ❌ 컴포넌트별 커스텀 폰트 크기 정의
+ * ❌ 하드코딩된 px 값 직접 사용
+ * ❌ 각 탭마다 다른 제목 크기
+ * ❌ 페이지마다 다른 본문 크기
+ *
+ * ✅ 대신 이렇게:
+ *
+ * 제목이 필요하면 → .typography-page-title
+ * 본문이 필요하면 → .typography-body
+ * 캡션이 필요하면 → .typography-caption
+ *
+ * 이 클래스들을 사용하면 전체 프로젝트의 타이포그래피가
+ * 자동으로 일관성을 유지합니다.
+ */

@@ -40,7 +40,7 @@ html[data-theme="dark"] .document-status-list::-webkit-scrollbar-thumb {
   gap: 10px;
   height: 200px;
   color: var(--color-ios-text-quaternary-light);
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -74,7 +74,7 @@ html[data-theme="dark"] .loading-spinner {
   gap: 8px;
   height: 100px;
   color: var(--color-ios-text-secondary-light);
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
@@ -83,7 +83,7 @@ html[data-theme="dark"] .list-error {
 }
 
 .error-icon {
-  font-size: 16px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-subheadline)); */ /* 15px - FONT_RULES.md: 16px deprecated */
   opacity: 0.6;
 }
 
@@ -98,12 +98,12 @@ html[data-theme="dark"] .list-error {
 }
 
 .empty-icon {
-  font-size: 32px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-xlarge-symbol)); */ /* 32px - FONT_RULES.md: 아이콘/심볼 */
   opacity: 0.2;
 }
 
 .empty-message {
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-quaternary-light);
   margin: 0;
@@ -176,7 +176,7 @@ html[data-theme="dark"] .status-item:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md: 14px deprecated */
   flex-shrink: 0;
 }
 
@@ -207,7 +207,7 @@ html[data-theme="dark"] .status-item:active {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
@@ -220,7 +220,7 @@ html[data-theme="dark"] .status-filename {
 /* === 진행률/상태 === */
 .status-progress {
   text-align: right;
-  font-size: 12px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-tertiary-light);
 }
@@ -241,7 +241,7 @@ html[data-theme="dark"] .status-progress {
 
 /* === 날짜 === */
 .status-date {
-  font-size: 11px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-quaternary-light);
   font-variant-numeric: tabular-nums;
@@ -357,12 +357,12 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   }
 
   .status-filename {
-    font-size: 12px;
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md */
   }
 
   .status-progress,
   .status-date {
-    font-size: 10px;
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-1)); */ /* 12px - FONT_RULES.md: 10px deprecated (접근성) */
   }
 
   .status-actions {
@@ -393,7 +393,7 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  font-size: 7px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-caption-2)); */ /* 11px - FONT_RULES.md: 7px deprecated (접근성) */
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: #ffffff;

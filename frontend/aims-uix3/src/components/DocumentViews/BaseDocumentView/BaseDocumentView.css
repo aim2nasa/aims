@@ -50,8 +50,8 @@ html[data-theme="dark"] .base-document-view__header {
 /* 제목 스타일 - 애플 타이포그래피 */
 .base-document-view__title {
   margin: 0;
-  font-size: var(--font-size-headline);
-  font-weight: var(--font-weight-semibold);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-headline)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-semibold)); */
   color: var(--color-text-primary);
   /* 애플 시스템 폰트 */
   font-family: var(--font-family-display);
@@ -135,8 +135,8 @@ html[data-theme="dark"] .base-document-view__content::-webkit-scrollbar-thumb {
 
 .base-document-view__placeholder p {
   margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-regular);
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-body)); */
+  /* TYPOGRAPHY_SYSTEM: font-weight: var(--font-weight-regular)); */
   font-family: var(--font-family-text);
   line-height: var(--line-height-normal);
 }
@@ -171,7 +171,7 @@ html[data-theme="dark"] .base-document-view__content::-webkit-scrollbar-thumb {
   }
 
   .base-document-view__title {
-    font-size: var(--font-size-callout);
+    /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-callout)); */
   }
 }
 

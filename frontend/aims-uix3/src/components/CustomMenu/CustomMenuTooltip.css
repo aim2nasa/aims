@@ -23,7 +23,7 @@
   color: white;
   padding: 8px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  /* TYPOGRAPHY_SYSTEM: font-size: var(--font-size-footnote)); */ /* 13px - FONT_RULES.md */
   font-weight: 500;
   white-space: nowrap;
   z-index: 1000;
