@@ -229,7 +229,9 @@ export class DocumentProcessingModule {
   static getCustomerLinkStatus(document: Document): CustomerLinkStatus {
     const isLinked = Boolean(document.customer_relation)
     const status = this.extractStatus(document)
-    const canLink = status === 'completed' && !isLinked
+    const isAnnualReport = document.is_annual_report === true
+    // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
+    const canLink = status === 'completed' && !isLinked && !isAnnualReport
 
     const result: CustomerLinkStatus = {
       isLinked,
