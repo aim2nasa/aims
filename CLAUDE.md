@@ -584,13 +584,29 @@ The system is organized into functional modules:
 
 ### Prerequisites (WSL/Linux/Mac)
 
-Python 테스트를 실행하려면 pytest 설치가 필요합니다:
+Python 테스트를 실행하려면 의존성 설치가 필요합니다:
 
 ```bash
-# Option 1: pip로 설치
+# Python virtual environment 생성 및 활성화
+cd backend/api/doc_status_api
+python3 -m venv venv
+source venv/bin/activate  # WSL/Linux/Mac
+# 또는 Windows에서: venv\Scripts\activate
+
+# 의존성 설치 (pytest 포함)
+pip install -r requirements.txt
+
+# 프로젝트 루트로 돌아가기
+cd ../../..
+```
+
+**중요**: test-all.sh는 시스템 전역 Python 환경을 사용합니다. venv 없이 실행하려면:
+
+```bash
+# 전역 환경에 pytest 설치
 pip install pytest pytest-asyncio
 
-# Option 2: Ubuntu/Debian 패키지 관리자로 설치
+# 또는 Ubuntu/Debian
 sudo apt update
 sudo apt install python3-pytest python3-pytest-asyncio
 ```
