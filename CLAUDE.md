@@ -582,6 +582,19 @@ The system is organized into functional modules:
 
 ## Common Development Commands
 
+### Prerequisites (WSL/Linux/Mac)
+
+Python 테스트를 실행하려면 pytest 설치가 필요합니다:
+
+```bash
+# Option 1: pip로 설치
+pip install pytest pytest-asyncio
+
+# Option 2: Ubuntu/Debian 패키지 관리자로 설치
+sudo apt update
+sudo apt install python3-pytest python3-pytest-asyncio
+```
+
 ### Frontend Development (UIX3)
 ```bash
 # Run development server (port 5177)
