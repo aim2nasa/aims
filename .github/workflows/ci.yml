@@ -41,7 +41,9 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: backend/api/doc_status_api/requirements.txt
+          cache-dependency-path: |
+            backend/api/doc_status_api/requirements.txt
+            backend/api/annual_report_api/requirements.txt
 
       # 프론트엔드 테스트
       - name: Install frontend dependencies
@@ -88,7 +90,18 @@ jobs:
           cd backend/api/doc_status_api
           pip install -r requirements.txt
 
-      - name: Run Python API tests
+      - name: Run Python API tests (doc_status_api)
         run: |
           cd backend/api/doc_status_api
+          python -m pytest -v
+
+      # Annual Report API 테스트
+      - name: Install Annual Report API dependencies
+        run: |
+          cd backend/api/annual_report_api
+          pip install -r requirements.txt
+
+      - name: Run Annual Report API tests
+        run: |
+          cd backend/api/annual_report_api
           python -m pytest -v
