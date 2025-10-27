@@ -49,7 +49,7 @@ echo "[2/4] Running Node.js API tests..."
 echo "----------------------------------------"
 cd backend/api/aims_api
 export MONGO_URI=mongodb://localhost:27017
-if npm test; then
+if npm run test:ci; then
     echo ""
     echo "[PASSED] Node.js API tests passed!"
 else

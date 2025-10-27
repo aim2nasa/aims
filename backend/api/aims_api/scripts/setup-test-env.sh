@@ -1,12 +1,15 @@
 #!/bin/bash
 # SSH 터널 설정 스크립트
 
-echo "Setting up SSH tunnel to MongoDB..."
+echo "Checking MongoDB connection..."
 
-# 기존 터널이 있는지 확인
-if lsof -ti:27017 >/dev/null 2>&1; then
-    echo "Port 27017 already in use (SSH tunnel may already exist)"
+# MongoDB 연결 테스트 (크로스 플랫폼)
+if mongosh --host localhost:27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1 || \
+   mongo --host localhost:27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1 || \
+   nc -z localhost 27017 >/dev/null 2>&1; then
+    echo "MongoDB connection already available on port 27017"
 else
+    echo "Setting up SSH tunnel to MongoDB..."
     # SSH 터널 시작
     ssh -f -N -L 27017:localhost:27017 tars.giize.com
     sleep 2

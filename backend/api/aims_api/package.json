@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
-    "test:standalone": "bash scripts/setup-test-env.sh && cross-env MONGO_URI=mongodb://localhost:27017 jest; bash scripts/teardown-test-env.sh",
+    "test": "bash scripts/setup-test-env.sh && cross-env MONGO_URI=mongodb://localhost:27017 jest; bash scripts/teardown-test-env.sh",
+    "test:ci": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "start": "node server.js"
