@@ -80,6 +80,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 검색어 상태
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // 대표만 보기 모드 상태
+  const [isRepresentativeMode, setIsRepresentativeMode] = useState<boolean>(false);
+
   // LocalStorage에서 트리 확장 상태 복원
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
     try {
@@ -517,6 +520,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
 
     setExpandedNodes(newExpandedNodes);
+    // 검색 시 대표만 보기 모드 해제
+    setIsRepresentativeMode(false);
   }, [searchQuery, structuredData]);
 
   const toggleNode = useCallback((nodeKey: string) => {
@@ -529,6 +534,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       }
       return newSet;
     });
+    // 수동으로 노드를 토글하면 대표만 보기 모드 해제
+    setIsRepresentativeMode(false);
   }, []);
 
   // 전체 펼치기
@@ -546,18 +553,21 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
 
     setExpandedNodes(allNodes);
+    setIsRepresentativeMode(false); // 대표만 보기 모드 해제
   }, [structuredData]);
 
   // 전체 접기
   const collapseAll = useCallback(() => {
     setExpandedNodes(new Set());
+    setIsRepresentativeMode(false); // 대표만 보기 모드 해제
   }, []);
 
-  // 대표만 보기 (가족/법인/가족관계미설정 루트만 펼침, 각 그룹은 접힌 상태)
+  // 대표만 보기 (가족/법인 루트만 펼침, 가족관계미설정은 숨김)
   const expandToRepresentatives = useCallback(() => {
-    // 가족/법인/가족관계미설정 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
-    const representativeNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+    // 가족/법인 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
+    const representativeNodes = new Set<string>(['family', 'corporate']);
     setExpandedNodes(representativeNodes);
+    setIsRepresentativeMode(true); // 대표만 보기 모드 활성화
   }, []);
 
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
@@ -747,14 +757,16 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 </span>
                 <div className="tree-node__content">
                   <span className="tree-node__label tree-node__label--family">가족</span>
-                  <span className="tree-node__badge">{familyEntries.length + (noFamilyRelationshipCustomers.length > 0 ? 1 : 0)}</span>
+                  <span className="tree-node__badge">
+                    {familyEntries.length + (!isRepresentativeMode && noFamilyRelationshipCustomers.length > 0 ? 1 : 0)}
+                  </span>
                 </div>
               </div>
 
               {expandedNodes.has('family') && (
                 <div className="tree-children">
-                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 */}
-                  {noFamilyRelationshipCustomers.length > 0 && (
+                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 (대표만 보기 모드에서는 숨김) */}
+                  {!isRepresentativeMode && noFamilyRelationshipCustomers.length > 0 && (
                     <div className="tree-group">
                       <div
                         className="tree-node tree-node--group"
