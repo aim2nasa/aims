@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "pretest": "bash scripts/setup-test-env.sh || true",
-    "test": "MONGO_URI=mongodb://localhost:27017 jest",
-    "posttest": "bash scripts/teardown-test-env.sh || true",
+    "test": "cross-env MONGO_URI=mongodb://localhost:27017 jest",
+    "test:standalone": "bash scripts/setup-test-env.sh && cross-env MONGO_URI=mongodb://localhost:27017 jest; bash scripts/teardown-test-env.sh",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "start": "node server.js"
@@ -23,6 +22,7 @@
     "multer": "^2.0.2"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "jest": "^29.7.0"
   },
   "jest": {
