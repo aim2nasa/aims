@@ -4,9 +4,7 @@
  * @version 6.0.0
  *
  * 🍎 탭 기반 고객 정보 보기
- * - aims-uix2와 동일한 5개 탭 구조
- * - 기본정보, 문서, 관계, 상담이력, 계약
- * - 기본정보 탭만 구현, 나머지는 플레이스홀더
+ * - 기본정보, 가족관계(개인만), 문서, Annual Report
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -19,7 +17,6 @@ import { Button } from '../../../../shared/ui/Button';
 import { Tabs, type Tab } from '../../../../components/Tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
 import { RelationshipsTab } from './tabs/RelationshipsTab';
-import { EmptyTab } from './tabs/EmptyTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { AnnualReportTab } from './tabs/AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
@@ -274,7 +271,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 법인 고객 여부 확인
   const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
 
-  // 🍎 탭 정의 (순서: 기본정보, 관계(개인만), 문서, Annual Report, 상담이력)
+  // 🍎 탭 정의 (순서: 기본정보, 가족관계(개인만), 문서, Annual Report)
   const tabs: Tab[] = useMemo(() => {
     const baseTabs: Tab[] = [
       {
@@ -320,16 +317,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--icon-color)"/>
           </svg>
         )
-      },
-      {
-        key: 'consultations',
-        label: '상담 이력',
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm1-8V4a1 1 0 0 0-2 0v4H4a1 1 0 0 0 0 2h3v4a1 1 0 0 0 2 0v-4h3a1 1 0 0 0 0-2H9z"/>
-          </svg>
-        ),
-        count: 0
       }
     ]
 
@@ -367,18 +354,6 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             customer={customer}
             {...(onSelectCustomer ? { onSelectCustomer } : {})}
             {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
-          />
-        );
-      case 'consultations':
-        return (
-          <EmptyTab
-            title="상담 이력 탭"
-            description="고객과의 상담 기록이 여기에 표시됩니다."
-            icon={
-              <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm1-8V4a1 1 0 0 0-2 0v4H4a1 1 0 0 0 0 2h3v4a1 1 0 0 0 2 0v-4h3a1 1 0 0 0 0-2H9z"/>
-              </svg>
-            }
           />
         );
       case 'annual_report':
