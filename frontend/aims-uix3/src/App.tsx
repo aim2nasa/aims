@@ -932,14 +932,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (
         <nav
-          className={`layout-pane layout-leftpane ${isResizing ? '' : 'transition-smooth'} ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
+          className={`layout-pane layout-leftpane ${leftPaneAnimationState === 'expanding' ? 'layout-leftpane--expanding' : ''} ${leftPaneAnimationState === 'collapsing' ? 'layout-leftpane--collapsing' : ''}`}
           role="navigation"
           aria-label="메인 네비게이션 메뉴"
           style={{
             top: `calc(var(--header-height-base) + var(--gap-top))`,
             width: layoutDimensions.leftPaneWidthVar,
             height: `calc(var(--mainpane-height) - var(--gap-top) - var(--gap-bottom))`,
-            padding: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)' /* 🍎 애플 표준: 1:2 비율 (12px/24px) */
+            padding: leftPaneCollapsed ? 'var(--spacing-3)' : 'var(--spacing-6)', /* 🍎 애플 표준: 1:2 비율 (12px/24px) */
+            transition: isResizing ? 'none' : 'width var(--duration-apple-graceful) var(--easing-apple-smooth), padding var(--duration-apple-graceful) var(--easing-apple-smooth)'
           }}
         >
           {/* CustomMenu - color.png 기반 완벽한 구현 */}

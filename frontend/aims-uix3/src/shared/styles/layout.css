@@ -205,9 +205,9 @@
   -webkit-backdrop-filter: var(--backdrop-glass-light);
   backdrop-filter: var(--backdrop-glass-light);
 
-  /* 🍎 중요: LeftPane과 완벽한 동기화를 위해 명시적 transition 추가 */
-  transition: left var(--duration-apple-graceful) var(--easing-ease-in-out),
-              width var(--duration-apple-graceful) var(--easing-ease-in-out),
+  /* 🍎 중요: LeftPane과 완벽한 동기화를 위해 동일한 easing 사용 */
+  transition: left var(--duration-apple-graceful) var(--easing-apple-smooth),
+              width var(--duration-apple-graceful) var(--easing-apple-smooth),
               box-shadow var(--duration-ios-quick) var(--easing-ios-default);
 
   /* 🍎 Performance: GPU 가속 최적화 */
