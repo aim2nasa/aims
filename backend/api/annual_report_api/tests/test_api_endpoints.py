@@ -70,8 +70,12 @@ class TestAnnualReportQueryEndpoints:
     """Annual Report 조회 엔드포인트 테스트"""
 
     @patch('routes.query.get_annual_reports')
-    def test_get_customer_annual_reports_success(self, mock_get_reports):
+    @patch('main.db')
+    def test_get_customer_annual_reports_success(self, mock_db, mock_get_reports):
         """고객의 Annual Reports 조회 성공"""
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
         customer_id = str(ObjectId())
         mock_get_reports.return_value = {
             "success": True,
@@ -95,8 +99,12 @@ class TestAnnualReportQueryEndpoints:
         assert len(data["data"]) == 1
 
     @patch('routes.query.get_annual_reports')
-    def test_get_customer_annual_reports_with_limit(self, mock_get_reports):
+    @patch('main.db')
+    def test_get_customer_annual_reports_with_limit(self, mock_db, mock_get_reports):
         """limit 파라미터로 조회 개수 제한"""
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
         customer_id = str(ObjectId())
         mock_get_reports.return_value = {
             "success": True,
@@ -113,8 +121,12 @@ class TestAnnualReportQueryEndpoints:
         assert call_args is not None
 
     @patch('routes.query.get_annual_reports')
-    def test_get_customer_annual_reports_empty(self, mock_get_reports):
+    @patch('main.db')
+    def test_get_customer_annual_reports_empty(self, mock_db, mock_get_reports):
         """Annual Report가 없는 경우"""
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
         customer_id = str(ObjectId())
         mock_get_reports.return_value = {
             "success": True,
@@ -139,8 +151,13 @@ class TestAnnualReportParseEndpoints:
     @patch('routes.parse.extract_customer_info_from_first_page')
     def test_check_annual_report_success(self, mock_extract, mock_is_ar):
         """Annual Report 판단 API 성공"""
-        # 모킹 설정
-        mock_is_ar.return_value = (True, 0.95)
+        # 모킹 설정 - 딕셔너리 반환 (튜플 아님!)
+        mock_is_ar.return_value = {
+            "is_annual_report": True,
+            "confidence": 0.95,
+            "reason": "키워드 매칭 성공",
+            "matched_keywords": ["Annual Review Report", "보유계약 현황"]
+        }
         mock_extract.return_value = {
             "customer_name": "테스트고객",
             "report_title": "Annual Review Report",
@@ -162,7 +179,13 @@ class TestAnnualReportParseEndpoints:
     @patch('routes.parse.is_annual_report')
     def test_check_annual_report_not_ar(self, mock_is_ar):
         """Annual Report가 아닌 경우"""
-        mock_is_ar.return_value = (False, 0.3)
+        # 딕셔너리 반환 (튜플 아님!)
+        mock_is_ar.return_value = {
+            "is_annual_report": False,
+            "confidence": 0.3,
+            "reason": "키워드 미매칭",
+            "matched_keywords": []
+        }
 
         test_file_content = b"%PDF-1.4 dummy content"
         files = {"file": ("normal.pdf", test_file_content, "application/pdf")}
@@ -179,8 +202,12 @@ class TestAnnualReportDeleteEndpoints:
     """Annual Report 삭제 엔드포인트 테스트"""
 
     @patch('routes.query.delete_annual_reports')
-    def test_delete_annual_reports_success(self, mock_delete):
+    @patch('main.db')
+    def test_delete_annual_reports_success(self, mock_db, mock_delete):
         """Annual Reports 삭제 성공"""
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
         customer_id = str(ObjectId())
         mock_delete.return_value = {
             "success": True,
@@ -188,15 +215,24 @@ class TestAnnualReportDeleteEndpoints:
             "message": "Successfully deleted 3 annual reports"
         }
 
-        response = client.delete(f"/customers/{customer_id}/annual-reports")
+        # DELETE 요청에 Body 포함 (indices 필수)
+        response = client.request(
+            "DELETE",
+            f"/customers/{customer_id}/annual-reports",
+            json={"indices": [0, 1, 2]}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
         assert data["deleted_count"] == 3
 
     @patch('routes.query.delete_annual_reports')
-    def test_delete_annual_reports_none_found(self, mock_delete):
+    @patch('main.db')
+    def test_delete_annual_reports_none_found(self, mock_db, mock_delete):
         """삭제할 Annual Report가 없는 경우"""
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
         customer_id = str(ObjectId())
         mock_delete.return_value = {
             "success": True,
@@ -204,7 +240,13 @@ class TestAnnualReportDeleteEndpoints:
             "message": "No annual reports found to delete"
         }
 
-        response = client.delete(f"/customers/{customer_id}/annual-reports")
+        # DELETE 요청에 Body 포함 (유효한 인덱스 배열 필요 - 빈 배열은 400 에러)
+        # 대신 유효하지 않은 인덱스를 사용하여 삭제 개수 0을 테스트
+        response = client.request(
+            "DELETE",
+            f"/customers/{customer_id}/annual-reports",
+            json={"indices": [999]}  # 존재하지 않는 인덱스
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -214,31 +256,36 @@ class TestAnnualReportDeleteEndpoints:
 class TestBackgroundParsingEndpoints:
     """백그라운드 파싱 트리거 엔드포인트 테스트"""
 
-    @patch('routes.background.trigger_background_parsing')
-    def test_trigger_parsing_success(self, mock_trigger):
+    @patch('routes.background.process_ar_documents_background')
+    @patch('main.db')
+    def test_trigger_parsing_success(self, mock_db, mock_process):
         """백그라운드 파싱 트리거 성공"""
-        mock_trigger.return_value = {
-            "success": True,
-            "message": "Background parsing triggered",
-            "pending_count": 5
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
+
+        # 요청 Body
+        request_body = {
+            "customer_id": str(ObjectId()),
+            "file_id": None
         }
 
-        response = client.post("/ar-background/trigger-parsing")
+        response = client.post("/ar-background/trigger-parsing", json=request_body)
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        assert "pending_count" in data
+        assert "message" in data
 
-    @patch('routes.background.trigger_background_parsing')
-    def test_trigger_parsing_no_pending(self, mock_trigger):
+    @patch('routes.background.process_ar_documents_background')
+    @patch('main.db')
+    def test_trigger_parsing_no_pending(self, mock_db, mock_process):
         """대기 중인 문서가 없는 경우"""
-        mock_trigger.return_value = {
-            "success": True,
-            "message": "No pending documents",
-            "pending_count": 0
-        }
+        # MongoDB 연결 Mock
+        mock_db.return_value = MagicMock()
 
-        response = client.post("/ar-background/trigger-parsing")
+        # 요청 Body (고객 ID 없이 전체 파싱)
+        request_body = {}
+
+        response = client.post("/ar-background/trigger-parsing", json=request_body)
         assert response.status_code == 200
         data = response.json()
-        assert data["pending_count"] == 0
+        assert data["success"] is True
