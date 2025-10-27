@@ -39,3 +39,18 @@ if (typeof DOMMatrix === 'undefined') {
     }
   }
 }
+
+// window.matchMedia stub (테스트 환경에서 matchMedia API가 없음)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
