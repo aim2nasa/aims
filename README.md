@@ -27,14 +27,18 @@ python scripts/run_docmeta.py --file ./samples/pdf/보험청구서.pdf
 
 전체 테스트 실행 (Node.js + Python):
 ```bash
-# Windows
-scripts\test-all.bat
+# 크로스 플랫폼 (권장) - Windows, Linux, Mac 모두 지원
+npm test
 
-# Linux/Mac
-./scripts/test-all.sh
+# 또는 Node.js 직접 실행
+node scripts/test-all.js
+
+# 레거시 방식 (deprecated)
+# Windows: scripts\test-all.bat
+# Linux/Mac: ./scripts/test-all.sh
 ```
 
-자세한 테스트 가이드는 [`docs/TESTING.md`](./docs/TESTING.md)를 참고하세요.
+자세한 테스트 가이드는 [`scripts/README.md`](./scripts/README.md)를 참고하세요.
 
 ## 사용 조건
 

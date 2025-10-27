@@ -10,8 +10,7 @@
 ## 🧪 테스트 실행 스크립트
 
 ### 파일명
-- `test-all.sh` (Linux/Mac/WSL)
-- `test-all.bat` (Windows)
+`test-all.js` - **크로스 플랫폼 지원** (Windows, Linux, Mac)
 
 ### 기능
 AIMS 프로젝트의 모든 테스트를 자동으로 실행합니다:
@@ -19,20 +18,33 @@ AIMS 프로젝트의 모든 테스트를 자동으로 실행합니다:
 2. Node.js API Tests (aims_api) - 23개 테스트
 3. Python API Tests (doc_status_api) - 43개 테스트
 
-### 사전 준비 (WSL/Linux/Mac)
+### 사전 준비 (모든 플랫폼 공통)
 
 #### 1. SSH 키 인증 설정 (필수)
 
 테스트 실행 시 tars 서버에 자동으로 SSH 터널을 생성하므로, 비밀번호 없이 SSH 접속할 수 있도록 키 인증을 설정해야 합니다.
 
+**Windows (PowerShell):**
+```powershell
+# 1단계: SSH 키 생성 (이미 있으면 스킵)
+ssh-keygen -t ed25519 -C "rossi@WonderCastle"
+# 엔터 3번 (기본 경로, 비밀번호 없음)
+
+# 2단계: 공개키를 tars 서버에 복사
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh rossi@tars.giize.com "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+# 3단계: 테스트 (비밀번호 없이 접속되면 성공)
+ssh tars.giize.com "echo SSH key authentication works"
+```
+
+**Linux/Mac/WSL:**
 ```bash
 # 1단계: SSH 키 생성 (이미 있으면 스킵)
 ssh-keygen -t ed25519 -C "rossi@WonderCastle"
 # 엔터 3번 (기본 경로, 비밀번호 없음)
 
-# 2단계: 공개키를 tars 서버에 복사 (마지막으로 비밀번호 한 번만 입력)
+# 2단계: 공개키를 tars 서버에 복사
 ssh-copy-id rossi@tars.giize.com
-
 # 또는 수동으로:
 cat ~/.ssh/id_ed25519.pub | ssh rossi@tars.giize.com "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 
@@ -44,8 +56,15 @@ ssh tars.giize.com "echo SSH key authentication works"
 
 #### 2. Python 의존성 설치
 
+**Windows:**
+```powershell
+# Python 패키지 설치
+py -3 -m pip install pytest pytest-asyncio
+```
+
+**Linux/Mac/WSL:**
 ```bash
-# 옵션 1: 전역 환경에 설치 (간단)
+# 옵션 1: pip 사용
 pip install pytest pytest-asyncio
 
 # 옵션 2: Ubuntu/Debian 패키지 관리자
@@ -53,19 +72,30 @@ sudo apt update
 sudo apt install python3-pytest python3-pytest-asyncio
 ```
 
-### 사용법
+### 사용법 (모든 플랫폼 공통)
 
-#### Linux/Mac/WSL
+**방법 1: npm 스크립트 사용 (권장)**
 ```bash
 # 프로젝트 루트에서 실행
-./scripts/test-all.sh
+npm test
 ```
 
-#### Windows
+**방법 2: Node.js 직접 실행**
 ```bash
-# PowerShell 또는 cmd에서 실행
+# 프로젝트 루트에서 실행
+node scripts/test-all.js
+```
+
+**방법 3: 레거시 스크립트 (deprecated)**
+```bash
+# Linux/Mac/WSL
+./scripts/test-all.sh
+
+# Windows
 .\scripts\test-all.bat
 ```
+
+> ⚠️ **참고**: `test-all.sh`와 `test-all.bat`는 하위 호환성을 위해 유지되지만, `npm test` 또는 `node scripts/test-all.js` 사용을 권장합니다.
 
 ### 실행 결과
 ```
@@ -95,24 +125,39 @@ sudo apt install python3-pytest python3-pytest-asyncio
 
 각 API는 단독으로도 테스트 가능합니다 (SSH 터널 자동 설정):
 
+**Node.js API (aims_api):**
 ```bash
-# Node.js API (aims_api)
 cd backend/api/aims_api
 npm test  # SSH 터널 자동 시작 → 테스트 → 터널 종료
+```
 
-# Python API (doc_status_api)
+**Python API (doc_status_api):**
+```bash
 cd backend/api/doc_status_api
+
+# Windows
+py -3 -m pytest -v
+
+# Linux/Mac/WSL
 python3 -m pytest -v
 ```
 
 ### SSH 터널링 동작 방식
 
-test-all.sh는 자동으로 다음을 수행합니다:
-1. **SSH 터널 시작**: `localhost:27017` → `tars.giize.com:27017`
-2. **MongoDB 연결**: 모든 테스트가 `localhost:27017`로 연결
-3. **SSH 터널 종료**: 테스트 완료 후 자동 정리
+`test-all.js`는 자동으로 다음을 수행합니다:
+1. **MongoDB 연결 체크**: 이미 연결 가능한지 확인
+2. **SSH 터널 시작** (필요시): `localhost:27017` → `tars.giize.com:27017`
+3. **테스트 실행**: 모든 테스트가 `localhost:27017`로 연결
+4. **SSH 터널 종료**: 테스트 완료 후 자동 정리
 
-개별 API 테스트(`npm test`)도 동일한 방식으로 SSH 터널을 자동 관리합니다.
+**중복 방지**:
+- `test-all.js` 실행 시: SSH 터널을 한 번만 설정하고 모든 테스트에서 재사용
+- 개별 API 테스트(`npm test`) 실행 시: 이미 터널이 있으면 재사용, 없으면 새로 생성
+
+**크로스 플랫폼 지원**:
+- Windows: `start /B ssh` 명령 사용
+- Linux/Mac: `ssh -f -N` 명령 사용
+- 모든 플랫폼에서 동일한 방식으로 작동
 
 ---
 
