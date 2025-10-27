@@ -443,6 +443,17 @@ html[data-theme="dark"] .search-highlight {
   background-color: rgba(52, 199, 89, 0.22);
 }
 
+/* 🍎 Warning 배지 - macOS 주황색 강조 (가족관계 미설정) */
+.tree-node__badge--warning {
+  background-color: rgba(255, 149, 0, 0.15);
+  color: rgb(201, 109, 0);
+  /* font-weight: var(--font-weight-bold); () */
+}
+
+.tree-node:hover .tree-node__badge--warning {
+  background-color: rgba(255, 149, 0, 0.22);
+}
+
 /* ==========================================
    관계 배지
    ========================================== */
@@ -560,6 +571,11 @@ html[data-theme="dark"] .tree-node:hover .tree-node__badge {
 html[data-theme="dark"] .tree-node__badge--success {
   background-color: rgba(52, 199, 89, 0.20);
   color: rgb(50, 215, 75);
+}
+
+html[data-theme="dark"] .tree-node__badge--warning {
+  background-color: rgba(255, 159, 10, 0.20);
+  color: rgb(255, 179, 64);
 }
 
 /* ==========================================

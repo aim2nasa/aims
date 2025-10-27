@@ -44,6 +44,7 @@ interface FamilyGroup {
 interface StructuredData {
   가족그룹: Record<string, FamilyGroup>;
   법인: Record<string, CorporateGroup>;
+  가족관계미설정: Customer[]; // 가족관계가 없는 개인 고객들
 }
 
 interface CorporateGroup {
@@ -85,12 +86,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       const saved = localStorage.getItem('aims_relationship_expanded_nodes');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return new Set(Array.isArray(parsed) ? parsed : ['family', 'corporate']);
+        return new Set(Array.isArray(parsed) ? parsed : ['family', 'no-family-relationship', 'corporate']);
       }
     } catch (error) {
       console.error('[CustomerRelationshipView] 확장 상태 복원 실패:', error);
     }
-    return new Set(['family', 'corporate']);
+    return new Set(['family', 'no-family-relationship', 'corporate']);
   });
 
   // 트리 확장 상태 변경 시 LocalStorage에 저장
@@ -228,22 +229,24 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 데이터 구조화
   const structuredData = useMemo((): StructuredData => {
     if (!relationships.length && documentCustomerMap.size === 0) {
-      return { 가족그룹: {}, 법인: {} };
+      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [] };
     }
 
     const mergedCustomerMap = new Map(resolvedCustomerMap);
 
     if (mergedCustomerMap.size === 0) {
-      return { 가족그룹: {}, 법인: {} };
+      return { 가족그룹: {}, 법인: {}, 가족관계미설정: [] };
     }
 
     const result: StructuredData = {
       가족그룹: {},
-      법인: {}
+      법인: {},
+      가족관계미설정: []
     };
 
     const familyNetworks = new Map<string, Set<string>>();
     const processed = new Set<string>();
+    const customersInFamilyRelationship = new Set<string>(); // 가족관계가 있는 고객 ID 추적
 
     relationships.forEach(relationship => {
       const category = relationship.relationship_info?.relationship_category;
@@ -268,6 +271,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
         familyNetworks.get(fromId)!.add(toId);
         familyNetworks.get(toId)!.add(fromId);
+
+        // 가족관계가 있는 고객으로 표시
+        customersInFamilyRelationship.add(fromId);
+        customersInFamilyRelationship.add(toId);
       }
     });
 
@@ -418,6 +425,27 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       }
     });
 
+    // 가족관계가 없는 개인 고객 찾기
+    const noFamilyRelationshipCustomers: Customer[] = [];
+    mergedCustomerMap.forEach((customer) => {
+      // 개인 고객이고 가족관계가 없는 경우
+      if (
+        customer.insurance_info?.customer_type === '개인' &&
+        !customersInFamilyRelationship.has(customer._id)
+      ) {
+        noFamilyRelationshipCustomers.push(customer);
+      }
+    });
+
+    // 이름순 정렬
+    noFamilyRelationshipCustomers.sort((a, b) => {
+      const nameA = a.personal_info?.name || '';
+      const nameB = b.personal_info?.name || '';
+      return nameA.localeCompare(nameB, 'ko');
+    });
+
+    result.가족관계미설정 = noFamilyRelationshipCustomers;
+
     return result;
   }, [documentCustomerMap, relationships, resolvedCustomerMap]);
 
@@ -428,7 +456,17 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
 
     const query = searchQuery.toLowerCase().trim();
-    const newExpandedNodes = new Set<string>(['family', 'corporate']);
+    const newExpandedNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+
+    // 가족관계 미설정 고객 검색
+    const hasNoFamilyMatch = structuredData.가족관계미설정.some(customer => {
+      const customerName = customer.personal_info?.name || '';
+      return customerName.toLowerCase().includes(query);
+    });
+
+    if (hasNoFamilyMatch) {
+      newExpandedNodes.add('no-family-relationship');
+    }
 
     // 가족 그룹 검색
     Object.entries(structuredData.가족그룹).forEach(([groupId, groupData]) => {
@@ -495,7 +533,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   // 전체 펼치기
   const expandAll = useCallback(() => {
-    const allNodes = new Set<string>(['family', 'corporate']);
+    const allNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
 
     // 가족 그룹 노드 추가
     Object.keys(structuredData.가족그룹).forEach(groupId => {
@@ -515,10 +553,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     setExpandedNodes(new Set());
   }, []);
 
-  // 대표만 보기 (가족/법인 루트만 펼침, 각 그룹은 접힌 상태)
+  // 대표만 보기 (가족/법인/가족관계미설정 루트만 펼침, 각 그룹은 접힌 상태)
   const expandToRepresentatives = useCallback(() => {
-    // 가족/법인 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
-    const representativeNodes = new Set<string>(['family', 'corporate']);
+    // 가족/법인/가족관계미설정 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
+    const representativeNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
     setExpandedNodes(representativeNodes);
   }, []);
 
@@ -580,7 +618,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 
   const familyEntries = Object.entries(structuredData.가족그룹);
   const corporateEntries = Object.entries(structuredData.법인);
-  const hasNoData = familyEntries.length === 0 && corporateEntries.length === 0;
+  const noFamilyRelationshipCustomers = structuredData.가족관계미설정 || [];
+  const hasNoData = familyEntries.length === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0;
 
   return (
     <CenterPaneView
@@ -697,7 +736,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             </div>
           </div>
           {/* 가족 관계 섹션 */}
-          {familyEntries.length > 0 && (
+          {(familyEntries.length > 0 || noFamilyRelationshipCustomers.length > 0) && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -708,12 +747,56 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 </span>
                 <div className="tree-node__content">
                   <span className="tree-node__label tree-node__label--family">가족</span>
-                  <span className="tree-node__badge">{familyEntries.length}</span>
+                  <span className="tree-node__badge">{familyEntries.length + (noFamilyRelationshipCustomers.length > 0 ? 1 : 0)}</span>
                 </div>
               </div>
 
               {expandedNodes.has('family') && (
                 <div className="tree-children">
+                  {/* 가족관계 미설정 섹션 - 가족 폴더 내 최상단 */}
+                  {noFamilyRelationshipCustomers.length > 0 && (
+                    <div className="tree-group">
+                      <div
+                        className="tree-node tree-node--group"
+                        onClick={() => toggleNode('no-family-relationship')}
+                      >
+                        <span className="tree-node__icon">
+                          ⚠️
+                        </span>
+                        <div className="tree-node__content">
+                          <span className="tree-node__label tree-node__label--no-relationship">
+                            가족관계 미설정
+                          </span>
+                          <span className="tree-node__badge tree-node__badge--warning">
+                            {noFamilyRelationshipCustomers.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      {expandedNodes.has('no-family-relationship') && (
+                        <div className="tree-children">
+                          {noFamilyRelationshipCustomers.map((customer) => (
+                            <div key={customer._id} className="tree-node tree-node--leaf">
+                              <span className="tree-node__icon">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-icon--personal" style={{ opacity: 0.5 }}>
+                                  <circle cx="10" cy="10" r="10" opacity="0.2" />
+                                  <circle cx="10" cy="7" r="3" />
+                                  <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                                </svg>
+                              </span>
+                              <span
+                                className="tree-node__label tree-node__label--clickable"
+                                onClick={(e) => handleCustomerClick(customer._id, e)}
+                              >
+                                {highlightText(customer.personal_info?.name || '이름없음')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {familyEntries
                     .sort(([, a], [, b]) => {
                       const nameA = a.representative.personal_info?.name || '';
