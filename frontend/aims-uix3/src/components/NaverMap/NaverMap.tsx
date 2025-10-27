@@ -134,6 +134,42 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
   }, [])
 
+  // ⭐⭐⭐ 브라우저 줌/리사이즈 감지 및 지도 크기 재계산
+  useEffect(() => {
+    if (!mapInstance.current) {
+      return
+    }
+
+    let resizeTimeout: NodeJS.Timeout
+
+    const handleResize = () => {
+      // 디바운싱: 리사이즈 이벤트가 멈춘 후 200ms 뒤에 실행
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        if (mapInstance.current) {
+          // 네이버 지도 API에 크기 변경 알림
+          window.dispatchEvent(new Event('resize'))
+
+          // 지도 중심 위치 재설정 (viewport 재계산 트리거)
+          const currentCenter = mapInstance.current.getCenter()
+          mapInstance.current.setCenter(currentCenter)
+
+          if (import.meta.env.DEV) {
+            console.log('[NaverMap] ⭐ 브라우저 줌/리사이즈 감지 - 지도 크기 재계산')
+          }
+        }
+      }, 200)
+    }
+
+    // 윈도우 리사이즈 이벤트 리스너 (브라우저 줌 포함)
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimeout)
+    }
+  }, [isMapReady])
+
   // 고객 마커 생성 (customers가 변경될 때만)
   useEffect(() => {
     if (!isMapReady || !mapInstance.current || !window.naver) {
