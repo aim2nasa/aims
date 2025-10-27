@@ -735,8 +735,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
               />
             </div>
           </div>
-          {/* 가족 관계 섹션 */}
-          {(familyEntries.length > 0 || noFamilyRelationshipCustomers.length > 0) && (
+          {/* 가족 관계 섹션 - 가족 그룹이 있을 때만 표시 */}
+          {familyEntries.length > 0 && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
