@@ -538,37 +538,72 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     setIsRepresentativeMode(false);
   }, []);
 
-  // 전체 펼치기
-  const expandAll = useCallback(() => {
-    const allNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+  // 전체 노드 개수 계산
+  const totalNodesCount = useMemo(() => {
+    let count = 2; // family, corporate
+    const noFamilyCount = structuredData.가족관계미설정?.length || 0;
+    if (!isRepresentativeMode && noFamilyCount > 0) {
+      count += 1; // no-family-relationship
+    }
+    count += Object.keys(structuredData.가족그룹).length;
+    count += Object.keys(structuredData.법인).length;
+    return count;
+  }, [structuredData, isRepresentativeMode]);
 
-    // 가족 그룹 노드 추가
-    Object.keys(structuredData.가족그룹).forEach(groupId => {
-      allNodes.add(`family-${groupId}`);
-    });
+  // 전체 펼쳐져있는지 확인
+  const isAllExpanded = useMemo(() => {
+    if (expandedNodes.size === 0) return false;
+    return expandedNodes.size >= totalNodesCount;
+  }, [expandedNodes.size, totalNodesCount]);
 
-    // 법인 그룹 노드 추가
-    Object.keys(structuredData.법인).forEach(companyId => {
-      allNodes.add(`corporate-${companyId}`);
-    });
+  // 전체 펼치기/접기 토글
+  const toggleExpandAll = useCallback(() => {
+    if (isAllExpanded) {
+      // 전체 접기
+      setExpandedNodes(new Set());
+      setIsRepresentativeMode(false);
+    } else {
+      // 전체 펼치기
+      const allNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
 
-    setExpandedNodes(allNodes);
-    setIsRepresentativeMode(false); // 대표만 보기 모드 해제
-  }, [structuredData]);
+      // 가족 그룹 노드 추가
+      Object.keys(structuredData.가족그룹).forEach(groupId => {
+        allNodes.add(`family-${groupId}`);
+      });
 
-  // 전체 접기
-  const collapseAll = useCallback(() => {
-    setExpandedNodes(new Set());
-    setIsRepresentativeMode(false); // 대표만 보기 모드 해제
-  }, []);
+      // 법인 그룹 노드 추가
+      Object.keys(structuredData.법인).forEach(companyId => {
+        allNodes.add(`corporate-${companyId}`);
+      });
 
-  // 대표만 보기 (가족/법인 루트만 펼침, 가족관계미설정은 숨김)
-  const expandToRepresentatives = useCallback(() => {
-    // 가족/법인 섹션만 펼치고, 각 그룹은 접어서 대표자만 보이게 함
-    const representativeNodes = new Set<string>(['family', 'corporate']);
-    setExpandedNodes(representativeNodes);
-    setIsRepresentativeMode(true); // 대표만 보기 모드 활성화
-  }, []);
+      setExpandedNodes(allNodes);
+      setIsRepresentativeMode(false);
+    }
+  }, [isAllExpanded, structuredData]);
+
+  // 대표만 보기 토글
+  const toggleRepresentativeMode = useCallback(() => {
+    if (isRepresentativeMode) {
+      // 대표만 보기 해제 → 전체 펼치기
+      const allNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+
+      Object.keys(structuredData.가족그룹).forEach(groupId => {
+        allNodes.add(`family-${groupId}`);
+      });
+
+      Object.keys(structuredData.법인).forEach(companyId => {
+        allNodes.add(`corporate-${companyId}`);
+      });
+
+      setExpandedNodes(allNodes);
+      setIsRepresentativeMode(false);
+    } else {
+      // 대표만 보기 활성화
+      const representativeNodes = new Set<string>(['family', 'corporate']);
+      setExpandedNodes(representativeNodes);
+      setIsRepresentativeMode(true);
+    }
+  }, [isRepresentativeMode, structuredData]);
 
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -657,57 +692,61 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <div className="relationship-header">
             <div className="relationship-title">고객 관계 현황</div>
             <div className="relationship-header-actions">
-              {/* 트리 전체 펼치기/접기 버튼 */}
+              {/* 트리 컨트롤 버튼 */}
               <div className="relationship-tree-controls">
-                <Tooltip content="전체 펼치기">
-                  <button
-                    type="button"
-                    className="tree-control-button"
-                    onClick={expandAll}
-                    aria-label="전체 펼치기"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="3" r="2"/>
-                      <line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" strokeWidth="1.5"/>
-                      <line x1="8" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                      <line x1="8" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="4" cy="11" r="1.5"/>
-                      <circle cx="12" cy="11" r="1.5"/>
-                      <circle cx="2" cy="14" r="1"/>
-                      <circle cx="6" cy="14" r="1"/>
-                      <circle cx="10" cy="14" r="1"/>
-                      <circle cx="14" cy="14" r="1"/>
-                    </svg>
-                  </button>
+                <Tooltip content={isAllExpanded ? "전체 접기" : "전체 펼치기"}>
+                  <div style={{ display: 'inline-block' }}>
+                    <button
+                      type="button"
+                      className="tree-control-button"
+                      onClick={toggleExpandAll}
+                      aria-label={isAllExpanded ? "전체 접기" : "전체 펼치기"}
+                    >
+                      {isAllExpanded ? (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 6l-4 4h8z"/>
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 10l4-4H4z"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </Tooltip>
-                <Tooltip content="대표만 보기">
-                  <button
-                    type="button"
-                    className="tree-control-button"
-                    onClick={expandToRepresentatives}
-                    aria-label="대표만 보기"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="4" r="2.5"/>
-                      <line x1="8" y1="6.5" x2="8" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                      <line x1="8" y1="10" x2="4" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-                      <line x1="8" y1="10" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-                      <circle cx="4" cy="13" r="1" opacity="0.3"/>
-                      <circle cx="12" cy="13" r="1" opacity="0.3"/>
-                    </svg>
-                  </button>
-                </Tooltip>
-                <Tooltip content="전체 접기">
-                  <button
-                    type="button"
-                    className="tree-control-button"
-                    onClick={collapseAll}
-                    aria-label="전체 접기"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="8" r="3"/>
-                    </svg>
-                  </button>
+                <Tooltip content={isRepresentativeMode ? "전체 보기" : "대표만 보기"}>
+                  <div style={{ display: 'inline-block' }}>
+                    <button
+                      type="button"
+                      className="tree-control-button"
+                      onClick={toggleRepresentativeMode}
+                      aria-label={isRepresentativeMode ? "전체 보기" : "대표만 보기"}
+                    >
+                      {isRepresentativeMode ? (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="8" cy="3" r="2"/>
+                          <line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                          <line x1="8" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                          <line x1="8" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                          <circle cx="4" cy="11" r="1.5"/>
+                          <circle cx="12" cy="11" r="1.5"/>
+                          <circle cx="2" cy="14" r="1"/>
+                          <circle cx="6" cy="14" r="1"/>
+                          <circle cx="10" cy="14" r="1"/>
+                          <circle cx="14" cy="14" r="1"/>
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="8" cy="4" r="2.5"/>
+                          <line x1="8" y1="6.5" x2="8" y2="10" stroke="currentColor" strokeWidth="1.5"/>
+                          <line x1="8" y1="10" x2="4" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+                          <line x1="8" y1="10" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+                          <circle cx="4" cy="13" r="1" opacity="0.3"/>
+                          <circle cx="12" cy="13" r="1" opacity="0.3"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </Tooltip>
               </div>
               <div className="relationship-search">

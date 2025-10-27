@@ -202,58 +202,63 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByLabelText('전체 펼치기')).toBeInTheDocument();
-        expect(screen.getByLabelText('대표만 보기')).toBeInTheDocument();
-        expect(screen.getByLabelText('전체 접기')).toBeInTheDocument();
+        // 토글 버튼이므로 초기 상태에 따라 "전체 펼치기" 또는 "전체 접기"가 표시됨
+        expect(
+          screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기')
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('대표만 보기') || screen.queryByLabelText('전체 보기')
+        ).toBeInTheDocument();
       });
     });
 
-    it('전체 펼치기 버튼 클릭 시 트리가 펼쳐져야 한다', async () => {
+    it('전체 펼치기/접기 버튼 클릭 시 토글되어야 한다', async () => {
       const user = userEvent.setup();
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByLabelText('전체 펼치기')).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기')
+        ).toBeInTheDocument();
       });
 
-      const expandButton = screen.getByLabelText('전체 펼치기');
-      await user.click(expandButton);
+      // 초기 레이블 확인
+      const initialButton = screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기');
+      const initialLabel = initialButton?.getAttribute('aria-label');
 
-      // 펼쳐진 상태 확인 (구체적인 DOM 구조에 따라 조정 필요)
+      // 버튼 클릭
+      await user.click(initialButton!);
+
+      // 레이블이 토글되었는지 확인
       await waitFor(() => {
-        expect(expandButton).toBeInTheDocument();
+        const newButton = screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기');
+        const newLabel = newButton?.getAttribute('aria-label');
+        expect(newLabel).not.toBe(initialLabel);
       });
     });
 
-    it('전체 접기 버튼 클릭 시 트리가 접혀야 한다', async () => {
+    it('대표만 보기/전체 보기 버튼 클릭 시 토글되어야 한다', async () => {
       const user = userEvent.setup();
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByLabelText('전체 접기')).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('대표만 보기') || screen.queryByLabelText('전체 보기')
+        ).toBeInTheDocument();
       });
 
-      const collapseButton = screen.getByLabelText('전체 접기');
-      await user.click(collapseButton);
+      // 초기 레이블 확인
+      const initialButton = screen.queryByLabelText('대표만 보기') || screen.queryByLabelText('전체 보기');
+      const initialLabel = initialButton?.getAttribute('aria-label');
 
+      // 버튼 클릭
+      await user.click(initialButton!);
+
+      // 레이블이 토글되었는지 확인
       await waitFor(() => {
-        expect(collapseButton).toBeInTheDocument();
-      });
-    });
-
-    it('대표만 보기 버튼 클릭 시 대표자만 보여야 한다', async () => {
-      const user = userEvent.setup();
-      renderComponent();
-
-      await waitFor(() => {
-        expect(screen.getByLabelText('대표만 보기')).toBeInTheDocument();
-      });
-
-      const representativeButton = screen.getByLabelText('대표만 보기');
-      await user.click(representativeButton);
-
-      await waitFor(() => {
-        expect(representativeButton).toBeInTheDocument();
+        const newButton = screen.queryByLabelText('대표만 보기') || screen.queryByLabelText('전체 보기');
+        const newLabel = newButton?.getAttribute('aria-label');
+        expect(newLabel).not.toBe(initialLabel);
       });
     });
   });
@@ -264,11 +269,13 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByLabelText('전체 펼치기')).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기')
+        ).toBeInTheDocument();
       });
 
-      const expandButton = screen.getByLabelText('전체 펼치기');
-      await user.click(expandButton);
+      const toggleButton = screen.queryByLabelText('전체 펼치기') || screen.queryByLabelText('전체 접기');
+      await user.click(toggleButton!);
 
       await waitFor(() => {
         expect(localStorage.setItem).toHaveBeenCalledWith(
