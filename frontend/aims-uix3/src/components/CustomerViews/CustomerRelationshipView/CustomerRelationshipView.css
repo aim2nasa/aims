@@ -280,6 +280,19 @@ html[data-theme="dark"] .search-highlight {
   opacity: 1;
 }
 
+/* Member 노드 (초성 폴더 내 가족 구성원) - Level 3 */
+.tree-node.tree-node--member {
+  /* font-size: var(--font-size-caption-1); (12px - 제목보다 작게 ) */
+  /* font-weight: var(--font-weight-normal); () */
+  line-height: 1.3;
+  padding-left: 68px; /* Level 3: 68px 들여쓰기 (Leaf + 20px) */
+  opacity: 0.85;
+}
+
+.tree-node.tree-node--member:hover {
+  opacity: 1;
+}
+
 /* Relation 노드 (관계 정보) - Level 2 */
 .tree-node.tree-node--relation {
   /* font-size: var(--font-size-caption-1); () */
@@ -481,6 +494,7 @@ html[data-theme="dark"] .search-highlight {
   flex-direction: column;
   gap: 1px;
   margin-top: 2px;
+  padding-left: 20px; /* 들여쓰기 */
   animation: treeExpand var(--duration-normal) var(--easing-ease-out);
   overflow: hidden;
 }
@@ -603,6 +617,10 @@ html[data-theme="dark"] .tree-node__badge--warning {
   .tree-node--relation,
   .tree-node--empty {
     padding-left: 42px;
+  }
+
+  .tree-node--member {
+    padding-left: 58px; /* 모바일에서도 추가 들여쓰기 */
   }
 }
 
