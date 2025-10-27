@@ -49,17 +49,17 @@ jobs:
           cd frontend/aims-uix3
           npm ci
 
+      - name: Type check frontend
+        run: |
+          cd frontend/aims-uix3
+          npm run typecheck
+
       - name: Build frontend
         run: |
           cd frontend/aims-uix3
           npm run build
 
-      - name: Run frontend tests
-        run: |
-          cd frontend/aims-uix3
-          npm test -- --run
-
-      - name: Check frontend coverage
+      - name: Run frontend tests with coverage
         run: |
           cd frontend/aims-uix3
           npm test -- --run --coverage
@@ -80,11 +80,7 @@ jobs:
       - name: Run backend tests
         run: |
           cd backend/api/aims_api
-          npm test
-
-      - name: Check backend test results
-        run: |
-          echo "✅ Backend tests passed"
+          npm run test:ci
 
       # Python API 테스트
       - name: Install Python API dependencies
@@ -96,7 +92,3 @@ jobs:
         run: |
           cd backend/api/doc_status_api
           python -m pytest -v
-
-      - name: Check Python API test results
-        run: |
-          echo "✅ Python API tests passed"
