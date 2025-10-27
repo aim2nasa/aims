@@ -105,3 +105,14 @@ jobs:
         run: |
           cd backend/api/annual_report_api
           python -m pytest -v
+
+      # RAG API 테스트
+      - name: Install RAG API dependencies
+        run: |
+          cd backend/api/aims_rag_api
+          pip install fastapi qdrant-client openai requests pydantic pytest pytest-asyncio
+
+      - name: Run RAG API tests
+        run: |
+          cd backend/api/aims_rag_api
+          python -m pytest -v
