@@ -363,13 +363,38 @@ html[data-theme="dark"] {
    <SFSymbol name="icon" size={SFSymbolSize.CALLOUT} />
    ```
 
-6. **이유:**
+6. **아이콘 배경 및 호버 효과 규칙:**
+   - **배경**: 모든 아이콘 버튼의 배경은 **투명** (`background: transparent`)
+   - **호버 효과**: 배경색 대신 **투명도 + 스케일 효과** 사용
+     ```css
+     /* 기본 상태 */
+     .icon-button {
+       background: transparent;
+       opacity: 0.7;
+       transition: all 0.2s ease;
+     }
+
+     /* 호버 상태 */
+     .icon-button:hover {
+       background: transparent;  /* 배경은 여전히 투명 */
+       opacity: 1;
+       transform: scale(1.1);    /* 튀어나오는 효과 */
+     }
+     ```
+   - **금지사항**:
+     - ❌ 호버 시 배경색 변경 금지 (`background: #f0f0f0` 등)
+     - ❌ `!important` 사용 금지
+   - **이유**: 애플 디자인 철학의 "서브틀한 인터랙션" 원칙 준수
+
+7. **이유:**
    - LeftPane은 UI의 핵심 네비게이션
    - 모든 아이콘의 시각적 일관성 유지
    - 사용자 경험의 통일성 확보
    - 애플 디자인 가이드라인 준수
 
-**기억하라**: LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
+**기억하라**:
+- LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
+- 아이콘 배경은 투명! 호버 시 튀어나오는 효과(opacity + scale)만 사용!
 
 ### 인라인 스타일 가이드라인 ⚖️
 
