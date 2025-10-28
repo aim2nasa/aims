@@ -573,9 +573,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 }}
               >
                 <div className="customer-icon">{getCustomerIcon(customer)}</div>
-                <div className="customer-info">
-                  <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
-                </div>
+                <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
                 <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
                 <span className="customer-gender">{getCustomerGender(customer)}</span>
                 <span className="customer-phone">{getCustomerInfo(customer)}</span>

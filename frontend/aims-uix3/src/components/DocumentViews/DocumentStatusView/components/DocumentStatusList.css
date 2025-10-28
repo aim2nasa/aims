@@ -18,11 +18,10 @@
   grid-template-columns:
     24px           /* 파일 타입 아이콘 */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
-    28px           /* 상태 아이콘 */
-    minmax(60px, 80px)  /* 진행률/상태 (축소 가능) */
-    minmax(130px, 150px) /* 날짜 (2줄 방지 위해 확대) */
-    minmax(80px, 104px); /* 액션 버튼 (4개) */
-  gap: 10px;
+    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    170px          /* 날짜 (한줄 표시 위해 확대) */
+    104px;         /* 액션 버튼 (4개, 고정) */
+  gap: 12px;
   align-items: center;
   padding: 8px 10px;
   background: #f5f6f7;  /* 완전 불투명 배경 */
@@ -54,7 +53,6 @@ html[data-theme="dark"] .status-list-header {
   flex-shrink: 0;
 }
 
-.header-progress,
 .header-date {
   justify-content: flex-end;
   text-align: right;
@@ -79,9 +77,6 @@ html[data-theme="dark"] .status-list-header {
   color: var(--color-icon-green);  /* 상태 - 초록색 */
 }
 
-.header-progress .header-icon-svg {
-  color: var(--color-icon-orange);  /* 진행률 - 주황색 */
-}
 
 .header-date .header-icon-svg {
   color: var(--color-icon-green);  /* 날짜 - 초록색 */
@@ -202,11 +197,10 @@ html[data-theme="dark"] .empty-message {
   grid-template-columns:
     24px           /* 파일 타입 아이콘 */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
-    28px           /* 상태 아이콘 */
-    minmax(60px, 80px)  /* 진행률/상태 (축소 가능) */
-    minmax(130px, 150px) /* 날짜 (2줄 방지 위해 확대) */
-    minmax(80px, 104px); /* 액션 버튼 (4개) */
-  gap: 10px;
+    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    170px          /* 날짜 (한줄 표시 위해 확대) */
+    104px;         /* 액션 버튼 (4개, 고정) */
+  gap: 12px;
   align-items: center;
   height: 32px;
   padding: 6px 10px;
@@ -254,6 +248,13 @@ html[data-theme="dark"] .status-item:active {
   background: var(--color-ios-bg-selected-dark);
 }
 
+/* === 상태 셀 (아이콘 + 텍스트) === */
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* === 상태 아이콘 === */
 .status-icon {
   display: flex;
@@ -285,6 +286,18 @@ html[data-theme="dark"] .status-item:active {
   color: var(--color-warning);
 }
 
+/* === 상태 텍스트 === */
+.status-text {
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-tertiary-light);
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .status-text {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* === 파일명 === */
 .status-filename {
   overflow: hidden;
@@ -300,25 +313,14 @@ html[data-theme="dark"] .status-filename {
   color: var(--color-ios-text-primary-dark);
 }
 
-/* === 진행률/상태 === */
-.status-progress {
-  text-align: right;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-tertiary-light);
-}
-
-html[data-theme="dark"] .status-progress {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.progress-text {
+/* .status-text 안의 진행률과 상태 텍스트 스타일 */
+.status-text .progress-text {
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   color: var(--color-primary-500);
 }
 
-.status-label {
+.status-text .status-label {
   font-weight: 400;
 }
 
@@ -443,7 +445,6 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   }
 
-  .status-progress,
   .status-date {
     /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   }

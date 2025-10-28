@@ -98,13 +98,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>상태</span>
         </div>
-        <div className="header-progress">
-          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-            <circle cx="8" cy="4" r="2.5" fill="currentColor"/>
-            <path d="M8 7v6M5 10l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span>진행률</span>
-        </div>
         <div className="header-date">
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
             <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
@@ -180,18 +173,20 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {DocumentStatusService.extractFilename(document)}
             </div>
 
-            {/* 상태 아이콘 */}
-            <Tooltip content={statusLabel}>
-              <div className={"status-icon status-" + status}>
-                {statusIcon}
+            {/* 상태 (아이콘 + 텍스트) */}
+            <div className="status-cell">
+              <Tooltip content={statusLabel}>
+                <div className={"status-icon status-" + status}>
+                  {statusIcon}
+                </div>
+              </Tooltip>
+              <div className="status-text">
+                {status === 'processing' && progress ? (
+                  <span className="progress-text">{progress}%</span>
+                ) : (
+                  <span className="status-label">{statusLabel}</span>
+                )}
               </div>
-            </Tooltip>
-
-            {/* 진행률 */}
-            <div className="status-progress">
-              {status === 'processing' && progress && (
-                <span className="progress-text">{progress}%</span>
-              )}
             </div>
 
             {/* 업로드 날짜 */}
