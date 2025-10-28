@@ -358,17 +358,44 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }, 600)
   }
 
-  // 🍎 칼럼 헤더 클릭 정렬 핸들러
+  // 🍎 칼럼 헤더 클릭 정렬 핸들러 - 백엔드 API 정렬 사용
   const handleColumnSort = React.useCallback((field: SortField) => {
-    if (sortField === field) {
-      // 같은 필드 클릭 시 방향 토글
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // 다른 필드 클릭 시 새 필드로 설정하고 오름차순으로 시작
-      setSortField(field);
-      setSortDirection('asc');
+    // status는 백엔드 computed 필드이므로 정렬 불가
+    if (field === 'status') {
+      console.warn('⚠️ status 정렬은 백엔드가 지원하지 않습니다.');
+      return;
     }
-  }, [sortField, sortDirection, setSortField, setSortDirection]);
+
+    // 정렬 방향 결정
+    const newDirection = (sortField === field && sortDirection === 'asc') ? 'desc' : 'asc';
+
+    // 로컬 상태 업데이트
+    setSortField(field);
+    setSortDirection(newDirection);
+
+    // 백엔드 API 필드명 매핑
+    const backendFieldMap: Record<SortField, string> = {
+      'filename': 'filename',
+      'size': 'size',
+      'uploadDate': 'uploadTime',
+      'type': 'fileType',
+      'status': '', // 사용 안 함
+    };
+
+    const backendField = backendFieldMap[field];
+
+    // 백엔드 API 정렬 파라미터 구성
+    const newParams = {
+      ...searchParams,
+      sortBy: backendField,
+      sortOrder: newDirection,
+      offset: 0  // 정렬 변경 시 첫 페이지로
+    };
+
+    // 페이지를 1로 리셋하고 백엔드 API 호출
+    handlePageChange(1);
+    loadDocuments(newParams, false);
+  }, [sortField, sortDirection, setSortField, setSortDirection, searchParams, loadDocuments, handlePageChange]);
 
   // 🍎 폴링 토글 핸들러
   const handleTogglePolling = React.useCallback(() => {
@@ -395,59 +422,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
   }, [])
 
-  // 🍎 칼럼 정렬 적용된 문서 리스트
-  const sortedDocuments = React.useMemo(() => {
-    if (!sortField) return documents;
-
-    const sorted = [...documents].sort((a, b) => {
-      let aValue: string | number | Date;
-      let bValue: string | number | Date;
-
-      switch (sortField) {
-        case 'filename':
-          aValue = DocumentUtils.getDisplayName(a).toLowerCase();
-          bValue = DocumentUtils.getDisplayName(b).toLowerCase();
-          return sortDirection === 'asc'
-            ? aValue.localeCompare(bValue, 'ko')
-            : bValue.localeCompare(aValue, 'ko');
-
-        case 'size':
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          aValue = DocumentStatusService.extractFileSize(a as any) || 0;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          bValue = DocumentStatusService.extractFileSize(b as any) || 0;
-          return sortDirection === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
-
-        case 'uploadDate':
-          aValue = new Date(a.uploadDate || 0);
-          bValue = new Date(b.uploadDate || 0);
-          return sortDirection === 'asc'
-            ? aValue.getTime() - bValue.getTime()
-            : bValue.getTime() - aValue.getTime();
-
-        case 'type':
-          aValue = (a.mimeType ? DocumentUtils.getFileExtension(a.mimeType) : '-').toLowerCase();
-          bValue = (b.mimeType ? DocumentUtils.getFileExtension(b.mimeType) : '-').toLowerCase();
-          return sortDirection === 'asc'
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-
-        case 'status':
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          aValue = DocumentStatusService.extractStatus(a as any);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          bValue = DocumentStatusService.extractStatus(b as any);
-          return sortDirection === 'asc'
-            ? String(aValue).localeCompare(String(bValue))
-            : String(bValue).localeCompare(String(aValue));
-
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }, [documents, sortField, sortDirection]);
+  // 🍎 백엔드에서 이미 정렬된 문서 리스트 사용
+  // 클라이언트 사이드 정렬 제거 - DB 전체를 대상으로 백엔드가 정렬함
+  const sortedDocuments = documents;
 
   // 🍎 View가 표시될 때마다 문서 목록 새로고침
   React.useEffect(() => {
