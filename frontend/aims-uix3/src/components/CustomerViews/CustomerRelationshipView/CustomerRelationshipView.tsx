@@ -19,6 +19,12 @@ import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
 import './CustomerRelationshipView.css';
 
+// 🚀 성능 최적화: 초성 인덱스 맵을 상수로 미리 계산 (O(1) 조회)
+const KOREAN_CONSONANTS = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+const CONSONANT_INDEX_MAP = new Map<string, number>(
+  KOREAN_CONSONANTS.map((consonant, index) => [consonant, index])
+);
+
 interface CustomerRelationshipViewProps {
   /** View 표시 여부 */
   visible: boolean;
@@ -482,12 +488,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return '#';
   }, []);
 
-  const familyEntries = Object.entries(structuredData.가족그룹);
   const corporateEntries = Object.entries(structuredData.법인);
   const noFamilyRelationshipCustomers = structuredData.가족관계미설정 || [];
 
-  // 가족 그룹을 초성별로 그룹화
+  // 🚀 성능 최적화: 가족 그룹을 초성별로 그룹화 (의존성 최적화)
   const familyGroupsByConsonant = useMemo(() => {
+    const familyEntries = Object.entries(structuredData.가족그룹);
     const grouped = new Map<string, Array<[string, FamilyGroup]>>();
 
     familyEntries.forEach(([groupId, groupData]) => {
@@ -500,11 +506,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       grouped.get(consonant)!.push([groupId, groupData]);
     });
 
-    // 초성별로 정렬 (ㄱ, ㄴ, ㄷ... 순서)
+    // 🚀 성능 최적화: Map 조회로 O(n²) → O(n log n) 개선
     const sortedConsonants = Array.from(grouped.keys()).sort((a, b) => {
-      const koreanConsonants = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-      const indexA = koreanConsonants.indexOf(a);
-      const indexB = koreanConsonants.indexOf(b);
+      const indexA = CONSONANT_INDEX_MAP.get(a) ?? -1;
+      const indexB = CONSONANT_INDEX_MAP.get(b) ?? -1;
 
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB;
@@ -526,7 +531,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     });
 
     return sortedGrouped;
-  }, [familyEntries, getKoreanConsonant]);
+  }, [structuredData.가족그룹, getKoreanConsonant]);
 
   // 검색어 필터링 및 자동 트리 펼치기
   useEffect(() => {
@@ -547,59 +552,57 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       newExpandedNodes.add('no-family-relationship');
     }
 
-    // 가족 그룹 검색 (초성 폴더 포함)
-    familyGroupsByConsonant.forEach((groups, consonant) => {
+    // 🚀 성능 최적화: 가족 그룹 검색 (조기 종료 로직 추가)
+    for (const [consonant, groups] of familyGroupsByConsonant) {
       const consonantKey = `consonant-${consonant}`;
 
-      groups.forEach(([groupId, groupData]) => {
+      for (const [groupId, groupData] of groups) {
         const groupKey = `family-${groupId}`;
 
-        // 대표자 이름 확인
-        const representativeName = groupData.representative.personal_info?.name || '';
-        if (representativeName.toLowerCase().includes(query)) {
+        // 대표자 이름 확인 (toLowerCase 캐싱)
+        const representativeName = (groupData.representative.personal_info?.name || '').toLowerCase();
+        if (representativeName.includes(query)) {
           newExpandedNodes.add('family');
-          newExpandedNodes.add(consonantKey); // 초성 폴더도 펼치기
+          newExpandedNodes.add(consonantKey);
           newExpandedNodes.add(groupKey);
-          return;
+          continue; // 대표자 매칭 시 구성원 검색 스킵
         }
 
-        // 구성원 이름 확인
-        const hasMatch = groupData.members.some(member => {
-          const memberName = member.personal_info?.name || '';
-          return memberName.toLowerCase().includes(query);
-        });
-
-        if (hasMatch) {
-          newExpandedNodes.add('family');
-          newExpandedNodes.add(consonantKey); // 초성 폴더도 펼치기
-          newExpandedNodes.add(groupKey);
+        // 구성원 이름 확인 (조기 종료)
+        for (const member of groupData.members) {
+          const memberName = (member.personal_info?.name || '').toLowerCase();
+          if (memberName.includes(query)) {
+            newExpandedNodes.add('family');
+            newExpandedNodes.add(consonantKey);
+            newExpandedNodes.add(groupKey);
+            break; // 첫 매칭 발견 시 즉시 종료
+          }
         }
-      });
-    });
+      }
+    }
 
-    // 법인 그룹 검색
-    Object.entries(structuredData.법인).forEach(([companyId, groupData]) => {
+    // 🚀 성능 최적화: 법인 그룹 검색 (조기 종료 로직 추가)
+    for (const [companyId, groupData] of Object.entries(structuredData.법인)) {
       const companyKey = `corporate-${companyId}`;
 
-      // 회사명 확인
-      const companyName = groupData.company.personal_info?.name || '';
-      if (companyName.toLowerCase().includes(query)) {
+      // 회사명 확인 (toLowerCase 캐싱)
+      const companyName = (groupData.company.personal_info?.name || '').toLowerCase();
+      if (companyName.includes(query)) {
         newExpandedNodes.add('corporate');
         newExpandedNodes.add(companyKey);
-        return;
+        continue; // 회사명 매칭 시 직원 검색 스킵
       }
 
-      // 직원 이름 확인
-      const hasMatch = groupData.employees.some(employee => {
-        const employeeName = employee.personal_info?.name || '';
-        return employeeName.toLowerCase().includes(query);
-      });
-
-      if (hasMatch) {
-        newExpandedNodes.add('corporate');
-        newExpandedNodes.add(companyKey);
+      // 직원 이름 확인 (조기 종료)
+      for (const employee of groupData.employees) {
+        const employeeName = (employee.personal_info?.name || '').toLowerCase();
+        if (employeeName.includes(query)) {
+          newExpandedNodes.add('corporate');
+          newExpandedNodes.add(companyKey);
+          break; // 첫 매칭 발견 시 즉시 종료
+        }
       }
-    });
+    }
 
     setExpandedNodes(newExpandedNodes);
     // 검색 시 대표만 보기 모드 해제
@@ -711,7 +714,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     );
   }
 
-  const hasNoData = familyEntries.length === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0;
+  const hasNoData = familyGroupsByConsonant.size === 0 && corporateEntries.length === 0 && noFamilyRelationshipCustomers.length === 0;
 
   return (
     <CenterPaneView
@@ -812,7 +815,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
             </div>
           </div>
           {/* 가족 관계 섹션 - 가족 그룹이 있을 때만 표시 */}
-          {familyEntries.length > 0 && (
+          {familyGroupsByConsonant.size > 0 && (
             <div className="tree-section">
               <div
                 className="tree-node tree-node--root"
@@ -824,7 +827,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                 <div className="tree-node__content">
                   <span className="tree-node__label tree-node__label--family">가족</span>
                   <span className="tree-node__badge">
-                    {familyEntries.length}
+                    {Array.from(familyGroupsByConsonant.values()).reduce((sum, groups) => sum + groups.length, 0)}
                   </span>
                 </div>
               </div>
