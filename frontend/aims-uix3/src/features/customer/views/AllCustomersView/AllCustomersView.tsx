@@ -38,6 +38,9 @@ const SORT_OPTIONS = [
   { value: 'oldest', label: '오래된순' },
 ];
 
+type SortField = 'name' | 'birth' | 'gender' | 'phone' | 'email' | 'address' | 'type' | 'status' | 'created';
+type SortDirection = 'asc' | 'desc';
+
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
     // F5 이후에도 유지되는 상태들
@@ -45,6 +48,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [sortBy, setSortBy] = usePersistedState('customer-all-sort', 'latest');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
+
+    // 칼럼 정렬 상태
+    const [sortField, setSortField] = usePersistedState<SortField | null>('customer-all-sort-field', null);
+    const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('customer-all-sort-direction', 'asc');
 
     // UI 상태 (새로고침 시 초기화되어도 됨)
     const [prevArrowClicked, setPrevArrowClicked] = useState(false);
@@ -91,35 +98,102 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const sortedCustomers = useMemo(() => {
       const sorted = [...filteredCustomers];
 
-      switch (sortBy) {
-        case 'latest':
-          // 최신순 (등록일 내림차순)
-          sorted.sort((a, b) => {
-            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-            return dateB - dateA;
-          });
-          break;
-        case 'name':
-          // 이름순 (가나다순)
-          sorted.sort((a, b) => {
-            const nameA = a.personal_info?.name || '';
-            const nameB = b.personal_info?.name || '';
-            return nameA.localeCompare(nameB, 'ko');
-          });
-          break;
-        case 'oldest':
-          // 오래된순 (등록일 오름차순)
-          sorted.sort((a, b) => {
-            const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-            const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-            return dateA - dateB;
-          });
-          break;
+      // 칼럼 정렬이 활성화된 경우
+      if (sortField) {
+        sorted.sort((a, b) => {
+          let compareResult = 0;
+
+          switch (sortField) {
+            case 'name': {
+              const nameA = a.personal_info?.name || '';
+              const nameB = b.personal_info?.name || '';
+              compareResult = nameA.localeCompare(nameB, 'ko');
+              break;
+            }
+            case 'birth': {
+              const dateA = a.personal_info?.birth_date ? new Date(a.personal_info.birth_date).getTime() : 0;
+              const dateB = b.personal_info?.birth_date ? new Date(b.personal_info.birth_date).getTime() : 0;
+              compareResult = dateA - dateB;
+              break;
+            }
+            case 'gender': {
+              const genderA = a.personal_info?.gender || '';
+              const genderB = b.personal_info?.gender || '';
+              compareResult = genderA.localeCompare(genderB, 'ko');
+              break;
+            }
+            case 'phone': {
+              const phoneA = a.personal_info?.mobile_phone || '';
+              const phoneB = b.personal_info?.mobile_phone || '';
+              compareResult = phoneA.localeCompare(phoneB);
+              break;
+            }
+            case 'email': {
+              const emailA = a.personal_info?.email || '';
+              const emailB = b.personal_info?.email || '';
+              compareResult = emailA.localeCompare(emailB);
+              break;
+            }
+            case 'address': {
+              const addressA = a.personal_info?.address?.address1 || '';
+              const addressB = b.personal_info?.address?.address1 || '';
+              compareResult = addressA.localeCompare(addressB, 'ko');
+              break;
+            }
+            case 'type': {
+              const typeA = a.insurance_info?.customer_type || '';
+              const typeB = b.insurance_info?.customer_type || '';
+              compareResult = typeA.localeCompare(typeB, 'ko');
+              break;
+            }
+            case 'status': {
+              const statusA = a.meta?.status || '';
+              const statusB = b.meta?.status || '';
+              compareResult = statusA.localeCompare(statusB);
+              break;
+            }
+            case 'created': {
+              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+              compareResult = dateA - dateB;
+              break;
+            }
+          }
+
+          return sortDirection === 'asc' ? compareResult : -compareResult;
+        });
+      } else {
+        // 기존 드롭다운 정렬 사용
+        switch (sortBy) {
+          case 'latest':
+            // 최신순 (등록일 내림차순)
+            sorted.sort((a, b) => {
+              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+              return dateB - dateA;
+            });
+            break;
+          case 'name':
+            // 이름순 (가나다순)
+            sorted.sort((a, b) => {
+              const nameA = a.personal_info?.name || '';
+              const nameB = b.personal_info?.name || '';
+              return nameA.localeCompare(nameB, 'ko');
+            });
+            break;
+          case 'oldest':
+            // 오래된순 (등록일 오름차순)
+            sorted.sort((a, b) => {
+              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+              return dateA - dateB;
+            });
+            break;
+        }
       }
 
       return sorted;
-    }, [filteredCustomers, sortBy]);
+    }, [filteredCustomers, sortBy, sortField, sortDirection]);
 
     const itemsPerPageNumber = useMemo(() => {
       const parsed = parseInt(itemsPerPage, 10);
@@ -188,6 +262,19 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     const handleSortChange = (value: string) => {
       setSortBy(value);
+      setSortField(null); // 드롭다운 정렬 선택 시 칼럼 정렬 해제
+      setCurrentPage(1);
+    };
+
+    const handleColumnSort = (field: SortField) => {
+      if (sortField === field) {
+        // 같은 칼럼을 클릭하면 방향 토글
+        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        // 다른 칼럼을 클릭하면 해당 칼럼으로 오름차순 정렬
+        setSortField(field);
+        setSortDirection('asc');
+      }
       setCurrentPage(1);
     };
 
@@ -357,14 +444,17 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           {!isEmpty && !isLoading && (
             <div className="customer-list-header">
               <div className="header-icon"></div>
-              <div className="header-name">
+              <div className="header-name header-sortable" onClick={() => handleColumnSort('name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
                   <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
                 </svg>
                 <span>이름</span>
+                {sortField === 'name' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-birth">
+              <div className="header-birth header-sortable" onClick={() => handleColumnSort('birth')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/>
                   <rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/>
@@ -376,8 +466,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <ellipse cx="11.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
                 </svg>
                 <span>생년월일</span>
+                {sortField === 'birth' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-gender">
+              <div className="header-gender header-sortable" onClick={() => handleColumnSort('gender')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="5" cy="6" r="2" fill="currentColor"/>
                   <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
@@ -385,45 +478,66 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                 </svg>
                 <span>성별</span>
+                {sortField === 'gender' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-phone">
+              <div className="header-phone header-sortable" onClick={() => handleColumnSort('phone')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
                 </svg>
                 <span>전화</span>
+                {sortField === 'phone' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-email">
+              <div className="header-email header-sortable" onClick={() => handleColumnSort('email')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                   <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>이메일</span>
+                {sortField === 'email' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-address">
+              <div className="header-address header-sortable" onClick={() => handleColumnSort('address')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
                 </svg>
                 <span>주소</span>
+                {sortField === 'address' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-type">
+              <div className="header-type header-sortable" onClick={() => handleColumnSort('type')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
                 </svg>
                 <span>유형</span>
+                {sortField === 'type' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-status">
+              <div className="header-status header-sortable" onClick={() => handleColumnSort('status')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="8" r="7" fill="currentColor"/>
                   <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/>
                 </svg>
                 <span>상태</span>
+                {sortField === 'status' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-created">
+              <div className="header-created header-sortable" onClick={() => handleColumnSort('created')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="8" r="7" fill="currentColor"/>
                   <path d="M8 4v4h3" stroke="white" strokeWidth="1" fill="none"/>
                 </svg>
                 <span>등록일</span>
+                {sortField === 'created' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
             </div>
           )}

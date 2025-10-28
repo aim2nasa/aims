@@ -259,6 +259,44 @@ html[data-theme="dark"] .customer-list-header {
   flex-shrink: 0;
 }
 
+/* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
+.header-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+}
+
+.header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.header-sortable:active {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .header-sortable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* 정렬 표시 아이콘 */
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--color-primary-700);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .sort-indicator {
+  color: var(--color-primary-300);
+}
+
 /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
 .header-name .header-icon-svg {
   color: var(--color-icon-blue);  /* 이름 - 파란색 */
