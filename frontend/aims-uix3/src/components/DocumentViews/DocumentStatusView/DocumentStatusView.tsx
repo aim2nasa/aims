@@ -92,6 +92,9 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
         onLinkClick={controller.handleDocumentLink}
+        sortField={controller.sortField}
+        sortDirection={controller.sortDirection}
+        onColumnSort={controller.handleColumnSort}
       />
 
       {/* 🍎 페이지네이션: DocumentLibrary와 동일한 구조 */}

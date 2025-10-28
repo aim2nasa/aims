@@ -46,6 +46,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // 🍎 Fetch Limit State (가져올 문서 개수)
   const [fetchLimit, setFetchLimit] = useState<number>(100)
 
+  // 🍎 Sort State
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
   /**
    * 문서 목록 가져오기
    */
@@ -256,10 +260,42 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   )
 
   const paginatedDocuments = useMemo(() => {
+    // 🍎 Apply sorting
+    let sortedDocs = [...filteredDocuments]
+    if (sortField) {
+      sortedDocs.sort((a, b) => {
+        switch (sortField) {
+          case 'filename': {
+            const aFilename = DocumentStatusService.extractFilename(a).toLowerCase()
+            const bFilename = DocumentStatusService.extractFilename(b).toLowerCase()
+            return sortDirection === 'asc'
+              ? aFilename.localeCompare(bFilename)
+              : bFilename.localeCompare(aFilename)
+          }
+          case 'status': {
+            const aStatus = DocumentStatusService.extractStatus(a)
+            const bStatus = DocumentStatusService.extractStatus(b)
+            return sortDirection === 'asc'
+              ? aStatus.localeCompare(bStatus)
+              : bStatus.localeCompare(aStatus)
+          }
+          case 'uploadDate': {
+            const aDate = DocumentStatusService.extractUploadedDate(a)
+            const bDate = DocumentStatusService.extractUploadedDate(b)
+            const aTime = aDate ? new Date(aDate).getTime() : 0
+            const bTime = bDate ? new Date(bDate).getTime() : 0
+            return sortDirection === 'asc' ? aTime - bTime : bTime - aTime
+          }
+          default:
+            return 0
+        }
+      })
+    }
+
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    return filteredDocuments.slice(startIndex, endIndex)
-  }, [filteredDocuments, currentPage, itemsPerPage])
+    return sortedDocs.slice(startIndex, endIndex)
+  }, [filteredDocuments, currentPage, itemsPerPage, sortField, sortDirection])
 
   // 🍎 Pagination Handlers
   const handlePageChange = useCallback((page: number) => {
@@ -278,6 +314,18 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setFetchLimit(limit)
     setCurrentPage(1) // Reset to first page
   }, [])
+
+  // 🍎 Sort Handler
+  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate') => {
+    if (sortField === field) {
+      // Same field: toggle direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New field: set field and default to asc
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }, [sortField, sortDirection])
 
   /**
    * 특정 문서의 고객 연결 정보를 업데이트
@@ -361,7 +409,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       itemsPerPage,
       totalPages,
       paginatedDocuments,
-      fetchLimit
+      fetchLimit,
+      sortField,
+      sortDirection
     }),
     [
       documents,
@@ -378,7 +428,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       itemsPerPage,
       totalPages,
       paginatedDocuments,
-      fetchLimit
+      fetchLimit,
+      sortField,
+      sortDirection
     ]
   )
 
@@ -405,7 +457,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       handleLimitChange,
       setFetchLimit,
       handleFetchLimitChange,
-      updateDocumentCustomerRelation
+      updateDocumentCustomerRelation,
+      setSortField,
+      setSortDirection,
+      handleColumnSort
     }),
     [
       fetchDocuments,
@@ -415,7 +470,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       handlePageChange,
       handleLimitChange,
       handleFetchLimitChange,
-      updateDocumentCustomerRelation
+      updateDocumentCustomerRelation,
+      handleColumnSort
     ]
   )
 

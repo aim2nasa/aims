@@ -27,6 +27,9 @@ export interface DocumentStatusState {
   paginatedDocuments: Document[]
   // 🍎 Fetch Limit State
   fetchLimit: number
+  // 🍎 Sort State
+  sortField: 'filename' | 'status' | 'uploadDate' | null
+  sortDirection: 'asc' | 'desc'
 }
 
 /**
@@ -59,6 +62,10 @@ export interface DocumentStatusActions {
     documentId: string,
     relation: DocumentCustomerRelation | undefined
   ) => void
+  // 🍎 Sort Actions
+  setSortField: (field: 'filename' | 'status' | 'uploadDate' | null) => void
+  setSortDirection: (direction: 'asc' | 'desc') => void
+  handleColumnSort: (field: 'filename' | 'status' | 'uploadDate') => void
 }
 
 /**

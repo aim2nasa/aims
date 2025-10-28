@@ -90,6 +90,49 @@ html[data-theme="dark"] .header-actions .header-icon-svg {
   color: var(--color-ios-text-tertiary-dark);
 }
 
+/* === 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 === */
+.header-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+}
+
+.header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.header-sortable:active {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .header-sortable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+.sort-indicator {
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-weight: 600;
+  margin-left: 2px;
+  color: var(--color-primary-600);
+  opacity: 0.9;
+}
+
+html[data-theme="dark"] .sort-indicator {
+  color: var(--color-primary-300);
+}
+
+.header-sortable:hover .sort-indicator {
+  opacity: 1;
+}
+
 /* === 스크롤바 === */
 .document-status-list::-webkit-scrollbar {
   width: 8px;

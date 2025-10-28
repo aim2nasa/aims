@@ -204,6 +204,10 @@ export const useDocumentStatusController = () => {
     // 🍎 Fetch Limit State
     fetchLimit: state.fetchLimit,
 
+    // 🍎 Sort State
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+
     // Context Actions
     setStatusFilter: actions.setStatusFilter,
     togglePolling: actions.togglePolling,
@@ -215,6 +219,9 @@ export const useDocumentStatusController = () => {
 
     // 🍎 Fetch Limit Actions
     handleFetchLimitChange: actions.handleFetchLimitChange,
+
+    // 🍎 Sort Actions
+    handleColumnSort: actions.handleColumnSort,
 
     // Document Detail Modal State & Handlers
     selectedDocument,

@@ -29,6 +29,10 @@ export interface DocumentStatusListProps {
   onSummaryClick?: (document: Document) => void
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
+  // 🍎 Sort props
+  sortField?: 'filename' | 'status' | 'uploadDate' | null
+  sortDirection?: 'asc' | 'desc'
+  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate') => void
 }
 
 export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
@@ -40,7 +44,10 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onDetailClick,
   onSummaryClick,
   onFullTextClick,
-  onLinkClick
+  onLinkClick,
+  sortField,
+  sortDirection,
+  onColumnSort
 }) => {
   // 로딩 상태
   if (isLoading && isEmpty) {
@@ -84,26 +91,53 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
       <div className="status-list-header">
         <div className="header-icon"></div>
-        <div className="header-filename">
+        <div
+          className={`header-filename ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('filename')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '파일명으로 정렬' : undefined}
+        >
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
             <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
             <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
           </svg>
           <span>파일명</span>
+          {sortField === 'filename' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
         </div>
-        <div className="header-status">
+        <div
+          className={`header-status ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('status')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '상태로 정렬' : undefined}
+        >
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
             <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
             <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span>상태</span>
+          {sortField === 'status' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
         </div>
-        <div className="header-date">
+        <div
+          className={`header-date ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('uploadDate')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '업로드 날짜로 정렬' : undefined}
+        >
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
             <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
             <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
           </svg>
           <span>업로드 날짜</span>
+          {sortField === 'uploadDate' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
         </div>
         <div className="header-actions">
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
