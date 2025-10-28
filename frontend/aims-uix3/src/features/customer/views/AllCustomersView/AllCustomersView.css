@@ -221,7 +221,7 @@ html[data-theme="dark"] .result-count {
   gap: 12px;
   padding: 8px 12px;
   min-height: 32px;
-  background: var(--color-ios-bg-secondary-light);
+  background: #f5f6f7;  /* 완전 불투명 배경 */
   border-bottom: 1px solid var(--color-ios-separator-light);
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 테이블 헤더 ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -231,11 +231,11 @@ html[data-theme="dark"] .result-count {
   letter-spacing: 0.3px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
 
 html[data-theme="dark"] .customer-list-header {
-  background: var(--color-ios-bg-secondary-dark);
+  background: #374151;  /* 완전 불투명 다크 배경 */
   border-bottom-color: var(--color-ios-separator-dark);
   color: var(--color-ios-text-tertiary-dark);
 }
