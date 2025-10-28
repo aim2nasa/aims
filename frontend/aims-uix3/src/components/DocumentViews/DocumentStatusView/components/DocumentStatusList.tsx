@@ -81,6 +81,46 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   // 리스트 렌더링
   return (
     <div className="document-status-list">
+      {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
+      <div className="status-list-header">
+        <div className="header-icon"></div>
+        <div className="header-filename">
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+            <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+          </svg>
+          <span>파일명</span>
+        </div>
+        <div className="header-status">
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>상태</span>
+        </div>
+        <div className="header-progress">
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <circle cx="8" cy="4" r="2.5" fill="currentColor"/>
+            <path d="M8 7v6M5 10l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>진행률</span>
+        </div>
+        <div className="header-date">
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          </svg>
+          <span>업로드 날짜</span>
+        </div>
+        <div className="header-actions">
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
+          </svg>
+          <span>액션</span>
+        </div>
+      </div>
+
       {documents.map((document, index) => {
         const status = DocumentStatusService.extractStatus(document)
         const progress = DocumentStatusService.extractProgress(document)
