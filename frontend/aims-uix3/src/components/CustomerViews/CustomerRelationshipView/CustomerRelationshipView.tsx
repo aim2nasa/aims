@@ -86,9 +86,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 검색어 상태
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // 대표만 보기 모드 상태
-  // 대표만 보기 모드 상태 - 기본값을 true로 설정 (디폴트로 대표만 보기)
-  const [isRepresentativeMode, setIsRepresentativeMode] = useState<boolean>(true);
+  // 트리 뷰 모드: 대표만 보기 → 초성만 보기 → 전체 보기 (순환)
+  type ViewMode = 'representative' | 'consonant' | 'all';
+  const [viewMode, setViewMode] = useState<ViewMode>('representative');
 
   // LocalStorage에서 트리 확장 상태 복원
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
@@ -605,8 +605,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
 
     setExpandedNodes(newExpandedNodes);
-    // 검색 시 대표만 보기 모드 해제
-    setIsRepresentativeMode(false);
+    // 검색 시 뷰 모드를 'all'로 변경
+    setViewMode('all');
   }, [searchQuery, structuredData, familyGroupsByConsonant]);
 
   const toggleNode = useCallback((nodeKey: string) => {
@@ -619,44 +619,52 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       }
       return newSet;
     });
-    // 수동으로 노드를 토글하면 대표만 보기 모드 해제
-    setIsRepresentativeMode(false);
-  }, []);
+    // 수동으로 노드를 토글하면 뷰 모드를 'all'로 변경
+    if (viewMode !== 'all') {
+      setViewMode('all');
+    }
+  }, [viewMode]);
 
-  // 대표만 보기 토글
-  const toggleRepresentativeMode = useCallback(() => {
-    if (isRepresentativeMode) {
-      // 대표만 보기 해제 → 전체 펼치기
-      const allNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
+  // 뷰 모드 순환 토글: 대표만 보기 → 초성만 보기 → 전체 보기 → 대표만 보기
+  const toggleViewMode = useCallback(() => {
+    let newExpandedNodes: Set<string>;
+
+    if (viewMode === 'representative') {
+      // 대표만 보기 → 초성만 보기 (최상위 폴더만 열고, 내부는 모두 닫힘)
+      newExpandedNodes = new Set<string>(['family', 'corporate']);
+      setViewMode('consonant');
+    } else if (viewMode === 'consonant') {
+      // 초성만 보기 → 전체 보기
+      newExpandedNodes = new Set<string>(['family', 'corporate', 'no-family-relationship']);
 
       // 초성 폴더 노드 추가
       familyGroupsByConsonant.forEach((_, consonant) => {
-        allNodes.add(`consonant-${consonant}`);
+        newExpandedNodes.add(`consonant-${consonant}`);
       });
 
       Object.keys(structuredData.가족그룹).forEach(groupId => {
-        allNodes.add(`family-${groupId}`);
+        newExpandedNodes.add(`family-${groupId}`);
       });
 
       Object.keys(structuredData.법인).forEach(companyId => {
-        allNodes.add(`corporate-${companyId}`);
+        newExpandedNodes.add(`corporate-${companyId}`);
       });
 
-      setExpandedNodes(allNodes);
-      setIsRepresentativeMode(false);
+      setViewMode('all');
     } else {
-      // 대표만 보기 활성화 - 초성 폴더와 가족 최상위만 펼치기
-      const representativeNodes = new Set<string>(['family', 'corporate']);
+      // 전체 보기 → 대표만 보기
+      newExpandedNodes = new Set<string>(['family', 'corporate']);
 
       // 초성 폴더는 펼쳐서 대표자가 보이도록
       familyGroupsByConsonant.forEach((_, consonant) => {
-        representativeNodes.add(`consonant-${consonant}`);
+        newExpandedNodes.add(`consonant-${consonant}`);
       });
 
-      setExpandedNodes(representativeNodes);
-      setIsRepresentativeMode(true);
+      setViewMode('representative');
     }
-  }, [isRepresentativeMode, structuredData, familyGroupsByConsonant]);
+
+    setExpandedNodes(newExpandedNodes);
+  }, [viewMode, structuredData, familyGroupsByConsonant]);
 
   const handleCustomerClick = useCallback((customerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -742,42 +750,105 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <div className="relationship-header">
             <div className="relationship-title">고객 관계 현황</div>
             <div className="relationship-header-actions">
-              {/* 트리 컨트롤 버튼 - 대표만 보기만 */}
-              <div className="relationship-tree-controls">
-                <Tooltip content={isRepresentativeMode ? "전체 보기" : "대표만 보기"}>
-                  <div style={{ display: 'inline-block' }}>
+              {/* 트리 뷰 모드 전환 버튼 */}
+              <div className="relationship-tree-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tooltip content={
+                  viewMode === 'representative' ? "초성만 보기" :
+                  viewMode === 'consonant' ? "전체 보기" :
+                  "대표만 보기"
+                }>
+                  <div style={{ display: 'inline-flex', width: '24px', height: '24px', position: 'relative' }}>
                     <button
                       type="button"
                       className="tree-control-button"
-                      onClick={toggleRepresentativeMode}
-                      aria-label={isRepresentativeMode ? "전체 보기" : "대표만 보기"}
+                      onClick={toggleViewMode}
+                      aria-label={
+                        viewMode === 'representative' ? "초성만 보기" :
+                        viewMode === 'consonant' ? "전체 보기" :
+                        "대표만 보기"
+                      }
+                      style={{ position: 'relative' }}
                     >
-                      {isRepresentativeMode ? (
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                          <circle cx="8" cy="3" r="2"/>
-                          <line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" strokeWidth="1.5"/>
-                          <line x1="8" y1="8" x2="4" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                          <line x1="8" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                          <circle cx="4" cy="11" r="1.5"/>
-                          <circle cx="12" cy="11" r="1.5"/>
-                          <circle cx="2" cy="14" r="1"/>
-                          <circle cx="6" cy="14" r="1"/>
-                          <circle cx="10" cy="14" r="1"/>
-                          <circle cx="14" cy="14" r="1"/>
-                        </svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                          <circle cx="8" cy="4" r="2.5"/>
-                          <line x1="8" y1="6.5" x2="8" y2="10" stroke="currentColor" strokeWidth="1.5"/>
-                          <line x1="8" y1="10" x2="4" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-                          <line x1="8" y1="10" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-                          <circle cx="4" cy="13" r="1" opacity="0.3"/>
-                          <circle cx="12" cy="13" r="1" opacity="0.3"/>
-                        </svg>
-                      )}
+                      {/* 대표만 보기 - 작은 트리 */}
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        style={{
+                          display: viewMode === 'representative' ? 'block' : 'none',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      >
+                        <circle cx="8" cy="5" r="1.5" fill="currentColor"/>
+                        <line x1="8" y1="6.5" x2="8" y2="8.5" strokeWidth="1.5"/>
+                        <line x1="8" y1="8.5" x2="5" y2="11" strokeWidth="1.5"/>
+                        <line x1="8" y1="8.5" x2="11" y2="11" strokeWidth="1.5"/>
+                        <circle cx="5" cy="11" r="1.5" fill="currentColor"/>
+                        <circle cx="11" cy="11" r="1.5" fill="currentColor"/>
+                      </svg>
+
+                      {/* 초성만 보기 - 점 */}
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        style={{
+                          display: viewMode === 'consonant' ? 'block' : 'none',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      >
+                        <circle cx="8" cy="8" r="2"/>
+                      </svg>
+
+                      {/* 전체 보기 - 큰 트리 */}
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        style={{
+                          display: viewMode === 'all' ? 'block' : 'none',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                      >
+                        <circle cx="8" cy="3" r="1.5" fill="currentColor"/>
+                        <line x1="8" y1="4.5" x2="8" y2="6.5" strokeWidth="1.5"/>
+                        <line x1="8" y1="6.5" x2="4" y2="8" strokeWidth="1.5"/>
+                        <line x1="8" y1="6.5" x2="12" y2="8" strokeWidth="1.5"/>
+                        <circle cx="4" cy="8" r="1.5" fill="currentColor"/>
+                        <circle cx="12" cy="8" r="1.5" fill="currentColor"/>
+                        <line x1="4" y1="9.5" x2="4" y2="11" strokeWidth="1.5"/>
+                        <line x1="4" y1="11" x2="2" y2="13" strokeWidth="1.5"/>
+                        <line x1="4" y1="11" x2="6" y2="13" strokeWidth="1.5"/>
+                        <line x1="12" y1="9.5" x2="12" y2="11" strokeWidth="1.5"/>
+                        <line x1="12" y1="11" x2="10" y2="13" strokeWidth="1.5"/>
+                        <line x1="12" y1="11" x2="14" y2="13" strokeWidth="1.5"/>
+                        <circle cx="2" cy="13" r="1" fill="currentColor"/>
+                        <circle cx="6" cy="13" r="1" fill="currentColor"/>
+                        <circle cx="10" cy="13" r="1" fill="currentColor"/>
+                        <circle cx="14" cy="13" r="1" fill="currentColor"/>
+                      </svg>
                     </button>
                   </div>
                 </Tooltip>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                  {viewMode === 'representative' ? "대표만 보기" :
+                   viewMode === 'consonant' ? "초성만 보기" :
+                   "전체 보기"}
+                </span>
               </div>
               <div className="relationship-search">
                 <input

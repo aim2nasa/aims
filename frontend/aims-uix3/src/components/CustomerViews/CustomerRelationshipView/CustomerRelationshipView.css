@@ -71,7 +71,7 @@
 }
 
 .tree-control-button:hover {
-  background-color: var(--color-bg-secondary);
+  background-color: transparent;
   color: var(--color-icon-blue);
   opacity: 1;
 }
