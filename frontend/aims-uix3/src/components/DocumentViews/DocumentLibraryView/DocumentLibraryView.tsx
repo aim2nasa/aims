@@ -50,17 +50,6 @@ interface DocumentLibraryViewProps {
   onDocumentDeleted?: () => void
 }
 
-// 정렬 옵션 정의
-const SORT_OPTIONS: DropdownOption[] = [
-  { value: 'uploadDate_desc', label: '최신순' },
-  { value: 'uploadDate_asc', label: '오래된순' },
-  { value: 'filename_asc', label: '이름순 (가나다)' },
-  { value: 'filename_desc', label: '이름순 (하파타)' },
-  { value: 'size_asc', label: '크기순 (큰 것부터)' },
-  { value: 'size_desc', label: '크기순 (작은 것부터)' },
-  { value: 'fileType_asc', label: '파일 형식순' },
-]
-
 // 페이지당 항목 수 옵션 정의
 const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
   { value: '10', label: '10개씩' },
@@ -104,7 +93,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     itemsPerPage,
     loadDocuments,
     handleSearchChange,
-    handleSortChange,
     handlePageChange,
     handleLimitChange,
     clearError,
@@ -368,21 +356,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     setTimeout(() => {
       setClickedButton(null)
     }, 600)
-  }
-
-  // 현재 정렬 상태
-  const currentSortBy = searchParams.sortBy || 'uploadDate'
-  const currentSortOrder = searchParams.sortOrder || 'desc'
-
-  // 정렬 옵션을 결합한 값
-  const sortValue = `${currentSortBy}_${currentSortOrder}`
-
-  // 정렬 변경 핸들러
-  const handleSortSelectChange = (value: string) => {
-    const [sortBy, sortOrder] = value.split('_')
-    if (sortBy && sortOrder) {
-      handleSortChange(sortBy, sortOrder as 'asc' | 'desc')
-    }
   }
 
   // 🍎 칼럼 헤더 클릭 정렬 핸들러
@@ -666,17 +639,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                 tooltip="문서 목록 새로고침"
                 size="small"
               />
-
-              {/* 🍎 정렬 드롭다운 */}
-              <div className="sort-selector">
-                <Dropdown
-                  value={sortValue}
-                  options={SORT_OPTIONS}
-                  onChange={handleSortSelectChange}
-                  aria-label="정렬 기준 선택"
-                  minWidth={160}
-                />
-              </div>
             </div>
           </div>
         )}
