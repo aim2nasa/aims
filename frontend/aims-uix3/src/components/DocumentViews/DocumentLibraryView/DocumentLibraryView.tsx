@@ -31,8 +31,13 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
+import { usePersistedState } from '@/hooks/usePersistedState'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
+
+// 정렬 필드 타입 정의
+type SortField = 'filename' | 'size' | 'uploadDate' | 'type' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -107,6 +112,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
+
+  // 🍎 칼럼 헤더 정렬 상태
+  const [sortField, setSortField] = usePersistedState<SortField | null>('document-library-sort-field', null);
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('document-library-sort-direction', 'asc');
 
   // 🍎 모달 상태 관리
   // NOTE: 모달에 전달하는 document는 API 응답 타입(types/documentStatus)
@@ -372,6 +381,72 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }
 
+  // 🍎 칼럼 헤더 클릭 정렬 핸들러
+  const handleColumnSort = React.useCallback((field: SortField) => {
+    if (sortField === field) {
+      // 같은 필드 클릭 시 방향 토글
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭 시 새 필드로 설정하고 오름차순으로 시작
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection, setSortField, setSortDirection]);
+
+  // 🍎 칼럼 정렬 적용된 문서 리스트
+  const sortedDocuments = React.useMemo(() => {
+    if (!sortField) return documents;
+
+    const sorted = [...documents].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortField) {
+        case 'filename':
+          aValue = DocumentUtils.getDisplayName(a).toLowerCase();
+          bValue = DocumentUtils.getDisplayName(b).toLowerCase();
+          return sortDirection === 'asc'
+            ? aValue.localeCompare(bValue, 'ko')
+            : bValue.localeCompare(aValue, 'ko');
+
+        case 'size':
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          aValue = DocumentStatusService.extractFileSize(a as any) || 0;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          bValue = DocumentStatusService.extractFileSize(b as any) || 0;
+          return sortDirection === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
+
+        case 'uploadDate':
+          aValue = new Date(a.uploadDate || 0);
+          bValue = new Date(b.uploadDate || 0);
+          return sortDirection === 'asc'
+            ? aValue.getTime() - bValue.getTime()
+            : bValue.getTime() - aValue.getTime();
+
+        case 'type':
+          aValue = (a.mimeType ? DocumentUtils.getFileExtension(a.mimeType) : '-').toLowerCase();
+          bValue = (b.mimeType ? DocumentUtils.getFileExtension(b.mimeType) : '-').toLowerCase();
+          return sortDirection === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+
+        case 'status':
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          aValue = DocumentStatusService.extractStatus(a as any);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          bValue = DocumentStatusService.extractStatus(b as any);
+          return sortDirection === 'asc'
+            ? String(aValue).localeCompare(String(bValue))
+            : String(bValue).localeCompare(String(aValue));
+
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [documents, sortField, sortDirection]);
+
   // 🍎 View가 표시될 때마다 문서 목록 새로고침
   React.useEffect(() => {
     if (visible) {
@@ -549,20 +624,85 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               </p>
             </div>
           ) : (
-            documents.map((document) => {
-              // NOTE: DocumentStatusService는 API 응답 타입을 기대하므로 as any 사용
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const status = DocumentStatusService.extractStatus(document as any)
-              const statusLabel = DocumentStatusService.getStatusLabel(status)
-              const statusIcon = DocumentStatusService.getStatusIcon(status)
-              const isLinked = Boolean(document.customer_relation)
-              const isAnnualReport = document.is_annual_report === true
-              // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
-              const canLink = status === 'completed' && !isLinked && !isAnnualReport
-              const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
-              const isSelected = selectedDocumentIds.has(document._id)
+            <>
+              {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
+              <div className="document-list-header">
+                {isDeleteMode && <div className="header-checkbox"></div>}
+                <div className="header-icon"></div>
+                <div className="header-filename header-sortable" onClick={() => handleColumnSort('filename')}>
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                    <path d="M9 1v3h3" stroke="var(--color-ios-bg-primary-light)" strokeWidth="0.8" fill="none"/>
+                  </svg>
+                  <span>파일명</span>
+                  {sortField === 'filename' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                <div className="header-size header-sortable" onClick={() => handleColumnSort('size')}>
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  </svg>
+                  <span>크기</span>
+                  {sortField === 'size' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                <div className="header-date header-sortable" onClick={() => handleColumnSort('uploadDate')}>
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    <line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" strokeWidth="1.2"/>
+                  </svg>
+                  <span>날짜</span>
+                  {sortField === 'uploadDate' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                <div className="header-type header-sortable" onClick={() => handleColumnSort('type')}>
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
+                  </svg>
+                  <span>타입</span>
+                  {sortField === 'type' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                <div className="header-status header-sortable" onClick={() => handleColumnSort('status')}>
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <path d="M3 3h10v2H3V3zm0 4h10v2H3V7zm0 4h7v2H3v-2z" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                  </svg>
+                  <span>상태</span>
+                  {sortField === 'status' && (
+                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                <div className="header-actions">
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
+                    <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
+                  </svg>
+                  <span>액션</span>
+                </div>
+              </div>
 
-              return (
+              {sortedDocuments.map((document) => {
+                // NOTE: DocumentStatusService는 API 응답 타입을 기대하므로 as any 사용
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const status = DocumentStatusService.extractStatus(document as any)
+                const statusLabel = DocumentStatusService.getStatusLabel(status)
+                const statusIcon = DocumentStatusService.getStatusIcon(status)
+                const isLinked = Boolean(document.customer_relation)
+                const isAnnualReport = document.is_annual_report === true
+                // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
+                const canLink = status === 'completed' && !isLinked && !isAnnualReport
+                const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
+                const isSelected = selectedDocumentIds.has(document._id)
+
+                return (
                 <div
                   key={document._id}
                   className={`document-item ${isSelected ? 'document-item--selected' : ''}`}
@@ -697,8 +837,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
                     </Tooltip>
                   </div>
                 </div>
-              )
-            })
+                )
+              })}
+            </>
           )}
         </div>
 

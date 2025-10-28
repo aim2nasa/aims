@@ -201,6 +201,181 @@ html[data-theme="dark"] .result-count {
   padding-right: 4px;
 }
 
+/* === 🍎 DOCUMENT LIST HEADER: Sortable column headers === */
+
+.document-list-header {
+  display: grid;
+  grid-template-columns:
+    24px      /* 아이콘 고정 */
+    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+    80px      /* 크기 고정 */
+    120px     /* 날짜 고정 */
+    50px      /* 타입 고정 */
+    60px      /* 상태 (넓게) */
+    124px;    /* 액션 버튼 */
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f5f6f7;  /* 완전 불투명 배경 */
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 600;
+  color: var(--color-ios-text-secondary-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .document-list-header {
+  background: #374151;  /* 완전 불투명 다크 배경 */
+  color: var(--color-ios-text-secondary-dark);
+  box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
+}
+
+/* 삭제 모드일 때 체크박스 칼럼 추가 */
+.document-library-view--delete-mode .document-list-header {
+  grid-template-columns:
+    24px      /* 체크박스 */
+    24px      /* 아이콘 고정 */
+    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
+    80px      /* 크기 고정 */
+    120px     /* 날짜 고정 */
+    50px      /* 타입 고정 */
+    60px      /* 상태 (넓게) */
+    124px;    /* 액션 버튼 */
+}
+
+.header-checkbox {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon {
+  width: 24px;
+}
+
+.header-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 헤더 아이콘은 절대 축소되지 않음 */
+.document-list-header .header-icon-svg {
+  flex-shrink: 0;
+}
+
+/* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
+.header-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+}
+
+.header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .header-sortable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.header-sortable:active {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .header-sortable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+.header-size,
+.header-date {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.header-type,
+.header-status {
+  text-align: center;
+  justify-content: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.header-actions .header-icon-svg {
+  flex-shrink: 0;
+}
+
+.header-actions span {
+  flex-shrink: 0;
+}
+
+.sort-indicator {
+  font-size: 10px;
+  color: var(--color-primary-600);
+  opacity: 0.8;
+  transition: opacity 0.15s ease-out;
+}
+
+html[data-theme="dark"] .sort-indicator {
+  color: var(--color-primary-300);
+}
+
+.header-sortable:hover .sort-indicator {
+  opacity: 1;
+}
+
+/* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+.header-filename .header-icon-svg {
+  color: var(--color-icon-blue);  /* 파일명 - 파란색 */
+}
+
+.header-size .header-icon-svg {
+  color: var(--color-icon-orange);  /* 크기 - 주황색 */
+}
+
+.header-date .header-icon-svg {
+  color: var(--color-icon-green);  /* 날짜 - 초록색 */
+}
+
+.header-type .header-icon-svg {
+  color: var(--color-icon-purple);  /* 타입 - 보라색 */
+}
+
+.header-status .header-icon-svg {
+  color: var(--color-icon-green);  /* 상태 - 초록색 */
+}
+
+.header-actions .header-icon-svg {
+  color: var(--color-ios-text-tertiary-light);  /* 액션 - 회색 */
+}
+
+html[data-theme="dark"] .header-actions .header-icon-svg {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* 🍎 SCROLLBAR: Apple-style subtle */
 .document-list::-webkit-scrollbar {
   width: 8px;
@@ -299,11 +474,11 @@ html[data-theme="dark"] .document-list-empty {
   display: grid;
   grid-template-columns:
     24px      /* 아이콘 고정 */
-    1fr       /* 파일명 (가변) */
+    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
     80px      /* 크기 고정 */
     120px     /* 날짜 고정 */
     50px      /* 타입 고정 */
-    28px      /* 상태 아이콘 */
+    60px      /* 상태 (넓게) */
     124px;    /* 액션 버튼 */
   gap: 12px;
   align-items: center;

@@ -137,27 +137,15 @@ html[data-theme="dark"] .document-item--selected:hover {
 
 /* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
 
-/* 🍎 삭제 모드 아닐 때: 기본 레이아웃 (체크박스 없음) */
-.document-item {
-  grid-template-columns:
-    24px      /* 아이콘 고정 */
-    1fr       /* 파일명 (가변) */
-    80px      /* 크기 고정 */
-    120px     /* 날짜 고정 */
-    50px      /* 타입 고정 */
-    28px      /* 상태 아이콘 */
-    104px;    /* 액션 버튼 */
-}
-
 /* 🍎 삭제 모드일 때만: 체크박스 열 추가 */
 .document-library-view--delete-mode .document-item {
   grid-template-columns:
-    20px      /* 체크박스 */
+    24px      /* 체크박스 */
     24px      /* 아이콘 고정 */
-    1fr       /* 파일명 (가변) */
+    minmax(200px, 2fr)  /* 파일명 (최소 200px, 가변) */
     80px      /* 크기 고정 */
     120px     /* 날짜 고정 */
     50px      /* 타입 고정 */
-    28px      /* 상태 아이콘 */
-    104px;    /* 액션 버튼 */
+    60px      /* 상태 (넓게) */
+    124px;    /* 액션 버튼 */
 }
