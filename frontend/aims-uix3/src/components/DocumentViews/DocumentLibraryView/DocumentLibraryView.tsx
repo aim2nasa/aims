@@ -496,7 +496,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     if (!visible || !isPollingEnabled) return
 
     const interval = setInterval(async () => {
-      await loadDocuments(searchParams, false)
+      await loadDocuments(searchParams, true) // silent=true로 백그라운드 업데이트
       setLastUpdated(new Date())
     }, 5000)
 
