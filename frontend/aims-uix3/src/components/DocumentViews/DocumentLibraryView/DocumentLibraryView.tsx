@@ -141,6 +141,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
 
+  // 🍎 자동 새로고침 (폴링) 상태
+  const [isPollingEnabled, setPollingEnabled] = usePersistedState('document-library-polling', true)
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
+
   // 🍎 모달 핸들러
   // NOTE: API 응답 타입 사용 (상단 모달 상태와 동일한 이유)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,6 +397,37 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
   }, [sortField, sortDirection, setSortField, setSortDirection]);
 
+  // 🍎 폴링 토글 핸들러
+  const handleTogglePolling = React.useCallback(() => {
+    setPollingEnabled(!isPollingEnabled)
+  }, [isPollingEnabled, setPollingEnabled])
+
+  // 🍎 문서 목록 새로고침 핸들러
+  const handleRefresh = React.useCallback(async () => {
+    await loadDocuments(searchParams, true)
+    setLastUpdated(new Date())
+  }, [loadDocuments, searchParams])
+
+  // 🍎 마지막 업데이트 시간 포맷팅
+  const formatLastUpdated = React.useCallback((date: Date | null): string => {
+    if (!date) return ''
+
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    if (isToday) {
+      return `오늘 ${hours}:${minutes}:${seconds}`
+    } else {
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${month}.${day}. ${hours}:${minutes}:${seconds}`
+    }
+  }, [])
+
   // 🍎 칼럼 정렬 적용된 문서 리스트
   const sortedDocuments = React.useMemo(() => {
     if (!sortField) return documents;
@@ -452,8 +487,21 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     if (visible) {
       // offset을 0으로 초기화하여 첫 페이지부터 시작
       loadDocuments({ ...searchParams, offset: 0 }, false);
+      setLastUpdated(new Date())
     }
   }, [visible]);
+
+  // 🍎 실시간 폴링 (5초마다)
+  React.useEffect(() => {
+    if (!visible || !isPollingEnabled) return
+
+    const interval = setInterval(async () => {
+      await loadDocuments(searchParams, false)
+      setLastUpdated(new Date())
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [visible, isPollingEnabled, loadDocuments, searchParams]);
 
   return (
     <CenterPaneView
@@ -593,11 +641,27 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             </div>
 
             <div className="result-controls">
+              {/* 🍎 Last Updated 표시 */}
+              {lastUpdated && (
+                <span className="last-updated">
+                  최근 업데이트: {formatLastUpdated(lastUpdated)}
+                </span>
+              )}
+
+              {/* 🍎 폴링 토글 버튼 */}
+              <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+                <button
+                  className={`polling-toggle ${isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
+                  onClick={handleTogglePolling}
+                  aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+                >
+                  <span className={`polling-dot ${isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
+                </button>
+              </Tooltip>
+
               {/* 🍎 새로고침 버튼 */}
               <RefreshButton
-                onClick={async () => {
-                  await loadDocuments(searchParams, false);
-                }}
+                onClick={handleRefresh}
                 loading={isLoading}
                 tooltip="문서 목록 새로고침"
                 size="small"
