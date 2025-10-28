@@ -235,6 +235,23 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     };
   }, [refresh, loadRelationshipsData]);
 
+  // customerChanged 이벤트 수신하여 데이터 새로고침 (고객 추가/수정/삭제 시)
+  useEffect(() => {
+    const handleCustomerChange = async () => {
+      if (import.meta.env.DEV) {
+        console.log('[CustomerRelationshipView] customerChanged 이벤트 수신 - 데이터 새로고침');
+      }
+      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
+      await refresh({ limit: 10000 });
+      await loadRelationshipsData();
+    };
+
+    window.addEventListener('customerChanged', handleCustomerChange);
+    return () => {
+      window.removeEventListener('customerChanged', handleCustomerChange);
+    };
+  }, [refresh, loadRelationshipsData]);
+
   const loading = customersLoading || relationshipsLoading;
   // 데이터 구조화
   const structuredData = useMemo((): StructuredData => {
