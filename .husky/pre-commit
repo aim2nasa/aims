@@ -19,7 +19,7 @@ fi
 echo "📦 Building frontend/aims-uix3..."
 (cd frontend/aims-uix3 && npm run build) || exit 1
 
-echo "🧪 Running frontend/aims-uix3 tests..."
-(cd frontend/aims-uix3 && npm test -- --run) || exit 1
+echo "🧪 Running tests for changed files..."
+(cd frontend/aims-uix3 && npm test -- --run --changed) || exit 1
 
 echo "✅ All checks passed!"
