@@ -213,10 +213,10 @@ html[data-theme="dark"] .result-count {
     60px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
-    minmax(180px, 3fr)  /* 주소 */
+    minmax(150px, 2fr)  /* 주소 */
     80px           /* 유형 (텍스트 표시) */
     80px           /* 상태 (텍스트 표시) */
-    100px;         /* 등록일 (텍스트 표시) */
+    160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
@@ -441,10 +441,10 @@ html[data-theme="dark"] .customer-list-empty {
     60px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
-    minmax(180px, 3fr)  /* 주소 */
+    minmax(150px, 2fr)  /* 주소 */
     80px           /* 유형 (텍스트 표시) */
     80px           /* 상태 (텍스트 표시) */
-    100px;         /* 등록일 (텍스트 표시) */
+    160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
   gap: 12px;
   align-items: center;
   height: 32px;
