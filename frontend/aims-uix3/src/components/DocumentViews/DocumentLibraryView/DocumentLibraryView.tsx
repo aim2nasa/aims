@@ -509,7 +509,22 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               onClick={handleToggleDeleteMode}
               aria-label={isDeleteMode ? "편집 완료" : "편집"}
             >
-              {isDeleteMode ? "✓" : "✏️"}
+              {isDeleteMode ? (
+                // Checkmark icon (16px) - stroke only
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                // Pencil icon (16px) - 개선된 디자인 + 색상 포인트
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* 연필 본체 */}
+                  <path d="M11.5 2.5L13.5 4.5L4.5 13.5L2 14L2.5 11.5L11.5 2.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  {/* 연필 끝 - 색상 포인트 */}
+                  <path d="M11.5 2.5L13.5 4.5" stroke="#FF6B6B" strokeWidth="1.8" strokeLinecap="round"/>
+                  {/* 편집 라인 */}
+                  <line x1="10.5" y1="3.5" x2="12.5" y2="5.5" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
+                </svg>
+              )}
             </button>
           </Tooltip>
         </div>
@@ -540,16 +555,14 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 삭제 모드 액션 바 */}
-        {isDeleteMode && (
+        {/* 삭제 모드 액션 바 - 선택된 항목이 있을 때만 표시 */}
+        {isDeleteMode && selectedDocumentIds.size > 0 && (
           <div className="document-library-actions">
             <div className="actions-left">
-              {selectedDocumentIds.size > 0 && (
-                <span className="selected-count">{selectedDocumentIds.size}개 선택됨</span>
-              )}
+              <span className="selected-count">{selectedDocumentIds.size}개 선택됨</span>
             </div>
             <div className="actions-right">
-              {selectedDocumentIds.size > 0 && (
+              {(
                 <Button
                   variant="destructive"
                   size="sm"

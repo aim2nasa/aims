@@ -16,6 +16,12 @@
   flex: 1;
 }
 
+/* Tooltip wrapper가 레이아웃에 영향을 주지 않도록 */
+.document-library-bar .tooltip-trigger {
+  display: flex;
+  align-items: center;
+}
+
 /* === 🍎 EDIT MODE BUTTON: 편집 아이콘 버튼 === */
 
 .edit-mode-button {
