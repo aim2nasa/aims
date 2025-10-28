@@ -10,6 +10,7 @@
 
 import React, { useState } from 'react';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
+import Tooltip from '@/shared/ui/Tooltip';
 import './RefreshButton.css';
 
 interface RefreshButtonProps {
@@ -90,21 +91,25 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
     .join(' ');
 
   return (
-    <button
-      type="button"
-      className={buttonClasses}
-      onClick={handleClick}
-      disabled={isDisabled || isLoading}
-      aria-label={tooltip}
-    >
-      <SFSymbol
-        name="arrow.clockwise"
-        size={symbolSize}
-        weight={SFSymbolWeight.MEDIUM}
-        className="refresh-button__icon"
-        decorative={true}
-      />
-    </button>
+    <Tooltip content={tooltip}>
+      <div style={{ display: 'inline-block' }}>
+        <button
+          type="button"
+          className={buttonClasses}
+          onClick={handleClick}
+          disabled={isDisabled || isLoading}
+          aria-label={tooltip}
+        >
+          <SFSymbol
+            name="arrow.clockwise"
+            size={symbolSize}
+            weight={SFSymbolWeight.MEDIUM}
+            className="refresh-button__icon"
+            decorative={true}
+          />
+        </button>
+      </div>
+    </Tooltip>
   );
 };
 
