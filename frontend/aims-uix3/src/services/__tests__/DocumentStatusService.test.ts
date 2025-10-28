@@ -902,20 +902,21 @@ describe('DocumentStatusService', () => {
   // 8. formatUploadDate()
   // ============================================================================
   describe('formatUploadDate', () => {
-    it('날짜를 "YYYY. MM. DD. HH:MM:SS" 형식으로 포맷해야 함', () => {
+    it('날짜를 "YYYY.MM.DD HH:MM:SS" 형식으로 포맷해야 함', () => {
       const result = DocumentStatusService.formatUploadDate('2025-10-14T15:30:45Z')
 
       // UTC 시간대 차이를 고려하여 년월일만 검증
-      expect(result).toMatch(/2025\. 10\. (14|15)\. \d{2}:\d{2}:\d{2}/)
+      expect(result).toMatch(/2025\.10\.(14|15) \d{2}:\d{2}:\d{2}/)
     })
 
     it('한 자리 수 월/일은 0으로 패딩해야 함', () => {
       const result = DocumentStatusService.formatUploadDate('2025-01-05T08:09:07Z')
 
       // 0 패딩이 제대로 되었는지 검증
-      expect(result).toMatch(/2025\. 01\. 05\. \d{2}:\d{2}:\d{2}/)
-      expect(result.split('. ')[1]).toBe('01') // 월 확인
-      expect(result.split('. ')[2]).toBe('05') // 일 확인
+      expect(result).toMatch(/2025\.01\.05 \d{2}:\d{2}:\d{2}/)
+      const parts = result.split('.')
+      expect(parts[1]).toBe('01') // 월 확인
+      expect(parts[2]?.split(' ')[0]).toBe('05') // 일 확인
     })
 
     it('null 입력 시 "-"를 반환해야 함', () => {

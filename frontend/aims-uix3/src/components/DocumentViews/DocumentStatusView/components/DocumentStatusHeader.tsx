@@ -65,25 +65,19 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
 
   /**
    * 마지막 업데이트 시간 포맷팅
-   * "오늘 HH:MM:SS" 형식으로 표시
+   * "YYYY.MM.DD HH:MM:SS" 형식으로 표시
    */
   const formatLastUpdated = useCallback((date: Date | null): string => {
     if (!date) return ''
 
-    const now = new Date()
-    const isToday = date.toDateString() === now.toDateString()
-
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     const seconds = String(date.getSeconds()).padStart(2, '0')
 
-    if (isToday) {
-      return `오늘 ${hours}:${minutes}:${seconds}`
-    } else {
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${month}.${day}. ${hours}:${minutes}:${seconds}`
-    }
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
   }, [])
 
   const handleFilterChange = useCallback(

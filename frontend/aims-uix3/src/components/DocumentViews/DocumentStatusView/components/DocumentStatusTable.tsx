@@ -112,20 +112,17 @@ export const DocumentStatusTable: React.FC<DocumentStatusTableProps> = ({
     return `status-${status}`
   }
 
-  // 날짜 포맷팅
+  // 날짜 포맷팅: YYYY.MM.DD HH:MM:SS
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Unknown'
-
     const date = new Date(dateString)
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    })
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
   }
 
   return (
