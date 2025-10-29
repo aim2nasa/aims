@@ -200,6 +200,7 @@ export interface DocumentStatusResponse {
       limit: number
       total: number
       totalPages: number
+      totalCount: number
     }
   }
   documents?: Document[]
@@ -209,6 +210,7 @@ export interface DocumentStatusResponse {
     limit: number
     total: number
     totalPages: number
+    totalCount: number
   }
 }
 

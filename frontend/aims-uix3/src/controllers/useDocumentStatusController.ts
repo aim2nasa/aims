@@ -197,6 +197,7 @@ export const useDocumentStatusController = () => {
     // 🍎 Pagination State
     currentPage: state.currentPage,
     totalPages: state.totalPages,
+    totalCount: state.totalCount,
     itemsPerPage: state.itemsPerPage,
     paginatedDocuments: state.paginatedDocuments,
 

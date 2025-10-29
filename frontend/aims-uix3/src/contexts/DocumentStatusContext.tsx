@@ -23,6 +23,7 @@ export interface DocumentStatusState {
   currentPage: number
   itemsPerPage: number
   totalPages: number
+  totalCount: number
   paginatedDocuments: Document[]
   // 🍎 Sort State
   sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null

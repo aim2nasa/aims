@@ -72,7 +72,7 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onTogglePolling={controller.togglePolling}
         onRefresh={controller.refreshDocuments}
         isLoading={controller.isLoading}
-        documentsCount={controller.documents.length}
+        documentsCount={controller.totalCount}
         lastUpdated={controller.lastUpdated}
       />
 

@@ -40,6 +40,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(10)
   const [totalPages, setTotalPages] = useState<number>(1)
+  const [totalCount, setTotalCount] = useState<number>(0)
 
   // 🍎 Sort State
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null>(null)
@@ -78,8 +79,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🍎 백엔드 pagination 정보 저장
         if (data.data?.pagination) {
           setTotalPages(data.data.pagination.totalPages || 1)
+          setTotalCount(data.data.pagination.totalCount || 0)
         } else if (data.pagination) {
           setTotalPages(data.pagination.totalPages || 1)
+          setTotalCount(data.pagination.totalCount || 0)
         }
 
         // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
@@ -381,6 +384,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       currentPage,
       itemsPerPage,
       totalPages,
+      totalCount,
       paginatedDocuments,
       sortField,
       sortDirection
@@ -398,6 +402,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       currentPage,
       itemsPerPage,
       totalPages,
+      totalCount,
       paginatedDocuments,
       sortField,
       sortDirection
