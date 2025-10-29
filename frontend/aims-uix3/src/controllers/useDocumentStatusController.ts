@@ -201,9 +201,6 @@ export const useDocumentStatusController = () => {
     itemsPerPage: state.itemsPerPage,
     paginatedDocuments: state.paginatedDocuments,
 
-    // 🍎 Fetch Limit State
-    fetchLimit: state.fetchLimit,
-
     // 🍎 Sort State
     sortField: state.sortField,
     sortDirection: state.sortDirection,
@@ -216,9 +213,6 @@ export const useDocumentStatusController = () => {
     // 🍎 Pagination Actions
     handlePageChange: actions.handlePageChange,
     handleLimitChange: actions.handleLimitChange,
-
-    // 🍎 Fetch Limit Actions
-    handleFetchLimitChange: actions.handleFetchLimitChange,
 
     // 🍎 Sort Actions
     handleColumnSort: actions.handleColumnSort,

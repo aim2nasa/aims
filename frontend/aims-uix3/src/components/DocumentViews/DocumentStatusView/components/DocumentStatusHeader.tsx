@@ -21,9 +21,6 @@ interface DocumentStatusHeaderProps {
   documentsCount: number
   filteredCount: number
   lastUpdated: Date | null
-  // 🍎 Fetch Limit Props
-  fetchLimit: number
-  onFetchLimitChange: (limit: number) => void
 }
 
 const FILTER_OPTIONS: DropdownOption[] = [
@@ -32,15 +29,6 @@ const FILTER_OPTIONS: DropdownOption[] = [
   { value: 'processing', label: '처리중' },
   { value: 'error', label: '오류' },
   { value: 'pending', label: '대기' },
-]
-
-const FETCH_LIMIT_OPTIONS: DropdownOption[] = [
-  { value: '50', label: '50개' },
-  { value: '100', label: '100개' },
-  { value: '200', label: '200개' },
-  { value: '300', label: '300개' },
-  { value: '400', label: '400개' },
-  { value: '500', label: '500개' },
 ]
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
@@ -52,16 +40,8 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   onFilterChange,
   documentsCount,
   filteredCount,
-  lastUpdated,
-  fetchLimit,
-  onFetchLimitChange
+  lastUpdated
 }) => {
-  // 🍎 설정 패널 토글 상태
-  const [isSettingsOpen, setSettingsOpen] = React.useState(false)
-
-  const handleToggleSettings = useCallback(() => {
-    setSettingsOpen((prev) => !prev)
-  }, [])
 
   /**
    * 마지막 업데이트 시간 포맷팅
@@ -85,13 +65,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
       onFilterChange(value as DocumentStatusHeaderProps['statusFilter'])
     },
     [onFilterChange]
-  )
-
-  const handleFetchLimitChange = useCallback(
-    (value: string) => {
-      onFetchLimitChange(Number(value))
-    },
-    [onFetchLimitChange]
   )
 
   const lastUpdatedLabel = useMemo(() => formatLastUpdated(lastUpdated), [formatLastUpdated, lastUpdated])
@@ -123,24 +96,13 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
         {/* 중앙: 여백 */}
         <div className="header-spacer" />
 
-        {/* 오른쪽: Last Updated + 설정 버튼 + 폴링 토글 + 새로고침 */}
+        {/* 오른쪽: Last Updated + 폴링 토글 + 새로고침 */}
         <div className="header-right">
           {lastUpdated && (
             <span className="last-updated">
               최근 업데이트: {lastUpdatedLabel}
             </span>
           )}
-
-          <Tooltip content="설정">
-            <button
-              className={"settings-toggle " + (isSettingsOpen ? 'settings-active' : '')}
-              onClick={handleToggleSettings}
-              aria-label="설정"
-              aria-expanded={isSettingsOpen}
-            >
-              ⚙
-            </button>
-          </Tooltip>
 
           <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
             <button
@@ -162,22 +124,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
           />
         </div>
       </div>
-
-      {/* 🍎 설정 패널: 최대 표시 드롭다운 */}
-      {isSettingsOpen && (
-        <div className="settings-panel">
-          <div className="filter-group">
-            <span className="filter-label">최대 표시:</span>
-            <Dropdown
-              value={String(fetchLimit)}
-              options={FETCH_LIMIT_OPTIONS}
-              onChange={handleFetchLimitChange}
-              aria-label="가져올 문서 개수"
-              width={100}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

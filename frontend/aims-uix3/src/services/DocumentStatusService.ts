@@ -82,10 +82,16 @@ export class DocumentStatusService {
 
   /**
    * 최근 문서 목록 조회
+   * @param page 페이지 번호 (1부터 시작)
+   * @param limit 페이지당 항목 수
+   * @param sort 정렬 옵션
    */
-  static async getRecentDocuments(limit: number = 1000, sort?: string): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string): Promise<DocumentStatusResponse> {
     try {
-      const params = new URLSearchParams({ limit: String(limit) })
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit)
+      })
       if (sort) {
         params.append('sort', sort)
       }

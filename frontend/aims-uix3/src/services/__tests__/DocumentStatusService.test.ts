@@ -75,23 +75,27 @@ describe('DocumentStatusService', () => {
           json: async () => ({ success: true, data: mockData }),
         } as Response)
 
-        const result = await DocumentStatusService.getRecentDocuments()
+        const result = await DocumentStatusService.getRecentDocuments(1, 10)
 
         expect(fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/documents/status?limit=1000'),
+          expect.stringContaining('/api/documents/status?page=1&limit=10'),
           expect.any(Object)
         )
         expect(result).toEqual(mockData)
       })
 
-      it('limit 파라미터를 전달해야 함', async () => {
+      it('page와 limit 파라미터를 전달해야 함', async () => {
         vi.mocked(fetch).mockResolvedValueOnce({
           ok: true,
           json: async () => ({ success: true, data: { documents: [] } }),
         } as Response)
 
-        await DocumentStatusService.getRecentDocuments(50)
+        await DocumentStatusService.getRecentDocuments(2, 50)
 
+        expect(fetch).toHaveBeenCalledWith(
+          expect.stringContaining('page=2'),
+          expect.any(Object)
+        )
         expect(fetch).toHaveBeenCalledWith(
           expect.stringContaining('limit=50'),
           expect.any(Object)

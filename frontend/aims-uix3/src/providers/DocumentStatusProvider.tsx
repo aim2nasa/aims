@@ -42,9 +42,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // 🍎 Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [itemsPerPage, setItemsPerPage] = useState<number>(10)
-
-  // 🍎 Fetch Limit State (가져올 문서 개수)
-  const [fetchLimit, setFetchLimit] = useState<number>(100)
+  const [totalPages, setTotalPages] = useState<number>(1)
 
   // 🍎 Sort State
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null>(null)
@@ -52,6 +50,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   /**
    * 문서 목록 가져오기
+   * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
    */
   const fetchDocuments = useCallback(
     async (isInitialLoad: boolean = false) => {
@@ -75,8 +74,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           sortParam = sortDirection === 'asc' ? 'mimeType_asc' : 'mimeType_desc'
         }
 
-        const data = await DocumentStatusService.getRecentDocuments(fetchLimit, sortParam)
+        // 🍎 페이지네이션 기반으로 변경: page와 limit 전달
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
+
+        // 🍎 백엔드 pagination 정보 저장
+        if (data.data?.pagination) {
+          setTotalPages(data.data.pagination.totalPages || 1)
+        } else if (data.pagination) {
+          setTotalPages(data.pagination.totalPages || 1)
+        }
 
         // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
         const documentsWithCustomerRelation: Document[] = await Promise.all(
@@ -129,7 +136,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [fetchLimit, sortField, sortDirection]
+    [currentPage, itemsPerPage, sortField, sortDirection]
   )
 
   /**
@@ -268,18 +275,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [documents, searchTerm, statusFilter])
 
   // 🍎 Pagination Logic
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredDocuments.length / itemsPerPage)),
-    [filteredDocuments.length, itemsPerPage]
-  )
-
+  // 백엔드에서 이미 페이지네이션된 데이터를 받으므로 filteredDocuments를 그대로 사용
   const paginatedDocuments = useMemo(() => {
-    // 🍎 백엔드에서 이미 정렬된 데이터를 받으므로 클라이언트 정렬 제거
-    // status 정렬은 백엔드에서 처리, filename/uploadDate는 향후 백엔드 구현 예정
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return filteredDocuments.slice(startIndex, endIndex)
-  }, [filteredDocuments, currentPage, itemsPerPage])
+    return filteredDocuments
+  }, [filteredDocuments])
 
   // 🍎 Pagination Handlers
   const handlePageChange = useCallback((page: number) => {
@@ -290,12 +289,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   const handleLimitChange = useCallback((limit: number) => {
     setItemsPerPage(limit)
-    setCurrentPage(1) // Reset to first page
-  }, [])
-
-  // 🍎 Fetch Limit Handler
-  const handleFetchLimitChange = useCallback((limit: number) => {
-    setFetchLimit(limit)
     setCurrentPage(1) // Reset to first page
   }, [])
 
@@ -374,21 +367,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1)
   }, [statusFilter, searchTerm])
 
-  // 🍎 fetchLimit 변경 시 문서 다시 가져오기
+  // 🍎 페이지, 페이지네이션 또는 정렬 옵션 변경 시 문서 다시 가져오기
   useEffect(() => {
     if (typeof window === 'undefined') return
     fetchDocuments(false)
-  }, [fetchLimit, fetchDocuments])
-
-  // 🍎 정렬 옵션 변경 시 문서 다시 가져오기
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    // sortField나 sortDirection이 변경되면 fetchDocuments 재호출
-    // fetchDocuments의 의존성 배열에 이미 포함되어 있으므로 자동 재호출됨
-    if (sortField !== null) {
-      fetchDocuments(false)
-    }
-  }, [sortField, sortDirection, fetchDocuments])
+  }, [currentPage, itemsPerPage, sortField, sortDirection, fetchDocuments])
 
   // State 객체
   const state: DocumentStatusState = useMemo(
@@ -407,7 +390,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       itemsPerPage,
       totalPages,
       paginatedDocuments,
-      fetchLimit,
       sortField,
       sortDirection
     }),
@@ -426,7 +408,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       itemsPerPage,
       totalPages,
       paginatedDocuments,
-      fetchLimit,
       sortField,
       sortDirection
     ]
@@ -453,8 +434,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setItemsPerPage,
       handlePageChange,
       handleLimitChange,
-      setFetchLimit,
-      handleFetchLimitChange,
       updateDocumentCustomerRelation,
       setSortField,
       setSortDirection,
@@ -467,7 +446,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       checkApiHealth,
       handlePageChange,
       handleLimitChange,
-      handleFetchLimitChange,
       updateDocumentCustomerRelation,
       handleColumnSort
     ]

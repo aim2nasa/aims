@@ -77,8 +77,6 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         documentsCount={controller.documents.length}
         filteredCount={controller.filteredDocuments.length}
         lastUpdated={controller.lastUpdated}
-        fetchLimit={controller.fetchLimit}
-        onFetchLimitChange={controller.handleFetchLimitChange}
       />
 
       {/* 🍎 리스트: DocumentLibrary와 동일한 구조 */}

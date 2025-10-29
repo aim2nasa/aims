@@ -195,9 +195,21 @@ export interface DocumentStatusResponse {
   data?: {
     documents: Document[]
     total: number
+    pagination?: {
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
   }
   documents?: Document[]
   total?: number
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 /**
