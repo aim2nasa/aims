@@ -56,7 +56,8 @@ const DocumentLibraryContent: React.FC<{
   onSelectAllIds: (ids: string[]) => void
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
   onToggleDeleteMode: () => void
-}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode }) => {
+  onDocumentClick?: (documentId: string) => void
+}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick }) => {
   const controller = useDocumentStatusController()
   const { actions } = useDocumentStatusContext()
 
@@ -114,6 +115,7 @@ const DocumentLibraryContent: React.FC<{
         isLoading={controller.isLoading}
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
+        {...(onDocumentClick && { onDocumentClick })}
         onDetailClick={controller.handleDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
@@ -225,6 +227,7 @@ const DocumentLibraryContent: React.FC<{
 export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
+  onDocumentClick,
   onDocumentDeleted,
 }) => {
   const {
@@ -439,6 +442,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
             onToggleDeleteMode={handleToggleDeleteMode}
+            {...(onDocumentClick && { onDocumentClick })}
           />
         </DocumentStatusProvider>
       </div>
