@@ -33,6 +33,11 @@ export interface DocumentStatusListProps {
   sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null
   sortDirection?: 'asc' | 'desc'
   onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => void
+  // 🍎 Delete mode props
+  isDeleteMode?: boolean
+  selectedDocumentIds?: Set<string>
+  onSelectAll?: (checked: boolean) => void
+  onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
 }
 
 export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
@@ -47,7 +52,11 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onLinkClick,
   sortField,
   sortDirection,
-  onColumnSort
+  onColumnSort,
+  isDeleteMode = false,
+  selectedDocumentIds = new Set(),
+  onSelectAll,
+  onSelectDocument
 }) => {
   // 로딩 상태
   if (isLoading && isEmpty) {
@@ -87,9 +96,21 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
   // 리스트 렌더링
   return (
-    <div className="document-status-list">
+    <div className={`document-status-list ${isDeleteMode ? 'document-status-list--delete-mode' : ''}`}>
       {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
       <div className="status-list-header">
+        {/* 🍎 삭제 모드: 전체 선택 체크박스 */}
+        {isDeleteMode && (
+          <div className="header-checkbox">
+            <input
+              type="checkbox"
+              checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id ?? doc.id ?? ''))}
+              onChange={(e) => onSelectAll?.(e.target.checked)}
+              aria-label="전체 선택"
+              className="document-select-all-checkbox"
+            />
+          </div>
+        )}
         <div className="header-icon"></div>
         <div
           className={`header-filename ${onColumnSort ? 'header-sortable' : ''}`}
@@ -193,12 +214,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         const documentId = document._id ?? document.id ?? null
         const key = documentId ?? `${DocumentStatusService.extractFilename(document)}-${index}`
 
+        const isSelected = documentId ? selectedDocumentIds.has(documentId) : false
+
         return (
           <div
             key={key}
-            className="status-item"
+            className={`status-item ${isSelected ? 'status-item--selected' : ''}`}
             onClick={() => {
-              if (documentId && onDocumentClick) {
+              if (documentId && onDocumentClick && !isDeleteMode) {
                 onDocumentClick(documentId)
               }
             }}
@@ -207,12 +230,32 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                if (documentId && onDocumentClick) {
+                if (documentId && onDocumentClick && !isDeleteMode) {
                   onDocumentClick(documentId)
                 }
               }
             }}
           >
+            {/* 🍎 삭제 모드: 개별 선택 체크박스 */}
+            {isDeleteMode && (
+              <div
+                className="document-checkbox-wrapper"
+                onClick={(e) => {
+                  if (documentId) {
+                    onSelectDocument?.(documentId, e)
+                  }
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => {}}
+                  aria-label={`${DocumentStatusService.extractFilename(document)} 선택`}
+                  className="document-checkbox"
+                />
+              </div>
+            )}
+
             {/* 파일 타입 아이콘 */}
             <div className="document-icon-wrapper">
               <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, DocumentStatusService.extractFilename(document))}`}>

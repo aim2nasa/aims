@@ -15,9 +15,16 @@
 
 /* === 🍎 SEARCH BAR: iOS-style search field with controls === */
 
-.document-library-search {
+.document-library-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   margin-bottom: 12px;
+}
+
+.document-library-bar .search-input-wrapper {
+  flex: 1;
 }
 
 .search-input-wrapper {

@@ -38,6 +38,19 @@
   box-shadow: 0 1px 0 0 var(--color-ios-separator-light);
 }
 
+/* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+.document-status-list--delete-mode .status-list-header {
+  grid-template-columns:
+    24px           /* 체크박스 */
+    24px           /* 파일 타입 아이콘 */
+    minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
+    80px           /* 크기 */
+    80px           /* 타입 */
+    170px          /* 날짜 */
+    120px          /* 상태 */
+    104px;         /* 액션 버튼 */
+}
+
 html[data-theme="dark"] .status-list-header {
   background: #374151;  /* 완전 불투명 다크 배경 */
   color: var(--color-ios-text-secondary-dark);
@@ -275,6 +288,19 @@ html[data-theme="dark"] .empty-message {
   animation: itemFadeIn 0.25s ease-out;
 }
 
+/* 🍎 삭제 모드일 때: 체크박스 열 추가 */
+.document-status-list--delete-mode .status-item {
+  grid-template-columns:
+    24px           /* 체크박스 */
+    24px           /* 파일 타입 아이콘 */
+    minmax(150px, 1fr)  /* 파일명 */
+    80px           /* 크기 */
+    80px           /* 타입 */
+    170px          /* 날짜 */
+    120px          /* 상태 */
+    104px;         /* 액션 버튼 */
+}
+
 @keyframes itemFadeIn {
   from {
     opacity: 0;
@@ -302,13 +328,23 @@ html[data-theme="dark"] .status-item:hover {
 /* === 🍎 SELECTED STATE: 명확한 선택 표시 === */
 .status-item.selected,
 .status-item[data-selected="true"],
+.status-item--selected,
 .status-item:active {
   background: var(--color-ios-bg-selected-light);
 }
 
 html[data-theme="dark"] .status-item.selected,
 html[data-theme="dark"] .status-item[data-selected="true"],
+html[data-theme="dark"] .status-item--selected,
 html[data-theme="dark"] .status-item:active {
+  background: var(--color-ios-bg-selected-dark);
+}
+
+.status-item--selected:hover {
+  background: var(--color-ios-bg-selected-light);
+}
+
+html[data-theme="dark"] .status-item--selected:hover {
   background: var(--color-ios-bg-selected-dark);
 }
 
@@ -700,6 +736,37 @@ html[data-theme="dark"] .document-icon.file-icon--text {
 
 html[data-theme="dark"] .status-item:hover .document-icon.file-icon--text {
   color: var(--color-file-text-hover-dark);
+}
+
+/* === 🍎 DELETE MODE: 체크박스 스타일 === */
+.header-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.document-select-all-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+.document-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.document-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
 }
 
 /* === ACCESSIBILITY === */

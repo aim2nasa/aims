@@ -49,7 +49,13 @@ const ITEMS_PER_PAGE_OPTIONS = [
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
  * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
  */
-const DocumentLibraryContent: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
+const DocumentLibraryContent: React.FC<{
+  searchQuery: string
+  isDeleteMode: boolean
+  selectedDocumentIds: Set<string>
+  onSelectAllIds: (ids: string[]) => void
+  onSelectDocument: (documentId: string, event: React.MouseEvent) => void
+}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument }) => {
   const controller = useDocumentStatusController()
   const { actions } = useDocumentStatusContext()
 
@@ -57,6 +63,18 @@ const DocumentLibraryContent: React.FC<{ searchQuery: string }> = ({ searchQuery
   React.useEffect(() => {
     actions.setSearchTerm(searchQuery)
   }, [searchQuery, actions])
+
+  // 🍎 전체 선택 핸들러 (Context의 documents 사용)
+  const handleSelectAll = React.useCallback((checked: boolean) => {
+    if (checked) {
+      const allIds = controller.paginatedDocuments
+        .map(doc => doc._id ?? doc.id ?? '')
+        .filter(id => id !== '')
+      onSelectAllIds(allIds)
+    } else {
+      onSelectAllIds([])
+    }
+  }, [controller.paginatedDocuments, onSelectAllIds])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
@@ -99,6 +117,10 @@ const DocumentLibraryContent: React.FC<{ searchQuery: string }> = ({ searchQuery
         sortField={controller.sortField}
         sortDirection={controller.sortDirection}
         onColumnSort={controller.handleColumnSort}
+        isDeleteMode={isDeleteMode}
+        selectedDocumentIds={selectedDocumentIds}
+        onSelectAll={handleSelectAll}
+        onSelectDocument={onSelectDocument}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
@@ -211,7 +233,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   } = useDocumentsController()
 
   // 🍎 삭제 기능 상태
-  const [isDeleteMode, setIsDeleteMode] = React.useState(false) // 삭제 모드 토글
+  const [isDeleteMode, setIsDeleteMode] = React.useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = React.useState(false)
 
@@ -221,11 +243,29 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   // 🍎 삭제 모드 토글 핸들러
   const handleToggleDeleteMode = React.useCallback(() => {
     if (isDeleteMode) {
-      // 삭제 모드 종료 시 선택 초기화
       setSelectedDocumentIds(new Set())
     }
     setIsDeleteMode(!isDeleteMode)
   }, [isDeleteMode])
+
+  // 🍎 전체 선택/해제 핸들러 (DocumentLibraryContent에서 ID 배열 전달받음)
+  const handleSelectAllIds = React.useCallback((ids: string[]) => {
+    setSelectedDocumentIds(new Set(ids))
+  }, [])
+
+  // 🍎 개별 선택/해제 핸들러
+  const handleSelectDocument = React.useCallback((documentId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(documentId)) {
+        newSet.delete(documentId)
+      } else {
+        newSet.add(documentId)
+      }
+      return newSet
+    })
+  }, [])
 
   // 🍎 문서 삭제 핸들러
   const handleDeleteSelected = React.useCallback(async () => {
@@ -278,6 +318,20 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       const results = await Promise.all(deletePromises)
       const failedDeletes = results.filter((r) => !r.success)
 
+      // 선택 초기화 및 삭제 모드 종료
+      setSelectedDocumentIds(new Set())
+      setIsDeleteMode(false)
+      setIsDeleting(false) // 모달 표시 전에 상태 복원
+
+      // 부모 컴포넌트에 삭제 완료 알림
+      if (onDocumentDeleted) {
+        onDocumentDeleted()
+      }
+
+      // 문서 목록 새로고침
+      await loadDocuments(searchParams, true)
+
+      // 결과 모달 표시 (비동기, 상태 복원 후)
       if (failedDeletes.length > 0) {
         // 일부 삭제 실패
         await confirmModal.actions.openModal({
@@ -295,36 +349,23 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           showCancel: false,
         })
       }
-
-      // 선택 초기화 및 삭제 모드 종료
-      setSelectedDocumentIds(new Set())
-      setIsDeleteMode(false)
-
-      // 부모 컴포넌트에 삭제 완료 알림
-      if (onDocumentDeleted) {
-        onDocumentDeleted()
-      }
-
-      // 문서 목록 새로고침
-      await loadDocuments(searchParams, true)
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
+      setIsDeleting(false) // 에러 발생 시에도 상태 복원
       await confirmModal.actions.openModal({
         title: '삭제 실패',
         message: '문서 삭제 중 오류가 발생했습니다.',
         confirmText: '확인',
         showCancel: false,
       })
-    } finally {
-      setIsDeleting(false)
     }
   }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
 
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
       <div className="document-library-view">
-        {/* 🍎 검색 바 - iOS 스타일 */}
-        <div className="document-library-search">
+        {/* 🍎 검색 바 + 편집 버튼 - iOS 스타일 */}
+        <div className="document-library-bar">
           <div className="search-input-wrapper">
             <SFSymbol
               name="magnifyingglass"
@@ -355,6 +396,22 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               </button>
             )}
           </div>
+
+          {/* 🍎 편집 모드 토글 버튼 */}
+          <Tooltip content={isDeleteMode ? '편집 모드 종료' : '편집 모드'}>
+            <button
+              className={`edit-mode-button ${isDeleteMode ? 'edit-mode-button--active' : ''}`}
+              onClick={handleToggleDeleteMode}
+              aria-label={isDeleteMode ? '편집 모드 종료' : '편집 모드 활성화'}
+            >
+              <SFSymbol
+                name="pencil.circle"
+                size={SFSymbolSize.CALLOUT}
+                weight={SFSymbolWeight.REGULAR}
+                decorative={true}
+              />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Error 표시 */}
@@ -365,45 +422,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 삭제 모드 토글 버튼 */}
-        {!isDeleteMode && (
-          <div className="document-library-toolbar">
-            <Tooltip content="삭제 모드">
-              <button
-                className="delete-mode-toggle"
-                onClick={handleToggleDeleteMode}
-                aria-label="삭제 모드 활성화"
-              >
-                <SFSymbol
-                  name="trash"
-                  size={SFSymbolSize.CALLOUT}
-                  weight={SFSymbolWeight.REGULAR}
-                  decorative={true}
-                />
-              </button>
-            </Tooltip>
-          </div>
-        )}
-
-        {/* 삭제 모드 헤더 - 삭제 모드일 때만 표시 */}
-        {isDeleteMode && (
-          <div className="delete-mode-header">
-            <span className="delete-mode-title">삭제 모드</span>
-            <button
-              className="delete-mode-cancel"
-              onClick={handleToggleDeleteMode}
-              aria-label="삭제 모드 종료"
-            >
-              <SFSymbol
-                name="xmark"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
-            </button>
-          </div>
-        )}
-
         {/* 삭제 모드 액션 바 - 선택된 항목이 있을 때만 표시 */}
         {isDeleteMode && selectedDocumentIds.size > 0 && (
           <div className="document-library-actions">
@@ -411,23 +429,27 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               <span className="selected-count">{selectedDocumentIds.size}개 선택됨</span>
             </div>
             <div className="actions-right">
-              {(
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteSelected}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? '삭제 중...' : '삭제'}
-                </Button>
-              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteSelected}
+                disabled={isDeleting}
+              >
+                {isDeleting ? '삭제 중...' : '삭제'}
+              </Button>
             </div>
           </div>
         )}
 
         {/* 🍎 타겟 영역: 헤더 + 문서 리스트 + 페이지네이션 */}
         <DocumentStatusProvider>
-          <DocumentLibraryContent searchQuery={searchQuery} />
+          <DocumentLibraryContent
+            searchQuery={searchQuery}
+            isDeleteMode={isDeleteMode}
+            selectedDocumentIds={selectedDocumentIds}
+            onSelectAllIds={handleSelectAllIds}
+            onSelectDocument={handleSelectDocument}
+          />
         </DocumentStatusProvider>
       </div>
 
