@@ -20,13 +20,13 @@
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
-    170px          /* 날짜 (한줄 표시 위해 확대) */
-    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    130px          /* 날짜 (오른쪽 정렬) */
+    90px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
   padding: 8px 10px;
-  background: #f5f6f7;  /* 완전 불투명 배경 */
+  background: var(--color-ios-bg-secondary-light);
   border-radius: 4px;
   margin-bottom: 4px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -46,13 +46,13 @@
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
-    170px          /* 날짜 */
-    120px          /* 상태 */
+    130px          /* 날짜 */
+    90px           /* 상태 */
     104px;         /* 액션 버튼 */
 }
 
 html[data-theme="dark"] .status-list-header {
-  background: #374151;  /* 완전 불투명 다크 배경 */
+  background: var(--color-ios-bg-secondary-dark);
   color: var(--color-ios-text-secondary-dark);
   box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
 }
@@ -68,27 +68,28 @@ html[data-theme="dark"] .status-list-header {
   flex-shrink: 0;
 }
 
-.header-size {
-  justify-content: flex-end;
-  text-align: right;
-}
-
-.header-type {
+/* === 🍎 COLUMN HEADER ALIGNMENT: 중앙 정렬 통일 === */
+.status-list-header .header-size {
   justify-content: center;
   text-align: center;
 }
 
-.header-date {
-  justify-content: flex-end;
-  text-align: right;
-}
-
-.header-status {
+.status-list-header .header-type {
   justify-content: center;
   text-align: center;
 }
 
-.header-actions {
+.status-list-header .header-date {
+  justify-content: center;
+  text-align: center;
+}
+
+.status-list-header .header-status {
+  justify-content: center;
+  text-align: center;
+}
+
+.status-list-header .header-actions {
   justify-content: center;
   text-align: center;
 }
@@ -274,8 +275,8 @@ html[data-theme="dark"] .empty-message {
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
-    170px          /* 날짜 (한줄 표시 위해 확대) */
-    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    130px          /* 날짜 (오른쪽 정렬) */
+    90px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
@@ -296,8 +297,8 @@ html[data-theme="dark"] .empty-message {
     minmax(150px, 1fr)  /* 파일명 */
     80px           /* 크기 */
     80px           /* 타입 */
-    170px          /* 날짜 */
-    120px          /* 상태 */
+    130px          /* 날짜 */
+    90px           /* 상태 */
     104px;         /* 액션 버튼 */
 }
 
@@ -352,6 +353,7 @@ html[data-theme="dark"] .status-item--selected:hover {
 .status-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -607,7 +609,7 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 7px deprecated (접근성) ) */
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: #ffffff;
+  color: var(--color-white);
   background-color: var(--color-primary-500);
   border: 1.5px solid var(--color-ios-bg-primary-light);
   border-radius: 3px;
