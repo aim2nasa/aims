@@ -200,7 +200,9 @@ describe('Dropdown', () => {
 
       // 메뉴에서 옵션 1 클릭 (두 번째 요소)
       const menuOptions = screen.getAllByText('옵션 1')
-      await user.click(menuOptions[1])
+      if (menuOptions[1]) {
+        await user.click(menuOptions[1])
+      }
 
       expect(onChange).toHaveBeenCalledWith('option1')
     })

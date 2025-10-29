@@ -258,7 +258,7 @@ describe('Input', () => {
 
   describe('ref forwarding', () => {
     it('ref를 통해 input 요소 접근 가능', () => {
-      const ref = { current: null } as React.RefObject<HTMLInputElement>
+      const ref = { current: null as HTMLInputElement | null }
 
       render(<Input ref={ref as any} />)
 
@@ -266,7 +266,7 @@ describe('Input', () => {
     })
 
     it('ref를 통한 focus 메서드 호출', () => {
-      const ref = { current: null } as React.RefObject<HTMLInputElement>
+      const ref = { current: null as HTMLInputElement | null }
 
       render(<Input ref={ref as any} />)
 
