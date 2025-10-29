@@ -32,9 +32,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [isLoading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const [statusFilter, setStatusFilter] = useState<
-    'all' | 'completed' | 'processing' | 'error' | 'pending'
-  >('all')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
@@ -267,12 +264,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       })
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((doc) => DocumentStatusService.extractStatus(doc) === statusFilter)
-    }
-
     setFilteredDocuments(filtered)
-  }, [documents, searchTerm, statusFilter])
+  }, [documents, searchTerm])
 
   // 🍎 Pagination Logic
   // 백엔드에서 이미 페이지네이션된 데이터를 받으므로 filteredDocuments를 그대로 사용
@@ -365,7 +358,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // 🍎 필터 변경 시 첫 페이지로 리셋
   useEffect(() => {
     setCurrentPage(1)
-  }, [statusFilter, searchTerm])
+  }, [searchTerm])
 
   // 🍎 페이지, 페이지네이션 또는 정렬 옵션 변경 시 문서 다시 가져오기
   useEffect(() => {
@@ -382,7 +375,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       isLoading,
       error,
       searchTerm,
-      statusFilter,
       lastUpdated,
       isPollingEnabled,
       apiHealth,
@@ -400,7 +392,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       isLoading,
       error,
       searchTerm,
-      statusFilter,
       lastUpdated,
       isPollingEnabled,
       apiHealth,
@@ -422,7 +413,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setLoading,
       setError,
       setSearchTerm,
-      setStatusFilter,
       setLastUpdated,
       setPollingEnabled,
       togglePolling,

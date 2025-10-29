@@ -26,7 +26,6 @@ const mockContextValue = {
     filteredDocuments: [] as Document[],
     isLoading: false,
     error: null,
-    statusFilter: 'all' as const,
     isPollingEnabled: false,
     lastUpdated: null,
     selectedDocument: null,
@@ -38,7 +37,6 @@ const mockContextValue = {
     paginatedDocuments: [] as Document[],
   },
   actions: {
-    setStatusFilter: vi.fn(),
     togglePolling: vi.fn(),
     refreshDocuments: vi.fn(),
     handlePageChange: vi.fn(),
@@ -81,14 +79,12 @@ describe('useDocumentStatusController', () => {
       expect(result.current.filteredDocuments).toEqual([])
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBeNull()
-      expect(result.current.statusFilter).toBe('all')
       expect(result.current.isPollingEnabled).toBe(false)
     })
 
     it('Context actions를 올바르게 노출한다', () => {
       const { result } = renderHook(() => useDocumentStatusController())
 
-      expect(result.current.setStatusFilter).toBeDefined()
       expect(result.current.togglePolling).toBeDefined()
       expect(result.current.refreshDocuments).toBeDefined()
     })
@@ -216,16 +212,6 @@ describe('useDocumentStatusController', () => {
   })
 
   describe('Context Actions 통합', () => {
-    it('setStatusFilter를 올바르게 호출한다', () => {
-      const { result } = renderHook(() => useDocumentStatusController())
-
-      act(() => {
-        result.current.setStatusFilter('completed')
-      })
-
-      expect(mockContextValue.actions.setStatusFilter).toHaveBeenCalledWith('completed')
-    })
-
     it('togglePolling를 올바르게 호출한다', () => {
       const { result } = renderHook(() => useDocumentStatusController())
 

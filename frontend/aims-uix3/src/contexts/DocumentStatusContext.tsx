@@ -16,7 +16,6 @@ export interface DocumentStatusState {
   isLoading: boolean
   error: string | null
   searchTerm: string
-  statusFilter: 'all' | 'completed' | 'processing' | 'error' | 'pending'
   lastUpdated: Date | null
   isPollingEnabled: boolean
   apiHealth: boolean | null
@@ -40,7 +39,6 @@ export interface DocumentStatusActions {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   setSearchTerm: (term: string) => void
-  setStatusFilter: (filter: 'all' | 'completed' | 'processing' | 'error' | 'pending') => void
   setLastUpdated: (date: Date) => void
   setPollingEnabled: (enabled: boolean) => void
   togglePolling: () => void

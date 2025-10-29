@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react'
-import { Dropdown, Tooltip, type DropdownOption } from '@/shared/ui'
+import { Tooltip } from '@/shared/ui'
 import RefreshButton from '../../../RefreshButton/RefreshButton'
 import './DocumentStatusHeader.css'
 
@@ -16,27 +16,15 @@ interface DocumentStatusHeaderProps {
   onTogglePolling: () => void
   onRefresh: () => void
   isLoading: boolean
-  statusFilter: 'all' | 'completed' | 'processing' | 'error' | 'pending'
-  onFilterChange: (filter: 'all' | 'completed' | 'processing' | 'error' | 'pending') => void
   documentsCount: number
   lastUpdated: Date | null
 }
-
-const FILTER_OPTIONS: DropdownOption[] = [
-  { value: 'all', label: '전체' },
-  { value: 'completed', label: '완료' },
-  { value: 'processing', label: '처리중' },
-  { value: 'error', label: '오류' },
-  { value: 'pending', label: '대기' },
-]
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   isPollingEnabled,
   onTogglePolling,
   onRefresh,
   isLoading,
-  statusFilter,
-  onFilterChange,
   documentsCount,
   lastUpdated
 }) => {
@@ -58,35 +46,18 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
     return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
   }, [])
 
-  const handleFilterChange = useCallback(
-    (value: string) => {
-      onFilterChange(value as DocumentStatusHeaderProps['statusFilter'])
-    },
-    [onFilterChange]
-  )
-
   const lastUpdatedLabel = useMemo(() => formatLastUpdated(lastUpdated), [formatLastUpdated, lastUpdated])
 
   return (
     <div className="document-status-header">
       {/* 메인 행 */}
       <div className="header-main-row">
-        {/* 왼쪽: 총 문서 개수 + 필터 드롭다운 */}
+        {/* 왼쪽: 총 문서 개수 */}
         <div className="header-left">
           <div className="filter-group">
             <span className="result-count">
               총 {documentsCount}개의 문서
             </span>
-          </div>
-          <div className="filter-group">
-            <span className="filter-label">상태 필터:</span>
-            <Dropdown
-              value={statusFilter}
-              options={FILTER_OPTIONS}
-              onChange={handleFilterChange}
-              aria-label="상태 필터"
-              width={100}
-            />
           </div>
         </div>
 

@@ -72,8 +72,6 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onTogglePolling={controller.togglePolling}
         onRefresh={controller.refreshDocuments}
         isLoading={controller.isLoading}
-        statusFilter={controller.statusFilter}
-        onFilterChange={controller.setStatusFilter}
         documentsCount={controller.documents.length}
         lastUpdated={controller.lastUpdated}
       />

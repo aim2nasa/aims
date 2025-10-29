@@ -190,7 +190,6 @@ export const useDocumentStatusController = () => {
     filteredDocuments: state.filteredDocuments,
     isLoading: state.isLoading,
     error: state.error,
-    statusFilter: state.statusFilter,
     isPollingEnabled: state.isPollingEnabled,
     apiHealth: state.apiHealth,
     lastUpdated: state.lastUpdated,
@@ -206,7 +205,6 @@ export const useDocumentStatusController = () => {
     sortDirection: state.sortDirection,
 
     // Context Actions
-    setStatusFilter: actions.setStatusFilter,
     togglePolling: actions.togglePolling,
     refreshDocuments: actions.refreshDocuments,
 
