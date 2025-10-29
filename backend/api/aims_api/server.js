@@ -448,8 +448,30 @@ app.get('/api/documents/status', async (req, res) => {
 
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
 
-    // 각 문서의 상태 분석
-    const documentsWithStatus = documents.map(doc => {
+    // 각 문서의 상태 분석 + DB 업데이트
+    const documentsWithStatus = await Promise.all(documents.map(async (doc) => {
+      // overallStatus 없거나 completed 아니면 DB 업데이트
+      if (!doc.overallStatus || doc.overallStatus !== 'completed') {
+        const { computed } = prepareDocumentResponse(doc);
+        const newStatus = computed.overallStatus;
+
+        // DB에 저장된 값과 다르면 업데이트
+        if (doc.overallStatus !== newStatus) {
+          await db.collection(COLLECTION_NAME).updateOne(
+            { _id: doc._id },
+            {
+              $set: {
+                overallStatus: newStatus,
+                overallStatusUpdatedAt: new Date()
+              }
+            }
+          );
+          // doc 객체도 업데이트 (이후 응답용)
+          doc.overallStatus = newStatus;
+        }
+      }
+
+      // 기존 analyzeDocumentStatus 방식대로 응답 구성
       const statusInfo = analyzeDocumentStatus(doc);
       return {
         _id: doc._id,
@@ -461,7 +483,7 @@ app.get('/api/documents/status', async (req, res) => {
         customer_relation: doc.customer_relation || null,
         ...statusInfo
       };
-    });
+    }));
 
     // 상태별 필터링
     let filteredDocuments = documentsWithStatus;
