@@ -33,7 +33,9 @@ async function extractFirstPageText(file: File): Promise<string> {
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const page = await pdf.getPage(1);
     const textContent = await page.getTextContent();
-    const text = textContent.items.map((item: any) => item.str).join(' ');
+    const text = textContent.items
+      .map((item) => ('str' in item ? item.str : ''))
+      .join(' ');
 
     if (import.meta.env.DEV) {
       console.log('[pdfParser] ✅ 텍스트 추출 완료, 길이:', text.length);

@@ -21,6 +21,7 @@ import { CustomerIdentificationModal } from '@/features/customer/components/Cust
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
+import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import { processAnnualReportFile, registerArDocument } from './utils/annualReportProcessor'
 import './DocumentRegistrationView.css'
@@ -314,7 +315,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
               // 🔍 고객이 1명일 때만 중복 체크
               // 동명이인(2명 이상)은 무조건 모달 띄우고, 선택 후에 중복 체크
-              if (customers.length === 1) {
+              if (customers.length === 1 && customers[0]) {
                 const customerId = customers[0]._id;
                 const processResult = await processAnnualReportFile(file, customerId);
 
@@ -338,7 +339,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               )
 
               // 🎯 고객이 1명이면 자동 선택 (모달 띄우지 않음)
-              if (customers.length === 1) {
+              if (customers.length === 1 && customers[0]) {
                 const customerId = customers[0]._id;
                 addLog(
                   'ar-auto',
@@ -677,7 +678,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
 
       // 파일명으로 문서 찾기 (filename 필드 사용)
-      const document = searchData.data.documents.find((doc: any) => doc.filename === fileName);
+      const document = searchData.data.documents.find((doc: Document) => doc.filename === fileName);
       if (!document) {
         console.warn(`⚠️ [일반 문서] 문서를 찾을 수 없음: ${fileName}`);
         return;

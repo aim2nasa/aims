@@ -4,6 +4,8 @@
  * 메트라이프 Annual Review Report PDF 파싱 및 조회 API
  */
 
+import type { Customer } from '@/entities/customer';
+
 // Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
 const ANNUAL_REPORT_API_URL = 'http://tars.giize.com:3010/api';
 
@@ -466,7 +468,7 @@ export class AnnualReportApi {
    * @param name 고객명
    * @returns 고객 목록
    */
-  static async searchCustomersByName(name: string): Promise<any[]> {
+  static async searchCustomersByName(name: string): Promise<Customer[]> {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
       const response = await fetch(
