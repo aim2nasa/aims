@@ -14,6 +14,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Button, Dropdown } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
+import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
 import DocumentStatusHeader from '../DocumentStatusView/components/DocumentStatusHeader'
 import DocumentStatusList from '../DocumentStatusView/components/DocumentStatusList'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
@@ -48,8 +49,14 @@ const ITEMS_PER_PAGE_OPTIONS = [
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
  * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
  */
-const DocumentLibraryContent: React.FC = () => {
+const DocumentLibraryContent: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
   const controller = useDocumentStatusController()
+  const { actions } = useDocumentStatusContext()
+
+  // 🍎 외부 검색어를 Context에 동기화
+  React.useEffect(() => {
+    actions.setSearchTerm(searchQuery)
+  }, [searchQuery, actions])
 
   // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
   const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
@@ -420,7 +427,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
         {/* 🍎 타겟 영역: 헤더 + 문서 리스트 + 페이지네이션 */}
         <DocumentStatusProvider>
-          <DocumentLibraryContent />
+          <DocumentLibraryContent searchQuery={searchQuery} />
         </DocumentStatusProvider>
       </div>
 
