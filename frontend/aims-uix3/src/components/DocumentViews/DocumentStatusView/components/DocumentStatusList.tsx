@@ -30,9 +30,9 @@ export interface DocumentStatusListProps {
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
   // 🍎 Sort props
-  sortField?: 'filename' | 'status' | 'uploadDate' | null
+  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null
   sortDirection?: 'asc' | 'desc'
-  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate') => void
+  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => void
 }
 
 export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
@@ -108,18 +108,33 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           )}
         </div>
         <div
-          className={`header-status ${onColumnSort ? 'header-sortable' : ''}`}
-          onClick={() => onColumnSort?.('status')}
+          className={`header-size ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('fileSize')}
           role={onColumnSort ? 'button' : undefined}
           tabIndex={onColumnSort ? 0 : undefined}
-          aria-label={onColumnSort ? '상태로 정렬' : undefined}
+          aria-label={onColumnSort ? '크기로 정렬' : undefined}
         >
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-            <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-            <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
           </svg>
-          <span>상태</span>
-          {sortField === 'status' && (
+          <span>크기</span>
+          {sortField === 'fileSize' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
+        </div>
+        <div
+          className={`header-type ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('mimeType')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '타입으로 정렬' : undefined}
+        >
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
+          </svg>
+          <span>타입</span>
+          {sortField === 'mimeType' && (
             <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
           )}
         </div>
@@ -136,6 +151,22 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </svg>
           <span>업로드 날짜</span>
           {sortField === 'uploadDate' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
+        </div>
+        <div
+          className={`header-status ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('status')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '상태로 정렬' : undefined}
+        >
+          <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+            <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>상태</span>
+          {sortField === 'status' && (
             <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
           )}
         </div>
@@ -207,6 +238,23 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {DocumentStatusService.extractFilename(document)}
             </div>
 
+            {/* 크기 */}
+            <span className="document-size">
+              {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document))}
+            </span>
+
+            {/* 타입 */}
+            <span className="document-type">
+              {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
+            </span>
+
+            {/* 업로드 날짜 */}
+            <div className="status-date">
+              {DocumentStatusService.formatUploadDate(
+                DocumentStatusService.extractUploadedDate(document)
+              )}
+            </div>
+
             {/* 상태 (아이콘 + 텍스트) */}
             <div className="status-cell">
               <Tooltip content={statusLabel}>
@@ -221,13 +269,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   <span className="status-label">{statusLabel}</span>
                 )}
               </div>
-            </div>
-
-            {/* 업로드 날짜 */}
-            <div className="status-date">
-              {DocumentStatusService.formatUploadDate(
-                DocumentStatusService.extractUploadedDate(document)
-              )}
             </div>
 
             {/* 액션 버튼 */}

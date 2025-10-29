@@ -438,39 +438,52 @@ app.get('/api/documents/status', async (req, res) => {
       filter['upload.originalName'] = { $regex: search, $options: 'i' };
     }
 
-    // 정렬 조건 구성
-    let sortCriteria = { 'upload.uploaded_at': -1 }; // 기본: 최신순
-    if (sort === 'status_asc') {
-      sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'status_desc') {
-      sortCriteria = { overallStatus: -1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'filename_asc') {
-      sortCriteria = { 'upload.originalName': 1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'filename_desc') {
-      sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'uploadDate_asc') {
-      sortCriteria = { 'upload.uploaded_at': 1 };
-    } else if (sort === 'uploadDate_desc') {
-      sortCriteria = { 'upload.uploaded_at': -1 };
-    } else if (sort === 'fileSize_asc') {
-      sortCriteria = { 'meta.size_bytes': 1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'fileSize_desc') {
-      sortCriteria = { 'meta.size_bytes': -1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'mimeType_asc') {
-      sortCriteria = { 'meta.mime': 1, 'upload.uploaded_at': -1 };
-    } else if (sort === 'mimeType_desc') {
-      sortCriteria = { 'meta.mime': -1, 'upload.uploaded_at': -1 };
-    }
-
-    // 문서 조회
-    const documents = await db.collection(COLLECTION_NAME)
-      .find(filter)
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .toArray();
-
+    // 문서 조회 및 정렬
+    let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
+
+    // fileSize 정렬은 aggregation 사용 (문자열→숫자 변환)
+    if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
+      const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            size_bytes_num: { $toLong: '$meta.size_bytes' }
+          }
+        },
+        { $sort: { size_bytes_num: sortOrder, 'upload.uploaded_at': -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
+      ]).toArray();
+    } else {
+      // 일반 정렬 조건 구성
+      let sortCriteria = { 'upload.uploaded_at': -1 }; // 기본: 최신순
+      if (sort === 'status_asc') {
+        sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'status_desc') {
+        sortCriteria = { overallStatus: -1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'filename_asc') {
+        sortCriteria = { 'upload.originalName': 1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'filename_desc') {
+        sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'uploadDate_asc') {
+        sortCriteria = { 'upload.uploaded_at': 1 };
+      } else if (sort === 'uploadDate_desc') {
+        sortCriteria = { 'upload.uploaded_at': -1 };
+      } else if (sort === 'mimeType_asc') {
+        sortCriteria = { 'meta.mime': 1, 'upload.uploaded_at': -1 };
+      } else if (sort === 'mimeType_desc') {
+        sortCriteria = { 'meta.mime': -1, 'upload.uploaded_at': -1 };
+      }
+
+      documents = await db.collection(COLLECTION_NAME)
+        .find(filter)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .toArray();
+    }
 
     // 각 문서의 상태 분석 + DB 업데이트
     const documentsWithStatus = await Promise.all(documents.map(async (doc) => {

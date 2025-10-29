@@ -47,7 +47,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [fetchLimit, setFetchLimit] = useState<number>(100)
 
   // 🍎 Sort State
-  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | null>(null)
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   /**
@@ -69,6 +69,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           sortParam = sortDirection === 'asc' ? 'filename_asc' : 'filename_desc'
         } else if (sortField === 'uploadDate') {
           sortParam = sortDirection === 'asc' ? 'uploadDate_asc' : 'uploadDate_desc'
+        } else if (sortField === 'fileSize') {
+          sortParam = sortDirection === 'asc' ? 'fileSize_asc' : 'fileSize_desc'
+        } else if (sortField === 'mimeType') {
+          sortParam = sortDirection === 'asc' ? 'mimeType_asc' : 'mimeType_desc'
         }
 
         const data = await DocumentStatusService.getRecentDocuments(fetchLimit, sortParam)
@@ -296,7 +300,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [])
 
   // 🍎 Sort Handler
-  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate') => {
+  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => {
     if (sortField === field) {
       // Same field: toggle direction
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'

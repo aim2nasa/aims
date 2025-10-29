@@ -28,7 +28,7 @@ export interface DocumentStatusState {
   // 🍎 Fetch Limit State
   fetchLimit: number
   // 🍎 Sort State
-  sortField: 'filename' | 'status' | 'uploadDate' | null
+  sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null
   sortDirection: 'asc' | 'desc'
 }
 
@@ -63,9 +63,9 @@ export interface DocumentStatusActions {
     relation: DocumentCustomerRelation | undefined
   ) => void
   // 🍎 Sort Actions
-  setSortField: (field: 'filename' | 'status' | 'uploadDate' | null) => void
+  setSortField: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null) => void
   setSortDirection: (direction: 'asc' | 'desc') => void
-  handleColumnSort: (field: 'filename' | 'status' | 'uploadDate') => void
+  handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => void
 }
 
 /**

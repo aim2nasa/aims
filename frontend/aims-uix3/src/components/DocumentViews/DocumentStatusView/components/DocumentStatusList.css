@@ -18,8 +18,10 @@
   grid-template-columns:
     24px           /* 파일 타입 아이콘 */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
-    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    80px           /* 크기 */
+    80px           /* 타입 */
     170px          /* 날짜 (한줄 표시 위해 확대) */
+    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
@@ -53,6 +55,16 @@ html[data-theme="dark"] .status-list-header {
   flex-shrink: 0;
 }
 
+.header-size {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.header-type {
+  justify-content: center;
+  text-align: center;
+}
+
 .header-date {
   justify-content: flex-end;
   text-align: right;
@@ -73,13 +85,20 @@ html[data-theme="dark"] .status-list-header {
   color: var(--color-icon-blue);  /* 파일명 - 파란색 */
 }
 
-.header-status .header-icon-svg {
-  color: var(--color-icon-green);  /* 상태 - 초록색 */
+.header-size .header-icon-svg {
+  color: var(--color-icon-purple);  /* 크기 - 보라색 */
 }
 
+.header-type .header-icon-svg {
+  color: var(--color-icon-orange);  /* 타입 - 주황색 */
+}
 
 .header-date .header-icon-svg {
   color: var(--color-icon-green);  /* 날짜 - 초록색 */
+}
+
+.header-status .header-icon-svg {
+  color: var(--color-icon-green);  /* 상태 - 초록색 */
 }
 
 .header-actions .header-icon-svg {
@@ -240,8 +259,10 @@ html[data-theme="dark"] .empty-message {
   grid-template-columns:
     24px           /* 파일 타입 아이콘 */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
-    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    80px           /* 크기 */
+    80px           /* 타입 */
     170px          /* 날짜 (한줄 표시 위해 확대) */
+    120px          /* 상태 (아이콘 + 상태명, 정렬 포함) */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
@@ -367,12 +388,39 @@ html[data-theme="dark"] .status-filename {
   font-weight: 400;
 }
 
+/* === 크기 === */
+.document-size {
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-quaternary-light);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+html[data-theme="dark"] .document-size {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === 타입 === */
+.document-type {
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-quaternary-light);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+html[data-theme="dark"] .document-type {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
 /* === 날짜 === */
 .status-date {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-quaternary-light);
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 html[data-theme="dark"] .status-date {
