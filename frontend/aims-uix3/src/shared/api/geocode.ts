@@ -13,12 +13,18 @@ export interface GeocodeResult {
   jibunAddress: string
 }
 
+interface GeocodeApiResponse {
+  success: boolean
+  data?: GeocodeResult
+  error?: string
+}
+
 /**
  * 주소를 좌표로 변환
  */
 export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
   try {
-    const response = await api.post<any>(
+    const response = await api.post<GeocodeApiResponse>(
       '/api/geocode',
       { address }
     )

@@ -19,6 +19,43 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import type { Customer } from '@/entities/customer/model';
 import './AnnualReportTab.css';
 
+// 백엔드 원시 응답 타입 정의
+interface RawAnnualReportData {
+  report_id?: string;
+  issue_date: string;
+  customer_name: string;
+  total_monthly_premium: number;
+  total_coverage: number;
+  contract_count: number;
+  total_contracts?: number;
+  created_at?: string;
+  uploaded_at?: string;
+  parsed_at?: string;
+  file_hash?: string;
+  file_id?: string;
+  contracts?: Array<{
+    '증권번호': string;
+    '보험상품': string;
+    '계약자'?: string;
+    '피보험자'?: string;
+    '보험료(원)'?: number;
+    '월납입보험료'?: number;
+    '보장금액(원)'?: number;
+    '가입금액(만원)'?: number;
+    '계약일'?: string;
+    '납입기간'?: string;
+    '보험기간'?: string;
+    '계약상태'?: string;
+  }>;
+}
+
+interface PendingDocument {
+  file_id: string;
+  filename: string;
+  status: string;
+  created_at: string;
+}
+
 interface AnnualReportTabProps {
   customer: Customer;
 }
@@ -43,7 +80,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
   const [isDeleting, setIsDeleting] = useState(false);
   // AR 파싱 대기/진행 중인 문서 상태
   const [pendingCount, setPendingCount] = useState(0);
-  const [pendingDocs, setPendingDocs] = useState<any[]>([]);
+  const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
 
   // 개발자 모드 - 전역 상태 사용
   const { isDevMode } = useDevModeStore();
@@ -99,8 +136,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
 
       if (response.success && response.data) {
         // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환
-        const transformedReports: AnnualReport[] = response.data.reports.map((rawData: any) => {
-          const transformedContracts = (rawData.contracts || []).map((contract: any) => ({
+        const transformedReports: AnnualReport[] = response.data.reports.map((rawData: RawAnnualReportData) => {
+          const transformedContracts = (rawData.contracts || []).map((contract) => ({
             insurance_company: '메트라이프',
             contract_number: contract['증권번호'] || '',
             product_name: contract['보험상품'] || '',
@@ -109,7 +146,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
             monthly_premium: contract['보험료(원)'] || 0,
             coverage_amount: (contract['가입금액(만원)'] || 0) * 10000,
             contract_date: contract['계약일'] || '',
-            maturity_date: undefined,
+            maturity_date: '',  // 백엔드 데이터에 없음
             premium_payment_period: contract['납입기간'] || '',
             insurance_period: contract['보험기간'] || '',
             status: contract['계약상태'] || ''
@@ -123,7 +160,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
             total_coverage: rawData.total_coverage || 0,
             contract_count: rawData.total_contracts || rawData.contract_count || 0,
             contracts: transformedContracts,
-            source_file_id: rawData.file_id,
+            source_file_id: rawData.file_id || '',
             created_at: rawData.uploaded_at || '',
             parsed_at: rawData.parsed_at || ''
           };
