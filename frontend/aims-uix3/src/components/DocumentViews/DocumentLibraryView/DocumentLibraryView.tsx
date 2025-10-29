@@ -4,40 +4,26 @@
  *
  * 문서 라이브러리 View 컴포넌트
  * BaseDocumentView를 확장하여 구현
- * /api/documents API를 사용하여 문서 리스트 표시
+ * /api/documents/status API를 사용하여 문서 리스트 표시 (DocumentStatusView와 동일)
  */
 
 import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
-import { DocumentUtils } from '@/entities/document'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown, type DropdownOption, Tooltip, Button } from '@/shared/ui'
-import {
-  DocumentIcon,
-  EyeIcon,
-  LinkIcon,
-  SummaryIcon
-} from '../components/DocumentActionIcons'
-import RefreshButton from '../../RefreshButton/RefreshButton'
-import { DocumentStatusService } from '../../../services/DocumentStatusService'
-import { CustomerService } from '../../../services/customerService'
-import { DocumentService } from '../../../services/DocumentService'
-import type { CustomerSearchResponse } from '@/entities/customer'
-import type { DocumentCustomerRelation } from '../../../types/documentStatus'
+import { Tooltip, Button, Dropdown } from '@/shared/ui'
+import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
+import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
+import DocumentStatusHeader from '../DocumentStatusView/components/DocumentStatusHeader'
+import DocumentStatusList from '../DocumentStatusView/components/DocumentStatusList'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
-import { usePersistedState } from '@/hooks/usePersistedState'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
-
-// 정렬 필드 타입 정의
-type SortField = 'filename' | 'size' | 'uploadDate' | 'type' | 'status';
-type SortDirection = 'asc' | 'desc';
 
 interface DocumentLibraryViewProps {
   /** View 표시 여부 */
@@ -50,13 +36,143 @@ interface DocumentLibraryViewProps {
   onDocumentDeleted?: () => void
 }
 
-// 페이지당 항목 수 옵션 정의
-const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
+// 🍎 페이지당 항목 수 옵션
+const ITEMS_PER_PAGE_OPTIONS = [
   { value: '10', label: '10개씩' },
   { value: '20', label: '20개씩' },
   { value: '50', label: '50개씩' },
-  { value: '100', label: '100개씩' },
+  { value: '100', label: '100개씩' }
 ]
+
+/**
+ * DocumentLibraryContent 내부 컴포넌트 (Pure View)
+ * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
+ */
+const DocumentLibraryContent: React.FC = () => {
+  const controller = useDocumentStatusController()
+
+  // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
+  const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
+
+  /**
+   * 페이지 변경 핸들러 (클릭 피드백 포함)
+   */
+  const handlePageChangeWithFeedback = (page: number, direction: 'prev' | 'next') => {
+    setClickedButton(direction)
+    controller.handlePageChange(page)
+
+    // 600ms 후 클릭 상태 복원
+    setTimeout(() => {
+      setClickedButton(null)
+    }, 600)
+  }
+
+  return (
+    <>
+      {/* 🍎 헤더: 컨트롤 + 필터 (한 줄) */}
+      <DocumentStatusHeader
+        isPollingEnabled={controller.isPollingEnabled}
+        onTogglePolling={controller.togglePolling}
+        onRefresh={controller.refreshDocuments}
+        isLoading={controller.isLoading}
+        documentsCount={controller.totalCount}
+        lastUpdated={controller.lastUpdated}
+      />
+
+      {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
+      <DocumentStatusList
+        documents={controller.paginatedDocuments}
+        isLoading={controller.isLoading}
+        isEmpty={controller.filteredDocuments.length === 0}
+        error={controller.error}
+        onDetailClick={controller.handleDocumentClick}
+        onSummaryClick={controller.handleDocumentSummary}
+        onFullTextClick={controller.handleDocumentFullText}
+        onLinkClick={controller.handleDocumentLink}
+        sortField={controller.sortField}
+        sortDirection={controller.sortDirection}
+        onColumnSort={controller.handleColumnSort}
+      />
+
+      {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
+      {!controller.isLoading && controller.filteredDocuments.length > 0 && (
+        <div className="document-pagination">
+          {/* 🍎 페이지당 항목 수 선택 */}
+          <div className="pagination-limit">
+            <Dropdown
+              value={String(controller.itemsPerPage)}
+              options={ITEMS_PER_PAGE_OPTIONS}
+              onChange={(value) => controller.handleLimitChange(Number(value))}
+              aria-label="페이지당 항목 수"
+              width={100}
+            />
+          </div>
+
+          {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+          {controller.totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-button pagination-button--prev"
+                onClick={() => handlePageChangeWithFeedback(controller.currentPage - 1, 'prev')}
+                disabled={controller.currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
+                  ‹
+                </span>
+              </button>
+
+              <div className="pagination-info">
+                <span className="pagination-current">{controller.currentPage}</span>
+                <span className="pagination-separator">/</span>
+                <span className="pagination-total">{controller.totalPages}</span>
+              </div>
+
+              <button
+                className="pagination-button pagination-button--next"
+                onClick={() => handlePageChangeWithFeedback(controller.currentPage + 1, 'next')}
+                disabled={controller.currentPage === controller.totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
+                  ›
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
+          {controller.totalPages <= 1 && <div className="pagination-spacer"></div>}
+        </div>
+      )}
+
+      {/* 모달들 */}
+      <DocumentDetailModal
+        visible={controller.isDetailModalVisible}
+        onClose={controller.handleDetailModalClose}
+        document={controller.selectedDocument}
+      />
+      <DocumentSummaryModal
+        visible={controller.isSummaryModalVisible}
+        onClose={controller.handleSummaryModalClose}
+        document={controller.selectedDocumentForSummary}
+      />
+      <DocumentFullTextModal
+        visible={controller.isFullTextModalVisible}
+        onClose={controller.handleFullTextModalClose}
+        document={controller.selectedDocumentForFullText}
+      />
+      <DocumentLinkModal
+        visible={controller.isLinkModalVisible}
+        onClose={controller.handleLinkModalClose}
+        document={controller.selectedDocumentForLink}
+        onSearchCustomers={controller.searchCustomers}
+        onFetchCustomerDocuments={controller.fetchCustomerDocuments}
+        onLink={controller.linkDocumentToCustomer}
+      />
+    </>
+  )
+}
 
 /**
  * DocumentLibraryView React 컴포넌트
@@ -76,50 +192,16 @@ const ITEMS_PER_PAGE_OPTIONS: DropdownOption[] = [
 export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   visible,
   onClose,
-  onDocumentClick,
   onDocumentDeleted,
 }) => {
   const {
-    documents,
-    isLoading,
-    isInitialLoad,
     error,
     searchQuery,
     searchParams,
-    searchResultMessage,
-    isEmpty,
-    currentPage,
-    totalPages,
-    itemsPerPage,
     loadDocuments,
     handleSearchChange,
-    handlePageChange,
-    handleLimitChange,
     clearError,
   } = useDocumentsController()
-
-  // 🍎 Progressive Disclosure: 페이지네이션 버튼 클릭 피드백 상태
-  const [clickedButton, setClickedButton] = React.useState<'prev' | 'next' | null>(null)
-
-  // 🍎 칼럼 헤더 정렬 상태
-  const [sortField, setSortField] = usePersistedState<SortField | null>('document-library-sort-field', null);
-  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('document-library-sort-direction', 'asc');
-
-  // 🍎 모달 상태 관리
-  // NOTE: 모달에 전달하는 document는 API 응답 타입(types/documentStatus)
-  // DocumentStatusService에서 반환되는 구조를 그대로 모달에 전달
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocument, setSelectedDocument] = React.useState<any | null>(null)
-  const [isDetailModalVisible, setDetailModalVisible] = React.useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = React.useState<any | null>(null)
-  const [isSummaryModalVisible, setSummaryModalVisible] = React.useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForFullText, setSelectedDocumentForFullText] = React.useState<any | null>(null)
-  const [isFullTextModalVisible, setFullTextModalVisible] = React.useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForLink, setSelectedDocumentForLink] = React.useState<any | null>(null)
-  const [isLinkModalVisible, setLinkModalVisible] = React.useState(false)
 
   // 🍎 삭제 기능 상태
   const [isDeleteMode, setIsDeleteMode] = React.useState(false) // 삭제 모드 토글
@@ -128,128 +210,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
-
-  // 🍎 자동 새로고침 (폴링) 상태
-  const [isPollingEnabled, setPollingEnabled] = usePersistedState('document-library-polling', true)
-  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
-
-  // 🍎 모달 핸들러
-  // NOTE: API 응답 타입 사용 (상단 모달 상태와 동일한 이유)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDetailClick = React.useCallback((document: any) => {
-    setSelectedDocument(document)
-    setDetailModalVisible(true)
-  }, [])
-
-  const handleDetailModalClose = React.useCallback(() => {
-    setDetailModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocument(null)
-    }, 300)
-  }, [])
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSummaryClickInternal = React.useCallback((document: any) => {
-    setSelectedDocumentForSummary(document)
-    setSummaryModalVisible(true)
-  }, [])
-
-  const handleSummaryModalClose = React.useCallback(() => {
-    setSummaryModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocumentForSummary(null)
-    }, 300)
-  }, [])
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFullTextClickInternal = React.useCallback((document: any) => {
-    setSelectedDocumentForFullText(document)
-    setFullTextModalVisible(true)
-  }, [])
-
-  const handleFullTextModalClose = React.useCallback(() => {
-    setFullTextModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocumentForFullText(null)
-    }, 300)
-  }, [])
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleLinkClickInternal = React.useCallback((document: any) => {
-    setSelectedDocumentForLink(document)
-    setLinkModalVisible(true)
-  }, [])
-
-  const handleLinkModalClose = React.useCallback(() => {
-    setLinkModalVisible(false)
-    setTimeout(() => {
-      setSelectedDocumentForLink(null)
-    }, 300)
-  }, [])
-
-  // 🍎 고객 검색 핸들러
-  const searchCustomers = React.useCallback(
-    async (searchTerm: string, page: number = 1, limit: number = 20): Promise<CustomerSearchResponse> => {
-      return CustomerService.searchCustomers(searchTerm, { page, limit })
-    },
-    []
-  )
-
-  // 🍎 고객별 문서 조회 핸들러
-  const fetchCustomerDocuments = React.useCallback(async (customerId: string) => {
-    return DocumentService.getCustomerDocuments(customerId)
-  }, [])
-
-  // 🍎 문서-고객 연결 핸들러
-  const linkDocumentToCustomer = React.useCallback(
-    async (params: {
-      customerId: string
-      documentId: string
-      relationshipType: string
-      notes?: string
-    }): Promise<DocumentCustomerRelation | undefined> => {
-      const { customerId, documentId, relationshipType, notes } = params
-
-      await DocumentService.linkDocumentToCustomer(customerId, {
-        document_id: documentId,
-        relationship_type: relationshipType,
-        ...(notes ? { notes } : {}),
-      })
-
-      // 문서 목록 새로고침
-      await loadDocuments(searchParams, true)
-
-      // 페이지 새로고침으로 모든 View 업데이트
-      window.location.reload();
-
-      return undefined
-    },
-    [loadDocuments, searchParams]
-  )
-
-  // 🍎 체크박스 전체 선택/해제
-  const handleSelectAll = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const allIds = new Set(documents.map(doc => doc._id))
-      setSelectedDocumentIds(allIds)
-    } else {
-      setSelectedDocumentIds(new Set())
-    }
-  }, [documents])
-
-  // 🍎 개별 체크박스 선택/해제
-  const handleSelectDocument = React.useCallback((documentId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
-    setSelectedDocumentIds(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(documentId)) {
-        newSet.delete(documentId)
-      } else {
-        newSet.add(documentId)
-      }
-      return newSet
-    })
-  }, [])
 
   // 🍎 삭제 모드 토글 핸들러
   const handleToggleDeleteMode = React.useCallback(() => {
@@ -268,274 +228,141 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         message: '삭제할 문서를 선택해주세요.',
         confirmText: '확인',
         showCancel: false,
-        iconType: 'warning'
       })
       return
     }
 
+    // 확인 모달 표시
     const confirmed = await confirmModal.actions.openModal({
       title: '문서 삭제',
-      message: `${selectedDocumentIds.size}개 문서를 삭제하시겠습니까?\n\nDB와 서버의 물리적 파일이 모두 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.`,
+      message: `선택한 ${selectedDocumentIds.size}개의 문서를 삭제하시겠습니까?`,
       confirmText: '삭제',
       cancelText: '취소',
-      confirmStyle: 'destructive',
       showCancel: true,
-      iconType: 'warning'
     })
 
-    if (!confirmed) {
-      return
-    }
+    if (!confirmed) return
 
-    setIsDeleting(true)
     try {
-      const result = await DocumentService.deleteDocuments(Array.from(selectedDocumentIds))
+      setIsDeleting(true)
 
-      setIsDeleting(false)
+      // 선택된 모든 문서 삭제
+      const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
+        try {
+          const response = await fetch(`/api/documents/${docId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
 
-      if (result.success) {
-        setSelectedDocumentIds(new Set())
-        setIsDeleteMode(false) // 삭제 완료 후 삭제 모드 종료
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `Failed to delete document ${docId}`)
+          }
 
-        // 🍎 프리뷰 창 닫기: 삭제된 문서가 프리뷰 중이면 닫기
-        setDetailModalVisible(false)
-        setSummaryModalVisible(false)
-        setFullTextModalVisible(false)
-        setLinkModalVisible(false)
-        setSelectedDocument(null)
-        setSelectedDocumentForSummary(null)
-        setSelectedDocumentForFullText(null)
-        setSelectedDocumentForLink(null)
+          return { success: true, docId }
+        } catch (error) {
+          console.error(`Error deleting document ${docId}:`, error)
+          return { success: false, docId, error }
+        }
+      })
 
-        // 🍎 RightPane 프리뷰도 닫기
-        onDocumentDeleted?.()
+      const results = await Promise.all(deletePromises)
+      const failedDeletes = results.filter((r) => !r.success)
 
-        await loadDocuments(searchParams, true) // 목록 새로고침
-
-        // 페이지 새로고침으로 모든 View 업데이트
-        window.location.reload();
-
-        // 🍎 삭제 완료 모달 제거: 조용히 삭제 처리
-        // await confirmModal.actions.openModal({
-        //   title: '완료',
-        //   message: `${result.deletedCount}건 삭제되었습니다.${result.failedCount > 0 ? `\n(${result.failedCount}건 실패)` : ''}`,
-        //   confirmText: '확인',
-        //   showCancel: false,
-        //   iconType: 'success'
-        // })
-      } else {
+      if (failedDeletes.length > 0) {
+        // 일부 삭제 실패
         await confirmModal.actions.openModal({
-          title: '실패',
-          message: result.message,
+          title: '삭제 실패',
+          message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
           confirmText: '확인',
           showCancel: false,
-          iconType: 'error'
+        })
+      } else {
+        // 모두 성공
+        await confirmModal.actions.openModal({
+          title: '삭제 완료',
+          message: `${selectedDocumentIds.size}개의 문서가 삭제되었습니다.`,
+          confirmText: '확인',
+          showCancel: false,
         })
       }
-    } catch (err) {
-      setIsDeleting(false)
+
+      // 선택 초기화 및 삭제 모드 종료
+      setSelectedDocumentIds(new Set())
+      setIsDeleteMode(false)
+
+      // 부모 컴포넌트에 삭제 완료 알림
+      if (onDocumentDeleted) {
+        onDocumentDeleted()
+      }
+
+      // 문서 목록 새로고침
+      await loadDocuments(searchParams, true)
+    } catch (error) {
+      console.error('Error in handleDeleteSelected:', error)
       await confirmModal.actions.openModal({
-        title: '오류',
-        message: '삭제 중 오류가 발생했습니다.',
+        title: '삭제 실패',
+        message: '문서 삭제 중 오류가 발생했습니다.',
         confirmText: '확인',
         showCancel: false,
-        iconType: 'error'
       })
-      console.error('Delete error:', err)
+    } finally {
+      setIsDeleting(false)
     }
-  }, [selectedDocumentIds, confirmModal.actions, loadDocuments, searchParams])
-
-  /**
-   * 페이지 변경 핸들러 (클릭 피드백 포함)
-   */
-  const handlePageChangeWithFeedback = (page: number, direction: 'prev' | 'next') => {
-    setClickedButton(direction)
-    handlePageChange(page)
-
-    // 600ms 후 클릭 상태 복원
-    setTimeout(() => {
-      setClickedButton(null)
-    }, 600)
-  }
-
-  // 🍎 칼럼 헤더 클릭 정렬 핸들러 - 백엔드 API 정렬 사용
-  const handleColumnSort = React.useCallback((field: SortField) => {
-    // status는 백엔드 computed 필드이므로 정렬 불가
-    if (field === 'status') {
-      console.warn('⚠️ status 정렬은 백엔드가 지원하지 않습니다.');
-      return;
-    }
-
-    // 정렬 방향 결정
-    const newDirection: 'asc' | 'desc' = (sortField === field && sortDirection === 'asc') ? 'desc' : 'asc';
-
-    // 로컬 상태 업데이트
-    setSortField(field);
-    setSortDirection(newDirection);
-
-    // 백엔드 API 필드명 매핑
-    const backendFieldMap: Record<SortField, 'filename' | 'size' | 'uploadDate' | 'createdAt' | 'updatedAt' | 'fileType'> = {
-      'filename': 'filename',
-      'size': 'size',
-      'uploadDate': 'uploadDate',
-      'type': 'fileType',
-      'status': 'filename', // fallback (사용 안 함)
-    };
-
-    const backendField = backendFieldMap[field];
-
-    // 백엔드 API 정렬 파라미터 구성
-    const newParams = {
-      ...searchParams,
-      sortBy: backendField,
-      sortOrder: newDirection,
-      offset: 0  // 정렬 변경 시 첫 페이지로
-    };
-
-    // 페이지를 1로 리셋하고 백엔드 API 호출
-    handlePageChange(1);
-    loadDocuments(newParams, false);
-  }, [sortField, sortDirection, setSortField, setSortDirection, searchParams, loadDocuments, handlePageChange]);
-
-  // 🍎 폴링 토글 핸들러
-  const handleTogglePolling = React.useCallback(() => {
-    setPollingEnabled(!isPollingEnabled)
-  }, [isPollingEnabled, setPollingEnabled])
-
-  // 🍎 문서 목록 새로고침 핸들러
-  const handleRefresh = React.useCallback(async () => {
-    await loadDocuments(searchParams, true)
-    setLastUpdated(new Date())
-  }, [loadDocuments, searchParams])
-
-  // 🍎 마지막 업데이트 시간 포맷팅
-  const formatLastUpdated = React.useCallback((date: Date | null): string => {
-    if (!date) return ''
-
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-
-    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
-  }, [])
-
-  // 🍎 백엔드에서 이미 정렬된 문서 리스트 사용
-  // 클라이언트 사이드 정렬 제거 - DB 전체를 대상으로 백엔드가 정렬함
-  const sortedDocuments = documents;
-
-  // 🍎 View가 표시될 때마다 문서 목록 새로고침
-  React.useEffect(() => {
-    if (visible) {
-      // offset을 0으로 초기화하여 첫 페이지부터 시작
-      loadDocuments({ ...searchParams, offset: 0 }, false);
-      setLastUpdated(new Date())
-    }
-  }, [visible]);
-
-  // 🍎 실시간 폴링 (5초마다)
-  React.useEffect(() => {
-    if (!visible || !isPollingEnabled) return
-
-    const interval = setInterval(async () => {
-      await loadDocuments(searchParams, true) // silent=true로 백그라운드 업데이트
-      setLastUpdated(new Date())
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [visible, isPollingEnabled, loadDocuments, searchParams]);
+  }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
 
   return (
-    <CenterPaneView
-      visible={visible}
-      title="문서 라이브러리"
-      titleIcon={<SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} style={{ color: 'var(--color-icon-doc-library)' }} />}
-      onClose={onClose}
-      marginTop={6}
-      marginBottom={6}
-      marginLeft={6}
-      marginRight={6}
-      className={`document-library-view ${isDeleteMode ? 'document-library-view--delete-mode' : ''}`}
-    >
-      <div className="document-library-container">
-        {/* 검색 바 */}
-        <div className="document-library-bar">
-          <div className="search-input-wrapper">
-            <SFSymbol
-              name="magnifyingglass"
-              size={SFSymbolSize.BODY}
-              weight={SFSymbolWeight.REGULAR}
-              className="search-icon"
-              decorative={true}
-            />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="파일명 또는 파일 형식 검색..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              aria-label="문서 검색"
-            />
-            {searchQuery && (
+    <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
+      <div className="document-library-view">
+        {/* 🍎 검색 바 (검색 기능 유지) */}
+        <div className="document-library-search">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="파일명으로 검색..."
+            className="document-search-input"
+          />
+        </div>
+
+        {/* Error 표시 */}
+        {error && (
+          <div className="error-message">
+            {error}
+            <button onClick={clearError}>닫기</button>
+          </div>
+        )}
+
+        {/* 삭제 모드 토글 버튼 */}
+        {!isDeleteMode && (
+          <div className="document-library-toolbar">
+            <Tooltip content="삭제 모드">
               <button
-                className="search-clear-button"
-                onClick={() => handleSearchChange('')}
-                aria-label="검색어 지우기"
+                className="delete-mode-toggle"
+                onClick={handleToggleDeleteMode}
+                aria-label="삭제 모드 활성화"
               >
                 <SFSymbol
-                  name="xmark.circle.fill"
-                  size={SFSymbolSize.BODY}
+                  name="trash"
+                  size={SFSymbolSize.CALLOUT}
                   weight={SFSymbolWeight.REGULAR}
                   decorative={true}
                 />
               </button>
-            )}
+            </Tooltip>
           </div>
+        )}
 
-          {/* 🍎 편집 버튼 - 아이콘 버튼 */}
-          <Tooltip content={isDeleteMode ? "편집 완료" : "편집"}>
+        {/* 삭제 모드 헤더 - 삭제 모드일 때만 표시 */}
+        {isDeleteMode && (
+          <div className="delete-mode-header">
+            <span className="delete-mode-title">삭제 모드</span>
             <button
-              className={`edit-mode-button ${isDeleteMode ? 'edit-mode-button--active' : ''}`}
+              className="delete-mode-cancel"
               onClick={handleToggleDeleteMode}
-              aria-label={isDeleteMode ? "편집 완료" : "편집"}
-            >
-              {isDeleteMode ? (
-                // Checkmark icon (16px) - stroke only
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                // Pencil icon (16px) - 개선된 디자인 + 색상 포인트
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {/* 연필 본체 */}
-                  <path d="M11.5 2.5L13.5 4.5L4.5 13.5L2 14L2.5 11.5L11.5 2.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  {/* 연필 끝 - 색상 포인트 */}
-                  <path d="M11.5 2.5L13.5 4.5" stroke="#FF6B6B" strokeWidth="1.8" strokeLinecap="round"/>
-                  {/* 편집 라인 */}
-                  <line x1="10.5" y1="3.5" x2="12.5" y2="5.5" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
-                </svg>
-              )}
-            </button>
-          </Tooltip>
-        </div>
-
-        {/* 에러 메시지 */}
-        {error && (
-          <div className="document-library-error" role="alert">
-            <SFSymbol
-              name="exclamationmark.triangle.fill"
-              size={SFSymbolSize.BODY}
-              weight={SFSymbolWeight.REGULAR}
-              className="error-icon"
-              decorative={true}
-            />
-            <span>{error}</span>
-            <button
-              className="error-dismiss-button"
-              onClick={clearError}
-              aria-label="에러 메시지 닫기"
+              aria-label="삭제 모드 종료"
             >
               <SFSymbol
                 name="xmark"
@@ -568,369 +395,11 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 검색 결과 헤더 */}
-        {!isLoading && !isEmpty && (
-          <div className="document-library-result-header">
-            <div className="result-header-left">
-              {isDeleteMode && (
-                <input
-                  type="checkbox"
-                  checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id))}
-                  onChange={handleSelectAll}
-                  aria-label="전체 선택"
-                  className="document-select-all-checkbox"
-                />
-              )}
-              <span className="result-count">{searchResultMessage}</span>
-            </div>
-
-            <div className="result-controls">
-              {/* 🍎 Last Updated 표시 */}
-              {lastUpdated && (
-                <span className="last-updated">
-                  최근 업데이트: {formatLastUpdated(lastUpdated)}
-                </span>
-              )}
-
-              {/* 🍎 폴링 토글 버튼 */}
-              <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
-                <button
-                  className={`polling-toggle ${isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
-                  onClick={handleTogglePolling}
-                  aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
-                >
-                  <span className={`polling-dot ${isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
-                </button>
-              </Tooltip>
-
-              {/* 🍎 새로고침 버튼 */}
-              <RefreshButton
-                onClick={handleRefresh}
-                loading={isLoading}
-                tooltip="문서 목록 새로고침"
-                size="small"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* 문서 리스트 */}
-        <div className="document-list">
-          {isLoading && isInitialLoad ? (
-            <div className="document-list-loading">
-              <div className="loading-spinner" aria-label="로딩 중" />
-              <span>문서를 불러오는 중...</span>
-            </div>
-          ) : isEmpty ? (
-            <div className="document-list-empty">
-              <SFSymbol
-                name="doc.text"
-                size={SFSymbolSize.TITLE_1}
-                weight={SFSymbolWeight.ULTRALIGHT}
-                className="empty-icon"
-                decorative={true}
-              />
-              <p className="empty-message">
-                {searchQuery ? '검색 결과가 없습니다' : '등록된 문서가 없습니다'}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
-              <div className="document-list-header">
-                {isDeleteMode && <div className="header-checkbox"></div>}
-                <div className="header-icon"></div>
-                <div className="header-filename header-sortable" onClick={() => handleColumnSort('filename')}>
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
-                    <path d="M9 1v3h3" stroke="var(--color-ios-bg-primary-light)" strokeWidth="0.8" fill="none"/>
-                  </svg>
-                  <span>파일명</span>
-                  {sortField === 'filename' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                <div className="header-size header-sortable" onClick={() => handleColumnSort('size')}>
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                    <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                  </svg>
-                  <span>크기</span>
-                  {sortField === 'size' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                <div className="header-date header-sortable" onClick={() => handleColumnSort('uploadDate')}>
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                    <line x1="2" y1="6" x2="14" y2="6" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" strokeWidth="1.2"/>
-                  </svg>
-                  <span>날짜</span>
-                  {sortField === 'uploadDate' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                <div className="header-type header-sortable" onClick={() => handleColumnSort('type')}>
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
-                  </svg>
-                  <span>타입</span>
-                  {sortField === 'type' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                <div className="header-status header-sortable" onClick={() => handleColumnSort('status')}>
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <path d="M3 3h10v2H3V3zm0 4h10v2H3V7zm0 4h7v2H3v-2z" fill="currentColor"/>
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                  </svg>
-                  <span>상태</span>
-                  {sortField === 'status' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                <div className="header-actions">
-                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
-                    <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
-                  </svg>
-                  <span>액션</span>
-                </div>
-              </div>
-
-              {sortedDocuments.map((document) => {
-                // NOTE: DocumentStatusService는 API 응답 타입을 기대하므로 as any 사용
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const status = DocumentStatusService.extractStatus(document as any)
-                const statusLabel = DocumentStatusService.getStatusLabel(status)
-                const statusIcon = DocumentStatusService.getStatusIcon(status)
-                const isLinked = Boolean(document.customer_relation)
-                const isAnnualReport = document.is_annual_report === true
-                // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
-                const canLink = status === 'completed' && !isLinked && !isAnnualReport
-                const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
-                const isSelected = selectedDocumentIds.has(document._id)
-
-                return (
-                <div
-                  key={document._id}
-                  className={`document-item ${isSelected ? 'document-item--selected' : ''}`}
-                  onClick={() => onDocumentClick?.(document._id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onDocumentClick?.(document._id);
-                    }
-                  }}
-                >
-                  {/* 🍎 CHECKBOX: Document selection - 삭제 모드일 때만 표시 */}
-                  {isDeleteMode && (
-                    <div className="document-checkbox-wrapper" onClick={(e) => handleSelectDocument(document._id, e)}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {}}
-                        aria-label={`${document.filename} 선택`}
-                        className="document-checkbox"
-                      />
-                    </div>
-                  )}
-
-                  {/* 🍎 ICON: File type indicator with color class */}
-                  <div className="document-icon-wrapper">
-                    <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.filename)}`}>
-                      <SFSymbol
-                        name={DocumentUtils.getFileIcon(document.mimeType, document.filename)}
-                        size={SFSymbolSize.CAPTION_1}
-                        weight={SFSymbolWeight.REGULAR}
-                        decorative={true}
-                      />
-                    </div>
-                    {/* 🍎 AR BADGE: Annual Report 표시 */}
-                    {document.is_annual_report && (
-                      <Tooltip content="Annual Report">
-                        <div className="document-ar-badge">
-                          AR
-                        </div>
-                      </Tooltip>
-                    )}
-                  </div>
-
-                  {/* 🍎 NAME: Primary information (flexible width) */}
-                  <div className="document-info">
-                    <div className="document-name" title={DocumentUtils.getDisplayName(document)}>
-                      {DocumentUtils.getDisplayName(document)}
-                    </div>
-                  </div>
-
-                  {/* 🍎 SIZE: Fixed width column */}
-                  <span className="document-size">
-                    {/* NOTE: API 응답 타입 사용 (상단 extractStatus와 동일한 이유) */}
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {DocumentUtils.formatFileSize(DocumentStatusService.extractFileSize(document as any))}
-                  </span>
-
-                  {/* 🍎 DATE: Fixed width column */}
-                  <span className="document-date">
-                    {DocumentUtils.formatUploadDate(document.uploadDate)}
-                  </span>
-
-                  {/* 🍎 TYPE: Fixed width column */}
-                  <span className="document-type">
-                    {document.mimeType ? DocumentUtils.getFileExtension(document.mimeType) : '-'}
-                  </span>
-
-                  {/* 🍎 STATUS: 문서 처리 상태 아이콘 */}
-                  <Tooltip content={statusLabel}>
-                    <div className={`status-icon status-${status}`}>
-                      {statusIcon}
-                    </div>
-                  </Tooltip>
-
-                  {/* 액션 버튼 */}
-                  <div className="document-actions">
-                    <Tooltip content="상세 보기">
-                      <button
-                        className="action-btn action-btn--detail"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDetailClick(document)
-                        }}
-                        aria-label="상세 보기"
-                      >
-                        <EyeIcon />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="요약 보기">
-                      <button
-                        className="action-btn action-btn--summary"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleSummaryClickInternal(document)
-                        }}
-                        aria-label="요약 보기"
-                      >
-                        <SummaryIcon />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="전체 텍스트 보기">
-                      <button
-                        className="action-btn action-btn--full"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleFullTextClickInternal(document)
-                        }}
-                        aria-label="전체 텍스트 보기"
-                      >
-                        <DocumentIcon />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={linkTooltip}>
-                      <button
-                        className="action-btn action-btn--link"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (canLink) {
-                            handleLinkClickInternal(document)
-                          }
-                        }}
-                        aria-label={linkTooltip}
-                        aria-disabled={!canLink}
-                        data-disabled={!canLink}
-                        tabIndex={canLink ? 0 : -1}
-                      >
-                        <LinkIcon />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-                )
-              })}
-            </>
-          )}
-        </div>
-
-        {/* 페이지네이션 */}
-        {!isLoading && !isEmpty && (
-          <div className="document-pagination">
-            {/* 🍎 페이지당 항목 수 선택 */}
-            <div className="pagination-limit">
-              <Dropdown
-                value={String(itemsPerPage)}
-                options={ITEMS_PER_PAGE_OPTIONS}
-                onChange={(value) => handleLimitChange(Number(value))}
-                aria-label="페이지당 항목 수"
-                width={100}
-              />
-            </div>
-
-            {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
-            {totalPages > 1 && (
-              <div className="pagination-controls">
-                <button
-                  className="pagination-button pagination-button--prev"
-                  onClick={() => handlePageChangeWithFeedback(currentPage - 1, 'prev')}
-                  disabled={currentPage === 1}
-                  aria-label="이전 페이지"
-                >
-                  <span className={`pagination-arrow ${clickedButton === 'prev' ? 'pagination-arrow--clicked' : ''}`}>
-                    ‹
-                  </span>
-                </button>
-
-                <div className="pagination-info">
-                  <span className="pagination-current">{currentPage}</span>
-                  <span className="pagination-separator">/</span>
-                  <span className="pagination-total">{totalPages}</span>
-                </div>
-
-                <button
-                  className="pagination-button pagination-button--next"
-                  onClick={() => handlePageChangeWithFeedback(currentPage + 1, 'next')}
-                  disabled={currentPage === totalPages}
-                  aria-label="다음 페이지"
-                >
-                  <span className={`pagination-arrow ${clickedButton === 'next' ? 'pagination-arrow--clicked' : ''}`}>
-                    ›
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
-            {totalPages <= 1 && <div className="pagination-spacer"></div>}
-          </div>
-        )}
+        {/* 🍎 타겟 영역: 헤더 + 문서 리스트 + 페이지네이션 */}
+        <DocumentStatusProvider>
+          <DocumentLibraryContent />
+        </DocumentStatusProvider>
       </div>
-
-      {/* 모달들 */}
-      <DocumentDetailModal
-        visible={isDetailModalVisible}
-        onClose={handleDetailModalClose}
-        document={selectedDocument}
-      />
-      <DocumentSummaryModal
-        visible={isSummaryModalVisible}
-        onClose={handleSummaryModalClose}
-        document={selectedDocumentForSummary}
-      />
-      <DocumentFullTextModal
-        visible={isFullTextModalVisible}
-        onClose={handleFullTextModalClose}
-        document={selectedDocumentForFullText}
-      />
-      <DocumentLinkModal
-        visible={isLinkModalVisible}
-        onClose={handleLinkModalClose}
-        document={selectedDocumentForLink}
-        onSearchCustomers={searchCustomers}
-        onFetchCustomerDocuments={fetchCustomerDocuments}
-        onLink={linkDocumentToCustomer}
-      />
 
       {/* Apple Confirm Modal */}
       <AppleConfirmModal
