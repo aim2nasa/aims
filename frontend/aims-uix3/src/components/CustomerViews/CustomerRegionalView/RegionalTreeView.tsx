@@ -490,7 +490,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <NaverMap
             customers={customers}
             selectedCustomerId={selectedCustomerId}
-            onCustomerSelect={(customerId) => {
+            onCustomerSelect={(customerId: string) => {
               // 고객 ID로 고객 객체 찾기
               const customer = customers.find(c => c._id === customerId)
               if (customer) {

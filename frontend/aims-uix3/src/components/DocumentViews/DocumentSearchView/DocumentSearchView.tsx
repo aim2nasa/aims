@@ -30,7 +30,7 @@ import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModa
 import { CustomerService } from '@/services/customerService'
 import { DocumentService } from '@/services/DocumentService'
 import type { CustomerSearchResponse } from '@/entities/customer'
-import type { DocumentCustomerRelation } from '../../../types/documentStatus'
+import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -97,17 +97,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   } | null>(null)
 
   // 🍎 새로운 모달 상태 관리 (DocumentLibrary와 동일한 구조)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForDetail, setSelectedDocumentForDetail] = useState<any | null>(null)
+  const [selectedDocumentForDetail, setSelectedDocumentForDetail] = useState<SearchResultItem | null>(null)
   const [isDetailModalVisible, setDetailModalVisible] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<any | null>(null)
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<SearchResultItem | null>(null)
   const [isSummaryModalVisible, setSummaryModalVisible] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForFullTextNew, setSelectedDocumentForFullTextNew] = useState<any | null>(null)
+  const [selectedDocumentForFullTextNew, setSelectedDocumentForFullTextNew] = useState<SearchResultItem | null>(null)
   const [isFullTextModalVisibleNew, setFullTextModalVisibleNew] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState<any | null>(null)
+  const [selectedDocumentForLink, setSelectedDocumentForLink] = useState<SearchResultItem | null>(null)
   const [isLinkModalVisible, setLinkModalVisible] = useState(false)
 
   /**
@@ -140,8 +136,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   /**
    * 🍎 새로운 모달 핸들러들 (DocumentLibrary와 동일)
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDetailClick = useCallback((document: any) => {
+  const handleDetailClick = useCallback((document: SearchResultItem) => {
     setSelectedDocumentForDetail(document)
     setDetailModalVisible(true)
   }, [])
@@ -153,8 +148,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }, 300)
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSummaryClickInternal = useCallback((document: any) => {
+  const handleSummaryClickInternal = useCallback((document: SearchResultItem) => {
     setSelectedDocumentForSummary(document)
     setSummaryModalVisible(true)
   }, [])
@@ -166,8 +160,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }, 300)
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFullTextClickInternal = useCallback((document: any) => {
+  const handleFullTextClickInternal = useCallback((document: SearchResultItem) => {
     setSelectedDocumentForFullTextNew(document)
     setFullTextModalVisibleNew(true)
   }, [])
@@ -179,8 +172,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }, 300)
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleLinkClickInternal = useCallback((document: any) => {
+  const handleLinkClickInternal = useCallback((document: SearchResultItem) => {
     setSelectedDocumentForLink(document)
     setLinkModalVisible(true)
   }, [])
@@ -372,9 +364,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   const mimeType = SearchService.getMimeType(item)
 
                   // 🍎 문서 처리 상태 정보 추출
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const status = DocumentProcessingModule.getProcessingStatus(item as any)
-                  const linkStatus = DocumentProcessingModule.getCustomerLinkStatus(item as any)
+                  const status = DocumentProcessingModule.getProcessingStatus(item as Document)
+                  const linkStatus = DocumentProcessingModule.getCustomerLinkStatus(item as Document)
                   const canLink = linkStatus.canLink
                   const linkTooltip = linkStatus.isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
 

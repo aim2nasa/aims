@@ -12,9 +12,74 @@ import { geocodeAddress } from '@/shared/api/geocode'
 import Tooltip from '@/shared/ui/Tooltip'
 import './NaverMap.css'
 
+// Naver Maps API 타입 정의
+interface NaverLatLng {
+  lat(): number
+  lng(): number
+}
+
+interface NaverPoint {
+  x: number
+  y: number
+}
+
+interface NaverBounds {
+  hasLatLng(latlng: NaverLatLng): boolean
+}
+
+interface NaverMarker {
+  setMap(map: NaverMap | null): void
+  setIcon(icon: { content: string; anchor: NaverPoint }): void
+}
+
+interface NaverInfoWindow {
+  open(map: NaverMap, marker: NaverMarker): void
+  close(): void
+}
+
+interface NaverMap {
+  getElement(): HTMLElement
+  getBounds(): NaverBounds
+  getCenter(): NaverLatLng
+  setCenter(latlng: NaverLatLng): void
+  getZoom(): number
+  setZoom(zoom: number): void
+  panBy(point: NaverPoint): void
+}
+
+interface NaverMapsEvent {
+  addListener(target: NaverMap | NaverMarker, eventName: string, listener: () => void): void
+}
+
+interface NaverMapsPosition {
+  TOP_RIGHT: unknown
+}
+
+interface NaverMapsNamespace {
+  maps: {
+    LatLng: new (lat: number, lng: number) => NaverLatLng
+    Point: new (x: number, y: number) => NaverPoint
+    Map: new (element: HTMLElement, options: unknown) => NaverMap
+    Marker: new (options: {
+      position: NaverLatLng
+      map: NaverMap
+      icon: { content: string; anchor: NaverPoint }
+    }) => NaverMarker
+    InfoWindow: new (options: {
+      content: string
+      borderWidth: number
+      backgroundColor: string
+      disableAnchor: boolean
+      pixelOffset: NaverPoint
+    }) => NaverInfoWindow
+    Event: NaverMapsEvent
+    Position: NaverMapsPosition
+  }
+}
+
 declare global {
   interface Window {
-    naver: any
+    naver: NaverMapsNamespace
   }
 }
 
@@ -58,8 +123,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   const initialZoom = 7
 
   const mapElement = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<any>(null)
-  const markers = useRef<Map<string, any>>(new Map()) // customerId -> marker
+  const mapInstance = useRef<NaverMap | null>(null)
+  const markers = useRef<Map<string, NaverMarker>>(new Map()) // customerId -> marker
   const [isMapReady, setIsMapReady] = useState(false)
 
   // 마커 로딩 진행률 상태
@@ -104,6 +169,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     // ⭐⭐⭐ 하얀 공백 제거: 지도 생성 직후 다중 시도로 viewport 강제 재계산
     const forceMapResize = () => {
+      if (!mapInstance.current) return
       window.dispatchEvent(new Event('resize'))
       mapInstance.current.setCenter(center)
       mapInstance.current.setZoom(initialZoom)
@@ -125,6 +191,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     // 줌 변경 이벤트 리스너
     window.naver.maps.Event.addListener(mapInstance.current, 'zoom_changed', () => {
+      if (!mapInstance.current) return
       const zoom = mapInstance.current.getZoom()
       setCurrentZoom(zoom)
     })
@@ -238,6 +305,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       }
 
       // 지도의 현재 경계 가져오기
+      if (!mapInstance.current) return
       const bounds = mapInstance.current.getBounds()
 
       // 1단계: 모든 Geocoding 요청을 병렬로 실행 (캐시 우선 사용)
@@ -321,7 +389,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       }
 
       // 3단계: 그룹별로 마커 생성
-      const zoom = mapInstance.current.getZoom()
+      if (!mapInstance.current) return
+      const map = mapInstance.current // null 체크 후 변수에 할당
+      const zoom = map.getZoom()
       const showNumbers = zoom >= 11 // 줌 레벨 11 이상일 때만 숫자 표시
 
       for (const [, group] of addressGroups.current.entries()) {
@@ -455,7 +525,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
         const marker = new window.naver.maps.Marker({
           position,
-          map: mapInstance.current,
+          map: map,
           icon: {
             content: markerContent,
             anchor: new window.naver.maps.Point(12, 12)
@@ -472,7 +542,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         })
 
         window.naver.maps.Event.addListener(marker, 'mouseover', () => {
-          infoWindow.open(mapInstance.current, marker)
+          infoWindow.open(map, marker)
         })
 
         window.naver.maps.Event.addListener(marker, 'mouseout', () => {
@@ -537,7 +607,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
 
     const showNumbers = currentZoom >= 11
-    const processedMarkers = new Set<any>()
+    const processedMarkers = new Set<NaverMarker>()
 
     // 각 그룹별로 마커 업데이트
     for (const [, group] of addressGroups.current.entries()) {
@@ -678,6 +748,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
       const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
       const map = mapInstance.current
+      if (!map) return
 
       // RP가 열려있을 때만 사용자 지도 중앙으로 조정
       const tree = document.querySelector('.regional-tree-container')
