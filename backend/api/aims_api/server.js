@@ -444,6 +444,14 @@ app.get('/api/documents/status', async (req, res) => {
       sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
     } else if (sort === 'status_desc') {
       sortCriteria = { overallStatus: -1, 'upload.uploaded_at': -1 };
+    } else if (sort === 'filename_asc') {
+      sortCriteria = { 'upload.originalName': 1, 'upload.uploaded_at': -1 };
+    } else if (sort === 'filename_desc') {
+      sortCriteria = { 'upload.originalName': -1, 'upload.uploaded_at': -1 };
+    } else if (sort === 'uploadDate_asc') {
+      sortCriteria = { 'upload.uploaded_at': 1 };
+    } else if (sort === 'uploadDate_desc') {
+      sortCriteria = { 'upload.uploaded_at': -1 };
     }
 
     // 문서 조회
