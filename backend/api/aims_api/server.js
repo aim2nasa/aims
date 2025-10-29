@@ -429,7 +429,7 @@ app.get('/api/documents', async (req, res) => {
  */
 app.get('/api/documents/status', async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search } = req.query;
+    const { page = 1, limit = 10, status, search, sort } = req.query;
     const skip = (page - 1) * limit;
 
     // 필터 조건 구성
@@ -438,10 +438,18 @@ app.get('/api/documents/status', async (req, res) => {
       filter['upload.originalName'] = { $regex: search, $options: 'i' };
     }
 
+    // 정렬 조건 구성
+    let sortCriteria = { 'upload.uploaded_at': -1 }; // 기본: 최신순
+    if (sort === 'status_asc') {
+      sortCriteria = { overallStatus: 1, 'upload.uploaded_at': -1 };
+    } else if (sort === 'status_desc') {
+      sortCriteria = { overallStatus: -1, 'upload.uploaded_at': -1 };
+    }
+
     // 문서 조회
     const documents = await db.collection(COLLECTION_NAME)
       .find(filter)
-      .sort({ 'upload.uploaded_at': -1 })
+      .sort(sortCriteria)
       .skip(skip)
       .limit(parseInt(limit))
       .toArray();
