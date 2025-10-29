@@ -75,7 +75,6 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         statusFilter={controller.statusFilter}
         onFilterChange={controller.setStatusFilter}
         documentsCount={controller.documents.length}
-        filteredCount={controller.filteredDocuments.length}
         lastUpdated={controller.lastUpdated}
       />
 

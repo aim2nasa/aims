@@ -19,7 +19,6 @@ interface DocumentStatusHeaderProps {
   statusFilter: 'all' | 'completed' | 'processing' | 'error' | 'pending'
   onFilterChange: (filter: 'all' | 'completed' | 'processing' | 'error' | 'pending') => void
   documentsCount: number
-  filteredCount: number
   lastUpdated: Date | null
 }
 
@@ -39,7 +38,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   statusFilter,
   onFilterChange,
   documentsCount,
-  filteredCount,
   lastUpdated
 }) => {
 
@@ -73,8 +71,13 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
     <div className="document-status-header">
       {/* 메인 행 */}
       <div className="header-main-row">
-        {/* 왼쪽: 필터 드롭다운 + 결과 카운트 */}
+        {/* 왼쪽: 총 문서 개수 + 필터 드롭다운 */}
         <div className="header-left">
+          <div className="filter-group">
+            <span className="result-count">
+              총 {documentsCount}개의 문서
+            </span>
+          </div>
           <div className="filter-group">
             <span className="filter-label">상태 필터:</span>
             <Dropdown
@@ -84,12 +87,6 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
               aria-label="상태 필터"
               width={100}
             />
-          </div>
-          <div className="filter-group">
-            <span className="filter-label">결과:</span>
-            <span className="result-count">
-              {statusFilter === 'all' ? documentsCount : filteredCount}개
-            </span>
           </div>
         </div>
 
