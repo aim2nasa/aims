@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { DocumentLibraryView } from './DocumentLibraryView'
 
 // Mock Documents
@@ -79,6 +79,69 @@ vi.mock('@/controllers/useDocumentsController', () => ({
   useDocumentsController: () => mockController,
 }))
 
+// Mock DocumentStatusProvider and Context
+const mockDocumentStatusContext = {
+  state: {
+    documents: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
+    isLoading: false,
+    error: null,
+    searchTerm: '',
+    sortField: null,
+    sortDirection: 'asc' as const,
+    currentPage: 1,
+    itemsPerPage: 10,
+    selectedDocument: null,
+    detailModalOpen: false,
+    summaryModalOpen: false,
+    fullTextModalOpen: false,
+    linkModalOpen: false,
+    isPollingEnabled: true,
+    pollingInterval: 3000,
+  },
+  actions: {
+    setDocuments: vi.fn(),
+    setLoading: vi.fn(),
+    setError: vi.fn(),
+    setSearchTerm: vi.fn(),
+    setSortField: vi.fn(),
+    setSortDirection: vi.fn(),
+    setCurrentPage: vi.fn(),
+    setItemsPerPage: vi.fn(),
+    openDetailModal: vi.fn(),
+    closeDetailModal: vi.fn(),
+    openSummaryModal: vi.fn(),
+    closeSummaryModal: vi.fn(),
+    openFullTextModal: vi.fn(),
+    closeFullTextModal: vi.fn(),
+    openLinkModal: vi.fn(),
+    closeLinkModal: vi.fn(),
+    togglePolling: vi.fn(),
+  },
+}
+
+vi.mock('@/contexts/DocumentStatusContext', () => ({
+  useDocumentStatusContext: () => mockDocumentStatusContext,
+}))
+
+vi.mock('@/providers/DocumentStatusProvider', () => ({
+  DocumentStatusProvider: ({ children }: any) => <div>{children}</div>,
+}))
+
+vi.mock('@/controllers/useDocumentStatusController', () => ({
+  useDocumentStatusController: () => ({
+    sortedAndFilteredDocuments: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
+    filteredDocuments: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
+    paginatedDocuments: [mockDocumentWithoutCustomer, mockDocumentWithCustomer, mockDocumentProcessing],
+    totalPages: 1,
+    isEmpty: false,
+    isLoading: false,
+    error: null,
+    handleColumnSort: vi.fn(),
+    handlePageChange: vi.fn(),
+    handleItemsPerPageChange: vi.fn(),
+  }),
+}))
+
 // Mock DocumentStatusService
 vi.mock('@/services/DocumentStatusService', () => ({
   DocumentStatusService: {
@@ -86,8 +149,20 @@ vi.mock('@/services/DocumentStatusService', () => ({
     extractFilename: (document: any) => document.filename || 'unknown.pdf',
     extractFileSize: (document: any) => document.fileSize || 0,
     extractUploadedDate: (document: any) => document.uploadTime || new Date().toISOString(),
+    extractProgress: (document: any) => document.progress || 0,
     getStatusLabel: (status: string) => status === 'completed' ? '완료' : '처리 중',
     getStatusIcon: (status: string) => status === 'completed' ? '✓' : '⋯',
+    formatUploadDate: (date: string) => new Date(date).toLocaleDateString('ko-KR'),
+  },
+}))
+
+// Mock DocumentUtils
+vi.mock('@/entities/document', () => ({
+  DocumentUtils: {
+    getFileTypeClass: () => 'file-type-pdf',
+    getFileIcon: () => 'doc.fill',
+    formatFileSize: (size: number) => `${(size / 1024).toFixed(1)} KB`,
+    getFileExtension: (mimeType: string) => mimeType?.split('/')[1]?.toUpperCase() || 'PDF',
   },
 }))
 
@@ -170,67 +245,65 @@ describe('DocumentLibraryView - 고객 연결 버튼 테스트', () => {
   })
 
   describe('고객과 연결되지 않은 문서', () => {
-    it('status가 completed이고 customer_relation이 null이면 링크 버튼이 활성화되어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('status가 completed이고 customer_relation이 null이면 링크 버튼이 활성화되어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      // 첫 번째 문서 항목 찾기 (테스트문서_연결안됨.pdf)
-      const documentItems = container.querySelectorAll('.document-item')
-      const firstDocument = documentItems[0]
+      // 문서 리스트가 렌더링될 때까지 대기
+      await waitFor(() => {
+        expect(screen.getByText('테스트문서_연결안됨.pdf')).toBeInTheDocument()
+      })
 
-      // 링크 버튼 찾기
-      const linkButton = within(firstDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      // 링크 버튼 찾기 (첫 번째 "고객에게 연결" 버튼)
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const firstLinkButton = linkButtons[0]!
 
       // 버튼이 활성화 상태인지 확인
-      expect(linkButton).not.toHaveAttribute('data-disabled', 'true')
-      expect(linkButton).toHaveAttribute('aria-disabled', 'false')
-      expect(linkButton).toHaveAttribute('tabIndex', '0')
+      expect(firstLinkButton).not.toHaveAttribute('data-disabled', 'true')
+      expect(firstLinkButton).toHaveAttribute('aria-disabled', 'false')
+      expect(firstLinkButton).toHaveAttribute('tabIndex', '0')
     })
 
-    it('링크 버튼의 툴팁이 "고객에게 연결"이어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('링크 버튼의 툴팁이 "고객에게 연결"이어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const firstDocument = documentItems[0]
+      await waitFor(() => {
+        expect(screen.getByText('테스트문서_연결안됨.pdf')).toBeInTheDocument()
+      })
 
       // 링크 버튼의 aria-label 확인
-      const linkButton = within(firstDocument as HTMLElement).getByLabelText('고객에게 연결')
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const firstLinkButton = linkButtons[0]!
 
       // aria-label이 "고객에게 연결"인지 확인
-      expect(linkButton).toHaveAttribute('aria-label', '고객에게 연결')
+      expect(firstLinkButton).toHaveAttribute('aria-label', '고객에게 연결')
     })
 
-    it('링크 버튼을 클릭하면 handleLinkClick이 호출되어야 함', () => {
+    it('링크 버튼을 클릭하면 handleLinkClick이 호출되어야 함', async () => {
       const onDocumentClick = vi.fn()
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} onDocumentClick={onDocumentClick} />
-      )
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} onDocumentClick={onDocumentClick} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const firstDocument = documentItems[0]
+      await waitFor(() => {
+        expect(screen.getByText('테스트문서_연결안됨.pdf')).toBeInTheDocument()
+      })
 
-      const linkButton = within(firstDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const firstLinkButton = linkButtons[0]!
 
       // 버튼이 클릭 가능한지 확인 (data-disabled가 false)
-      expect(linkButton.getAttribute('data-disabled')).toBe('false')
+      expect(firstLinkButton.getAttribute('data-disabled')).toBe('false')
     })
   })
 
   describe('고객과 연결된 문서', () => {
-    it('customer_relation이 존재하면 링크 버튼이 비활성화되어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('customer_relation이 존재하면 링크 버튼이 비활성화되어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      // 두 번째 문서 항목 찾기 (김보성보유계약현황202508.pdf)
-      const documentItems = container.querySelectorAll('.document-item')
-      const secondDocument = documentItems[1]
+      await waitFor(() => {
+        expect(screen.getByText('김보성보유계약현황202508.pdf')).toBeInTheDocument()
+      })
 
-      // 링크 버튼 찾기
-      const linkButton = within(secondDocument as HTMLElement).getByLabelText(/이미 고객과 연결됨/)
+      // "이미 고객과 연결됨" 버튼 찾기
+      const linkButton = screen.getByLabelText('이미 고객과 연결됨')
 
       // 버튼이 비활성화 상태인지 확인
       expect(linkButton).toHaveAttribute('data-disabled', 'true')
@@ -238,30 +311,28 @@ describe('DocumentLibraryView - 고객 연결 버튼 테스트', () => {
       expect(linkButton).toHaveAttribute('tabIndex', '-1')
     })
 
-    it('링크 버튼의 툴팁이 "이미 고객과 연결됨"이어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('링크 버튼의 툴팁이 "이미 고객과 연결됨"이어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const secondDocument = documentItems[1]
+      await waitFor(() => {
+        expect(screen.getByText('김보성보유계약현황202508.pdf')).toBeInTheDocument()
+      })
 
       // 링크 버튼의 aria-label 확인
-      const linkButton = within(secondDocument as HTMLElement).getByLabelText('이미 고객과 연결됨')
+      const linkButton = screen.getByLabelText('이미 고객과 연결됨')
 
       // aria-label이 "이미 고객과 연결됨"인지 확인
       expect(linkButton).toHaveAttribute('aria-label', '이미 고객과 연결됨')
     })
 
-    it('링크 버튼을 클릭해도 handleLinkClick이 호출되지 않아야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('링크 버튼을 클릭해도 handleLinkClick이 호출되지 않아야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const secondDocument = documentItems[1]
+      await waitFor(() => {
+        expect(screen.getByText('김보성보유계약현황202508.pdf')).toBeInTheDocument()
+      })
 
-      const linkButton = within(secondDocument as HTMLElement).getByLabelText(/이미 고객과 연결됨/)
+      const linkButton = screen.getByLabelText('이미 고객과 연결됨')
 
       // 버튼이 클릭 불가능한지 확인 (data-disabled가 true)
       expect(linkButton.getAttribute('data-disabled')).toBe('true')
@@ -269,101 +340,103 @@ describe('DocumentLibraryView - 고객 연결 버튼 테스트', () => {
   })
 
   describe('처리 중인 문서', () => {
-    it('status가 processing이면 customer_relation과 무관하게 링크 버튼이 비활성화되어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('status가 processing이면 customer_relation과 무관하게 링크 버튼이 비활성화되어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      // 세 번째 문서 항목 찾기 (처리중문서.pdf)
-      const documentItems = container.querySelectorAll('.document-item')
-      const thirdDocument = documentItems[2]
+      await waitFor(() => {
+        expect(screen.getByText('처리중문서.pdf')).toBeInTheDocument()
+      })
 
-      // 링크 버튼 찾기
-      const linkButton = within(thirdDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      // "고객에게 연결" 버튼 중 두 번째 (처리중문서.pdf에 해당)
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const processingDocButton = linkButtons[1]! // 첫 번째는 테스트문서, 두 번째가 처리중문서
 
       // 버튼이 비활성화 상태인지 확인 (status가 processing이므로)
-      expect(linkButton).toHaveAttribute('data-disabled', 'true')
-      expect(linkButton).toHaveAttribute('aria-disabled', 'true')
+      expect(processingDocButton).toHaveAttribute('data-disabled', 'true')
+      expect(processingDocButton).toHaveAttribute('aria-disabled', 'true')
     })
 
-    it('처리 중인 문서의 링크 버튼 툴팁은 "고객에게 연결"이어야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('처리 중인 문서의 링크 버튼 툴팁은 "고객에게 연결"이어야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const thirdDocument = documentItems[2]
+      await waitFor(() => {
+        expect(screen.getByText('처리중문서.pdf')).toBeInTheDocument()
+      })
 
-      const linkButton = within(thirdDocument as HTMLElement).getByLabelText('고객에게 연결')
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const processingDocButton = linkButtons[1]!
 
       // customer_relation이 null이므로 aria-label은 "고객에게 연결"
-      expect(linkButton).toHaveAttribute('aria-label', '고객에게 연결')
+      expect(processingDocButton).toHaveAttribute('aria-label', '고객에게 연결')
     })
   })
 
   describe('canLink 로직 검증', () => {
-    it('status=completed, customer_relation=null → canLink=true', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('status=completed, customer_relation=null → canLink=true', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const firstDocument = documentItems[0]
-      const linkButton = within(firstDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      await waitFor(() => {
+        expect(screen.getByText('테스트문서_연결안됨.pdf')).toBeInTheDocument()
+      })
 
-      expect(linkButton.getAttribute('data-disabled')).toBe('false')
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const firstLinkButton = linkButtons[0]!
+
+      expect(firstLinkButton.getAttribute('data-disabled')).toBe('false')
     })
 
-    it('status=completed, customer_relation=존재 → canLink=false', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('status=completed, customer_relation=존재 → canLink=false', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const secondDocument = documentItems[1]
-      const linkButton = within(secondDocument as HTMLElement).getByLabelText(/이미 고객과 연결됨/)
+      await waitFor(() => {
+        expect(screen.getByText('김보성보유계약현황202508.pdf')).toBeInTheDocument()
+      })
+
+      const linkButton = screen.getByLabelText('이미 고객과 연결됨')
 
       expect(linkButton.getAttribute('data-disabled')).toBe('true')
     })
 
-    it('status=processing, customer_relation=null → canLink=false', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('status=processing, customer_relation=null → canLink=false', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const thirdDocument = documentItems[2]
-      const linkButton = within(thirdDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      await waitFor(() => {
+        expect(screen.getByText('처리중문서.pdf')).toBeInTheDocument()
+      })
 
-      expect(linkButton.getAttribute('data-disabled')).toBe('true')
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const processingDocButton = linkButtons[1]!
+
+      expect(processingDocButton.getAttribute('data-disabled')).toBe('true')
     })
   })
 
   describe('CSS 클래스 및 스타일 검증', () => {
-    it('비활성화된 버튼은 data-disabled="true" 속성을 가져야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('비활성화된 버튼은 data-disabled="true" 속성을 가져야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const secondDocument = documentItems[1]
-      const linkButton = within(secondDocument as HTMLElement).getByLabelText(/이미 고객과 연결됨/)
+      await waitFor(() => {
+        expect(screen.getByText('김보성보유계약현황202508.pdf')).toBeInTheDocument()
+      })
+
+      const linkButton = screen.getByLabelText('이미 고객과 연결됨')
 
       // data-disabled 속성 확인 (CSS에서 [data-disabled="true"]로 스타일 적용)
       expect(linkButton).toHaveAttribute('data-disabled', 'true')
     })
 
-    it('활성화된 버튼은 data-disabled="false" 속성을 가져야 함', () => {
-      const { container } = render(
-        <DocumentLibraryView visible={true} onClose={vi.fn()} />
-      )
+    it('활성화된 버튼은 data-disabled="false" 속성을 가져야 함', async () => {
+      render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const documentItems = container.querySelectorAll('.document-item')
-      const firstDocument = documentItems[0]
-      const linkButton = within(firstDocument as HTMLElement).getByLabelText(/고객에게 연결/)
+      await waitFor(() => {
+        expect(screen.getByText('테스트문서_연결안됨.pdf')).toBeInTheDocument()
+      })
+
+      const linkButtons = screen.getAllByLabelText('고객에게 연결')
+      const firstLinkButton = linkButtons[0]!
 
       // data-disabled 속성 확인
-      expect(linkButton).toHaveAttribute('data-disabled', 'false')
+      expect(firstLinkButton).toHaveAttribute('data-disabled', 'false')
     })
   })
 })
