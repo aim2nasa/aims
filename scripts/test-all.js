@@ -65,7 +65,7 @@ function checkMongoConnection() {
 
 // SSH 터널 설정
 async function setupSSHTunnel() {
-  logHeader('[0/4] Setting up SSH tunnel to MongoDB...');
+  logHeader('[0/7] Setting up SSH tunnel to MongoDB...');
   logSeparator();
 
   const isConnected = await checkMongoConnection();
@@ -99,7 +99,7 @@ async function setupSSHTunnel() {
 
 // SSH 터널 종료
 function teardownSSHTunnel() {
-  logHeader('[4/4] Closing SSH tunnel...');
+  logHeader('[7/7] Closing SSH tunnel...');
   logSeparator();
 
   const isWindows = process.platform === 'win32';
@@ -152,7 +152,7 @@ function teardownSSHTunnel() {
 
 // 테스트 실행
 function runTest(stepNum, title, cwd, command, env = {}) {
-  logHeader(`[${stepNum}/4] Running ${title}...`);
+  logHeader(`[${stepNum}/7] Running ${title}...`);
   logSeparator();
 
   try {
@@ -195,16 +195,31 @@ async function main() {
   log('');
   log('');
 
-  // 3. Python API Tests
+  // 3. Python Module Tests (src/)
   const pythonCmd = process.platform === 'win32' ? 'py -3 -m pytest -v' : 'python3 -m pytest -v';
-  runTest('3', 'Python API tests', 'backend/api/doc_status_api', pythonCmd);
+  runTest('3', 'Python module tests (src/)', '.', pythonCmd + ' src/');
+  log('');
+  log('');
+
+  // 4. Python Tools Tests
+  runTest('4', 'Python tools tests', '.', pythonCmd + ' tools/mime_type_analyzer/tests/');
+  log('');
+  log('');
+
+  // 5. Python API Tests (doc_status_api)
+  runTest('5', 'Python API tests (doc_status_api)', 'backend/api/doc_status_api', pythonCmd);
+  log('');
+  log('');
+
+  // 6. Python API Tests (annual_report_api)
+  runTest('6', 'Python API tests (annual_report_api)', 'backend/api/annual_report_api', pythonCmd);
   log('');
 
   logHeader('========================================');
   logHeader('  Test Results Summary');
   logHeader('========================================');
 
-  // 4. SSH 터널 종료
+  // 7. SSH 터널 종료
   teardownSSHTunnel();
   log('');
 
