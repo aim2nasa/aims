@@ -25,7 +25,9 @@ export interface CheckAnnualReportResult {
  */
 async function extractFirstPageText(file: File): Promise<string> {
   try {
-    console.log('[pdfParser] 📄 PDF 텍스트 추출 시작:', file.name);
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] 📄 PDF 텍스트 추출 시작:', file.name);
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -33,8 +35,10 @@ async function extractFirstPageText(file: File): Promise<string> {
     const textContent = await page.getTextContent();
     const text = textContent.items.map((item: any) => item.str).join(' ');
 
-    console.log('[pdfParser] ✅ 텍스트 추출 완료, 길이:', text.length);
-    console.log('[pdfParser] 📄 추출된 텍스트 (첫 500자):', text.substring(0, 500));
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] ✅ 텍스트 추출 완료, 길이:', text.length);
+      console.log('[pdfParser] 📄 추출된 텍스트 (첫 500자):', text.substring(0, 500));
+    }
 
     return text;
   } catch (error) {
@@ -82,7 +86,9 @@ function extractMetadata(text: string) {
 export async function checkAnnualReportFromPDF(
   file: File
 ): Promise<CheckAnnualReportResult> {
-  console.log('[pdfParser] 🔍 Annual Report 체크 시작:', file.name);
+  if (import.meta.env.DEV) {
+    console.log('[pdfParser] 🔍 Annual Report 체크 시작:', file.name);
+  }
 
   try {
     // 1. 첫 페이지 텍스트 추출
@@ -95,22 +101,28 @@ export async function checkAnnualReportFromPDF(
     const matchedRequired = requiredKeywords.filter((kw) => text.includes(kw));
     const matchedOptional = optionalKeywords.filter((kw) => text.includes(kw));
 
-    console.log('[pdfParser] 매칭된 필수 키워드:', matchedRequired);
-    console.log('[pdfParser] 매칭된 선택 키워드:', matchedOptional);
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] 매칭된 필수 키워드:', matchedRequired);
+      console.log('[pdfParser] 매칭된 선택 키워드:', matchedOptional);
+    }
 
     // 3. 신뢰도 계산 (필수 키워드가 있고, 선택 키워드 중 1개 이상 있으면 OK)
     const isAnnualReport = matchedRequired.length > 0 && matchedOptional.length > 0;
     const confidence = matchedRequired.length > 0 ? 1.0 : 0;
 
     if (!isAnnualReport) {
-      console.log('[pdfParser] ❌ Annual Report 아님, confidence:', confidence);
+      if (import.meta.env.DEV) {
+        console.log('[pdfParser] ❌ Annual Report 아님, confidence:', confidence);
+      }
       return { is_annual_report: false, confidence, metadata: null };
     }
 
     // 4. 메타데이터 추출
     const metadata = extractMetadata(text);
 
-    console.log('[pdfParser] ✅ Annual Report 판단: true, metadata:', metadata);
+    if (import.meta.env.DEV) {
+      console.log('[pdfParser] ✅ Annual Report 판단: true, metadata:', metadata);
+    }
 
     return {
       is_annual_report: true,

@@ -75,7 +75,8 @@ export class DocumentStatusService {
 
       return await response.json()
     } catch (error) {
-      console.error('Health check failed:', error)
+      // Health check 실패는 중요한 에러이므로 유지
+      console.error('[DocumentStatusService] Health check failed:', error)
       throw error
     }
   }
@@ -111,7 +112,7 @@ export class DocumentStatusService {
       const data = await response.json()
       return data.success ? data.data : data
     } catch (error) {
-      console.error('Get documents failed:', error)
+      console.error('[DocumentStatusService] Get documents failed:', error)
       throw error
     }
   }
@@ -135,7 +136,7 @@ export class DocumentStatusService {
 
       return await response.json()
     } catch (error) {
-      console.error('Get document status failed:', error)
+      console.error('[DocumentStatusService] Get document status failed:', error)
       throw error
     }
   }
@@ -164,7 +165,7 @@ export class DocumentStatusService {
       }
       return null
     } catch (error) {
-      console.error('Webhook fetch failed:', error)
+      console.error('[DocumentStatusService] Webhook fetch failed:', error)
       throw error
     }
   }

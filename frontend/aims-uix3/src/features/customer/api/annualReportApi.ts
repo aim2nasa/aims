@@ -191,7 +191,7 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || 'Annual Report 파싱 요청에 실패했습니다.');
     } catch (error) {
-      console.error('AnnualReportApi.parseAnnualReport:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Annual Report 파싱 중 오류가 발생했습니다.',
@@ -225,7 +225,7 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || '상태 조회에 실패했습니다.');
     } catch (error) {
-      console.error('AnnualReportApi.getParseStatus:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         error: error instanceof Error ? error.message : '상태 조회 중 오류가 발생했습니다.',
@@ -266,7 +266,7 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || 'Annual Reports 조회에 실패했습니다.');
     } catch (error) {
-      console.error('AnnualReportApi.getAnnualReports:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Annual Reports 조회 중 오류가 발생했습니다.',
@@ -316,7 +316,7 @@ export class AnnualReportApi {
 
       throw new Error(data.message || data.error || '최신 Annual Report 조회에 실패했습니다.');
     } catch (error) {
-      console.error('AnnualReportApi.getLatestAnnualReport:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         error:
@@ -412,7 +412,7 @@ export class AnnualReportApi {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('AnnualReportApi.checkAnnualReport:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       // 에러 시에도 is_annual_report: false로 반환 (조용히 실패)
       return {
         is_annual_report: false,
@@ -452,7 +452,7 @@ export class AnnualReportApi {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('AnnualReportApi.parseAnnualReportFile:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Annual Report 파싱 요청에 실패했습니다.',
@@ -481,7 +481,7 @@ export class AnnualReportApi {
       // 백엔드 응답 구조: { success: true, data: { customers: [...] } }
       return data.data?.customers || [];
     } catch (error) {
-      console.error('AnnualReportApi.searchCustomersByName:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return [];
     }
   }
@@ -521,7 +521,7 @@ export class AnnualReportApi {
 
       throw new Error(data.message || 'Annual Reports 삭제에 실패했습니다');
     } catch (error) {
-      console.error('AnnualReportApi.deleteAnnualReports:', error);
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Annual Reports 삭제 중 오류가 발생했습니다',
