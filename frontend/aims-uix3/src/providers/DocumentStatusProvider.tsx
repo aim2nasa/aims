@@ -65,8 +65,11 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         let sortParam: string | undefined = undefined
         if (sortField === 'status') {
           sortParam = sortDirection === 'asc' ? 'status_asc' : 'status_desc'
+        } else if (sortField === 'filename') {
+          sortParam = sortDirection === 'asc' ? 'filename_asc' : 'filename_desc'
+        } else if (sortField === 'uploadDate') {
+          sortParam = sortDirection === 'asc' ? 'uploadDate_asc' : 'uploadDate_desc'
         }
-        // filename, uploadDate는 백엔드 미구현이므로 undefined
 
         const data = await DocumentStatusService.getRecentDocuments(fetchLimit, sortParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
