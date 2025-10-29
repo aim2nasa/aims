@@ -45,72 +45,72 @@ export const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
 export const SummaryIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...baseProps} {...props}>
     <defs>
-      {/* 첫 번째 라인 - 주황-노랑 그라데이션 */}
+      {/* 첫 번째 라인 - 매우 진한 오렌지 그라데이션 */}
       <linearGradient id="line1Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#fb923c" />
-        <stop offset="30%" stopColor="#ff9f0a" />
-        <stop offset="70%" stopColor="#fbbf24" />
-        <stop offset="100%" stopColor="#fde047" />
+        <stop offset="0%" stopColor="#ea580c" />
+        <stop offset="30%" stopColor="#dc2626" />
+        <stop offset="70%" stopColor="#c2410c" />
+        <stop offset="100%" stopColor="#9a3412" />
       </linearGradient>
-      {/* 두 번째 라인 - 주황-빨강 그라데이션 */}
+      {/* 두 번째 라인 - 매우 진한 빨강-주황 그라데이션 */}
       <linearGradient id="line2Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#f97316" />
-        <stop offset="30%" stopColor="#ff9f0a" />
-        <stop offset="70%" stopColor="#fb923c" />
-        <stop offset="100%" stopColor="#f59e0b" />
+        <stop offset="0%" stopColor="#dc2626" />
+        <stop offset="30%" stopColor="#ea580c" />
+        <stop offset="70%" stopColor="#c2410c" />
+        <stop offset="100%" stopColor="#b91c1c" />
       </linearGradient>
-      {/* 세 번째 라인 - 노랑-주황 그라데이션 */}
+      {/* 세 번째 라인 - 진한 주황 그라데이션 */}
       <linearGradient id="line3Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#fbbf24" />
-        <stop offset="50%" stopColor="#ff9f0a" />
-        <stop offset="100%" stopColor="#fb923c" />
+        <stop offset="0%" stopColor="#c2410c" />
+        <stop offset="50%" stopColor="#ea580c" />
+        <stop offset="100%" stopColor="#9a3412" />
       </linearGradient>
-      {/* 불릿 1 - 주황 방사형 */}
+      {/* 불릿 1 - 매우 진한 오렌지 방사형 */}
       <radialGradient id="bullet1Gradient" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#fef3c7" />
-        <stop offset="40%" stopColor="#fde047" />
-        <stop offset="100%" stopColor="#ff9f0a" />
+        <stop offset="0%" stopColor="#fed7aa" />
+        <stop offset="40%" stopColor="#ea580c" />
+        <stop offset="100%" stopColor="#c2410c" />
       </radialGradient>
-      {/* 불릿 2 - 노랑 방사형 */}
+      {/* 불릿 2 - 진한 빨강-주황 방사형 */}
       <radialGradient id="bullet2Gradient" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#fef9c3" />
-        <stop offset="40%" stopColor="#fbbf24" />
-        <stop offset="100%" stopColor="#f59e0b" />
+        <stop offset="0%" stopColor="#fecaca" />
+        <stop offset="40%" stopColor="#dc2626" />
+        <stop offset="100%" stopColor="#b91c1c" />
       </radialGradient>
-      {/* 불릿 3 - 진한 주황 방사형 */}
+      {/* 불릿 3 - 매우 진한 주황 방사형 */}
       <radialGradient id="bullet3Gradient" cx="30%" cy="30%" r="70%">
         <stop offset="0%" stopColor="#fed7aa" />
-        <stop offset="40%" stopColor="#fb923c" />
-        <stop offset="100%" stopColor="#f97316" />
+        <stop offset="40%" stopColor="#c2410c" />
+        <stop offset="100%" stopColor="#9a3412" />
       </radialGradient>
     </defs>
 
     {/* 첫 번째 리스트 라인 - 배경 글로우 */}
-    <path d="M7 7h10" stroke="#fde047" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 7h10" stroke="#ea580c" strokeWidth={2.5} strokeLinecap="round" opacity={0.5} />
     <path d="M7 7h10" stroke="url(#line1Gradient)" strokeWidth={1.5} strokeLinecap="round" />
 
     {/* 두 번째 리스트 라인 - 배경 글로우 */}
-    <path d="M7 12h10" stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 12h10" stroke="#dc2626" strokeWidth={2.5} strokeLinecap="round" opacity={0.5} />
     <path d="M7 12h10" stroke="url(#line2Gradient)" strokeWidth={1.5} strokeLinecap="round" />
 
     {/* 세 번째 리스트 라인 - 배경 글로우 */}
-    <path d="M7 17h7" stroke="#fbbf24" strokeWidth={2.5} strokeLinecap="round" opacity={0.3} />
+    <path d="M7 17h7" stroke="#c2410c" strokeWidth={2.5} strokeLinecap="round" opacity={0.5} />
     <path d="M7 17h7" stroke="url(#line3Gradient)" strokeWidth={1.5} strokeLinecap="round" />
 
     {/* 불릿 포인트 1 - 외곽 글로우 */}
-    <circle cx={4.5} cy={7} r={1.4} fill="#fde047" opacity={0.4} />
+    <circle cx={4.5} cy={7} r={1.4} fill="#ea580c" opacity={0.6} />
     <circle cx={4.5} cy={7} r={0.9} fill="url(#bullet1Gradient)" />
-    <circle cx={3.8} cy={6.3} r={0.3} fill="#fef3c7" opacity={0.8} />
+    <circle cx={3.8} cy={6.3} r={0.3} fill="#fed7aa" opacity={0.9} />
 
     {/* 불릿 포인트 2 - 외곽 글로우 */}
-    <circle cx={4.5} cy={12} r={1.4} fill="#fbbf24" opacity={0.4} />
+    <circle cx={4.5} cy={12} r={1.4} fill="#dc2626" opacity={0.6} />
     <circle cx={4.5} cy={12} r={0.9} fill="url(#bullet2Gradient)" />
-    <circle cx={3.8} cy={11.3} r={0.3} fill="#fef9c3" opacity={0.8} />
+    <circle cx={3.8} cy={11.3} r={0.3} fill="#fecaca" opacity={0.9} />
 
     {/* 불릿 포인트 3 - 외곽 글로우 */}
-    <circle cx={4.5} cy={17} r={1.4} fill="#fb923c" opacity={0.4} />
+    <circle cx={4.5} cy={17} r={1.4} fill="#c2410c" opacity={0.6} />
     <circle cx={4.5} cy={17} r={0.9} fill="url(#bullet3Gradient)" />
-    <circle cx={3.8} cy={16.3} r={0.3} fill="#fed7aa" opacity={0.8} />
+    <circle cx={3.8} cy={16.3} r={0.3} fill="#fed7aa" opacity={0.9} />
   </svg>
 )
 
