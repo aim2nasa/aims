@@ -442,7 +442,7 @@ app.get('/api/documents/status', async (req, res) => {
     let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
 
-    // fileSize 정렬은 aggregation 사용 (문자열→숫자 변환)
+    // fileSize, mimeType 정렬은 aggregation 사용
     if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
       const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
@@ -453,6 +453,28 @@ app.get('/api/documents/status', async (req, res) => {
           }
         },
         { $sort: { size_bytes_num: sortOrder, 'upload.uploaded_at': -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
+      ]).toArray();
+    } else if (sort === 'mimeType_asc' || sort === 'mimeType_desc') {
+      // mimeType 정렬: 확장자 알파벳 순
+      const sortOrder = sort === 'mimeType_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            // 파일명에서 확장자 추출
+            fileExtension: {
+              $toLower: {
+                $arrayElemAt: [
+                  { $split: ['$upload.originalName', '.'] },
+                  -1
+                ]
+              }
+            }
+          }
+        },
+        { $sort: { fileExtension: sortOrder, 'upload.originalName': 1 } },
         { $skip: skip },
         { $limit: parseInt(limit) }
       ]).toArray();
@@ -471,10 +493,6 @@ app.get('/api/documents/status', async (req, res) => {
         sortCriteria = { 'upload.uploaded_at': 1 };
       } else if (sort === 'uploadDate_desc') {
         sortCriteria = { 'upload.uploaded_at': -1 };
-      } else if (sort === 'mimeType_asc') {
-        sortCriteria = { 'meta.mime': 1, 'upload.uploaded_at': -1 };
-      } else if (sort === 'mimeType_desc') {
-        sortCriteria = { 'meta.mime': -1, 'upload.uploaded_at': -1 };
       }
 
       documents = await db.collection(COLLECTION_NAME)
