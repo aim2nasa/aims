@@ -11,7 +11,7 @@ import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Tooltip, Button, Dropdown } from '@/shared/ui'
+import { Button, Dropdown } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
@@ -55,7 +55,8 @@ const DocumentLibraryContent: React.FC<{
   selectedDocumentIds: Set<string>
   onSelectAllIds: (ids: string[]) => void
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
-}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument }) => {
+  onToggleDeleteMode: () => void
+}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode }) => {
   const controller = useDocumentStatusController()
   const { actions } = useDocumentStatusContext()
 
@@ -102,6 +103,9 @@ const DocumentLibraryContent: React.FC<{
         isLoading={controller.isLoading}
         documentsCount={controller.totalCount}
         lastUpdated={controller.lastUpdated}
+        showEditButton={true}
+        isEditMode={isDeleteMode}
+        onToggleEditMode={onToggleDeleteMode}
       />
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
@@ -364,8 +368,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
       <div className="document-library-view">
-        {/* 🍎 검색 바 + 편집 버튼 - iOS 스타일 */}
-        <div className="document-library-bar">
+        {/* 🍎 상단 검색 영역 */}
+        <div className="library-search-bar">
+          {/* 검색 바 */}
           <div className="search-input-wrapper">
             <SFSymbol
               name="magnifyingglass"
@@ -396,22 +401,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
               </button>
             )}
           </div>
-
-          {/* 🍎 편집 모드 토글 버튼 */}
-          <Tooltip content={isDeleteMode ? '편집 모드 종료' : '편집 모드'}>
-            <button
-              className={`edit-mode-button ${isDeleteMode ? 'edit-mode-button--active' : ''}`}
-              onClick={handleToggleDeleteMode}
-              aria-label={isDeleteMode ? '편집 모드 종료' : '편집 모드 활성화'}
-            >
-              <SFSymbol
-                name="pencil.circle"
-                size={SFSymbolSize.CALLOUT}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
-            </button>
-          </Tooltip>
         </div>
 
         {/* Error 표시 */}
@@ -449,6 +438,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             selectedDocumentIds={selectedDocumentIds}
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
+            onToggleDeleteMode={handleToggleDeleteMode}
           />
         </DocumentStatusProvider>
       </div>

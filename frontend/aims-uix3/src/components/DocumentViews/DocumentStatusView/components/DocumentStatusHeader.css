@@ -66,11 +66,53 @@ html[data-theme="dark"] .result-count {
   flex: 1;
 }
 
-/* === RIGHT: Last Updated + 폴링 + 새로고침 === */
+/* === RIGHT: Last Updated + 편집 + 폴링 + 새로고침 === */
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* === 🍎 EDIT MODE ICON BUTTON: iOS 스타일 아이콘 버튼 === */
+.edit-mode-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button {
+  color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+.edit-mode-icon-button--active {
+  color: var(--color-success);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button--active {
+  color: var(--color-success);
 }
 
 .last-updated {
