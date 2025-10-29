@@ -93,7 +93,7 @@ vi.mock('../../CenterPaneView/CenterPaneView', () => ({
 }))
 
 vi.mock('../components/DocumentStatusHeader', () => ({
-  default: ({ isPollingEnabled, onTogglePolling, onRefresh, isLoading, documentsCount, lastUpdated }: any) => (
+  default: ({ isPollingEnabled, onTogglePolling, onRefresh, isLoading, documentsCount }: any) => (
     <div data-testid="document-status-header">
       <span data-testid="documents-count">{documentsCount}</span>
       <button onClick={onTogglePolling} data-testid="toggle-polling">

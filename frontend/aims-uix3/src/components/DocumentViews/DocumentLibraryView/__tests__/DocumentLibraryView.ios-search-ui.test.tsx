@@ -18,8 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render } from '@testing-library/react'
 import { DocumentLibraryView } from '../DocumentLibraryView'
 
 // Mock DocumentStatusProvider
@@ -282,19 +281,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
     })
 
     it('Clear 버튼이 aria-label을 가져야 함', () => {
-      // searchQuery가 있는 경우를 시뮬레이션하기 위해
-      // useDocumentsController mock을 재정의
-      vi.mocked(vi.importActual('../../../../controllers/useDocumentsController')).useDocumentsController = vi.fn(() => ({
-        documents: [],
-        isLoading: false,
-        error: null,
-        loadDocuments: vi.fn(),
-        clearError: vi.fn(),
-        searchParams: {},
-        searchQuery: 'test',
-        handleSearchChange: mockHandleSearchChange,
-      }))
-
+      // searchQuery가 있는 경우 Clear 버튼이 aria-label을 가짐
       const { container } = render(
         <DocumentLibraryView
           visible={true}
