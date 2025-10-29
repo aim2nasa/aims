@@ -316,15 +316,38 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
       <div className="document-library-view">
-        {/* 🍎 검색 바 (검색 기능 유지) */}
+        {/* 🍎 검색 바 - iOS 스타일 */}
         <div className="document-library-search">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="파일명으로 검색..."
-            className="document-search-input"
-          />
+          <div className="search-input-wrapper">
+            <SFSymbol
+              name="magnifyingglass"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              className="search-icon"
+              decorative={true}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="파일명으로 검색..."
+              className="search-input"
+            />
+            {searchQuery && (
+              <button
+                className="search-clear-button"
+                onClick={() => handleSearchChange('')}
+                aria-label="검색어 지우기"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Error 표시 */}
