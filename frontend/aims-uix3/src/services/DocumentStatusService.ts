@@ -83,9 +83,14 @@ export class DocumentStatusService {
   /**
    * 최근 문서 목록 조회
    */
-  static async getRecentDocuments(limit: number = 1000): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(limit: number = 1000, sort?: string): Promise<DocumentStatusResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents/status?limit=${limit}`, {
+      const params = new URLSearchParams({ limit: String(limit) })
+      if (sort) {
+        params.append('sort', sort)
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

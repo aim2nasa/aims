@@ -61,7 +61,14 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
         setError(null)
 
-        const data = await DocumentStatusService.getRecentDocuments(fetchLimit)
+        // 🍎 백엔드 정렬 파라미터 생성
+        let sortParam: string | undefined = undefined
+        if (sortField === 'status') {
+          sortParam = sortDirection === 'asc' ? 'status_asc' : 'status_desc'
+        }
+        // filename, uploadDate는 백엔드 미구현이므로 undefined
+
+        const data = await DocumentStatusService.getRecentDocuments(fetchLimit, sortParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
@@ -115,7 +122,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [fetchLimit]
+    [fetchLimit, sortField, sortDirection]
   )
 
   /**
@@ -260,42 +267,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   )
 
   const paginatedDocuments = useMemo(() => {
-    // 🍎 Apply sorting
-    let sortedDocs = [...filteredDocuments]
-    if (sortField) {
-      sortedDocs.sort((a, b) => {
-        switch (sortField) {
-          case 'filename': {
-            const aFilename = DocumentStatusService.extractFilename(a).toLowerCase()
-            const bFilename = DocumentStatusService.extractFilename(b).toLowerCase()
-            return sortDirection === 'asc'
-              ? aFilename.localeCompare(bFilename)
-              : bFilename.localeCompare(aFilename)
-          }
-          case 'status': {
-            const aStatus = DocumentStatusService.extractStatus(a)
-            const bStatus = DocumentStatusService.extractStatus(b)
-            return sortDirection === 'asc'
-              ? aStatus.localeCompare(bStatus)
-              : bStatus.localeCompare(aStatus)
-          }
-          case 'uploadDate': {
-            const aDate = DocumentStatusService.extractUploadedDate(a)
-            const bDate = DocumentStatusService.extractUploadedDate(b)
-            const aTime = aDate ? new Date(aDate).getTime() : 0
-            const bTime = bDate ? new Date(bDate).getTime() : 0
-            return sortDirection === 'asc' ? aTime - bTime : bTime - aTime
-          }
-          default:
-            return 0
-        }
-      })
-    }
-
+    // 🍎 백엔드에서 이미 정렬된 데이터를 받으므로 클라이언트 정렬 제거
+    // status 정렬은 백엔드에서 처리, filename/uploadDate는 향후 백엔드 구현 예정
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    return sortedDocs.slice(startIndex, endIndex)
-  }, [filteredDocuments, currentPage, itemsPerPage, sortField, sortDirection])
+    return filteredDocuments.slice(startIndex, endIndex)
+  }, [filteredDocuments, currentPage, itemsPerPage])
 
   // 🍎 Pagination Handlers
   const handlePageChange = useCallback((page: number) => {
@@ -319,12 +296,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate') => {
     if (sortField === field) {
       // Same field: toggle direction
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'
+      setSortDirection(newDirection)
+      // 🍎 방향만 변경되므로 fetchDocuments가 자동으로 재호출됨 (의존성 배열)
     } else {
       // New field: set field and default to asc
       setSortField(field)
       setSortDirection('asc')
+      // 🍎 필드가 변경되므로 fetchDocuments가 자동으로 재호출됨 (의존성 배열)
     }
+    setCurrentPage(1) // 정렬 변경 시 첫 페이지로 이동
   }, [sortField, sortDirection])
 
   /**
@@ -391,6 +372,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     if (typeof window === 'undefined') return
     fetchDocuments(false)
   }, [fetchLimit, fetchDocuments])
+
+  // 🍎 정렬 옵션 변경 시 문서 다시 가져오기
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    // sortField나 sortDirection이 변경되면 fetchDocuments 재호출
+    // fetchDocuments의 의존성 배열에 이미 포함되어 있으므로 자동 재호출됨
+    if (sortField !== null) {
+      fetchDocuments(false)
+    }
+  }, [sortField, sortDirection, fetchDocuments])
 
   // State 객체
   const state: DocumentStatusState = useMemo(

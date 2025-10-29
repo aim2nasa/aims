@@ -367,19 +367,19 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     }
 
     // 정렬 방향 결정
-    const newDirection = (sortField === field && sortDirection === 'asc') ? 'desc' : 'asc';
+    const newDirection: 'asc' | 'desc' = (sortField === field && sortDirection === 'asc') ? 'desc' : 'asc';
 
     // 로컬 상태 업데이트
     setSortField(field);
     setSortDirection(newDirection);
 
     // 백엔드 API 필드명 매핑
-    const backendFieldMap: Record<SortField, string> = {
+    const backendFieldMap: Record<SortField, 'filename' | 'size' | 'uploadDate' | 'createdAt' | 'updatedAt' | 'fileType'> = {
       'filename': 'filename',
       'size': 'size',
-      'uploadDate': 'uploadTime',
+      'uploadDate': 'uploadDate',
       'type': 'fileType',
-      'status': '', // 사용 안 함
+      'status': 'filename', // fallback (사용 안 함)
     };
 
     const backendField = backendFieldMap[field];
