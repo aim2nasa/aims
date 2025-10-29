@@ -65,9 +65,10 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
   }
 
   return (
-    <div className="document-status-view-content">
-      {/* 🍎 헤더: 컨트롤 + 필터 (한 줄) */}
-      <DocumentStatusHeader
+    <div className="document-status-view-wrapper">
+      <div className="document-status-view-content">
+        {/* 🍎 헤더: 컨트롤 + 필터 (한 줄) */}
+        <DocumentStatusHeader
         isPollingEnabled={controller.isPollingEnabled}
         onTogglePolling={controller.togglePolling}
         onRefresh={controller.refreshDocuments}
@@ -168,6 +169,7 @@ const DocumentStatusViewContent: React.FC<{ onDocumentClick?: (documentId: strin
         onFetchCustomerDocuments={controller.fetchCustomerDocuments}
         onLink={controller.linkDocumentToCustomer}
       />
+      </div>
     </div>
   )
 }
