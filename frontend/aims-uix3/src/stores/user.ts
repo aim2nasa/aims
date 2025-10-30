@@ -117,7 +117,50 @@ export function useUserStore() {
   };
 
   /**
+   * 이전 사용자의 데이터 정리
+   * - sessionStorage의 모든 사용자별 데이터 삭제
+   * - localStorage의 사용자별 설정 유지 (aims-current-user-id 제외)
+   */
+  const clearUserData = (): void => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      // sessionStorage 완전 정리 (문서 업로드 상태, 처리 로그 등)
+      sessionStorage.clear();
+
+      // localStorage에서 사용자별 데이터 정리
+      // 시스템 설정은 유지하고 사용자별 데이터만 제거
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          // 문서 관련 사용자별 데이터
+          key.startsWith('document-') ||
+          key.startsWith('upload-') ||
+          // 고객 관련 사용자별 데이터
+          key.startsWith('customer-') ||
+          // 검색 히스토리
+          key.startsWith('search-') ||
+          // 기타 사용자별 캐시
+          key.includes('-cache-') ||
+          key.includes('-state-')
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+
+      // 식별된 키들 삭제
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      console.log(`[UserStore] 사용자 데이터 정리 완료: ${keysToRemove.length}개 항목 삭제`);
+    } catch (error) {
+      console.error('[UserStore] 사용자 데이터 정리 실패:', error);
+    }
+  };
+
+  /**
    * 사용자 ID 설정
+   * - 이전 사용자 데이터 정리
    * - 전역 변수 업데이트
    * - localStorage에 저장
    * - 모든 구독자에게 알림
@@ -125,6 +168,9 @@ export function useUserStore() {
    */
   const setUserId = (newUserId: string): void => {
     if (currentUserId === newUserId) return;
+
+    // 이전 사용자 데이터 정리 (reload 전에 실행!)
+    clearUserData();
 
     currentUserId = newUserId;
 
