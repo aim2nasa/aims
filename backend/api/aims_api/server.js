@@ -161,6 +161,15 @@ function analyzeDocumentStatus(doc) {
  */
 app.get('/api/documents', async (req, res) => {
   try {
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId required'
+      });
+    }
+
     // 파라미터 검증 및 기본값 설정
     let { page, limit = 10, offset, search, sort = 'uploadTime_desc', sortBy, sortOrder, mimeType } = req.query;
 
@@ -234,12 +243,15 @@ app.get('/api/documents', async (req, res) => {
     //   });
     // }
 
-    let query = {};
+    // ⭐ owner_id 필터 추가 (사용자 계정 기능)
+    let query = {
+      owner_id: userId
+    };
 
     // 검색 조건 추가
     if (search) {
       console.log(`🔍 검색 요청 - 원본: "${search}"`);
-      
+
       // 1. URL 디코딩 처리 (한글 인코딩 문제 해결)
       let decodedSearch;
       try {
@@ -249,7 +261,7 @@ app.get('/api/documents', async (req, res) => {
         console.warn(`⚠️ URL 디코딩 실패, 원본 사용: ${e.message}`);
         decodedSearch = search;
       }
-      
+
       // 2. 유니코드 정규화 (한글 조합 문자 문제 해결)
       const normalizedSearch = decodedSearch.normalize('NFC');
       console.log(`🔄 정규화 완료: "${normalizedSearch}"`);
@@ -259,10 +271,8 @@ app.get('/api/documents', async (req, res) => {
       console.log(`🛡️ 이스케이프 완료: "${escapedSearch}"`);
 
       // 4. 검색 조건 구성 (파일명만 검색)
-      query = {
-        'upload.originalName': { $regex: escapedSearch, $options: 'i' }
-      };
-      
+      query['upload.originalName'] = { $regex: escapedSearch, $options: 'i' };
+
       console.log(`🎯 MongoDB 쿼리:`, JSON.stringify(query, null, 2));
     }
 
@@ -1059,21 +1069,33 @@ app.get('/api/health', async (req, res) => {
  */
 app.get('/api/customers', async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      search, 
-      status, 
-      customerType, 
-      region, 
-      startDate, 
-      endDate, 
-      hasDocuments 
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId required'
+      });
+    }
+
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      customerType,
+      region,
+      startDate,
+      endDate,
+      hasDocuments
     } = req.query;
     const skip = (page - 1) * limit;
 
-    let filter = {};
-    
+    // ⭐ created_by 필터 추가 (사용자 계정 기능)
+    let filter = {
+      'meta.created_by': userId
+    };
+
     // 기본 검색 (이름, 전화번호, 이메일)
     if (search) {
       // URL 디코딩 처리 (이미 디코딩된 경우 그대로 사용)
