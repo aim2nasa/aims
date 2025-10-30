@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from bson import ObjectId, json_util
@@ -371,21 +371,26 @@ async def health_check():
 
 @app.get("/status/{document_id}", response_model=DocumentStatus)
 async def get_document_status(
-    document_id: str = Path(..., description="Document ObjectId")
+    document_id: str = Path(..., description="Document ObjectId"),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """문서 ID로 처리 상태 조회"""
     try:
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
         # ObjectId 유효성 검사
         try:
             obj_id = ObjectId(document_id)
         except InvalidId:
             raise HTTPException(status_code=400, detail="Invalid document ID format")
-        
-        # MongoDB에서 문서 조회
-        document = collection.find_one({"_id": obj_id})
-        
+
+        # ⭐ MongoDB에서 문서 조회 (owner_id 필터 추가)
+        document = collection.find_one({"_id": obj_id, "owner_id": user_id})
+
         if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
+            raise HTTPException(status_code=404, detail="Document not found or access denied")
         
         # 상태 정보 포맷팅 후 반환
         return format_document_status(document)
@@ -397,15 +402,26 @@ async def get_document_status(
 
 @app.get("/status/{document_id}/simple")
 async def get_simple_status(
-    document_id: str = Path(..., description="Document ObjectId")
+    document_id: str = Path(..., description="Document ObjectId"),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """간단한 상태 정보만 반환"""
     try:
-        obj_id = ObjectId(document_id)
-        document = collection.find_one({"_id": obj_id})
-        
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        # ObjectId 유효성 검사
+        try:
+            obj_id = ObjectId(document_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid document ID format")
+
+        # ⭐ owner_id 필터 추가
+        document = collection.find_one({"_id": obj_id, "owner_id": user_id})
+
         if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
+            raise HTTPException(status_code=404, detail="Document not found or access denied")
         
         overall_status, progress = get_overall_status(document)
         
@@ -451,10 +467,18 @@ async def get_full_document(
 
 
 @app.get("/status")
-async def get_recent_documents(limit: int = 10):
+async def get_recent_documents(
+    limit: int = 10,
+    user_id: str = Header(None, alias="x-user-id")
+):
     """최근 문서들의 상태 목록 조회"""
     try:
-        documents = collection.find().sort("_id", -1).limit(limit)
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        # ⭐ owner_id 필터 추가
+        documents = collection.find({"owner_id": user_id}).sort("_id", -1).limit(limit)
         
         results = []
         for doc in documents:
@@ -468,7 +492,9 @@ async def get_recent_documents(limit: int = 10):
             })
         
         return {"documents": results, "total": len(results)}
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
@@ -692,7 +718,10 @@ class DeleteDocumentsResponse(BaseModel):
 
 
 @app.delete("/documents", response_model=DeleteDocumentsResponse)
-async def delete_documents(request: DeleteDocumentsRequest):
+async def delete_documents(
+    request: DeleteDocumentsRequest,
+    user_id: str = Header(None, alias="x-user-id")
+):
     """
     문서 삭제 (DB + 물리적 파일 + 고객 참조)
 
@@ -703,6 +732,10 @@ async def delete_documents(request: DeleteDocumentsRequest):
         삭제 결과 (성공/실패 개수, 에러 목록)
     """
     import os
+
+    # ⭐ userId 검증 (사용자 계정 기능)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
 
     if not request.document_ids:
         raise HTTPException(status_code=400, detail="삭제할 문서 ID가 필요합니다")
@@ -724,13 +757,13 @@ async def delete_documents(request: DeleteDocumentsRequest):
                 failed_count += 1
                 continue
 
-            # MongoDB에서 문서 조회
-            document = collection.find_one({"_id": obj_id})
+            # ⭐ MongoDB에서 문서 조회 (owner_id 필터 추가)
+            document = collection.find_one({"_id": obj_id, "owner_id": user_id})
 
             if not document:
                 errors.append({
                     "document_id": doc_id,
-                    "error": "문서를 찾을 수 없습니다"
+                    "error": "문서를 찾을 수 없거나 권한이 없습니다"
                 })
                 failed_count += 1
                 continue
