@@ -626,33 +626,30 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
 
     try {
-      // n8n webhook을 통해 문서 상세 정보 조회
-      const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: documentId })
-      })
+      // /api/documents/:id/status API로 문서 상세 정보 조회
+      const response = await fetch(`/api/documents/${documentId}/status`)
 
-      const json = await response.json() as unknown
-      const data = Array.isArray(json) ? json as SmartSearchDocumentResponse[] : json ? [json as SmartSearchDocumentResponse] : []
-      if (import.meta.env.DEV) {
-        console.log('[App] API 응답 데이터:', data)
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.status}`)
       }
 
-      const fileData = data[0]
-      if (!fileData) {
+      const result = await response.json()
+      if (import.meta.env.DEV) {
+        console.log('[App] API 응답:', result)
+      }
+
+      if (!result.success || !result.data) {
         if (import.meta.env.DEV) {
-          console.warn('[App] fileData가 비어 있습니다.')
+          console.warn('[App] 문서 데이터가 없습니다.')
         }
         return
       }
 
-      const rawDocument = toSmartSearchDocumentResponse(fileData)
+      // result.data.raw를 SmartSearchDocumentResponse로 변환
+      const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
       if (!rawDocument) {
         if (import.meta.env.DEV) {
-          console.warn('[App] smart search 응답이 예상한 형태가 아닙니다.', fileData)
+          console.warn('[App] 문서 응답이 예상한 형태가 아닙니다.', result.data.raw)
         }
         return
       }
