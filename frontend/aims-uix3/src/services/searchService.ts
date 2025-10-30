@@ -8,7 +8,8 @@
 import type {
   SearchQuery,
   SearchResponse,
-  SearchResultItem
+  SearchResultItem,
+  SemanticSearchResultItem
 } from '@/entities/search'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
@@ -53,8 +54,50 @@ export class SearchService {
 
       const data = await response.json()
 
-      // 시맨틱 검색 결과는 Qdrant payload에 이미 모든 정보가 있음 (MongoDB 조회 불필요)
+      // 시맨틱 검색의 경우 MongoDB에서 전체 문서 정보 가져오기
+      if (query.search_mode === 'semantic' && data.search_results && data.search_results.length > 0) {
+        const enrichedResults = await Promise.all(
+          data.search_results.map(async (item: SemanticSearchResultItem) => {
+            const docId = item.payload?.doc_id
+            if (!docId) return item
 
+            try {
+              // MongoDB에서 전체 문서 정보 조회
+              const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`)
+              if (!docResponse.ok) {
+                console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
+                return item
+              }
+
+              const docData = await docResponse.json()
+              if (!docData.success || !docData.data) {
+                return item
+              }
+
+              // Qdrant 결과(payload, score)와 MongoDB 결과(meta, ocr, overallStatus 등) 병합
+              return {
+                ...item,
+                _id: docId,
+                meta: docData.data.raw.meta,
+                ocr: docData.data.raw.ocr,
+                overallStatus: docData.data.computed.overallStatus,
+                customer_relation: docData.data.raw.customer_relation
+              }
+            } catch (error) {
+              console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)
+              return item
+            }
+          })
+        )
+
+        return {
+          answer: data.answer || null,
+          search_results: enrichedResults,
+          search_mode: query.search_mode,
+        }
+      }
+
+      // 키워드 검색은 이미 전체 정보 포함
       return {
         answer: data.answer || null,
         search_results: data.search_results || [],
