@@ -120,6 +120,7 @@ export async function apiRequest<T = unknown>(
   // 헤더 구성
   const requestHeaders = {
     ...API_CONFIG.DEFAULT_HEADERS,
+    'x-user-id': 'tester', // ⭐ userId 헤더 추가 (향후 로그인 기능 구현 시 동적으로 변경)
     ...headers,
   };
 
