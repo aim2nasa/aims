@@ -19,6 +19,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  avatarUrl?: string; // 프로필 사진 URL (선택 사항)
 }
 
 /**

@@ -199,6 +199,37 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         >
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
         </div>
+
+        {/* 사용자 계정 정보 - 항상 표시, 맨 우측 (Google 스타일) */}
+        <div className="header-user-profile">
+          {loading ? (
+            <div className="header-user-avatar-skeleton" aria-label="사용자 정보 로딩 중">
+              <span className="header-user-avatar-loading-text">...</span>
+            </div>
+          ) : (() => {
+            const currentUser = availableUsers.find(u => u.id === userId);
+            const userName = currentUser?.name || userId;
+            const userInitial = userName.charAt(0).toUpperCase();
+            const avatarUrl = currentUser?.avatarUrl;
+
+            return (
+              <Tooltip content={`현재 사용자: ${userName}`}>
+                <div className="header-user-avatar" aria-label={`현재 사용자: ${userName}`}>
+                  <div className="header-user-avatar-circle">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={userName} />
+                    ) : (
+                      userInitial
+                    )}
+                  </div>
+                  <span className="header-user-name">
+                    {userName}
+                  </span>
+                </div>
+              </Tooltip>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Progressive Disclosure 인디케이터 - BRB 스타일 + 4단계 펄스 */}
