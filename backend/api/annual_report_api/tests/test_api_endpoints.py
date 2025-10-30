@@ -74,9 +74,17 @@ class TestAnnualReportQueryEndpoints:
     def test_get_customer_annual_reports_success(self, mock_db, mock_get_reports):
         """고객의 Annual Reports 조회 성공"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
-
         customer_id = str(ObjectId())
+        user_id = "test_user"
+
+        # customers 컬렉션 Mock (소유권 검증)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "meta": {"created_by": user_id}
+        }
+        mock_db.customers = mock_customers
+
         mock_get_reports.return_value = {
             "success": True,
             "data": [
@@ -91,7 +99,10 @@ class TestAnnualReportQueryEndpoints:
             "total": 1
         }
 
-        response = client.get(f"/customers/{customer_id}/annual-reports")
+        response = client.get(
+            f"/customers/{customer_id}/annual-reports",
+            headers={"x-user-id": user_id}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -103,9 +114,17 @@ class TestAnnualReportQueryEndpoints:
     def test_get_customer_annual_reports_with_limit(self, mock_db, mock_get_reports):
         """limit 파라미터로 조회 개수 제한"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
-
         customer_id = str(ObjectId())
+        user_id = "test_user"
+
+        # customers 컬렉션 Mock (소유권 검증)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "meta": {"created_by": user_id}
+        }
+        mock_db.customers = mock_customers
+
         mock_get_reports.return_value = {
             "success": True,
             "data": [],
@@ -113,7 +132,10 @@ class TestAnnualReportQueryEndpoints:
             "total": 0
         }
 
-        response = client.get(f"/customers/{customer_id}/annual-reports?limit=5")
+        response = client.get(
+            f"/customers/{customer_id}/annual-reports?limit=5",
+            headers={"x-user-id": user_id}
+        )
         assert response.status_code == 200
         mock_get_reports.assert_called_once()
         # limit 파라미터가 전달되었는지 확인
@@ -125,9 +147,17 @@ class TestAnnualReportQueryEndpoints:
     def test_get_customer_annual_reports_empty(self, mock_db, mock_get_reports):
         """Annual Report가 없는 경우"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
-
         customer_id = str(ObjectId())
+        user_id = "test_user"
+
+        # customers 컬렉션 Mock (소유권 검증)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "meta": {"created_by": user_id}
+        }
+        mock_db.customers = mock_customers
+
         mock_get_reports.return_value = {
             "success": True,
             "data": [],
@@ -136,7 +166,10 @@ class TestAnnualReportQueryEndpoints:
             "message": "No annual reports found"
         }
 
-        response = client.get(f"/customers/{customer_id}/annual-reports")
+        response = client.get(
+            f"/customers/{customer_id}/annual-reports",
+            headers={"x-user-id": user_id}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -206,9 +239,17 @@ class TestAnnualReportDeleteEndpoints:
     def test_delete_annual_reports_success(self, mock_db, mock_delete):
         """Annual Reports 삭제 성공"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
-
         customer_id = str(ObjectId())
+        user_id = "test_user"
+
+        # customers 컬렉션 Mock (소유권 검증)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "meta": {"created_by": user_id}
+        }
+        mock_db.customers = mock_customers
+
         mock_delete.return_value = {
             "success": True,
             "deleted_count": 3,
@@ -219,7 +260,8 @@ class TestAnnualReportDeleteEndpoints:
         response = client.request(
             "DELETE",
             f"/customers/{customer_id}/annual-reports",
-            json={"indices": [0, 1, 2]}
+            json={"indices": [0, 1, 2]},
+            headers={"x-user-id": user_id}
         )
         assert response.status_code == 200
         data = response.json()
@@ -231,9 +273,17 @@ class TestAnnualReportDeleteEndpoints:
     def test_delete_annual_reports_none_found(self, mock_db, mock_delete):
         """삭제할 Annual Report가 없는 경우"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
-
         customer_id = str(ObjectId())
+        user_id = "test_user"
+
+        # customers 컬렉션 Mock (소유권 검증)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = {
+            "_id": ObjectId(customer_id),
+            "meta": {"created_by": user_id}
+        }
+        mock_db.customers = mock_customers
+
         mock_delete.return_value = {
             "success": True,
             "deleted_count": 0,
@@ -245,7 +295,8 @@ class TestAnnualReportDeleteEndpoints:
         response = client.request(
             "DELETE",
             f"/customers/{customer_id}/annual-reports",
-            json={"indices": [999]}  # 존재하지 않는 인덱스
+            json={"indices": [999]},  # 존재하지 않는 인덱스
+            headers={"x-user-id": user_id}
         )
         assert response.status_code == 200
         data = response.json()
@@ -261,7 +312,7 @@ class TestBackgroundParsingEndpoints:
     def test_trigger_parsing_success(self, mock_db, mock_process):
         """백그라운드 파싱 트리거 성공"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
+        user_id = "test_user"
 
         # 요청 Body
         request_body = {
@@ -269,7 +320,11 @@ class TestBackgroundParsingEndpoints:
             "file_id": None
         }
 
-        response = client.post("/ar-background/trigger-parsing", json=request_body)
+        response = client.post(
+            "/ar-background/trigger-parsing",
+            json=request_body,
+            headers={"x-user-id": user_id}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -280,12 +335,16 @@ class TestBackgroundParsingEndpoints:
     def test_trigger_parsing_no_pending(self, mock_db, mock_process):
         """대기 중인 문서가 없는 경우"""
         # MongoDB 연결 Mock
-        mock_db.return_value = MagicMock()
+        user_id = "test_user"
 
         # 요청 Body (고객 ID 없이 전체 파싱)
         request_body = {}
 
-        response = client.post("/ar-background/trigger-parsing", json=request_body)
+        response = client.post(
+            "/ar-background/trigger-parsing",
+            json=request_body,
+            headers={"x-user-id": user_id}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
