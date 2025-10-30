@@ -170,7 +170,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.5.2 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.5.3 - AIMS Document Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -441,6 +441,9 @@ class DocumentViewer:
         # 우측: 요약/전체 토글 및 복사 버튼
         # 전체 복사 버튼
         ttk.Button(raw_nav_frame, text="📋 전체 복사", command=self.copy_raw_to_clipboard).pack(side=tk.RIGHT, padx=5)
+
+        # 문서 삭제 버튼
+        ttk.Button(raw_nav_frame, text="🗑️ 삭제", command=self.delete_current_document).pack(side=tk.RIGHT, padx=5)
 
         # 자동 새로고침 토글 버튼
         self.raw_auto_refresh_button = ttk.Button(raw_nav_frame, text="🔄 자동 (3초)", command=self.toggle_raw_auto_refresh)
@@ -1628,6 +1631,71 @@ class DocumentViewer:
 
             # Raw 데이터 목록 새로고침 (삭제 후 자동 로드)
             self.load_raw_collection_data()
+
+        except Exception as e:
+            messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
+
+    def delete_current_document(self):
+        """현재 보고 있는 문서 삭제"""
+        try:
+            # 현재 문서 목록 가져오기
+            docs_to_use = self.raw_documents if self.raw_documents else self.documents
+
+            if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
+                messagebox.showwarning("경고", "삭제할 문서가 없습니다.")
+                return
+
+            # 현재 문서 가져오기
+            current_doc = docs_to_use[self.current_raw_index]
+            doc_id = current_doc.get("_id")
+
+            if not doc_id:
+                messagebox.showerror("오류", "문서 ID를 찾을 수 없습니다.")
+                return
+
+            # 현재 DB/Collection 확인
+            selected_db = self.current_db.get()
+            selected_collection = self.current_collection.get()
+
+            if not selected_db or not selected_collection:
+                messagebox.showwarning("경고", "DB와 Collection을 먼저 선택해주세요.")
+                return
+
+            # DB/Collection 가져오기
+            self.mongo.switch_database(selected_db)
+            collection = self.mongo.get_collection(selected_collection)
+
+            if collection is None:
+                messagebox.showerror("오류", "컬렉션을 가져올 수 없습니다.")
+                return
+
+            # 문서 삭제
+            result = collection.delete_one({"_id": doc_id})
+
+            if result.deleted_count == 0:
+                messagebox.showerror("오류", "문서를 삭제하지 못했습니다.")
+                return
+
+            # 로컬 목록에서도 제거
+            docs_to_use.pop(self.current_raw_index)
+
+            # 문서 개수 업데이트
+            if self.raw_documents:
+                self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}개")
+            else:
+                self.count_label.config(text=f"문서: {len(self.documents)}개")
+
+            # 다음 문서로 이동 (또는 이전 문서)
+            if not docs_to_use:
+                # 모든 문서가 삭제된 경우
+                self.current_raw_index = 0
+                self.update_raw_viewer()
+            else:
+                # 현재 인덱스가 범위를 벗어나면 조정
+                if self.current_raw_index >= len(docs_to_use):
+                    self.current_raw_index = len(docs_to_use) - 1
+
+                self.update_raw_viewer()
 
         except Exception as e:
             messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
