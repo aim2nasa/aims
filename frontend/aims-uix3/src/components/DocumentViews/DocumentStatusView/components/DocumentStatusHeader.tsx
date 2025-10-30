@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react'
-import { Tooltip } from '@/shared/ui'
+import { Tooltip, Button } from '@/shared/ui'
 import RefreshButton from '../../../RefreshButton/RefreshButton'
 import './DocumentStatusHeader.css'
 
@@ -22,6 +22,10 @@ interface DocumentStatusHeaderProps {
   showEditButton?: boolean
   isEditMode?: boolean
   onToggleEditMode?: () => void
+  // 🍎 삭제 모드 액션 (DocumentLibrary용)
+  selectedCount?: number
+  onDeleteSelected?: () => void
+  isDeleting?: boolean
 }
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
@@ -33,7 +37,10 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   lastUpdated,
   showEditButton = false,
   isEditMode = false,
-  onToggleEditMode
+  onToggleEditMode,
+  selectedCount = 0,
+  onDeleteSelected,
+  isDeleting = false
 }) => {
 
   /**
@@ -85,6 +92,22 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
             <span className="result-count">
               총 {documentsCount}개의 문서
             </span>
+            {/* 🍎 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+            {isEditMode && (
+              <>
+                <span className="selected-count-inline">
+                  {selectedCount}개 선택됨
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onDeleteSelected}
+                  disabled={isDeleting || selectedCount === 0}
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 

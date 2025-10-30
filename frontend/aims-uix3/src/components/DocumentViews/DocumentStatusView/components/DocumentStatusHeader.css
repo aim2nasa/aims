@@ -61,6 +61,16 @@ html[data-theme="dark"] .result-count {
   color: var(--color-ios-text-tertiary-dark);
 }
 
+/* === SELECTED COUNT INLINE: 삭제 모드 선택 카운트 === */
+.selected-count-inline {
+  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin-left: 8px;
+}
+
 /* === SPACER === */
 .header-spacer {
   flex: 1;

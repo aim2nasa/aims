@@ -11,7 +11,7 @@ import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Button, Dropdown } from '@/shared/ui'
+import { Dropdown } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
@@ -57,7 +57,9 @@ const DocumentLibraryContent: React.FC<{
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
   onToggleDeleteMode: () => void
   onDocumentClick?: (documentId: string) => void
-}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick }) => {
+  onDeleteSelected: () => void
+  isDeleting: boolean
+}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting }) => {
   const controller = useDocumentStatusController()
   const { actions } = useDocumentStatusContext()
 
@@ -107,6 +109,9 @@ const DocumentLibraryContent: React.FC<{
         showEditButton={true}
         isEditMode={isDeleteMode}
         onToggleEditMode={onToggleDeleteMode}
+        selectedCount={selectedDocumentIds.size}
+        onDeleteSelected={onDeleteSelected}
+        isDeleting={isDeleting}
       />
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
@@ -414,25 +419,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 삭제 모드 액션 바 - 선택된 항목이 있을 때만 표시 */}
-        {isDeleteMode && selectedDocumentIds.size > 0 && (
-          <div className="document-library-actions">
-            <div className="actions-left">
-              <span className="selected-count">{selectedDocumentIds.size}개 선택됨</span>
-            </div>
-            <div className="actions-right">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteSelected}
-                disabled={isDeleting}
-              >
-                {isDeleting ? '삭제 중...' : '삭제'}
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* 🍎 타겟 영역: 헤더 + 문서 리스트 + 페이지네이션 */}
         <DocumentStatusProvider>
           <DocumentLibraryContent
@@ -442,6 +428,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
             onToggleDeleteMode={handleToggleDeleteMode}
+            onDeleteSelected={handleDeleteSelected}
+            isDeleting={isDeleting}
             {...(onDocumentClick && { onDocumentClick })}
           />
         </DocumentStatusProvider>
