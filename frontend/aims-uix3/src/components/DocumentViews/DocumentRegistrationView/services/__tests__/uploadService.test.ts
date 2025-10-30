@@ -451,7 +451,7 @@ describe('UserContextService', () => {
       const context = UserContextService.getContext()
 
       expect(context.identifierType).toBe('userId')
-      expect(context.identifierValue).toBe('rossi.kwak@gmail.com')
+      expect(context.identifierValue).toBe('tester')
     })
 
     it('컨텍스트를 설정할 수 있어야 함', () => {
@@ -507,7 +507,7 @@ describe('UserContextService', () => {
       const context = UserContextService.getContext()
 
       expect(context.identifierType).toBe('userId')
-      expect(context.identifierValue).toBe('rossi.kwak@gmail.com')
+      expect(context.identifierValue).toBe('tester')
     })
   })
 
@@ -529,7 +529,7 @@ describe('UserContextService', () => {
       const formData = UserContextService.createFormData(file)
 
       expect(formData.get('file')).toBe(file)
-      expect(formData.get('userId')).toBe('rossi.kwak@gmail.com')
+      expect(formData.get('userId')).toBe('tester')
     })
 
     it('프로젝트 정보를 포함할 수 있어야 함', () => {

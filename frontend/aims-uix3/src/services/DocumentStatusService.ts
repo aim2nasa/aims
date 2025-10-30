@@ -89,6 +89,11 @@ export class DocumentStatusService {
    */
   static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string): Promise<DocumentStatusResponse> {
     try {
+      // Get current userId from localStorage
+      const userId = typeof window !== 'undefined'
+        ? localStorage.getItem('aims-current-user-id') || 'tester'
+        : 'tester';
+
       const params = new URLSearchParams({
         page: String(page),
         limit: String(limit)
@@ -100,7 +105,8 @@ export class DocumentStatusService {
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         mode: 'cors'
       })

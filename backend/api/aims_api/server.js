@@ -243,9 +243,9 @@ app.get('/api/documents', async (req, res) => {
     //   });
     // }
 
-    // ⭐ owner_id 필터 추가 (사용자 계정 기능)
+    // ⭐ ownerId 필터 추가 (사용자 계정 기능)
     let query = {
-      owner_id: userId
+      ownerId: userId
     };
 
     // 검색 조건 추가
@@ -442,8 +442,19 @@ app.get('/api/documents/status', async (req, res) => {
     const { page = 1, limit = 10, status, search, sort } = req.query;
     const skip = (page - 1) * limit;
 
-    // 필터 조건 구성
-    let filter = {};
+    // userId 추출 (헤더 또는 쿼리)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // 필터 조건 구성 - ownerId 필터 추가
+    let filter = {
+      ownerId: userId
+    };
     if (search) {
       filter['upload.originalName'] = { $regex: search, $options: 'i' };
     }
@@ -1811,6 +1822,9 @@ app.get('/api/customers/:id/documents', async (req, res) => {
       });
     }
 
+    // ⭐ userId 추출 (보안 강화)
+    const userId = req.query.userId || req.headers['x-user-id'];
+
     // 고객 정보 조회
     const customer = await db.collection(CUSTOMERS_COLLECTION)
       .findOne({ _id: new ObjectId(id) });
@@ -1824,7 +1838,7 @@ app.get('/api/customers/:id/documents', async (req, res) => {
 
     // 고객에 연결된 문서들 조회
     const documentIds = customer.documents?.map(doc => doc.document_id) || [];
-    
+
     if (documentIds.length === 0) {
       return res.json({
         success: true,
@@ -1836,8 +1850,14 @@ app.get('/api/customers/:id/documents', async (req, res) => {
       });
     }
 
+    // ⭐ ownerId 필터 추가 (사용자별 문서 격리)
+    const query = { _id: { $in: documentIds } };
+    if (userId) {
+      query.ownerId = userId;
+    }
+
     const documents = await db.collection(COLLECTION_NAME)
-      .find({ _id: { $in: documentIds } })
+      .find(query)
       .toArray();
 
     // 문서에 상태 정보 추가

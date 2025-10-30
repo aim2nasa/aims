@@ -18,6 +18,7 @@ import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
+import { api } from '@/shared/lib/api'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
 import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
@@ -107,7 +108,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       errors: [],
       context: {
         identifierType: 'userId',
-        identifierValue: 'rossi.kwak@gmail.com'
+        identifierValue: typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester'
       }
     }
   }
@@ -529,7 +530,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       errors: [],
       context: {
         identifierType: 'userId',
-        identifierValue: 'rossi.kwak@gmail.com'
+        identifierValue: typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester'
       }
     })
     try {
@@ -669,8 +670,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const checkNormalDocumentCompletion = useCallback(async (fileName: string) => {
     try {
       // 1. 파일명으로 문서 조회 (/api/documents에서 최근 문서 목록 조회)
-      const searchResponse = await fetch(`http://tars.giize.com:3010/api/documents?limit=100`);
-      const searchData = await searchResponse.json();
+      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`);
 
       if (!searchData.success || !searchData.data || !searchData.data.documents) {
         console.warn(`⚠️ [일반 문서] 문서 목록 조회 실패`);
@@ -685,6 +685,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
 
       const documentId = document._id;
+      if (!documentId) {
+        console.warn(`⚠️ [일반 문서] 문서 ID가 없음: ${fileName}`);
+        return;
+      }
       console.log(`🔍 [일반 문서] 문서 ID 확인: ${fileName} → ${documentId}`);
 
       // 2. overallStatus가 completed가 될 때까지 polling

@@ -13,21 +13,43 @@ type UploadMetadataValue = string | number | boolean | null | undefined
 /**
  * 사용자 컨텍스트 관리 클래스
  *
- * 현재: 하드코딩된 userId 사용
+ * 현재: localStorage에서 동적으로 userId 로드
  * 미래: 동적 사용자 선택 및 다양한 식별자 지원
  */
 export class UserContextService {
-  // 🔄 현재 기본 컨텍스트 (향후 동적으로 변경 예정)
-  private static context: UploadContext = {
-    identifierType: 'userId',
-    identifierValue: 'rossi.kwak@gmail.com'
+  // 🔄 현재 기본 컨텍스트 (localStorage에서 동적 로드)
+  private static getDefaultContext(): UploadContext {
+    const currentUserId = typeof window !== 'undefined'
+      ? localStorage.getItem('aims-current-user-id') || 'tester'
+      : 'tester';
+
+    return {
+      identifierType: 'userId',
+      identifierValue: currentUserId
+    };
   }
+
+  private static context: UploadContext = UserContextService.getDefaultContext()
 
   /**
    * 현재 업로드 컨텍스트 반환
+   * localStorage에서 최신 userId를 반영
    */
   static getContext(): UploadContext {
-    return { ...this.context }
+    // userId 타입일 때만 localStorage에서 최신 값 반영
+    if (this.context.identifierType === 'userId') {
+      const currentUserId = typeof window !== 'undefined'
+        ? localStorage.getItem('aims-current-user-id') || 'tester'
+        : 'tester';
+
+      return {
+        ...this.context,
+        identifierValue: currentUserId
+      };
+    }
+
+    // 다른 식별자 타입(phoneNumber, customerNumber 등)은 내부 context 그대로 반환
+    return { ...this.context };
   }
 
   /**
@@ -77,8 +99,19 @@ export class UserContextService {
     // 필수: 파일
     formData.append('file', file)
 
+    // userId 타입일 때만 localStorage에서 최신 값 가져오기
+    const identifierValue = this.context.identifierType === 'userId'
+      ? (typeof window !== 'undefined'
+          ? localStorage.getItem('aims-current-user-id') || 'tester'
+          : 'tester')
+      : this.context.identifierValue;
+
+    // 🔍 디버깅: userId 확인
+    console.log('[UserContextService] createFormData - identifierType:', this.context.identifierType);
+    console.log('[UserContextService] createFormData - identifierValue:', identifierValue);
+
     // 필수: 사용자 식별자
-    formData.append(this.context.identifierType, this.context.identifierValue)
+    formData.append(this.context.identifierType, identifierValue)
 
     // 선택적: 프로젝트 정보
     if (this.context.projectId) {
@@ -104,10 +137,7 @@ export class UserContextService {
    * 기본값으로 리셋
    */
   static reset(): void {
-    this.context = {
-      identifierType: 'userId',
-      identifierValue: 'rossi.kwak@gmail.com'
-    }
+    this.context = this.getDefaultContext()
   }
 
   /**
