@@ -8,7 +8,6 @@
  * 1. 페이지 스크롤 제거, 목록 내부 스크롤만 활성화
  * 2. 브라우저 높이에 따라 목록 영역이 가변적으로 조정
  * 3. 100개 이상 항목 표시 시에도 이중 스크롤 방지
- * 4. DocumentStatusView와 동일한 UX 구조 적용
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -369,7 +368,7 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
     })
   })
 
-  describe('DocumentStatusView와의 일관성', () => {
+  describe('UI 구조 일관성', () => {
     it('브라우저 높이를 최대한 활용하는 구조를 가져야 함', () => {
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 

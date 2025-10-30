@@ -135,7 +135,6 @@ describe('RefreshButton - AIMS 스타일 툴팁 테스트 (커밋 dd9f02b)', () 
       const affectedComponents = [
         'CustomerRelationshipView',
         'DocumentLibraryView',
-        'DocumentStatusView',
         'AllCustomersView',
       ]
 
