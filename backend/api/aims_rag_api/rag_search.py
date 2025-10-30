@@ -17,6 +17,7 @@ class SearchRequest(BaseModel):
     query: str
     mode: str = "OR"
     search_mode: str = "semantic"
+    user_id: Optional[str] = None
 
 class UnifiedSearchResponse(BaseModel):
     search_mode: str
@@ -91,7 +92,7 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
 async def search_endpoint(request: SearchRequest):
     if request.search_mode == "keyword":
         # 키워드 검색 로직
-        payload = {"query": request.query, "mode": request.mode}
+        payload = {"query": request.query, "mode": request.mode, "user_id": request.user_id}
         try:
             response = requests.post(SMARTSEARCH_API_URL, json=payload)
             response.raise_for_status()

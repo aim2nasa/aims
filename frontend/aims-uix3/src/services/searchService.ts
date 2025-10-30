@@ -29,12 +29,23 @@ export class SearchService {
    */
   static async searchDocuments(query: SearchQuery): Promise<SearchResponse> {
     try {
+      // 현재 사용자 ID 가져오기
+      const userId = typeof window !== 'undefined'
+        ? localStorage.getItem('aims-current-user-id') || 'tester'
+        : 'tester';
+
+      // 쿼리에 user_id 추가
+      const queryWithUser = {
+        ...query,
+        user_id: userId
+      };
+
       const response = await fetch(SEARCH_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(query),
+        body: JSON.stringify(queryWithUser),
       })
 
       if (!response.ok) {

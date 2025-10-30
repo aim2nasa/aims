@@ -540,7 +540,8 @@ describe('SearchService.searchDocuments', () => {
         body: JSON.stringify({
           query: '테스트',
           search_mode: 'keyword',
-          mode: 'AND'
+          mode: 'AND',
+          user_id: 'tester'
         })
       }
     );
