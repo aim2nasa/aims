@@ -350,12 +350,6 @@ const CustomMenu = ({
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
           label: '문서 검색',
           tooltipTitle: '문서를 검색합니다',
-        },
-        {
-          key: 'dsd',
-          icon: <span className="menu-icon-red"><MenuIcons.Dashboard /></span>,
-          label: '문서 처리 현황',
-          tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
         }
       ]
     },
@@ -379,12 +373,6 @@ const CustomMenu = ({
         icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
         label: '',
         tooltipTitle: '문서를 검색합니다',
-      },
-      {
-        key: 'dsd',
-        icon: <span className="menu-icon-red"><MenuIcons.Dashboard /></span>,
-        label: '',
-        tooltipTitle: '문서 처리 상태와 통계를 확인합니다',
       }
     ] : [])
   ], [collapsed, hasSearchResults, searchResultsCount])

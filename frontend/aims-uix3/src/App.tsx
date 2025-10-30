@@ -17,7 +17,6 @@ const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
 const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
 const DocumentSearchView = lazy(() => import('./components/DocumentViews/DocumentSearchView/DocumentSearchView'))
-const DocumentStatusView = lazy(() => import('./components/DocumentViews/DocumentStatusView/DocumentStatusView'))
 const DocumentManagementView = lazy(() => import('./components/DocumentViews/DocumentManagementView/DocumentManagementView'))
 const CustomerManagementView = lazy(() => import('./components/CustomerViews/CustomerManagementView/CustomerManagementView'))
 const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/CustomerRegistrationView/CustomerRegistrationView'))
@@ -322,7 +321,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     window.history.replaceState({}, '', url.toString())
   }, [])
 
-  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView, DocumentStatusView 활성 시 PaginationPane 숨김
+  // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
@@ -1036,14 +1035,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={null}>
             <DocumentSearchView
               visible={activeDocumentView === 'documents-search'}
-              onClose={closeDocumentView}
-              onDocumentClick={handleDocumentClick}
-            />
-          </Suspense>
-
-          <Suspense fallback={null}>
-            <DocumentStatusView
-              visible={activeDocumentView === 'dsd'}
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
             />
