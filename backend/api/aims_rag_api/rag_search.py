@@ -73,7 +73,41 @@ def search_qdrant(query_vector: List[float], user_id: Optional[str] = None, coll
         print(f"❌ Qdrant 검색 중 오류 발생: {e}")
         return []
 
-# 3. LLM을 사용하여 답변 생성하는 함수 (새로운 기능)
+# 3. 문서별 중복 제거 함수 (최고 점수 청크만 반환)
+def deduplicate_by_document(search_results: List) -> List[Dict]:
+    """
+    문서별로 중복을 제거하고, 각 문서의 최고 점수 청크만 반환
+
+    Args:
+        search_results: Qdrant 검색 결과 리스트
+
+    Returns:
+        문서별 최고 점수 청크 리스트 (점수 기준 내림차순 정렬)
+    """
+    if not search_results:
+        return []
+
+    doc_map = {}
+    for res in search_results:
+        doc_id = res.payload.get('doc_id')
+        if not doc_id:
+            continue
+
+        # 해당 문서의 최고 점수 청크만 유지
+        if doc_id not in doc_map or res.score > doc_map[doc_id]['score']:
+            doc_map[doc_id] = {
+                "id": res.id,
+                "score": res.score,
+                "payload": res.payload
+            }
+
+    # 점수 기준으로 내림차순 정렬
+    results = list(doc_map.values())
+    results.sort(key=lambda x: x['score'], reverse=True)
+
+    return results
+
+# 4. LLM을 사용하여 답변 생성하는 함수 (새로운 기능)
 def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
     if not search_results:
         return "관련 문서를 찾을 수 없습니다."
@@ -129,13 +163,18 @@ async def search_endpoint(request: SearchRequest):
             raise HTTPException(status_code=500, detail="쿼리 임베딩 실패.")
 
         search_results = search_qdrant(query_vector, user_id=request.user_id)
+
+        # 🔥 문서별 중복 제거 (최고 점수 청크만 반환)
+        deduplicated_results = deduplicate_by_document(search_results)
+
+        # LLM 답변 생성 (중복 제거된 결과 사용)
         final_answer = generate_answer_with_llm(request.query, search_results)
 
-        # 응답 구조를 통일된 형식으로 변경
+        # 응답 구조를 통일된 형식으로 변경 (중복 제거된 결과 반환)
         return UnifiedSearchResponse(
             search_mode="semantic",
             answer=final_answer,
-            search_results=[{"id": res.id, "score": res.score, "payload": res.payload} for res in search_results]
+            search_results=deduplicated_results
         )
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
