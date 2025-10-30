@@ -96,130 +96,123 @@
 
 ## 3. 마이그레이션 단계
 
-### Phase 1: 백엔드 기반 작업 (1주)
+### ⚠️ 중요: 기존 데이터 처리 방침
 
-1. **MongoDB 스키마 변경**
-   - `files.owner_id` 필드 추가
-   - `customers.meta.created_by` 필드 추가
-   - 인덱스 생성
+**기존 데이터는 모두 삭제하고 새로 시작합니다.**
 
-2. **기존 데이터 마이그레이션**
-   - 모든 기존 데이터에 `owner_id: "tester"` 할당
-   - 파일 물리적 이동 스크립트 작성 및 실행
+- MongoDB의 `files`, `customers` 컬렉션 전체 삭제
+- `/data/files/` 디렉토리 전체 삭제
+- 깨끗한 상태에서 새 스키마로 시작
 
-3. **백엔드 API 수정**
+### Phase 1: 백엔드 기반 작업 (3일)
+
+1. **기존 데이터 삭제**
+   - MongoDB 컬렉션 드롭
+   - 파일 디렉토리 삭제
+   - 인덱스 재생성
+
+2. **백엔드 API 수정**
    - 요청 body/query에서 `userId` 추출
    - DB 쿼리에 `owner_id` 필터 추가
    - 파일 저장 경로에 `userId` 포함
+   - 새 문서/고객 생성 시 `owner_id`, `created_by` 자동 추가
 
-### Phase 2: 백엔드 검증 (3일)
+### Phase 2: 백엔드 검증 (2일)
 
-4. **API 단위 테스트**
-   - 문서 CRUD (userId 필터링 확인)
-   - 고객 CRUD (userId 필터링 확인)
+3. **API 단위 테스트**
+   - 문서 생성 (owner_id 자동 할당 확인)
+   - 고객 생성 (created_by 자동 할당 확인)
    - 파일 업로드 (경로 확인)
+   - userId 필터링 동작 확인
 
-5. **수동 테스트**
+4. **수동 테스트**
    - curl/Postman으로 API 호출
-   - 다른 userId로 접근 시 차단 확인
+   - 다른 userId로 접근 시 빈 결과 확인
 
-### Phase 3: 프론트엔드 작업 (3일)
+### Phase 3: 프론트엔드 작업 (2일)
 
-6. **전역 사용자 Store 생성**
+5. **전역 사용자 Store 생성**
    - `useUserStore.ts` 구현
-   - localStorage 연동
+   - localStorage 연동 (기본값: tester)
 
-7. **UserContextService 동적화**
+6. **UserContextService 동적화**
    - 하드코딩 제거
    - Zustand store 연동
 
-8. **API 호출 수정**
-   - 모든 API 요청에 `userId` 포함
+7. **API 호출 수정**
+   - 모든 API 요청에 `x-user-id` 헤더 자동 추가
    - 하드코딩된 URL 통일
 
-### Phase 4: 통합 테스트 (2일)
+### Phase 4: 통합 테스트 (1일)
 
-9. **E2E 테스트**
+8. **E2E 테스트**
    - 파일 업로드 → 저장 경로 확인
    - 문서 조회 → userId 필터링 확인
    - 고객 관리 → userId 필터링 확인
 
-10. **배포 준비**
-    - 롤백 스크립트 준비
-    - 모니터링 설정
+9. **배포**
+   - n8n 워크플로우 수정
+   - 백엔드 배포
+   - 프론트엔드 배포
 
-**총 예상 기간**: 2주
+**총 예상 기간**: 1주 (기존 데이터 마이그레이션 불필요로 단축)
 
 ---
 
 ## 4. 백엔드 수정 계획
 
-### 4.1 MongoDB 마이그레이션 스크립트
+### 4.1 기존 데이터 삭제 스크립트
 
-**파일**: `backend/scripts/migrate_add_owner_id.js`
+**파일**: `backend/scripts/clean_database.js`
 
 ```javascript
-// 1. files 컬렉션에 owner_id 추가
-db.files.updateMany(
-  { owner_id: { $exists: false } },
-  { $set: { owner_id: "tester" } }
-);
+// MongoDB 연결
+const { MongoClient } = require('mongodb');
+const MONGO_URL = 'mongodb://tars:27017';
+const DB_NAME = 'docupload';
 
-// 2. destPath 변경
-db.files.find({ owner_id: "tester" }).forEach(doc => {
-  const oldPath = doc.upload.destPath;
-  const newPath = oldPath.replace("/data/files/", "/data/files/users/tester/");
+async function cleanDatabase() {
+  const client = await MongoClient.connect(MONGO_URL);
+  const db = client.db(DB_NAME);
 
-  db.files.updateOne(
-    { _id: doc._id },
-    { $set: { "upload.destPath": newPath } }
-  );
-});
+  // 1. files 컬렉션 드롭
+  await db.collection('files').drop();
+  console.log('files 컬렉션 삭제 완료');
 
-// 3. customers 컬렉션에 created_by 추가
-db.customers.updateMany(
-  { "meta.created_by": { $exists: false } },
-  { $set: { "meta.created_by": "tester" } }
-);
+  // 2. customers 컬렉션 드롭
+  await db.collection('customers').drop();
+  console.log('customers 컬렉션 삭제 완료');
 
-// 4. 인덱스 생성
-db.files.createIndex({ owner_id: 1 });
-db.customers.createIndex({ "meta.created_by": 1 });
+  // 3. 인덱스 재생성
+  await db.collection('files').createIndex({ owner_id: 1 });
+  await db.collection('customers').createIndex({ "meta.created_by": 1 });
+  console.log('인덱스 생성 완료');
 
-print("Migration completed!");
+  await client.close();
+  console.log('데이터베이스 정리 완료!');
+}
+
+cleanDatabase();
 ```
 
-### 4.2 파일 이동 스크립트
-
-**파일**: `backend/scripts/move_files_to_user_dirs.sh`
+**파일**: `backend/scripts/clean_files.sh`
 
 ```bash
 #!/bin/bash
 
-USER_ID="tester"
+# 파일 디렉토리 삭제
 OLD_BASE="/data/files"
-NEW_BASE="/data/files/users/$USER_ID"
 
-# 디렉토리 생성
-mkdir -p "$NEW_BASE"
+echo "Cleaning file directory: $OLD_BASE"
+rm -rf "$OLD_BASE"
 
-# 연도별 폴더 이동
-for year_dir in "$OLD_BASE"/20*; do
-  if [ -d "$year_dir" ]; then
-    year=$(basename "$year_dir")
-    echo "Moving $year..."
+# 새 디렉토리 구조 생성
+mkdir -p "$OLD_BASE"
 
-    # 연도 폴더 복사 (원본 유지)
-    cp -r "$year_dir" "$NEW_BASE/"
-  fi
-done
-
-echo "File migration completed!"
-echo "Verify files in: $NEW_BASE"
-echo "After verification, remove old files manually."
+echo "File cleanup completed!"
 ```
 
-### 4.3 Node.js API 수정 (aims_api)
+### 4.2 Node.js API 수정 (aims_api)
 
 **파일**: `backend/api/aims_api/server.js`
 
@@ -269,7 +262,7 @@ app.get('/api/customers', async (req, res) => {
 // n8n 워크플로우 자체를 수정해야 함 (별도 문서 참조)
 ```
 
-### 4.4 Python 문서 상태 API 수정
+### 4.3 Python 문서 상태 API 수정
 
 **파일**: `backend/api/doc_status_api/main.py`
 
@@ -317,7 +310,7 @@ async def get_recent_documents(
     docs = await db.files.find({"owner_id": user_id}).limit(limit).to_list(limit)
 ```
 
-### 4.5 Python Annual Report API 수정
+### 4.4 Python Annual Report API 수정
 
 **파일**: `backend/api/annual_report_api/routes/query.py`
 
@@ -343,7 +336,7 @@ async def get_customer_annual_reports(
     # AR 조회 계속...
 ```
 
-### 4.6 n8n 워크플로우 수정
+### 4.5 n8n 워크플로우 수정
 
 **파일**: `backend/n8n_flows/docprep-main.json`
 
@@ -545,47 +538,47 @@ export function HeaderView() {
 
 ---
 
-## 6. 데이터 마이그레이션
+## 6. 데이터 삭제 및 초기화
 
-### 6.1 마이그레이션 순서
+### 6.1 초기화 순서
 
-```mermaid
-graph TD
-    A[백업 생성] --> B[MongoDB 스키마 변경]
-    B --> C[기존 데이터에 owner_id 할당]
-    C --> D[파일 물리적 이동 준비]
-    D --> E[테스트 환경 검증]
-    E --> F[프로덕션 마이그레이션]
-    F --> G[검증 및 모니터링]
+```
+1. 백업 생성 (만약을 위해)
+   ↓
+2. MongoDB 컬렉션 드롭
+   ↓
+3. 파일 디렉토리 삭제
+   ↓
+4. 인덱스 재생성
+   ↓
+5. 새 구조로 테스트
 ```
 
-### 6.2 백업 스크립트
+### 6.2 백업 스크립트 (선택적)
 
-**파일**: `backend/scripts/backup_before_migration.sh`
+**파일**: `backend/scripts/backup_before_clean.sh`
 
 ```bash
 #!/bin/bash
 
-BACKUP_DIR="/data/backups/migration-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR="/data/backups/before-clean-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
 # MongoDB 백업
 mongodump --host tars:27017 --db docupload --out "$BACKUP_DIR/mongodb"
 
-# 파일 시스템 백업 (심볼릭 링크로 공간 절약)
-cp -al /data/files "$BACKUP_DIR/files"
+# 파일 시스템 백업 (tar로 압축)
+tar -czf "$BACKUP_DIR/files.tar.gz" /data/files
 
 echo "Backup completed: $BACKUP_DIR"
 echo "Total size: $(du -sh $BACKUP_DIR)"
 ```
 
-### 6.3 파일 이동 검증 스크립트
+### 6.3 데이터 삭제 검증 스크립트
 
-**파일**: `backend/scripts/verify_file_migration.js`
+**파일**: `backend/scripts/verify_clean.js`
 
 ```javascript
-const fs = require('fs');
-const path = require('path');
 const { MongoClient } = require('mongodb');
 
 const MONGO_URL = 'mongodb://tars:27017';
@@ -595,57 +588,29 @@ async function verify() {
   const client = await MongoClient.connect(MONGO_URL);
   const db = client.db(DB_NAME);
 
-  const files = await db.collection('files').find({ owner_id: 'tester' }).toArray();
+  const filesCount = await db.collection('files').countDocuments();
+  const customersCount = await db.collection('customers').countDocuments();
 
-  let missingFiles = 0;
-  let totalFiles = files.length;
+  console.log(`files 문서 수: ${filesCount}`);
+  console.log(`customers 문서 수: ${customersCount}`);
 
-  for (const doc of files) {
-    const destPath = doc.upload?.destPath;
-    if (!destPath) continue;
+  // 인덱스 확인
+  const filesIndexes = await db.collection('files').indexes();
+  const customersIndexes = await db.collection('customers').indexes();
 
-    if (!fs.existsSync(destPath)) {
-      console.error(`Missing file: ${destPath}`);
-      missingFiles++;
-    }
-  }
-
-  console.log(`Total files: ${totalFiles}`);
-  console.log(`Missing files: ${missingFiles}`);
-  console.log(`Success rate: ${((totalFiles - missingFiles) / totalFiles * 100).toFixed(2)}%`);
+  console.log('files 인덱스:', filesIndexes.map(idx => idx.name));
+  console.log('customers 인덱스:', customersIndexes.map(idx => idx.name));
 
   await client.close();
 
-  process.exit(missingFiles > 0 ? 1 : 0);
+  if (filesCount === 0 && customersCount === 0) {
+    console.log('\n✅ 데이터 삭제 완료!');
+  } else {
+    console.log('\n❌ 데이터가 남아있습니다.');
+  }
 }
 
 verify();
-```
-
-### 6.4 롤백 스크립트
-
-**파일**: `backend/scripts/rollback_migration.sh`
-
-```bash
-#!/bin/bash
-
-BACKUP_DIR=$1
-
-if [ -z "$BACKUP_DIR" ]; then
-  echo "Usage: $0 <backup_dir>"
-  exit 1
-fi
-
-echo "Rolling back from: $BACKUP_DIR"
-
-# MongoDB 복원
-mongorestore --host tars:27017 --db docupload --drop "$BACKUP_DIR/mongodb/docupload"
-
-# 파일 시스템 복원 (필요 시)
-# rm -rf /data/files
-# cp -r "$BACKUP_DIR/files" /data/files
-
-echo "Rollback completed!"
 ```
 
 ---
@@ -748,63 +713,43 @@ mongo tars:27017/docupload --eval 'db.files.findOne({}, {upload: 1})'
 ### 8.1 롤백 트리거 조건
 
 다음 상황 발생 시 즉시 롤백:
-- 마이그레이션 후 파일 손실 10% 이상
 - API 에러율 5% 이상
 - 프론트엔드 접속 불가
-- 데이터베이스 성능 50% 이상 저하
+- 새 파일 업로드 실패
 
-### 8.2 롤백 절차
+### 8.2 롤백 절차 (간소화)
+
+**기존 데이터를 삭제했으므로 롤백은 코드만 되돌리면 됩니다.**
 
 ```bash
-# 1. 백업 디렉토리 확인
-BACKUP_DIR="/data/backups/migration-20251030-123456"
-ls -la "$BACKUP_DIR"
-
-# 2. MongoDB 복원
-mongorestore --host tars:27017 --db docupload --drop \
-  "$BACKUP_DIR/mongodb/docupload"
-
-# 3. 백엔드 서버 이전 버전으로 복원 (git)
+# 1. 백엔드 서버 이전 버전으로 복원 (git)
 cd /home/rossi/aims/backend/api/aims_api
-git checkout <commit-before-migration>
+git checkout <commit-before-changes>
 ./deploy_aims_api.sh
 
-# 4. 프론트엔드 이전 버전으로 복원
+# 2. 프론트엔드 이전 버전으로 복원
 cd d:\aims\frontend\aims-uix3
-git checkout <commit-before-migration>
+git checkout <commit-before-changes>
 npm run build
 
-# 5. 파일 시스템 복원 (선택적, 심볼릭 링크 제거)
-# 원본 /data/files는 백업 시점에 심볼릭 링크로 보존되어 있음
+# 3. n8n 워크플로우 복원 (GUI에서 수동)
 
-# 6. 서비스 재시작 및 검증
-# API 테스트
+# 4. 서비스 재시작 및 검증
 curl http://tars.giize.com:3010/api/health
-
-# 프론트엔드 접속 확인
-# http://aims-uix3.example.com
 ```
 
-### 8.3 부분 롤백 (단계별)
+### 8.3 백업 복원 (선택적)
 
-**백엔드만 롤백**:
-```bash
-cd /home/rossi/aims/backend/api/aims_api
-git checkout <previous-commit>
-./deploy_aims_api.sh
-```
+백업을 생성한 경우:
 
-**프론트엔드만 롤백**:
 ```bash
-cd d:\aims\frontend\aims-uix3
-git checkout <previous-commit>
-npm run build
-```
-
-**데이터베이스만 롤백**:
-```bash
+# MongoDB 복원
+BACKUP_DIR="/data/backups/before-clean-20251030-123456"
 mongorestore --host tars:27017 --db docupload --drop \
   "$BACKUP_DIR/mongodb/docupload"
+
+# 파일 복원
+tar -xzf "$BACKUP_DIR/files.tar.gz" -C /
 ```
 
 ---
@@ -813,28 +758,24 @@ mongorestore --host tars:27017 --db docupload --drop \
 
 ### 9.1 백엔드 수정 체크리스트
 
-- [ ] MongoDB 마이그레이션 스크립트 작성
-- [ ] 파일 이동 스크립트 작성
-- [ ] 백업 스크립트 작성
+- [ ] 데이터 삭제 스크립트 작성 및 실행
+  - [ ] clean_database.js
+  - [ ] clean_files.sh
+  - [ ] verify_clean.js
 - [ ] Node.js API (aims_api) 수정
   - [ ] 문서 조회 API (userId 필터)
   - [ ] 고객 조회 API (userId 필터)
-  - [ ] 문서 삭제 API (권한 검증)
-  - [ ] 고객 삭제 API (권한 검증)
+  - [ ] 문서 생성 시 owner_id 자동 추가
+  - [ ] 고객 생성 시 created_by 자동 추가
 - [ ] Python 문서 상태 API 수정
   - [ ] 상태 조회 (userId 필터)
   - [ ] 문서 목록 (userId 필터)
-  - [ ] 문서 삭제 (권한 검증)
 - [ ] Python AR API 수정
   - [ ] AR 조회 (userId 검증)
-  - [ ] AR 파싱 (userId 포함)
 - [ ] n8n 워크플로우 수정
   - [ ] userId 파라미터 받기
   - [ ] 파일 저장 경로 변경
   - [ ] MongoDB 저장 시 owner_id 포함
-- [ ] 인덱스 생성
-  - [ ] files.owner_id
-  - [ ] customers.meta.created_by
 
 ### 9.2 프론트엔드 수정 체크리스트
 
@@ -854,35 +795,29 @@ mongorestore --host tars:27017 --db docupload --drop \
 
 ### 9.3 테스트 체크리스트
 
+- [ ] 데이터 삭제 검증
+  - [ ] MongoDB 컬렉션 비어있음 확인
+  - [ ] 파일 디렉토리 비어있음 확인
+  - [ ] 인덱스 정상 생성 확인
 - [ ] 백엔드 단위 테스트
-  - [ ] 문서 조회 (userId 필터링)
-  - [ ] 고객 조회 (userId 필터링)
-  - [ ] 권한 없이 접근 시 에러
+  - [ ] 문서 생성 (owner_id 자동 할당)
+  - [ ] 고객 생성 (created_by 자동 할당)
+  - [ ] userId 필터링 동작
 - [ ] 프론트엔드 통합 테스트
   - [ ] 파일 업로드 → 경로 확인
   - [ ] 문서 조회 → userId 필터링
   - [ ] 고객 관리 → userId 필터링
-- [ ] 파일 시스템 검증
-  - [ ] 파일 이동 완료 확인
-  - [ ] 파일 손실 없음 확인
-  - [ ] 경로 정확성 확인
-- [ ] 성능 테스트
-  - [ ] API 응답 시간
-  - [ ] 데이터베이스 쿼리 성능
-  - [ ] 인덱스 효과 확인
 
 ### 9.4 배포 체크리스트
 
-- [ ] 백업 완료 확인
-- [ ] 롤백 스크립트 준비
-- [ ] 마이그레이션 스크립트 실행
+- [ ] 백업 생성 (선택적)
+- [ ] 데이터 삭제 실행
+- [ ] n8n 워크플로우 수정
 - [ ] 백엔드 배포
   - [ ] Node.js API
   - [ ] Python APIs
 - [ ] 프론트엔드 빌드 및 배포
-- [ ] 모니터링 설정
 - [ ] 검증 테스트 실행
-- [ ] 사용자 공지 (필요 시)
 
 ---
 
@@ -964,5 +899,34 @@ mongorestore --host tars:27017 --db docupload --drop \
 ---
 
 **계획서 작성 완료**: 2025-10-30
-**예상 총 소요 기간**: 2주 (Phase 1-4)
-**다음 단계**: 백엔드 마이그레이션 스크립트 작성 및 테스트 환경 검증
+**수정**: 2025-10-30 (기존 데이터 삭제 방식으로 변경)
+**예상 총 소요 기간**: 1주 (Phase 1-4)
+**다음 단계**: 데이터 삭제 스크립트 작성 및 백엔드 API 수정
+
+## 13. 주요 변경사항 (기존 계획 대비)
+
+### 변경 전 (복잡)
+- 기존 데이터 마이그레이션 필요
+- 파일 물리적 이동 필요
+- 경로 변경 스크립트 필요
+- 검증 스크립트 복잡
+- 롤백 복잡 (데이터 복원 필요)
+- **예상 기간: 2주**
+
+### 변경 후 (단순)
+- 기존 데이터 삭제 (clean start)
+- 파일 이동 불필요
+- 새 구조로 바로 시작
+- 검증 간단 (빈 상태 확인)
+- 롤백 간단 (코드만 되돌리기)
+- **예상 기간: 1주**
+
+### 장점
+✅ 마이그레이션 리스크 제거
+✅ 작업 시간 50% 단축
+✅ 롤백 절차 간소화
+✅ 테스트 데이터로 새로 시작 가능
+✅ 스키마 일관성 보장
+
+### 단점
+❌ 기존 데이터 손실 (하지만 테스트 데이터이므로 문제없음)
