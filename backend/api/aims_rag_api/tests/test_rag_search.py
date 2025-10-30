@@ -121,6 +121,7 @@ class TestSearchQdrantFunction:
         mock_client.search.assert_called_once_with(
             collection_name="docembed",
             query_vector=query_vector,
+            query_filter=None,
             limit=5,
             with_payload=True
         )
@@ -267,7 +268,7 @@ class TestSearchEndpoint:
             MagicMock(
                 id=1,
                 score=0.95,
-                payload={"preview": "내용 1", "original_name": "문서1.pdf"}
+                payload={"doc_id": "doc1", "preview": "내용 1", "original_name": "문서1.pdf"}
             )
         ]
         mock_generate.return_value = "AI generated answer"
