@@ -414,3 +414,29 @@
   margin-right: 3px;
   box-shadow: 6px 0 0 currentColor;
 }
+
+/* === 사용자 표시기 스타일 (개발자 모드 전용) === */
+
+.header-user-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  transition: all var(--duration-micro-gentle) var(--easing-micro-progressive-expand);
+  font-size: var(--font-size-sm);
+  line-height: 1.2;
+}
+
+.header-user-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.header-user-id {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-family: var(--font-family-mono);
+}

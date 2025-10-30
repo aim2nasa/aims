@@ -16,6 +16,7 @@ import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import { useDevModeStore } from '../../shared/store/useDevModeStore'
+import { useUserStore } from '../../stores/user'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -43,6 +44,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
   // 개발자 모드 상태 (Ctrl+Shift+D로 토글)
   const { isDevMode } = useDevModeStore()
+
+  // 현재 사용자 정보
+  const { userId } = useUserStore()
 
   // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
   const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
@@ -125,6 +129,20 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
       {/* 제어 요소들 - Progressive Disclosure */}
       <div className="header-controls">
+        {/* 현재 사용자 표시 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
+        {isDevMode && (
+          <div
+            className="header-user-indicator"
+            style={{
+              opacity: state.showControls ? 1 : 0,
+              transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+            }}
+          >
+            <span className="header-user-label">사용자:</span>
+            <span className="header-user-id">{userId}</span>
+          </div>
+        )}
+
         {/* 레이아웃 제어 버튼 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
         {isDevMode && (
           <Tooltip content="레이아웃 제어">
