@@ -466,13 +466,14 @@ export class AnnualReportApi {
    * 고객명으로 고객 검색
    *
    * @param name 고객명
+   * @param userId 사용자 ID (설계사 계정)
    * @returns 고객 목록
    */
-  static async searchCustomersByName(name: string): Promise<Customer[]> {
+  static async searchCustomersByName(name: string, userId: string): Promise<Customer[]> {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
       const response = await fetch(
-        `http://tars.giize.com:3010/api/customers?search=${encodeURIComponent(name)}`
+        `http://tars.giize.com:3010/api/customers?search=${encodeURIComponent(name)}&userId=${encodeURIComponent(userId)}`
       );
 
       if (!response.ok) {

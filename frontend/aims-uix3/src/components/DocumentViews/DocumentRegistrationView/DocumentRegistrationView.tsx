@@ -16,7 +16,7 @@ import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleC
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService, fileValidator } from './services/uploadService'
-import { uploadConfig } from './services/userContextService'
+import { uploadConfig, UserContextService } from './services/userContextService'
 import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
 import { api } from '@/shared/lib/api'
 import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
@@ -310,8 +310,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             if (checkResult.is_annual_report && checkResult.metadata) {
               console.log('[DocumentRegistrationView] ✅ Annual Report 감지!', checkResult.metadata);
 
-              // 고객명으로 검색
-              const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name);
+              // 고객명으로 검색 (현재 userId로 필터링)
+              const currentUserId = UserContextService.getContext().identifierValue;
+              const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name, currentUserId);
               console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
 
               // 🔍 고객이 1명일 때만 중복 체크
