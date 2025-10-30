@@ -71,20 +71,23 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
           return
         }
 
-        // API를 통해 상세 문서 데이터 가져오기
-        const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: docId })
-        })
+        // 백엔드 API를 통해 문서 상세 정보 가져오기
+        const response = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`)
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
 
         const responseData = await response.json()
-        const fileData = responseData[0]
 
-        const summary = fileData ? getSummaryFromDocument(fileData) : getSummaryFromDocument(document)
-        setSummaryContent(summary)
+        // API 응답에서 summary 추출: data.raw.meta.summary
+        if (responseData.success && responseData.data?.raw?.meta?.summary) {
+          setSummaryContent(responseData.data.raw.meta.summary)
+        } else {
+          // API에서 summary를 못 찾으면 로컬 데이터로 폴백
+          const summary = getSummaryFromDocument(document)
+          setSummaryContent(summary)
+        }
       } catch (error) {
         console.error('Summary fetch error:', error)
         // API 실패 시 로컬 데이터로 폴백

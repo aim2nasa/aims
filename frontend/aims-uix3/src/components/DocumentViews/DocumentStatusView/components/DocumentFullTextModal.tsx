@@ -71,20 +71,23 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
           return
         }
 
-        // API를 통해 상세 문서 데이터 가져오기
-        const response = await fetch('https://n8nd.giize.com/webhook/smartsearch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: docId })
-        })
+        // 백엔드 API를 통해 문서 상세 정보 가져오기
+        const response = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`)
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
 
         const responseData = await response.json()
-        const fileData = responseData[0]
 
-        const fullText = fileData ? getFullTextFromDocument(fileData) : getFullTextFromDocument(document)
-        setFullTextContent(fullText)
+        // API 응답에서 full_text 추출: data.raw.meta.full_text
+        if (responseData.success && responseData.data?.raw?.meta?.full_text) {
+          setFullTextContent(responseData.data.raw.meta.full_text)
+        } else {
+          // API에서 full_text를 못 찾으면 로컬 데이터로 폴백
+          const fullText = getFullTextFromDocument(document)
+          setFullTextContent(fullText)
+        }
       } catch (error) {
         console.error('Full text fetch error:', error)
         // API 실패 시 로컬 데이터로 폴백
