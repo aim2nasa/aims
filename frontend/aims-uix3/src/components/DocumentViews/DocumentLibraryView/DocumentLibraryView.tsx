@@ -116,6 +116,7 @@ const DocumentLibraryContent: React.FC<{
         isEmpty={controller.filteredDocuments.length === 0}
         error={controller.error}
         {...(onDocumentClick ? { onDocumentClick } : {})}
+        onDetailClick={controller.handleDocumentClick}
         onSummaryClick={controller.handleDocumentSummary}
         onFullTextClick={controller.handleDocumentFullText}
         onLinkClick={controller.handleDocumentLink}
