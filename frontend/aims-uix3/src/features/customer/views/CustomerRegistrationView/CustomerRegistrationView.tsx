@@ -33,11 +33,11 @@ export const CustomerRegistrationView: React.FC = () => {
     handleSubmit,
     handleReset,
   } = useCustomerRegistrationController({
-    onSuccess: async (customerId) => {
+    onSuccess: async (_customerId, customerName) => {
       // 애플 스타일 성공 모달 표시 (취소 버튼 없이)
       await confirmController.actions.openModal({
         title: '등록 완료',
-        message: `고객 등록이 완료되었습니다.\nID: ${customerId}`,
+        message: `${customerName} 님이 등록되었습니다.`,
         confirmText: '확인',
         confirmStyle: 'primary',
         showCancel: false,

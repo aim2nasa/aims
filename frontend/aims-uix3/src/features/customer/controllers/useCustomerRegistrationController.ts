@@ -13,7 +13,7 @@ import { api } from '@/shared/lib/api';
 
 interface UseCustomerRegistrationControllerProps {
   /** 등록 성공 시 콜백 */
-  onSuccess?: (customerId: string) => void | Promise<void>;
+  onSuccess?: (customerId: string, customerName: string) => void | Promise<void>;
   /** 등록 실패 시 콜백 */
   onError?: (error: Error) => void | Promise<void>;
 }
@@ -157,18 +157,26 @@ export const useCustomerRegistrationController = ({
       const apiData = transformToApiFormat(formData);
 
       // API 호출 (api.post는 자동으로 X-User-Id 헤더 추가)
-      const result = await api.post<{ success: boolean; data: { customer_id: string } }>(
+      const result = await api.post<{
+        success: boolean;
+        data: {
+          customer_id: string;
+          customer_name: string;
+        }
+      }>(
         '/api/customers',
         apiData
       );
 
       const customerId = result.data?.customer_id;
-      if (!customerId) {
+      const customerName = result.data?.customer_name;
+
+      if (!customerId || !customerName) {
         throw new Error('고객 등록에 실패했습니다.');
       }
 
       if (import.meta.env.DEV) {
-        console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId);
+        console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId, customerName);
       }
 
       // customerChanged 이벤트 발생 (지역별 보기 등 다른 View 동기화)
@@ -176,7 +184,7 @@ export const useCustomerRegistrationController = ({
 
       // 성공 콜백 (async 지원)
       if (onSuccess) {
-        await onSuccess(customerId);
+        await onSuccess(customerId, customerName);
       }
 
       // 폼 초기화
