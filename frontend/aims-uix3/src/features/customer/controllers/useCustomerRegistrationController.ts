@@ -9,6 +9,7 @@
 
 import { useState } from 'react';
 import { CreateCustomerSchema, type CreateCustomerData } from '@/entities/customer/model';
+import { api } from '@/shared/lib/api';
 
 interface UseCustomerRegistrationControllerProps {
   /** 등록 성공 시 콜백 */
@@ -155,22 +156,16 @@ export const useCustomerRegistrationController = ({
       // API 요청 형식으로 변환
       const apiData = transformToApiFormat(formData);
 
-      // API 호출
-      const response = await fetch('http://tars.giize.com:3010/api/customers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiData),
-      });
+      // API 호출 (api.post는 자동으로 X-User-Id 헤더 추가)
+      const result = await api.post<{ success: boolean; data: { customer_id: string } }>(
+        '/api/customers',
+        apiData
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '고객 등록에 실패했습니다.');
-      }
-
-      const result = await response.json();
       const customerId = result.data?.customer_id;
+      if (!customerId) {
+        throw new Error('고객 등록에 실패했습니다.');
+      }
 
       if (import.meta.env.DEV) {
         console.log('[useCustomerRegistrationController] 고객 생성 완료:', customerId);

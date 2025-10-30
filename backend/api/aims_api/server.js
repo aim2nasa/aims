@@ -1282,7 +1282,16 @@ async function generateUniqueCustomerName(originalName) {
 app.post('/api/customers', async (req, res) => {
   try {
     const customerData = req.body;
-    
+
+    // ⭐ userId 추출 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId required'
+      });
+    }
+
     // 원본 고객명을 기준으로 유니크한 이름 생성
     const originalName = customerData.personal_info?.name;
     if (!originalName) {
@@ -1291,9 +1300,9 @@ app.post('/api/customers', async (req, res) => {
         error: '고객명은 필수 입력 항목입니다.'
       });
     }
-    
+
     const uniqueName = await generateUniqueCustomerName(originalName);
-    
+
     const newCustomer = {
       ...customerData,
       personal_info: {
@@ -1303,8 +1312,8 @@ app.post('/api/customers', async (req, res) => {
       meta: {
         created_at: new Date(),
         updated_at: new Date(),
-        created_by: customerData.created_by || null,
-        last_modified_by: customerData.created_by || null,
+        created_by: userId,
+        last_modified_by: userId,
         status: 'active',
         original_name: originalName !== uniqueName ? originalName : undefined
       }

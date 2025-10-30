@@ -126,7 +126,7 @@ describe('useCustomerRegistrationController', () => {
     it('name이 있으면 검증 통과해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -145,7 +145,7 @@ describe('useCustomerRegistrationController', () => {
     it('이벤트 객체가 있으면 preventDefault를 호출해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -170,7 +170,7 @@ describe('useCustomerRegistrationController', () => {
 
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: mockCustomerId } })
+        json: async () => ({ success: true, data: { customer_id: mockCustomerId } })
       } as Response);
 
       const { result } = renderHook(() =>
@@ -191,7 +191,7 @@ describe('useCustomerRegistrationController', () => {
     it('성공 시 customerChanged 이벤트를 발생시켜야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -214,7 +214,7 @@ describe('useCustomerRegistrationController', () => {
     it('성공 시 폼을 초기화해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -311,13 +311,13 @@ describe('useCustomerRegistrationController', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(expect.any(Error));
-      expect(result.current.errors?.['submit']).toBe('네트워크 에러');
+      expect(result.current.errors?.['submit']).toBe('네트워크 오류: 네트워크 에러');
     });
 
     it('올바른 API 엔드포인트와 메서드로 요청해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -334,9 +334,10 @@ describe('useCustomerRegistrationController', () => {
         'http://tars.giize.com:3010/api/customers',
         expect.objectContaining({
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'x-user-id': expect.any(String)
+          })
         })
       );
     });
@@ -344,7 +345,7 @@ describe('useCustomerRegistrationController', () => {
     it('폼 데이터를 올바른 API 형식으로 변환해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -386,7 +387,7 @@ describe('useCustomerRegistrationController', () => {
     it('주소 필드가 모두 없으면 address를 포함하지 않아야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -451,7 +452,7 @@ describe('useCustomerRegistrationController', () => {
 
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       const { result } = renderHook(() =>
@@ -501,7 +502,7 @@ describe('useCustomerRegistrationController', () => {
 
       // 3. 에러 검증
       expect(onError).toHaveBeenCalled();
-      expect(result.current.errors?.['submit']).toBe('서버 에러');
+      expect(result.current.errors?.['submit']).toBe('네트워크 오류: 서버 에러');
       expect(result.current.isSubmitting).toBe(false);
     });
 
@@ -529,7 +530,7 @@ describe('useCustomerRegistrationController', () => {
       // 두 번째 제출은 성공
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { customer_id: 'new-customer-123' } })
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123' } })
       } as Response);
 
       // 2. 재제출
