@@ -50,7 +50,7 @@ export const CustomerRegistrationView: React.FC = () => {
       // 애플 스타일 에러 모달 표시 (취소 버튼 없이)
       await confirmController.actions.openModal({
         title: '등록 실패',
-        message: `고객 등록에 실패했습니다.\n${error.message}`,
+        message: error.message,
         confirmText: '확인',
         confirmStyle: 'destructive',
         showCancel: false,
