@@ -29,6 +29,7 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { CustomerService } from '@/services/customerService'
 import { DocumentService } from '@/services/DocumentService'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { CustomerSearchResponse } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import './DocumentSearchView.css'
@@ -97,7 +98,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   } | null>(null)
 
   // 🍎 새로운 모달 상태 관리 (DocumentLibrary와 동일한 구조)
-  const [selectedDocumentForDetail, setSelectedDocumentForDetail] = useState<SearchResultItem | null>(null)
+  // Detail 모달은 API를 통해 가공된 Document 타입을 사용
+  const [selectedDocumentForDetail, setSelectedDocumentForDetail] = useState<Document | null>(null)
   const [isDetailModalVisible, setDetailModalVisible] = useState(false)
   const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<SearchResultItem | null>(null)
   const [isSummaryModalVisible, setSummaryModalVisible] = useState(false)
@@ -135,10 +137,47 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   /**
    * 🍎 새로운 모달 핸들러들 (DocumentLibrary와 동일)
+   * Detail 모달은 API를 통해 가공된 Document를 표시
    */
-  const handleDetailClick = useCallback((document: SearchResultItem) => {
-    setSelectedDocumentForDetail(document)
-    setDetailModalVisible(true)
+  const handleDetailClick = useCallback(async (searchResult: SearchResultItem) => {
+    // SearchResultItem에서 document_id 추출
+    const docId = SearchService.getDocumentId(searchResult)
+    if (!docId) {
+      console.warn('[DocumentSearchView] document_id가 없습니다:', searchResult)
+      return
+    }
+
+    try {
+      // /api/documents/:id/status API로 가공된 Document 조회
+      const response = await DocumentStatusService.getDocumentStatus(docId)
+
+      if (!response.success || !response.data) {
+        console.warn('[DocumentSearchView] 문서 데이터가 없습니다.')
+        return
+      }
+
+      // response.data = { _id, raw: {...}, computed: {...} }
+      // raw 데이터에서 필요한 필드 추출하여 가공된 Document 구조 생성
+      const { raw, computed } = response.data
+
+      // 문서 목록 API와 동일한 구조로 변환
+      const processedDocument: Document = {
+        _id: response.data._id,
+        ...(raw.upload?.originalName && { originalName: raw.upload.originalName }),
+        ...(raw.upload?.uploaded_at && { uploaded_at: raw.upload.uploaded_at }),
+        ...(raw.meta?.size_bytes && { fileSize: raw.meta.size_bytes }),
+        ...(raw.meta?.mime && { mimeType: raw.meta.mime }),
+        ...(raw.customer_relation && { customer_relation: raw.customer_relation }),
+        ...(computed.uiStages && { stages: computed.uiStages }),
+        ...(computed.overallStatus && { overallStatus: computed.overallStatus }),
+        ...(computed.progress !== undefined && { progress: computed.progress })
+      }
+
+      setSelectedDocumentForDetail(processedDocument)
+      setDetailModalVisible(true)
+    } catch (error) {
+      console.error('[DocumentSearchView] 문서 상태 조회 오류:', error)
+    }
   }, [])
 
   const handleDetailModalClose = useCallback(() => {
