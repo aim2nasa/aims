@@ -8,8 +8,7 @@
 import type {
   SearchQuery,
   SearchResponse,
-  SearchResultItem,
-  SemanticSearchResultItem
+  SearchResultItem
 } from '@/entities/search'
 
 const SEARCH_API_URL = 'https://tars.giize.com/search_api'
@@ -54,22 +53,7 @@ export class SearchService {
 
       const data = await response.json()
 
-      // 시맨틱 검색인 경우 MongoDB 상세 정보 보강
-      if (query.search_mode === 'semantic' && data.search_results) {
-        const enrichedResults = await Promise.all(
-          data.search_results.map(async (item: SemanticSearchResultItem) => {
-            const docId = item.payload?.doc_id || item.id
-            if (docId) {
-              const details = await this.getDocumentDetails(docId)
-              if (details) {
-                return { ...item, ...details }
-              }
-            }
-            return item
-          })
-        )
-        data.search_results = enrichedResults
-      }
+      // 시맨틱 검색 결과는 Qdrant payload에 이미 모든 정보가 있음 (MongoDB 조회 불필요)
 
       return {
         answer: data.answer || null,

@@ -551,45 +551,35 @@ describe('SearchService.searchDocuments', () => {
     expect(result.search_mode).toBe('keyword');
   });
 
-  it('시맨틱 검색을 수행하고 문서 상세 정보를 보강한다', async () => {
+  it('시맨틱 검색을 수행한다 (Qdrant payload에 모든 정보 포함)', async () => {
     const mockSearchResponse = {
       search_results: [
         {
           id: 'semantic1',
           score: 0.95,
-          payload: { doc_id: 'doc123' }
+          payload: {
+            doc_id: 'doc123',
+            original_name: 'test.pdf',
+            owner_id: 'tester'
+          }
         }
       ],
       answer: 'AI 답변'
     };
 
-    const mockDetailResponse = [
-      {
-        upload: { originalName: 'enriched.pdf' },
-        meta: { summary: 'Enriched summary' }
-      }
-    ];
-
-    vi.mocked(global.fetch)
-      // 첫 번째 호출: searchDocuments
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockSearchResponse
-      } as Response)
-      // 두 번째 호출: getDocumentDetails
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockDetailResponse
-      } as Response);
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockSearchResponse
+    } as Response);
 
     const result = await SearchService.searchDocuments({
       query: '시맨틱 테스트',
       search_mode: 'semantic'
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(result.search_results).toHaveLength(1);
-    expect(result.search_results[0]).toHaveProperty('upload');
+    expect((result.search_results[0] as any).payload).toHaveProperty('owner_id', 'tester');
     expect(result.search_mode).toBe('semantic');
   });
 

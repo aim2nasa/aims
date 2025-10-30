@@ -12,6 +12,8 @@ import json
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
+# CORS는 nginx에서 처리하므로 여기서는 제거
+
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
     query: str
@@ -41,15 +43,28 @@ def embed_query(query_text: str) -> List[float]:
         print(f"❌ 쿼리 임베딩 중 오류 발생: {e}")
         return None
 
-# 2. Qdrant 유사도 검색 함수 (이전 단계와 동일)
-def search_qdrant(query_vector: List[float], collection_name: str = "docembed", top_k: int = 5):
+# 2. Qdrant 유사도 검색 함수 (사용자 필터 추가)
+def search_qdrant(query_vector: List[float], user_id: Optional[str] = None, collection_name: str = "docembed", top_k: int = 5):
     if not query_vector:
         return []
     client = QdrantClient(host="localhost", port=6333, check_compatibility=False)
     try:
+        # 사용자 ID 필터 조건 생성
+        query_filter = None
+        if user_id:
+            query_filter = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="owner_id",
+                        match=models.MatchValue(value=user_id)
+                    )
+                ]
+            )
+
         search_result = client.search(
             collection_name=collection_name,
             query_vector=query_vector,
+            query_filter=query_filter,
             limit=top_k,
             with_payload=True
         )
@@ -108,12 +123,12 @@ async def search_endpoint(request: SearchRequest):
             raise HTTPException(status_code=500, detail=f"SmartSearch API 호출 오류: {e}")
 
     elif request.search_mode == "semantic":
-        # 의미 검색 로직 (기존 T10 내용 활용)
+        # 의미 검색 로직 (사용자 필터 적용)
         query_vector = embed_query(request.query)
         if not query_vector:
             raise HTTPException(status_code=500, detail="쿼리 임베딩 실패.")
 
-        search_results = search_qdrant(query_vector)
+        search_results = search_qdrant(query_vector, user_id=request.user_id)
         final_answer = generate_answer_with_llm(request.query, search_results)
 
         # 응답 구조를 통일된 형식으로 변경

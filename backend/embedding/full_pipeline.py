@@ -65,6 +65,7 @@ def run_full_pipeline(mongo_uri: str = 'mongodb://tars:27017/', db_name: str = '
                 chunks = split_text_into_chunks(full_text, {
                     'doc_id': doc_id,
                     'original_name': doc_data.get('upload', {}).get('originalName') or doc_data.get('originalName'),
+                    'owner_id': doc_data.get('ownerId'),  # 사용자 ID 추가
                     'uploaded_at': doc_data.get('upload', {}).get('uploaded_at') or doc_data.get('uploaded_at'),
                     'mime': doc_data.get('meta', {}).get('mime'),
                     'text_source': text_source  # 텍스트 소스 정보 추가
