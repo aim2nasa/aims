@@ -25,36 +25,18 @@ import sys
 import os
 import io
 import json
-from pymongo import MongoClient
+from unittest.mock import Mock, patch, MagicMock
 
 # 상위 디렉토리의 main.py를 import하기 위한 경로 설정
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from main import app
-from config import settings
+# MongoDB Mock
+with patch('pymongo.MongoClient'):
+    from main import app
 
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_mongodb():
-    """테스트 전 MongoDB 연결 설정"""
-    import main
-
-    # MongoDB 연결
-    try:
-        main.mongo_client = MongoClient(settings.MONGO_URI)
-        main.mongo_client.admin.command('ping')
-        main.db = main.mongo_client[settings.DB_NAME]
-        print(f"✅ Test MongoDB 연결 성공: {settings.DB_NAME}")
-    except Exception as e:
-        print(f"❌ Test MongoDB 연결 실패: {e}")
-        pytest.skip(f"MongoDB connection failed: {e}")
-
-    yield
-
-    # 정리
-    if main.mongo_client:
-        main.mongo_client.close()
-
+# Mock main.db globally (initialize it so routes don't crash)
+import main
+main.db = MagicMock()
 
 # TestClient 생성
 client = TestClient(app)
@@ -71,8 +53,14 @@ class TestGetAnnualReportsUserId:
         assert response.status_code == 400
         assert response.json()["detail"] == "user_id required"
 
-    def test_get_annual_reports_with_userid_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_get_annual_reports_with_userid_invalid_customer_returns_404(self, mock_db):
         """userId와 함께 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         customer_id = str(ObjectId())
         response = client.get(
             f"/customers/{customer_id}/annual-reports?limit=10",
@@ -92,8 +80,14 @@ class TestGetAnnualReportsUserId:
         assert response.status_code == 400
         assert "Invalid customer_id format" in response.json()["detail"]
 
-    def test_get_annual_reports_with_userid_header(self):
+    @patch('main.db')
+    def test_get_annual_reports_with_userid_header(self, mock_db):
         """x-user-id 헤더로 userId 전달 시 정상 처리"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         customer_id = str(ObjectId())
         response = client.get(
             f"/customers/{customer_id}/annual-reports?limit=10",
@@ -117,8 +111,14 @@ class TestGetLatestAnnualReportUserId:
         assert response.status_code == 400
         assert response.json()["detail"] == "user_id required"
 
-    def test_get_latest_with_userid_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_get_latest_with_userid_invalid_customer_returns_404(self, mock_db):
         """userId와 함께 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         customer_id = str(ObjectId())
         response = client.get(
             f"/customers/{customer_id}/annual-reports/latest",
@@ -155,8 +155,14 @@ class TestDeleteAnnualReportsUserId:
         assert response.status_code == 400
         assert response.json()["detail"] == "user_id required"
 
-    def test_delete_annual_reports_with_userid_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_delete_annual_reports_with_userid_invalid_customer_returns_404(self, mock_db):
         """userId와 함께 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         customer_id = str(ObjectId())
         response = client.request(
             "DELETE",
@@ -218,8 +224,14 @@ class TestParseAnnualReportUserId:
         assert response.status_code == 400
         assert response.json()["detail"] == "user_id required"
 
-    def test_parse_with_userid_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_parse_with_userid_invalid_customer_returns_404(self, mock_db):
         """userId와 함께 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         pdf_content = b"%PDF-1.4\n%EOF"
         files = {"file": ("test.pdf", io.BytesIO(pdf_content), "application/pdf")}
         data = {"customer_id": str(ObjectId())}
@@ -267,8 +279,14 @@ class TestParseByPathUserId:
         assert response.status_code == 400
         assert response.json()["detail"] == "user_id required"
 
-    def test_parse_by_path_with_userid_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_parse_by_path_with_userid_invalid_customer_returns_404(self, mock_db):
         """userId와 함께 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         request_data = {
             "file_id": str(ObjectId()),
             "customer_id": str(ObjectId()),
@@ -325,8 +343,14 @@ class TestTriggerParsingUserId:
         assert data["success"] == True
         assert "파싱이 시작되었습니다" in data["message"]
 
-    def test_trigger_parsing_with_userid_and_invalid_customer_returns_404(self):
+    @patch('main.db')
+    def test_trigger_parsing_with_userid_and_invalid_customer_returns_404(self, mock_db):
         """userId와 특정 customer_id로 호출했지만 customer 없음 시 404 반환"""
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
+
         customer_id = str(ObjectId())
         response = client.post(
             "/ar-background/trigger-parsing",
@@ -386,10 +410,13 @@ class TestUserIdHeaderExtraction:
 class TestCustomerOwnershipVerification:
     """customer 소유권 검증 (통합 테스트)"""
 
-    def test_different_users_cannot_access_others_customers(self):
+    @patch('main.db')
+    def test_different_users_cannot_access_others_customers(self, mock_db):
         """다른 userId는 다른 사용자의 customer에 접근 불가"""
-        # 실제 DB에 customer가 있다면 각 사용자는 자신의 meta.created_by인 customer만 접근 가능
-        # 현재는 빈 DB이므로 소유권 검증이 작동하는지만 확인
+        # Mock: customer 없음 (find_one returns None)
+        mock_customers = MagicMock()
+        mock_customers.find_one.return_value = None
+        mock_db.customers = mock_customers
 
         customer_id = str(ObjectId())
 
