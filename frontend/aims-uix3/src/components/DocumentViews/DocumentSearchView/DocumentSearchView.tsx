@@ -354,6 +354,35 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 />
               </div>
 
+              {/* 🍎 유사도 점수 범례 (시맨틱 검색일 때만 표시) */}
+              {searchMode === 'semantic' && results.length > 0 && (
+                <div className="similarity-legend">
+                  <div className="legend-title">유사도 점수:</div>
+                  <div className="legend-items">
+                    <div className="legend-item">
+                      <span className="legend-icon">🟢</span>
+                      <span className="legend-label">매우 높음 (≥0.85)</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-icon">🟢</span>
+                      <span className="legend-label">높음 (≥0.70)</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-icon">🟡</span>
+                      <span className="legend-label">보통 (≥0.50)</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-icon">🟠</span>
+                      <span className="legend-label">낮음 (≥0.30)</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-icon">🔴</span>
+                      <span className="legend-label">매우 낮음 (&lt;0.30)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* 🍎 iOS Table View 스타일 결과 리스트 */}
               <div className="search-results-table" role="list">
                 {results.map((item, index) => {

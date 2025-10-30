@@ -183,6 +183,61 @@ html[data-theme="dark"] .search-error {
   padding: 4px 0;
 }
 
+/* 🍎 유사도 점수 범례 - iOS 서브틀 스타일 */
+.similarity-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  margin-bottom: 8px;
+}
+
+html[data-theme="dark"] .similarity-legend {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+.legend-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .legend-title {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.legend-items {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.legend-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .legend-label {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
 /* 로딩 / Empty State */
 .search-loading,
 .search-empty {
