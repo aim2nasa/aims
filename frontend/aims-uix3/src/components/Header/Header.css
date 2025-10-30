@@ -415,9 +415,9 @@
   box-shadow: 6px 0 0 currentColor;
 }
 
-/* === 사용자 표시기 스타일 (개발자 모드 전용) === */
+/* === 사용자 선택기 스타일 (개발자 모드 전용) === */
 
-.header-user-indicator {
+.header-user-selector {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
@@ -433,10 +433,41 @@
 .header-user-label {
   color: var(--color-text-secondary);
   font-weight: 500;
+  white-space: nowrap;
 }
 
-.header-user-id {
+.header-user-select {
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
   font-family: var(--font-family-mono);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  outline: none;
+}
+
+.header-user-select:hover {
+  border-color: var(--color-primary);
+  background: var(--color-bg-hover);
+}
+
+.header-user-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
+}
+
+.header-user-select option {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: var(--spacing-2);
+}
+
+.header-user-loading {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-style: italic;
 }

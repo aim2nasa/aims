@@ -46,7 +46,13 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   const { isDevMode } = useDevModeStore()
 
   // 현재 사용자 정보
-  const { userId } = useUserStore()
+  const { userId, setUserId, availableUsers, loading } = useUserStore()
+
+  // 사용자 전환 핸들러
+  const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newUserId = event.target.value;
+    setUserId(newUserId);
+  }
 
   // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
   const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
@@ -129,17 +135,35 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
       {/* 제어 요소들 - Progressive Disclosure */}
       <div className="header-controls">
-        {/* 현재 사용자 표시 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
+        {/* 사용자 전환 드롭다운 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
         {isDevMode && (
           <div
-            className="header-user-indicator"
+            className="header-user-selector"
             style={{
               opacity: state.showControls ? 1 : 0,
               transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
             }}
           >
-            <span className="header-user-label">사용자:</span>
-            <span className="header-user-id">{userId}</span>
+            <label htmlFor="user-select" className="header-user-label">
+              사용자:
+            </label>
+            {loading ? (
+              <span className="header-user-loading">로딩중...</span>
+            ) : (
+              <select
+                id="user-select"
+                value={userId}
+                onChange={handleUserChange}
+                className="header-user-select"
+                aria-label="사용자 선택"
+              >
+                {availableUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} ({user.id})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )}
 

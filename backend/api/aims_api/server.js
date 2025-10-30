@@ -1062,6 +1062,40 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// ==================== 사용자 관리 API ====================
+
+/**
+ * 사용자 목록 조회 API
+ * 개발자 모드에서 사용자 전환 시 사용
+ */
+app.get('/api/users', async (req, res) => {
+  try {
+    const usersCollection = db.collection('users');
+
+    // 모든 사용자 조회 (비밀번호 제외)
+    const users = await usersCollection
+      .find({}, { projection: { password: 0 } })
+      .sort({ _id: 1 })
+      .toArray();
+
+    res.json({
+      success: true,
+      data: users.map(user => ({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }))
+    });
+  } catch (error) {
+    console.error('❌ 사용자 목록 조회 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== 고객 관리 API ====================
 
 /**
