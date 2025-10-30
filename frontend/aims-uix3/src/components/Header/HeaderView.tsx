@@ -15,6 +15,7 @@ import useHeaderTooltip from './useHeaderTooltip'
 import { HAPTIC_TYPES } from '../../hooks/useHapticFeedback'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
+import { useDevModeStore } from '../../shared/store/useDevModeStore'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -39,6 +40,9 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   controller
 }) => {
   const { state, handleMouseEnter, handleMouseLeave, handleFocus, handleBlur } = controller
+
+  // 개발자 모드 상태 (Ctrl+Shift+D로 토글)
+  const { isDevMode } = useDevModeStore()
 
   // 3단계: 애플스러운 툴팁 Hook + 4단계: 펄스 애니메이션
   const { showTooltip, showPulse, dismissTooltip } = useHeaderTooltip()
@@ -121,25 +125,27 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
       {/* 제어 요소들 - Progressive Disclosure */}
       <div className="header-controls">
-        {/* 레이아웃 제어 버튼 */}
-        <Tooltip content="레이아웃 제어">
-          <button
-            onClick={handleLayoutControlClick}
-            className="header-control-button haptic-enabled micro-button micro-haptic-medium"
-            aria-label="레이아웃 제어"
-            style={{
-              opacity: state.showControls ? 1 : 0,
-              transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
-            }}
-          >
-            <SFSymbol
-              name="gear"
-              size={SFSymbolSize.CALLOUT}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-          </button>
-        </Tooltip>
+        {/* 레이아웃 제어 버튼 - 개발자 모드(Ctrl+Shift+D)에서만 표시 */}
+        {isDevMode && (
+          <Tooltip content="레이아웃 제어">
+            <button
+              onClick={handleLayoutControlClick}
+              className="header-control-button haptic-enabled micro-button micro-haptic-medium"
+              aria-label="레이아웃 제어"
+              style={{
+                opacity: state.showControls ? 1 : 0,
+                transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+              }}
+            >
+              <SFSymbol
+                name="gear"
+                size={SFSymbolSize.CALLOUT}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative={true}
+              />
+            </button>
+          </Tooltip>
+        )}
 
         {/* 테마 토글 */}
         <div
