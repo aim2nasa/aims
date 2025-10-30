@@ -6,9 +6,10 @@ Annual Report Background Parsing Routes
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from bson import ObjectId
+from bson.errors import InvalidId
 
 from services.detector import is_annual_report
 from services.parser import parse_annual_report
@@ -206,7 +207,8 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
 @router.post("/trigger-parsing", response_model=TriggerParsingResponse)
 async def trigger_ar_parsing(
     request: TriggerParsingRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     고객의 AR 문서들을 백그라운드에서 파싱하도록 트리거
@@ -214,8 +216,17 @@ async def trigger_ar_parsing(
     - n8n 워크플로우 완료 후 호출됨
     - 발행일 기준으로 중복 체크
     - 미파싱 문서만 순차 처리
+
+    Args:
+        request: TriggerParsingRequest (customer_id, file_id)
+        background_tasks: FastAPI BackgroundTasks
+        user_id: 설계사 userId (x-user-id 헤더)
     """
     try:
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
         # MongoDB 연결 확인
         from main import db
         if db is None:
@@ -224,14 +235,26 @@ async def trigger_ar_parsing(
                 detail="데이터베이스 연결 오류"
             )
 
-        # customer_id 검증 (제공된 경우만)
+        # ⭐ customer_id 유효성 및 소유권 검증 (제공된 경우만)
         if request.customer_id:
             try:
-                ObjectId(request.customer_id)
-            except Exception:
+                customer_obj_id = ObjectId(request.customer_id)
+            except InvalidId:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"잘못된 ObjectId 형식: {request.customer_id}"
+                    detail="Invalid customer_id format"
+                )
+
+            # customer 소유권 검증
+            customer = db.customers.find_one({
+                "_id": customer_obj_id,
+                "meta.created_by": user_id
+            })
+
+            if not customer:
+                raise HTTPException(
+                    status_code=404,
+                    detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
                 )
 
         # 백그라운드 작업 등록
@@ -242,7 +265,7 @@ async def trigger_ar_parsing(
             request.file_id
         )
 
-        logger.info(f"✅ [Trigger] 백그라운드 파싱 작업 등록: customer_id={request.customer_id or 'ALL'}")
+        logger.info(f"✅ [Trigger] 백그라운드 파싱 작업 등록: user_id={user_id}, customer_id={request.customer_id or 'ALL'}")
 
         return TriggerParsingResponse(
             success=True,

@@ -3,9 +3,11 @@ Annual Report 조회 API 라우터
 GET /customers/{customer_id}/annual-reports - Annual Reports 조회
 DELETE /customers/{customer_id}/annual-reports - Annual Reports 삭제
 """
-from fastapi import APIRouter, HTTPException, Path, Query, Body
+from fastapi import APIRouter, HTTPException, Path, Query, Body, Header
 from pydantic import BaseModel, Field
 from typing import List, Optional, Any, Dict
+from bson import ObjectId
+from bson.errors import InvalidId
 import logging
 
 from services.db_writer import get_annual_reports, delete_annual_reports
@@ -73,7 +75,8 @@ class AnnualReportsResponse(BaseModel):
 )
 async def get_customer_annual_reports(
     customer_id: str = Path(..., description="고객 ObjectId"),
-    limit: int = Query(10, ge=1, le=100, description="최대 조회 개수")
+    limit: int = Query(10, ge=1, le=100, description="최대 조회 개수"),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     고객의 Annual Reports 조회 (최신순)
@@ -81,6 +84,7 @@ async def get_customer_annual_reports(
     Args:
         customer_id: 고객 ObjectId
         limit: 최대 조회 개수 (기본 10, 최대 100)
+        user_id: 설계사 userId (x-user-id 헤더)
 
     Returns:
         AnnualReportsResponse: {
@@ -91,19 +95,41 @@ async def get_customer_annual_reports(
         }
 
     Raises:
-        HTTPException 400: customer_id가 유효하지 않을 때
+        HTTPException 400: userId 또는 customer_id가 유효하지 않을 때
+        HTTPException 403: 고객 접근 권한이 없을 때
         HTTPException 404: 고객을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"📥 Annual Reports 조회 요청: customer_id={customer_id}, limit={limit}")
+    logger.info(f"📥 Annual Reports 조회 요청: customer_id={customer_id}, user_id={user_id}, limit={limit}")
 
     try:
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
         # MongoDB 연결 확인
         from main import db
         if db is None:
             raise HTTPException(
                 status_code=500,
                 detail="데이터베이스 연결 오류"
+            )
+
+        # ⭐ customer_id 유효성 및 소유권 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
             )
 
         # Annual Reports 조회
@@ -157,29 +183,53 @@ async def get_customer_annual_reports(
     response_model=Dict[str, Any]
 )
 async def get_latest_annual_report(
-    customer_id: str = Path(..., description="고객 ObjectId")
+    customer_id: str = Path(..., description="고객 ObjectId"),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     고객의 최신 Annual Report 조회
 
     Args:
         customer_id: 고객 ObjectId
+        user_id: 설계사 userId (x-user-id 헤더)
 
     Returns:
         dict: 최신 Annual Report 데이터
 
     Raises:
-        HTTPException 404: Annual Report가 없을 때
+        HTTPException 400: userId 또는 customer_id가 유효하지 않을 때
+        HTTPException 404: 고객 또는 Annual Report가 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"📥 최신 Annual Report 조회: customer_id={customer_id}")
+    logger.info(f"📥 최신 Annual Report 조회: customer_id={customer_id}, user_id={user_id}")
 
     try:
+        # ⭐ userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
         from main import db
         if db is None:
             raise HTTPException(
                 status_code=500,
                 detail="데이터베이스 연결 오류"
+            )
+
+        # ⭐ customer 소유권 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
             )
 
         # 최신 1건만 조회
@@ -249,7 +299,8 @@ class DeleteAnnualReportsResponse(BaseModel):
 )
 async def delete_customer_annual_reports(
     customer_id: str = Path(..., description="고객 ObjectId"),
-    request: DeleteAnnualReportsRequest = Body(...)
+    request: DeleteAnnualReportsRequest = Body(...),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     고객의 Annual Reports 삭제 (복수 선택 가능)
@@ -257,6 +308,7 @@ async def delete_customer_annual_reports(
     Args:
         customer_id: 고객 ObjectId
         request: 삭제 요청 (indices 배열)
+        user_id: 설계사 userId (x-user-id 헤더)
 
     Returns:
         DeleteAnnualReportsResponse: {
@@ -266,13 +318,17 @@ async def delete_customer_annual_reports(
         }
 
     Raises:
-        HTTPException 400: 유효하지 않은 요청
+        HTTPException 400: userId 또는 요청이 유효하지 않을 때
         HTTPException 404: 고객을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"🗑️  Annual Reports 삭제 요청: customer_id={customer_id}, indices={request.indices}")
+    logger.info(f"🗑️  Annual Reports 삭제 요청: customer_id={customer_id}, user_id={user_id}, indices={request.indices}")
 
     try:
+        # ⭐ userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
         # 유효성 검증
         if not request.indices:
             raise HTTPException(
@@ -285,6 +341,23 @@ async def delete_customer_annual_reports(
             raise HTTPException(
                 status_code=500,
                 detail="데이터베이스 연결 오류"
+            )
+
+        # ⭐ customer 소유권 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
             )
 
         # 삭제 실행

@@ -2,9 +2,11 @@
 Annual Report 파싱 API 라우터
 POST /annual-report/parse - 파싱 실행 (비동기)
 """
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form, Header
 from pydantic import BaseModel, Field
 from typing import Optional
+from bson import ObjectId
+from bson.errors import InvalidId
 import logging
 import os
 import tempfile
@@ -304,7 +306,8 @@ async def parse_annual_report_endpoint(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     customer_id: str = Form(...),
-    end_page: Optional[int] = Form(None)
+    end_page: Optional[int] = Form(None),
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     Annual Report PDF 파싱 API (비동기) - Multipart/form-data
@@ -316,6 +319,7 @@ async def parse_annual_report_endpoint(
         file: PDF 파일 (multipart/form-data)
         customer_id: 고객 ObjectId
         end_page: 추출할 마지막 페이지 번호 (선택, 자동 감지 가능)
+        user_id: 설계사 userId (x-user-id 헤더)
         background_tasks: FastAPI BackgroundTasks
 
     Returns:
@@ -326,13 +330,39 @@ async def parse_annual_report_endpoint(
         }
 
     Raises:
-        HTTPException 400: 파일이 PDF가 아니거나 유효하지 않을 때
+        HTTPException 400: userId, customer_id 또는 파일이 유효하지 않을 때
+        HTTPException 404: 고객을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"📥 파싱 요청 수신: filename={file.filename}, customer_id={customer_id}, end_page={end_page}")
+    logger.info(f"📥 파싱 요청 수신: filename={file.filename}, customer_id={customer_id}, user_id={user_id}, end_page={end_page}")
 
     temp_file_path = None
     try:
+        # ⭐ userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        # ⭐ customer 소유권 검증
+        from main import db
+        if db is None:
+            raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
+
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
+            )
+
         # PDF 파일 검증
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(
@@ -349,44 +379,8 @@ async def parse_annual_report_endpoint(
 
         logger.info(f"📁 임시 파일 저장: {temp_file_path}")
 
-        # MongoDB 연결 확인
-        from main import db
-        if db is None:
-            raise HTTPException(
-                status_code=500,
-                detail="데이터베이스 연결 오류"
-            )
-
-        # 고객 ID 검증
-        from bson import ObjectId
-        from bson.errors import InvalidId
-        try:
-            customer_oid = ObjectId(customer_id)
-            logger.info(f"🔍 고객 검증 중: {customer_oid}")
-            logger.info(f"📊 DB 객체: {db}, 컬렉션: {db.customers}")
-
-            # 전체 고객 수 확인
-            total = db.customers.count_documents({})
-            logger.info(f"📊 전체 고객 수: {total}")
-
-            customer = db.customers.find_one({"_id": customer_oid})
-            logger.info(f"🔎 조회 결과: {'Found' if customer else 'Not Found'}")
-
-            if not customer:
-                logger.warning(f"❌ 고객을 찾을 수 없습니다: {customer_id}")
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"유효하지 않은 customer_id (존재하지 않음): {customer_id}"
-                )
-            logger.info(f"✅ 고객 확인됨: {customer.get('personal_info', {}).get('name', 'Unknown')}")
-        except InvalidId as e:
-            logger.error(f"잘못된 ObjectId 형식: {customer_id} - {e}")
-            raise HTTPException(
-                status_code=400,
-                detail=f"잘못된 ObjectId 형식: {customer_id}"
-            )
-        except HTTPException:
-            raise
+        # customer 정보 로깅 (이미 위에서 검증 완료)
+        logger.info(f"✅ 고객 확인됨: {customer.get('personal_info', {}).get('name', 'Unknown')}")
 
         # file_id 생성 (임시)
         file_id = f"temp_{os.path.basename(temp_file_path)}"
@@ -428,7 +422,8 @@ async def parse_annual_report_endpoint(
 @router.post("/parse-by-path", response_model=ParseResponse)
 async def parse_annual_report_by_path_endpoint(
     request: ParseRequest,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    user_id: str = Header(None, alias="x-user-id")
 ):
     """
     Annual Report PDF 파싱 API (비동기) - JSON body (기존 방식)
@@ -439,6 +434,7 @@ async def parse_annual_report_by_path_endpoint(
     Args:
         request: ParseRequest (file_id, customer_id, file_path)
         background_tasks: FastAPI BackgroundTasks
+        user_id: 설계사 userId (x-user-id 헤더)
 
     Returns:
         ParseResponse: {
@@ -451,9 +447,35 @@ async def parse_annual_report_by_path_endpoint(
         HTTPException 400: file_path가 없거나 파일을 찾을 수 없을 때
         HTTPException 500: 서버 오류
     """
-    logger.info(f"📥 파싱 요청 수신 (경로): file_id={request.file_id}, customer_id={request.customer_id}")
+    logger.info(f"📥 파싱 요청 수신 (경로): file_id={request.file_id}, customer_id={request.customer_id}, user_id={user_id}")
 
     try:
+        # ⭐ userId 검증 (사용자 계정 기능)
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        # MongoDB 연결 확인
+        from main import db
+        if db is None:
+            raise HTTPException(status_code=500, detail="데이터베이스 연결 오류")
+
+        # ⭐ customer 소유권 검증
+        try:
+            customer_obj_id = ObjectId(request.customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
+            )
+
         # 파일 경로 확인
         file_path = request.file_path
 
