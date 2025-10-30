@@ -71,23 +71,25 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
           <div className="filter-group">
             {/* 🍎 편집 모드 아이콘 버튼 (DocumentLibrary 전용) */}
             {showEditButton && onToggleEditMode && (
-              <button
-                className={`edit-mode-icon-button ${isEditMode ? 'edit-mode-icon-button--active' : ''}`}
-                onClick={onToggleEditMode}
-                aria-label={isEditMode ? '편집 완료' : '편집'}
-              >
-                {isEditMode ? (
-                  // 완료 상태: 체크마크 아이콘
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : (
-                  // 편집 상태: 연필 아이콘
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </button>
+              <Tooltip content={isEditMode ? '편집 완료' : '편집'}>
+                <button
+                  className={`edit-mode-icon-button ${isEditMode ? 'edit-mode-icon-button--active' : ''}`}
+                  onClick={onToggleEditMode}
+                  aria-label={isEditMode ? '편집 완료' : '편집'}
+                >
+                  {isEditMode ? (
+                    // 완료 상태: 체크마크 아이콘
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    // 편집 상태: 연필 아이콘
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </Tooltip>
             )}
             <span className="result-count">
               총 {documentsCount}개의 문서

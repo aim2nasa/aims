@@ -239,10 +239,14 @@ describe('DocumentStatusHeader - 편집 버튼 재배치 테스트 (커밋 c8c49
 
       expect(children.length).toBeGreaterThanOrEqual(2)
 
-      // 첫 번째 자식이 편집 버튼
+      // 첫 번째 자식이 편집 버튼 (Tooltip으로 감싸져 있을 수 있음)
       const firstChild = children[0]
       expect(firstChild).not.toBeUndefined()
-      expect(firstChild?.classList.contains('edit-mode-icon-button')).toBe(true)
+      // Tooltip으로 감싸진 경우, 내부에서 편집 버튼을 찾음
+      const editButton = firstChild?.classList.contains('edit-mode-icon-button')
+        ? firstChild
+        : firstChild?.querySelector('.edit-mode-icon-button')
+      expect(editButton).not.toBeNull()
 
       // 두 번째 자식이 총 문서 개수
       const secondChild = children[1]
