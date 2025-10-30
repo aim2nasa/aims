@@ -140,8 +140,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
           <div
             className="header-user-selector"
             style={{
-              opacity: state.showControls ? 1 : 0,
-              transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+              opacity: 1, // 개발자 모드에서는 항상 표시
+              transform: 'translateY(0)'
             }}
           >
             <label htmlFor="user-select" className="header-user-label">
@@ -175,8 +175,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
               className="header-control-button haptic-enabled micro-button micro-haptic-medium"
               aria-label="레이아웃 제어"
               style={{
-                opacity: state.showControls ? 1 : 0,
-                transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+                opacity: 1, // 개발자 모드에서는 항상 표시
+                transform: 'translateY(0)'
               }}
             >
               <SFSymbol
@@ -193,8 +193,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         <div
           className="header-theme-container"
           style={{
-            opacity: state.showControls ? 1 : 0,
-            transform: state.showControls ? 'translateY(0)' : 'translateY(-8px)'
+            opacity: isDevMode ? 1 : (state.showControls ? 1 : 0), // 개발자 모드에서는 항상 표시
+            transform: isDevMode ? 'translateY(0)' : (state.showControls ? 'translateY(0)' : 'translateY(-8px)')
           }}
         >
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />

@@ -66,10 +66,18 @@ export function useUserStore() {
 
   // MongoDB에서 사용자 목록 로드
   useEffect(() => {
+    // 테스트 환경에서는 fetch 하지 않음
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const fetchUsers = async () => {
       try {
         const response = await fetch('http://tars.giize.com:3010/api/users');
         const result = await response.json();
+
+        // 브라우저 환경에서만 setState 호출
+        if (typeof window === 'undefined') return;
 
         if (result.success) {
           setAvailableUsers(result.data);
@@ -81,13 +89,19 @@ export function useUserStore() {
           ]);
         }
       } catch (error) {
+        // 브라우저 환경에서만 에러 처리 및 setState 호출
+        if (typeof window === 'undefined') return;
+
         console.error('❌ 사용자 목록 API 호출 실패:', error);
         // 실패 시 기본 사용자만 표시
         setAvailableUsers([
           { id: 'tester', name: '테스트 설계사', email: 'tester@example.com', role: 'agent' }
         ]);
       } finally {
-        setLoading(false);
+        // 브라우저 환경에서만 setLoading 호출
+        if (typeof window !== 'undefined') {
+          setLoading(false);
+        }
       }
     };
 
