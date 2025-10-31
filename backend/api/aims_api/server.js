@@ -2340,12 +2340,24 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
     const { customerId } = req.params;
     const { limit } = req.query;
 
-    console.log(`📋 [Annual Report] 고객 Annual Reports 조회: ${customerId}`);
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`📋 [Annual Report] 고객 Annual Reports 조회: ${customerId}, userId: ${userId}`);
 
     const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports`;
 
     const response = await axios.get(pythonApiUrl, {
       params: { limit },
+      headers: {
+        'x-user-id': userId
+      },
       timeout: 3000
     });
 
@@ -2425,11 +2437,23 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
   const { customerId } = req.params; // catch 블록에서도 접근 가능하도록 밖으로 이동
 
   try {
-    console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}`);
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}, userId: ${userId}`);
 
     const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports/latest`;
 
     const response = await axios.get(pythonApiUrl, {
+      headers: {
+        'x-user-id': userId
+      },
       timeout: 3000
     });
 
@@ -2471,7 +2495,16 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
     const { customerId } = req.params;
     const { indices } = req.body;
 
-    console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, indices=${JSON.stringify(indices)}`);
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, userId=${userId}, indices=${JSON.stringify(indices)}`);
 
     if (!indices || !Array.isArray(indices) || indices.length === 0) {
       return res.status(400).json({
@@ -2484,6 +2517,9 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
 
     const response = await axios.delete(pythonApiUrl, {
       data: { indices },
+      headers: {
+        'x-user-id': userId
+      },
       timeout: 5000
     });
 
@@ -2708,14 +2744,26 @@ app.listen(PORT, '0.0.0.0', () => {
  */
 app.post("/api/ar-background/trigger-parsing", async (req, res) => {
   try {
-    console.log("🚀 [AR 백그라운드 파싱 프록시] 요청 수신");
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log("🚀 [AR 백그라운드 파싱 프록시] 요청 수신, userId:", userId);
 
     // localhost:8004로 요청 전달
     const response = await axios.post(
       "http://localhost:8004/ar-background/trigger-parsing",
       req.body,
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": userId
+        },
         timeout: 5000
       }
     );

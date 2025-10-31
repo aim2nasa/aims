@@ -239,16 +239,18 @@ export class AnnualReportApi {
    * 고객의 Annual Reports 목록 조회
    *
    * @param customerId 고객 ID
+   * @param userId 사용자 ID (설계사 계정)
    * @param limit 조회 개수 (기본: 10)
    * @returns Annual Reports 목록
    */
   static async getAnnualReports(
     customerId: string,
+    userId: string,
     limit: number = 10
   ): Promise<AnnualReportsListResponse> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}`
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}&userId=${encodeURIComponent(userId)}`
       );
 
       const data = await response.json();
@@ -280,14 +282,16 @@ export class AnnualReportApi {
    * 고객의 최신 Annual Report 조회
    *
    * @param customerId 고객 ID
+   * @param userId 사용자 ID (설계사 계정)
    * @returns 최신 Annual Report
    */
   static async getLatestAnnualReport(
-    customerId: string
+    customerId: string,
+    userId: string
   ): Promise<LatestAnnualReportResponse> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest`
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest?userId=${encodeURIComponent(userId)}`
       );
 
       // 404는 데이터 없음 (정상 케이스)
@@ -493,16 +497,18 @@ export class AnnualReportApi {
    * Annual Reports 삭제 (복수 선택 가능)
    *
    * @param customerId 고객 ID
+   * @param userId 사용자 ID (설계사 계정)
    * @param indices 삭제할 리포트 인덱스 배열 (최신순 기준)
    * @returns 삭제 결과
    */
   static async deleteAnnualReports(
     customerId: string,
+    userId: string,
     indices: number[]
   ): Promise<{ success: boolean; message: string; deleted_count?: number }> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports`,
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?userId=${encodeURIComponent(userId)}`,
         {
           method: 'DELETE',
           headers: {

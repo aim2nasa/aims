@@ -16,6 +16,7 @@ import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annu
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
 import './AnnualReportTab.css';
 
@@ -132,7 +133,8 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
     setError(null);
 
     try {
-      const response = await AnnualReportApi.getAnnualReports(customer._id, 20);
+      const userId = UserContextService.getContext().identifierValue;
+      const response = await AnnualReportApi.getAnnualReports(customer._id, userId, 20);
 
       if (response.success && response.data) {
         // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환
@@ -240,8 +242,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
 
     setIsDeleting(true);
     try {
+      const userId = UserContextService.getContext().identifierValue;
       const result = await AnnualReportApi.deleteAnnualReports(
         customer._id,
+        userId,
         Array.from(selectedIndices)
       );
 
