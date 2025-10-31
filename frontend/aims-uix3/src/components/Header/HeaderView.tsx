@@ -7,7 +7,7 @@
  * CLAUDE.md 준수: 애플 디자인 철학 "Progressive Disclosure" UI 구현
  */
 
-import React, { useEffect, memo } from 'react'
+import React, { useEffect, memo, useState, useRef } from 'react'
 import { HeaderProps, HeaderControllerReturn } from './Header.types'
 import ThemeToggle from '../ThemeToggle'
 import HeaderTooltip from './HeaderTooltip'
@@ -17,6 +17,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import { useDevModeStore } from '../../shared/store/useDevModeStore'
 import { useUserStore } from '../../stores/user'
+import { UserProfileMenu } from './UserProfileMenu'
 import './Header.css'
 
 interface HeaderViewProps extends HeaderProps {
@@ -47,6 +48,10 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
   // 현재 사용자 정보
   const { userId, setUserId, availableUsers, loading } = useUserStore()
+
+  // 사용자 프로필 메뉴 상태
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const userAvatarRef = useRef<HTMLDivElement>(null)
 
   // 사용자 전환 핸들러
   const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -213,7 +218,23 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             const avatarUrl = currentUser?.avatarUrl;
 
             return (
-              <div className="header-user-avatar" aria-label={`현재 사용자: ${userName}`}>
+              <div
+                ref={userAvatarRef}
+                className="header-user-avatar"
+                role="button"
+                tabIndex={0}
+                aria-label={`현재 사용자: ${userName}. 클릭하여 프로필 메뉴 열기`}
+                aria-haspopup="menu"
+                aria-expanded={isProfileMenuOpen}
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsProfileMenuOpen(!isProfileMenuOpen);
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="header-user-avatar-circle">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={userName} />
@@ -228,6 +249,26 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             );
           })()}
         </div>
+
+        {/* 사용자 프로필 메뉴 */}
+        {!loading && (() => {
+          const currentUser = availableUsers.find(u => u.id === userId);
+          if (!currentUser) return null;
+
+          return (
+            <UserProfileMenu
+              isOpen={isProfileMenuOpen}
+              onClose={() => setIsProfileMenuOpen(false)}
+              user={{
+                id: currentUser.id,
+                name: currentUser.name,
+                email: `${currentUser.id}@example.com`, // TODO: 실제 이메일 추가
+                ...(currentUser.avatarUrl && { avatarUrl: currentUser.avatarUrl })
+              }}
+              anchorElement={userAvatarRef.current}
+            />
+          );
+        })()}
       </div>
 
       {/* Progressive Disclosure 인디케이터 - BRB 스타일 + 4단계 펄스 */}
