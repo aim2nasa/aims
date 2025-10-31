@@ -213,20 +213,18 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
             const avatarUrl = currentUser?.avatarUrl;
 
             return (
-              <Tooltip content={`현재 사용자: ${userName}`}>
-                <div className="header-user-avatar" aria-label={`현재 사용자: ${userName}`}>
-                  <div className="header-user-avatar-circle">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt={userName} />
-                    ) : (
-                      userInitial
-                    )}
-                  </div>
-                  <span className="header-user-name">
-                    {userName}
-                  </span>
+              <div className="header-user-avatar" aria-label={`현재 사용자: ${userName}`}>
+                <div className="header-user-avatar-circle">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={userName} />
+                  ) : (
+                    userInitial
+                  )}
                 </div>
-              </Tooltip>
+                <span className="header-user-name">
+                  {userName}
+                </span>
+              </div>
             );
           })()}
         </div>
