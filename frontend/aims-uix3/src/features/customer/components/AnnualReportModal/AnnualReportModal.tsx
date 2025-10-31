@@ -13,6 +13,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
+import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
 import { AnnualReportApi } from '../../api/annualReportApi';
 import './AnnualReportModal.css';
@@ -189,24 +190,32 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   const renderSortIcon = (columnKey: keyof InsuranceContract) => {
     if (!sortConfig || sortConfig.key !== columnKey) {
       return (
-        <span className="contracts-table__sort-icon">
-          <SFSymbol
-            name="chevron.up.chevron.down"
-            size={SFSymbolSize.CAPTION_2}
-            weight={SFSymbolWeight.REGULAR}
-          />
-        </span>
+        <Tooltip content="클릭하여 정렬">
+          <span className="contracts-table__sort-icon">
+            <SFSymbol
+              name="arrow.up.arrow.down"
+              size={SFSymbolSize.CAPTION_2}
+              weight={SFSymbolWeight.REGULAR}
+              decorative={true}
+            />
+          </span>
+        </Tooltip>
       );
     }
 
+    const tooltipText = sortConfig.direction === 'asc' ? '오름차순 정렬 중' : '내림차순 정렬 중';
+
     return (
-      <span className="contracts-table__sort-icon">
-        <SFSymbol
-          name={sortConfig.direction === 'asc' ? 'chevron.up' : 'chevron.down'}
-          size={SFSymbolSize.CAPTION_2}
-          weight={SFSymbolWeight.SEMIBOLD}
-        />
-      </span>
+      <Tooltip content={tooltipText}>
+        <span className="contracts-table__sort-icon">
+          <SFSymbol
+            name={sortConfig.direction === 'asc' ? 'chevron.up' : 'chevron.down'}
+            size={SFSymbolSize.CAPTION_2}
+            weight={SFSymbolWeight.SEMIBOLD}
+            decorative={true}
+          />
+        </span>
+      </Tooltip>
     );
   };
 
@@ -291,67 +300,67 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                     className={`contracts-table__th--sortable ${isSortedColumn('insurance_company') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('insurance_company')}
                   >
-                    <span>보험사{renderSortIcon('insurance_company')}</span>
+                    보험사 {renderSortIcon('insurance_company')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('contract_number') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('contract_number')}
                   >
-                    <span>증권번호{renderSortIcon('contract_number')}</span>
+                    증권번호 {renderSortIcon('contract_number')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('product_name') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('product_name')}
                   >
-                    <span>보험상품{renderSortIcon('product_name')}</span>
+                    보험상품 {renderSortIcon('product_name')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('contractor_name') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('contractor_name')}
                   >
-                    <span>계약자{renderSortIcon('contractor_name')}</span>
+                    계약자 {renderSortIcon('contractor_name')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('insured_name') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('insured_name')}
                   >
-                    <span>피보험자{renderSortIcon('insured_name')}</span>
+                    피보험자 {renderSortIcon('insured_name')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('contract_date') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('contract_date')}
                   >
-                    <span>계약일{renderSortIcon('contract_date')}</span>
+                    계약일 {renderSortIcon('contract_date')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('status') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('status')}
                   >
-                    <span>계약상태{renderSortIcon('status')}</span>
+                    계약상태 {renderSortIcon('status')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('coverage_amount') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('coverage_amount')}
                   >
-                    <span>가입금액(만원){renderSortIcon('coverage_amount')}</span>
+                    가입금액(만원) {renderSortIcon('coverage_amount')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('insurance_period') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('insurance_period')}
                   >
-                    <span>보험기간{renderSortIcon('insurance_period')}</span>
+                    보험기간 {renderSortIcon('insurance_period')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('premium_payment_period') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('premium_payment_period')}
                   >
-                    <span>납입기간{renderSortIcon('premium_payment_period')}</span>
+                    납입기간 {renderSortIcon('premium_payment_period')}
                   </th>
                   <th
                     className={`contracts-table__th--sortable ${isSortedColumn('monthly_premium') ? 'contracts-table__th--sorted' : ''}`}
                     onClick={() => handleSort('monthly_premium')}
                   >
-                    <span>보험료(원){renderSortIcon('monthly_premium')}</span>
+                    보험료(원) {renderSortIcon('monthly_premium')}
                   </th>
                 </tr>
               </thead>

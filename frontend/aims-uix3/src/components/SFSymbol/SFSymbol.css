@@ -815,6 +815,42 @@
   -webkit-mask-size: contain;
 }
 
+/* chevron.up - 위쪽 화살표 */
+.sf-symbol--chevron-up .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6em;
+  height: 0.35em;
+
+  /* iOS 표준 화살표 (위쪽) */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 35'%3e%3cpath d='M5 30l25-25 25 25' stroke='currentColor' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* arrow.up.arrow.down - 양방향 정렬 화살표 */
+.sf-symbol--arrow-up-arrow-down .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.4em;
+  height: 0.7em;
+
+  /* iOS 표준 양방향 화살표 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 70'%3e%3cpath d='M20 5l-10 10M20 5l10 10M20 5v60M10 55l10 10M30 55l10-10' stroke='currentColor' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
 /* === 위트있는 HOVER 애니메이션 === */
 
 /* 사람 아이콘 - 살짝 인사하는 효과 */
