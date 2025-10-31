@@ -1,22 +1,36 @@
 /**
  * Annual Report Modal Styles
  * @since 2025-10-16
+ * @version 4.0.0 - AIMS 표준 모달 디자인 적용
  *
  * 🍎 애플 디자인 시스템 준수
- * - 문서 프리뷰 모달 디자인 재사용
+ * - AIMS 표준 모달 디자인
+ * - Elevated Card with iOS Shadows
  * - Progressive Disclosure
  * - Subtle Interactions
+ * - Improved Sortable Headers
  */
 
-/* ==================== 드래그 스타일 추가 ==================== */
+/* ==================== 드래그 스타일 개선 ==================== */
 
 .customer-document-preview--dragging {
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-modal-elevated-light);
   user-select: none;
+  cursor: grabbing !important;
 }
 
 [data-theme="dark"] .customer-document-preview--dragging {
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--shadow-modal-elevated-dark);
+}
+
+/* 모달 헤더 드래그 커서 */
+.customer-document-preview__header {
+  cursor: grab;
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.customer-document-preview__header:active {
+  cursor: grabbing;
 }
 
 /* ==================== Center States (Loading, Error, Empty) ==================== */
@@ -143,25 +157,61 @@
   letter-spacing: 0.3px;
 }
 
-/* Sortable Table Headers */
+/* Sortable Table Headers - 개선된 직관성 */
 .contracts-table__th--sortable {
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s ease;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  position: relative;
 }
 
+/* 호버 시 배경색 + 스케일 효과 */
 .contracts-table__th--sortable:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--color-bg-hover);
+  transform: scale(1.02);
 }
 
 [data-theme="dark"] .contracts-table__th--sortable:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.contracts-table__th--sortable span {
+/* 활성 정렬 헤더 강조 */
+.contracts-table__th--sortable.contracts-table__th--sorted {
+  background-color: var(--color-primary-ultra-light);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .contracts-table__th--sortable.contracts-table__th--sorted {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* 정렬 아이콘 컨테이너 */
+.contracts-table__th--sortable > span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* 정렬 아이콘 스타일 */
+.contracts-table__sort-icon {
+  opacity: 0.4;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/* 호버 시 아이콘 강조 */
+.contracts-table__th--sortable:hover .contracts-table__sort-icon {
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+/* 활성 정렬 아이콘 */
+.contracts-table__th--sortable.contracts-table__th--sorted .contracts-table__sort-icon {
+  opacity: 1;
+  color: var(--color-primary);
 }
 
 [data-theme="dark"] .contracts-table th {

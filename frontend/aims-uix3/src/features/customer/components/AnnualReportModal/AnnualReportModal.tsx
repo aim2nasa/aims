@@ -12,7 +12,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
 import { AnnualReportApi } from '../../api/annualReportApi';
@@ -189,12 +188,33 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
    */
   const renderSortIcon = (columnKey: keyof InsuranceContract) => {
     if (!sortConfig || sortConfig.key !== columnKey) {
-      return <SFSymbol name="chevron.up.chevron.down" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.REGULAR} />;
+      return (
+        <span className="contracts-table__sort-icon">
+          <SFSymbol
+            name="chevron.up.chevron.down"
+            size={SFSymbolSize.CAPTION_2}
+            weight={SFSymbolWeight.REGULAR}
+          />
+        </span>
+      );
     }
 
-    return sortConfig.direction === 'asc'
-      ? <SFSymbol name="chevron.up" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} />
-      : <SFSymbol name="chevron.down" size={SFSymbolSize.CAPTION_2} weight={SFSymbolWeight.SEMIBOLD} />;
+    return (
+      <span className="contracts-table__sort-icon">
+        <SFSymbol
+          name={sortConfig.direction === 'asc' ? 'chevron.up' : 'chevron.down'}
+          size={SFSymbolSize.CAPTION_2}
+          weight={SFSymbolWeight.SEMIBOLD}
+        />
+      </span>
+    );
+  };
+
+  /**
+   * 정렬된 헤더인지 확인
+   */
+  const isSortedColumn = (columnKey: keyof InsuranceContract) => {
+    return sortConfig && sortConfig.key === columnKey;
   };
 
   const renderContent = () => {
@@ -267,49 +287,71 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               <thead>
                 <tr>
                   <th>순번</th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insurance_company')}>
-                    <span>보험사</span>
-                    {renderSortIcon('insurance_company')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('insurance_company') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('insurance_company')}
+                  >
+                    <span>보험사{renderSortIcon('insurance_company')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contract_number')}>
-                    <span>증권번호</span>
-                    {renderSortIcon('contract_number')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('contract_number') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('contract_number')}
+                  >
+                    <span>증권번호{renderSortIcon('contract_number')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('product_name')}>
-                    <span>보험상품</span>
-                    {renderSortIcon('product_name')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('product_name') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('product_name')}
+                  >
+                    <span>보험상품{renderSortIcon('product_name')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contractor_name')}>
-                    <span>계약자</span>
-                    {renderSortIcon('contractor_name')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('contractor_name') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('contractor_name')}
+                  >
+                    <span>계약자{renderSortIcon('contractor_name')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insured_name')}>
-                    <span>피보험자</span>
-                    {renderSortIcon('insured_name')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('insured_name') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('insured_name')}
+                  >
+                    <span>피보험자{renderSortIcon('insured_name')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('contract_date')}>
-                    <span>계약일</span>
-                    {renderSortIcon('contract_date')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('contract_date') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('contract_date')}
+                  >
+                    <span>계약일{renderSortIcon('contract_date')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('status')}>
-                    <span>계약상태</span>
-                    {renderSortIcon('status')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('status') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('status')}
+                  >
+                    <span>계약상태{renderSortIcon('status')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('coverage_amount')}>
-                    <span>가입금액(만원)</span>
-                    {renderSortIcon('coverage_amount')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('coverage_amount') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('coverage_amount')}
+                  >
+                    <span>가입금액(만원){renderSortIcon('coverage_amount')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('insurance_period')}>
-                    <span>보험기간</span>
-                    {renderSortIcon('insurance_period')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('insurance_period') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('insurance_period')}
+                  >
+                    <span>보험기간{renderSortIcon('insurance_period')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('premium_payment_period')}>
-                    <span>납입기간</span>
-                    {renderSortIcon('premium_payment_period')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('premium_payment_period') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('premium_payment_period')}
+                  >
+                    <span>납입기간{renderSortIcon('premium_payment_period')}</span>
                   </th>
-                  <th className="contracts-table__th--sortable" onClick={() => handleSort('monthly_premium')}>
-                    <span>보험료(원)</span>
-                    {renderSortIcon('monthly_premium')}
+                  <th
+                    className={`contracts-table__th--sortable ${isSortedColumn('monthly_premium') ? 'contracts-table__th--sorted' : ''}`}
+                    onClick={() => handleSort('monthly_premium')}
+                  >
+                    <span>보험료(원){renderSortIcon('monthly_premium')}</span>
                   </th>
                 </tr>
               </thead>
@@ -395,21 +437,21 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               </p>
             </div>
           </div>
-          <div className="customer-document-preview__header-actions">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              style={{ cursor: 'pointer' }}
-            >
-              닫기
-            </Button>
-          </div>
         </header>
 
         <main className="customer-document-preview__content">
           {renderContent()}
         </main>
+
+        {/* Footer - 닫기 버튼 (AIMS 표준 위치) */}
+        <div className="fulltext-modal-footer">
+          <button
+            className="fulltext-modal-button"
+            onClick={onClose}
+          >
+            닫기
+          </button>
+        </div>
       </div>
     </div>
   );
