@@ -476,6 +476,54 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return result;
   }, [documentCustomerMap, relationships, resolvedCustomerMap]);
 
+  // 관계 유형 레이블 조회 헬퍼 함수
+  const getRelationshipLabel = useCallback((customerId: string, relatedToId?: string): string => {
+    const typeLabels: Record<string, string> = {
+      spouse: '배우자',
+      parent: '부모',
+      child: '자녀',
+      sibling: '형제자매',
+      grandparent: '조부모',
+      grandchild: '손자녀',
+      ceo: '대표',
+      executive: '임원',
+      employee: '직원',
+      friend: '친구',
+      colleague: '동료',
+    };
+
+    // 해당 고객과 관련된 관계 찾기
+    const relationship = relationships.find(rel => {
+      const fromId = typeof rel.from_customer === 'object' ? rel.from_customer._id : rel.from_customer;
+      const toId = typeof rel.related_customer === 'object' ? rel.related_customer._id : rel.related_customer;
+
+      // relatedToId가 있으면 특정 관계만 찾기 (법인-직원 등)
+      if (relatedToId) {
+        return (fromId === customerId && toId === relatedToId) || (toId === customerId && fromId === relatedToId);
+      }
+
+      // relatedToId가 없으면 해당 고객이 포함된 모든 관계 찾기
+      return fromId === customerId || toId === customerId;
+    });
+
+    if (!relationship) {
+      return '';
+    }
+
+    // display_relationship_label이 있으면 우선 사용
+    if (relationship.display_relationship_label) {
+      return relationship.display_relationship_label;
+    }
+
+    // relationship_type으로 레이블 찾기
+    const relationType = relationship.relationship_info?.relationship_type;
+    if (!relationType) {
+      return '';
+    }
+
+    return typeLabels[relationType] || relationType;
+  }, [relationships]);
+
   // 한글 초성 추출 함수
   const getKoreanConsonant = useCallback((name: string): string => {
     if (!name || name.length === 0) {
@@ -1047,6 +1095,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                               onClick={(e) => handleCustomerClick(member._id, e)}
                                             >
                                               {highlightText(member.personal_info?.name || '이름없음')}
+                                              {(() => {
+                                                const label = getRelationshipLabel(member._id, groupData.representative._id);
+                                                return label ? ` (${label})` : '';
+                                              })()}
                                             </span>
                                           </div>
                                         ))}
@@ -1168,6 +1220,10 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                       onClick={(e) => handleCustomerClick(employee._id, e)}
                                     >
                                       {highlightText(employee.personal_info?.name || '이름없음')}
+                                      {(() => {
+                                        const label = getRelationshipLabel(employee._id, companyId);
+                                        return label ? ` (${label})` : '';
+                                      })()}
                                     </span>
                                   </div>
                                 ))}
