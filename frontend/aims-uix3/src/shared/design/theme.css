@@ -159,6 +159,10 @@
   /* Progressive Disclosure Indicator */
   --color-header-indicator: rgba(156, 163, 175, 0.6);
 
+  /* User Avatar Colors - Light Theme (유튜브/구글 스타일: 부드러운 색상) */
+  --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (양쪽 테마에서 잘 보임) */
+  --color-avatar-text: #ffffff; /* 하얀 텍스트 */
+
   /* Header Heights and Opacities - Progressive Disclosure 최적화 */
   --header-height-base: 50px;  /* 충분한 마우스 상호작용 영역 */
   --header-height-expanded: 70px;
@@ -316,6 +320,10 @@
 
   /* Progressive Disclosure Indicator */
   --color-header-indicator: rgba(156, 163, 175, 0.4);
+
+  /* User Avatar Colors - Dark Theme (유튜브/구글 스타일: 라이트와 동일) */
+  --color-avatar-bg: #5865f2; /* 부드러운 인디고 블루 (라이트와 일관성) */
+  --color-avatar-text: #ffffff; /* 하얀 텍스트 */
 
   /* === APPLE iOS STYLE COLORS - DARK THEME === */
 

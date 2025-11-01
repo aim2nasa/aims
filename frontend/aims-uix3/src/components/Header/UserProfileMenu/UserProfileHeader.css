@@ -28,14 +28,15 @@ html[data-theme="dark"] .user-profile-header {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--color-primary);
+  /* Header 아바타와 동일한 색상 사용 */
+  background: var(--color-avatar-bg);
+  color: var(--color-avatar-text);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-family-system);
   font-size: 20px;
   font-weight: var(--font-weight-semibold);
-  color: white;
 }
 
 .user-profile-header__avatar img {

@@ -10,6 +10,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
+import { useDevModeStore } from '../../../shared/store/useDevModeStore';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -26,6 +27,10 @@ export interface UserProfileMenuProps {
   };
   /** 앵커 요소 (메뉴를 표시할 기준 위치) */
   anchorElement: HTMLElement | null;
+  /** 테마 토글 핸들러 (선택사항) */
+  onThemeToggle?: () => void;
+  /** 현재 테마 (선택사항) */
+  theme?: 'light' | 'dark' | 'system';
 }
 
 /**
@@ -41,10 +46,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   isOpen,
   onClose,
   user,
-  anchorElement
+  anchorElement,
+  onThemeToggle,
+  theme
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
+
+  // 개발자 모드 상태
+  const { isDevMode } = useDevModeStore();
 
   // 메뉴 위치 계산
   const [position, setPosition] = React.useState({ top: 0, right: 0 });
@@ -99,9 +109,24 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   }, [isOpen]);
 
   // 핸들러들
+  const handleSwitchAccount = () => {
+    console.log('[UserProfileMenu] 계정 전환 클릭');
+    // TODO: 계정 전환 UI 표시 (개발자 모드)
+    alert('계정 전환 기능은 Header의 개발자 모드(Ctrl+Shift+D)에서 사용 가능합니다.');
+    onClose();
+  };
+
   const handleAccountSettings = () => {
     console.log('[UserProfileMenu] 계정 설정 클릭');
     // TODO: 계정 설정 모달 열기
+    onClose();
+  };
+
+  const handleThemeToggle = () => {
+    console.log('[UserProfileMenu] 테마 토글 클릭');
+    if (onThemeToggle) {
+      onThemeToggle();
+    }
     onClose();
   };
 
@@ -139,20 +164,35 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
       {/* 메뉴 아이템들 */}
       <div className="user-profile-menu__items">
-        {/* 계정 설정 */}
+        {/* 그룹 1: 계정 관리 */}
+        {isDevMode && (
+          <UserProfileMenuItem
+            icon="person.2"
+            label="계정 전환"
+            onClick={handleSwitchAccount}
+          />
+        )}
         <UserProfileMenuItem
           icon="gearshape"
           label="계정 설정"
           onClick={handleAccountSettings}
+          showDivider={true}
         />
 
-        {/* 구분선 + 로그아웃 */}
+        {/* 그룹 2: 설정 */}
+        <UserProfileMenuItem
+          icon="moon"
+          label={`테마: ${theme === 'light' ? '라이트' : theme === 'dark' ? '다크' : '시스템'}`}
+          onClick={handleThemeToggle}
+          showDivider={true}
+        />
+
+        {/* 그룹 3: 시스템 */}
         <UserProfileMenuItem
           icon="arrow.right.square"
           label="로그아웃"
           onClick={handleLogout}
           isDangerous={true}
-          showDivider={true}
         />
       </div>
     </div>
