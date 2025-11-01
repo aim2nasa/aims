@@ -6,7 +6,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo.errors import PyMongoError
 
@@ -100,8 +100,13 @@ def save_annual_report(
 
         # 발행기준일 파싱
         try:
-            # "YYYY-MM-DD" → datetime
-            issue_date = datetime.strptime(issue_date_str, "%Y-%m-%d") if issue_date_str else None
+            # "YYYY-MM-DD" → datetime (UTC 타임존 명시)
+            if issue_date_str:
+                # naive datetime 생성 후 UTC 타임존 설정
+                naive_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
+                issue_date = naive_date.replace(tzinfo=timezone.utc)
+            else:
+                issue_date = None
         except Exception as e:
             logger.warning(f"발행기준일 파싱 실패: {issue_date_str} ({e})")
             issue_date = None

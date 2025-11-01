@@ -1193,12 +1193,12 @@ app.get('/api/customers', async (req, res) => {
     if (startDate || endDate) {
       const dateFilter = {};
       if (startDate) {
-        dateFilter.$gte = new Date(startDate);
+        // "YYYY-MM-DD" 형식을 UTC 자정으로 변환
+        dateFilter.$gte = new Date(startDate + 'T00:00:00.000Z');
       }
       if (endDate) {
-        const endDateTime = new Date(endDate);
-        endDateTime.setHours(23, 59, 59, 999); // 해당 일의 마지막 시간
-        dateFilter.$lte = endDateTime;
+        // "YYYY-MM-DD" 형식을 UTC 23:59:59.999로 변환
+        dateFilter.$lte = new Date(endDate + 'T23:59:59.999Z');
       }
       filter['meta.created_at'] = dateFilter;
     }
