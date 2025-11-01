@@ -27,10 +27,6 @@ export interface UserProfileMenuProps {
   };
   /** 앵커 요소 (메뉴를 표시할 기준 위치) */
   anchorElement: HTMLElement | null;
-  /** 테마 토글 핸들러 (선택사항) */
-  onThemeToggle?: () => void;
-  /** 현재 테마 (선택사항) */
-  theme?: 'light' | 'dark' | 'system';
 }
 
 /**
@@ -46,9 +42,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   isOpen,
   onClose,
   user,
-  anchorElement,
-  onThemeToggle,
-  theme
+  anchorElement
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
@@ -122,14 +116,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  const handleThemeToggle = () => {
-    console.log('[UserProfileMenu] 테마 토글 클릭');
-    if (onThemeToggle) {
-      onThemeToggle();
-    }
-    onClose();
-  };
-
   const handleLogout = () => {
     console.log('[UserProfileMenu] 로그아웃 클릭');
     // TODO: 로그아웃 확인 다이얼로그
@@ -179,15 +165,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           showDivider={true}
         />
 
-        {/* 그룹 2: 설정 */}
-        <UserProfileMenuItem
-          icon="moon"
-          label={`테마: ${theme === 'light' ? '라이트' : theme === 'dark' ? '다크' : '시스템'}`}
-          onClick={handleThemeToggle}
-          showDivider={true}
-        />
-
-        {/* 그룹 3: 시스템 */}
+        {/* 로그아웃 */}
         <UserProfileMenuItem
           icon="arrow.right.square"
           label="로그아웃"

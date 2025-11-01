@@ -263,8 +263,6 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
                 ...(currentUser.avatarUrl && { avatarUrl: currentUser.avatarUrl })
               }}
               anchorElement={userAvatarRef.current}
-              onThemeToggle={onThemeToggle}
-              theme={theme}
             />
           );
         })()}
