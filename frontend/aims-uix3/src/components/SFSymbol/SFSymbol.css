@@ -1469,6 +1469,57 @@
   opacity: 0.7;
 }
 
+/* GEARSHAPE (Settings) SYMBOL - 톱니바퀴 */
+.sf-symbol--gearshape .sf-symbol__shape::before {
+  content: '⚙️';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.1em;
+  line-height: 1;
+  opacity: 1;
+  filter: grayscale(100%);
+}
+
+.sf-symbol--gearshape .sf-symbol__shape::after {
+  content: none;
+}
+
+/* ARROW.RIGHT.SQUARE (Logout) SYMBOL - 로그아웃 아이콘 */
+.sf-symbol--arrow-right-square .sf-symbol__shape::before {
+  content: '↪';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  font-size: 1.3em;
+  line-height: 1;
+  opacity: 1;
+  font-weight: bold;
+}
+
+.sf-symbol--arrow-right-square .sf-symbol__shape::after {
+  content: none;
+}
+
+/* PERSON.2 (Switch Account) SYMBOL - 계정 전환 아이콘 */
+.sf-symbol--person-2 .sf-symbol__shape::before {
+  content: '👥';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.1em;
+  line-height: 1;
+  opacity: 1;
+  filter: grayscale(100%);
+}
+
+.sf-symbol--person-2 .sf-symbol__shape::after {
+  content: none;
+}
+
 /* === HIGH CONTRAST MODE === */
 
 @media (prefers-contrast: high) {

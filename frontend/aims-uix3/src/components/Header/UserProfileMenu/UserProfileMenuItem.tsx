@@ -71,8 +71,9 @@ export const UserProfileMenuItem: React.FC<UserProfileMenuItemProps> = ({
         <SFSymbol
           name={icon}
           size={SFSymbolSize.CALLOUT}
-          weight={SFSymbolWeight.REGULAR}
+          weight={SFSymbolWeight.SEMIBOLD}
           decorative={true}
+          className="user-profile-menu-item__icon"
         />
         <span className="user-profile-menu-item__label">
           {label}
