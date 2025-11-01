@@ -966,6 +966,44 @@ app.delete('/api/documents/:id', async (req, res) => {
     }
     // ========================================
 
+    // ========== Annual Report 파싱 데이터 삭제 ==========
+    if (document.is_annual_report) {
+      try {
+        console.log(`🗑️  [AR 삭제] Annual Report 문서 삭제 감지: file_id=${id}`);
+
+        // 1. 고객 ID 및 발행일 추출
+        const customerId = document.customer_relation?.customer_id;
+        const issueDate = document.ar_metadata?.issue_date;
+
+        if (!customerId) {
+          console.warn('⚠️ [AR 삭제] customer_id를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
+        } else if (!issueDate) {
+          console.warn('⚠️ [AR 삭제] issue_date를 찾을 수 없음 - AR 파싱 삭제 건너뜀');
+        } else {
+          // 2. 해당 고객의 annual_reports에서 동일한 발행일을 가진 모든 항목 제거
+          console.log(`🗓️  [AR 삭제] 발행일: ${issueDate} - 동일 발행일의 모든 AR 파싱 삭제`);
+
+          const arDeleteResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+            { '_id': customerId },
+            {
+              $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+              $set: { 'meta.updated_at': utcNowDate() }
+            }
+          );
+
+          if (arDeleteResult.modifiedCount > 0) {
+            console.log(`✅ [AR 삭제] AR 파싱 데이터 삭제 완료: customer_id=${customerId}, issue_date=${issueDate}`);
+          } else {
+            console.log(`ℹ️  [AR 삭제] 삭제할 AR 파싱 데이터 없음 (issue_date로 매칭 실패)`);
+          }
+        }
+      } catch (arError) {
+        console.warn('⚠️ [AR 삭제] AR 파싱 데이터 삭제 실패:', arError.message);
+        // AR 삭제 실패해도 문서 삭제는 진행
+      }
+    }
+    // ===================================================
+
     // 파일 시스템에서 파일 삭제
     const fs = require('fs').promises;
     if (document.upload?.destPath) {
