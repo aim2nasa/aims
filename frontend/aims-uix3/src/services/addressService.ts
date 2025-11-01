@@ -10,6 +10,7 @@
  */
 
 import type { AddressHistoryItem } from '@/entities/customer/model';
+import { formatDateTime } from '@/shared/lib/timeUtils';
 
 /**
  * API 기본 URL
@@ -99,20 +100,7 @@ export class AddressService {
    */
   static formatDate(dateString: string): string {
     try {
-      const date = new Date(dateString);
-
-      const dateStr = date.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-      });
-
-      const timeStr = date.toLocaleTimeString('ko-KR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-
-      return `${dateStr} ${timeStr}`;
+      return formatDateTime(dateString);
     } catch (error) {
       console.error('[AddressService] 날짜 포맷팅 실패:', error);
       return dateString;

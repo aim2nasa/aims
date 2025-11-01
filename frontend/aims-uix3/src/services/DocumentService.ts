@@ -8,6 +8,7 @@
  */
 
 import { api } from '@/shared/lib/api';
+import { utcNowISO } from '@/shared/lib/timeUtils';
 import {
   Document,
   CreateDocumentData,
@@ -171,7 +172,7 @@ export class DocumentService {
       const uploadTimeRaw =
         toString(record['uploadTime']) ??
         toString(record['uploaded_at']) ??
-        new Date().toISOString();
+        utcNowISO();
       const uploadDate = uploadTimeRaw.includes('xxx')
         ? uploadTimeRaw.replace('xxx', '000Z')
         : uploadTimeRaw;

@@ -1,5 +1,5 @@
 import pathlib
-from datetime import datetime
+from datetime import datetime, timezone
 from src.shared.mime_utils import get_mime_type
 from src.shared.exif_utils import extract_exif
 from src.shared.pdf_utils import get_pdf_page_count
@@ -28,7 +28,7 @@ def get_file_metadata(file_path: str):
         "mime": mime_type,
         "extension": path.suffix,
         "size_bytes": stat.st_size,
-        "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+        "created_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
         "status": "ok",
         "exif": {},
         "pdf_pages": None

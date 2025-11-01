@@ -216,21 +216,20 @@ describe('AddressService', () => {
       expect(result).toMatch(/\d{4}\.\s\d{1,2}\.\s\d{1,2}\.\s오[전후]\s\d{1,2}:\d{2}/);
     });
 
-    it('잘못된 날짜 문자열의 경우 "Invalid Date" 문자열을 포함해야 함', () => {
+    it('잘못된 날짜 문자열의 경우 "잘못된 시간"을 반환해야 함', () => {
       const dateString = 'invalid-date';
       const result = AddressService.formatDate(dateString);
 
-      // Date 생성자는 예외를 던지지 않고 Invalid Date를 만듦
-      // toLocaleDateString/toLocaleTimeString이 "Invalid Date"를 반환
-      expect(result).toContain('Invalid Date');
+      // formatDateTime() 유틸리티는 잘못된 날짜에 대해 "잘못된 시간"을 반환
+      expect(result).toBe('잘못된 시간');
     });
 
-    it('빈 문자열의 경우 "Invalid Date" 문자열을 포함해야 함', () => {
+    it('빈 문자열의 경우 "-"를 반환해야 함', () => {
       const dateString = '';
       const result = AddressService.formatDate(dateString);
 
-      // 빈 문자열도 Invalid Date로 처리됨
-      expect(result).toContain('Invalid Date');
+      // formatDateTime() 유틸리티는 빈 문자열에 대해 "-"를 반환
+      expect(result).toBe('-');
     });
   });
 });
