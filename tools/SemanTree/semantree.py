@@ -20,7 +20,7 @@ from tkinter import ttk, scrolledtext, messagebox
 
 # Qdrant 클라이언트 import (선택적)
 try:
-    from qdrant_client import QdrantClient
+    from qdrant_client import QdrantClient, models
     from qdrant_client.models import Distance, VectorParams
     QDRANT_AVAILABLE = True
 except ImportError:
@@ -112,7 +112,7 @@ class QdrantConnection:
                     print("SSH tunnel failed, trying direct connection...")
 
             # Qdrant 연결
-            self.client = QdrantClient(host=self.host, port=self.port, timeout=5.0)
+            self.client = QdrantClient(host=self.host, port=self.port, timeout=5.0, check_compatibility=False)
             # 연결 테스트
             self.client.get_collections()
             return True
@@ -154,6 +154,26 @@ class QdrantConnection:
                 print(f"Failed to get collection info: {e}")
                 return None
         return None
+
+    def clear_collection(self, collection_name: str) -> bool:
+        """특정 컬렉션의 모든 포인트 삭제 후 재생성"""
+        if self.client is not None:
+            try:
+                # 컬렉션 삭제
+                self.client.delete_collection(collection_name=collection_name)
+                print(f"Qdrant {collection_name} 컬렉션 삭제됨")
+
+                # 컬렉션 재생성 (docembed 기본 설정)
+                self.client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE),
+                )
+                print(f"Qdrant {collection_name} 컬렉션 재생성됨")
+                return True
+            except Exception as e:
+                print(f"Failed to clear Qdrant collection: {e}")
+                return False
+        return False
 
     def scroll_points(self, collection_name: str, limit: int = 100, offset: Optional[str] = None):
         """컬렉션의 포인트들을 스크롤 조회"""
@@ -256,6 +276,19 @@ class MongoDBConnection:
         if self.db is not None:
             return self.db.files
         return None
+
+    def clear_collection(self, db_name: str, collection_name: str) -> bool:
+        """특정 컬렉션의 모든 문서 삭제"""
+        if self.client is not None:
+            try:
+                target_db = self.client[db_name]
+                result = target_db[collection_name].delete_many({})
+                print(f"MongoDB {db_name}.{collection_name}: {result.deleted_count}개 문서 삭제됨")
+                return True
+            except Exception as e:
+                print(f"Failed to clear collection: {e}")
+                return False
+        return False
 
 
 class DocumentViewer:
@@ -514,6 +547,9 @@ class DocumentViewer:
         # 패턴 기반 문서 삭제 버튼 (모든 컬렉션에서 사용 가능)
         ttk.Button(collection_row, text="🗑️ 패턴 삭제", command=self.delete_by_pattern).pack(side=tk.LEFT, padx=10)
 
+        # MongoDB 컬렉션 초기화 버튼
+        ttk.Button(collection_row, text="🔥 초기화", command=self.clear_mongodb_collection).pack(side=tk.LEFT, padx=10)
+
         # Raw 데이터 네비게이션 프레임
         raw_nav_frame = ttk.Frame(raw_data_tab, padding="10")
         raw_nav_frame.pack(fill=tk.X)
@@ -593,6 +629,9 @@ class DocumentViewer:
             # 포인트 개수 표시
             self.qdrant_count_label = ttk.Label(qdrant_coll_row, text="포인트: 0개", font=("Arial", 10))
             self.qdrant_count_label.pack(side=tk.LEFT, padx=10)
+
+            # Qdrant 컬렉션 초기화 버튼
+            ttk.Button(qdrant_coll_row, text="🔥 초기화", command=self.clear_qdrant_collection).pack(side=tk.LEFT, padx=10)
 
             # Qdrant 데이터 네비게이션 프레임
             qdrant_nav_frame = ttk.Frame(qdrant_tab, padding="10")
@@ -2025,6 +2064,83 @@ class DocumentViewer:
             messagebox.showinfo("복사 완료", "Qdrant 데이터가 클립보드에 복사되었습니다.")
         except Exception as e:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
+
+    def clear_qdrant_collection(self):
+        """현재 선택된 Qdrant 컬렉션 초기화"""
+        if not QDRANT_AVAILABLE or not self.qdrant:
+            messagebox.showerror("오류", "Qdrant가 사용 불가능합니다.")
+            return
+
+        selected_collection = self.current_qdrant_collection.get()
+
+        if not selected_collection:
+            messagebox.showwarning("선택 오류", "초기화할 Collection을 선택해주세요.")
+            return
+
+        # 확인 다이얼로그
+        response = messagebox.askyesno(
+            "초기화 확인",
+            f"Qdrant '{selected_collection}' 컬렉션을 초기화하시겠습니까?\n\n"
+            f"⚠️ 모든 포인트가 삭제되고 컬렉션이 재생성됩니다!\n"
+            f"⚠️ 이 작업은 되돌릴 수 없습니다!",
+            icon='warning'
+        )
+
+        if not response:
+            return
+
+        try:
+            # 컬렉션 초기화
+            if self.qdrant.clear_collection(selected_collection):
+                messagebox.showinfo("초기화 완료", f"'{selected_collection}' 컬렉션이 초기화되었습니다.")
+                # 데이터 다시 로드
+                self.qdrant_points = []
+                self.current_qdrant_index = 0
+                self.update_qdrant_viewer()
+                self.qdrant_count_label.config(text="포인트: 0개")
+            else:
+                messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
+
+        except Exception as e:
+            messagebox.showerror("초기화 실패", f"컬렉션 초기화 실패:\n{e}")
+
+    # ========== MongoDB 컬렉션 초기화 메서드 ==========
+
+    def clear_mongodb_collection(self):
+        """현재 선택된 MongoDB 컬렉션 초기화"""
+        selected_db = self.current_db.get()
+        selected_collection = self.current_collection.get()
+
+        if not selected_db or not selected_collection:
+            messagebox.showwarning("선택 오류", "초기화할 DB와 Collection을 선택해주세요.")
+            return
+
+        # 확인 다이얼로그
+        response = messagebox.askyesno(
+            "초기화 확인",
+            f"MongoDB '{selected_db}.{selected_collection}' 컬렉션을 초기화하시겠습니까?\n\n"
+            f"⚠️ 모든 문서가 삭제됩니다!\n"
+            f"⚠️ 이 작업은 되돌릴 수 없습니다!",
+            icon='warning'
+        )
+
+        if not response:
+            return
+
+        try:
+            # 컬렉션 초기화
+            if self.mongo.clear_collection(selected_db, selected_collection):
+                messagebox.showinfo("초기화 완료", f"'{selected_db}.{selected_collection}' 컬렉션이 초기화되었습니다.")
+                # 데이터 다시 로드
+                self.raw_documents = []
+                self.current_raw_index = 0
+                self.update_raw_viewer()
+                self.raw_count_label.config(text="문서: 0개")
+            else:
+                messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
+
+        except Exception as e:
+            messagebox.showerror("초기화 실패", f"컬렉션 초기화 실패:\n{e}")
 
     def on_closing(self):
         """애플리케이션 종료"""
