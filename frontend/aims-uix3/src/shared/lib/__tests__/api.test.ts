@@ -419,6 +419,117 @@ describe('apiRequest', () => {
       );
     });
   });
+
+  describe('사용자 격리 (x-user-id 헤더)', () => {
+    // Mock localStorage
+    const localStorageMock = (() => {
+      let store: Record<string, string> = {};
+      return {
+        getItem: (key: string) => store[key] || null,
+        setItem: (key: string, value: string) => {
+          store[key] = value;
+        },
+        clear: () => {
+          store = {};
+        },
+      };
+    })();
+
+    beforeEach(() => {
+      localStorageMock.clear();
+      global.localStorage = localStorageMock as Storage;
+
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({})
+      } as Response);
+    });
+
+    it('localStorage에서 사용자 ID를 읽어 x-user-id 헤더에 추가해야 함', async () => {
+      localStorage.setItem('aims-current-user-id', 'user123');
+
+      await apiRequest('/test');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-user-id': 'user123'
+          })
+        })
+      );
+    });
+
+    it('localStorage에 사용자 ID가 없으면 "tester"를 기본값으로 사용해야 함', async () => {
+      // localStorage에 사용자 ID 없음
+
+      await apiRequest('/test');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-user-id': 'tester'
+          })
+        })
+      );
+    });
+
+    it('모든 HTTP 메서드에서 x-user-id 헤더가 일관되게 추가되어야 함', async () => {
+      localStorage.setItem('aims-current-user-id', 'agent007');
+
+      // GET
+      await api.get('/test');
+      expect(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'agent007'
+      });
+
+      // POST
+      await api.post('/test', { data: 'value' });
+      expect(vi.mocked(global.fetch).mock.calls[1]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'agent007'
+      });
+
+      // PUT
+      await api.put('/test', { data: 'value' });
+      expect(vi.mocked(global.fetch).mock.calls[2]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'agent007'
+      });
+
+      // PATCH
+      await api.patch('/test', { data: 'value' });
+      expect(vi.mocked(global.fetch).mock.calls[3]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'agent007'
+      });
+
+      // DELETE
+      await api.delete('/test');
+      expect(vi.mocked(global.fetch).mock.calls[4]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'agent007'
+      });
+    });
+
+    it('사용자 ID가 변경되면 새로운 ID가 헤더에 반영되어야 함', async () => {
+      // 첫 번째 사용자
+      localStorage.setItem('aims-current-user-id', 'user1');
+      await apiRequest('/test');
+
+      expect(vi.mocked(global.fetch).mock.calls[0]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'user1'
+      });
+
+      // 사용자 전환
+      localStorage.setItem('aims-current-user-id', 'user2');
+      await apiRequest('/test');
+
+      expect(vi.mocked(global.fetch).mock.calls[1]?.[1]?.headers).toMatchObject({
+        'x-user-id': 'user2'
+      });
+    });
+  });
 });
 
 describe('api 편의 함수', () => {
