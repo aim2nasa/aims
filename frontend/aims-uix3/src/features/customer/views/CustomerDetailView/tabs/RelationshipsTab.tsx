@@ -176,6 +176,10 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
     return null;
   };
 
+  // 법인 고객 여부 확인
+  const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
+  const deleteHeaderLabel = isBusinessCustomer ? '관계 삭제' : '가족 삭제';
+
   return (
     <div className="form-section">
       <div className="form-section__content">
@@ -189,7 +193,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                   <th>관계 유형</th>
                   <th>관련 고객</th>
                   <th>등록일</th>
-                  <th className="relationships-table__delete-header">가족 삭제</th>
+                  <th className="relationships-table__delete-header">{deleteHeaderLabel}</th>
                 </tr>
               </thead>
               <tbody>

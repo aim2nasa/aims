@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import BaseViewer from '../../../../components/BaseViewer/BaseViewer';
 import CustomerEditModal from '../CustomerEditModal';
 import FamilyRelationshipModal from '../../components/FamilyRelationshipModal';
+import CorporateRelationshipModal from '../../components/CorporateRelationshipModal';
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Button } from '../../../../shared/ui/Button';
@@ -49,6 +50,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 }) => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
+  const [isCorporateModalVisible, setIsCorporateModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
 
   // URL에서 활성 탭 복원 (초기 마운트 시에만)
@@ -235,6 +237,13 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     onRefresh?.();
   }, [onRefresh]);
 
+  const handleCorporateRelationshipSuccess = useCallback(() => {
+    if (import.meta.env.DEV) {
+      console.log('[CustomerDetailView] 법인 관계자 추가 완료 - Document가 자동으로 모든 View 업데이트함');
+    }
+    onRefresh?.();
+  }, [onRefresh]);
+
   // 개인 고객인지 확인 (더 이상 사용하지 않음 - canAddFamilyRelation으로 대체)
   // const isPersonalCustomer = customer.insurance_info?.customer_type === '개인';
 
@@ -271,7 +280,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   // 법인 고객 여부 확인
   const isBusinessCustomer = customer.insurance_info?.customer_type === '법인';
 
-  // 🍎 탭 정의 (순서: 기본정보, 가족관계(개인만), 문서, Annual Report)
+  // 🍎 탭 정의 (순서: 기본정보, 가족관계(개인만)/관계인(법인만), 문서, Annual Report)
   const tabs: Tab[] = useMemo(() => {
     const baseTabs: Tab[] = [
       {
@@ -283,7 +292,34 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
           </svg>
         )
-      },
+      }
+    ];
+
+    // 관계 탭 추가 (개인: 가족 관계, 법인: 관계인)
+    if (isBusinessCustomer) {
+      baseTabs.push({
+        key: 'relationships',
+        label: '관계인',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
+          </svg>
+        )
+      });
+    } else {
+      baseTabs.push({
+        key: 'relationships',
+        label: '가족 관계',
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
+          </svg>
+        )
+      });
+    }
+
+    // 문서, Annual Report 탭 추가
+    baseTabs.push(
       {
         key: 'documents',
         label: '문서',
@@ -318,21 +354,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           </svg>
         )
       }
-    ]
+    );
 
-    if (!isBusinessCustomer) {
-      baseTabs.splice(1, 0, {
-        key: 'relationships',
-        label: '가족 관계',
-        icon: (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
-          </svg>
-        )
-      })
-    }
-
-    return baseTabs
+    return baseTabs;
   }, [isBusinessCustomer, documentCount]);
 
   // 🍎 탭 내용 렌더링
@@ -388,6 +412,17 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 가족 추가
               </Button>
             )}
+            {isBusinessCustomer && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsCorporateModalVisible(true)}
+                title="법인 관계자를 추가합니다"
+                leftIcon={<span>👤</span>}
+              >
+                관계자 추가
+              </Button>
+            )}
             <Button
               variant="primary"
               size="sm"
@@ -436,6 +471,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         onCancel={() => setIsFamilyModalVisible(false)}
         customerId={customer._id}
         onSuccess={handleFamilyRelationshipSuccess}
+      />
+
+      {/* 법인 관계자 추가 모달 */}
+      <CorporateRelationshipModal
+        visible={isCorporateModalVisible}
+        onCancel={() => setIsCorporateModalVisible(false)}
+        customerId={customer._id}
+        onSuccess={handleCorporateRelationshipSuccess}
       />
 
       {/* 🍎 애플 스타일 확인 모달 */}
