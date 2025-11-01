@@ -205,17 +205,17 @@ export class SearchService {
    */
   static getSummary(item: SearchResultItem): string {
     // 1. meta.summary
-    if (item.meta?.summary) {
+    if (item.meta?.summary && item.meta.summary !== 'null' && item.meta.summary.trim() !== '') {
       return item.meta.summary
     }
 
     // 2. ocr.summary
-    if (item.ocr?.summary) {
+    if (item.ocr?.summary && item.ocr.summary !== 'null' && item.ocr.summary.trim() !== '') {
       return item.ocr.summary
     }
 
     // 3. docsum.summary
-    if ('docsum' in item && item.docsum?.summary) {
+    if ('docsum' in item && item.docsum?.summary && item.docsum.summary !== 'null' && item.docsum.summary.trim() !== '') {
       return item.docsum.summary
     }
 
