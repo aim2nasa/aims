@@ -754,7 +754,7 @@
             {
               "id": "6fdd4a23-d873-4efc-b11a-511d9bfeb80f",
               "name": "queued_at",
-              "value": "={{ $now }}",
+              "value": "={{ $now.toISO() }}",
               "type": "string"
             }
           ]
@@ -868,7 +868,7 @@
             {
               "id": "88a07c8b-7ce0-461c-9f89-c3a3746fe405",
               "name": "upload.uploaded_at",
-              "value": "={{ $now.format('yyyy-MM-dd\\'T\\'HH:mm:ss.SSSxxx') }}",
+              "value": "={{ $now.toISO() }}",
               "type": "string"
             },
             {
