@@ -11,6 +11,15 @@ import json
 import asyncio
 import threading
 from concurrent.futures import ThreadPoolExecutor
+import sys
+from pathlib import Path as FilePath
+
+# AIMS 프로젝트 루트를 Python 경로에 추가
+project_root = FilePath(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from src.shared.time_utils import utc_now_iso
+from datetime import timezone
 
 app = FastAPI(title="Document Status API", version="1.0.0")
 
@@ -132,7 +141,7 @@ def start_change_stream_monitor():
                                     "uploaded_at": document.get('upload', {}).get('uploaded_at') or 
                                                   document.get('uploaded_at'),
                                     "operation_type": operation_type,
-                                    "timestamp": datetime.utcnow().isoformat()
+                                    "timestamp": utc_now_iso()
                                 }
                             }
                             
@@ -240,7 +249,7 @@ def get_overall_status(doc: Dict) -> tuple[str, int]:
                         meta_time = meta_created_at
 
                     # 현재 시간과 비교
-                    current_time = datetime.utcnow()
+                    current_time = datetime.now(timezone.utc)
                     time_diff = current_time - meta_time.replace(tzinfo=None)
 
                     # 5분 이상 pending이면 타임아웃
@@ -550,7 +559,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "data": {
                     "documents": results,
                     "total": len(results),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": utc_now_iso()
                 }
             }))
             print(f"Sent initial data with {len(results)} documents")
@@ -563,14 +572,14 @@ async def websocket_endpoint(websocket: WebSocket):
                         if websocket.client_state.name == 'CONNECTED':
                             await websocket.send_text(json.dumps({
                                 "type": "ping",
-                                "timestamp": datetime.utcnow().isoformat()
+                                "timestamp": utc_now_iso()
                             }))
                     except Exception as e:
                         print(f"Ping error: {e}")
                         break
             
             async def update_task_func():
-                last_check_time = datetime.utcnow()
+                last_check_time = datetime.now(timezone.utc)
                 last_document_count = None  # 이전 문서 수 추적
                 
                 while websocket.client_state.name == 'CONNECTED':
@@ -580,7 +589,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         if websocket.client_state.name != 'CONNECTED':
                             break
                             
-                        current_time = datetime.utcnow()
+                        current_time = datetime.now(timezone.utc)
                         
                         # 전체 문서 수 확인 (빠른 카운트)
                         total_documents = collection.count_documents({})
@@ -718,7 +727,7 @@ async def websocket_stats():
     """WebSocket 연결 통계"""
     return {
         "active_connections": len(manager.active_connections),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": utc_now_iso()
     }
 
 
@@ -797,7 +806,7 @@ async def delete_documents(
                     {"documents.document_id": obj_id},
                     {
                         "$pull": {"documents": {"document_id": obj_id}},
-                        "$set": {"meta.updated_at": datetime.utcnow()}
+                        "$set": {"meta.updated_at": datetime.now(timezone.utc)}
                     }
                 )
                 if customers_update_result.modified_count > 0:
@@ -836,7 +845,7 @@ async def delete_documents(
                                 "$pull": {
                                     "annual_reports": {"issue_date": issue_date_obj}
                                 },
-                                "$set": {"meta.updated_at": datetime.utcnow()}
+                                "$set": {"meta.updated_at": datetime.now(timezone.utc)}
                             }
                         )
 
@@ -875,7 +884,7 @@ async def delete_documents(
                     "type": "document_deleted",
                     "data": {
                         "id": doc_id,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": utc_now_iso()
                     }
                 })
             else:

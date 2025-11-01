@@ -7,6 +7,7 @@ const axios = require('axios');
 const multer = require('multer');
 const FormData = require('form-data');
 const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
+const { utcNowISO, utcNowDate } = require('./lib/timeUtils');
 
 const app = express();
 app.use(cors());
@@ -36,7 +37,7 @@ function escapeRegex(str) {
 
 // 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
 app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
+  const timestamp = utcNowISO();
   const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
   
   console.log(`\n======================================`);
@@ -114,7 +115,7 @@ const registerFallbackHandlers = () => {
         'PUT /api/customers/:id',
         'DELETE /api/customers/:id'
       ],
-      timestamp: new Date().toISOString()
+      timestamp: utcNowISO()
     });
   });
 
@@ -124,7 +125,7 @@ const registerFallbackHandlers = () => {
       success: false,
       error: '내부 서버 오류가 발생했습니다.',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: utcNowISO()
     });
   });
 };
@@ -538,7 +539,7 @@ app.get('/api/documents/status', async (req, res) => {
             {
               $set: {
                 overallStatus: newStatus,
-                overallStatusUpdatedAt: new Date()
+                overallStatusUpdatedAt: utcNowDate()
               }
             }
           );
@@ -680,7 +681,7 @@ app.get('/webhook/get-status/:document_id', async (req, res) => {
       overall_status: statusInfo.overallStatus,
       progress_percentage: statusInfo.progress,
       stages: Object.values(statusInfo.stages),
-      last_updated: new Date().toISOString()
+      last_updated: utcNowISO()
     });
   } catch (error) {
     console.error('문서 상태 조회 오류:', error);
@@ -775,7 +776,7 @@ app.post('/api/documents/:id/retry', async (req, res) => {
         $unset: { 'ocr.status': '', 'ocr.error': '', 'ocr.failed_at': '' },
         $set: {
           'ocr.queue': true,
-          'ocr.queue_at': new Date().toISOString()
+          'ocr.queue_at': utcNowISO()
         }
       };
       
@@ -953,7 +954,7 @@ app.delete('/api/documents/:id', async (req, res) => {
         { 'documents.document_id': new ObjectId(id) },
         {
           $pull: { documents: { document_id: new ObjectId(id) } },
-          $set: { 'meta.updated_at': new Date() }
+          $set: { 'meta.updated_at': utcNowDate() }
         }
       );
       if (customersUpdateResult.modifiedCount > 0) {
@@ -1061,7 +1062,7 @@ app.get('/api/health', async (req, res) => {
     res.json({
       success: true,
       message: 'API 서버가 정상적으로 작동 중입니다.',
-      timestamp: new Date().toISOString(),
+      timestamp: utcNowISO(),
       database: 'connected'
     });
   } catch (error) {
@@ -1328,8 +1329,8 @@ app.post('/api/customers', async (req, res) => {
         name: uniqueName
       },
       meta: {
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: utcNowDate(),
+        updated_at: utcNowDate(),
         created_by: userId,
         last_modified_by: userId,
         status: 'active',
@@ -1443,7 +1444,7 @@ app.put('/api/customers/:id', async (req, res) => {
         const historyRecord = {
           customer_id: new ObjectId(id),
           address: oldAddress,
-          changed_at: new Date(),
+          changed_at: utcNowDate(),
           reason: updateData.address_change_reason || '고객 요청',
           changed_by: updateData.modified_by || '시스템',
           notes: updateData.address_change_notes || ''
@@ -1457,7 +1458,7 @@ app.put('/api/customers/:id', async (req, res) => {
     // 기존 고객 정보 업데이트 로직
     const updateFields = {
       ...updateData,
-      'meta.updated_at': new Date(),
+      'meta.updated_at': utcNowDate(),
       'meta.last_modified_by': updateData.modified_by || null
     };
 
@@ -1706,7 +1707,7 @@ app.post('/api/customers/:id/documents', async (req, res) => {
     const documentLink = {
       document_id: new ObjectId(document_id),
       relationship: relationship_type || 'general',
-      upload_date: new Date(),
+      upload_date: utcNowDate(),
       notes: notes || ''
     };
 
@@ -1714,7 +1715,7 @@ app.post('/api/customers/:id/documents', async (req, res) => {
       { _id: new ObjectId(id) },
       { 
         $push: { documents: documentLink },
-        $set: { 'meta.updated_at': new Date() }
+        $set: { 'meta.updated_at': utcNowDate() }
       }
     );
 
@@ -1727,7 +1728,7 @@ app.post('/api/customers/:id/documents', async (req, res) => {
             customer_id: new ObjectId(id),
             relationship_type: relationship_type || 'general',
             assigned_by: assigned_by ? new ObjectId(assigned_by) : null,
-            assigned_at: new Date(),
+            assigned_at: utcNowDate(),
             notes: notes || ''
           }
         }
@@ -1789,7 +1790,7 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
       { _id: new ObjectId(id) },
       { 
         $pull: { documents: { document_id: new ObjectId(document_id) } },
-        $set: { 'meta.updated_at': new Date() }
+        $set: { 'meta.updated_at': utcNowDate() }
       }
     );
 
@@ -1918,7 +1919,7 @@ app.get('/api/address/test', async (req, res) => {
     success: true,
     message: '테스트 엔드포인트가 정상적으로 작동합니다!',
     query: req.query,
-    timestamp: new Date().toISOString()
+    timestamp: utcNowISO()
   });
 });
 
@@ -2659,7 +2660,7 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
     const historyRecord = {
       customer_id: new ObjectId(id),
       address: previous_address,
-      changed_at: new Date(),
+      changed_at: utcNowDate(),
       reason: reason || '주소 변경',
       changed_by: changed_by || '시스템',
       notes: notes || ''
@@ -2704,7 +2705,7 @@ const PORT = process.env.PORT || 3010;
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n🚀🚀🚀 ================================');
   console.log(`🚀 문서 상태 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
-  console.log(`🚀 서버 시간: ${new Date().toISOString()}`);
+  console.log(`🚀 서버 시간: ${utcNowISO()}`);
   console.log(`🚀 바인딩: 0.0.0.0:${PORT} (모든 네트워크 인터페이스)`);
   console.log('🚀🚀🚀 ================================\n');
 

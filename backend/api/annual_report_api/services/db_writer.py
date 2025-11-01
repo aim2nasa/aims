@@ -3,10 +3,18 @@ MongoDB에 Annual Report 저장
 customers 컬렉션의 annual_reports 배열에 추가
 """
 import logging
+import sys
+from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
 from bson import ObjectId
 from pymongo.errors import PyMongoError
+
+# AIMS 프로젝트 루트를 Python 경로에 추가
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from src.shared.time_utils import utc_now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +122,8 @@ def save_annual_report(
             "total_contracts": total_contracts,
 
             # 타임스탬프
-            "uploaded_at": datetime.now(),
-            "parsed_at": datetime.now(),
+            "uploaded_at": utc_now_iso(),
+            "parsed_at": utc_now_iso(),
         }
 
         # 원본 파일 ID 추가 (있는 경우)
