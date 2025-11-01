@@ -1089,13 +1089,20 @@ app.get('/api/users', async (req, res) => {
       .sort({ _id: 1 })
       .toArray();
 
+    // 사용자별 귀여운 아바타 매핑
+    const avatarMap = {
+      'tester': 'https://api.dicebear.com/7.x/bottts/svg?seed=tester&backgroundColor=b6e3f4',
+      'user2': 'https://api.dicebear.com/7.x/croodles/svg?seed=user2&backgroundColor=ffdfbf'
+    };
+
     res.json({
       success: true,
       data: users.map(user => ({
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatarUrl: avatarMap[user._id] || user.avatarUrl
       }))
     });
   } catch (error) {
