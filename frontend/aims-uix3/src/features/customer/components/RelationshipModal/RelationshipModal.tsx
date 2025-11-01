@@ -105,23 +105,33 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
       const { relationships } = allData;
       const relatedCustomers = new Set<string>();
 
-      // 해당 카테고리의 관계만 필터링
+      // 현재 고객(customerId)과 이미 관계를 맺은 고객들을 찾음
       relationships.forEach(relationship => {
         const category = relationship.relationship_info.relationship_category;
         const fromCustomer = relationship.from_customer;
         const toCustomer = relationship.related_customer;
 
-        if (category === relationshipCategory &&
-            typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === filterCustomerType &&
-            typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === filterCustomerType) {
+        // 현재 카테고리의 관계만 확인
+        if (category !== relationshipCategory) {
+          return;
+        }
 
-          relatedCustomers.add(fromCustomer._id);
-          relatedCustomers.add(toCustomer._id);
+        // 현재 고객(customerId)이 from_customer인 경우
+        if (typeof fromCustomer === 'object' && fromCustomer?._id === customerId) {
+          // 관련된 고객(to_customer)가 필터 타입과 일치하면 제외 대상
+          if (typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === filterCustomerType) {
+            relatedCustomers.add(toCustomer._id);
+          }
+        }
+
+        // 현재 고객(customerId)이 to_customer인 경우 (역방향 관계)
+        if (typeof toCustomer === 'object' && toCustomer?._id === customerId) {
+          // 관련된 고객(from_customer)가 필터 타입과 일치하면 제외 대상
+          if (typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === filterCustomerType) {
+            relatedCustomers.add(fromCustomer._id);
+          }
         }
       });
-
-      // 현재 고객 제외
-      relatedCustomers.delete(customerId);
 
       setAlreadyRelatedCustomers(relatedCustomers);
     } catch (error) {
