@@ -16,6 +16,7 @@ import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/S
 import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
 import { AnnualReportApi } from '../../api/annualReportApi';
+import { formatDateTime } from '@/shared/lib/timeUtils';
 import './AnnualReportModal.css';
 
 /**
@@ -397,7 +398,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
         {/* Footer Info */}
         <div className="annual-report-modal__footer">
           <span className="annual-report-modal__footer-text">
-            생성일: {new Date(report.created_at).toLocaleString('ko-KR')}
+            생성일: {formatDateTime(report.created_at)}
           </span>
         </div>
       </>

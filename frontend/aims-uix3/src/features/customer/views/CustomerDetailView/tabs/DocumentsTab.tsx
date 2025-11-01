@@ -18,6 +18,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
+import { formatDateTime } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
@@ -32,14 +33,6 @@ interface DocumentsTabProps {
   onRefresh?: () => void
   onDocumentCountChange?: (count: number) => void
 }
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit'
-})
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
   contract: '계약서',
@@ -207,7 +200,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   }
 
   const lastUpdatedLabel = lastUpdated
-    ? DATE_FORMATTER.format(new Date(lastUpdated))
+    ? formatDateTime(new Date(lastUpdated).toISOString())
     : null
 
   return (
@@ -251,7 +244,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               {documents.map((document) => {
                 const status = (document.status ?? (document as { overallStatus?: string }).overallStatus ?? 'linked') as string
                 const linkedAt = document.linkedAt ?? document.uploadedAt ?? null
-                const formattedDate = linkedAt ? DATE_FORMATTER.format(new Date(linkedAt)) : '-'
+                const formattedDate = formatDateTime(linkedAt)
                 const sizeLabel = document.fileSize ? DocumentUtils.formatFileSize(document.fileSize) : undefined
 
                 return (

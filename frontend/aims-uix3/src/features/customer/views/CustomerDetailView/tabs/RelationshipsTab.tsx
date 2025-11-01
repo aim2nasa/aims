@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerRelationshipsController } from '@/controllers/useCustomerRelationshipsController';
 import type { Relationship } from '@/services/relationshipService';
+import { formatDateTime } from '@/shared/lib/timeUtils';
 import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
@@ -35,12 +36,6 @@ interface RelationshipsTabProps {
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   onRelationshipsUpdated?: () => void;
 }
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
 
 export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   customer,
@@ -104,7 +99,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       const relationshipType = relationship.relationship_info?.relationship_type ?? '';
       const createdAt =
         relationship.meta?.created_at ?? relationship.created_at ?? '';
-      const createdAtLabel = createdAt ? DATE_FORMATTER.format(new Date(createdAt)) : '-';
+      const createdAtLabel = formatDateTime(createdAt);
 
       // 관계별 보기와 동일한 이모지 아이콘 사용
       const getRelationIcon = (type: string) => {

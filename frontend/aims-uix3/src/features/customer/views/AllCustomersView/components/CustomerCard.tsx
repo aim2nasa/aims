@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Customer, CustomerUtils, CustomerTypeUtils } from '@/entities/customer/model';
+import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerCard.css';
 
 interface CustomerCardProps {
@@ -58,7 +59,7 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onClick })
       {/* Meta Info */}
       <div className="customer-card__meta">
         <span className="customer-card__date">
-          {new Date(customer.meta?.created_at || '').toLocaleDateString('ko-KR')} 등록
+          {formatDate(customer.meta?.created_at)} 등록
         </span>
         {customer.personal_info?.birth_date && (
           <span className="customer-card__age">
