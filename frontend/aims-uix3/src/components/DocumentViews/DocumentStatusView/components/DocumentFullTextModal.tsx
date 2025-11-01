@@ -80,11 +80,30 @@ export const DocumentFullTextModal: React.FC<DocumentFullTextModalProps> = ({
 
         const responseData = await response.json()
 
-        // API 응답에서 full_text 추출: data.raw.meta.full_text
-        if (responseData.success && responseData.data?.raw?.meta?.full_text) {
-          setFullTextContent(responseData.data.raw.meta.full_text)
+        // API 응답에서 full_text 추출
+        // 우선순위: meta.full_text > ocr.full_text > text.full_text
+        const rawData = responseData.success ? responseData.data?.raw : null
+
+        if (rawData) {
+          // 1. meta.full_text 확인
+          if (rawData.meta?.full_text && rawData.meta.full_text.trim()) {
+            setFullTextContent(rawData.meta.full_text)
+          }
+          // 2. ocr.full_text 확인
+          else if (rawData.ocr?.full_text && rawData.ocr.full_text.trim()) {
+            setFullTextContent(rawData.ocr.full_text)
+          }
+          // 3. text.full_text 확인 (text/plain 파일용)
+          else if (rawData.text?.full_text && rawData.text.full_text.trim()) {
+            setFullTextContent(rawData.text.full_text)
+          }
+          else {
+            // API에서 full_text를 못 찾으면 로컬 데이터로 폴백
+            const fullText = getFullTextFromDocument(document)
+            setFullTextContent(fullText)
+          }
         } else {
-          // API에서 full_text를 못 찾으면 로컬 데이터로 폴백
+          // API 응답이 없으면 로컬 데이터로 폴백
           const fullText = getFullTextFromDocument(document)
           setFullTextContent(fullText)
         }

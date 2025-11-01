@@ -80,11 +80,36 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
 
         const responseData = await response.json()
 
-        // API 응답에서 summary 추출: data.raw.meta.summary
-        if (responseData.success && responseData.data?.raw?.meta?.summary) {
-          setSummaryContent(responseData.data.raw.meta.summary)
+        // API 응답에서 summary 추출
+        // 우선순위: meta.summary > meta.full_text(앞 200자) > ocr.summary > ocr.full_text(앞 200자)
+        const rawData = responseData.success ? responseData.data?.raw : null
+
+        if (rawData) {
+          // 1. meta.summary 확인
+          if (rawData.meta?.summary && rawData.meta.summary !== 'null') {
+            setSummaryContent(rawData.meta.summary)
+          }
+          // 2. meta.full_text가 있으면 앞 200자 사용
+          else if (rawData.meta?.full_text && rawData.meta.full_text.trim()) {
+            const cleanText = rawData.meta.full_text.trim()
+            setSummaryContent(cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText)
+          }
+          // 3. ocr.summary 확인
+          else if (rawData.ocr?.summary && rawData.ocr.summary !== 'null') {
+            setSummaryContent(rawData.ocr.summary)
+          }
+          // 4. ocr.full_text가 있으면 앞 200자 사용
+          else if (rawData.ocr?.full_text && rawData.ocr.full_text.trim()) {
+            const cleanText = rawData.ocr.full_text.trim()
+            setSummaryContent(cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText)
+          }
+          else {
+            // API에서 summary를 못 찾으면 로컬 데이터로 폴백
+            const summary = getSummaryFromDocument(document)
+            setSummaryContent(summary)
+          }
         } else {
-          // API에서 summary를 못 찾으면 로컬 데이터로 폴백
+          // API 응답이 없으면 로컬 데이터로 폴백
           const summary = getSummaryFromDocument(document)
           setSummaryContent(summary)
         }
