@@ -174,7 +174,8 @@ class DocumentStatus(BaseModel):
 
 def get_overall_status(doc: Dict) -> tuple[str, int]:
     """새로운 상태 코드 기준에 따른 전체 처리 상태와 진행률 계산"""
-    
+    from datetime import datetime, timedelta
+
     # 기본 정보 추출
     upload_info = doc.get('upload', {})
     meta_info = doc.get('meta', {})
@@ -226,8 +227,28 @@ def get_overall_status(doc: Dict) -> tuple[str, int]:
         
         # OCR 지원 MIME - OCR 상태 체크
         ocr_status = ocr_info.get('status', 'pending')
-        
+
         if ocr_status == 'pending':
+            # 타임아웃 체크: Meta 생성 후 5분 이상 경과 시 타임아웃으로 판단
+            meta_created_at = meta_info.get('created_at')
+            if meta_created_at:
+                try:
+                    # ISO 형식 datetime 파싱
+                    if isinstance(meta_created_at, str):
+                        meta_time = datetime.fromisoformat(meta_created_at.replace('Z', '+00:00'))
+                    else:
+                        meta_time = meta_created_at
+
+                    # 현재 시간과 비교
+                    current_time = datetime.utcnow()
+                    time_diff = current_time - meta_time.replace(tzinfo=None)
+
+                    # 5분 이상 pending이면 타임아웃
+                    if time_diff > timedelta(minutes=5):
+                        return 'timeout', 60  # 타임아웃 상태
+                except Exception as e:
+                    print(f"Error checking timeout: {e}")
+
             return 'processing', 50  # [U][Mx] OCR 대기
         elif ocr_status == 'queued':
             return 'processing', 60  # [U][Mx][Oq] OCR 큐 대기

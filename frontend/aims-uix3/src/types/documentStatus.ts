@@ -9,7 +9,7 @@
 /**
  * 문서 처리 상태
  */
-export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending'
+export type DocumentStatus = 'completed' | 'processing' | 'error' | 'pending' | 'timeout'
 
 /**
  * 처리 단계 상태

@@ -388,6 +388,11 @@ html[data-theme="dark"] .status-item--selected:hover {
   color: var(--color-warning);
 }
 
+.status-icon.status-timeout {
+  color: var(--color-error);
+  opacity: 0.7;
+}
+
 /* === 상태 텍스트 === */
 .status-text {
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */

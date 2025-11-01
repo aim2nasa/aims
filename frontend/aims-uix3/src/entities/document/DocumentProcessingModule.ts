@@ -394,6 +394,8 @@ export class DocumentProcessingModule {
         return '✗'
       case 'pending':
         return '○'
+      case 'timeout':
+        return '⏱'
       default:
         return '?'
     }
@@ -412,6 +414,8 @@ export class DocumentProcessingModule {
         return '오류'
       case 'pending':
         return '대기'
+      case 'timeout':
+        return '타임아웃'
       default:
         return '알 수 없음'
     }
