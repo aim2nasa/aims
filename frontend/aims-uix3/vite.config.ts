@@ -13,7 +13,24 @@ export default defineConfig({
         target: 'http://tars.giize.com:3010',
         changeOrigin: true
       }
+    },
+    // CSS HMR 개선 (아이콘 변경 즉시 반영)
+    hmr: {
+      overlay: true
+    },
+    // 파일 변경 감지 개선 (특히 WSL 환경)
+    watch: {
+      usePolling: true
     }
+  },
+  // CSS 소스맵 활성화 (디버깅 용이)
+  css: {
+    devSourcemap: true
+  },
+  // 빌드 설정
+  build: {
+    // CSS 코드 분할 비활성화 (개발 시 캐싱 문제 방지)
+    cssCodeSplit: false
   },
   test: {
     globals: true,
