@@ -242,9 +242,6 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
                     userInitial
                   )}
                 </div>
-                <span className="header-user-name">
-                  {userName}
-                </span>
               </div>
             );
           })()}
