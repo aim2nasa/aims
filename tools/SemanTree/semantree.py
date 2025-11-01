@@ -18,6 +18,15 @@ from pymongo import MongoClient
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
+# Qdrant 클라이언트 import (선택적)
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams
+    QDRANT_AVAILABLE = True
+except ImportError:
+    QDRANT_AVAILABLE = False
+    print("Warning: qdrant-client not installed. Qdrant features will be disabled.")
+
 
 class SSHTunnel:
     """SSH 터널 관리 클래스"""
@@ -78,6 +87,90 @@ class SSHTunnel:
                 self.process.kill()
             self.process = None
             self.is_connected = False
+
+
+class QdrantConnection:
+    """Qdrant 연결 관리 클래스"""
+
+    def __init__(self, host: str = "localhost", port: int = 6333):
+        self.host = host
+        self.port = port
+        self.client: Optional[QdrantClient] = None
+        self.ssh_tunnel: Optional[SSHTunnel] = None
+
+    def connect(self, use_ssh_tunnel: bool = True) -> bool:
+        """Qdrant 연결"""
+        if not QDRANT_AVAILABLE:
+            print("Qdrant client is not available")
+            return False
+
+        try:
+            # SSH 터널 시작
+            if use_ssh_tunnel:
+                self.ssh_tunnel = SSHTunnel(remote_port=6333, local_port=6333)
+                if not self.ssh_tunnel.start():
+                    print("SSH tunnel failed, trying direct connection...")
+
+            # Qdrant 연결
+            self.client = QdrantClient(host=self.host, port=self.port, timeout=5.0)
+            # 연결 테스트
+            self.client.get_collections()
+            return True
+        except Exception as e:
+            print(f"Qdrant connection failed: {e}")
+            return False
+
+    def disconnect(self):
+        """Qdrant 연결 종료"""
+        if self.client:
+            self.client.close()
+
+        # SSH 터널 종료
+        if self.ssh_tunnel:
+            self.ssh_tunnel.stop()
+
+    def get_collection_list(self) -> List[str]:
+        """Qdrant 컬렉션 목록 반환"""
+        if self.client is not None:
+            try:
+                collections = self.client.get_collections()
+                return sorted([c.name for c in collections.collections])
+            except Exception as e:
+                print(f"Failed to get collection list: {e}")
+                return []
+        return []
+
+    def get_collection_info(self, collection_name: str) -> Optional[Dict[str, Any]]:
+        """컬렉션 정보 반환"""
+        if self.client is not None:
+            try:
+                info = self.client.get_collection(collection_name)
+                return {
+                    "name": info.config.params.vectors,
+                    "count": info.points_count,
+                    "status": info.status
+                }
+            except Exception as e:
+                print(f"Failed to get collection info: {e}")
+                return None
+        return None
+
+    def scroll_points(self, collection_name: str, limit: int = 100, offset: Optional[str] = None):
+        """컬렉션의 포인트들을 스크롤 조회"""
+        if self.client is not None:
+            try:
+                points, next_offset = self.client.scroll(
+                    collection_name=collection_name,
+                    limit=limit,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=True
+                )
+                return points, next_offset
+            except Exception as e:
+                print(f"Failed to scroll points: {e}")
+                return None, None
+        return None, None
 
 
 class MongoDBConnection:
@@ -170,12 +263,19 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.5.3 - AIMS Document Viewer")
+        self.root.title("SemanTree v0.6.0 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
         self.mongo = MongoDBConnection()
         self.documents: List[Dict[str, Any]] = []
+
+        # Qdrant 연결
+        self.qdrant = QdrantConnection() if QDRANT_AVAILABLE else None
+        self.qdrant_collections: List[str] = []
+        self.qdrant_points: List[Dict[str, Any]] = []
+        self.current_qdrant_collection: tk.StringVar = tk.StringVar(value="")
+        self.current_qdrant_index: int = 0
 
         # 태그 트리 데이터
         self.tag_to_docs: Dict[str, List[str]] = {}  # {tag: [doc_id1, doc_id2, ...]}
@@ -470,19 +570,93 @@ class DocumentViewer:
         )
         self.raw_text_area.pack(fill=tk.BOTH, expand=True)
 
+        # ===== 탭 3: Qdrant 벡터 데이터 =====
+        if QDRANT_AVAILABLE:
+            qdrant_tab = ttk.Frame(self.notebook)
+            self.notebook.add(qdrant_tab, text="🔍 Qdrant 벡터")
+
+            # Collection 선택 프레임
+            qdrant_select_frame = ttk.LabelFrame(qdrant_tab, text="🗄️ Qdrant Collection 선택", padding="10")
+            qdrant_select_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+            # Collection 선택
+            qdrant_coll_row = ttk.Frame(qdrant_select_frame)
+            qdrant_coll_row.pack(fill=tk.X, pady=(0, 5))
+
+            ttk.Label(qdrant_coll_row, text="Collection:", width=12).pack(side=tk.LEFT)
+            self.qdrant_collection_combo = ttk.Combobox(qdrant_coll_row, textvariable=self.current_qdrant_collection, width=20, state="readonly")
+            self.qdrant_collection_combo.pack(side=tk.LEFT, padx=5)
+
+            # 로드 버튼
+            ttk.Button(qdrant_coll_row, text="🔄 로드", command=self.load_qdrant_collection_data).pack(side=tk.LEFT, padx=10)
+
+            # 포인트 개수 표시
+            self.qdrant_count_label = ttk.Label(qdrant_coll_row, text="포인트: 0개", font=("Arial", 10))
+            self.qdrant_count_label.pack(side=tk.LEFT, padx=10)
+
+            # Qdrant 데이터 네비게이션 프레임
+            qdrant_nav_frame = ttk.Frame(qdrant_tab, padding="10")
+            qdrant_nav_frame.pack(fill=tk.X)
+
+            # 이전 버튼
+            self.qdrant_prev_button = ttk.Button(qdrant_nav_frame, text="◀ 이전", command=self.prev_qdrant_point)
+            self.qdrant_prev_button.pack(side=tk.LEFT, padx=5)
+
+            # 현재 포인트 번호
+            self.qdrant_point_label = ttk.Label(qdrant_nav_frame, text="0 / 0", font=("Arial", 12, "bold"))
+            self.qdrant_point_label.pack(side=tk.LEFT, padx=10)
+
+            # 다음 버튼
+            self.qdrant_next_button = ttk.Button(qdrant_nav_frame, text="다음 ▶", command=self.next_qdrant_point)
+            self.qdrant_next_button.pack(side=tk.LEFT, padx=5)
+
+            # 포인트 이동
+            ttk.Label(qdrant_nav_frame, text="포인트 이동:").pack(side=tk.LEFT, padx=(20, 5))
+            self.qdrant_point_number_var = tk.StringVar(value="1")
+            qdrant_point_entry = ttk.Entry(qdrant_nav_frame, textvariable=self.qdrant_point_number_var, width=10)
+            qdrant_point_entry.pack(side=tk.LEFT, padx=5)
+            qdrant_point_entry.bind('<Return>', lambda e: self.goto_qdrant_point())
+            ttk.Button(qdrant_nav_frame, text="이동", command=self.goto_qdrant_point).pack(side=tk.LEFT, padx=5)
+
+            # 우측: 복사 버튼
+            ttk.Button(qdrant_nav_frame, text="📋 전체 복사", command=self.copy_qdrant_to_clipboard).pack(side=tk.RIGHT, padx=5)
+
+            # Qdrant 데이터 텍스트 영역
+            qdrant_text_frame = ttk.Frame(qdrant_tab)
+            qdrant_text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+            self.qdrant_text_area = scrolledtext.ScrolledText(
+                qdrant_text_frame,
+                wrap=tk.WORD,
+                font=("Consolas", 10),
+                bg="#1e1e1e",
+                fg="#d4d4d4",
+                insertbackground="white"
+            )
+            self.qdrant_text_area.pack(fill=tk.BOTH, expand=True)
+
     def connect_and_load(self):
         """MongoDB 연결 및 문서 로드"""
         self.status_label.config(text="SSH tunnel connecting...", foreground="orange")
         self.root.update()
 
         if self.mongo.connect(use_ssh_tunnel=True):
-            self.status_label.config(text=f"✓ Connected: localhost:{self.mongo.port} (via SSH)", foreground="green")
+            self.status_label.config(text=f"✓ Connected: MongoDB localhost:{self.mongo.port} (via SSH)", foreground="green")
             self.reload_documents()
             # Raw 탭의 DB/Collection 선택기 초기화
             self.initialize_raw_selectors()
         else:
-            self.status_label.config(text="✗ Connection Failed", foreground="red")
+            self.status_label.config(text="✗ MongoDB Connection Failed", foreground="red")
             messagebox.showerror("Connection Error", "Failed to connect to MongoDB.\n\nMake sure you can SSH to tars.giize.com")
+
+        # Qdrant 연결 시도 (선택적)
+        if QDRANT_AVAILABLE and self.qdrant:
+            if self.qdrant.connect(use_ssh_tunnel=True):
+                self.status_label.config(text=f"✓ Connected: MongoDB + Qdrant (via SSH)", foreground="green")
+                self.initialize_qdrant_selectors()
+            else:
+                # Qdrant 연결 실패해도 MongoDB는 사용 가능
+                print("Qdrant connection failed, but MongoDB is available")
 
     def reload_documents(self):
         """문서 목록 새로고침"""
@@ -1700,11 +1874,165 @@ class DocumentViewer:
         except Exception as e:
             messagebox.showerror("삭제 실패", f"문서 삭제 실패:\n{e}")
 
+    # ========== Qdrant 데이터 뷰어 메서드 ==========
+
+    def initialize_qdrant_selectors(self):
+        """Qdrant 탭의 Collection 선택기 초기화"""
+        if not QDRANT_AVAILABLE or not self.qdrant:
+            return
+
+        try:
+            # Collection 목록 로드
+            collection_list = self.qdrant.get_collection_list()
+            self.qdrant_collection_combo['values'] = collection_list
+
+            # 기본 Collection 설정
+            if collection_list:
+                self.current_qdrant_collection.set(collection_list[0])
+
+        except Exception as e:
+            print(f"Failed to initialize qdrant selectors: {e}")
+
+    def load_qdrant_collection_data(self):
+        """선택된 Qdrant Collection의 데이터 로드"""
+        if not QDRANT_AVAILABLE or not self.qdrant:
+            messagebox.showerror("오류", "Qdrant가 사용 불가능합니다.")
+            return
+
+        selected_collection = self.current_qdrant_collection.get()
+
+        if not selected_collection:
+            messagebox.showwarning("선택 오류", "Collection을 선택해주세요.")
+            return
+
+        try:
+            # 포인트 조회 (최대 100개)
+            points, next_offset = self.qdrant.scroll_points(selected_collection, limit=100)
+
+            if points is None:
+                messagebox.showerror("오류", "포인트를 조회할 수 없습니다.")
+                return
+
+            # 포인트를 딕셔너리 형태로 변환
+            self.qdrant_points = []
+            for point in points:
+                point_dict = {
+                    "id": point.id,
+                    "vector": point.vector if hasattr(point, 'vector') else None,
+                    "payload": point.payload if hasattr(point, 'payload') else {}
+                }
+                self.qdrant_points.append(point_dict)
+
+            self.qdrant_count_label.config(text=f"포인트: {len(self.qdrant_points)}개")
+
+            # 첫 포인트로 이동
+            self.current_qdrant_index = 0
+            self.update_qdrant_viewer()
+
+            messagebox.showinfo("로드 완료", f"{len(self.qdrant_points)}개의 포인트를 로드했습니다.\n(최대 100개 제한)")
+
+        except Exception as e:
+            messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
+
+    def update_qdrant_viewer(self):
+        """Qdrant 데이터 뷰어 업데이트"""
+        if not self.qdrant_points or self.current_qdrant_index < 0 or self.current_qdrant_index >= len(self.qdrant_points):
+            self.qdrant_text_area.delete(1.0, tk.END)
+            self.qdrant_text_area.insert(1.0, "포인트가 없습니다.")
+            self.qdrant_point_label.config(text="0 / 0")
+            self.qdrant_prev_button.config(state=tk.DISABLED)
+            self.qdrant_next_button.config(state=tk.DISABLED)
+            return
+
+        # 현재 포인트
+        point = self.qdrant_points[self.current_qdrant_index]
+
+        # 포인트 번호 업데이트
+        self.qdrant_point_number_var.set(str(self.current_qdrant_index + 1))
+        self.qdrant_point_label.config(text=f"{self.current_qdrant_index + 1} / {len(self.qdrant_points)}")
+
+        # 포인트 데이터 포맷팅 (벡터는 요약)
+        formatted_point = {
+            "id": point["id"],
+            "payload": point["payload"]
+        }
+
+        # 벡터 정보 추가 (요약)
+        if point.get("vector"):
+            vector = point["vector"]
+            if isinstance(vector, list):
+                vector_summary = f"[벡터 차원: {len(vector)}, 첫 5개: {vector[:5]}...]"
+            else:
+                vector_summary = str(vector)
+            formatted_point["vector_info"] = vector_summary
+
+        # JSON 포맷팅
+        json_text = json.dumps(formatted_point, indent=2, ensure_ascii=False)
+
+        # 텍스트 영역 업데이트
+        self.qdrant_text_area.delete(1.0, tk.END)
+        self.qdrant_text_area.insert(1.0, json_text)
+
+        # 버튼 상태 업데이트
+        self.qdrant_prev_button.config(state=tk.NORMAL if len(self.qdrant_points) > 1 else tk.DISABLED)
+        self.qdrant_next_button.config(state=tk.NORMAL if len(self.qdrant_points) > 1 else tk.DISABLED)
+
+    def prev_qdrant_point(self):
+        """이전 포인트로 이동 (wrap around)"""
+        if not self.qdrant_points:
+            return
+
+        if self.current_qdrant_index > 0:
+            self.current_qdrant_index -= 1
+        else:
+            # 처음에서 이전 누르면 마지막으로
+            self.current_qdrant_index = len(self.qdrant_points) - 1
+
+        self.update_qdrant_viewer()
+
+    def next_qdrant_point(self):
+        """다음 포인트로 이동 (wrap around)"""
+        if not self.qdrant_points:
+            return
+
+        if self.current_qdrant_index < len(self.qdrant_points) - 1:
+            self.current_qdrant_index += 1
+        else:
+            # 마지막에서 다음 누르면 처음으로
+            self.current_qdrant_index = 0
+
+        self.update_qdrant_viewer()
+
+    def goto_qdrant_point(self):
+        """특정 포인트 번호로 이동"""
+        try:
+            point_num = int(self.qdrant_point_number_var.get())
+            if 1 <= point_num <= len(self.qdrant_points):
+                self.current_qdrant_index = point_num - 1
+                self.update_qdrant_viewer()
+            else:
+                messagebox.showwarning("범위 오류", f"1부터 {len(self.qdrant_points)} 사이의 숫자를 입력하세요.")
+        except ValueError:
+            messagebox.showwarning("입력 오류", "숫자를 입력하세요.")
+
+    def copy_qdrant_to_clipboard(self):
+        """Qdrant 데이터를 클립보드에 복사"""
+        try:
+            content = self.qdrant_text_area.get(1.0, tk.END)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(content)
+            self.root.update()
+            messagebox.showinfo("복사 완료", "Qdrant 데이터가 클립보드에 복사되었습니다.")
+        except Exception as e:
+            messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
+
     def on_closing(self):
         """애플리케이션 종료"""
         # 자동 새로고침 타이머 중지
         self.stop_raw_auto_refresh()
         self.mongo.disconnect()
+        if QDRANT_AVAILABLE and self.qdrant:
+            self.qdrant.disconnect()
         self.root.destroy()
 
 
