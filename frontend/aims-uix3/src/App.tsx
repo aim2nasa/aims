@@ -782,7 +782,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const rightWidthExpr = `calc(${availableWidth} - (${centerWidthExpr}))`
 
     const centerPaneLeft = `calc(${leftPaneWidthVar} + var(--gap-left))`
-    const rightPaneLeft = `calc(${centerPaneLeft} + ${centerWidthExpr} + var(--gap-center))`
+
+    // 🍎 미닫이문 UX: RightPane left 위치
+    // - 보일 때: CenterPane 우측 (정상 위치)
+    // - 숨겨질 때: 화면 우측 밖 (100vw 이상) → 우측으로 슬라이드 아웃
+    const rightPaneLeft = rightPaneVisible
+      ? `calc(${centerPaneLeft} + ${centerWidthExpr} + var(--gap-center))`
+      : `100vw` // 화면 우측 밖으로 완전히 이동
 
     return {
       leftPaneWidth,
@@ -1211,7 +1217,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             flexDirection: 'column'
           }}
         >
-          {rightPaneVisible && !rightPaneContentType && (
+          {!rightPaneContentType && (
             <>
               <h3 className="section-heading" style={{
                 color: 'var(--color-text-primary)',
@@ -1221,15 +1227,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           )}
 
           {/* 고객 상세 정보 표시 */}
-          {rightPaneVisible && rightPaneContentType === 'customer' && selectedCustomer && (
+          {rightPaneContentType === 'customer' && selectedCustomer && (
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
               <CustomerDetailView
                 customer={selectedCustomer}
                 onClose={() => {
-                  setSelectedCustomer(null)
-                  setRightPaneContentType(null)
+                  // 🍎 미닫이문 UX: 애니메이션 먼저 시작
                   setRightPaneVisible(false)
-                  updateURLParams({ customerId: null })
+
+                  // transition 완료 후 (600ms) 콘텐츠 정리
+                  setTimeout(() => {
+                    setSelectedCustomer(null)
+                    setRightPaneContentType(null)
+                    updateURLParams({ customerId: null })
+                  }, 600) // var(--duration-apple-graceful) = 600ms
                 }}
                 onRefresh={handleCustomerRefresh}
                 onDelete={handleCustomerDelete}
@@ -1243,7 +1254,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           )}
 
           {/* 문서 프리뷰 표시 */}
-          {rightPaneVisible && rightPaneContentType === 'document' && selectedDocument && (
+          {rightPaneContentType === 'document' && selectedDocument && (
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
               <BaseViewer
                 visible={true}
@@ -1251,10 +1262,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                        selectedDocument.payload?.originalName ||
                        '파일'}
                 onClose={() => {
-                  setSelectedDocument(null)
-                  setRightPaneContentType(null)
+                  // 🍎 미닫이문 UX: 애니메이션 먼저 시작
                   setRightPaneVisible(false)
-                  updateURLParams({ documentId: null })
+
+                  // transition 완료 후 (600ms) 콘텐츠 정리
+                  setTimeout(() => {
+                    setSelectedDocument(null)
+                    setRightPaneContentType(null)
+                    updateURLParams({ documentId: null })
+                  }, 600) // var(--duration-apple-graceful) = 600ms
                 }}
               >
                 {(() => {

@@ -450,15 +450,17 @@ html[data-theme="dark"] .layout-brb-reset:hover {
   overflow: hidden;
   background-color: transparent;
 
-  /* 🎯 미닫이문 효과: transform + width + opacity 동시 애니메이션 */
+  /* 🎯 미닫이문 효과: CenterPane과 동일한 transition (left + width) */
+  /* LeftPane-CenterPane 방식과 완벽하게 동일하게 적용 */
+  /* 🍎 핵심: apple-smooth easing으로 CenterPane과 완벽한 동기화 */
   transition:
-    transform var(--duration-apple-graceful) var(--easing-ease-in-out),
-    width var(--duration-apple-graceful) var(--easing-ease-in-out),
-    opacity var(--duration-apple-graceful) var(--easing-ease-in-out);
+    left var(--duration-apple-graceful) var(--easing-apple-smooth),
+    width var(--duration-apple-graceful) var(--easing-apple-smooth),
+    opacity var(--duration-apple-graceful) var(--easing-apple-smooth);
 
   /* 🍎 Performance: GPU 가속 최적화 */
-  will-change: transform, width, opacity;
-  transform: translateZ(0) translateX(0); /* 보임 상태: 제자리 */
+  will-change: left, width, opacity;
+  transform: translateZ(0); /* GPU 레이어만 생성, translateX 제거 */
   backface-visibility: hidden;
 
   /* 프로페셔널 UI: 텍스트 선택 방지 */
@@ -468,11 +470,12 @@ html[data-theme="dark"] .layout-brb-reset:hover {
   -ms-user-select: none;
 }
 
-/* 🎯 미닫이문 닫힘: 우측으로 슬라이드 아웃 */
+/* 🎯 미닫이문 닫힘: width만 0으로 (left는 App.tsx에서 계산된 위치 유지) */
 .layout-rightpane-container--hidden {
-  width: 0px !important;
+  /* width: 0px는 App.tsx에서 inline style로 설정됨 */
   opacity: 0;
-  transform: translateZ(0) translateX(100%); /* 완전히 우측 밖으로 */
+  /* left는 변하지 않음 - 자연스러운 우측 슬라이드 아웃 효과 */
+  pointer-events: none; /* 애니메이션 중 클릭 차단 */
 }
 
 .layout-rightpane-content {
