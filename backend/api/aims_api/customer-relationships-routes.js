@@ -67,9 +67,10 @@ const setupCustomerRelationshipRoutes = (app, db) => {
   app.post('/api/customers/:id/relationships', async (req, res) => {
     try {
       const { id } = req.params;
-      const { 
-        to_customer_id, 
-        relationship_type, 
+      const {
+        to_customer_id,
+        relationship_type,
+        relationship_category,  // 프론트엔드에서 전달
         relationship_details = {},
         insurance_relevance = {},
         strength = 'medium'
@@ -91,12 +92,29 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       const allTypes = getAllRelationshipTypes();
-      if (!allTypes[relationship_type]) {
-        return res.status(400).json({
-          success: false,
-          error: '유효하지 않은 관계 유형입니다.',
-          available_types: Object.keys(allTypes)
-        });
+      let typeConfig = allTypes[relationship_type];
+      let isCustomType = false;
+
+      // 사용자 정의 관계 타입 처리 (corporate 카테고리만 허용)
+      if (!typeConfig) {
+        if (relationship_category === 'corporate') {
+          // 사용자 정의 법인 관계 타입 허용
+          isCustomType = true;
+          typeConfig = {
+            reverse: relationship_type,  // 사용자 정의는 역방향도 동일
+            bidirectional: false,  // 법인 관계는 단방향
+            category: 'corporate',
+            label: relationship_type,  // 사용자가 입력한 값 그대로 사용
+            custom: true  // 사용자 정의 플래그
+          };
+        } else {
+          // family 카테고리는 사용자 정의 타입 불허
+          return res.status(400).json({
+            success: false,
+            error: '유효하지 않은 관계 유형입니다.',
+            available_types: Object.keys(allTypes)
+          });
+        }
       }
 
       // 두 고객이 모두 존재하는지 확인
@@ -127,7 +145,6 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         });
       }
 
-      const typeConfig = allTypes[relationship_type];
       const now = utcNowDate();
 
       // 관계 데이터 생성
