@@ -503,9 +503,25 @@ describe('SearchService - 엣지 케이스', () => {
 // searchDocuments API 테스트
 // ============================================
 describe('SearchService.searchDocuments', () => {
+  // Mock localStorage
+  const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+    return {
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+    };
+  })();
+
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    localStorageMock.clear();
+    global.localStorage = localStorageMock as Storage;
   });
 
   afterEach(() => {
@@ -764,5 +780,196 @@ describe('SearchService.getDocumentDetails', () => {
     const result = await SearchService.getDocumentDetails('doc123');
 
     expect(result).toBeNull();
+  });
+});
+
+// ============================================
+// 사용자 격리 (user_id 필터) 테스트
+// ============================================
+describe('SearchService - 사용자 격리', () => {
+  // Mock localStorage
+  const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+    return {
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+    };
+  })();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn();
+    localStorageMock.clear();
+    global.localStorage = localStorageMock as Storage;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('키워드 검색 시 localStorage에서 user_id를 읽어 쿼리에 포함해야 한다', async () => {
+    localStorage.setItem('aims-current-user-id', 'agent123');
+
+    const mockResponse = {
+      search_results: [{ _id: 'doc1', filename: 'test.pdf' }],
+      answer: '검색 결과'
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    await SearchService.searchDocuments({
+      query: '키워드 테스트',
+      search_mode: 'keyword',
+      mode: 'AND'
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://tars.giize.com/search_api',
+      expect.objectContaining({
+        body: JSON.stringify({
+          query: '키워드 테스트',
+          search_mode: 'keyword',
+          mode: 'AND',
+          user_id: 'agent123'
+        })
+      })
+    );
+  });
+
+  it('시맨틱 검색 시 localStorage에서 user_id를 읽어 쿼리에 포함해야 한다', async () => {
+    localStorage.setItem('aims-current-user-id', 'agent456');
+
+    const mockSearchResponse = {
+      search_results: [
+        {
+          id: 'semantic1',
+          score: 0.95,
+          payload: {
+            doc_id: 'doc789',
+            original_name: 'semantic.pdf',
+            owner_id: 'agent456'
+          }
+        }
+      ],
+      answer: 'AI 답변'
+    };
+
+    const mockMongoDBResponse = {
+      success: true,
+      data: {
+        raw: {
+          meta: { summary: 'Summary text' },
+          ocr: null,
+          customer_relation: null
+        },
+        computed: {
+          overallStatus: 'completed'
+        }
+      }
+    };
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSearchResponse
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMongoDBResponse
+      } as Response);
+
+    await SearchService.searchDocuments({
+      query: '시맨틱 테스트',
+      search_mode: 'semantic'
+    });
+
+    // 첫 번째 호출: 시맨틱 검색 API
+    expect(vi.mocked(global.fetch).mock.calls[0]?.[1]?.body).toBe(
+      JSON.stringify({
+        query: '시맨틱 테스트',
+        search_mode: 'semantic',
+        user_id: 'agent456'
+      })
+    );
+  });
+
+  it('localStorage에 user_id가 없으면 "tester"를 기본값으로 사용해야 한다', async () => {
+    // localStorage에 사용자 ID 없음
+
+    const mockResponse = {
+      search_results: [],
+      answer: null
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    await SearchService.searchDocuments({
+      query: '기본 사용자 테스트',
+      search_mode: 'keyword'
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://tars.giize.com/search_api',
+      expect.objectContaining({
+        body: JSON.stringify({
+          query: '기본 사용자 테스트',
+          search_mode: 'keyword',
+          user_id: 'tester'
+        })
+      })
+    );
+  });
+
+  it('사용자 ID가 변경되면 새로운 user_id로 검색해야 한다', async () => {
+    const mockResponse = {
+      search_results: [],
+      answer: null
+    };
+
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse
+    } as Response);
+
+    // 첫 번째 사용자로 검색
+    localStorage.setItem('aims-current-user-id', 'user1');
+    await SearchService.searchDocuments({
+      query: 'test1',
+      search_mode: 'keyword'
+    });
+
+    expect(vi.mocked(global.fetch).mock.calls[0]?.[1]?.body).toBe(
+      JSON.stringify({
+        query: 'test1',
+        search_mode: 'keyword',
+        user_id: 'user1'
+      })
+    );
+
+    // 사용자 전환 후 검색
+    localStorage.setItem('aims-current-user-id', 'user2');
+    await SearchService.searchDocuments({
+      query: 'test2',
+      search_mode: 'keyword'
+    });
+
+    expect(vi.mocked(global.fetch).mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({
+        query: 'test2',
+        search_mode: 'keyword',
+        user_id: 'user2'
+      })
+    );
   });
 });
