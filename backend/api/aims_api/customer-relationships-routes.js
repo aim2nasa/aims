@@ -1,6 +1,7 @@
 // customer-relationships-routes.js - 고객 관계 관리 API 라우트
 
 const { ObjectId } = require('mongodb');
+const { utcNowDate, utcNowISO } = require('./lib/timeUtils');
 
 // 관계 유형 정의
 const RELATIONSHIP_TYPES = {
@@ -127,7 +128,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
       }
 
       const typeConfig = allTypes[relationship_type];
-      const now = new Date();
+      const now = utcNowDate();
 
       // 관계 데이터 생성
       const relationshipData = {
@@ -423,7 +424,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
           influence_score: totalInfluenceScore,
           referral_potential: referralPotential,
           key_influencers_count: keyInfluencers.length,
-          analysis_date: new Date()
+          analysis_date: utcNowISO()
         }
       });
 
@@ -467,7 +468,7 @@ const setupCustomerRelationshipRoutes = (app, db) => {
         updateFields['relationship_info.strength'] = updateData.strength;
       }
 
-      updateFields['meta.updated_at'] = new Date();
+      updateFields['meta.updated_at'] = utcNowDate();
       updateFields['meta.last_modified_by'] = new ObjectId('000000000000000000000000'); // 임시
 
       const result = await db.collection('customer_relationships').updateOne(

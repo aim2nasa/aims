@@ -18,11 +18,15 @@ import sys
 import os
 import time
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# 프로젝트 루트의 src 경로 추가 (time_utils 접근용)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, project_root)
 
 from pymongo import MongoClient
 from bson import ObjectId
@@ -32,6 +36,7 @@ from services.detector import AnnualReportDetector
 from services.parser import AnnualReportParser
 from services.db_writer import save_annual_report
 from utils.pdf_utils import find_contract_table_end_page
+from src.shared.time_utils import utc_now_iso
 
 
 class AnnualReportAutoParser:
@@ -69,7 +74,7 @@ class AnnualReportAutoParser:
 
         # 시간 필터 (force_all이 False일 때만)
         if not force_all:
-            since = datetime.utcnow() - timedelta(hours=lookback_hours)
+            since = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
             query["uploadDate"] = {"$gte": since}
 
         files = list(self.files_collection.find(query).sort("uploadDate", -1))
@@ -138,7 +143,7 @@ class AnnualReportAutoParser:
                 "$set": {
                     "file_id": file_id,
                     "status": "processing",
-                    "started_at": datetime.utcnow()
+                    "started_at": datetime.now(timezone.utc)
                 }
             },
             upsert=True
@@ -151,7 +156,7 @@ class AnnualReportAutoParser:
             {
                 "$set": {
                     "status": "completed",
-                    "completed_at": datetime.utcnow(),
+                    "completed_at": datetime.now(timezone.utc),
                     "result": result
                 }
             }
@@ -164,7 +169,7 @@ class AnnualReportAutoParser:
             {
                 "$set": {
                     "status": "not_annual_report",
-                    "checked_at": datetime.utcnow()
+                    "checked_at": datetime.now(timezone.utc)
                 }
             }
         )
@@ -176,7 +181,7 @@ class AnnualReportAutoParser:
             {
                 "$set": {
                     "status": "failed",
-                    "failed_at": datetime.utcnow(),
+                    "failed_at": datetime.now(timezone.utc),
                     "error": error
                 }
             }
