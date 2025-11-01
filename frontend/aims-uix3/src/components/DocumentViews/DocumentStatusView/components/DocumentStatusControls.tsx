@@ -7,6 +7,7 @@
  */
 
 import React from 'react'
+import { formatTime } from '@/shared/lib/timeUtils'
 import './DocumentStatusControls.css'
 
 interface DocumentStatusControlsProps {
@@ -71,12 +72,7 @@ export const DocumentStatusControls: React.FC<DocumentStatusControlsProps> = ({
             <div className="update-time">
               <span className="update-time-label">마지막 업데이트:</span>
               <span className="update-time-value">
-                {lastUpdated.toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  hour12: false
-                })}
+                {formatTime(lastUpdated.toISOString())}
               </span>
             </div>
           )}

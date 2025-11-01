@@ -7,6 +7,7 @@ import React, { useMemo, useState, useCallback } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { UploadFile, UploadStatus } from '../types/uploadTypes'
 import { uploadHelpers } from '../services/userContextService'
+import { formatTime } from '@/shared/lib/timeUtils'
 import './FileList.css'
 
 interface FileListProps {
@@ -375,11 +376,7 @@ export const FileList: React.FC<FileListProps> = ({
             {/* 🍎 TIME: Fixed width column */}
             <div className="file-item__time-compact">
               {uploadFile.completedAt
-                ? uploadFile.completedAt.toLocaleTimeString('en-US', {
-                    hour12: true,
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  })
+                ? formatTime(uploadFile.completedAt.toISOString())
                 : uploadFile.status === 'uploading'
                   ? `${uploadFile.progress || 0}%`
                   : ''
