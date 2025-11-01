@@ -1089,10 +1089,10 @@ app.get('/api/users', async (req, res) => {
       .sort({ _id: 1 })
       .toArray();
 
-    // 사용자별 귀여운 아바타 매핑
+    // 사용자별 아바타 매핑 (Adventurer 스타일 - 픽사 캐릭터 느낌)
     const avatarMap = {
-      'tester': 'https://api.dicebear.com/7.x/bottts/svg?seed=tester&backgroundColor=b6e3f4',
-      'user2': 'https://api.dicebear.com/7.x/croodles/svg?seed=user2&backgroundColor=ffdfbf'
+      'tester': 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
+      'user2': 'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=ffdfbf'
     };
 
     res.json({
