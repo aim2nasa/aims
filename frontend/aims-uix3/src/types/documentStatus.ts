@@ -52,12 +52,14 @@ export interface ProcessingPathAnalysis {
  * Upload 데이터 구조
  */
 export interface UploadData {
+  name?: string
   originalName?: string
   saveName?: string
   destPath?: string
   timestamp?: string
   uploaded_at?: string
   status?: StageStatus | string
+  message?: string
   fileSize?: number
   size?: number
   file_size?: number
@@ -85,6 +87,7 @@ export interface MetaData {
  * OCR 데이터 구조
  */
 export interface OcrData {
+  name?: string
   full_text?: string
   summary?: string
   status?: StageStatus
@@ -92,6 +95,7 @@ export interface OcrData {
   queue?: boolean
   confidence?: string
   message?: string
+  timestamp?: string
 }
 
 /**
