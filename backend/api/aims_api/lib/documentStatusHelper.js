@@ -3,6 +3,8 @@
  * 문서 상태 분석 헬퍼 함수들
  */
 
+const { normalizeTimestamp } = require('./timeUtils');
+
 /**
  * 바이트를 사람이 읽기 쉬운 형태로 변환
  */
@@ -56,7 +58,7 @@ function prepareDocumentResponse(doc) {
   if (doc.upload) {
     uiStages.upload.status = 'completed';
     uiStages.upload.message = '업로드 완료';
-    uiStages.upload.timestamp = doc.upload.uploaded_at;
+    uiStages.upload.timestamp = normalizeTimestamp(doc.upload.uploaded_at);
     displayMessages.upload = '업로드 완료';
     currentStage = 1;
     progress = 20;
@@ -66,7 +68,7 @@ function prepareDocumentResponse(doc) {
   if (doc.meta && doc.meta.meta_status === 'ok') {
     uiStages.meta.status = 'completed';
     uiStages.meta.message = `메타데이터 추출 완료 (${doc.meta.mime}, ${formatBytes(doc.meta.size_bytes)})`;
-    uiStages.meta.timestamp = doc.meta.created_at;
+    uiStages.meta.timestamp = normalizeTimestamp(doc.meta.created_at);
     displayMessages.meta = `메타데이터 추출 완료 (${doc.meta.mime})`;
     currentStage = 2;
     progress = hasMetaText ? 50 : 40;
@@ -93,6 +95,7 @@ function prepareDocumentResponse(doc) {
   if (!hasMetaText && doc.meta && doc.meta.meta_status === 'ok') {
     uiStages.ocr_prep.status = 'completed';
     uiStages.ocr_prep.message = 'OCR 준비 완료';
+    uiStages.ocr_prep.timestamp = normalizeTimestamp(doc.meta.created_at); // meta 완료 시점 사용
     currentStage = 3;
     progress = 60;
   }
@@ -124,6 +127,7 @@ function prepareDocumentResponse(doc) {
     } else if (doc.ocr.status === 'done') {
       uiStages.ocr.status = 'completed';
       uiStages.ocr.message = `OCR 완료 (신뢰도: ${doc.ocr.confidence})`;
+      uiStages.ocr.timestamp = normalizeTimestamp(doc.ocr.done_at || doc.ocr.started_at); // done_at 우선, 없으면 started_at
       displayMessages.ocr = `OCR 완료 (신뢰도: ${doc.ocr.confidence || 'N/A'})`;
       currentStage = 4;
       progress = 80;
@@ -163,6 +167,7 @@ function prepareDocumentResponse(doc) {
     if (doc.docembed.status === 'done') {
       uiStages.docembed.status = 'completed';
       uiStages.docembed.message = `임베딩 완료 (${doc.docembed.chunks}개 청크, ${doc.docembed.dims}차원)`;
+      uiStages.docembed.timestamp = normalizeTimestamp(doc.docembed.updated_at); // updated_at 사용
       displayMessages.docembed = `임베딩 완료 (${doc.docembed.chunks}개 청크)`;
       currentStage = hasMetaText ? 3 : 5;
       progress = 100;

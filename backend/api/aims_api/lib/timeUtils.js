@@ -119,6 +119,60 @@ function getTimeDiff(start, end) {
 }
 
 /**
+ * 다양한 형식의 timestamp를 AIMS 표준 형식으로 정규화
+ *
+ * 입력 형식 지원:
+ * - "2025-11-01T18:31:47.755+09:00" (KST) → "2025-11-01T09:31:47.755Z" (UTC)
+ * - "2025-11-01T09:32:05.598428+00:00" (마이크로초) → "2025-11-01T09:32:05.598Z" (밀리초)
+ * - "2025-11-01T09:31:47.737Z" (이미 표준) → "2025-11-01T09:31:47.737Z" (그대로)
+ *
+ * AIMS 표준 형식:
+ * - UTC 타임존 (Z)
+ * - 밀리초 3자리 정밀도
+ * - ISO 8601 형식
+ *
+ * @param {string|null|undefined} timestamp - 정규화할 timestamp
+ * @returns {string|null} AIMS 표준 형식 timestamp (입력이 null/undefined/invalid이면 null)
+ *
+ * @example
+ * // KST → UTC 변환
+ * normalizeTimestamp("2025-11-01T18:31:47.755+09:00");
+ * // → "2025-11-01T09:31:47.755Z"
+ *
+ * // 마이크로초 → 밀리초
+ * normalizeTimestamp("2025-11-01T09:32:05.598428+00:00");
+ * // → "2025-11-01T09:32:05.598Z"
+ *
+ * // 이미 표준 형식
+ * normalizeTimestamp("2025-11-01T09:31:47.737Z");
+ * // → "2025-11-01T09:31:47.737Z"
+ */
+function normalizeTimestamp(timestamp) {
+  // null, undefined, 빈 문자열 처리
+  if (!timestamp) {
+    return null;
+  }
+
+  try {
+    // Date 객체로 파싱 (자동으로 UTC 변환)
+    const date = new Date(timestamp);
+
+    // 유효하지 않은 날짜 체크
+    if (isNaN(date.getTime())) {
+      console.warn('[timeUtils] Invalid timestamp:', timestamp);
+      return null;
+    }
+
+    // ISO 8601 UTC 형식으로 변환 (자동으로 밀리초 3자리)
+    // Date.toISOString()은 항상 "YYYY-MM-DDTHH:mm:ss.sssZ" 형식 반환
+    return date.toISOString();
+  } catch (error) {
+    console.error('[timeUtils] Error normalizing timestamp:', timestamp, error);
+    return null;
+  }
+}
+
+/**
  * 레거시 코드 호환성을 위한 별칭
  *
  * @deprecated utcNowISO() 사용을 권장합니다.
@@ -134,6 +188,7 @@ module.exports = {
   utcNowDate,
   parseISOTimestamp,
   getTimeDiff,
+  normalizeTimestamp,
   // 레거시 호환성
   getUTCNow
 };
