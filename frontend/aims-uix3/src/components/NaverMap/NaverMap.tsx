@@ -118,8 +118,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   height = '100%',
   selectionTimestamp = 0
 }) => {
-  // 초기 지도 중심 좌표 (남한 전체 보기)
-  const initialCenter = { lat: 36.5, lng: 127.5 }
+  // 초기 지도 중심 좌표 (제주도 포함 남한 전체 보기)
+  const initialCenter = { lat: 36.0, lng: 127.5 }
   const initialZoom = 7
 
   const mapElement = useRef<HTMLDivElement>(null)
