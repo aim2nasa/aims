@@ -140,37 +140,23 @@ describe('DocumentStatusService', () => {
     })
 
     describe('getDocumentDetailViaWebhook', () => {
-      it('n8n webhook을 통해 문서 상세를 조회해야 함', async () => {
+      it('백엔드 API를 통해 문서 상세를 조회해야 함', async () => {
         const mockDetail = { _id: 'doc1', filename: 'test.pdf' }
 
         vi.mocked(fetch).mockResolvedValueOnce({
           ok: true,
-          json: async () => [mockDetail],
+          json: async () => mockDetail,
         } as Response)
 
         const result = await DocumentStatusService.getDocumentDetailViaWebhook('doc1')
 
         expect(fetch).toHaveBeenCalledWith(
-          expect.stringContaining('webhook/smartsearch'),
+          expect.stringContaining('/api/documents/doc1/status'),
           expect.objectContaining({
-            method: 'POST',
-            body: JSON.stringify({ id: 'doc1' }),
+            method: 'GET',
           })
         )
         expect(result).toEqual(mockDetail)
-      })
-
-      it('배열 응답에서 첫 번째 요소를 반환해야 함', async () => {
-        const mockDetails = [{ _id: 'doc1' }, { _id: 'doc2' }]
-
-        vi.mocked(fetch).mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockDetails,
-        } as Response)
-
-        const result = await DocumentStatusService.getDocumentDetailViaWebhook('doc1')
-
-        expect(result).toEqual(mockDetails[0])
       })
 
       it('객체 응답을 그대로 반환해야 함', async () => {

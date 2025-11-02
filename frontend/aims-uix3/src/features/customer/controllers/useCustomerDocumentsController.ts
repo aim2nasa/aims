@@ -240,11 +240,11 @@ export const useCustomerDocumentsController = (
       })
 
       try {
-        const detail = await DocumentStatusService.getDocumentDetailViaWebhook(document._id)
+        const response = await DocumentStatusService.getDocumentDetailViaWebhook(document._id)
 
         if (!mountedRef.current) return
 
-        if (!detail) {
+        if (!response) {
           setPreviewState({
             isOpen: true,
             isLoading: false,
@@ -255,9 +255,12 @@ export const useCustomerDocumentsController = (
           return
         }
 
-        // detail을 Record<string, any>로 직접 사용
-        const recDetail = detail as Record<string, any>
-        const metadata = extractPreviewInfo(recDetail, document)
+        // API 응답 구조: { success: true, data: { raw: {...} } }
+        const apiResponse = response as Record<string, any>
+        const raw = apiResponse['data']?.['raw'] || apiResponse['raw'] || response
+
+        // raw 데이터에서 메타데이터 추출
+        const metadata = extractPreviewInfo(raw, document)
 
         setPreviewState({
           isOpen: true,
@@ -267,7 +270,7 @@ export const useCustomerDocumentsController = (
           data: {
             ...metadata,
             document,
-            rawDetail: recDetail
+            rawDetail: raw
           }
         })
       } catch (err) {

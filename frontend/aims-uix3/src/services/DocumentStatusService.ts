@@ -24,6 +24,7 @@ import type {
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || 'http://tars.giize.com:3010'
+// @ts-ignore - 다른 모듈에서 사용될 수 있음
 const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
 
 type MaybeSerialized<T> = T | string | null | undefined
@@ -148,16 +149,17 @@ export class DocumentStatusService {
   }
 
   /**
-   * n8n Webhook을 통한 문서 상세 조회
+   * 문서 상세 정보 조회 (고객 문서 프리뷰용)
+   * /api/documents/:id/status API 사용
    */
   static async getDocumentDetailViaWebhook(documentId: string): Promise<Document | Record<string, unknown> | null> {
     try {
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/status`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id: documentId })
+        mode: 'cors'
       })
 
       if (!response.ok) {
@@ -165,13 +167,12 @@ export class DocumentStatusService {
       }
 
       const data = await response.json()
-      const detail = Array.isArray(data) ? data[0] : data
-      if (detail && typeof detail === 'object') {
-        return detail as Document | Record<string, unknown>
+      if (data && typeof data === 'object') {
+        return data as Document | Record<string, unknown>
       }
       return null
     } catch (error) {
-      console.error('[DocumentStatusService] Webhook fetch failed:', error)
+      console.error('[DocumentStatusService] Get document detail failed:', error)
       throw error
     }
   }
