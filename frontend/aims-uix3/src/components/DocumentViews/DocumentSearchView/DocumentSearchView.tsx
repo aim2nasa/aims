@@ -88,6 +88,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,
+    handleReset,
   } = useDocumentSearch()
 
   // Full Text 모달 상태 (기존 - 검색 결과용)
@@ -332,6 +333,24 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               aria-label="키워드 모드 선택"
               width={75}
             />
+          )}
+
+          {/* 🍎 Progressive Disclosure: 검색 결과 초기화 버튼 (검색어나 결과가 있을 때만 표시) */}
+          {(query || results.length > 0) && (
+            <Tooltip content="검색 초기화">
+              <button
+                className="reset-button"
+                onClick={handleReset}
+                aria-label="검색 초기화"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.CALLOUT}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              </button>
+            </Tooltip>
           )}
 
           {/* 검색 버튼 */}

@@ -119,6 +119,48 @@ html[data-theme="dark"] .fulltext-button:hover {
   transform: scale(0.95);
 }
 
+/* 🍎 초기화 버튼 - Progressive Disclosure, 서브틀한 iOS 스타일 */
+.reset-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.6;
+  animation: fadeInScale var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .reset-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.reset-button:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  background: transparent;
+}
+
+.reset-button:active {
+  transform: scale(0.95);
+}
+
+.reset-button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] .reset-button:focus-visible {
+  outline-color: var(--color-primary-300);
+}
+
 /* 검색 버튼 - iOS 스타일 */
 .search-button {
   flex-shrink: 0; /* 축소 방지 */
@@ -787,6 +829,17 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   }
 }
 
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -803,11 +856,13 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   .search-result-row,
   .search-answer,
   .search-error,
-  .keyword-mode-pills {
+  .keyword-mode-pills,
+  .reset-button {
     animation: none;
   }
 
-  .search-result-row:hover .row-chevron {
+  .search-result-row:hover .row-chevron,
+  .reset-button:hover {
     transform: none;
   }
 }
