@@ -1,527 +1,455 @@
 /**
- * CustomerRelationshipView Styles
- * @since 1.0.0
- * @version 3.1.0 - macOS Finder Style + FIXED INDENTATION
+ * CustomerRelationshipView - Style 8: Windows 11 Fluent Design (WINNER!)
  *
- * 🍎 애플 macOS Finder 디자인 철학 준수
- * - Progressive Disclosure (점진적 정보 공개)
- * - 서브틀한 기본 상태
- * - 부드러운 애니메이션
- * - 일관된 타이포그래피
- *
- * 🔧 CRITICAL FIX: padding-left specificity (2025-10-09 22:48)
- * - Root: padding-left: 8px
- * - Group: padding-left: 28px
- * - Leaf: padding-left: 48px
+ * 디자인 철학:
+ * - Windows 11 Fluent Design System
+ * - Acrylic 배경 효과
+ * - 미세한 그림자와 레이어
+ * - Segoe UI 폰트 느낌
  */
 
-/* ==========================================
-   헤더 영역 - 검색 + Refresh 버튼 포함
-   ========================================== */
+/* ============================================
+   전역 스타일
+   ============================================ */
+
+.customer-relationship-view {
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-text-primary: rgba(0, 0, 0, 0.9);
+  --color-text-secondary: rgba(0, 0, 0, 0.6);
+  --color-hover-bg: rgba(0, 0, 0, 0.04);
+  --color-pressed-bg: rgba(0, 0, 0, 0.06);
+  --color-accent: #0078d4;
+  --color-accent-light: rgba(0, 120, 212, 0.1);
+}
+
+html[data-theme="dark"] .customer-relationship-view {
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-text-primary: rgba(255, 255, 255, 0.9);
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-hover-bg: rgba(255, 255, 255, 0.05);
+  --color-pressed-bg: rgba(255, 255, 255, 0.08);
+  --color-accent: #60cdff;
+  --color-accent-light: rgba(96, 205, 255, 0.15);
+}
+
+/* ============================================
+   헤더
+   ============================================ */
 
 .relationship-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 12px 16px 8px 16px;
-  border-bottom: 1px solid var(--color-border-primary);
-  gap: 12px;
+  align-items: center;
+  padding: 12px var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
+}
+
+html[data-theme="dark"] .relationship-header {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
 }
 
 .relationship-title {
-  /* font-size: var(--font-size-body); () */
-  /* font-weight: var(--font-weight-semibold); () */
+  font-size: 14px;
+  font-weight: 600;
   color: var(--color-text-primary);
-  font-family: var(--font-family-system);
-  flex-shrink: 0;
+  letter-spacing: -0.01em;
 }
 
 .relationship-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
-  justify-content: flex-end;
+  gap: var(--spacing-md);
 }
 
-/* ==========================================
-   트리 전체 펼치기/접기 버튼
-   ========================================== */
+/* ============================================
+   트리 구조
+   ============================================ */
 
-.relationship-tree-controls {
+.relationship-tree {
+  height: 100%;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  padding: var(--spacing-sm);
 }
 
-.tree-control-button {
+.tree-section {
+  padding: var(--spacing-xs) 0;
+}
+
+.tree-node {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 1px 0;
   cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  opacity: 0.6;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+  position: relative;
 }
 
-.tree-control-button:hover {
-  background-color: transparent;
-  color: var(--color-icon-blue);
+.tree-node::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  border-radius: 4px 0 0 4px;
+}
+
+.tree-node:hover {
+  background-color: var(--color-hover-bg);
+}
+
+.tree-node:hover::before {
+  opacity: 0.3;
+}
+
+.tree-node:active {
+  background-color: var(--color-pressed-bg);
+}
+
+/* 아이콘 */
+.tree-node__icon {
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.1s ease;
+}
+
+.tree-node:hover .tree-node__icon {
   opacity: 1;
 }
 
-.tree-control-button:active {
-  transform: scale(0.92);
-  opacity: 0.8;
+.tree-node__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
 }
 
-/* ==========================================
-   검색 입력란 - macOS 스타일
-   ========================================== */
+.tree-node__label {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.tree-node__label--clickable {
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: color 0.1s ease;
+}
+
+.tree-node__label--clickable:hover {
+  color: var(--color-accent);
+}
+
+/* 뱃지 - Windows 11 스타일 */
+.tree-node__badge {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="dark"] .tree-node__badge {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   계층 구조
+   ============================================ */
+
+.tree-children {
+  padding-left: 20px;
+  margin-left: 8px;
+  border-left: 1px solid var(--color-border);
+}
+
+.tree-group {
+  margin: 0;
+}
+
+/* ============================================
+   루트 노드
+   ============================================ */
+
+.tree-node--root {
+  font-weight: 600;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  background: var(--color-accent-light);
+}
+
+.tree-node--root .tree-node__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.tree-node--root .tree-node__icon {
+  font-size: 17px;
+  opacity: 0.85;
+  color: var(--color-accent);
+}
+
+/* ============================================
+   리프 노드
+   ============================================ */
+
+.tree-node--leaf {
+  padding-left: calc(10px + 20px);
+}
+
+.tree-node--member {
+  padding-left: calc(10px + 40px);
+}
+
+/* ============================================
+   검색
+   ============================================ */
 
 .relationship-search {
   position: relative;
   display: flex;
   align-items: center;
-  max-width: 200px;
 }
 
 .relationship-search-input {
-  width: 100%;
-  padding: 6px 32px 6px 12px;
-  /* font-size: var(--font-size-caption-1); () */
-  font-family: var(--font-family-system);
+  width: 220px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
   color: var(--color-text-primary);
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  outline: none;
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.relationship-search-input::placeholder {
-  color: var(--color-text-tertiary);
+html[data-theme="dark"] .relationship-search-input {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .relationship-search-input:focus {
-  border-color: var(--color-icon-blue);
-  background-color: var(--color-bg-primary);
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  outline: none;
+  border-color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+html[data-theme="dark"] .relationship-search-input:focus {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.relationship-search-input::placeholder {
+  color: var(--color-text-secondary);
 }
 
 .relationship-search-clear {
   position: absolute;
-  right: 8px;
+  right: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--easing-ease-out);
+  border-radius: 3px;
+  transition: all 0.1s ease;
 }
 
 .relationship-search-clear:hover {
-  color: var(--color-text-secondary);
+  background: var(--color-hover-bg);
+  color: var(--color-text-primary);
 }
 
-.relationship-search-clear:active {
-  transform: scale(0.9);
-}
-
-/* ==========================================
-   검색 하이라이트
-   ========================================== */
+/* ============================================
+   하이라이트
+   ============================================ */
 
 .search-highlight {
-  background-color: var(--color-highlight-bg);
-  color: var(--color-text-primary);
-  /* font-weight: var(--font-weight-semibold); () */
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: 1px 3px;
   border-radius: 2px;
-  padding: 1px 2px;
+  font-weight: 500;
 }
 
-html[data-theme="dark"] .search-highlight {
-  background-color: var(--color-highlight-bg-dark);
-  color: var(--color-text-primary);
+/* ============================================
+   관계 정보
+   ============================================ */
+
+.tree-node__relation-toggle {
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  opacity: 0.6;
+  transition: all 0.1s ease;
+  border-radius: 3px;
 }
 
-/* ==========================================
-   로딩 & 빈 상태
-   ========================================== */
+.tree-node__relation-toggle:hover {
+  opacity: 1;
+  background: var(--color-hover-bg);
+}
 
-.relationship-loading {
+.relation-list {
+  padding: var(--spacing-sm) 0;
+  padding-left: calc(10px + 40px);
+}
+
+.relation-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  gap: 16px;
+  gap: var(--spacing-sm);
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  margin: 2px 0;
+  border-left: 2px solid var(--color-accent-light);
 }
 
-.loading-spinner {
+html[data-theme="dark"] .relation-item {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.relation-item__icon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.relation-item__text {
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+
+/* ============================================
+   트리 컨트롤
+   ============================================ */
+
+.relationship-tree-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.tree-control-button {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border);
   width: 32px;
   height: 32px;
-  border: 3px solid var(--color-border-primary);
-  border-top-color: var(--color-icon-blue);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  /* font-size: var(--font-size-footnote); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-normal); () */
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   color: var(--color-text-secondary);
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+html[data-theme="dark"] .tree-control-button {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tree-control-button:hover {
+  background-color: var(--color-hover-bg);
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tree-control-button:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================================
+   로딩 & 빈 상태
+   ============================================ */
+
+.relationship-loading,
 .relationship-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  gap: 16px;
+  padding: calc(var(--spacing-lg) * 3);
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-normal); () */
+  gap: var(--spacing-md);
 }
 
-/* ==========================================
-   트리 컨테이너
-   ========================================== */
-
-.relationship-tree {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
+.loading-text {
+  font-size: 13px;
+  font-weight: 400;
 }
 
-.tree-section {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 8px;
+/* ============================================
+   고객 아이콘
+   ============================================ */
+
+.customer-icon--personal,
+.customer-icon--corporate {
+  opacity: 0.65;
+  width: 16px;
+  height: 16px;
+  transition: opacity 0.1s ease;
 }
 
-/* ==========================================
-   트리 노드 - macOS Finder 스타일
-   ========================================== */
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px; /* 기본값: 구체적인 클래스에서 override */
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-  font-family: var(--font-family-system);
-  position: relative;
-}
-
-/* 🍎 macOS Finder 호버 - 서브틀한 배경 */
-.tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-/* 🍎 macOS Finder 액티브 - 약간 더 진한 배경 */
-.tree-node:active {
-  background-color: rgba(0, 0, 0, 0.08);
-  transform: scale(0.995);
-}
-
-/* Root 노드 (가족, 법인) - Level 0 */
-.tree-node.tree-node--root {
-  /* font-weight: var(--font-weight-normal); () */
-  /* font-size: var(--font-size-caption-1); (12px - 제목보다 작게 ) */
-  line-height: 1.3;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 8px; /* Level 0: 8px 들여쓰기 */
-  margin-bottom: 2px;
-}
-
-/* Group 노드 (대표, 회사명) - Level 1 */
-.tree-node.tree-node--group {
-  /* font-weight: var(--font-weight-normal); () */
-  /* font-size: var(--font-size-caption-1); (12px - 제목보다 작게 ) */
-  line-height: 1.3;
-  padding-left: 28px; /* Level 1: 28px 들여쓰기 (Root + 20px) */
-}
-
-/* Leaf 노드 (구성원, 직원) - Level 2 */
-.tree-node.tree-node--leaf {
-  /* font-size: var(--font-size-caption-1); (12px - 제목보다 작게 ) */
-  /* font-weight: var(--font-weight-normal); () */
-  line-height: 1.3;
-  padding-left: 48px; /* Level 2: 48px 들여쓰기 (Group + 20px) */
+.tree-node:hover .customer-icon--personal,
+.tree-node:hover .customer-icon--corporate {
   opacity: 0.9;
 }
 
-.tree-node.tree-node--leaf:hover {
-  opacity: 1;
-}
+/* ============================================
+   특수 노드
+   ============================================ */
 
-/* Member 노드 (초성 폴더 내 가족 구성원) - Level 3 */
-.tree-node.tree-node--member {
-  /* font-size: var(--font-size-caption-1); (12px - 제목보다 작게 ) */
-  /* font-weight: var(--font-weight-normal); () */
-  line-height: 1.3;
-  padding-left: 68px; /* Level 3: 68px 들여쓰기 (Leaf + 20px) */
-  opacity: 0.85;
-}
-
-.tree-node.tree-node--member:hover {
-  opacity: 1;
-}
-
-/* Relation 노드 (관계 정보) - Level 2 */
-.tree-node.tree-node--relation {
-  /* font-size: var(--font-size-caption-1); () */
-  /* font-weight: var(--font-weight-normal); () */
-  line-height: 1.3;
-  padding-left: 48px; /* Level 2: 48px 들여쓰기 (Leaf와 동일) */
-  background-color: rgba(0, 0, 0, 0.02);
-  opacity: 0.85;
-}
-
-.tree-node.tree-node--relation:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-  opacity: 1;
-}
-
-/* Empty 노드 - Level 2 */
-.tree-node.tree-node--empty {
-  /* font-size: var(--font-size-caption-1); () */
-  /* font-weight: var(--font-weight-normal); () */
-  line-height: 1.3;
-  padding-left: 48px; /* Level 2: 48px 들여쓰기 (Leaf와 동일) */
-  font-style: italic;
-  color: var(--color-text-tertiary);
-  cursor: default;
-  opacity: 0.6;
-}
-
-.tree-node.tree-node--empty:hover {
-  background-color: transparent;
-  transform: none;
-}
-
-/* ==========================================
-   트리 노드 아이콘
-   ========================================== */
-
-.tree-node__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  transition: transform var(--duration-fast) var(--easing-ease-out);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-}
-
-/* 🍎 Folder 아이콘 회전 애니메이션 (macOS 스타일) */
-.tree-node__icon.expanded {
-  transform: rotate(90deg);
-}
-
-/* SVG 아이콘 스타일 */
-.tree-node__icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* ==========================================
-   컨텐츠 컨테이너 - 라벨과 배지
-   ========================================== */
-
-.tree-node__content {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex: 1;
-  min-width: 0;
-}
-
-/* ==========================================
-   트리 노드 라벨
-   ========================================== */
-
-.tree-node__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-primary);
-  flex-shrink: 1;
-
-  /* 🔤 iOS/macOS Typography: 완벽한 텍스트 렌더링 */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-/* 🍎 카테고리 라벨 색상 - macOS Finder 스타일 */
-.tree-node__label--family {
-  color: var(--color-text-primary);
-  /* font-weight: var(--font-weight-normal); () */
-}
-
-.tree-node__label--corporate {
-  color: var(--color-text-primary);
-  /* font-weight: var(--font-weight-normal); () */
-}
-
-/* 🍎 클릭 가능한 라벨 - 서브틀한 언더라인 */
-.tree-node__label--clickable {
-  color: var(--color-icon-blue);
-  text-decoration: none;
-  position: relative;
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--easing-ease-out);
-}
-
-.tree-node__label--clickable:hover {
-  color: var(--color-icon-cyan);
-}
-
-.tree-node__label--clickable::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -2px;
-  height: 1px;
-  background-color: currentColor;
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-}
-
-.tree-node__label--clickable:hover::after {
-  opacity: 0.4;
-}
-
-/* ==========================================
-   트리 노드 배지 - macOS 스타일
-   ========================================== */
-
-.tree-node__badge {
-  /* font-size: var(--font-size-caption-2); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-semibold); () */
-  line-height: 1;
-  padding: 3px 7px;
-  margin-left: 6px;
-  background-color: rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
+.tree-node__label--no-relationship {
   color: var(--color-text-secondary);
-  flex-shrink: 0;
-  white-space: nowrap;
-  min-width: 20px;
-  text-align: center;
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  font-style: italic;
 }
 
-.tree-node:hover .tree-node__badge {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-/* 🍎 Success 배지 - macOS 녹색 강조 */
-.tree-node__badge--success {
-  background-color: rgba(52, 199, 89, 0.15);
-  color: rgb(30, 130, 76);
-  /* font-weight: var(--font-weight-bold); () */
-}
-
-.tree-node:hover .tree-node__badge--success {
-  background-color: rgba(52, 199, 89, 0.22);
-}
-
-/* 🍎 Warning 배지 - macOS 주황색 강조 (가족관계 미설정) */
 .tree-node__badge--warning {
-  background-color: rgba(255, 149, 0, 0.15);
-  color: rgb(201, 109, 0);
-  /* font-weight: var(--font-weight-bold); () */
+  background: rgba(255, 185, 0, 0.15);
+  color: rgb(201, 138, 0);
+  font-weight: 700;
 }
 
-.tree-node:hover .tree-node__badge--warning {
-  background-color: rgba(255, 149, 0, 0.22);
+html[data-theme="dark"] .tree-node__badge--warning {
+  background: rgba(255, 185, 0, 0.2);
+  color: rgb(255, 185, 0);
 }
 
-/* ==========================================
-   관계 배지
-   ========================================== */
-
-.tree-node__relation-badge {
-  /* font-size: var(--font-size-caption-2); () */
-  font-family: var(--font-family-system);
-  /* font-weight: var(--font-weight-semibold); () */
-  line-height: 1;
-  padding: 3px 8px;
-  background: linear-gradient(135deg, rgb(255, 59, 48), rgb(255, 45, 85));
-  border-radius: 6px;
-  color: white;
-  margin-right: 8px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(255, 59, 48, 0.3);
-}
-
-/* ==========================================
-   트리 자식 컨테이너
-   ========================================== */
-
-.tree-children {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: 2px;
-  padding-left: 20px; /* 들여쓰기 */
-  animation: treeExpand var(--duration-normal) var(--easing-ease-out);
-  overflow: hidden;
-}
-
-@keyframes treeExpand {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.tree-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-/* ==========================================
-   스크롤바 - macOS 스타일
-   ========================================== */
+/* ============================================
+   스크롤바 - Windows 11 스타일
+   ============================================ */
 
 .relationship-tree::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
 
 .relationship-tree::-webkit-scrollbar-track {
@@ -529,159 +457,23 @@ html[data-theme="dark"] .search-highlight {
 }
 
 .relationship-tree::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  border: 3px solid transparent;
   background-clip: content-box;
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
 }
 
 .relationship-tree::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+  background-clip: content-box;
 }
 
-/* ==========================================
-   고객 아이콘 - 전체보기와 일관성
-   ========================================== */
-
-.customer-icon--personal {
-  color: var(--color-success);
-  flex-shrink: 0;
-  transition: color var(--duration-fast) var(--easing-ease-out);
+html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  background-clip: content-box;
 }
 
-.tree-node--leaf:hover .customer-icon--personal {
-  color: var(--color-icon-cyan);
-}
-
-/* ==========================================
-   다크 모드 (미래 확장)
-   ========================================== */
-
-html[data-theme="dark"] .tree-node:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-html[data-theme="dark"] .tree-node:active {
-  background-color: rgba(255, 255, 255, 0.10);
-}
-
-html[data-theme="dark"] .tree-node--relation {
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-html[data-theme="dark"] .tree-node--relation:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-}
-
-html[data-theme="dark"] .tree-node__badge {
-  background-color: rgba(255, 255, 255, 0.10);
-}
-
-html[data-theme="dark"] .tree-node:hover .tree-node__badge {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-html[data-theme="dark"] .tree-node__badge--success {
-  background-color: rgba(52, 199, 89, 0.20);
-  color: rgb(50, 215, 75);
-}
-
-html[data-theme="dark"] .tree-node__badge--warning {
-  background-color: rgba(255, 159, 10, 0.20);
-  color: rgb(255, 179, 64);
-}
-
-/* ==========================================
-   반응형
-   ========================================== */
-
-@media (max-width: 768px) {
-  .relationship-tree {
-    padding: 6px;
-  }
-
-  .tree-node {
-    padding: 5px 10px;
-  }
-
-  .tree-node--root {
-    padding: 7px 10px;
-  }
-
-  .tree-node--group {
-    padding-left: 24px;
-  }
-
-  .tree-node--leaf,
-  .tree-node--relation,
-  .tree-node--empty {
-    padding-left: 42px;
-  }
-
-  .tree-node--member {
-    padding-left: 58px; /* 모바일에서도 추가 들여쓰기 */
-  }
-}
-
-/* ==========================================
-   🔗 관계 아이콘 토글 - 작고 서브틀하게
-   ========================================== */
-
-.tree-node__relation-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  opacity: 0.5;
-  cursor: pointer;
-  transition: opacity var(--duration-fast) var(--easing-ease-out),
-              transform var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-}
-
-.tree-node__relation-toggle:hover {
-  opacity: 1;
-  transform: scale(1.15);
-}
-
-/* ==========================================
-   관계 정보 리스트 - 작은 폰트로 컴팩트하게
-   ========================================== */
-
-.relation-list {
-  padding-left: 48px; /* leaf와 동일한 indentation */
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.relation-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 0;
-  cursor: help; /* 툴팁 있음을 표시 */
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
-}
-
-.relation-item:hover {
-  opacity: 0.8;
-}
-
-.relation-item__icon {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-
-.relation-item__text {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  white-space: nowrap;
+html[data-theme="dark"] .relationship-tree::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+  background-clip: content-box;
 }
