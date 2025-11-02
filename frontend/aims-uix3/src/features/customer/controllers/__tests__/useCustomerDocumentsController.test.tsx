@@ -301,6 +301,139 @@ describe('useCustomerDocumentsController', () => {
       expect(result.current.previewState.data?.fileUrl).toBe('https://tars.giize.com/uploads/file.pdf');
     });
 
+    /**
+     * 회귀 테스트: 백엔드 API 응답 구조 변경 대응
+     *
+     * 문제 배경 (2025-01-02):
+     * - 사용자 계정 시스템 도입 후 문서 프리뷰가 작동하지 않음
+     * - 원인: API 응답이 { success: true, data: { raw: {...} } } 구조인데
+     *   코드가 최상위 객체를 직접 파싱하려고 시도
+     *
+     * 해결:
+     * - response['data']?.['raw'] 경로로 실제 문서 메타데이터 추출
+     * - 없으면 response['raw'] fallback
+     * - 그것도 없으면 response 자체 사용
+     *
+     * 이 테스트의 목적:
+     * - 백엔드 API 응답 구조가 변경되어도 정상 작동 보장
+     * - 중첩된 data.raw 구조를 올바르게 파싱하는지 검증
+     * - 향후 동일한 버그 발생 시 테스트 실패로 즉시 감지
+     */
+    it('[회귀] 백엔드 API 응답 구조 { data: { raw: {...} } }를 올바르게 파싱해야 함', async () => {
+      // 백엔드 API의 실제 응답 구조 모방
+      const backendApiResponse = {
+        success: true,
+        data: {
+          raw: {
+            upload: {
+              originalName: 'api-response-document.pdf',
+              destPath: '/data/uploads/2025/01/test.pdf',
+              mimeType: 'application/pdf',
+              fileSize: 8192,
+              uploaded_at: '2025-01-02T12:00:00Z'
+            }
+          }
+        }
+      };
+
+      vi.mocked(DocumentStatusService.getDocumentDetailViaWebhook).mockResolvedValue(backendApiResponse);
+
+      const { result } = renderHook(() =>
+        useCustomerDocumentsController(mockCustomerId, { autoLoad: false })
+      );
+
+      await act(async () => {
+        await result.current.openPreview(mockDocuments[0]!);
+      });
+
+      // 프리뷰가 정상적으로 열려야 함
+      expect(result.current.previewState.isOpen).toBe(true);
+      expect(result.current.previewState.isLoading).toBe(false);
+      expect(result.current.previewState.error).toBeNull();
+
+      // data.raw에서 메타데이터를 정확히 추출해야 함
+      expect(result.current.previewState.data).toBeTruthy();
+      expect(result.current.previewState.data?.originalName).toBe('api-response-document.pdf');
+      expect(result.current.previewState.data?.fileUrl).toBe('https://tars.giize.com/uploads/2025/01/test.pdf');
+      expect(result.current.previewState.data?.mimeType).toBe('application/pdf');
+      expect(result.current.previewState.data?.sizeBytes).toBe(8192);
+
+      // rawDetail에 원본 데이터가 저장되어야 함
+      expect(result.current.previewState.data?.rawDetail).toEqual(backendApiResponse.data.raw);
+    });
+
+    /**
+     * 회귀 테스트: data 없이 raw만 있는 응답 구조 대응
+     *
+     * Fallback 경로 검증:
+     * - response['data']?.['raw'] 없으면
+     * - response['raw'] 시도
+     */
+    it('[회귀] response.raw 구조 (data 없음)도 파싱해야 함', async () => {
+      const responseWithRawOnly = {
+        success: true,
+        raw: {
+          upload: {
+            originalName: 'raw-only-document.pdf',
+            destPath: '/uploads/raw.pdf',
+            mimeType: 'application/pdf',
+            fileSize: 4096,
+            uploaded_at: '2025-01-03T12:00:00Z'
+          }
+        }
+      };
+
+      vi.mocked(DocumentStatusService.getDocumentDetailViaWebhook).mockResolvedValue(responseWithRawOnly);
+
+      const { result } = renderHook(() =>
+        useCustomerDocumentsController(mockCustomerId, { autoLoad: false })
+      );
+
+      await act(async () => {
+        await result.current.openPreview(mockDocuments[0]!);
+      });
+
+      expect(result.current.previewState.isOpen).toBe(true);
+      expect(result.current.previewState.error).toBeNull();
+      expect(result.current.previewState.data?.originalName).toBe('raw-only-document.pdf');
+      expect(result.current.previewState.data?.rawDetail).toEqual(responseWithRawOnly.raw);
+    });
+
+    /**
+     * 회귀 테스트: 레거시 응답 구조 (최상위에 직접 메타데이터) 대응
+     *
+     * Fallback 경로 검증:
+     * - response['data']?.['raw'] 없고
+     * - response['raw']도 없으면
+     * - response 자체를 사용
+     */
+    it('[회귀] 레거시 응답 구조 (최상위 직접 메타데이터)도 파싱해야 함', async () => {
+      const legacyResponse = {
+        upload: {
+          originalName: 'legacy-document.pdf',
+          destPath: '/uploads/legacy.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 2048,
+          uploaded_at: '2025-01-04T12:00:00Z'
+        }
+      };
+
+      vi.mocked(DocumentStatusService.getDocumentDetailViaWebhook).mockResolvedValue(legacyResponse);
+
+      const { result } = renderHook(() =>
+        useCustomerDocumentsController(mockCustomerId, { autoLoad: false })
+      );
+
+      await act(async () => {
+        await result.current.openPreview(mockDocuments[0]!);
+      });
+
+      expect(result.current.previewState.isOpen).toBe(true);
+      expect(result.current.previewState.error).toBeNull();
+      expect(result.current.previewState.data?.originalName).toBe('legacy-document.pdf');
+      expect(result.current.previewState.data?.rawDetail).toEqual(legacyResponse);
+    });
+
     it('프리뷰 로딩 중에는 isLoading이 true여야 함', async () => {
       let resolvePreview: ((value: any) => void) | null = null;
 
