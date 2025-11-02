@@ -40,6 +40,61 @@ export interface DocumentStatusListProps {
   onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
 }
 
+/**
+ * OCR 신뢰도를 5단계로 분류
+ * 0.0 ~ 1.0 범위의 신뢰도를 색상 레벨로 변환
+ */
+const getOcrConfidenceLevel = (confidence: number): {
+  color: string
+  label: string
+} => {
+  if (confidence >= 0.95) {
+    return { color: 'excellent', label: '매우 높음' }
+  } else if (confidence >= 0.85) {
+    return { color: 'high', label: '높음' }
+  } else if (confidence >= 0.70) {
+    return { color: 'medium', label: '보통' }
+  } else if (confidence >= 0.50) {
+    return { color: 'low', label: '낮음' }
+  } else {
+    return { color: 'very-low', label: '매우 낮음' }
+  }
+}
+
+/**
+ * Document에서 OCR confidence 추출
+ *
+ * 두 가지 소스에서 시도:
+ * 1. document.ocr?.confidence (검색 API에서 사용)
+ * 2. document.stages?.ocr?.message에서 파싱 (리스트 API에서 사용)
+ */
+const getOcrConfidence = (document: Document): number | null => {
+  // 1. document.ocr?.confidence 먼저 시도 (검색 API)
+  if (document.ocr && typeof document.ocr !== 'string') {
+    const directConfidence = document.ocr.confidence
+    if (directConfidence) {
+      const parsed = parseFloat(directConfidence)
+      if (!isNaN(parsed)) return parsed
+    }
+  }
+
+  // 2. stages.ocr.message에서 파싱 시도 (리스트 API)
+  // 예: "OCR 완료 (신뢰도: 0.9817)"
+  const stageOcr = document.stages?.ocr
+  if (stageOcr && typeof stageOcr !== 'string') {
+    const ocrMessage = stageOcr.message
+    if (ocrMessage && typeof ocrMessage === 'string') {
+      const match = ocrMessage.match(/신뢰도:\s*([\d.]+)/)
+      if (match && match[1]) {
+        const parsed = parseFloat(match[1])
+        if (!isNaN(parsed)) return parsed
+      }
+    }
+  }
+
+  return null
+}
+
 export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   documents,
   isLoading,
@@ -274,6 +329,19 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </div>
                 </Tooltip>
               )}
+              {/* 🍎 OCR BADGE: OCR 처리 완료 문서 신뢰도 표시 */}
+              {(() => {
+                const confidence = getOcrConfidence(document)
+                if (confidence === null) return null
+                const level = getOcrConfidenceLevel(confidence)
+                return (
+                  <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                    <div className={`document-ocr-badge ocr-${level.color}`}>
+                      OCR
+                    </div>
+                  </Tooltip>
+                )
+              })()}
             </div>
 
             {/* 파일명 */}

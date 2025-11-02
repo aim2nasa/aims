@@ -286,6 +286,27 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }
   }
 
+  /**
+   * OCR 신뢰도를 5단계로 분류
+   * 0.0 ~ 1.0 범위의 신뢰도를 색상 레벨로 변환
+   */
+  const getOcrConfidenceLevel = (confidence: number): {
+    color: string
+    label: string
+  } => {
+    if (confidence >= 0.95) {
+      return { color: 'excellent', label: '매우 높음' }
+    } else if (confidence >= 0.85) {
+      return { color: 'high', label: '높음' }
+    } else if (confidence >= 0.70) {
+      return { color: 'medium', label: '보통' }
+    } else if (confidence >= 0.50) {
+      return { color: 'low', label: '낮음' }
+    } else {
+      return { color: 'very-low', label: '매우 낮음' }
+    }
+  }
+
   return (
     <CenterPaneView
       visible={visible}
@@ -494,6 +515,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                               <Tooltip content="Annual Report">
                                 <div className="document-ar-badge">
                                   AR
+                                </div>
+                              </Tooltip>
+                            ) : null}
+                            {/* 🍎 OCR BADGE: OCR 처리 완료 문서 신뢰도 표시 */}
+                            {confidence !== null && confidence !== undefined ? (
+                              <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${getOcrConfidenceLevel(confidence).label})`}>
+                                <div className={`document-ocr-badge ocr-${getOcrConfidenceLevel(confidence).color}`}>
+                                  OCR
                                 </div>
                               </Tooltip>
                             ) : null}

@@ -33,7 +33,7 @@ const mockSemanticItem: SemanticSearchResultItem = {
   },
   ocr: {
     summary: 'This is an OCR summary',
-    confidence: '95.5%',
+    confidence: '0.955',
   },
 };
 
@@ -53,7 +53,7 @@ const mockKeywordItem: KeywordSearchResultItem = {
   },
   ocr: {
     summary: 'This is a keyword OCR summary',
-    confidence: '92.3%',
+    confidence: '0.923',
   },
 };
 
@@ -252,10 +252,10 @@ describe('SearchService.getOCRConfidence', () => {
     const item: SearchResultItem = {
       score: 0.9,
       meta: {},
-      ocr: { confidence: '95.5%' },
+      ocr: { confidence: '0.955' },
     } as SemanticSearchResultItem;
 
-    expect(SearchService.getOCRConfidence(item)).toBe('95.5%');
+    expect(SearchService.getOCRConfidence(item)).toBe(0.955);
   });
 
   it('ocr.confidence가 없으면 null을 반환한다', () => {
@@ -407,7 +407,7 @@ describe('SearchService - 실제 데이터 통합 테스트', () => {
     expect(SearchService.getFilePath(mockSemanticItem)).toBe('/uploads/meta/test.pdf');
     expect(SearchService.getOriginalName(mockSemanticItem)).toBe('test-meta.pdf');
     expect(SearchService.getSummary(mockSemanticItem)).toBe('This is a meta summary');
-    expect(SearchService.getOCRConfidence(mockSemanticItem)).toBe('95.5%');
+    expect(SearchService.getOCRConfidence(mockSemanticItem)).toBe(0.955);
     expect(SearchService.getDocumentId(mockSemanticItem)).toBe('doc-123');
     expect(SearchService.getMimeType(mockSemanticItem)).toBe('application/pdf');
   });
@@ -416,7 +416,7 @@ describe('SearchService - 실제 데이터 통합 테스트', () => {
     expect(SearchService.getFilePath(mockKeywordItem)).toBe('/uploads/upload/test.pdf');
     expect(SearchService.getOriginalName(mockKeywordItem)).toBe('test-upload.pdf');
     expect(SearchService.getSummary(mockKeywordItem)).toBe('This is a keyword meta summary');
-    expect(SearchService.getOCRConfidence(mockKeywordItem)).toBe('92.3%');
+    expect(SearchService.getOCRConfidence(mockKeywordItem)).toBe(0.923);
     expect(SearchService.getDocumentId(mockKeywordItem)).toBe('keyword-doc-1');
     expect(SearchService.getMimeType(mockKeywordItem)).toBe('application/pdf');
   });

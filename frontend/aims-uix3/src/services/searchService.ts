@@ -226,10 +226,15 @@ export class SearchService {
    * OCR 신뢰도 추출
    *
    * @param item 검색 결과 아이템
-   * @returns OCR 신뢰도
+   * @returns OCR 신뢰도 (0.0 ~ 1.0 범위의 숫자)
    */
-  static getOCRConfidence(item: SearchResultItem): string | null {
-    return item.ocr?.confidence || null
+  static getOCRConfidence(item: SearchResultItem): number | null {
+    const confidence = item.ocr?.confidence
+    if (!confidence) return null
+
+    // 문자열을 숫자로 변환 (백엔드에서 "0.9817" 형태로 전송)
+    const parsed = parseFloat(confidence)
+    return isNaN(parsed) ? null : parsed
   }
 
   /**

@@ -90,6 +90,8 @@ export interface OcrData {
   status?: StageStatus
   warn?: boolean
   queue?: boolean
+  confidence?: string
+  message?: string
 }
 
 /**
