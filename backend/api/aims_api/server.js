@@ -7,7 +7,7 @@ const axios = require('axios');
 const multer = require('multer');
 const FormData = require('form-data');
 const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
-const { utcNowISO, utcNowDate } = require('./lib/timeUtils');
+const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 
 const app = express();
 app.use(cors());
@@ -553,7 +553,7 @@ app.get('/api/documents/status', async (req, res) => {
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
-        uploadedAt: doc.upload?.uploaded_at,
+        uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
@@ -629,7 +629,7 @@ app.get('/api/documents/:id/status', async (req, res) => {
         // 📋 기본 메타 정보 (하위 호환성)
         _id: document._id,
         originalName: document.upload?.originalName || 'Unknown File',
-        uploadedAt: document.upload?.uploaded_at,
+        uploadedAt: normalizeTimestamp(document.upload?.uploaded_at),
         fileSize: document.meta?.size_bytes,
         mimeType: document.meta?.mime,
         filePath: document.upload?.destPath
@@ -1618,7 +1618,7 @@ app.get('/api/admin/orphaned-relationships', async (req, res) => {
           fromCustomerExists,
           relatedCustomerExists,
           relationshipType: relationship.relationship_info?.relationship_type || 'Unknown',
-          createdAt: relationship.meta?.created_at
+          createdAt: normalizeTimestamp(relationship.meta?.created_at)
         });
       }
     }
@@ -1910,16 +1910,16 @@ app.get('/api/customers/:id/documents', async (req, res) => {
     const documentsWithStatus = documents.map(doc => {
       const statusInfo = analyzeDocumentStatus(doc);
       const customerDoc = customer.documents.find(d => d.document_id.equals(doc._id));
-      
+
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
-        uploadedAt: doc.upload?.uploaded_at,
+        uploadedAt: normalizeTimestamp(doc.upload?.uploaded_at),
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
         relationship: customerDoc?.relationship,
         notes: customerDoc?.notes,
-        linkedAt: customerDoc?.upload_date,
+        linkedAt: normalizeTimestamp(customerDoc?.upload_date),
         ...statusInfo
       };
     });
@@ -2459,7 +2459,7 @@ app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) =>
         documents: pendingDocs.map(doc => ({
           file_id: doc._id.toString(),
           filename: doc.upload?.originalName || 'Unknown',
-          uploaded_at: doc.upload?.uploaded_at,
+          uploaded_at: normalizeTimestamp(doc.upload?.uploaded_at),
           status: doc.ar_parsing_status || 'pending',
           issue_date: doc.ar_metadata?.issue_date
         }))
@@ -2632,7 +2632,7 @@ app.get('/api/customers/:id/address-history', async (req, res) => {
       addressHistory.push({
         _id: 'current',
         address: customer.personal_info.address,
-        changed_at: customer.meta?.updated_at || customer.meta?.created_at,
+        changed_at: normalizeTimestamp(customer.meta?.updated_at || customer.meta?.created_at),
         reason: '현재 주소',
         changed_by: '시스템',
         is_current: true
@@ -2649,7 +2649,7 @@ app.get('/api/customers/:id/address-history', async (req, res) => {
       addressHistory.push({
         _id: record._id,
         address: record.address,
-        changed_at: record.changed_at,
+        changed_at: normalizeTimestamp(record.changed_at),
         reason: record.reason || '주소 변경',
         changed_by: record.changed_by || '시스템',
         notes: record.notes,
