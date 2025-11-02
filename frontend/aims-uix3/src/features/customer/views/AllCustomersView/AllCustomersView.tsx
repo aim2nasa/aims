@@ -32,12 +32,6 @@ const ITEMS_PER_PAGE_OPTIONS = [
   { value: '100', label: '100개씩' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'latest', label: '최신순' },
-  { value: 'name', label: '이름순' },
-  { value: 'oldest', label: '오래된순' },
-];
-
 type SortField = 'name' | 'birth' | 'gender' | 'phone' | 'email' | 'address' | 'type' | 'status' | 'created';
 type SortDirection = 'asc' | 'desc';
 
@@ -45,7 +39,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
   function AllCustomersView({ onCustomerClick }, ref) {
     // F5 이후에도 유지되는 상태들
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '10');
-    const [sortBy, setSortBy] = usePersistedState('customer-all-sort', 'latest');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
 
@@ -163,37 +156,16 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           return sortDirection === 'asc' ? compareResult : -compareResult;
         });
       } else {
-        // 기존 드롭다운 정렬 사용
-        switch (sortBy) {
-          case 'latest':
-            // 최신순 (등록일 내림차순)
-            sorted.sort((a, b) => {
-              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-              return dateB - dateA;
-            });
-            break;
-          case 'name':
-            // 이름순 (가나다순)
-            sorted.sort((a, b) => {
-              const nameA = a.personal_info?.name || '';
-              const nameB = b.personal_info?.name || '';
-              return nameA.localeCompare(nameB, 'ko');
-            });
-            break;
-          case 'oldest':
-            // 오래된순 (등록일 오름차순)
-            sorted.sort((a, b) => {
-              const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
-              const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
-              return dateA - dateB;
-            });
-            break;
-        }
+        // 정렬 없을 때 기본값: 최신순 (등록일 내림차순)
+        sorted.sort((a, b) => {
+          const dateA = a.meta?.created_at ? new Date(a.meta.created_at).getTime() : 0;
+          const dateB = b.meta?.created_at ? new Date(b.meta.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
       }
 
       return sorted;
-    }, [filteredCustomers, sortBy, sortField, sortDirection]);
+    }, [filteredCustomers, sortField, sortDirection]);
 
     const itemsPerPageNumber = useMemo(() => {
       const parsed = parseInt(itemsPerPage, 10);
@@ -257,12 +229,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     const handleItemsPerPageChange = (value: string) => {
       setItemsPerPage(value);
-      setCurrentPage(1);
-    };
-
-    const handleSortChange = (value: string) => {
-      setSortBy(value);
-      setSortField(null); // 드롭다운 정렬 선택 시 칼럼 정렬 해제
       setCurrentPage(1);
     };
 
@@ -430,13 +396,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 tooltip="고객 목록 새로고침"
                 size="small"
               />
-              <div className="sort-selector">
-                <Dropdown
-                  value={sortBy}
-                  options={SORT_OPTIONS}
-                  onChange={handleSortChange}
-                />
-              </div>
             </div>
           </div>
         )}
