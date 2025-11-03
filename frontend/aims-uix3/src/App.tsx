@@ -1052,6 +1052,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
               onDocumentDeleted={() => setRightPaneVisible(false)}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 
