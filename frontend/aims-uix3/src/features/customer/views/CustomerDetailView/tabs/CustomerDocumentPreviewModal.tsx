@@ -15,6 +15,7 @@ import SFSymbol, {
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
 import { PDFViewer } from '../../../../../components/PDFViewer/PDFViewer'
+import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { formatDateTime } from '@/shared/lib/timeUtils'
@@ -136,9 +137,11 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
 
     if (isImage && fileUrl) {
       return (
-        <div className="customer-document-preview__image-wrapper">
-          <img src={fileUrl} alt={previewDocument.originalName} className="customer-document-preview__image" />
-        </div>
+        <ImageViewer
+          file={fileUrl}
+          alt={previewDocument.originalName}
+          {...(onDownload ? { onDownload } : {})}
+        />
       )
     }
 

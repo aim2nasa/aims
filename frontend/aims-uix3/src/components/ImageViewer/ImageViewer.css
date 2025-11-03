@@ -1,7 +1,8 @@
 /**
  * ImageViewer Styles
- * @since 1.0.0
+ * @since 2025-11-03
  *
+ * PDFViewer와 동일한 레이아웃 및 스타일
  * Apple 디자인 철학 준수:
  * - Progressive Disclosure: 컨트롤은 필요시에만 강조
  * - Clarity: 명확한 정보 계층
@@ -10,7 +11,7 @@
 
 /* === 🍎 IMAGE VIEWER CONTAINER === */
 
-.image-viewer-container {
+.image-viewer {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -19,82 +20,71 @@
   overflow: hidden;
 }
 
-html[data-theme="dark"] .image-viewer-container {
+html[data-theme="dark"] .image-viewer {
   background-color: var(--color-ios-bg-secondary-dark);
 }
 
 /* === 🍎 IMAGE CONTENT AREA === */
 
-.image-content {
+.image-viewer-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: auto;
   padding: 16px;
-  position: relative;
   user-select: none;
 }
 
 /* Cursor states for draggable content */
-.image-content--draggable {
+.image-viewer-content--draggable {
   cursor: grab;
 }
 
-.image-content--dragging {
+.image-viewer-content--dragging {
   cursor: grabbing;
 }
 
-.image-wrapper {
+.image-container {
+  transition: transform 0.3s ease-out;
+  will-change: transform;
+}
+
+.image-viewer-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--color-ios-separator-light);
   border-radius: 8px;
-  overflow: hidden;
   background-color: var(--color-ios-bg-primary-light);
-  transition: opacity 0.3s ease-out;
 }
 
-html[data-theme="dark"] .image-wrapper {
+html[data-theme="dark"] .image-viewer-image {
   border-color: var(--color-ios-separator-dark);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   background-color: var(--color-ios-bg-primary-dark);
 }
 
-.image-hidden {
-  opacity: 0;
-}
-
-.image-visible {
-  opacity: 1;
-}
-
-.preview-image {
-  display: block;
-  max-height: calc(100vh - 200px);
-  height: auto;
-  width: auto;
-  transition: transform 0.2s ease-out;
-  transform-origin: center center;
-  user-select: none;
-  pointer-events: none;
-}
-
 /* === 🍎 LOADING STATE === */
 
-.loading-indicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.image-viewer-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
   padding: 40px 20px;
+  color: var(--color-ios-text-secondary-light);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
-.loading-spinner {
+html[data-theme="dark"] .image-viewer-loading {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.image-viewer-loading .loading-spinner {
   width: 32px;
   height: 32px;
   border: 3px solid var(--color-ios-separator-light);
@@ -103,7 +93,7 @@ html[data-theme="dark"] .image-wrapper {
   animation: spin 0.8s linear infinite;
 }
 
-html[data-theme="dark"] .loading-spinner {
+html[data-theme="dark"] .image-viewer-loading .loading-spinner {
   border-color: var(--color-ios-separator-dark);
   border-top-color: var(--color-ios-interactive-dark);
 }
@@ -114,17 +104,6 @@ html[data-theme="dark"] .loading-spinner {
   }
 }
 
-.loading-text {
-  margin: 0;
-  color: var(--color-ios-text-secondary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .loading-text {
-  color: var(--color-ios-text-secondary-dark);
-}
-
 /* === 🍎 ERROR STATE === */
 
 .image-viewer-error {
@@ -132,59 +111,32 @@ html[data-theme="dark"] .loading-text {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
-  padding: 40px 20px;
-  background-color: var(--color-ios-bg-secondary-light);
-}
-
-html[data-theme="dark"] .image-viewer-error {
-  background-color: var(--color-ios-bg-secondary-dark);
-}
-
-.error-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 16px;
+  padding: 40px 20px;
   text-align: center;
 }
 
-.error-icon {
-  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
+.image-viewer-error .error-icon {
   color: var(--color-ios-system-red-light);
 }
 
-html[data-theme="dark"] .error-icon {
+html[data-theme="dark"] .image-viewer-error .error-icon {
   color: var(--color-ios-system-red-dark);
 }
 
-.error-title {
-  margin: 0;
-  color: var(--color-ios-text-primary-light);
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .error-title {
-  color: var(--color-ios-text-primary-dark);
-}
-
-.error-message {
+.image-viewer-error .error-message {
   margin: 0;
   color: var(--color-ios-text-secondary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
-html[data-theme="dark"] .error-message {
+html[data-theme="dark"] .image-viewer-error .error-message {
   color: var(--color-ios-text-secondary-dark);
 }
 
 /* === 🍎 CONTROLS: Progressive Disclosure === */
 
-.controls-container {
+.image-viewer-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -195,51 +147,41 @@ html[data-theme="dark"] .error-message {
   flex-shrink: 0;
 }
 
-html[data-theme="dark"] .controls-container {
+html[data-theme="dark"] .image-viewer-controls {
   background-color: var(--color-ios-bg-primary-dark);
   border-top-color: var(--color-ios-separator-dark);
 }
 
-.controls-left,
-.controls-right {
+.image-viewer-controls .controls-left,
+.image-viewer-controls .controls-center,
+.image-viewer-controls .controls-right {
   flex: 1;
   display: flex;
   align-items: center;
 }
 
-.controls-left {
+.image-viewer-controls .controls-left {
   justify-content: flex-start;
 }
 
-.controls-right {
+.image-viewer-controls .controls-center {
+  justify-content: center;
+  gap: 24px;
+}
+
+.image-viewer-controls .controls-right {
   justify-content: flex-end;
 }
 
-/* === 🍎 ZOOM CONTROLS === */
-
-.zoom-controls {
+.image-viewer-controls .controls-section {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.zoom-text {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  min-width: 60px;
-  text-align: center;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .zoom-text {
-  color: var(--color-ios-text-secondary-dark);
-}
-
 /* === 🍎 CONTROL BUTTONS: Apple Style === */
 
-.control-button {
+.image-viewer-controls .control-button {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -248,7 +190,6 @@ html[data-theme="dark"] .zoom-text {
   color: var(--color-ios-interactive-light);
   border: 1px solid transparent;
   border-radius: 6px;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -257,43 +198,35 @@ html[data-theme="dark"] .zoom-text {
   line-height: 1;
 }
 
-.control-button:hover:not(:disabled) {
+.image-viewer-controls .control-button:hover:not(:disabled) {
   background-color: var(--color-ios-bg-secondary-light);
   border-color: var(--color-ios-separator-light);
   opacity: 1;
 }
 
-.control-button:active:not(:disabled) {
+.image-viewer-controls .control-button:active:not(:disabled) {
   transform: scale(0.96);
 }
 
-.control-button:disabled {
+.image-viewer-controls .control-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-html[data-theme="dark"] .control-button {
+html[data-theme="dark"] .image-viewer-controls .control-button {
   color: var(--color-ios-interactive-dark);
 }
 
-html[data-theme="dark"] .control-button:hover:not(:disabled) {
+html[data-theme="dark"] .image-viewer-controls .control-button:hover:not(:disabled) {
   background-color: var(--color-ios-bg-secondary-dark);
   border-color: var(--color-ios-separator-dark);
 }
 
-/* === 🍎 GHOST BUTTON VARIANT === */
-
-.control-button--ghost {
-  /* 기본 control-button 스타일 유지 */
-}
-
 /* === 🍎 PRIMARY BUTTON: Accent Style === */
 
-/* Light Mode - 어두운 파란색 */
-.control-button--primary {
+.image-viewer-controls .control-button--primary {
   background-color: var(--color-primary-600);
   color: white;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 600;
   gap: 4px;
   padding: 6px 12px;
@@ -301,62 +234,75 @@ html[data-theme="dark"] .control-button:hover:not(:disabled) {
   transition: background-color 0.15s ease-out;
 }
 
-.control-button--primary span[aria-hidden] {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+.image-viewer-controls .control-button--primary span[aria-hidden] {
   line-height: 1;
 }
 
-.control-button.control-button--primary:hover {
+.image-viewer-controls .control-button.control-button--primary:hover {
   background-color: var(--color-primary-700);
   color: white;
 }
 
-.control-button.control-button--primary:active {
+.image-viewer-controls .control-button.control-button--primary:active {
   background-color: var(--color-primary-800);
   color: white;
 }
 
-/* Dark Mode - 밝은 파란색 */
-html[data-theme="dark"] .control-button--primary {
+html[data-theme="dark"] .image-viewer-controls .control-button--primary {
   background-color: var(--color-primary-500);
   color: white;
 }
 
-html[data-theme="dark"] .control-button.control-button--primary:hover {
+html[data-theme="dark"] .image-viewer-controls .control-button.control-button--primary:hover {
   background-color: var(--color-primary-400);
   color: white;
 }
 
-html[data-theme="dark"] .control-button.control-button--primary:active {
+html[data-theme="dark"] .image-viewer-controls .control-button.control-button--primary:active {
   background-color: var(--color-primary-300);
   color: white;
 }
 
+/* === 🍎 INFO TEXT: Subtle Typography === */
+
+.image-viewer-controls .zoom-info {
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .image-viewer-controls .zoom-info {
+  color: var(--color-ios-text-secondary-dark);
+}
+
 /* === 🍎 SCROLLBAR: Apple Style === */
 
-.image-content::-webkit-scrollbar {
+.image-viewer-content::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.image-content::-webkit-scrollbar-track {
+.image-viewer-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.image-content::-webkit-scrollbar-thumb {
+.image-viewer-content::-webkit-scrollbar-thumb {
   background-color: var(--color-ios-scrollbar-light);
   border-radius: 4px;
   transition: background-color 0.15s ease-out;
 }
 
-html[data-theme="dark"] .image-content::-webkit-scrollbar-thumb {
+html[data-theme="dark"] .image-viewer-content::-webkit-scrollbar-thumb {
   background-color: var(--color-ios-scrollbar-dark);
 }
 
-.image-content::-webkit-scrollbar-thumb:hover {
+.image-viewer-content::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-ios-scrollbar-hover-light);
 }
 
-html[data-theme="dark"] .image-content::-webkit-scrollbar-thumb:hover {
+html[data-theme="dark"] .image-viewer-content::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-ios-scrollbar-hover-dark);
 }
