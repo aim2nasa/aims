@@ -1,48 +1,16 @@
 /**
  * PDFViewer Styles
  * @since 1.0.0
+ * @refactored 2025-11-03 - 공통 스타일을 viewer-common.css로 이동
  *
- * Apple 디자인 철학 준수:
- * - Progressive Disclosure: 컨트롤은 필요시에만 강조
- * - Clarity: 명확한 정보 계층
- * - Depth: 자연스러운 깊이감
+ * PDF 전용 스타일만 포함
+ * 공통 스타일은 ../../styles/viewer-common.css 참조
  */
 
-/* === 🍎 PDF VIEWER CONTAINER === */
-
-.pdf-viewer {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  background-color: var(--color-ios-bg-secondary-light);
-  overflow: hidden;
-}
-
-html[data-theme="dark"] .pdf-viewer {
-  background-color: var(--color-ios-bg-secondary-dark);
-}
-
-/* === 🍎 PDF CONTENT AREA === */
+/* === 🍎 PDF CONTENT AREA (PDF 전용) === */
 
 .pdf-viewer-content {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow: auto;
-  padding: 16px;
-  user-select: none;
-}
-
-/* Cursor states for draggable content */
-.pdf-viewer-content--draggable {
-  cursor: grab;
-}
-
-.pdf-viewer-content--dragging {
-  cursor: grabbing;
+  align-items: flex-start; /* PDF는 상단 정렬 (이미지는 center) */
 }
 
 .pdf-page-container {
@@ -61,75 +29,7 @@ html[data-theme="dark"] .pdf-page-container {
   background-color: var(--color-ios-bg-primary-dark);
 }
 
-/* === 🍎 LOADING STATE === */
-
-.pdf-viewer-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  color: var(--color-ios-text-secondary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .pdf-viewer-loading {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--color-ios-separator-light);
-  border-top-color: var(--color-ios-interactive-light);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-html[data-theme="dark"] .loading-spinner {
-  border-color: var(--color-ios-separator-dark);
-  border-top-color: var(--color-ios-interactive-dark);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === 🍎 ERROR STATE === */
-
-.pdf-viewer-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 40px 20px;
-  text-align: center;
-}
-
-.error-icon {
-  /* font-size: var(--font-size-xlarge-symbol); (32px - FONT_RULES.md: 아이콘/심볼 ) */
-  color: var(--color-ios-system-red-light);
-}
-
-html[data-theme="dark"] .error-icon {
-  color: var(--color-ios-system-red-dark);
-}
-
-.error-message {
-  margin: 0;
-  color: var(--color-ios-text-secondary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
-
-html[data-theme="dark"] .error-message {
-  color: var(--color-ios-text-secondary-dark);
-}
+/* === 🍎 PDF ERROR STATE (재시도 버튼) === */
 
 .retry-button {
   padding: 8px 16px;
@@ -137,7 +37,6 @@ html[data-theme="dark"] .error-message {
   color: var(--color-ios-bg-primary-light);
   border: none;
   border-radius: 8px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   cursor: pointer;
@@ -151,185 +50,4 @@ html[data-theme="dark"] .error-message {
 html[data-theme="dark"] .retry-button {
   background-color: var(--color-ios-interactive-dark);
   color: var(--color-ios-bg-primary-dark);
-}
-
-/* === 🍎 CONTROLS: Progressive Disclosure === */
-
-.pdf-viewer-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 12px 16px;
-  background-color: var(--color-ios-bg-primary-light);
-  border-top: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .pdf-viewer-controls {
-  background-color: var(--color-ios-bg-primary-dark);
-  border-top-color: var(--color-ios-separator-dark);
-}
-
-.controls-left,
-.controls-center,
-.controls-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.controls-left {
-  justify-content: flex-start;
-}
-
-.controls-center {
-  justify-content: center;
-  gap: 24px;
-}
-
-.controls-right {
-  justify-content: flex-end;
-}
-
-.controls-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* === 🍎 CONTROL BUTTONS: Apple Style === */
-
-.control-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background-color: transparent;
-  color: var(--color-ios-interactive-light);
-  border: 1px solid transparent;
-  border-radius: 6px;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-  opacity: 0.8;
-  line-height: 1;
-}
-
-.control-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-secondary-light);
-  border-color: var(--color-ios-separator-light);
-  opacity: 1;
-}
-
-.control-button:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
-.control-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-html[data-theme="dark"] .control-button {
-  color: var(--color-ios-interactive-dark);
-}
-
-html[data-theme="dark"] .control-button:hover:not(:disabled) {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-/* === 🍎 PRIMARY BUTTON: Accent Style === */
-
-/* Light Mode - 어두운 파란색 */
-.control-button--primary {
-  background-color: var(--color-primary-600);
-  color: white;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 600;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 7px;
-  transition: background-color 0.15s ease-out;
-}
-
-.control-button--primary span[aria-hidden] {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  line-height: 1;
-}
-
-.control-button.control-button--primary:hover {
-  background-color: var(--color-primary-700);
-  color: white;
-}
-
-.control-button.control-button--primary:active {
-  background-color: var(--color-primary-800);
-  color: white;
-}
-
-/* Dark Mode - 밝은 파란색 */
-html[data-theme="dark"] .control-button--primary {
-  background-color: var(--color-primary-500);
-  color: white;
-}
-
-html[data-theme="dark"] .control-button.control-button--primary:hover {
-  background-color: var(--color-primary-400);
-  color: white;
-}
-
-html[data-theme="dark"] .control-button.control-button--primary:active {
-  background-color: var(--color-primary-300);
-  color: white;
-}
-
-/* === 🍎 INFO TEXT: Subtle Typography === */
-
-.page-info,
-.zoom-info {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-ios-text-secondary-light);
-  min-width: 60px;
-  text-align: center;
-  line-height: 1.2;
-}
-
-html[data-theme="dark"] .page-info,
-html[data-theme="dark"] .zoom-info {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* === 🍎 SCROLLBAR: Apple Style === */
-
-.pdf-viewer-content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.pdf-viewer-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.pdf-viewer-content::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 4px;
-  transition: background-color 0.15s ease-out;
-}
-
-html[data-theme="dark"] .pdf-viewer-content::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-.pdf-viewer-content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-light);
-}
-
-html[data-theme="dark"] .pdf-viewer-content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ios-scrollbar-hover-dark);
 }

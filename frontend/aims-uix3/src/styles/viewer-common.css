@@ -1,0 +1,144 @@
+/**
+ * Viewer Common Styles
+ * @since 2025-11-03
+ *
+ * PDFViewer, ImageViewer, DownloadOnlyViewer 등 모든 뷰어의 공통 스타일
+ * DRY 원칙 적용 - 중복 CSS 제거
+ *
+ * Apple 디자인 철학 준수:
+ * - Progressive Disclosure: 컨트롤은 필요시에만 강조
+ * - Clarity: 명확한 정보 계층
+ * - Depth: 자연스러운 깊이감
+ */
+
+/* === 🍎 VIEWER CONTAINER === */
+
+.viewer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-ios-bg-secondary-light);
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .viewer-container {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+/* === 🍎 CONTENT AREA === */
+
+.viewer-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+  padding: 16px;
+  user-select: none;
+}
+
+/* Cursor states for draggable content */
+.viewer-content--draggable {
+  cursor: grab;
+}
+
+.viewer-content--dragging {
+  cursor: grabbing;
+}
+
+/* === 🍎 LOADING STATE === */
+
+.viewer-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--color-ios-text-secondary-light);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .viewer-loading {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.viewer-loading__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-ios-separator-light);
+  border-top-color: var(--color-ios-interactive-light);
+  border-radius: 50%;
+  animation: viewer-spin 0.8s linear infinite;
+}
+
+html[data-theme="dark"] .viewer-loading__spinner {
+  border-color: var(--color-ios-separator-dark);
+  border-top-color: var(--color-ios-interactive-dark);
+}
+
+@keyframes viewer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === 🍎 ERROR STATE === */
+
+.viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.viewer-error__icon {
+  color: var(--color-ios-system-red-light);
+}
+
+html[data-theme="dark"] .viewer-error__icon {
+  color: var(--color-ios-system-red-dark);
+}
+
+.viewer-error__message {
+  margin: 0;
+  color: var(--color-ios-text-secondary-light);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+html[data-theme="dark"] .viewer-error__message {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 🍎 SCROLLBAR: Apple Style === */
+
+.viewer-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.viewer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.viewer-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .viewer-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+.viewer-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-light);
+}
+
+html[data-theme="dark"] .viewer-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ios-scrollbar-hover-dark);
+}

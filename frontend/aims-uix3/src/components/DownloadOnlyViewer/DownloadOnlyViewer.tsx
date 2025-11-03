@@ -1,6 +1,7 @@
 /**
  * DownloadOnlyViewer Component
  * @since 1.0.0
+ * @refactored 2025-11-03 - 공통 컴포넌트 적용 (DRY 원칙)
  *
  * 미리보기를 지원하지 않는 파일 형식을 위한 다운로드 전용 뷰어
  * Apple 디자인 철학 준수 - 깔끔하고 직관적한 UI
@@ -9,6 +10,8 @@
 
 import React from 'react'
 import Tooltip from '../../shared/ui/Tooltip'
+import { ViewerControls } from '../ViewerControls'
+import '../../styles/viewer-common.css'
 import './DownloadOnlyViewer.css'
 
 interface DownloadOnlyViewerProps {
@@ -35,9 +38,9 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
   onDownload
 }) => {
   return (
-    <div className="download-only-viewer">
+    <div className="viewer-container"> {/* 공통 CSS */}
       {/* 메인 콘텐츠 영역 */}
-      <div className="download-only-content">
+      <div className="viewer-content download-only-content">
         <div className="preview-placeholder">
           {/* 파일 아이콘 */}
           <div className="file-icon" aria-hidden="true">
@@ -64,25 +67,16 @@ export const DownloadOnlyViewer: React.FC<DownloadOnlyViewerProps> = ({
         </div>
       </div>
 
-      {/* === 🍎 APPLE STYLE CONTROLS === */}
-      <div className="controls-container">
-        {/* 왼쪽 공간 (균형) */}
-        <div className="controls-spacer" />
-
-        {/* 중앙 공간 */}
-        <div className="controls-spacer" />
-
-        {/* 오른쪽 - 다운로드 버튼 */}
-        <Tooltip content="다운로드">
-          <button
-            className="control-button control-button--primary"
-            onClick={onDownload}
-            aria-label={`${fileName} 다운로드`}
-          >
-            <span aria-hidden="true">↓</span>
-          </button>
-        </Tooltip>
-      </div>
+      {/* 🎯 공통 컴포넌트 사용 (Controls) - 다운로드만 */}
+      <ViewerControls
+        scale={1.0}
+        isModified={false}
+        onZoomIn={() => {}}
+        onZoomOut={() => {}}
+        onReset={() => {}}
+        onDownload={onDownload}
+        // pageNav 없음, zoom 없음 (다운로드만)
+      />
     </div>
   )
 }

@@ -1,0 +1,153 @@
+/**
+ * ViewerControls Styles
+ * @since 2025-11-03
+ *
+ * PDFViewer, ImageViewer 등 모든 뷰어의 공통 컨트롤 스타일
+ * Apple 디자인 철학 준수 - Progressive Disclosure
+ */
+
+/* === 🍎 CONTROLS CONTAINER: Progressive Disclosure === */
+
+.viewer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 16px;
+  background-color: var(--color-ios-bg-primary-light);
+  border-top: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .viewer-controls {
+  background-color: var(--color-ios-bg-primary-dark);
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+/* === 🍎 LAYOUT SECTIONS === */
+
+.viewer-controls__left,
+.viewer-controls__center,
+.viewer-controls__right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.viewer-controls__left {
+  justify-content: flex-start;
+}
+
+.viewer-controls__center {
+  justify-content: center;
+  gap: 24px;
+}
+
+.viewer-controls__right {
+  justify-content: flex-end;
+}
+
+.viewer-controls__section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === 🍎 CONTROL BUTTONS: Apple Style === */
+
+.viewer-controls__button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--color-ios-interactive-light);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.viewer-controls__button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-ios-separator-light);
+  opacity: 1;
+}
+
+.viewer-controls__button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.viewer-controls__button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+html[data-theme="dark"] .viewer-controls__button {
+  color: var(--color-ios-interactive-dark);
+}
+
+html[data-theme="dark"] .viewer-controls__button:hover:not(:disabled) {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* === 🍎 PRIMARY BUTTON: Accent Style === */
+
+.viewer-controls__button--primary {
+  background-color: var(--color-primary-600);
+  color: white;
+  font-weight: 600;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  transition: background-color 0.15s ease-out;
+}
+
+.viewer-controls__button--primary span[aria-hidden] {
+  line-height: 1;
+}
+
+.viewer-controls__button.viewer-controls__button--primary:hover {
+  background-color: var(--color-primary-700);
+  color: white;
+}
+
+.viewer-controls__button.viewer-controls__button--primary:active {
+  background-color: var(--color-primary-800);
+  color: white;
+}
+
+html[data-theme="dark"] .viewer-controls__button--primary {
+  background-color: var(--color-primary-500);
+  color: white;
+}
+
+html[data-theme="dark"] .viewer-controls__button.viewer-controls__button--primary:hover {
+  background-color: var(--color-primary-400);
+  color: white;
+}
+
+html[data-theme="dark"] .viewer-controls__button.viewer-controls__button--primary:active {
+  background-color: var(--color-primary-300);
+  color: white;
+}
+
+/* === 🍎 INFO TEXT: Subtle Typography === */
+
+.viewer-controls__info {
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  min-width: 60px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .viewer-controls__info {
+  color: var(--color-ios-text-secondary-dark);
+}
