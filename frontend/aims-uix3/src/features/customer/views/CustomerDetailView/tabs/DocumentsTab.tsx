@@ -26,6 +26,10 @@ import { AppleConfirmModal } from '../../../../../components/DocumentViews/Docum
 import DownloadHelper from '../../../../../utils/downloadHelper'
 import type { CustomerDocumentItem } from '@/services/DocumentService'
 import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
+import {
+  PreviewIcon,
+  LinkIcon
+} from '../../../../../components/DocumentViews/components/DocumentActionIcons'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -372,10 +376,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         onClick={() => handlePreview(document)}
                         aria-label="문서 보기"
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M8 3C4.5 3 1.5 5.5 0 8c1.5 2.5 4.5 5 8 5s6.5-2.5 8-5c-1.5-2.5-4.5-5-8-5z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                          <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                        </svg>
+                        <PreviewIcon />
                       </button>
                     </Tooltip>
                     <Tooltip content="연결 해제">
@@ -394,9 +395,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                             weight={SFSymbolWeight.REGULAR}
                           />
                         ) : (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M10 6.5L8 8.5L6 6.5M3 6V3h10v3M3 13V10h10v3" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <LinkIcon />
                         )}
                       </button>
                     </Tooltip>

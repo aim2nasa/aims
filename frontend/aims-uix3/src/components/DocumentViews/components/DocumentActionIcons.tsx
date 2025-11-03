@@ -192,3 +192,29 @@ export const LinkIcon = (props: SVGProps<SVGSVGElement>) => (
     />
   </svg>
 )
+
+// 🍎 Preview Icon - 파란색 톤의 돋보기 아이콘 (문서 미리보기)
+export const PreviewIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...baseProps} {...props}>
+    <defs>
+      <linearGradient id="previewGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#60a5fa" />
+        <stop offset="50%" stopColor="#3b82f6" />
+        <stop offset="100%" stopColor="#2563eb" />
+      </linearGradient>
+      <linearGradient id="glassGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#dbeafe" stopOpacity={0.3} />
+        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1} />
+      </linearGradient>
+    </defs>
+    {/* 돋보기 렌즈 - 파란색 그라데이션 배경 */}
+    <circle cx={10} cy={10} r={6.5} fill="url(#glassGradient)" />
+    <circle cx={10} cy={10} r={6.5} stroke="#60a5fa" strokeWidth={2.2} strokeLinecap="round" opacity={0.2} />
+    <circle cx={10} cy={10} r={6.5} stroke="url(#previewGradient)" strokeWidth={1.5} strokeLinecap="round" />
+    {/* 렌즈 하이라이트 */}
+    <path d="M7 8a3 3 0 0 1 4-1" stroke="#dbeafe" strokeWidth={1.2} strokeLinecap="round" opacity={0.6} />
+    {/* 돋보기 손잡이 - 파란색 그라데이션 */}
+    <path d="M15 15l5 5" stroke="#60a5fa" strokeWidth={2.5} strokeLinecap="round" opacity={0.2} />
+    <path d="M15 15l5 5" stroke="url(#previewGradient)" strokeWidth={1.8} strokeLinecap="round" />
+  </svg>
+)
