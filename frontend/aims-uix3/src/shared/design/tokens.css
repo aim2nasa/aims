@@ -780,12 +780,30 @@
   /* OCR Confidence Badge Colors */
   --color-badge-ocr-excellent: #22c55e;           /* Green 500 - 매우 높음/높음 (≥0.85) */
   --color-badge-ocr-excellent-dark: #16a34a;      /* Green 600 */
+  --color-badge-ocr-excellent-glow: rgba(34, 197, 94, 0.5);    /* Green glow light */
+  --color-badge-ocr-excellent-glow-dark: rgba(34, 197, 94, 0.6); /* Green glow dark */
   --color-badge-ocr-medium: #eab308;              /* Yellow 500 - 보통 (0.70-0.85) */
   --color-badge-ocr-medium-dark: #ca8a04;         /* Yellow 600 */
+  --color-badge-ocr-medium-glow: rgba(234, 179, 8, 0.5);       /* Yellow glow light */
+  --color-badge-ocr-medium-glow-dark: rgba(234, 179, 8, 0.6);  /* Yellow glow dark */
   --color-badge-ocr-low: #f97316;                 /* Orange 500 - 낮음 (0.50-0.70) */
   --color-badge-ocr-low-dark: #ea580c;            /* Orange 600 */
+  --color-badge-ocr-low-glow: rgba(249, 115, 22, 0.5);         /* Orange glow light */
+  --color-badge-ocr-low-glow-dark: rgba(249, 115, 22, 0.6);    /* Orange glow dark */
   --color-badge-ocr-very-low: #ef4444;            /* Red 500 - 매우 낮음 (<0.50) */
   --color-badge-ocr-very-low-dark: #dc2626;       /* Red 600 */
+  --color-badge-ocr-very-low-glow: rgba(239, 68, 68, 0.5);     /* Red glow light */
+  --color-badge-ocr-very-low-glow-dark: rgba(239, 68, 68, 0.6); /* Red glow dark */
+
+  /* TXT Badge Colors - Blue theme */
+  --color-badge-txt: rgba(59, 130, 246, 0.85);    /* Blue 500, 85% opacity - TXT badge light */
+  --color-badge-txt-dark: rgba(37, 99, 235, 0.85); /* Blue 600, 85% opacity - TXT badge dark */
+  --color-badge-txt-glow: rgba(59, 130, 246, 0.5);  /* TXT badge hover glow light */
+  --color-badge-txt-glow-dark: rgba(59, 130, 246, 0.6); /* TXT badge hover glow dark */
+
+  /* Badge Common Colors */
+  --color-badge-text: #ffffff;                     /* Badge text color (white) */
+  --color-badge-shadow: rgba(0, 0, 0, 0.15);       /* Badge shadow */
 
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */

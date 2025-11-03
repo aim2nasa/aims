@@ -350,6 +350,49 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         decorative={true}
                       />
                     </div>
+                    {/* 🍎 AR BADGE: Annual Report 표시 */}
+                    {document.isAnnualReport && (
+                      <Tooltip content="Annual Report">
+                        <div className="document-ar-badge">
+                          AR
+                        </div>
+                      </Tooltip>
+                    )}
+                    {/* 🍎 OCR/TXT BADGE */}
+                    {(() => {
+                      const typeLabel = DocumentUtils.getDocumentTypeLabel(document);
+                      if (typeLabel === 'OCR' && document.ocrConfidence !== null && document.ocrConfidence !== undefined) {
+                        // OCR 뱃지 표시
+                        const confidence = typeof document.ocrConfidence === 'string'
+                          ? parseFloat(document.ocrConfidence)
+                          : document.ocrConfidence;
+                        const getConfidenceLevel = (conf: number) => {
+                          if (conf >= 0.95) return { color: 'excellent', label: '매우 높음' };
+                          if (conf >= 0.85) return { color: 'high', label: '높음' };
+                          if (conf >= 0.70) return { color: 'medium', label: '보통' };
+                          if (conf >= 0.50) return { color: 'low', label: '낮음' };
+                          return { color: 'very-low', label: '매우 낮음' };
+                        };
+                        const level = getConfidenceLevel(confidence);
+                        return (
+                          <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                            <div className={`document-ocr-badge ocr-${level.color}`}>
+                              OCR
+                            </div>
+                          </Tooltip>
+                        );
+                      } else if (typeLabel === 'TXT') {
+                        // TXT 뱃지 표시
+                        return (
+                          <Tooltip content="TXT 기반 문서">
+                            <div className="document-txt-badge">
+                              TXT
+                            </div>
+                          </Tooltip>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {/* 파일명 */}

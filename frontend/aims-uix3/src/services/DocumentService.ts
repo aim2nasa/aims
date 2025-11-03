@@ -65,6 +65,9 @@ export interface CustomerDocumentItem {
   linkedAt?: string;
   status?: string;
   progress?: number;
+  isAnnualReport?: boolean;
+  ocrConfidence?: number | string;
+  stages?: any;
   ar_metadata?: {
     issue_date?: string;
     customer_name?: string;
@@ -369,6 +372,29 @@ export class DocumentService {
           const status = toString(item['status']) ?? undefined;
           const progress = toNumber(item['progress']);
 
+          // Annual Report 판단: relationship === "annual_report"
+          const isAnnualReport = relationship === 'annual_report';
+
+          // stages 필드 추출 (DocumentUtils.getDocumentType이 사용)
+          const stages = isRecord(item['stages']) ? item['stages'] : undefined;
+
+          // OCR 신뢰도 추출: stages.ocr.message에서 파싱
+          let ocrConfidence: number | undefined;
+          if (stages && isRecord(stages['ocr'])) {
+            const ocrStage = stages['ocr'] as Record<string, unknown>;
+            const ocrMessage = toString(ocrStage['message']);
+            if (ocrMessage) {
+              // "OCR 완료 (신뢰도: 0.9817)" 형식에서 숫자 추출
+              const match = ocrMessage.match(/신뢰도:\s*([\d.]+)/);
+              if (match && match[1]) {
+                const parsed = parseFloat(match[1]);
+                if (!isNaN(parsed)) {
+                  ocrConfidence = parsed;
+                }
+              }
+            }
+          }
+
           const result: CustomerDocumentItem = {
             _id: id
           };
@@ -382,6 +408,9 @@ export class DocumentService {
           if (linkedAt) result.linkedAt = linkedAt;
           if (status) result.status = status;
           if (typeof progress === 'number') result.progress = progress;
+          if (isAnnualReport) result.isAnnualReport = true;
+          if (typeof ocrConfidence === 'number') result.ocrConfidence = ocrConfidence;
+          if (stages) result.stages = stages as any;
 
           return result;
         })
