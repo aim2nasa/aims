@@ -19,6 +19,7 @@ import { ImageViewer } from '../../../../../components/ImageViewer/ImageViewer'
 import { DocumentUtils } from '@/entities/document'
 import type { PreviewDocumentInfo } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { formatDateTime } from '@/shared/lib/timeUtils'
+import { useModalDragResize } from '../../../../../hooks/useModalDragResize'
 import './CustomerDocumentPreviewModal.css'
 
 interface CustomerDocumentPreviewModalProps {
@@ -51,6 +52,14 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   onRetry,
   onDownload
 }) => {
+  // 드래그 & 리사이즈 Hook
+  const modal = useModalDragResize({
+    initialWidth: 1400,
+    initialHeight: 800,
+    minWidth: 600,
+    minHeight: 400
+  })
+
   useEffect(() => {
     if (!visible) return
 
@@ -177,10 +186,24 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       onClick={handleBackdropClick}
     >
       <div
-        className="customer-document-preview"
+        className="customer-document-preview customer-document-preview--draggable"
+        style={modal.modalStyle}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="customer-document-preview__header">
+        {/* 리사이즈 핸들 */}
+        {modal.resizeHandles.map(handle => (
+          <div
+            key={handle.position}
+            className={`resize-handle resize-handle--${handle.position}`}
+            onMouseDown={handle.onMouseDown}
+            style={handle.style}
+          />
+        ))}
+
+        <header
+          className="customer-document-preview__header"
+          {...modal.headerProps}
+        >
           <div className="customer-document-preview__title">
             <SFSymbol
               name="doc.text"

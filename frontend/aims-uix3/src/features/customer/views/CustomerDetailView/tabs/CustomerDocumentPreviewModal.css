@@ -120,3 +120,82 @@
   gap: var(--spacing-4);
   color: var(--color-text-secondary);
 }
+
+/* === 드래그 & 리사이즈 기능 === */
+
+.customer-document-preview--draggable {
+  position: fixed;
+}
+
+/* 리사이즈 핸들 */
+.resize-handle {
+  position: absolute;
+  z-index: 10;
+  background: transparent;
+}
+
+/* 모서리 핸들 (10px x 10px) */
+.resize-handle--nw {
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nwse-resize;
+}
+
+.resize-handle--ne {
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nesw-resize;
+}
+
+.resize-handle--sw {
+  bottom: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nesw-resize;
+}
+
+.resize-handle--se {
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nwse-resize;
+}
+
+/* 변 핸들 */
+.resize-handle--n {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 4px;
+  cursor: ns-resize;
+}
+
+.resize-handle--s {
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 4px;
+  cursor: ns-resize;
+}
+
+.resize-handle--w {
+  top: 10px;
+  left: 0;
+  bottom: 10px;
+  width: 4px;
+  cursor: ew-resize;
+}
+
+.resize-handle--e {
+  top: 10px;
+  right: 0;
+  bottom: 10px;
+  width: 4px;
+  cursor: ew-resize;
+}
