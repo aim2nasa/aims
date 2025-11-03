@@ -485,22 +485,22 @@ html[data-theme="dark"] .row-index {
   transform: scale(1.1);
 }
 
-/* === 🍎 AR BADGE: Annual Report indicator === */
+/* === 🍎 AR BADGE: Annual Report indicator (상단 중앙, 보라색) === */
 .document-ar-badge {
   position: absolute;
-  bottom: -2px;
+  top: -2px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 7px;
+  font-size: 6px;
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: #ffffff;
-  background-color: var(--color-primary-500);
+  background-color: var(--color-badge-ar);
   border: 1.5px solid var(--color-ios-bg-primary-light);
-  border-radius: 3px;
-  padding: 1px 3px;
+  border-radius: 2.5px;
+  padding: 0.5px 2.5px;
   line-height: 1;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   z-index: 2;
   pointer-events: none;
@@ -508,24 +508,25 @@ html[data-theme="dark"] .row-index {
 }
 
 html[data-theme="dark"] .document-ar-badge {
-  background-color: var(--color-primary-400);
+  background-color: var(--color-badge-ar-dark);
   border-color: var(--color-ios-bg-primary-dark);
 }
 
 .search-result-row:hover .document-ar-badge {
   transform: translateX(-50%) scale(1.1);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
 }
 
 html[data-theme="dark"] .search-result-row:hover .document-ar-badge {
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
 }
 
-/* === 🍎 OCR BADGE: OCR 신뢰도 표시 === */
+/* === 🍎 OCR BADGE: OCR 신뢰도 표시 (하단 중앙) === */
 .document-ocr-badge {
   position: absolute;
   bottom: -2px;
-  left: -2px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 7px;
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -555,7 +556,7 @@ html[data-theme="dark"] .document-ocr-badge.ocr-excellent {
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-excellent {
-  transform: scale(1.1);
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
 }
 
@@ -573,7 +574,7 @@ html[data-theme="dark"] .document-ocr-badge.ocr-high {
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-high {
-  transform: scale(1.1);
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
 }
 
@@ -591,7 +592,7 @@ html[data-theme="dark"] .document-ocr-badge.ocr-medium {
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-medium {
-  transform: scale(1.1);
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
 }
 
@@ -609,7 +610,7 @@ html[data-theme="dark"] .document-ocr-badge.ocr-low {
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-low {
-  transform: scale(1.1);
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
 }
 
@@ -627,12 +628,48 @@ html[data-theme="dark"] .document-ocr-badge.ocr-very-low {
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-very-low {
-  transform: scale(1.1);
+  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
 }
 
 html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-very-low {
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+/* === 🍎 TXT BADGE: TXT 기반 문서 표시 (하단 중앙) === */
+.document-txt-badge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: #ffffff;
+  background-color: rgba(59, 130, 246, 0.85); /* Blue 500, 85% opacity */
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-txt-badge {
+  background-color: rgba(37, 99, 235, 0.85); /* Blue 600, 85% opacity */
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
+.search-result-row:hover .document-txt-badge {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+html[data-theme="dark"] .search-result-row:hover .document-txt-badge {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
 }
 
 /* 파일 타입별 색상 (DocumentLibraryView와 동일) */

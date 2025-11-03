@@ -771,6 +771,12 @@
   --color-ios-indigo-dark: #5e5ce6;    /* iOS systemIndigo Dark */
   --color-ios-yellow-dark: #ffd60a;    /* iOS systemYellow Dark */
 
+  /* === BADGE COLORS === */
+  /* AR (Annual Report) Badge - Purple theme to distinguish from TXT badge (blue) */
+  --color-badge-ar: #8b5cf6;           /* Purple 500 - AR badge light */
+  --color-badge-ar-dark: #7c3aed;      /* Purple 600 - AR badge dark */
+  --color-badge-ar-glow: rgba(139, 92, 246, 0.5);  /* AR badge hover glow */
+
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
 

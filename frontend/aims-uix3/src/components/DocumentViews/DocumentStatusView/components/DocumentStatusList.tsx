@@ -332,7 +332,17 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {/* 🍎 OCR BADGE: OCR 처리 완료 문서 신뢰도 표시 */}
               {(() => {
                 const confidence = getOcrConfidence(document)
-                if (confidence === null) return null
+                if (confidence === null) {
+                  // OCR 뱃지가 없는 경우, TXT 타입만 표시
+                  const typeLabel = DocumentUtils.getDocumentTypeLabel(document);
+                  return typeLabel === 'TXT' ? (
+                    <Tooltip content="TXT 기반 문서">
+                      <div className="document-txt-badge">
+                        TXT
+                      </div>
+                    </Tooltip>
+                  ) : null;
+                }
                 const level = getOcrConfidenceLevel(confidence)
                 return (
                   <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>

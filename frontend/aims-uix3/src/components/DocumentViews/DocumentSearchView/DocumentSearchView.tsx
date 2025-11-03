@@ -525,7 +525,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                   OCR
                                 </div>
                               </Tooltip>
-                            ) : null}
+                            ) : (() => {
+                              // OCR 뱃지가 없는 경우, TXT 타입만 표시
+                              const typeLabel = DocumentUtils.getDocumentTypeLabel(item);
+                              return typeLabel === 'TXT' ? (
+                                <Tooltip content="TXT 기반 문서">
+                                  <div className="document-txt-badge">
+                                    TXT
+                                  </div>
+                                </Tooltip>
+                              ) : null;
+                            })()}
                           </div>
                           <span className="row-title">{originalName}</span>
                         </div>

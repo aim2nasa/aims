@@ -331,6 +331,59 @@ export const DocumentUtils = {
   },
 
   /**
+   * 문서 타입 판별: OCR 기반 vs TXT 기반
+   * @param document - Document 또는 SearchResultItem (any 타입)
+   * @returns 'ocr' | 'txt' | null
+   *
+   * 판별 기준:
+   * - OCR 기반: ocr 필드가 존재하고 status가 'done'
+   * - TXT 기반: meta.full_text가 있거나 docembed.text_source가 'meta'
+   * - null: 판별 불가
+   */
+  getDocumentType: (document: any): 'ocr' | 'txt' | null => {
+    if (!document) return null;
+
+    // 1. OCR 필드가 있고 완료된 경우 → OCR 기반
+    if (document.ocr && typeof document.ocr === 'object') {
+      if (document.ocr.status === 'done') {
+        return 'ocr';
+      }
+    }
+
+    // 2. docembed.text_source 확인
+    if (document.docembed && typeof document.docembed === 'object') {
+      if (document.docembed.text_source === 'ocr') {
+        return 'ocr';
+      }
+      if (document.docembed.text_source === 'meta') {
+        return 'txt';
+      }
+    }
+
+    // 3. meta.full_text가 있는 경우 → TXT 기반
+    if (document.meta && typeof document.meta === 'object') {
+      if (document.meta.full_text && document.meta.full_text.length > 0) {
+        return 'txt';
+      }
+    }
+
+    // 4. 판별 불가
+    return null;
+  },
+
+  /**
+   * 문서 타입 레이블 반환
+   * @param document - Document 또는 SearchResultItem
+   * @returns 'OCR' | 'TXT' | ''
+   */
+  getDocumentTypeLabel: (document: any): 'OCR' | 'TXT' | '' => {
+    const type = DocumentUtils.getDocumentType(document);
+    if (type === 'ocr') return 'OCR';
+    if (type === 'txt') return 'TXT';
+    return '';
+  },
+
+  /**
    * 업로드 날짜 포맷팅 (시분초 포함)
    */
   formatUploadDate: (date?: string): string => {
