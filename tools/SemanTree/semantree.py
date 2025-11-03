@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 SemanTree - Semantic Tree Document Viewer
 AIMS 문서 뷰어 및 시맨틱 트리 분석 도구
@@ -192,6 +192,17 @@ class QdrantConnection:
                 return None, None
         return None, None
 
+    def get_collection_info(self, collection_name: str):
+        """컬렉션 정보 조회 (전체 포인트 수 포함)"""
+        if self.client is not None:
+            try:
+                collection_info = self.client.get_collection(collection_name=collection_name)
+                return collection_info
+            except Exception as e:
+                print(f"Failed to get collection info: {e}")
+                return None
+        return None
+
 
 class MongoDBConnection:
     """MongoDB 연결 관리 클래스"""
@@ -313,7 +324,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.6.3 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.6.4 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -1560,15 +1571,23 @@ class DocumentViewer:
                 messagebox.showerror("오류", "Collection을 가져올 수 없습니다.")
                 return
 
-            # 문서 로드
-            self.raw_documents = list(collection.find().sort("_id", -1).limit(1000))
-            self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}개")
+            # 전체 문서 개수 확인
+            total_count = collection.count_documents({})
+
+            # 문서 로드 (최대 10000개)
+            self.raw_documents = list(collection.find().sort("_id", -1).limit(10000))
+            self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}/{total_count}개")
 
             # 첫 문서로 이동
             self.current_raw_index = 0
             self.update_raw_viewer()
 
-            messagebox.showinfo("로드 완료", f"{len(self.raw_documents)}개의 문서를 로드했습니다.\n(최대 1000개 제한)")
+            if total_count > 10000:
+                messagebox.showinfo("로드 완료",
+                    f"총 {total_count}개 중 최근 {len(self.raw_documents)}개 로드\n"
+                    f"(메모리 효율을 위해 10000개로 제한)")
+            else:
+                messagebox.showinfo("로드 완료", f"{len(self.raw_documents)}개 문서 로드 완료")
 
         except Exception as e:
             messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
@@ -1964,8 +1983,12 @@ class DocumentViewer:
             return
 
         try:
-            # 포인트 조회 (최대 100개)
-            points, next_offset = self.qdrant.scroll_points(selected_collection, limit=100)
+            # 전체 포인트 개수 확인
+            collection_info = self.qdrant.get_collection_info(selected_collection)
+            total_count = collection_info.points_count if collection_info else 0
+
+            # 포인트 조회 (최대 10000개)
+            points, next_offset = self.qdrant.scroll_points(selected_collection, limit=10000)
 
             if points is None:
                 messagebox.showerror("오류", "포인트를 조회할 수 없습니다.")
@@ -1981,13 +2004,18 @@ class DocumentViewer:
                 }
                 self.qdrant_points.append(point_dict)
 
-            self.qdrant_count_label.config(text=f"포인트: {len(self.qdrant_points)}개")
+            self.qdrant_count_label.config(text=f"포인트: {len(self.qdrant_points)}/{total_count}개")
 
             # 첫 포인트로 이동
             self.current_qdrant_index = 0
             self.update_qdrant_viewer()
 
-            messagebox.showinfo("로드 완료", f"{len(self.qdrant_points)}개의 포인트를 로드했습니다.\n(최대 100개 제한)")
+            if total_count > 10000:
+                messagebox.showinfo("로드 완료",
+                    f"총 {total_count}개 중 최근 {len(self.qdrant_points)}개 로드\n"
+                    f"(메모리 효율을 위해 10000개로 제한)")
+            else:
+                messagebox.showinfo("로드 완료", f"{len(self.qdrant_points)}개 포인트 로드 완료")
 
         except Exception as e:
             messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
