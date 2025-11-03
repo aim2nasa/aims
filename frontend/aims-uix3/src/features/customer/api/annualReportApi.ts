@@ -537,4 +537,68 @@ export class AnnualReportApi {
       };
     }
   }
+
+  /**
+   * 중복 Annual Reports 정리
+   *
+   * 동일 발행일(issue_date)의 AR 중 문서 연결일(linked_at)과 가장 가까운
+   * 파싱일시(parsed_at)를 가진 AR만 남기고 나머지 삭제
+   *
+   * @param customerId 고객 ID
+   * @param userId 사용자 ID (설계사 계정)
+   * @param issueDate 발행일 (YYYY-MM-DD 또는 ISO 형식)
+   * @param referenceLinkedAt 기준 연결일 (ISO 8601 형식)
+   * @returns 정리 결과
+   */
+  static async cleanupDuplicates(
+    customerId: string,
+    userId: string,
+    issueDate: string,
+    referenceLinkedAt: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    deleted_count?: number;
+    kept_report?: {
+      issue_date?: string;
+      parsed_at?: string;
+      customer_name?: string;
+    };
+  }> {
+    try {
+      const response = await fetch(
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/cleanup-duplicates?userId=${encodeURIComponent(userId)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            issue_date: issueDate,
+            reference_linked_at: referenceLinkedAt,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success !== false) {
+        return {
+          success: true,
+          message: data.message || '중복 Annual Reports가 정리되었습니다',
+          deleted_count: data.deleted_count,
+          kept_report: data.kept_report,
+        };
+      }
+
+      throw new Error(data.message || '중복 Annual Reports 정리에 실패했습니다');
+    } catch (error) {
+      // 에러는 리턴값으로 처리되므로 로깅 불필요
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : '중복 Annual Reports 정리 중 오류가 발생했습니다',
+      };
+    }
+  }
 }

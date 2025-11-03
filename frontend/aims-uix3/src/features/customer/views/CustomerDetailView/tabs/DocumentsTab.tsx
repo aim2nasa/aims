@@ -18,7 +18,7 @@ import SFSymbol, {
   SFSymbolSize,
   SFSymbolWeight
 } from '../../../../../components/SFSymbol'
-import { formatDateTime } from '@/shared/lib/timeUtils'
+import { formatDateTime, formatDateTimeCompact } from '@/shared/lib/timeUtils'
 import { DocumentUtils } from '@/entities/document'
 import { useCustomerDocumentsController } from '@/features/customer/controllers/useCustomerDocumentsController'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
@@ -244,7 +244,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               {documents.map((document) => {
                 const status = (document.status ?? (document as { overallStatus?: string }).overallStatus ?? 'linked') as string
                 const linkedAt = document.linkedAt ?? document.uploadedAt ?? null
-                const formattedDate = formatDateTime(linkedAt)
+                const formattedDate = formatDateTimeCompact(linkedAt)
                 const sizeLabel = document.fileSize ? DocumentUtils.formatFileSize(document.fileSize) : undefined
 
                 return (

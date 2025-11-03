@@ -65,6 +65,12 @@ export interface CustomerDocumentItem {
   linkedAt?: string;
   status?: string;
   progress?: number;
+  ar_metadata?: {
+    issue_date?: string;
+    customer_name?: string;
+    fsr_name?: string | null;
+    report_title?: string;
+  };
 }
 
 export interface CustomerDocumentsResult {

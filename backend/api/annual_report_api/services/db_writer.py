@@ -409,3 +409,177 @@ def delete_annual_reports(
             "message": f"삭제 실패: {str(e)}",
             "deleted_count": 0
         }
+
+
+def cleanup_duplicate_annual_reports(
+    db,
+    customer_id: str,
+    issue_date: str,
+    reference_linked_at: str
+) -> Dict[str, any]:
+    """
+    동일 발행일(issue_date)의 중복 Annual Report 정리
+
+    문서 탭의 연결일(linked_at)과 가장 가까운 파싱일시(parsed_at)를 가진
+    Annual Report만 남기고 나머지 동일 발행일 AR 삭제
+
+    Args:
+        db: MongoDB database 객체
+        customer_id: 고객 ObjectId (문자열)
+        issue_date: 발행일 (YYYY-MM-DD 또는 ISO 형식)
+        reference_linked_at: 기준 연결일 (ISO 8601 형식)
+
+    Returns:
+        dict: {
+            "success": bool,
+            "message": str,
+            "deleted_count": int,
+            "kept_report": dict (optional, 유지된 리포트 정보)
+        }
+    """
+    logger.info(f"중복 Annual Reports 정리: customer_id={customer_id}, issue_date={issue_date}, reference={reference_linked_at}")
+
+    try:
+        # ObjectId 변환
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except Exception as e:
+            raise ValueError(f"유효하지 않은 customer_id: {customer_id}") from e
+
+        # 고객 조회
+        customers_collection = db["customers"]
+        customer = customers_collection.find_one(
+            {"_id": customer_obj_id},
+            {"annual_reports": 1}
+        )
+
+        if not customer:
+            logger.warning(f"고객을 찾을 수 없습니다: {customer_id}")
+            return {
+                "success": False,
+                "message": "고객을 찾을 수 없습니다",
+                "deleted_count": 0
+            }
+
+        # annual_reports 배열 가져오기
+        all_reports = customer.get("annual_reports", [])
+
+        # 발행일 정규화 (날짜만 비교)
+        target_issue_date = issue_date.split('T')[0]  # "2025-08-29"
+
+        # 동일 발행일의 리포트 필터링
+        same_issue_reports = []
+        other_reports = []
+
+        for report in all_reports:
+            report_issue_date = None
+            if "issue_date" in report:
+                if isinstance(report["issue_date"], datetime):
+                    report_issue_date = report["issue_date"].strftime("%Y-%m-%d")
+                elif isinstance(report["issue_date"], str):
+                    report_issue_date = report["issue_date"].split('T')[0]
+
+            if report_issue_date == target_issue_date:
+                same_issue_reports.append(report)
+            else:
+                other_reports.append(report)
+
+        # 중복이 없으면 작업 불필요
+        if len(same_issue_reports) <= 1:
+            logger.info(f"중복 없음: 발행일 {target_issue_date}의 리포트가 {len(same_issue_reports)}개")
+            return {
+                "success": True,
+                "message": "중복된 Annual Report가 없습니다",
+                "deleted_count": 0
+            }
+
+        # reference_linked_at을 datetime으로 변환
+        try:
+            reference_dt = datetime.fromisoformat(reference_linked_at.replace('Z', '+00:00'))
+        except Exception as e:
+            logger.error(f"reference_linked_at 파싱 실패: {reference_linked_at}, 오류={e}")
+            raise ValueError(f"유효하지 않은 reference_linked_at: {reference_linked_at}")
+
+        # 각 리포트의 parsed_at과 reference_linked_at 간 시간차 계산
+        # 가장 가까운 것을 찾기
+        best_report = None
+        min_diff = None
+
+        for report in same_issue_reports:
+            parsed_at = report.get("parsed_at")
+            if not parsed_at:
+                continue
+
+            # datetime으로 변환
+            if isinstance(parsed_at, str):
+                try:
+                    parsed_dt = datetime.fromisoformat(parsed_at.replace('Z', '+00:00'))
+                except:
+                    continue
+            elif isinstance(parsed_at, datetime):
+                parsed_dt = parsed_at
+            else:
+                continue
+
+            # 시간차 계산 (절대값)
+            time_diff = abs((parsed_dt - reference_dt).total_seconds())
+
+            if min_diff is None or time_diff < min_diff:
+                min_diff = time_diff
+                best_report = report
+
+        # best_report가 없으면 (parsed_at이 없는 경우) 첫 번째 것 유지
+        if best_report is None:
+            logger.warning(f"parsed_at이 없는 리포트들: 첫 번째 리포트 유지")
+            best_report = same_issue_reports[0]
+
+        # 유지할 리포트 목록 = other_reports + best_report
+        reports_to_keep = other_reports + [best_report]
+
+        # 고객 문서 업데이트
+        result = customers_collection.update_one(
+            {"_id": customer_obj_id},
+            {"$set": {"annual_reports": reports_to_keep}}
+        )
+
+        deleted_count = len(same_issue_reports) - 1
+
+        if result.modified_count > 0:
+            logger.info(f"✅ 중복 Annual Reports 정리 완료: {deleted_count}건 삭제")
+
+            # 유지된 리포트 정보 요약
+            kept_info = {
+                "issue_date": best_report.get("issue_date"),
+                "parsed_at": best_report.get("parsed_at"),
+                "customer_name": best_report.get("customer_name")
+            }
+
+            return {
+                "success": True,
+                "message": f"{deleted_count}개의 중복 Annual Report가 삭제되었습니다",
+                "deleted_count": deleted_count,
+                "kept_report": kept_info
+            }
+        else:
+            logger.warning(f"⚠️  변경사항이 없습니다")
+            return {
+                "success": False,
+                "message": "변경사항이 없습니다",
+                "deleted_count": 0
+            }
+
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise
+
+    except PyMongoError as e:
+        logger.error(f"❌ MongoDB 오류: {e}")
+        raise
+
+    except Exception as e:
+        logger.error(f"❌ 중복 Annual Reports 정리 중 오류: {e}")
+        return {
+            "success": False,
+            "message": f"정리 실패: {str(e)}",
+            "deleted_count": 0
+        }

@@ -10,7 +10,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 import logging
 
-from services.db_writer import get_annual_reports, delete_annual_reports
+from services.db_writer import get_annual_reports, delete_annual_reports, cleanup_duplicate_annual_reports
 
 logger = logging.getLogger(__name__)
 
@@ -397,6 +397,144 @@ async def delete_customer_annual_reports(
         )
     except Exception as e:
         logger.error(f"❌ Annual Reports 삭제 API 오류: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"서버 오류: {str(e)}"
+        )
+
+
+class CleanupDuplicatesRequest(BaseModel):
+    """중복 Annual Reports 정리 요청"""
+    issue_date: str = Field(..., description="발행일 (YYYY-MM-DD 또는 ISO 형식)")
+    reference_linked_at: str = Field(..., description="기준 연결일 (ISO 8601 형식)")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "issue_date": "2025-08-29",
+                "reference_linked_at": "2025-11-03T06:25:33Z"
+            }
+        }
+
+
+class CleanupDuplicatesResponse(BaseModel):
+    """중복 Annual Reports 정리 응답"""
+    success: bool
+    message: str
+    deleted_count: int
+    kept_report: Optional[Dict[str, Any]] = None
+
+
+@router.post(
+    "/customers/{customer_id}/annual-reports/cleanup-duplicates",
+    response_model=CleanupDuplicatesResponse
+)
+async def cleanup_duplicate_reports(
+    customer_id: str = Path(..., description="고객 ObjectId"),
+    request: CleanupDuplicatesRequest = Body(...),
+    user_id: str = Header(None, alias="x-user-id")
+):
+    """
+    동일 발행일의 중복 Annual Report 정리
+
+    문서 탭의 연결일(linked_at)과 가장 가까운 파싱일시(parsed_at)를 가진
+    Annual Report만 남기고 나머지 동일 발행일 AR 삭제
+
+    Args:
+        customer_id: 고객 ObjectId
+        request: 정리 요청 (issue_date, reference_linked_at)
+        user_id: 설계사 userId (x-user-id 헤더)
+
+    Returns:
+        CleanupDuplicatesResponse: {
+            "success": true,
+            "message": "N개의 중복 Annual Report가 삭제되었습니다",
+            "deleted_count": N,
+            "kept_report": { ... }
+        }
+
+    Raises:
+        HTTPException 400: userId 또는 요청이 유효하지 않을 때
+        HTTPException 404: 고객을 찾을 수 없을 때
+        HTTPException 500: 서버 오류
+    """
+    logger.info(
+        f"🧹 중복 Annual Reports 정리 요청: "
+        f"customer_id={customer_id}, user_id={user_id}, "
+        f"issue_date={request.issue_date}, reference={request.reference_linked_at}"
+    )
+
+    try:
+        # ⭐ userId 검증
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+
+        from main import db
+        if db is None:
+            raise HTTPException(
+                status_code=500,
+                detail="데이터베이스 연결 오류"
+            )
+
+        # ⭐ customer 소유권 검증
+        try:
+            customer_obj_id = ObjectId(customer_id)
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid customer_id format")
+
+        customer = db.customers.find_one({
+            "_id": customer_obj_id,
+            "meta.created_by": user_id
+        })
+
+        if not customer:
+            raise HTTPException(
+                status_code=404,
+                detail="고객을 찾을 수 없거나 접근 권한이 없습니다"
+            )
+
+        # 중복 정리 실행
+        result = cleanup_duplicate_annual_reports(
+            db=db,
+            customer_id=customer_id,
+            issue_date=request.issue_date,
+            reference_linked_at=request.reference_linked_at
+        )
+
+        if not result["success"] and result.get("deleted_count", 0) == 0:
+            # 중복이 없는 경우는 200 OK 반환 (정상 케이스)
+            if "중복" in result.get("message", ""):
+                logger.info(f"✅ 중복 없음 (정상): {result['message']}")
+                return CleanupDuplicatesResponse(
+                    success=True,
+                    message=result["message"],
+                    deleted_count=0
+                )
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=result.get("message", "정리 실패")
+                )
+
+        logger.info(f"✅ 중복 Annual Reports 정리 완료: {result['deleted_count']}건")
+
+        return CleanupDuplicatesResponse(
+            success=True,
+            message=result["message"],
+            deleted_count=result["deleted_count"],
+            kept_report=result.get("kept_report")
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"❌ 유효성 검증 실패: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"❌ 중복 정리 API 오류: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"서버 오류: {str(e)}"

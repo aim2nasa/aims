@@ -2053,6 +2053,7 @@ app.get('/api/customers/:id/documents', async (req, res) => {
         relationship: customerDoc?.relationship,
         notes: customerDoc?.notes,
         linkedAt: normalizeTimestamp(customerDoc?.upload_date),
+        ar_metadata: doc.ar_metadata,
         ...statusInfo
       };
     });
@@ -2725,6 +2726,72 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Annual Report 삭제 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 고객의 중복 Annual Reports 정리 프록시
+ */
+app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const { issue_date, reference_linked_at } = req.body;
+
+    // ⭐ userId 추출 및 검증 (사용자 계정 기능)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId required'
+      });
+    }
+
+    console.log(`🧹 [Annual Report] 중복 정리 요청: customer=${customerId}, userId=${userId}, issue_date=${issue_date}, reference=${reference_linked_at}`);
+
+    if (!issue_date || !reference_linked_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'issue_date와 reference_linked_at가 필요합니다'
+      });
+    }
+
+    const pythonApiUrl = `http://172.17.0.1:8004/customers/${customerId}/annual-reports/cleanup-duplicates`;
+
+    const response = await axios.post(pythonApiUrl, {
+      issue_date,
+      reference_linked_at
+    }, {
+      headers: {
+        'x-user-id': userId
+      },
+      timeout: 5000
+    });
+
+    console.log(`✅ [Annual Report] 중복 정리 완료:`, response.data);
+    res.json(response.data);
+
+  } catch (error) {
+    console.error('❌ [Annual Report] 중복 정리 오류:', error.message);
+
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Annual Report API 서버에 연결할 수 없습니다.'
+      });
+    }
+
+    if (error.response?.status === 404) {
+      return res.status(404).json({
+        success: false,
+        message: error.response.data?.message || '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: '중복 Annual Report 정리 중 오류가 발생했습니다.',
       error: error.message
     });
   }

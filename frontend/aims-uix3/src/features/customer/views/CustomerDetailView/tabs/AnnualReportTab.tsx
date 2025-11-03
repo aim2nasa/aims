@@ -134,6 +134,42 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
 
     try {
       const userId = UserContextService.getContext().identifierValue;
+
+      // ⭐ 먼저 Documents 탭의 문서들을 가져와서 중복 AR 정리
+      try {
+        const docsResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/documents`);
+        const docsData = await docsResponse.json();
+
+        if (docsData.success && docsData.data?.documents) {
+          const arDocuments = docsData.data.documents.filter(
+            (doc: any) => doc.relationship === 'annual_report' && doc.linkedAt && doc.ar_metadata?.issue_date
+          );
+
+          if (arDocuments.length > 0) {
+            console.log(`[AnnualReportTab] 자동 중복 정리 시작: ${arDocuments.length}개 AR 문서 발견`);
+
+            for (const doc of arDocuments) {
+              const issueDate = doc.ar_metadata.issue_date.split('T')[0];
+
+              console.log(`[AnnualReportTab] AR 중복 정리: issue_date=${issueDate}, linkedAt=${doc.linkedAt}`);
+
+              const result = await AnnualReportApi.cleanupDuplicates(
+                customer._id,
+                userId,
+                issueDate,
+                doc.linkedAt
+              );
+
+              if (result.deleted_count && result.deleted_count > 0) {
+                console.log(`[AnnualReportTab] ✅ 중복 AR 정리 완료 (${issueDate}): ${result.deleted_count}건 삭제`);
+              }
+            }
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('[AnnualReportTab] 자동 중복 정리 실패 (무시):', cleanupError);
+      }
+
       const response = await AnnualReportApi.getAnnualReports(customer._id, userId, 20);
 
       if (response.success && response.data) {
