@@ -59,6 +59,7 @@ interface PendingDocument {
 
 interface AnnualReportTabProps {
   customer: Customer;
+  onAnnualReportCountChange?: (count: number) => void;
 }
 
 const ITEMS_PER_PAGE_OPTIONS = [
@@ -67,7 +68,7 @@ const ITEMS_PER_PAGE_OPTIONS = [
   { value: '50', label: '50개씩' },
 ];
 
-export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) => {
+export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reports, setReports] = useState<AnnualReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
@@ -113,6 +114,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer }) =>
 
     return () => clearInterval(interval);
   }, [pendingCount, customer._id]);
+
+  // 🍎 Annual Report 개수 변경 시 부모에게 알림
+  useEffect(() => {
+    onAnnualReportCountChange?.(reports.length);
+  }, [reports.length, onAnnualReportCountChange]);
 
   const loadPendingDocuments = async () => {
     try {

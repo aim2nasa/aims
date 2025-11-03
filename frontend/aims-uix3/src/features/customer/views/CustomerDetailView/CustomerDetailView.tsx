@@ -64,6 +64,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
   const [documentCount, setDocumentCount] = useState(0);
+  const [annualReportCount, setAnnualReportCount] = useState(0);
   const confirmController = useAppleConfirmController();
 
   useEffect(() => {
@@ -354,40 +355,51 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--icon-color)"/>
             <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--icon-color)"/>
           </svg>
-        )
+        ),
+        count: annualReportCount
       }
     );
 
     return baseTabs;
-  }, [isBusinessCustomer, documentCount]);
+  }, [isBusinessCustomer, documentCount, annualReportCount]);
 
-  // 🍎 탭 내용 렌더링
+  // 🍎 탭 내용 렌더링 (개수 업데이트를 위해 모든 탭을 숨김 상태로 렌더링)
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 'info':
-        return <BasicInfoTab customer={customer} />;
-      case 'documents':
-        return (
+    return (
+      <>
+        {/* 기본 정보 탭 */}
+        <div style={{ display: activeTab === 'info' ? 'block' : 'none' }}>
+          <BasicInfoTab customer={customer} />
+        </div>
+
+        {/* 문서 탭 - 항상 렌더링하여 개수 업데이트 */}
+        <div style={{ display: activeTab === 'documents' ? 'block' : 'none' }}>
           <DocumentsTab
             customer={customer}
             onDocumentCountChange={setDocumentCount}
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
           />
-        );
-      case 'relationships':
-        return (
+        </div>
+
+        {/* 관계 탭 */}
+        <div style={{ display: activeTab === 'relationships' ? 'block' : 'none' }}>
           <RelationshipsTab
             customer={customer}
             {...(onSelectCustomer ? { onSelectCustomer } : {})}
             {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
           />
-        );
-      case 'annual_report':
-        return <AnnualReportTab customer={customer} />;
-      default:
-        return <BasicInfoTab customer={customer} />;
-    }
+        </div>
+
+        {/* Annual Report 탭 - 항상 렌더링하여 개수 업데이트 */}
+        <div style={{ display: activeTab === 'annual_report' ? 'block' : 'none' }}>
+          <AnnualReportTab
+            customer={customer}
+            onAnnualReportCountChange={setAnnualReportCount}
+          />
+        </div>
+      </>
+    );
   };
 
   return (
