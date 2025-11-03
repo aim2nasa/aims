@@ -325,7 +325,7 @@ class TestCleanupDuplicatesEndpoint:
         mock_customers.find_one.side_effect = [
             {  # 첫 번째 호출: 소유권 확인
                 "_id": ObjectId(customer_id),
-                "userId": ObjectId(user_id)
+                "meta": {"created_by": user_id}
             },
             {  # 두 번째 호출: cleanup 함수 내부
                 "_id": ObjectId(customer_id),
@@ -390,11 +390,8 @@ class TestCleanupDuplicatesEndpoint:
         mock_customers = MagicMock()
         mock_db.__getitem__.return_value = mock_customers
 
-        # 다른 userId 소유
-        mock_customers.find_one.return_value = {
-            "_id": ObjectId(customer_id),
-            "userId": ObjectId(other_user_id)
-        }
+        # 다른 userId 소유 - find_one이 None 반환 (권한 없음)
+        mock_customers.find_one.return_value = None
 
         response = client.post(
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
