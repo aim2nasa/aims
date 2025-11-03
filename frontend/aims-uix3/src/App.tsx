@@ -299,6 +299,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
 
+  // 문서 라이브러리 새로고침을 위한 ref
+  const documentLibraryRefreshRef = useRef<(() => Promise<void>) | null>(null)
+
   // URL 상태 동기화 헬퍼 함수들
   const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null }) => {
     const url = new URL(window.location.href)
@@ -1053,6 +1056,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onDocumentClick={handleDocumentClick}
               onDocumentDeleted={() => setRightPaneVisible(false)}
               onCustomerClick={handleCustomerClick}
+              onRefreshExpose={(refreshFn) => {
+                documentLibraryRefreshRef.current = refreshFn
+              }}
             />
           </Suspense>
 
@@ -1266,6 +1272,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 onRefresh={handleCustomerRefresh}
                 onDelete={handleCustomerDelete}
                 onSelectCustomer={handleCustomerClick}
+                {...(documentLibraryRefreshRef.current ? { onDocumentLibraryRefresh: documentLibraryRefreshRef.current } : {})}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}
                 gapTop={gapValues.gapTop}

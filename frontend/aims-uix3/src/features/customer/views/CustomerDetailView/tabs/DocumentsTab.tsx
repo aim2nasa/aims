@@ -36,6 +36,7 @@ interface DocumentsTabProps {
   customer: Customer
   onRefresh?: () => void
   onDocumentCountChange?: (count: number) => void
+  onDocumentLibraryRefresh?: () => Promise<void>
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -53,7 +54,8 @@ type SortDirection = 'asc' | 'desc'
 export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   customer,
   onRefresh,
-  onDocumentCountChange
+  onDocumentCountChange,
+  onDocumentLibraryRefresh
 }) => {
   const confirmController = useAppleConfirmController()
   const {
@@ -171,8 +173,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
       await unlinkDocument(document._id)
       onRefresh?.()
+      // 🍎 문서 라이브러리 즉시 새로고침
+      if (onDocumentLibraryRefresh) {
+        await onDocumentLibraryRefresh()
+      }
     },
-    [confirmController.actions, onRefresh, unlinkDocument]
+    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh]
   )
 
   const handleDownload = useCallback(async () => {

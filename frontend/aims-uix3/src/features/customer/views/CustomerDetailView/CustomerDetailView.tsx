@@ -31,6 +31,7 @@ interface CustomerDetailViewProps {
   onRefresh?: () => void;
   onDelete?: () => void;
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
+  onDocumentLibraryRefresh?: () => Promise<void>;
   gapLeft?: number;
   gapRight?: number;
   gapTop?: number;
@@ -43,6 +44,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onRefresh,
   onDelete,
   onSelectCustomer,
+  onDocumentLibraryRefresh,
   gapLeft = 2,
   gapRight = 2,
   gapTop = 2,
@@ -370,6 +372,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             customer={customer}
             onDocumentCountChange={setDocumentCount}
             {...(onRefresh ? { onRefresh } : {})}
+            {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
           />
         );
       case 'relationships':

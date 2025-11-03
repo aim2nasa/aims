@@ -37,6 +37,8 @@ interface DocumentLibraryViewProps {
   onDocumentDeleted?: () => void
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string) => void
+  /** 새로고침 함수 expose */
+  onRefreshExpose?: (refreshFn: () => Promise<void>) => void
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -70,6 +72,17 @@ const DocumentLibraryContent: React.FC<{
   React.useEffect(() => {
     actions.setSearchTerm(searchQuery)
   }, [searchQuery, actions])
+
+  // 🍎 외부에서 새로고침 이벤트 받기
+  React.useEffect(() => {
+    const handleRefresh = () => {
+      void actions.refreshDocuments()
+    }
+    window.addEventListener('refresh-document-library', handleRefresh)
+    return () => {
+      window.removeEventListener('refresh-document-library', handleRefresh)
+    }
+  }, [actions])
 
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
   const handleSelectAll = React.useCallback((checked: boolean) => {
@@ -239,6 +252,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   onDocumentClick,
   onDocumentDeleted,
   onCustomerClick,
+  onRefreshExpose,
 }) => {
   const {
     error,
@@ -248,6 +262,16 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     handleSearchChange,
     clearError,
   } = useDocumentsController()
+
+  // 🍎 새로고침 함수 expose
+  React.useEffect(() => {
+    if (onRefreshExpose) {
+      onRefreshExpose(async () => {
+        // DocumentLibraryView 내부의 refresh 이벤트 발생
+        window.dispatchEvent(new CustomEvent('refresh-document-library'))
+      })
+    }
+  }, [onRefreshExpose])
 
   // 🍎 삭제 기능 상태
   const [isDeleteMode, setIsDeleteMode] = React.useState(false)
