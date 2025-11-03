@@ -316,13 +316,14 @@ class TestCleanupDuplicatesEndpoint:
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
 
-        # Mock DB 설정
+        # Mock DB 설정 (attribute와 dictionary 접근 모두 지원)
         mock_customers = MagicMock()
         mock_db.customers = mock_customers
+        mock_db.__getitem__.return_value = mock_customers  # db["customers"] 지원
 
         # 고객 소유권 확인
         mock_customers.find_one.side_effect = [
-            {  # 첫 번째 호출: 소유권 확인
+            {  # 첫 번째 호출: 소유권 확인 (endpoint)
                 "_id": ObjectId(customer_id),
                 "meta": {"created_by": user_id}
             },
