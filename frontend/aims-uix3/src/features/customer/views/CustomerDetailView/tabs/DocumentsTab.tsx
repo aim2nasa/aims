@@ -2,17 +2,16 @@
  * AIMS UIX-3 Customer Detail - Documents Tab
  * @since 2025-10-25
  *
- * 🍎 CenterPane DocumentLibraryView와 동일한 리스트 스타일
- * 칼럼: 파일명, 크기, 연결일, 작업 (문서보기, 연결해제)
- * - 페이지네이션 포함
- * - 정렬 기능 포함
+ * 🍎 CenterPane DocumentLibraryView 디자인 100% 복제
+ * - 칼럼: 파일 타입 아이콘, 파일명, 크기, 연결일, 작업 (문서보기, 연결해제)
+ * - 헤더 아이콘 및 스타일 동일
+ * - 페이지네이션, 정렬 기능 포함
  */
 
 import React, { useCallback, useState, useMemo } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import RefreshButton from '../../../../../components/RefreshButton/RefreshButton'
 import { Tooltip } from '@/shared/ui'
-import { Button } from '@/shared/ui/Button'
 import { Dropdown } from '@/shared/ui'
 import SFSymbol, {
   SFSymbolAnimation,
@@ -90,7 +89,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       setSortField(field)
       setSortDirection('desc')
     }
-    setCurrentPage(1) // 정렬 변경 시 첫 페이지로
+    setCurrentPage(1)
   }, [sortField])
 
   // 🍎 정렬된 문서 목록
@@ -137,7 +136,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 페이지당 항목 수 변경
   const handleLimitChange = useCallback((limit: number) => {
     setItemsPerPage(limit)
-    setCurrentPage(1) // 첫 페이지로 리셋
+    setCurrentPage(1)
   }, [])
 
   const handleRefresh = useCallback(async () => {
@@ -236,28 +235,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     ? formatDateTime(new Date(lastUpdated).toISOString())
     : null
 
-  // 🍎 정렬 아이콘 렌더링
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return (
-        <SFSymbol
-          name="chevron.up.chevron.down"
-          size={SFSymbolSize.CAPTION_1}
-          weight={SFSymbolWeight.MEDIUM}
-          className="sort-icon sort-icon--inactive"
-        />
-      )
-    }
-    return (
-      <SFSymbol
-        name={sortDirection === 'asc' ? 'chevron.up' : 'chevron.down'}
-        size={SFSymbolSize.CAPTION_1}
-        weight={SFSymbolWeight.MEDIUM}
-        className="sort-icon sort-icon--active"
-      />
-    )
-  }
-
   return (
     <div className="customer-documents">
       <div className="customer-documents__header">
@@ -285,119 +262,153 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
       {!isEmpty && documents.length > 0 && (
         <>
-          <div className="customer-documents__table-wrapper">
-            <table className="customer-documents__table customer-documents__table--list">
-              <thead>
-                <tr>
-                  <th scope="col" className="sortable" onClick={() => handleSort('originalName')}>
-                    <div className="th-content">
-                      <span>파일명</span>
-                      {renderSortIcon('originalName')}
-                    </div>
-                  </th>
-                  <th scope="col" className="sortable" onClick={() => handleSort('fileSize')}>
-                    <div className="th-content">
-                      <span>크기</span>
-                      {renderSortIcon('fileSize')}
-                    </div>
-                  </th>
-                  <th scope="col" className="sortable" onClick={() => handleSort('linkedAt')}>
-                    <div className="th-content">
-                      <span>연결일</span>
-                      {renderSortIcon('linkedAt')}
-                    </div>
-                  </th>
-                  <th scope="col" className="customer-documents__actions-header">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedDocuments.map((document) => {
-                  const linkedAt = document.linkedAt ?? document.uploadedAt ?? null
-                  const formattedDate = formatDateTimeCompact(linkedAt)
-                  const sizeLabel = document.fileSize ? DocumentUtils.formatFileSize(document.fileSize) : '-'
+          {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
+          <div className="customer-documents__list-container">
+            {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
+            <div className="customer-documents-list-header">
+              <div className="header-icon"></div>
+              <div
+                className="header-filename header-sortable"
+                onClick={() => handleSort('originalName')}
+                role="button"
+                tabIndex={0}
+                aria-label="파일명으로 정렬"
+              >
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                  <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+                </svg>
+                <span>파일명</span>
+                {sortField === 'originalName' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div
+                className="header-size header-sortable"
+                onClick={() => handleSort('fileSize')}
+                role="button"
+                tabIndex={0}
+                aria-label="크기로 정렬"
+              >
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M8 2v6l4 2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                </svg>
+                <span>크기</span>
+                {sortField === 'fileSize' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div
+                className="header-date header-sortable"
+                onClick={() => handleSort('linkedAt')}
+                role="button"
+                tabIndex={0}
+                aria-label="연결일로 정렬"
+              >
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M2 6h12M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                <span>연결일</span>
+                {sortField === 'linkedAt' && (
+                  <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div className="header-actions">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
+                  <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
+                </svg>
+                <span>작업</span>
+              </div>
+            </div>
 
-                  return (
-                    <tr key={document._id} className="customer-documents__row">
-                      <td>
-                        <button
-                          type="button"
-                          className="customer-documents__name"
-                          onClick={() => handlePreview(document)}
-                        >
+            {/* 🍎 문서 리스트 - CenterPane과 동일한 구조 */}
+            {paginatedDocuments.map((document, index) => {
+              const linkedAt = document.linkedAt ?? document.uploadedAt ?? null
+              const formattedDate = formatDateTimeCompact(linkedAt)
+              const sizeLabel = document.fileSize ? DocumentUtils.formatFileSize(document.fileSize) : '-'
+              const documentId = document._id ?? `doc-${index}`
+
+              return (
+                <div
+                  key={documentId}
+                  className="customer-documents-item"
+                >
+                  {/* 파일 타입 아이콘 */}
+                  <div className="document-icon-wrapper">
+                    <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.originalName)}`}>
+                      <SFSymbol
+                        name={DocumentUtils.getFileIcon(document.mimeType, document.originalName)}
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.REGULAR}
+                        decorative={true}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 파일명 */}
+                  <div className="status-filename">
+                    {document.originalName ?? '이름 없는 문서'}
+                  </div>
+
+                  {/* 크기 */}
+                  <span className="document-size">
+                    {sizeLabel}
+                  </span>
+
+                  {/* 연결일 */}
+                  <div className="status-date">
+                    {formattedDate}
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="status-actions">
+                    <Tooltip content="문서 보기">
+                      <button
+                        type="button"
+                        className="action-btn action-btn--detail"
+                        onClick={() => handlePreview(document)}
+                        aria-label="문서 보기"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3C4.5 3 1.5 5.5 0 8c1.5 2.5 4.5 5 8 5s6.5-2.5 8-5c-1.5-2.5-4.5-5-8-5z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                          <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="연결 해제">
+                      <button
+                        type="button"
+                        className="action-btn action-btn--unlink"
+                        onClick={() => void handleUnlink(document)}
+                        aria-label="연결 해제"
+                        disabled={unlinkingId === document._id}
+                      >
+                        {unlinkingId === document._id ? (
                           <SFSymbol
-                            name="doc.text"
-                            size={SFSymbolSize.BODY}
+                            name="arrow.clockwise"
+                            animation={SFSymbolAnimation.ROTATE}
+                            size={SFSymbolSize.CAPTION_1}
                             weight={SFSymbolWeight.REGULAR}
                           />
-                          <span className="customer-documents__name-text">
-                            {document.originalName ?? '이름 없는 문서'}
-                          </span>
-                        </button>
-                      </td>
-                      <td>
-                        <span className="customer-documents__size">
-                          {sizeLabel}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="customer-documents__date">
-                          {formattedDate}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="customer-documents__row-actions">
-                          <Tooltip content="문서 보기">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="customer-documents__action-button"
-                              onClick={() => handlePreview(document)}
-                            >
-                              <SFSymbol
-                                name="eye"
-                                size={SFSymbolSize.BODY}
-                                weight={SFSymbolWeight.REGULAR}
-                                className="customer-documents__action-icon customer-documents__action-icon--view"
-                                decorative
-                              />
-                              <span className="sr-only">보기</span>
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content="연결 해제">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="customer-documents__action-button customer-documents__action-button--danger"
-                              loading={unlinkingId === document._id}
-                              onClick={() => void handleUnlink(document)}
-                            >
-                              {unlinkingId !== document._id && (
-                                <SFSymbol
-                                  name="trash"
-                                  size={SFSymbolSize.BODY}
-                                  weight={SFSymbolWeight.REGULAR}
-                                  className="customer-documents__action-icon customer-documents__action-icon--danger"
-                                  decorative
-                                />
-                              )}
-                              <span className="sr-only">연결 해제</span>
-                            </Button>
-                          </Tooltip>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M10 6.5L8 8.5L6 6.5M3 6V3h10v3M3 13V10h10v3" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {/* 🍎 페이지네이션 */}
           {totalPages > 0 && (
             <div className="document-pagination">
-              {/* 🍎 페이지당 항목 수 선택 */}
               <div className="pagination-limit">
                 <Dropdown
                   value={String(itemsPerPage)}
@@ -408,7 +419,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 />
               </div>
 
-              {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
               {totalPages > 1 && (
                 <div className="pagination-controls">
                   <button
@@ -437,7 +447,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                 </div>
               )}
 
-              {/* 🍎 페이지가 1개일 때 빈 공간 유지 */}
               {totalPages <= 1 && <div className="pagination-spacer"></div>}
             </div>
           )}
