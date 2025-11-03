@@ -19,7 +19,6 @@ export interface ViewerControlsActions {
   zoomIn: () => void
   zoomOut: () => void
   resetView: () => void
-  handleWheel: (e: React.WheelEvent) => void
   handleMouseDown: (e: React.MouseEvent) => void
   handleMouseMove: (e: React.MouseEvent) => void
   handleMouseUp: () => void
@@ -37,7 +36,7 @@ export interface UseViewerControlsReturn extends ViewerControlsState, ViewerCont
  * const controls = useViewerControls()
  *
  * return (
- *   <div onWheel={controls.handleWheel} onMouseDown={controls.handleMouseDown}>
+ *   <div onMouseDown={controls.handleMouseDown}>
  *     <img style={{ transform: `scale(${controls.scale})` }} />
  *   </div>
  * )
@@ -63,13 +62,6 @@ export const useViewerControls = (): UseViewerControlsReturn => {
   const resetView = useCallback(() => {
     setScale(1.0)
     setPosition({ x: 0, y: 0 })
-  }, [])
-
-  // 마우스 휠로 확대/축소
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? -0.1 : 0.1
-    setScale(prev => Math.max(0.5, Math.min(3.0, prev + delta)))
   }, [])
 
   // 마우스 드래그 시작
@@ -114,7 +106,6 @@ export const useViewerControls = (): UseViewerControlsReturn => {
     zoomIn,
     zoomOut,
     resetView,
-    handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp

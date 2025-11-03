@@ -61,7 +61,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지
       {/* Image Content */}
       <div
         className={`viewer-content image-viewer-content ${controls.scale > 1.0 ? (controls.isDragging ? 'viewer-content--dragging' : 'viewer-content--draggable') : ''}`}
-        onWheel={controls.handleWheel}
         onMouseDown={controls.handleMouseDown}
         onMouseMove={controls.handleMouseMove}
         onMouseUp={controls.handleMouseUp}

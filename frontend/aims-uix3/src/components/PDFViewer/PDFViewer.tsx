@@ -115,7 +115,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
       {/* PDF Document */}
       <div
         className={`viewer-content pdf-viewer-content ${controls.scale > 1.0 ? (controls.isDragging ? 'viewer-content--dragging' : 'viewer-content--draggable') : ''}`}
-        onWheel={controls.handleWheel}
         onMouseDown={controls.handleMouseDown}
         onMouseMove={controls.handleMouseMove}
         onMouseUp={controls.handleMouseUp}
