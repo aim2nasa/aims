@@ -279,16 +279,33 @@ class MongoDBConnection:
 
     def clear_collection(self, db_name: str, collection_name: str) -> bool:
         """특정 컬렉션의 모든 문서 삭제"""
-        if self.client is not None:
-            try:
-                target_db = self.client[db_name]
-                result = target_db[collection_name].delete_many({})
-                print(f"MongoDB {db_name}.{collection_name}: {result.deleted_count}개 문서 삭제됨")
-                return True
-            except Exception as e:
-                print(f"Failed to clear collection: {e}")
-                return False
-        return False
+        if self.client is None:
+            print("MongoDB client is None")
+            return False
+        
+        try:
+            print(f"Attempting to clear {db_name}.{collection_name}")
+            target_db = self.client[db_name]
+            target_collection = target_db[collection_name]
+            
+            # 삭제 전 문서 수 확인
+            count_before = target_collection.count_documents({})
+            print(f"Documents before deletion: {count_before}")
+            
+            # 모든 문서 삭제
+            result = target_collection.delete_many({})
+            print(f"MongoDB {db_name}.{collection_name}: {result.deleted_count}개 문서 삭제됨")
+            
+            # 삭제 후 문서 수 확인
+            count_after = target_collection.count_documents({})
+            print(f"Documents after deletion: {count_after}")
+            
+            return True
+        except Exception as e:
+            print(f"Failed to clear collection: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
 
 
 class DocumentViewer:
@@ -296,7 +313,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.6.0 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.6.3 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -424,8 +441,8 @@ class DocumentViewer:
         search_row.pack(fill=tk.X, pady=(0, 5))
 
         ttk.Label(search_row, text="검색:", width=6).pack(side=tk.LEFT)
-        search_entry = ttk.Entry(search_row, textvariable=self.search_query, width=15)
-        search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        search_entry = ttk.Entry(search_row, textvariable=self.search_query, width=15, font=("Arial", 10))
+        search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True, ipady=3)
         search_entry.bind('<Return>', lambda e: self.apply_search())
 
         ttk.Button(search_row, text="검색", width=6, command=self.apply_search).pack(side=tk.LEFT, padx=2)
@@ -436,9 +453,11 @@ class DocumentViewer:
         date_row1.pack(fill=tk.X, pady=(0, 2))
 
         ttk.Label(date_row1, text="기간:", width=6).pack(side=tk.LEFT)
-        ttk.Entry(date_row1, textvariable=self.date_from, width=10).pack(side=tk.LEFT, padx=2)
+        date_from_entry = ttk.Entry(date_row1, textvariable=self.date_from, width=10, font=("Arial", 10))
+        date_from_entry.pack(side=tk.LEFT, padx=2, ipady=3)
         ttk.Label(date_row1, text="~").pack(side=tk.LEFT)
-        ttk.Entry(date_row1, textvariable=self.date_to, width=10).pack(side=tk.LEFT, padx=2)
+        date_to_entry = ttk.Entry(date_row1, textvariable=self.date_to, width=10, font=("Arial", 10))
+        date_to_entry.pack(side=tk.LEFT, padx=2, ipady=3)
 
         date_row2 = ttk.Frame(filter_frame)
         date_row2.pack(fill=tk.X)
@@ -511,9 +530,9 @@ class DocumentViewer:
         # 문서 더블클릭 이벤트
         self.doc_list.bind("<Double-1>", self.on_document_double_click)
 
-        # ===== 탭 2: Raw 데이터 =====
+        # ===== 탭 2: MongoDB =====
         raw_data_tab = ttk.Frame(self.notebook)
-        self.notebook.add(raw_data_tab, text="📋 Raw 데이터")
+        self.notebook.add(raw_data_tab, text="📋 MongoDB")
 
         # DB/Collection 선택 프레임
         raw_select_frame = ttk.LabelFrame(raw_data_tab, text="🗄️ DB & Collection 선택", padding="10")
@@ -2093,11 +2112,8 @@ class DocumentViewer:
             # 컬렉션 초기화
             if self.qdrant.clear_collection(selected_collection):
                 messagebox.showinfo("초기화 완료", f"'{selected_collection}' 컬렉션이 초기화되었습니다.")
-                # 데이터 다시 로드
-                self.qdrant_points = []
-                self.current_qdrant_index = 0
-                self.update_qdrant_viewer()
-                self.qdrant_count_label.config(text="포인트: 0개")
+                # Qdrant에서 데이터 다시 로드 (삭제 확인)
+                self.load_qdrant_collection_data()
             else:
                 messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
 
@@ -2128,18 +2144,22 @@ class DocumentViewer:
             return
 
         try:
+            print(f"UI: Attempting to clear {selected_db}.{selected_collection}")
             # 컬렉션 초기화
             if self.mongo.clear_collection(selected_db, selected_collection):
-                messagebox.showinfo("초기화 완료", f"'{selected_db}.{selected_collection}' 컬렉션이 초기화되었습니다.")
-                # 데이터 다시 로드
-                self.raw_documents = []
-                self.current_raw_index = 0
-                self.update_raw_viewer()
-                self.raw_count_label.config(text="문서: 0개")
+                messagebox.showinfo("초기화 완료", 
+                    f"'{selected_db}.{selected_collection}' 컬렉션이 초기화되었습니다.\n"
+                    f"콘솔에서 삭제된 문서 수를 확인하세요.")
+                # MongoDB에서 데이터 다시 로드 (삭제 확인)
+                self.load_raw_collection_data()
             else:
-                messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
+                messagebox.showerror("초기화 실패", 
+                    "컬렉션 초기화에 실패했습니다.\n"
+                    "콘솔에서 에러 메시지를 확인하세요.")
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             messagebox.showerror("초기화 실패", f"컬렉션 초기화 실패:\n{e}")
 
     def on_closing(self):
