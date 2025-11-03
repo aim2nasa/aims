@@ -87,8 +87,9 @@ export class DocumentStatusService {
    * @param page 페이지 번호 (1부터 시작)
    * @param limit 페이지당 항목 수
    * @param sort 정렬 옵션
+   * @param search 검색어 (파일명 검색)
    */
-  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string): Promise<DocumentStatusResponse> {
     try {
       // Get current userId from localStorage
       const userId = typeof window !== 'undefined'
@@ -101,6 +102,9 @@ export class DocumentStatusService {
       })
       if (sort) {
         params.append('sort', sort)
+      }
+      if (search && search.trim()) {
+        params.append('search', search.trim())
       }
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {

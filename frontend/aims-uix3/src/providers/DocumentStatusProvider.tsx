@@ -49,6 +49,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   /**
    * 문서 목록 가져오기
    * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
+   * 🔍 검색어가 있으면 백엔드에 전달하여 전체 라이브러리 검색
    */
   const fetchDocuments = useCallback(
     async (isInitialLoad: boolean = false) => {
@@ -72,8 +73,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           sortParam = sortDirection === 'asc' ? 'mimeType_asc' : 'mimeType_desc'
         }
 
+        // 🔍 검색어 준비 (trim 처리)
+        const searchQuery = searchTerm.trim() || undefined
+
         // 🍎 페이지네이션 기반으로 변경: page와 limit 전달
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam)
+        // 🔍 검색어도 함께 전달하여 백엔드에서 전체 라이브러리 검색
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장
@@ -136,7 +141,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [currentPage, itemsPerPage, sortField, sortDirection]
+    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm]
   )
 
   /**
@@ -231,44 +236,14 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [isPollingEnabled, fetchDocuments, checkApiHealth])
 
   /**
-   * 검색 및 필터링
+   * 🔍 검색 및 필터링
+   * 백엔드에서 이미 검색된 결과를 받으므로 프론트엔드 필터링 불필요
+   * documents를 그대로 filteredDocuments로 사용
    */
   useEffect(() => {
-    let filtered = documents
-
-    if (searchTerm) {
-      filtered = filtered.filter((doc) => {
-        const filename = DocumentStatusService.extractFilename(doc)
-        const id = doc['id'] || doc._id || ''
-        const searchTermLower = searchTerm.toLowerCase()
-
-        const matchesFilename = filename.toLowerCase().includes(searchTermLower)
-        const matchesId = id.toLowerCase().includes(searchTermLower)
-
-        // Meta full_text 검색
-        const metaFullText = (typeof doc.meta === 'object' && doc.meta !== null)
-          ? doc.meta.full_text || ''
-          : ''
-        const matchesMetaText = metaFullText.toLowerCase().includes(searchTermLower)
-
-        // OCR full_text 검색
-        const ocrFullText = (typeof doc.ocr === 'object' && doc.ocr !== null)
-          ? doc.ocr.full_text || ''
-          : ''
-        const matchesOcrText = ocrFullText.toLowerCase().includes(searchTermLower)
-
-        // Text full_text 검색
-        const textFullText = (typeof doc.text === 'object' && doc.text !== null)
-          ? doc.text.full_text || ''
-          : ''
-        const matchesTextText = textFullText.toLowerCase().includes(searchTermLower)
-
-        return matchesFilename || matchesId || matchesMetaText || matchesOcrText || matchesTextText
-      })
-    }
-
-    setFilteredDocuments(filtered)
-  }, [documents, searchTerm])
+    // 🔍 백엔드에서 이미 필터링된 데이터를 받으므로 그대로 사용
+    setFilteredDocuments(documents)
+  }, [documents])
 
   // 🍎 Pagination Logic
   // 백엔드에서 이미 페이지네이션된 데이터를 받으므로 filteredDocuments를 그대로 사용
