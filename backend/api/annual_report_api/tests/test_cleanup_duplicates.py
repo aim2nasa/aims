@@ -248,7 +248,8 @@ class TestCleanupDuplicatesFunction:
         mock_customers.find_one.return_value = {
             "_id": ObjectId(customer_id),
             "annual_reports": [
-                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z"}
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:20:00.000Z"},
+                {"issue_date": "2025-08-29", "parsed_at": "2025-11-03T06:25:00.000Z"}  # 중복 추가
             ]
         }
 

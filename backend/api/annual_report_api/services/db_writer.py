@@ -551,7 +551,8 @@ def cleanup_duplicate_annual_reports(
             kept_info = {
                 "issue_date": best_report.get("issue_date"),
                 "parsed_at": best_report.get("parsed_at"),
-                "customer_name": best_report.get("customer_name")
+                "customer_name": best_report.get("customer_name"),
+                "fsr_name": best_report.get("fsr_name")
             }
 
             return {
