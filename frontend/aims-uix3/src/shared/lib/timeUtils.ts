@@ -267,12 +267,25 @@ export function formatDateTimeCompact(timestamp: string | undefined | null): str
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
+    // KST로 변환하여 각 부분 추출
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+
+    const parts = formatter.formatToParts(date);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const hours = parts.find(p => p.type === 'hour')?.value || '';
+    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+    const seconds = parts.find(p => p.type === 'second')?.value || '';
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   } catch (e) {
