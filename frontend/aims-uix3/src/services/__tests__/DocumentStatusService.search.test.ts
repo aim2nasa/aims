@@ -22,6 +22,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -47,6 +48,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -60,7 +62,7 @@ describe('DocumentStatusService - Search Parameter', () => {
       await DocumentStatusService.getRecentDocuments(1, 10)
 
       // Then
-      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(callUrl).not.toContain('search=')
     })
 
@@ -70,6 +72,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -83,7 +86,7 @@ describe('DocumentStatusService - Search Parameter', () => {
       await DocumentStatusService.getRecentDocuments(1, 10, undefined, '')
 
       // Then
-      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(callUrl).not.toContain('search=')
     })
 
@@ -93,6 +96,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -106,7 +110,7 @@ describe('DocumentStatusService - Search Parameter', () => {
       await DocumentStatusService.getRecentDocuments(1, 10, undefined, '   ')
 
       // Then
-      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(callUrl).not.toContain('search=')
     })
 
@@ -116,6 +120,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -134,7 +139,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         expect.any(Object)
       )
 
-      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(callUrl).not.toContain('%20') // 공백이 포함되지 않아야 함
     })
 
@@ -144,6 +149,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 25,
           pagination: { page: 2, totalPages: 3, totalCount: 25, limit: 10, total: 25 }
         }
       }
@@ -157,7 +163,7 @@ describe('DocumentStatusService - Search Parameter', () => {
       await DocumentStatusService.getRecentDocuments(2, 10, 'filename_asc', '보험')
 
       // Then
-      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      const callUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(callUrl).toContain('page=2')
       expect(callUrl).toContain('limit=10')
       expect(callUrl).toContain('sort=filename_asc')
@@ -175,6 +181,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: mockDocuments,
+          total: 2,
           pagination: { page: 1, totalPages: 1, totalCount: 2, limit: 10, total: 2 }
         }
       }
@@ -189,7 +196,7 @@ describe('DocumentStatusService - Search Parameter', () => {
 
       // Then
       expect(result.documents).toEqual(mockDocuments)
-      expect(result.pagination.totalCount).toBe(2)
+      expect(result.pagination!.totalCount).toBe(2)
     })
   })
 
@@ -202,6 +209,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }
@@ -231,6 +239,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         success: true,
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       }

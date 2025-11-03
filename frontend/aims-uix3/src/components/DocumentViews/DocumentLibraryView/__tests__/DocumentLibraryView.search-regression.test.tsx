@@ -40,6 +40,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
       mockGetRecentDocuments.mockResolvedValue({
         data: {
           documents: [],
+          total: 0,
           pagination: {
             page: 1,
             totalPages: 1,
@@ -68,6 +69,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
       mockGetRecentDocuments.mockResolvedValue({
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       })
@@ -85,6 +87,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
       mockGetRecentDocuments.mockResolvedValue({
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       })
@@ -120,6 +123,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
             fileSize: 1024,
             overallStatus: 'completed'
           })),
+          total: 29,
           pagination: { page: 1, totalPages: 3, totalCount: 29, limit: 10, total: 29 }
         }
       })
@@ -134,6 +138,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
             fileSize: 1024,
             overallStatus: 'completed'
           }],
+          total: 1,
           pagination: { page: 1, totalPages: 1, totalCount: 1, limit: 10, total: 1 }
         }
       })
@@ -166,6 +171,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
             fileSize: 1024,
             overallStatus: 'completed'
           }],
+          total: 1,
           pagination: { page: 1, totalPages: 1, totalCount: 1, limit: 10, total: 1 }
         }
       })
@@ -189,6 +195,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
       mockGetRecentDocuments.mockResolvedValue({
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       })
@@ -248,6 +255,7 @@ describe('DocumentLibraryView - 검색 회귀 테스트 (commit db7dc3c)', () =>
       mockGetRecentDocuments.mockResolvedValue({
         data: {
           documents: [],
+          total: 0,
           pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 10, total: 0 }
         }
       })
