@@ -22,6 +22,7 @@
     80px           /* 타입 */
     130px          /* 날짜 (오른쪽 정렬) */
     90px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    120px          /* 연결된 고객 (새로 추가) */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
@@ -48,6 +49,7 @@
     80px           /* 타입 */
     130px          /* 날짜 */
     90px           /* 상태 */
+    120px          /* 연결된 고객 */
     104px;         /* 액션 버튼 */
 }
 
@@ -89,6 +91,11 @@ html[data-theme="dark"] .status-list-header {
   text-align: center;
 }
 
+.status-list-header .header-customer {
+  justify-content: center;
+  text-align: center;
+}
+
 .status-list-header .header-actions {
   justify-content: center;
   text-align: center;
@@ -113,6 +120,10 @@ html[data-theme="dark"] .status-list-header {
 
 .header-status .header-icon-svg {
   color: var(--color-icon-green);  /* 상태 - 초록색 */
+}
+
+.header-customer .header-icon-svg {
+  color: var(--color-icon-teal);  /* 고객 - 청록색 */
 }
 
 .header-actions .header-icon-svg {
@@ -277,6 +288,7 @@ html[data-theme="dark"] .empty-message {
     80px           /* 타입 */
     130px          /* 날짜 (오른쪽 정렬) */
     90px           /* 상태 (아이콘 + 상태명, 정렬 포함) */
+    120px          /* 연결된 고객 */
     104px;         /* 액션 버튼 (4개, 고정) */
   gap: 12px;
   align-items: center;
@@ -299,6 +311,7 @@ html[data-theme="dark"] .empty-message {
     80px           /* 타입 */
     130px          /* 날짜 */
     90px           /* 상태 */
+    120px          /* 연결된 고객 */
     104px;         /* 액션 버튼 */
 }
 
@@ -468,6 +481,71 @@ html[data-theme="dark"] .document-type {
 
 html[data-theme="dark"] .status-date {
   color: var(--color-ios-text-quaternary-dark);
+}
+
+/* === 연결된 고객 === */
+.status-customer {
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-customer .customer-name {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .status-customer .customer-name {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.status-customer .customer-none {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .status-customer .customer-none {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 고객명 클릭 가능 버튼 스타일 */
+.status-customer .customer-name-button {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+}
+
+.status-customer .customer-name-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .status-customer .customer-name-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-primary-400);
+}
+
+.status-customer .customer-name-button:active {
+  background: var(--color-ios-bg-hover-light);
+  transform: scale(0.98);
+}
+
+html[data-theme="dark"] .status-customer .customer-name-button:active {
+  background: var(--color-ios-bg-hover-dark);
 }
 
 /* === 액션 버튼 === */

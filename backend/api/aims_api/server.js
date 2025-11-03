@@ -392,6 +392,30 @@ app.get('/api/documents', async (req, res) => {
     // 전체 문서 수 조회
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(query);
 
+    // customer_relation이 있는 문서의 customer_id 수집
+    const customerIds = documents
+      .filter(doc => doc.customer_relation?.customer_id)
+      .map(doc => doc.customer_relation.customer_id);
+
+    // 고객 정보 일괄 조회
+    const customerMap = {};
+    if (customerIds.length > 0) {
+      console.log('[DEBUG] customerIds:', customerIds);
+      const customers = await db.collection('customers')
+        .find({ _id: { $in: customerIds } })
+        .project({ _id: 1, 'personal_info.name': 1 })
+        .toArray();
+
+      console.log('[DEBUG] customers found:', customers.length);
+      console.log('[DEBUG] customers:', JSON.stringify(customers, null, 2));
+
+      customers.forEach(customer => {
+        customerMap[customer._id.toString()] = customer.personal_info?.name || null;
+      });
+
+      console.log('[DEBUG] customerMap:', customerMap);
+    }
+
     // 문서 데이터 변환 (단순화)
     const transformedDocuments = documents.map(doc => {
       // 단순한 상태 판단
@@ -406,6 +430,20 @@ app.get('/api/documents', async (req, res) => {
         progress = 60;
       }
 
+      // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
+      let customerRelation = null;
+      if (doc.customer_relation?.customer_id) {
+        const customerId = doc.customer_relation.customer_id.toString();
+        customerRelation = {
+          customer_id: customerId,
+          customer_name: customerMap[customerId] || null,
+          relationship_type: doc.customer_relation.relationship_type,
+          assigned_by: doc.customer_relation.assigned_by,
+          assigned_at: doc.customer_relation.assigned_at,
+          notes: doc.customer_relation.notes
+        };
+      }
+
       return {
         _id: doc._id,
         filename: doc.upload?.originalName || 'Unknown File',
@@ -416,7 +454,7 @@ app.get('/api/documents', async (req, res) => {
         progress: progress,
         filePath: doc.upload?.destPath,
         is_annual_report: doc.is_annual_report || false,
-        customer_relation: doc.customer_relation || null
+        customer_relation: customerRelation
       };
     });
 
@@ -534,6 +572,24 @@ app.get('/api/documents/status', async (req, res) => {
         .toArray();
     }
 
+    // customer_relation이 있는 문서의 customer_id 수집
+    const customerIds = documents
+      .filter(doc => doc.customer_relation?.customer_id)
+      .map(doc => doc.customer_relation.customer_id);
+
+    // 고객 정보 일괄 조회
+    const customerMap = {};
+    if (customerIds.length > 0) {
+      const customers = await db.collection('customers')
+        .find({ _id: { $in: customerIds } })
+        .project({ _id: 1, 'personal_info.name': 1 })
+        .toArray();
+
+      customers.forEach(customer => {
+        customerMap[customer._id.toString()] = customer.personal_info?.name || null;
+      });
+    }
+
     // 각 문서의 상태 분석 + DB 업데이트
     const documentsWithStatus = await Promise.all(documents.map(async (doc) => {
       // overallStatus 없거나 completed 아니면 DB 업데이트
@@ -557,6 +613,20 @@ app.get('/api/documents/status', async (req, res) => {
         }
       }
 
+      // customer_relation 변환 (ObjectId를 string으로, customer_name 추가)
+      let customerRelation = null;
+      if (doc.customer_relation?.customer_id) {
+        const customerId = doc.customer_relation.customer_id.toString();
+        customerRelation = {
+          customer_id: customerId,
+          customer_name: customerMap[customerId] || null,
+          relationship_type: doc.customer_relation.relationship_type,
+          assigned_by: doc.customer_relation.assigned_by,
+          assigned_at: doc.customer_relation.assigned_at,
+          notes: doc.customer_relation.notes
+        };
+      }
+
       // 기존 analyzeDocumentStatus 방식대로 응답 구성
       const statusInfo = analyzeDocumentStatus(doc);
       return {
@@ -566,7 +636,7 @@ app.get('/api/documents/status', async (req, res) => {
         fileSize: doc.meta?.size_bytes,
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
-        customer_relation: doc.customer_relation || null,
+        customer_relation: customerRelation,
         ...statusInfo
       };
     }));

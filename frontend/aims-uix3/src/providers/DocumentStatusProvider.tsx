@@ -90,27 +90,15 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           setTotalCount(data.pagination.totalCount || 0)
         }
 
-        // 각 문서의 customer_relation 정보를 가져오기 위해 개별 문서 조회
-        const documentsWithCustomerRelation: Document[] = await Promise.all(
-          realDocuments.map(async (doc: Document): Promise<Document> => {
-            try {
-              const detailedDoc = await DocumentStatusService.getDocumentStatus(doc._id || doc['id'] || '')
-
-              // ✅ NEW: raw 필드 우선 사용, 하위 호환성 유지
-              const customerRelation =
-                detailedDoc.data?.raw?.customer_relation ||
-                detailedDoc.data?.rawDocument?.customer_relation
-
-              return {
-                ...doc,
-                customer_relation: customerRelation
-              } as Document
-            } catch (error) {
-              console.error(`Failed to fetch detailed info for document ${doc._id}:`, error)
-              return doc
-            }
-          })
-        )
+        // ✅ FIX: /api/documents/status API가 이미 customer_relation을 반환하므로
+        // 개별 문서 조회 없이 바로 사용 (N+1 쿼리 방지 + customer_name 보존)
+        const documentsWithCustomerRelation: Document[] = realDocuments.map((doc: Document): Document => {
+          return {
+            ...doc,
+            // API가 이미 customer_relation (customer_name 포함)을 반환함
+            customer_relation: doc.customer_relation
+          } as Document
+        })
 
         // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
         setDocuments((prevDocs) => {

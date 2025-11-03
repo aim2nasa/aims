@@ -35,6 +35,8 @@ interface DocumentLibraryViewProps {
   onDocumentClick?: (documentId: string) => void
   /** 문서 삭제 완료 핸들러 */
   onDocumentDeleted?: () => void
+  /** 고객 클릭 핸들러 */
+  onCustomerClick?: (customerId: string) => void
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -59,7 +61,8 @@ const DocumentLibraryContent: React.FC<{
   onDocumentClick?: (documentId: string) => void
   onDeleteSelected: () => void
   isDeleting: boolean
-}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting }) => {
+  onCustomerClick?: (customerId: string) => void
+}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
   const controller = useDocumentStatusController()
   const { actions } = useDocumentStatusContext()
 
@@ -132,6 +135,7 @@ const DocumentLibraryContent: React.FC<{
         selectedDocumentIds={selectedDocumentIds}
         onSelectAll={handleSelectAll}
         onSelectDocument={onSelectDocument}
+        {...(onCustomerClick ? { onCustomerClick } : {})}
       />
 
       {/* 🍎 페이지네이션: DocumentStatusView와 동일한 구조 */}
@@ -234,6 +238,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   onClose,
   onDocumentClick,
   onDocumentDeleted,
+  onCustomerClick,
 }) => {
   const {
     error,
@@ -431,6 +436,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onDeleteSelected={handleDeleteSelected}
             isDeleting={isDeleting}
             {...(onDocumentClick && { onDocumentClick })}
+            {...(onCustomerClick && { onCustomerClick })}
           />
         </DocumentStatusProvider>
       </div>
