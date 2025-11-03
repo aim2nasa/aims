@@ -12,6 +12,7 @@
  * 7. parseISOTimestamp - ISO 8601 → Date
  * 8. getTimeDiff - 두 timestamp 차이
  * 9. formatDuration - 밀리초를 읽기 쉽게
+ * 10. formatDateTimeCompact - ISO 8601 → YYYY-MM-DD HH:mm:ss (문서 탭 통일 형식)
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -24,7 +25,8 @@ import {
   toUTCISO,
   parseISOTimestamp,
   getTimeDiff,
-  formatDuration
+  formatDuration,
+  formatDateTimeCompact
 } from '../timeUtils';
 
 describe('timeUtils', () => {
@@ -365,6 +367,78 @@ describe('timeUtils', () => {
       const result = formatTime(midnightUTC);
 
       expect(result).toMatch(/오전 \d{2}:00/);
+    });
+  });
+
+  describe('formatDateTimeCompact', () => {
+    it('ISO 8601 UTC timestamp를 "YYYY-MM-DD HH:mm:ss" 형식으로 변환해야 한다', () => {
+      // 2025-11-03T06:25:30.000Z (UTC) → 2025-11-03 15:25:30 (KST)
+      const result = formatDateTimeCompact('2025-11-03T06:25:30.000Z');
+      expect(result).toBe('2025-11-03 15:25:30');
+    });
+
+    it('null이나 undefined를 "-"로 변환해야 한다', () => {
+      expect(formatDateTimeCompact(null)).toBe('-');
+      expect(formatDateTimeCompact(undefined)).toBe('-');
+      expect(formatDateTimeCompact('')).toBe('-');
+    });
+
+    it('잘못된 형식의 timestamp는 "잘못된 시간"을 반환해야 한다', () => {
+      expect(formatDateTimeCompact('not-a-date')).toBe('잘못된 시간');
+      expect(formatDateTimeCompact('2025-99-99')).toBe('잘못된 시간');
+    });
+
+    it('자정(00:00:00)을 올바르게 처리해야 한다', () => {
+      // 2025-11-02T15:00:00.000Z (UTC) → 2025-11-03 00:00:00 (KST)
+      const result = formatDateTimeCompact('2025-11-02T15:00:00.000Z');
+      expect(result).toBe('2025-11-03 00:00:00');
+    });
+
+    it('정오(12:00:00)를 올바르게 처리해야 한다', () => {
+      // 2025-11-03T03:00:00.000Z (UTC) → 2025-11-03 12:00:00 (KST)
+      const result = formatDateTimeCompact('2025-11-03T03:00:00.000Z');
+      expect(result).toBe('2025-11-03 12:00:00');
+    });
+
+    it('날짜 경계를 넘는 경우 KST 날짜로 변환해야 한다', () => {
+      // 2025-11-02T16:00:00.000Z (UTC) → 2025-11-03 01:00:00 (KST)
+      const result = formatDateTimeCompact('2025-11-02T16:00:00.000Z');
+      expect(result).toBe('2025-11-03 01:00:00');
+    });
+
+    it('밀리초를 올바르게 버려야 한다', () => {
+      // 밀리초가 999ms여도 초 단위만 표시
+      const result = formatDateTimeCompact('2025-11-03T06:25:30.999Z');
+      expect(result).toBe('2025-11-03 15:25:30');
+    });
+
+    it('한 자리 숫자를 두 자리로 패딩해야 한다', () => {
+      // 2025-01-05T00:05:05.000Z (UTC) → 2025-01-05 09:05:05 (KST)
+      const result = formatDateTimeCompact('2025-01-05T00:05:05.000Z');
+      expect(result).toBe('2025-01-05 09:05:05');
+    });
+
+    it('연말연시 경계를 올바르게 처리해야 한다', () => {
+      // 2024-12-31T16:00:00.000Z (UTC) → 2025-01-01 01:00:00 (KST)
+      const result = formatDateTimeCompact('2024-12-31T16:00:00.000Z');
+      expect(result).toBe('2025-01-01 01:00:00');
+    });
+
+    it('문서 연결일 형식과 일치해야 한다 (DocumentsTab에서 사용)', () => {
+      // DocumentsTab에서 표시되는 형식과 동일해야 함
+      const linkedAt = '2025-11-03T06:24:00.000Z';
+      const result = formatDateTimeCompact(linkedAt);
+
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+      expect(result).toBe('2025-11-03 15:24:00');
+    });
+
+    it('Annual Report 파싱일시 형식과 일치해야 한다', () => {
+      // AnnualReportTab에서 표시되는 형식과 동일해야 함
+      const parsedAt = '2025-11-03T06:25:30.000Z';
+      const result = formatDateTimeCompact(parsedAt);
+
+      expect(result).toBe('2025-11-03 15:25:30');
     });
   });
 
