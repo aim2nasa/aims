@@ -283,9 +283,14 @@ export function formatDateTimeCompact(timestamp: string | undefined | null): str
     const year = parts.find(p => p.type === 'year')?.value || '';
     const month = parts.find(p => p.type === 'month')?.value || '';
     const day = parts.find(p => p.type === 'day')?.value || '';
-    const hours = parts.find(p => p.type === 'hour')?.value || '';
+    let hours = parts.find(p => p.type === 'hour')?.value || '';
     const minutes = parts.find(p => p.type === 'minute')?.value || '';
     const seconds = parts.find(p => p.type === 'second')?.value || '';
+
+    // 자정을 24:00:00이 아닌 00:00:00으로 표시
+    if (hours === '24') {
+      hours = '00';
+    }
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   } catch (e) {
