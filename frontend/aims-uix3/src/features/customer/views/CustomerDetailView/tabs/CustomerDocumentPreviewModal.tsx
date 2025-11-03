@@ -67,8 +67,13 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   // 모달 크기 변경 시 fit scale 재계산
   useEffect(() => {
     // 모달 content 영역 크기 (헤더 60px, 컨트롤 50px, 패딩 제외)
-    const contentWidth = modal.size.width - 32 // 좌우 패딩
-    const contentHeight = modal.size.height - 60 - 50 - 32 // 헤더, 컨트롤, 상하 패딩
+    const HEADER_HEIGHT = 60
+    const CONTROLS_HEIGHT = 50
+    const VERTICAL_PADDING = 32 // 상하 패딩 합계
+    const HORIZONTAL_PADDING = 32 // 좌우 패딩 합계
+
+    const contentWidth = modal.size.width - HORIZONTAL_PADDING
+    const contentHeight = modal.size.height - HEADER_HEIGHT - CONTROLS_HEIGHT - VERTICAL_PADDING
 
     // 대략적인 표준 문서 크기 (A4: 595×842)
     // 실제로는 문서마다 다르지만 일반적인 비율로 계산
@@ -77,7 +82,9 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
 
     const scaleX = contentWidth / avgDocWidth
     const scaleY = contentHeight / avgDocHeight
-    const calculatedScale = Math.min(scaleX, scaleY, 1.0) // 최대 1.0
+
+    // 수직 스크롤이 생기지 않도록 더 작은 scale 선택 (0.9를 곱해 여유 공간 확보)
+    const calculatedScale = Math.min(scaleX, scaleY, 1.0) * 0.9
 
     setFitScale(calculatedScale)
   }, [modal.size.width, modal.size.height])

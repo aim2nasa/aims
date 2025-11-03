@@ -56,7 +56,7 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
 
   // 축소
   const zoomOut = useCallback(() => {
-    setScale(prev => Math.max(prev - 0.25, 0.5))
+    setScale(prev => Math.max(prev - 0.25, 0.25))
   }, [])
 
   // 뷰 리셋 (원래 크기 및 위치로)
