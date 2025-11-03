@@ -351,9 +351,9 @@ class TestCleanupDuplicatesEndpoint:
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
             json={
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:30.000Z",
-                "userId": user_id
-            }
+                "reference_linked_at": "2025-11-03T06:25:30.000Z"
+            },
+            headers={"x-user-id": user_id}
         )
 
         # 검증
@@ -376,7 +376,7 @@ class TestCleanupDuplicatesEndpoint:
             }
         )
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 400  # userId required
 
     @patch('main.mongo_client')
     def test_endpoint_unauthorized_customer(self, mock_mongo):
@@ -400,13 +400,13 @@ class TestCleanupDuplicatesEndpoint:
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
             json={
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:30.000Z",
-                "userId": user_id
-            }
+                "reference_linked_at": "2025-11-03T06:25:30.000Z"
+            },
+            headers={"x-user-id": user_id}
         )
 
-        assert response.status_code == 403
-        assert "권한이 없습니다" in response.json()["detail"]
+        assert response.status_code == 404  # 고객을 찾을 수 없거나 권한 없음
+        assert "고객을 찾을 수 없거나 접근 권한이 없습니다" in response.json()["detail"]
 
     @patch('main.mongo_client')
     def test_endpoint_customer_not_found(self, mock_mongo):
@@ -425,13 +425,13 @@ class TestCleanupDuplicatesEndpoint:
             f"/customers/{customer_id}/annual-reports/cleanup-duplicates",
             json={
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:30.000Z",
-                "userId": user_id
-            }
+                "reference_linked_at": "2025-11-03T06:25:30.000Z"
+            },
+            headers={"x-user-id": user_id}
         )
 
         assert response.status_code == 404
-        assert "고객을 찾을 수 없습니다" in response.json()["detail"]
+        assert "고객을 찾을 수 없거나 접근 권한이 없습니다" in response.json()["detail"]
 
     @patch('main.mongo_client')
     def test_endpoint_invalid_customer_id_format(self, mock_mongo):
@@ -440,9 +440,9 @@ class TestCleanupDuplicatesEndpoint:
             "/customers/invalid-id/annual-reports/cleanup-duplicates",
             json={
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:30.000Z",
-                "userId": str(ObjectId())
-            }
+                "reference_linked_at": "2025-11-03T06:25:30.000Z"
+            },
+            headers={"x-user-id": str(ObjectId())}
         )
 
         assert response.status_code == 400
