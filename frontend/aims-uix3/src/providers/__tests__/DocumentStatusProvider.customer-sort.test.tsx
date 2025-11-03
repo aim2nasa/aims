@@ -121,7 +121,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
         result.current.actions.setSortField('customer')
       })
 
-      expect(result.current.state.sortField).toBe('customer')
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBe('customer')
+      })
     })
 
     it('sortDirection을 "desc"로 설정할 수 있어야 함', async () => {
@@ -137,7 +139,9 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
         result.current.actions.setSortDirection('desc')
       })
 
-      expect(result.current.state.sortDirection).toBe('desc')
+      await waitFor(() => {
+        expect(result.current.state.sortDirection).toBe('desc')
+      })
     })
   })
 
@@ -329,24 +333,42 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
         expect(result.current.state.isLoading).toBe(false)
       })
 
-      // TypeScript should allow these
+      // TypeScript should allow these - test type safety
       act(() => {
         result.current.actions.setSortField('customer')
       })
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBe('customer')
+      })
+
       act(() => {
         result.current.actions.setSortField('filename')
       })
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBe('filename')
+      })
+
       act(() => {
         result.current.actions.setSortField('status')
       })
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBe('status')
+      })
+
       act(() => {
         result.current.actions.setSortField(null)
       })
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBeNull()
+      })
 
       // Should not throw
-      expect(() => {
+      act(() => {
         result.current.actions.handleColumnSort('customer')
-      }).not.toThrow()
+      })
+      await waitFor(() => {
+        expect(result.current.state.sortField).toBe('customer')
+      })
     })
 
     it('[회귀 방지] 정렬 변경이 fetchDocuments를 트리거해야 함', async () => {

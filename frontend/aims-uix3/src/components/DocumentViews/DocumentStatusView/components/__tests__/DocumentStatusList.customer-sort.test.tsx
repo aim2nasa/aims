@@ -535,7 +535,6 @@ describe('DocumentStatusList - 연결된 고객 칼럼 정렬 테스트 (커밋 
     })
 
     it('[회귀 방지] 정렬 상태가 다른 칼럼으로 변경되어도 "연결된 고객" 칼럼은 정상 작동해야 함', async () => {
-      const user = userEvent.setup()
       const onColumnSort = vi.fn()
 
       const { rerender } = render(
