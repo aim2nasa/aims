@@ -310,16 +310,15 @@ class TestCleanupDuplicatesFunction:
 class TestCleanupDuplicatesEndpoint:
     """POST /customers/{customer_id}/annual-reports/cleanup-duplicates 엔드포인트 테스트"""
 
-    @patch('main.mongo_client')
-    def test_endpoint_successful_cleanup(self, mock_mongo):
+    @patch('main.db')
+    def test_endpoint_successful_cleanup(self, mock_db):
         """정상적인 정리 요청 성공"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
 
         # Mock DB 설정
-        mock_db = mock_mongo.__getitem__.return_value
         mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
+        mock_db.customers = mock_customers
 
         # 고객 소유권 확인
         mock_customers.find_one.side_effect = [
@@ -362,8 +361,8 @@ class TestCleanupDuplicatesEndpoint:
         assert data["success"] is True
         assert data["deleted_count"] == 1
 
-    @patch('main.mongo_client')
-    def test_endpoint_missing_userId(self, mock_mongo):
+    @patch('main.db')
+    def test_endpoint_missing_userId(self, mock_db):
         """userId가 없으면 401 에러"""
         customer_id = str(ObjectId())
 
@@ -378,17 +377,16 @@ class TestCleanupDuplicatesEndpoint:
 
         assert response.status_code == 400  # userId required
 
-    @patch('main.mongo_client')
-    def test_endpoint_unauthorized_customer(self, mock_mongo):
+    @patch('main.db')
+    def test_endpoint_unauthorized_customer(self, mock_db):
         """다른 사용자의 고객은 403 에러"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
         other_user_id = str(ObjectId())
 
         # Mock DB 설정
-        mock_db = mock_mongo.__getitem__.return_value
         mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
+        mock_db.customers = mock_customers
 
         # 다른 userId 소유 - find_one이 None 반환 (권한 없음)
         mock_customers.find_one.return_value = None
@@ -405,16 +403,15 @@ class TestCleanupDuplicatesEndpoint:
         assert response.status_code == 404  # 고객을 찾을 수 없거나 권한 없음
         assert "고객을 찾을 수 없거나 접근 권한이 없습니다" in response.json()["detail"]
 
-    @patch('main.mongo_client')
-    def test_endpoint_customer_not_found(self, mock_mongo):
+    @patch('main.db')
+    def test_endpoint_customer_not_found(self, mock_db):
         """존재하지 않는 고객은 404 에러"""
         customer_id = str(ObjectId())
         user_id = str(ObjectId())
 
         # Mock DB 설정
-        mock_db = mock_mongo.__getitem__.return_value
         mock_customers = MagicMock()
-        mock_db.__getitem__.return_value = mock_customers
+        mock_db.customers = mock_customers
 
         mock_customers.find_one.return_value = None  # 고객 없음
 
@@ -430,8 +427,8 @@ class TestCleanupDuplicatesEndpoint:
         assert response.status_code == 404
         assert "고객을 찾을 수 없거나 접근 권한이 없습니다" in response.json()["detail"]
 
-    @patch('main.mongo_client')
-    def test_endpoint_invalid_customer_id_format(self, mock_mongo):
+    @patch('main.db')
+    def test_endpoint_invalid_customer_id_format(self, mock_db):
         """잘못된 형식의 customer_id는 400 에러"""
         response = client.post(
             "/customers/invalid-id/annual-reports/cleanup-duplicates",
