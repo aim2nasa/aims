@@ -503,7 +503,8 @@ html[data-theme="dark"] .row-index {
   letter-spacing: 0.2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: help;
   transition: all 0.2s ease-out;
 }
 
@@ -538,7 +539,8 @@ html[data-theme="dark"] .search-result-row:hover .document-ar-badge {
   letter-spacing: 0.3px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: help;
   transition: all 0.2s ease-out;
 }
 
@@ -548,11 +550,11 @@ html[data-theme="dark"] .document-ocr-badge {
 
 /* OCR 신뢰도 색상: Excellent (>= 0.95) */
 .document-ocr-badge.ocr-excellent {
-  background-color: #22c55e; /* Green 500 */
+  background-color: var(--color-badge-ocr-excellent);
 }
 
 html[data-theme="dark"] .document-ocr-badge.ocr-excellent {
-  background-color: #16a34a; /* Green 600 */
+  background-color: var(--color-badge-ocr-excellent-dark);
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-excellent {
@@ -566,11 +568,11 @@ html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-excelle
 
 /* OCR 신뢰도 색상: High (>= 0.85) */
 .document-ocr-badge.ocr-high {
-  background-color: #22c55e; /* Green 500 */
+  background-color: var(--color-badge-ocr-excellent);
 }
 
 html[data-theme="dark"] .document-ocr-badge.ocr-high {
-  background-color: #16a34a; /* Green 600 */
+  background-color: var(--color-badge-ocr-excellent-dark);
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-high {
@@ -584,11 +586,11 @@ html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-high {
 
 /* OCR 신뢰도 색상: Medium (>= 0.70) */
 .document-ocr-badge.ocr-medium {
-  background-color: #eab308; /* Yellow 500 */
+  background-color: var(--color-badge-ocr-medium);
 }
 
 html[data-theme="dark"] .document-ocr-badge.ocr-medium {
-  background-color: #ca8a04; /* Yellow 600 */
+  background-color: var(--color-badge-ocr-medium-dark);
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-medium {
@@ -602,11 +604,11 @@ html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-medium 
 
 /* OCR 신뢰도 색상: Low (>= 0.50) */
 .document-ocr-badge.ocr-low {
-  background-color: #f97316; /* Orange 500 */
+  background-color: var(--color-badge-ocr-low);
 }
 
 html[data-theme="dark"] .document-ocr-badge.ocr-low {
-  background-color: #ea580c; /* Orange 600 */
+  background-color: var(--color-badge-ocr-low-dark);
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-low {
@@ -620,11 +622,11 @@ html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-low {
 
 /* OCR 신뢰도 색상: Very Low (< 0.50) */
 .document-ocr-badge.ocr-very-low {
-  background-color: #ef4444; /* Red 500 */
+  background-color: var(--color-badge-ocr-very-low);
 }
 
 html[data-theme="dark"] .document-ocr-badge.ocr-very-low {
-  background-color: #dc2626; /* Red 600 */
+  background-color: var(--color-badge-ocr-very-low-dark);
 }
 
 .search-result-row:hover .document-ocr-badge.ocr-very-low {
@@ -654,7 +656,8 @@ html[data-theme="dark"] .search-result-row:hover .document-ocr-badge.ocr-very-lo
   letter-spacing: 0.3px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: help;
   transition: all 0.2s ease-out;
 }
 

@@ -642,7 +642,7 @@ html[data-theme="dark"] .document-item:active {
   min-width: 18px;
   height: 14px;
   padding: 0 3px;
-  background-color: var(--color-primary-500);
+  background-color: var(--color-badge-ar);
   border-radius: 6px;
   border: 1.5px solid var(--color-ios-bg-primary-light);
   color: white;
@@ -650,21 +650,23 @@ html[data-theme="dark"] .document-item:active {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 700;
   letter-spacing: 0.3px;
+  pointer-events: auto;
+  cursor: help;
   transition: all 0.2s ease-out;
 }
 
 html[data-theme="dark"] .document-ar-badge {
-  background-color: var(--color-primary-400);
+  background-color: var(--color-badge-ar-dark);
   border-color: var(--color-ios-bg-primary-dark);
 }
 
 .document-item:hover .document-ar-badge {
   transform: scale(1.1);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
 }
 
 html[data-theme="dark"] .document-item:hover .document-ar-badge {
-  box-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
+  box-shadow: 0 0 8px var(--color-badge-ar-glow);
 }
 
 /* === 🍎 FILE TYPE ICON COLORS (CSS 변수 사용) === */

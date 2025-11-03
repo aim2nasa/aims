@@ -392,6 +392,10 @@ html[data-theme="dark"] {
    - 사용자 경험의 통일성 확보
    - 애플 디자인 가이드라인 준수
 
+8. **예외:**
+   - 문서 타입 아이콘 (DocumentSearchView, DocumentLibraryView): 24px 허용
+   - 이유: 문서 구분을 위한 시각적 강조 필요
+
 **기억하라**:
 - LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
 - 아이콘 배경은 투명! 호버 시 튀어나오는 효과(opacity + scale)만 사용!

@@ -622,12 +622,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             {getSimilarityLevel(score).icon}
                           </div>
                         )}
-                        {/* OCR 신뢰도 (키워드 검색 시) */}
-                        {confidence && !score && (
-                          <div className="row-detail">
-                            인식률: {confidence}
-                          </div>
-                        )}
                         <span className="row-chevron" aria-hidden="true">›</span>
                       </div>
                     </div>
