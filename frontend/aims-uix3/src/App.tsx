@@ -56,6 +56,7 @@ interface SmartSearchDocumentResponse {
   upload?: SmartSearchUploadRaw
   payload?: SmartSearchPayloadRaw
   meta?: SmartSearchMetaRaw
+  ocr?: any
 }
 
 interface SelectedDocumentUpload {
@@ -75,6 +76,7 @@ interface SelectedDocumentPayload {
 interface SelectedDocumentMeta {
   mime?: string
   sizeBytes?: number
+  originalName?: string
 }
 
 interface SelectedDocument {
@@ -83,6 +85,7 @@ interface SelectedDocument {
   upload: SelectedDocumentUpload
   payload?: SelectedDocumentPayload
   meta: SelectedDocumentMeta
+  ocr?: any
 }
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -135,8 +138,9 @@ const toSmartSearchDocumentResponse = (value: unknown): SmartSearchDocumentRespo
   const upload: SmartSearchUploadRaw = isPlainObject(record['upload']) ? (record['upload'] as SmartSearchUploadRaw) : ({} as SmartSearchUploadRaw)
   const payload: SmartSearchPayloadRaw = isPlainObject(record['payload']) ? (record['payload'] as SmartSearchPayloadRaw) : ({} as SmartSearchPayloadRaw)
   const meta: SmartSearchMetaRaw = isPlainObject(record['meta']) ? (record['meta'] as SmartSearchMetaRaw) : ({} as SmartSearchMetaRaw)
+  const ocr = isPlainObject(record['ocr']) ? record['ocr'] as any : undefined
 
-  return { upload, payload, meta }
+  return { upload, payload, meta, ocr }
 }
 
 const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentResponse): SelectedDocument => {
@@ -203,6 +207,11 @@ const buildSelectedDocument = (documentId: string, raw: SmartSearchDocumentRespo
 
   if (hasPayload) {
     selected.payload = payload
+  }
+
+  // OCR 데이터 포함
+  if (raw.ocr) {
+    selected.ocr = raw.ocr
   }
 
   return selected
@@ -646,6 +655,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
 
       // result.data.raw를 SmartSearchDocumentResponse로 변환
+      if (import.meta.env.DEV) {
+        console.log('[App] result.data.raw:', result.data.raw)
+        console.log('[App] result.data.raw.ocr:', result.data.raw?.ocr)
+      }
+
       const rawDocument = toSmartSearchDocumentResponse(result.data.raw)
       if (!rawDocument) {
         if (import.meta.env.DEV) {
@@ -654,10 +668,16 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         return
       }
 
+      if (import.meta.env.DEV) {
+        console.log('[App] rawDocument after conversion:', rawDocument)
+        console.log('[App] rawDocument.ocr:', rawDocument.ocr)
+      }
+
       const selected = buildSelectedDocument(documentId, rawDocument)
 
       if (import.meta.env.DEV) {
         console.log('[App] 구성된 document 객체:', selected)
+        console.log('[App] selected.ocr:', selected.ocr)
         console.log('[App] fileUrl:', selected.fileUrl)
       }
 
@@ -1258,9 +1278,41 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <Suspense fallback={<div style={{ padding: 'var(--spacing-6)', color: 'var(--color-text-secondary)' }}>로딩 중...</div>}>
               <BaseViewer
                 visible={true}
-                title={selectedDocument.upload?.originalName ||
-                       selectedDocument.payload?.originalName ||
-                       '파일'}
+                title={(() => {
+                  const fileName = selectedDocument.upload?.originalName ||
+                                   selectedDocument.payload?.originalName ||
+                                   selectedDocument.meta?.originalName ||
+                                   '파일'
+
+                  // OCR 신뢰도 표시
+                  const ocrConfidence = selectedDocument.ocr?.confidence
+                  if (ocrConfidence !== undefined && ocrConfidence !== null) {
+                    const confidenceNum = typeof ocrConfidence === 'string' ? parseFloat(ocrConfidence) : ocrConfidence
+                    if (!isNaN(confidenceNum)) {
+                      // 신뢰도 레벨 계산
+                      let label = '매우 낮음'
+                      if (confidenceNum >= 0.95) label = '매우 높음'
+                      else if (confidenceNum >= 0.85) label = '높음'
+                      else if (confidenceNum >= 0.70) label = '보통'
+                      else if (confidenceNum >= 0.50) label = '낮음'
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div>{fileName}</div>
+                          <div style={{
+                            fontSize: '11px',
+                            fontWeight: '400',
+                            color: 'var(--color-text-tertiary)',
+                            opacity: 0.7
+                          }}>
+                            OCR {(confidenceNum * 100).toFixed(1)}% · {label}
+                          </div>
+                        </div>
+                      )
+                    }
+                  }
+                  return fileName
+                })()}
                 onClose={() => {
                   // 🍎 미닫이문 UX: 애니메이션 먼저 시작
                   setRightPaneVisible(false)
