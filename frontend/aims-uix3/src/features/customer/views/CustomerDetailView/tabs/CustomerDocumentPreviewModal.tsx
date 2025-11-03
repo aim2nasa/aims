@@ -6,7 +6,7 @@
  * react-pdf 기반 PDF 뷰어 + 이미지 프리뷰 제공
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/shared/ui/Button'
 import SFSymbol, {
@@ -53,12 +53,34 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
   onDownload
 }) => {
   // 드래그 & 리사이즈 Hook
+  // 화면 크기의 90%를 초기 크기로 설정
   const modal = useModalDragResize({
-    initialWidth: 1400,
-    initialHeight: 800,
+    initialWidth: Math.min(1200, window.innerWidth * 0.9),
+    initialHeight: Math.min(800, window.innerHeight * 0.9),
     minWidth: 600,
     minHeight: 400
   })
+
+  // Fit to page를 위한 scale 계산
+  const [fitScale, setFitScale] = useState<number>(1.0)
+
+  // 모달 크기 변경 시 fit scale 재계산
+  useEffect(() => {
+    // 모달 content 영역 크기 (헤더 60px, 컨트롤 50px, 패딩 제외)
+    const contentWidth = modal.size.width - 32 // 좌우 패딩
+    const contentHeight = modal.size.height - 60 - 50 - 32 // 헤더, 컨트롤, 상하 패딩
+
+    // 대략적인 표준 문서 크기 (A4: 595×842)
+    // 실제로는 문서마다 다르지만 일반적인 비율로 계산
+    const avgDocWidth = 595
+    const avgDocHeight = 842
+
+    const scaleX = contentWidth / avgDocWidth
+    const scaleY = contentHeight / avgDocHeight
+    const calculatedScale = Math.min(scaleX, scaleY, 1.0) // 최대 1.0
+
+    setFitScale(calculatedScale)
+  }, [modal.size.width, modal.size.height])
 
   useEffect(() => {
     if (!visible) return
@@ -139,6 +161,7 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
       return (
         <PDFViewer
           file={fileUrl}
+          initialScale={fitScale}
           {...(onDownload ? { onDownload } : {})}
         />
       )
@@ -149,6 +172,7 @@ export const CustomerDocumentPreviewModal: React.FC<CustomerDocumentPreviewModal
         <ImageViewer
           file={fileUrl}
           alt={previewDocument.originalName}
+          initialScale={fitScale}
           {...(onDownload ? { onDownload } : {})}
         />
       )

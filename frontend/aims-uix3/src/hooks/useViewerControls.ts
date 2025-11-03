@@ -31,9 +31,10 @@ export interface UseViewerControlsReturn extends ViewerControlsState, ViewerCont
  *
  * 확대/축소, 드래그, 위치 관리 등 모든 뷰어의 공통 기능 제공
  *
+ * @param initialScale - 초기 scale 값 (기본값: 1.0)
  * @example
  * ```tsx
- * const controls = useViewerControls()
+ * const controls = useViewerControls(0.8)
  *
  * return (
  *   <div onMouseDown={controls.handleMouseDown}>
@@ -42,8 +43,8 @@ export interface UseViewerControlsReturn extends ViewerControlsState, ViewerCont
  * )
  * ```
  */
-export const useViewerControls = (): UseViewerControlsReturn => {
-  const [scale, setScale] = useState(1.0)
+export const useViewerControls = (initialScale: number = 1.0): UseViewerControlsReturn => {
+  const [scale, setScale] = useState(initialScale)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
@@ -60,9 +61,9 @@ export const useViewerControls = (): UseViewerControlsReturn => {
 
   // 뷰 리셋 (원래 크기 및 위치로)
   const resetView = useCallback(() => {
-    setScale(1.0)
+    setScale(initialScale)
     setPosition({ x: 0, y: 0 })
-  }, [])
+  }, [initialScale])
 
   // 마우스 드래그 시작
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -94,7 +95,7 @@ export const useViewerControls = (): UseViewerControlsReturn => {
   }, [scale])
 
   // 뷰가 기본 상태에서 벗어났는지 확인
-  const isModified = scale !== 1.0 || position.x !== 0 || position.y !== 0
+  const isModified = scale !== initialScale || position.x !== 0 || position.y !== 0
 
   return {
     // State

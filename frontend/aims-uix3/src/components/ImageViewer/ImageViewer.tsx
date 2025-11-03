@@ -21,6 +21,8 @@ interface ImageViewerProps {
   alt?: string
   /** 다운로드 핸들러 */
   onDownload?: () => void
+  /** 초기 scale (fit to page) */
+  initialScale?: number
 }
 
 /**
@@ -37,9 +39,9 @@ interface ImageViewerProps {
  * />
  * ```
  */
-export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지', onDownload }) => {
+export const ImageViewer: React.FC<ImageViewerProps> = ({ file, alt = '이미지', onDownload, initialScale }) => {
   // 🎯 공통 Hook 사용 (확대/축소/드래그)
-  const controls = useViewerControls()
+  const controls = useViewerControls(initialScale)
 
   // Image 전용 state
   const [isLoading, setIsLoading] = useState(true)

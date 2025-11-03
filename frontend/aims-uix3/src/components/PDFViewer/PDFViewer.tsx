@@ -25,6 +25,8 @@ interface PDFViewerProps {
   file: string
   /** 다운로드 핸들러 */
   onDownload?: () => void
+  /** 초기 scale (fit to page) */
+  initialScale?: number
 }
 
 /**
@@ -39,9 +41,9 @@ interface PDFViewerProps {
  * />
  * ```
  */
-export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload }) => {
+export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialScale }) => {
   // 🎯 공통 Hook 사용 (확대/축소/드래그)
-  const controls = useViewerControls()
+  const controls = useViewerControls(initialScale)
 
   // PDF 전용 state
   const [numPages, setNumPages] = useState<number | null>(null)
