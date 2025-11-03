@@ -163,6 +163,23 @@ vi.mock('@/entities/document', () => ({
     getFileIcon: () => 'doc.fill',
     formatFileSize: (size: number) => `${(size / 1024).toFixed(1)} KB`,
     getFileExtension: (mimeType: string) => mimeType?.split('/')[1]?.toUpperCase() || 'PDF',
+    getDocumentType: (document: any) => {
+      if (!document) return null
+      if (document.ocr && typeof document.ocr === 'object' && document.ocr.status === 'done') return 'ocr'
+      if (document.docembed && typeof document.docembed === 'object') {
+        if (document.docembed.text_source === 'ocr') return 'ocr'
+        if (document.docembed.text_source === 'meta') return 'txt'
+      }
+      if (document.meta && typeof document.meta === 'object' && document.meta.full_text && document.meta.full_text.length > 0) return 'txt'
+      return null
+    },
+    getDocumentTypeLabel: (document: any) => {
+      if (!document) return ''
+      const type = document.ocr?.status === 'done' ? 'ocr' : document.docembed?.text_source === 'ocr' ? 'ocr' : document.docembed?.text_source === 'meta' ? 'txt' : document.meta?.full_text ? 'txt' : null
+      if (type === 'ocr') return 'OCR'
+      if (type === 'txt') return 'TXT'
+      return ''
+    },
   },
 }))
 
