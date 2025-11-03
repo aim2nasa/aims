@@ -6,6 +6,7 @@ const cors = require('cors');
 const axios = require('axios');
 const multer = require('multer');
 const FormData = require('form-data');
+const { QdrantClient } = require('@qdrant/js-client-rest');
 const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 
@@ -86,11 +87,19 @@ const CUSTOMERS_COLLECTION = 'customers';
 const AGENTS_COLLECTION = 'agents';
 const CASES_COLLECTION = 'cases';
 
+// Qdrant 설정
+const QDRANT_HOST = 'localhost';
+const QDRANT_PORT = 6333;
+const QDRANT_COLLECTION = 'docembed';
+
 // 고객 관계 관리 라우트 import
 const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
 
 let db;
 let fallbackHandlersRegistered = false;
+
+// Qdrant 클라이언트 인스턴스
+const qdrantClient = new QdrantClient({ host: QDRANT_HOST, port: QDRANT_PORT });
 
 const registerFallbackHandlers = () => {
   if (fallbackHandlersRegistered) {
@@ -1018,8 +1027,29 @@ app.delete('/api/documents/:id', async (req, res) => {
     await db.collection(COLLECTION_NAME)
       .deleteOne({ _id: new ObjectId(id) });
 
-    // Qdrant에서 임베딩 삭제 (필요한 경우)
-    // Qdrant 클라이언트를 사용하여 해당 문서의 임베딩 삭제
+    // Qdrant에서 임베딩 삭제
+    try {
+      console.log(`🗑️  [Qdrant] 문서 임베딩 삭제 시도: doc_id=${id}`);
+
+      // Qdrant에서 doc_id 필터를 사용하여 포인트 삭제
+      await qdrantClient.delete(QDRANT_COLLECTION, {
+        filter: {
+          must: [
+            {
+              key: 'doc_id',
+              match: {
+                value: id
+              }
+            }
+          ]
+        }
+      });
+
+      console.log(`✅ [Qdrant] 문서 임베딩 삭제 완료: doc_id=${id}`);
+    } catch (qdrantError) {
+      console.warn(`⚠️  [Qdrant] 임베딩 삭제 실패:`, qdrantError.message);
+      // Qdrant 삭제 실패해도 문서는 이미 삭제됨
+    }
 
     res.json({
       success: true,
