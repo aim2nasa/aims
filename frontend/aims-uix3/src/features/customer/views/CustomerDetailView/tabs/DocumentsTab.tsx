@@ -353,7 +353,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   </div>
 
                   {/* 파일명 */}
-                  <div className="status-filename">
+                  <div
+                    className="status-filename status-filename--clickable"
+                    onClick={() => handlePreview(document)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handlePreview(document)
+                      }
+                    }}
+                  >
                     {document.originalName ?? '이름 없는 문서'}
                   </div>
 

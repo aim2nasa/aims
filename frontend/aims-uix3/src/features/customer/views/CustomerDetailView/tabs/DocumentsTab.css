@@ -320,6 +320,19 @@
   font-weight: 500;
 }
 
+.status-filename--clickable {
+  cursor: pointer;
+  transition: color 0.15s ease-out;
+}
+
+.status-filename--clickable:hover {
+  color: var(--color-primary-600);
+}
+
+[data-theme="dark"] .status-filename--clickable:hover {
+  color: var(--color-primary-400);
+}
+
 /* === 크기 === */
 .document-size {
   text-align: center;
