@@ -468,6 +468,7 @@ html[data-theme="dark"] .row-index {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+  overflow: visible; /* 뱃지가 영역 밖으로 나갈 수 있도록 허용 */
 }
 
 .row-title-wrapper .document-icon {
@@ -525,7 +526,7 @@ html[data-theme="dark"] .search-result-row:hover .document-ar-badge {
 /* === 🍎 OCR BADGE: OCR 신뢰도 표시 (하단 중앙) === */
 .document-ocr-badge {
   position: absolute;
-  bottom: -2px;
+  bottom: -3px; /* 조금 더 아래로 (툴팁 인식 개선) */
   left: 50%;
   transform: translateX(-50%);
   font-size: 7px;
@@ -538,8 +539,8 @@ html[data-theme="dark"] .search-result-row:hover .document-ar-badge {
   line-height: 1;
   letter-spacing: 0.3px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  z-index: 2;
-  pointer-events: auto;
+  z-index: 10; /* z-index 증가 */
+  pointer-events: auto !important; /* 명시적으로 이벤트 활성화 */
   cursor: help;
   transition: all 0.2s ease-out;
 }
