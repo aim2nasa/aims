@@ -614,13 +614,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
                         {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (
-                          <div
-                            className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
-                            title={`유사도: ${score.toFixed(4)} (${getSimilarityLevel(score).label})`}
-                            aria-label={`유사도 ${getSimilarityLevel(score).label}`}
-                          >
-                            {getSimilarityLevel(score).icon}
-                          </div>
+                          <Tooltip content={`유사도: ${score.toFixed(4)} (${getSimilarityLevel(score).label})`}>
+                            <div
+                              className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
+                              aria-label={`유사도 ${getSimilarityLevel(score).label}`}
+                            >
+                              {getSimilarityLevel(score).icon}
+                            </div>
+                          </Tooltip>
                         )}
                         <span className="row-chevron" aria-hidden="true">›</span>
                       </div>
