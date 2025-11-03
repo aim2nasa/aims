@@ -43,7 +43,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [totalCount, setTotalCount] = useState<number>(0)
 
   // 🍎 Sort State
-  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null>(null)
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   /**
@@ -71,6 +71,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           sortParam = sortDirection === 'asc' ? 'fileSize_asc' : 'fileSize_desc'
         } else if (sortField === 'mimeType') {
           sortParam = sortDirection === 'asc' ? 'mimeType_asc' : 'mimeType_desc'
+        } else if (sortField === 'customer') {
+          sortParam = sortDirection === 'asc' ? 'customer_asc' : 'customer_desc'
         }
 
         // 🔍 검색어 준비 (trim 처리)
@@ -252,7 +254,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [])
 
   // 🍎 Sort Handler
-  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => {
+  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => {
     if (sortField === field) {
       // Same field: toggle direction
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'

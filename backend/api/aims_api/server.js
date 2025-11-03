@@ -511,8 +511,41 @@ app.get('/api/documents/status', async (req, res) => {
     let documents;
     const totalCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
 
-    // fileSize, mimeType 정렬은 aggregation 사용
-    if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
+    // fileSize, mimeType, customer 정렬은 aggregation 사용
+    if (sort === 'customer_asc' || sort === 'customer_desc') {
+      // customer 정렬: customers 컬렉션과 join하여 고객 이름으로 정렬
+      const sortOrder = sort === 'customer_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'customer_relation.customer_id',
+            foreignField: '_id',
+            as: 'customer_info'
+          }
+        },
+        {
+          $addFields: {
+            // 고객 이름 추출 (없으면 빈 문자열)
+            customer_name: {
+              $ifNull: [
+                { $arrayElemAt: ['$customer_info.personal_info.name', 0] },
+                ''
+              ]
+            }
+          }
+        },
+        // 고객 없는 문서를 맨 뒤로 보내기 위해 두 단계 정렬
+        { $sort: {
+            customer_name: sortOrder,
+            'upload.uploaded_at': -1
+          }
+        },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
+      ]).toArray();
+    } else if (sort === 'fileSize_asc' || sort === 'fileSize_desc') {
       const sortOrder = sort === 'fileSize_asc' ? 1 : -1;
       documents = await db.collection(COLLECTION_NAME).aggregate([
         { $match: filter },

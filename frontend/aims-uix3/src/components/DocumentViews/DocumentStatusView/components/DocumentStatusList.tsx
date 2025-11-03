@@ -30,9 +30,9 @@ export interface DocumentStatusListProps {
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
   // 🍎 Sort props
-  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | null
+  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null
   sortDirection?: 'asc' | 'desc'
-  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType') => void
+  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => void
   // 🍎 Delete mode props
   isDeleteMode?: boolean
   selectedDocumentIds?: Set<string>
@@ -249,12 +249,21 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
           )}
         </div>
-        <div className="header-customer">
+        <div
+          className={`header-customer ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('customer')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '연결된 고객으로 정렬' : undefined}
+        >
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
             <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none"/>
             <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
           </svg>
           <span>연결된 고객</span>
+          {sortField === 'customer' && (
+            <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+          )}
         </div>
         <div className="header-actions">
           <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
