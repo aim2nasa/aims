@@ -350,7 +350,15 @@ export const DocumentUtils = {
       }
     }
 
-    // 2. docembed.text_source 확인
+    // 2. stages.ocr가 있고 완료된 경우 → OCR 기반 (문서 라이브러리 API)
+    if (document.stages && typeof document.stages === 'object') {
+      const ocrStage = document.stages.ocr;
+      if (ocrStage && typeof ocrStage === 'object' && ocrStage.status === 'completed') {
+        return 'ocr';
+      }
+    }
+
+    // 3. docembed.text_source 확인
     if (document.docembed && typeof document.docembed === 'object') {
       if (document.docembed.text_source === 'ocr') {
         return 'ocr';
@@ -360,14 +368,26 @@ export const DocumentUtils = {
       }
     }
 
-    // 3. meta.full_text가 있는 경우 → TXT 기반
+    // 4. meta.full_text가 있는 경우 → TXT 기반
     if (document.meta && typeof document.meta === 'object') {
       if (document.meta.full_text && document.meta.full_text.length > 0) {
         return 'txt';
       }
     }
 
-    // 4. 판별 불가
+    // 5. stages.meta가 있고 full_text가 있는 경우 → TXT 기반 (문서 라이브러리 API)
+    if (document.stages && typeof document.stages === 'object') {
+      const metaStage = document.stages.meta;
+      if (metaStage && typeof metaStage === 'object' && metaStage.status === 'completed') {
+        // meta stage가 완료되었지만 OCR이 없으면 TXT 기반
+        const ocrStage = document.stages.ocr;
+        if (!ocrStage || (typeof ocrStage === 'object' && ocrStage.status !== 'completed')) {
+          return 'txt';
+        }
+      }
+    }
+
+    // 6. 판별 불가
     return null;
   },
 
