@@ -41,10 +41,10 @@
   background-color: var(--color-neutral-0);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 800px;
+  width: 63%; /* 90% - 30% = 63% */
+  max-width: 560px; /* 800px - 30% = 560px */
   max-height: 95vh;
-  min-height: 700px;
+  min-height: 770px; /* 700px + 10% = 770px */
   display: flex;
   flex-direction: column;
   animation: slideUp var(--duration-normal) var(--easing-ease-out);
@@ -495,9 +495,9 @@ html[data-theme="dark"] .document-link-modal__customer-item--selected .document-
 
 .document-link-modal__textarea {
   width: 100%;
-  min-height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
-  height: 36px;
-  max-height: 36px;
+  min-height: 252px; /* 36px * 7 = 252px */
+  height: 252px;
+  max-height: 252px;
   resize: none; /* 높이 고정을 위해 resize 비활성화 */
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-lg);
@@ -505,7 +505,7 @@ html[data-theme="dark"] .document-link-modal__customer-item--selected .document-
   background: var(--color-neutral-0);
   color: var(--color-text-primary);
   /* font-size: var(--font-size-footnote); () */
-  overflow-y: hidden; /* 스크롤 숨김 */
+  overflow-y: auto; /* 스크롤 활성화 */
 }
 
 html[data-theme="dark"] .document-link-modal__textarea {
