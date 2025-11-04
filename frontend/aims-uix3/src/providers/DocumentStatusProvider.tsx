@@ -38,7 +38,19 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   // 🍎 Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10)
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => {
+    // localStorage에서 저장된 값 불러오기
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('aims-items-per-page')
+      if (saved) {
+        const parsed = parseInt(saved, 10)
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed
+        }
+      }
+    }
+    return 10 // 기본값
+  })
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalCount, setTotalCount] = useState<number>(0)
 
@@ -251,6 +263,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const handleLimitChange = useCallback((limit: number) => {
     setItemsPerPage(limit)
     setCurrentPage(1) // Reset to first page
+    // localStorage에 설정 저장
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aims-items-per-page', limit.toString())
+    }
   }, [])
 
   // 🍎 Sort Handler
