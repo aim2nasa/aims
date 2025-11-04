@@ -12,6 +12,7 @@ import React, { useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import { HapticService, HapticType } from '../../services/hapticService'
+import Button from './Button'
 import './ConfirmationDialog.css'
 
 export interface ConfirmationDialogProps {
@@ -139,25 +140,23 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
         {/* 액션 버튼 영역 */}
         <div className="confirmation-dialog__actions">
-          <button
-            type="button"
-            className="confirmation-dialog__button confirmation-dialog__button--cancel"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={handleCancel}
             aria-label={`${cancelText} - 작업을 취소합니다`}
           >
             {cancelText}
-          </button>
-          <button
-            type="button"
-            className={`confirmation-dialog__button confirmation-dialog__button--confirm ${
-              destructive ? 'confirmation-dialog__button--destructive' : ''
-            }`}
+          </Button>
+          <Button
+            variant={destructive ? 'destructive' : 'primary'}
+            size="md"
             onClick={handleConfirm}
             aria-label={`${confirmText} - 작업을 실행합니다`}
             autoFocus
           >
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

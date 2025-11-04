@@ -93,18 +93,19 @@ describe('ConfirmationDialog', () => {
       expect(screen.getByRole('alertdialog', { hidden: true })).toBeInTheDocument()
     })
 
-    it('destructive=true일 때 확인 버튼에 destructive 클래스가 적용되어야 함', () => {
+    it('destructive=true일 때 확인 버튼에 destructive variant가 적용되어야 함', () => {
       render(<ConfirmationDialog {...defaultProps} confirmText="삭제" destructive={true} />)
 
       const confirmButton = screen.getByRole('button', { name: /삭제.*실행/, hidden: true })
-      expect(confirmButton).toHaveClass('confirmation-dialog__button--destructive')
+      expect(confirmButton).toHaveClass('button--destructive')
     })
 
-    it('destructive=false일 때 확인 버튼에 destructive 클래스가 없어야 함', () => {
+    it('destructive=false일 때 확인 버튼에 primary variant가 적용되어야 함', () => {
       render(<ConfirmationDialog {...defaultProps} confirmText="승인" destructive={false} />)
 
       const confirmButton = screen.getByRole('button', { name: /승인.*실행/, hidden: true })
-      expect(confirmButton).not.toHaveClass('confirmation-dialog__button--destructive')
+      expect(confirmButton).toHaveClass('button--primary')
+      expect(confirmButton).not.toHaveClass('button--destructive')
     })
   })
 
@@ -316,10 +317,11 @@ describe('ConfirmationDialog', () => {
       )
 
       const confirmButton = screen.getByRole('button', { name: /영구 삭제.*실행/, hidden: true })
-      expect(confirmButton).toHaveClass('confirmation-dialog__button--destructive')
+      expect(confirmButton).toHaveClass('button--destructive')
 
       const cancelButton = screen.getByRole('button', { name: /돌아가기.*취소/, hidden: true })
       expect(cancelButton).toBeInTheDocument()
+      expect(cancelButton).toHaveClass('button--secondary')
     })
 
     it('onClose 핸들러와 함께 사용', async () => {

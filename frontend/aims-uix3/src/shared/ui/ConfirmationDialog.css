@@ -189,115 +189,9 @@
   }
 }
 
-.confirmation-dialog__button {
+/* 공용 Button 컴포넌트 사용 - 버튼 스타일 모두 제거 */
+.confirmation-dialog__actions .button {
   flex: 1;
-  min-height: var(--touch-target-min);
-  padding: var(--spacing-3) var(--spacing-4);
-  border-radius: var(--radius-lg);
-
-  /* 텍스트 스타일 */
-  /* font-size: var(--font-size-body); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  line-height: var(--line-height-normal);
-  text-align: center;
-
-  /* 기본 상태 */
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-
-  /* 🍎 Performance: GPU 가속 */
-  will-change: transform, background-color, border-color;
-  transform: translateZ(0);
-
-  /* 접근성 */
-  outline: none;
-
-  /* 햅틱 피드백 표시 */
-  touch-action: manipulation;
-}
-
-/* 취소 버튼 - 세컨더리 스타일 */
-.confirmation-dialog__button--cancel {
-  background-color: var(--color-neutral-100);
-  color: var(--color-text-primary);
-  border-color: var(--color-neutral-300);
-}
-
-.confirmation-dialog__button--cancel:hover {
-  background-color: var(--color-neutral-200);
-  border-color: var(--color-neutral-400);
-  transform: translateY(-1px) translateZ(0);
-}
-
-.confirmation-dialog__button--cancel:active {
-  background-color: var(--color-neutral-300);
-  transform: translateY(0) translateZ(0);
-}
-
-/* 확인 버튼 - 프라이머리 스타일 */
-.confirmation-dialog__button--confirm {
-  background-color: var(--color-primary-600);
-  color: var(--color-neutral-0);
-  border-color: var(--color-primary-600);
-  box-shadow: var(--shadow-apple-button);
-}
-
-.confirmation-dialog__button--confirm:hover {
-  background-color: var(--color-primary-700);
-  border-color: var(--color-primary-700);
-  transform: translateY(-1px) translateZ(0);
-  box-shadow: var(--shadow-apple-button-hover);
-}
-
-.confirmation-dialog__button--confirm:active {
-  background-color: var(--color-primary-800);
-  border-color: var(--color-primary-800);
-  transform: translateY(0) translateZ(0);
-  box-shadow: var(--shadow-apple-button);
-}
-
-/* 위험한 액션 버튼 - 경고 스타일 */
-.confirmation-dialog__button--destructive {
-  background-color: var(--color-error);
-  border-color: var(--color-error);
-}
-
-.confirmation-dialog__button--destructive:hover {
-  background-color: var(--color-error-600); /* iOS systemRed 표준 */
-  border-color: var(--color-error-600);
-}
-
-.confirmation-dialog__button--destructive:active {
-  background-color: var(--color-error-700); /* iOS systemRed Dark */
-  border-color: var(--color-error-700);
-}
-
-/* 포커스 상태 */
-.confirmation-dialog__button:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: var(--outline-offset-base);
-}
-
-.confirmation-dialog__button--destructive:focus-visible {
-  outline-color: var(--color-error);
-}
-
-/* === DARK THEME === */
-
-[data-theme="dark"] .confirmation-dialog__button--cancel {
-  background-color: var(--color-neutral-800);
-  color: var(--color-text-primary);
-  border-color: var(--color-neutral-600);
-}
-
-[data-theme="dark"] .confirmation-dialog__button--cancel:hover {
-  background-color: var(--color-neutral-700);
-  border-color: var(--color-neutral-500);
-}
-
-[data-theme="dark"] .confirmation-dialog__button--cancel:active {
-  background-color: var(--color-neutral-600);
 }
 
 /* === RESPONSIVE === */
@@ -314,11 +208,7 @@
     gap: var(--spacing-2);
   }
 
-  .confirmation-dialog__button {
-    order: 0;
-  }
-
-  .confirmation-dialog__button--confirm {
+  .confirmation-dialog__actions .button:last-child {
     order: -1; /* 모바일에서는 확인 버튼이 위에 */
   }
 }
@@ -332,13 +222,5 @@
   .confirmation-dialog__content,
   .confirmation-dialog__actions {
     animation: none;
-  }
-
-  .confirmation-dialog__button {
-    transition: none;
-  }
-
-  .confirmation-dialog__button:hover {
-    transform: none;
   }
 }
