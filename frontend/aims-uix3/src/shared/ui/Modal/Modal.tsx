@@ -21,8 +21,8 @@ export interface ModalProps {
   visible: boolean
   /** 모달 닫기 핸들러 */
   onClose: () => void
-  /** 모달 제목 (선택적) */
-  title?: string
+  /** 모달 제목 (선택적) - 문자열 또는 React 요소 */
+  title?: React.ReactNode
   /** 모달 크기 */
   size?: 'sm' | 'md' | 'lg' | 'xl'
   /** backdrop 클릭 시 닫기 활성화 여부 */
@@ -123,7 +123,7 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={ariaLabel || title || 'Modal'}
+        aria-label={ariaLabel || (typeof title === 'string' ? title : 'Modal')}
         tabIndex={-1}
       >
         {/* Header */}
