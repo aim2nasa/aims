@@ -90,6 +90,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const dragOriginRef = useRef({ x: 0, y: 0 })
   const modalRef = useRef<HTMLDivElement>(null)
+  const wasDraggingRef = useRef(false) // 드래그 직후인지 추적
 
   const documentId = useMemo(
     () => document?._id || (document as Record<string, string | undefined>)?.['id'] || '',
@@ -132,8 +133,15 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
    * 드래그 종료 핸들러
    */
   const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      wasDraggingRef.current = true
+      // 100ms 후 드래그 상태 해제 (클릭 이벤트 발생 방지)
+      setTimeout(() => {
+        wasDraggingRef.current = false
+      }, 100)
+    }
     setIsDragging(false)
-  }, [])
+  }, [isDragging])
 
   /**
    * 드래그 이벤트 리스너 등록
@@ -333,6 +341,11 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
    * 배경 클릭 시 닫기
    */
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    // 드래그 직후라면 클릭 무시
+    if (wasDraggingRef.current) {
+      return
+    }
+
     if (event.target === event.currentTarget) {
       onClose()
     }
