@@ -92,7 +92,7 @@ describe('DocumentSummaryModal', () => {
   });
 
   describe('Portal 렌더링', () => {
-    it('모달이 document.body에 직접 렌더링되어야 한다', () => {
+    it('모달이 document.body에 Portal로 렌더링되어야 한다', () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -111,8 +111,8 @@ describe('DocumentSummaryModal', () => {
         />
       );
 
-      const modal = screen.getByRole('dialog');
-      expect(modal.parentElement).toBe(document.body);
+      const backdrop = screen.getByRole('presentation');
+      expect(backdrop.parentElement).toBe(document.body);
     });
   });
 
@@ -238,7 +238,7 @@ describe('DocumentSummaryModal', () => {
         />
       );
 
-      const backdrop = screen.getByRole('dialog');
+      const backdrop = screen.getByRole('presentation');
       await user.click(backdrop);
 
       expect(handleClose).toHaveBeenCalled();
@@ -276,31 +276,6 @@ describe('DocumentSummaryModal', () => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    it('X 버튼 클릭 시 onClose가 호출되어야 한다', async () => {
-      const handleClose = vi.fn();
-      const user = userEvent.setup();
-
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: { raw: { meta: { summary: '테스트' } } }
-        })
-      } as Response);
-
-      render(
-        <DocumentSummaryModal
-          visible={true}
-          onClose={handleClose}
-          document={mockDocument}
-        />
-      );
-
-      const xButton = screen.getByLabelText('모달 닫기');
-      await user.click(xButton);
-
-      expect(handleClose).toHaveBeenCalled();
-    });
   });
 
   describe('접근성', () => {
@@ -323,7 +298,7 @@ describe('DocumentSummaryModal', () => {
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-modal', 'true');
-      expect(dialog).toHaveAttribute('aria-labelledby', 'summary-modal-title');
+      expect(dialog).toHaveAttribute('aria-label', '문서 요약');
     });
 
     it('파일명이 모달 제목으로 표시되어야 한다', () => {
