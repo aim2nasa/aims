@@ -112,27 +112,10 @@ export function useHapticFeedback() {
                      config.intensity * hapticIntensity;
 
     try {
-      // Vibration API는 사용자 제스처 후에만 작동 (브라우저 보안 정책)
-      if ('vibrate' in navigator) {
-        try {
-          // iOS Safari - Vibration API
-          if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-            const vibrationPattern = generateiOSVibrationPattern(type, intensity);
-            navigator.vibrate(vibrationPattern);
-          }
-          // Android Chrome - Vibration API
-          else {
-            navigator.vibrate(Math.round(config.duration * intensity));
-          }
-        } catch (vibrateError) {
-          // 사용자 제스처 없이 호출 시 발생하는 에러 무시
-          // 시각적 햅틱으로 대체
-          triggerVisualHaptic(type, intensity);
-        }
-      } else {
-        // 웹 기반 햅틱 (시각/오디오 피드백)
-        triggerVisualHaptic(type, intensity);
-      }
+      // 웹 브라우저에서는 Vibration API 사용 시 사용자 제스처 필요
+      // 브라우저 Intervention 경고를 피하기 위해 시각적 햅틱만 사용
+      // TODO: 실제 모바일 앱으로 패키징할 때 Vibration API 활성화
+      triggerVisualHaptic(type, intensity);
 
       console.log(`[Haptic] ${type} 피드백 실행 (강도: ${intensity.toFixed(2)})`);
 

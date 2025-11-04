@@ -193,7 +193,7 @@ describe('useHapticFeedback', () => {
       consoleWarnSpy.mockRestore()
     })
 
-    it('Android에서 vibrate API를 사용해야 함', () => {
+    it('웹 브라우저에서는 시각적 햅틱을 사용해야 함 (Android)', () => {
       // Android userAgent
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (Linux; Android 10)',
@@ -207,11 +207,13 @@ describe('useHapticFeedback', () => {
         result.current.triggerHaptic(HAPTIC_TYPES.MEDIUM)
       })
 
-      // MEDIUM: duration 100ms, intensity 0.7, total: 70ms
-      expect(vibrateSpy).toHaveBeenCalledWith(70)
+      // Vibration API 대신 시각적 햅틱 사용
+      expect(vibrateSpy).not.toHaveBeenCalled()
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.7')
+      expect(document.body.classList.contains('haptic-medium')).toBe(true)
     })
 
-    it('iOS에서 vibration pattern을 사용해야 함', () => {
+    it('웹 브라우저에서는 시각적 햅틱을 사용해야 함 (iOS)', () => {
       // iOS userAgent
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0)',
@@ -225,11 +227,13 @@ describe('useHapticFeedback', () => {
         result.current.triggerHaptic(HAPTIC_TYPES.LIGHT)
       })
 
-      // LIGHT 패턴: [30], intensity 0.5 * 1.0 = 0.5, result: [15]
-      expect(vibrateSpy).toHaveBeenCalledWith([15])
+      // Vibration API 대신 시각적 햅틱 사용
+      expect(vibrateSpy).not.toHaveBeenCalled()
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.5')
+      expect(document.body.classList.contains('haptic-light')).toBe(true)
     })
 
-    it('iOS SUCCESS 패턴은 복잡한 패턴을 사용해야 함', () => {
+    it('웹 브라우저에서는 시각적 햅틱을 사용해야 함 (SUCCESS 패턴)', () => {
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (iPad)',
         writable: true,
@@ -242,9 +246,10 @@ describe('useHapticFeedback', () => {
         result.current.triggerHaptic(HAPTIC_TYPES.SUCCESS)
       })
 
-      // SUCCESS: [40, 20, 60], intensity 0.8 * 1.0 = 0.8
-      // result: [32, 16, 48]
-      expect(vibrateSpy).toHaveBeenCalledWith([32, 16, 48])
+      // Vibration API 대신 시각적 햅틱 사용
+      expect(vibrateSpy).not.toHaveBeenCalled()
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.8')
+      expect(document.body.classList.contains('haptic-success')).toBe(true)
     })
 
     it('커스텀 강도를 지원해야 함', () => {
@@ -257,11 +262,13 @@ describe('useHapticFeedback', () => {
       const { result } = renderHook(() => useHapticFeedback())
 
       act(() => {
-        // MEDIUM: duration 100ms, customIntensity 0.3
+        // MEDIUM: customIntensity 0.3
         result.current.triggerHaptic(HAPTIC_TYPES.MEDIUM, 0.3)
       })
 
-      expect(vibrateSpy).toHaveBeenCalledWith(30) // 100 * 0.3 = 30
+      // 시각적 햅틱에서 커스텀 강도 적용 확인
+      expect(vibrateSpy).not.toHaveBeenCalled()
+      expect(document.documentElement.style.getPropertyValue('--haptic-intensity')).toBe('0.3')
     })
 
     it('vibrate API가 없으면 시각적 피드백을 사용해야 함', () => {
