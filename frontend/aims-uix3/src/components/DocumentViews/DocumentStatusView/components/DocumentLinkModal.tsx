@@ -86,9 +86,9 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   }, [onSearchCustomers])
 
   // 🍎 드래그 상태 관리
-  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const dragOriginRef = useRef({ x: 0, y: 0 })
+  const dragStartRef = useRef({ x: 0, y: 0 }) // 드래그 시작 시 마우스 위치
   const modalRef = useRef<HTMLDivElement>(null)
   const wasDraggingRef = useRef(false) // 드래그 직후인지 추적
 
@@ -121,12 +121,12 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
    * 드래그 중 핸들러
    */
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return
+    if (!isDragging || !modalRef.current) return
 
-    const newX = e.clientX - dragOriginRef.current.x
-    const newY = e.clientY - dragOriginRef.current.y
+    const deltaX = e.clientX - dragStartRef.current.x
+    const deltaY = e.clientY - dragStartRef.current.y
 
-    setPosition({ x: newX, y: newY })
+    setPosition({ x: deltaX, y: deltaY })
   }, [isDragging])
 
   /**
@@ -370,7 +370,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
         aria-modal="true"
         aria-labelledby="document-link-modal-title"
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          ...(position ? { transform: `translate(${position.x}px, ${position.y}px)` } : {}),
           cursor: isDragging ? 'grabbing' : 'default'
         }}
       >
@@ -382,10 +382,9 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             if (!modalRef.current) return
 
             setIsDragging(true)
-            const rect = modalRef.current.getBoundingClientRect()
-            dragOriginRef.current = {
-              x: e.clientX - rect.left + position.x,
-              y: e.clientY - rect.top + position.y
+            dragStartRef.current = {
+              x: e.clientX,
+              y: e.clientY
             }
           }}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
