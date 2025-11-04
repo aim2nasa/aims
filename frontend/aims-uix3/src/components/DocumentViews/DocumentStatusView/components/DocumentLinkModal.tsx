@@ -613,7 +613,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
           </Tooltip>
           <Tooltip content={duplicateWarning ? duplicateWarning : '선택한 고객과 문서를 연결합니다'}>
             <Button
-              variant="secondary"
+              variant="primary"
               size="md"
               onClick={handleLink}
               disabled={isLinkDisabled}
