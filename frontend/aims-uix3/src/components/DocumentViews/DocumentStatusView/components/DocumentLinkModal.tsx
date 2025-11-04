@@ -337,20 +337,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
     }
   }
 
-  /**
-   * 배경 클릭 시 닫기
-   */
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    // 드래그 직후라면 클릭 무시
-    if (wasDraggingRef.current) {
-      return
-    }
-
-    if (event.target === event.currentTarget) {
-      onClose()
-    }
-  }
-
   if (!visible || !document) {
     return null
   }
@@ -360,7 +346,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
   const modalBody = (
     <div
       className="document-link-modal-backdrop"
-      onClick={handleBackdropClick}
       role="presentation"
     >
       <div
