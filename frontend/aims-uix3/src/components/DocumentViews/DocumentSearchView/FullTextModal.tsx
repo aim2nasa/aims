@@ -10,6 +10,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '@/shared/ui/Button'
 import './FullTextModal.css'
 
 interface FullTextModalProps {
@@ -177,12 +178,12 @@ export const FullTextModal: React.FC<FullTextModalProps> = ({
 
         {/* 모달 푸터 */}
         <div className="fulltext-modal-footer">
-          <button
-            className="fulltext-modal-button"
+          <Button
+            variant="secondary"
             onClick={onClose}
           >
             닫기
-          </button>
+          </Button>
         </div>
       </div>
     </div>

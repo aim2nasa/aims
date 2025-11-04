@@ -134,25 +134,7 @@ html[data-theme="dark"] .fulltext-modal-body {
   justify-content: flex-end;
 }
 
-.fulltext-modal-button {
-  background-color: var(--color-accent);
-  color: var(--color-text-primary);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 24px;
-  /* font-size: var(--font-size-body); () */
-  /* font-weight: var(--font-weight-medium); () */
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.fulltext-modal-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.fulltext-modal-button:active {
-  transform: scale(0.98);
-}
+/* 커스텀 버튼 스타일 제거: 공용 Button 컴포넌트 사용 */
 
 
 /* 스크롤바 스타일 (WebKit) */
