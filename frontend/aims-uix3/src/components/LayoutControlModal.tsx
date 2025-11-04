@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useDraggable } from '../hooks/useDraggable';
 import { HapticService, HapticType, withHaptic } from '../services/hapticService';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from './SFSymbol';
+import Button from '@/shared/ui/Button';
 
 interface LayoutControlModalProps {
   isOpen: boolean;
@@ -198,9 +199,9 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
           <div className="gap-section-header">
             <h3 className="modal-section-title">Gap 설정</h3>
             <div className="gap-controls">
-              <button onClick={handleResetWithHaptic} className="reset-button haptic-enabled">
+              <Button onClick={handleResetWithHaptic} variant="secondary" size="sm">
                 디폴트
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -280,9 +281,9 @@ const LayoutControlModal: React.FC<LayoutControlModalProps> = ({
       </div>
 
       <div className="modal-footer">
-        <button className="button-secondary" onClick={handleSafeClose}>
+        <Button variant="secondary" onClick={handleSafeClose}>
           닫기
-        </button>
+        </Button>
       </div>
     </div>,
     document.body // Portal 타겟: document.body에 직접 렌더링
