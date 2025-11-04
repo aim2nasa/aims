@@ -123,107 +123,21 @@
 /* 🍎 MODAL ACTIONS: iOS 버튼 영역 */
 .apple-confirm-modal__actions {
   display: flex;
+  gap: var(--spacing-3);
   border-top: 0.33px solid rgba(60, 60, 67, 0.18); /* iOS Separator 더 서브틀하게 */
   min-height: 43px; /* iOS 최적화된 터치 영역 */
+  padding: var(--spacing-2) var(--spacing-3);
 }
 
-.apple-confirm-modal__button {
+/* 공용 Button 컴포넌트 사용 */
+.apple-confirm-modal__actions .button {
   flex: 1;
-  background: none;
-  border: none;
-  padding: 11px 16px;
-  /* font-size: var(--font-size-callout); (iOS 버튼 텍스트 최적 크기 (16px) ) */
-  font-weight: 400; /* iOS Regular */
-  line-height: 1.24; /* iOS 표준 라인 높이 최적화 */
-  cursor: pointer;
-  transition:
-    background-color 0.12s cubic-bezier(0.4, 0, 0.6, 1),
-    color 0.12s cubic-bezier(0.4, 0, 0.6, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 43px;
-  position: relative;
-  font-family: var(--font-family-text);
-  letter-spacing: -0.32px; /* iOS 표준 kerning 최적화 */
-
-  /* 🍎 애플 스타일: outline 없이 배경색으로만 포커스 표현 */
-  outline: none;
-}
-
-/* 🍎 BUTTON DIVIDER: 버튼 사이 구분선 */
-.apple-confirm-modal__button:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 0.33px;
-  background-color: rgba(60, 60, 67, 0.18); /* iOS Separator 더 서브틀하게 */
-}
-
-/* 🍎 CANCEL BUTTON: 취소 버튼 스타일 */
-.apple-confirm-modal__button--cancel {
-  color: var(--color-ios-blue); /* iOS systemBlue 정확한 색상 */
-  font-weight: 400; /* iOS Regular */
-  border-radius: 0 0 0 13px; /* 왼쪽 하단 모서리만 둥글게 */
-}
-
-.apple-confirm-modal__button--cancel:hover {
-  background-color: rgba(0, 122, 255, 0.04);
-}
-
-.apple-confirm-modal__button--cancel:active {
-  background-color: rgba(0, 122, 255, 0.1);
-}
-
-/* 🍎 CONFIRM BUTTON: 확인 버튼 기본 스타일 */
-.apple-confirm-modal__button--confirm {
-  font-weight: 590; /* iOS Semibold 최적화 - 주요 액션 강조 */
-  border-radius: 0 0 13px 0; /* 오른쪽 하단 모서리만 둥글게 */
-}
-
-/* 🍎 PRIMARY CONFIRM: 일반 확인 (파란색) */
-.apple-confirm-modal__button--primary {
-  color: var(--color-ios-blue); /* iOS systemBlue 정확한 색상 */
-}
-
-.apple-confirm-modal__button--primary:hover {
-  background-color: rgba(0, 122, 255, 0.04);
-}
-
-.apple-confirm-modal__button--primary:active {
-  background-color: rgba(0, 122, 255, 0.1);
-}
-
-/* 🍎 DESTRUCTIVE CONFIRM: 위험한 액션 (빨간색) */
-.apple-confirm-modal__button--destructive {
-  color: var(--color-ios-red); /* iOS systemRed 정확한 색상 */
-}
-
-.apple-confirm-modal__button--destructive:hover {
-  background-color: rgba(255, 59, 48, 0.04);
-}
-
-.apple-confirm-modal__button--destructive:active {
-  background-color: rgba(255, 59, 48, 0.1);
-}
-
-/* 🍎 FOCUS STYLES: 애플 스타일 포커스 - 배경색만 사용 (inset 그림자 제거) */
-.apple-confirm-modal__button:focus {
-  background-color: rgba(0, 122, 255, 0.12);
-}
-
-/* 키보드 포커스 - 약간 더 강조 */
-.apple-confirm-modal__button:focus-visible {
-  background-color: rgba(0, 122, 255, 0.18);
 }
 
 /* 🍎 REDUCED MOTION: 모션 감소 사용자 배려 */
 @media (prefers-reduced-motion: reduce) {
   .apple-confirm-modal-overlay,
-  .apple-confirm-modal,
-  .apple-confirm-modal__button {
+  .apple-confirm-modal {
     transition: none;
   }
 }

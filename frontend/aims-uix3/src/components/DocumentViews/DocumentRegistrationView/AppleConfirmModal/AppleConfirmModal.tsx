@@ -9,6 +9,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import type { AppleConfirmState, AppleConfirmActions } from '../../../../controllers/useAppleConfirmController'
+import Button from '../../../../shared/ui/Button'
 import './AppleConfirmModal.css'
 
 export interface AppleConfirmModalProps {
@@ -86,24 +87,24 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
         {/* 🍎 MODAL ACTIONS: iOS 버튼 스타일 */}
         <div className="apple-confirm-modal__actions">
           {state.showCancel && (
-            <button
-              type="button"
-              className="apple-confirm-modal__button apple-confirm-modal__button--cancel"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={actions.handleCancel}
               autoFocus={state.confirmStyle === 'destructive'} // destructive일 때는 취소에 포커스
             >
               {state.cancelText}
-            </button>
+            </Button>
           )}
 
-          <button
-            type="button"
-            className={`apple-confirm-modal__button apple-confirm-modal__button--confirm apple-confirm-modal__button--${state.confirmStyle}`}
+          <Button
+            variant={state.confirmStyle === 'destructive' ? 'destructive' : 'primary'}
+            size="md"
             onClick={actions.handleConfirm}
             autoFocus={!state.showCancel || state.confirmStyle === 'primary'} // 취소 버튼 없거나 primary일 때 확인에 포커스
           >
             {state.confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,
