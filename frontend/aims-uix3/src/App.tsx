@@ -1086,6 +1086,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'documents-search'}
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 

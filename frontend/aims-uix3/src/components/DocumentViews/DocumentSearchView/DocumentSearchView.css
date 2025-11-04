@@ -727,13 +727,81 @@ html[data-theme="dark"] .row-subtitle {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* Row Trailing (상태 아이콘 + 액션 버튼 + 점수 + 화살표) */
+/* Row Trailing (고객명 + 상태 아이콘 + 액션 버튼 + 점수 + 화살표) */
 .row-trailing {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-left: 12px;
   flex-shrink: 0;
+}
+
+/* 🍎 연결된 고객 (DocumentLibrary와 동일한 스타일) */
+.search-customer {
+  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  max-width: 120px;
+  margin-right: 8px;
+}
+
+.search-customer .customer-name {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .search-customer .customer-name {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.search-customer .customer-none {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .search-customer .customer-none {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 고객명 클릭 가능 버튼 스타일 */
+.search-customer .customer-name-button {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+}
+
+.search-customer .customer-name-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .search-customer .customer-name-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-primary-400);
+}
+
+.search-customer .customer-name-button:active {
+  background: var(--color-ios-bg-hover-light);
+  transform: scale(0.98);
+}
+
+html[data-theme="dark"] .search-customer .customer-name-button:active {
+  background: var(--color-ios-bg-hover-dark);
 }
 
 /* 🍎 문서 처리 상태 아이콘 (DocumentLibrary와 동일) */

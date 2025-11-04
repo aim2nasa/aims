@@ -42,6 +42,8 @@ interface DocumentSearchViewProps {
   onClose: () => void
   /** 문서 클릭 핸들러 (RightPane 프리뷰) */
   onDocumentClick?: (documentId: string) => void
+  /** 고객 클릭 핸들러 */
+  onCustomerClick?: (customerId: string) => void
 }
 
 /**
@@ -74,7 +76,8 @@ const KEYWORD_MODE_OPTIONS: DropdownOption[] = [
 export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
   onClose,
-  onDocumentClick
+  onDocumentClick,
+  onCustomerClick
 }) => {
   const {
     query,
@@ -577,8 +580,28 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="row-subtitle">{summary}</div>
                       </div>
 
-                      {/* Trailing: 액션 버튼들 + 점수 + 화살표 */}
+                      {/* Trailing: 고객명 + 액션 버튼들 + 점수 + 화살표 */}
                       <div className="row-trailing">
+                        {/* 🍎 연결된 고객 (문서 라이브러리와 동일한 레이아웃) */}
+                        <div className="search-customer">
+                          {('customer_relation' in item && item.customer_relation?.customer_name) ? (
+                            <button
+                              className="customer-name customer-name-button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (onCustomerClick && item.customer_relation?.customer_id) {
+                                  onCustomerClick(item.customer_relation.customer_id)
+                                }
+                              }}
+                              aria-label={`${item.customer_relation.customer_name} 상세 보기`}
+                            >
+                              {item.customer_relation.customer_name}
+                            </button>
+                          ) : (
+                            <span className="customer-none">-</span>
+                          )}
+                        </div>
+
                         {/* 🍎 문서 처리 상태 아이콘 */}
                         <Tooltip content={status.label}>
                           <div className={`status-icon status-${status.status}`}>
