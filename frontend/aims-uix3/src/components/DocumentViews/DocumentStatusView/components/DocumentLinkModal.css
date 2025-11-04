@@ -43,7 +43,8 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 800px;
-  max-height: 85vh;
+  max-height: 95vh;
+  min-height: 700px;
   display: flex;
   flex-direction: column;
   animation: slideUp var(--duration-normal) var(--easing-ease-out);
@@ -69,9 +70,9 @@ html[data-theme="dark"] .document-link-modal {
 /* 모달 바디 */
 .document-link-modal__content {
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
-  padding: 20px;
+  padding: 16px 20px;
   background-color: var(--color-layout-secondary-light);
   min-height: 0;
 }
@@ -141,10 +142,10 @@ html[data-theme="dark"] .document-link-modal__content {
 
 .document-link-modal__section {
   padding: 0;
-  margin-bottom: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
 }
 
 .document-link-modal__section:last-child {
@@ -154,7 +155,7 @@ html[data-theme="dark"] .document-link-modal__content {
 .document-link-modal__section--document {
   background: transparent;
   padding: 0;
-  margin-bottom: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
 }
 
 .document-link-modal__section h3 {
@@ -234,7 +235,9 @@ html[data-theme="dark"] .document-link-modal__search-feedback {
 .document-link-modal__results {
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-lg);
-  max-height: 220px;
+  height: 100px; /* 고정 높이 더 축소 */
+  min-height: 100px; /* 최소 높이 보장 */
+  max-height: 100px; /* 최대 높이 제한 */
   overflow-y: auto;
   background: var(--color-bg-secondary);
   padding: var(--spacing-2);
@@ -292,19 +295,14 @@ html[data-theme="dark"] .document-link-modal__spinner {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
-  max-height: 220px;
-  overflow-y: auto;
 }
 
 .document-link-modal__customer-item {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-3);
   background: var(--color-neutral-0);
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   cursor: pointer;
   color: var(--color-text-primary);
   transition:
@@ -322,78 +320,131 @@ html[data-theme="dark"] .document-link-modal__customer-item {
 .document-link-modal__customer-item:hover {
   border-color: var(--color-primary-300);
   background: var(--color-bg-hover);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* 선택된 항목 - 강한 하이라이트 */
 .document-link-modal__customer-item--selected {
   border-color: var(--color-primary-500);
-  background: rgba(59, 130, 246, 0.08);
-  box-shadow: 0 0 0 1px var(--color-primary-500);
+  background: rgba(59, 130, 246, 0.28);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  animation: customer-select-pulse 0.3s ease-out;
 }
 
 html[data-theme="dark"] .document-link-modal__customer-item--selected {
-  background: var(--color-bg-active);
-  box-shadow: 0 0 0 1px var(--color-primary-400);
+  background: rgba(59, 130, 246, 0.35);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
 }
 
+/* 선택된 항목 호버 시에도 선택 상태 유지 */
+.document-link-modal__customer-item--selected:hover {
+  border-color: var(--color-primary-500);
+  background: rgba(59, 130, 246, 0.33);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+html[data-theme="dark"] .document-link-modal__customer-item--selected:hover {
+  background: rgba(59, 130, 246, 0.40);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.6);
+}
+
+/* 선택 시 애니메이션 */
+@keyframes customer-select-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* 한 줄 레이아웃 */
 .document-link-modal__customer-item-row {
   display: grid;
-  grid-template-columns: minmax(200px, 3fr) minmax(160px, 2fr) minmax(80px, 1fr);
+  grid-template-columns: 20px auto minmax(80px, 1fr) minmax(120px, 1.5fr) minmax(150px, 3fr);
   align-items: center;
   gap: var(--spacing-2);
   width: 100%;
-  min-width: 100%;
+}
+
+/* 체크마크 열 */
+.document-link-modal__customer-item-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+/* 체크마크 아이콘 강조 */
+.document-link-modal__customer-item-check svg {
+  color: var(--color-primary-500);
+}
+
+html[data-theme="dark"] .document-link-modal__customer-item-check svg {
+  color: var(--color-primary-400);
+}
+
+.document-link-modal__customer-item-number {
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  /* font-size: var(--font-size-footnote); () */
+  min-width: 24px;
+  text-align: right;
+}
+
+/* 선택된 항목의 번호 강조 */
+.document-link-modal__customer-item--selected .document-link-modal__customer-item-number {
+  color: var(--color-primary-600);
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .document-link-modal__customer-item--selected .document-link-modal__customer-item-number {
+  color: var(--color-primary-300);
 }
 
 .document-link-modal__customer-item-name {
-  /* font-size: var(--font-size-footnote); () */
-  /* font-weight: var(--font-weight-medium); () */
+  font-weight: 600;
   color: var(--color-text-primary);
+  /* font-size: var(--font-size-footnote); () */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.document-link-modal__customer-item-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  /* font-size: var(--font-size-footnote); () */
-  color: var(--color-text-secondary);
-  min-width: 0;
+/* 선택된 항목의 이름 강조 */
+.document-link-modal__customer-item--selected .document-link-modal__customer-item-name {
+  color: var(--color-primary-700);
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .document-link-modal__customer-item--selected .document-link-modal__customer-item-name {
+  color: var(--color-primary-200);
 }
 
 .document-link-modal__customer-item-phone {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-link-modal__customer-item-type {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-link-modal__customer-item-divider {
-  opacity: 0.5;
-}
-
-.document-link-modal__customer-item-tag {
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 var(--spacing-2);
-  background: var(--color-bg-tertiary);
+  font-weight: 500;
   color: var(--color-text-secondary);
-  border-radius: var(--radius-md);
+  /* font-size: var(--font-size-footnote); () */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-link-modal__customer-item-address {
   /* font-size: var(--font-size-caption-1); () */
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item-tag {
-  background: var(--color-layout-secondary-dark);
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .document-link-modal__pagination {
@@ -404,39 +455,6 @@ html[data-theme="dark"] .document-link-modal__customer-item-tag {
 }
 
 .document-link-modal__pagination-info {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-}
-
-.selected-customer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-4);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-lg);
-  background: rgba(59, 130, 246, 0.05);
-}
-
-html[data-theme="dark"] .selected-customer {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.selected-customer__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-}
-
-.selected-customer__name {
-  /* font-size: var(--font-size-md); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  color: var(--color-text-primary);
-  display: block;
-}
-
-.selected-customer__info {
   /* font-size: var(--font-size-sm); () */
   color: var(--color-text-secondary);
 }
@@ -470,9 +488,10 @@ html[data-theme="dark"] .selected-customer {
 
 .document-link-modal__textarea {
   width: 100%;
-  min-height: 96px;
+  min-height: 50px;
+  max-height: 70px;
   resize: vertical;
-  padding: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-ios-separator-light);
   background: var(--color-neutral-0);
@@ -507,6 +526,19 @@ html[data-theme="dark"] .document-link-modal__footer {
 }
 
 /* ===== 입력 필드 및 버튼 스타일 ===== */
+
+/* Dropdown 메뉴 높이 제한 (모달 내부) */
+.document-link-modal .ios-dropdown__menu {
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 10001; /* footer보다 위에 표시 */
+}
+
+/* 위로 펼쳐지는 경우 위치 조정 */
+.document-link-modal .ios-dropdown__menu--upward {
+  bottom: calc(100% + 4px);
+  top: auto;
+}
 
 .document-link-modal .input-container {
   background-color: var(--color-neutral-0);

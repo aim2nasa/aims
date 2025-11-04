@@ -65,7 +65,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [searchError, setSearchError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<{ currentPage: number; totalPages: number; totalCount: number } | null>(null)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [relationshipType, setRelationshipType] = useState<string>('general')
   const [notes, setNotes] = useState<string>('')
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
@@ -95,7 +94,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       setSearchError(null)
       setPagination(null)
       setSelectedCustomerId(null)
-      setSelectedCustomer(null)
       setRelationshipType('general')
       setNotes('')
       setDuplicateWarning(null)
@@ -238,7 +236,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
    */
   const handleSelectCustomer = async (customer: Customer) => {
     setSelectedCustomerId(customer._id)
-    setSelectedCustomer(customer)
     setDuplicateWarning(null)
     setFeedbackMessage(null)
 
@@ -317,7 +314,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
   }
 
   const isLinkDisabled = !selectedCustomerId || Boolean(duplicateWarning) || linkLoading
-  const totalResults = pagination?.totalCount ?? searchResults.length
 
   const modalBody = (
     <div
@@ -402,18 +398,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             />
             {searchError && <p className="document-link-modal__error">{searchError}</p>}
 
-          {/* Search Feedback */}
-          {searchTerm && (
-            <div className="document-link-modal__search-feedback">
-              <span>
-                검색 결과 <strong>{totalResults}</strong>명
-              </span>
-              {totalResults > SEARCH_LIMIT && (
-                <span className="document-link-modal__hint">더 구체적인 검색어를 입력하면 정확도가 높아집니다.</span>
-              )}
-            </div>
-          )}
-
           {/* Results */}
           <div className="document-link-modal__results">
             {searchLoading ? (
@@ -423,7 +407,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
               </div>
             ) : searchResults.length > 0 ? (
               <ul className="customer-result-list" role="listbox">
-                {searchResults.map((customer) => {
+                {searchResults.map((customer, index) => {
                   const isSelected = selectedCustomerId === customer._id
                   const displayName = customer.personal_info?.name || '이름 없음'
                   const phone =
@@ -432,24 +416,46 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
                     customer.personal_info?.home_phone ??
                     customer.personal_info?.work_phone ??
                     '연락처 없음'
-                  const customerType = customer.insurance_info?.customer_type || '유형 없음'
+
+                  // address가 객체일 수 있으므로 문자열로 변환
+                  const addressObj = customer.personal_info?.address
+                  const address = typeof addressObj === 'string'
+                    ? addressObj
+                    : addressObj && typeof addressObj === 'object'
+                      ? `${addressObj.address1 || ''} ${addressObj.address2 || ''}`.trim() || '주소 없음'
+                      : '주소 없음'
 
                   return (
                     <li
                       key={customer._id}
                       className={`document-link-modal__customer-item ${isSelected ? 'document-link-modal__customer-item--selected' : ''}`}
-                      onClick={() => handleSelectCustomer(customer)}
+                      onClick={() => {
+                        if (isSelected) {
+                          // 이미 선택된 항목 클릭 시 선택 해제
+                          setSelectedCustomerId(null)
+                          setDuplicateWarning(null)
+                        } else {
+                          handleSelectCustomer(customer)
+                        }
+                      }}
                       aria-pressed={isSelected}
                       role="option"
                     >
                       <div className="document-link-modal__customer-item-row">
-                        <span className="document-link-modal__customer-item-name">{displayName}</span>
-                        <span className="document-link-modal__customer-item-info">
-                          <span className="document-link-modal__customer-item-phone">{phone}</span>
-                          <span className="document-link-modal__customer-item-divider">•</span>
-                          <span className="document-link-modal__customer-item-type" title={customerType}>{customerType}</span>
+                        <span className="document-link-modal__customer-item-check">
+                          {isSelected && (
+                            <SFSymbol
+                              name="checkmark.circle.fill"
+                              size={SFSymbolSize.FOOTNOTE}
+                              weight={SFSymbolWeight.SEMIBOLD}
+                              decorative={true}
+                            />
+                          )}
                         </span>
-                        {isSelected && <span className="document-link-modal__customer-item-tag">선택됨</span>}
+                        <span className="document-link-modal__customer-item-number">{index + 1}</span>
+                        <span className="document-link-modal__customer-item-name">{displayName}</span>
+                        <span className="document-link-modal__customer-item-phone">{phone}</span>
+                        <span className="document-link-modal__customer-item-address">{address}</span>
                       </div>
                     </li>
                   )
@@ -490,39 +496,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             </div>
           )}
         </section>
-
-        {/* Selected customer */}
-        {selectedCustomer && (
-          <section className="document-link-modal__section">
-            <div className="selected-customer">
-              <div className="selected-customer__meta">
-                <SFSymbol
-                  name="person.circle"
-                  size={SFSymbolSize.TITLE_3}
-                  weight={SFSymbolWeight.REGULAR}
-                  decorative={true}
-                />
-                <div>
-                  <span className="selected-customer__name">{selectedCustomer.personal_info?.name}</span>
-                  <span className="selected-customer__info">
-                    {selectedCustomer.personal_info?.mobile_phone || '연락처 없음'} · {selectedCustomer.insurance_info?.customer_type || '유형 미입력'}
-                  </span>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedCustomerId(null)
-                  setSelectedCustomer(null)
-                  setDuplicateWarning(null)
-                }}
-              >
-                선택 해제
-              </Button>
-            </div>
-          </section>
-        )}
 
         {/* Form */}
         <section className="document-link-modal__section">
