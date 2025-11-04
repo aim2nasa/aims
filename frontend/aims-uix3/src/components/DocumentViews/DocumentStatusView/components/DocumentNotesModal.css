@@ -26,19 +26,21 @@ html[data-theme="dark"] .document-notes-modal__info {
 
 .document-notes-modal__info .info-row {
   display: flex;
-  gap: var(--spacing-3);
-  align-items: baseline;
+  gap: var(--spacing-2);
+  align-items: center;
 }
 
 .document-notes-modal__info .info-label {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
-  min-width: 50px;
+  min-width: 60px;
+  flex-shrink: 0;
 }
 
 .document-notes-modal__info .info-value {
   color: var(--color-text-primary);
   flex: 1;
+  word-break: break-word;
 }
 
 /* === 메모 내용 === */
@@ -47,6 +49,7 @@ html[data-theme="dark"] .document-notes-modal__info {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  margin-top: var(--spacing-5);
 }
 
 .document-notes-modal__notes h3 {
