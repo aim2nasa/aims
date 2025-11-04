@@ -7,6 +7,9 @@
  * tokens.css의 원시 토큰을 기반으로 컨텍스트에 맞는 의미를 부여합니다.
  */
 
+/* === Modal System Variables === */
+@import './modal-variables.css';
+
 /* === LIGHT THEME (기본) === */
 
 :root,
