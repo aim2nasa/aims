@@ -70,7 +70,7 @@ html[data-theme="dark"] .document-link-modal {
 /* 모달 바디 */
 .document-link-modal__content {
   flex: 1 1 auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 20px;
   background-color: var(--color-layout-secondary-light);
@@ -166,7 +166,7 @@ html[data-theme="dark"] .document-link-modal__content {
 }
 
 .document-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--spacing-2);
   border: 1px solid var(--color-ios-separator-light);
@@ -176,7 +176,9 @@ html[data-theme="dark"] .document-link-modal__content {
   /* font-size: var(--font-size-footnote); () */
   color: var(--color-text-primary);
   width: 100%;
-  max-width: calc(100% - var(--spacing-4));
+  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+  min-height: 36px;
+  max-height: 36px;
 }
 
 html[data-theme="dark"] .document-chip {
@@ -235,9 +237,9 @@ html[data-theme="dark"] .document-link-modal__search-feedback {
 .document-link-modal__results {
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-lg);
-  height: 100px; /* 고정 높이 더 축소 */
-  min-height: 100px; /* 최소 높이 보장 */
-  max-height: 100px; /* 최대 높이 제한 */
+  height: 150px; /* 최소 3명 보이도록 높이 증가 */
+  min-height: 150px;
+  max-height: 200px;
   overflow-y: auto;
   background: var(--color-bg-secondary);
   padding: var(--spacing-2);
@@ -305,6 +307,11 @@ html[data-theme="dark"] .document-link-modal__spinner {
   border-radius: var(--radius-md);
   cursor: pointer;
   color: var(--color-text-primary);
+  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+  min-height: 36px;
+  max-height: 36px;
+  display: flex;
+  align-items: center;
   transition:
     border-color var(--duration-fast) var(--easing-ease-out),
     background-color var(--duration-fast) var(--easing-ease-out),
@@ -488,15 +495,17 @@ html[data-theme="dark"] .document-link-modal__customer-item--selected .document-
 
 .document-link-modal__textarea {
   width: 100%;
-  min-height: 50px;
-  max-height: 70px;
-  resize: vertical;
+  min-height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+  height: 36px;
+  max-height: 36px;
+  resize: none; /* 높이 고정을 위해 resize 비활성화 */
   padding: var(--spacing-2) var(--spacing-3);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-ios-separator-light);
   background: var(--color-neutral-0);
   color: var(--color-text-primary);
   /* font-size: var(--font-size-footnote); () */
+  overflow-y: hidden; /* 스크롤 숨김 */
 }
 
 html[data-theme="dark"] .document-link-modal__textarea {
@@ -531,20 +540,15 @@ html[data-theme="dark"] .document-link-modal__footer {
 .document-link-modal .ios-dropdown__menu {
   max-height: 240px;
   overflow-y: auto;
-  z-index: 10001; /* footer보다 위에 표시 */
-}
-
-/* 위로 펼쳐지는 경우 위치 조정 */
-.document-link-modal .ios-dropdown__menu--upward {
-  bottom: calc(100% + 4px);
-  top: auto;
 }
 
 .document-link-modal .input-container {
   background-color: var(--color-neutral-0);
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-lg);
-  min-height: 44px;
+  min-height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
+  height: 36px;
+  max-height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -556,13 +560,13 @@ html[data-theme="dark"] .document-link-modal .input-container {
 }
 
 .document-link-modal .input {
-  height: auto;
+  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
   width: 100%;
   box-sizing: border-box;
-  min-height: 44px;
-  padding: var(--spacing-3) var(--spacing-4);
+  min-height: 36px;
+  max-height: 36px;
+  padding: var(--spacing-2) var(--spacing-3);
   color: var(--color-text-primary);
-  max-height: none;
 }
 
 .document-link-modal .input.input--with-left-icon {
