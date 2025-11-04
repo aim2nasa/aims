@@ -5,7 +5,7 @@
  * 공간 효율적인 리스트 레이아웃
  */
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -17,6 +17,7 @@ import {
   LinkIcon,
   SummaryIcon
 } from '../../components/DocumentActionIcons'
+import { DocumentNotesModal } from './DocumentNotesModal'
 import './DocumentStatusList.css'
 
 export interface DocumentStatusListProps {
@@ -116,6 +117,13 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onSelectDocument,
   onCustomerClick
 }) => {
+  // 메모 모달 상태 관리
+  const [notesModalVisible, setNotesModalVisible] = useState(false)
+  const [selectedNotes, setSelectedNotes] = useState<{
+    documentName: string
+    customerName?: string | undefined
+    notes: string
+  } | null>(null)
   // 로딩 상태
   if (isLoading && isEmpty) {
     return (
@@ -376,6 +384,31 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             {/* 파일명 */}
             <div className="status-filename">
               {DocumentStatusService.extractFilename(document)}
+              {/* 메모 버튼: customer_relation에 notes가 있는 경우에만 표시 */}
+              {document.customer_relation?.notes &&
+               typeof document.customer_relation.notes === 'string' &&
+               document.customer_relation.notes.trim() !== '' && (
+                <button
+                  className="document-notes-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedNotes({
+                      documentName: DocumentStatusService.extractFilename(document),
+                      customerName: document.customer_relation?.customer_name,
+                      notes: document.customer_relation?.notes || ''
+                    })
+                    setNotesModalVisible(true)
+                  }}
+                  title={
+                    document.customer_relation.notes.length > 50
+                      ? `${document.customer_relation.notes.substring(0, 50)}...`
+                      : document.customer_relation.notes
+                  }
+                  aria-label="메모 보기"
+                >
+                  📝
+                </button>
+              )}
             </div>
 
             {/* 크기 */}
@@ -490,6 +523,20 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           </div>
         )
       })}
+
+      {/* 메모 모달 */}
+      {selectedNotes && (
+        <DocumentNotesModal
+          visible={notesModalVisible}
+          documentName={selectedNotes.documentName}
+          customerName={selectedNotes.customerName}
+          notes={selectedNotes.notes}
+          onClose={() => {
+            setNotesModalVisible(false)
+            setSelectedNotes(null)
+          }}
+        />
+      )}
     </div>
   )
 }
