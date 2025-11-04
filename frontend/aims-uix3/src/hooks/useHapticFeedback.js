@@ -112,18 +112,25 @@ export function useHapticFeedback() {
                      config.intensity * hapticIntensity;
 
     try {
-      // iOS Safari - Vibration API
-      if ('vibrate' in navigator && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        // iOS 햅틱 패턴 구현
-        const vibrationPattern = generateiOSVibrationPattern(type, intensity);
-        navigator.vibrate(vibrationPattern);
-      }
-      // Android Chrome - Vibration API
-      else if ('vibrate' in navigator) {
-        navigator.vibrate(Math.round(config.duration * intensity));
-      }
-      // 웹 기반 햅틱 (시각/오디오 피드백)
-      else {
+      // Vibration API는 사용자 제스처 후에만 작동 (브라우저 보안 정책)
+      if ('vibrate' in navigator) {
+        try {
+          // iOS Safari - Vibration API
+          if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            const vibrationPattern = generateiOSVibrationPattern(type, intensity);
+            navigator.vibrate(vibrationPattern);
+          }
+          // Android Chrome - Vibration API
+          else {
+            navigator.vibrate(Math.round(config.duration * intensity));
+          }
+        } catch (vibrateError) {
+          // 사용자 제스처 없이 호출 시 발생하는 에러 무시
+          // 시각적 햅틱으로 대체
+          triggerVisualHaptic(type, intensity);
+        }
+      } else {
+        // 웹 기반 햅틱 (시각/오디오 피드백)
         triggerVisualHaptic(type, intensity);
       }
 

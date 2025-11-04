@@ -618,24 +618,25 @@ describe('useHapticFeedback', () => {
   })
 
   describe('에러 처리', () => {
-    it('vibrate API 실패 시 경고를 출력하고 계속 실행해야 함', () => {
+    it('vibrate API 실패 시 시각적 햅틱으로 대체되어야 함', () => {
       vibrateSpy.mockImplementation(() => {
         throw new Error('Vibration failed')
       })
 
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
       const { result } = renderHook(() => useHapticFeedback())
 
       act(() => {
         result.current.triggerHaptic(HAPTIC_TYPES.LIGHT)
       })
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Haptic] 햅틱 피드백 실행 실패:'),
-        expect.any(Error)
+      // vibrate() 실패 시 triggerVisualHaptic()으로 대체되므로
+      // 경고 대신 정상 로그가 출력됨
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[Haptic] light 피드백 실행')
       )
 
-      consoleWarnSpy.mockRestore()
+      consoleLogSpy.mockRestore()
     })
   })
 })
