@@ -685,6 +685,15 @@ html[data-theme="dark"] .search-result-row:hover .document-txt-badge {
 .document-icon.file-type-archive { background-color: var(--color-file-archive); color: var(--color-neutral-0); }
 .document-icon.file-type-unknown { background-color: var(--color-file-unknown); color: var(--color-neutral-600); }
 
+/* Container for filename and memo button */
+.row-title-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 0;
+}
+
 .row-title {
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -693,7 +702,7 @@ html[data-theme="dark"] .search-result-row:hover .document-txt-badge {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
+  flex-shrink: 1;
   min-width: 0;
 }
 
@@ -1043,4 +1052,36 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   .search-result-row {
     min-height: var(--spacing-11); /* 44px - iOS 최소 터치 영역 */
   }
+}
+
+/* === MEMO BUTTON === */
+
+.document-notes-btn {
+  width: var(--spacing-4);
+  height: var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--spacing-2);
+  padding: 0;
+  font-size: var(--font-size-body);
+  line-height: 1;
+  opacity: 0.7;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.document-notes-btn:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.document-notes-btn:active {
+  transform: scale(0.95);
 }

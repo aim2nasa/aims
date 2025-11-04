@@ -4,6 +4,7 @@
  *
  * 문서 검색 기능의 타입 정의
  */
+import type { DocumentCustomerRelation } from '../../types/documentStatus'
 
 /**
  * 검색 모드
@@ -100,6 +101,8 @@ export interface SemanticSearchResultItem {
   docsum?: {
     summary?: string
   }
+  /** 고객 관계 정보 */
+  customer_relation?: DocumentCustomerRelation
 }
 
 /**
@@ -131,6 +134,8 @@ export interface KeywordSearchResultItem {
   }
   /** OCR 정보 */
   ocr?: OCRInfo
+  /** 고객 관계 정보 */
+  customer_relation?: DocumentCustomerRelation
 }
 
 /**

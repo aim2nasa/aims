@@ -27,6 +27,7 @@ import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetail
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
+import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
 import { CustomerService } from '@/services/customerService'
 import { DocumentService } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
@@ -108,6 +109,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [isFullTextModalVisibleNew, setFullTextModalVisibleNew] = useState(false)
   const [selectedDocumentForLink, setSelectedDocumentForLink] = useState<SearchResultItem | null>(null)
   const [isLinkModalVisible, setLinkModalVisible] = useState(false)
+  // 🍎 메모 모달 상태
+  const [notesModalVisible, setNotesModalVisible] = useState(false)
+  const [selectedNotes, setSelectedNotes] = useState<{
+    documentName: string
+    customerName?: string | undefined
+    notes: string
+  } | null>(null)
 
   /**
    * Enter 키 입력 핸들러
@@ -537,7 +545,34 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                               ) : null;
                             })()}
                           </div>
-                          <span className="row-title">{originalName}</span>
+                          <div className="row-title-container">
+                            <span className="row-title">{originalName}</span>
+                            {/* 메모 버튼: customer_relation에 notes가 있는 경우에만 표시 */}
+                            {('customer_relation' in item && item.customer_relation?.notes &&
+                             typeof item.customer_relation.notes === 'string' &&
+                             item.customer_relation.notes.trim() !== '') && (
+                              <button
+                                className="document-notes-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedNotes({
+                                    documentName: originalName,
+                                    customerName: item.customer_relation?.customer_name,
+                                    notes: item.customer_relation?.notes || ''
+                                  })
+                                  setNotesModalVisible(true)
+                                }}
+                                title={
+                                  item.customer_relation.notes.length > 50
+                                    ? `${item.customer_relation.notes.substring(0, 50)}...`
+                                    : item.customer_relation.notes
+                                }
+                                aria-label="메모 보기"
+                              >
+                                📝
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className="row-subtitle">{summary}</div>
                       </div>
@@ -674,6 +709,19 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         onFetchCustomerDocuments={fetchCustomerDocuments}
         onLink={linkDocumentToCustomer}
       />
+      {/* 메모 모달 */}
+      {selectedNotes && (
+        <DocumentNotesModal
+          visible={notesModalVisible}
+          documentName={selectedNotes.documentName}
+          customerName={selectedNotes.customerName}
+          notes={selectedNotes.notes}
+          onClose={() => {
+            setNotesModalVisible(false)
+            setSelectedNotes(null)
+          }}
+        />
+      )}
     </CenterPaneView>
   )
 }

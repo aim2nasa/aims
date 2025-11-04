@@ -1012,8 +1012,8 @@ html[data-theme="dark"] .status-item:hover .document-icon.file-icon--text {
 /* === MEMO BUTTON === */
 
 .document-notes-btn {
-  width: var(--spacing-6);
-  height: var(--spacing-6);
+  width: var(--spacing-4);
+  height: var(--spacing-4);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
