@@ -7,14 +7,7 @@
   "background_color": "#f2f2f7",
   "theme_color": "#f2f2f7",
   "orientation": "any",
-  "icons": [
-    {
-      "src": "/vite.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ],
+  "icons": [],
   "categories": ["productivity", "business"],
   "lang": "ko-KR",
   "dir": "ltr"
