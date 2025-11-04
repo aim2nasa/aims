@@ -71,6 +71,19 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const prevSearchTermRef = useRef<string>('')
+  const isSearchStableRef = useRef<boolean>(true) // 검색 결과가 안정화되었는지 추적
+  const onSearchCustomersRef = useRef(onSearchCustomers) // 함수 참조 고정
+  const clickCountRef = useRef<number>(0) // 클릭 횟수 추적
+
+  // 입력 변경 감지용 refs
+  const lastChangeTimestampRef = useRef<number>(0) // 마지막 onChange 시간
+  const pendingValueRef = useRef<string | null>(null) // 복원 대기 중인 값
+
+  // 함수 참조 업데이트
+  useEffect(() => {
+    onSearchCustomersRef.current = onSearchCustomers
+  }, [onSearchCustomers])
 
   // 🍎 드래그 상태 관리
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -89,6 +102,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
    */
   useEffect(() => {
     if (visible) {
+      clickCountRef.current = 0
       setSearchTerm('')
       setSearchResults([])
       setSearchError(null)
@@ -164,20 +178,32 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
     if (!visible) return
 
     const trimmed = searchTerm.trim()
+
     if (!trimmed) {
       setSearchResults([])
       setPagination(null)
       setSearchLoading(false)
       setSearchError(null)
+      isSearchStableRef.current = true // 빈 검색어는 즉시 안정화
       return
     }
 
+    // 검색어가 변경되면 페이지를 1로 리셋
+    if (prevSearchTermRef.current !== trimmed) {
+      prevSearchTermRef.current = trimmed
+      if (currentPage !== 1) {
+        setCurrentPage(1)
+        return // 페이지 변경 후 이 useEffect가 다시 실행됨
+      }
+    }
+
     let isCancelled = false
+    isSearchStableRef.current = false // 검색 시작 - 불안정 상태
     setSearchLoading(true)
     setSearchError(null)
 
     const timer = window.setTimeout(() => {
-      onSearchCustomers(trimmed, currentPage, SEARCH_LIMIT)
+      onSearchCustomersRef.current(trimmed, currentPage, SEARCH_LIMIT)
         .then((response) => {
           if (isCancelled) return
           const customers = response.customers ?? []
@@ -203,6 +229,13 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             totalPages: 1,
             totalCount: filtered.length
           })
+
+          // 검색 결과 렌더링 후 안정화 (150ms 대기)
+          setTimeout(() => {
+            if (!isCancelled) {
+              isSearchStableRef.current = true
+            }
+          }, 150)
         })
         .catch((error) => {
           if (isCancelled) return
@@ -210,6 +243,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
           setSearchError('고객 검색에 실패했습니다.')
           setSearchResults([])
           setPagination(null)
+          isSearchStableRef.current = true // 에러 시에도 안정화
         })
         .finally(() => {
           if (!isCancelled) {
@@ -222,14 +256,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       isCancelled = true
       window.clearTimeout(timer)
     }
-  }, [searchTerm, currentPage, visible, onSearchCustomers])
-
-  /**
-   * 검색어 변경 시 페이지 초기화
-   */
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm])
+  }, [searchTerm, currentPage, visible]) // onSearchCustomers 제거 - ref로 관리
 
   /**
    * 고객 선택 시 중복 연결 검사
@@ -239,7 +266,9 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
     setDuplicateWarning(null)
     setFeedbackMessage(null)
 
-    if (!documentId) return
+    if (!documentId) {
+      return
+    }
 
     try {
       const customerDocs = await onFetchCustomerDocuments(customer._id)
@@ -385,7 +414,47 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             <Input
               placeholder="예: 김철수, 010-1234-5678"
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              autoComplete="off"
+              onChange={(event) => {
+                const now = performance.now()
+                const newValue = event.target.value
+
+                // 🚫 자동 삭제/재입력 사이클 감지
+                // Case 1: 값이 빈 문자열로 변경되는 경우 - 복원 대기 모드 진입
+                if (!newValue && searchTerm.trim()) {
+                  pendingValueRef.current = searchTerm
+                  lastChangeTimestampRef.current = now
+
+                  // 100ms 후에도 복원되지 않으면 정상 삭제로 간주
+                  setTimeout(() => {
+                    if (pendingValueRef.current === searchTerm) {
+                      pendingValueRef.current = null
+                      setSearchTerm('')
+                    }
+                  }, 100)
+
+                  return
+                }
+
+                // Case 2: 복원 대기 중인 경우 - 모든 변경 차단
+                if (pendingValueRef.current) {
+                  const timeSinceEmpty = now - lastChangeTimestampRef.current
+
+                  if (timeSinceEmpty < 100) {
+                    // 100ms 이내 = 자동 사이클
+                    pendingValueRef.current = null
+                    return
+                  } else {
+                    // 100ms 이후 = 정상 입력
+                    pendingValueRef.current = null
+                  }
+                }
+
+                // 정상적인 변경 - 상태 업데이트
+                pendingValueRef.current = null
+                lastChangeTimestampRef.current = now
+                setSearchTerm(newValue)
+              }}
               leftIcon={
                 <SFSymbol
                   name="magnifyingglass"
@@ -429,9 +498,15 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
                     <li
                       key={customer._id}
                       className={`document-link-modal__customer-item ${isSelected ? 'document-link-modal__customer-item--selected' : ''}`}
-                      onClick={() => {
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+
+                        // 검색 결과가 안정화되지 않았으면 클릭 무시
+                        if (!isSearchStableRef.current) {
+                          return
+                        }
+
                         if (isSelected) {
-                          // 이미 선택된 항목 클릭 시 선택 해제
                           setSelectedCustomerId(null)
                           setDuplicateWarning(null)
                         } else {
