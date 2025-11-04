@@ -1,0 +1,218 @@
+/**
+ * DraggableModal Styles
+ * @since 2025-11-04
+ * @version 1.0.0
+ *
+ * Drag & Resize 가능한 모달 스타일
+ * - 기본 Modal 스타일 + Resize Handles
+ * - iOS 디자인 철학 준수
+ */
+
+/* ===== Backdrop ===== */
+
+.draggable-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-overlay-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== Modal Container ===== */
+
+.draggable-modal {
+  background-color: var(--color-layout-content-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-modal-light);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp var(--duration-normal) var(--easing-ease-out);
+  position: relative; /* For resize handles */
+}
+
+html[data-theme="dark"] .draggable-modal {
+  background-color: var(--color-layout-content-dark);
+  box-shadow: var(--shadow-modal-dark);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== Header (Draggable Handle) ===== */
+
+.draggable-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-layout-border);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.draggable-modal__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Content ===== */
+
+.draggable-modal__content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  background-color: var(--color-layout-secondary-light);
+  min-height: 0;
+}
+
+html[data-theme="dark"] .draggable-modal__content {
+  background-color: var(--color-layout-secondary-dark);
+}
+
+/* iOS 스타일 스크롤바 */
+.draggable-modal__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.draggable-modal__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.draggable-modal__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-layout-border);
+  border-radius: 4px;
+}
+
+.draggable-modal__content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
+}
+
+/* ===== Footer ===== */
+
+.draggable-modal__footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-layout-border);
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  background-color: var(--color-layout-content-light);
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .draggable-modal__footer {
+  background-color: var(--color-layout-content-dark);
+}
+
+/* ===== Resize Handles ===== */
+
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+
+/* 모서리 핸들 (8px x 8px) */
+.resize-handle--nw {
+  top: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+.resize-handle--ne {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle--sw {
+  bottom: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle--se {
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+/* 변 핸들 */
+.resize-handle--n {
+  top: -4px;
+  left: 12px;
+  right: 12px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle--s {
+  bottom: -4px;
+  left: 12px;
+  right: 12px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle--w {
+  top: 12px;
+  bottom: 12px;
+  left: -4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.resize-handle--e {
+  top: 12px;
+  bottom: 12px;
+  right: -4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+/* ===== 접근성 ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .draggable-modal-backdrop,
+  .draggable-modal {
+    animation: none;
+  }
+}

@@ -27,3 +27,5 @@ export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
+export { DraggableModal } from './DraggableModal';
+export type { DraggableModalProps } from './DraggableModal';
