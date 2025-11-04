@@ -1,0 +1,222 @@
+/**
+ * DocumentNotesModal Styles
+ * @since 1.0.0
+ *
+ * iOS Human Interface Guidelines 준수
+ */
+
+/* === BACKDROP === */
+
+.document-notes-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-index-modal);
+  background-color: var(--backdrop-modal-dimming);
+  animation: backdropAppear var(--duration-moderate) var(--easing-ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6);
+}
+
+@keyframes backdropAppear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* === MODAL CONTAINER === */
+
+.document-notes-modal {
+  background-color: var(--color-neutral-0);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-apple-elevated);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalAppear var(--duration-moderate) var(--easing-ios-spring);
+}
+
+html[data-theme="dark"] .document-notes-modal {
+  background-color: var(--color-ios-menu-bg-dark);
+}
+
+@keyframes modalAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.01) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* === HEADER === */
+
+.document-notes-modal__header {
+  padding: var(--spacing-5) var(--spacing-6);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+html[data-theme="dark"] .document-notes-modal__header {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.document-notes-modal__title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.document-notes-modal__title h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.document-notes-modal__close {
+  background: transparent;
+  border: none;
+  padding: var(--spacing-2);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.document-notes-modal__close:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* === CONTENT === */
+
+.document-notes-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+/* 문서 정보 */
+.document-notes-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .document-notes-modal__info {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.document-notes-modal__info .info-row {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: baseline;
+}
+
+.document-notes-modal__info .info-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  min-width: 50px;
+}
+
+.document-notes-modal__info .info-value {
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+/* 메모 내용 */
+.document-notes-modal__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.document-notes-modal__notes h3 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.document-notes-modal__notes .notes-content {
+  padding: var(--spacing-4);
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-ios-separator-light);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 100px;
+}
+
+html[data-theme="dark"] .document-notes-modal__notes .notes-content {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* === FOOTER === */
+
+.document-notes-modal__footer {
+  padding: var(--spacing-4) var(--spacing-6);
+  border-top: 1px solid var(--color-ios-separator-light);
+  display: flex;
+  justify-content: flex-end;
+}
+
+html[data-theme="dark"] .document-notes-modal__footer {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+/* === RESPONSIVE === */
+
+@media (max-width: 480px) {
+  .document-notes-modal {
+    max-width: calc(100vw - 2rem);
+    margin: 0 1rem;
+  }
+
+  .document-notes-modal__header,
+  .document-notes-modal__content,
+  .document-notes-modal__footer {
+    padding: var(--spacing-4);
+  }
+}
+
+/* === REDUCED MOTION === */
+
+@media (prefers-reduced-motion: reduce) {
+  .document-notes-modal-backdrop,
+  .document-notes-modal {
+    animation: none;
+  }
+}

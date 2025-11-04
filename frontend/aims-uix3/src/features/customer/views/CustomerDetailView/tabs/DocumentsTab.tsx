@@ -30,6 +30,7 @@ import {
   PreviewIcon,
   LinkIcon
 } from '../../../../../components/DocumentViews/components/DocumentActionIcons'
+import { DocumentNotesModal } from '../../../../../components/DocumentViews/DocumentStatusView/components/DocumentNotesModal'
 import './DocumentsTab.css'
 
 interface DocumentsTabProps {
@@ -86,6 +87,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   // 🍎 정렬 상태
   const [sortField, setSortField] = useState<SortField>('linkedAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
+  // 🍎 메모 모달 상태
+  const [notesModalVisible, setNotesModalVisible] = useState(false)
+  const [selectedNotes, setSelectedNotes] = useState<{
+    documentName: string
+    customerName?: string
+    notes: string
+  } | null>(null)
 
   // 🍎 정렬 핸들러
   const handleSort = useCallback((field: SortField) => {
@@ -443,6 +452,24 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                     }}
                   >
                     {document.originalName ?? '이름 없는 문서'}
+                    {document.notes && typeof document.notes === 'string' && document.notes.trim() !== '' && (
+                      <button
+                        className="document-notes-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedNotes({
+                            documentName: document.originalName ?? '이름 없는 문서',
+                            customerName: customer.personal_info.name,
+                            notes: document.notes || ''
+                          })
+                          setNotesModalVisible(true)
+                        }}
+                        title={document.notes.length > 50 ? `${document.notes.substring(0, 50)}...` : document.notes}
+                        aria-label="메모 보기"
+                      >
+                        📝
+                      </button>
+                    )}
                   </div>
 
                   {/* 크기 */}
@@ -554,6 +581,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         state={confirmController.state}
         actions={confirmController.actions}
       />
+
+      {selectedNotes && (
+        <DocumentNotesModal
+          visible={notesModalVisible}
+          documentName={selectedNotes.documentName}
+          customerName={selectedNotes.customerName}
+          notes={selectedNotes.notes}
+          onClose={() => {
+            setNotesModalVisible(false)
+            setSelectedNotes(null)
+          }}
+        />
+      )}
     </div>
   )
 }
