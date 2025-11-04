@@ -530,31 +530,7 @@ html[data-theme="dark"] .fulltext-modal-footer {
   background-color: var(--color-layout-content-dark);
 }
 
-.fulltext-modal-button {
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 32px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  letter-spacing: -0.3px;
-  user-select: none;
-  box-shadow: var(--shadow-sm);
-}
-
-.fulltext-modal-button:hover {
-  background-color: var(--color-accent-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-button-hover);
-}
-
-.fulltext-modal-button:active {
-  transform: translateY(0) scale(0.97);
-}
+/* 커스텀 버튼 스타일 제거: 공용 Button 컴포넌트 사용 */
 
 /* ===== 반응형 디자인 ===== */
 
@@ -601,14 +577,12 @@ html[data-theme="dark"] .fulltext-modal-footer {
   .fulltext-modal-backdrop,
   .fulltext-modal-container,
   .detail-progress-bar-fill,
-  .detail-copy-button,
-  .fulltext-modal-button {
+  .detail-copy-button {
     animation: none;
     transition: none;
   }
 
   .detail-copy-button:active,
-  .fulltext-modal-button:active,
   .detail-info-card:hover {
     transform: none;
   }

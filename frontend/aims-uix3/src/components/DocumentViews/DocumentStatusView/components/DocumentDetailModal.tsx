@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import { Tooltip } from '../../../../shared/ui'
+import Button from '@/shared/ui/Button'
 import './DocumentDetailModal.css'
 
 interface DocumentDetailModalProps {
@@ -323,12 +324,12 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 
         {/* 모달 푸터 */}
         <div className="fulltext-modal-footer">
-          <button
-            className="fulltext-modal-button"
+          <Button
+            variant="secondary"
             onClick={onClose}
           >
             닫기
-          </button>
+          </Button>
         </div>
       </div>
     </div>
