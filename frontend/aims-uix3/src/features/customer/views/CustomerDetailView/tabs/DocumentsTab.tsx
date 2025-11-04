@@ -150,6 +150,34 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     onRefresh?.()
   }, [onRefresh, refresh])
 
+  // 🍎 documentLinked 이벤트 리스너 (문서 연결 시 즉시 반영)
+  React.useEffect(() => {
+    const handleDocumentLinked = async (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        documentId: string
+        customerId: string
+        timestamp: string
+      }>
+
+      if (import.meta.env.DEV) {
+        console.log('[DocumentsTab] documentLinked 이벤트 수신:', customEvent.detail)
+      }
+
+      // 현재 고객의 문서가 연결된 경우에만 새로고침
+      if (customEvent.detail.customerId === customer?._id) {
+        if (import.meta.env.DEV) {
+          console.log('[DocumentsTab] 현재 고객의 문서 연결됨 - 자동 새로고침')
+        }
+        await refresh()
+      }
+    }
+
+    window.addEventListener('documentLinked', handleDocumentLinked)
+    return () => {
+      window.removeEventListener('documentLinked', handleDocumentLinked)
+    }
+  }, [customer?._id, refresh])
+
   const handlePreview = useCallback(
     (document: CustomerDocumentItem) => {
       void openPreview(document)

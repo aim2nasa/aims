@@ -324,6 +324,22 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       await onLink(_params)
 
       setFeedbackMessage('문서가 고객에게 성공적으로 연결되었습니다.')
+
+      // 🍎 문서 연결 이벤트 발생 (고객 상세 페이지 자동 새로고침용)
+      window.dispatchEvent(new CustomEvent('documentLinked', {
+        detail: {
+          documentId,
+          customerId: selectedCustomerId,
+          timestamp: new Date().toISOString()
+        }
+      }))
+      if (import.meta.env.DEV) {
+        console.log('[DocumentLinkModal] documentLinked 이벤트 발생:', {
+          documentId,
+          customerId: selectedCustomerId
+        })
+      }
+
       onClose()
     } catch (error) {
       console.error('문서 연결 오류:', error)
