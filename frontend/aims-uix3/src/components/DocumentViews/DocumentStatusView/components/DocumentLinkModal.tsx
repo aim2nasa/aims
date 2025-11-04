@@ -1,11 +1,15 @@
 /**
  * DocumentLinkModal Component
+ * @version 2.0.0 - 🍎 iOS 스타일 모달 디자인 통일
  * @description 문서를 고객에게 연결하는 모달
  *
- * CLAUDE.md, CSS_SYSTEM.md, COMPONENT_GUIDE.md, ARCHITECTURE.md 준수
+ * - React Portal 사용
+ * - 드래그로 이동 가능
+ * - ESC 키로 닫기
+ * - iOS 스타일 디자인
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Document, DocumentCustomerRelation } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
@@ -68,6 +72,13 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState<number>(1)
+
+  // 🍎 드래그 상태 관리
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragOriginRef = useRef({ x: 0, y: 0 })
+  const modalRef = useRef<HTMLDivElement>(null)
+
   const documentId = useMemo(
     () => document?._id || (document as Record<string, string | undefined>)?.['id'] || '',
     [document]
@@ -92,6 +103,40 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       setCurrentPage(1)
     }
   }, [visible])
+
+  /**
+   * 드래그 중 핸들러
+   */
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return
+
+    const newX = e.clientX - dragOriginRef.current.x
+    const newY = e.clientY - dragOriginRef.current.y
+
+    setPosition({ x: newX, y: newY })
+  }, [isDragging])
+
+  /**
+   * 드래그 종료 핸들러
+   */
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  /**
+   * 드래그 이벤트 리스너 등록
+   */
+  useEffect(() => {
+    if (isDragging) {
+      window.document.addEventListener('mousemove', handleMouseMove)
+      window.document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        window.document.removeEventListener('mousemove', handleMouseMove)
+        window.document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+    return undefined
+  }, [isDragging, handleMouseMove, handleMouseUp])
 
   /**
    * Escape 키로 모달 닫기
@@ -280,9 +325,33 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       onClick={handleBackdropClick}
       role="presentation"
     >
-      <div className="document-link-modal" role="dialog" aria-modal="true" aria-labelledby="document-link-modal-title">
-        {/* Header */}
-        <header className="document-link-modal__header">
+      <div
+        ref={modalRef}
+        className="document-link-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="document-link-modal-title"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
+      >
+        {/* Header - 드래그 가능 */}
+        <header
+          className="document-link-modal__header"
+          onMouseDown={(e) => {
+            if (e.button !== 0) return // 왼쪽 클릭만
+            if (!modalRef.current) return
+
+            setIsDragging(true)
+            const rect = modalRef.current.getBoundingClientRect()
+            dragOriginRef.current = {
+              x: e.clientX - rect.left + position.x,
+              y: e.clientY - rect.top + position.y
+            }
+          }}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
           <div className="document-link-modal__title">
             <SFSymbol
               name="person.crop.circle.badge.plus"
@@ -290,9 +359,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
               weight={SFSymbolWeight.MEDIUM}
               decorative={true}
             />
-            <div>
-              <h2 id="document-link-modal-title">문서를 고객에게 연결</h2>
-            </div>
+            <h2 id="document-link-modal-title">문서를 고객에게 연결</h2>
           </div>
           <button
             type="button"
