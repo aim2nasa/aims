@@ -281,8 +281,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [mainPaneVisible, setMainPaneVisible] = useState(true)
   const [brbVisible, setBrbVisible] = useState(true)
 
-  // LeftPane 축소/확장 상태
-  const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(false)
+  // LeftPane 축소/확장 상태 (localStorage 영속화)
+  const [leftPaneCollapsed, setLeftPaneCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aims-leftPaneCollapsed')
+      return saved === 'true'
+    } catch {
+      return false
+    }
+  })
 
   // 문서 관리 View 상태 (한 번에 하나의 View만 표시) - 영속화 지원
   const [activeDocumentView, setActiveDocumentView] = useState<string | null>(
@@ -756,6 +763,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
       const newCollapsed = !prev
+
+      // localStorage에 상태 저장
+      try {
+        localStorage.setItem('aims-leftPaneCollapsed', String(newCollapsed))
+        if (import.meta.env.DEV) {
+          console.log('[App] LeftPane 상태 저장:', newCollapsed)
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error('[App] LeftPane 상태 저장 실패:', error)
+        }
+      }
 
       // 애니메이션 상태 설정
       if (import.meta.env.DEV) {
