@@ -14,6 +14,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Document } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
+import Button from '@/shared/ui/Button'
 import './DocumentSummaryModal.css'
 
 interface DocumentSummaryModalProps {
@@ -343,12 +344,12 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
 
         {/* 모달 푸터 */}
         <div className="fulltext-modal-footer">
-          <button
-            className="fulltext-modal-button"
+          <Button
+            variant="secondary"
             onClick={onClose}
           >
             닫기
-          </button>
+          </Button>
         </div>
       </div>
     </div>
