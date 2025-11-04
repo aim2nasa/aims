@@ -97,7 +97,65 @@ export class SearchService {
         }
       }
 
-      // 키워드 검색은 이미 전체 정보 포함
+      // 키워드 검색의 경우 customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+      if (query.search_mode === 'keyword' && data.search_results && data.search_results.length > 0) {
+        // customer_id 수집 (중복 제거) - ObjectId를 문자열로 변환
+        const customerIds = new Set<string>()
+        data.search_results.forEach((item: SearchResultItem) => {
+          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+            // ObjectId를 문자열로 변환
+            const customerId = String(item.customer_relation.customer_id)
+            customerIds.add(customerId)
+          }
+        })
+
+        // customer_name 일괄 조회 (효율적!)
+        const customerMap: Record<string, string> = {}
+        if (customerIds.size > 0) {
+          await Promise.all(
+            Array.from(customerIds).map(async (customerId) => {
+              try {
+                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`)
+                if (customerResponse.ok) {
+                  const customerData = await customerResponse.json()
+                  if (customerData.success && customerData.data) {
+                    customerMap[customerId] = customerData.data.personal_info?.name || null
+                  }
+                }
+              } catch (error) {
+                console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
+              }
+            })
+          )
+        }
+
+        // 검색 결과에 customer_name 추가
+        const enrichedResults = data.search_results.map((item: SearchResultItem) => {
+          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+            // ObjectId를 문자열로 변환
+            const customerId = String(item.customer_relation.customer_id)
+            const customerName = customerMap[customerId]
+            if (customerName) {
+              return {
+                ...item,
+                customer_relation: {
+                  ...item.customer_relation,
+                  customer_name: customerName
+                }
+              }
+            }
+          }
+          return item
+        })
+
+        return {
+          answer: data.answer || null,
+          search_results: enrichedResults,
+          search_mode: query.search_mode,
+        }
+      }
+
+      // 그 외의 경우 원본 그대로 반환
       return {
         answer: data.answer || null,
         search_results: data.search_results || [],
