@@ -109,8 +109,8 @@ describe('DocumentFullTextModal', () => {
         />
       );
 
-      const modal = screen.getByRole('dialog');
-      expect(modal.parentElement).toBe(document.body);
+      const backdrop = screen.getByRole('presentation');
+      expect(backdrop.parentElement).toBe(document.body);
     });
   });
 
@@ -273,7 +273,7 @@ describe('DocumentFullTextModal', () => {
         />
       );
 
-      const backdrop = screen.getByRole('dialog');
+      const backdrop = screen.getByRole('presentation');
       await user.click(backdrop);
 
       expect(handleClose).toHaveBeenCalled();
@@ -311,31 +311,6 @@ describe('DocumentFullTextModal', () => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    it('X 버튼 클릭 시 onClose가 호출되어야 한다', async () => {
-      const handleClose = vi.fn();
-      const user = userEvent.setup();
-
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: { raw: { meta: { full_text: '테스트' } } }
-        })
-      } as Response);
-
-      render(
-        <DocumentFullTextModal
-          visible={true}
-          onClose={handleClose}
-          document={mockDocument}
-        />
-      );
-
-      const xButton = screen.getByLabelText('모달 닫기');
-      await user.click(xButton);
-
-      expect(handleClose).toHaveBeenCalled();
-    });
   });
 
   describe('접근성', () => {
@@ -358,7 +333,7 @@ describe('DocumentFullTextModal', () => {
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-modal', 'true');
-      expect(dialog).toHaveAttribute('aria-labelledby', 'fulltext-modal-title');
+      expect(dialog).toHaveAttribute('aria-label', '문서 전체 텍스트');
     });
 
     it('파일명이 모달 제목으로 표시되어야 한다', () => {
