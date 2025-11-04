@@ -1,73 +1,13 @@
 /**
  * DocumentLinkModal Styles
- * @version 2.0.0 - 🍎 iOS 스타일 모달 디자인 통일
+ * @version 3.0.0 - 🍎 공통 Modal 컴포넌트 적용
+ * @updated 2025-11-04
  *
- * 🍎 Apple Design Philosophy:
- * - Frosted Glass Effect with Vibrancy
- * - No Text Selection (user-select: none)
- * - Elevated iOS Shadows & Depths
- * - Refined Typography & Spacing
+ * 공통 Modal 컴포넌트 사용으로 backdrop, container, header, close button 스타일 제거
+ * 컴포넌트 고유 스타일(검색, 고객 선택, 중복 체크 등)만 유지
  */
 
-/* ===== 기본 모달 구조 ===== */
-
-/* 배경 오버레이 */
-.document-link-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-layout-main);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* 모달 컨테이너 - 🍎 Elevated Card */
-.document-link-modal {
-  background-color: var(--color-neutral-0);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 63%; /* 90% - 30% = 63% */
-  max-width: 560px; /* 800px - 30% = 560px */
-  max-height: 95vh;
-  min-height: 770px; /* 700px + 10% = 770px */
-  display: flex;
-  flex-direction: column;
-  animation: slideUp var(--duration-normal) var(--easing-ease-out);
-  user-select: none;
-}
-
-html[data-theme="dark"] .document-link-modal {
-  background-color: var(--color-ios-menu-bg-dark);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* 모달 바디 */
+/* ===== 모달 바디 ===== */
 .document-link-modal__content {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -81,61 +21,18 @@ html[data-theme="dark"] .document-link-modal__content {
   background-color: var(--color-layout-secondary-dark);
 }
 
-/* 모달 헤더 - 🍎 iOS Title Bar */
-.document-link-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-layout-border);
-  user-select: none;
-}
-
+/* ===== 제목 스타일 (Modal title prop에서 사용) ===== */
 .document-link-modal__title {
   display: flex;
   gap: var(--spacing-3);
   align-items: center;
-  flex: 1;
 }
 
-.document-link-modal__title h2 {
+.document-link-modal__title span {
   margin: 0;
   font-size: 17px;
   font-weight: 600;
   color: var(--color-text-primary);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-link-modal__close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
-}
-
-.document-link-modal__close:hover {
-  background-color: var(--color-layout-accent);
-}
-
-.document-link-modal__close:active {
-  transform: scale(0.95);
-}
-
-.document-link-modal__close:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
 }
 
 /* ===== 콘텐츠 섹션 ===== */
@@ -518,20 +415,6 @@ html[data-theme="dark"] .document-link-modal__textarea {
   margin: 0;
   /* font-size: var(--font-size-footnote); () */
   color: var(--color-text-secondary);
-}
-
-/* 모달 푸터 */
-.document-link-modal__footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--color-layout-border);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-3);
-  background-color: var(--color-neutral-0);
-}
-
-html[data-theme="dark"] .document-link-modal__footer {
-  background-color: var(--color-ios-menu-bg-dark);
 }
 
 /* ===== 입력 필드 및 버튼 스타일 ===== */

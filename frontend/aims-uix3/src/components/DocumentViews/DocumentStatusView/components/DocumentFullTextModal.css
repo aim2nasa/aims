@@ -1,113 +1,14 @@
 /**
  * DocumentFullTextModal Styles
  * @since 1.0.0
- * @version 2.0.0 - 🍎 문서검색 FullTextModal 스타일 적용
+ * @version 3.0.0 - 🍎 공통 Modal 컴포넌트 적용
+ * @updated 2025-11-04
  *
- * 🍎 iOS 스타일 Full Text 모달 기반
- * - React Portal 사용
- * - 드래그로 이동 가능
- * - ESC 키로 닫기
- * - 로딩 스피너 추가
+ * 공통 Modal 컴포넌트 사용으로 backdrop, container, header, footer 스타일 제거
+ * 컴포넌트 고유 스타일(로딩, 콘텐츠 표시)만 유지
  */
 
-/* ===== 기본 모달 구조 (FullTextModal과 동일) ===== */
-
-/* 배경 오버레이 */
-.fulltext-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-layout-main);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* 모달 컨테이너 */
-.fulltext-modal-container {
-  background-color: var(--color-neutral-0);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 800px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp var(--duration-normal) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .fulltext-modal-container {
-  background-color: var(--color-ios-menu-bg-dark);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* 모달 헤더 */
-.fulltext-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-layout-border);
-  user-select: none; /* 드래그 시 텍스트 선택 방지 */
-}
-
-.fulltext-modal-title {
-  /* font-size: var(--font-size-body); () */
-  /* font-weight: var(--font-weight-semibold); () */
-  color: var(--color-text-primary);
-  margin: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fulltext-modal-close {
-  background: none;
-  border: none;
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background-color var(--duration-fast) var(--easing-ease-out);
-}
-
-.fulltext-modal-close:hover {
-  background-color: var(--color-layout-accent);
-}
-
-.fulltext-modal-close:active {
-  transform: scale(0.95);
-}
+/* ===== DocumentFullTextModal 전용 스타일 ===== */
 
 /* 모달 바디 */
 .fulltext-modal-body {
@@ -132,36 +33,6 @@ html[data-theme="dark"] .fulltext-modal-body {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
-
-/* 모달 푸터 */
-.fulltext-modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--color-layout-border);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.fulltext-modal-button {
-  background-color: var(--color-accent);
-  color: var(--color-text-primary);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 24px;
-  /* font-size: var(--font-size-body); () */
-  /* font-weight: var(--font-weight-medium); () */
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-}
-
-.fulltext-modal-button:hover {
-  background-color: var(--color-accent-hover);
-}
-
-.fulltext-modal-button:active {
-  transform: scale(0.98);
-}
-
-/* ===== DocumentFullTextModal 전용 스타일 ===== */
 
 /* 로딩 상태 */
 .fulltext-loading-state {

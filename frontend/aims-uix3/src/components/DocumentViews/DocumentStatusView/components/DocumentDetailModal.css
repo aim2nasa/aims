@@ -1,141 +1,19 @@
 /**
  * DocumentDetailModal Styles
  * @since 1.0.0
- * @version 5.0.0 - 🍎 단일 통합 레이아웃 (원본 데이터 독립 스크롤)
+ * @version 6.0.0 - 🍎 공통 Modal 컴포넌트 적용
+ * @updated 2025-11-04
+ *
+ * 공통 Modal 컴포넌트 사용으로 backdrop, container, header, close, footer 스타일 제거
+ * 컴포넌트 고유 스타일(처리 상태, 문서 정보, 원본 데이터)만 유지
  *
  * 🍎 Apple Design Philosophy:
- * - Frosted Glass Effect with Vibrancy
  * - No Text Selection (user-select: none)
  * - Elevated iOS Shadows & Depths
  * - Refined Typography & Spacing
  * - Progressive Disclosure
  * - Unified Single Layout (No Tabs)
  */
-
-/* ===== 기본 모달 구조 ===== */
-
-/* 배경 오버레이 */
-.fulltext-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-overlay-backdrop);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn var(--duration-fast) var(--easing-ease-out);
-  user-select: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* 모달 컨테이너 - 🍎 Elevated Card */
-.fulltext-modal-container {
-  background-color: var(--color-layout-content-light);
-  border-radius: 20px;
-  box-shadow: var(--shadow-modal-light);
-  width: 90%;
-  max-width: 900px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp var(--duration-normal) var(--easing-ease-out);
-  user-select: none;
-}
-
-html[data-theme="dark"] .fulltext-modal-container {
-  background-color: var(--color-layout-content-dark);
-  box-shadow: var(--shadow-modal-dark);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(30px) scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* 모달 헤더 - 🍎 iOS Title Bar */
-.fulltext-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 28px;
-  border-bottom: 0.5px solid var(--color-layout-border);
-  user-select: none;
-  background-color: var(--color-layout-content-light);
-  border-radius: 20px 20px 0 0;
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .fulltext-modal-header {
-  background-color: var(--color-layout-content-dark);
-}
-
-.fulltext-modal-title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  color: var(--color-text-primary);
-  margin: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: -0.5px;
-  user-select: none;
-}
-
-.fulltext-modal-close {
-  background-color: var(--color-layout-accent-light);
-  border: none;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
-  color: var(--color-text-primary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  flex-shrink: 0;
-  user-select: none;
-}
-
-html[data-theme="dark"] .fulltext-modal-close {
-  background-color: var(--color-layout-accent-dark);
-  color: var(--color-text-primary);
-}
-
-.fulltext-modal-close:hover {
-  background-color: var(--color-layout-accent-light);
-  color: var(--color-text-primary);
-  transform: scale(1.1);
-}
-
-html[data-theme="dark"] .fulltext-modal-close:hover {
-  background-color: var(--color-layout-accent-dark);
-}
-
-.fulltext-modal-close:active {
-  transform: scale(0.95);
-}
 
 /* ===== 모달 바디 - 통합 레이아웃 (스크롤 없음) ===== */
 
@@ -513,37 +391,9 @@ html[data-theme="dark"] .detail-code-block {
   box-sizing: border-box;
 }
 
-/* ===== 모달 푸터 ===== */
-
-.fulltext-modal-footer {
-  padding: 20px 28px 24px 28px;
-  border-top: 0.5px solid var(--color-layout-border);
-  display: flex;
-  justify-content: flex-end;
-  background-color: var(--color-layout-content-light);
-  border-radius: 0 0 20px 20px;
-  user-select: none;
-  flex-shrink: 0;
-}
-
-html[data-theme="dark"] .fulltext-modal-footer {
-  background-color: var(--color-layout-content-dark);
-}
-
-/* 커스텀 버튼 스타일 제거: 공용 Button 컴포넌트 사용 */
-
 /* ===== 반응형 디자인 ===== */
 
 @media (max-width: 768px) {
-  .fulltext-modal-container {
-    width: 95%;
-    max-height: 90vh;
-  }
-
-  .fulltext-modal-header {
-    padding: 20px 24px;
-  }
-
   .fulltext-modal-body {
     padding: 20px;
   }
@@ -565,17 +415,11 @@ html[data-theme="dark"] .fulltext-modal-footer {
     height: 320px;
     max-height: 320px;
   }
-
-  .fulltext-modal-footer {
-    padding: 16px 24px 20px 24px;
-  }
 }
 
 /* ===== 접근성 ===== */
 
 @media (prefers-reduced-motion: reduce) {
-  .fulltext-modal-backdrop,
-  .fulltext-modal-container,
   .detail-progress-bar-fill,
   .detail-copy-button {
     animation: none;
