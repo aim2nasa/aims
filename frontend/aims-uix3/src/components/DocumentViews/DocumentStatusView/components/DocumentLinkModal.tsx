@@ -398,14 +398,6 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
             />
             <h2 id="document-link-modal-title">문서를 고객에게 연결</h2>
           </div>
-          <button
-            type="button"
-            className="document-link-modal__close"
-            onClick={onClose}
-            aria-label="모달 닫기"
-          >
-            ×
-          </button>
         </header>
 
         <div className="document-link-modal__content">

@@ -376,7 +376,7 @@ html[data-theme="dark"] .document-link-modal__customer-item--selected:hover {
 /* 한 줄 레이아웃 */
 .document-link-modal__customer-item-row {
   display: grid;
-  grid-template-columns: 20px auto minmax(80px, 1fr) minmax(120px, 1.5fr) minmax(150px, 3fr);
+  grid-template-columns: 20px auto minmax(80px, 1fr) minmax(120px, 1.5fr) minmax(200px, 4fr);
   align-items: center;
   gap: var(--spacing-2);
   width: 100%;
@@ -404,8 +404,8 @@ html[data-theme="dark"] .document-link-modal__customer-item-check svg {
   font-weight: 600;
   color: var(--color-text-tertiary);
   /* font-size: var(--font-size-footnote); () */
-  min-width: 24px;
-  text-align: right;
+  min-width: 8px;
+  text-align: left;
 }
 
 /* 선택된 항목의 번호 강조 */
