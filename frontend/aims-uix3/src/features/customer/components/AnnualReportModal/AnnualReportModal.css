@@ -60,14 +60,14 @@
   gap: 16px;
   margin-bottom: 24px;
   padding: 20px;
-  background: #ffffff;
+  background: var(--color-layout-content-light);
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--color-layout-border);
 }
 
 [data-theme="dark"] .annual-report-summary {
-  background: #1f2937;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--color-layout-content-dark);
+  border-color: var(--color-layout-border);
 }
 
 .annual-report-summary__item {
@@ -116,14 +116,14 @@
 
 .contracts-table-wrapper {
   overflow-x: auto;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--color-layout-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--color-layout-content-light);
 }
 
 [data-theme="dark"] .contracts-table-wrapper {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: #1f2937;
+  border-color: var(--color-layout-border);
+  background: var(--color-layout-content-dark);
 }
 
 .contracts-table {
@@ -135,14 +135,14 @@
 }
 
 .contracts-table thead {
-  background: #f5f6f7;
+  background: var(--color-layout-secondary-light);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 [data-theme="dark"] .contracts-table thead {
-  background: #374151;
+  background: var(--color-layout-secondary-dark);
 }
 
 .contracts-table th {
@@ -150,7 +150,7 @@
   text-align: left;
   font-weight: 600;
   color: var(--color-text-primary);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 2px solid var(--color-layout-border);
   white-space: nowrap;
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
   text-transform: uppercase;
@@ -172,7 +172,7 @@
 }
 
 [data-theme="dark"] .contracts-table__th--sortable:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--color-hover-dark);
 }
 
 /* 활성 정렬 헤더 강조 */
@@ -182,7 +182,7 @@
 }
 
 [data-theme="dark"] .contracts-table__th--sortable.contracts-table__th--sorted {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: var(--color-primary-alpha-light);
 }
 
 /* 정렬 아이콘 스타일 - 명확하게 표시 */
@@ -206,16 +206,16 @@
 }
 
 [data-theme="dark"] .contracts-table th {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: var(--color-layout-border);
 }
 
 .contracts-table tbody tr {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--color-layout-border);
   transition: background-color 0.2s ease;
 }
 
 [data-theme="dark"] .contracts-table tbody tr {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: var(--color-hover-dark);
 }
 
 .contracts-table tbody tr:last-child {
@@ -223,11 +223,11 @@
 }
 
 .contracts-table tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--color-hover-light);
 }
 
 [data-theme="dark"] .contracts-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-dark);
 }
 
 .contracts-table td {
@@ -329,12 +329,12 @@
 .annual-report-modal__footer {
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--color-layout-border);
   text-align: center;
 }
 
 [data-theme="dark"] .annual-report-modal__footer {
-  border-top-color: rgba(255, 255, 255, 0.08);
+  border-top-color: var(--color-layout-border);
 }
 
 .annual-report-modal__footer-text {
