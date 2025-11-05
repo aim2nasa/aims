@@ -494,7 +494,7 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-regular);
 }
 
 .cell-name .customer-icon {
