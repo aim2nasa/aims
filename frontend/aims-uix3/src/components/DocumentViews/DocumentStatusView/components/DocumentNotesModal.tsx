@@ -9,6 +9,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button, Modal } from '@/shared/ui'
+import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
+import { AppleConfirmModal } from '../../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import './DocumentNotesModal.css'
 
 export interface DocumentNotesModalProps {
@@ -38,6 +40,9 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   const [editedNotes, setEditedNotes] = useState(notes)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // AppleConfirmModal 컨트롤러
+  const confirmController = useAppleConfirmController()
 
   // notes가 변경되면 editedNotes도 업데이트
   useEffect(() => {
@@ -71,10 +76,16 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   const handleDelete = async () => {
     if (!onDelete) return
 
-    // 삭제 확인
-    if (!confirm('메모를 삭제하시겠습니까?')) {
-      return
-    }
+    // AppleConfirmModal로 삭제 확인
+    const confirmed = await confirmController.actions.openModal({
+      title: '메모 삭제',
+      message: '메모를 삭제하시겠습니까?',
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive'
+    })
+
+    if (!confirmed) return
 
     setIsDeleting(true)
     try {
@@ -145,48 +156,56 @@ export const DocumentNotesModal: React.FC<DocumentNotesModalProps> = ({
   )
 
   return (
-    <Modal
-      visible={visible}
-      onClose={onClose}
-      title="문서 메모"
-      size="md"
-      footer={footer}
-      ariaLabel="문서 메모"
-      className="document-notes-modal"
-    >
-      {/* 문서 정보 */}
-      <div className="document-notes-modal__info">
-        <div className="info-row">
-          <span className="info-label">문서:</span>
-          <span className="info-value">{documentName}</span>
-        </div>
-        {customerName && (
+    <>
+      <Modal
+        visible={visible}
+        onClose={onClose}
+        title="문서 메모"
+        size="md"
+        footer={footer}
+        ariaLabel="문서 메모"
+        className="document-notes-modal"
+      >
+        {/* 문서 정보 */}
+        <div className="document-notes-modal__info">
           <div className="info-row">
-            <span className="info-label">고객:</span>
-            <span className="info-value">{customerName}</span>
+            <span className="info-label">문서:</span>
+            <span className="info-value">{documentName}</span>
           </div>
-        )}
-      </div>
+          {customerName && (
+            <div className="info-row">
+              <span className="info-label">고객:</span>
+              <span className="info-value">{customerName}</span>
+            </div>
+          )}
+        </div>
 
-      {/* 메모 내용 */}
-      <div className="document-notes-modal__notes">
-        <h3>메모 내용</h3>
-        {isEditing ? (
-          <textarea
-            className="notes-textarea"
-            value={editedNotes}
-            onChange={(e) => setEditedNotes(e.target.value)}
-            placeholder="메모를 입력하세요..."
-            rows={8}
-            autoFocus
-          />
-        ) : (
-          <div className="notes-content">
-            {notes || '(메모 없음)'}
-          </div>
-        )}
-      </div>
-    </Modal>
+        {/* 메모 내용 */}
+        <div className="document-notes-modal__notes">
+          <h3>메모 내용</h3>
+          {isEditing ? (
+            <textarea
+              className="notes-textarea"
+              value={editedNotes}
+              onChange={(e) => setEditedNotes(e.target.value)}
+              placeholder="메모를 입력하세요..."
+              rows={8}
+              autoFocus
+            />
+          ) : (
+            <div className="notes-content">
+              {notes || '(메모 없음)'}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* AppleConfirmModal */}
+      <AppleConfirmModal
+        state={confirmController.state}
+        actions={confirmController.actions}
+      />
+    </>
   )
 }
 
