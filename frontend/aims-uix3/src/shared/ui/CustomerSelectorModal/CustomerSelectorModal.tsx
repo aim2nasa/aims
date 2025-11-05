@@ -255,15 +255,23 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {initial}
               </button>
             ))}
-            {selectedInitial && (
-              <button
-                className="customer-selector-modal__initial-clear"
-                onClick={() => setSelectedInitial(null)}
-                title="초성 필터 해제"
-              >
-                전체
-              </button>
-            )}
+            {/* 초성 필터 상태 표시 */}
+            <div className="customer-selector-modal__filter-status">
+              <span className="customer-selector-modal__filter-label">필터:</span>
+              <span className={`customer-selector-modal__filter-value ${selectedInitial ? 'active' : 'inactive'}`}>
+                {selectedInitial || '없음'}
+              </span>
+              {selectedInitial && (
+                <button
+                  className="customer-selector-modal__filter-clear"
+                  onClick={() => setSelectedInitial(null)}
+                  title="초성 필터 해제"
+                  aria-label="초성 필터 해제"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </>
       )}
