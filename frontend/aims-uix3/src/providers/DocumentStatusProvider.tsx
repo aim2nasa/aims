@@ -52,7 +52,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     }
-    return 10 // 기본값
+    return 15 // 기본값 (10 → 15로 변경)
   })
   const [totalPages, setTotalPages] = useState<number>(1)
   const [totalCount, setTotalCount] = useState<number>(0)

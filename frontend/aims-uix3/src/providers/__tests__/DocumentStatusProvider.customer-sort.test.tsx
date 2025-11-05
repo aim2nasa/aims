@@ -71,9 +71,9 @@ const createMockApiResponse = () => ({
       totalPages: 1,
       totalCount: 2,
       currentPage: 1,
-      itemsPerPage: 10,
+      itemsPerPage: 15,
       page: 1,
-      limit: 10,
+      limit: 15,
       total: 2,
     },
   },
@@ -276,7 +276,7 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
       await waitFor(() => {
         expect(DocumentStatusService.DocumentStatusService.getRecentDocuments).toHaveBeenCalledWith(
           1, // page
-          10, // limit
+          15, // limit
           'customer_asc', // sort
           undefined, // searchQuery
           undefined  // customerLink
@@ -316,7 +316,7 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
       await waitFor(() => {
         expect(DocumentStatusService.DocumentStatusService.getRecentDocuments).toHaveBeenCalledWith(
           1,
-          10,
+          15,
           'customer_desc',
           undefined, // search
           undefined  // customerLink
@@ -419,7 +419,7 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
       await waitFor(() => {
         expect(DocumentStatusService.DocumentStatusService.getRecentDocuments).toHaveBeenCalledWith(
           1,
-          10,
+          15,
           'customer_asc',
           '김보성', // search
           undefined // customerLink

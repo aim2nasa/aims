@@ -44,6 +44,7 @@ interface DocumentLibraryViewProps {
 // 🍎 페이지당 항목 수 옵션
 const ITEMS_PER_PAGE_OPTIONS = [
   { value: '10', label: '10개씩' },
+  { value: '15', label: '15개씩' },
   { value: '20', label: '20개씩' },
   { value: '50', label: '50개씩' },
   { value: '100', label: '100개씩' }
