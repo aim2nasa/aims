@@ -26,6 +26,8 @@ export interface SearchQuery {
   search_mode: SearchMode
   /** 키워드 모드 (키워드 검색시만 사용) */
   mode?: KeywordMode
+  /** 고객 ID (특정 고객의 문서만 검색) */
+  customer_id?: string
 }
 
 /**

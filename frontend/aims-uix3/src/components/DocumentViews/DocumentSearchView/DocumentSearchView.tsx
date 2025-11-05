@@ -93,6 +93,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,
+    handleCustomerIdChange,
     handleReset,
   } = useDocumentSearch()
 
@@ -480,7 +481,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </span>
                     <button
                       className="clear-customer-button"
-                      onClick={() => setSelectedCustomer(null)}
+                      onClick={() => {
+                        setSelectedCustomer(null)
+                        handleCustomerIdChange(null)
+                      }}
                       aria-label="고객 선택 해제"
                       title="고객 선택 해제"
                     >
@@ -1031,6 +1035,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         onClose={() => setIsCustomerSelectorOpen(false)}
         onSelect={(customer) => {
           setSelectedCustomer(customer)
+          handleCustomerIdChange(customer._id)
           console.log('선택된 고객:', customer)
         }}
       />

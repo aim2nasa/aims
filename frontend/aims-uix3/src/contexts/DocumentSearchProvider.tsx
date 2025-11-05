@@ -17,6 +17,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
   const [query, setQuery] = usePersistedState<string>('document-search-query', '')
   const [searchMode, setSearchMode] = usePersistedState<SearchMode>('document-search-mode', 'keyword')
   const [keywordMode, setKeywordMode] = usePersistedState<KeywordMode>('document-search-keyword-mode', 'AND')
+  const [customerId, setCustomerId] = useState<string | null>(null)
   const [results, setResults] = usePersistedState<DocumentSearchContextValue['results']>('document-search-results', [])
   const [answer, setAnswer] = usePersistedState<string | null>('document-search-answer', null)
   const [lastSearchMode, setLastSearchMode] = usePersistedState<SearchMode | null>('document-search-last-mode', null)
@@ -40,7 +41,8 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
       const searchQuery = {
         query: query.trim(),
         search_mode: searchMode,
-        ...(searchMode === 'keyword' && { mode: keywordMode })
+        ...(searchMode === 'keyword' && { mode: keywordMode }),
+        ...(customerId && { customer_id: customerId })
       }
 
       const response = await SearchService.searchDocuments(searchQuery)
@@ -54,7 +56,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     } finally {
       setIsLoading(false)
     }
-  }, [keywordMode, query, searchMode])
+  }, [keywordMode, query, searchMode, customerId])
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value)
@@ -70,18 +72,24 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     setKeywordMode(mode)
   }, [])
 
+  const handleCustomerIdChange = useCallback((id: string | null) => {
+    setCustomerId(id)
+  }, [])
+
   const handleReset = useCallback(() => {
     setQuery('')
     setResults([])
     setAnswer(null)
     setError(null)
     setLastSearchMode(null)
+    setCustomerId(null)
   }, [])
 
   const value: DocumentSearchContextValue = {
     query,
     searchMode,
     keywordMode,
+    customerId,
     results,
     answer,
     isLoading,
@@ -91,6 +99,7 @@ export const DocumentSearchProvider: React.FC<DocumentSearchProviderProps> = ({ 
     handleQueryChange,
     handleSearchModeChange,
     handleKeywordModeChange,
+    handleCustomerIdChange,
     handleReset
   }
 

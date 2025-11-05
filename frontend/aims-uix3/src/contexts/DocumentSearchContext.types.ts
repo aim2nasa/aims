@@ -13,6 +13,7 @@ export interface DocumentSearchContextValue {
   query: string
   searchMode: SearchMode
   keywordMode: KeywordMode
+  customerId: string | null
   results: SearchResultItem[]
   answer: string | null
   isLoading: boolean
@@ -24,6 +25,7 @@ export interface DocumentSearchContextValue {
   handleQueryChange: (value: string) => void
   handleSearchModeChange: (mode: SearchMode) => void
   handleKeywordModeChange: (mode: KeywordMode) => void
+  handleCustomerIdChange: (customerId: string | null) => void
   handleReset: () => void
 }
 

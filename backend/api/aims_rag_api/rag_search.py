@@ -20,6 +20,7 @@ class SearchRequest(BaseModel):
     mode: str = "OR"
     search_mode: str = "semantic"
     user_id: Optional[str] = None
+    customer_id: Optional[str] = None
 
 class UnifiedSearchResponse(BaseModel):
     search_mode: str
@@ -142,6 +143,8 @@ async def search_endpoint(request: SearchRequest):
     if request.search_mode == "keyword":
         # 키워드 검색 로직
         payload = {"query": request.query, "mode": request.mode, "user_id": request.user_id}
+        if request.customer_id:
+            payload["customer_id"] = request.customer_id
         try:
             response = requests.post(SMARTSEARCH_API_URL, json=payload)
             response.raise_for_status()
