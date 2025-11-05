@@ -126,6 +126,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  // 🍎 검색 실행 시점의 고객 정보 (검색 결과 설명에 사용)
+  const [lastSearchCustomer, setLastSearchCustomer] = useState<Customer | null>(null)
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | null
@@ -190,6 +192,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
    */
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      // 검색 실행 시 현재 선택된 고객 저장
+      setLastSearchCustomer(selectedCustomer)
       handleSearch()
     }
   }
@@ -529,7 +533,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             <Tooltip content="검색 초기화">
               <button
                 className="reset-button"
-                onClick={handleReset}
+                onClick={() => {
+                  handleReset()
+                  setLastSearchCustomer(null)
+                }}
                 aria-label="검색 초기화"
               >
                 <SFSymbol
@@ -545,7 +552,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           {/* 검색 버튼 */}
           <button
             className="search-button"
-            onClick={handleSearch}
+            onClick={() => {
+              // 검색 실행 시 현재 선택된 고객 저장
+              setLastSearchCustomer(selectedCustomer)
+              handleSearch()
+            }}
             disabled={isLoading}
             aria-label={isLoading ? '검색 중' : '검색 실행'}
           >
@@ -584,8 +595,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   ) : (
                     <>
                       <p>
-                        {selectedCustomer
-                          ? `${selectedCustomer.personal_info?.name}에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`
+                        {lastSearchCustomer
+                          ? `${lastSearchCustomer.personal_info?.name}에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`
                           : `모든 고객에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`}
                       </p>
                       <p className="results-divider">--- 검색 결과 ---</p>
