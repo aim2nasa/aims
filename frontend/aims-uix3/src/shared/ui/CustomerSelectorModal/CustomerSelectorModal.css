@@ -475,7 +475,7 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
 
 .cell-type .type-badge {
   padding: 2px var(--spacing-2);
-  background: var(--color-bg-tertiary);
+  background: transparent;
   border-radius: var(--border-radius-sm);
   font-size: 10px;
   color: var(--color-text-secondary);
