@@ -59,6 +59,8 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   // 선택된 초성 필터 (ㄱ,ㄴ,ㄷ,...)
   const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
+  // 정렬 상태 (칼럼명, 오름차순/내림차순)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   // 모달 열릴 때 전체 고객 로드
   useEffect(() => {
@@ -126,7 +128,16 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     return initials[initialIndex] || '';
   };
 
-  // 표시할 고객 목록 (탭 + 초성 필터링)
+  // 정렬 핸들러
+  const handleSort = useCallback((key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  }, [sortConfig]);
+
+  // 표시할 고객 목록 (탭 + 초성 필터링 + 정렬)
   const displayedCustomers = useMemo(() => {
     let customers: Customer[];
 
@@ -154,8 +165,56 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       });
     }
 
+    // 정렬 적용
+    if (sortConfig) {
+      customers = [...customers].sort((a, b) => {
+        let aValue: string | number = '';
+        let bValue: string | number = '';
+
+        switch (sortConfig.key) {
+          case 'name':
+            aValue = a.personal_info?.name || '';
+            bValue = b.personal_info?.name || '';
+            break;
+          case 'birth':
+            aValue = a.personal_info?.birth_date || '';
+            bValue = b.personal_info?.birth_date || '';
+            break;
+          case 'gender':
+            aValue = a.personal_info?.gender || '';
+            bValue = b.personal_info?.gender || '';
+            break;
+          case 'phone':
+            aValue = a.personal_info?.mobile_phone || '';
+            bValue = b.personal_info?.mobile_phone || '';
+            break;
+          case 'email':
+            aValue = a.personal_info?.email || '';
+            bValue = b.personal_info?.email || '';
+            break;
+          case 'address':
+            // 주소는 personal_info.address.address1 경로 사용
+            aValue = a.personal_info?.address?.address1 || '';
+            bValue = b.personal_info?.address?.address1 || '';
+            break;
+          case 'type':
+            aValue = a.insurance_info?.customer_type || '';
+            bValue = b.insurance_info?.customer_type || '';
+            break;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
     return customers;
-  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial]);
+  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial, sortConfig]);
 
   // 고객 선택
   const handleSelectCustomer = useCallback((customer: Customer) => {
@@ -337,14 +396,17 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
           {/* 테이블 헤더 */}
           {displayedCustomers.length > 0 && (
             <div className="customer-selector-modal__table-header">
-              <div className="header-name">
+              <div className="header-name sortable" onClick={() => handleSort('name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
                   <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
                 </svg>
                 <span>이름</span>
+                {sortConfig?.key === 'name' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-birth">
+              <div className="header-birth sortable" onClick={() => handleSort('birth')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/>
                   <rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/>
@@ -356,8 +418,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                   <ellipse cx="9.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
                 </svg>
                 <span>생년월일</span>
+                {sortConfig?.key === 'birth' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-gender">
+              <div className="header-gender sortable" onClick={() => handleSort('gender')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="5" cy="6" r="2" fill="currentColor"/>
                   <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
@@ -365,31 +430,46 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                   <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                 </svg>
                 <span>성별</span>
+                {sortConfig?.key === 'gender' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-phone">
+              <div className="header-phone sortable" onClick={() => handleSort('phone')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
                 </svg>
                 <span>전화</span>
+                {sortConfig?.key === 'phone' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-email">
+              <div className="header-email sortable" onClick={() => handleSort('email')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                   <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>이메일</span>
+                {sortConfig?.key === 'email' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-address">
+              <div className="header-address sortable" onClick={() => handleSort('address')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
                 </svg>
                 <span>주소</span>
+                {sortConfig?.key === 'address' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
-              <div className="header-type">
+              <div className="header-type sortable" onClick={() => handleSort('type')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
                 </svg>
                 <span>유형</span>
+                {sortConfig?.key === 'type' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
               </div>
             </div>
           )}

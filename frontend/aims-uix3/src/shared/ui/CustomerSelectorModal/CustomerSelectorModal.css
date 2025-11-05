@@ -261,6 +261,29 @@
   text-overflow: ellipsis;
 }
 
+/* 정렬 가능한 헤더 */
+.customer-selector-modal__table-header > div.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  border-radius: var(--border-radius-sm);
+  padding: 4px;
+  margin: -4px;
+}
+
+.customer-selector-modal__table-header > div.sortable:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* 정렬 인디케이터 */
+.sort-indicator {
+  margin-left: 2px;
+  font-size: 10px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
 /* 헤더 아이콘은 절대 축소되지 않음 */
 .customer-selector-modal__table-header .header-icon-svg {
   flex-shrink: 0;
