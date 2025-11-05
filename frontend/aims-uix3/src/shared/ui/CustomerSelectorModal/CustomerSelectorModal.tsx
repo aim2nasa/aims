@@ -187,11 +187,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       visible={visible}
       onClose={onClose}
       title="고객 선택"
-      initialWidth={600}
+      initialWidth={950}
       initialHeight={700}
       minWidth={500}
       minHeight={500}
       showHeader={true}
+      showResetButton={true}
       footer={
         <div className="customer-selector-modal__footer-buttons">
           <Button

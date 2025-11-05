@@ -84,6 +84,31 @@ html[data-theme="dark"] .draggable-modal {
   white-space: nowrap;
 }
 
+/* 초기 크기 복원 버튼 */
+.draggable-modal__reset-button {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: transparent;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-in-out);
+  margin-left: var(--spacing-3);
+  flex-shrink: 0;
+}
+
+.draggable-modal__reset-button:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-focus);
+  color: var(--color-text-primary);
+}
+
+.draggable-modal__reset-button:active {
+  transform: scale(0.98);
+}
+
 /* ===== Content ===== */
 
 .draggable-modal__content {

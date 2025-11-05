@@ -33,6 +33,7 @@ interface UseModalDragResizeReturn {
   size: { width: number; height: number }
   isDragging: boolean
   isResizing: boolean
+  isResizedFromDefault: boolean
   modalStyle: React.CSSProperties
   headerProps: {
     onMouseDown: (e: React.MouseEvent) => void
@@ -43,6 +44,7 @@ interface UseModalDragResizeReturn {
     onMouseDown: (e: React.MouseEvent) => void
     style: React.CSSProperties
   }>
+  reset: () => void
 }
 
 /**
@@ -85,6 +87,12 @@ export const useModalDragResize = (
     y: (window.innerHeight - initialHeight) / 2
   }
 
+  // 초기값 저장 (리셋용)
+  const initialValuesRef = useRef({
+    position: initialPosition,
+    size: { width: initialWidth, height: initialHeight }
+  })
+
   const [state, setState] = useState<ModalDragResizeState>({
     position: initialPosition,
     size: { width: initialWidth, height: initialHeight },
@@ -95,6 +103,22 @@ export const useModalDragResize = (
 
   const dragStartRef = useRef({ x: 0, y: 0 })
   const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 })
+
+  // 초기값과 다른지 확인
+  const isResizedFromDefault =
+    state.size.width !== initialValuesRef.current.size.width ||
+    state.size.height !== initialValuesRef.current.size.height ||
+    state.position.x !== initialValuesRef.current.position.x ||
+    state.position.y !== initialValuesRef.current.position.y
+
+  // 초기 크기로 리셋
+  const reset = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      position: initialValuesRef.current.position,
+      size: initialValuesRef.current.size
+    }))
+  }, [])
 
   // 드래그 시작
   const handleDragStart = useCallback((e: React.MouseEvent) => {
@@ -249,9 +273,11 @@ export const useModalDragResize = (
     size: state.size,
     isDragging: state.isDragging,
     isResizing: state.isResizing,
+    isResizedFromDefault,
     modalStyle,
     headerProps,
-    resizeHandles
+    resizeHandles,
+    reset
   }
 }
 
