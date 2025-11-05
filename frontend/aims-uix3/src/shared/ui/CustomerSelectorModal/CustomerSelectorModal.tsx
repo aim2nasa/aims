@@ -50,10 +50,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
   // 검색 쿼리
   const [searchQuery, setSearchQuery] = useState('');
-  // 펼쳐진 트리 노드
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  // 활성 탭 ('all' | 'personal' | 'corporate')
+  const [activeTab, setActiveTab] = useState<'all' | 'personal' | 'corporate'>('all');
   // 선택된 고객
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  // 선택된 초성 필터 (ㄱ,ㄴ,ㄷ,...)
+  const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
 
   // 모달 열릴 때 전체 고객 로드
   useEffect(() => {
@@ -62,11 +64,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       loadCustomers({ limit: 10000, page: 1 });
       setSelectedCustomer(null);
       setSearchQuery('');
-      setExpandedNodes(new Set());
+      setActiveTab('all');
     }
   }, [visible, loadCustomers]);
 
-  // 개인/법인으로 분류
+  // 개인/법인으로 분류 및 정렬
   const { personalCustomers, corporateCustomers } = useMemo(() => {
     const personal: Customer[] = [];
     const corporate: Customer[] = [];
@@ -80,12 +82,25 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       }
     });
 
+    // 이름 기준으로 정렬 (가나다순)
+    const sortByName = (a: Customer, b: Customer) => {
+      const nameA = a.personal_info?.name || '';
+      const nameB = b.personal_info?.name || '';
+      return nameA.localeCompare(nameB, 'ko-KR');
+    };
+
+    personal.sort(sortByName);
+    corporate.sort(sortByName);
+
     return { personalCustomers: personal, corporateCustomers: corporate };
   }, [allCustomers]);
 
+  // 검색 중인지 여부
+  const isSearching = searchQuery.trim().length > 0;
+
   // 검색 필터링
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) {
+    if (!isSearching) {
       return [];
     }
 
@@ -95,20 +110,49 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
       return name.includes(query) || phone.includes(query);
     });
-  }, [allCustomers, searchQuery]);
+  }, [allCustomers, searchQuery, isSearching]);
 
-  // 트리 노드 토글
-  const toggleNode = useCallback((nodeId: string) => {
-    setExpandedNodes(prev => {
-      const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
-      } else {
-        next.add(nodeId);
+  // 한글 초성 추출 함수
+  const getInitialConsonant = (name: string): string => {
+    if (!name) return '';
+    const code = name.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) return ''; // 한글이 아님
+    const initialIndex = Math.floor(code / 588);
+    // 초성을 자모(ㄱㄴㄷ...)로 변환
+    const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+    return initials[initialIndex] || '';
+  };
+
+  // 표시할 고객 목록 (탭 + 초성 필터링)
+  const displayedCustomers = useMemo(() => {
+    let customers: Customer[];
+
+    if (isSearching) {
+      customers = searchResults;
+    } else {
+      switch (activeTab) {
+        case 'personal':
+          customers = personalCustomers;
+          break;
+        case 'corporate':
+          customers = corporateCustomers;
+          break;
+        case 'all':
+        default:
+          customers = allCustomers;
       }
-      return next;
-    });
-  }, []);
+    }
+
+    // 초성 필터 적용
+    if (selectedInitial && !isSearching) {
+      customers = customers.filter(customer => {
+        const name = customer.personal_info?.name || '';
+        return getInitialConsonant(name) === selectedInitial;
+      });
+    }
+
+    return customers;
+  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial]);
 
   // 고객 선택
   const handleSelectCustomer = useCallback((customer: Customer) => {
@@ -123,15 +167,16 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
   }, [selectedCustomer, onSelect, onClose]);
 
-  const isSearching = searchQuery.trim().length > 0;
-
   console.log('[CustomerSelectorModal] 렌더링:', {
+    visible,
     isLoading,
     allCustomersCount: allCustomers.length,
     personalCount: personalCustomers.length,
     corporateCount: corporateCustomers.length,
     isSearching,
-    searchResultsCount: searchResults.length
+    searchResultsCount: searchResults.length,
+    displayedCustomersCount: displayedCustomers.length,
+    selectedInitial
   });
 
   return (
@@ -174,6 +219,55 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
         />
       </div>
 
+      {/* 탭 (검색 중이 아닐 때만 표시) */}
+      {!isSearching && (
+        <>
+          <div className="customer-selector-modal__tabs">
+            <button
+              className={`customer-selector-modal__tab ${activeTab === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveTab('all')}
+            >
+              전체 ({allCustomers.length})
+            </button>
+            <button
+              className={`customer-selector-modal__tab ${activeTab === 'personal' ? 'active' : ''}`}
+              onClick={() => setActiveTab('personal')}
+            >
+              개인 ({personalCustomers.length})
+            </button>
+            <button
+              className={`customer-selector-modal__tab ${activeTab === 'corporate' ? 'active' : ''}`}
+              onClick={() => setActiveTab('corporate')}
+            >
+              법인 ({corporateCustomers.length})
+            </button>
+          </div>
+
+          {/* 한글 초성 인덱스 */}
+          <div className="customer-selector-modal__initials">
+            {['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
+              <button
+                key={initial}
+                className={`customer-selector-modal__initial ${selectedInitial === initial ? 'active' : ''}`}
+                onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+                title={`${initial}로 시작하는 고객`}
+              >
+                {initial}
+              </button>
+            ))}
+            {selectedInitial && (
+              <button
+                className="customer-selector-modal__initial-clear"
+                onClick={() => setSelectedInitial(null)}
+                title="초성 필터 해제"
+              >
+                전체
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
       {/* 로딩 */}
       {isLoading && (
         <div className="customer-selector-modal__loading">
@@ -184,122 +278,34 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       {/* 고객 목록 */}
       {!isLoading && (
         <div className="customer-selector-modal__list">
-          {isSearching ? (
-            // 검색 결과
-            searchResults.length === 0 ? (
-              <div className="customer-selector-modal__empty">
-                검색 결과가 없습니다
-              </div>
-            ) : (
-              searchResults.map(customer => (
-                <div
-                  key={customer._id}
-                  className={`customer-selector-modal__customer-item ${
-                    selectedCustomer?._id === customer._id ? 'selected' : ''
-                  }`}
-                  onClick={() => handleSelectCustomer(customer)}
-                >
-                  <div className="customer-selector-modal__customer-name">
-                    {customer.personal_info?.name || '이름 없음'}
-                  </div>
-                  <div className="customer-selector-modal__customer-meta">
-                    <span className="customer-selector-modal__customer-type">
-                      {customer.insurance_info?.customer_type || '개인'}
-                    </span>
-                    {customer.personal_info?.mobile_phone && (
-                      <span className="customer-selector-modal__customer-phone">
-                        {customer.personal_info.mobile_phone}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))
-            )
+          {displayedCustomers.length === 0 ? (
+            <div className="customer-selector-modal__empty">
+              {isSearching ? '검색 결과가 없습니다' : '등록된 고객이 없습니다'}
+            </div>
           ) : (
-            // 트리 구조
-            <>
-              {allCustomers.length === 0 ? (
-                <div className="customer-selector-modal__empty">
-                  등록된 고객이 없습니다
+            displayedCustomers.map(customer => (
+              <div
+                key={customer._id}
+                className={`customer-selector-modal__customer-item ${
+                  selectedCustomer?._id === customer._id ? 'selected' : ''
+                }`}
+                onClick={() => handleSelectCustomer(customer)}
+              >
+                <div className="customer-selector-modal__customer-name">
+                  {customer.personal_info?.name || '이름 없음'}
                 </div>
-              ) : (
-                <>
-                  {/* 개인 그룹 */}
-                  <div className="customer-selector-modal__tree-group">
-                    <div
-                      className="customer-selector-modal__tree-header"
-                      onClick={() => toggleNode('personal')}
-                    >
-                      <span className="customer-selector-modal__tree-icon">
-                        {expandedNodes.has('personal') ? '▼' : '▶'}
-                      </span>
-                      <span className="customer-selector-modal__tree-title">
-                        개인 ({personalCustomers.length})
-                      </span>
-                    </div>
-                    {expandedNodes.has('personal') && (
-                      <div className="customer-selector-modal__tree-items">
-                        {personalCustomers.map(customer => (
-                          <div
-                            key={customer._id}
-                            className={`customer-selector-modal__customer-item ${
-                              selectedCustomer?._id === customer._id ? 'selected' : ''
-                            }`}
-                            onClick={() => handleSelectCustomer(customer)}
-                          >
-                            <div className="customer-selector-modal__customer-name">
-                              {customer.personal_info?.name || '이름 없음'}
-                            </div>
-                            {customer.personal_info?.mobile_phone && (
-                              <div className="customer-selector-modal__customer-phone">
-                                {customer.personal_info.mobile_phone}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 법인 그룹 */}
-                  <div className="customer-selector-modal__tree-group">
-                    <div
-                      className="customer-selector-modal__tree-header"
-                      onClick={() => toggleNode('corporate')}
-                    >
-                      <span className="customer-selector-modal__tree-icon">
-                        {expandedNodes.has('corporate') ? '▼' : '▶'}
-                      </span>
-                      <span className="customer-selector-modal__tree-title">
-                        법인 ({corporateCustomers.length})
-                      </span>
-                    </div>
-                    {expandedNodes.has('corporate') && (
-                      <div className="customer-selector-modal__tree-items">
-                        {corporateCustomers.map(customer => (
-                          <div
-                            key={customer._id}
-                            className={`customer-selector-modal__customer-item ${
-                              selectedCustomer?._id === customer._id ? 'selected' : ''
-                            }`}
-                            onClick={() => handleSelectCustomer(customer)}
-                          >
-                            <div className="customer-selector-modal__customer-name">
-                              {customer.personal_info?.name || '이름 없음'}
-                            </div>
-                            {customer.personal_info?.mobile_phone && (
-                              <div className="customer-selector-modal__customer-phone">
-                                {customer.personal_info.mobile_phone}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
+                <div className="customer-selector-modal__customer-meta">
+                  <span className="customer-selector-modal__customer-type">
+                    {customer.insurance_info?.customer_type || '개인'}
+                  </span>
+                  {customer.personal_info?.mobile_phone && (
+                    <span className="customer-selector-modal__customer-phone">
+                      {customer.personal_info.mobile_phone}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </div>
       )}

@@ -52,7 +52,7 @@
 /* ===== Search ===== */
 
 .customer-selector-modal__search {
-  margin-bottom: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
 }
 
 .customer-selector-modal__search-input {
@@ -63,11 +63,104 @@
   font-size: var(--font-size-sm);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
 }
 
 .customer-selector-modal__search-input:focus {
   outline: none;
   border-color: var(--color-accent);
+}
+
+/* ===== Tabs ===== */
+
+.customer-selector-modal__tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  margin-bottom: var(--spacing-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.customer-selector-modal__tab {
+  flex: 1;
+  padding: var(--spacing-2) var(--spacing-3);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.customer-selector-modal__tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+}
+
+.customer-selector-modal__tab.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ===== 한글 초성 인덱스 ===== */
+
+.customer-selector-modal__initials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--spacing-3);
+  padding: var(--spacing-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.customer-selector-modal__initial {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-selector-modal__initial:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+  transform: scale(1.05);
+}
+
+.customer-selector-modal__initial.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.customer-selector-modal__initial-clear {
+  padding: 4px var(--spacing-2);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  margin-left: auto;
+}
+
+.customer-selector-modal__initial-clear:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 /* ===== Loading & Empty ===== */
@@ -85,54 +178,21 @@
 .customer-selector-modal__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  overflow-y: auto;
+  max-height: 500px;
 }
 
-/* ===== Tree Group ===== */
-
-.customer-selector-modal__tree-group {
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-}
-
-.customer-selector-modal__tree-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3);
-  background: var(--color-bg-secondary);
-  cursor: pointer;
-  user-select: none;
-  transition: background var(--duration-fast) var(--easing-ease-out);
-}
-
-.customer-selector-modal__tree-header:hover {
-  background: var(--color-bg-tertiary);
-}
-
-.customer-selector-modal__tree-icon {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
-.customer-selector-modal__tree-title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.customer-selector-modal__tree-items {
-  background: var(--color-bg-primary);
-}
-
-/* ===== Customer Item ===== */
+/* ===== Customer Item (컴팩트 디자인) ===== */
 
 .customer-selector-modal__customer-item {
-  padding: var(--spacing-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-2) var(--spacing-3);
   border-bottom: 1px solid var(--color-border-subtle);
   cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-ease-out);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  min-height: 44px; /* 터치 친화적 최소 높이 */
 }
 
 .customer-selector-modal__customer-item:last-child {
@@ -152,24 +212,27 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  margin-bottom: var(--spacing-1);
+  margin-bottom: 2px;
 }
 
 .customer-selector-modal__customer-meta {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  font-size: var(--font-size-xs);
 }
 
 .customer-selector-modal__customer-type {
-  padding: 2px var(--spacing-2);
+  padding: 1px var(--spacing-2);
   background: var(--color-bg-tertiary);
   border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .customer-selector-modal__customer-phone {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--color-text-tertiary);
+  white-space: nowrap;
 }
