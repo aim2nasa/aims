@@ -88,8 +88,9 @@ export class DocumentStatusService {
    * @param limit 페이지당 항목 수
    * @param sort 정렬 옵션
    * @param search 검색어 (파일명 검색)
+   * @param customerLink 고객 연결 필터 ('linked' | 'unlinked' | undefined)
    */
-  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked'): Promise<DocumentStatusResponse> {
     try {
       // Get current userId from localStorage
       const userId = typeof window !== 'undefined'
@@ -105,6 +106,9 @@ export class DocumentStatusService {
       }
       if (search && search.trim()) {
         params.append('search', search.trim())
+      }
+      if (customerLink) {
+        params.append('customerLink', customerLink)
       }
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {

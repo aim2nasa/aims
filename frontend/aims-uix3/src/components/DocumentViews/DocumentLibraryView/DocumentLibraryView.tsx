@@ -50,6 +50,77 @@ const ITEMS_PER_PAGE_OPTIONS = [
 ]
 
 /**
+ * 🍎 DocumentLibrarySearchAndFilters: 검색창 + 필터 버튼 그룹 (같은 행)
+ */
+const DocumentLibrarySearchAndFilters: React.FC<{
+  searchQuery: string
+  onSearchChange: (value: string) => void
+}> = ({ searchQuery, onSearchChange }) => {
+  const { state, actions } = useDocumentStatusContext()
+
+  return (
+    <div className="library-search-bar">
+      {/* 검색 바 */}
+      <div className="search-input-wrapper">
+        <SFSymbol
+          name="magnifyingglass"
+          size={SFSymbolSize.CAPTION_1}
+          weight={SFSymbolWeight.MEDIUM}
+          className="search-icon"
+          decorative={true}
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="파일명으로 검색..."
+          className="search-input"
+        />
+        {searchQuery && (
+          <button
+            className="search-clear-button"
+            onClick={() => onSearchChange('')}
+            aria-label="검색어 지우기"
+          >
+            <SFSymbol
+              name="xmark.circle.fill"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.REGULAR}
+              decorative={true}
+            />
+          </button>
+        )}
+      </div>
+
+      {/* 🍎 고객 연결 필터 버튼 그룹 */}
+      <div className="library-filters">
+        <button
+          className={`filter-button ${state.customerLinkFilter === 'all' ? 'filter-button--active' : ''}`}
+          onClick={() => actions.setCustomerLinkFilter('all')}
+          aria-label="모든 파일"
+        >
+          전체
+        </button>
+        <button
+          className={`filter-button ${state.customerLinkFilter === 'linked' ? 'filter-button--active' : ''}`}
+          onClick={() => actions.setCustomerLinkFilter('linked')}
+          aria-label="고객 연결된 파일만"
+        >
+          고객 연결
+        </button>
+        <button
+          className={`filter-button ${state.customerLinkFilter === 'unlinked' ? 'filter-button--active' : ''}`}
+          onClick={() => actions.setCustomerLinkFilter('unlinked')}
+          aria-label="고객 미연결된 파일만"
+        >
+          고객 미연결
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
  * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
  */
@@ -404,41 +475,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   return (
     <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
       <div className="document-library-view">
-        {/* 🍎 상단 검색 영역 */}
-        <div className="library-search-bar">
-          {/* 검색 바 */}
-          <div className="search-input-wrapper">
-            <SFSymbol
-              name="magnifyingglass"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              className="search-icon"
-              decorative={true}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="파일명으로 검색..."
-              className="search-input"
-            />
-            {searchQuery && (
-              <button
-                className="search-clear-button"
-                onClick={() => handleSearchChange('')}
-                aria-label="검색어 지우기"
-              >
-                <SFSymbol
-                  name="xmark.circle.fill"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.REGULAR}
-                  decorative={true}
-                />
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Error 표시 */}
         {error && (
           <div className="error-message">
@@ -447,8 +483,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 🍎 타겟 영역: 헤더 + 문서 리스트 + 페이지네이션 */}
+        {/* 🍎 타겟 영역: 검색 + 헤더 + 문서 리스트 + 페이지네이션 */}
         <DocumentStatusProvider>
+          <DocumentLibrarySearchAndFilters
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+          />
           <DocumentLibraryContent
             searchQuery={searchQuery}
             isDeleteMode={isDeleteMode}

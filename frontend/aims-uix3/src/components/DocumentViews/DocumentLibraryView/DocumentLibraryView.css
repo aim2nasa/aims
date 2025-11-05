@@ -23,11 +23,12 @@
   padding: 16px;
 }
 
-/* === 🍎 SEARCH BAR: 검색 영역 === */
+/* === 🍎 SEARCH BAR: 검색 및 필터 영역 === */
 
 .library-search-bar {
   display: flex;
   align-items: center;
+  gap: 12px;
   width: 100%;
   margin-bottom: 12px;
 }
@@ -36,7 +37,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 0 0 25%;
+  min-width: 200px;
   background-color: var(--color-ios-bg-secondary-light);
   border-radius: 10px;
   padding: 8px 12px;
@@ -116,6 +118,73 @@ html[data-theme="dark"] .search-clear-button {
 html[data-theme="dark"] .search-clear-button:hover {
   color: var(--color-ios-interactive-dark);
   background: var(--color-ios-bg-secondary-dark);
+}
+
+/* === 🍎 LIBRARY FILTERS: 고객 연결 필터 버튼 그룹 === */
+
+.library-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .filter-button {
+  background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.filter-button:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+  border-color: var(--color-ios-interactive-light);
+  color: var(--color-ios-interactive-light);
+}
+
+html[data-theme="dark"] .filter-button:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+  border-color: var(--color-ios-interactive-dark);
+  color: var(--color-ios-interactive-dark);
+}
+
+.filter-button--active {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+  color: var(--color-ios-text-inverted);
+}
+
+html[data-theme="dark"] .filter-button--active {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  color: var(--color-ios-text-inverted);
+}
+
+.filter-button--active:hover {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  color: var(--color-ios-text-inverted);
+}
+
+html[data-theme="dark"] .filter-button--active:hover {
+  background-color: var(--color-primary-700);
+  border-color: var(--color-primary-700);
+  color: var(--color-ios-text-inverted);
 }
 
 /* 편집 버튼 스타일은 DocumentStatusHeader.css로 이동 */
@@ -296,7 +365,7 @@ html[data-theme="dark"] .result-controls .dot-inactive {
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
-  background: #f5f6f7;  /* 완전 불투명 배경 */
+  background: var(--color-neutral-100);  /* 완전 불투명 배경 */
   border-radius: 4px;
   margin-bottom: 4px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -309,7 +378,7 @@ html[data-theme="dark"] .result-controls .dot-inactive {
 }
 
 html[data-theme="dark"] .document-list-header {
-  background: #374151;  /* 완전 불투명 다크 배경 */
+  background: var(--color-neutral-700);  /* 완전 불투명 다크 배경 */
   color: var(--color-ios-text-secondary-dark);
   box-shadow: 0 1px 0 0 var(--color-ios-separator-dark);
 }

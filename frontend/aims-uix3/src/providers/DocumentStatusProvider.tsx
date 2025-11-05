@@ -8,7 +8,8 @@ import {
   DocumentStatusContext,
   type DocumentStatusState,
   type DocumentStatusActions,
-  type DocumentStatusContextValue
+  type DocumentStatusContextValue,
+  type CustomerLinkFilter
 } from '../contexts/DocumentStatusContext'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
@@ -58,10 +59,14 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
+  // 🍎 Customer Link Filter State
+  const [customerLinkFilter, setCustomerLinkFilter] = useState<CustomerLinkFilter>('all')
+
   /**
    * 문서 목록 가져오기
    * 🍎 페이지네이션 기반: 현재 페이지와 페이지당 항목 수에 따라 데이터 가져오기
    * 🔍 검색어가 있으면 백엔드에 전달하여 전체 라이브러리 검색
+   * 🍎 고객 연결 필터도 백엔드로 전달
    */
   const fetchDocuments = useCallback(
     async (isInitialLoad: boolean = false) => {
@@ -90,9 +95,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🔍 검색어 준비 (trim 처리)
         const searchQuery = searchTerm.trim() || undefined
 
+        // 🍎 고객 연결 필터 파라미터 준비
+        const customerLinkParam = customerLinkFilter === 'all' ? undefined : customerLinkFilter
+
         // 🍎 페이지네이션 기반으로 변경: page와 limit 전달
         // 🔍 검색어도 함께 전달하여 백엔드에서 전체 라이브러리 검색
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery)
+        // 🍎 고객 연결 필터도 백엔드로 전달
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, customerLinkParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장
@@ -143,7 +152,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm]
+    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, customerLinkFilter]
   )
 
   /**
@@ -239,11 +248,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   /**
    * 🔍 검색 및 필터링
-   * 백엔드에서 이미 검색된 결과를 받으므로 프론트엔드 필터링 불필요
+   * 백엔드에서 이미 검색되고 필터링된 결과를 받으므로 프론트엔드 필터링 불필요
    * documents를 그대로 filteredDocuments로 사용
    */
   useEffect(() => {
-    // 🔍 백엔드에서 이미 필터링된 데이터를 받으므로 그대로 사용
     setFilteredDocuments(documents)
   }, [documents])
 
@@ -342,7 +350,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   // 🍎 필터 변경 시 첫 페이지로 리셋
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm])
+  }, [searchTerm, customerLinkFilter])
 
   // 🍎 페이지, 페이지네이션 또는 정렬 옵션 변경 시 문서 다시 가져오기
   useEffect(() => {
@@ -368,7 +376,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       totalCount,
       paginatedDocuments,
       sortField,
-      sortDirection
+      sortDirection,
+      customerLinkFilter
     }),
     [
       documents,
@@ -386,7 +395,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       totalCount,
       paginatedDocuments,
       sortField,
-      sortDirection
+      sortDirection,
+      customerLinkFilter
     ]
   )
 
@@ -413,7 +423,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       updateDocumentCustomerRelation,
       setSortField,
       setSortDirection,
-      handleColumnSort
+      handleColumnSort,
+      setCustomerLinkFilter
     }),
     [
       fetchDocuments,

@@ -7,6 +7,11 @@ import { createContext, useContext } from 'react'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
 /**
+ * 고객 연결 필터 타입
+ */
+export type CustomerLinkFilter = 'all' | 'linked' | 'unlinked'
+
+/**
  * 문서 처리 현황 상태
  */
 export interface DocumentStatusState {
@@ -28,6 +33,8 @@ export interface DocumentStatusState {
   // 🍎 Sort State
   sortField: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null
   sortDirection: 'asc' | 'desc'
+  // 🍎 Customer Link Filter
+  customerLinkFilter: CustomerLinkFilter
 }
 
 /**
@@ -60,6 +67,8 @@ export interface DocumentStatusActions {
   setSortField: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null) => void
   setSortDirection: (direction: 'asc' | 'desc') => void
   handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => void
+  // 🍎 Customer Link Filter Actions
+  setCustomerLinkFilter: (filter: CustomerLinkFilter) => void
 }
 
 /**

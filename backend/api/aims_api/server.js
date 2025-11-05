@@ -487,7 +487,7 @@ app.get('/api/documents', async (req, res) => {
  */
 app.get('/api/documents/status', async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink } = req.query;
     const skip = (page - 1) * limit;
 
     // userId 추출 (헤더 또는 쿼리)
@@ -503,6 +503,14 @@ app.get('/api/documents/status', async (req, res) => {
     let filter = {
       ownerId: userId
     };
+
+    // 🍎 고객 연결 필터 추가
+    if (customerLink === 'linked') {
+      filter['customer_relation.customer_id'] = { $exists: true, $ne: null };
+    } else if (customerLink === 'unlinked') {
+      filter['customer_relation.customer_id'] = { $exists: false };
+    }
+
     if (search) {
       filter['upload.originalName'] = { $regex: search, $options: 'i' };
     }
