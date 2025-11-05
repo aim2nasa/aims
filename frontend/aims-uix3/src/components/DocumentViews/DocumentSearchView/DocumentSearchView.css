@@ -458,6 +458,41 @@ html[data-theme="dark"] .search-results-column-header {
   justify-content: center;
 }
 
+/* 🍎 정렬 가능한 컬럼 헤더 */
+.search-results-column-header .sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+}
+
+.search-results-column-header .sortable:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .search-results-column-header .sortable:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.search-results-column-header .sortable.sorted {
+  color: var(--color-ios-interactive-light);
+}
+
+html[data-theme="dark"] .search-results-column-header .sortable.sorted {
+  color: var(--color-ios-interactive-dark);
+}
+
+/* 정렬 인디케이터 */
+.search-results-column-header .sort-indicator {
+  font-size: 10px;
+  margin-left: 2px;
+  opacity: 0.8;
+}
+
 /* === 🍎 RESULTS TABLE VIEW: iOS Native Style === */
 
 .search-results-table {

@@ -7,7 +7,7 @@
  * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService } from '@/services/searchService'
@@ -121,6 +121,64 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  // 🍎 정렬 상태
+  type SortField = 'filename' | 'customer' | 'status' | null
+  type SortOrder = 'asc' | 'desc'
+  const [sortField, setSortField] = useState<SortField>(null)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+
+  /**
+   * 정렬 핸들러
+   */
+  const handleSort = useCallback((field: Exclude<SortField, null>) => {
+    if (sortField === field) {
+      // 같은 필드 클릭 시 정렬 순서 토글
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      // 다른 필드 클릭 시 오름차순으로 시작
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }, [sortField, sortOrder])
+
+  /**
+   * 정렬된 결과 생성
+   */
+  const sortedResults = useMemo(() => {
+    if (!sortField || !results) return results
+
+    const sorted = [...results].sort((a, b) => {
+      let compareValue = 0
+
+      if (sortField === 'filename') {
+        const nameA = SearchService.getOriginalName(a).toLowerCase()
+        const nameB = SearchService.getOriginalName(b).toLowerCase()
+        compareValue = nameA.localeCompare(nameB, 'ko-KR')
+      } else if (sortField === 'customer') {
+        const customerA = ('customer_relation' in a && a.customer_relation?.customer_name) || ''
+        const customerB = ('customer_relation' in b && b.customer_relation?.customer_name) || ''
+        // 고객 없음은 항상 마지막
+        if (!customerA && customerB) return 1
+        if (customerA && !customerB) return -1
+        compareValue = customerA.localeCompare(customerB, 'ko-KR')
+      } else if (sortField === 'status') {
+        const statusA = DocumentProcessingModule.getProcessingStatus(a as Document).status
+        const statusB = DocumentProcessingModule.getProcessingStatus(b as Document).status
+        // 상태 우선순위: completed > processing > failed
+        const statusPriority: Record<string, number> = {
+          completed: 3,
+          processing: 2,
+          failed: 1
+        }
+        compareValue = (statusPriority[statusA] || 0) - (statusPriority[statusB] || 0)
+      }
+
+      return sortOrder === 'asc' ? compareValue : -compareValue
+    })
+
+    return sorted
+  }, [results, sortField, sortOrder])
 
   /**
    * Enter 키 입력 핸들러
@@ -535,26 +593,77 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               {/* 🍎 컬럼 헤더 */}
               <div className="search-results-column-header">
                 <div className="header-index">#</div>
-                <div className="header-filename">
+                <div
+                  className={`header-filename sortable ${sortField === 'filename' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('filename')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleSort('filename')
+                    }
+                  }}
+                  aria-label={`파일명으로 정렬 ${sortField === 'filename' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                >
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                     <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
                     <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
                   </svg>
                   <span>파일명</span>
+                  {sortField === 'filename' && (
+                    <span className="sort-indicator" aria-hidden="true">
+                      {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
                 </div>
-                <div className="header-customer">
+                <div
+                  className={`header-customer sortable ${sortField === 'customer' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('customer')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleSort('customer')
+                    }
+                  }}
+                  aria-label={`연결된 고객으로 정렬 ${sortField === 'customer' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                >
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                     <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                     <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                   </svg>
                   <span>연결된 고객</span>
+                  {sortField === 'customer' && (
+                    <span className="sort-indicator" aria-hidden="true">
+                      {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
                 </div>
-                <div className="header-status">
+                <div
+                  className={`header-status sortable ${sortField === 'status' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('status')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleSort('status')
+                    }
+                  }}
+                  aria-label={`상태로 정렬 ${sortField === 'status' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                >
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                     <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                     <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   <span>상태</span>
+                  {sortField === 'status' && (
+                    <span className="sort-indicator" aria-hidden="true">
+                      {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
                 </div>
                 <div className="header-actions">
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -567,7 +676,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
               {/* 🍎 iOS Table View 스타일 결과 리스트 */}
               <div className="search-results-table" role="list">
-                {results.map((item, index) => {
+                {sortedResults.map((item, index) => {
                   const originalName = SearchService.getOriginalName(item)
                   const summary = SearchService.getSummary(item)
                   const confidence = SearchService.getOCRConfidence(item)
