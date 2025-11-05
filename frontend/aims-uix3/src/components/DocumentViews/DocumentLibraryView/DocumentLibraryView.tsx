@@ -67,6 +67,27 @@ const DocumentLibraryContent: React.FC<{
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
+  // 🍎 드롭다운 상태 관리
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = React.useState(false)
+  const filterDropdownRef = React.useRef<HTMLDivElement>(null)
+
+  // 🍎 드롭다운 외부 클릭 시 닫기
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setIsFilterDropdownOpen(false)
+      }
+    }
+
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isFilterDropdownOpen])
+
   // 마지막 업데이트 시간 포맷팅
   const formatLastUpdated = React.useCallback((date: Date | null): string => {
     if (!date) return ''
@@ -200,29 +221,124 @@ const DocumentLibraryContent: React.FC<{
             )}
           </div>
 
-          {/* 필터 버튼 그룹 */}
+          {/* 필터 버튼 그룹 - 드롭다운 방식 */}
           <div className="library-filters">
-            <button
-              className={`filter-button ${state.customerLinkFilter === 'all' ? 'filter-button--active' : ''}`}
-              onClick={() => actions.setCustomerLinkFilter('all')}
-              aria-label="모든 파일"
-            >
-              전체
-            </button>
-            <button
-              className={`filter-button ${state.customerLinkFilter === 'linked' ? 'filter-button--active' : ''}`}
-              onClick={() => actions.setCustomerLinkFilter('linked')}
-              aria-label="고객 연결된 파일만"
-            >
-              고객 연결
-            </button>
-            <button
-              className={`filter-button ${state.customerLinkFilter === 'unlinked' ? 'filter-button--active' : ''}`}
-              onClick={() => actions.setCustomerLinkFilter('unlinked')}
-              aria-label="고객 미연결된 파일만"
-            >
-              고객 미연결
-            </button>
+            {/* 필터 아이콘 + 레이블 */}
+            <div className="library-filters__status">
+              <SFSymbol
+                name="line.horizontal.3"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="library-filters__icon"
+                decorative={true}
+              />
+              <span className="library-filters__label">필터:</span>
+            </div>
+
+            {/* 드롭다운 wrapper */}
+            <div className="library-filters__dropdown-wrapper" ref={filterDropdownRef}>
+              {/* 드롭다운 버튼 */}
+              <button
+                className={`library-filters__dropdown-button ${state.customerLinkFilter !== 'all' ? 'library-filters__dropdown-button--active' : ''}`}
+                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                aria-label="고객 연결 필터 선택"
+                aria-expanded={isFilterDropdownOpen}
+              >
+                <span>
+                  {state.customerLinkFilter === 'all' && '필터없음'}
+                  {state.customerLinkFilter === 'linked' && '고객 연결'}
+                  {state.customerLinkFilter === 'unlinked' && '고객 미연결'}
+                </span>
+                <SFSymbol
+                  name="chevron.down"
+                  size={SFSymbolSize.CAPTION_2}
+                  weight={SFSymbolWeight.SEMIBOLD}
+                  className="library-filters__dropdown-icon"
+                  decorative={true}
+                />
+              </button>
+
+              {/* 드롭다운 메뉴 */}
+              {isFilterDropdownOpen && (
+                <div className="library-filters__dropdown-menu">
+                  <button
+                    className={`library-filters__dropdown-item ${state.customerLinkFilter === 'all' ? 'library-filters__dropdown-item--selected' : ''}`}
+                    onClick={() => {
+                      actions.setCustomerLinkFilter('all')
+                      setIsFilterDropdownOpen(false)
+                    }}
+                  >
+                    <span>필터없음</span>
+                    {state.customerLinkFilter === 'all' && (
+                      <SFSymbol
+                        name="checkmark"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.SEMIBOLD}
+                        className="library-filters__check-icon"
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                  <button
+                    className={`library-filters__dropdown-item ${state.customerLinkFilter === 'linked' ? 'library-filters__dropdown-item--selected' : ''}`}
+                    onClick={() => {
+                      actions.setCustomerLinkFilter('linked')
+                      setIsFilterDropdownOpen(false)
+                    }}
+                  >
+                    <span>고객 연결</span>
+                    {state.customerLinkFilter === 'linked' && (
+                      <SFSymbol
+                        name="checkmark"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.SEMIBOLD}
+                        className="library-filters__check-icon"
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                  <button
+                    className={`library-filters__dropdown-item ${state.customerLinkFilter === 'unlinked' ? 'library-filters__dropdown-item--selected' : ''}`}
+                    onClick={() => {
+                      actions.setCustomerLinkFilter('unlinked')
+                      setIsFilterDropdownOpen(false)
+                    }}
+                  >
+                    <span>고객 미연결</span>
+                    {state.customerLinkFilter === 'unlinked' && (
+                      <SFSymbol
+                        name="checkmark"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.SEMIBOLD}
+                        className="library-filters__check-icon"
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 초기화 버튼 (전체) - 필터 활성 시에만 표시 */}
+            {state.customerLinkFilter !== 'all' && (
+              <Tooltip content="필터 초기화">
+                <button
+                  className="library-filters__clear"
+                  onClick={() => {
+                    actions.setCustomerLinkFilter('all')
+                    setIsFilterDropdownOpen(false)
+                  }}
+                  aria-label="필터 초기화"
+                >
+                  <SFSymbol
+                    name="xmark.circle.fill"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.REGULAR}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+            )}
           </div>
         </div>
 
