@@ -23,12 +23,12 @@
   flex-wrap: nowrap; /* 한 줄 유지 */
 }
 
-/* A: iOS Spotlight 서치필드 (flex-grow로 반응형) */
+/* A: iOS Spotlight 서치필드 (10% 축소) */
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-  flex: 1; /* 남은 공간 모두 차지 */
+  flex: 0.9; /* 남은 공간의 90% 차지 (10% 축소) */
   min-width: 200px; /* 최소 너비 보장 */
   background-color: var(--color-ios-bg-secondary-light);
   border-radius: 10px;
@@ -1353,14 +1353,14 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   transform: scale(0.98);
 }
 
-/* === 🍎 선택된 고객명 표시 === */
+/* === 🍎 선택된 고객명 표시 (10% 확대) === */
 .selected-customer-display {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  min-width: 120px;
-  max-width: 200px;
+  min-width: 132px; /* 120px → 132px (10% 증가) */
+  max-width: 220px; /* 200px → 220px (10% 증가) */
   background-color: var(--color-ios-bg-secondary-light);
   border-radius: 8px;
   flex-shrink: 0;
