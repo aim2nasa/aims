@@ -62,7 +62,8 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 정렬 상태 (칼럼명, 오름차순/내림차순)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   // 칼럼 폭 상태 (비율 기반, 합계 100%)
-  const initialColumnWidthRatios = [15, 11, 6, 13.5, 22, 24.5, 8]; // %
+  // [이름, 생년월일, 성별, 전화, 이메일, 주소, 유형]
+  const initialColumnWidthRatios = [14, 8, 4.5, 13, 21, 24.5, 15]; // %
   const [columnWidthRatios, setColumnWidthRatios] = useState<number[]>(initialColumnWidthRatios);
 
   // 모달 열릴 때 전체 고객 로드
