@@ -205,7 +205,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           <span>문서를 고객에게 연결</span>
         </div>
       }
-      size="lg"
+      size="sm"
       footer={footer}
       ariaLabel="문서를 고객에게 연결"
       className="document-link-modal"
@@ -223,13 +223,11 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
 
       {/* Customer Selection */}
       <section className="document-link-modal__section">
-        <h3>고객 선택</h3>
         <div className="document-link-modal__customer-selection">
           <Button
             variant="secondary"
             size="md"
             onClick={() => setIsCustomerSelectorOpen(true)}
-            fullWidth
           >
             고객선택
           </Button>
@@ -238,30 +236,26 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           <div className="document-link-modal__selected-customer">
             {selectedCustomer ? (
               <div className="selected-customer-info">
-                <div className="selected-customer-main">
-                  <span className="selected-customer-name">
-                    {selectedCustomer.personal_info?.name || '이름 없음'}
-                  </span>
-                  <button
-                    className="clear-customer-button"
-                    onClick={() => {
-                      setSelectedCustomer(null)
-                      setDuplicateWarning(null)
-                    }}
-                    aria-label="고객 선택 해제"
-                    title="고객 선택 해제"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="selected-customer-details">
-                  <span className="selected-customer-phone">
-                    {selectedCustomer.personal_info?.mobile_phone ||
-                     selectedCustomer.personal_info?.home_phone ||
-                     selectedCustomer.personal_info?.work_phone ||
-                     '연락처 없음'}
-                  </span>
-                </div>
+                <span className="selected-customer-name">
+                  {selectedCustomer.personal_info?.name || '이름 없음'}
+                </span>
+                <span className="selected-customer-phone">
+                  {selectedCustomer.personal_info?.mobile_phone ||
+                   selectedCustomer.personal_info?.home_phone ||
+                   selectedCustomer.personal_info?.work_phone ||
+                   '연락처 없음'}
+                </span>
+                <button
+                  className="clear-customer-button"
+                  onClick={() => {
+                    setSelectedCustomer(null)
+                    setDuplicateWarning(null)
+                  }}
+                  aria-label="고객 선택 해제"
+                  title="고객 선택 해제"
+                >
+                  ✕
+                </button>
               </div>
             ) : (
               <span className="customer-placeholder">고객을 선택해주세요</span>
@@ -273,7 +267,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     {/* Form */}
     <section className="document-link-modal__section">
       <div className="document-link-modal__form-row">
-        <div className="document-link-modal__field">
+        <div className="document-link-modal__field document-link-modal__field--inline">
           <label htmlFor="relationship-type">문서 유형</label>
           <Dropdown
             value={relationshipType}

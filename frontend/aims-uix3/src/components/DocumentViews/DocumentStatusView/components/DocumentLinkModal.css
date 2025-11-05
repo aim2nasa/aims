@@ -106,18 +106,29 @@ html[data-theme="dark"] .document-chip {
 
 .document-link-modal__customer-selection {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: var(--spacing-3);
+  align-items: center;
+}
+
+/* 고객선택 버튼 높이 (B) - A 영역과 동일 */
+.document-link-modal__customer-selection .button {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
 }
 
 .document-link-modal__selected-customer {
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-3);
+  padding: 0 var(--spacing-3);
   background: var(--color-bg-secondary);
-  min-height: 60px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 html[data-theme="dark"] .document-link-modal__selected-customer {
@@ -127,23 +138,26 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
 
 .selected-customer-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: var(--spacing-2);
   width: 100%;
-}
-
-.selected-customer-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
 }
 
 .selected-customer-name {
   font-weight: 600;
   color: var(--color-text-primary);
-  font-size: 15px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.selected-customer-phone {
+  font-size: 13px;
+  color: var(--color-text-secondary);
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clear-customer-button {
@@ -168,17 +182,6 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
   background: var(--color-bg-hover);
   color: var(--color-text-primary);
   transform: scale(1.1);
-}
-
-.selected-customer-details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.selected-customer-phone {
-  font-size: 13px;
-  color: var(--color-text-secondary);
 }
 
 .customer-placeholder {
@@ -206,6 +209,19 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
   gap: var(--spacing-2);
   flex: 1;
   min-width: 220px;
+}
+
+/* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
+.document-link-modal__field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.document-link-modal__field--inline label {
+  flex-shrink: 0;
+  min-width: auto;
+  white-space: nowrap;
 }
 
 .document-link-modal__field label {
@@ -254,6 +270,15 @@ html[data-theme="dark"] .document-link-modal__textarea {
 .document-link-modal .ios-dropdown__menu {
   max-height: 240px;
   overflow-y: auto;
+}
+
+/* Dropdown 트리거 높이 (D) - A 영역과 동일 */
+.document-link-modal .ios-dropdown__trigger {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0 12px;
+  box-sizing: border-box;
 }
 
 .document-link-modal .input-container {
