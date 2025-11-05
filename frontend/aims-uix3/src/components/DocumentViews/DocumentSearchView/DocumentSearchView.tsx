@@ -455,36 +455,40 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       <div className="document-search-container">
         {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
         <div className="search-bar-wrapper">
-          {/* 🍎 고객 선택 버튼 */}
-          <button
-            className="customer-select-button"
-            onClick={() => setIsCustomerSelectorOpen(true)}
-            aria-label="고객 선택"
-            title="고객 선택"
-          >
-            고객선택
-          </button>
+          {/* 🍎 고객 선택 버튼 (키워드 검색일 때만 표시) */}
+          {searchMode === 'keyword' && (
+            <>
+              <button
+                className="customer-select-button"
+                onClick={() => setIsCustomerSelectorOpen(true)}
+                aria-label="고객 선택"
+                title="고객 선택"
+              >
+                고객선택
+              </button>
 
-          {/* 🍎 선택된 고객명 표시 */}
-          <div className="selected-customer-display">
-            {selectedCustomer ? (
-              <>
-                <span className="selected-customer-name">
-                  {selectedCustomer.personal_info?.name}
-                </span>
-                <button
-                  className="clear-customer-button"
-                  onClick={() => setSelectedCustomer(null)}
-                  aria-label="고객 선택 해제"
-                  title="고객 선택 해제"
-                >
-                  ✕
-                </button>
-              </>
-            ) : (
-              <span className="customer-placeholder">고객 미선택</span>
-            )}
-          </div>
+              {/* 🍎 선택된 고객명 표시 */}
+              <div className="selected-customer-display">
+                {selectedCustomer ? (
+                  <>
+                    <span className="selected-customer-name">
+                      {selectedCustomer.personal_info?.name}
+                    </span>
+                    <button
+                      className="clear-customer-button"
+                      onClick={() => setSelectedCustomer(null)}
+                      aria-label="고객 선택 해제"
+                      title="고객 선택 해제"
+                    >
+                      ✕
+                    </button>
+                  </>
+                ) : (
+                  <span className="customer-placeholder">고객 미선택</span>
+                )}
+              </div>
+            </>
+          )}
 
           {/* A: 검색 입력 필드 (flex-grow) */}
           <div className="search-input-wrapper">
