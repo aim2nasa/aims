@@ -691,7 +691,19 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           ) : (
             !isLoading && (
               <div className="search-empty" role="status">
-                검색을 실행하면 결과가 표시됩니다.
+                {lastSearchMode ? (
+                  <div className="search-no-results">
+                    <div className="no-results-icon">🔍</div>
+                    <div className="no-results-text">
+                      <div className="no-results-title">검색 결과가 없습니다</div>
+                      <div className="no-results-description">
+                        다른 검색어를 입력하거나 검색 모드를 변경해보세요.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  '검색을 실행하면 결과가 표시됩니다.'
+                )}
               </div>
             )
           )}

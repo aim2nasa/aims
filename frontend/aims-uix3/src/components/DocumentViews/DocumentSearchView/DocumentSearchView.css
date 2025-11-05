@@ -299,6 +299,41 @@ html[data-theme="dark"] .search-empty {
   color: var(--color-ios-empty-dark);
 }
 
+/* === 검색 결과 없음 === */
+
+.search-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-12) var(--spacing-6);
+}
+
+.no-results-icon {
+  font-size: 32px;
+  opacity: 0.4;
+  margin-bottom: var(--spacing-1);
+}
+
+.no-results-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.no-results-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.no-results-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
 /* === 🍎 AI ANSWER: iOS Card Style === */
 
 .search-answer {
