@@ -554,26 +554,29 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             {('customer_relation' in item && item.customer_relation?.notes &&
                              typeof item.customer_relation.notes === 'string' &&
                              item.customer_relation.notes.trim() !== '') && (
-                              <button
-                                className="document-notes-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedNotes({
-                                    documentName: originalName,
-                                    customerName: item.customer_relation?.customer_name,
-                                    notes: item.customer_relation?.notes || ''
-                                  })
-                                  setNotesModalVisible(true)
-                                }}
-                                title={
+                              <Tooltip
+                                content={
                                   item.customer_relation.notes.length > 50
                                     ? `${item.customer_relation.notes.substring(0, 50)}...`
                                     : item.customer_relation.notes
                                 }
-                                aria-label="메모 보기"
                               >
-                                📝
-                              </button>
+                                <button
+                                  className="document-notes-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedNotes({
+                                      documentName: originalName,
+                                      customerName: item.customer_relation?.customer_name,
+                                      notes: item.customer_relation?.notes || ''
+                                    })
+                                    setNotesModalVisible(true)
+                                  }}
+                                  aria-label="메모 보기"
+                                >
+                                  📝
+                                </button>
+                              </Tooltip>
                             )}
                           </div>
                         </div>

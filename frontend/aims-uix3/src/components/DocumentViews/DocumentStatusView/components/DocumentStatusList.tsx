@@ -388,26 +388,29 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               {document.customer_relation?.notes &&
                typeof document.customer_relation.notes === 'string' &&
                document.customer_relation.notes.trim() !== '' && (
-                <button
-                  className="document-notes-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedNotes({
-                      documentName: DocumentStatusService.extractFilename(document),
-                      customerName: document.customer_relation?.customer_name,
-                      notes: document.customer_relation?.notes || ''
-                    })
-                    setNotesModalVisible(true)
-                  }}
-                  title={
+                <Tooltip
+                  content={
                     document.customer_relation.notes.length > 50
                       ? `${document.customer_relation.notes.substring(0, 50)}...`
                       : document.customer_relation.notes
                   }
-                  aria-label="메모 보기"
                 >
-                  📝
-                </button>
+                  <button
+                    className="document-notes-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedNotes({
+                        documentName: DocumentStatusService.extractFilename(document),
+                        customerName: document.customer_relation?.customer_name,
+                        notes: document.customer_relation?.notes || ''
+                      })
+                      setNotesModalVisible(true)
+                    }}
+                    aria-label="메모 보기"
+                  >
+                    📝
+                  </button>
+                </Tooltip>
               )}
             </div>
 

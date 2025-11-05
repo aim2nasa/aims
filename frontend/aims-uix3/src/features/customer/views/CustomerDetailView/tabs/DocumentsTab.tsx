@@ -453,22 +453,25 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                   >
                     {document.originalName ?? '이름 없는 문서'}
                     {document.notes && typeof document.notes === 'string' && document.notes.trim() !== '' && (
-                      <button
-                        className="document-notes-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedNotes({
-                            documentName: document.originalName ?? '이름 없는 문서',
-                            customerName: customer.personal_info.name,
-                            notes: document.notes || ''
-                          })
-                          setNotesModalVisible(true)
-                        }}
-                        title={document.notes.length > 50 ? `${document.notes.substring(0, 50)}...` : document.notes}
-                        aria-label="메모 보기"
+                      <Tooltip
+                        content={document.notes.length > 50 ? `${document.notes.substring(0, 50)}...` : document.notes}
                       >
-                        📝
-                      </button>
+                        <button
+                          className="document-notes-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedNotes({
+                              documentName: document.originalName ?? '이름 없는 문서',
+                              customerName: customer.personal_info.name,
+                              notes: document.notes || ''
+                            })
+                            setNotesModalVisible(true)
+                          }}
+                          aria-label="메모 보기"
+                        >
+                          📝
+                        </button>
+                      </Tooltip>
                     )}
                   </div>
 
