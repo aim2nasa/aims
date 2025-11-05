@@ -60,6 +60,17 @@
   --color-focus-ring: rgba(0, 122, 255, 0.1);
   --color-focus-ring-dark: rgba(100, 170, 255, 0.15);
 
+  /* Selection/Highlight Colors (for selected rows/items) */
+  --color-selection-bg-light: rgba(59, 130, 246, 0.28);         /* Light mode: selected item background */
+  --color-selection-bg-light-hover: rgba(59, 130, 246, 0.33);   /* Light mode: selected item hover background */
+  --color-selection-bg-dark: rgba(59, 130, 246, 0.35);          /* Dark mode: selected item background */
+  --color-selection-bg-dark-hover: rgba(59, 130, 246, 0.40);    /* Dark mode: selected item hover background */
+  --color-selection-glow-light: rgba(59, 130, 246, 0.4);        /* Light mode: selection glow effect */
+  --color-selection-glow-light-hover: rgba(59, 130, 246, 0.5);  /* Light mode: selection glow hover */
+  --color-selection-glow-dark: rgba(59, 130, 246, 0.5);         /* Dark mode: selection glow effect */
+  --color-selection-glow-dark-hover: rgba(59, 130, 246, 0.6);   /* Dark mode: selection glow hover */
+  --color-selection-glow-pulse: rgba(59, 130, 246, 0.2);        /* Pulse animation peak glow */
+
   /* === OPACITY VALUES === */
   --opacity-overlay: 0.5;
   --opacity-overlay-strong: 0.75;

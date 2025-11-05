@@ -396,9 +396,31 @@
   background: var(--color-bg-secondary);
 }
 
+/* 선택된 행 - 강한 하이라이트 (CSS 변수 사용) */
 .customer-selector-modal__customer-row.selected {
-  background: var(--color-accent-bg);
-  border-left: 3px solid var(--color-accent);
+  border-color: var(--color-primary-500);
+  background: var(--color-selection-bg-light);
+  box-shadow: 0 0 0 3px var(--color-selection-glow-light);
+  animation: customer-row-select-pulse 0.3s ease-out;
+}
+
+html[data-theme="dark"] .customer-selector-modal__customer-row.selected {
+  background: var(--color-selection-bg-dark);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px var(--color-selection-glow-dark);
+}
+
+/* 선택된 행 호버 시에도 선택 상태 유지 */
+.customer-selector-modal__customer-row.selected:hover {
+  border-color: var(--color-primary-500);
+  background: var(--color-selection-bg-light-hover);
+  box-shadow: 0 0 0 3px var(--color-selection-glow-light-hover);
+}
+
+html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
+  background: var(--color-selection-bg-dark-hover);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px var(--color-selection-glow-dark-hover);
 }
 
 /* ===== Table Cells ===== */
@@ -421,6 +443,16 @@
 .cell-name .customer-icon {
   color: var(--color-text-secondary);
   flex-shrink: 0;
+}
+
+/* 선택된 행의 이름 강조 */
+.customer-selector-modal__customer-row.selected .cell-name {
+  color: var(--color-primary-700);
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .customer-selector-modal__customer-row.selected .cell-name {
+  color: var(--color-primary-200);
 }
 
 .cell-birth,
@@ -465,4 +497,22 @@
   color: var(--color-accent);
   flex-shrink: 0;
   justify-self: end;
+}
+
+/* ===== Animations ===== */
+
+/* 선택 시 펄스 애니메이션 (CSS 변수 사용) */
+@keyframes customer-row-select-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--color-selection-glow-light);
+  }
+  50% {
+    transform: scale(1.005);
+    box-shadow: 0 0 0 5px var(--color-selection-glow-pulse);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px var(--color-selection-glow-light);
+  }
 }
