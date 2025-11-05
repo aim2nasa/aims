@@ -384,7 +384,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
           {/* 한글 초성 인덱스 */}
           <div className="customer-selector-modal__initials">
-            {['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
+            {['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
               <button
                 key={initial}
                 className={`customer-selector-modal__initial ${selectedInitial === initial ? 'active' : ''}`}
