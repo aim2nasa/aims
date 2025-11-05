@@ -243,7 +243,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               onClick={() => setActiveTab('all')}
             >
               <SFSymbol
-                name="person.3"
+                name="person.3.fill"
                 size={SFSymbolSize.FOOTNOTE}
                 weight={SFSymbolWeight.MEDIUM}
                 className="customer-selector-modal__tab-icon"
@@ -269,7 +269,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               onClick={() => setActiveTab('corporate')}
             >
               <SFSymbol
-                name="building.2"
+                name="building.2.fill"
                 size={SFSymbolSize.FOOTNOTE}
                 weight={SFSymbolWeight.MEDIUM}
                 className="customer-selector-modal__tab-icon"
@@ -293,6 +293,13 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
             ))}
             {/* 초성 필터 상태 표시 */}
             <div className="customer-selector-modal__filter-status">
+              <SFSymbol
+                name="line.horizontal.3"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="customer-selector-modal__filter-icon"
+                decorative
+              />
               <span className="customer-selector-modal__filter-label">필터:</span>
               <span className={`customer-selector-modal__filter-value ${selectedInitial ? 'active' : 'inactive'}`}>
                 {selectedInitial || '없음'}
@@ -304,7 +311,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                   title="초성 필터 해제"
                   aria-label="초성 필터 해제"
                 >
-                  ✕
+                  <SFSymbol
+                    name="xmark.circle.fill"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative
+                  />
                 </button>
               )}
             </div>
@@ -325,13 +337,60 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
           {/* 테이블 헤더 */}
           {displayedCustomers.length > 0 && (
             <div className="customer-selector-modal__table-header">
-              <div className="header-name">이름</div>
-              <div className="header-birth">생년월일</div>
-              <div className="header-gender">성별</div>
-              <div className="header-phone">전화</div>
-              <div className="header-email">이메일</div>
-              <div className="header-address">주소</div>
-              <div className="header-type">유형</div>
+              <div className="header-name">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                </svg>
+                <span>이름</span>
+              </div>
+              <div className="header-birth">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="10" width="12" height="3" rx="0.5" fill="var(--cake-bottom)"/>
+                  <rect x="3" y="7" width="10" height="3" rx="0.5" fill="var(--cake-top)"/>
+                  <rect x="4" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <rect x="6.5" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <rect x="9" y="3.5" width="1.5" height="3.5" rx="0.3" fill="var(--candle)"/>
+                  <ellipse cx="4.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
+                  <ellipse cx="7.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
+                  <ellipse cx="9.75" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
+                </svg>
+                <span>생년월일</span>
+              </div>
+              <div className="header-gender">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="5" cy="6" r="2" fill="currentColor"/>
+                  <path d="M5 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
+                  <circle cx="11" cy="6" r="2" fill="currentColor"/>
+                  <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
+                </svg>
+                <span>성별</span>
+              </div>
+              <div className="header-phone">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
+                </svg>
+                <span>전화</span>
+              </div>
+              <div className="header-email">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                </svg>
+                <span>이메일</span>
+              </div>
+              <div className="header-address">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
+                </svg>
+                <span>주소</span>
+              </div>
+              <div className="header-type">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
+                </svg>
+                <span>유형</span>
+              </div>
             </div>
           )}
 
@@ -343,7 +402,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               </div>
             ) : (
               displayedCustomers.map(customer => {
-                const isCorporate = customer.insurance_info?.customer_type === '법인';
                 const birthDate = customer.personal_info?.birth_date;
                 const birthDisplay = birthDate
                   ? new Date(birthDate).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', '')
@@ -367,13 +425,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                     onClick={() => handleSelectCustomer(customer)}
                   >
                     <div className="cell-name">
-                      <SFSymbol
-                        name={isCorporate ? 'building.2' : 'person.circle'}
-                        size={SFSymbolSize.FOOTNOTE}
-                        weight={SFSymbolWeight.MEDIUM}
-                        className="customer-icon"
-                        decorative
-                      />
                       {customer.personal_info?.name || '이름 없음'}
                     </div>
                     <div className="cell-birth">{birthDisplay}</div>

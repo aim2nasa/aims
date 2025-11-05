@@ -170,6 +170,11 @@
   border-radius: var(--border-radius-sm);
 }
 
+.customer-selector-modal__filter-icon {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
 .customer-selector-modal__filter-label {
   font-size: 11px;
   color: var(--color-text-secondary);
@@ -199,23 +204,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
   padding: 0;
   margin-left: 2px;
   background: transparent;
   border: none;
-  border-radius: 50%;
-  font-size: 12px;
-  line-height: 1;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.7;
 }
 
 .customer-selector-modal__filter-clear:hover {
-  background: var(--color-bg-hover);
   color: var(--color-text-primary);
+  opacity: 1;
   transform: scale(1.1);
 }
 
@@ -252,9 +253,50 @@
 }
 
 .customer-selector-modal__table-header > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 헤더 아이콘은 절대 축소되지 않음 */
+.customer-selector-modal__table-header .header-icon-svg {
+  flex-shrink: 0;
+}
+
+/* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors (AllCustomersView와 동일) */
+.header-name .header-icon-svg {
+  color: var(--color-icon-blue);  /* 이름 - 파란색 */
+}
+
+.header-birth .header-icon-svg {
+  color: var(--color-icon-green);  /* 생년월일 - 초록색 */
+  --cake-bottom: var(--color-orange-400);  /* 케이크 아래층 - 갈색 */
+  --cake-top: var(--color-orange-300);     /* 케이크 위층 - 주황색 */
+  --candle: var(--color-error);            /* 촛불 - 빨간색 */
+  --flame: var(--color-warning);           /* 불꽃 - 주황색 */
+}
+
+.header-gender .header-icon-svg {
+  color: var(--color-icon-purple);  /* 성별 - 보라색 */
+}
+
+.header-phone .header-icon-svg {
+  color: var(--color-icon-blue);  /* 전화 - 파란색 */
+}
+
+.header-email .header-icon-svg {
+  color: var(--color-icon-orange);  /* 이메일 - 주황색 */
+}
+
+.header-address .header-icon-svg {
+  color: var(--color-icon-green);  /* 주소 - 초록색 */
+}
+
+.header-type .header-icon-svg {
+  color: var(--color-icon-orange);  /* 유형 - 주황색 */
 }
 
 /* ===== List (Table Body) ===== */
@@ -340,13 +382,25 @@
 .cell-birth,
 .cell-gender,
 .cell-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--color-text-primary);
 }
 
 .cell-email,
 .cell-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
+}
+
+.cell-icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .cell-type {
