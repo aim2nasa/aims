@@ -104,18 +104,15 @@ export const useModalDragResize = (
   const dragStartRef = useRef({ x: 0, y: 0 })
   const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0, posX: 0, posY: 0 })
 
-  // 초기값과 다른지 확인
+  // 초기값과 다른지 확인 (크기만 비교)
   const isResizedFromDefault =
     state.size.width !== initialValuesRef.current.size.width ||
-    state.size.height !== initialValuesRef.current.size.height ||
-    state.position.x !== initialValuesRef.current.position.x ||
-    state.position.y !== initialValuesRef.current.position.y
+    state.size.height !== initialValuesRef.current.size.height
 
-  // 초기 크기로 리셋
+  // 초기 크기로 리셋 (위치는 유지)
   const reset = useCallback(() => {
     setState(prev => ({
       ...prev,
-      position: initialValuesRef.current.position,
       size: initialValuesRef.current.size
     }))
   }, [])
