@@ -1328,38 +1328,29 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   transform: scale(0.95);
 }
 
-/* === 🍎 고객 선택 버튼 === */
+/* === 🍎 고객 선택 버튼 (AIMS 공통 버튼 스타일) === */
 .customer-select-button {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: 8px 20px;
   border: none;
-  border-radius: 8px;
-  background-color: var(--color-ios-bg-secondary-light);
-  color: var(--color-ios-text-primary-light);
+  background-color: var(--color-primary-500);
+  color: var(--color-neutral-0);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  border-radius: 8px;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
   white-space: nowrap;
-  letter-spacing: -0.2px;
-}
-
-html[data-theme="dark"] .customer-select-button {
-  background-color: var(--color-ios-bg-secondary-dark);
-  color: var(--color-ios-text-primary-dark);
+  min-width: 80px;
 }
 
 .customer-select-button:hover {
-  background-color: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .customer-select-button:hover {
-  background-color: var(--color-ios-bg-tertiary-dark);
+  background-color: var(--color-primary-600);
+  transform: scale(1.02);
 }
 
 .customer-select-button:active {
-  opacity: 0.8;
+  transform: scale(0.98);
 }
 
 /* === 🍎 선택된 고객명 표시 === */
