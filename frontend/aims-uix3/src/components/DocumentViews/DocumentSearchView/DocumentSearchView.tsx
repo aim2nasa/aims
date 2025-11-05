@@ -117,6 +117,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [selectedNotes, setSelectedNotes] = useState<{
     documentName: string
     customerName?: string | undefined
+    customerId?: string | undefined
+    documentId?: string | undefined
     notes: string
   } | null>(null)
 
@@ -234,6 +236,63 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       setSelectedDocumentForLink(null)
     }, 300)
   }, [])
+
+  /**
+   * 🍎 메모 저장 핸들러
+   */
+  const handleSaveNotes = useCallback(async (notes: string) => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
+      console.error('[DocumentSearchView] customerId 또는 documentId가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        notes
+      )
+
+      // 성공 후 상태 업데이트
+      setSelectedNotes(prev => prev ? { ...prev, notes } : null)
+
+      // 검색 결과 새로고침
+      await handleSearch()
+    } catch (error) {
+      console.error('[DocumentSearchView] 메모 저장 실패:', error)
+      alert('메모 저장에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, handleSearch])
+
+  /**
+   * 🍎 메모 삭제 핸들러 (빈 문자열로 저장)
+   */
+  const handleDeleteNotes = useCallback(async () => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
+      console.error('[DocumentSearchView] customerId 또는 documentId가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        ''
+      )
+
+      // 모달 닫기
+      setNotesModalVisible(false)
+      setSelectedNotes(null)
+
+      // 검색 결과 새로고침
+      await handleSearch()
+    } catch (error) {
+      console.error('[DocumentSearchView] 메모 삭제 실패:', error)
+      alert('메모 삭제에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, handleSearch])
 
   /**
    * 🍎 고객 검색 핸들러
@@ -568,6 +627,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                                     setSelectedNotes({
                                       documentName: originalName,
                                       customerName: item.customer_relation?.customer_name,
+                                      customerId: item.customer_relation?.customer_id,
+                                      documentId: SearchService.getDocumentId(item),
                                       notes: item.customer_relation?.notes || ''
                                     })
                                     setNotesModalVisible(true)
@@ -753,11 +814,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           visible={notesModalVisible}
           documentName={selectedNotes.documentName}
           customerName={selectedNotes.customerName}
+          customerId={selectedNotes.customerId}
+          documentId={selectedNotes.documentId}
           notes={selectedNotes.notes}
           onClose={() => {
             setNotesModalVisible(false)
             setSelectedNotes(null)
           }}
+          onSave={handleSaveNotes}
+          onDelete={handleDeleteNotes}
         />
       )}
     </CenterPaneView>

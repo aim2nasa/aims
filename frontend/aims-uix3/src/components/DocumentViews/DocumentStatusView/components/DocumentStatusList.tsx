@@ -5,11 +5,12 @@
  * 공간 효율적인 리스트 레이아웃
  */
 
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
+import { DocumentService } from '../../../../services/DocumentService'
 import type { Document } from '../../../../types/documentStatus'
 import {
   DocumentIcon,
@@ -41,6 +42,8 @@ export interface DocumentStatusListProps {
   onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
   // 🍎 Customer click handler
   onCustomerClick?: (customerId: string) => void
+  // 🍎 Refresh handler
+  onRefresh?: () => Promise<void>
 }
 
 /**
@@ -115,15 +118,80 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   selectedDocumentIds = new Set(),
   onSelectAll,
   onSelectDocument,
-  onCustomerClick
+  onCustomerClick,
+  onRefresh
 }) => {
   // 메모 모달 상태 관리
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{
     documentName: string
     customerName?: string | undefined
+    customerId?: string | undefined
+    documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  /**
+   * 메모 저장 핸들러
+   */
+  const handleSaveNotes = useCallback(async (notes: string) => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
+      console.error('[DocumentStatusList] customerId 또는 documentId가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        notes
+      )
+
+      // 성공 후 상태 업데이트
+      setSelectedNotes(prev => prev ? { ...prev, notes } : null)
+
+      // 문서 목록 새로고침
+      if (onRefresh) {
+        await onRefresh()
+      }
+    } catch (error) {
+      console.error('[DocumentStatusList] 메모 저장 실패:', error)
+      alert('메모 저장에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, onRefresh])
+
+  /**
+   * 메모 삭제 핸들러 (빈 문자열로 저장)
+   */
+  const handleDeleteNotes = useCallback(async () => {
+    if (!selectedNotes?.customerId || !selectedNotes?.documentId) {
+      console.error('[DocumentStatusList] customerId 또는 documentId가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        selectedNotes.customerId,
+        selectedNotes.documentId,
+        ''
+      )
+
+      // 모달 닫기
+      setNotesModalVisible(false)
+      setSelectedNotes(null)
+
+      // 문서 목록 새로고침
+      if (onRefresh) {
+        await onRefresh()
+      }
+    } catch (error) {
+      console.error('[DocumentStatusList] 메모 삭제 실패:', error)
+      alert('메모 삭제에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, onRefresh])
+
   // 로딩 상태
   if (isLoading && isEmpty) {
     return (
@@ -402,6 +470,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                       setSelectedNotes({
                         documentName: DocumentStatusService.extractFilename(document),
                         customerName: document.customer_relation?.customer_name,
+                        customerId: document.customer_relation?.customer_id,
+                        documentId: document._id ?? document.id,
                         notes: document.customer_relation?.notes || ''
                       })
                       setNotesModalVisible(true)
@@ -533,11 +603,15 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
           visible={notesModalVisible}
           documentName={selectedNotes.documentName}
           customerName={selectedNotes.customerName}
+          customerId={selectedNotes.customerId}
+          documentId={selectedNotes.documentId}
           notes={selectedNotes.notes}
           onClose={() => {
             setNotesModalVisible(false)
             setSelectedNotes(null)
           }}
+          onSave={handleSaveNotes}
+          onDelete={handleDeleteNotes}
         />
       )}
     </div>

@@ -476,6 +476,25 @@ export class DocumentService {
   }
 
   /**
+   * 고객 문서 메모 수정
+   */
+  static async updateDocumentNotes(
+    customerId: string,
+    documentId: string,
+    notes: string
+  ): Promise<void> {
+    if (!customerId.trim()) {
+      throw new Error('고객 ID가 필요합니다');
+    }
+
+    if (!documentId.trim()) {
+      throw new Error('문서 ID가 필요합니다');
+    }
+
+    await api.patch(ENDPOINTS.CUSTOMER_DOCUMENT(customerId, documentId), { notes });
+  }
+
+  /**
    * 사용 중인 모든 태그 조회
    */
   static async getDocumentTags(): Promise<string[]> {

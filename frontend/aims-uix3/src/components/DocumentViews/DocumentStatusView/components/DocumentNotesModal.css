@@ -75,3 +75,38 @@ html[data-theme="dark"] .document-notes-modal__notes .notes-content {
   background: var(--color-layout-secondary-dark);
   border-color: var(--color-ios-separator-dark);
 }
+
+/* === 편집 모드 textarea === */
+
+.document-notes-modal__notes .notes-textarea {
+  width: 100%;
+  padding: var(--spacing-4);
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-ios-separator-light);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  min-height: 150px;
+}
+
+.document-notes-modal__notes .notes-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha);
+}
+
+html[data-theme="dark"] .document-notes-modal__notes .notes-textarea {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* === Footer 버튼 레이아웃 === */
+
+.document-notes-modal__footer {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+}

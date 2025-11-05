@@ -25,6 +25,7 @@ import { useAppleConfirmController } from '@/controllers/useAppleConfirmControll
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import DownloadHelper from '../../../../../utils/downloadHelper'
 import type { CustomerDocumentItem } from '@/services/DocumentService'
+import { DocumentService } from '@/services/DocumentService'
 import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
 import {
   PreviewIcon,
@@ -92,7 +93,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{
     documentName: string
-    customerName?: string
+    customerName?: string | undefined
+    documentId?: string | undefined
     notes: string
   } | null>(null)
 
@@ -226,6 +228,63 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       ...(preview.rawDetail as Record<string, unknown>)
     })
   }, [previewState.data])
+
+  /**
+   * 메모 저장 핸들러
+   */
+  const handleSaveNotes = useCallback(async (notes: string) => {
+    if (!selectedNotes?.documentId || !customer?._id) {
+      console.error('[DocumentsTab] documentId 또는 customer._id가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        customer._id,
+        selectedNotes.documentId,
+        notes
+      )
+
+      // 성공 후 상태 업데이트
+      setSelectedNotes(prev => prev ? { ...prev, notes } : null)
+
+      // 문서 목록 새로고침
+      await refresh()
+    } catch (error) {
+      console.error('[DocumentsTab] 메모 저장 실패:', error)
+      alert('메모 저장에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, customer, refresh])
+
+  /**
+   * 메모 삭제 핸들러 (빈 문자열로 저장)
+   */
+  const handleDeleteNotes = useCallback(async () => {
+    if (!selectedNotes?.documentId || !customer?._id) {
+      console.error('[DocumentsTab] documentId 또는 customer._id가 없습니다')
+      return
+    }
+
+    try {
+      await DocumentService.updateDocumentNotes(
+        customer._id,
+        selectedNotes.documentId,
+        ''
+      )
+
+      // 모달 닫기
+      setNotesModalVisible(false)
+      setSelectedNotes(null)
+
+      // 문서 목록 새로고침
+      await refresh()
+    } catch (error) {
+      console.error('[DocumentsTab] 메모 삭제 실패:', error)
+      alert('메모 삭제에 실패했습니다.')
+      throw error
+    }
+  }, [selectedNotes, customer, refresh])
 
   const renderState = () => {
     if (isLoading && documents.length === 0) {
@@ -463,6 +522,7 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                             setSelectedNotes({
                               documentName: document.originalName ?? '이름 없는 문서',
                               customerName: customer.personal_info.name,
+                              documentId: document._id,
                               notes: document.notes || ''
                             })
                             setNotesModalVisible(true)
@@ -590,11 +650,15 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
           visible={notesModalVisible}
           documentName={selectedNotes.documentName}
           customerName={selectedNotes.customerName}
+          customerId={customer._id}
+          documentId={selectedNotes.documentId}
           notes={selectedNotes.notes}
           onClose={() => {
             setNotesModalVisible(false)
             setSelectedNotes(null)
           }}
+          onSave={handleSaveNotes}
+          onDelete={handleDeleteNotes}
         />
       )}
     </div>

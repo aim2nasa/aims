@@ -1988,6 +1988,94 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
 });
 
 /**
+ * 고객 문서 메모 수정 API
+ */
+app.patch('/api/customers/:id/documents/:document_id', async (req, res) => {
+  try {
+    const { id, document_id } = req.params;
+    const { notes } = req.body;
+
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 ID입니다.'
+      });
+    }
+
+    // notes 유효성 검사 (undefined일 수 있음 - 빈 문자열로 삭제 허용)
+    if (notes !== undefined && typeof notes !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'notes는 문자열이어야 합니다.'
+      });
+    }
+
+    // 고객 존재 확인
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: '고객을 찾을 수 없습니다.'
+      });
+    }
+
+    // 문서 존재 확인
+    const document = await db.collection(COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(document_id) });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: '문서를 찾을 수 없습니다.'
+      });
+    }
+
+    const newNotes = notes !== undefined ? notes : '';
+
+    // 고객 컬렉션에서 해당 문서의 notes 업데이트
+    await db.collection(CUSTOMERS_COLLECTION).updateOne(
+      {
+        _id: new ObjectId(id),
+        'documents.document_id': new ObjectId(document_id)
+      },
+      {
+        $set: {
+          'documents.$.notes': newNotes,
+          'meta.updated_at': utcNowDate()
+        }
+      }
+    );
+
+    // 문서 컬렉션에서도 customer_relation.notes 업데이트
+    await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(document_id) },
+      {
+        $set: {
+          'customer_relation.notes': newNotes
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: '메모가 성공적으로 수정되었습니다.',
+      data: {
+        notes: newNotes
+      }
+    });
+  } catch (error) {
+    console.error('메모 수정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '메모 수정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 고객 관련 문서 목록 조회 API
  */
 app.get('/api/customers/:id/documents', async (req, res) => {
