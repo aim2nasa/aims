@@ -579,7 +579,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <p>주어진 검색어와 유사도가 높은 상위 {results.length}개의 문서를 보여드립니다.</p>
                   ) : (
                     <>
-                      <p>총 {results.length}건의 결과가 발견되었습니다.</p>
+                      <p>
+                        {selectedCustomer
+                          ? `${selectedCustomer.personal_info?.name}에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`
+                          : `모든 고객에 대하여 검색한 결과, 총 ${results.length}건의 파일이 검색되었습니다.`}
+                      </p>
                       <p className="results-divider">--- 검색 결과 ---</p>
                     </>
                   )}
