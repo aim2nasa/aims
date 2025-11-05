@@ -28,10 +28,11 @@ import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSumma
 import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
+import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import { CustomerService } from '@/services/customerService'
 import { DocumentService } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
-import type { CustomerSearchResponse } from '@/entities/customer'
+import type { CustomerSearchResponse, Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import './DocumentSearchView.css'
 
@@ -121,6 +122,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  // 🍎 고객 선택 모달 상태
+  const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | null
@@ -450,6 +455,37 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       <div className="document-search-container">
         {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
         <div className="search-bar-wrapper">
+          {/* 🍎 고객 선택 버튼 */}
+          <button
+            className="customer-select-button"
+            onClick={() => setIsCustomerSelectorOpen(true)}
+            aria-label="고객 선택"
+            title="고객 선택"
+          >
+            고객선택
+          </button>
+
+          {/* 🍎 선택된 고객명 표시 */}
+          <div className="selected-customer-display">
+            {selectedCustomer ? (
+              <>
+                <span className="selected-customer-name">
+                  {selectedCustomer.personal_info?.name}
+                </span>
+                <button
+                  className="clear-customer-button"
+                  onClick={() => setSelectedCustomer(null)}
+                  aria-label="고객 선택 해제"
+                  title="고객 선택 해제"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <span className="customer-placeholder">고객 미선택</span>
+            )}
+          </div>
+
           {/* A: 검색 입력 필드 (flex-grow) */}
           <div className="search-input-wrapper">
             <span className="search-icon" aria-hidden="true">🔍</span>
@@ -969,6 +1005,16 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           onDelete={handleDeleteNotes}
         />
       )}
+
+      {/* 🍎 고객 선택 모달 */}
+      <CustomerSelectorModal
+        visible={isCustomerSelectorOpen}
+        onClose={() => setIsCustomerSelectorOpen(false)}
+        onSelect={(customer) => {
+          setSelectedCustomer(customer)
+          console.log('선택된 고객:', customer)
+        }}
+      />
     </CenterPaneView>
   )
 }

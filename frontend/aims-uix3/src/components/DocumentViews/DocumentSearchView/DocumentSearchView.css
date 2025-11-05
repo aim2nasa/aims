@@ -1327,3 +1327,114 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
 .document-notes-btn:active {
   transform: scale(0.95);
 }
+
+/* === 🍎 고객 선택 버튼 === */
+.customer-select-button {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-ios-bg-secondary-light);
+  color: var(--color-ios-text-primary-light);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+html[data-theme="dark"] .customer-select-button {
+  background-color: var(--color-ios-bg-secondary-dark);
+  color: var(--color-ios-text-primary-dark);
+}
+
+.customer-select-button:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .customer-select-button:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.customer-select-button:active {
+  opacity: 0.8;
+}
+
+/* === 🍎 선택된 고객명 표시 === */
+.selected-customer-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  min-width: 120px;
+  max-width: 200px;
+  background-color: var(--color-ios-bg-secondary-light);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+html[data-theme="dark"] .selected-customer-display {
+  background-color: var(--color-ios-bg-secondary-dark);
+}
+
+.selected-customer-name {
+  flex: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ios-text-primary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+html[data-theme="dark"] .selected-customer-name {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.customer-placeholder {
+  flex: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  color: var(--color-ios-text-placeholder-light);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+html[data-theme="dark"] .customer-placeholder {
+  color: var(--color-ios-text-placeholder-dark);
+}
+
+.clear-customer-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .clear-customer-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.clear-customer-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.clear-customer-button:active {
+  transform: scale(0.95);
+}
