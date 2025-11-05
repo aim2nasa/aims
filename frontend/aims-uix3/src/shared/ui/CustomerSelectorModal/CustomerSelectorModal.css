@@ -112,7 +112,7 @@
   opacity: 1;
 }
 
-/* ===== 한글 초성 인덱스 ===== */
+/* ===== 초성 인덱스 (한글/알파벳/숫자) ===== */
 
 .customer-selector-modal__initials {
   display: flex;
@@ -125,6 +125,31 @@
   flex-shrink: 0;
 }
 
+/* 초성 타입 토글 버튼 (ㄱㄴㄷ/abc/123) */
+.customer-selector-modal__initial-type-toggle {
+  width: 42px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-button-primary-bg);
+  border: 1px solid var(--color-button-primary-bg);
+  border-radius: var(--border-radius-sm);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-button-primary-text);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+}
+
+.customer-selector-modal__initial-type-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+/* 초성 버튼 */
 .customer-selector-modal__initial {
   width: 28px;
   height: 28px;

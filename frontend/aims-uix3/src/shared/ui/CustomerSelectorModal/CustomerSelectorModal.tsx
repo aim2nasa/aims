@@ -59,6 +59,8 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   // 선택된 초성 필터 (ㄱ,ㄴ,ㄷ,...)
   const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
+  // 초성 타입 ('korean' | 'alphabet' | 'number')
+  const [initialType, setInitialType] = useState<'korean' | 'alphabet' | 'number'>('korean');
   // 정렬 상태 (칼럼명, 오름차순/내림차순)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   // 칼럼 폭 상태 (비율 기반, 합계 100%)
@@ -130,6 +132,34 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     // 초성을 자모(ㄱㄴㄷ...)로 변환
     const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
     return initials[initialIndex] || '';
+  };
+
+  // 알파벳 초성 추출 함수 (대소문자 구분 없음)
+  const getAlphabetInitial = (name: string): string => {
+    if (!name) return '';
+    const firstChar = name.charAt(0).toUpperCase();
+    if (firstChar >= 'A' && firstChar <= 'Z') {
+      return firstChar;
+    }
+    return '';
+  };
+
+  // 숫자 초성 추출 함수
+  const getNumberInitial = (name: string): string => {
+    if (!name) return '';
+    const firstChar = name.charAt(0);
+    if (firstChar >= '0' && firstChar <= '9') {
+      return firstChar;
+    }
+    return '';
+  };
+
+  // 이름의 초성 추출 (타입에 따라)
+  const getNameInitial = (name: string, type: 'korean' | 'alphabet' | 'number'): string => {
+    if (type === 'korean') return getInitialConsonant(name);
+    if (type === 'alphabet') return getAlphabetInitial(name);
+    if (type === 'number') return getNumberInitial(name);
+    return '';
   };
 
   // 정렬 핸들러
@@ -204,7 +234,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     if (selectedInitial && !isSearching) {
       customers = customers.filter(customer => {
         const name = customer.personal_info?.name || '';
-        return getInitialConsonant(name) === selectedInitial;
+        return getNameInitial(name, initialType) === selectedInitial;
       });
     }
 
@@ -257,7 +287,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
 
     return customers;
-  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial, sortConfig]);
+  }, [activeTab, allCustomers, personalCustomers, corporateCustomers, isSearching, searchResults, selectedInitial, initialType, sortConfig]);
 
   // 고객 선택
   const handleSelectCustomer = useCallback((customer: Customer) => {
@@ -382,9 +412,43 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
             </button>
           </div>
 
-          {/* 한글 초성 인덱스 */}
+          {/* 초성 인덱스 */}
           <div className="customer-selector-modal__initials">
-            {['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
+            {/* 초성 타입 토글 버튼 */}
+            <button
+              className="customer-selector-modal__initial-type-toggle"
+              onClick={() => {
+                const nextType = initialType === 'korean' ? 'alphabet' : initialType === 'alphabet' ? 'number' : 'korean';
+                setInitialType(nextType);
+                setSelectedInitial(null);
+              }}
+              title="초성 타입 전환 (한글/영문/숫자)"
+            >
+              {initialType === 'korean' ? 'ㄱㄴㄷ' : initialType === 'alphabet' ? 'abc' : '123'}
+            </button>
+
+            {/* 초성 버튼들 */}
+            {initialType === 'korean' && ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
+              <button
+                key={initial}
+                className={`customer-selector-modal__initial ${selectedInitial === initial ? 'active' : ''}`}
+                onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+                title={`${initial}로 시작하는 고객`}
+              >
+                {initial}
+              </button>
+            ))}
+            {initialType === 'alphabet' && ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'].map(initial => (
+              <button
+                key={initial}
+                className={`customer-selector-modal__initial ${selectedInitial === initial.toUpperCase() ? 'active' : ''}`}
+                onClick={() => setSelectedInitial(selectedInitial === initial.toUpperCase() ? null : initial.toUpperCase())}
+                title={`${initial.toUpperCase()}로 시작하는 고객`}
+              >
+                {initial}
+              </button>
+            ))}
+            {initialType === 'number' && ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(initial => (
               <button
                 key={initial}
                 className={`customer-selector-modal__initial ${selectedInitial === initial ? 'active' : ''}`}
