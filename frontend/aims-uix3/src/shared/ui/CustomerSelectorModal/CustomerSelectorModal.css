@@ -241,7 +241,6 @@
 
 .customer-selector-modal__table-header {
   display: grid;
-  grid-template-columns: 120px 90px 50px 110px 180px 200px 60px;
   gap: var(--spacing-2);
   padding: var(--spacing-2) var(--spacing-3);
   background: var(--color-bg-secondary);
@@ -259,6 +258,29 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
+}
+
+/* 칼럼 리사이즈 핸들 */
+.column-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 10;
+}
+
+.column-resize-handle:hover {
+  background: var(--color-accent);
+  opacity: 0.5;
+}
+
+.column-resize-handle:active {
+  background: var(--color-accent);
+  opacity: 0.8;
 }
 
 /* 정렬 가능한 헤더 */
@@ -355,7 +377,6 @@
 
 .customer-selector-modal__customer-row {
   display: grid;
-  grid-template-columns: 120px 90px 50px 110px 180px 200px 60px auto;
   gap: var(--spacing-2);
   align-items: center;
   padding: var(--spacing-2) var(--spacing-3);

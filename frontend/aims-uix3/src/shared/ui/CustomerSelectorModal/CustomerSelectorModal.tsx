@@ -61,6 +61,9 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
   // 정렬 상태 (칼럼명, 오름차순/내림차순)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  // 칼럼 폭 상태 (비율 기반, 합계 100%)
+  const initialColumnWidthRatios = [15, 11, 6, 13.5, 22, 24.5, 8]; // %
+  const [columnWidthRatios, setColumnWidthRatios] = useState<number[]>(initialColumnWidthRatios);
 
   // 모달 열릴 때 전체 고객 로드
   useEffect(() => {
@@ -136,6 +139,45 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
     setSortConfig({ key, direction });
   }, [sortConfig]);
+
+  // 칼럼 리사이즈 핸들러 (비율 기반)
+  const handleColumnResize = useCallback((e: React.MouseEvent, columnIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const tableHeader = (e.target as HTMLElement).closest('.customer-selector-modal__table-header');
+    if (!tableHeader) return;
+
+    const tableWidth = tableHeader.clientWidth;
+    const startRatio = columnWidthRatios[columnIndex];
+    if (startRatio === undefined) return;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaRatio = (deltaX / tableWidth) * 100; // px를 %로 변환
+      const newRatio = Math.max(3, startRatio + deltaRatio); // 최소 3%
+
+      setColumnWidthRatios(prev => {
+        const newRatios = [...prev];
+        newRatios[columnIndex] = newRatio;
+        return newRatios;
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [columnWidthRatios]);
+
+  // 칼럼 폭 초기화
+  const resetColumnWidths = useCallback(() => {
+    setColumnWidthRatios(initialColumnWidthRatios);
+  }, []);
 
   // 표시할 고객 목록 (탭 + 초성 필터링 + 정렬)
   const displayedCustomers = useMemo(() => {
@@ -252,6 +294,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       minHeight={500}
       showHeader={true}
       showResetButton={true}
+      onReset={resetColumnWidths}
       footer={
         <div className="customer-selector-modal__footer-buttons">
           <Button
@@ -395,7 +438,10 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
         <>
           {/* 테이블 헤더 */}
           {displayedCustomers.length > 0 && (
-            <div className="customer-selector-modal__table-header">
+            <div
+              className="customer-selector-modal__table-header"
+              style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
+            >
               <div className="header-name sortable" onClick={() => handleSort('name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
@@ -405,6 +451,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'name' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 0)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-birth sortable" onClick={() => handleSort('birth')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -421,6 +472,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'birth' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 1)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-gender sortable" onClick={() => handleSort('gender')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -433,6 +489,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'gender' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 2)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-phone sortable" onClick={() => handleSort('phone')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -442,6 +503,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'phone' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 3)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-email sortable" onClick={() => handleSort('email')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -452,6 +518,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'email' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 4)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-address sortable" onClick={() => handleSort('address')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -461,6 +532,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'address' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 5)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="header-type sortable" onClick={() => handleSort('type')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -470,6 +546,11 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {sortConfig?.key === 'type' && (
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
+                <div
+                  className="column-resize-handle"
+                  onMouseDown={(e) => handleColumnResize(e, 6)}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
             </div>
           )}
@@ -502,6 +583,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                     className={`customer-selector-modal__customer-row ${
                       selectedCustomer?._id === customer._id ? 'selected' : ''
                     }`}
+                    style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
                     onClick={() => handleSelectCustomer(customer)}
                   >
                     <div className="cell-name">

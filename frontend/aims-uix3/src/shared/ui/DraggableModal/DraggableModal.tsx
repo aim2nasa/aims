@@ -30,6 +30,8 @@ export interface DraggableModalProps {
   showHeader?: boolean
   /** 크기 초기화 버튼 표시 여부 */
   showResetButton?: boolean
+  /** 크기 초기화 시 호출될 추가 콜백 (칼럼 폭 리셋 등) */
+  onReset?: () => void
   /** 모달 footer 영역 (선택적) */
   footer?: React.ReactNode
   /** 모달 본문 내용 */
@@ -77,6 +79,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   escapeToClose = true,
   showHeader = true,
   showResetButton = false,
+  onReset,
   footer,
   children,
   className = '',
@@ -168,6 +171,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
                 onClick={(e) => {
                   e.stopPropagation()
                   modal.reset()
+                  onReset?.()
                 }}
                 title="초기 크기로 복원"
                 aria-label="초기 크기로 복원"
