@@ -805,6 +805,11 @@
   --color-badge-text: #ffffff;                     /* Badge text color (white) */
   --color-badge-shadow: rgba(0, 0, 0, 0.15);       /* Badge shadow */
 
+  /* Similarity Indicator Drop Shadow Colors */
+  --color-similarity-excellent-shadow: rgba(34, 197, 94, 0.4);  /* Green shadow for excellent similarity */
+  --color-similarity-high-shadow: rgba(34, 197, 94, 0.3);       /* Green shadow for high similarity */
+  --color-similarity-medium-shadow: rgba(250, 204, 21, 0.3);    /* Yellow shadow for medium similarity */
+
   /* === 🍎 FILE TYPE ICON COLORS === */
   /* Apple-style file type differentiation with subtle base colors and vibrant hover states */
 

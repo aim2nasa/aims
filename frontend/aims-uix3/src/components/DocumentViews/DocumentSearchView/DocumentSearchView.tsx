@@ -532,6 +532,39 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 </div>
               )}
 
+              {/* 🍎 컬럼 헤더 */}
+              <div className="search-results-column-header">
+                <div className="header-index">#</div>
+                <div className="header-filename">
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                    <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+                  </svg>
+                  <span>파일명</span>
+                </div>
+                <div className="header-customer">
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  </svg>
+                  <span>연결된 고객</span>
+                </div>
+                <div className="header-status">
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>상태</span>
+                </div>
+                <div className="header-actions">
+                  <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                    <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
+                    <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
+                  </svg>
+                  <span>액션</span>
+                </div>
+              </div>
+
               {/* 🍎 iOS Table View 스타일 결과 리스트 */}
               <div className="search-results-table" role="list">
                 {results.map((item, index) => {
@@ -562,13 +595,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                       }}
                       aria-label={`문서: ${originalName}`}
                     >
-                      {/* Leading: 인덱스 */}
-                      <div className="row-leading">
-                        <span className="row-index">[{index + 1}]</span>
+                      {/* 인덱스 */}
+                      <div className="row-index">
+                        <span>[{index + 1}]</span>
                       </div>
 
-                      {/* Content: 아이콘 + 제목 + 요약 */}
-                      <div className="row-content">
+                      {/* 파일명 */}
+                      <div className="row-filename">
                         <div className="row-title-wrapper">
                           {/* 🍎 파일 타입 아이콘 */}
                           <div className="document-icon-wrapper">
@@ -644,34 +677,37 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="row-subtitle">{summary}</div>
                       </div>
 
-                      {/* Trailing: 고객명 + 액션 버튼들 + 점수 + 화살표 */}
-                      <div className="row-trailing">
-                        {/* 🍎 연결된 고객 (문서 라이브러리와 동일한 레이아웃) */}
-                        <div className="search-customer">
-                          {('customer_relation' in item && item.customer_relation?.customer_name) ? (
-                            <button
-                              className="customer-name customer-name-button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (onCustomerClick && item.customer_relation?.customer_id) {
-                                  onCustomerClick(item.customer_relation.customer_id)
-                                }
-                              }}
-                              aria-label={`${item.customer_relation.customer_name} 상세 보기`}
-                            >
-                              {item.customer_relation.customer_name}
-                            </button>
-                          ) : (
-                            <span className="customer-none">-</span>
-                          )}
-                        </div>
+                      {/* 연결된 고객 */}
+                      <div className="row-customer">
+                        {('customer_relation' in item && item.customer_relation?.customer_name) ? (
+                          <button
+                            className="customer-name customer-name-button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (onCustomerClick && item.customer_relation?.customer_id) {
+                                onCustomerClick(item.customer_relation.customer_id)
+                              }
+                            }}
+                            aria-label={`${item.customer_relation.customer_name} 상세 보기`}
+                          >
+                            {item.customer_relation.customer_name}
+                          </button>
+                        ) : (
+                          <span className="customer-none">-</span>
+                        )}
+                      </div>
 
-                        {/* 🍎 문서 처리 상태 아이콘 */}
+                      {/* 상태 */}
+                      <div className="row-status">
                         <Tooltip content={status.label}>
                           <div className={`status-icon status-${status.status}`}>
                             {status.icon}
                           </div>
                         </Tooltip>
+                      </div>
+
+                      {/* 액션 버튼들 */}
+                      <div className="row-actions">
 
                         {/* 🍎 상세 보기 버튼 */}
                         <Tooltip content="상세 보기">
@@ -745,7 +781,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             </div>
                           </Tooltip>
                         )}
-                        <span className="row-chevron" aria-hidden="true">›</span>
                       </div>
                     </div>
                   )
