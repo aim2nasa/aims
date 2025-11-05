@@ -310,6 +310,24 @@ html[data-theme="dark"] {
 
 **철칙**: `!important`를 써야겠다는 생각이 들면, CSS 구조를 재설계해야 할 시점!
 
+### 아이콘 구현 규칙 🎯
+
+**필수 문서**: [docs/ICON_IMPLEMENTATION_TROUBLESHOOTING.md](docs/ICON_IMPLEMENTATION_TROUBLESHOOTING.md)
+
+**체크리스트**:
+```
+□ AllCustomersView SVG 복사 (SFSymbol X)
+□ 헤더에만 (데이터 행 X)
+□ 13px 크기 (16px 이하)
+□ CSS 변수 색상 (하드코딩 X)
+□ Ctrl+Shift+R 테스트
+□ npm test && npm run build
+```
+
+**금지**: 16px 초과, 색상 하드코딩, 데이터 행 아이콘, grayscale
+
+**캐싱 문제**: [docs/CSS_ICON_CACHING_ISSUE.md](docs/CSS_ICON_CACHING_ISSUE.md)
+
 ### 아이콘 크기 규칙 - 절대 준수! 📏
 
 **LeftPane CustomMenu 아이콘이 모든 아이콘의 기준이다!**
@@ -399,6 +417,25 @@ html[data-theme="dark"] {
 **기억하라**:
 - LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
 - 아이콘 배경은 투명! 호버 시 튀어나오는 효과(opacity + scale)만 사용!
+
+### 🔧 아이콘 캐싱 문제 해결 - 필독! 🔧
+
+**아이콘 변경 후 브라우저에 반영 안 될 때:**
+
+SFSymbol CSS의 `::before content` 속성은 브라우저가 강력하게 캐싱합니다.
+
+**즉시 해결:**
+```bash
+cd frontend/aims-uix3
+rm -rf node_modules/.vite
+npm run dev
+```
+
+그 후 브라우저에서 **Ctrl+Shift+R** (하드 리프레시)
+
+**상세 설명**: [`docs/CSS_ICON_CACHING_ISSUE.md`](../docs/CSS_ICON_CACHING_ISSUE.md) 참고
+
+---
 
 ### 인라인 스타일 가이드라인 ⚖️
 
