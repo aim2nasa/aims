@@ -531,15 +531,20 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
 .cell-type {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
-.cell-type .type-badge {
-  padding: 2px var(--spacing-2);
-  background: transparent;
-  border-radius: var(--border-radius-sm);
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
+.cell-type .customer-type-icon {
+  flex-shrink: 0;
+  transition: color 0.2s ease-out;
+}
+
+.cell-type .customer-type-icon--corporate {
+  color: var(--color-icon-orange);
+}
+
+.cell-type .customer-type-icon--personal {
+  color: var(--color-icon-blue);
 }
 
 .customer-selector-modal__customer-row .check-icon {
