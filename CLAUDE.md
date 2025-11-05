@@ -352,7 +352,13 @@ html[data-theme="dark"] {
    ❌ 24px - 금지
    ```
 
-4. **적용 범위:**
+4. **아이콘 배경 규칙:**
+   - **모든 아이콘은 투명 배경 사용** (`background: transparent`)
+   - **호버 시에도 투명 배경 유지** (배경색 변경 금지)
+   - 호버 효과: `opacity` + `transform: scale()` 조합만 허용
+   - 예: `opacity: 0.7` → `1.0`, `scale(1.0)` → `scale(1.1)`
+
+5. **적용 범위:**
    - 모든 SVG 아이콘 (width, height)
    - 모든 SFSymbol 컴포넌트 (size 속성)
    - 모든 커스텀 아이콘 컴포넌트
@@ -360,7 +366,7 @@ html[data-theme="dark"] {
    - 리스트 아이템 아이콘
    - 액션 버튼 아이콘
 
-5. **위반 예시 및 수정:**
+6. **위반 예시 및 수정:**
    ```tsx
    // ❌ 잘못된 예 - 20px는 16px보다 큼
    const baseProps = {
@@ -381,7 +387,7 @@ html[data-theme="dark"] {
    <SFSymbol name="icon" size={SFSymbolSize.CALLOUT} />
    ```
 
-6. **아이콘 배경 및 호버 효과 규칙:**
+7. **아이콘 배경 및 호버 효과 규칙:**
    - **배경**: 모든 아이콘 버튼의 배경은 **투명** (`background: transparent`)
    - **호버 효과**: 배경색 대신 **투명도 + 스케일 효과** 사용
      ```css
@@ -404,13 +410,13 @@ html[data-theme="dark"] {
      - ❌ `!important` 사용 금지
    - **이유**: 애플 디자인 철학의 "서브틀한 인터랙션" 원칙 준수
 
-7. **이유:**
+8. **이유:**
    - LeftPane은 UI의 핵심 네비게이션
    - 모든 아이콘의 시각적 일관성 유지
    - 사용자 경험의 통일성 확보
    - 애플 디자인 가이드라인 준수
 
-8. **예외:**
+9. **예외:**
    - 문서 타입 아이콘 (DocumentSearchView, DocumentLibraryView): 24px 허용
    - 이유: 문서 구분을 위한 시각적 강조 필요
 
