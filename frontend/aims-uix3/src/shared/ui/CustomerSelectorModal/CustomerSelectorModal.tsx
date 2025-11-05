@@ -126,12 +126,23 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 한글 초성 추출 함수
   const getInitialConsonant = (name: string): string => {
     if (!name) return '';
-    const code = name.charCodeAt(0) - 0xAC00;
-    if (code < 0 || code > 11171) return ''; // 한글이 아님
-    const initialIndex = Math.floor(code / 588);
-    // 초성을 자모(ㄱㄴㄷ...)로 변환
-    const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
-    return initials[initialIndex] || '';
+    const firstChar = name.charAt(0);
+    const code = firstChar.charCodeAt(0);
+
+    // 1. 한글 완성형 문자 (가-힣: 0xAC00-0xD7A3)
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const initialIndex = Math.floor((code - 0xAC00) / 588);
+      const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+      return initials[initialIndex] || '';
+    }
+
+    // 2. 한글 자음 (ㄱ-ㅎ: 0x3131-0x314E)
+    if (code >= 0x3131 && code <= 0x314E) {
+      // 자음 자체를 그대로 반환 (ㄱ, ㄲ, ㄴ, ㄷ, ...)
+      return firstChar;
+    }
+
+    return '';
   };
 
   // 알파벳 초성 추출 함수 (대소문자 구분 없음)
