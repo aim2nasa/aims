@@ -65,7 +65,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   size = 'md',
-  backdropClosable = true,
+  backdropClosable = false,
   escapeToClose = true,
   showHeader = true,
   footer,

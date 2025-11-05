@@ -252,34 +252,6 @@ describe('DocumentFullTextModal', () => {
     });
   });
 
-  describe('배경 클릭으로 닫기', () => {
-    it('배경 클릭 시 onClose가 호출되어야 한다', async () => {
-      const handleClose = vi.fn();
-      const user = userEvent.setup();
-
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: { raw: { meta: { full_text: '테스트' } } }
-        })
-      } as Response);
-
-      render(
-        <DocumentFullTextModal
-          visible={true}
-          onClose={handleClose}
-          document={mockDocument}
-        />
-      );
-
-      const backdrop = screen.getByRole('presentation');
-      await user.click(backdrop);
-
-      expect(handleClose).toHaveBeenCalled();
-    });
-  });
-
   describe('닫기 버튼', () => {
     it('닫기 버튼 클릭 시 onClose가 호출되어야 한다', async () => {
       const handleClose = vi.fn();

@@ -71,7 +71,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
   visible,
   onClose,
   title,
-  backdropClosable = true,
+  backdropClosable = false,
   escapeToClose = true,
   showHeader = true,
   footer,
