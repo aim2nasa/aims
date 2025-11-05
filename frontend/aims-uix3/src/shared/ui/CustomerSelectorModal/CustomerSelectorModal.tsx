@@ -14,6 +14,8 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { DraggableModal } from '../DraggableModal';
+import { SFSymbol } from '../../../components/SFSymbol/SFSymbol';
+import { SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol/SFSymbol.types';
 import './CustomerSelectorModal.css';
 
 export interface CustomerSelectorModalProps {
@@ -209,14 +211,23 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     >
       {/* 검색 입력 */}
       <div className="customer-selector-modal__search">
-        <input
-          type="text"
-          className="customer-selector-modal__search-input"
-          placeholder="고객 이름 검색..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          autoFocus
-        />
+        <div className="customer-selector-modal__search-wrapper">
+          <SFSymbol
+            name="magnifyingglass"
+            size={SFSymbolSize.FOOTNOTE}
+            weight={SFSymbolWeight.MEDIUM}
+            className="customer-selector-modal__search-icon"
+            decorative
+          />
+          <input
+            type="text"
+            className="customer-selector-modal__search-input"
+            placeholder="고객 이름 또는 전화번호 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+        </div>
       </div>
 
       {/* 탭 (검색 중이 아닐 때만 표시) */}
@@ -227,18 +238,39 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               className={`customer-selector-modal__tab ${activeTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveTab('all')}
             >
+              <SFSymbol
+                name="person.3"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="customer-selector-modal__tab-icon"
+                decorative
+              />
               전체 ({allCustomers.length})
             </button>
             <button
               className={`customer-selector-modal__tab ${activeTab === 'personal' ? 'active' : ''}`}
               onClick={() => setActiveTab('personal')}
             >
+              <SFSymbol
+                name="person"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="customer-selector-modal__tab-icon"
+                decorative
+              />
               개인 ({personalCustomers.length})
             </button>
             <button
               className={`customer-selector-modal__tab ${activeTab === 'corporate' ? 'active' : ''}`}
               onClick={() => setActiveTab('corporate')}
             >
+              <SFSymbol
+                name="building.2"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="customer-selector-modal__tab-icon"
+                decorative
+              />
               법인 ({corporateCustomers.length})
             </button>
           </div>
@@ -285,37 +317,86 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
       {/* 고객 목록 */}
       {!isLoading && (
-        <div className="customer-selector-modal__list">
-          {displayedCustomers.length === 0 ? (
-            <div className="customer-selector-modal__empty">
-              {isSearching ? '검색 결과가 없습니다' : '등록된 고객이 없습니다'}
+        <>
+          {/* 테이블 헤더 */}
+          {displayedCustomers.length > 0 && (
+            <div className="customer-selector-modal__table-header">
+              <div className="header-name">이름</div>
+              <div className="header-birth">생년월일</div>
+              <div className="header-gender">성별</div>
+              <div className="header-phone">전화</div>
+              <div className="header-email">이메일</div>
+              <div className="header-address">주소</div>
+              <div className="header-type">유형</div>
             </div>
-          ) : (
-            displayedCustomers.map(customer => (
-              <div
-                key={customer._id}
-                className={`customer-selector-modal__customer-item ${
-                  selectedCustomer?._id === customer._id ? 'selected' : ''
-                }`}
-                onClick={() => handleSelectCustomer(customer)}
-              >
-                <div className="customer-selector-modal__customer-name">
-                  {customer.personal_info?.name || '이름 없음'}
-                </div>
-                <div className="customer-selector-modal__customer-meta">
-                  <span className="customer-selector-modal__customer-type">
-                    {customer.insurance_info?.customer_type || '개인'}
-                  </span>
-                  {customer.personal_info?.mobile_phone && (
-                    <span className="customer-selector-modal__customer-phone">
-                      {customer.personal_info.mobile_phone}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
           )}
-        </div>
+
+          {/* 테이블 바디 */}
+          <div className="customer-selector-modal__list">
+            {displayedCustomers.length === 0 ? (
+              <div className="customer-selector-modal__empty">
+                {isSearching ? '검색 결과가 없습니다' : '등록된 고객이 없습니다'}
+              </div>
+            ) : (
+              displayedCustomers.map(customer => {
+                const isCorporate = customer.insurance_info?.customer_type === '법인';
+                const birthDate = customer.personal_info?.birth_date;
+                const birthDisplay = birthDate
+                  ? new Date(birthDate).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', '')
+                  : '-';
+                const gender = customer.personal_info?.gender;
+                const genderDisplay = gender === 'M' ? '남' : gender === 'F' ? '여' : '-';
+                const email = customer.personal_info?.email || '-';
+                const emailDisplay = email.length > 25 ? email.substring(0, 22) + '...' : email;
+                const address = customer.personal_info?.address;
+                const fullAddress = address?.address1
+                  ? `${address.address1} ${address.address2 || ''}`.trim()
+                  : '-';
+                const addressDisplay = fullAddress.length > 30 ? fullAddress.substring(0, 27) + '...' : fullAddress;
+
+                return (
+                  <div
+                    key={customer._id}
+                    className={`customer-selector-modal__customer-row ${
+                      selectedCustomer?._id === customer._id ? 'selected' : ''
+                    }`}
+                    onClick={() => handleSelectCustomer(customer)}
+                  >
+                    <div className="cell-name">
+                      <SFSymbol
+                        name={isCorporate ? 'building.2' : 'person.circle'}
+                        size={SFSymbolSize.FOOTNOTE}
+                        weight={SFSymbolWeight.MEDIUM}
+                        className="customer-icon"
+                        decorative
+                      />
+                      {customer.personal_info?.name || '이름 없음'}
+                    </div>
+                    <div className="cell-birth">{birthDisplay}</div>
+                    <div className="cell-gender">{genderDisplay}</div>
+                    <div className="cell-phone">{customer.personal_info?.mobile_phone || '-'}</div>
+                    <div className="cell-email" title={email}>{emailDisplay}</div>
+                    <div className="cell-address" title={fullAddress}>{addressDisplay}</div>
+                    <div className="cell-type">
+                      <span className="type-badge">
+                        {customer.insurance_info?.customer_type || '개인'}
+                      </span>
+                    </div>
+                    {selectedCustomer?._id === customer._id && (
+                      <SFSymbol
+                        name="checkmark.circle.fill"
+                        size={SFSymbolSize.CALLOUT}
+                        weight={SFSymbolWeight.SEMIBOLD}
+                        className="check-icon"
+                        decorative
+                      />
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
     </DraggableModal>
   );

@@ -7,6 +7,15 @@
  * DraggableModal이 기본 스타일 제공, 여기서는 컨텐츠만 스타일링
  */
 
+/* ===== Modal Content Override ===== */
+
+/* DraggableModal의 content 스크롤 제거 - 목록 영역에만 스크롤 적용 */
+.draggable-modal__content:has(.customer-selector-modal__search) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ===== Footer Buttons ===== */
 
 .customer-selector-modal__footer-buttons {
@@ -53,22 +62,42 @@
 
 .customer-selector-modal__search {
   margin-bottom: var(--spacing-3);
+  flex-shrink: 0;
+}
+
+.customer-selector-modal__search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.customer-selector-modal__search-icon {
+  position: absolute;
+  left: var(--spacing-3);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .customer-selector-modal__search-input {
   width: 100%;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--color-border);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) 36px;
+  border: 1.5px solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-sm);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  transition: border-color var(--duration-fast) var(--easing-ease-out);
+  transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
 .customer-selector-modal__search-input:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.customer-selector-modal__search-input::placeholder {
+  color: var(--color-text-tertiary);
 }
 
 /* ===== Tabs ===== */
@@ -78,10 +107,15 @@
   gap: var(--spacing-1);
   margin-bottom: var(--spacing-2);
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .customer-selector-modal__tab {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: var(--spacing-2) var(--spacing-3);
   background: transparent;
   border: none;
@@ -103,6 +137,14 @@
   border-bottom-color: var(--color-accent);
 }
 
+.customer-selector-modal__tab-icon {
+  opacity: 0.8;
+}
+
+.customer-selector-modal__tab.active .customer-selector-modal__tab-icon {
+  opacity: 1;
+}
+
 /* ===== 한글 초성 인덱스 ===== */
 
 .customer-selector-modal__initials {
@@ -113,6 +155,7 @@
   padding: var(--spacing-2);
   background: var(--color-bg-secondary);
   border-radius: var(--border-radius-md);
+  flex-shrink: 0;
 }
 
 .customer-selector-modal__initial {
@@ -211,7 +254,14 @@
 
 /* ===== Loading & Empty ===== */
 
-.customer-selector-modal__loading,
+.customer-selector-modal__loading {
+  text-align: center;
+  padding: var(--spacing-8);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
 .customer-selector-modal__empty {
   text-align: center;
   padding: var(--spacing-8);
@@ -219,57 +269,126 @@
   font-size: var(--font-size-sm);
 }
 
-/* ===== List ===== */
+/* ===== Table Header ===== */
+
+.customer-selector-modal__table-header {
+  display: grid;
+  grid-template-columns: 120px 90px 50px 110px 180px 200px 60px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.customer-selector-modal__table-header > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== List (Table Body) ===== */
 
 .customer-selector-modal__list {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  max-height: 500px;
+  overflow-x: hidden;
+  max-height: 400px;
+  min-height: 200px;
 }
 
-/* ===== Customer Item (컴팩트 디자인) ===== */
+/* iOS 스타일 스크롤바 */
+.customer-selector-modal__list::-webkit-scrollbar {
+  width: 8px;
+}
 
-.customer-selector-modal__customer-item {
-  display: flex;
+.customer-selector-modal__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.customer-selector-modal__list::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 4px;
+}
+
+.customer-selector-modal__list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
+}
+
+/* ===== Customer Row (테이블 행) ===== */
+
+.customer-selector-modal__customer-row {
+  display: grid;
+  grid-template-columns: 120px 90px 50px 110px 180px 200px 60px auto;
+  gap: var(--spacing-2);
   align-items: center;
-  justify-content: space-between;
   padding: var(--spacing-2) var(--spacing-3);
   border-bottom: 1px solid var(--color-border-subtle);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
-  min-height: 44px; /* 터치 친화적 최소 높이 */
+  min-height: 44px;
+  flex-shrink: 0;
+  position: relative;
 }
 
-.customer-selector-modal__customer-item:last-child {
+.customer-selector-modal__customer-row:last-child {
   border-bottom: none;
 }
 
-.customer-selector-modal__customer-item:hover {
+.customer-selector-modal__customer-row:hover {
   background: var(--color-bg-secondary);
 }
 
-.customer-selector-modal__customer-item.selected {
+.customer-selector-modal__customer-row.selected {
   background: var(--color-accent-bg);
   border-left: 3px solid var(--color-accent);
 }
 
-.customer-selector-modal__customer-name {
+/* ===== Table Cells ===== */
+
+.customer-selector-modal__customer-row > div {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.customer-selector-modal__customer-meta {
+.cell-name {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: 6px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.cell-name .customer-icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.cell-birth,
+.cell-gender,
+.cell-phone {
+  color: var(--color-text-primary);
+}
+
+.cell-email,
+.cell-address {
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
 }
 
-.customer-selector-modal__customer-type {
-  padding: 1px var(--spacing-2);
+.cell-type {
+  display: flex;
+  justify-content: center;
+}
+
+.cell-type .type-badge {
+  padding: 2px var(--spacing-2);
   background: var(--color-bg-tertiary);
   border-radius: var(--border-radius-sm);
   font-size: 10px;
@@ -277,8 +396,8 @@
   white-space: nowrap;
 }
 
-.customer-selector-modal__customer-phone {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
+.customer-selector-modal__customer-row .check-icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  justify-self: end;
 }
