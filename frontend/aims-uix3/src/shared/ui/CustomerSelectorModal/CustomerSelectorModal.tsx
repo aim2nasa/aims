@@ -14,6 +14,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { DraggableModal } from '../DraggableModal';
+import { Button } from '../Button';
 import { SFSymbol } from '../../../components/SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol/SFSymbol.types';
 import './CustomerSelectorModal.css';
@@ -193,19 +194,21 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       showHeader={true}
       footer={
         <div className="customer-selector-modal__footer-buttons">
-          <button
-            className="customer-selector-modal__button customer-selector-modal__button--secondary"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={onClose}
           >
             취소
-          </button>
-          <button
-            className="customer-selector-modal__button customer-selector-modal__button--primary"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleConfirm}
             disabled={!selectedCustomer}
           >
             선택 완료
-          </button>
+          </Button>
         </div>
       }
     >
