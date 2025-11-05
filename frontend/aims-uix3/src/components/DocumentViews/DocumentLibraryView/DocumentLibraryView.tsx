@@ -181,7 +181,7 @@ const DocumentLibraryContent: React.FC<{
               type="text"
               value={state.searchTerm}
               onChange={(e) => actions.setSearchTerm(e.target.value)}
-              placeholder="파일명으로 검색"
+              placeholder="파일명 검색"
               className="search-input"
             />
             {state.searchTerm && (
