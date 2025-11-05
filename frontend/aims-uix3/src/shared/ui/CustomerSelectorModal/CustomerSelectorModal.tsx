@@ -414,7 +414,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
           {/* 초성 인덱스 */}
           <div className="customer-selector-modal__initials">
-            {/* 초성 타입 토글 버튼 */}
+            {/* 초성 타입 토글 버튼 (iOS 키보드 스타일) */}
             <button
               className="customer-selector-modal__initial-type-toggle"
               onClick={() => {
@@ -423,8 +423,22 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 setSelectedInitial(null);
               }}
               title="초성 타입 전환 (한글/영문/숫자)"
+              aria-label="초성 타입 전환"
             >
-              {initialType === 'korean' ? 'ㄱㄴㄷ' : initialType === 'alphabet' ? 'abc' : '123'}
+              <svg
+                className="customer-selector-modal__globe-icon"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ stroke: 'currentColor' }}
+              >
+                <circle cx="12" cy="12" r="10" fill="none" strokeWidth="2" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" fill="none" strokeWidth="2" />
+              </svg>
+              <span className="customer-selector-modal__initial-type-label">
+                {initialType === 'korean' ? 'ㄱㄴ' : initialType === 'alphabet' ? 'AB' : '12'}
+              </span>
             </button>
 
             {/* 초성 버튼들 */}
@@ -438,12 +452,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 {initial}
               </button>
             ))}
-            {initialType === 'alphabet' && ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'].map(initial => (
+            {initialType === 'alphabet' && ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'].map(initial => (
               <button
                 key={initial}
-                className={`customer-selector-modal__initial ${selectedInitial === initial.toUpperCase() ? 'active' : ''}`}
-                onClick={() => setSelectedInitial(selectedInitial === initial.toUpperCase() ? null : initial.toUpperCase())}
-                title={`${initial.toUpperCase()}로 시작하는 고객`}
+                className={`customer-selector-modal__initial ${selectedInitial === initial ? 'active' : ''}`}
+                onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+                title={`${initial}로 시작하는 고객`}
               >
                 {initial}
               </button>
