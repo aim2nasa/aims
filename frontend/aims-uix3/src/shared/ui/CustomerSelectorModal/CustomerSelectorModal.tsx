@@ -63,7 +63,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   // 칼럼 폭 상태 (비율 기반, 합계 100%)
   // [이름, 생년월일, 성별, 전화, 이메일, 주소, 유형]
-  const initialColumnWidthRatios = [14, 10, 6, 13, 21, 26, 10]; // %
+  const initialColumnWidthRatios = [14, 9, 5, 12, 18, 25, 17]; // %
   const [columnWidthRatios, setColumnWidthRatios] = useState<number[]>(initialColumnWidthRatios);
 
   // 모달 열릴 때 전체 고객 로드
@@ -600,15 +600,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                         {customer.insurance_info?.customer_type || '개인'}
                       </span>
                     </div>
-                    {selectedCustomer?._id === customer._id && (
-                      <SFSymbol
-                        name="checkmark.circle.fill"
-                        size={SFSymbolSize.CALLOUT}
-                        weight={SFSymbolWeight.SEMIBOLD}
-                        className="check-icon"
-                        decorative
-                      />
-                    )}
                   </div>
                 );
               })
