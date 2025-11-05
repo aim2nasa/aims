@@ -8,20 +8,20 @@
  * - iOS 스타일 디자인
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import type { Document, DocumentCustomerRelation } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
-import type { Customer, CustomerSearchResponse } from '@/entities/customer'
+import type { Customer } from '@/entities/customer'
 import type { CustomerDocumentsResult } from '../../../../services/DocumentService'
-import { Button, Dropdown, type DropdownOption, Input, Tooltip, Modal } from '../../../../shared/ui'
+import { Button, Dropdown, type DropdownOption, Tooltip, Modal } from '../../../../shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
+import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/CustomerSelectorModal'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
   visible: boolean
   document: Document | null
   onClose: () => void
-  onSearchCustomers: (searchTerm: string, page?: number, limit?: number) => Promise<CustomerSearchResponse>
   onFetchCustomerDocuments: (customerId: string) => Promise<CustomerDocumentsResult>
   onLink: (params: {
     customerId: string
@@ -47,159 +47,48 @@ const RELATIONSHIP_OPTIONS: DropdownOption[] = ALL_RELATIONSHIP_TYPES.filter(
   option => option.value !== 'annual_report'
 )
 
-const SEARCH_LIMIT = 20
-
 export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   visible,
   document,
   onClose,
-  onSearchCustomers,
   onFetchCustomerDocuments,
   onLink
 }) => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<Customer[]>([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<{ currentPage: number; totalPages: number; totalCount: number } | null>(null)
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
+  const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [relationshipType, setRelationshipType] = useState<string>('general')
   const [notes, setNotes] = useState<string>('')
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState<number>(1)
-  const prevSearchTermRef = useRef<string>('')
-  const isSearchStableRef = useRef<boolean>(true) // 검색 결과가 안정화되었는지 추적
-  const onSearchCustomersRef = useRef(onSearchCustomers) // 함수 참조 고정
-
-  // 입력 변경 감지용 refs
-  const lastChangeTimestampRef = useRef<number>(0) // 마지막 onChange 시간
-  const pendingValueRef = useRef<string | null>(null) // 복원 대기 중인 값
-
-  // 함수 참조 업데이트
-  useEffect(() => {
-    onSearchCustomersRef.current = onSearchCustomers
-  }, [onSearchCustomers])
 
   const documentId = useMemo(
     () => document?._id || (document as Record<string, string | undefined>)?.['id'] || '',
     [document]
   );
-const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
+  const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
   /**
    * 모달이 열릴 때 상태 초기화
    */
   useEffect(() => {
     if (visible) {
-      setSearchTerm('')
-      setSearchResults([])
-      setSearchError(null)
-      setPagination(null)
-      setSelectedCustomerId(null)
+      setSelectedCustomer(null)
       setRelationshipType('general')
       setNotes('')
       setDuplicateWarning(null)
       setFeedbackMessage(null)
-      setCurrentPage(1)
     }
   }, [visible])
-
-  /**
-   * 고객 검색 (디바운스)
-   */
-  useEffect(() => {
-    if (!visible) return
-
-    const trimmed = searchTerm.trim()
-
-    if (!trimmed) {
-      setSearchResults([])
-      setPagination(null)
-      setSearchLoading(false)
-      setSearchError(null)
-      isSearchStableRef.current = true // 빈 검색어는 즉시 안정화
-      return
-    }
-
-    // 검색어가 변경되면 페이지를 1로 리셋
-    if (prevSearchTermRef.current !== trimmed) {
-      prevSearchTermRef.current = trimmed
-      if (currentPage !== 1) {
-        setCurrentPage(1)
-        return // 페이지 변경 후 이 useEffect가 다시 실행됨
-      }
-    }
-
-    let isCancelled = false
-    isSearchStableRef.current = false // 검색 시작 - 불안정 상태
-    setSearchLoading(true)
-    setSearchError(null)
-
-    const timer = window.setTimeout(() => {
-      onSearchCustomersRef.current(trimmed, currentPage, SEARCH_LIMIT)
-        .then((response) => {
-          if (isCancelled) return
-          const customers = response.customers ?? []
-          const normalize = (value: string) =>
-            value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-          const keyword = normalize(trimmed)
-          const filtered = customers.filter((customer) => {
-            const name = customer.personal_info?.name
-            const phone =
-              customer.personal_info?.mobile_phone ?? customer.personal_info?.home_phone ?? customer.personal_info?.work_phone ??
-              customer.personal_info?.mobile_phone ??
-              customer.personal_info?.home_phone ??
-              customer.personal_info?.work_phone
-            return (
-              (name && normalize(name).includes(keyword)) ||
-              (phone && normalize(phone).includes(keyword))
-            )
-          })
-
-          setSearchResults(filtered)
-          setPagination({
-            currentPage: 1,
-            totalPages: 1,
-            totalCount: filtered.length
-          })
-
-          // 검색 결과 렌더링 후 안정화 (150ms 대기)
-          setTimeout(() => {
-            if (!isCancelled) {
-              isSearchStableRef.current = true
-            }
-          }, 150)
-        })
-        .catch((error) => {
-          if (isCancelled) return
-          console.error('고객 검색 오류:', error)
-          setSearchError('고객 검색에 실패했습니다.')
-          setSearchResults([])
-          setPagination(null)
-          isSearchStableRef.current = true // 에러 시에도 안정화
-        })
-        .finally(() => {
-          if (!isCancelled) {
-            setSearchLoading(false)
-          }
-        })
-    }, 300)
-
-    return () => {
-      isCancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [searchTerm, currentPage, visible]) // onSearchCustomers 제거 - ref로 관리
 
   /**
    * 고객 선택 시 중복 연결 검사
    */
   const handleSelectCustomer = async (customer: Customer) => {
-    setSelectedCustomerId(customer._id)
+    setSelectedCustomer(customer)
     setDuplicateWarning(null)
     setFeedbackMessage(null)
+    setIsCustomerSelectorOpen(false)
 
     if (!documentId) {
       return
@@ -219,30 +108,17 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
   }
 
   /**
-   * 고객 검색 결과 페이지 변경
-   */
-  const handlePageChange = (direction: 'prev' | 'next') => {
-    if (!pagination) return
-
-    if (direction === 'prev' && pagination.currentPage > 1) {
-      setCurrentPage(pagination.currentPage - 1)
-    } else if (direction === 'next' && pagination.currentPage < pagination.totalPages) {
-      setCurrentPage(pagination.currentPage + 1)
-    }
-  }
-
-  /**
    * 연결 실행
    */
   const handleLink = async () => {
-    if (!documentId || !selectedCustomerId) return
+    if (!documentId || !selectedCustomer) return
 
     setLinkLoading(true)
     setFeedbackMessage(null)
 
     try {
       const _params: { customerId: string; documentId: string; relationshipType: string; notes?: string } = {
-        customerId: selectedCustomerId,
+        customerId: selectedCustomer._id,
         documentId,
         relationshipType
       };
@@ -256,14 +132,14 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       window.dispatchEvent(new CustomEvent('documentLinked', {
         detail: {
           documentId,
-          customerId: selectedCustomerId,
+          customerId: selectedCustomer._id,
           timestamp: new Date().toISOString()
         }
       }))
       if (import.meta.env.DEV) {
         console.log('[DocumentLinkModal] documentLinked 이벤트 발생:', {
           documentId,
-          customerId: selectedCustomerId
+          customerId: selectedCustomer._id
         })
       }
 
@@ -284,7 +160,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
     return null
   }
 
-  const isLinkDisabled = !selectedCustomerId || Boolean(duplicateWarning) || linkLoading
+  const isLinkDisabled = !selectedCustomer || Boolean(duplicateWarning) || linkLoading
 
   const footer = (
     <>
@@ -314,6 +190,7 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
   )
 
   return (
+    <>
     <Modal
       visible={visible}
       onClose={onClose}
@@ -344,169 +221,54 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
         </div>
       </section>
 
-      {/* Search */}
+      {/* Customer Selection */}
       <section className="document-link-modal__section">
-        <h3>고객 검색</h3>
-        <Input
-          placeholder="예: 김철수, 010-1234-5678"
-          value={searchTerm}
-          autoComplete="off"
-          onChange={(event) => {
-            const now = performance.now()
-            const newValue = event.target.value
+        <h3>고객 선택</h3>
+        <div className="document-link-modal__customer-selection">
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => setIsCustomerSelectorOpen(true)}
+            fullWidth
+          >
+            고객선택
+          </Button>
 
-            // 🚫 자동 삭제/재입력 사이클 감지
-            // Case 1: 값이 빈 문자열로 변경되는 경우 - 복원 대기 모드 진입
-            if (!newValue && searchTerm.trim()) {
-              pendingValueRef.current = searchTerm
-              lastChangeTimestampRef.current = now
-
-              // 100ms 후에도 복원되지 않으면 정상 삭제로 간주
-              setTimeout(() => {
-                if (pendingValueRef.current === searchTerm) {
-                  pendingValueRef.current = null
-                  setSearchTerm('')
-                }
-              }, 100)
-
-              return
-            }
-
-            // Case 2: 복원 대기 중인 경우 - 모든 변경 차단
-            if (pendingValueRef.current) {
-              const timeSinceEmpty = now - lastChangeTimestampRef.current
-
-              if (timeSinceEmpty < 100) {
-                // 100ms 이내 = 자동 사이클
-                pendingValueRef.current = null
-                return
-              } else {
-                // 100ms 이후 = 정상 입력
-                pendingValueRef.current = null
-              }
-            }
-
-            // 정상적인 변경 - 상태 업데이트
-            pendingValueRef.current = null
-            lastChangeTimestampRef.current = now
-            setSearchTerm(newValue)
-          }}
-          leftIcon={
-            <SFSymbol
-              name="magnifyingglass"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.REGULAR}
-              decorative={true}
-            />
-          }
-          fullWidth
-        />
-        {searchError && <p className="document-link-modal__error">{searchError}</p>}
-
-      {/* Results */}
-      <div className="document-link-modal__results">
-        {searchLoading ? (
-          <div className="document-link-modal__loader">
-            <span className="document-link-modal__spinner" aria-label="검색 중" />
-            <span>고객을 검색하고 있습니다...</span>
-          </div>
-        ) : searchResults.length > 0 ? (
-          <ul className="customer-result-list" role="listbox">
-            {searchResults.map((customer, index) => {
-              const isSelected = selectedCustomerId === customer._id
-              const displayName = customer.personal_info?.name || '이름 없음'
-              const phone =
-                customer.personal_info?.mobile_phone ?? customer.personal_info?.home_phone ?? customer.personal_info?.work_phone ??
-                customer.personal_info?.mobile_phone ??
-                customer.personal_info?.home_phone ??
-                customer.personal_info?.work_phone ??
-                '연락처 없음'
-
-              // address가 객체일 수 있으므로 문자열로 변환
-              const addressObj = customer.personal_info?.address
-              const address = typeof addressObj === 'string'
-                ? addressObj
-                : addressObj && typeof addressObj === 'object'
-                  ? `${addressObj.address1 || ''} ${addressObj.address2 || ''}`.trim() || '주소 없음'
-                  : '주소 없음'
-
-              return (
-                <li
-                  key={customer._id}
-                  className={`document-link-modal__customer-item ${isSelected ? 'document-link-modal__customer-item--selected' : ''}`}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-
-                    // 검색 결과가 안정화되지 않았으면 클릭 무시
-                    if (!isSearchStableRef.current) {
-                      return
-                    }
-
-                    if (isSelected) {
-                      setSelectedCustomerId(null)
+          {/* 선택된 고객 표시 */}
+          <div className="document-link-modal__selected-customer">
+            {selectedCustomer ? (
+              <div className="selected-customer-info">
+                <div className="selected-customer-main">
+                  <span className="selected-customer-name">
+                    {selectedCustomer.personal_info?.name || '이름 없음'}
+                  </span>
+                  <button
+                    className="clear-customer-button"
+                    onClick={() => {
+                      setSelectedCustomer(null)
                       setDuplicateWarning(null)
-                    } else {
-                      handleSelectCustomer(customer)
-                    }
-                  }}
-                  aria-pressed={isSelected}
-                  role="option"
-                >
-                  <div className="document-link-modal__customer-item-row">
-                    <span className="document-link-modal__customer-item-check">
-                      {isSelected && (
-                        <SFSymbol
-                          name="checkmark.circle.fill"
-                          size={SFSymbolSize.FOOTNOTE}
-                          weight={SFSymbolWeight.SEMIBOLD}
-                          decorative={true}
-                        />
-                      )}
-                    </span>
-                    <span className="document-link-modal__customer-item-number">{index + 1}</span>
-                    <span className="document-link-modal__customer-item-name">{displayName}</span>
-                    <span className="document-link-modal__customer-item-phone">{phone}</span>
-                    <span className="document-link-modal__customer-item-address">{address}</span>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        ) : searchTerm ? (
-          <div className="document-link-modal__empty">
-            <span>검색 결과가 없습니다.</span>
+                    }}
+                    aria-label="고객 선택 해제"
+                    title="고객 선택 해제"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="selected-customer-details">
+                  <span className="selected-customer-phone">
+                    {selectedCustomer.personal_info?.mobile_phone ||
+                     selectedCustomer.personal_info?.home_phone ||
+                     selectedCustomer.personal_info?.work_phone ||
+                     '연락처 없음'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <span className="customer-placeholder">고객을 선택해주세요</span>
+            )}
           </div>
-        ) : (
-          <div className="document-link-modal__empty">
-            <span>검색어를 입력하면 고객을 찾을 수 있습니다.</span>
-          </div>
-        )}
-      </div>
-
-      {pagination && pagination.totalPages > 1 && (
-        <div className="document-link-modal__pagination">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handlePageChange('prev')}
-            disabled={pagination.currentPage <= 1}
-          >
-            이전
-          </Button>
-          <span className="document-link-modal__pagination-info">
-            {pagination.currentPage} / {pagination.totalPages}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handlePageChange('next')}
-            disabled={pagination.currentPage >= pagination.totalPages}
-          >
-            다음
-          </Button>
         </div>
-      )}
-    </section>
+      </section>
 
     {/* Form */}
     <section className="document-link-modal__section">
@@ -545,6 +307,14 @@ const documentName = useMemo(() => (document ? DocumentStatusService.extractFile
       </section>
     )}
     </Modal>
+
+    {/* 🍎 고객 선택 모달 */}
+    <CustomerSelectorModal
+      visible={isCustomerSelectorOpen}
+      onClose={() => setIsCustomerSelectorOpen(false)}
+      onSelect={handleSelectCustomer}
+    />
+    </>
   )
 }
 

@@ -29,10 +29,9 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { DocumentNotesModal } from '../DocumentStatusView/components/DocumentNotesModal'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
-import { CustomerService } from '@/services/customerService'
 import { DocumentService } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
-import type { CustomerSearchResponse, Customer } from '@/entities/customer'
+import type { Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import './DocumentSearchView.css'
 
@@ -361,16 +360,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       throw error
     }
   }, [selectedNotes, handleSearch])
-
-  /**
-   * 🍎 고객 검색 핸들러
-   */
-  const searchCustomers = useCallback(
-    async (searchTerm: string, page: number = 1, limit: number = 20): Promise<CustomerSearchResponse> => {
-      return CustomerService.searchCustomers(searchTerm, { page, limit })
-    },
-    []
-  )
 
   /**
    * 🍎 고객별 문서 조회 핸들러
@@ -1007,7 +996,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         visible={isLinkModalVisible}
         onClose={handleLinkModalClose}
         document={selectedDocumentForLink}
-        onSearchCustomers={searchCustomers}
         onFetchCustomerDocuments={fetchCustomerDocuments}
         onLink={linkDocumentToCustomer}
       />

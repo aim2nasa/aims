@@ -223,7 +223,6 @@ const DocumentLibraryContent: React.FC<{
         visible={controller.isLinkModalVisible}
         onClose={controller.handleLinkModalClose}
         document={controller.selectedDocumentForLink}
-        onSearchCustomers={controller.searchCustomers}
         onFetchCustomerDocuments={controller.fetchCustomerDocuments}
         onLink={controller.linkDocumentToCustomer}
       />

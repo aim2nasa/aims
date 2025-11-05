@@ -102,266 +102,97 @@ html[data-theme="dark"] .document-chip {
   margin-left: var(--spacing-2);
 }
 
+/* ===== 고객 선택 영역 ===== */
+
+.document-link-modal__customer-selection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.document-link-modal__selected-customer {
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-3);
+  background: var(--color-bg-secondary);
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+html[data-theme="dark"] .document-link-modal__selected-customer {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.selected-customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
+.selected-customer-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.selected-customer-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  flex: 1;
+}
+
+.clear-customer-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.clear-customer-button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.selected-customer-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.selected-customer-phone {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.customer-placeholder {
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+  font-style: italic;
+}
+
 .document-link-modal__error {
   margin: 0;
   /* font-size: var(--font-size-caption-1); () */
   color: var(--color-error-500);
 }
 
-.document-link-modal__hint {
-  /* font-size: var(--font-size-caption-1); () */
-  color: var(--color-text-tertiary);
-}
-
-.document-link-modal__search-feedback {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(59, 130, 246, 0.03);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-2) var(--spacing-3);
-  /* font-size: var(--font-size-footnote); () */
-  color: var(--color-text-secondary);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-html[data-theme="dark"] .document-link-modal__search-feedback {
-  background: transparent;
-  color: var(--color-text-secondary);
-  border-color: var(--color-border-secondary);
-}
-
-.document-link-modal__results {
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-lg);
-  height: 150px; /* 최소 3명 보이도록 높이 증가 */
-  min-height: 150px;
-  max-height: 200px;
-  overflow-y: auto;
-  background: var(--color-bg-secondary);
-  padding: var(--spacing-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-html[data-theme="dark"] .document-link-modal__results {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.document-link-modal__loader {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-6);
-  color: var(--color-text-secondary);
-  /* font-size: var(--font-size-sm); () */
-}
-
-.document-link-modal__spinner {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--color-ios-separator-light);
-  border-top-color: var(--color-primary-500);
-  animation: document-link-spinner 0.8s linear infinite;
-}
-
-html[data-theme="dark"] .document-link-modal__spinner {
-  border-color: var(--color-ios-separator-dark);
-}
-
-@keyframes document-link-spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.document-link-modal__empty {
-  padding: var(--spacing-6);
-  text-align: center;
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-tertiary);
-}
-
-.customer-result-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.document-link-modal__customer-item {
-  width: 100%;
-  padding: var(--spacing-2) var(--spacing-3);
-  background: var(--color-neutral-0);
-  border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  color: var(--color-text-primary);
-  height: 36px; /* A 영역 기준 높이 (행 높이 통일) */
-  min-height: 36px;
-  max-height: 36px;
-  display: flex;
-  align-items: center;
-  transition:
-    border-color var(--duration-fast) var(--easing-ease-out),
-    background-color var(--duration-fast) var(--easing-ease-out),
-    box-shadow var(--duration-fast) var(--easing-ease-out);
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-  color: var(--color-text-primary);
-}
-
-.document-link-modal__customer-item:hover {
-  border-color: var(--color-primary-300);
-  background: var(--color-bg-hover);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* 선택된 항목 - 강한 하이라이트 */
-.document-link-modal__customer-item--selected {
-  border-color: var(--color-primary-500);
-  background: rgba(59, 130, 246, 0.28);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
-  animation: customer-select-pulse 0.3s ease-out;
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item--selected {
-  background: rgba(59, 130, 246, 0.35);
-  border-color: var(--color-primary-400);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-}
-
-/* 선택된 항목 호버 시에도 선택 상태 유지 */
-.document-link-modal__customer-item--selected:hover {
-  border-color: var(--color-primary-500);
-  background: rgba(59, 130, 246, 0.33);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item--selected:hover {
-  background: rgba(59, 130, 246, 0.40);
-  border-color: var(--color-primary-400);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.6);
-}
-
-/* 선택 시 애니메이션 */
-@keyframes customer-select-pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  }
-}
-
-/* 한 줄 레이아웃 */
-.document-link-modal__customer-item-row {
-  display: grid;
-  grid-template-columns: 20px auto minmax(80px, 1fr) minmax(120px, 1.5fr) minmax(200px, 4fr);
-  align-items: center;
-  gap: var(--spacing-2);
-  width: 100%;
-}
-
-/* 체크마크 열 */
-.document-link-modal__customer-item-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-}
-
-/* 체크마크 아이콘 강조 */
-.document-link-modal__customer-item-check svg {
-  color: var(--color-primary-500);
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item-check svg {
-  color: var(--color-primary-400);
-}
-
-.document-link-modal__customer-item-number {
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-  /* font-size: var(--font-size-footnote); () */
-  min-width: 8px;
-  text-align: left;
-}
-
-/* 선택된 항목의 번호 강조 */
-.document-link-modal__customer-item--selected .document-link-modal__customer-item-number {
-  color: var(--color-primary-600);
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item--selected .document-link-modal__customer-item-number {
-  color: var(--color-primary-300);
-}
-
-.document-link-modal__customer-item-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  /* font-size: var(--font-size-footnote); () */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 선택된 항목의 이름 강조 */
-.document-link-modal__customer-item--selected .document-link-modal__customer-item-name {
-  color: var(--color-primary-700);
-  font-weight: 700;
-}
-
-html[data-theme="dark"] .document-link-modal__customer-item--selected .document-link-modal__customer-item-name {
-  color: var(--color-primary-200);
-}
-
-.document-link-modal__customer-item-phone {
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); () */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-link-modal__customer-item-address {
-  /* font-size: var(--font-size-caption-1); () */
-  color: var(--color-text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.document-link-modal__pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-3);
-}
-
-.document-link-modal__pagination-info {
-  /* font-size: var(--font-size-sm); () */
-  color: var(--color-text-secondary);
-}
 
 .document-link-modal__form-row {
   display: flex;
