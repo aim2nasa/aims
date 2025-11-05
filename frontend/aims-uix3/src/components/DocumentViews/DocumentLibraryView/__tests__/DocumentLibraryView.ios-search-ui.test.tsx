@@ -48,6 +48,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       paginatedDocuments: [],
       sortField: null,
       sortDirection: 'desc',
+      customerLinkFilter: 'all',
     },
     actions: {
       setSearchTerm: vi.fn(),
@@ -71,6 +72,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       setSortField: vi.fn(),
       setSortDirection: vi.fn(),
       handleColumnSort: vi.fn(),
+      setCustomerLinkFilter: vi.fn(),
     }
   })
 }))
@@ -158,7 +160,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
   })
 
   describe('검색 UI 구조', () => {
-    it('library-search-bar 컨테이너가 렌더링되어야 함', () => {
+    it('library-unified-header 컨테이너가 렌더링되어야 함', () => {
       const { container } = render(
         <DocumentLibraryView
           visible={true}
@@ -166,7 +168,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
         />
       )
 
-      const searchContainer = container.querySelector('.library-search-bar')
+      const searchContainer = container.querySelector('.library-unified-header')
       expect(searchContainer).not.toBeNull()
     })
 
@@ -250,7 +252,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
       )
 
       const searchInput = container.querySelector('.search-input') as HTMLInputElement
-      expect(searchInput?.placeholder).toBe('파일명으로 검색...')
+      expect(searchInput?.placeholder).toBe('파일명으로 검색')
     })
 
     it('input type이 "text"여야 함', () => {
@@ -297,7 +299,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
   })
 
   describe('CSS 클래스명 검증', () => {
-    it('library-search-bar 클래스가 존재해야 함', () => {
+    it('library-unified-header 클래스가 존재해야 함', () => {
       const { container } = render(
         <DocumentLibraryView
           visible={true}
@@ -305,8 +307,8 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
         />
       )
 
-      const searchContainer = container.querySelector('.library-search-bar')
-      expect(searchContainer).toHaveClass('library-search-bar')
+      const searchContainer = container.querySelector('.library-unified-header')
+      expect(searchContainer).toHaveClass('library-unified-header')
     })
 
     it('search-input-wrapper 클래스가 존재해야 함', () => {
@@ -371,7 +373,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
         />
       )
 
-      const searchContainer = container.querySelector('.library-search-bar')
+      const searchContainer = container.querySelector('.library-unified-header')
 
       // searchContainer가 존재하는지 확인 (DocumentStatusProvider 내부에 있음)
       expect(searchContainer).not.toBeNull()
@@ -423,7 +425,7 @@ describe('DocumentLibraryView - iOS 스타일 검색 UI 테스트 (커밋 f154f9
         />
       )
 
-      const searchContainer = container.querySelector('.library-search-bar')
+      const searchContainer = container.querySelector('.library-unified-header')
       const searchInput = container.querySelector('.search-input')
 
       expect(searchContainer).not.toBeNull()

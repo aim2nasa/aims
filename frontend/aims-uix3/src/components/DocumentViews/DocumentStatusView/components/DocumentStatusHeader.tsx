@@ -26,6 +26,8 @@ interface DocumentStatusHeaderProps {
   selectedCount?: number
   onDeleteSelected?: () => void
   isDeleting?: boolean
+  // 🍎 총 문서 개수 표시 여부 (DocumentLibrary에서는 별도 영역에 표시)
+  showDocumentsCount?: boolean
 }
 
 export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
@@ -40,7 +42,8 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
   onToggleEditMode,
   selectedCount = 0,
   onDeleteSelected,
-  isDeleting = false
+  isDeleting = false,
+  showDocumentsCount = true
 }) => {
 
   /**
@@ -66,7 +69,7 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
     <div className="document-status-header">
       {/* 메인 행 */}
       <div className="header-main-row">
-        {/* 왼쪽: 편집 버튼 + 총 문서 개수 */}
+        {/* 왼쪽: 편집 버튼 + 총 문서 개수 (선택적) */}
         <div className="header-left">
           <div className="filter-group">
             {/* 🍎 편집 모드 아이콘 버튼 (DocumentLibrary 전용) */}
@@ -91,9 +94,12 @@ export const DocumentStatusHeader: React.FC<DocumentStatusHeaderProps> = ({
                 </button>
               </Tooltip>
             )}
-            <span className="result-count">
-              총 {documentsCount}개의 문서
-            </span>
+            {/* 🍎 총 문서 개수 (showDocumentsCount가 true일 때만 표시) */}
+            {showDocumentsCount && (
+              <span className="result-count">
+                총 {documentsCount}개의 문서
+              </span>
+            )}
             {/* 🍎 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
             {isEditMode && (
               <>

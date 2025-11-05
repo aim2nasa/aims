@@ -17,6 +17,7 @@ import type { Document, DocumentCustomerRelation } from '../types/documentStatus
 interface DocumentStatusProviderProps {
   children: React.ReactNode
   initialFiles?: Document[]
+  searchQuery?: string
 }
 
 /**
@@ -24,7 +25,8 @@ interface DocumentStatusProviderProps {
  */
 export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   children,
-  initialFiles = []
+  initialFiles = [],
+  searchQuery = ''
 }) => {
   // State
   const [documents, setDocuments] = useState<Document[]>([])
@@ -32,7 +34,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isLoading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [searchTerm, setSearchTerm] = useState<string>(searchQuery)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
@@ -191,6 +193,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       }
     }
   }, [])
+
+  /**
+   * searchQuery prop 변경 시 searchTerm 동기화
+   */
+  useEffect(() => {
+    setSearchTerm(searchQuery)
+  }, [searchQuery])
 
   /**
    * 초기 로드

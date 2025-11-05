@@ -11,11 +11,10 @@ import React from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentsController } from '@/controllers/useDocumentsController'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Dropdown } from '@/shared/ui'
+import { Dropdown, Tooltip, Button } from '@/shared/ui'
 import { DocumentStatusProvider } from '../../../providers/DocumentStatusProvider'
 import { useDocumentStatusController } from '../../../controllers/useDocumentStatusController'
 import { useDocumentStatusContext } from '../../../contexts/DocumentStatusContext'
-import DocumentStatusHeader from '../DocumentStatusView/components/DocumentStatusHeader'
 import DocumentStatusList from '../DocumentStatusView/components/DocumentStatusList'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
@@ -23,6 +22,7 @@ import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFull
 import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
+import RefreshButton from '../../RefreshButton/RefreshButton'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
@@ -50,82 +50,10 @@ const ITEMS_PER_PAGE_OPTIONS = [
 ]
 
 /**
- * 🍎 DocumentLibrarySearchAndFilters: 검색창 + 필터 버튼 그룹 (같은 행)
- */
-const DocumentLibrarySearchAndFilters: React.FC<{
-  searchQuery: string
-  onSearchChange: (value: string) => void
-}> = ({ searchQuery, onSearchChange }) => {
-  const { state, actions } = useDocumentStatusContext()
-
-  return (
-    <div className="library-search-bar">
-      {/* 검색 바 */}
-      <div className="search-input-wrapper">
-        <SFSymbol
-          name="magnifyingglass"
-          size={SFSymbolSize.CAPTION_1}
-          weight={SFSymbolWeight.MEDIUM}
-          className="search-icon"
-          decorative={true}
-        />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="파일명으로 검색..."
-          className="search-input"
-        />
-        {searchQuery && (
-          <button
-            className="search-clear-button"
-            onClick={() => onSearchChange('')}
-            aria-label="검색어 지우기"
-          >
-            <SFSymbol
-              name="xmark.circle.fill"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.REGULAR}
-              decorative={true}
-            />
-          </button>
-        )}
-      </div>
-
-      {/* 🍎 고객 연결 필터 버튼 그룹 */}
-      <div className="library-filters">
-        <button
-          className={`filter-button ${state.customerLinkFilter === 'all' ? 'filter-button--active' : ''}`}
-          onClick={() => actions.setCustomerLinkFilter('all')}
-          aria-label="모든 파일"
-        >
-          전체
-        </button>
-        <button
-          className={`filter-button ${state.customerLinkFilter === 'linked' ? 'filter-button--active' : ''}`}
-          onClick={() => actions.setCustomerLinkFilter('linked')}
-          aria-label="고객 연결된 파일만"
-        >
-          고객 연결
-        </button>
-        <button
-          className={`filter-button ${state.customerLinkFilter === 'unlinked' ? 'filter-button--active' : ''}`}
-          onClick={() => actions.setCustomerLinkFilter('unlinked')}
-          aria-label="고객 미연결된 파일만"
-        >
-          고객 미연결
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/**
  * DocumentLibraryContent 내부 컴포넌트 (Pure View)
  * 🍎 DocumentStatusView와 동일한 리스트 기반 레이아웃
  */
 const DocumentLibraryContent: React.FC<{
-  searchQuery: string
   isDeleteMode: boolean
   selectedDocumentIds: Set<string>
   onSelectAllIds: (ids: string[]) => void
@@ -135,14 +63,21 @@ const DocumentLibraryContent: React.FC<{
   onDeleteSelected: () => void
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
-}> = ({ searchQuery, isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
+}> = ({ isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
   const controller = useDocumentStatusController()
-  const { actions } = useDocumentStatusContext()
+  const { state, actions } = useDocumentStatusContext()
 
-  // 🍎 외부 검색어를 Context에 동기화
-  React.useEffect(() => {
-    actions.setSearchTerm(searchQuery)
-  }, [searchQuery, actions])
+  // 마지막 업데이트 시간 포맷팅
+  const formatLastUpdated = React.useCallback((date: Date | null): string => {
+    if (!date) return ''
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
+  }, [])
 
   // 🍎 외부에서 새로고침 이벤트 받기
   React.useEffect(() => {
@@ -185,21 +120,140 @@ const DocumentLibraryContent: React.FC<{
 
   return (
     <>
-      {/* 🍎 헤더: 컨트롤 + 필터 (한 줄) */}
-      <DocumentStatusHeader
-        isPollingEnabled={controller.isPollingEnabled}
-        onTogglePolling={controller.togglePolling}
-        onRefresh={controller.refreshDocuments}
-        isLoading={controller.isLoading}
-        documentsCount={controller.totalCount}
-        lastUpdated={controller.lastUpdated}
-        showEditButton={true}
-        isEditMode={isDeleteMode}
-        onToggleEditMode={onToggleDeleteMode}
-        selectedCount={selectedDocumentIds.size}
-        onDeleteSelected={onDeleteSelected}
-        isDeleting={isDeleting}
-      />
+      {/* 🍎 통합 헤더: 총 문서 개수 + 검색창 + 필터 버튼 + 편집 + 실시간 + 새로고침 (한 줄) */}
+      <div className="library-unified-header">
+        {/* 왼쪽: 편집 버튼 + 총 문서 개수 */}
+        <div className="header-left-section">
+          {/* 편집 버튼 */}
+          <Tooltip content={isDeleteMode ? '편집 완료' : '편집'}>
+            <button
+              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+              onClick={onToggleDeleteMode}
+              aria-label={isDeleteMode ? '편집 완료' : '편집'}
+            >
+              {isDeleteMode ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+          </Tooltip>
+
+          {/* 총 문서 개수 */}
+          <span className="result-count">
+            총 {controller.totalCount}개의 문서
+          </span>
+
+          {/* 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+          {isDeleteMode && (
+            <>
+              <span className="selected-count-inline">
+                {selectedDocumentIds.size}개 선택됨
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDeleteSelected}
+                disabled={isDeleting || selectedDocumentIds.size === 0}
+              >
+                {isDeleting ? '삭제 중...' : '삭제'}
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* 중앙: 검색창 + 필터 버튼 */}
+        <div className="header-center-section">
+          {/* 검색창 */}
+          <div className="search-input-wrapper">
+            <SFSymbol
+              name="magnifyingglass"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              className="search-icon"
+              decorative={true}
+            />
+            <input
+              type="text"
+              value={state.searchTerm}
+              onChange={(e) => actions.setSearchTerm(e.target.value)}
+              placeholder="파일명으로 검색"
+              className="search-input"
+            />
+            {state.searchTerm && (
+              <button
+                className="search-clear-button"
+                onClick={() => actions.setSearchTerm('')}
+                aria-label="검색어 지우기"
+              >
+                <SFSymbol
+                  name="xmark.circle.fill"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.REGULAR}
+                  decorative={true}
+                />
+              </button>
+            )}
+          </div>
+
+          {/* 필터 버튼 그룹 */}
+          <div className="library-filters">
+            <button
+              className={`filter-button ${state.customerLinkFilter === 'all' ? 'filter-button--active' : ''}`}
+              onClick={() => actions.setCustomerLinkFilter('all')}
+              aria-label="모든 파일"
+            >
+              전체
+            </button>
+            <button
+              className={`filter-button ${state.customerLinkFilter === 'linked' ? 'filter-button--active' : ''}`}
+              onClick={() => actions.setCustomerLinkFilter('linked')}
+              aria-label="고객 연결된 파일만"
+            >
+              고객 연결
+            </button>
+            <button
+              className={`filter-button ${state.customerLinkFilter === 'unlinked' ? 'filter-button--active' : ''}`}
+              onClick={() => actions.setCustomerLinkFilter('unlinked')}
+              aria-label="고객 미연결된 파일만"
+            >
+              고객 미연결
+            </button>
+          </div>
+        </div>
+
+        {/* 오른쪽: 최근 업데이트 + 폴링 + 새로고침 */}
+        <div className="header-right-section">
+          {controller.lastUpdated && (
+            <span className="last-updated">
+              최근 업데이트: {formatLastUpdated(controller.lastUpdated)}
+            </span>
+          )}
+
+          <Tooltip content={controller.isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+            <button
+              className={`polling-toggle ${controller.isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
+              onClick={controller.togglePolling}
+              aria-label={controller.isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+            >
+              <span className={`polling-dot ${controller.isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
+            </button>
+          </Tooltip>
+
+          <RefreshButton
+            onClick={async () => {
+              await controller.refreshDocuments();
+            }}
+            loading={controller.isLoading}
+            tooltip="문서 현황 새로고침"
+            size="small"
+          />
+        </div>
+      </div>
 
       {/* 🍎 리스트: DocumentStatusView와 동일한 구조 */}
       <DocumentStatusList
@@ -329,7 +383,6 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     searchQuery,
     searchParams,
     loadDocuments,
-    handleSearchChange,
     clearError,
   } = useDocumentsController()
 
@@ -483,14 +536,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
           </div>
         )}
 
-        {/* 🍎 타겟 영역: 검색 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider>
-          <DocumentLibrarySearchAndFilters
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-          />
+        {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
+        <DocumentStatusProvider searchQuery={searchQuery}>
           <DocumentLibraryContent
-            searchQuery={searchQuery}
             isDeleteMode={isDeleteMode}
             selectedDocumentIds={selectedDocumentIds}
             onSelectAllIds={handleSelectAllIds}

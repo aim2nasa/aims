@@ -28,6 +28,8 @@ vi.mock('../../../../providers/DocumentStatusProvider', () => ({
 }))
 
 // Mock useDocumentStatusContext
+const mockSearchQuery = 'test-document'
+
 vi.mock('../../../../contexts/DocumentStatusContext', () => ({
   useDocumentStatusContext: () => ({
     state: {
@@ -36,7 +38,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       selectedDocument: null,
       isLoading: false,
       error: null,
-      searchTerm: '',
+      searchTerm: mockSearchQuery,
       lastUpdated: null,
       isPollingEnabled: false,
       apiHealth: null,
@@ -47,6 +49,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       paginatedDocuments: [],
       sortField: null,
       sortDirection: 'desc',
+      customerLinkFilter: 'all',
     },
     actions: {
       setSearchTerm: vi.fn(),
@@ -70,6 +73,7 @@ vi.mock('../../../../contexts/DocumentStatusContext', () => ({
       setSortField: vi.fn(),
       setSortDirection: vi.fn(),
       handleColumnSort: vi.fn(),
+      setCustomerLinkFilter: vi.fn(),
     }
   })
 }))
@@ -91,12 +95,14 @@ vi.mock('../../../../controllers/useDocumentStatusController', () => ({
     handlePageChange: vi.fn(),
     handleLimitChange: vi.fn(),
     handleColumnSort: vi.fn(),
+    isPollingEnabled: false,
+    togglePolling: vi.fn(),
+    refreshDocuments: vi.fn(),
   })
 }))
 
 // Mock useDocumentsController with searchQuery
 const mockHandleSearchChange = vi.fn()
-const mockSearchQuery = 'test-document'
 
 vi.mock('../../../../controllers/useDocumentsController', () => ({
   useDocumentsController: () => ({

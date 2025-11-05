@@ -183,7 +183,7 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
       const view = document.querySelector('.document-library-view') as HTMLElement
-      const searchBar = document.querySelector('.library-search-bar') as HTMLElement
+      const searchBar = document.querySelector('.library-unified-header') as HTMLElement
 
       expect(view).toContainElement(searchBar)
     })
@@ -192,7 +192,7 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
       const view = document.querySelector('.document-library-view')
-      const searchBar = document.querySelector('.library-search-bar')
+      const searchBar = document.querySelector('.library-unified-header')
 
       // view가 존재하고 searchBar를 포함
       expect(view).toBeInTheDocument()
@@ -204,12 +204,10 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
     it('검색 바, 헤더, 리스트가 순서대로 렌더링되어야 함', () => {
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const searchBar = document.querySelector('.library-search-bar')
-      const header = document.querySelector('.document-status-header')
+      const unifiedHeader = document.querySelector('.library-unified-header')
       const list = document.querySelector('.document-status-list')
 
-      expect(searchBar).toBeInTheDocument()
-      expect(header).toBeInTheDocument()
+      expect(unifiedHeader).toBeInTheDocument()
       expect(list).toBeInTheDocument()
     })
 
@@ -217,11 +215,9 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
       const view = document.querySelector('.document-library-view') as HTMLElement
-      const searchBar = document.querySelector('.library-search-bar') as HTMLElement
-      const header = document.querySelector('.document-status-header') as HTMLElement
+      const unifiedHeader = document.querySelector('.library-unified-header') as HTMLElement
 
-      expect(view).toContainElement(searchBar)
-      expect(view).toContainElement(header)
+      expect(view).toContainElement(unifiedHeader)
     })
   })
 
@@ -273,7 +269,7 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
     it('검색 바가 렌더링되어야 함', () => {
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
-      const searchBar = document.querySelector('.library-search-bar')
+      const searchBar = document.querySelector('.library-unified-header')
       expect(searchBar).toBeInTheDocument()
     })
 
@@ -290,7 +286,7 @@ describe('DocumentLibraryView - 스크롤 개선 테스트 (커밋 1019974)', ()
       render(<DocumentLibraryView visible={true} onClose={vi.fn()} />)
 
       expect(document.querySelector('.document-library-view')).toBeInTheDocument()
-      expect(document.querySelector('.library-search-bar')).toBeInTheDocument()
+      expect(document.querySelector('.library-unified-header')).toBeInTheDocument()
     })
 
     it('CenterPaneView가 렌더링되어야 함', () => {
