@@ -84,29 +84,38 @@ html[data-theme="dark"] .draggable-modal {
   white-space: nowrap;
 }
 
-/* 초기 크기 복원 버튼 */
+/* 초기 크기 복원 버튼 (아이콘 버전) */
 .draggable-modal__reset-button {
-  padding: var(--spacing-2) var(--spacing-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+  height: 28px;
   background: transparent;
-  border: 1px solid var(--color-border-primary);
+  border: none;
   border-radius: 6px;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-in-out);
-  margin-left: var(--spacing-3);
+  margin-left: var(--spacing-2);
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .draggable-modal__reset-button:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-focus);
+  background: transparent;
   color: var(--color-text-primary);
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .draggable-modal__reset-button:active {
-  transform: scale(0.98);
+  transform: scale(0.95);
+}
+
+.draggable-modal__reset-button svg {
+  flex-shrink: 0;
 }
 
 /* ===== Content ===== */

@@ -13,6 +13,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
+import Tooltip from '../Tooltip'
 import './DraggableModal.css'
 
 export interface DraggableModalProps {
@@ -166,18 +167,22 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
           >
             <h2 className="draggable-modal__title">{title}</h2>
             {showResetButton && modal.isResizedFromDefault && (
-              <button
-                className="draggable-modal__reset-button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  modal.reset()
-                  onReset?.()
-                }}
-                title="초기 크기로 복원"
-                aria-label="초기 크기로 복원"
-              >
-                초기 크기로 복원
-              </button>
+              <Tooltip content="초기 크기로 복원">
+                <button
+                  className="draggable-modal__reset-button draggable-modal__reset-button--icon"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    modal.reset()
+                    onReset?.()
+                  }}
+                  aria-label="초기 크기로 복원"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M2 4v4h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </Tooltip>
             )}
           </header>
         )}
