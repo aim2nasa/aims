@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import Modal from '@/shared/ui/Modal';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
 import './AddressArchiveModal.css';
@@ -41,92 +42,95 @@ export const AddressArchiveModal: React.FC<AddressArchiveModalProps> = ({
   error,
   customerName
 }) => {
-  if (!isOpen) return null;
-
   // 현재 주소인지 확인 (첫 번째 항목이 현재 주소)
   const isCurrentAddress = (index: number) => index === 0 && addressHistory.length > 0;
 
   return (
-    <div className="address-archive-modal-overlay" onClick={onClose}>
-      <div className="address-archive-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="address-archive-modal__header">
-          <h2 className="address-archive-modal__title">
-            🏠 {customerName}님의 주소 보관소
-          </h2>
-          <button className="address-archive-modal__close" onClick={onClose} aria-label="닫기">
-            ✕
-          </button>
-        </div>
+    <Modal
+      visible={isOpen}
+      onClose={onClose}
+      size="md"
+      showHeader={false}
+      backdropClosable={true}
+      className="address-archive-modal"
+    >
+      {/* Header */}
+      <div className="address-archive-modal__header">
+        <h2 className="address-archive-modal__title">
+          🏠 {customerName}님의 주소 보관소
+        </h2>
+        <button className="address-archive-modal__close" onClick={onClose} aria-label="닫기">
+          ✕
+        </button>
+      </div>
 
-        {/* Info */}
-        <div className="address-archive-modal__info">
-          총 <strong>{addressHistory.length}건</strong>의 주소 변경 이력이 있습니다.
-        </div>
+      {/* Info */}
+      <div className="address-archive-modal__info">
+        총 <strong>{addressHistory.length}건</strong>의 주소 변경 이력이 있습니다.
+      </div>
 
-        {/* Content */}
-        <div className="address-archive-modal__content">
-          {/* 에러 표시 */}
-          {error && (
-            <div className="address-archive-modal__error">
-              ⚠️ {error}
-            </div>
-          )}
+      {/* Content */}
+      <div className="address-archive-modal__content">
+        {/* 에러 표시 */}
+        {error && (
+          <div className="address-archive-modal__error">
+            ⚠️ {error}
+          </div>
+        )}
 
-          {/* 로딩 표시 */}
-          {isLoading && (
-            <div className="address-archive-modal__loading">
-              주소 이력을 불러오는 중...
-            </div>
-          )}
+        {/* 로딩 표시 */}
+        {isLoading && (
+          <div className="address-archive-modal__loading">
+            주소 이력을 불러오는 중...
+          </div>
+        )}
 
-          {/* 빈 상태 */}
-          {!isLoading && !error && addressHistory.length === 0 && (
-            <div className="address-archive-modal__empty">
-              주소 이력이 없습니다.
-            </div>
-          )}
+        {/* 빈 상태 */}
+        {!isLoading && !error && addressHistory.length === 0 && (
+          <div className="address-archive-modal__empty">
+            주소 이력이 없습니다.
+          </div>
+        )}
 
-          {/* 주소 이력 목록 */}
-          {!isLoading && addressHistory.map((item, index) => {
-            const isCurrent = isCurrentAddress(index);
+        {/* 주소 이력 목록 */}
+        {!isLoading && addressHistory.map((item, index) => {
+          const isCurrent = isCurrentAddress(index);
 
-            return (
-              <div
-                key={item._id || index}
-                className={`address-item ${isCurrent ? 'address-item--current' : ''}`}
-              >
-                <div className="address-item__header">
-                  <div className="address-item__date">
-                    <span className={`address-item__icon ${isCurrent ? 'current' : 'past'}`}>
-                      {isCurrent ? '✓' : '○'}
-                    </span>
-                    {AddressService.formatDate(item.changed_at)}
-                  </div>
-                  {isCurrent ? (
-                    <span className="address-item__current-badge">현재 주소</span>
-                  ) : (
-                    <span className="address-item__past-badge">과거 주소</span>
-                  )}
+          return (
+            <div
+              key={item._id || index}
+              className={`address-item ${isCurrent ? 'address-item--current' : ''}`}
+            >
+              <div className="address-item__header">
+                <div className="address-item__date">
+                  <span className={`address-item__icon ${isCurrent ? 'current' : 'past'}`}>
+                    {isCurrent ? '✓' : '○'}
+                  </span>
+                  {AddressService.formatDate(item.changed_at)}
                 </div>
-                <div className="address-item__content">
-                  <div className="address-item__pin">📍</div>
-                  <div className="address-item__text">
-                    {AddressService.formatAddress(item.address)}
-                  </div>
-                </div>
-                {/* 메모 표시 */}
-                {item.notes && (
-                  <div className="address-item__notes">
-                    메모: {item.notes}
-                  </div>
+                {isCurrent ? (
+                  <span className="address-item__current-badge">현재 주소</span>
+                ) : (
+                  <span className="address-item__past-badge">과거 주소</span>
                 )}
               </div>
-            );
-          })}
-        </div>
+              <div className="address-item__content">
+                <div className="address-item__pin">📍</div>
+                <div className="address-item__text">
+                  {AddressService.formatAddress(item.address)}
+                </div>
+              </div>
+              {/* 메모 표시 */}
+              {item.notes && (
+                <div className="address-item__notes">
+                  메모: {item.notes}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -14,9 +14,9 @@
  * - 4개 탭: 기본 정보 / 연락처 정보 / 주소 정보 / 보험 정보
  */
 
-import React, { useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useCallback } from 'react';
 import { Customer } from '@/entities/customer';
+import Modal from '@/shared/ui/Modal';
 import { useCustomerEditController } from '../../controllers/useCustomerEditController';
 import { BasicInfoSection } from '../CustomerRegistrationView/components/BasicInfoSection';
 import type { BasicInfoFormData } from '../CustomerRegistrationView/components/BasicInfoSection';
@@ -73,22 +73,6 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
   } = useCustomerEditController(customer);
 
   /**
-   * ESC 키로 모달 닫기
-   */
-  useEffect(() => {
-    if (!visible) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [visible, onClose]);
-
-  /**
    * 저장 버튼 클릭 핸들러
    */
   const handleSaveClick = useCallback(async () => {
@@ -100,15 +84,6 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
       window.location.reload();
     }
   }, [handleSave, onSuccess, onClose]);
-
-  /**
-   * 배경 클릭으로 모달 닫기
-   */
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
 
   const handleBasicInfoChange = useCallback(
     (field: keyof BasicInfoFormData, value: BasicInfoFormData[keyof BasicInfoFormData]) => {
@@ -130,8 +105,6 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     },
     [handleFieldChange]
   )
-
-  if (!visible) return null;
 
   // 폼 데이터를 섹션 컴포넌트 형식으로 변환
   const basicInfoData: BasicInfoFormData = {
@@ -158,130 +131,128 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
     customer_type: formData.insurance_info?.customer_type ?? '개인'
   };
 
-  return createPortal(
-    <div
-      className="customer-edit-modal-backdrop"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="customer-edit-modal-title"
+  return (
+    <Modal
+      visible={visible}
+      onClose={onClose}
+      size="lg"
+      showHeader={false}
+      backdropClosable={true}
+      className="customer-edit-modal"
     >
-      <div className="customer-edit-modal-container" onClick={(e) => e.stopPropagation()}>
-        {/* 🍎 헤더 영역 - iOS Title Bar */}
-        <div className="customer-edit-modal-header">
-          <h2 id="customer-edit-modal-title" className="customer-edit-modal-title">
-            고객 정보 수정
-          </h2>
-          <button
-            type="button"
-            className="customer-edit-modal-close-button"
-            onClick={onClose}
-            aria-label="모달 닫기"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* 🍎 탭 네비게이션 - 고객 등록과 동일한 4개 탭 */}
-        <div className="customer-edit-modal-tabs">
-          <button
-            type="button"
-            className={`customer-edit-modal-tab ${activeTab === 'info' ? 'customer-edit-modal-tab--active' : ''}`}
-            onClick={() => handleTabChange('info')}
-          >
-            기본 정보
-          </button>
-          <button
-            type="button"
-            className={`customer-edit-modal-tab ${activeTab === 'contact' ? 'customer-edit-modal-tab--active' : ''}`}
-            onClick={() => handleTabChange('contact')}
-          >
-            연락처 정보
-          </button>
-          <button
-            type="button"
-            className={`customer-edit-modal-tab ${activeTab === 'address' ? 'customer-edit-modal-tab--active' : ''}`}
-            onClick={() => handleTabChange('address')}
-          >
-            주소 정보
-          </button>
-          <button
-            type="button"
-            className={`customer-edit-modal-tab ${activeTab === 'insurance' ? 'customer-edit-modal-tab--active' : ''}`}
-            onClick={() => handleTabChange('insurance')}
-          >
-            보험 정보
-          </button>
-        </div>
-
-        {/* 🍎 콘텐츠 영역 - 고객 등록의 섹션 컴포넌트 재사용 */}
-        <div className="customer-edit-modal-content">
-          {/* 기본 정보 탭 */}
-          {activeTab === 'info' && (
-            <BasicInfoSection
-              formData={basicInfoData}
-              errors={errors}
-              onChange={handleBasicInfoChange}
-            />
-          )}
-
-          {/* 연락처 정보 탭 */}
-          {activeTab === 'contact' && (
-            <ContactSection
-              formData={contactData}
-              errors={errors}
-              onChange={handleContactChange}
-            />
-          )}
-
-          {/* 주소 정보 탭 */}
-          {activeTab === 'address' && (
-            <AddressSection
-              formData={addressData}
-              errors={errors}
-              onChange={(field, value) => handleFieldChange(`personal_info.address.${field}`, value)}
-            />
-          )}
-
-          {/* 보험 정보 탭 */}
-          {activeTab === 'insurance' && (
-            <InsuranceInfoSection
-              formData={insuranceData}
-              errors={errors}
-              onChange={handleInsuranceChange}
-            />
-          )}
-
-          {/* 전체 에러 메시지 */}
-          {errors['submit'] && (
-            <div className="customer-edit-modal-submit-error">
-              {errors['submit']}
-            </div>
-          )}
-        </div>
-
-        {/* 🍎 Footer - 저장/취소 버튼 */}
-        <div className="customer-edit-modal-footer">
-          <button
-            type="button"
-            className="customer-edit-modal-button customer-edit-modal-button--cancel"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className="customer-edit-modal-button customer-edit-modal-button--primary"
-            onClick={handleSaveClick}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? '저장 중...' : '저장'}
-          </button>
-        </div>
+      {/* 🍎 헤더 영역 - iOS Title Bar */}
+      <div className="customer-edit-modal-header">
+        <h2 id="customer-edit-modal-title" className="customer-edit-modal-title">
+          고객 정보 수정
+        </h2>
+        <button
+          type="button"
+          className="customer-edit-modal-close-button"
+          onClick={onClose}
+          aria-label="모달 닫기"
+        >
+          ✕
+        </button>
       </div>
-    </div>,
-    document.body
+
+      {/* 🍎 탭 네비게이션 - 고객 등록과 동일한 4개 탭 */}
+      <div className="customer-edit-modal-tabs">
+        <button
+          type="button"
+          className={`customer-edit-modal-tab ${activeTab === 'info' ? 'customer-edit-modal-tab--active' : ''}`}
+          onClick={() => handleTabChange('info')}
+        >
+          기본 정보
+        </button>
+        <button
+          type="button"
+          className={`customer-edit-modal-tab ${activeTab === 'contact' ? 'customer-edit-modal-tab--active' : ''}`}
+          onClick={() => handleTabChange('contact')}
+        >
+          연락처 정보
+        </button>
+        <button
+          type="button"
+          className={`customer-edit-modal-tab ${activeTab === 'address' ? 'customer-edit-modal-tab--active' : ''}`}
+          onClick={() => handleTabChange('address')}
+        >
+          주소 정보
+        </button>
+        <button
+          type="button"
+          className={`customer-edit-modal-tab ${activeTab === 'insurance' ? 'customer-edit-modal-tab--active' : ''}`}
+          onClick={() => handleTabChange('insurance')}
+        >
+          보험 정보
+        </button>
+      </div>
+
+      {/* 🍎 콘텐츠 영역 - 고객 등록의 섹션 컴포넌트 재사용 */}
+      <div className="customer-edit-modal-content">
+        {/* 기본 정보 탭 */}
+        {activeTab === 'info' && (
+          <BasicInfoSection
+            formData={basicInfoData}
+            errors={errors}
+            onChange={handleBasicInfoChange}
+          />
+        )}
+
+        {/* 연락처 정보 탭 */}
+        {activeTab === 'contact' && (
+          <ContactSection
+            formData={contactData}
+            errors={errors}
+            onChange={handleContactChange}
+          />
+        )}
+
+        {/* 주소 정보 탭 */}
+        {activeTab === 'address' && (
+          <AddressSection
+            formData={addressData}
+            errors={errors}
+            onChange={(field, value) => handleFieldChange(`personal_info.address.${field}`, value)}
+          />
+        )}
+
+        {/* 보험 정보 탭 */}
+        {activeTab === 'insurance' && (
+          <InsuranceInfoSection
+            formData={insuranceData}
+            errors={errors}
+            onChange={handleInsuranceChange}
+          />
+        )}
+
+        {/* 전체 에러 메시지 */}
+        {errors['submit'] && (
+          <div className="customer-edit-modal-submit-error">
+            {errors['submit']}
+          </div>
+        )}
+      </div>
+
+      {/* 🍎 Footer - 저장/취소 버튼 */}
+      <div className="customer-edit-modal-footer">
+        <button
+          type="button"
+          className="customer-edit-modal-button customer-edit-modal-button--cancel"
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          className="customer-edit-modal-button customer-edit-modal-button--primary"
+          onClick={handleSaveClick}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? '저장 중...' : '저장'}
+        </button>
+      </div>
+    </Modal>
   );
 };
 
