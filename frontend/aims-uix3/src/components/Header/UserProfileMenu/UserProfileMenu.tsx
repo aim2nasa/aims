@@ -6,11 +6,12 @@
  * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
+import { AccountSettingsModal } from '../../../features/AccountSettings';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -49,6 +50,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore();
+
+  // 계정 설정 모달 상태
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
   // 메뉴 위치 계산
   const [position, setPosition] = React.useState({ top: 0, right: 0 });
@@ -112,8 +116,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const handleAccountSettings = () => {
     console.log('[UserProfileMenu] 계정 설정 클릭');
-    // TODO: 계정 설정 모달 열기
+    setIsAccountSettingsOpen(true);
     onClose();
+  };
+
+  const handleAccountSettingsSave = (updatedUser: Partial<UserProfileMenuProps['user']>) => {
+    console.log('[UserProfileMenu] 계정 정보 저장:', updatedUser);
+    // TODO: 실제 API 연동
   };
 
   const handleLogout = () => {
@@ -127,53 +136,71 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isAccountSettingsOpen) return null;
 
   const menuContent = (
-    <div
-      ref={menuRef}
-      className="user-profile-menu"
-      style={{
-        position: 'fixed',
-        top: `${position.top}px`,
-        right: `${position.right}px`
-      }}
-      role="menu"
-      aria-label="사용자 프로필 메뉴"
-    >
-      {/* 사용자 정보 헤더 */}
-      <UserProfileHeader
-        name={user.name}
-        email={user.email}
-        {...(user.avatarUrl && { avatarUrl: user.avatarUrl })}
-      />
-
-      {/* 메뉴 아이템들 */}
-      <div className="user-profile-menu__items">
-        {/* 그룹 1: 계정 관리 */}
-        {isDevMode && (
-          <UserProfileMenuItem
-            icon="person.2"
-            label="계정 전환"
-            onClick={handleSwitchAccount}
+    <>
+      {/* 프로필 메뉴 */}
+      {isOpen && (
+        <div
+          ref={menuRef}
+          className="user-profile-menu"
+          style={{
+            position: 'fixed',
+            top: `${position.top}px`,
+            right: `${position.right}px`
+          }}
+          role="menu"
+          aria-label="사용자 프로필 메뉴"
+        >
+          {/* 사용자 정보 헤더 */}
+          <UserProfileHeader
+            name={user.name}
+            email={user.email}
+            {...(user.avatarUrl && { avatarUrl: user.avatarUrl })}
           />
-        )}
-        <UserProfileMenuItem
-          icon="gearshape"
-          label="계정 설정"
-          onClick={handleAccountSettings}
-          showDivider={true}
-        />
 
-        {/* 로그아웃 */}
-        <UserProfileMenuItem
-          icon="arrow.right.square"
-          label="로그아웃"
-          onClick={handleLogout}
-          isDangerous={true}
-        />
-      </div>
-    </div>
+          {/* 메뉴 아이템들 */}
+          <div className="user-profile-menu__items">
+            {/* 그룹 1: 계정 관리 */}
+            {isDevMode && (
+              <UserProfileMenuItem
+                icon="person.2"
+                label="계정 전환"
+                onClick={handleSwitchAccount}
+              />
+            )}
+            <UserProfileMenuItem
+              icon="gearshape"
+              label="계정 설정"
+              onClick={handleAccountSettings}
+              showDivider={true}
+            />
+
+            {/* 로그아웃 */}
+            <UserProfileMenuItem
+              icon="arrow.right.square"
+              label="로그아웃"
+              onClick={handleLogout}
+              isDangerous={true}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 계정 설정 모달 */}
+      <AccountSettingsModal
+        visible={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        user={{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          ...(user.avatarUrl && { avatarUrl: user.avatarUrl })
+        }}
+        onSave={handleAccountSettingsSave}
+      />
+    </>
   );
 
   // Portal을 사용하여 body에 직접 렌더링
