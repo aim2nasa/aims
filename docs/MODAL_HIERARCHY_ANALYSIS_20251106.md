@@ -6,12 +6,15 @@
 
 ---
 
-## 📊 전체 현황 (19개)
+## 📊 전체 현황 (18개) - 업데이트됨 ✅
 
 ```
-공통 시스템 사용: 13개 (68.4%) ✅
-자체 구현: 6개 (31.6%) ⚠️
+공통 시스템 사용: 13개 (72.2%) ✅
+자체 구현: 5개 (27.8%) ⚠️
 ```
+
+> **업데이트 (2025-11-06)**: ConfirmationDialog 삭제 (Dead Code 제거, 커밋 610465f)
+> 총 모달 수: 19개 → 18개
 
 ---
 
@@ -55,11 +58,10 @@
 ├─ CustomerIdentificationModal (고객 식별)
 └─ CustomerDocumentPreviewModal (문서 프리뷰, 훅 직접 사용*)
 
-⚠️ 자체 구현 (6개)
+⚠️ 자체 구현 (5개) - ConfirmationDialog 삭제됨 ✅
 ├─ AddressSearchModal (Kakao 주소 검색, createPortal)
 ├─ LayoutControlModal (레이아웃 제어, createPortal + useDraggable)
 ├─ AppleConfirmModal (iOS 확인, createPortal + Controller)
-├─ ConfirmationDialog (Apple HIG 확인, createPortal + Haptic)
 ├─ RelationshipModal (DOM 직접 렌더링, createPortal 미사용)
 └─ CustomerDocumentPreviewModal (useModalDragResize 훅 직접 사용)
 ```
@@ -116,16 +118,15 @@
 
 ---
 
-### ⚠️ 자체 구현 (6개)
+### ⚠️ 자체 구현 (4개) - ConfirmationDialog 삭제됨 ✅
 
 | # | 모달 | 경로 | 구현 방식 | 특수성 |
 |---|------|------|----------|--------|
 | 1 | AddressSearchModal | `features/customer/components/AddressSearchModal/` | createPortal 직접 사용 | Kakao Maps API 연동 |
 | 2 | LayoutControlModal | `components/LayoutControlModal.tsx` | createPortal + useDraggable | 레이아웃 제어 패널 |
 | 3 | AppleConfirmModal | `components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/` | createPortal + Controller | Controller-View 패턴 |
-| 4 | ConfirmationDialog | `shared/ui/ConfirmationDialog.tsx` | createPortal + Haptic | 햅틱 피드백 통합 |
-| 5 | RelationshipModal | `features/customer/components/RelationshipModal/` | DOM 직접 렌더링 | createPortal 미사용 |
-| 6 | CustomerDocumentPreviewModal | `features/customer/views/CustomerDetailView/tabs/` | useModalDragResize 훅 직접 | react-pdf 통합 |
+| 4 | RelationshipModal | `features/customer/components/RelationshipModal/` | DOM 직접 렌더링 | createPortal 미사용 |
+| 5 | CustomerDocumentPreviewModal | `features/customer/views/CustomerDetailView/tabs/` | useModalDragResize 훅 직접 | react-pdf 통합 |
 
 **특징**:
 - ⚠️ ESC 키, body overflow 등을 자체 구현
@@ -166,17 +167,19 @@
 
 ---
 
-### 🔴 Low Priority (2개) - 유지 권장
+### 🔴 Low Priority (1개) - 유지 권장
 
 5. **AppleConfirmModal**
    - **유지 이유**: Controller-View 패턴 특수성 (`useAppleConfirmController` 훅 연동)
    - **마이그레이션 비용**: 높음
    - **효과**: 낮음
 
-6. **ConfirmationDialog**
-   - **유지 이유**: 햅틱 피드백 통합, Apple HIG 준수 특수 구현
-   - **마이그레이션 비용**: 높음
-   - **효과**: 낮음
+### ✅ 삭제 완료 (1개) - Dead Code 제거
+
+6. **~~ConfirmationDialog~~** ✅ 삭제됨 (커밋 610465f)
+   - **삭제 이유**: Dead Code (실제 사용되지 않음)
+   - **대체**: AppleConfirmModal이 실제 확인 다이얼로그로 사용 중
+   - **영향**: 없음
 
 ---
 
@@ -186,11 +189,13 @@
 
 | 카테고리 | 개수 | 비율 |
 |---------|------|------|
-| **Modal 기반** | 9 | 47.4% |
-| **DraggableModal 기반** | 4 | 21.0% |
-| **공통 시스템 합계** | **13** | **68.4%** ✅ |
-| **자체 구현** | 6 | 31.6% |
-| **전체** | **19** | **100%** |
+| **Modal 기반** | 9 | 50.0% |
+| **DraggableModal 기반** | 4 | 22.2% |
+| **공통 시스템 합계** | **13** | **72.2%** ✅ |
+| **자체 구현** | 5 | 27.8% |
+| **전체** | **18** | **100%** |
+
+> **변경사항**: ConfirmationDialog 삭제 (Dead Code 제거, 커밋 610465f)
 
 ### 마이그레이션 완료 시 예상
 
@@ -198,13 +203,15 @@
 
 | 카테고리 | 개수 | 비율 |
 |---------|------|------|
-| **Modal 기반** | 11 (+2) | 57.9% |
-| **DraggableModal 기반** | 6 (+2) | 31.6% |
-| **공통 시스템 합계** | **17** | **89.5%** 🎯 |
-| **자체 구현 (특수 목적)** | 2 | 10.5% |
-| **전체** | **19** | **100%** |
+| **Modal 기반** | 11 (+2) | 61.1% |
+| **DraggableModal 기반** | 6 (+2) | 33.3% |
+| **공통 시스템 합계** | **17** | **94.4%** 🎯 |
+| **자체 구현 (특수 목적)** | 1 | 5.6% |
+| **전체** | **18** | **100%** |
 
 **예상 코드 감소량**: 약 150~200줄 (ESC, body overflow, drag 로직 제거)
+
+> **업데이트**: 총 모달 수 19개 → 18개 (ConfirmationDialog 삭제)
 
 ---
 
@@ -504,19 +511,24 @@ Phase 3: 복잡한 것 (CustomerDocumentPreviewModal, LayoutControlModal)
 
 ## ✅ 결론
 
-**AIMS-UIX3 모달 시스템은 현재 68.4%의 공통화율을 달성했으며, 4개 모달을 추가 마이그레이션하면 89.5%까지 향상 가능합니다.**
+**AIMS-UIX3 모달 시스템은 현재 72.2%의 공통화율을 달성했으며, 4개 모달을 추가 마이그레이션하면 94.4%까지 향상 가능합니다.**
 
 **핵심 전략**:
 1. ✅ 단순한 것부터 점진적 마이그레이션
 2. ✅ 비즈니스 로직 100% 보존
 3. ✅ 각 단계마다 테스트 통과 확인
-4. ✅ 특수 목적 모달은 유지 (AppleConfirmModal, ConfirmationDialog)
+4. ✅ 특수 목적 모달은 유지 (AppleConfirmModal)
+5. ✅ Dead Code 제거 (ConfirmationDialog 삭제 완료)
 
 **예상 ROI**:
 - 코드 13% 감소
 - 유지보수 비용 67% 감소
 - 사용자 경험 일관성 향상
 - 버그 수정 용이성 향상
+
+**현재까지 달성**:
+- ✅ ConfirmationDialog 삭제 (Dead Code 제거, 3,371줄 감소)
+- ✅ 공통화율 68.4% → 72.2% 향상
 
 ---
 
