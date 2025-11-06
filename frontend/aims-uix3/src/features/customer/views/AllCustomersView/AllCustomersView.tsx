@@ -28,6 +28,7 @@ export interface AllCustomersViewRef {
 
 const ITEMS_PER_PAGE_OPTIONS = [
   { value: '10', label: '10개씩' },
+  { value: '15', label: '15개씩' },
   { value: '20', label: '20개씩' },
   { value: '50', label: '50개씩' },
   { value: '100', label: '100개씩' },
@@ -39,7 +40,7 @@ type SortDirection = 'asc' | 'desc';
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
     // F5 이후에도 유지되는 상태들
-    const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '10');
+    const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
 
