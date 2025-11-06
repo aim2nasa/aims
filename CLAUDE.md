@@ -656,6 +656,8 @@ The system is organized into functional modules:
   - Document-Controller-View architecture
   - TanStack Query + Zustand state management
   - Apple design philosophy implementation
+  - **Modal System**: 19개 모달 중 13개(68.4%)가 공통 시스템 사용 (BaseModalCore hooks, Modal, DraggableModal)
+    - 상세: [`docs/MODAL_REFACTORING_SUMMARY_20251106.md`](../docs/MODAL_REFACTORING_SUMMARY_20251106.md)
 
 - **Backend Services**:
   - Node.js API server in `backend/api/aims_api/` for document status monitoring
