@@ -216,7 +216,7 @@ describe('CustomerIdentificationModal Component', () => {
         />
       );
 
-      const confirmButton = screen.getByText('선택 완료');
+      const confirmButton = screen.getByText('선택 완료').closest('button');
       expect(confirmButton).toBeDisabled();
     });
 

@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
+import Button from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 import { api } from '@/shared/lib/api';
@@ -149,26 +150,30 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
       minHeight={500}
       footer={
         <div className="customer-identification-modal__footer">
-          <button
-            className="customer-identification-modal__button customer-identification-modal__button--secondary"
+          <Button
+            variant="ghost"
+            size="md"
             onClick={handleCancel}
             disabled={isCreatingCustomer}
+            className="customer-identification-modal__button customer-identification-modal__button--secondary"
           >
             취소
-          </button>
-          <button
-            className="customer-identification-modal__button customer-identification-modal__button--primary"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleConfirm}
             disabled={
               isCreatingCustomer ||
               (scenario === 'multiple' && !selectedCustomerId)
             }
+            loading={isCreatingCustomer}
+            className="customer-identification-modal__button customer-identification-modal__button--primary"
           >
-            {isCreatingCustomer && '고객 생성 중...'}
             {!isCreatingCustomer && scenario === 'single' && '선택 완료'}
             {!isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
             {!isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
-          </button>
+          </Button>
         </div>
       }
       className="customer-identification-modal"

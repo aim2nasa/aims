@@ -17,6 +17,7 @@
 import React, { useCallback } from 'react';
 import { Customer } from '@/entities/customer';
 import Modal from '@/shared/ui/Modal';
+import Button from '@/shared/ui/Button';
 import { useCustomerEditController } from '../../controllers/useCustomerEditController';
 import { BasicInfoSection } from '../CustomerRegistrationView/components/BasicInfoSection';
 import type { BasicInfoFormData } from '../CustomerRegistrationView/components/BasicInfoSection';
@@ -235,22 +236,25 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
 
       {/* 🍎 Footer - 저장/취소 버튼 */}
       <div className="customer-edit-modal-footer">
-        <button
-          type="button"
-          className="customer-edit-modal-button customer-edit-modal-button--cancel"
+        <Button
+          variant="ghost"
+          size="md"
           onClick={onClose}
           disabled={isSubmitting}
+          className="customer-edit-modal-button customer-edit-modal-button--cancel"
         >
           취소
-        </button>
-        <button
-          type="button"
-          className="customer-edit-modal-button customer-edit-modal-button--primary"
+        </Button>
+        <Button
+          variant="primary"
+          size="md"
           onClick={handleSaveClick}
           disabled={isSubmitting}
+          loading={isSubmitting}
+          className="customer-edit-modal-button customer-edit-modal-button--primary"
         >
-          {isSubmitting ? '저장 중...' : '저장'}
-        </button>
+          저장
+        </Button>
       </div>
     </Modal>
   );

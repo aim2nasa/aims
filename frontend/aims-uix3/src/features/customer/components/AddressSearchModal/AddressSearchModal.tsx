@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Modal from '@/shared/ui/Modal';
+import Button from '@/shared/ui/Button';
 import { AddressApi, AddressSearchResult, FormattedAddress } from '../../api/addressApi';
 import './AddressSearchModal.css';
 
@@ -176,13 +177,16 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
               autoComplete="off"
             />
           </div>
-          <button
-            className="address-search-modal__search-btn"
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => searchAddress(searchKeyword)}
             disabled={loading}
+            loading={loading}
+            className="address-search-modal__search-btn"
           >
-            {loading ? '검색 중...' : '검색'}
-          </button>
+            검색
+          </Button>
         </div>
 
         {/* 검색 결과 */}
@@ -192,13 +196,16 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
               <div className="address-search-modal__result-header">
                 <span>검색 결과 ({searchResults.length}건{totalCount > searchResults.length ? ` / 총 ${totalCount}건` : ''})</span>
                 {!isEnd && (
-                  <button
-                    className="address-search-modal__more-btn"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={loadMoreResults}
                     disabled={loading}
+                    loading={loading}
+                    className="address-search-modal__more-btn"
                   >
                     더보기 +
-                  </button>
+                  </Button>
                 )}
               </div>
               <div className="address-search-modal__results" ref={listRef}>

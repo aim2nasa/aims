@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '@/shared/ui/Modal';
+import Button from '@/shared/ui/Button';
 import { CustomerService } from '@/services/customerService';
 import { RelationshipService } from '@/services/relationshipService';
 import type { Customer } from '@/entities/customer/model';
@@ -302,31 +303,31 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
 
   const footer = (
     <div className="relationship-modal__actions">
-      <button
-        type="button"
-        className="relationship-modal__button relationship-modal__button--cancel"
+      <Button
+        variant="ghost"
+        size="md"
         onClick={onCancel}
         disabled={loading}
+        className="relationship-modal__button relationship-modal__button--cancel"
       >
         취소
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="primary"
+        size="md"
         type="submit"
         form="relationship-form"
-        className="relationship-modal__button relationship-modal__button--primary"
         disabled={!isFormValid || loading}
+        loading={loading}
+        leftIcon={
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z" />
+          </svg>
+        }
+        className="relationship-modal__button relationship-modal__button--primary"
       >
-        {loading ? (
-          '추가 중...'
-        ) : (
-          <>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z" />
-            </svg>
-            관계 추가
-          </>
-        )}
-      </button>
+        관계 추가
+      </Button>
     </div>
   );
 
