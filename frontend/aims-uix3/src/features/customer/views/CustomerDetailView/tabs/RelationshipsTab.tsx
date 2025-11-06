@@ -14,6 +14,7 @@ import type { Customer } from '@/entities/customer/model';
 import { useCustomerRelationshipsController } from '@/controllers/useCustomerRelationshipsController';
 import type { Relationship } from '@/services/relationshipService';
 import { formatDateTime } from '@/shared/lib/timeUtils';
+import Button from '@/shared/ui/Button';
 import SFSymbol, {
   SFSymbolAnimation,
   SFSymbolSize,
@@ -149,13 +150,14 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
             variant={SFSymbolVariant.FILL}
           />
           <span>{error}</span>
-          <button
-            type="button"
-            className="relationships-retry"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => loadRelationships()}
+            className="relationships-retry"
           >
             다시 시도
-          </button>
+          </Button>
         </div>
       );
     }
@@ -215,13 +217,14 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                       </td>
                       <td>
                         {row.relatedCustomer ? (
-                          <button
-                            type="button"
-                            className="relationships-link"
+                          <Button
+                            variant="link"
+                            size="sm"
                             onClick={() => handleCustomerSelect(row.relatedCustomer)}
+                            className="relationships-link"
                           >
                             {row.relatedCustomer.personal_info?.name || '이름 없음'}
-                          </button>
+                          </Button>
                         ) : (
                           <span>알 수 없음</span>
                         )}
@@ -229,10 +232,11 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                       <td>{row.createdAt}</td>
                       <td>
                         <Tooltip content="관계 삭제">
-                          <button
-                            type="button"
-                            className="relationships-action relationships-action--danger"
+                          <Button
+                            variant="destructive"
+                            size="sm"
                             onClick={() => handleDelete(row.key)}
+                            className="relationships-action relationships-action--danger"
                             aria-label="관계 삭제"
                           >
                             <SFSymbol
@@ -240,7 +244,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                               size={SFSymbolSize.TITLE_3}
                               weight={SFSymbolWeight.SEMIBOLD}
                             />
-                          </button>
+                          </Button>
                         </Tooltip>
                       </td>
                     </tr>

@@ -12,6 +12,7 @@
 
 import React, { useState } from 'react';
 import DraggableModal from '@/shared/ui/DraggableModal';
+import Button from '@/shared/ui/Button';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
@@ -363,12 +364,14 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
       minHeight={600}
       footer={
         <div className="fulltext-modal-footer">
-          <button
-            className="fulltext-modal-button"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={onClose}
+            className="fulltext-modal-button"
           >
             닫기
-          </button>
+          </Button>
         </div>
       }
       className="customer-document-preview"

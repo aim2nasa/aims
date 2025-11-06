@@ -10,6 +10,7 @@
 import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } from 'react';
 import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
 import { Dropdown } from '@/shared/ui';
+import Button from '@/shared/ui/Button';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
@@ -354,13 +355,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               onChange={handleSearchInputChange}
             />
             {searchValue && (
-              <button
-                className="search-clear-button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleClearSearch}
+                className="search-clear-button"
                 aria-label="검색어 지우기"
               >
                 <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -372,13 +375,15 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
               <SFSymbol name="exclamationmark.triangle.fill" size={SFSymbolSize.BODY} />
             </div>
             <span>{error}</span>
-            <button
-              className="error-dismiss-button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => refresh()}
+              className="error-dismiss-button"
               aria-label="에러 닫기"
             >
               <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -564,16 +569,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             {/* 🍎 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
             {pagination.totalPages > 1 && (
               <div className="pagination-controls">
-                <button
-                  className="pagination-button pagination-button--prev"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handlePrevPage}
                   disabled={pagination.currentPage === 1}
+                  className="pagination-button pagination-button--prev"
                   aria-label="이전 페이지"
                 >
                   <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
                     ‹
                   </span>
-                </button>
+                </Button>
 
                 <div className="pagination-info">
                   <span className="pagination-current">{pagination.currentPage}</span>
@@ -581,16 +588,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <span className="pagination-total">{pagination.totalPages}</span>
                 </div>
 
-                <button
-                  className="pagination-button pagination-button--next"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleNextPage}
                   disabled={pagination.currentPage === pagination.totalPages}
+                  className="pagination-button pagination-button--next"
                   aria-label="다음 페이지"
                 >
                   <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
                     ›
                   </span>
-                </button>
+                </Button>
               </div>
             )}
 
