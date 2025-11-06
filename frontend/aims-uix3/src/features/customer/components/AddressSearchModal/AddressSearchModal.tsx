@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import Modal from '@/shared/ui/Modal';
 import { AddressApi, AddressSearchResult, FormattedAddress } from '../../api/addressApi';
 import './AddressSearchModal.css';
 
@@ -127,34 +127,14 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
     }
   }, [selectedIndex]);
 
-  // ESC 키로 모달 닫기
-  useEffect(() => {
-    const handleEscKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleEscKey);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleEscKey);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="address-search-modal-overlay" onClick={onClose}>
-      <div
-        className="address-search-modal"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="address-search-title"
-      >
+  return (
+    <Modal
+      visible={isOpen}
+      onClose={onClose}
+      showHeader={false}
+      backdropClosable={true}
+      className="address-search-modal"
+    >
         {/* 헤더 */}
         <div className="address-search-modal__header">
           <h2 id="address-search-title">
@@ -287,8 +267,6 @@ export const AddressSearchModal: React.FC<AddressSearchModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>,
-    document.body
+    </Modal>
   );
 };
