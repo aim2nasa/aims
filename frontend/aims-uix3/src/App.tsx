@@ -8,6 +8,7 @@ import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
+import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화
@@ -28,6 +29,7 @@ const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
+const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
 import DownloadHelper from './utils/downloadHelper'
 
 interface SmartSearchUploadRaw {
@@ -260,7 +262,7 @@ interface AppProps {
 }
 
 function App({ gaps: initialGaps }: AppProps = {}) {
-  const [rightPaneVisible, setRightPaneVisible] = useState(true)
+  const [rightPaneVisible, setRightPaneVisible] = useState(false)
   const [centerWidth, setCenterWidth] = useState(DEFAULT_CENTER_WIDTH_PERCENT)
   const [paginationVisible, setPaginationVisible] = useState(true)
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
@@ -295,6 +297,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [activeDocumentView, setActiveDocumentView] = useState<string | null>(
     persistentState.activeDocumentView
   )
+
+  // 계정 설정 Store (등록은 나중에 수행)
+  const { registerSetters } = useAccountSettingsStore()
 
   // RightPane 문서 프리뷰 상태
   const [selectedDocument, setSelectedDocument] = useState<SelectedDocument | null>(null)
@@ -353,7 +358,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "customers-register" ||
         activeDocumentView === "customers-all" ||
         activeDocumentView === "customers-regional" ||
-        activeDocumentView === "customers-relationship") {
+        activeDocumentView === "customers-relationship" ||
+        activeDocumentView === "account-settings") {
       setPaginationVisible(false)
       // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
       if (!selectedDocument && !selectedCustomer) {
@@ -618,7 +624,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 문서 관리 View들
       'documents', 'documents-register', 'documents-library', 'documents-search', 'dsd',
       // 고객 관리 View들
-      'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship'
+      'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship',
+      // 설정 View들
+      'account-settings'
     ]
     if (allViewKeys.includes(menuKey)) {
       setActiveDocumentView(menuKey)
@@ -633,6 +641,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       updateURLParams({ customerId: null, documentId: null })
     }
   }, [updateURLParams])
+
+  // 계정 설정 Store에 모든 setter 등록
+  useEffect(() => {
+    registerSetters({
+      setActiveDocumentView,
+      setRightPaneVisible,
+      setSelectedDocument,
+      setSelectedCustomer,
+      setRightPaneContentType,
+      updateURLParams
+    })
+  }, [registerSetters, setActiveDocumentView, setRightPaneVisible, setSelectedDocument, setSelectedCustomer, setRightPaneContentType, updateURLParams])
 
   const closeDocumentView = useCallback(() => {
     setActiveDocumentView(null)
@@ -1130,6 +1150,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-relationship'}
               onClose={closeDocumentView}
               onCustomerSelect={handleCustomerClick}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <AccountSettingsView
+              visible={activeDocumentView === 'account-settings'}
+              onClose={closeDocumentView}
+              user={{
+                id: '1',
+                name: '테스트 설계사',
+                email: 'tester@example.com'
+              }}
             />
           </Suspense>
         </main>

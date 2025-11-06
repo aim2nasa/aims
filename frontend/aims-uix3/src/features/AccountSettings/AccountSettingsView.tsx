@@ -11,6 +11,7 @@
 import React, { useState } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
+import Button from '@/shared/ui/Button'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -145,17 +146,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   )}
                 </div>
                 {!isEditing && (
-                  <button
-                    className="account-settings-view__edit-button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
-                    aria-label="프로필 편집"
+                    leftIcon={
+                      <SFSymbol
+                        name="pencil"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                      />
+                    }
                   >
-                    <SFSymbol
-                      name="pencil"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
-                  </button>
+                    편집
+                  </Button>
                 )}
               </div>
             </section>
@@ -231,18 +235,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
             {/* 편집 모드 버튼 */}
             {isEditing && (
               <div className="account-settings-view__actions">
-                <button
-                  className="account-settings-view__button account-settings-view__button--secondary"
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={handleCancel}
                 >
                   취소
-                </button>
-                <button
-                  className="account-settings-view__button account-settings-view__button--primary"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
                   onClick={handleSave}
                 >
                   저장
-                </button>
+                </Button>
               </div>
             )}
           </div>

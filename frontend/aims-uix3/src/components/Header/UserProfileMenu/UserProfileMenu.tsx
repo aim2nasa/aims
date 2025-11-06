@@ -12,7 +12,8 @@ import { createPortal } from 'react-dom';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
-import { AccountSettingsModal, AccountSettingsView } from '../../../features/AccountSettings';
+import { useAccountSettingsStore } from '../../../shared/store/useAccountSettingsStore';
+import { AccountSettingsModal } from '../../../features/AccountSettings';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -55,8 +56,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   // 계정 설정 모달 상태
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
-  // 계정 설정 View 상태
-  const [isAccountSettingsViewOpen, setIsAccountSettingsViewOpen] = useState(false);
+  // 계정 설정 View 상태 (Zustand store 사용)
+  const { openAccountSettingsView } = useAccountSettingsStore();
 
   // 메뉴 위치 계산
   const [position, setPosition] = React.useState({ top: 0, right: 0 });
@@ -112,31 +113,26 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   // 핸들러들
   const handleSwitchAccount = () => {
-    console.log('[UserProfileMenu] 계정 전환 클릭');
     // TODO: 계정 전환 UI 표시 (개발자 모드)
     alert('계정 전환 기능은 Header의 개발자 모드(Ctrl+Shift+D)에서 사용 가능합니다.');
     onClose();
   };
 
   const handleAccountSettings = () => {
-    console.log('[UserProfileMenu] 계정 설정 클릭');
     setIsAccountSettingsOpen(true);
     onClose();
   };
 
-  const handleAccountSettingsSave = (updatedUser: Partial<UserProfileMenuProps['user']>) => {
-    console.log('[UserProfileMenu] 계정 정보 저장:', updatedUser);
+  const handleAccountSettingsSave = (_updatedUser: Partial<UserProfileMenuProps['user']>) => {
     // TODO: 실제 API 연동
   };
 
   const handleAdvancedSettings = () => {
-    console.log('[UserProfileMenu] 고급 설정 클릭');
     setIsAccountSettingsOpen(false);
-    setIsAccountSettingsViewOpen(true);
+    openAccountSettingsView();
   };
 
   const handleLogout = () => {
-    console.log('[UserProfileMenu] 로그아웃 클릭');
     // TODO: 로그아웃 확인 다이얼로그
     const confirmed = window.confirm('정말 로그아웃하시겠습니까?');
     if (confirmed) {
@@ -146,7 +142,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  if (!isOpen && !isAccountSettingsOpen && !isAccountSettingsViewOpen) return null;
+  if (!isOpen && !isAccountSettingsOpen) return null;
 
   const menuContent = (
     <>
@@ -210,19 +206,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         }}
         onSave={handleAccountSettingsSave}
         onAdvancedSettingsClick={handleAdvancedSettings}
-      />
-
-      {/* 계정 설정 View (고급 설정) */}
-      <AccountSettingsView
-        visible={isAccountSettingsViewOpen}
-        onClose={() => setIsAccountSettingsViewOpen(false)}
-        user={{
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          ...(user.avatarUrl && { avatarUrl: user.avatarUrl })
-        }}
-        onSave={handleAccountSettingsSave}
       />
     </>
   );
