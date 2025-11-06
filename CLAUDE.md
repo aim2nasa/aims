@@ -656,9 +656,62 @@ The system is organized into functional modules:
   - Document-Controller-View architecture
   - TanStack Query + Zustand state management
   - Apple design philosophy implementation
+
   - **Modal System**: 19개 모달 중 13개(68.4%)가 공통 시스템 사용 (BaseModalCore hooks, Modal, DraggableModal)
     - 상세: [`docs/MODAL_REFACTORING_SUMMARY_20251106.md`](../docs/MODAL_REFACTORING_SUMMARY_20251106.md)
+  - **AIMS 공통 컴포넌트 규칙** (유지보수성과 재사용성을 위한 필수 준수):
+    - **모달**: 계층적 구조 준수 - `@/shared/ui/Modal` (기본), `@/shared/ui/DraggableModal` (드래그/리사이즈 필요시)
+    - **버튼**: `@/shared/ui/Button` 사용 - variant: primary/secondary/ghost/destructive/link, size: sm/md/lg
+    - **금지**: HTML `<button>` 직접 사용 금지, Portal/ESC 직접 구현 금지 (중구난방 코드 방지)
 
+## 🏗️ AIMS 모달 계층 구조
+
+### 핵심 구조
+
+```
+BaseModalCore (Hooks)
+  ├─ useEscapeKey       - ESC 키로 닫기
+  ├─ useBodyOverflow    - body 스크롤 제어 (iOS 대응)
+  └─ useBackdropClick   - backdrop 클릭 처리
+
+Modal (기본)
+  ├─ Portal 렌더링 (createPortal)
+  ├─ BaseModalCore 훅 사용
+  ├─ 크기: sm/md/lg/xl
+  └─ 용도: 일반적인 모든 모달 (계정설정, 메모, 요약 등)
+
+DraggableModal (확장)
+  ├─ Modal 기능 전부 포함
+  ├─ useModalDragResize 훅 추가
+  ├─ 헤더 드래그로 이동
+  ├─ 8개 핸들로 리사이즈
+  └─ 용도: 대량 데이터 조회/편집 (고객선택, 문서프리뷰, 연간보고서 등)
+
+CustomerSelectorModal (특수)
+  ├─ DraggableModal 기반
+  ├─ 고객 검색/필터/정렬 기능 내장
+  └─ 용도: 고객 선택이 필요한 모든 화면
+```
+
+### 선택 기준
+
+| 모달 유형 | 사용 시점 | 예시 |
+|----------|---------|------|
+| `Modal` | 고정 크기, 간단한 입력/확인 | 계정설정, 메모, 요약, 확인 다이얼로그 |
+| `DraggableModal` | 대량 데이터, 크기 조절 필요 | 문서프리뷰, 고객검색, 연간보고서 |
+| `CustomerSelectorModal` | 고객 선택 | 문서 연결, 관계 설정 |
+
+### 금지사항
+
+- ❌ HTML `<div class="modal">` 직접 구현
+- ❌ Portal/ESC/body overflow 중복 구현
+- ❌ 개별 모달마다 스타일 새로 작성
+
+### 경로
+
+- `@/shared/ui/Modal` - 기본 모달
+- `@/shared/ui/DraggableModal` - 드래그 모달
+- `@/shared/ui/CustomerSelectorModal` - 고객 선택 모달
 - **Backend Services**:
   - Node.js API server in `backend/api/aims_api/` for document status monitoring
   - Python FastAPI service in `backend/api/doc_status_api/` for document status API

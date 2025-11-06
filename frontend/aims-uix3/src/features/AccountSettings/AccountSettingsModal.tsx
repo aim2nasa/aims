@@ -1,15 +1,16 @@
 /**
  * Account Settings Modal Component
  * @since 2025-11-06
- * @version 1.1.0
+ * @version 2.0.0
  *
  * 사용자 계정 정보 조회 및 편집 모달
  * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
- * CLAUDE.md 준수: 공통 Modal 컴포넌트 사용
+ * CLAUDE.md 준수: 공통 Modal 및 Button 컴포넌트 사용
  */
 
 import React, { useState } from 'react'
 import Modal from '@/shared/ui/Modal/Modal'
+import Button from '@/shared/ui/Button'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import './AccountSettingsModal.css'
 
@@ -117,28 +118,38 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
   }
 
+  // 편집 시작 핸들러
+  const handleStartEdit = () => {
+    setIsEditing(true)
+  }
+
   const modalFooter = isEditing ? (
-    <>
-      <button
-        className="account-settings-button account-settings-button--secondary"
+    <div className="account-settings__footer-actions">
+      <Button
+        variant="secondary"
+        size="md"
         onClick={handleCancel}
       >
         취소
-      </button>
-      <button
-        className="account-settings-button account-settings-button--primary"
+      </Button>
+      <Button
+        variant="primary"
+        size="md"
         onClick={handleSave}
       >
         저장
-      </button>
-    </>
+      </Button>
+    </div>
   ) : (
-    <button
-      className="account-settings-button account-settings-button--secondary"
-      onClick={onClose}
-    >
-      닫기
-    </button>
+    <div className="account-settings__footer-actions">
+      <Button
+        variant="secondary"
+        size="md"
+        onClick={onClose}
+      >
+        닫기
+      </Button>
+    </div>
   )
 
   return (
@@ -154,7 +165,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     >
       <div className="account-settings">
         {/* 프로필 섹션 */}
-        <section className="account-settings__section">
+        <section className="account-settings__section account-settings__section--profile">
           <div className="account-settings__profile">
             <div className="account-settings__avatar">
               {user.avatarUrl ? (
@@ -165,20 +176,28 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 </div>
               )}
             </div>
-            {!isEditing && (
-              <button
-                className="account-settings__edit-button"
-                onClick={() => setIsEditing(true)}
-                aria-label="프로필 편집"
-              >
+            <div className="account-settings__profile-info">
+              <h3 className="account-settings__profile-name">{user.name}</h3>
+              <p className="account-settings__profile-email">{user.email}</p>
+            </div>
+          </div>
+
+          {!isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleStartEdit}
+              leftIcon={
                 <SFSymbol
                   name="pencil"
                   size={SFSymbolSize.CAPTION_1}
                   weight={SFSymbolWeight.MEDIUM}
                 />
-              </button>
-            )}
-          </div>
+              }
+            >
+              편집
+            </Button>
+          )}
         </section>
 
         {/* 기본 정보 섹션 */}
@@ -189,7 +208,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <label className="account-settings__label">이름</label>
             <input
               type="text"
-              className="account-settings__input"
+              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
               value={formData.name}
               onChange={handleInputChange('name')}
               disabled={!isEditing}
@@ -200,7 +219,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <label className="account-settings__label">이메일</label>
             <input
               type="email"
-              className="account-settings__input"
+              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
               value={formData.email}
               onChange={handleInputChange('email')}
               disabled={!isEditing}
@@ -211,7 +230,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <label className="account-settings__label">전화번호</label>
             <input
               type="tel"
-              className="account-settings__input"
+              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
               value={formData.phone}
               onChange={handleInputChange('phone')}
               placeholder="010-0000-0000"
@@ -228,7 +247,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <label className="account-settings__label">지점</label>
             <input
               type="text"
-              className="account-settings__input"
+              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
               value={formData.department}
               onChange={handleInputChange('department')}
               placeholder="예: 강남지점"
@@ -240,7 +259,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             <label className="account-settings__label">직급</label>
             <input
               type="text"
-              className="account-settings__input"
+              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
               value={formData.position}
               onChange={handleInputChange('position')}
               placeholder="예: 팀장"
@@ -324,18 +343,22 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
         {/* 고급 설정 링크 */}
         <section className="account-settings__section account-settings__section--footer">
-          <button
-            className="account-settings__link"
+          <Button
+            variant="link"
+            size="md"
             onClick={handleAdvancedSettings}
             disabled={!onAdvancedSettingsClick}
+            leftIcon={
+              <SFSymbol
+                name="gearshape.2"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+              />
+            }
+            fullWidth
           >
-            <SFSymbol
-              name="gearshape.2"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>고급 설정</span>
-          </button>
+            고급 설정
+          </Button>
         </section>
       </div>
     </Modal>
