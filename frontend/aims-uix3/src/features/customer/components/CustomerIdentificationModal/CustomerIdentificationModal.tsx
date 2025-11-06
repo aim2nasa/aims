@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import DraggableModal from '@/shared/ui/DraggableModal';
 import type { Customer } from '@/entities/customer/model';
 import type { CheckAnnualReportResult } from '@/features/customer/utils/pdfParser';
 import { api } from '@/shared/lib/api';
@@ -54,12 +55,6 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   // 고객별 Annual Report 목록 캐시 (customerId -> issue_date[])
   const customerReportsCacheRef = useRef<Map<string, string[]>>(new Map());
 
-  // 드래그 상태
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const modalRef = useRef<HTMLDivElement>(null);
-
   // ✅ customers prop이 변경될 때 selectedCustomerId 업데이트
   useEffect(() => {
     if (customers.length === 1) {
@@ -69,50 +64,12 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
     }
   }, [customers]);
 
-  // 모달이 닫힐 때 캐시 초기화 및 위치 리셋
+  // 모달이 닫힐 때 캐시 초기화
   useEffect(() => {
     if (!isOpen) {
       customerReportsCacheRef.current.clear();
-      setPosition({ x: 0, y: 0 });
     }
   }, [isOpen]);
-
-  // 드래그 이벤트 핸들러
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return; // 왼쪽 마우스 버튼만
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    });
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-
-      setPosition({ x: newX, y: newY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragStart]);
-
-  if (!isOpen) return null;
 
   // 시나리오 판단
   const scenario = customers.length === 1 ? 'single' : customers.length > 1 ? 'multiple' : 'none';
@@ -177,26 +134,47 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   };
 
   return (
-    <div className="customer-identification-modal__overlay">
-      <div
-        ref={modalRef}
-        className={`customer-identification-modal ${isDragging ? 'customer-identification-modal--dragging' : ''}`}
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
-        }}
-      >
-        {/* Header */}
-        <div
-          className="customer-identification-modal__header"
-          onMouseDown={handleMouseDown}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-        >
+    <DraggableModal
+      visible={isOpen}
+      onClose={onClose}
+      title={
+        <div className="customer-identification-modal__header-content">
           <div className="customer-identification-modal__icon">📊</div>
           <h2 className="customer-identification-modal__title">Annual Report 감지</h2>
         </div>
-
-        {/* Content */}
-        <div className="customer-identification-modal__content">
+      }
+      initialWidth={600}
+      initialHeight={700}
+      minWidth={500}
+      minHeight={500}
+      footer={
+        <div className="customer-identification-modal__footer">
+          <button
+            className="customer-identification-modal__button customer-identification-modal__button--secondary"
+            onClick={handleCancel}
+            disabled={isCreatingCustomer}
+          >
+            취소
+          </button>
+          <button
+            className="customer-identification-modal__button customer-identification-modal__button--primary"
+            onClick={handleConfirm}
+            disabled={
+              isCreatingCustomer ||
+              (scenario === 'multiple' && !selectedCustomerId)
+            }
+          >
+            {isCreatingCustomer && '고객 생성 중...'}
+            {!isCreatingCustomer && scenario === 'single' && '선택 완료'}
+            {!isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
+            {!isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
+          </button>
+        </div>
+      }
+      className="customer-identification-modal"
+    >
+      {/* Content */}
+      <div className="customer-identification-modal__content">
           {/* File Info */}
           <div className="customer-identification-modal__file-info">
             <div className="customer-identification-modal__file-icon">📄</div>
@@ -332,32 +310,7 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="customer-identification-modal__footer">
-          <button
-            className="customer-identification-modal__button customer-identification-modal__button--secondary"
-            onClick={handleCancel}
-            disabled={isCreatingCustomer}
-          >
-            취소
-          </button>
-          <button
-            className="customer-identification-modal__button customer-identification-modal__button--primary"
-            onClick={handleConfirm}
-            disabled={
-              isCreatingCustomer ||
-              (scenario === 'multiple' && !selectedCustomerId)
-            }
-          >
-            {isCreatingCustomer && '고객 생성 중...'}
-            {!isCreatingCustomer && scenario === 'single' && '선택 완료'}
-            {!isCreatingCustomer && scenario === 'multiple' && '선택 완료'}
-            {!isCreatingCustomer && scenario === 'none' && '등록 후 Annual Report 저장'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </DraggableModal>
   );
 };
 

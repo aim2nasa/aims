@@ -10,8 +10,8 @@
  * - 문서 프리뷰 모달 디자인 적용
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
+import DraggableModal from '@/shared/ui/DraggableModal';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
@@ -51,71 +51,8 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
   error,
   customerName
 }) => {
-  // 드래그 상태
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const modalRef = useRef<HTMLDivElement>(null);
-
   // 정렬 상태
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-
-  // 모달이 열릴 때 위치 초기화
-  useEffect(() => {
-    if (isOpen) {
-      setPosition({ x: 0, y: 0 });
-    }
-  }, [isOpen]);
-
-  // ESC 키로 닫기
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // 드래그 시작
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.annual-report-modal__title')) {
-      setIsDragging(true);
-      setDragStart({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
-    }
-  };
-
-  // 드래그 중
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-      setPosition({ x: newX, y: newY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragStart]);
-
-  if (!isOpen) return null;
 
   /**
    * 계약 상태에 따른 배지 스타일
@@ -133,11 +70,6 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
     return 'contract-item__status--default';
   };
 
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.currentTarget === event.target) {
-      onClose();
-    }
-  };
 
   /**
    * 정렬 핸들러 - 컬럼 클릭 시 오름차순/내림차순 토글
@@ -405,55 +337,31 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
     );
   };
 
-  const portalTarget =
-    typeof window !== 'undefined' && window.document ? window.document.body : null;
-
-  if (!portalTarget) {
-    return null;
-  }
-
-  const modalContent = (
-    <div
-      className="customer-document-preview__backdrop"
-      role="dialog"
-      aria-modal="true"
-      onClick={handleBackdropClick}
-    >
-      <div
-        ref={modalRef}
-        className={`customer-document-preview ${isDragging ? 'customer-document-preview--dragging' : ''}`}
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px)`
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header - 드래그 가능 */}
-        <header
-          className="customer-document-preview__header"
-          onMouseDown={handleMouseDown}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-        >
-          <div className="customer-document-preview__title">
-            <SFSymbol
-              name="chart.bar.doc.horizontal"
-              size={SFSymbolSize.BODY}
-              weight={SFSymbolWeight.REGULAR}
-            />
-            <div>
-              <h2>{customerName}님의 Annual Report</h2>
-              <p>
-                {report?.issue_date ? `발행일: ${report.issue_date.split('T')[0]}` : '정보 없음'}
-                {report && ` · ${report.contract_count}건`}
-              </p>
-            </div>
+  return (
+    <DraggableModal
+      visible={isOpen}
+      onClose={onClose}
+      title={
+        <div className="customer-document-preview__title">
+          <SFSymbol
+            name="chart.bar.doc.horizontal"
+            size={SFSymbolSize.BODY}
+            weight={SFSymbolWeight.REGULAR}
+          />
+          <div>
+            <h2>{customerName}님의 Annual Report</h2>
+            <p>
+              {report?.issue_date ? `발행일: ${report.issue_date.split('T')[0]}` : '정보 없음'}
+              {report && ` · ${report.contract_count}건`}
+            </p>
           </div>
-        </header>
-
-        <main className="customer-document-preview__content">
-          {renderContent()}
-        </main>
-
-        {/* Footer - 닫기 버튼 (AIMS 표준 위치) */}
+        </div>
+      }
+      initialWidth={1200}
+      initialHeight={800}
+      minWidth={800}
+      minHeight={600}
+      footer={
         <div className="fulltext-modal-footer">
           <button
             className="fulltext-modal-button"
@@ -462,12 +370,14 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             닫기
           </button>
         </div>
-      </div>
-    </div>
+      }
+      className="customer-document-preview"
+    >
+      <main className="customer-document-preview__content">
+        {renderContent()}
+      </main>
+    </DraggableModal>
   );
-
-  // Portal을 사용하여 document.body에 직접 렌더링
-  return createPortal(modalContent, portalTarget);
 };
 
 export default AnnualReportModal;
