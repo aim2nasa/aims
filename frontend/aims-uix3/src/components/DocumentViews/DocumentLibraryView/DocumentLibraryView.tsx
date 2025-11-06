@@ -567,6 +567,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       confirmText: '삭제',
       cancelText: '취소',
       showCancel: true,
+      confirmStyle: 'destructive',
     })
 
     if (!confirmed) return

@@ -21,8 +21,8 @@
     0 3px 12px rgba(0, 0, 0, 0.04),
     0 12px 40px rgba(0, 0, 0, 0.06),
     0 25px 80px rgba(0, 0, 0, 0.08);
-  max-width: 300px; /* iOS alert 더 compact한 너비 */
-  min-width: 270px;
+  max-width: 340px; /* 메시지 2줄 표시를 위한 너비 확장 */
+  min-width: 300px;
   width: 100%;
   max-height: 70vh;
   overflow: hidden;
@@ -69,10 +69,11 @@
 .apple-confirm-modal__message {
   /* font-size: var(--font-size-caption-1); (iOS Alert 메시지 최적 크기 (12px) ) */
   font-weight: 400; /* iOS Regular */
-  line-height: 1.33; /* iOS 라인 높이 최적화 */
+  line-height: 1.5; /* 2줄 표시를 위한 line-height 증가 */
   color: var(--color-neutral-900); /* iOS Secondary Label 색상 */
   margin: 0;
   white-space: pre-wrap; /* 줄바꿈 지원 */
+  word-break: keep-all; /* 한글 단어 단위 줄바꿈 */
   font-family: var(--font-family-text);
   letter-spacing: -0.06px; /* iOS kerning 최적화 */
   opacity: 0.85; /* 메시지 텍스트를 약간 서브틀하게 */
@@ -82,7 +83,7 @@
 .apple-confirm-modal__actions {
   display: flex;
   gap: var(--spacing-3);
-  border-top: 0.33px solid rgba(60, 60, 67, 0.18); /* iOS Separator 더 서브틀하게 */
+  /* border-top 제거: 회색 라인 없앰 */
   min-height: 43px; /* iOS 최적화된 터치 영역 */
   padding: var(--spacing-2) var(--spacing-3);
 }
@@ -140,7 +141,7 @@ html[data-theme="dark"] .apple-confirm-modal__message {
 }
 
 html[data-theme="dark"] .apple-confirm-modal__actions {
-  border-top-color: rgba(84, 84, 88, 0.65); /* iOS Separator 다크 모드 */
+  /* border-top 제거로 인해 불필요 */
 }
 
 html[data-theme="dark"] .apple-confirm-modal__button:not(:last-child)::after {
