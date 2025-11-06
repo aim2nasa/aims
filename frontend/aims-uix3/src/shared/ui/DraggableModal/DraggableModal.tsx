@@ -13,6 +13,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import { useModalDragResize } from '../../../hooks/useModalDragResize'
+import { useEscapeKey, useBodyOverflow, useBackdropClick } from '../Modal/hooks/useModalCore'
 import Tooltip from '../Tooltip'
 import './DraggableModal.css'
 
@@ -98,39 +99,10 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
     minHeight
   })
 
-  // ESC 키로 닫기
-  React.useEffect(() => {
-    if (!escapeToClose || !visible) return
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [visible, onClose, escapeToClose])
-
-  // body overflow 제어
-  React.useEffect(() => {
-    if (visible) {
-      document.body.style.overflow = 'hidden'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [visible])
-
-  // 모달 외부 클릭 처리
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (backdropClosable && e.target === e.currentTarget) {
-      onClose()
-    }
-  }
+  // 공통 모달 훅 사용
+  useEscapeKey(escapeToClose && visible, onClose)
+  useBodyOverflow(visible)
+  const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
 
   if (!visible) return null
 

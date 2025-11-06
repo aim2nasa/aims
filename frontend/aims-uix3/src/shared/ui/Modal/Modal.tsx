@@ -12,8 +12,9 @@
  * - Light/Dark 테마 자동 대응
  */
 
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useEscapeKey, useBodyOverflow, useBackdropClick } from './hooks/useModalCore'
 import './Modal.css'
 
 export interface ModalProps {
@@ -75,39 +76,10 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // ESC 키로 닫기
-  useEffect(() => {
-    if (!escapeToClose || !visible) return
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [visible, onClose, escapeToClose])
-
-  // body overflow 제어
-  useEffect(() => {
-    if (visible) {
-      document.body.style.overflow = 'hidden'
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [visible])
-
-  // 모달 외부 클릭 처리
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (backdropClosable && e.target === e.currentTarget) {
-      onClose()
-    }
-  }
+  // 공통 모달 훅 사용
+  useEscapeKey(escapeToClose && visible, onClose)
+  useBodyOverflow(visible)
+  const handleBackdropClick = useBackdropClick(backdropClosable, onClose)
 
   if (!visible) return null
 
