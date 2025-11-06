@@ -146,7 +146,7 @@ describe('RelationshipModal', () => {
     });
 
     it('allowCustomRelation이 true일 때 직접 입력 옵션이 표시되어야 한다', () => {
-      const {container} = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -161,7 +161,7 @@ describe('RelationshipModal', () => {
       );
 
       // 직접 입력 옵션이 select 안에 있는지 확인
-      const selectElements = container.querySelectorAll('select');
+      const selectElements = document.querySelectorAll('select');
       let hasDirectInput = false;
       selectElements.forEach(select => {
         if (select.textContent?.includes('직접 입력')) {
@@ -172,7 +172,7 @@ describe('RelationshipModal', () => {
     });
 
     it('allowCustomRelation이 false일 때 직접 입력 옵션이 표시되지 않아야 한다', () => {
-      const {container} = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -187,7 +187,7 @@ describe('RelationshipModal', () => {
       );
 
       // 직접 입력 옵션이 없어야 함
-      const selectElements = container.querySelectorAll('select');
+      const selectElements = document.querySelectorAll('select');
       let hasDirectInput = false;
       selectElements.forEach(select => {
         if (select.textContent?.includes('직접 입력')) {
@@ -300,8 +300,8 @@ describe('RelationshipModal', () => {
         />
       );
 
-      const closeButton = screen.getByLabelText(/닫기/);
-      await user.click(closeButton);
+      const cancelButton = screen.getByRole('button', { name: '취소' });
+      await user.click(cancelButton);
 
       expect(mockOnCancel).toHaveBeenCalled();
     });

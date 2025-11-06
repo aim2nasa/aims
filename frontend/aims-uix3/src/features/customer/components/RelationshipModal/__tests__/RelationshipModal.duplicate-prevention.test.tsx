@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, waitFor, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { RelationshipModal, type RelationshipType } from '../RelationshipModal'
 import { CustomerService } from '@/services/customerService'
@@ -81,7 +81,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         limit: 50
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -97,15 +97,15 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '신')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '신')
 
       await waitFor(() => {
         expect(CustomerService.getCustomers).toHaveBeenCalled()
       })
 
       await waitFor(() => {
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         if (dropdown) {
           const options = dropdown.querySelectorAll('.autocomplete-option')
           expect(options.length).toBeLessThanOrEqual(1)
@@ -132,7 +132,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 1
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -147,12 +147,12 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '이영희')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '이영희')
 
       await waitFor(() => {
-        const emptyMessage = container.querySelector('.autocomplete-empty')
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const emptyMessage = document.querySelector('.autocomplete-empty')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         expect(emptyMessage || !dropdown).toBeTruthy()
       })
     })
@@ -176,7 +176,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 1
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -191,12 +191,12 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '중복')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '중복')
 
       await waitFor(() => {
-        const emptyMessage = container.querySelector('.autocomplete-empty')
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const emptyMessage = document.querySelector('.autocomplete-empty')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         expect(emptyMessage || !dropdown).toBeTruthy()
       })
     })
@@ -273,7 +273,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 1
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -289,7 +289,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
       )
 
       await waitFor(() => {
-        const submitButton = container.querySelector('button[type="submit"]')
+        const submitButton = screen.getByRole('button', { name: /관계 추가/i })
         expect(submitButton).toBeTruthy()
       })
     })
@@ -318,7 +318,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 2
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -337,11 +337,11 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         expect(RelationshipService.getAllRelationshipsWithCustomers).toHaveBeenCalled()
       })
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '관계자')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '관계자')
 
       await waitFor(() => {
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         if (dropdown) {
           const options = dropdown.querySelectorAll('.autocomplete-option')
           expect(options.length).toBe(1)
@@ -366,7 +366,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 2
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -381,11 +381,11 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '고객')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '고객')
 
       await waitFor(() => {
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         if (dropdown) {
           const options = dropdown.querySelectorAll('.autocomplete-option')
           expect(options.length).toBe(1)
@@ -407,7 +407,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 1
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -423,8 +423,8 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
       )
 
       await waitFor(() => {
-        const emptyMessage = container.querySelector('.autocomplete-empty')
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const emptyMessage = document.querySelector('.autocomplete-empty')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         expect(emptyMessage || !dropdown).toBeTruthy()
       })
     })
@@ -436,7 +436,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         timestamp: Date.now()
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -451,8 +451,8 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '   ')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '   ')
 
       await waitFor(() => {
         expect(CustomerService.getCustomers).not.toHaveBeenCalled()
@@ -478,7 +478,7 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         total: 1
       } as any)
 
-      const { container } = render(
+      render(
         <RelationshipModal
           visible={true}
           onCancel={mockOnCancel}
@@ -493,16 +493,16 @@ describe('법인 관계자 중복 방지 - Regression Tests', () => {
         />
       )
 
-      const searchInput = container.querySelector('input[type="text"]')
-      await userEvent.type(searchInput!, '양쪽')
+      const searchInput = screen.getByPlaceholderText('고객 이름을 입력하여 검색하세요')
+      await userEvent.type(searchInput, '양쪽')
 
       await waitFor(() => {
-        const dropdown = container.querySelector('.autocomplete-dropdown')
+        const dropdown = document.querySelector('.autocomplete-dropdown')
         if (dropdown) {
           const options = dropdown.querySelectorAll('.autocomplete-option')
           expect(options.length).toBe(1)
         } else {
-          const emptyMessage = container.querySelector('.autocomplete-empty')
+          const emptyMessage = document.querySelector('.autocomplete-empty')
           expect(emptyMessage).toBeNull()
         }
       })

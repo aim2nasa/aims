@@ -1,7 +1,8 @@
 /**
  * AIMS UIX-3 Relationship Modal (공통 관계 추가 모달)
  * @since 2025-11-01
- * @version 1.0.0
+ * @version 2.0.0 - Modal 컴포넌트 기반으로 마이그레이션 (Phase 5)
+ * @updated 2025-11-06
  *
  * 🍎 애플 디자인 철학 준수
  * - Progressive Disclosure
@@ -10,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Modal from '@/shared/ui/Modal';
 import { CustomerService } from '@/services/customerService';
 import { RelationshipService } from '@/services/relationshipService';
 import type { Customer } from '@/entities/customer/model';
@@ -298,29 +300,53 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
     setErrorMessage(null);
   };
 
-  if (!visible) return null;
+  const footer = (
+    <div className="relationship-modal__actions">
+      <button
+        type="button"
+        className="relationship-modal__button relationship-modal__button--cancel"
+        onClick={onCancel}
+        disabled={loading}
+      >
+        취소
+      </button>
+      <button
+        type="submit"
+        form="relationship-form"
+        className="relationship-modal__button relationship-modal__button--primary"
+        disabled={!isFormValid || loading}
+      >
+        {loading ? (
+          '추가 중...'
+        ) : (
+          <>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z" />
+            </svg>
+            관계 추가
+          </>
+        )}
+      </button>
+    </div>
+  );
 
   return (
-    <div className="relationship-modal-overlay" onClick={onCancel}>
-      <div className="relationship-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="relationship-modal__header">
-          <div className="relationship-modal__title">
-            {titleIcon}
-            <span>{title}</span>
-          </div>
-          <button
-            className="relationship-modal__close"
-            onClick={onCancel}
-            aria-label="닫기"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/>
-            </svg>
-          </button>
+    <Modal
+      visible={visible}
+      onClose={onCancel}
+      title={
+        <div className="relationship-modal__title">
+          {titleIcon}
+          <span>{title}</span>
         </div>
-
-        <div className="relationship-modal__body">
-          <form className="relationship-modal__form" onSubmit={handleSubmit}>
+      }
+      size="sm"
+      footer={footer}
+      ariaLabel={title}
+      className="relationship-modal"
+    >
+      <div className="relationship-modal__body">
+        <form id="relationship-form" className="relationship-modal__form" onSubmit={handleSubmit}>
             {/* 고객 선택 */}
             <section className="relationship-modal__field">
               <div className="relationship-modal__field-header">
@@ -461,38 +487,9 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
 
             {/* 성공 메시지 */}
             {successMessage && <div className="relationship-modal__success">{successMessage}</div>}
-
-            {/* 액션 버튼 */}
-            <div className="relationship-modal__actions">
-              <button
-                type="button"
-                className="relationship-modal__button relationship-modal__button--cancel"
-                onClick={onCancel}
-                disabled={loading}
-              >
-                취소
-              </button>
-              <button
-                type="submit"
-                className="relationship-modal__button relationship-modal__button--primary"
-                disabled={!isFormValid || loading}
-              >
-                {loading ? (
-                  '추가 중...'
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                      <path d="M8 1l-6 3v4c0 4 3 7 6 7s6-3 6-7V4l-6-3z" />
-                    </svg>
-                    관계 추가
-                  </>
-                )}
-              </button>
-            </div>
           </form>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 
