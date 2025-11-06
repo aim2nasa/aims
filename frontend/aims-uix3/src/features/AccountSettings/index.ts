@@ -5,3 +5,5 @@
 
 export { AccountSettingsModal } from './AccountSettingsModal'
 export type { AccountSettingsModalProps } from './AccountSettingsModal'
+export { AccountSettingsView } from './AccountSettingsView'
+export type { AccountSettingsViewProps } from './AccountSettingsView'

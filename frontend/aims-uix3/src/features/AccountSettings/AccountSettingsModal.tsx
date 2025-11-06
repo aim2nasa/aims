@@ -1,7 +1,7 @@
 /**
  * Account Settings Modal Component
  * @since 2025-11-06
- * @version 1.0.0
+ * @version 1.1.0
  *
  * 사용자 계정 정보 조회 및 편집 모달
  * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
@@ -30,6 +30,8 @@ export interface AccountSettingsModalProps {
   }
   /** 저장 핸들러 */
   onSave?: (updatedUser: Partial<AccountSettingsModalProps['user']>) => void
+  /** 고급 설정 클릭 핸들러 */
+  onAdvancedSettingsClick?: () => void
 }
 
 /**
@@ -45,7 +47,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   visible,
   onClose,
   user,
-  onSave
+  onSave,
+  onAdvancedSettingsClick
 }) => {
   // 편집 가능한 필드 상태
   const [formData, setFormData] = useState({
@@ -104,6 +107,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       position: user.position || ''
     })
     setIsEditing(false)
+  }
+
+  // 고급 설정 핸들러
+  const handleAdvancedSettings = () => {
+    if (onAdvancedSettingsClick) {
+      onAdvancedSettingsClick()
+      onClose()
+    }
   }
 
   const modalFooter = isEditing ? (
@@ -313,14 +324,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
         {/* 고급 설정 링크 */}
         <section className="account-settings__section account-settings__section--footer">
-          <button className="account-settings__link" disabled>
+          <button
+            className="account-settings__link"
+            onClick={handleAdvancedSettings}
+            disabled={!onAdvancedSettingsClick}
+          >
             <SFSymbol
               name="gearshape.2"
               size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.MEDIUM}
             />
             <span>고급 설정</span>
-            <span className="account-settings__badge">준비중</span>
           </button>
         </section>
       </div>

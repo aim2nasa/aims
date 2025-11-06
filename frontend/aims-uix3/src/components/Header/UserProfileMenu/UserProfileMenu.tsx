@@ -1,6 +1,7 @@
 /**
  * User Profile Menu Component
  * @since 1.0.0
+ * @version 1.1.0
  *
  * 사용자 프로필 메뉴 - 계정 관리, 설정, 로그아웃 등
  * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
@@ -11,7 +12,7 @@ import { createPortal } from 'react-dom';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
-import { AccountSettingsModal } from '../../../features/AccountSettings';
+import { AccountSettingsModal, AccountSettingsView } from '../../../features/AccountSettings';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -53,6 +54,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   // 계정 설정 모달 상태
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+
+  // 계정 설정 View 상태
+  const [isAccountSettingsViewOpen, setIsAccountSettingsViewOpen] = useState(false);
 
   // 메뉴 위치 계산
   const [position, setPosition] = React.useState({ top: 0, right: 0 });
@@ -125,6 +129,12 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     // TODO: 실제 API 연동
   };
 
+  const handleAdvancedSettings = () => {
+    console.log('[UserProfileMenu] 고급 설정 클릭');
+    setIsAccountSettingsOpen(false);
+    setIsAccountSettingsViewOpen(true);
+  };
+
   const handleLogout = () => {
     console.log('[UserProfileMenu] 로그아웃 클릭');
     // TODO: 로그아웃 확인 다이얼로그
@@ -136,7 +146,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  if (!isOpen && !isAccountSettingsOpen) return null;
+  if (!isOpen && !isAccountSettingsOpen && !isAccountSettingsViewOpen) return null;
 
   const menuContent = (
     <>
@@ -192,6 +202,20 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       <AccountSettingsModal
         visible={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
+        user={{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          ...(user.avatarUrl && { avatarUrl: user.avatarUrl })
+        }}
+        onSave={handleAccountSettingsSave}
+        onAdvancedSettingsClick={handleAdvancedSettings}
+      />
+
+      {/* 계정 설정 View (고급 설정) */}
+      <AccountSettingsView
+        visible={isAccountSettingsViewOpen}
+        onClose={() => setIsAccountSettingsViewOpen(false)}
         user={{
           id: user.id,
           name: user.name,
