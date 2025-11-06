@@ -1,42 +1,14 @@
 /**
  * AppleConfirmModal Styles
  * @since 1.0.0
+ * @version 2.0.0 - Modal 컴포넌트 기반으로 마이그레이션 (Phase 6)
+ * @updated 2025-11-06
  *
  * 🍎 iOS/macOS 네이티브 alert 완벽 재현
  * 애플 디자인 철학: Clarity, Deference, Depth
+ *
+ * Modal 컴포넌트가 overlay, 애니메이션, Portal을 자동 처리하므로 제거됨
  */
-
-/* 🍎 OVERLAY */
-.apple-confirm-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.32);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  opacity: 0;
-  transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-  padding: 20px;
-}
-
-.apple-confirm-modal-overlay--visible {
-  opacity: 1 !important;
-  /* 🔒 절대 신뢰성: 오버레이도 절대 사라지지 않음 */
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 10000 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: none !important;
-}
 
 /* 🍎 MODAL CONTAINER: iOS Alert 카드 */
 .apple-confirm-modal {
@@ -54,20 +26,6 @@
   width: 100%;
   max-height: 70vh;
   overflow: hidden;
-  /* 🔒 신뢰성: 기본 상태에서만 transform 적용 */
-  transform: scale(0.85) translateY(10px);
-  opacity: 0;
-  /* 🔒 신뢰성: visible 상태에서는 transition 비활성화 */
-  transition:
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.apple-confirm-modal--visible {
-  transform: scale(1) translateY(0) !important;
-  opacity: 1 !important;
-  /* 🔒 절대 신뢰성: 모달이 열린 상태에서는 어떤 외부 요인으로도 사라지지 않음 */
-  transition: none !important;
 }
 
 /* 🍎 MODAL HEADER: 아이콘과 제목 */
@@ -136,7 +94,6 @@
 
 /* 🍎 REDUCED MOTION: 모션 감소 사용자 배려 */
 @media (prefers-reduced-motion: reduce) {
-  .apple-confirm-modal-overlay,
   .apple-confirm-modal {
     transition: none;
   }
@@ -144,10 +101,6 @@
 
 /* 🍎 MOBILE RESPONSIVE: 작은 화면 대응 */
 @media (max-width: 480px) {
-  .apple-confirm-modal-overlay {
-    padding: 16px;
-  }
-
   .apple-confirm-modal {
     max-width: none;
     min-width: 260px;

@@ -1,13 +1,17 @@
 /**
  * AppleConfirmModal Component
  * @since 1.0.0
+ * @version 2.0.0 - Modal 컴포넌트 기반으로 마이그레이션 (Phase 6)
+ * @updated 2025-11-06
  *
  * 🍎 애플 스타일 확인 모달 - iOS/macOS 네이티브 alert 완벽 재현
  * COMPONENT_GUIDE.md와 ARCHITECTURE.md 패턴을 준수하는 순수 View 컴포넌트
+ *
+ * Modal 컴포넌트가 ESC, body overflow, Portal, 애니메이션을 자동 처리합니다.
  */
 
 import React from 'react'
-import { createPortal } from 'react-dom'
+import Modal from '../../../../shared/ui/Modal'
 import type { AppleConfirmState, AppleConfirmActions } from '../../../../controllers/useAppleConfirmController'
 import Button from '../../../../shared/ui/Button'
 import './AppleConfirmModal.css'
@@ -37,78 +41,75 @@ export const AppleConfirmModal: React.FC<AppleConfirmModalProps> = ({
   state,
   actions
 }) => {
-  // 🔒 절대 신뢰성: 모달이 열린 상태에서는 절대 사라지지 않음
-  // shouldRender가 false더라도 isOpen이 true라면 렌더링 유지
-  if (!state.shouldRender && !state.isOpen) return null
+  if (!state.isOpen) return null
 
-  // 🍎 Portal을 사용해 body에 직접 렌더링 (애플 스타일)
-  return createPortal(
-    <div
-      className={`apple-confirm-modal-overlay ${state.isAnimating ? 'apple-confirm-modal-overlay--visible' : ''}`}
-      onClick={actions.handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="apple-confirm-modal-title"
-      aria-describedby="apple-confirm-modal-message"
-    >
-      <div
-        className={`apple-confirm-modal ${state.isAnimating ? 'apple-confirm-modal--visible' : ''}`}
-        onClick={(e) => e.stopPropagation()}
+  // Footer with buttons
+  const footer = (
+    <div className="apple-confirm-modal__actions">
+      {state.showCancel && (
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={actions.handleCancel}
+          autoFocus={state.confirmStyle === 'destructive'}
+        >
+          {state.cancelText}
+        </Button>
+      )}
+
+      <Button
+        variant={state.confirmStyle === 'destructive' ? 'destructive' : 'primary'}
+        size="md"
+        onClick={actions.handleConfirm}
+        autoFocus={!state.showCancel || state.confirmStyle === 'primary'}
       >
-        {/* 🍎 MODAL HEADER: iOS Alert 스타일 */}
-        <div className="apple-confirm-modal__header">
-          <div className="apple-confirm-modal__icon">
-            <div className={`apple-confirm-modal__icon-display apple-confirm-modal__icon-display--${state.iconType || 'warning'}`}>
-              {state.iconType === 'success' && '✅'}
-              {state.iconType === 'error' && '❌'}
-              {state.iconType === 'info' && 'ℹ️'}
-              {(!state.iconType || state.iconType === 'warning') && '⚠️'}
-            </div>
+        {state.confirmText}
+      </Button>
+    </div>
+  )
+
+  const handleClose = state.showCancel ? actions.handleCancel : () => {}
+
+  return (
+    <Modal
+      visible={state.isOpen}
+      onClose={handleClose}
+      showHeader={false}
+      backdropClosable={state.showCancel ?? true}
+      className="apple-confirm-modal"
+      size="sm"
+      footer={footer}
+      ariaLabel={state.title || '확인'}
+    >
+      {/* 🍎 MODAL HEADER: iOS Alert 스타일 */}
+      <div className="apple-confirm-modal__header">
+        <div className="apple-confirm-modal__icon">
+          <div className={`apple-confirm-modal__icon-display apple-confirm-modal__icon-display--${state.iconType || 'warning'}`}>
+            {state.iconType === 'success' && '✅'}
+            {state.iconType === 'error' && '❌'}
+            {state.iconType === 'info' && 'ℹ️'}
+            {(!state.iconType || state.iconType === 'warning') && '⚠️'}
           </div>
-
-          <h2
-            id="apple-confirm-modal-title"
-            className="apple-confirm-modal__title"
-          >
-            {state.title}
-          </h2>
         </div>
 
-        {/* 🍎 MODAL BODY: 명확한 메시지 표시 */}
-        <div className="apple-confirm-modal__body">
-          <p
-            id="apple-confirm-modal-message"
-            className="apple-confirm-modal__message"
-          >
-            {state.message}
-          </p>
-        </div>
-
-        {/* 🍎 MODAL ACTIONS: iOS 버튼 스타일 */}
-        <div className="apple-confirm-modal__actions">
-          {state.showCancel && (
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={actions.handleCancel}
-              autoFocus={state.confirmStyle === 'destructive'} // destructive일 때는 취소에 포커스
-            >
-              {state.cancelText}
-            </Button>
-          )}
-
-          <Button
-            variant={state.confirmStyle === 'destructive' ? 'destructive' : 'primary'}
-            size="md"
-            onClick={actions.handleConfirm}
-            autoFocus={!state.showCancel || state.confirmStyle === 'primary'} // 취소 버튼 없거나 primary일 때 확인에 포커스
-          >
-            {state.confirmText}
-          </Button>
-        </div>
+        <h2
+          id="apple-confirm-modal-title"
+          className="apple-confirm-modal__title"
+        >
+          {state.title}
+        </h2>
       </div>
-    </div>,
-    document.body
+
+      {/* 🍎 MODAL BODY: 명확한 메시지 표시 */}
+      <div className="apple-confirm-modal__body">
+        <p
+          id="apple-confirm-modal-message"
+          className="apple-confirm-modal__message"
+        >
+          {state.message}
+        </p>
+      </div>
+    </Modal>
   )
 }
 
