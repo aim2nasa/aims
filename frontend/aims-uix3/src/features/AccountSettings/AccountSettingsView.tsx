@@ -1,0 +1,466 @@
+/**
+ * Account Settings View Component (Full Page Version)
+ * @since 2025-11-06
+ * @version 2.0.0
+ *
+ * 사용자 계정 정보 관리 전용 페이지 (하이브리드 2단계)
+ * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
+ * CLAUDE.md 준수: CenterPaneView 상속, CSS 변수 사용
+ */
+
+import React, { useState } from 'react'
+import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
+import './AccountSettingsView.css'
+
+export interface AccountSettingsViewProps {
+  /** View 표시 여부 */
+  visible: boolean
+  /** View 닫기 핸들러 */
+  onClose: () => void
+  /** 사용자 정보 */
+  user: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+    department?: string
+    position?: string
+    avatarUrl?: string
+  }
+  /** 저장 핸들러 */
+  onSave?: (updatedUser: Partial<AccountSettingsViewProps['user']>) => void
+}
+
+type TabId = 'profile' | 'security' | 'notifications' | 'data'
+
+interface Tab {
+  id: TabId
+  label: string
+  icon: string
+}
+
+const TABS: Tab[] = [
+  { id: 'profile', label: '개인정보', icon: 'person.circle' },
+  { id: 'security', label: '보안', icon: 'lock.shield' },
+  { id: 'notifications', label: '알림', icon: 'bell' },
+  { id: 'data', label: '데이터', icon: 'cylinder' }
+]
+
+/**
+ * AccountSettingsView 컴포넌트
+ *
+ * 계정 설정 전용 페이지 (탭 구조)
+ * - 개인정보: 프로필, 기본 정보, 소속 정보
+ * - 보안: 비밀번호 변경, 2단계 인증
+ * - 알림: 세부 알림 규칙 설정
+ * - 데이터: 데이터 내보내기, 계정 삭제
+ */
+export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
+  visible,
+  onClose,
+  user,
+  onSave
+}) => {
+  // 현재 탭
+  const [activeTab, setActiveTab] = useState<TabId>('profile')
+
+  // 편집 가능한 필드 상태
+  const [formData, setFormData] = useState({
+    name: user.name,
+    email: user.email,
+    phone: user.phone || '',
+    department: user.department || '',
+    position: user.position || ''
+  })
+
+  // 알림 설정 상태
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    sms: false,
+    documentUpload: true,
+    documentProcessed: true,
+    weeklyReport: false
+  })
+
+  // 편집 모드 상태
+  const [isEditing, setIsEditing] = useState(false)
+
+  // 입력 핸들러
+  const handleInputChange = (field: keyof typeof formData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }))
+  }
+
+  // 알림 토글 핸들러
+  const handleNotificationToggle = (type: keyof typeof notifications) => () => {
+    setNotifications(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }))
+  }
+
+  // 저장 핸들러
+  const handleSave = () => {
+    if (onSave) {
+      onSave(formData)
+    }
+    setIsEditing(false)
+  }
+
+  // 취소 핸들러
+  const handleCancel = () => {
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      department: user.department || '',
+      position: user.position || ''
+    })
+    setIsEditing(false)
+  }
+
+  // 탭별 콘텐츠 렌더링
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return (
+          <div className="account-settings-view__content">
+            {/* 프로필 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">프로필</h3>
+              <div className="account-settings-view__profile">
+                <div className="account-settings-view__avatar">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} />
+                  ) : (
+                    <div className="account-settings-view__avatar-placeholder">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                {!isEditing && (
+                  <button
+                    className="account-settings-view__edit-button"
+                    onClick={() => setIsEditing(true)}
+                    aria-label="프로필 편집"
+                  >
+                    <SFSymbol
+                      name="pencil"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {/* 기본 정보 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">기본 정보</h3>
+
+              <div className="account-settings-view__field">
+                <label className="account-settings-view__label">이름</label>
+                <input
+                  type="text"
+                  className="account-settings-view__input"
+                  value={formData.name}
+                  onChange={handleInputChange('name')}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="account-settings-view__field">
+                <label className="account-settings-view__label">이메일</label>
+                <input
+                  type="email"
+                  className="account-settings-view__input"
+                  value={formData.email}
+                  onChange={handleInputChange('email')}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="account-settings-view__field">
+                <label className="account-settings-view__label">전화번호</label>
+                <input
+                  type="tel"
+                  className="account-settings-view__input"
+                  value={formData.phone}
+                  onChange={handleInputChange('phone')}
+                  placeholder="010-0000-0000"
+                  disabled={!isEditing}
+                />
+              </div>
+            </section>
+
+            {/* 소속 정보 섹션 */}
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">소속 정보</h3>
+
+              <div className="account-settings-view__field">
+                <label className="account-settings-view__label">지점</label>
+                <input
+                  type="text"
+                  className="account-settings-view__input"
+                  value={formData.department}
+                  onChange={handleInputChange('department')}
+                  placeholder="예: 강남지점"
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="account-settings-view__field">
+                <label className="account-settings-view__label">직급</label>
+                <input
+                  type="text"
+                  className="account-settings-view__input"
+                  value={formData.position}
+                  onChange={handleInputChange('position')}
+                  placeholder="예: 팀장"
+                  disabled={!isEditing}
+                />
+              </div>
+            </section>
+
+            {/* 편집 모드 버튼 */}
+            {isEditing && (
+              <div className="account-settings-view__actions">
+                <button
+                  className="account-settings-view__button account-settings-view__button--secondary"
+                  onClick={handleCancel}
+                >
+                  취소
+                </button>
+                <button
+                  className="account-settings-view__button account-settings-view__button--primary"
+                  onClick={handleSave}
+                >
+                  저장
+                </button>
+              </div>
+            )}
+          </div>
+        )
+
+      case 'security':
+        return (
+          <div className="account-settings-view__content">
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">비밀번호</h3>
+              <button className="account-settings-view__link">
+                <SFSymbol name="key" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                <span>비밀번호 변경</span>
+                <span className="account-settings-view__badge">준비중</span>
+              </button>
+            </section>
+
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">2단계 인증</h3>
+              <button className="account-settings-view__link">
+                <SFSymbol name="lock.shield" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                <span>2단계 인증 설정</span>
+                <span className="account-settings-view__badge">준비중</span>
+              </button>
+            </section>
+          </div>
+        )
+
+      case 'notifications':
+        return (
+          <div className="account-settings-view__content">
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">기본 알림</h3>
+
+              <div className="account-settings-view__toggle-group">
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="envelope" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>이메일 알림</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.email ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('email')}
+                    role="switch"
+                    aria-checked={notifications.email}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="bell" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>푸시 알림</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.push ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('push')}
+                    role="switch"
+                    aria-checked={notifications.push}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="message" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>SMS 알림</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.sms ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('sms')}
+                    role="switch"
+                    aria-checked={notifications.sms}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">이벤트 알림</h3>
+
+              <div className="account-settings-view__toggle-group">
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="doc.badge.plus" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>문서 업로드 알림</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.documentUpload ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('documentUpload')}
+                    role="switch"
+                    aria-checked={notifications.documentUpload}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="doc.badge.clock" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>문서 처리 완료 알림</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.documentProcessed ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('documentProcessed')}
+                    role="switch"
+                    aria-checked={notifications.documentProcessed}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+
+                <div className="account-settings-view__toggle-item">
+                  <div className="account-settings-view__toggle-label">
+                    <SFSymbol name="chart.bar" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                    <span>주간 리포트</span>
+                  </div>
+                  <button
+                    className={`account-settings-view__toggle ${
+                      notifications.weeklyReport ? 'account-settings-view__toggle--active' : ''
+                    }`}
+                    onClick={handleNotificationToggle('weeklyReport')}
+                    role="switch"
+                    aria-checked={notifications.weeklyReport}
+                  >
+                    <span className="account-settings-view__toggle-slider" />
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )
+
+      case 'data':
+        return (
+          <div className="account-settings-view__content">
+            <section className="account-settings-view__section">
+              <h3 className="account-settings-view__section-title">데이터 관리</h3>
+              <button className="account-settings-view__link">
+                <SFSymbol name="square.and.arrow.down" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                <span>내 데이터 내보내기</span>
+                <span className="account-settings-view__badge">준비중</span>
+              </button>
+            </section>
+
+            <section className="account-settings-view__section account-settings-view__section--danger">
+              <h3 className="account-settings-view__section-title">위험 영역</h3>
+              <button className="account-settings-view__link account-settings-view__link--danger">
+                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                <span>계정 삭제</span>
+                <span className="account-settings-view__badge">준비중</span>
+              </button>
+            </section>
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  return (
+    <CenterPaneView
+      visible={visible}
+      title="계정 설정"
+      titleIcon={
+        <SFSymbol
+          name="gearshape"
+          size={SFSymbolSize.FOOTNOTE}
+          weight={SFSymbolWeight.MEDIUM}
+        />
+      }
+      onClose={onClose}
+      marginTop={4}
+      marginBottom={4}
+      marginLeft={4}
+      marginRight={4}
+      className="account-settings-view"
+    >
+      {/* 탭 네비게이션 */}
+      <nav className="account-settings-view__tabs">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            className={`account-settings-view__tab ${
+              activeTab === tab.id ? 'account-settings-view__tab--active' : ''
+            }`}
+            onClick={() => setActiveTab(tab.id)}
+            aria-selected={activeTab === tab.id}
+          >
+            <SFSymbol
+              name={tab.icon}
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+            />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* 탭 콘텐츠 */}
+      {renderTabContent()}
+    </CenterPaneView>
+  )
+}
+
+export default AccountSettingsView
