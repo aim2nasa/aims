@@ -9,6 +9,7 @@ import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
+import { useUserStore } from './stores/user'
 import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화
@@ -269,6 +270,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // Developer Mode - Global State
   const { isDevMode, toggleDevMode } = useDevModeStore()
+
+  // User Store - 사용자 정보
+  const { userId, availableUsers } = useUserStore()
 
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
@@ -1154,15 +1158,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           </Suspense>
 
           <Suspense fallback={null}>
-            <AccountSettingsView
-              visible={activeDocumentView === 'account-settings'}
-              onClose={closeDocumentView}
-              user={{
-                id: '1',
-                name: '테스트 설계사',
-                email: 'tester@example.com'
-              }}
-            />
+            {(() => {
+              const currentUser = availableUsers.find(u => u.id === userId);
+              return (
+                <AccountSettingsView
+                  visible={activeDocumentView === 'account-settings'}
+                  onClose={closeDocumentView}
+                  user={{
+                    id: currentUser?.id || '1',
+                    name: currentUser?.name || '테스트 설계사',
+                    email: `${currentUser?.id || 'tester'}@example.com`,
+                    ...(currentUser?.avatarUrl && { avatarUrl: currentUser.avatarUrl })
+                  }}
+                />
+              );
+            })()}
           </Suspense>
         </main>
       )}
