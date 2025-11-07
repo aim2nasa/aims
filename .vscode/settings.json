@@ -41,5 +41,6 @@
   
   // 터미널 설정
   "terminal.integrated.defaultProfile.windows": "Command Prompt",
-  "terminal.integrated.cwd": "frontend/aims-uix1"
+  "terminal.integrated.cwd": "frontend/aims-uix3",
+  "claudeCodeChat.permissions.yoloMode": false
 }
