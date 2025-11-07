@@ -431,7 +431,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
-      title="계정 설정"
+      title="고급 계정 설정"
       titleIcon={
         <SFSymbol
           name="gearshape"
