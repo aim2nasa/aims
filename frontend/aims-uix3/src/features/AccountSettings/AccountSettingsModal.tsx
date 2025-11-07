@@ -11,6 +11,7 @@
 import React, { useState } from 'react'
 import Modal from '@/shared/ui/Modal/Modal'
 import Button from '@/shared/ui/Button'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import './AccountSettingsModal.css'
 
@@ -183,20 +184,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           </div>
 
           {!isEditing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleStartEdit}
-              leftIcon={
-                <SFSymbol
-                  name="pencil"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                />
-              }
-            >
-              편집
-            </Button>
+            <Tooltip content="편집">
+              <button
+                className="account-settings__edit-button"
+                onClick={handleStartEdit}
+                aria-label="편집"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </Tooltip>
           )}
         </section>
 

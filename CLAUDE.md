@@ -978,3 +978,20 @@ import Tooltip from '@/shared/ui/Tooltip'
 **참고**: DocumentLibraryView, CustomerRegionalView 적용 완료 (커밋 140d821)
 
 ---
+
+
+## 🔧 자주 발생하는 문제와 해결법
+
+### 아이콘이 표시되지 않는 문제
+
+**증상**: 컴포넌트에 SFSymbol을 사용했는데 아이콘이 안 보임
+
+**원인**: SFSymbol.css에 해당 아이콘이 정의되지 않음
+
+**해결**: [docs/ACCOUNT_SETTINGS_EDIT_BUTTON_FIX.md](docs/ACCOUNT_SETTINGS_EDIT_BUTTON_FIX.md)
+
+**핵심**:
+1. SFSymbol 사용 전 `SFSymbol.css`에서 아이콘 정의 확인
+2. 없으면 SVG 직접 사용 (AllCustomersView/DocumentLibraryView 참조)
+3. Tooltip은 named export: `import { Tooltip } from '@/shared/ui/Tooltip'`
+
