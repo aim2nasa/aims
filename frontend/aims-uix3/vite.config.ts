@@ -20,7 +20,7 @@ export default defineConfig({
     },
     // 파일 변경 감지 개선 (특히 WSL 환경)
     watch: {
-      usePolling: true
+      // usePolling: true  // ⚠️ Windows 네이티브 환경에서는 비활성화 필수! (HMR 크래시 유발)
     }
   },
   // CSS 소스맵 활성화 (디버깅 용이)
