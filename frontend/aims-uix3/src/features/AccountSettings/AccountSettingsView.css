@@ -73,6 +73,7 @@
 }
 
 .account-settings-view__avatar {
+  position: relative;
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -83,6 +84,36 @@
   justify-content: center;
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.account-settings-view__avatar--editable {
+  cursor: pointer;
+}
+
+.account-settings-view__avatar--editable:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.account-settings-view__avatar--editable:hover .account-settings-view__avatar-overlay {
+  opacity: 1;
+}
+
+.account-settings-view__avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-inverse);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+  pointer-events: none;
 }
 
 .account-settings-view__avatar img {

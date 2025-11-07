@@ -88,6 +88,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false)
 
+  // 아바타 이미지 상태
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user.avatarUrl)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
   // 입력 핸들러
   const handleInputChange = (field: keyof typeof formData) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -96,6 +100,38 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       ...prev,
       [field]: e.target.value
     }))
+  }
+
+  // 아바타 클릭 핸들러
+  const handleAvatarClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }
+
+  // 아바타 파일 선택 핸들러
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // 이미지 파일 검증
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드할 수 있습니다.')
+        return
+      }
+
+      // 파일 크기 검증 (5MB 제한)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.')
+        return
+      }
+
+      // FileReader로 미리보기 생성
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   // 알림 토글 핸들러
@@ -109,7 +145,16 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 저장 핸들러
   const handleSave = () => {
     if (onSave) {
-      onSave(formData)
+      const updates: Partial<AccountSettingsViewProps['user']> = {
+        ...formData
+      }
+
+      // 아바타가 변경되었고 유효한 경우에만 포함
+      if (avatarPreview && avatarPreview !== user.avatarUrl) {
+        updates.avatarUrl = avatarPreview
+      }
+
+      onSave(updates)
     }
     setIsEditing(false)
   }
@@ -123,6 +168,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       department: user.department || '',
       position: user.position || ''
     })
+    setAvatarPreview(user.avatarUrl)
     setIsEditing(false)
   }
 
@@ -134,15 +180,38 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           <div className="account-settings-view__content">
             {/* 프로필 헤더 */}
             <div className="account-settings-view__profile-header">
-              <div className="account-settings-view__avatar">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} />
+              <div
+                className={`account-settings-view__avatar ${isEditing ? 'account-settings-view__avatar--editable' : ''}`}
+                onClick={handleAvatarClick}
+                role={isEditing ? 'button' : undefined}
+                aria-label={isEditing ? '아바타 이미지 변경' : undefined}
+                tabIndex={isEditing ? 0 : undefined}
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt={user.name} />
                 ) : (
                   <div className="account-settings-view__avatar-placeholder">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
+                {isEditing && (
+                  <div className="account-settings-view__avatar-overlay">
+                    <SFSymbol
+                      name="camera"
+                      size={SFSymbolSize.BODY}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  </div>
+                )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+                aria-hidden="true"
+              />
               <div className="account-settings-view__profile-info">
                 <h2 className="account-settings-view__profile-name">{user.name}</h2>
                 <p className="account-settings-view__profile-email">{user.email}</p>
