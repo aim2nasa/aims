@@ -64,12 +64,21 @@
 .account-settings-view__profile-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-5);
   padding: var(--spacing-5);
   margin-bottom: var(--spacing-6);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
+}
+
+.account-settings-view__profile {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-5);
+  flex: 1;
+  min-width: 0;
 }
 
 .account-settings-view__avatar {
@@ -161,6 +170,48 @@
   white-space: nowrap;
 }
 
+/* === HEADER ACTIONS === */
+
+.account-settings-view__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+/* === EDIT BUTTON === */
+
+.account-settings-view__header-actions .account-settings-view__edit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-accent-blue);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.7;
+}
+
+.account-settings-view__header-actions .account-settings-view__edit-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  background: transparent;
+}
+
+.account-settings-view__header-actions .account-settings-view__edit-button:active {
+  transform: scale(0.95);
+}
+
+.account-settings-view__header-actions .account-settings-view__edit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+}
+
 /* === GRID LAYOUT === */
 
 .account-settings-view__grid {
@@ -203,7 +254,7 @@
   margin-bottom: var(--spacing-4);
 }
 
-.account-settings-view__edit-button {
+.account-settings-view__profile .account-settings-view__edit-button {
   position: absolute;
   bottom: 0;
   right: 50%;
@@ -221,12 +272,12 @@
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-.account-settings-view__edit-button:hover {
+.account-settings-view__profile .account-settings-view__edit-button:hover {
   transform: translateX(calc(50% + 36px)) scale(1.1);
   box-shadow: var(--shadow-sm);
 }
 
-.account-settings-view__edit-button:active {
+.account-settings-view__profile .account-settings-view__edit-button:active {
   transform: translateX(calc(50% + 36px)) scale(0.95);
 }
 

@@ -1,7 +1,7 @@
 /**
  * Account Settings View Component (Full Page Version)
  * @since 2025-11-06
- * @version 2.0.0
+ * @version 2.0.1
  *
  * 사용자 계정 정보 관리 전용 페이지 (하이브리드 2단계)
  * Apple HIG 준수: Progressive Disclosure, Clarity, Deference
@@ -12,6 +12,7 @@ import React, { useState, useEffect } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { useUserStore } from '@/stores/user'
 import './AccountSettingsView.css'
@@ -271,57 +272,59 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
           <div className="account-settings-view__content">
             {/* 프로필 헤더 */}
             <div className="account-settings-view__profile-header">
-              <div
-                className={`account-settings-view__avatar ${isEditing ? 'account-settings-view__avatar--editable' : ''}`}
-                onClick={handleAvatarClick}
-                role={isEditing ? 'button' : undefined}
-                aria-label={isEditing ? '아바타 이미지 변경' : undefined}
-                tabIndex={isEditing ? 0 : undefined}
-              >
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt={user.name} />
-                ) : (
-                  <div className="account-settings-view__avatar-placeholder">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                {isEditing && (
-                  <div className="account-settings-view__avatar-overlay">
-                    <SFSymbol
-                      name="camera"
-                      size={SFSymbolSize.BODY}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                style={{ display: 'none' }}
-                aria-hidden="true"
-              />
-              <div className="account-settings-view__profile-info">
-                <h2 className="account-settings-view__profile-name">{user.name}</h2>
-                <p className="account-settings-view__profile-email">{user.email}</p>
-              </div>
-              {!isEditing && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  leftIcon={
-                    <SFSymbol
-                      name="pencil"
-                      size={SFSymbolSize.CAPTION_1}
-                      weight={SFSymbolWeight.MEDIUM}
-                    />
-                  }
+              <div className="account-settings-view__profile">
+                <div
+                  className={`account-settings-view__avatar ${isEditing ? 'account-settings-view__avatar--editable' : ''}`}
+                  onClick={handleAvatarClick}
+                  role={isEditing ? 'button' : undefined}
+                  aria-label={isEditing ? '아바타 이미지 변경' : undefined}
+                  tabIndex={isEditing ? 0 : undefined}
                 >
-                  편집
-                </Button>
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt={user.name} />
+                  ) : (
+                    <div className="account-settings-view__avatar-placeholder">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {isEditing && (
+                    <div className="account-settings-view__avatar-overlay">
+                      <SFSymbol
+                        name="camera"
+                        size={SFSymbolSize.BODY}
+                        weight={SFSymbolWeight.MEDIUM}
+                      />
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                />
+                <div className="account-settings-view__profile-info">
+                  <h2 className="account-settings-view__profile-name">{user.name}</h2>
+                  <p className="account-settings-view__profile-email">{user.email}</p>
+                </div>
+              </div>
+
+              {!isEditing && (
+                <div className="account-settings-view__header-actions">
+                  <Tooltip content="편집">
+                    <button
+                      className="account-settings-view__edit-button"
+                      onClick={() => setIsEditing(true)}
+                      aria-label="편집"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </Tooltip>
+                </div>
               )}
             </div>
 
