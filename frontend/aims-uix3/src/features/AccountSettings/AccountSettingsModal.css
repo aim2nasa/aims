@@ -12,7 +12,7 @@
 .account-settings {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-3);
 }
 
 /* === GRID LAYOUT === */
@@ -39,31 +39,101 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-3);
+  padding: var(--spacing-2) 0;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--color-border);
   border-radius: 0;
+  margin-bottom: var(--spacing-2);
 }
 
 .account-settings__section-title {
   margin: 0;
   padding-bottom: var(--spacing-1);
-  border-bottom: 2px solid var(--color-accent-blue);
-  font-size: var(--font-size-xs);
+  border-bottom: 1.5px solid var(--color-accent-blue);
+  font-size: 11px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .account-settings__section--footer {
-  padding: var(--spacing-2);
+  padding: 0;
   background: transparent;
   border: none;
   border-top: 1px solid var(--color-border);
   border-radius: 0;
-  margin-top: 0;
+  margin-top: var(--spacing-1);
+  padding-top: var(--spacing-3);
+}
+
+/* === ADVANCED SETTINGS BUTTON === */
+
+.account-settings__advanced-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.account-settings__advanced-button:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.1);
+}
+
+.account-settings__advanced-button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.account-settings__advanced-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.account-settings__advanced-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.account-settings__advanced-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--color-accent-blue);
+  transition: transform var(--duration-fast) var(--easing-ease-out);
+}
+
+.account-settings__advanced-button:hover:not(:disabled) .account-settings__advanced-icon {
+  transform: scale(1.1);
+}
+
+.account-settings__advanced-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.account-settings__advanced-chevron {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.account-settings__advanced-button:hover:not(:disabled) .account-settings__advanced-chevron {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 /* === PROFILE === */
@@ -131,6 +201,14 @@
   white-space: nowrap;
 }
 
+/* === HEADER ACTIONS === */
+
+.account-settings__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
 /* === EDIT BUTTON === */
 
 .account-settings__edit-button {
@@ -162,6 +240,44 @@
 .account-settings__edit-button:focus {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+}
+
+/* === SETTINGS BUTTON === */
+
+.account-settings__settings-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-accent-blue);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.7;
+}
+
+.account-settings__settings-button:hover:not(:disabled) {
+  opacity: 1;
+  transform: scale(1.1);
+  background: transparent;
+}
+
+.account-settings__settings-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.account-settings__settings-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+}
+
+.account-settings__settings-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* === FIELD === */

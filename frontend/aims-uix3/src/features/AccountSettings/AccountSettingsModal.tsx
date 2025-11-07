@@ -12,7 +12,6 @@ import React, { useState } from 'react'
 import Modal from '@/shared/ui/Modal/Modal'
 import Button from '@/shared/ui/Button'
 import { Tooltip } from '@/shared/ui/Tooltip'
-import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import './AccountSettingsModal.css'
 
 export interface AccountSettingsModalProps {
@@ -61,13 +60,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     position: user.position || ''
   })
 
-  // 알림 설정 상태
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    sms: false
-  })
-
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false)
 
@@ -78,14 +70,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     setFormData(prev => ({
       ...prev,
       [field]: e.target.value
-    }))
-  }
-
-  // 알림 토글 핸들러
-  const handleNotificationToggle = (type: keyof typeof notifications) => () => {
-    setNotifications(prev => ({
-      ...prev,
-      [type]: !prev[type]
     }))
   }
 
@@ -158,7 +142,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       visible={visible}
       onClose={onClose}
       title="계정 설정"
-      size="lg"
+      size="xl"
       backdropClosable={!isEditing}
       escapeToClose={!isEditing}
       footer={modalFooter}
@@ -184,17 +168,32 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           </div>
 
           {!isEditing && (
-            <Tooltip content="편집">
-              <button
-                className="account-settings__edit-button"
-                onClick={handleStartEdit}
-                aria-label="편집"
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </Tooltip>
+            <div className="account-settings__header-actions">
+              <Tooltip content="편집">
+                <button
+                  className="account-settings__edit-button"
+                  onClick={handleStartEdit}
+                  aria-label="편집"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </Tooltip>
+              <Tooltip content="고급 설정">
+                <button
+                  className="account-settings__settings-button"
+                  onClick={handleAdvancedSettings}
+                  disabled={!onAdvancedSettingsClick}
+                  aria-label="고급 설정"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    <path d="M6.7 2h2.6l.4 1.2c.3.1.5.2.8.4l1.1-.6 1.8 1.8-.6 1.1c.2.3.3.5.4.8l1.2.4v2.6l-1.2.4c-.1.3-.2.5-.4.8l.6 1.1-1.8 1.8-1.1-.6c-.3.2-.5.3-.8.4l-.4 1.2H6.7l-.4-1.2c-.3-.1-.5-.2-.8-.4l-1.1.6-1.8-1.8.6-1.1c-.2-.3-.3-.5-.4-.8L2 9.3V6.7l1.2-.4c.1-.3.2-.5.4-.8l-.6-1.1 1.8-1.8 1.1.6c.3-.2.5-.3.8-.4L6.7 2z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  </svg>
+                </button>
+              </Tooltip>
+            </div>
           )}
         </section>
 
@@ -297,84 +296,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             </div>
           </section>
         </div>
-
-        {/* 알림 설정 섹션 */}
-        <section className="account-settings__section">
-          <h3 className="account-settings__section-title">알림 설정</h3>
-
-          <div className="account-settings__toggle-group">
-            <div className="account-settings__toggle-item">
-              <div className="account-settings__toggle-label">
-                <span>📧 이메일</span>
-              </div>
-              <button
-                className={`account-settings__toggle ${
-                  notifications.email ? 'account-settings__toggle--active' : ''
-                }`}
-                onClick={handleNotificationToggle('email')}
-                role="switch"
-                aria-checked={notifications.email}
-                aria-label="이메일 알림 토글"
-              >
-                <span className="account-settings__toggle-slider" />
-              </button>
-            </div>
-
-            <div className="account-settings__toggle-item">
-              <div className="account-settings__toggle-label">
-                <span>🔔 푸시</span>
-              </div>
-              <button
-                className={`account-settings__toggle ${
-                  notifications.push ? 'account-settings__toggle--active' : ''
-                }`}
-                onClick={handleNotificationToggle('push')}
-                role="switch"
-                aria-checked={notifications.push}
-                aria-label="푸시 알림 토글"
-              >
-                <span className="account-settings__toggle-slider" />
-              </button>
-            </div>
-
-            <div className="account-settings__toggle-item">
-              <div className="account-settings__toggle-label">
-                <span>💬 SMS</span>
-              </div>
-              <button
-                className={`account-settings__toggle ${
-                  notifications.sms ? 'account-settings__toggle--active' : ''
-                }`}
-                onClick={handleNotificationToggle('sms')}
-                role="switch"
-                aria-checked={notifications.sms}
-                aria-label="SMS 알림 토글"
-              >
-                <span className="account-settings__toggle-slider" />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* 고급 설정 링크 */}
-        <section className="account-settings__section account-settings__section--footer">
-          <Button
-            variant="link"
-            size="md"
-            onClick={handleAdvancedSettings}
-            disabled={!onAdvancedSettingsClick}
-            leftIcon={
-              <SFSymbol
-                name="gearshape.2"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-              />
-            }
-            fullWidth
-          >
-            고급 설정
-          </Button>
-        </section>
       </div>
     </Modal>
   )
