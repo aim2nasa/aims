@@ -212,10 +212,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
               <span className="header-user-avatar-loading-text">...</span>
             </div>
           ) : (() => {
-            const currentUser = availableUsers.find(u => u.id === userId);
-            const userName = currentUser?.name || userId;
+            // 전역 currentUser 우선 사용, 없으면 availableUsers에서 찾기 (fallback)
+            const displayUser = currentUser || availableUsers.find(u => u.id === userId);
+            const userName = displayUser?.name || userId;
             const userInitial = userName.charAt(0).toUpperCase();
-            const avatarUrl = currentUser?.avatarUrl;
+            const avatarUrl = displayUser?.avatarUrl;
 
             return (
               <div
