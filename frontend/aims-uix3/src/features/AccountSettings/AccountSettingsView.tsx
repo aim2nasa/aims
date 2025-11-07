@@ -172,7 +172,13 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                 <h3 className="account-settings-view__section-title">기본 정보</h3>
 
                 <div className="account-settings-view__field">
-                  <label className="account-settings-view__label">이름</label>
+                  <label className="account-settings-view__label">
+                    <svg className="account-settings-view__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                      <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                      <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                    </svg>
+                    이름
+                  </label>
                   <input
                     type="text"
                     className="account-settings-view__input"
@@ -183,7 +189,13 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                 </div>
 
                 <div className="account-settings-view__field">
-                  <label className="account-settings-view__label">이메일</label>
+                  <label className="account-settings-view__label">
+                    <svg className="account-settings-view__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                      <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    </svg>
+                    이메일
+                  </label>
                   <input
                     type="email"
                     className="account-settings-view__input"
@@ -194,7 +206,12 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                 </div>
 
                 <div className="account-settings-view__field">
-                  <label className="account-settings-view__label">전화번호</label>
+                  <label className="account-settings-view__label">
+                    <svg className="account-settings-view__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                      <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
+                    </svg>
+                    전화번호
+                  </label>
                   <input
                     type="tel"
                     className="account-settings-view__input"
@@ -211,7 +228,12 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                 <h3 className="account-settings-view__section-title">소속 정보</h3>
 
                 <div className="account-settings-view__field">
-                  <label className="account-settings-view__label">지점</label>
+                  <label className="account-settings-view__label">
+                    <svg className="account-settings-view__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                      <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
+                    </svg>
+                    지점
+                  </label>
                   <input
                     type="text"
                     className="account-settings-view__input"
@@ -223,7 +245,14 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                 </div>
 
                 <div className="account-settings-view__field">
-                  <label className="account-settings-view__label">직급</label>
+                  <label className="account-settings-view__label">
+                    <svg className="account-settings-view__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                      <rect x="2" y="6" width="12" height="7" rx="1" fill="currentColor"/>
+                      <path d="M5 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                      <rect x="7" y="8" width="2" height="2" rx="0.5" fill="var(--color-bg-primary)"/>
+                    </svg>
+                    직급
+                  </label>
                   <input
                     type="text"
                     className="account-settings-view__input"

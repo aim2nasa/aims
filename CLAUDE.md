@@ -328,6 +328,43 @@ html[data-theme="dark"] {
 
 **캐싱 문제**: [docs/CSS_ICON_CACHING_ISSUE.md](docs/CSS_ICON_CACHING_ISSUE.md)
 
+#### ⚠️ 아이콘 문제 해결
+
+**증상**: 아이콘 색상이 다르거나, 표시 안 되거나, 캐싱으로 안 바뀌는 경우
+
+**즉시 확인할 두 가지:**
+
+1. **CSS 선택자 문제** (90% 원인)
+   ```bash
+   # 문제: nth-child()는 <h3> 제목도 카운트함
+   section .field:nth-child(2)  # ❌ 잘못됨
+
+   # 해결: nth-of-type()로 field만 카운트
+   section > .field:nth-of-type(1)  # ✅ 올바름
+   ```
+
+2. **CSS 캐싱 문제** (10% 원인)
+   ```bash
+   rm -rf node_modules/.vite dist .vite
+   npm run dev
+   # 브라우저: Ctrl+Shift+R
+   ```
+
+**절대 하지 말 것:**
+- ❌ CSS 색상값만 계속 바꾸기 (무의미)
+- ❌ "안 되네?" 하면서 여러 번 시도
+- ❌ 파일을 여러 번 저장하기
+
+**올바른 순서:**
+```
+1. CSS 파일 열기
+2. 선택자가 nth-of-type()인지 확인
+3. 직접 자식 선택자 (>)가 있는지 확인
+4. 캐시 삭제 + 서버 재시작
+5. Ctrl+Shift+R
+6. 끝
+```
+
 ### 아이콘 크기 규칙 - 절대 준수! 📏
 
 **LeftPane CustomMenu 아이콘이 모든 아이콘의 기준이다!**

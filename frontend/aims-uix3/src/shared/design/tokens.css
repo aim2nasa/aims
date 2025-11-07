@@ -754,6 +754,7 @@
   /* Form Section Icon Colors - iOS System Colors */
   --color-icon-blue: #007aff;      /* iOS systemBlue */
   --color-icon-green: #34c759;     /* iOS systemGreen */
+  --color-icon-orange: #ff9500;    /* iOS systemOrange */
   --color-icon-purple: #af52de;    /* iOS systemPurple */
   --color-icon-red: #ff3b30;       /* iOS systemRed */
   
