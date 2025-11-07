@@ -132,105 +132,109 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       case 'profile':
         return (
           <div className="account-settings-view__content">
-            {/* 프로필 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">프로필</h3>
-              <div className="account-settings-view__profile">
-                <div className="account-settings-view__avatar">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} />
-                  ) : (
-                    <div className="account-settings-view__avatar-placeholder">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                {!isEditing && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    leftIcon={
-                      <SFSymbol
-                        name="pencil"
-                        size={SFSymbolSize.CAPTION_1}
-                        weight={SFSymbolWeight.MEDIUM}
-                      />
-                    }
-                  >
-                    편집
-                  </Button>
+            {/* 프로필 헤더 */}
+            <div className="account-settings-view__profile-header">
+              <div className="account-settings-view__avatar">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} />
+                ) : (
+                  <div className="account-settings-view__avatar-placeholder">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
                 )}
               </div>
-            </section>
-
-            {/* 기본 정보 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">기본 정보</h3>
-
-              <div className="account-settings-view__field">
-                <label className="account-settings-view__label">이름</label>
-                <input
-                  type="text"
-                  className="account-settings-view__input"
-                  value={formData.name}
-                  onChange={handleInputChange('name')}
-                  disabled={!isEditing}
-                />
+              <div className="account-settings-view__profile-info">
+                <h2 className="account-settings-view__profile-name">{user.name}</h2>
+                <p className="account-settings-view__profile-email">{user.email}</p>
               </div>
+              {!isEditing && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  leftIcon={
+                    <SFSymbol
+                      name="pencil"
+                      size={SFSymbolSize.CAPTION_1}
+                      weight={SFSymbolWeight.MEDIUM}
+                    />
+                  }
+                >
+                  편집
+                </Button>
+              )}
+            </div>
 
-              <div className="account-settings-view__field">
-                <label className="account-settings-view__label">이메일</label>
-                <input
-                  type="email"
-                  className="account-settings-view__input"
-                  value={formData.email}
-                  onChange={handleInputChange('email')}
-                  disabled={!isEditing}
-                />
-              </div>
+            {/* 2단 그리드 레이아웃 */}
+            <div className="account-settings-view__grid">
+              {/* 기본 정보 섹션 */}
+              <section className="account-settings-view__section">
+                <h3 className="account-settings-view__section-title">기본 정보</h3>
 
-              <div className="account-settings-view__field">
-                <label className="account-settings-view__label">전화번호</label>
-                <input
-                  type="tel"
-                  className="account-settings-view__input"
-                  value={formData.phone}
-                  onChange={handleInputChange('phone')}
-                  placeholder="010-0000-0000"
-                  disabled={!isEditing}
-                />
-              </div>
-            </section>
+                <div className="account-settings-view__field">
+                  <label className="account-settings-view__label">이름</label>
+                  <input
+                    type="text"
+                    className="account-settings-view__input"
+                    value={formData.name}
+                    onChange={handleInputChange('name')}
+                    disabled={!isEditing}
+                  />
+                </div>
 
-            {/* 소속 정보 섹션 */}
-            <section className="account-settings-view__section">
-              <h3 className="account-settings-view__section-title">소속 정보</h3>
+                <div className="account-settings-view__field">
+                  <label className="account-settings-view__label">이메일</label>
+                  <input
+                    type="email"
+                    className="account-settings-view__input"
+                    value={formData.email}
+                    onChange={handleInputChange('email')}
+                    disabled={!isEditing}
+                  />
+                </div>
 
-              <div className="account-settings-view__field">
-                <label className="account-settings-view__label">지점</label>
-                <input
-                  type="text"
-                  className="account-settings-view__input"
-                  value={formData.department}
-                  onChange={handleInputChange('department')}
-                  placeholder="예: 강남지점"
-                  disabled={!isEditing}
-                />
-              </div>
+                <div className="account-settings-view__field">
+                  <label className="account-settings-view__label">전화번호</label>
+                  <input
+                    type="tel"
+                    className="account-settings-view__input"
+                    value={formData.phone}
+                    onChange={handleInputChange('phone')}
+                    placeholder="010-0000-0000"
+                    disabled={!isEditing}
+                  />
+                </div>
+              </section>
 
-              <div className="account-settings-view__field">
-                <label className="account-settings-view__label">직급</label>
-                <input
-                  type="text"
-                  className="account-settings-view__input"
-                  value={formData.position}
-                  onChange={handleInputChange('position')}
-                  placeholder="예: 팀장"
-                  disabled={!isEditing}
-                />
-              </div>
-            </section>
+              {/* 소속 정보 섹션 */}
+              <section className="account-settings-view__section">
+                <h3 className="account-settings-view__section-title">소속 정보</h3>
+
+                <div className="account-settings-view__field">
+                  <label className="account-settings-view__label">지점</label>
+                  <input
+                    type="text"
+                    className="account-settings-view__input"
+                    value={formData.department}
+                    onChange={handleInputChange('department')}
+                    placeholder="예: 강남지점"
+                    disabled={!isEditing}
+                  />
+                </div>
+
+                <div className="account-settings-view__field">
+                  <label className="account-settings-view__label">직급</label>
+                  <input
+                    type="text"
+                    className="account-settings-view__input"
+                    value={formData.position}
+                    onChange={handleInputChange('position')}
+                    placeholder="예: 팀장"
+                    disabled={!isEditing}
+                  />
+                </div>
+              </section>
+            </div>
 
             {/* 편집 모드 버튼 */}
             {isEditing && (

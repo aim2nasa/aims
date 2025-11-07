@@ -157,14 +157,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       visible={visible}
       onClose={onClose}
       title="계정 설정"
-      size="md"
+      size="lg"
       backdropClosable={!isEditing}
       escapeToClose={!isEditing}
       footer={modalFooter}
       ariaLabel="계정 설정 모달"
     >
       <div className="account-settings">
-        {/* 프로필 섹션 */}
+        {/* 프로필 헤더 */}
         <section className="account-settings__section account-settings__section--profile">
           <div className="account-settings__profile">
             <div className="account-settings__avatar">
@@ -200,73 +200,105 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           )}
         </section>
 
-        {/* 기본 정보 섹션 */}
-        <section className="account-settings__section">
-          <h3 className="account-settings__section-title">기본 정보</h3>
+        {/* 2단 그리드 레이아웃 */}
+        <div className="account-settings__grid">
+          {/* 기본 정보 섹션 */}
+          <section className="account-settings__section">
+            <h3 className="account-settings__section-title">기본 정보</h3>
 
-          <div className="account-settings__field">
-            <label className="account-settings__label">이름</label>
-            <input
-              type="text"
-              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
-              value={formData.name}
-              onChange={handleInputChange('name')}
-              disabled={!isEditing}
-            />
-          </div>
+            <div className="account-settings__field">
+              <label className="account-settings__label">
+                <svg className="account-settings__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                </svg>
+                이름
+              </label>
+              <input
+                type="text"
+                className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
+                value={formData.name}
+                onChange={handleInputChange('name')}
+                disabled={!isEditing}
+              />
+            </div>
 
-          <div className="account-settings__field">
-            <label className="account-settings__label">이메일</label>
-            <input
-              type="email"
-              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
-              value={formData.email}
-              onChange={handleInputChange('email')}
-              disabled={!isEditing}
-            />
-          </div>
+            <div className="account-settings__field">
+              <label className="account-settings__label">
+                <svg className="account-settings__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="1" y="4" width="14" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                  <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                </svg>
+                이메일
+              </label>
+              <input
+                type="email"
+                className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
+                value={formData.email}
+                onChange={handleInputChange('email')}
+                disabled={!isEditing}
+              />
+            </div>
 
-          <div className="account-settings__field">
-            <label className="account-settings__label">전화번호</label>
-            <input
-              type="tel"
-              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
-              value={formData.phone}
-              onChange={handleInputChange('phone')}
-              placeholder="010-0000-0000"
-              disabled={!isEditing}
-            />
-          </div>
-        </section>
+            <div className="account-settings__field">
+              <label className="account-settings__label">
+                <svg className="account-settings__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
+                </svg>
+                전화번호
+              </label>
+              <input
+                type="tel"
+                className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
+                value={formData.phone}
+                onChange={handleInputChange('phone')}
+                placeholder="010-0000-0000"
+                disabled={!isEditing}
+              />
+            </div>
+          </section>
 
-        {/* 소속 정보 섹션 */}
-        <section className="account-settings__section">
-          <h3 className="account-settings__section-title">소속 정보</h3>
+          {/* 소속 정보 섹션 */}
+          <section className="account-settings__section">
+            <h3 className="account-settings__section-title">소속 정보</h3>
 
-          <div className="account-settings__field">
-            <label className="account-settings__label">지점</label>
-            <input
-              type="text"
-              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
-              value={formData.department}
-              onChange={handleInputChange('department')}
-              placeholder="예: 강남지점"
-              disabled={!isEditing}
-            />
-          </div>
+            <div className="account-settings__field">
+              <label className="account-settings__label">
+                <svg className="account-settings__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
+                </svg>
+                지점
+              </label>
+              <input
+                type="text"
+                className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
+                value={formData.department}
+                onChange={handleInputChange('department')}
+                placeholder="예: 강남지점"
+                disabled={!isEditing}
+              />
+            </div>
 
-          <div className="account-settings__field">
-            <label className="account-settings__label">직급</label>
-            <input
-              type="text"
-              className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
-              value={formData.position}
-              onChange={handleInputChange('position')}
-              placeholder="예: 팀장"
-              disabled={!isEditing}
-            />
-          </div>
-        </section>
+            <div className="account-settings__field">
+              <label className="account-settings__label">
+                <svg className="account-settings__label-icon" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="6" width="12" height="7" rx="1" fill="currentColor"/>
+                  <path d="M5 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <rect x="7" y="8" width="2" height="2" rx="0.5" fill="var(--color-bg-primary)"/>
+                </svg>
+                직급
+              </label>
+              <input
+                type="text"
+                className={`account-settings__input ${isEditing ? 'account-settings__input--editing' : ''}`}
+                value={formData.position}
+                onChange={handleInputChange('position')}
+                placeholder="예: 팀장"
+                disabled={!isEditing}
+              />
+            </div>
+          </section>
+        </div>
 
         {/* 알림 설정 섹션 */}
         <section className="account-settings__section">
@@ -275,12 +307,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           <div className="account-settings__toggle-group">
             <div className="account-settings__toggle-item">
               <div className="account-settings__toggle-label">
-                <SFSymbol
-                  name="envelope"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                />
-                <span>이메일 알림</span>
+                <span>📧 이메일</span>
               </div>
               <button
                 className={`account-settings__toggle ${
@@ -297,12 +324,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
             <div className="account-settings__toggle-item">
               <div className="account-settings__toggle-label">
-                <SFSymbol
-                  name="bell"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                />
-                <span>푸시 알림</span>
+                <span>🔔 푸시</span>
               </div>
               <button
                 className={`account-settings__toggle ${
@@ -319,12 +341,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
             <div className="account-settings__toggle-item">
               <div className="account-settings__toggle-label">
-                <SFSymbol
-                  name="message"
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.MEDIUM}
-                />
-                <span>SMS 알림</span>
+                <span>💬 SMS</span>
               </div>
               <button
                 className={`account-settings__toggle ${

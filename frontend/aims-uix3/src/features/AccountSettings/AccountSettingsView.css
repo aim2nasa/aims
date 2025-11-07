@@ -59,50 +59,30 @@
   max-height: calc(100vh - 200px);
 }
 
-/* === SECTION === */
+/* === PROFILE HEADER === */
 
-.account-settings-view__section {
-  margin-bottom: var(--spacing-6);
-}
-
-.account-settings-view__section:last-child {
-  margin-bottom: 0;
-}
-
-.account-settings-view__section-title {
-  margin: 0 0 var(--spacing-4) 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.account-settings-view__section--danger {
-  padding-top: var(--spacing-6);
-  border-top: 1px solid var(--color-border);
-}
-
-/* === PROFILE === */
-
-.account-settings-view__profile {
+.account-settings-view__profile-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-4);
-  position: relative;
-  margin-bottom: var(--spacing-4);
+  gap: var(--spacing-5);
+  padding: var(--spacing-5);
+  margin-bottom: var(--spacing-6);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
 }
 
 .account-settings-view__avatar {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--color-bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .account-settings-view__avatar img {
@@ -117,10 +97,79 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-tertiary);
-  background: var(--color-bg-secondary);
+  background: linear-gradient(135deg, var(--color-accent-blue-translucent), var(--color-accent-purple-translucent));
+}
+
+.account-settings-view__profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.account-settings-view__profile-name {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-settings-view__profile-email {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* === GRID LAYOUT === */
+
+.account-settings-view__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+}
+
+/* === SECTION === */
+
+.account-settings-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.account-settings-view__section-title {
+  margin: 0 0 var(--spacing-3) 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.account-settings-view__section--danger {
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--color-border);
+}
+
+/* === PROFILE (Legacy - Kept for other tabs) === */
+
+.account-settings-view__profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  position: relative;
+  margin-bottom: var(--spacing-4);
 }
 
 .account-settings-view__edit-button {
@@ -153,12 +202,13 @@
 /* === FIELD === */
 
 .account-settings-view__field {
-  margin-bottom: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
 .account-settings-view__label {
   display: block;
-  margin-bottom: var(--spacing-2);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
@@ -169,7 +219,7 @@
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   outline: none;
@@ -179,12 +229,13 @@
 .account-settings-view__input:focus:not(:disabled) {
   border-color: var(--color-accent-blue);
   box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+  background: var(--color-bg-primary);
 }
 
 .account-settings-view__input:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-secondary);
 }
 
 .account-settings-view__input::placeholder {
@@ -352,6 +403,13 @@
 
 /* === RESPONSIVE === */
 
+@media (max-width: 1024px) {
+  .account-settings-view__grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-5);
+  }
+}
+
 @media (max-width: 768px) {
   .account-settings-view__tabs {
     flex-wrap: wrap;
@@ -361,9 +419,24 @@
     padding: var(--spacing-4);
   }
 
+  .account-settings-view__profile-header {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .account-settings-view__profile-info {
+    align-items: center;
+  }
+
   .account-settings-view__avatar {
     width: 72px;
     height: 72px;
+  }
+
+  .account-settings-view__grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
   }
 
   .account-settings-view__edit-button {
