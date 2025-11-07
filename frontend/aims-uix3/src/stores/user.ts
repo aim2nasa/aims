@@ -18,8 +18,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role?: string; // 역할 (선택 사항)
   avatarUrl?: string; // 프로필 사진 URL (선택 사항)
+  phone?: string;
+  department?: string;
+  position?: string;
 }
 
 /**
@@ -31,9 +34,19 @@ let currentUserId = typeof window !== 'undefined'
   : 'tester';
 
 /**
+ * 현재 사용자 상세 정보를 저장하는 전역 변수
+ */
+let currentUserInfo: User | null = null;
+
+/**
  * 구독자 목록 (상태 변경 시 알림받을 컴포넌트들)
  */
 const subscribers = new Set<(userId: string) => void>();
+
+/**
+ * 사용자 정보 구독자 목록
+ */
+const userInfoSubscribers = new Set<(user: User | null) => void>();
 
 /**
  * 모든 구독자에게 userId 변경 알림
@@ -43,16 +56,24 @@ function notifySubscribers() {
 }
 
 /**
+ * 모든 구독자에게 사용자 정보 변경 알림
+ */
+function notifyUserInfoSubscribers() {
+  userInfoSubscribers.forEach(callback => callback(currentUserInfo));
+}
+
+/**
  * User Store Hook
  *
  * 사용자 ID 상태를 관리하고 변경사항을 구독
  */
 export function useUserStore() {
   const [userId, setUserIdState] = useState(currentUserId);
+  const [currentUser, setCurrentUser] = useState<User | null>(currentUserInfo);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 구독 설정
+  // userId 구독 설정
   useEffect(() => {
     const handleUserIdChange = (newUserId: string) => {
       setUserIdState(newUserId);
@@ -62,6 +83,19 @@ export function useUserStore() {
 
     return () => {
       subscribers.delete(handleUserIdChange);
+    };
+  }, []);
+
+  // 사용자 정보 구독 설정
+  useEffect(() => {
+    const handleUserInfoChange = (user: User | null) => {
+      setCurrentUser(user);
+    };
+
+    userInfoSubscribers.add(handleUserInfoChange);
+
+    return () => {
+      userInfoSubscribers.delete(handleUserInfoChange);
     };
   }, []);
 
@@ -186,10 +220,29 @@ export function useUserStore() {
     }
   };
 
+  /**
+   * 현재 사용자 정보 업데이트
+   * DB 저장 후 전역 상태 갱신에 사용
+   */
+  const updateCurrentUser = (user: User): void => {
+    currentUserInfo = user;
+    notifyUserInfoSubscribers();
+  };
+
+  /**
+   * 현재 사용자 정보 가져오기
+   */
+  const getCurrentUser = (): User | null => {
+    return currentUserInfo;
+  };
+
   return {
     userId,
     getUserId,
     setUserId,
+    currentUser,
+    updateCurrentUser,
+    getCurrentUser,
     availableUsers,
     loading,
   };

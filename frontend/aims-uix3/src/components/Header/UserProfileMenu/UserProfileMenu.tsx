@@ -123,10 +123,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  const handleAccountSettingsSave = (_updatedUser: Partial<UserProfileMenuProps['user']>) => {
-    // TODO: 실제 API 연동
-  };
-
   const handleAdvancedSettings = () => {
     setIsAccountSettingsOpen(false);
     openAccountSettingsView();
@@ -198,13 +194,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       <AccountSettingsModal
         visible={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
-        user={{
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          ...(user.avatarUrl && { avatarUrl: user.avatarUrl })
-        }}
-        onSave={handleAccountSettingsSave}
         onAdvancedSettingsClick={handleAdvancedSettings}
       />
     </>

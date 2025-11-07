@@ -1294,6 +1294,127 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+/**
+ * 특정 사용자 정보 조회 API
+ * GET /api/users/:id
+ * 개발자 모드 및 계정 설정에서 사용
+ */
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const usersCollection = db.collection('users');
+
+    // 사용자 조회 (비밀번호 제외)
+    const user = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { password: 0 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // 아바타 매핑 (기존 로직과 동일)
+    const avatarMap = {
+      'tester': 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
+      'user2': 'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=ffdfbf'
+    };
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+        department: user.department || '',
+        position: user.position || '',
+        role: user.role,
+        avatarUrl: user.avatarUrl || avatarMap[user._id]
+      }
+    });
+  } catch (error) {
+    console.error('❌ 사용자 조회 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 사용자 정보 업데이트 API
+ * PUT /api/users/:id
+ * 계정 설정에서 프로필 정보 수정 시 사용
+ */
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updateData = req.body;
+    const usersCollection = db.collection('users');
+
+    // 업데이트할 수 있는 필드만 허용
+    const allowedFields = ['name', 'email', 'phone', 'department', 'position', 'avatarUrl'];
+    const filteredData = {};
+
+    for (const field of allowedFields) {
+      if (updateData[field] !== undefined) {
+        filteredData[field] = updateData[field];
+      }
+    }
+
+    // 업데이트할 데이터가 없는 경우
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No valid fields to update'
+      });
+    }
+
+    // 사용자 정보 업데이트
+    const result = await usersCollection.updateOne(
+      { _id: userId },
+      { $set: filteredData }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // 업데이트된 사용자 정보 조회 (비밀번호 제외)
+    const updatedUser = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { password: 0 } }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        department: updatedUser.department || '',
+        position: updatedUser.position || '',
+        role: updatedUser.role,
+        avatarUrl: updatedUser.avatarUrl
+      }
+    });
+  } catch (error) {
+    console.error('❌ 사용자 정보 업데이트 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== 고객 관리 API ====================
 
 /**

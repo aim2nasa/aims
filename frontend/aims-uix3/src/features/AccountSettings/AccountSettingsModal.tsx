@@ -8,10 +8,12 @@
  * CLAUDE.md 준수: 공통 Modal 및 Button 컴포넌트 사용
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Modal from '@/shared/ui/Modal/Modal'
 import Button from '@/shared/ui/Button'
 import { Tooltip } from '@/shared/ui/Tooltip'
+import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
+import { useUserStore } from '@/stores/user'
 import './AccountSettingsModal.css'
 
 export interface AccountSettingsModalProps {
@@ -19,18 +21,6 @@ export interface AccountSettingsModalProps {
   visible: boolean
   /** 모달 닫기 핸들러 */
   onClose: () => void
-  /** 사용자 정보 */
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    department?: string
-    position?: string
-    avatarUrl?: string
-  }
-  /** 저장 핸들러 */
-  onSave?: (updatedUser: Partial<AccountSettingsModalProps['user']>) => void
   /** 고급 설정 클릭 핸들러 */
   onAdvancedSettingsClick?: () => void
 }
@@ -47,21 +37,71 @@ export interface AccountSettingsModalProps {
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   visible,
   onClose,
-  user,
-  onSave,
   onAdvancedSettingsClick
 }) => {
+  // 전역 상태
+  const { currentUser, updateCurrentUser } = useUserStore()
+
+  // 사용자 정보 상태
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   // 편집 가능한 필드 상태
   const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone || '',
-    department: user.department || '',
-    position: user.position || ''
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    position: ''
   })
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // 사용자 정보 로드
+  useEffect(() => {
+    if (!visible) return
+
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true)
+        setLoadError(null)
+        const userData = await getCurrentUser()
+        setUser(userData)
+        setFormData({
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || '',
+          department: userData.department || '',
+          position: userData.position || ''
+        })
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error)
+        setLoadError(error instanceof Error ? error.message : '사용자 정보를 불러올 수 없습니다')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [visible])
+
+  // 전역 currentUser 변경 감지 (다른 곳에서 저장한 경우)
+  // 편집 중일 때는 사용자 입력을 보존하기 위해 동기화 스킵
+  useEffect(() => {
+    if (!visible || !currentUser || isEditing) return
+
+    setUser(currentUser)
+    setFormData({
+      name: currentUser.name,
+      email: currentUser.email,
+      phone: currentUser.phone || '',
+      department: currentUser.department || '',
+      position: currentUser.position || ''
+    })
+  }, [currentUser, visible, isEditing])
 
   // 입력 핸들러
   const handleInputChange = (field: keyof typeof formData) => (
@@ -74,16 +114,47 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   }
 
   // 저장 핸들러
-  const handleSave = () => {
-    if (onSave) {
-      onSave(formData)
+  const handleSave = async () => {
+    if (!user) return
+
+    try {
+      setIsSaving(true)
+
+      const updates: Partial<User> = {
+        ...formData
+      }
+
+      // API 호출하여 DB에 저장
+      const updatedUser = await updateUser(user.id, updates)
+      setUser(updatedUser)
+      setFormData({
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        department: updatedUser.department || '',
+        position: updatedUser.position || ''
+      })
+      setIsEditing(false)
+
+      // 전역 상태 업데이트 (모든 컴포넌트에 즉시 반영)
+      updateCurrentUser(updatedUser)
+
+      onClose()
+
+      // 성공 메시지 (선택적)
+      console.log('✅ 사용자 정보가 저장되었습니다')
+    } catch (error) {
+      console.error('❌ 사용자 정보 저장 실패:', error)
+      alert(error instanceof Error ? error.message : '저장에 실패했습니다')
+    } finally {
+      setIsSaving(false)
     }
-    setIsEditing(false)
-    onClose()
   }
 
   // 취소 핸들러
   const handleCancel = () => {
+    if (!user) return
+
     // 원래 값으로 복원
     setFormData({
       name: user.name,
@@ -114,6 +185,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         variant="secondary"
         size="md"
         onClick={handleCancel}
+        disabled={isSaving}
       >
         취소
       </Button>
@@ -121,8 +193,9 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         variant="primary"
         size="md"
         onClick={handleSave}
+        disabled={isSaving}
       >
-        저장
+        {isSaving ? '저장 중...' : '저장'}
       </Button>
     </div>
   ) : (
@@ -131,6 +204,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         variant="secondary"
         size="md"
         onClick={onClose}
+        disabled={isLoading}
       >
         닫기
       </Button>
@@ -149,23 +223,40 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       ariaLabel="계정 설정 모달"
     >
       <div className="account-settings">
-        {/* 프로필 헤더 */}
-        <section className="account-settings__section account-settings__section--profile">
-          <div className="account-settings__profile">
-            <div className="account-settings__avatar">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} />
-              ) : (
-                <div className="account-settings__avatar-placeholder">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div className="account-settings__profile-info">
-              <h3 className="account-settings__profile-name">{user.name}</h3>
-              <p className="account-settings__profile-email">{user.email}</p>
-            </div>
+        {/* 로딩 상태 */}
+        {isLoading && (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p>사용자 정보를 불러오는 중...</p>
           </div>
+        )}
+
+        {/* 에러 상태 */}
+        {loadError && !isLoading && (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-error)' }}>
+            <p>{loadError}</p>
+          </div>
+        )}
+
+        {/* 정상 상태 */}
+        {!isLoading && !loadError && user && (
+          <>
+            {/* 프로필 헤더 */}
+            <section className="account-settings__section account-settings__section--profile">
+              <div className="account-settings__profile">
+                <div className="account-settings__avatar">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} />
+                  ) : (
+                    <div className="account-settings__avatar-placeholder">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="account-settings__profile-info">
+                  <h3 className="account-settings__profile-name">{user.name}</h3>
+                  <p className="account-settings__profile-email">{user.email}</p>
+                </div>
+              </div>
 
           {!isEditing && (
             <div className="account-settings__header-actions">
@@ -296,6 +387,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
             </div>
           </section>
         </div>
+          </>
+        )}
       </div>
     </Modal>
   )

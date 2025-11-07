@@ -8,10 +8,12 @@
  * CLAUDE.md 준수: CenterPaneView 상속, CSS 변수 사용
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
+import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
+import { useUserStore } from '@/stores/user'
 import './AccountSettingsView.css'
 
 export interface AccountSettingsViewProps {
@@ -19,18 +21,6 @@ export interface AccountSettingsViewProps {
   visible: boolean
   /** View 닫기 핸들러 */
   onClose: () => void
-  /** 사용자 정보 */
-  user: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-    department?: string
-    position?: string
-    avatarUrl?: string
-  }
-  /** 저장 핸들러 */
-  onSave?: (updatedUser: Partial<AccountSettingsViewProps['user']>) => void
 }
 
 type TabId = 'profile' | 'security' | 'notifications' | 'data'
@@ -59,20 +49,26 @@ const TABS: Tab[] = [
  */
 export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   visible,
-  onClose,
-  user,
-  onSave
+  onClose
 }) => {
+  // 전역 상태
+  const { currentUser, updateCurrentUser } = useUserStore()
+
   // 현재 탭
   const [activeTab, setActiveTab] = useState<TabId>('profile')
 
+  // 사용자 정보 상태
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   // 편집 가능한 필드 상태
   const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone || '',
-    department: user.department || '',
-    position: user.position || ''
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    position: ''
   })
 
   // 알림 설정 상태
@@ -87,10 +83,56 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // 아바타 이미지 상태
-  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user.avatarUrl)
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  // 사용자 정보 로드
+  useEffect(() => {
+    if (!visible) return
+
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true)
+        setLoadError(null)
+        const userData = await getCurrentUser()
+        setUser(userData)
+        setFormData({
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || '',
+          department: userData.department || '',
+          position: userData.position || ''
+        })
+        setAvatarPreview(userData.avatarUrl)
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error)
+        setLoadError(error instanceof Error ? error.message : '사용자 정보를 불러올 수 없습니다')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [visible])
+
+  // 전역 currentUser 변경 감지 (다른 곳에서 저장한 경우)
+  // 편집 중일 때는 사용자 입력을 보존하기 위해 동기화 스킵
+  useEffect(() => {
+    if (!visible || !currentUser || isEditing) return
+
+    setUser(currentUser)
+    setFormData({
+      name: currentUser.name,
+      email: currentUser.email,
+      phone: currentUser.phone || '',
+      department: currentUser.department || '',
+      position: currentUser.position || ''
+    })
+    setAvatarPreview(currentUser.avatarUrl)
+  }, [currentUser, visible, isEditing])
 
   // 입력 핸들러
   const handleInputChange = (field: keyof typeof formData) => (
@@ -143,9 +185,13 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   }
 
   // 저장 핸들러
-  const handleSave = () => {
-    if (onSave) {
-      const updates: Partial<AccountSettingsViewProps['user']> = {
+  const handleSave = async () => {
+    if (!user) return
+
+    try {
+      setIsSaving(true)
+
+      const updates: Partial<User> = {
         ...formData
       }
 
@@ -154,13 +200,36 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         updates.avatarUrl = avatarPreview
       }
 
-      onSave(updates)
+      // API 호출하여 DB에 저장
+      const updatedUser = await updateUser(user.id, updates)
+      setUser(updatedUser)
+      setFormData({
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || '',
+        department: updatedUser.department || '',
+        position: updatedUser.position || ''
+      })
+      setAvatarPreview(updatedUser.avatarUrl)
+      setIsEditing(false)
+
+      // 전역 상태 업데이트 (모든 컴포넌트에 즉시 반영)
+      updateCurrentUser(updatedUser)
+
+      // 성공 메시지 (선택적)
+      console.log('✅ 사용자 정보가 저장되었습니다')
+    } catch (error) {
+      console.error('❌ 사용자 정보 저장 실패:', error)
+      alert(error instanceof Error ? error.message : '저장에 실패했습니다')
+    } finally {
+      setIsSaving(false)
     }
-    setIsEditing(false)
   }
 
   // 취소 핸들러
   const handleCancel = () => {
+    if (!user) return
+
     setFormData({
       name: user.name,
       email: user.email,
@@ -174,6 +243,28 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
   // 탭별 콘텐츠 렌더링
   const renderTabContent = () => {
+    // 로딩 중
+    if (isLoading) {
+      return (
+        <div className="account-settings-view__content">
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p>사용자 정보를 불러오는 중...</p>
+          </div>
+        </div>
+      )
+    }
+
+    // 에러 발생
+    if (loadError || !user) {
+      return (
+        <div className="account-settings-view__content">
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-error)' }}>
+            <p>{loadError || '사용자 정보를 불러올 수 없습니다'}</p>
+          </div>
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'profile':
         return (
@@ -341,6 +432,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   variant="secondary"
                   size="md"
                   onClick={handleCancel}
+                  disabled={isSaving}
                 >
                   취소
                 </Button>
@@ -348,8 +440,9 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   variant="primary"
                   size="md"
                   onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  저장
+                  {isSaving ? '저장 중...' : '저장'}
                 </Button>
               </div>
             )}

@@ -47,7 +47,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   const { isDevMode } = useDevModeStore()
 
   // 현재 사용자 정보
-  const { userId, setUserId, availableUsers, loading } = useUserStore()
+  const { userId, setUserId, currentUser, availableUsers, loading } = useUserStore()
 
   // 사용자 프로필 메뉴 상태
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -249,18 +249,19 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
         {/* 사용자 프로필 메뉴 */}
         {!loading && (() => {
-          const currentUser = availableUsers.find(u => u.id === userId);
-          if (!currentUser) return null;
+          // 전역 currentUser가 있으면 사용, 없으면 availableUsers에서 찾기 (fallback)
+          const displayUser = currentUser || availableUsers.find(u => u.id === userId);
+          if (!displayUser) return null;
 
           return (
             <UserProfileMenu
               isOpen={isProfileMenuOpen}
               onClose={() => setIsProfileMenuOpen(false)}
               user={{
-                id: currentUser.id,
-                name: currentUser.name,
-                email: `${currentUser.id}@example.com`, // TODO: 실제 이메일 추가
-                ...(currentUser.avatarUrl && { avatarUrl: currentUser.avatarUrl })
+                id: displayUser.id,
+                name: displayUser.name,
+                email: displayUser.email || `${displayUser.id}@example.com`,
+                ...(displayUser.avatarUrl && { avatarUrl: displayUser.avatarUrl })
               }}
               anchorElement={userAvatarRef.current}
             />

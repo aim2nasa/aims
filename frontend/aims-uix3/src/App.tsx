@@ -10,6 +10,7 @@ import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useUserStore } from './stores/user'
+import { getCurrentUser } from './entities/user/api'
 import type { Customer } from './entities/customer'
 
 // Lazy loading으로 성능 최적화
@@ -271,8 +272,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // Developer Mode - Global State
   const { isDevMode, toggleDevMode } = useDevModeStore()
 
-  // User Store - 사용자 정보
-  const { userId, availableUsers } = useUserStore()
+  // User Store - 사용자 정보 전역 관리
+  const { updateCurrentUser } = useUserStore()
 
   // iOS Dynamic Type 시스템 초기화 및 추적
   const dynamicType = useDynamicType()
@@ -350,6 +351,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [])
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
+  // 초기 로딩 시 사용자 정보를 전역 상태에 로드
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser()
+        updateCurrentUser(user)
+      } catch (error) {
+        console.error('❌ 초기 사용자 정보 로드 실패:', error)
+      }
+    }
+
+    loadCurrentUser()
+  }, [updateCurrentUser])
+
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
@@ -1158,21 +1173,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           </Suspense>
 
           <Suspense fallback={null}>
-            {(() => {
-              const currentUser = availableUsers.find(u => u.id === userId);
-              return (
-                <AccountSettingsView
-                  visible={activeDocumentView === 'account-settings'}
-                  onClose={closeDocumentView}
-                  user={{
-                    id: currentUser?.id || '1',
-                    name: currentUser?.name || '테스트 설계사',
-                    email: `${currentUser?.id || 'tester'}@example.com`,
-                    ...(currentUser?.avatarUrl && { avatarUrl: currentUser.avatarUrl })
-                  }}
-                />
-              );
-            })()}
+            <AccountSettingsView
+              visible={activeDocumentView === 'account-settings'}
+              onClose={closeDocumentView}
+            />
           </Suspense>
         </main>
       )}
