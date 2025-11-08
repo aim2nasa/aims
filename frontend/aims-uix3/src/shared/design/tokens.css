@@ -330,6 +330,10 @@
     0 4px 12px rgba(0, 123, 255, var(--opacity-shadow-2xl)),
     0 6px 20px rgba(0, 123, 255, var(--opacity-shadow-xl));
 
+  /* Card Hover Shadows */
+  --shadow-card-hover-light: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-md));
+  --shadow-card-hover-dark: 0 2px 8px rgba(0, 0, 0, var(--opacity-shadow-2xl));
+
   --shadow-inset-light: inset 0 1px 3px rgba(0, 0, 0, var(--opacity-border));
   --shadow-inset-dark: inset 0 1px 3px rgba(0, 0, 0, var(--opacity-border-dark));
   --shadow-progress: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-xl));

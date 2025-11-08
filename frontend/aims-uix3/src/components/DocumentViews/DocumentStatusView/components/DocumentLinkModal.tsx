@@ -394,12 +394,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                   aria-label={`고객 ${customer.name} 선택`}
                 >
                   <div className="recent-customer-icon">👤</div>
-                  <div className="recent-customer-info">
-                    <span className="recent-customer-name">{customer.name}</span>
-                    {customer.phone && (
-                      <span className="recent-customer-phone">{customer.phone}</span>
-                    )}
-                  </div>
+                  <span className="recent-customer-name">{customer.name}</span>
                 </button>
               ))}
             </div>
