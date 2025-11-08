@@ -306,26 +306,25 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
                   aria-hidden="true"
                 />
                 <div className="account-settings-view__profile-info">
-                  <h2 className="account-settings-view__profile-name">{user.name}</h2>
+                  <div className="account-settings-view__name-row">
+                    <h2 className="account-settings-view__profile-name">{user.name}</h2>
+                    {!isEditing && (
+                      <Tooltip content="편집">
+                        <button
+                          className="edit-mode-icon-button"
+                          onClick={() => setIsEditing(true)}
+                          aria-label="편집"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    )}
+                  </div>
                   <p className="account-settings-view__profile-email">{user.email}</p>
                 </div>
               </div>
-
-              {!isEditing && (
-                <div className="account-settings-view__header-actions">
-                  <Tooltip content="편집">
-                    <button
-                      className="account-settings-view__edit-button"
-                      onClick={() => setIsEditing(true)}
-                      aria-label="편집"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </Tooltip>
-                </div>
-              )}
             </div>
 
             {/* 2단 그리드 레이아웃 */}

@@ -151,6 +151,12 @@
   min-width: 0;
 }
 
+.account-settings-view__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
 .account-settings-view__profile-name {
   margin: 0;
   font-size: var(--font-size-xl);
@@ -159,6 +165,38 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.account-settings-view__edit-button-inline {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-settings-view__edit-button-inline:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .account-settings-view__edit-button-inline {
+  color: var(--color-primary-400);
+}
+
+html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
+  background: transparent;
+  opacity: 1;
 }
 
 .account-settings-view__profile-email {
