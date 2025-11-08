@@ -60,6 +60,12 @@
   --color-focus-ring: rgba(0, 122, 255, 0.1);
   --color-focus-ring-dark: rgba(100, 170, 255, 0.15);
 
+  /* Accent Colors (Primary Blue with Alpha Variants) */
+  --color-accent-blue: #3b82f6;                                 /* Primary accent blue */
+  --color-accent-blue-alpha-80: rgba(59, 130, 246, 0.8);       /* 80% opacity - strong glow */
+  --color-accent-blue-alpha-50: rgba(59, 130, 246, 0.5);       /* 50% opacity - medium glow */
+  --color-accent-blue-alpha-30: rgba(59, 130, 246, 0.3);       /* 30% opacity - subtle glow */
+
   /* Selection/Highlight Colors (for selected rows/items) */
   --color-selection-bg-light: rgba(59, 130, 246, 0.28);         /* Light mode: selected item background */
   --color-selection-bg-light-hover: rgba(59, 130, 246, 0.33);   /* Light mode: selected item hover background */

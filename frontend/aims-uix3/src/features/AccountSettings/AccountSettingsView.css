@@ -67,7 +67,7 @@
 
 .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol,
 .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol::before {
-  color: #ffffff;
+  color: var(--color-neutral-0);
 }
 
 .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active:hover {
@@ -93,7 +93,7 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
 
 html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol,
 html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol::before {
-  color: #ffffff;
+  color: var(--color-neutral-0);
 }
 
 /* === CONTENT === */
@@ -126,6 +126,12 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
   min-width: 0;
 }
 
+/* 아바타 래퍼 (최소한의 스타일만) */
+.account-settings-view__avatar-wrapper {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .account-settings-view__avatar {
   position: relative;
   width: 80px;
@@ -141,16 +147,8 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-.account-settings-view__avatar--editable {
-  cursor: pointer;
-}
-
-.account-settings-view__avatar--editable:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
-}
-
-.account-settings-view__avatar--editable:hover .account-settings-view__avatar-overlay {
+/* 호버 시 카메라 오버레이 표시 */
+.account-settings-view__avatar:hover .account-settings-view__avatar-overlay {
   opacity: 1;
 }
 
@@ -160,7 +158,7 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-overlay-modal);
   display: flex;
   align-items: center;
   justify-content: center;
