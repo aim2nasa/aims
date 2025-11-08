@@ -641,23 +641,29 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     >
       {/* 탭 네비게이션 */}
       <nav className="account-settings-view__tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`account-settings-view__tab ${
-              activeTab === tab.id ? 'account-settings-view__tab--active' : ''
-            }`}
-            onClick={() => setActiveTab(tab.id)}
-            aria-selected={activeTab === tab.id}
-          >
-            <SFSymbol
-              name={tab.icon}
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-            />
-            <span>{tab.label}</span>
-          </button>
-        ))}
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              className={`account-settings-view__tab ${
+                isActive ? 'account-settings-view__tab--active' : ''
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+              aria-selected={isActive}
+              style={isActive ? { color: '#ffffff', background: '#3b82f6', borderColor: '#3b82f6' } : undefined}
+            >
+              <SFSymbol
+                name={tab.icon}
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+              />
+              <span style={isActive ? { color: '#ffffff' } : undefined}>
+                {tab.label}
+              </span>
+            </button>
+          )
+        })}
       </nav>
 
       {/* 탭 콘텐츠 */}

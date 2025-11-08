@@ -9,46 +9,89 @@
 
 /* === TABS === */
 
+/* Pills / Rounded Tabs Style (2번 디자인) */
 .account-settings-view__tabs {
   display: flex;
   gap: var(--spacing-2);
   padding: var(--spacing-4);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
+  margin: var(--spacing-4);
+  margin-bottom: 0;
 }
 
 .account-settings-view__tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-2);
   padding: var(--spacing-2) var(--spacing-4);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
+  white-space: nowrap;
 }
 
-.account-settings-view__tab:hover {
-  background: var(--color-bg-tertiary);
+.account-settings-view__tab:hover:not(.account-settings-view__tab--active) {
   color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
 }
 
 .account-settings-view__tab:focus {
-  box-shadow: 0 0 0 3px var(--color-accent-blue-translucent);
+  outline: none;
 }
 
-.account-settings-view__tab--active {
-  color: var(--color-accent-blue);
-  background: var(--color-accent-blue-translucent);
+/* 선택된 탭: 파란 배경 + 흰색 텍스트 */
+/* Note: TSX에서 inline style로 적용하므로 CSS는 백업용으로만 유지 */
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active {
+  color: var(--color-text-inverse);
+  background: var(--color-accent-blue);
+  border-color: var(--color-accent-blue);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 8px var(--color-accent-blue-translucent);
 }
 
-.account-settings-view__tab--active:hover {
-  background: var(--color-accent-blue-translucent);
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active span {
+  color: var(--color-text-inverse);
+}
+
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active svg {
+  color: var(--color-text-inverse);
+}
+
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol {
+  color: var(--color-text-inverse);
+}
+
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-accent-blue-translucent);
+}
+
+/* 다크 테마 */
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active {
+  color: var(--color-text-inverse);
+  background: var(--color-accent-blue);
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 2px 8px var(--color-accent-blue-translucent);
+}
+
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active span {
+  color: var(--color-text-inverse);
+}
+
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active svg {
+  color: var(--color-text-inverse);
+}
+
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol {
+  color: var(--color-text-inverse);
 }
 
 /* === CONTENT === */
