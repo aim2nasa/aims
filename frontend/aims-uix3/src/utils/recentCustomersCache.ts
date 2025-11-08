@@ -12,7 +12,7 @@ export interface RecentCustomer {
 }
 
 const STORAGE_KEY = 'aims-recent-customers'
-const MAX_RECENT_CUSTOMERS = 3
+const MAX_RECENT_CUSTOMERS = 5
 
 /**
  * 최근 선택한 고객 목록 가져오기
