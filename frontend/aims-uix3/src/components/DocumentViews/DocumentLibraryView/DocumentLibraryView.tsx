@@ -23,6 +23,7 @@ import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModa
 import { AppleConfirmModal } from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import RefreshButton from '../../RefreshButton/RefreshButton'
+import { LinkIcon } from '../components/DocumentActionIcons'
 import './DocumentLibraryView.css'
 import './DocumentLibraryView-delete.css'
 
@@ -56,17 +57,35 @@ const ITEMS_PER_PAGE_OPTIONS = [
  */
 const DocumentLibraryContent: React.FC<{
   isDeleteMode: boolean
+  isBulkLinkMode: boolean
   selectedDocumentIds: Set<string>
   onSelectAllIds: (ids: string[]) => void
   onSelectDocument: (documentId: string, event: React.MouseEvent) => void
   onToggleDeleteMode: () => void
+  onToggleBulkLinkMode: () => void
   onDocumentClick?: (documentId: string) => void
   onDeleteSelected: () => void
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
-}> = ({ isDeleteMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 고객 일괄 연결 모드 진입 시 필터 및 정렬 자동 적용
+  const prevBulkLinkModeRef = React.useRef(isBulkLinkMode)
+  React.useEffect(() => {
+    // 모드가 false에서 true로 변경될 때만 실행
+    if (isBulkLinkMode && !prevBulkLinkModeRef.current) {
+      // "고객 미연결" 필터 적용
+      actions.setCustomerLinkFilter('unlinked')
+      // 날짜 오름차순 정렬 (가장 오래된 것이 위로)
+      controller.handleColumnSort('uploadDate')
+      if (controller.sortDirection === 'desc') {
+        controller.handleColumnSort('uploadDate') // 한 번 더 클릭하여 asc로 변경
+      }
+    }
+    prevBulkLinkModeRef.current = isBulkLinkMode
+  }, [isBulkLinkMode])
 
   // 🍎 드롭다운 상태 관리
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = React.useState(false)
@@ -144,8 +163,25 @@ const DocumentLibraryContent: React.FC<{
     <>
       {/* 🍎 통합 헤더: 총 문서 개수 + 검색창 + 필터 버튼 + 편집 + 실시간 + 새로고침 (한 줄) */}
       <div className="library-unified-header">
-        {/* 왼쪽: 삭제 버튼 + 총 문서 개수 */}
+        {/* 왼쪽: 고객 일괄 연결 버튼 + 삭제 버튼 + 총 문서 개수 */}
         <div className="header-left-section">
+          {/* 고객 일괄 연결 버튼 */}
+          <Tooltip content={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}>
+            <button
+              className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
+              onClick={onToggleBulkLinkMode}
+              aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
+            >
+              {isBulkLinkMode ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <LinkIcon width={13} height={13} />
+              )}
+            </button>
+          </Tooltip>
+
           {/* 삭제 버튼 */}
           <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
             <button
@@ -390,6 +426,7 @@ const DocumentLibraryContent: React.FC<{
         sortDirection={controller.sortDirection}
         onColumnSort={controller.handleColumnSort}
         isDeleteMode={isDeleteMode}
+        isBulkLinkMode={isBulkLinkMode}
         selectedDocumentIds={selectedDocumentIds}
         onSelectAll={handleSelectAll}
         onSelectDocument={onSelectDocument}
@@ -521,6 +558,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   const [selectedDocumentIds, setSelectedDocumentIds] = React.useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = React.useState(false)
 
+  // 🍎 고객 일괄 연결 기능 상태
+  const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
+
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
 
@@ -530,7 +570,23 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       setSelectedDocumentIds(new Set())
     }
     setIsDeleteMode(!isDeleteMode)
-  }, [isDeleteMode])
+    // 삭제 모드 켜면 일괄 연결 모드는 끄기
+    if (!isDeleteMode && isBulkLinkMode) {
+      setIsBulkLinkMode(false)
+    }
+  }, [isDeleteMode, isBulkLinkMode])
+
+  // 🍎 고객 일괄 연결 모드 토글 핸들러
+  const handleToggleBulkLinkMode = React.useCallback(() => {
+    if (isBulkLinkMode) {
+      setSelectedDocumentIds(new Set())
+    }
+    setIsBulkLinkMode(!isBulkLinkMode)
+    // 일괄 연결 모드 켜면 삭제 모드는 끄기
+    if (!isBulkLinkMode && isDeleteMode) {
+      setIsDeleteMode(false)
+    }
+  }, [isBulkLinkMode, isDeleteMode])
 
   // 🍎 전체 선택/해제 핸들러 (DocumentLibraryContent에서 ID 배열 전달받음)
   const handleSelectAllIds = React.useCallback((ids: string[]) => {
@@ -661,10 +717,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         <DocumentStatusProvider searchQuery={searchQuery}>
           <DocumentLibraryContent
             isDeleteMode={isDeleteMode}
+            isBulkLinkMode={isBulkLinkMode}
             selectedDocumentIds={selectedDocumentIds}
             onSelectAllIds={handleSelectAllIds}
             onSelectDocument={handleSelectDocument}
             onToggleDeleteMode={handleToggleDeleteMode}
+            onToggleBulkLinkMode={handleToggleBulkLinkMode}
             onDeleteSelected={handleDeleteSelected}
             isDeleting={isDeleting}
             {...(onDocumentClick && { onDocumentClick })}

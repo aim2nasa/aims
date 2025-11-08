@@ -40,6 +40,8 @@ export interface DocumentStatusListProps {
   selectedDocumentIds?: Set<string>
   onSelectAll?: (checked: boolean) => void
   onSelectDocument?: (documentId: string, event: React.MouseEvent) => void
+  // 🍎 Bulk link mode props
+  isBulkLinkMode?: boolean
   // 🍎 Customer click handler
   onCustomerClick?: (customerId: string) => void
   // 🍎 Refresh handler
@@ -115,6 +117,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   sortDirection,
   onColumnSort,
   isDeleteMode = false,
+  isBulkLinkMode = false,
   selectedDocumentIds = new Set(),
   onSelectAll,
   onSelectDocument,
@@ -230,15 +233,23 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
 
   // 리스트 렌더링
   return (
-    <div className={`document-status-list ${isDeleteMode ? 'document-status-list--delete-mode' : ''}`}>
+    <div className={`document-status-list ${isDeleteMode || isBulkLinkMode ? 'document-status-list--delete-mode' : ''}`}>
       {/* 🍎 칼럼 헤더 - 스티키 포지셔닝으로 항상 보임 */}
       <div className="status-list-header">
-        {/* 🍎 삭제 모드: 전체 선택 체크박스 */}
-        {isDeleteMode && (
+        {/* 🍎 삭제 모드 또는 일괄 연결 모드: 전체 선택 체크박스 */}
+        {(isDeleteMode || isBulkLinkMode) && (
           <div className="header-checkbox">
             <input
               type="checkbox"
-              checked={documents.length > 0 && documents.every(doc => selectedDocumentIds.has(doc._id ?? doc.id ?? ''))}
+              checked={documents.length > 0 && documents.every(doc => {
+                const docId = doc._id ?? doc.id ?? ''
+                // 🍎 일괄 연결 모드: 고객 미연결 문서만 선택 가능
+                if (isBulkLinkMode) {
+                  const hasCustomer = doc.customer_relation?.customer_name
+                  return hasCustomer || selectedDocumentIds.has(docId)
+                }
+                return selectedDocumentIds.has(docId)
+              })}
               onChange={(e) => onSelectAll?.(e.target.checked)}
               aria-label="전체 선택"
               className="document-select-all-checkbox"
@@ -386,25 +397,41 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               }
             }}
           >
-            {/* 🍎 삭제 모드: 개별 선택 체크박스 */}
-            {isDeleteMode && (
-              <div
-                className="document-checkbox-wrapper"
-                onClick={(e) => {
-                  if (documentId) {
-                    onSelectDocument?.(documentId, e)
-                  }
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => {}}
-                  aria-label={`${DocumentStatusService.extractFilename(document)} 선택`}
-                  className="document-checkbox"
-                />
-              </div>
-            )}
+            {/* 🍎 삭제 모드 또는 일괄 연결 모드: 개별 선택 체크박스 */}
+            {(() => {
+              // 🍎 일괄 연결 모드: 고객 미연결 문서만 체크박스 표시
+              if (isBulkLinkMode) {
+                const hasCustomer = document.customer_relation?.customer_name
+                if (hasCustomer) {
+                  // 고객 연결된 문서는 체크박스 없음 (공백으로 레이아웃 유지)
+                  return <div className="document-checkbox-wrapper"></div>
+                }
+              }
+
+              // 삭제 모드 또는 일괄 연결 모드 (미연결 문서)
+              if (isDeleteMode || isBulkLinkMode) {
+                return (
+                  <div
+                    className="document-checkbox-wrapper"
+                    onClick={(e) => {
+                      if (documentId) {
+                        onSelectDocument?.(documentId, e)
+                      }
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      aria-label={`${DocumentStatusService.extractFilename(document)} 선택`}
+                      className="document-checkbox"
+                    />
+                  </div>
+                )
+              }
+
+              return null
+            })()}
 
             {/* 파일 타입 아이콘 */}
             <div className="document-icon-wrapper">

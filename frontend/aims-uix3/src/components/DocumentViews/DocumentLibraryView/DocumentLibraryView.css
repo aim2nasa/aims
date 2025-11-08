@@ -45,7 +45,7 @@ html[data-theme="dark"] .library-unified-header {
 .header-left-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 2px;
   flex-shrink: 0;
 }
 

@@ -160,6 +160,7 @@ html[data-theme="dark"] .document-library-view--delete-mode .document-item.docum
   width: 20px;
   height: 20px;
   padding: 0;
+  margin: 0;
   border: none;
   border-radius: 4px;
   background: transparent;
