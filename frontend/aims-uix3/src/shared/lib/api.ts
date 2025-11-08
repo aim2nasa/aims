@@ -7,6 +7,9 @@
  * 타임아웃, 에러 처리, 요청/응답 인터셉터 제공
  */
 
+// API 로그 디버그 모드 (필요시 true로 변경)
+const API_DEBUG = false;
+
 // API 설정
 export const API_CONFIG = {
   BASE_URL: import.meta.env['VITE_API_BASE_URL'] || 'http://tars.giize.com:3010',
@@ -147,7 +150,7 @@ export async function apiRequest<T = unknown>(
   }
 
   // 요청 전 로그 (개발 환경에서만)
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && API_DEBUG) {
     console.log(`🌐 API Request: ${requestOptions.method || 'GET'} ${url}`);
   }
 
@@ -183,7 +186,7 @@ export async function apiRequest<T = unknown>(
   }
 
   // 응답 후 로그 (개발 환경에서만)
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && API_DEBUG) {
     console.log(`API Response: ${response.status} ${url}`, data);
   }
 
