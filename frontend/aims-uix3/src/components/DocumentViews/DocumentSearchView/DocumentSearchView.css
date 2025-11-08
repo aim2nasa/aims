@@ -19,6 +19,7 @@
 .search-bar-wrapper {
   display: flex;
   align-items: center;
+  justify-content: center; /* 중앙 정렬 */
   gap: 8px;
   flex-wrap: nowrap; /* 한 줄 유지 */
 }
