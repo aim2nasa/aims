@@ -144,23 +144,26 @@ const DocumentLibraryContent: React.FC<{
     <>
       {/* 🍎 통합 헤더: 총 문서 개수 + 검색창 + 필터 버튼 + 편집 + 실시간 + 새로고침 (한 줄) */}
       <div className="library-unified-header">
-        {/* 왼쪽: 편집 버튼 + 총 문서 개수 */}
+        {/* 왼쪽: 삭제 버튼 + 총 문서 개수 */}
         <div className="header-left-section">
-          {/* 편집 버튼 */}
-          <Tooltip content={isDeleteMode ? '편집 완료' : '편집'}>
+          {/* 삭제 버튼 */}
+          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
             <button
               className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
               onClick={onToggleDeleteMode}
-              aria-label={isDeleteMode ? '편집 완료' : '편집'}
+              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
             >
               {isDeleteMode ? (
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1 1-3.667 9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
               )}
             </button>
           </Tooltip>

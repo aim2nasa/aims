@@ -151,6 +151,48 @@ html[data-theme="dark"] .document-library-view--delete-mode .document-item.docum
   background: var(--color-ios-bg-selected-dark);
 }
 
+/* === 🍎 EDIT MODE ICON BUTTON: 문서 라이브러리 삭제 버튼 === */
+
+.edit-mode-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-error);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button {
+  color: var(--color-error);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+.edit-mode-icon-button--active {
+  color: var(--color-success);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button--active {
+  color: var(--color-success);
+}
+
 /* === 🍎 GRID LAYOUT UPDATE: 체크박스 열 추가 === */
 
 /* 🍎 삭제 모드일 때만: 체크박스 열 추가 */
