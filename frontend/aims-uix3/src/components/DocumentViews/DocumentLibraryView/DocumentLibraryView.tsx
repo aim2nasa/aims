@@ -170,6 +170,7 @@ const DocumentLibraryContent: React.FC<{
             <button
               className={`edit-mode-icon-button ${isBulkLinkMode ? 'edit-mode-icon-button--active' : ''}`}
               onClick={onToggleBulkLinkMode}
+              disabled={isDeleteMode}
               aria-label={isBulkLinkMode ? '연결 완료' : '고객 일괄 연결'}
             >
               {isBulkLinkMode ? (
@@ -187,6 +188,7 @@ const DocumentLibraryContent: React.FC<{
             <button
               className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
               onClick={onToggleDeleteMode}
+              disabled={isBulkLinkMode}
               aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
             >
               {isDeleteMode ? (

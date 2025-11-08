@@ -167,13 +167,25 @@ html[data-theme="dark"] .document-library-view--delete-mode .document-item.docum
   color: var(--color-error);
   cursor: pointer;
   transition: all 0.2s ease;
-  opacity: 0.7;
+  opacity: 0.9;
 }
 
 .edit-mode-icon-button:hover {
   background: transparent;
   opacity: 1;
   transform: scale(1.1);
+}
+
+.edit-mode-icon-button:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(100%);
+}
+
+.edit-mode-icon-button:disabled:hover {
+  opacity: 0.2;
+  transform: none;
 }
 
 html[data-theme="dark"] .edit-mode-icon-button {
@@ -183,6 +195,16 @@ html[data-theme="dark"] .edit-mode-icon-button {
 html[data-theme="dark"] .edit-mode-icon-button:hover {
   background: transparent;
   opacity: 1;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:disabled {
+  opacity: 0.15;
+  filter: grayscale(100%);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:disabled:hover {
+  opacity: 0.15;
+  transform: none;
 }
 
 .edit-mode-icon-button--active {
