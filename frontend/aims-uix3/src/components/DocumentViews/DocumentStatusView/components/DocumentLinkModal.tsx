@@ -76,7 +76,8 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     return []
   }, [document, documents])
 
-  const isBulkMode = targetDocuments.length > 1
+  // documents prop이 있으면 bulk mode (문서가 1개여도)
+  const isBulkMode = !!(documents && documents.length > 0)
 
   // 단일 문서 모드에서만 사용 (일괄 모드에서는 targetDocuments 사용)
   const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
@@ -301,7 +302,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             <span className="document-chip__icon" aria-hidden="true">📄</span>
             <span className="document-chip__name">{documentName}</span>
             <span className="document-chip__status">
-              {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(document!))}
+              {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(targetDocuments[0] || document!))}
             </span>
           </div>
         )}

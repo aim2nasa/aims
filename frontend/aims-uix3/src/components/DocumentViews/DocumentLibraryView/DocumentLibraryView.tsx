@@ -784,6 +784,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onLinkSuccess={() => {
               // 문서 목록 새로고침
               loadDocuments(searchParams)
+              // 선택 상태만 초기화 (bulk link 모드는 유지)
+              setSelectedDocumentIds(new Set())
+              setSelectedDocumentsForLink([])
             }}
           />
         </DocumentStatusProvider>
