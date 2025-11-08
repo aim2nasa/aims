@@ -227,6 +227,26 @@ const DocumentLibraryContent: React.FC<{
               </Button>
             </>
           )}
+
+          {/* 일괄 연결 모드일 때: 선택된 개수 + 연결 버튼 */}
+          {isBulkLinkMode && (
+            <>
+              <span className="selected-count-inline">
+                {selectedDocumentIds.size}개 선택됨
+              </span>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  // TODO: 실제 연결 로직 구현
+                  console.log('연결할 문서 IDs:', Array.from(selectedDocumentIds))
+                }}
+                disabled={selectedDocumentIds.size === 0}
+              >
+                연결
+              </Button>
+            </>
+          )}
         </div>
 
         {/* 중앙: 검색창 + 필터 버튼 */}
