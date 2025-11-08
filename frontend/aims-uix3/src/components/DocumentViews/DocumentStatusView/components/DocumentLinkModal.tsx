@@ -20,7 +20,9 @@ import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
   visible: boolean
-  document: Document | null
+  /** 단일 문서 (하위 호환성) 또는 여러 문서 배열 */
+  document?: Document | null
+  documents?: Document[]
   onClose: () => void
   onFetchCustomerDocuments: (customerId: string) => Promise<CustomerDocumentsResult>
   onLink: (params: {
@@ -50,6 +52,7 @@ const RELATIONSHIP_OPTIONS: DropdownOption[] = ALL_RELATIONSHIP_TYPES.filter(
 export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   visible,
   document,
+  documents,
   onClose,
   onFetchCustomerDocuments,
   onLink
@@ -62,10 +65,20 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
 
-  const documentId = useMemo(
-    () => document?._id || (document as Record<string, string | undefined>)?.['id'] || '',
-    [document]
-  );
+  // 단일 문서 또는 여러 문서 배열 처리
+  const targetDocuments = useMemo(() => {
+    if (documents && documents.length > 0) {
+      return documents
+    }
+    if (document) {
+      return [document]
+    }
+    return []
+  }, [document, documents])
+
+  const isBulkMode = targetDocuments.length > 1
+
+  // 단일 문서 모드에서만 사용 (일괄 모드에서는 targetDocuments 사용)
   const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
   /**
@@ -82,7 +95,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   }, [visible])
 
   /**
-   * 고객 선택 시 중복 연결 검사
+   * 고객 선택 시 중복 연결 검사 (단일/일괄 모두 지원)
    */
   const handleSelectCustomer = async (customer: Customer) => {
     setSelectedCustomer(customer)
@@ -90,16 +103,25 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     setFeedbackMessage(null)
     setIsCustomerSelectorOpen(false)
 
-    if (!documentId) {
+    if (targetDocuments.length === 0) {
       return
     }
 
     try {
       const customerDocs = await onFetchCustomerDocuments(customer._id)
-      const alreadyLinked = customerDocs.documents?.some((doc) => String(doc._id) === documentId)
+      const customerDocIds = new Set(customerDocs.documents?.map(doc => String(doc._id)) || [])
 
-      if (alreadyLinked) {
-        setDuplicateWarning('이 문서는 이미 선택한 고객과 연결되어 있습니다.')
+      const duplicates = targetDocuments.filter(doc => {
+        const docId = doc._id || (doc as Record<string, string | undefined>)?.['id'] || ''
+        return customerDocIds.has(docId)
+      })
+
+      if (duplicates.length > 0) {
+        if (isBulkMode) {
+          setDuplicateWarning(`${duplicates.length}개의 문서가 이미 선택한 고객과 연결되어 있습니다.`)
+        } else {
+          setDuplicateWarning('이 문서는 이미 선택한 고객과 연결되어 있습니다.')
+        }
       }
     } catch (error) {
       console.error('고객 문서 조회 오류:', error)
@@ -108,42 +130,79 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   }
 
   /**
-   * 연결 실행
+   * 연결 실행 (단일/일괄 모두 지원)
    */
   const handleLink = async () => {
-    if (!documentId || !selectedCustomer) return
+    if (targetDocuments.length === 0 || !selectedCustomer) return
 
     setLinkLoading(true)
     setFeedbackMessage(null)
 
     try {
-      const _params: { customerId: string; documentId: string; relationshipType: string; notes?: string } = {
-        customerId: selectedCustomer._id,
-        documentId,
-        relationshipType
-      };
-      const _trimmed = notes.trim();
-      if (_trimmed) { _params.notes = _trimmed; }
-      await onLink(_params)
+      const trimmedNotes = notes.trim()
+      let successCount = 0
+      let failureCount = 0
 
-      setFeedbackMessage('문서가 고객에게 성공적으로 연결되었습니다.')
-
-      // 🍎 문서 연결 이벤트 발생 (고객 상세 페이지 자동 새로고침용)
-      window.dispatchEvent(new CustomEvent('documentLinked', {
-        detail: {
-          documentId,
-          customerId: selectedCustomer._id,
-          timestamp: new Date().toISOString()
+      // 모든 문서에 대해 순차적으로 연결 시도
+      for (const doc of targetDocuments) {
+        const docId = doc._id || (doc as Record<string, string | undefined>)?.['id'] || ''
+        if (!docId) {
+          failureCount++
+          continue
         }
-      }))
+
+        try {
+          const params: { customerId: string; documentId: string; relationshipType: string; notes?: string } = {
+            customerId: selectedCustomer._id,
+            documentId: docId,
+            relationshipType
+          }
+          if (trimmedNotes) {
+            params.notes = trimmedNotes
+          }
+          await onLink(params)
+
+          // 🍎 문서 연결 이벤트 발생 (고객 상세 페이지 자동 새로고침용)
+          window.dispatchEvent(new CustomEvent('documentLinked', {
+            detail: {
+              documentId: docId,
+              customerId: selectedCustomer._id,
+              timestamp: new Date().toISOString()
+            }
+          }))
+
+          successCount++
+        } catch (err) {
+          console.error(`문서 ${docId} 연결 실패:`, err)
+          failureCount++
+        }
+      }
+
+      if (isBulkMode) {
+        if (failureCount === 0) {
+          setFeedbackMessage(`${successCount}개의 문서가 고객에게 성공적으로 연결되었습니다.`)
+        } else {
+          setFeedbackMessage(
+            `${successCount}개 성공, ${failureCount}개 실패했습니다.`
+          )
+        }
+      } else {
+        setFeedbackMessage('문서가 고객에게 성공적으로 연결되었습니다.')
+      }
+
       if (import.meta.env.DEV) {
-        console.log('[DocumentLinkModal] documentLinked 이벤트 발생:', {
-          documentId,
+        console.log('[DocumentLinkModal] 일괄 연결 완료:', {
+          total: targetDocuments.length,
+          success: successCount,
+          failure: failureCount,
           customerId: selectedCustomer._id
         })
       }
 
-      onClose()
+      // 성공한 문서가 하나라도 있으면 모달 닫기
+      if (successCount > 0) {
+        onClose()
+      }
     } catch (error) {
       console.error('문서 연결 오류:', error)
       const message =
@@ -156,7 +215,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     }
   }
 
-  if (!visible || !document) {
+  if (!visible || targetDocuments.length === 0) {
     return null
   }
 
@@ -210,15 +269,42 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       ariaLabel="문서를 고객에게 연결"
       className="document-link-modal"
     >
-      {/* Document Info */}
+      {/* Document Info - 단일 문서 또는 여러 문서 리스트 */}
       <section className="document-link-modal__section document-link-modal__section--document">
-        <div className="document-chip">
-          <span className="document-chip__icon" aria-hidden="true">📄</span>
-          <span className="document-chip__name">{documentName}</span>
-          <span className="document-chip__status">
-            {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(document))}
-          </span>
-        </div>
+        {isBulkMode ? (
+          <>
+            <div className="document-link-modal__bulk-header">
+              <span className="document-link-modal__bulk-count">
+                📄 {targetDocuments.length}개의 문서 선택됨
+              </span>
+            </div>
+            <div className="document-link-modal__document-list">
+              {targetDocuments.map((doc, index) => {
+                const docId = doc._id || (doc as Record<string, string | undefined>)?.['id'] || ''
+                const docName = DocumentStatusService.extractFilename(doc)
+                const docStatus = DocumentStatusService.extractStatus(doc)
+                const statusLabel = DocumentStatusService.getStatusLabel(docStatus)
+                return (
+                  <div key={docId || index} className="document-list-item">
+                    <span className="document-list-item__icon" aria-hidden="true">📄</span>
+                    <span className="document-list-item__name" title={docName}>
+                      {docName}
+                    </span>
+                    <span className="document-list-item__status">{statusLabel}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="document-chip">
+            <span className="document-chip__icon" aria-hidden="true">📄</span>
+            <span className="document-chip__name">{documentName}</span>
+            <span className="document-chip__status">
+              {DocumentStatusService.getStatusLabel(DocumentStatusService.extractStatus(document!))}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* Customer Selection */}

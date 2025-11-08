@@ -67,7 +67,8 @@ const DocumentLibraryContent: React.FC<{
   onDeleteSelected: () => void
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick }) => {
+  onBulkLinkClick: (documents: any[]) => void
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick }) => {
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
 
@@ -238,8 +239,11 @@ const DocumentLibraryContent: React.FC<{
                 variant="primary"
                 size="sm"
                 onClick={() => {
-                  // TODO: 실제 연결 로직 구현
-                  console.log('연결할 문서 IDs:', Array.from(selectedDocumentIds))
+                  // 선택된 문서 ID에 해당하는 Document 객체들을 가져오기
+                  const selectedDocs = state.documents.filter(doc =>
+                    selectedDocumentIds.has(doc._id || '')
+                  )
+                  onBulkLinkClick(selectedDocs)
                 }}
                 disabled={selectedDocumentIds.size === 0}
               >
@@ -582,6 +586,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
   // 🍎 고객 일괄 연결 기능 상태
   const [isBulkLinkMode, setIsBulkLinkMode] = React.useState(false)
+  const [isDocumentLinkModalVisible, setIsDocumentLinkModalVisible] = React.useState(false)
+  const [selectedDocumentsForLink, setSelectedDocumentsForLink] = React.useState<any[]>([])
 
   // 🍎 Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController()
@@ -747,6 +753,10 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onToggleBulkLinkMode={handleToggleBulkLinkMode}
             onDeleteSelected={handleDeleteSelected}
             isDeleting={isDeleting}
+            onBulkLinkClick={(documents) => {
+              setSelectedDocumentsForLink(documents)
+              setIsDocumentLinkModalVisible(true)
+            }}
             {...(onDocumentClick && { onDocumentClick })}
             {...(onCustomerClick && { onCustomerClick })}
           />
@@ -758,7 +768,47 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         state={confirmModal.state}
         actions={confirmModal.actions}
       />
+
+      {/* 일괄 고객 연결 모달 */}
+      {isDocumentLinkModalVisible && (
+        <DocumentStatusProvider searchQuery={searchQuery}>
+          <DocumentLinkModalWrapper
+            visible={isDocumentLinkModalVisible}
+            documents={selectedDocumentsForLink}
+            onClose={() => {
+              setIsDocumentLinkModalVisible(false)
+              setSelectedDocumentsForLink([])
+              setSelectedDocumentIds(new Set())
+              setIsBulkLinkMode(false)
+            }}
+            onLinkSuccess={() => {
+              // 문서 목록 새로고침
+              loadDocuments(searchParams)
+            }}
+          />
+        </DocumentStatusProvider>
+      )}
     </CenterPaneView>
+  )
+}
+
+// 일괄 연결용 DocumentLinkModal 래퍼 (DocumentStatusProvider 내부에서 사용)
+const DocumentLinkModalWrapper: React.FC<{
+  visible: boolean
+  documents: any[]
+  onClose: () => void
+  onLinkSuccess: () => void
+}> = ({ visible, documents, onClose }) => {
+  const controller = useDocumentStatusController()
+
+  return (
+    <DocumentLinkModal
+      visible={visible}
+      documents={documents}
+      onClose={onClose}
+      onFetchCustomerDocuments={controller.fetchCustomerDocuments}
+      onLink={controller.linkDocumentToCustomer}
+    />
   )
 }
 
