@@ -51,7 +51,8 @@
   margin: 0;
   padding-bottom: var(--spacing-1);
   border-bottom: 1.5px solid var(--color-accent-blue);
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: section titles */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-secondary);
   text-transform: uppercase;

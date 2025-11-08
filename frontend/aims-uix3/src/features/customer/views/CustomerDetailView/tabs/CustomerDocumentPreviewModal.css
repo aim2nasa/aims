@@ -48,14 +48,16 @@
 
 .customer-document-preview__title h2 {
   margin: 0;
-  /* font-size: var(--font-size-title-3); () */
-  /* font-weight: var(--font-weight-semibold); () */
+  font-size: var(--font-size-title-3); /* 20px - FONT_SIZE_STANDARDS.md: 제목 */
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 .customer-document-preview__title p {
   margin: 0;
-  /* font-size: var(--font-size-caption-1); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 부제목 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
 }
 
@@ -86,7 +88,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-3);
-  /* font-size: var(--font-size-subheadline); () */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 중앙 메시지 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   text-align: center;
 }

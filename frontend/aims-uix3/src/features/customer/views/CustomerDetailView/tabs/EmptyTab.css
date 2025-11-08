@@ -19,7 +19,7 @@
 }
 
 .empty-tab__icon {
-  /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_RULES.md: 아이콘/심볼 ) */
+  /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 ) */
   margin-bottom: var(--spacing-md);
   opacity: 0.3;
 }

@@ -34,8 +34,8 @@ html[data-theme="dark"] .user-profile-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-family-system);
-  font-size: 20px;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title-3); /* 20px - FONT_SIZE_STANDARDS.md: avatar initial */
   font-weight: var(--font-weight-semibold);
 }
 
@@ -61,8 +61,8 @@ html[data-theme="dark"] .user-profile-header {
 
 /* 이름 */
 .user-profile-header__name {
-  font-family: var(--font-family-system);
-  font-size: var(--font-size-body);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: user name */
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   line-height: 1.3;
@@ -73,8 +73,8 @@ html[data-theme="dark"] .user-profile-header {
 
 /* 이메일 */
 .user-profile-header__email {
-  font-family: var(--font-family-system);
-  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: email (already correct) */
   color: var(--color-text-secondary);
   line-height: 1.3;
   opacity: 0.8;

@@ -26,7 +26,7 @@ html[data-theme="dark"] .fulltext-modal-body {
 
 .fulltext-content {
   font-family: var(--font-mono);
-  /* font-size: var(--font-size-caption-1); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
   line-height: 1.6;
   color: var(--color-text-primary);
   margin: 0;
@@ -43,7 +43,8 @@ html[data-theme="dark"] .fulltext-modal-body {
   gap: 12px;
   min-height: 300px;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-body); () */
+  font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+  font-family: var(--font-family-display);
 }
 
 .fulltext-loading-spinner {

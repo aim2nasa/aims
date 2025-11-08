@@ -55,7 +55,8 @@ html[data-theme="dark"] .relationship-header {
 }
 
 .relationship-title {
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
@@ -120,7 +121,7 @@ html[data-theme="dark"] .relationship-header {
 
 /* 아이콘 */
 .tree-node__icon {
-  font-size: 16px;
+  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
   opacity: 0.7;
   transition: opacity 0.1s ease;
 }
@@ -137,7 +138,8 @@ html[data-theme="dark"] .relationship-header {
 }
 
 .tree-node__label {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 400;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
@@ -155,7 +157,8 @@ html[data-theme="dark"] .relationship-header {
 
 /* 뱃지 - Windows 11 스타일 */
 .tree-node__badge {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   font-weight: 600;
   background: rgba(0, 0, 0, 0.05);
@@ -197,7 +200,8 @@ html[data-theme="dark"] .tree-node__badge {
 }
 
 .tree-node--root .tree-node__label {
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -205,7 +209,7 @@ html[data-theme="dark"] .tree-node__badge {
 }
 
 .tree-node--root .tree-node__icon {
-  font-size: 17px;
+  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
   opacity: 0.85;
   color: var(--color-accent);
 }
@@ -235,7 +239,8 @@ html[data-theme="dark"] .tree-node__badge {
 .relationship-search-input {
   width: 220px;
   padding: 6px 12px;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
+  font-family: var(--font-family-text);
   border: 1px solid var(--color-border);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.5);
@@ -300,7 +305,8 @@ html[data-theme="dark"] .relationship-search-input:focus {
    ============================================ */
 
 .tree-node__relation-toggle {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   cursor: pointer;
   padding: 4px 6px;
   opacity: 0.6;
@@ -323,7 +329,8 @@ html[data-theme="dark"] .relationship-search-input:focus {
   align-items: center;
   gap: var(--spacing-sm);
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   background: rgba(0, 0, 0, 0.03);
   border-radius: 4px;
@@ -336,7 +343,7 @@ html[data-theme="dark"] .relation-item {
 }
 
 .relation-item__icon {
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 아이콘 */
   opacity: 0.7;
 }
 
@@ -403,7 +410,8 @@ html[data-theme="dark"] .tree-control-button {
 }
 
 .loading-text {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 400;
 }
 

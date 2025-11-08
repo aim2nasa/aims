@@ -19,7 +19,8 @@
   gap: 12px;
   min-height: 200px;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-body); () */
+  font-size: var(--font-size-body); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+  font-family: var(--font-family-display);
 }
 
 .summary-loading-spinner {

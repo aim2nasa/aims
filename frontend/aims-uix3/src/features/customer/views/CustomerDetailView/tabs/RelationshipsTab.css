@@ -132,7 +132,7 @@
 
 /* 이모지 아이콘 스타일 (관계별 보기와 동일) */
 .relationships-category__icon--emoji {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
   color: inherit;
 }
 

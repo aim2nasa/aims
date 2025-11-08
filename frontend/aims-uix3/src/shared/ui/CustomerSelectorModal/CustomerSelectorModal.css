@@ -176,7 +176,8 @@
 
 /* 초성 타입 레이블 (ㄱㄴ/AB/12) */
 .customer-selector-modal__initial-type-label {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   line-height: 1;
@@ -192,7 +193,8 @@
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-primary);
   border-radius: var(--border-radius-sm);
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -236,13 +238,15 @@
 }
 
 .customer-selector-modal__filter-label {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
 }
 
 .customer-selector-modal__filter-value {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-bold);
   min-width: 20px;
   text-align: center;
@@ -361,7 +365,8 @@
 /* 정렬 인디케이터 */
 .sort-indicator {
   margin-left: 2px;
-  font-size: 10px;
+  font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
+  font-family: var(--font-family-text);
   color: var(--color-accent);
   flex-shrink: 0;
 }

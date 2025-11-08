@@ -54,8 +54,8 @@ html[data-theme="dark"] .base-viewer__header {
 /* 🍎 제목 스타일 */
 .base-viewer__title {
   margin: 0;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 페이지 제목 ) */
-  /* font-weight: var(--font-weight-semibold); (semibold - 제목 강조 ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+  font-weight: var(--font-weight-semibold);
   color: var(--color-header-title);
   font-family: var(--font-family-display);
   line-height: var(--line-height-tight);

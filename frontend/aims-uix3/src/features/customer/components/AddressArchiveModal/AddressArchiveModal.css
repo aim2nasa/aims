@@ -77,7 +77,8 @@
 }
 
 .address-archive-modal__title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 17px deprecated ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 메인 타이틀 (17px deprecated) */
+  font-family: var(--font-family-display);
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -91,7 +92,7 @@
 .address-archive-modal__close {
   background: none;
   border: none;
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+  font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 */
   color: var(--color-text-secondary);
   cursor: pointer;
   padding: 4px 8px;
@@ -111,7 +112,8 @@
 .address-archive-modal__info {
   padding: 12px 24px;
   background-color: var(--color-layout-secondary-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   border-bottom: 1px solid var(--color-layout-brb-light);
 }
@@ -141,7 +143,8 @@
   border: 1px solid var(--color-danger);
   border-radius: 8px;
   color: var(--color-danger);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+  font-family: var(--font-family-text);
   text-align: center;
   margin-bottom: 16px;
 }
@@ -155,7 +158,8 @@
   padding: 40px;
   text-align: center;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+  font-family: var(--font-family-text);
 }
 
 /* Empty State */
@@ -163,7 +167,8 @@
   padding: 40px;
   text-align: center;
   color: var(--color-text-tertiary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+  font-family: var(--font-family-text);
 }
 
 /* Address Item */
@@ -206,7 +211,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
 }
 
@@ -217,7 +223,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
+  font-family: var(--font-family-text);
   font-weight: 600;
 }
 
@@ -238,7 +245,8 @@
 /* Current Badge */
 .address-item__current-badge {
   padding: 4px 12px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   border: 1px solid var(--color-icon-green);
   background-color: transparent;
   color: var(--color-icon-green);
@@ -251,7 +259,8 @@
 /* Past Badge */
 .address-item__past-badge {
   padding: 4px 12px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   border: 1px solid var(--color-icon-orange);
   background-color: transparent;
   color: var(--color-icon-orange);
@@ -269,13 +278,15 @@
 }
 
 .address-item__pin {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 타이틀 (16px deprecated) */
+  font-family: var(--font-family-display);
   flex-shrink: 0;
 }
 
 .address-item__text {
   flex: 1;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 텍스트 (14px deprecated) */
+  font-family: var(--font-family-text);
   line-height: 1.5;
   color: var(--color-text-primary);
   font-weight: 500;
@@ -290,7 +301,8 @@
 .address-item__notes {
   margin-top: 8px;
   padding: 6px 10px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   border-radius: 4px;
 }
 

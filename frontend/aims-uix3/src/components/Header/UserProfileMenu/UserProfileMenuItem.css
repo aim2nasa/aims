@@ -22,8 +22,8 @@
   cursor: pointer;
 
   /* 텍스트 */
-  font-family: var(--font-family-system);
-  font-size: var(--font-size-body);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: menu items */
   color: var(--color-text-primary);
   text-align: left;
 
@@ -36,7 +36,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: menu icons */
   color: var(--color-text-primary);
 }
 

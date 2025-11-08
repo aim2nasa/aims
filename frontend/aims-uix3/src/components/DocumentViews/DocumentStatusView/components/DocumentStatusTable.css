@@ -28,8 +28,8 @@
 .document-status-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-family-system);
-  /* font-size: var(--font-size-footnote); () */
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: table body */
 }
 
 /* === 테이블 헤더 === */
@@ -41,9 +41,10 @@
 .document-status-table thead th {
   padding: var(--spacing-3) var(--spacing-4);
   text-align: left;
-  /* font-weight: var(--font-weight-semibold); () */
+  font-weight: var(--font-weight-semibold);
   color: var(--color-ios-text-secondary-light);
-  /* font-size: var(--font-size-caption-1); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: table headers */
+  font-family: var(--font-family-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -97,7 +98,7 @@
 }
 
 .filename-icon {
-  /* font-size: var(--font-size-body); () */
+  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: file icons */
   flex-shrink: 0;
 }
 
@@ -105,7 +106,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  /* font-weight: var(--font-weight-medium); () */
+  font-weight: var(--font-weight-medium);
   color: var(--color-ios-text-primary-light);
 }
 
@@ -116,12 +117,13 @@
   gap: var(--spacing-1);
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
-  /* font-size: var(--font-size-caption-1); () */
-  /* font-weight: var(--font-weight-medium); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: status badge */
+  font-family: var(--font-family-text);
+  font-weight: var(--font-weight-medium);
 }
 
 .status-icon {
-  /* font-size: var(--font-size-footnote); () */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: status icons */
 }
 
 .status-text {
@@ -191,7 +193,8 @@
 }
 
 .progress-text {
-  /* font-size: var(--font-size-caption-1); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: progress text */
+  font-family: var(--font-family-text);
   color: var(--color-ios-text-secondary-light);
   font-variant-numeric: tabular-nums;
   min-width: 40px;
@@ -200,7 +203,8 @@
 
 /* === 날짜 셀 === */
 .date-text {
-  /* font-size: var(--font-size-caption-1); () */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: date text */
+  font-family: var(--font-family-text);
   color: var(--color-ios-text-secondary-light);
   font-variant-numeric: tabular-nums;
 }
@@ -380,7 +384,7 @@ html[data-theme='dark'] .action-button:disabled {
 
 /* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+  font-size: var(--font-size-large-symbol); /* 24px - FONT_SIZE_STANDARDS.md: 대형 심볼 */
   font-weight: 300;
   line-height: 1;
   color: var(--color-ios-text-primary-light);
@@ -395,8 +399,8 @@ html[data-theme='dark'] .action-button:disabled {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: pagination info */
+  font-family: var(--font-family-text);
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
   min-width: 60px;
@@ -520,7 +524,8 @@ html[data-theme="dark"] .pagination-total {
 /* === 반응형 === */
 @media (max-width: 768px) {
   .document-status-table {
-    /* font-size: var(--font-size-caption-2); () */
+    font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: mobile table */
+    font-family: var(--font-family-text);
   }
 
   .document-status-table thead th,

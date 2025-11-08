@@ -51,7 +51,8 @@ html[data-theme="dark"] .regional-tree-view {
   gap: var(--spacing-lg);
   padding: 12px var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
 }
 
@@ -66,7 +67,7 @@ html[data-theme="dark"] .regional-tree-stats {
 }
 
 .stat-icon {
-  font-size: 15px;
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
   opacity: 0.7;
 }
 
@@ -169,7 +170,7 @@ html[data-theme="dark"] .regional-tree-container {
 }
 
 .tree-node-folder-icon {
-  font-size: 16px;
+  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘/모달 헤더 */
   opacity: 0.7;
   transition: opacity 0.1s ease;
 }
@@ -184,14 +185,16 @@ html[data-theme="dark"] .regional-tree-container {
 
 .tree-node-label {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 400;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;
 }
 
 .tree-node-badge {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   font-weight: 600;
   background: rgba(0, 0, 0, 0.05);
@@ -275,7 +278,8 @@ html[data-theme="dark"] .badge-no-address {
 }
 
 .tree-customer-name {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   color: var(--color-text-primary);
   font-weight: 400;
 }
@@ -324,7 +328,8 @@ html[data-theme="dark"] .tree-header-actions {
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보/테이블 헤더 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -371,14 +376,16 @@ html[data-theme="dark"] .tree-action-btn {
 }
 
 .empty-title {
-  font-size: 15px;
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+  font-family: var(--font-family-display);
   font-weight: 600;
   margin: 0;
   color: var(--color-text-primary);
 }
 
 .empty-message {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 400;
   margin: 0;
   color: var(--color-text-secondary);

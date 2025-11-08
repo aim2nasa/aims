@@ -84,9 +84,9 @@ html[data-theme="dark"] .customer-edit-modal-header {
 }
 
 .customer-edit-modal-title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-family: var(--font-family-display);
   color: var(--color-text-primary);
   margin: 0;
   flex: 1;
@@ -103,7 +103,7 @@ html[data-theme="dark"] .customer-edit-modal-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 닫기 버튼 */
   transition: all var(--duration-fast) var(--easing-ease-out);
   flex-shrink: 0;
 }
@@ -137,9 +137,9 @@ html[data-theme="dark"] .customer-edit-modal-tabs {
   border: none;
   background-color: transparent;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 탭 */
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-family-text);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
   position: relative;
@@ -197,7 +197,8 @@ html[data-theme="dark"] .customer-edit-modal-content {
 }
 
 .customer-edit-modal-section-title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -229,10 +230,10 @@ html[data-theme="dark"] .customer-edit-modal-content {
 
 /* ===== 라벨 ===== */
 .customer-edit-modal-label {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 레이블 */
   font-weight: 500;
   color: var(--color-text-secondary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-family-text);
 }
 
 .customer-edit-modal-label--required::after {
@@ -251,8 +252,8 @@ html[data-theme="dark"] .customer-edit-modal-label--required::after {
   border-radius: 8px;
   background-color: var(--color-layout-secondary-light);
   color: var(--color-text-primary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 필드 */
+  font-family: var(--font-family-text);
   transition: all var(--duration-fast) var(--easing-ease-out);
   outline: none;
 }
@@ -289,9 +290,9 @@ html[data-theme="dark"] .customer-edit-modal-input--error {
 
 /* ===== 에러 메시지 ===== */
 .customer-edit-modal-error {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 에러 메시지 */
+  font-family: var(--font-family-text);
   color: var(--color-ios-red-light);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   margin-top: -2px;
 }
 
@@ -305,7 +306,8 @@ html[data-theme="dark"] .customer-edit-modal-error {
   border: 1px solid var(--color-ios-red-light);
   border-radius: 8px;
   color: var(--color-ios-red-light);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 제출 에러 */
+  font-family: var(--font-family-text);
   margin-top: 12px;
 }
 
@@ -335,9 +337,9 @@ html[data-theme="dark"] .customer-edit-modal-footer {
   padding: 12px 24px;
   border: none;
   border-radius: 10px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-family-text);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
   outline: none;

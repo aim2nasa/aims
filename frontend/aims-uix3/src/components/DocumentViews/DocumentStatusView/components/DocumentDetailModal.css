@@ -54,7 +54,8 @@ html[data-theme="dark"] .detail-section {
 }
 
 .detail-section-title {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -140,7 +141,8 @@ html[data-theme="dark"] .detail-progress-bar-fill.status-pending {
   gap: 4px;
   padding: 4px 10px;
   border-radius: 100px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   letter-spacing: -0.2px;
@@ -173,11 +175,13 @@ html[data-theme="dark"] .detail-status-badge.status-pending {
 }
 
 .detail-status-icon {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 아이콘 */
+  font-family: var(--font-family-text);
 }
 
 .detail-progress-text {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -244,7 +248,8 @@ html[data-theme="dark"] .detail-info-card:hover {
 }
 
 .detail-info-card-label {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
+  font-family: var(--font-family-text);
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-secondary);
@@ -254,7 +259,8 @@ html[data-theme="dark"] .detail-info-card:hover {
 }
 
 .detail-info-card-value {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-text-primary);
@@ -269,7 +275,7 @@ html[data-theme="dark"] .detail-info-card:hover {
 .detail-info-card-value--wrap {
   white-space: pre-wrap;
   word-break: break-all;
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 (10px deprecated) */
   font-family: "SF Mono", Monaco, "Courier New", monospace;
   line-height: 1.2;
 }
@@ -280,7 +286,8 @@ html[data-theme="dark"] .detail-info-card:hover {
   border: none;
   border-radius: 6px;
   padding: 4px 6px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 (14px deprecated) */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
@@ -376,7 +383,7 @@ html[data-theme="dark"] .detail-code-block {
 /* 원본 데이터 코드 블록 */
 .detail-code-text--raw {
   font-family: "SF Mono", Monaco, "Courier New", monospace;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
   line-height: 1.4;
   color: var(--color-text-primary);
   background-color: transparent;

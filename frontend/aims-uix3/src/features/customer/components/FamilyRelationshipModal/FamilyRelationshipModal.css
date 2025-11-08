@@ -71,7 +71,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 모달 제목 */
+  font-family: var(--font-family-display);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -125,7 +126,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 필드 제목 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -140,7 +142,8 @@
   justify-content: center;
   padding: 4px 8px;
   border-radius: 999px;
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 배지 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   background-color: rgba(52, 199, 89, 0.15);
   color: var(--color-icon-green);
@@ -156,7 +159,8 @@
 .form-select {
   width: 100%;
   padding: 10px 12px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 필드 */
+  font-family: var(--font-family-text);
   border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   background-color: var(--color-bg-secondary);
@@ -264,7 +268,8 @@
   border: none;
   background: transparent;
   text-align: left;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 자동완성 옵션 */
+  font-family: var(--font-family-text);
   color: var(--color-text-primary);
   cursor: pointer;
   transition: background-color 0.15s ease-out;
@@ -292,7 +297,8 @@
 .autocomplete-empty {
   padding: 20px;
   text-align: center;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 빈 상태 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
 }
 
@@ -302,7 +308,8 @@
   background-color: rgba(255, 59, 48, 0.1);
   border: 1px solid var(--color-icon-red);
   border-radius: 8px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 에러 메시지 */
+  font-family: var(--font-family-text);
   color: var(--color-icon-red);
   margin-bottom: 20px;
 }
@@ -313,7 +320,8 @@
   background-color: rgba(52, 199, 89, 0.1);
   border: 1px solid var(--color-icon-green);
   border-radius: 8px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 성공 메시지 */
+  font-family: var(--font-family-text);
   color: var(--color-icon-green);
   margin-bottom: 20px;
 }
@@ -329,7 +337,8 @@
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 버튼 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease-out;

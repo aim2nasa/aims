@@ -185,7 +185,8 @@ html[data-theme="dark"] .search-clear-button:hover {
 }
 
 .library-filters__label {
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
 }
@@ -204,7 +205,8 @@ html[data-theme="dark"] .search-clear-button:hover {
   padding: 0 10px 0 12px;
   background: transparent;
   border: none;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/힌트 */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -270,7 +272,8 @@ html[data-theme="dark"] .library-filters__dropdown-menu {
   padding: 10px 12px;
   background: transparent;
   border: none;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   text-align: left;
@@ -434,7 +437,8 @@ html[data-theme="dark"] .result-controls .last-updated {
 }
 
 .result-controls .polling-dot {
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
+  font-family: var(--font-family-text);
   transition: color 0.2s ease;
 }
 
@@ -619,7 +623,8 @@ html[data-theme="dark"] .header-sortable:active {
 }
 
 .sort-indicator {
-  font-size: 10px;
+  font-size: var(--font-size-caption-2); /* 10px - FONT_SIZE_STANDARDS.md: 작은 메타데이터 */
+  font-family: var(--font-family-text);
   color: var(--color-primary-600);
   opacity: 0.8;
   transition: opacity 0.15s ease-out;

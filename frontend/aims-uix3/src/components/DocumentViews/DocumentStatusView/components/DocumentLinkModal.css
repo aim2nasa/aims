@@ -30,7 +30,8 @@ html[data-theme="dark"] .document-link-modal__content {
 
 .document-link-modal__title span {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-headline); /* 17px - FONT_SIZE_STANDARDS.md: 헤드라인 */
+  font-family: var(--font-family-display);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -57,7 +58,8 @@ html[data-theme="dark"] .document-link-modal__content {
 
 .document-link-modal__section h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
+  font-family: var(--font-family-display);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -147,12 +149,14 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
 .selected-customer-name {
   font-weight: 600;
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   flex-shrink: 0;
 }
 
 .selected-customer-phone {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   flex: 1;
   overflow: hidden;
@@ -167,7 +171,7 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
   cursor: pointer;
   padding: var(--spacing-1);
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: 아이콘 */
   line-height: 1;
   display: flex;
   align-items: center;
@@ -186,7 +190,8 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
 
 .customer-placeholder {
   color: var(--color-text-tertiary);
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-style: italic;
 }
 

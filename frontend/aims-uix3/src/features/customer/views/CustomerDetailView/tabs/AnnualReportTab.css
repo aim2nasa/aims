@@ -73,7 +73,7 @@ html[data-theme="dark"] .parsing-spinner {
 }
 
 .parsing-notice-title {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   font-weight: 600;
   color: var(--color-ios-text-primary-light);
   margin-bottom: 4px;
@@ -84,7 +84,7 @@ html[data-theme="dark"] .parsing-notice-title {
 }
 
 .parsing-notice-description {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   color: var(--color-ios-text-secondary-light);
   line-height: 1.5;
   margin-bottom: 12px;
@@ -124,7 +124,7 @@ html[data-theme="dark"] .parsing-file-item {
 }
 
 .parsing-file-name {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 500;
   color: var(--color-ios-text-primary-light);
   overflow: hidden;
@@ -137,7 +137,7 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .parsing-file-status {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 500;
   color: var(--color-primary);
   white-space: nowrap;
@@ -183,7 +183,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 .annual-report-tab__loading p {
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
 }
 
 .annual-report-tab__error {
@@ -197,13 +197,13 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .annual-report-tab__error-icon {
-  /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_RULES.md: 아이콘/심볼 ) */
+  /* font-size: var(--font-size-xxlarge-symbol); (48px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 ) */
   opacity: 0.6;
 }
 
 .annual-report-tab__error p {
   color: var(--color-danger);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   max-width: 400px;
 }
 
@@ -218,20 +218,20 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .annual-report-tab__empty-icon {
-  /* font-size: var(--font-size-xxxlarge-symbol); (64px - FONT_RULES.md: 이모지 ) */
+  /* font-size: var(--font-size-xxxlarge-symbol); (64px - FONT_SIZE_STANDARDS.md: 이모지 ) */
   opacity: 0.5;
   margin-bottom: 20px;
 }
 
 .annual-report-tab__empty-title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 8px 0;
 }
 
 .annual-report-tab__empty-description {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   color: var(--color-text-secondary);
   max-width: 600px;
   margin: 0 0 20px 0;
@@ -248,7 +248,7 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .annual-report-tab__empty-hint-text {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   color: var(--color-text-secondary);
   margin: 0;
   line-height: 1.6;
@@ -264,7 +264,7 @@ html[data-theme="dark"] .parsing-file-name {
 }
 
 .annual-report-tab__title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 20px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 20px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -291,7 +291,7 @@ html[data-theme="dark"] .parsing-file-name {
   min-height: 32px;
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md: 10px deprecated (접근성) ) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md: 10px deprecated (접근성) ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 600;
   color: var(--color-ios-text-tertiary-light);
@@ -446,7 +446,7 @@ html[data-theme="dark"] .annual-report-row--selected {
 /* ==================== 🍎 ROW CELLS ==================== */
 
 .row-issue-date {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
   white-space: nowrap;
@@ -457,7 +457,7 @@ html[data-theme="dark"] .row-issue-date {
 }
 
 .row-parsed-at {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
   white-space: nowrap;
@@ -468,7 +468,7 @@ html[data-theme="dark"] .row-parsed-at {
 }
 
 .row-premium {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 400;
   color: var(--color-primary);
   text-align: right;
@@ -476,7 +476,7 @@ html[data-theme="dark"] .row-parsed-at {
 }
 
 .row-count {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
   text-align: center;
@@ -494,7 +494,7 @@ html[data-theme="dark"] .row-count {
 }
 
 .status-badge {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 6px;
@@ -590,7 +590,7 @@ html[data-theme="dark"] .pagination-button:active:not(:disabled) {
 
 /* 🍎 PAGINATION ARROW - Large and Clear */
 .pagination-arrow {
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+  /* font-size: var(--font-size-large-symbol); (24px - FONT_SIZE_STANDARDS.md: 아이콘/심볼 ) */
   font-weight: 300;
   line-height: 1;
   color: inherit;
@@ -615,7 +615,7 @@ html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
   display: flex;
   align-items: center;
   gap: 6px;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
@@ -660,7 +660,7 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__summary-title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 20px 0;
@@ -675,13 +675,13 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__info-label {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .annual-report-tab__info-value {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   color: var(--color-text-primary);
   font-weight: 500;
 }
@@ -705,13 +705,13 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__stat-label {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .annual-report-tab__stat-value {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 18px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 18px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -741,7 +741,7 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__preview-title {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+  /* font-size: var(--font-size-subheadline); (15px - FONT_SIZE_STANDARDS.md: 16px deprecated ) */
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 16px 0;
@@ -769,13 +769,13 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__contract-company {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .annual-report-tab__contract-status {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-2); (11px - FONT_SIZE_STANDARDS.md ) */
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 10px;
@@ -784,14 +784,14 @@ html[data-theme="dark"] .pagination-total {
 }
 
 .annual-report-tab__contract-product {
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md: 14px deprecated ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md: 14px deprecated ) */
   font-weight: 500;
   color: var(--color-text-primary);
   margin-bottom: 6px;
 }
 
 .annual-report-tab__contract-details {
-  /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-caption-1); (12px - FONT_SIZE_STANDARDS.md ) */
   color: var(--color-text-secondary);
   display: flex;
   gap: 8px;
@@ -801,7 +801,7 @@ html[data-theme="dark"] .pagination-total {
   text-align: center;
   padding: 12px;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s ease;
