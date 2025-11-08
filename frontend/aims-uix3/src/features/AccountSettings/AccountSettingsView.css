@@ -157,6 +157,37 @@
   gap: var(--spacing-2);
 }
 
+.account-settings-view__name-row .edit-mode-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.account-settings-view__name-row .edit-mode-icon-button svg {
+  color: var(--color-text-primary);
+}
+
+.account-settings-view__name-row .edit-mode-icon-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  background: transparent;
+}
+
+.account-settings-view__name-row .edit-mode-icon-button:active {
+  transform: scale(0.95);
+}
+
 .account-settings-view__profile-name {
   margin: 0;
   font-size: var(--font-size-xl);
