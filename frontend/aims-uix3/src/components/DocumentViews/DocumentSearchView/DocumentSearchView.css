@@ -393,6 +393,7 @@ html[data-theme="dark"] .search-results-header {
 
 .results-header-text {
   flex: 1;
+  text-align: center; /* 중앙 정렬 */
 }
 
 .results-header-text p {
