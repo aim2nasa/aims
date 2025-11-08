@@ -65,8 +65,9 @@
   color: var(--color-text-inverse);
 }
 
-.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol {
-  color: var(--color-text-inverse);
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol,
+.account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol::before {
+  color: #ffffff;
 }
 
 .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active:hover {
@@ -90,8 +91,9 @@ html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab
   color: var(--color-text-inverse);
 }
 
-html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol {
-  color: var(--color-text-inverse);
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol,
+html[data-theme="dark"] .account-settings-view__tabs .account-settings-view__tab.account-settings-view__tab--active .sf-symbol::before {
+  color: #ffffff;
 }
 
 /* === CONTENT === */

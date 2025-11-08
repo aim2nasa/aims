@@ -332,9 +332,31 @@ html[data-theme="dark"] {
 
 **증상**: 아이콘 색상이 다르거나, 표시 안 되거나, 캐싱으로 안 바뀌는 경우
 
-**즉시 확인할 두 가지:**
+**즉시 확인할 세 가지:**
 
-1. **CSS 선택자 문제** (90% 원인)
+1. **SFSymbol 아이콘이 정의되지 않음** (최우선 확인!)
+   ```bash
+   # SFSymbol.css에 해당 아이콘이 있는지 확인
+   cd frontend/aims-uix3/src/components/SFSymbol
+   grep "person.circle\|lock.shield" SFSymbol.css
+
+   # 없으면 직접 SVG로 구현
+   ```
+
+   **해결책**: SFSymbol.css에 아이콘이 없으면 직접 SVG 사용
+   ```tsx
+   {/* SFSymbol 대신 직접 SVG 사용 */}
+   <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+     <path d="..." fill="currentColor"/>
+   </svg>
+   ```
+
+   **핵심**:
+   - 13px 크기 (CLAUDE.md 아이콘 크기 규칙 준수)
+   - `fill="currentColor"` 필수 (테마 색상 자동 상속)
+   - SFSymbol 컴포넌트 사용 금지 (정의 안된 아이콘은 표시 안됨)
+
+2. **CSS 선택자 문제** (90% 원인)
    ```bash
    # 문제: nth-child()는 <h3> 제목도 카운트함
    section .field:nth-child(2)  # ❌ 잘못됨
@@ -343,7 +365,7 @@ html[data-theme="dark"] {
    section > .field:nth-of-type(1)  # ✅ 올바름
    ```
 
-2. **CSS 캐싱 문제** (10% 원인)
+3. **CSS 캐싱 문제** (10% 원인)
    ```bash
    rm -rf node_modules/.vite dist .vite
    npm run dev
