@@ -16,6 +16,7 @@ import type { CustomerDocumentsResult } from '../../../../services/DocumentServi
 import { Button, Dropdown, type DropdownOption, Tooltip, Modal } from '../../../../shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/CustomerSelectorModal'
+import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../../utils/recentCustomersCache'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -64,6 +65,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
+  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
 
   // 단일 문서 또는 여러 문서 배열 처리
   const targetDocuments = useMemo(() => {
@@ -83,7 +85,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
   /**
-   * 모달이 열릴 때 상태 초기화
+   * 모달이 열릴 때 상태 초기화 및 최근 고객 로드
    */
   useEffect(() => {
     if (visible) {
@@ -92,6 +94,8 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       setNotes('')
       setDuplicateWarning(null)
       setFeedbackMessage(null)
+      // 최근 선택한 고객 목록 로드
+      setRecentCustomers(getRecentCustomers())
     }
   }, [visible])
 
@@ -103,6 +107,11 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     setDuplicateWarning(null)
     setFeedbackMessage(null)
     setIsCustomerSelectorOpen(false)
+
+    // 최근 선택 고객 목록에 추가
+    addRecentCustomer(customer)
+    // UI 업데이트를 위해 최근 고객 목록 다시 로드
+    setRecentCustomers(getRecentCustomers())
 
     if (targetDocuments.length === 0) {
       return
@@ -128,6 +137,26 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       console.error('고객 문서 조회 오류:', error)
       setDuplicateWarning(null)
     }
+  }
+
+  /**
+   * 최근 선택 고객에서 빠른 선택 처리
+   */
+  const handleQuickSelectCustomer = async (recentCustomer: RecentCustomer) => {
+    // Customer 객체 형태로 변환
+    const customer: Customer = {
+      _id: recentCustomer._id,
+      personal_info: {
+        name: recentCustomer.name,
+        mobile_phone: recentCustomer.phone,
+        address: recentCustomer.address ? {
+          address1: recentCustomer.address
+        } : undefined
+      }
+    } as Customer
+
+    // 기존 고객 선택 핸들러 호출
+    await handleSelectCustomer(customer)
   }
 
   /**
@@ -349,6 +378,33 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* 최근 선택 고객 - 빠른 선택 */}
+        {recentCustomers.length > 0 && !selectedCustomer && (
+          <div className="document-link-modal__recent-customers">
+            <div className="recent-customers-header">
+              <span className="recent-customers-label">최근 선택 고객</span>
+            </div>
+            <div className="recent-customers-list">
+              {recentCustomers.map((customer) => (
+                <button
+                  key={customer._id}
+                  className="recent-customer-card"
+                  onClick={() => handleQuickSelectCustomer(customer)}
+                  aria-label={`고객 ${customer.name} 선택`}
+                >
+                  <div className="recent-customer-icon">👤</div>
+                  <div className="recent-customer-info">
+                    <span className="recent-customer-name">{customer.name}</span>
+                    {customer.phone && (
+                      <span className="recent-customer-phone">{customer.phone}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
     {/* Form */}
