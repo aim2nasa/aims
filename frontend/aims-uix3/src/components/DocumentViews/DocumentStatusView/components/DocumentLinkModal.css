@@ -309,7 +309,7 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
 }
 
 .recent-customers-header {
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-1); /* 간격 축소: 8px → 4px */
 }
 
 .recent-customers-label {
