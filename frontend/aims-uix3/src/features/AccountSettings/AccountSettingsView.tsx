@@ -655,24 +655,24 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
             >
               {/* SVG 아이콘 직접 추가 */}
               {tab.id === 'profile' && (
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.5 6c0-2.5 2-4.5 4.5-4.5h2c2.5 0 4.5 2 4.5 4.5v.5H2.5v-.5z" fill="currentColor"/>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.5 6c0-2.5 2-4.5 4.5-4.5h2c2.5 0 4.5 2 4.5 4.5v.5H2.5v-.5z" fill={isActive ? '#ffffff' : 'var(--color-icon-blue)'}/>
                 </svg>
               )}
               {tab.id === 'security' && (
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 1l-6 2.5v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5v-4L8 1zm0 6.5v5c-2.5-.8-4.5-3.2-4.5-5.5V5L8 3.2V7.5z" fill="currentColor"/>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                  <path d="M8 1l-6 2.5v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5v-4L8 1zm0 6.5v5c-2.5-.8-4.5-3.2-4.5-5.5V5L8 3.2V7.5z" fill={isActive ? '#ffffff' : 'var(--color-icon-purple)'}/>
                 </svg>
               )}
               {tab.id === 'notifications' && (
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2a4 4 0 0 0-4 4v3.5l-1 1.5h10l-1-1.5V6a4 4 0 0 0-4-4zm2 11h-4c0 1.1.9 2 2 2s2-.9 2-2z" fill="currentColor"/>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                  <path d="M8 2a4 4 0 0 0-4 4v3.5l-1 1.5h10l-1-1.5V6a4 4 0 0 0-4-4zm2 11h-4c0 1.1.9 2 2 2s2-.9 2-2z" fill={isActive ? '#ffffff' : 'var(--color-icon-orange)'}/>
                 </svg>
               )}
               {tab.id === 'data' && (
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <ellipse cx="8" cy="4" rx="5" ry="2" fill="currentColor"/>
-                  <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4c0 1.1-2.2 2-5 2s-5-.9-5-2z" fill="currentColor"/>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                  <ellipse cx="8" cy="4" rx="5" ry="2" fill={isActive ? '#ffffff' : 'var(--color-icon-green)'}/>
+                  <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4c0 1.1-2.2 2-5 2s-5-.9-5-2z" fill={isActive ? '#ffffff' : 'var(--color-icon-green)'}/>
                 </svg>
               )}
               <span>{tab.label}</span>
