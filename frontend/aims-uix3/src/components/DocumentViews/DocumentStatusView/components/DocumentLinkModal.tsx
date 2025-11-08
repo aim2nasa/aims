@@ -294,7 +294,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           <span>문서를 고객에게 연결</span>
         </div>
       }
-      size="sm"
+      size={isBulkMode ? "xl" : "sm"}
       footer={footer}
       ariaLabel="문서를 고객에게 연결"
       className="document-link-modal"
@@ -432,7 +432,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           placeholder="이 문서와 고객의 관계에 대한 참고 메모를 남겨주세요."
-          rows={3}
+          rows={2}
         />
       </div>
     </section>

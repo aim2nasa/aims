@@ -40,10 +40,10 @@ html[data-theme="dark"] .document-link-modal__content {
 
 .document-link-modal__section {
   padding: 0;
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-1); /* 여백 최소화 */
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1); /* 여백 최소화 */
 }
 
 .document-link-modal__section:last-child {
@@ -53,7 +53,8 @@ html[data-theme="dark"] .document-link-modal__content {
 .document-link-modal__section--document {
   background: transparent;
   padding: 0;
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-1); /* 여백 최소화 */
+  flex-shrink: 0; /* 다른 섹션이 이 섹션을 압축하지 못하게 */
 }
 
 .document-link-modal__section h3 {
@@ -121,13 +122,45 @@ html[data-theme="dark"] .document-chip {
   color: var(--color-text-primary);
 }
 
-.document-link-modal__document-list {
-  max-height: 180px; /* 약 5개 항목 표시 (36px * 5 = 180px) */
+.document-link-modal__section--document .document-link-modal__document-list {
+  /* 최대 5개 문서까지 표시 - 메모 공간 확보를 위해 높이 축소 */
+  /* 36px(항목) * 5개 = 180px + padding = 198px */
+  max-height: 198px;
   overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
-  padding: var(--spacing-1);
+  padding: var(--spacing-3);
+  /* 스크롤바 스타일 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-tertiary) transparent;
+  /* 플렉스박스 */
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* 아이템 간 간격 제거 */
+  flex-shrink: 0; /* 높이 축소 방지 */
+}
+
+/* 웹킷 브라우저용 스크롤바 스타일 */
+.document-link-modal__document-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.document-link-modal__document-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.document-link-modal__document-list::-webkit-scrollbar-thumb {
+  background: var(--color-text-tertiary);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+.document-link-modal__document-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+  opacity: 0.7;
 }
 
 html[data-theme="dark"] .document-link-modal__document-list {
@@ -141,7 +174,11 @@ html[data-theme="dark"] .document-link-modal__document-list {
   gap: var(--spacing-2);
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
-  min-height: 32px;
+  /* A 영역과 동일한 높이 유지 */
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  flex-shrink: 0; /* 아이템 축소 방지 */
   transition: background-color 0.15s ease;
 }
 
@@ -173,23 +210,6 @@ html[data-theme="dark"] .document-link-modal__document-list {
   margin-left: var(--spacing-2);
 }
 
-/* 스크롤바 스타일 (문서 리스트) */
-.document-link-modal__document-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 3px;
-}
-
-.document-link-modal__document-list::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
-}
 
 /* ===== 고객 선택 영역 ===== */
 
@@ -284,9 +304,11 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
 
 /* ===== 최근 선택 고객 섹션 ===== */
 .document-link-modal__recent-customers {
-  margin-top: var(--spacing-3);
-  padding-top: var(--spacing-3);
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-2);
   border-top: 1px solid var(--color-ios-separator-light);
+  max-height: 80px;
+  overflow-y: auto;
 }
 
 html[data-theme="dark"] .document-link-modal__recent-customers {
@@ -390,7 +412,7 @@ html[data-theme="dark"] .recent-customer-card:hover {
 .document-link-modal__field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1); /* 여백 최소화 */
   flex: 1;
   min-width: 220px;
 }
@@ -423,11 +445,11 @@ html[data-theme="dark"] .recent-customer-card:hover {
 
 .document-link-modal__textarea {
   width: 100%;
-  min-height: 252px; /* 36px * 7 = 252px */
-  height: 252px;
-  max-height: 252px;
+  min-height: 64px; /* 2줄 높이 - 메모 공간 확대 */
+  height: 64px;
+  max-height: 64px;
   resize: none; /* 높이 고정을 위해 resize 비활성화 */
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-2); /* 패딩 조정 */
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-ios-separator-light);
   background: var(--color-neutral-0);
