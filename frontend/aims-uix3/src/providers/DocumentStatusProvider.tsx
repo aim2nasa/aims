@@ -38,6 +38,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isPollingEnabled, setPollingEnabled] = useState<boolean>(true)
   const [apiHealth, setApiHealth] = useState<boolean | null>(null)
+  const [isPageVisible, setPageVisible] = useState<boolean>(true) // Page Visibility API
 
   // 🍎 Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -202,6 +203,33 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [searchQuery])
 
   /**
+   * Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
+   */
+  useEffect(() => {
+    // 테스트 환경에서는 스킵
+    if (typeof window === 'undefined') return
+
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === 'visible'
+      setPageVisible(isVisible)
+
+      // 탭이 다시 보이면 즉시 데이터 새로고침
+      if (isVisible) {
+        fetchDocuments(false)
+        checkApiHealth()
+      }
+    }
+
+    // 초기 상태 설정
+    setPageVisible(document.visibilityState === 'visible')
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [fetchDocuments, checkApiHealth])
+
+  /**
    * 초기 로드
    */
   useEffect(() => {
@@ -241,11 +269,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   /**
    * 실시간 폴링 (5초마다)
+   * 페이지가 보이고(isPageVisible) 폴링이 활성화(isPollingEnabled)되어 있을 때만 실행
    */
   useEffect(() => {
     // 테스트 환경에서는 폴링 스킵
     if (typeof window === 'undefined') return
     if (!isPollingEnabled) return
+    if (!isPageVisible) return // 페이지가 백그라운드면 폴링 중지
 
     const interval = setInterval(() => {
       fetchDocuments(false)
@@ -253,7 +283,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [isPollingEnabled, fetchDocuments, checkApiHealth])
+  }, [isPollingEnabled, isPageVisible, fetchDocuments, checkApiHealth])
 
   /**
    * 🔍 검색 및 필터링

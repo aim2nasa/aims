@@ -372,32 +372,32 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <BasicInfoTab customer={customer} />
         </div>
 
-        {/* 문서 탭 - 항상 렌더링하여 개수 업데이트 */}
-        <div style={{ display: activeTab === 'documents' ? 'block' : 'none' }}>
+        {/* 문서 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
+        {activeTab === 'documents' && (
           <DocumentsTab
             customer={customer}
             onDocumentCountChange={setDocumentCount}
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
           />
-        </div>
+        )}
 
-        {/* 관계 탭 */}
-        <div style={{ display: activeTab === 'relationships' ? 'block' : 'none' }}>
+        {/* 관계 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
+        {activeTab === 'relationships' && (
           <RelationshipsTab
             customer={customer}
             {...(onSelectCustomer ? { onSelectCustomer } : {})}
             {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
           />
-        </div>
+        )}
 
-        {/* Annual Report 탭 - 항상 렌더링하여 개수 업데이트 */}
-        <div style={{ display: activeTab === 'annual_report' ? 'block' : 'none' }}>
+        {/* Annual Report 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
+        {activeTab === 'annual_report' && (
           <AnnualReportTab
             customer={customer}
             onAnnualReportCountChange={setAnnualReportCount}
           />
-        </div>
+        )}
       </>
     );
   };

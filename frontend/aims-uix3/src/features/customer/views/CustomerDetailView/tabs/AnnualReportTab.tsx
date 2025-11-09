@@ -83,12 +83,36 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   // AR 파싱 대기/진행 중인 문서 상태
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
+  // Page Visibility API: 백그라운드 탭에서 폴링 중지
+  const [isPageVisible, setPageVisible] = useState(true);
 
   // 개발자 모드 - 전역 상태 사용
   const { isDevMode } = useDevModeStore();
 
   // Apple Confirm Modal 컨트롤러
   const confirmModal = useAppleConfirmController();
+
+  // Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === 'visible';
+      setPageVisible(isVisible);
+
+      // 탭이 다시 보이면 즉시 데이터 새로고침
+      if (isVisible && pendingCount > 0) {
+        loadPendingDocuments();
+        loadAnnualReports();
+      }
+    };
+
+    // 초기 상태 설정
+    setPageVisible(document.visibilityState === 'visible');
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [pendingCount]);
 
   // 개발자 모드 OFF시 선택 초기화
   useEffect(() => {
@@ -104,7 +128,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   }, [customer._id]);
 
   // 주기적으로 파싱 대기 문서 확인 (10초마다)
+  // 페이지가 보일 때만 폴링
   useEffect(() => {
+    if (!isPageVisible) return; // 백그라운드 탭에서는 폴링 중지
+
     const interval = setInterval(() => {
       if (pendingCount > 0) {
         loadPendingDocuments();
@@ -113,7 +140,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [pendingCount, customer._id]);
+  }, [pendingCount, customer._id, isPageVisible]);
 
   // 🍎 Annual Report 개수 변경 시 부모에게 알림
   useEffect(() => {
