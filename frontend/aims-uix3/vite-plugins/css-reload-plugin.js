@@ -14,6 +14,14 @@ export default function cssReloadPlugin() {
       if (file.endsWith('.css')) {
         console.log(`[CSS-Reload] ${file} changed - triggering full reload`)
 
+        // tokens.css 변경 시 main.tsx 무효화 (확실한 반영)
+        if (file.includes('tokens.css')) {
+          const mainModule = server.moduleGraph.getModuleById('\0vite/preload-helper.js')
+          if (mainModule) {
+            server.moduleGraph.invalidateModule(mainModule)
+          }
+        }
+
         // 전체 페이지 리로드 강제
         server.ws.send({
           type: 'full-reload',

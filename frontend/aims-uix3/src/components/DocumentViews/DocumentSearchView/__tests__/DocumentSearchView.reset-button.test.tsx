@@ -195,9 +195,9 @@ describe('DocumentSearchView - 검색 초기화 버튼', () => {
     // 검색어가 지워져야 함
     expect(searchInput.value).toBe('')
 
-    // 초기 상태 메시지가 표시되어야 함
+    // 초기 상태 가이드가 표시되어야 함
     await waitFor(() => {
-      expect(screen.getByText('검색을 실행하면 결과가 표시됩니다.')).toBeInTheDocument()
+      expect(screen.getByText('문서 검색 사용 방법')).toBeInTheDocument()
     })
   })
 
