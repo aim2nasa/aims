@@ -1,0 +1,355 @@
+{
+  "startTime": 1762698080585,
+  "iterations": 865,
+  "cssChanges": 288,
+  "tsxChanges": 289,
+  "iconChanges": 288,
+  "crashes": 0,
+  "errors": [],
+  "memorySnapshots": [
+    {
+      "iteration": 10,
+      "memoryKB": 250232
+    },
+    {
+      "iteration": 20,
+      "memoryKB": 242532
+    },
+    {
+      "iteration": 30,
+      "memoryKB": 296108
+    },
+    {
+      "iteration": 40,
+      "memoryKB": 250888
+    },
+    {
+      "iteration": 50,
+      "memoryKB": 246528
+    },
+    {
+      "iteration": 60,
+      "memoryKB": 251664
+    },
+    {
+      "iteration": 70,
+      "memoryKB": 246584
+    },
+    {
+      "iteration": 80,
+      "memoryKB": 226348
+    },
+    {
+      "iteration": 90,
+      "memoryKB": 249204
+    },
+    {
+      "iteration": 100,
+      "memoryKB": 231852
+    },
+    {
+      "iteration": 110,
+      "memoryKB": 249092
+    },
+    {
+      "iteration": 120,
+      "memoryKB": 253364
+    },
+    {
+      "iteration": 130,
+      "memoryKB": 249652
+    },
+    {
+      "iteration": 140,
+      "memoryKB": 254644
+    },
+    {
+      "iteration": 150,
+      "memoryKB": 250456
+    },
+    {
+      "iteration": 160,
+      "memoryKB": 233756
+    },
+    {
+      "iteration": 170,
+      "memoryKB": 254124
+    },
+    {
+      "iteration": 180,
+      "memoryKB": 243440
+    },
+    {
+      "iteration": 190,
+      "memoryKB": 213372
+    },
+    {
+      "iteration": 200,
+      "memoryKB": 251368
+    },
+    {
+      "iteration": 210,
+      "memoryKB": 250044
+    },
+    {
+      "iteration": 220,
+      "memoryKB": 254188
+    },
+    {
+      "iteration": 230,
+      "memoryKB": 253720
+    },
+    {
+      "iteration": 240,
+      "memoryKB": 257448
+    },
+    {
+      "iteration": 250,
+      "memoryKB": 252316
+    },
+    {
+      "iteration": 260,
+      "memoryKB": 252124
+    },
+    {
+      "iteration": 270,
+      "memoryKB": 252660
+    },
+    {
+      "iteration": 280,
+      "memoryKB": 257848
+    },
+    {
+      "iteration": 290,
+      "memoryKB": 228580
+    },
+    {
+      "iteration": 300,
+      "memoryKB": 254204
+    },
+    {
+      "iteration": 310,
+      "memoryKB": 240228
+    },
+    {
+      "iteration": 320,
+      "memoryKB": 255652
+    },
+    {
+      "iteration": 330,
+      "memoryKB": 247556
+    },
+    {
+      "iteration": 340,
+      "memoryKB": 256408
+    },
+    {
+      "iteration": 350,
+      "memoryKB": 257964
+    },
+    {
+      "iteration": 360,
+      "memoryKB": 253516
+    },
+    {
+      "iteration": 370,
+      "memoryKB": 256732
+    },
+    {
+      "iteration": 380,
+      "memoryKB": 249732
+    },
+    {
+      "iteration": 390,
+      "memoryKB": 255928
+    },
+    {
+      "iteration": 400,
+      "memoryKB": 236468
+    },
+    {
+      "iteration": 410,
+      "memoryKB": 256404
+    },
+    {
+      "iteration": 420,
+      "memoryKB": 259496
+    },
+    {
+      "iteration": 430,
+      "memoryKB": 257600
+    },
+    {
+      "iteration": 440,
+      "memoryKB": 256488
+    },
+    {
+      "iteration": 450,
+      "memoryKB": 252740
+    },
+    {
+      "iteration": 460,
+      "memoryKB": 258560
+    },
+    {
+      "iteration": 470,
+      "memoryKB": 234680
+    },
+    {
+      "iteration": 480,
+      "memoryKB": 257688
+    },
+    {
+      "iteration": 490,
+      "memoryKB": 216468
+    },
+    {
+      "iteration": 500,
+      "memoryKB": 255292
+    },
+    {
+      "iteration": 510,
+      "memoryKB": 241908
+    },
+    {
+      "iteration": 520,
+      "memoryKB": 258464
+    },
+    {
+      "iteration": 530,
+      "memoryKB": 253816
+    },
+    {
+      "iteration": 540,
+      "memoryKB": 261060
+    },
+    {
+      "iteration": 550,
+      "memoryKB": 256504
+    },
+    {
+      "iteration": 560,
+      "memoryKB": 250620
+    },
+    {
+      "iteration": 570,
+      "memoryKB": 258328
+    },
+    {
+      "iteration": 580,
+      "memoryKB": 251844
+    },
+    {
+      "iteration": 590,
+      "memoryKB": 258912
+    },
+    {
+      "iteration": 600,
+      "memoryKB": 255644
+    },
+    {
+      "iteration": 610,
+      "memoryKB": 214692
+    },
+    {
+      "iteration": 620,
+      "memoryKB": 256984
+    },
+    {
+      "iteration": 630,
+      "memoryKB": 254468
+    },
+    {
+      "iteration": 640,
+      "memoryKB": 258604
+    },
+    {
+      "iteration": 650,
+      "memoryKB": 236112
+    },
+    {
+      "iteration": 660,
+      "memoryKB": 259444
+    },
+    {
+      "iteration": 670,
+      "memoryKB": 260468
+    },
+    {
+      "iteration": 680,
+      "memoryKB": 255528
+    },
+    {
+      "iteration": 690,
+      "memoryKB": 262060
+    },
+    {
+      "iteration": 700,
+      "memoryKB": 256968
+    },
+    {
+      "iteration": 710,
+      "memoryKB": 252092
+    },
+    {
+      "iteration": 720,
+      "memoryKB": 260076
+    },
+    {
+      "iteration": 730,
+      "memoryKB": 251860
+    },
+    {
+      "iteration": 740,
+      "memoryKB": 261160
+    },
+    {
+      "iteration": 750,
+      "memoryKB": 255240
+    },
+    {
+      "iteration": 760,
+      "memoryKB": 217728
+    },
+    {
+      "iteration": 770,
+      "memoryKB": 260248
+    },
+    {
+      "iteration": 780,
+      "memoryKB": 257588
+    },
+    {
+      "iteration": 790,
+      "memoryKB": 245904
+    },
+    {
+      "iteration": 800,
+      "memoryKB": 258024
+    },
+    {
+      "iteration": 810,
+      "memoryKB": 263600
+    },
+    {
+      "iteration": 820,
+      "memoryKB": 257896
+    },
+    {
+      "iteration": 830,
+      "memoryKB": 261980
+    },
+    {
+      "iteration": 840,
+      "memoryKB": 262636
+    },
+    {
+      "iteration": 850,
+      "memoryKB": 254784
+    },
+    {
+      "iteration": 860,
+      "memoryKB": 263576
+    }
+  ]
+}

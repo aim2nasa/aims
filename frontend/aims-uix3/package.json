@@ -7,6 +7,8 @@
     "dev": "vite",
     "dev:clean": "npm run clean && vite",
     "dev:force": "npm run clean:deps && vite --force",
+    "dev:win": "powershell -Command \"if (Test-Path '.vite') { Remove-Item -Recurse -Force '.vite' }; if (Test-Path 'node_modules\\.vite') { Remove-Item -Recurse -Force 'node_modules\\.vite' }; if (Test-Path 'dist') { Remove-Item -Recurse -Force 'dist' }\" && vite",
+    "test:hmr": "node test-hmr.js",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "build": "tsc -b && vite build",

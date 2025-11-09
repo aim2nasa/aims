@@ -2,12 +2,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import cssReloadPlugin from './vite-plugins/css-reload-plugin.js'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),  // React Fast Refresh 기본 활성화
-    tsconfigPaths()
+    tsconfigPaths(),
+    cssReloadPlugin()  // CSS 변경 시 전체 리로드 강제 (Windows 안정성)
   ],
   server: {
     proxy: {
@@ -17,20 +19,22 @@ export default defineConfig({
         changeOrigin: true
       }
     },
-    // HMR 설정: 에러 오버레이 완전 비활성화
+    // HMR 설정 최적화
     hmr: {
-      overlay: false
+      overlay: true,
+      // WebSocket 연결 안정화
+      protocol: 'ws',
+      timeout: 30000
     },
-    // 파일 감시 최적화
+    // 파일 감시 최적화 (CSS 감시 활성화)
     watch: {
-      // CSS 파일 감시 제외 - Vite CSS HMR이 Windows에서 크래시 유발
       ignored: [
         '**/node_modules/**',
         '**/.git/**',
-        '**/.vscode/**',
-        '**/*.css'  // CSS 파일 완전히 무시
+        '**/.vscode/**'
+        // CSS 파일 감시 활성화 - HMR 즉시 반영
       ],
-      // 폴링 비활성화 (Windows 네이티브 환경)
+      // Windows에서 안정적인 파일 감시
       usePolling: false
     },
     // 개발 서버 안정성 설정

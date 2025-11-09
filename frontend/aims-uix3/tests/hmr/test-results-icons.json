@@ -1,0 +1,43 @@
+{
+  "passed": 6,
+  "failed": 0,
+  "totalDuration": 38572,
+  "results": [
+    {
+      "name": "1. 기본 아이콘 CSS 변경",
+      "passed": true,
+      "duration": 3055,
+      "error": null
+    },
+    {
+      "name": "2. 아이콘 색상 변경",
+      "passed": true,
+      "duration": 3040,
+      "error": null
+    },
+    {
+      "name": "3. 아이콘 크기 변경",
+      "passed": true,
+      "duration": 3049,
+      "error": null
+    },
+    {
+      "name": "4. 빠른 연속 아이콘 변경 (5회)",
+      "passed": true,
+      "duration": 5592,
+      "error": null
+    },
+    {
+      "name": "5. 대용량 아이콘 CSS 추가",
+      "passed": true,
+      "duration": 3043,
+      "error": null
+    },
+    {
+      "name": "6. 아이콘 CSS 안정성 (20회 반복)",
+      "passed": true,
+      "duration": 20793,
+      "error": null
+    }
+  ]
+}
