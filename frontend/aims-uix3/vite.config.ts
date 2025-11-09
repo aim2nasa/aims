@@ -53,7 +53,18 @@ export default defineConfig({
   build: {
     cssCodeSplit: false,
     // 청크 크기 경고 임계값 상향 (빌드 안정성)
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // 명시적 hash 기반 캐시 무효화 (브라우저 캐싱 방지)
+    rollupOptions: {
+      output: {
+        // 진입점 파일명에 hash 추가 (예: index-BEty5ehk.js)
+        entryFileNames: 'assets/[name]-[hash].js',
+        // 청크 파일명에 hash 추가 (예: DocumentSearchView-QnFOKP7v.js)
+        chunkFileNames: 'assets/[name]-[hash].js',
+        // 정적 에셋에 hash 추가 (예: style-DpVtKAcz.css)
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   },
   // 최적화 설정
   optimizeDeps: {
