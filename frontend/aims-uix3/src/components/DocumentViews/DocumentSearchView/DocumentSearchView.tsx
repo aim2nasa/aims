@@ -656,7 +656,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 >
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                     <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
-                    <path d="M9 1v3h3" stroke="#f5f6f7" strokeWidth="0.8" fill="none"/>
+                    <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
                   </svg>
                   <span>파일명</span>
                   {sortField === 'filename' && (
@@ -958,7 +958,69 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </div>
                   </div>
                 ) : (
-                  '검색을 실행하면 결과가 표시됩니다.'
+                  <div className="search-guide">
+                    <div className="guide-header">
+                      <div className="guide-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <h3 className="guide-title">문서 검색 사용 방법</h3>
+                    </div>
+
+                    <div className="guide-content">
+                      <div className="guide-section">
+                        <div className="guide-step">
+                          <span className="step-number">1</span>
+                          <div className="step-content">
+                            <h4 className="step-title">검색어 입력</h4>
+                            <p className="step-description">찾고 싶은 내용을 검색창에 입력하세요</p>
+                          </div>
+                        </div>
+
+                        <div className="guide-step">
+                          <span className="step-number">2</span>
+                          <div className="step-content">
+                            <h4 className="step-title">검색 모드 선택</h4>
+                            <div className="mode-options">
+                              <div className="mode-option">
+                                <span className="mode-badge mode-keyword">키워드 검색</span>
+                                <p className="mode-description">정확한 단어를 찾을 때 (기본)</p>
+                              </div>
+                              <div className="mode-option">
+                                <span className="mode-badge mode-ai">AI 검색</span>
+                                <p className="mode-description">의미가 비슷한 내용을 찾을 때</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="guide-step">
+                          <span className="step-number">3</span>
+                          <div className="step-content">
+                            <h4 className="step-title">검색 실행</h4>
+                            <p className="step-description">검색 버튼을 클릭하거나 Enter를 눌러주세요</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="guide-tips">
+                        <h4 className="tips-title">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          검색 팁
+                        </h4>
+                        <ul className="tips-list">
+                          <li>키워드 검색 시 고객을 먼저 선택하면 해당 고객의 문서만 검색됩니다</li>
+                          <li>AND/OR 모드로 여러 단어 검색 조건을 조절할 수 있습니다</li>
+                          <li>AI 검색은 질문 형태로 입력하면 더 좋은 결과를 얻을 수 있습니다</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )
