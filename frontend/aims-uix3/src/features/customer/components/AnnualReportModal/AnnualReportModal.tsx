@@ -358,9 +358,9 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           </div>
         </div>
       }
-      initialWidth={1200}
+      initialWidth={1440}
       initialHeight={800}
-      minWidth={800}
+      minWidth={960}
       minHeight={600}
       footer={
         <div className="fulltext-modal-footer">
