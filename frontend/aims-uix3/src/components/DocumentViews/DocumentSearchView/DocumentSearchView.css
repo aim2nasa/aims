@@ -1449,9 +1449,10 @@ html[data-theme="dark"] .clear-customer-button {
 /* === 🍎 SEARCH GUIDE === */
 
 .search-guide {
-  max-width: 700px;
-  margin: 0 auto 0;
-  padding: 32px;
+  width: 50%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 16px;
   background: var(--color-ios-bg-secondary-light);
   border-radius: 16px;
   animation: fadeIn var(--duration-ios-standard) var(--easing-ease-out);
@@ -1598,8 +1599,9 @@ html[data-theme="dark"] .step-description {
 
 .mode-options {
   display: flex;
-  gap: 12px;
+  gap: 24px;
   margin-top: 10px;
+  width: 100%;
 }
 
 .mode-option {

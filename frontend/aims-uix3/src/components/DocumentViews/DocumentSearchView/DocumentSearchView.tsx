@@ -974,30 +974,45 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <div className="guide-step">
                           <span className="step-number">1</span>
                           <div className="step-content">
-                            <h4 className="step-title">검색어 입력</h4>
-                            <p className="step-description">찾고 싶은 내용을 검색창에 입력하세요</p>
+                            <h4 className="step-title">고객 선택 (선택사항)</h4>
+                            <p className="step-description">"고객선택" 버튼으로 특정 고객 지정 가능</p>
+                            <p className="step-description">• 미선택: 모든 고객 문서 검색</p>
+                            <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠름)</p>
+                            <p className="step-description">📌 키워드 검색에서만 가능</p>
                           </div>
                         </div>
 
                         <div className="guide-step">
                           <span className="step-number">2</span>
                           <div className="step-content">
+                            <h4 className="step-title">검색어 입력</h4>
+                            <p className="step-description">찾고 싶은 내용을 검색창에 입력하세요</p>
+                          </div>
+                        </div>
+
+                        <div className="guide-step">
+                          <span className="step-number">3</span>
+                          <div className="step-content">
                             <h4 className="step-title">검색 모드 선택</h4>
                             <div className="mode-options">
                               <div className="mode-option">
-                                <span className="mode-badge mode-keyword">키워드 검색</span>
-                                <p className="mode-description">정확한 단어를 찾을 때 (기본)</p>
+                                <span className="mode-badge mode-keyword">키워드 검색 (기본)</span>
+                                <p className="mode-description">• DB에 저장된 정확한 내용을 검색</p>
+                                <p className="mode-description">• AND: 입력한 모든 키워드가 포함된 문서 검색</p>
+                                <p className="mode-description">• OR: 입력한 키워드 중 하나 이상 포함된 문서 검색</p>
                               </div>
                               <div className="mode-option">
-                                <span className="mode-badge mode-ai">AI 검색</span>
-                                <p className="mode-description">의미가 비슷한 내용을 찾을 때</p>
+                                <span className="mode-badge mode-ai">AI 검색 (실험적)</span>
+                                <p className="mode-description">• 의미가 비슷한 내용 검색</p>
+                                <p className="mode-description">• 질문 형태 예시: "암 진단 시 보험금 얼마 받나요?"</p>
+                                <p className="mode-description">📌 결과가 부정확할 수 있으니 참고용으로만 사용하세요</p>
                               </div>
                             </div>
                           </div>
                         </div>
 
                         <div className="guide-step">
-                          <span className="step-number">3</span>
+                          <span className="step-number">4</span>
                           <div className="step-content">
                             <h4 className="step-title">검색 실행</h4>
                             <p className="step-description">검색 버튼을 클릭하거나 Enter를 눌러주세요</p>
@@ -1014,7 +1029,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                           검색 팁
                         </h4>
                         <ul className="tips-list">
-                          <li>키워드 검색 시 고객을 먼저 선택하면 해당 고객의 문서만 검색됩니다</li>
+                          <li>특정 고객 문서만 찾는다면 고객을 먼저 선택하세요</li>
                           <li>AND/OR 모드로 여러 단어 검색 조건을 조절할 수 있습니다</li>
                           <li>AI 검색은 질문 형태로 입력하면 더 좋은 결과를 얻을 수 있습니다</li>
                         </ul>
