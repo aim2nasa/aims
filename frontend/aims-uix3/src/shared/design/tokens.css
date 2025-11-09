@@ -156,6 +156,28 @@
   --color-progress-error-dark: #ff453a;        /* iOS systemRed Dark */
   --color-progress-pending-dark: #98989d;      /* iOS systemGray Dark */
 
+  /* Icon Colors (for SVG fill/stroke) */
+  --color-icon-lightbulb-fill: #ffc107;        /* Lightbulb icon yellow fill */
+  --color-icon-lightbulb-stroke: #424242;      /* Lightbulb icon dark stroke */
+  --color-icon-pdf-stroke: #f5f6f7;            /* PDF icon light stroke */
+
+  /* Step Number Badge Colors (라이트벌브 색상 통일) */
+  --color-step-number-bg-light: #ffe082;       /* Light mode: 밝은 노란색 배경 (라이트벌브 계열) */
+  --color-step-number-text-light: #424242;     /* Light mode: 진한 검은색 텍스트 (라이트벌브 stroke와 동일) */
+  --color-step-number-border-light: #424242;   /* Light mode: 검은색 경계선 (라이트벌브 stroke와 동일) */
+  --color-step-number-bg-dark: #3d3623;        /* Dark mode: 어두운 노란색 배경 */
+  --color-step-number-text-dark: #ffd95a;      /* Dark mode: 밝은 노란색 텍스트 */
+  --color-step-number-border-dark: #6b5d3f;    /* Dark mode: 어두운 경계선 */
+
+  /* Search Mode Option Background Colors */
+  --color-mode-option-bg-light: rgba(0, 0, 0, 0.1);         /* Light mode: 명확하게 보이는 회색 배경 (10%) */
+  --color-mode-option-bg-light-hover: rgba(0, 0, 0, 0.15);  /* Light mode: 호버 시 더 진한 배경 (15%) */
+
+  /* Search Mode Badge Colors (라이트/다크 테마 통일) */
+  --color-badge-keyword: #30d158;       /* 키워드 검색 배지 - 양쪽 테마 동일 */
+  --color-badge-ai: #bf5af2;            /* AI 검색 배지 - 양쪽 테마 동일 */
+  --color-badge-text: #ffffff;          /* 배지 텍스트 - 양쪽 테마 동일 */
+
   /* === ACCESSIBILITY COLOR CONTRAST === */
   /* WCAG 2.1 AAA 준수 (7:1 대비) - iOS 접근성 표준 */
 
