@@ -168,6 +168,7 @@ font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 - [ ] 폰트 패밀리는 SF Pro Text (Apple System Font)
 - [ ] 적절한 font-weight 적용 (400/500/600)
 - [ ] WCAG 접근성 기준 준수 (12px 이상)
+- [ ] 10px 이하 사용 시 예외 규정 확인 (초소형 아이콘 뱃지만 허용, 툴팁 필수)
 
 ---
 
@@ -192,6 +193,7 @@ font-family: "Helvetica";
 font-family: "Roboto";
 
 /* ❌ 10px 이하 사용 금지 (접근성 위반) */
+/* 예외: 초소형 아이콘 뱃지 (6-7px) - 툴팁 필수 */
 font-size: 9px;
 font-size: 10px;
 ```
@@ -200,7 +202,11 @@ font-size: 10px;
 
 다음 경우에만 규정 외 크기 허용:
 1. **대형 심볼/아이콘**: 24px 이상 (페이지네이션 화살표, 모달 아이콘 등)
-2. **특수 디자인 요구사항**: 사용자 명시적 요청 + UX 근거 명확한 경우
+2. **초소형 아이콘 뱃지**: 6-7px (문서 아이콘 위 겹침 라벨 - AR, OCR 신뢰도, TXT)
+   - 사용 위치: DocumentSearchView, DocumentLibraryView
+   - 조건: 반드시 툴팁 제공 (접근성 보완)
+   - 예시: `.document-ar-badge`, `.document-ocr-badge`, `.document-txt-badge`
+3. **특수 디자인 요구사항**: 사용자 명시적 요청 + UX 근거 명확한 경우
 
 ---
 
