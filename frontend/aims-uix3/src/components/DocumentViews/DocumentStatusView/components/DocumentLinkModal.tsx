@@ -294,7 +294,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
           <span>문서를 고객에게 연결</span>
         </div>
       }
-      size={isBulkMode ? "xl" : "sm"}
+      size={isBulkMode ? "xl" : "md"}
       footer={footer}
       ariaLabel="문서를 고객에게 연결"
       className="document-link-modal"
