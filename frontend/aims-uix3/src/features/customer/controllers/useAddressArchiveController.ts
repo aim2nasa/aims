@@ -9,7 +9,7 @@
  * - Service Layer를 통한 실제 API 연동
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { AddressService } from '@/services/addressService';
 
@@ -94,12 +94,22 @@ export const useAddressArchiveController = (
   }, []);
 
   /**
+   * 🍎 페이지 로드 시 자동으로 주소 이력 개수 로드
+   */
+  useEffect(() => {
+    if (customerId) {
+      loadAddressHistory(customerId);
+    }
+  }, [customerId, loadAddressHistory]);
+
+  /**
    * 주소 보관소 모달 열기
    */
   const open = useCallback(() => {
     setIsOpen(true);
-    loadAddressHistory(customerId);
-  }, [customerId, loadAddressHistory]);
+    // 이미 로드된 데이터가 있으므로 다시 로드하지 않음
+    // 필요시 여기서 다시 loadAddressHistory를 호출할 수 있음
+  }, []);
 
   /**
    * 주소 보관소 모달 닫기

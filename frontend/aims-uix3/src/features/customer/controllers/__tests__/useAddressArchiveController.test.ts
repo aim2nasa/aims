@@ -54,12 +54,17 @@ describe('useAddressArchiveController', () => {
       expect(result.current.addressHistory).toEqual([]);
     });
 
-    it('초기 isLoading은 false여야 함', () => {
+    it('초기 isLoading은 false여야 함', async () => {
+      vi.mocked(AddressService.getAddressHistory).mockResolvedValue(mockAddressHistory);
+
       const { result } = renderHook(() =>
         useAddressArchiveController(mockCustomerId)
       );
 
-      expect(result.current.isLoading).toBe(false);
+      // useEffect로 자동 로딩이 완료될 때까지 대기
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
     });
 
     it('초기 error는 null이어야 함', () => {
@@ -215,10 +220,16 @@ describe('useAddressArchiveController', () => {
     });
 
     it('customerId가 없으면 에러를 설정해야 함', async () => {
+      // customerId가 빈 문자열일 때 useEffect에서 자동 로딩되지 않음
       const { result } = renderHook(() =>
-        useAddressArchiveController(mockCustomerId)
+        useAddressArchiveController('')
       );
 
+      // useEffect가 실행되지 않았으므로 초기 상태 확인
+      expect(result.current.error).toBeNull();
+      expect(AddressService.getAddressHistory).not.toHaveBeenCalled();
+
+      // 직접 빈 문자열로 loadAddressHistory 호출
       await act(async () => {
         await result.current.loadAddressHistory('');
       });
@@ -229,21 +240,20 @@ describe('useAddressArchiveController', () => {
 
     it('로드 시작 시 이전 에러를 초기화해야 함', async () => {
       vi.mocked(AddressService.getAddressHistory)
-        .mockRejectedValueOnce(new Error('첫 번째 에러'))
-        .mockResolvedValueOnce(mockAddressHistory);
+        .mockRejectedValueOnce(new Error('첫 번째 에러')) // useEffect에서 소비
+        .mockResolvedValueOnce(mockAddressHistory);       // 수동 호출에서 성공
 
       const { result } = renderHook(() =>
         useAddressArchiveController(mockCustomerId)
       );
 
-      // 첫 번째 로드 실패
-      await act(async () => {
-        await result.current.loadAddressHistory(mockCustomerId);
+      // useEffect에서 자동 로드가 실패할 때까지 대기
+      await waitFor(() => {
+        expect(result.current.error).toBe('첫 번째 에러');
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.error).toBe('첫 번째 에러');
-
-      // 두 번째 로드 성공
+      // 두 번째 로드 성공 (수동 호출)
       await act(async () => {
         await result.current.loadAddressHistory(mockCustomerId);
       });

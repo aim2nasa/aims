@@ -287,3 +287,82 @@
 .customer-detail-view .tabs-bar__tab[data-tab-key="contracts"] svg {
   color: var(--color-icon-purple);
 }
+
+/* ===== 🍎 주소 보관소 아이콘 버튼 (상세주소 행 우측 끝) ===== */
+
+/* 아이콘 버튼이 있는 form-row */
+.customer-detail-view .form-row--with-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 주소 변경 이력 라벨 */
+.customer-detail-view .address-archive-label {
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* 주소 보관소 아이콘 버튼 */
+.customer-detail-view .address-archive-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-left: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+/* 🍎 Progressive Disclosure - 호버 시 강조 */
+.customer-detail-view .address-archive-icon-button:hover {
+  opacity: 1;
+  background: transparent;
+  transform: scale(1.15);
+}
+
+.customer-detail-view .address-archive-icon-button:active {
+  transform: scale(0.95);
+}
+
+/* 보관함 아이콘 색상 */
+.customer-detail-view .form-row--with-action .address-archive-icon-button svg {
+  color: var(--color-icon-orange);
+  flex-shrink: 0;
+}
+
+/* 개수 뱃지 (우측 상단) */
+.customer-detail-view .address-archive-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 3px;
+  background-color: var(--color-primary);
+  color: var(--color-neutral-0);
+  font-size: 8px;
+  font-weight: var(--font-weight-bold);
+  border-radius: 6px;
+  line-height: 1;
+  border: 1px solid var(--color-layout-main-light);
+}
+
+[data-theme="dark"] .customer-detail-view .address-archive-badge {
+  border-color: var(--color-layout-main-dark);
+}

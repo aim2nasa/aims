@@ -22,6 +22,7 @@ interface BasicInfoTabProps {
 export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
   // 🍎 Controller Hook - 비즈니스 로직 분리
   const addressArchiveController = useAddressArchiveController(customer._id);
+
   return (
     <>
       {/* 🍎 기본 정보 섹션 */}
@@ -99,18 +100,12 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
 
       {/* 🍎 주소 정보 섹션 */}
       <div className="form-section">
-        <Tooltip content="주소 보관소 보기">
-          <h3
-            className="form-section__title form-section__title--address form-section__title--clickable"
-            onClick={addressArchiveController.open}
-            aria-label="주소 보관소 보기"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
-            </svg>
-            <span>주소</span>
-          </h3>
-        </Tooltip>
+        <h3 className="form-section__title form-section__title--address">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0a6 6 0 00-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 00-6-6zm0 8a2 2 0 110-4 2 2 0 010 4z"/>
+          </svg>
+          <span>주소</span>
+        </h3>
         <div className="form-section__content">
           {/* 우편번호 */}
           <div className="form-row">
@@ -125,9 +120,29 @@ export const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ customer }) => {
           </div>
 
           {/* 상세주소 */}
-          <div className="form-row">
+          <div className="form-row form-row--with-action">
             <label className="form-row__label">상세주소</label>
             <div className="form-row__value">{customer.personal_info?.address?.address2 || ''}</div>
+            <span className="address-archive-label">
+              주소 변경 이력({addressArchiveController.addressHistory.length})
+            </span>
+            <Tooltip content="주소 변경 이력 보기">
+              <button
+                className="address-archive-icon-button"
+                onClick={addressArchiveController.open}
+                aria-label="주소 변경 이력"
+                type="button"
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
+                </svg>
+                {addressArchiveController.addressHistory.length > 0 && (
+                  <span className="address-archive-badge">
+                    {addressArchiveController.addressHistory.length}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
