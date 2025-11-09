@@ -102,6 +102,21 @@ export const Modal: React.FC<ModalProps> = ({
         {showHeader && title && (
           <header className="modal__header">
             <h2 className="modal__title">{title}</h2>
+            <button
+              className="modal__close-button"
+              onClick={onClose}
+              aria-label="모달 닫기"
+              type="button"
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M12 4L4 12M4 4L12 12"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           </header>
         )}
 

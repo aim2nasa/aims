@@ -152,7 +152,14 @@ export const CustomerEditModal: React.FC<CustomerEditModalProps> = ({
           onClick={onClose}
           aria-label="모달 닫기"
         >
-          ✕
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M12 4L4 12M4 4L12 12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       </div>
 

@@ -104,18 +104,19 @@ html[data-theme="dark"] .customer-edit-modal-header {
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 닫기 버튼 */
-  transition: all var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.25;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .customer-edit-modal-close-button:hover {
-  background-color: var(--color-ios-bg-hover-light);
-  color: var(--color-text-primary);
+  background-color: transparent;
+  opacity: 0.8;
   transform: scale(1.1);
 }
 
-html[data-theme="dark"] .customer-edit-modal-close-button:hover {
-  background-color: var(--color-ios-bg-hover-dark);
+.customer-edit-modal-close-button:active {
+  transform: scale(0.95);
 }
 
 /* ===== 탭 네비게이션 ===== */

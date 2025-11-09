@@ -94,6 +94,32 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  flex: 1;
+}
+
+.modal__close-button {
+  background: transparent;
+  border: none;
+  padding: var(--spacing-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  opacity: 0.25;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modal__close-button:hover {
+  background: transparent;
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.modal__close-button:active {
+  transform: scale(0.95);
 }
 
 /* === CONTENT === */

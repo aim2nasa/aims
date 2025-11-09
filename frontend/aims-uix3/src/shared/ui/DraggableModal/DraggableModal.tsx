@@ -138,24 +138,44 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
             {...modal.headerProps}
           >
             <h2 className="draggable-modal__title">{title}</h2>
-            {showResetButton && modal.isResizedFromDefault && (
-              <Tooltip content="초기 크기로 복원">
-                <button
-                  className="draggable-modal__reset-button draggable-modal__reset-button--icon"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    modal.reset()
-                    onReset?.()
-                  }}
-                  aria-label="초기 크기로 복원"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M2 4v4h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </Tooltip>
-            )}
+            <div className="draggable-modal__header-buttons">
+              {showResetButton && modal.isResizedFromDefault && (
+                <Tooltip content="초기 크기로 복원">
+                  <button
+                    className="draggable-modal__reset-button draggable-modal__reset-button--icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      modal.reset()
+                      onReset?.()
+                    }}
+                    aria-label="초기 크기로 복원"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M2 4v4h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+              )}
+              <button
+                className="draggable-modal__close-button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onClose()
+                }}
+                aria-label="모달 닫기"
+                type="button"
+              >
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M12 4L4 12M4 4L12 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </header>
         )}
 

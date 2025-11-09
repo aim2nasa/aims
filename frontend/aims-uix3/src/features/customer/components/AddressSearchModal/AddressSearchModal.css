@@ -89,11 +89,17 @@ html[data-theme="dark"] .address-search-modal__header {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity var(--duration-fast) var(--easing-ease-out);
+  opacity: 0.25;
+  transition: all 0.2s ease;
 }
 
 .address-search-modal__close:hover {
-  opacity: 0.6;
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.address-search-modal__close:active {
+  transform: scale(0.95);
 }
 
 /* 검색 영역 - 컴팩트 */

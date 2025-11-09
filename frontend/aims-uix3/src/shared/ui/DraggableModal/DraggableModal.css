@@ -118,6 +118,40 @@ html[data-theme="dark"] .draggable-modal {
   flex-shrink: 0;
 }
 
+/* 헤더 버튼 그룹 */
+.draggable-modal__header-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+/* X 닫기 버튼 */
+.draggable-modal__close-button {
+  background: transparent;
+  border: none;
+  padding: var(--spacing-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  opacity: 0.25;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.draggable-modal__close-button:hover {
+  background: transparent;
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.draggable-modal__close-button:active {
+  transform: scale(0.95);
+}
+
 /* ===== Content ===== */
 
 .draggable-modal__content {
