@@ -351,7 +351,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [])
 
   // DocumentRegistrationView, DocumentLibrary, DocumentSearchView 활성 시 PaginationPane 숨김
-  // 초기 로딩 시 사용자 정보를 전역 상태에 로드
+  // 초기 로딩 시 사용자 정보를 전역 상태에 로드 (앱 시작 시 1회만 실행)
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
@@ -363,7 +363,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
 
     loadCurrentUser()
-  }, [updateCurrentUser])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리

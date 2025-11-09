@@ -60,7 +60,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // 사용자 정보 로드
+  // 사용자 정보 로드 (전역 상태에 없을 때만 API 호출)
   useEffect(() => {
     if (!visible) return
 
@@ -68,6 +68,22 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       try {
         setIsLoading(true)
         setLoadError(null)
+
+        // 전역 상태에 이미 있으면 API 호출 불필요
+        if (currentUser) {
+          setUser(currentUser)
+          setFormData({
+            name: currentUser.name,
+            email: currentUser.email,
+            phone: currentUser.phone || '',
+            department: currentUser.department || '',
+            position: currentUser.position || ''
+          })
+          setIsLoading(false)
+          return
+        }
+
+        // 전역 상태에 없으면 API 호출
         const userData = await getCurrentUser()
         setUser(userData)
         setFormData({
@@ -86,7 +102,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
 
     loadUserData()
-  }, [visible])
+  }, [visible, currentUser])
 
   // 전역 currentUser 변경 감지 (다른 곳에서 저장한 경우)
   // 편집 중일 때는 사용자 입력을 보존하기 위해 동기화 스킵
