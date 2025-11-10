@@ -337,45 +337,60 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
         )}
       </section>
 
-      {/* Customer Selection */}
+      {/* Customer Selection & Document Type */}
       <section className="document-link-modal__section">
-        <div className="document-link-modal__customer-selection">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => setIsCustomerSelectorOpen(true)}
-          >
-            고객선택
-          </Button>
+        <div className="document-link-modal__main-row">
+          {/* 고객 선택 */}
+          <div className="document-link-modal__customer-selection">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setIsCustomerSelectorOpen(true)}
+            >
+              고객선택
+            </Button>
 
-          {/* 선택된 고객 표시 */}
-          <div className="document-link-modal__selected-customer">
-            {selectedCustomer ? (
-              <div className="selected-customer-info">
-                <span className="selected-customer-name">
-                  {selectedCustomer.personal_info?.name || '이름 없음'}
-                </span>
-                <span className="selected-customer-phone">
-                  {selectedCustomer.personal_info?.mobile_phone ||
-                   selectedCustomer.personal_info?.home_phone ||
-                   selectedCustomer.personal_info?.work_phone ||
-                   '연락처 없음'}
-                </span>
-                <button
-                  className="clear-customer-button"
-                  onClick={() => {
-                    setSelectedCustomer(null)
-                    setDuplicateWarning(null)
-                  }}
-                  aria-label="고객 선택 해제"
-                  title="고객 선택 해제"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <span className="customer-placeholder">고객을 선택해주세요</span>
-            )}
+            {/* 선택된 고객 표시 */}
+            <div className="document-link-modal__selected-customer">
+              {selectedCustomer ? (
+                <div className="selected-customer-info">
+                  <span className="selected-customer-name">
+                    {selectedCustomer.personal_info?.name || '이름 없음'}
+                  </span>
+                  <span className="selected-customer-phone">
+                    {selectedCustomer.personal_info?.mobile_phone ||
+                     selectedCustomer.personal_info?.home_phone ||
+                     selectedCustomer.personal_info?.work_phone ||
+                     '연락처 없음'}
+                  </span>
+                  <button
+                    className="clear-customer-button"
+                    onClick={() => {
+                      setSelectedCustomer(null)
+                      setDuplicateWarning(null)
+                    }}
+                    aria-label="고객 선택 해제"
+                    title="고객 선택 해제"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <span className="customer-placeholder">고객을 선택해주세요</span>
+              )}
+            </div>
+          </div>
+
+          {/* 문서 유형 */}
+          <div className="document-link-modal__field document-link-modal__field--inline">
+            <label htmlFor="relationship-type">문서 유형</label>
+            <Dropdown
+              value={relationshipType}
+              options={RELATIONSHIP_OPTIONS}
+              onChange={setRelationshipType}
+              aria-label="문서 유형 선택"
+              width="100%"
+            />
           </div>
         </div>
 
@@ -402,20 +417,8 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
         )}
       </section>
 
-    {/* Form */}
+    {/* Memo */}
     <section className="document-link-modal__section">
-      <div className="document-link-modal__form-row">
-        <div className="document-link-modal__field document-link-modal__field--inline">
-          <label htmlFor="relationship-type">문서 유형</label>
-          <Dropdown
-            value={relationshipType}
-            options={RELATIONSHIP_OPTIONS}
-            onChange={setRelationshipType}
-            aria-label="문서 유형 선택"
-            width="100%"
-          />
-        </div>
-      </div>
       <div className="document-link-modal__field">
         <label htmlFor="link-notes">
           메모

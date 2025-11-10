@@ -11,7 +11,7 @@
 .document-link-modal__content {
   flex: 1 1 auto;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible; /* 드롭다운이 모달 밖으로 나갈 수 있도록 */
   padding: 16px 20px;
   background-color: var(--color-layout-secondary-light);
   min-height: 0;
@@ -44,6 +44,7 @@ html[data-theme="dark"] .document-link-modal__content {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1); /* 여백 최소화 */
+  overflow: visible; /* 드롭다운이 섹션 밖으로 나갈 수 있도록 */
 }
 
 .document-link-modal__section:last-child {
@@ -211,6 +212,18 @@ html[data-theme="dark"] .document-link-modal__document-list {
 }
 
 
+/* ===== 고객 선택 & 문서 유형 같은 줄 배치 ===== */
+
+.document-link-modal__main-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-4);
+  align-items: center;
+  flex-wrap: wrap; /* 모바일에서 줄바꿈 허용 */
+  overflow: visible; /* 드롭다운이 row 밖으로 나갈 수 있도록 */
+  position: relative; /* 드롭다운 위치 기준점 */
+}
+
 /* ===== 고객 선택 영역 ===== */
 
 .document-link-modal__customer-selection {
@@ -218,6 +231,8 @@ html[data-theme="dark"] .document-link-modal__document-list {
   flex-direction: row;
   gap: var(--spacing-3);
   align-items: center;
+  flex: 3; /* 60% 비율 */
+  min-width: 300px; /* 최소 너비 확보 */
 }
 
 /* 고객선택 버튼 높이 (B) - A 영역과 동일 */
@@ -400,6 +415,14 @@ html[data-theme="dark"] .recent-customer-card:hover {
   flex-direction: row;
   align-items: center;
   gap: var(--spacing-3);
+  position: relative; /* 드롭다운 위치 기준점 */
+  overflow: visible; /* 드롭다운이 필드 밖으로 나갈 수 있도록 */
+}
+
+/* main-row 안의 인라인 필드는 적절한 너비 차지 */
+.document-link-modal__main-row .document-link-modal__field--inline {
+  flex: 2; /* 40% 비율 */
+  min-width: 200px; /* 문서 유형 드롭다운 최소 너비 */
 }
 
 .document-link-modal__field--inline label {
@@ -452,8 +475,9 @@ html[data-theme="dark"] .document-link-modal__textarea {
 
 /* Dropdown 메뉴 높이 제한 (모달 내부) */
 .document-link-modal .ios-dropdown__menu {
-  max-height: 240px;
+  max-height: 180px; /* 높이 축소하여 스크롤 활성화 */
   overflow-y: auto;
+  z-index: 1000; /* 다른 요소 위에 표시 */
 }
 
 /* Dropdown 트리거 높이 (D) - A 영역과 동일 */
