@@ -2027,7 +2027,7 @@ app.post('/api/customers/:id/documents', async (req, res) => {
           customer_relation: {
             customer_id: new ObjectId(id),
             relationship_type: relationship_type || 'general',
-            assigned_by: assigned_by ? new ObjectId(assigned_by) : null,
+            assigned_by: assigned_by || null,
             assigned_at: utcNowDate(),
             notes: notes || ''
           }

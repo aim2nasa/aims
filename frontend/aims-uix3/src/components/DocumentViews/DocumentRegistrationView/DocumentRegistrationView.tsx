@@ -9,7 +9,9 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import { Tabs, Tab } from '../../Tabs/Tabs'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
+import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
 import FileListSection from './FileListSection/FileListSection'
 import ProcessingLog from './ProcessingLog/ProcessingLog'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
@@ -55,6 +57,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   visible,
   onClose
 }) => {
+  // 탭 상태 관리
+  const [activeTab, setActiveTab] = useState<'default' | 'customer'>('default')
+
+  // 고객 파일 등록 탭 상태
+  const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
+  const [customerFileDocType, setCustomerFileDocType] = useState<string>('')
+  const [customerFileNotes, setCustomerFileNotes] = useState<string>('')
+
   // SessionStorage 키
   const SESSION_KEY = 'document-upload-state'
 
@@ -156,6 +166,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 📄 일반 문서 파일명 → 문서 ID 매핑 (백그라운드 처리 완료 확인용)
   const normalDocumentMappingRef = useRef<Map<string, string>>(new Map())
+
+  // 🔗 고객 파일 등록 탭에서 업로드된 파일 추적 (파일명 → 고객 정보 매핑)
+  const customerFileUploadMappingRef = useRef<Map<string, {
+    customerId: string
+    customerName: string
+    documentType: string
+    notes: string
+  }>>(new Map())
 
   // 📝 처리 로그 상태 (sessionStorage에서 복원)
   const getInitialLogs = (): Log[] => {
@@ -474,6 +492,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     if (validFiles.length > 0) {
       uploadService.queueFiles(validFiles)
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
+
+      // 🔗 고객 파일 등록 탭에서 업로드된 파일이면 추적 목록에 추가
+      if (activeTab === 'customer' && customerFileCustomer && customerFileDocType) {
+        validFiles.forEach(f => {
+          customerFileUploadMappingRef.current.set(f.file.name, {
+            customerId: customerFileCustomer._id,
+            customerName: customerFileCustomer.personal_info?.name || '이름 없음',
+            documentType: customerFileDocType,
+            notes: customerFileNotes
+          })
+          console.log(`🔗 [고객 파일 등록] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}`)
+        })
+      }
     }
 
     // 🎯 AR 큐 처리 시작
@@ -481,7 +512,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.log('🔥 [handleFilesSelected] AR 큐 처리 시작, 큐:', arQueueRef.current.length)
       processNextArInQueue()
     }
-  }, [generateFileId, addLog, processNextArInQueue])
+  }, [generateFileId, addLog, processNextArInQueue, activeTab, customerFileCustomer, customerFileDocType, customerFileNotes])
 
   /**
    * 파일 재시도 핸들러
@@ -668,6 +699,107 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.error(`❌ [AR] 처리 실패:`, error);
     }
   }, []);
+
+  /**
+   * 고객 파일 등록 탭에서 업로드된 문서를 고객에게 자동 연결
+   */
+  const linkCustomerFile = useCallback(async (fileName: string) => {
+    const customerFileInfo = customerFileUploadMappingRef.current.get(fileName);
+    if (!customerFileInfo) {
+      console.log(`⚠️ [고객 파일 자동 연결] 추적 정보 없음: ${fileName}`);
+      return;
+    }
+
+    console.log(`🔗 [고객 파일 자동 연결] 시작: ${fileName} → 고객: ${customerFileInfo.customerName}`);
+
+    try {
+      // 1. 파일명으로 문서 조회
+      const searchData = await api.get<{ success: boolean; data: { documents: Document[] } }>(`/api/documents?limit=100`);
+
+      if (!searchData.success || !searchData.data || !searchData.data.documents) {
+        console.warn(`⚠️ [고객 파일 자동 연결] 문서 목록 조회 실패`);
+        return;
+      }
+
+      const document = searchData.data.documents.find((doc: Document) => doc.filename === fileName);
+      if (!document) {
+        console.warn(`⚠️ [고객 파일 자동 연결] 문서를 찾을 수 없음: ${fileName}`);
+        return;
+      }
+
+      const documentId = document._id;
+      if (!documentId) {
+        console.warn(`⚠️ [고객 파일 자동 연결] 문서 ID가 없음: ${fileName}`);
+        return;
+      }
+
+      console.log(`🔍 [고객 파일 자동 연결] 문서 ID 확인: ${fileName} → ${documentId}`);
+
+      // 2. 문서 처리 완료 대기 (overallStatus === 'completed')
+      const checkInterval = 5000; // 5초마다 체크
+      const maxAttempts = 36; // 최대 180초 (3분)
+      let attempts = 0;
+
+      const checkAndLink = setInterval(async () => {
+        attempts++;
+
+        try {
+          const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+          const response = await docResponse.json();
+
+          if (response.success && response.data?.computed?.overallStatus === 'completed') {
+            clearInterval(checkAndLink);
+
+            console.log(`🔗 [고객 파일 자동 연결] 문서 처리 완료, 연결 시작`);
+            addLog('info', `[4/4] 문서-고객 자동 연결 시작: ${fileName}`, undefined, customerFileInfo.customerName);
+
+            // 3. 고객에게 문서 연결
+            try {
+              // notes가 있을 때만 포함 (exactOptionalPropertyTypes 준수)
+              const linkPayload = {
+                document_id: documentId,
+                relationship_type: customerFileInfo.documentType,
+                assigned_by: UserContextService.getContext().identifierValue,
+                ...(customerFileInfo.notes ? { notes: customerFileInfo.notes } : {})
+              };
+
+              console.log(`📤 [고객 파일 자동 연결] API 호출 시작:`, {
+                customerId: customerFileInfo.customerId,
+                customerName: customerFileInfo.customerName,
+                documentId,
+                fileName,
+                payload: linkPayload
+              });
+
+              await DocumentService.linkDocumentToCustomer(customerFileInfo.customerId, linkPayload);
+
+              console.log(`✅ [고객 파일 자동 연결] API 호출 성공`);
+              addLog('success', `[4/4] 문서-고객 자동 연결 완료: ${fileName}`, undefined, customerFileInfo.customerName);
+
+              // 추적 목록에서 제거
+              customerFileUploadMappingRef.current.delete(fileName);
+            } catch (linkError) {
+              console.error(`❌ [고객 파일 자동 연결] API 호출 실패:`, linkError);
+              addLog('error', `문서 자동 연결 실패: ${fileName}`, linkError instanceof Error ? linkError.message : String(linkError), customerFileInfo.customerName);
+              customerFileUploadMappingRef.current.delete(fileName);
+            }
+          } else if (attempts >= maxAttempts) {
+            clearInterval(checkAndLink);
+            console.warn(`⚠️ [고객 파일 자동 연결] 문서 처리 대기 시간 초과: ${fileName}`);
+            addLog('warning', `문서 자동 연결 시간 초과: ${fileName}`, '처리가 지연되고 있습니다. 나중에 수동으로 연결해주세요.', customerFileInfo.customerName);
+            customerFileUploadMappingRef.current.delete(fileName);
+          } else {
+            console.log(`⏳ [고객 파일 자동 연결] 대기 중... (${attempts}/${maxAttempts}) - ${fileName}`);
+          }
+        } catch (error) {
+          console.error(`❌ [고객 파일 자동 연결] 상태 확인 실패:`, error);
+        }
+      }, checkInterval);
+    } catch (error) {
+      console.error(`❌ [고객 파일 자동 연결] 처리 실패:`, error);
+      addLog('error', `문서 자동 연결 실패: ${fileName}`, error instanceof Error ? error.message : String(error), customerFileInfo.customerName);
+    }
+  }, [addLog]);
 
   /**
    * 일반 문서 백그라운드 처리 완료 확인 (polling)
@@ -890,15 +1022,31 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           addLog('success', `[4/5] 문서 업로드 완료: ${currentFile.file.name}`, undefined, customerName)
           addLog('ar-detect', `AR 문서 처리 중: ${currentFile.file.name}`, '고객 자동 연결 대기 중...', customerName)
         } else {
-          addLog('success', `[3/4] 문서 업로드 완료: ${currentFile.file.name}`, '메타데이터 추출 및 임베딩 진행 중...', customerName)
+          // 🔗 고객 파일 등록 탭에서 업로드된 파일인지 확인
+          const isCustomerFile = customerFileUploadMappingRef.current.has(currentFile.file.name);
 
-          // ✅ 일반 문서도 백그라운드 처리 완료 확인 시작
-          console.log(`🚀 [일반 문서] 백그라운드 처리 확인 시작: ${currentFile.file.name}`);
-          // 파일명으로부터 문서 ID를 얻어야 하므로 약간의 딜레이 후 polling 시작
-          setTimeout(() => {
-            console.log(`🔍 [일반 문서] checkNormalDocumentCompletion 호출: ${currentFile.file.name}`);
-            checkNormalDocumentCompletion(currentFile.file.name);
-          }, 1000);
+          if (isCustomerFile) {
+            // 고객 파일 등록 - 자동 연결 시작
+            const customerFileInfo = customerFileUploadMappingRef.current.get(currentFile.file.name);
+            addLog('success', `[3/4] 문서 업로드 완료: ${currentFile.file.name}`, '메타데이터 추출 및 임베딩 진행 중...', customerFileInfo?.customerName)
+
+            console.log(`🔗 [고객 파일 자동 연결] linkCustomerFile 호출 예약: ${currentFile.file.name}`);
+            setTimeout(() => {
+              console.log(`🔗 [고객 파일 자동 연결] linkCustomerFile 호출: ${currentFile.file.name}`);
+              linkCustomerFile(currentFile.file.name);
+            }, 1000);
+          } else {
+            // 일반 문서 - 백그라운드 처리 완료 확인
+            addLog('success', `[3/4] 문서 업로드 완료: ${currentFile.file.name}`, '메타데이터 추출 및 임베딩 진행 중...', customerName)
+
+            // ✅ 일반 문서도 백그라운드 처리 완료 확인 시작
+            console.log(`🚀 [일반 문서] 백그라운드 처리 확인 시작: ${currentFile.file.name}`);
+            // 파일명으로부터 문서 ID를 얻어야 하므로 약간의 딜레이 후 polling 시작
+            setTimeout(() => {
+              console.log(`🔍 [일반 문서] checkNormalDocumentCompletion 호출: ${currentFile.file.name}`);
+              checkNormalDocumentCompletion(currentFile.file.name);
+            }, 1000);
+          }
         }
       } else if (status === 'error') {
         addLog('error', `업로드 실패: ${currentFile.file.name}`, error, customerName)
@@ -906,7 +1054,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         addLog('warning', `업로드 경고: ${currentFile.file.name}`, error, customerName)
       }
     }
-  }, [uploadState.files, setAnnualReportFlag, addLog])
+  }, [uploadState.files, setAnnualReportFlag, addLog, linkCustomerFile, checkNormalDocumentCompletion])
 
   /**
    * 업로드 서비스 콜백 설정 - useRef로 안정적인 참조 유지
@@ -1055,6 +1203,12 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return "문서 등록"
   }
 
+  // 탭 정의
+  const tabs: Tab[] = [
+    { key: 'default', label: '기본 등록' },
+    { key: 'customer', label: '고객 파일 등록' }
+  ]
+
   return (
     <CenterPaneView
       visible={visible}
@@ -1070,15 +1224,45 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
-        {/* 파일 업로드 영역 */}
-        <FileUploadArea
-          onFilesSelected={handleFilesSelected}
-          options={fileSelectionOptions}
-          uploading={uploadState.uploading}
-          disabled={false}
+        {/* 탭 네비게이션 */}
+        <Tabs
+          tabs={tabs}
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as 'default' | 'customer')}
         />
 
-        {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 */}
+        {/* 탭별 업로드 영역 */}
+        {activeTab === 'default' && (
+          <FileUploadArea
+            onFilesSelected={handleFilesSelected}
+            options={fileSelectionOptions}
+            uploading={uploadState.uploading}
+            disabled={false}
+          />
+        )}
+
+        {activeTab === 'customer' && (
+          <>
+            <CustomerFileUploadArea
+              selectedCustomer={customerFileCustomer}
+              onCustomerSelect={setCustomerFileCustomer}
+              documentType={customerFileDocType}
+              onDocumentTypeChange={setCustomerFileDocType}
+              notes={customerFileNotes}
+              onNotesChange={setCustomerFileNotes}
+              disabled={false}
+            />
+            {/* 파일 업로드 영역 (공통) */}
+            <FileUploadArea
+              onFilesSelected={handleFilesSelected}
+              options={fileSelectionOptions}
+              uploading={uploadState.uploading}
+              disabled={!customerFileCustomer || !customerFileDocType}
+            />
+          </>
+        )}
+
+        {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 (공통 영역) */}
         <div className="file-log-container">
           {/* 업로드 목록 영역 - 60% */}
           <FileListSection

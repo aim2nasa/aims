@@ -1,0 +1,213 @@
+/**
+ * CustomerFileUploadArea Styles
+ * @since 1.0.0
+ *
+ * 🍎 iOS 스타일 - DocumentLinkModal과 100% 동일한 레이아웃
+ */
+
+.customer-file-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-lg);
+  overflow: visible;
+}
+
+html[data-theme="dark"] .customer-file-upload-area {
+  background: var(--color-layout-secondary-dark);
+}
+
+/* ===== 고객 선택 & 문서 유형 같은 줄 배치 (DocumentLinkModal과 동일) ===== */
+
+.customer-file-upload-area__main-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-4);
+  align-items: center;
+  justify-content: center; /* 중앙 정렬 */
+  flex-wrap: nowrap;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== 고객 선택 영역 (DocumentLinkModal과 동일) ===== */
+
+.customer-file-upload-area__customer-selection {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-3);
+  align-items: center;
+  width: 350px; /* 고정 폭 - 문서 유형과 동일 */
+  overflow: visible;
+  position: relative;
+}
+
+/* 고객선택 버튼 높이 */
+.customer-file-upload-area__customer-selection .button {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+}
+
+/* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
+.customer-file-upload-area__selected-customer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  overflow: visible;
+  position: relative;
+}
+
+/* 고객 선택됨: 이름 + X 버튼 */
+.customer-file-upload-area__selected-customer > span.selected-customer-name {
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: var(--radius-lg);
+  padding: 0 var(--spacing-3);
+  background: var(--color-bg-secondary);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-footnote);
+  font-family: var(--font-family-text);
+}
+
+html[data-theme="dark"] .customer-file-upload-area__selected-customer > span.selected-customer-name {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.customer-file-upload-area .clear-customer-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-callout);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.customer-file-upload-area .clear-customer-button:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.customer-file-upload-area .clear-customer-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 문서 유형 필드 (DocumentLinkModal과 동일) ===== */
+
+.customer-file-upload-area__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  width: 350px; /* 고정 폭 - 고객 선택과 동일 */
+}
+
+/* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
+.customer-file-upload-area__field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-3);
+  position: relative;
+  overflow: visible;
+}
+
+.customer-file-upload-area__main-row .customer-file-upload-area__field--inline {
+  width: 350px; /* 고정 폭 유지 - 고객 선택과 동일 */
+}
+
+.customer-file-upload-area__field--inline label {
+  flex-shrink: 0;
+  min-width: auto;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* 문서 유형 드롭다운이 남은 공간 모두 차지 */
+.customer-file-upload-area__field--inline > div {
+  flex: 1;
+}
+
+/* 드롭다운 메뉴 높이 제한 */
+.customer-file-upload-area .ios-dropdown__menu {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9999;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* 섹션 레이블 */
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* 메모 입력 섹션 */
+.notes-section {
+  display: flex;
+  flex-direction: column;
+  width: calc(350px + var(--spacing-4) + 350px); /* 고객선택 + gap + 문서유형 */
+  margin: 0 auto; /* 중앙 정렬 */
+  margin-top: 16px; /* 상단 간격 - 적당하게 */
+}
+
+.notes-input {
+  padding: 8px 12px;
+  background: var(--color-bg-primary);
+  border: 1.5px solid var(--color-ios-separator-light);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  resize: vertical;
+  min-height: 60px;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .notes-input {
+  background: var(--color-layout-content-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.notes-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.notes-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notes-input::placeholder {
+  color: var(--color-text-tertiary);
+}
