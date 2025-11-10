@@ -132,6 +132,17 @@ const DocumentLibraryContent: React.FC<{
     }
   }, [actions])
 
+  // 🍎 문서 연결 시 자동 새로고침
+  React.useEffect(() => {
+    const handleDocumentLinked = () => {
+      void actions.refreshDocuments()
+    }
+    window.addEventListener('documentLinked', handleDocumentLinked)
+    return () => {
+      window.removeEventListener('documentLinked', handleDocumentLinked)
+    }
+  }, [actions])
+
   // 🍎 전체 선택 핸들러 (Context의 documents 사용)
   const handleSelectAll = React.useCallback((checked: boolean) => {
     if (checked) {
