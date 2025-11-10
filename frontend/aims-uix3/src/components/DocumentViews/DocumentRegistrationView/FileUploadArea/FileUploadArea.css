@@ -101,11 +101,11 @@
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */ /* 폰트 크기 축소 */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--color-file-default-light);
 }
 
 html[data-theme="dark"] .file-upload-area__hint-text {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-file-default-dark);
 }
 
 /* 🍎 DROP ACTIVE: Clear feedback */
@@ -114,7 +114,7 @@ html[data-theme="dark"] .file-upload-area__hint-text {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: rgba(0, 122, 255, 0.8);
+  color: var(--color-ios-spinner-fill-light);
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -126,7 +126,7 @@ html[data-theme="dark"] .file-upload-area__hint-text {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: rgba(0, 122, 255, 0.6);
+  color: var(--color-ios-interactive-light);
   /* font-size: var(--font-size-caption-1); (12px - FONT_RULES.md ) */
   font-weight: 400;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
@@ -166,18 +166,18 @@ html[data-theme="dark"] .file-upload-area__hint-text {
 /* 🍎 HIGH CONTRAST: Enhanced visibility */
 @media (prefers-contrast: high) {
   .file-upload-area__dropzone {
-    border-color: rgba(0, 0, 0, 0.3);
+    border-color: var(--color-ios-empty-light);
   }
 
   html[data-theme="dark"] .file-upload-area__dropzone {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: var(--color-ios-empty-dark);
   }
 
   .file-upload-area__button--secondary {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--color-active-light);
   }
 
   html[data-theme="dark"] .file-upload-area__button--secondary {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--color-active-dark);
   }
 }

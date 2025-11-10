@@ -114,19 +114,19 @@
 }
 
 .processing-log__sort--primary:hover {
-  background: rgba(10, 132, 255, 0.08);
+  background: var(--color-active-light);
 }
 
 .processing-log__sort--success:hover {
-  background: rgba(52, 199, 89, 0.08);
+  background: var(--color-active-light);
 }
 
 .processing-log__sort--info:hover {
-  background: rgba(88, 86, 214, 0.08);
+  background: var(--color-active-light);
 }
 
 .processing-log__clear--danger:hover {
-  background: rgba(255, 59, 48, 0.08);
+  background: var(--color-active-light);
 }
 
 .processing-log__sort:active,

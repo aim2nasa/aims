@@ -11,7 +11,7 @@
   z-index: 10000;
 
   /* 🍎 TRUE APPLE HUD: 테마 무관 검은색 반투명 박스 */
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--color-ios-tooltip-bg-light);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
@@ -83,7 +83,7 @@
   width: 24px;
   height: 24px;
 
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-opacity-scrollbar-light);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -98,13 +98,13 @@
 }
 
 .feedback-toast__close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-ios-empty-light);
   transform: scale(1.1);
 }
 
 .feedback-toast__close:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--color-ios-empty-dark);
 }
 
 /* 🍎 RESPONSIVE: 모바일에서도 중앙 유지 */
@@ -138,7 +138,7 @@
 /* 🍎 HIGH CONTRAST: HUD 스타일 유지 */
 @media (prefers-contrast: high) {
   .feedback-toast {
-    background: rgba(0, 0, 0, 0.9);
+    background: var(--color-ios-tooltip-bg-dark);
   }
 
   .feedback-toast__message {
