@@ -46,11 +46,13 @@ html[data-theme="dark"] .tabs-bar {
   white-space: nowrap;
   user-select: none;
   min-height: 28px;
+  opacity: 0.3; /* Progressive Disclosure: 비활성 탭은 거의 보이지 않게 */
 }
 
 .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.tabs-bar__tab--disabled) {
   background-color: var(--color-hover-light);
   color: var(--color-text-primary);
+  opacity: 0.8; /* 호버 시 약간 진하게 */
 }
 
 html[data-theme="dark"] .tabs-bar__tab {
@@ -60,21 +62,33 @@ html[data-theme="dark"] .tabs-bar__tab {
 html[data-theme="dark"] .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.tabs-bar__tab--disabled) {
   background-color: var(--color-hover-dark);
   color: var(--color-text-primary);
+  opacity: 0.8; /* 호버 시 약간 진하게 */
 }
 
 /* === 활성 탭 === */
 .tabs-bar__tab--active {
   background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  box-shadow: var(--shadow-base);
+  box-shadow: var(--shadow-md); /* 더 강한 그림자로 깊이감 */
   font-weight: 600;
+  opacity: 1; /* 완전히 불투명 */
 }
 
 html[data-theme="dark"] .tabs-bar__tab--active {
   background-color: var(--color-layout-content-dark);
   color: var(--color-text-primary);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card-hover-dark); /* 더 강한 그림자 */
   font-weight: 600;
+  opacity: 1; /* 완전히 불투명 */
+}
+
+/* === 활성 탭 아이콘 강조 === */
+.tabs-bar__tab--active .tabs-bar__tab-icon {
+  color: var(--color-primary);
+}
+
+html[data-theme="dark"] .tabs-bar__tab--active .tabs-bar__tab-icon {
+  color: var(--color-primary);
 }
 
 /* === 비활성화된 탭 === */
