@@ -1776,7 +1776,7 @@ html[data-theme="dark"] .recent-search-header {
 }
 
 .recent-search-list {
-  max-height: 300px;
+  max-height: 280px; /* 7개 항목이 완전히 보이는 높이 (각 40px × 7 = 280px) */
   overflow-y: auto;
   background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
 }
