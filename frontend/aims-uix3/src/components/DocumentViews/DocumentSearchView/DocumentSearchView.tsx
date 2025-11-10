@@ -1142,6 +1142,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <p className="step-description">"고객선택" 버튼으로 특정 고객 지정 가능</p>
                             <p className="step-description">• 미선택: 모든 고객 문서 검색</p>
                             <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠름)</p>
+                            <p className="step-description">• 최근 선택한 5명이 드롭다운에 표시 (첫 사용시 비어있음)</p>
                             <p className="step-description">📌 키워드 검색에서만 가능</p>
                           </div>
                         </div>
