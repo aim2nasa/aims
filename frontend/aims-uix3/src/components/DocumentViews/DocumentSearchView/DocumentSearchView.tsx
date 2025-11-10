@@ -21,7 +21,6 @@ import {
   LinkIcon,
   SummaryIcon
 } from '../components/DocumentActionIcons'
-import RefreshButton from '../../RefreshButton/RefreshButton'
 import FullTextModal from './FullTextModal'
 import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
 import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
@@ -726,17 +725,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </>
                   )}
                 </div>
-                <RefreshButton
-                  onClick={async () => {
-                    if (query) {
-                      await handleSearch();
-                    }
-                  }}
-                  loading={isLoading}
-                  tooltip="검색 새로고침"
-                  size="small"
-                  disabled={!query}
-                />
               </div>
 
               {/* 🍎 유사도 점수 범례 (시맨틱 검색일 때만 표시) */}
