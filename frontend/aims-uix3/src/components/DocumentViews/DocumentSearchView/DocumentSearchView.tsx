@@ -7,7 +7,7 @@
  * Search.py 기능을 React + iOS 네이티브 스타일로 구현
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService } from '@/services/searchService'
@@ -33,6 +33,7 @@ import { DocumentService } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
+import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../utils/recentCustomers'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -128,6 +129,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   // 🍎 검색 실행 시점의 고객 정보 (검색 결과 설명에 사용)
   const [lastSearchCustomer, setLastSearchCustomer] = useState<Customer | null>(null)
+  // 🍎 최근 선택한 고객 목록
+  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | null
@@ -197,6 +200,58 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       handleSearch()
     }
   }
+
+  /**
+   * 최근 고객 목록 불러오기
+   */
+  useEffect(() => {
+    const recent = getRecentCustomers()
+    console.log('[DocumentSearchView] 최근 고객 목록:', recent)
+    setRecentCustomers(recent)
+  }, [])
+
+  /**
+   * 최근 고객 드롭다운 옵션 생성
+   */
+  const recentCustomerOptions = useMemo((): DropdownOption[] => {
+    const options: DropdownOption[] = [
+      { value: '', label: '고객 미선택' }
+    ]
+
+    recentCustomers.forEach(customer => {
+      options.push({
+        value: customer.id,
+        label: customer.name
+      })
+    })
+
+    return options
+  }, [recentCustomers])
+
+  /**
+   * 최근 고객 드롭다운에서 선택 핸들러
+   */
+  const handleRecentCustomerSelect = useCallback((customerId: string) => {
+    if (!customerId) {
+      // "고객 미선택" 선택
+      setSelectedCustomer(null)
+      handleCustomerIdChange(null)
+      return
+    }
+
+    // 최근 고객 목록에서 찾기
+    const recentCustomer = recentCustomers.find(c => c.id === customerId)
+    if (recentCustomer) {
+      // Customer 객체 재구성 (화면 표시용)
+      setSelectedCustomer({
+        _id: recentCustomer.id,
+        personal_info: {
+          name: recentCustomer.name
+        }
+      } as Customer)
+      handleCustomerIdChange(customerId)
+    }
+  }, [recentCustomers, handleCustomerIdChange])
 
   /**
    * 문서 클릭 핸들러
@@ -461,7 +516,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 고객선택
               </button>
 
-              {/* 🍎 선택된 고객명 표시 */}
+              {/* 🍎 선택된 고객명 표시 또는 최근 고객 드롭다운 */}
               <div className="selected-customer-display">
                 {selectedCustomer ? (
                   <>
@@ -481,7 +536,13 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </button>
                   </>
                 ) : (
-                  <span className="customer-placeholder">고객 미선택</span>
+                  <Dropdown
+                    value=""
+                    options={recentCustomerOptions}
+                    onChange={handleRecentCustomerSelect}
+                    width={150}
+                    aria-label="최근 선택한 고객"
+                  />
                 )}
               </div>
             </>
@@ -1101,6 +1162,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         onSelect={(customer) => {
           setSelectedCustomer(customer)
           handleCustomerIdChange(customer._id)
+          // 최근 고객 목록에 추가
+          addRecentCustomer(customer)
+          setRecentCustomers(getRecentCustomers())
           console.log('선택된 고객:', customer)
         }}
       />
