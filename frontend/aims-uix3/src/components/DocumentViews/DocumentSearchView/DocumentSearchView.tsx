@@ -34,6 +34,7 @@ import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
 import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../utils/recentCustomers'
+import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -131,6 +132,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [lastSearchCustomer, setLastSearchCustomer] = useState<Customer | null>(null)
   // 🍎 최근 선택한 고객 목록
   const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
+  // 🍎 최근 검색어 목록
+  const [recentSearchQueries, setRecentSearchQueries] = useState<RecentSearchQuery[]>([])
+  // 🍎 검색어 입력 필드 포커스 상태
+  const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
 
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | null
@@ -197,7 +202,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     if (e.key === 'Enter') {
       // 검색 실행 시 현재 선택된 고객 저장
       setLastSearchCustomer(selectedCustomer)
+      // 검색어를 최근 목록에 추가
+      if (query.trim()) {
+        addRecentSearchQuery(query.trim())
+        setRecentSearchQueries(getRecentSearchQueries())
+      }
       handleSearch()
+      // 드롭다운 닫기
+      setIsSearchInputFocused(false)
     }
   }
 
@@ -208,6 +220,15 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     const recent = getRecentCustomers()
     console.log('[DocumentSearchView] 최근 고객 목록:', recent)
     setRecentCustomers(recent)
+  }, [])
+
+  /**
+   * 최근 검색어 목록 불러오기
+   */
+  useEffect(() => {
+    const recent = getRecentSearchQueries()
+    console.log('[DocumentSearchView] 최근 검색어 목록:', recent)
+    setRecentSearchQueries(recent)
   }, [])
 
   /**
@@ -557,9 +578,50 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
+              onFocus={() => {
+                console.log('[DocumentSearchView] 🔍 검색 입력 필드 포커스')
+                setIsSearchInputFocused(true)
+                // 포커스 시 최근 검색어 다시 불러오기
+                const recent = getRecentSearchQueries()
+                console.log('[DocumentSearchView] 📋 포커스 시 최근 검색어:', recent)
+                console.log('[DocumentSearchView] 📊 배열 길이:', recent.length)
+                setRecentSearchQueries(recent)
+              }}
+              onBlur={() => {
+                // 드롭다운 클릭 시간을 주기 위해 지연
+                setTimeout(() => setIsSearchInputFocused(false), 200)
+              }}
               placeholder="문서 검색"
               aria-label="문서 검색"
             />
+            {/* 🍎 최근 검색어 드롭다운 */}
+            {(() => {
+              console.log('[DocumentSearchView] 🎯 드롭다운 렌더링 조건:', {
+                isSearchInputFocused,
+                recentSearchQueriesLength: recentSearchQueries.length,
+                shouldShow: isSearchInputFocused && recentSearchQueries.length > 0
+              })
+              return isSearchInputFocused && recentSearchQueries.length > 0
+            })() && (
+              <div className="recent-search-dropdown">
+                <div className="recent-search-header">최근 검색어</div>
+                <div className="recent-search-list">
+                  {recentSearchQueries.map((item, index) => (
+                    <button
+                      key={index}
+                      className="recent-search-item"
+                      onClick={() => {
+                        handleQueryChange(item.query)
+                        setIsSearchInputFocused(false)
+                      }}
+                      type="button"
+                    >
+                      <span className="recent-search-text">{item.query}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* B: 검색 모드 드롭다운 */}
@@ -609,7 +671,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             onClick={() => {
               // 검색 실행 시 현재 선택된 고객 저장
               setLastSearchCustomer(selectedCustomer)
+              // 검색어를 최근 목록에 추가
+              if (query.trim()) {
+                addRecentSearchQuery(query.trim())
+                setRecentSearchQueries(getRecentSearchQueries())
+              }
               handleSearch()
+              // 드롭다운 닫기
+              setIsSearchInputFocused(false)
             }}
             disabled={isLoading}
             aria-label={isLoading ? '검색 중' : '검색 실행'}

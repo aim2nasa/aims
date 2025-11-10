@@ -22,6 +22,7 @@
   justify-content: center; /* 중앙 정렬 */
   gap: 8px;
   flex-wrap: nowrap; /* 한 줄 유지 */
+  overflow: visible; /* 드롭다운이 잘리지 않도록 */
 }
 
 /* A: iOS Spotlight 서치필드 (10% 축소) */
@@ -35,6 +36,7 @@
   border-radius: 10px;
   padding: 8px 12px;
   transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  overflow: visible; /* 드롭다운이 잘리지 않도록 */
 }
 
 html[data-theme="dark"] .search-input-wrapper {
@@ -1721,4 +1723,123 @@ html[data-theme="dark"] .tips-list li {
 
 html[data-theme="dark"] .tips-list li::before {
   color: var(--color-ios-blue-dark);
+}
+
+/* === 🍎 RECENT SEARCH DROPDOWN: iOS Spotlight Style === */
+
+.recent-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+  border-radius: 10px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .recent-search-dropdown {
+  background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 0 0.5px rgba(255, 255, 255, 0.12);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recent-search-header {
+  padding: 8px 12px;
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-weight: 600;
+  color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+  background-color: var(--color-neutral-100); /* ✅ 불투명 라이트 그레이 */
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .recent-search-header {
+  color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+  background-color: var(--color-neutral-900); /* ✅ 불투명 다크 배경 */
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.recent-search-list {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+}
+
+html[data-theme="dark"] .recent-search-list {
+  background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+}
+
+.recent-search-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background-color: var(--color-neutral-0); /* ✅ 불투명 흰색 */
+  color: var(--color-neutral-900); /* ✅ 불투명 다크 텍스트 */
+  font-size: var(--font-size-subheadline); /* 15px */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .recent-search-item {
+  background-color: var(--color-neutral-800); /* ✅ 불투명 다크 배경 */
+  color: var(--color-neutral-50); /* ✅ 불투명 라이트 텍스트 */
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.recent-search-item:last-child {
+  border-bottom: none;
+}
+
+.recent-search-item:hover {
+  background-color: var(--color-neutral-100); /* ✅ 불투명 라이트 그레이 호버 */
+}
+
+html[data-theme="dark"] .recent-search-item:hover {
+  background-color: var(--color-neutral-700); /* ✅ 불투명 다크 호버 */
+}
+
+.recent-search-item:active {
+  background-color: var(--color-neutral-200); /* ✅ 불투명 라이트 그레이 active */
+}
+
+html[data-theme="dark"] .recent-search-item:active {
+  background-color: var(--color-neutral-600); /* ✅ 불투명 다크 active */
+}
+
+.recent-search-icon {
+  flex-shrink: 0;
+  color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+  font-size: 14px;
+}
+
+html[data-theme="dark"] .recent-search-icon {
+  color: var(--color-neutral-400); /* ✅ 불투명 미디엄 그레이 */
+}
+
+.recent-search-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
