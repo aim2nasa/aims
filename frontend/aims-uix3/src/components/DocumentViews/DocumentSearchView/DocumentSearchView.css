@@ -414,7 +414,7 @@ html[data-theme="dark"] .search-results-header {
     50px           /* 인덱스 (#) */
     minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
     110px          /* 연결된 고객 */
-    50px           /* 상태 (아이콘만) */
+    70px           /* 상태 */
     160px;         /* 액션 버튼 (5개: 상세/요약/전체/연결/유사도) */
   gap: 12px;
   align-items: center;
@@ -519,7 +519,7 @@ html[data-theme="dark"] .search-results-column-header .sortable.sorted {
     50px           /* 인덱스 (#) */
     minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
     110px          /* 연결된 고객 */
-    50px           /* 상태 (아이콘만) */
+    70px           /* 상태 */
     160px;         /* 액션 버튼 (5개: 상세/요약/전체/연결/유사도) */
   gap: 12px;
   align-items: center;
