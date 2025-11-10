@@ -1205,8 +1205,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
   // 탭 정의
   const tabs: Tab[] = [
-    { key: 'default', label: '기본 등록' },
-    { key: 'customer', label: '고객 파일 등록' }
+    { key: 'default', label: '나중에 고객 연결' },
+    { key: 'customer', label: '지금 고객 연결' }
   ]
 
   return (
