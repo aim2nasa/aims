@@ -411,7 +411,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                   value=""
                   options={recentCustomerOptions}
                   onChange={handleRecentCustomerSelect}
-                  width={150}
+                  width="100%"
                   aria-label="최근 선택한 고객"
                 />
               )}

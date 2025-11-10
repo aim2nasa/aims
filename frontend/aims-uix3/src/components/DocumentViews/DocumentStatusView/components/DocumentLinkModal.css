@@ -12,6 +12,15 @@
   overflow: visible;
 }
 
+/* 모달 크기 조정 (고객 선택과 문서 유형이 한 줄에 표시되도록) */
+.document-link-modal.modal--xl {
+  max-width: 700px; /* 기존 1000px → 700px */
+}
+
+.document-link-modal.modal--md {
+  max-width: 580px; /* 한 줄 표시를 위해 조정 */
+}
+
 /* ===== 모달 콘텐츠 - 드롭다운이 모달 밖으로 확장 가능 ===== */
 .document-link-modal .modal__content {
   overflow: visible;
@@ -233,7 +242,7 @@ html[data-theme="dark"] .document-link-modal__document-list {
   flex-direction: row;
   gap: var(--spacing-4);
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* 한 줄 표시 강제 */
   overflow: visible;
   position: relative;
   z-index: 1;
@@ -246,8 +255,7 @@ html[data-theme="dark"] .document-link-modal__document-list {
   flex-direction: row;
   gap: var(--spacing-3);
   align-items: center;
-  flex: 3; /* 60% 비율 */
-  min-width: 300px; /* 최소 너비 확보 */
+  flex: 1; /* 가능한 공간 차지 */
   overflow: visible; /* 드롭다운이 잘리지 않도록 */
   position: relative; /* 드롭다운 위치 기준 */
 }
@@ -421,8 +429,7 @@ html[data-theme="dark"] .recent-customer-card:hover {
 
 /* main-row 안의 인라인 필드는 적절한 너비 차지 */
 .document-link-modal__main-row .document-link-modal__field--inline {
-  flex: 2; /* 40% 비율 */
-  min-width: 200px; /* 문서 유형 드롭다운 최소 너비 */
+  flex: 1; /* 가능한 공간 차지 */
 }
 
 .document-link-modal__field--inline label {
