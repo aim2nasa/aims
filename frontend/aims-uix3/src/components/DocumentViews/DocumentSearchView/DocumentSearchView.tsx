@@ -597,7 +597,12 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onKeyPress={handleKeyPress}
               onFocus={() => {
                 console.log('[DocumentSearchView] 🔍 검색 입력 필드 포커스')
-                // 입력 필드 포커스 시에는 드롭다운 닫기 (검색 아이콘 클릭으로만 열림)
+                // 입력 필드 포커스 시 최근 검색어 드롭다운 열기
+                setIsSearchInputFocused(true)
+                // 최근 검색어 다시 불러오기
+                const recent = getRecentSearchQueries()
+                console.log('[DocumentSearchView] 📋 최근 검색어:', recent)
+                setRecentSearchQueries(recent)
               }}
               onBlur={() => {
                 // 드롭다운 클릭 시간을 주기 위해 지연
