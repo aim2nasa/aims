@@ -15,13 +15,16 @@
   border-radius: var(--radius-md);
   padding: 2px;
   gap: 2px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-inset-light);
+  margin-bottom: var(--spacing-md);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 html[data-theme="dark"] .tabs-bar {
   background-color: var(--color-layout-secondary-dark);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-inset-dark);
 }
 
 /* === 개별 탭 버튼 === */
@@ -31,21 +34,22 @@ html[data-theme="dark"] .tabs-bar {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 6px 12px;
   border: none;
   background-color: transparent;
   color: var(--color-text-secondary);
-  /* font-size: var(--font-size-sm); () */
-  /* font-weight: var(--font-weight-medium); () */
+  font-size: 13px;
+  font-weight: 500;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
   white-space: nowrap;
   user-select: none;
+  min-height: 28px;
 }
 
 .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.tabs-bar__tab--disabled) {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--color-hover-light);
   color: var(--color-text-primary);
 }
 
@@ -54,7 +58,7 @@ html[data-theme="dark"] .tabs-bar__tab {
 }
 
 html[data-theme="dark"] .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.tabs-bar__tab--disabled) {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-hover-dark);
   color: var(--color-text-primary);
 }
 
@@ -62,14 +66,15 @@ html[data-theme="dark"] .tabs-bar__tab:hover:not(.tabs-bar__tab--active):not(.ta
 .tabs-bar__tab--active {
   background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* font-weight: var(--font-weight-semibold); () */
+  box-shadow: var(--shadow-base);
+  font-weight: 600;
 }
 
 html[data-theme="dark"] .tabs-bar__tab--active {
   background-color: var(--color-layout-content-dark);
   color: var(--color-text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
+  font-weight: 600;
 }
 
 /* === 비활성화된 탭 === */
@@ -81,7 +86,7 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 /* === 탭 아이콘 === */
 .tabs-bar__tab-icon {
   display: inline-flex;
-  /* font-size: var(--font-size-md); () */
+  font-size: 14px;
 }
 
 /* === 탭 라벨 === */
@@ -93,7 +98,7 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 /* === 탭 카운트 (선택사항) === */
 .tabs-bar__tab-count {
   opacity: 0.6;
-  /* font-size: var(--font-size-xs); () */
+  font-size: 12px;
   margin-left: 2px;
 }
 
@@ -114,8 +119,8 @@ html[data-theme="dark"] .tabs-bar__tab--active {
 /* === 반응형 디자인 === */
 @media (max-width: 640px) {
   .tabs-bar__tab {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    /* font-size: var(--font-size-xs); () */
+    padding: 4px 8px;
+    font-size: 12px;
   }
 
   .tabs-bar__tab-label {
@@ -123,6 +128,6 @@ html[data-theme="dark"] .tabs-bar__tab--active {
   }
 
   .tabs-bar__tab-icon {
-    /* font-size: var(--font-size-lg); () */
+    font-size: 16px;
   }
 }
