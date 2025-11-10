@@ -51,16 +51,33 @@ html[data-theme="dark"] .search-input-wrapper:focus-within {
   background-color: var(--color-ios-bg-tertiary-dark);
 }
 
-/* 검색 아이콘 */
+/* 🍎 검색 아이콘 (클릭 가능, 최근 검색어 드롭다운 토글) */
 .search-icon {
   margin-right: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--color-ios-text-quaternary-light);
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.6;
   /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
 }
 
 html[data-theme="dark"] .search-icon {
+  background: transparent;
   color: var(--color-ios-text-quaternary-dark);
+}
+
+.search-icon:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.search-icon:active {
+  transform: scale(0.95);
 }
 
 /* 검색 입력 필드 */
@@ -87,6 +104,54 @@ html[data-theme="dark"] .search-input {
 
 html[data-theme="dark"] .search-input::placeholder {
   color: var(--color-ios-text-placeholder-dark);
+}
+
+/* 🍎 검색어 지우기 버튼 - Progressive Disclosure, iOS 스타일 */
+.clear-search-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  margin-top: -8px; /* height의 절반 (16px / 2) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ios-text-quaternary-light);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: opacity var(--duration-ios-quick) var(--easing-ease-out),
+              transform var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.6;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html[data-theme="dark"] .clear-search-button {
+  background: transparent;
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.clear-search-button:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.clear-search-button:active {
+  transform: scale(0.95);
+}
+
+.clear-search-button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] .clear-search-button:focus-visible {
+  outline-color: var(--color-primary-300);
 }
 
 /* Full Text 보기 버튼 - Progressive Disclosure */

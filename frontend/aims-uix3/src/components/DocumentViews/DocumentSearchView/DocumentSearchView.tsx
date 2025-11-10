@@ -570,7 +570,25 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
           {/* A: 검색 입력 필드 (flex-grow) */}
           <div className="search-input-wrapper">
-            <span className="search-icon" aria-hidden="true">🔍</span>
+            <button
+              className="search-icon"
+              onClick={() => {
+                console.log('[DocumentSearchView] 🔍 검색 아이콘 클릭')
+                // 최근 검색어 드롭다운 토글
+                const newFocusState = !isSearchInputFocused
+                setIsSearchInputFocused(newFocusState)
+                if (newFocusState) {
+                  // 드롭다운 열 때 최근 검색어 다시 불러오기
+                  const recent = getRecentSearchQueries()
+                  console.log('[DocumentSearchView] 📋 최근 검색어:', recent)
+                  setRecentSearchQueries(recent)
+                }
+              }}
+              aria-label="최근 검색어 보기"
+              type="button"
+            >
+              🔍
+            </button>
             <input
               type="text"
               className="search-input"
@@ -579,12 +597,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onKeyPress={handleKeyPress}
               onFocus={() => {
                 console.log('[DocumentSearchView] 🔍 검색 입력 필드 포커스')
-                setIsSearchInputFocused(true)
-                // 포커스 시 최근 검색어 다시 불러오기
-                const recent = getRecentSearchQueries()
-                console.log('[DocumentSearchView] 📋 포커스 시 최근 검색어:', recent)
-                console.log('[DocumentSearchView] 📊 배열 길이:', recent.length)
-                setRecentSearchQueries(recent)
+                // 입력 필드 포커스 시에는 드롭다운 닫기 (검색 아이콘 클릭으로만 열림)
               }}
               onBlur={() => {
                 // 드롭다운 클릭 시간을 주기 위해 지연
@@ -593,6 +606,19 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               placeholder="문서 검색"
               aria-label="문서 검색"
             />
+            {/* 🍎 검색어 지우기 버튼 (Progressive Disclosure) */}
+            {query.trim() && (
+              <button
+                className="clear-search-button"
+                onClick={() => {
+                  handleQueryChange('')
+                }}
+                aria-label="검색어 지우기"
+                type="button"
+              >
+                ✕
+              </button>
+            )}
             {/* 🍎 최근 검색어 드롭다운 */}
             {(() => {
               console.log('[DocumentSearchView] 🎯 드롭다운 렌더링 조건:', {
