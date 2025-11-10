@@ -139,7 +139,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   // 🍎 정렬 상태
   type SortField = 'filename' | 'customer' | 'status' | null
   type SortOrder = 'asc' | 'desc'
-  const [sortField, setSortField] = useState<SortField>(null)
+  const [sortField, setSortField] = useState<SortField>('filename')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
   /**
@@ -808,9 +808,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
                   </svg>
                   <span>파일명</span>
-                  {sortField === 'filename' && (
+                  {sortField === 'filename' ? (
                     <span className="sort-indicator" aria-hidden="true">
                       {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  ) : (
+                    <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                      <span className="sort-arrow">▲</span>
+                      <span className="sort-arrow">▼</span>
                     </span>
                   )}
                 </div>
@@ -832,9 +837,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                   </svg>
                   <span>연결된 고객</span>
-                  {sortField === 'customer' && (
+                  {sortField === 'customer' ? (
                     <span className="sort-indicator" aria-hidden="true">
                       {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  ) : (
+                    <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                      <span className="sort-arrow">▲</span>
+                      <span className="sort-arrow">▼</span>
                     </span>
                   )}
                 </div>
@@ -856,9 +866,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   <span>상태</span>
-                  {sortField === 'status' && (
+                  {sortField === 'status' ? (
                     <span className="sort-indicator" aria-hidden="true">
                       {sortOrder === 'asc' ? '▲' : '▼'}
+                    </span>
+                  ) : (
+                    <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                      <span className="sort-arrow">▲</span>
+                      <span className="sort-arrow">▼</span>
                     </span>
                   )}
                 </div>

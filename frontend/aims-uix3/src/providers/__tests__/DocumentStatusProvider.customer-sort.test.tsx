@@ -96,7 +96,7 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
   })
 
   describe('Unit Tests - sortField 타입', () => {
-    it('sortField 초기값이 null이어야 함', async () => {
+    it('sortField 초기값이 uploadDate이고 sortDirection이 desc여야 함', async () => {
       const { result } = renderHook(() => useDocumentStatusContext(), {
         wrapper: ({ children }) => <DocumentStatusProvider>{children}</DocumentStatusProvider>,
       })
@@ -105,7 +105,8 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
         expect(result.current.state.isLoading).toBe(false)
       })
 
-      expect(result.current.state.sortField).toBeNull()
+      expect(result.current.state.sortField).toBe('uploadDate')
+      expect(result.current.state.sortDirection).toBe('desc')
     })
 
     it('sortField를 "customer"로 설정할 수 있어야 함', async () => {

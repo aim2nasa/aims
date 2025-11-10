@@ -85,6 +85,9 @@
   /* Icon Colors */
   --color-hamburger-icon: var(--color-hamburger-icon-light);
 
+  /* Sort Indicator Colors */
+  --color-sort-indicator-active: var(--color-error-600); /* 선택된 정렬 컬럼 강조 */
+
   /* Hamburger Button Colors - Light Theme */
   --color-hamburger-button-bg: var(--color-hamburger-button-bg-light);
 
@@ -247,6 +250,9 @@
 
   /* Icon Colors - Dark Theme */
   --color-hamburger-icon: var(--color-hamburger-icon-dark);
+
+  /* Sort Indicator Colors - Dark Theme */
+  --color-sort-indicator-active: var(--color-error); /* 선택된 정렬 컬럼 강조 */
 
   /* Hamburger Button Colors - Dark Theme */
   --color-hamburger-button-bg: var(--color-hamburger-button-bg-dark);

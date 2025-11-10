@@ -59,8 +59,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [totalCount, setTotalCount] = useState<number>(0)
 
   // 🍎 Sort State
-  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null>('uploadDate')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   // 🍎 Customer Link Filter State
   const [customerLinkFilter, setCustomerLinkFilter] = useState<CustomerLinkFilter>('all')
