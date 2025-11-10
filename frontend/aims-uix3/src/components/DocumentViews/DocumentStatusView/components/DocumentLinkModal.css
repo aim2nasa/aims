@@ -475,7 +475,7 @@ html[data-theme="dark"] .document-link-modal__textarea {
 
 /* Dropdown 메뉴 높이 제한 (모달 내부) - 모든 드롭다운에 적용 */
 .document-link-modal .ios-dropdown__menu {
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 9999;
@@ -483,9 +483,9 @@ html[data-theme="dark"] .document-link-modal__textarea {
   touch-action: pan-y;
 }
 
-/* 고객 선택 드롭다운 메뉴 (스크롤 보장) */
+/* 고객 선택 드롭다운 메뉴 (더 많은 항목 표시) */
 .document-link-modal__customer-selection .ios-dropdown__menu {
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 10000;
@@ -495,7 +495,7 @@ html[data-theme="dark"] .document-link-modal__textarea {
 
 /* 고객 드롭다운 옵션 많을 때 스크롤 명시 */
 .document-link-modal__selected-customer .ios-dropdown .ios-dropdown__menu {
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: scroll;
   overflow-x: hidden;
   z-index: 10000;
