@@ -7,14 +7,27 @@
  * 컴포넌트 고유 스타일(검색, 고객 선택, 중복 체크 등)만 유지
  */
 
+/* ===== 모달 컨테이너 - 드롭다운 오버플로우 허용 ===== */
+.document-link-modal.modal {
+  overflow: visible;
+}
+
+/* ===== 모달 콘텐츠 - 드롭다운이 모달 밖으로 확장 가능 ===== */
+.document-link-modal .modal__content {
+  overflow: visible;
+}
+
 /* ===== 모달 바디 ===== */
 .document-link-modal__content {
   flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: visible; /* 드롭다운이 모달 밖으로 나갈 수 있도록 */
+  overflow: visible;
   padding: 16px 20px;
   background-color: var(--color-layout-secondary-light);
   min-height: 0;
+  max-height: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overscroll-behavior: none;
 }
 
 html[data-theme="dark"] .document-link-modal__content {
@@ -40,11 +53,12 @@ html[data-theme="dark"] .document-link-modal__content {
 
 .document-link-modal__section {
   padding: 0;
-  margin-bottom: var(--spacing-1); /* 여백 최소화 */
+  margin-bottom: var(--spacing-1);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1); /* 여백 최소화 */
-  overflow: visible; /* 드롭다운이 섹션 밖으로 나갈 수 있도록 */
+  gap: var(--spacing-1);
+  overflow: visible;
+  position: relative;
 }
 
 .document-link-modal__section:last-child {
@@ -219,9 +233,10 @@ html[data-theme="dark"] .document-link-modal__document-list {
   flex-direction: row;
   gap: var(--spacing-4);
   align-items: center;
-  flex-wrap: wrap; /* 모바일에서 줄바꿈 허용 */
-  overflow: visible; /* 드롭다운이 row 밖으로 나갈 수 있도록 */
-  position: relative; /* 드롭다운 위치 기준점 */
+  flex-wrap: wrap;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== 고객 선택 영역 ===== */
@@ -233,6 +248,8 @@ html[data-theme="dark"] .document-link-modal__document-list {
   align-items: center;
   flex: 3; /* 60% 비율 */
   min-width: 300px; /* 최소 너비 확보 */
+  overflow: visible; /* 드롭다운이 잘리지 않도록 */
+  position: relative; /* 드롭다운 위치 기준 */
 }
 
 /* 고객선택 버튼 높이 (B) - A 영역과 동일 */
@@ -242,48 +259,38 @@ html[data-theme="dark"] .document-link-modal__document-list {
   max-height: 36px;
 }
 
+/* 🍎 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
 .document-link-modal__selected-customer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  overflow: visible; /* 드롭다운이 잘리지 않도록 */
+  position: relative; /* 드롭다운 위치 기준 */
+}
+
+/* 고객 선택됨: 이름 + X 버튼 컨테이너 */
+.document-link-modal__selected-customer > span.selected-customer-name {
   border: 1px solid var(--color-ios-separator-light);
   border-radius: var(--radius-lg);
   padding: 0 var(--spacing-3);
   background: var(--color-bg-secondary);
   height: 36px;
-  min-height: 36px;
-  max-height: 36px;
   display: flex;
   align-items: center;
   flex: 1;
-}
-
-html[data-theme="dark"] .document-link-modal__selected-customer {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
-}
-
-.selected-customer-info {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--spacing-2);
-  width: 100%;
-}
-
-.selected-customer-name {
   font-weight: 600;
   color: var(--color-text-primary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-size: var(--font-size-footnote);
   font-family: var(--font-family-text);
-  flex-shrink: 0;
 }
 
-.selected-customer-phone {
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  color: var(--color-text-secondary);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+html[data-theme="dark"] .document-link-modal__selected-customer > span.selected-customer-name {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
 .clear-customer-button {
@@ -310,14 +317,7 @@ html[data-theme="dark"] .document-link-modal__selected-customer {
   transform: scale(1.1);
 }
 
-.customer-placeholder {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
-  font-family: var(--font-family-text);
-  font-style: italic;
-}
-
-/* ===== 최근 선택 고객 섹션 ===== */
+/* ===== (사용 안 함) 최근 선택 고객 섹션 - DocumentSearchView 드롭다운 방식 사용 ===== */
 .document-link-modal__recent-customers {
   margin-top: var(--spacing-2);
   padding-top: var(--spacing-2);
@@ -473,11 +473,34 @@ html[data-theme="dark"] .document-link-modal__textarea {
 
 /* ===== 입력 필드 및 버튼 스타일 ===== */
 
-/* Dropdown 메뉴 높이 제한 (모달 내부) */
+/* Dropdown 메뉴 높이 제한 (모달 내부) - 모든 드롭다운에 적용 */
 .document-link-modal .ios-dropdown__menu {
-  max-height: 180px; /* 높이 축소하여 스크롤 활성화 */
+  max-height: 200px;
   overflow-y: auto;
-  z-index: 1000; /* 다른 요소 위에 표시 */
+  overflow-x: hidden;
+  z-index: 9999;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* 고객 선택 드롭다운 메뉴 (스크롤 보장) */
+.document-link-modal__customer-selection .ios-dropdown__menu {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 10000;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* 고객 드롭다운 옵션 많을 때 스크롤 명시 */
+.document-link-modal__selected-customer .ios-dropdown .ios-dropdown__menu {
+  max-height: 200px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  z-index: 10000;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 /* Dropdown 트리거 높이 (D) - A 영역과 동일 */
@@ -555,23 +578,10 @@ html[data-theme="dark"] .document-link-modal__button--cancel.button--ghost {
   color: var(--color-text-secondary);
 }
 
-/* ===== 스크롤바 스타일 (WebKit) ===== */
+/* ===== 스크롤바 스타일 (WebKit) - 모달 바디는 스크롤 없음 ===== */
 
 .document-link-modal__content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.document-link-modal__content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.document-link-modal__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-layout-border);
-  border-radius: 4px;
-}
-
-.document-link-modal__content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
+  display: none; /* 스크롤바 숨김 */
 }
 
 @media (max-width: 768px) {

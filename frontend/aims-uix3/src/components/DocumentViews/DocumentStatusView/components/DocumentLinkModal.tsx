@@ -8,7 +8,7 @@
  * - iOS 스타일 디자인
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import type { Document, DocumentCustomerRelation } from '../../../../types/documentStatus'
 import { DocumentStatusService } from '../../../../services/DocumentStatusService'
 import type { Customer } from '@/entities/customer'
@@ -158,6 +158,43 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     // 기존 고객 선택 핸들러 호출
     await handleSelectCustomer(customer)
   }
+
+  /**
+   * 🍎 최근 고객 드롭다운 옵션 생성 (DocumentSearchView와 동일)
+   */
+  const recentCustomerOptions = useMemo((): DropdownOption[] => {
+    const options: DropdownOption[] = [
+      { value: '', label: '고객 미선택' }
+    ]
+
+    recentCustomers.forEach(customer => {
+      options.push({
+        value: customer._id,
+        label: customer.name
+      })
+    })
+
+    return options
+  }, [recentCustomers])
+
+  /**
+   * 🍎 최근 고객 드롭다운에서 선택 핸들러 (DocumentSearchView와 동일)
+   */
+  const handleRecentCustomerSelect = useCallback(async (customerId: string) => {
+    if (!customerId) {
+      // "고객 미선택" 선택
+      setSelectedCustomer(null)
+      setDuplicateWarning(null)
+      return
+    }
+
+    // 최근 고객 목록에서 찾기
+    const recentCustomer = recentCustomers.find(c => c._id === customerId)
+    if (recentCustomer) {
+      // Customer 객체 재구성
+      await handleQuickSelectCustomer(recentCustomer)
+    }
+  }, [recentCustomers, handleQuickSelectCustomer])
 
   /**
    * 연결 실행 (단일/일괄 모두 지원)
@@ -340,7 +377,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       {/* Customer Selection & Document Type */}
       <section className="document-link-modal__section">
         <div className="document-link-modal__main-row">
-          {/* 고객 선택 */}
+          {/* 🍎 고객 선택 (DocumentSearchView와 동일한 패턴) */}
           <div className="document-link-modal__customer-selection">
             <Button
               variant="secondary"
@@ -350,18 +387,12 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
               고객선택
             </Button>
 
-            {/* 선택된 고객 표시 */}
+            {/* 🍎 선택된 고객 표시 또는 최근 고객 드롭다운 */}
             <div className="document-link-modal__selected-customer">
               {selectedCustomer ? (
-                <div className="selected-customer-info">
+                <>
                   <span className="selected-customer-name">
                     {selectedCustomer.personal_info?.name || '이름 없음'}
-                  </span>
-                  <span className="selected-customer-phone">
-                    {selectedCustomer.personal_info?.mobile_phone ||
-                     selectedCustomer.personal_info?.home_phone ||
-                     selectedCustomer.personal_info?.work_phone ||
-                     '연락처 없음'}
                   </span>
                   <button
                     className="clear-customer-button"
@@ -374,9 +405,15 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
                   >
                     ✕
                   </button>
-                </div>
+                </>
               ) : (
-                <span className="customer-placeholder">고객을 선택해주세요</span>
+                <Dropdown
+                  value=""
+                  options={recentCustomerOptions}
+                  onChange={handleRecentCustomerSelect}
+                  width={150}
+                  aria-label="최근 선택한 고객"
+                />
               )}
             </div>
           </div>
@@ -393,28 +430,6 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             />
           </div>
         </div>
-
-        {/* 최근 선택 고객 - 빠른 선택 */}
-        {recentCustomers.length > 0 && !selectedCustomer && (
-          <div className="document-link-modal__recent-customers">
-            <div className="recent-customers-header">
-              <span className="recent-customers-label">최근 선택 고객</span>
-            </div>
-            <div className="recent-customers-list">
-              {recentCustomers.map((customer) => (
-                <button
-                  key={customer._id}
-                  className="recent-customer-card"
-                  onClick={() => handleQuickSelectCustomer(customer)}
-                  aria-label={`고객 ${customer.name} 선택`}
-                >
-                  <div className="recent-customer-icon">👤</div>
-                  <span className="recent-customer-name">{customer.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
 
     {/* Memo */}
