@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
+import Tooltip from '../Tooltip'
 import './UsageGuide.css'
 
 export interface GuideSection {
@@ -74,12 +75,16 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({
           </svg>
           <span className="usage-guide__title">{title}</span>
         </div>
-        <SFSymbol
-          name={isExpanded ? 'chevron.up' : 'chevron.down'}
-          size={SFSymbolSize.CAPTION_1}
-          weight={SFSymbolWeight.SEMIBOLD}
-          className="usage-guide__chevron"
-        />
+        <Tooltip content={isExpanded ? '가이드 접기' : '가이드 펼치기'}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <SFSymbol
+              name={isExpanded ? 'chevron.up' : 'chevron.down'}
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.SEMIBOLD}
+              className="usage-guide__chevron"
+            />
+          </div>
+        </Tooltip>
       </button>
 
       {/* 내용 (펼쳤을 때만 표시) */}
