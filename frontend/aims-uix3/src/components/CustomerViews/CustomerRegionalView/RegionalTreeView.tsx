@@ -635,6 +635,72 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   }, [regionalGroups, customers])
 
   // 필터 변경 핸들러
+  /**
+   * 선택된 지역/구군의 고객 분포를 분석하여 최적의 지도 뷰 계산
+   * @param region 선택된 광역시/도
+   * @param district 선택된 구/군 (빈 문자열이면 지역 전체)
+   * @returns 최적의 지도 중심 좌표, 없으면 null
+   */
+  const calculateOptimalMapView = (region: string, district: string): { lat: number; lng: number } | null => {
+    // 현재 필터에 맞는 고객들 중 선택된 지역/구군에 속하는 고객들만 필터링
+    const relevantCustomers = typeFilteredCustomers.filter(customer => {
+      const address = customer.personal_info?.address?.address1
+      if (!address) return false
+
+      const parts = address.split(' ')
+      const rawCity = parts[0] || ''
+      const customerDistrict = parts[1] || ''
+      const city = normalizeProvinceName(rawCity)
+
+      // 지역 필터
+      if (region && city !== region) return false
+
+      // 구/군 필터 (district가 빈 문자열이면 전체 구/군)
+      if (district && customerDistrict !== district) return false
+
+      return true
+    })
+
+    if (relevantCustomers.length === 0) {
+      return null // 고객이 없으면 null 반환
+    }
+
+    // 고객들이 속한 구/군의 좌표 수집 (중복 제거)
+    const uniqueDistricts = new Set<string>()
+    relevantCustomers.forEach(customer => {
+      const address = customer.personal_info?.address?.address1
+      if (!address) return
+
+      const parts = address.split(' ')
+      const rawCity = parts[0] || ''
+      const customerDistrict = parts[1] || ''
+      const city = normalizeProvinceName(rawCity)
+
+      const key = `${city}-${customerDistrict}`
+      if (DISTRICT_CENTER_COORDS[key]) {
+        uniqueDistricts.add(key)
+      }
+    })
+
+    // 각 구/군의 좌표 수집
+    const coordinates: Array<{ lat: number; lng: number }> = []
+    uniqueDistricts.forEach(key => {
+      if (DISTRICT_CENTER_COORDS[key]) {
+        coordinates.push(DISTRICT_CENTER_COORDS[key])
+      }
+    })
+
+    if (coordinates.length === 0) {
+      return null // 좌표를 찾을 수 없으면 null 반환
+    }
+
+    // 모든 좌표의 평균 중심 계산
+    const avgLat = coordinates.reduce((sum, coord) => sum + coord.lat, 0) / coordinates.length
+    const avgLng = coordinates.reduce((sum, coord) => sum + coord.lng, 0) / coordinates.length
+
+    return { lat: avgLat, lng: avgLng }
+  }
+
   const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
     setCustomerTypeFilter(filter)
   }
@@ -644,9 +710,14 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     // 지역 변경 시 구군 선택 초기화
     setSelectedDistrict('')
 
-    // 지역 선택 시 지도 중심 이동 (고객 유무와 관계없이 항상 이동)
-    if (region && PROVINCE_CENTER_COORDS[region]) {
-      setMapCenter(PROVINCE_CENTER_COORDS[region])
+    // 지역 선택 시 고객 분포 기반 최적 지도 뷰 계산
+    if (region) {
+      const optimalView = calculateOptimalMapView(region, '')
+      if (optimalView) {
+        setMapCenter(optimalView)
+      } else if (PROVINCE_CENTER_COORDS[region]) {
+        setMapCenter(PROVINCE_CENTER_COORDS[region])
+      }
     } else {
       // 전체 지역 선택 시 중심 좌표 초기화
       setMapCenter(null)
@@ -656,22 +727,29 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   const handleDistrictChange = (district: string) => {
     setSelectedDistrict(district)
 
-    // 구/군 선택 시 지도 이동
-    // 1순위: 구/군별 정확한 좌표 사용 (DISTRICT_CENTER_COORDS)
-    // 2순위: 없으면 광역시/도 중심 좌표 사용 (PROVINCE_CENTER_COORDS)
+    // 구/군 선택 시 고객 분포 기반 최적 지도 뷰 계산
     if (district && selectedRegion) {
-      const districtKey = `${selectedRegion}-${district}`
-      if (DISTRICT_CENTER_COORDS[districtKey]) {
-        // 구/군별 정확한 좌표가 있으면 사용
-        setMapCenter(DISTRICT_CENTER_COORDS[districtKey])
-      } else if (PROVINCE_CENTER_COORDS[selectedRegion]) {
-        // 없으면 광역시/도 중심 좌표 사용
-        setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+      const optimalView = calculateOptimalMapView(selectedRegion, district)
+      if (optimalView) {
+        setMapCenter(optimalView)
+      } else {
+        // 고객이 없으면 기본 좌표 사용
+        const districtKey = `${selectedRegion}-${district}`
+        if (DISTRICT_CENTER_COORDS[districtKey]) {
+          setMapCenter(DISTRICT_CENTER_COORDS[districtKey])
+        } else if (PROVINCE_CENTER_COORDS[selectedRegion]) {
+          setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+        }
       }
     } else {
-      // 전체 구/군 선택 시 지역 중심으로 이동
-      if (selectedRegion && PROVINCE_CENTER_COORDS[selectedRegion]) {
-        setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+      // 전체 구/군 선택 시 지역 전체 뷰
+      if (selectedRegion) {
+        const optimalView = calculateOptimalMapView(selectedRegion, '')
+        if (optimalView) {
+          setMapCenter(optimalView)
+        } else if (PROVINCE_CENTER_COORDS[selectedRegion]) {
+          setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+        }
       }
     }
   }

@@ -25,6 +25,7 @@ interface NaverPoint {
 
 interface NaverBounds {
   hasLatLng(latlng: NaverLatLng): boolean
+  extend(latlng: NaverLatLng): void
 }
 
 interface NaverMarker {
@@ -45,6 +46,7 @@ interface NaverMap {
   getZoom(): number
   setZoom(zoom: number): void
   panBy(point: NaverPoint): void
+  fitBounds(bounds: NaverBounds, options?: { top?: number; right?: number; bottom?: number; left?: number }): void
 }
 
 interface NaverMapsEvent {
@@ -59,6 +61,7 @@ interface NaverMapsNamespace {
   maps: {
     LatLng: new (lat: number, lng: number) => NaverLatLng
     Point: new (x: number, y: number) => NaverPoint
+    LatLngBounds: new (sw?: NaverLatLng, ne?: NaverLatLng) => NaverBounds
     Map: new (element: HTMLElement, options: unknown) => NaverMap
     Marker: new (options: {
       position: NaverLatLng
@@ -313,11 +316,8 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }
       }
 
-      // 지도의 현재 경계 가져오기
-      if (!mapInstance.current) return
-      const bounds = mapInstance.current.getBounds()
-
       // 1단계: 모든 Geocoding 요청을 병렬로 실행 (캐시 우선 사용)
+      if (!mapInstance.current) return
       let completedCount = 0
 
       const geocodingTasks = customersWithAddress.map(async (customer) => {
@@ -376,25 +376,49 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       // 2단계: 주소별로 고객 그룹화 (address1 기준)
       addressGroups.current.clear()
 
+      // 실제 고객 위치로 bounds 계산 (지역/구군 선택 시)
+      const allPositions: Array<{ lat: number; lng: number }> = []
+
       for (const item of geocodingResults) {
         if (!item) continue
 
         const { customer, result } = item
-        const position = new window.naver.maps.LatLng(result.latitude, result.longitude)
 
-        // 지도 범위 밖이면 마커 생성하지 않음
-        if (!bounds.hasLatLng(position)) {
-          if (import.meta.env.DEV) {
-            console.log(`[NaverMap] 범위 밖: ${customer.personal_info?.name} - 마커 생성 안 함`)
-          }
-          continue
-        }
+        // 모든 고객 위치를 수집 (bounds 계산용)
+        allPositions.push({ lat: result.latitude, lng: result.longitude })
 
         const address1 = customer.personal_info?.address?.address1 || ''
         if (!addressGroups.current.has(address1)) {
           addressGroups.current.set(address1, [])
         }
         addressGroups.current.get(address1)!.push({ customer, result })
+      }
+
+      // 지역/구군 선택 시: 실제 고객 위치로 지도 bounds 자동 조정
+      if (allPositions.length > 0 && (selectedRegion || selectedDistrict) && mapInstance.current) {
+        // 첫 번째 고객 위치로 초기 bounds 생성 (length > 0이므로 안전)
+        const firstPos = allPositions[0]!
+        const bounds = new window.naver.maps.LatLngBounds(
+          new window.naver.maps.LatLng(firstPos.lat, firstPos.lng),
+          new window.naver.maps.LatLng(firstPos.lat, firstPos.lng)
+        )
+
+        // 모든 고객 위치를 포함하도록 bounds 확장
+        allPositions.forEach(pos => {
+          bounds.extend(new window.naver.maps.LatLng(pos.lat, pos.lng))
+        })
+
+        // bounds에 약간의 여백 추가 (padding)
+        mapInstance.current.fitBounds(bounds, {
+          top: 50,
+          right: 50,
+          bottom: 50,
+          left: 50
+        })
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] 실제 고객 위치로 bounds 조정: ${allPositions.length}명`)
+        }
       }
 
       // 3단계: 그룹별로 마커 생성
