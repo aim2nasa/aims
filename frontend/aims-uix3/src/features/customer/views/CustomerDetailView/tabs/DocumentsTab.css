@@ -734,3 +734,145 @@ html[data-theme="dark"] .customer-documents-item:hover .document-txt-badge {
 .document-notes-btn:active {
   transform: scale(0.95);
 }
+
+/* === 🍎 DELETE MODE: 삭제 기능 (DocumentLibraryView와 동일) === */
+
+/* 삭제 아이콘 버튼 */
+.edit-mode-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-error);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.9;
+}
+
+.edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.edit-mode-icon-button:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(100%);
+}
+
+.edit-mode-icon-button:disabled:hover {
+  opacity: 0.2;
+  transform: none;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button {
+  color: var(--color-error);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:disabled {
+  opacity: 0.15;
+  filter: grayscale(100%);
+}
+
+html[data-theme="dark"] .edit-mode-icon-button:disabled:hover {
+  opacity: 0.15;
+  transform: none;
+}
+
+.edit-mode-icon-button--active {
+  color: var(--color-success);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .edit-mode-icon-button--active {
+  color: var(--color-success);
+}
+
+/* 선택된 개수 표시 */
+.selected-count-inline {
+  font-size: var(--font-size-callout);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* 체크박스 헤더 */
+.header-checkbox {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.document-select-all-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+/* 체크박스 래퍼 */
+.document-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.document-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-500);
+}
+
+/* 삭제 모드일 때 그리드 레이아웃 변경 */
+.customer-documents--delete-mode .customer-documents-list-header {
+  grid-template-columns:
+    24px              /* 체크박스 */
+    24px              /* 파일 타입 아이콘 */
+    minmax(150px, 1fr)  /* 파일명 (가변) */
+    80px              /* 크기 */
+    130px             /* 연결일 */
+    52px;             /* 액션 버튼 (2개) */
+}
+
+.customer-documents--delete-mode .customer-documents-item {
+  grid-template-columns:
+    24px              /* 체크박스 */
+    24px              /* 파일 타입 아이콘 */
+    minmax(150px, 1fr)  /* 파일명 (가변) */
+    80px              /* 크기 */
+    130px             /* 연결일 */
+    52px;             /* 액션 버튼 (2개) */
+}
+
+/* 선택된 문서 하이라이트 */
+.customer-documents--delete-mode .customer-documents-item--selected {
+  background: var(--color-ios-bg-selected-light);
+}
+
+html[data-theme="dark"] .customer-documents--delete-mode .customer-documents-item--selected {
+  background: var(--color-ios-bg-selected-dark);
+}
+
+.customer-documents--delete-mode .customer-documents-item--selected:hover {
+  background: var(--color-ios-bg-selected-light);
+}
+
+html[data-theme="dark"] .customer-documents--delete-mode .customer-documents-item--selected:hover {
+  background: var(--color-ios-bg-selected-dark);
+}

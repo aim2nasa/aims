@@ -11,7 +11,7 @@
 import React, { useCallback, useState, useMemo } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import RefreshButton from '../../../../../components/RefreshButton/RefreshButton'
-import { Tooltip } from '@/shared/ui'
+import { Tooltip, Button } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import SFSymbol, {
   SFSymbolAnimation,
@@ -97,6 +97,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     documentId?: string | undefined
     notes: string
   } | null>(null)
+
+  // 🍎 삭제 기능 상태 (DocumentLibraryView와 동일)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 🍎 정렬 핸들러
   const handleSort = useCallback((field: SortField) => {
@@ -286,6 +291,138 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     }
   }, [selectedNotes, customer, refresh])
 
+  // 🍎 삭제 모드 토글 핸들러 (DocumentLibraryView와 동일)
+  const handleToggleDeleteMode = useCallback(() => {
+    if (isDeleteMode) {
+      setSelectedDocumentIds(new Set())
+    }
+    setIsDeleteMode(!isDeleteMode)
+  }, [isDeleteMode])
+
+  // 🍎 전체 선택/해제 핸들러
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      const allIds = paginatedDocuments
+        .map(doc => doc._id)
+        .filter((id): id is string => id !== undefined && id !== null)
+      setSelectedDocumentIds(new Set(allIds))
+    } else {
+      setSelectedDocumentIds(new Set())
+    }
+  }, [paginatedDocuments])
+
+  // 🍎 개별 선택/해제 핸들러
+  const handleSelectDocument = useCallback((documentId: string, event: React.ChangeEvent<HTMLInputElement> | React.MouseEvent) => {
+    event.stopPropagation()
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(documentId)) {
+        newSet.delete(documentId)
+      } else {
+        newSet.add(documentId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // 🍎 문서 삭제 핸들러 (DocumentLibraryView와 동일)
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedDocumentIds.size === 0) {
+      await confirmController.actions.openModal({
+        title: '선택 항목 없음',
+        message: '삭제할 문서를 선택해주세요.',
+        confirmText: '확인',
+        showCancel: false,
+      })
+      return
+    }
+
+    // 확인 모달 표시
+    const confirmed = await confirmController.actions.openModal({
+      title: '문서 삭제',
+      message: `선택한 ${selectedDocumentIds.size}개의 문서를 삭제하시겠습니까?`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      showCancel: true,
+      confirmStyle: 'destructive',
+    })
+
+    if (!confirmed) return
+
+    try {
+      setIsDeleting(true)
+
+      // 선택된 모든 문서 삭제
+      const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
+        try {
+          const response = await fetch(`/api/documents/${docId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `Failed to delete document ${docId}`)
+          }
+
+          return { success: true, docId }
+        } catch (error) {
+          console.error(`Error deleting document ${docId}:`, error)
+          return { success: false, docId, error }
+        }
+      })
+
+      const results = await Promise.all(deletePromises)
+      const failedDeletes = results.filter((r) => !r.success)
+
+      // 선택 초기화 및 삭제 모드 종료
+      setSelectedDocumentIds(new Set())
+      setIsDeleteMode(false)
+      setIsDeleting(false) // 모달 표시 전에 상태 복원
+
+      // 부모 컴포넌트에 삭제 완료 알림
+      onRefresh?.()
+
+      // 문서 목록 새로고침
+      await refresh()
+
+      // 🍎 문서 라이브러리 즉시 새로고침
+      if (onDocumentLibraryRefresh) {
+        await onDocumentLibraryRefresh()
+      }
+
+      // 결과 모달 표시 (비동기, 상태 복원 후)
+      if (failedDeletes.length > 0) {
+        // 일부 삭제 실패
+        await confirmController.actions.openModal({
+          title: '삭제 실패',
+          message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
+          confirmText: '확인',
+          showCancel: false,
+        })
+      } else {
+        // 모두 성공
+        await confirmController.actions.openModal({
+          title: '삭제 완료',
+          message: `${selectedDocumentIds.size}개의 문서가 삭제되었습니다.`,
+          confirmText: '확인',
+          showCancel: false,
+        })
+      }
+    } catch (error) {
+      console.error('Error in handleDeleteSelected:', error)
+      setIsDeleting(false) // 에러 발생 시에도 상태 복원
+      await confirmController.actions.openModal({
+        title: '삭제 실패',
+        message: '문서 삭제 중 오류가 발생했습니다.',
+        confirmText: '확인',
+        showCancel: false,
+      })
+    }
+  }, [selectedDocumentIds, confirmController, onRefresh, refresh, onDocumentLibraryRefresh])
+
   const renderState = () => {
     if (isLoading && documents.length === 0) {
       return (
@@ -342,13 +479,53 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     : null
 
   return (
-    <div className="customer-documents">
+    <div className={`customer-documents ${isDeleteMode ? 'customer-documents--delete-mode' : ''}`}>
       <div className="customer-documents__header">
         <div className="customer-documents__summary">
+          {/* 🍎 삭제 버튼 */}
+          <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+            <button
+              className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+              onClick={handleToggleDeleteMode}
+              aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+            >
+              {isDeleteMode ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+              )}
+            </button>
+          </Tooltip>
+
           <span className="customer-documents__count">
             총 <strong>{documentCount}</strong>건 연결됨
           </span>
-          {lastUpdatedLabel && (
+
+          {/* 🍎 삭제 모드일 때: 선택된 개수 + 삭제 버튼 */}
+          {isDeleteMode && (
+            <>
+              <span className="selected-count-inline">
+                {selectedDocumentIds.size}개 선택됨
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteSelected}
+                disabled={isDeleting || selectedDocumentIds.size === 0}
+              >
+                {isDeleting ? '삭제 중...' : '삭제'}
+              </Button>
+            </>
+          )}
+
+          {!isDeleteMode && lastUpdatedLabel && (
             <span className="customer-documents__updated">
               마지막 동기화: {lastUpdatedLabel}
             </span>
@@ -372,6 +549,18 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
           <div className="customer-documents__list-container">
             {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
             <div className="customer-documents-list-header">
+              {/* 🍎 삭제 모드일 때만 체크박스 표시 */}
+              {isDeleteMode && (
+                <div className="header-checkbox">
+                  <input
+                    type="checkbox"
+                    className="document-select-all-checkbox"
+                    checked={selectedDocumentIds.size === paginatedDocuments.length && paginatedDocuments.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    aria-label="전체 선택"
+                  />
+                </div>
+              )}
               <div className="header-icon"></div>
               <div
                 className="header-filename header-sortable"
@@ -440,8 +629,21 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               return (
                 <div
                   key={documentId}
-                  className="customer-documents-item"
+                  className={`customer-documents-item ${selectedDocumentIds.has(document._id ?? '') ? 'customer-documents-item--selected' : ''}`}
                 >
+                  {/* 🍎 삭제 모드일 때만 체크박스 표시 */}
+                  {isDeleteMode && document._id && (
+                    <div className="document-checkbox-wrapper">
+                      <input
+                        type="checkbox"
+                        className="document-checkbox"
+                        checked={selectedDocumentIds.has(document._id)}
+                        onChange={(e) => handleSelectDocument(document._id!, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`${document.originalName ?? '문서'} 선택`}
+                      />
+                    </div>
+                  )}
                   {/* 파일 타입 아이콘 */}
                   <div className="document-icon-wrapper">
                     <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, document.originalName)}`}>
