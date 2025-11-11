@@ -29,3 +29,6 @@ export { Modal } from './Modal';
 export type { ModalProps } from './Modal';
 export { DraggableModal } from './DraggableModal';
 export type { DraggableModalProps } from './DraggableModal';
+
+export { StatCard } from './StatCard';
+export type { StatCardProps } from './StatCard';
