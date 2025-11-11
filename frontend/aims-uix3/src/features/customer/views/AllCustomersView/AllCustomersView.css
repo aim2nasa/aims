@@ -168,10 +168,62 @@ html[data-theme="dark"] .customer-library-result-header {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-secondary-light);
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 html[data-theme="dark"] .result-count {
   color: var(--color-ios-text-secondary-dark);
+}
+
+/* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
+.type-filter-button {
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--color-ios-text-tertiary-light);
+  transition: all 0.15s ease-out;
+  user-select: none;
+}
+
+html[data-theme="dark"] .type-filter-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.type-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .type-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.type-filter-button.active {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .type-filter-button.active {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.type-filter-separator {
+  color: var(--color-ios-text-quaternary-light);
+  user-select: none;
+}
+
+html[data-theme="dark"] .type-filter-separator {
+  color: var(--color-ios-text-quaternary-dark);
 }
 
 /* === 🍎 RESULT CONTROLS: 정렬 및 새로고침 === */

@@ -43,6 +43,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
     const [currentPage, setCurrentPage] = usePersistedState('customer-all-page', 1);
+    const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-all-type-filter', 'all');
 
     // 칼럼 정렬 상태
     const [sortField, setSortField] = usePersistedState<SortField | null>('customer-all-sort-field', null);
@@ -69,25 +70,35 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       loadCustomers({ limit: 10000, page: 1 });
     }, [loadCustomers]);
 
-    // 검색 필터링된 고객 목록
+    // 검색 및 유형 필터링된 고객 목록
     const filteredCustomers = useMemo(() => {
-      if (!searchValue.trim()) {
-        return allCustomers;
+      let customers = allCustomers;
+
+      // 유형 필터링
+      if (customerTypeFilter === 'personal') {
+        customers = customers.filter(c => c.insurance_info?.customer_type !== '법인');
+      } else if (customerTypeFilter === 'corporate') {
+        customers = customers.filter(c => c.insurance_info?.customer_type === '법인');
       }
 
-      const searchLower = searchValue.toLowerCase().trim();
-      return allCustomers.filter(customer => {
-        const name = customer.personal_info?.name?.toLowerCase() || '';
-        const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
-        const email = customer.personal_info?.email?.toLowerCase() || '';
+      // 검색 필터링
+      if (searchValue.trim()) {
+        const searchLower = searchValue.toLowerCase().trim();
+        customers = customers.filter(customer => {
+          const name = customer.personal_info?.name?.toLowerCase() || '';
+          const phone = customer.personal_info?.mobile_phone?.replace(/-/g, '') || '';
+          const email = customer.personal_info?.email?.toLowerCase() || '';
 
-        return (
-          name.includes(searchLower) ||
-          phone.includes(searchLower) ||
-          email.includes(searchLower)
-        );
-      });
-    }, [allCustomers, searchValue]);
+          return (
+            name.includes(searchLower) ||
+            phone.includes(searchLower) ||
+            email.includes(searchLower)
+          );
+        });
+      }
+
+      return customers;
+    }, [allCustomers, searchValue, customerTypeFilter]);
 
     // 정렬된 고객 목록 (페이지네이션 적용 전)
     const sortedCustomers = useMemo(() => {
@@ -206,12 +217,12 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       return sortedCustomers.slice(offset, offset + itemsPerPageNumber);
     }, [sortedCustomers, currentPageForView, itemsPerPageNumber]);
 
-    // 개인/법인 고객 수 계산 (검색 결과 기준)
+    // 개인/법인 고객 수 계산 (전체 기준)
     const customerTypeCounts = useMemo(() => {
-      const personal = filteredCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
-      const corporate = filteredCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
-      return { personal, corporate };
-    }, [filteredCustomers]);
+      const personal = allCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
+      const corporate = allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
+      return { personal, corporate, total: allCustomers.length };
+    }, [allCustomers]);
 
     // refresh 함수를 부모에게 노출
     useImperativeHandle(ref, () => ({
@@ -260,6 +271,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         setTimeout(() => setNextArrowClicked(false), 150);
         setCurrentPage(currentPageForView + 1);
       }
+    };
+
+    const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
+      setCustomerTypeFilter(filter);
+      setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
     };
 
     const getCustomerIcon = (customer: Customer) => {
@@ -391,7 +407,29 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         {/* 결과 헤더 */}
         {!isLoading && (
           <div className="customer-library-result-header">
-            <div className="result-count">총 {totalCustomers}명 (개인 {customerTypeCounts.personal}, 법인 {customerTypeCounts.corporate})</div>
+            <div className="result-count">
+              <button
+                className={`type-filter-button ${customerTypeFilter === 'all' ? 'active' : ''}`}
+                onClick={() => handleTypeFilterChange('all')}
+              >
+                총 {customerTypeCounts.total}명
+              </button>
+              <span className="type-filter-separator">(</span>
+              <button
+                className={`type-filter-button ${customerTypeFilter === 'personal' ? 'active' : ''}`}
+                onClick={() => handleTypeFilterChange('personal')}
+              >
+                개인 {customerTypeCounts.personal}
+              </button>
+              <span className="type-filter-separator">,</span>
+              <button
+                className={`type-filter-button ${customerTypeFilter === 'corporate' ? 'active' : ''}`}
+                onClick={() => handleTypeFilterChange('corporate')}
+              >
+                법인 {customerTypeCounts.corporate}
+              </button>
+              <span className="type-filter-separator">)</span>
+            </div>
             <div className="result-controls">
               <RefreshButton
                 onClick={async () => {
