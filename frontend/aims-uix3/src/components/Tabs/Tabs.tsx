@@ -94,7 +94,7 @@ export const Tabs: React.FC<TabsProps> = ({
             {tab.icon && <span className="tabs-bar__tab-icon">{tab.icon}</span>}
             <span className="tabs-bar__tab-label">
               {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
+              {tab.count !== undefined && (
                 <span className="tabs-bar__tab-count"> ({tab.count})</span>
               )}
             </span>

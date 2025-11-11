@@ -36,12 +36,14 @@ interface RelationshipsTabProps {
   customer: Customer;
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
   onRelationshipsUpdated?: () => void;
+  onRelationshipsCountChange?: (count: number) => void;
 }
 
 export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   customer,
   onSelectCustomer,
   onRelationshipsUpdated,
+  onRelationshipsCountChange,
 }) => {
   const confirmController = useAppleConfirmController();
   const {
@@ -50,6 +52,11 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   } = useCustomerRelationshipsController({ customerId: customer?._id, autoLoad: true });
 
   const relationshipsCount = relationships.length;
+
+  // 🍎 관계 개수 변경 시 부모에게 알림
+  useEffect(() => {
+    onRelationshipsCountChange?.(relationshipsCount);
+  }, [relationshipsCount, onRelationshipsCountChange]);
 
   const handleCustomerSelect = useCallback(
     (relatedCustomer?: Customer) => {

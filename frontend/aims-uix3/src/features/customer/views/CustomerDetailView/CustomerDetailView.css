@@ -50,6 +50,15 @@
   padding-top: var(--spacing-3);
 }
 
+/* 🍎 탭 패널 - 항상 렌더링하되 숨김 처리 */
+.customer-detail-view__tab-panel {
+  display: none;
+}
+
+.customer-detail-view__tab-panel--active {
+  display: block;
+}
+
 /* Form */
 .customer-detail-view__form {
   display: flex;

@@ -63,6 +63,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   });
 
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
+  const [relationshipsCount, setRelationshipsCount] = useState(0);
   const [documentCount, setDocumentCount] = useState(0);
   const [annualReportCount, setAnnualReportCount] = useState(0);
   const confirmController = useAppleConfirmController();
@@ -307,7 +308,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
           </svg>
-        )
+        ),
+        count: relationshipsCount
       });
     } else {
       baseTabs.push({
@@ -317,7 +319,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
           </svg>
-        )
+        ),
+        count: relationshipsCount
       });
     }
 
@@ -361,43 +364,44 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     );
 
     return baseTabs;
-  }, [isBusinessCustomer, documentCount, annualReportCount]);
+  }, [isBusinessCustomer, relationshipsCount, documentCount, annualReportCount]);
 
   // 🍎 탭 내용 렌더링 (개수 업데이트를 위해 모든 탭을 숨김 상태로 렌더링)
   const renderTabContent = () => {
     return (
       <>
         {/* 기본 정보 탭 */}
-        <div style={{ display: activeTab === 'info' ? 'block' : 'none' }}>
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'info' ? 'customer-detail-view__tab-panel--active' : ''}`}>
           <BasicInfoTab customer={customer} />
         </div>
 
-        {/* 문서 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
-        {activeTab === 'documents' && (
+        {/* 문서 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'documents' ? 'customer-detail-view__tab-panel--active' : ''}`}>
           <DocumentsTab
             customer={customer}
             onDocumentCountChange={setDocumentCount}
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
           />
-        )}
+        </div>
 
-        {/* 관계 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
-        {activeTab === 'relationships' && (
+        {/* 관계 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'relationships' ? 'customer-detail-view__tab-panel--active' : ''}`}>
           <RelationshipsTab
             customer={customer}
+            onRelationshipsCountChange={setRelationshipsCount}
             {...(onSelectCustomer ? { onSelectCustomer } : {})}
             {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
           />
-        )}
+        </div>
 
-        {/* Annual Report 탭 - 조건부 렌더링으로 불필요한 폴링 방지 */}
-        {activeTab === 'annual_report' && (
+        {/* Annual Report 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'annual_report' ? 'customer-detail-view__tab-panel--active' : ''}`}>
           <AnnualReportTab
             customer={customer}
             onAnnualReportCountChange={setAnnualReportCount}
           />
-        )}
+        </div>
       </>
     );
   };
