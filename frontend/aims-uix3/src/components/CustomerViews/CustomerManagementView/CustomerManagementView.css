@@ -62,9 +62,9 @@
   margin: 0 auto; /* 중앙 정렬 */
 }
 
-/* 최근 활동 */
+/* 최근 활동 (사용 가이드와 동일한 폭 사용) */
 .customer-management-view__recent-activity {
-  max-width: 800px;
+  /* max-width 제거하여 전체 폭 사용 */
 }
 
 /* 반응형 */

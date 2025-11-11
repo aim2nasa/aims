@@ -57,9 +57,9 @@
   margin: 0 auto; /* 중앙 정렬 */
 }
 
-/* 최근 활동 */
+/* 최근 활동 (사용 가이드와 동일한 폭 사용) */
 .document-management-view__recent-activity {
-  max-width: 800px;
+  /* max-width 제거하여 전체 폭 사용 */
 }
 
 /* 파일 타입 아이콘 스타일 (DocumentStatusList와 동일) */
