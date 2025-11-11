@@ -203,7 +203,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           name="person-2"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
-          style={{ color: 'var(--color-purple)' }}
+          style={{ color: 'var(--color-ios-purple)' }}
         />
       ),
       title: '관계별 보기',
