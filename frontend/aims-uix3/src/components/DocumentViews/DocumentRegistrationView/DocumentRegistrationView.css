@@ -256,12 +256,13 @@ html[data-theme="dark"] .registration-guide .step-description {
   border-radius: 6px;
   cursor: pointer;
   color: var(--color-text-secondary);
+  opacity: 0.7;
   transition: all 0.2s ease;
 }
 
 .document-registration-view__reset-button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
+  background: transparent;
+  opacity: 1;
   transform: scale(1.1);
 }
 
@@ -272,6 +273,12 @@ html[data-theme="dark"] .registration-guide .step-description {
 .document-registration-view__reset-button svg {
   width: 16px;
   height: 16px;
+  transition: transform 0.2s ease;
+}
+
+/* 호버 시 SVG 회전 (45도) */
+.document-registration-view__reset-button:hover svg {
+  transform: rotate(45deg);
 }
 
 .document-registration-view__tab-icon {
