@@ -134,12 +134,25 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 같은 고객 재선택을 감지하기 위한 타임스탬프
   const [selectionTimestamp, setSelectionTimestamp] = useState(0)
 
+  // 고객 유형 필터 (F5 이후에도 유지)
+  const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-regional-type-filter', 'all')
+
+  // 유형 필터링된 고객 목록
+  const filteredCustomers = useMemo(() => {
+    if (customerTypeFilter === 'personal') {
+      return customers.filter(c => c.insurance_info?.customer_type !== '법인')
+    } else if (customerTypeFilter === 'corporate') {
+      return customers.filter(c => c.insurance_info?.customer_type === '법인')
+    }
+    return customers
+  }, [customers, customerTypeFilter])
+
   // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
   const regionalGroups = useMemo(() => {
     const groups: { [city: string]: { [district: string]: Customer[] } } = {}
     const noAddressCustomers: Customer[] = []
 
-    customers.forEach((customer) => {
+    filteredCustomers.forEach((customer) => {
       const address = customer.personal_info?.address?.address1
       if (!address) {
         noAddressCustomers.push(customer)
@@ -158,20 +171,20 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     })
 
     return { groups, noAddressCustomers }
-  }, [customers])
+  }, [filteredCustomers])
 
-  // 통계 계산 - aims-uix2와 동일
+  // 통계 계산
   const stats = useMemo(() => {
     const { groups, noAddressCustomers } = regionalGroups
-    const totalCustomers = customers.length
     const citiesCount = Object.keys(groups).length
     const districtsCount = Object.values(groups).reduce(
       (sum, districts) => sum + Object.keys(districts).length, 0
     )
 
-    // 개인/법인 고객 수 계산 (전체보기와 동일한 로직)
+    // 개인/법인 고객 수 계산 (항상 전체 customers 기준 - AllCustomersView와 동일)
     const personalCount = customers.filter(c => c.insurance_info?.customer_type !== '법인').length
     const corporateCount = customers.filter(c => c.insurance_info?.customer_type === '법인').length
+    const totalCustomers = customers.length
 
     return {
       totalCustomers,
@@ -182,6 +195,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       noAddressCount: noAddressCustomers.length
     }
   }, [regionalGroups, customers])
+
+  // 필터 변경 핸들러
+  const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
+    setCustomerTypeFilter(filter)
+  }
 
   // 트리 데이터 생성
   const treeData = useMemo((): TreeNodeData[] => {
@@ -431,12 +449,34 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   return (
     <div className="regional-tree-view">
 
-      {/* 통계 - 텍스트 아이콘 */}
+      {/* 통계 - 클릭 가능한 필터 */}
       <div className="regional-tree-stats">
         <div className="stat-item">
           <span className="stat-icon">👥</span>
           <span className="stat-label">전체 고객</span>
-          <span className="stat-value">{stats.totalCustomers}명 (개인 {stats.personalCount}, 법인 {stats.corporateCount})</span>
+          <div className="stat-filter-group">
+            <button
+              className={`type-filter-button ${customerTypeFilter === 'all' ? 'active' : ''}`}
+              onClick={() => handleTypeFilterChange('all')}
+            >
+              {stats.totalCustomers}명
+            </button>
+            <span className="type-filter-separator">(</span>
+            <button
+              className={`type-filter-button ${customerTypeFilter === 'personal' ? 'active' : ''}`}
+              onClick={() => handleTypeFilterChange('personal')}
+            >
+              개인 {stats.personalCount}
+            </button>
+            <span className="type-filter-separator">,</span>
+            <button
+              className={`type-filter-button ${customerTypeFilter === 'corporate' ? 'active' : ''}`}
+              onClick={() => handleTypeFilterChange('corporate')}
+            >
+              법인 {stats.corporateCount}
+            </button>
+            <span className="type-filter-separator">)</span>
+          </div>
         </div>
         <span className="stat-divider">·</span>
         <div className="stat-item">
@@ -488,11 +528,11 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         {/* 지도 */}
         <div className="regional-map-container">
           <NaverMap
-            customers={customers}
+            customers={filteredCustomers}
             selectedCustomerId={selectedCustomerId}
             onCustomerSelect={(customerId: string) => {
               // 고객 ID로 고객 객체 찾기
-              const customer = customers.find(c => c._id === customerId)
+              const customer = filteredCustomers.find(c => c._id === customerId)
               if (customer) {
                 handleCustomerClick(customer)
               }

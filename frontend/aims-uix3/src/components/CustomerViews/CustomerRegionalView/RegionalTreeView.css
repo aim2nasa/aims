@@ -66,6 +66,12 @@ html[data-theme="dark"] .regional-tree-stats {
   gap: var(--spacing-xs);
 }
 
+.stat-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .stat-icon {
   font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
   opacity: 0.7;
@@ -423,4 +429,57 @@ html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb {
 html[data-theme="dark"] .regional-tree-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
   background-clip: content-box;
+}
+
+/* ============================================
+   고객 유형 필터 버튼 (AllCustomersView와 동일)
+   ============================================ */
+
+/* 🍎 TYPE FILTER BUTTON: Subtle clickable filter */
+.type-filter-button {
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--color-ios-text-tertiary-light);
+  transition: all 0.15s ease-out;
+  user-select: none;
+}
+
+html[data-theme="dark"] .type-filter-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.type-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .type-filter-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.type-filter-button.active {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .type-filter-button.active {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.type-filter-separator {
+  color: var(--color-ios-text-quaternary-light);
+  user-select: none;
+}
+
+html[data-theme="dark"] .type-filter-separator {
+  color: var(--color-ios-text-quaternary-dark);
 }
