@@ -104,7 +104,7 @@ html[data-theme="dark"] .regional-tree-stats {
 }
 
 .regional-tree-container {
-  flex: 0 0 400px;
+  flex: 0 0 300px;
   overflow-y: auto;
   border-right: 1px solid var(--color-border);
   padding: var(--spacing-sm);
