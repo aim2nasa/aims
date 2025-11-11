@@ -226,22 +226,6 @@ html[data-theme="dark"] .type-filter-separator {
   color: var(--color-ios-text-quaternary-dark);
 }
 
-/* === 🍎 RESULT CONTROLS: 정렬 및 새로고침 === */
-
-.result-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* === 🍎 SORT SELECTOR: iOS Style Dropdown === */
-
-.sort-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* === 🍎 CUSTOMER LIST: iOS table view === */
 
 .customer-list {

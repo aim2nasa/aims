@@ -13,7 +13,6 @@ import { Dropdown } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
-import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
@@ -429,17 +428,6 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 법인 {customerTypeCounts.corporate}
               </button>
               <span className="type-filter-separator">)</span>
-            </div>
-            <div className="result-controls">
-              <RefreshButton
-                onClick={async () => {
-                  await refresh();
-                  await loadCustomers({ limit: 10000, page: 1 });
-                }}
-                loading={isLoading}
-                tooltip="고객 목록 새로고침"
-                size="small"
-              />
             </div>
           </div>
         )}
