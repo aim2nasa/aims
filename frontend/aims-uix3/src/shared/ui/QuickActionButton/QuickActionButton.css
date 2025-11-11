@@ -12,14 +12,13 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--duration-normal) var(--easing-ease-out);
-  min-height: 100px;
-  aspect-ratio: 1 / 1;
+  min-height: 60px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
 
   /* Progressive Disclosure: 기본 서브틀 */
@@ -120,8 +119,8 @@ html[data-theme="dark"] .quick-action-button--primary {
 /* 반응형 */
 @media (max-width: 768px) {
   .quick-action-button {
-    min-height: 80px;
-    padding: var(--spacing-3);
+    min-height: 56px;
+    padding: var(--spacing-2) var(--spacing-3);
   }
 
   .quick-action-button__icon {
