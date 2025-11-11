@@ -68,9 +68,17 @@ const DocumentLibraryContent: React.FC<{
   isDeleting: boolean
   onCustomerClick?: (customerId: string) => void
   onBulkLinkClick: (documents: any[]) => void
-}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick }) => {
+  onRemoveDocumentsExpose?: (fn: (docIds: Set<string>) => void) => void
+}> = ({ isDeleteMode, isBulkLinkMode, selectedDocumentIds, onSelectAllIds, onSelectDocument, onToggleDeleteMode, onToggleBulkLinkMode, onDocumentClick, onDeleteSelected, isDeleting, onCustomerClick, onBulkLinkClick, onRemoveDocumentsExpose }) => {
   const controller = useDocumentStatusController()
   const { state, actions } = useDocumentStatusContext()
+
+  // 🍎 Optimistic Update 함수를 외부로 노출
+  React.useEffect(() => {
+    if (onRemoveDocumentsExpose) {
+      onRemoveDocumentsExpose(actions.removeDocuments)
+    }
+  }, [onRemoveDocumentsExpose, actions.removeDocuments])
 
   // 🍎 고객 일괄 연결 모드 진입 시 필터 및 정렬 자동 적용
   const prevBulkLinkModeRef = React.useRef(isBulkLinkMode)
@@ -580,6 +588,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     clearError,
   } = useDocumentsController()
 
+  // 🍎 Optimistic Update 함수를 저장할 ref
+  const removeDocumentsFnRef = React.useRef<((docIds: Set<string>) => void) | null>(null)
+
   // 🍎 새로고침 함수 expose
   React.useEffect(() => {
     if (onRefreshExpose) {
@@ -697,6 +708,14 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
       const results = await Promise.all(deletePromises)
       const failedDeletes = results.filter((r) => !r.success)
+      const successfulIds = results
+        .filter((r) => r.success)
+        .map((r) => r.docId)
+
+      // 🍎 Optimistic Update: 즉시 로컬 상태에서 제거
+      if (successfulIds.length > 0 && removeDocumentsFnRef.current) {
+        removeDocumentsFnRef.current(new Set(successfulIds))
+      }
 
       // 선택 초기화 및 삭제 모드 종료
       setSelectedDocumentIds(new Set())
@@ -708,8 +727,8 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         onDocumentDeleted()
       }
 
-      // 문서 목록 새로고침
-      await loadDocuments(searchParams, true)
+      // 🔄 백그라운드로 새로고침 (정확한 상태 동기화)
+      void loadDocuments(searchParams, true)
 
       // 결과 모달 표시 (비동기, 상태 복원 후)
       if (failedDeletes.length > 0) {
@@ -767,6 +786,9 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
             onBulkLinkClick={(documents) => {
               setSelectedDocumentsForLink(documents)
               setIsDocumentLinkModalVisible(true)
+            }}
+            onRemoveDocumentsExpose={(fn) => {
+              removeDocumentsFnRef.current = fn
             }}
             {...(onDocumentClick && { onDocumentClick })}
             {...(onCustomerClick && { onCustomerClick })}

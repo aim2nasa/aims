@@ -196,6 +196,16 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [])
 
   /**
+   * 문서 즉시 제거 (Optimistic Update)
+   */
+  const removeDocuments = useCallback((docIds: Set<string>) => {
+    setDocuments(prev => prev.filter(doc => {
+      const id = doc._id ?? doc.id ?? ''
+      return !docIds.has(id)
+    }))
+  }, [])
+
+  /**
    * searchQuery prop 변경 시 searchTerm 동기화
    */
   useEffect(() => {
@@ -463,7 +473,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       setSortField,
       setSortDirection,
       handleColumnSort,
-      setCustomerLinkFilter
+      setCustomerLinkFilter,
+      removeDocuments
     }),
     [
       fetchDocuments,
@@ -473,7 +484,8 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       handlePageChange,
       handleLimitChange,
       updateDocumentCustomerRelation,
-      handleColumnSort
+      handleColumnSort,
+      removeDocuments
     ]
   )
 

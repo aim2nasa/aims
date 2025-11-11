@@ -69,6 +69,8 @@ export interface DocumentStatusActions {
   handleColumnSort: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => void
   // 🍎 Customer Link Filter Actions
   setCustomerLinkFilter: (filter: CustomerLinkFilter) => void
+  // 🍎 Optimistic Update Actions
+  removeDocuments: (docIds: Set<string>) => void
 }
 
 /**
