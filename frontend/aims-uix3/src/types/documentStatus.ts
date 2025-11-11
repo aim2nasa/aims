@@ -185,6 +185,7 @@ export interface Document {
 export interface DocumentCustomerRelation {
   customer_id: string
   customer_name?: string
+  customer_type?: string | null
   relationship_type?: string
   assigned_by?: string | null
   assigned_at?: string

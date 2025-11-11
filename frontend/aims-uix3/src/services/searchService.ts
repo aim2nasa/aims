@@ -109,8 +109,8 @@ export class SearchService {
           }
         })
 
-        // customer_name 일괄 조회 (효율적!)
-        const customerMap: Record<string, string> = {}
+        // customer_name + customer_type 일괄 조회 (효율적!)
+        const customerMap: Record<string, { name: string | null; type: string | null }> = {}
         if (customerIds.size > 0) {
           await Promise.all(
             Array.from(customerIds).map(async (customerId) => {
@@ -119,7 +119,10 @@ export class SearchService {
                 if (customerResponse.ok) {
                   const customerData = await customerResponse.json()
                   if (customerData.success && customerData.data) {
-                    customerMap[customerId] = customerData.data.personal_info?.name || null
+                    customerMap[customerId] = {
+                      name: customerData.data.personal_info?.name || null,
+                      type: customerData.data.insurance_info?.customer_type || null
+                    }
                   }
                 }
               } catch (error) {
@@ -129,18 +132,19 @@ export class SearchService {
           )
         }
 
-        // 검색 결과에 customer_name 추가
+        // 검색 결과에 customer_name + customer_type 추가
         const enrichedResults = data.search_results.map((item: SearchResultItem) => {
           if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
             // ObjectId를 문자열로 변환
             const customerId = String(item.customer_relation.customer_id)
-            const customerName = customerMap[customerId]
-            if (customerName) {
+            const customerInfo = customerMap[customerId]
+            if (customerInfo) {
               return {
                 ...item,
                 customer_relation: {
                   ...item.customer_relation,
-                  customer_name: customerName
+                  customer_name: customerInfo.name,
+                  customer_type: customerInfo.type
                 }
               }
             }

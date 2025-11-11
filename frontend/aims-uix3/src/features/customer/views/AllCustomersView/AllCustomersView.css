@@ -561,14 +561,14 @@ html[data-theme="dark"] .customer-item:active {
   background: var(--color-ios-bg-selected-dark);
 }
 
-/* === 🍎 CUSTOMER ICON: Person icon === */
+/* === 🍎 CUSTOMER ICON: Person icon (16px - CLAUDE.md 준수) === */
 
 .customer-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   transition: color 0.2s ease-out;
 }
