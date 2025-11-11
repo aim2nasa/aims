@@ -11,7 +11,6 @@ import React from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import FileList from '../FileList/FileList'
 import ProgressIndicator from '../ProgressIndicator/ProgressIndicator'
-import RefreshButton from '../../../RefreshButton/RefreshButton'
 import { UploadState } from '../types/uploadTypes'
 import './FileListSection.css'
 
@@ -54,15 +53,6 @@ export const FileListSection: React.FC<FileListSectionProps> = ({
           <span className="file-list-section__title">업로드 목록</span>
           {hasFiles && (
             <span className="file-list-section__count">{uploadState.files.length}</span>
-          )}
-        </div>
-        <div className="file-list-section__header-right">
-          {hasFiles && (
-            <RefreshButton
-              onClick={onClearAll}
-              tooltip="업로드 기록 초기화"
-              size="small"
-            />
           )}
         </div>
       </div>
