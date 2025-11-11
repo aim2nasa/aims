@@ -27,6 +27,8 @@ export interface StatCardProps {
   onClick?: () => void;
   /** 로딩 상태 */
   isLoading?: boolean;
+  /** 에러 메시지 (선택사항) */
+  error?: string;
 }
 
 /**
@@ -53,7 +55,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'neutral',
   trend,
   onClick,
-  isLoading = false
+  isLoading = false,
+  error
 }) => {
   const formattedValue = typeof value === 'number'
     ? value.toLocaleString('ko-KR')
@@ -77,6 +80,12 @@ export const StatCard: React.FC<StatCardProps> = ({
         <div className="stat-card__skeleton">
           <div className="stat-card__skeleton-title" />
           <div className="stat-card__skeleton-value" />
+        </div>
+      ) : error ? (
+        <div className="stat-card__error">
+          <div className="stat-card__error-icon">⚠️</div>
+          <h3 className="stat-card__title">{title}</h3>
+          <div className="stat-card__error-message">{error}</div>
         </div>
       ) : (
         <>

@@ -47,7 +47,12 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   onNavigate,
 }) => {
   // 고객 목록 조회 (통계 계산용)
-  const { data: customersData, isLoading: isCustomersLoading, refetch: refetchCustomers } = useQuery({
+  const {
+    data: customersData,
+    isLoading: isCustomersLoading,
+    isError: isCustomersError,
+    refetch: refetchCustomers
+  } = useQuery({
     queryKey: ['allCustomers'],
     queryFn: () =>
       getCustomers({
@@ -174,6 +179,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               icon={<SFSymbol name="person.3.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
               isLoading={isCustomersLoading}
+              {...(isCustomersError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="활성 고객"
@@ -181,6 +187,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               icon={<SFSymbol name="person.fill.checkmark" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
               isLoading={isCustomersLoading}
+              {...(isCustomersError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="최근 등록"
@@ -188,6 +195,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               icon={<SFSymbol name="person.badge.plus" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="warning"
               isLoading={isCustomersLoading}
+              {...(isCustomersError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="관계 매핑"
@@ -195,6 +203,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
               isLoading={isCustomersLoading}
+              {...(isCustomersError && { error: '통계 조회 실패' })}
             />
           </div>
         </section>
@@ -232,7 +241,12 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             최근 활동
           </h2>
           <div className="customer-management-view__recent-activity">
-            <RecentActivityList items={recentActivities} maxItems={5} isLoading={isCustomersLoading} />
+            <RecentActivityList
+              items={recentActivities}
+              maxItems={5}
+              isLoading={isCustomersLoading}
+              {...(isCustomersError && { error: '최근 활동 조회 실패' })}
+            />
           </div>
         </section>
       </div>

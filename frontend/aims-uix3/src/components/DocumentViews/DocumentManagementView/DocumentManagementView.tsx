@@ -47,13 +47,23 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   onNavigate,
 }) => {
   // 문서 통계 API 연동
-  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useQuery({
+  const {
+    data: stats,
+    isLoading: isStatsLoading,
+    isError: isStatsError,
+    refetch: refetchStats
+  } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
   });
 
   // 최근 문서 목록 조회
-  const { data: recentDocuments, isLoading: isRecentLoading, refetch: refetchRecent } = useQuery({
+  const {
+    data: recentDocuments,
+    isLoading: isRecentLoading,
+    isError: isRecentError,
+    refetch: refetchRecent
+  } = useQuery({
     queryKey: ['recentDocuments'],
     queryFn: () =>
       getDocuments({
@@ -162,6 +172,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               icon={<SFSymbol name="doc.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
               isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="처리 대기"
@@ -169,6 +180,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               icon={<SFSymbol name="clock" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="warning"
               isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="OCR 완료"
@@ -176,6 +188,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               icon={<SFSymbol name="doc.text" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
               isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
             />
             <StatCard
               title="태그 완료"
@@ -183,6 +196,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               icon={<SFSymbol name="tag.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
               isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
             />
           </div>
         </section>
@@ -220,7 +234,12 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             최근 활동
           </h2>
           <div className="document-management-view__recent-activity">
-            <RecentActivityList items={recentActivities} maxItems={5} isLoading={isRecentLoading} />
+            <RecentActivityList
+              items={recentActivities}
+              maxItems={5}
+              isLoading={isRecentLoading}
+              {...(isRecentError && { error: '최근 활동 조회 실패' })}
+            />
           </div>
         </section>
       </div>

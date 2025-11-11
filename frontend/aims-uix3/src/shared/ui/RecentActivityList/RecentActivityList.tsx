@@ -34,6 +34,8 @@ export interface RecentActivityListProps {
   maxItems?: number;
   /** 로딩 상태 */
   isLoading?: boolean;
+  /** 에러 메시지 */
+  error?: string;
 }
 
 /**
@@ -65,6 +67,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
   emptyMessage = '최근 활동이 없습니다',
   maxItems,
   isLoading = false,
+  error,
 }) => {
   const displayItems = maxItems ? items.slice(0, maxItems) : items;
 
@@ -79,6 +82,15 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="recent-activity-list recent-activity-list--error">
+        <div className="recent-activity-list__error-icon">⚠️</div>
+        <p className="recent-activity-list__error-message">{error}</p>
       </div>
     );
   }
