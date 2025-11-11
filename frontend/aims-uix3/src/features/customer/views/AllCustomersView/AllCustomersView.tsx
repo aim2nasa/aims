@@ -444,8 +444,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
                 </svg>
                 <span>이름</span>
-                {sortField === 'name' && (
+                {sortField === 'name' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-birth header-sortable" onClick={() => handleColumnSort('birth')}>
@@ -460,8 +465,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <ellipse cx="11.25" cy="3" rx="0.9" ry="1.2" fill="var(--flame)"/>
                 </svg>
                 <span>생년월일</span>
-                {sortField === 'birth' && (
+                {sortField === 'birth' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-gender header-sortable" onClick={() => handleColumnSort('gender')}>
@@ -472,8 +482,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M11 9c-1.5 0-3 1-3 2v1h6v-1c0-1-1.5-2-3-2z" fill="currentColor"/>
                 </svg>
                 <span>성별</span>
-                {sortField === 'gender' && (
+                {sortField === 'gender' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-phone header-sortable" onClick={() => handleColumnSort('phone')}>
@@ -481,8 +496,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M3 1h3l1 3-2 2c1 2 3 4 5 5l2-2 3 1v3c0 1-1 2-2 2C6 15 1 10 1 3c0-1 1-2 2-2z" fill="currentColor"/>
                 </svg>
                 <span>전화</span>
-                {sortField === 'phone' && (
+                {sortField === 'phone' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-email header-sortable" onClick={() => handleColumnSort('email')}>
@@ -491,8 +511,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                 </svg>
                 <span>이메일</span>
-                {sortField === 'email' && (
+                {sortField === 'email' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-address header-sortable" onClick={() => handleColumnSort('address')}>
@@ -500,8 +525,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M8 1l-7 6h2v7h4V9h2v5h4V7h2L8 1z" fill="currentColor"/>
                 </svg>
                 <span>주소</span>
-                {sortField === 'address' && (
+                {sortField === 'address' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-type header-sortable" onClick={() => handleColumnSort('type')}>
@@ -509,8 +539,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M3 14h10V4H3v10zm2-8h1v1H5V6zm3 0h1v1H8V6zm3 0h1v1h-1V6z" fill="currentColor"/>
                 </svg>
                 <span>유형</span>
-                {sortField === 'type' && (
+                {sortField === 'type' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('status')}>
@@ -519,8 +554,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M6 8l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none"/>
                 </svg>
                 <span>상태</span>
-                {sortField === 'status' && (
+                {sortField === 'status' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
               <div className="header-created header-sortable" onClick={() => handleColumnSort('created')}>
@@ -529,8 +569,13 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   <path d="M8 4v4h3" stroke="white" strokeWidth="1" fill="none"/>
                 </svg>
                 <span>등록일</span>
-                {sortField === 'created' && (
+                {sortField === 'created' ? (
                   <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                ) : (
+                  <span className="sort-indicator sort-indicator--both">
+                    <span className="sort-arrow">▲</span>
+                    <span className="sort-arrow">▼</span>
+                  </span>
                 )}
               </div>
             </div>
