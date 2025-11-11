@@ -22,6 +22,8 @@ interface DocumentManagementViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** View 변경 핸들러 */
+  onNavigate: (view: string) => void;
 }
 
 /**
@@ -41,6 +43,7 @@ interface DocumentManagementViewProps {
 export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
   // 문서 통계 API 연동
   const { data: stats, isLoading: isStatsLoading } = useQuery({
@@ -101,17 +104,20 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     });
   }, [recentDocuments]);
 
-  // 빠른 액션 핸들러 (Phase 2에서 실제 네비게이션 추가)
+  // 빠른 액션 핸들러
   const handleDocumentRegister = () => {
-    console.log('[DocumentManagementView] 문서 등록 클릭 (Phase 2에서 구현)');
+    onNavigate('documents-register');
+    onClose();
   };
 
   const handleDocumentSearch = () => {
-    console.log('[DocumentManagementView] 문서 검색 클릭 (Phase 2에서 구현)');
+    onNavigate('documents-search');
+    onClose();
   };
 
   const handleDocumentLibrary = () => {
-    console.log('[DocumentManagementView] 문서 라이브러리 클릭 (Phase 2에서 구현)');
+    onNavigate('documents-library');
+    onClose();
   };
 
   return (

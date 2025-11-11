@@ -22,6 +22,8 @@ interface CustomerManagementViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** View 변경 핸들러 */
+  onNavigate: (view: string) => void;
 }
 
 /**
@@ -41,6 +43,7 @@ interface CustomerManagementViewProps {
 export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
   // 고객 목록 조회 (통계 계산용)
   const { data: customersData, isLoading: isCustomersLoading } = useQuery({
@@ -116,17 +119,20 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     });
   }, [customersData]);
 
-  // 빠른 액션 핸들러 (Phase 2에서 실제 네비게이션 추가)
+  // 빠른 액션 핸들러
   const handleCustomerRegister = () => {
-    console.log('[CustomerManagementView] 고객 등록 클릭 (Phase 2에서 구현)');
+    onNavigate('customers-register');
+    onClose();
   };
 
   const handleCustomerSearch = () => {
-    console.log('[CustomerManagementView] 고객 검색 클릭 (Phase 2에서 구현)');
+    onNavigate('customers-all');
+    onClose();
   };
 
   const handleRelationshipMap = () => {
-    console.log('[CustomerManagementView] 관계도 클릭 (Phase 2에서 구현)');
+    onNavigate('customers-relationship');
+    onClose();
   };
 
   return (
