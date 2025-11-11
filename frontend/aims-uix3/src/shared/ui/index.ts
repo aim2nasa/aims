@@ -35,3 +35,6 @@ export type { StatCardProps } from './StatCard';
 
 export { QuickActionButton } from './QuickActionButton';
 export type { QuickActionButtonProps } from './QuickActionButton';
+
+export { RecentActivityList } from './RecentActivityList';
+export type { RecentActivityListProps, RecentActivityItem } from './RecentActivityList';
