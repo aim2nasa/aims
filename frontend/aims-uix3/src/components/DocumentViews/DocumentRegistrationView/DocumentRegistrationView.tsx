@@ -9,6 +9,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
+import Tooltip from '@/shared/ui/Tooltip'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
 import FileListSection from './FileListSection/FileListSection'
@@ -570,6 +571,29 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.warn('[DocumentRegistrationView] Failed to clear state:', error)
     }
   }, [SESSION_KEY])
+
+  /**
+   * 문서등록 초기페이지로 완전히 되돌리기
+   */
+  const handleResetToInitialState = useCallback(() => {
+    // 1. 파일 목록 초기화
+    handleClearAll()
+
+    // 2. 처리 로그 초기화
+    setProcessingLogs([])
+
+    // 3. 고객 파일 등록 폼 초기화
+    setCustomerFileCustomer(null)
+    setCustomerFileDocType('')
+    setCustomerFileNotes('')
+
+    // 4. 성공 메시지 초기화
+    setShowSuccessMessage(false)
+    setAutoRegistrationLog(null)
+
+    // 5. 로그 추가
+    addLog('info', '초기 상태로 되돌아갔습니다')
+  }, [handleClearAll, addLog])
 
   /**
    * 업로드 진행률 콜백
@@ -1284,6 +1308,31 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             </span>
             지금 고객 연결
           </button>
+        </div>
+
+        {/* 초기 상태로 되돌리기 버튼 */}
+        <div className="document-registration-view__reset-container">
+          <Tooltip content="문서등록을 초기 상태로 되돌립니다">
+            <button
+              type="button"
+              onClick={async () => {
+                const confirmed = await showAppleConfirm(
+                  '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
+                  '초기 상태로 되돌리기'
+                )
+                if (confirmed) {
+                  handleResetToInitialState()
+                }
+              }}
+              className="document-registration-view__reset-button"
+              aria-label="초기 상태로 되돌리기"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 8a6 6 0 1 1 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M2 8l2-2m-2 2l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </Tooltip>
         </div>
 
         {/* 탭별 업로드 영역 */}

@@ -98,9 +98,7 @@ export function showAppleConfirm(
         </div>
       `}
       <div style="padding: 0 20px 18px 20px; text-align: center;">
-        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary); margin: 0; white-space: pre-wrap; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">
-          ${processedMessage}
-        </p>
+        <p style="font-size: var(--font-size-caption-1, 12px); font-weight: 400; line-height: 1.33; color: var(--color-text-primary); margin: 0; white-space: pre-wrap; font-family: var(--font-family-text, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif); letter-spacing: -0.06px; opacity: 0.85;">${processedMessage}</p>
       </div>
       ${buttonsHTML}
     `

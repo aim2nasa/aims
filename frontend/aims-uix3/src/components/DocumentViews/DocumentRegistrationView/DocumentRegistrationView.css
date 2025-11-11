@@ -237,6 +237,43 @@ html[data-theme="dark"] .registration-guide .step-description {
   box-shadow: 0 2px 8px var(--color-accent-blue-translucent);
 }
 
+/* 초기 상태로 되돌리기 버튼 */
+.document-registration-view__reset-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto var(--spacing-4) auto;
+}
+
+.document-registration-view__reset-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.document-registration-view__reset-button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.document-registration-view__reset-button:active {
+  transform: scale(0.95);
+}
+
+.document-registration-view__reset-button svg {
+  width: 16px;
+  height: 16px;
+}
+
 .document-registration-view__tab-icon {
   display: inline-flex;
   align-items: center;
