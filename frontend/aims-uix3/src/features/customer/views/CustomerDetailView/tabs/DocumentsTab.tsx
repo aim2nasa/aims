@@ -39,6 +39,7 @@ interface DocumentsTabProps {
   onRefresh?: () => void
   onDocumentCountChange?: (count: number) => void
   onDocumentLibraryRefresh?: () => Promise<void>
+  onAnnualReportNeedRefresh?: () => void
 }
 
 // 🍎 페이지당 항목 수 옵션
@@ -57,7 +58,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   customer,
   onRefresh,
   onDocumentCountChange,
-  onDocumentLibraryRefresh
+  onDocumentLibraryRefresh,
+  onAnnualReportNeedRefresh
 }) => {
   const confirmController = useAppleConfirmController()
   const {
@@ -216,13 +218,19 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       if (!confirmed) return
 
       await unlinkDocument(document._id)
+
+      // 🍎 AR 문서인 경우 Annual Report 탭 즉시 새로고침
+      if (document.isAnnualReport) {
+        onAnnualReportNeedRefresh?.()
+      }
+
       onRefresh?.()
       // 🍎 문서 라이브러리 즉시 새로고침
       if (onDocumentLibraryRefresh) {
         await onDocumentLibraryRefresh()
       }
     },
-    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh]
+    [confirmController.actions, onRefresh, unlinkDocument, onDocumentLibraryRefresh, onAnnualReportNeedRefresh]
   )
 
   const handleDownload = useCallback(async () => {
@@ -349,6 +357,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
     if (!confirmed) return
 
+    // 🍎 삭제될 문서 중 AR 문서가 있는지 확인
+    const hasArDocument = documents.some(
+      doc => selectedDocumentIds.has(doc._id) && doc.isAnnualReport
+    )
+
     try {
       setIsDeleting(true)
 
@@ -391,6 +404,11 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       // 🍎 문서 라이브러리 즉시 새로고침
       if (onDocumentLibraryRefresh) {
         await onDocumentLibraryRefresh()
+      }
+
+      // 🍎 AR 문서가 삭제되었으면 Annual Report 탭 즉시 새로고침
+      if (hasArDocument) {
+        onAnnualReportNeedRefresh?.()
       }
 
       // 결과 모달 표시 (비동기, 상태 복원 후)

@@ -2085,6 +2085,22 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
       });
     }
 
+    // AR 문서인 경우 파싱 데이터도 삭제
+    if (document.is_annual_report) {
+      const issueDate = document.ar_metadata?.issue_date;
+      if (issueDate) {
+        console.log(`🗑️  [AR 삭제] issue_date=${issueDate} 파싱 데이터 삭제`);
+        await db.collection(CUSTOMERS_COLLECTION).updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $pull: { annual_reports: { issue_date: new Date(issueDate) } },
+            $set: { 'meta.updated_at': utcNowDate() }
+          }
+        );
+        console.log(`✅ [AR 삭제] 파싱 데이터 삭제 완료`);
+      }
+    }
+
     // 고객에서 문서 연결 제거
     await db.collection(CUSTOMERS_COLLECTION).updateOne(
       { _id: new ObjectId(id) },

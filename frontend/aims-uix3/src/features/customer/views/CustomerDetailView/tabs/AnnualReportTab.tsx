@@ -60,6 +60,7 @@ interface PendingDocument {
 interface AnnualReportTabProps {
   customer: Customer;
   onAnnualReportCountChange?: (count: number) => void;
+  refreshTrigger?: number;
 }
 
 const ITEMS_PER_PAGE_OPTIONS = [
@@ -68,7 +69,7 @@ const ITEMS_PER_PAGE_OPTIONS = [
   { value: '50', label: '50개씩' },
 ];
 
-export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange }) => {
+export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange, refreshTrigger }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reports, setReports] = useState<AnnualReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
@@ -125,7 +126,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   useEffect(() => {
     loadAnnualReports();
     loadPendingDocuments();
-  }, [customer._id]);
+  }, [customer._id, refreshTrigger]);
 
   // 주기적으로 파싱 대기 문서 확인 (10초마다)
   // 페이지가 보일 때만 폴링

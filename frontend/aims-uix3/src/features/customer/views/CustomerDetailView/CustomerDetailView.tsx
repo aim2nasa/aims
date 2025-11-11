@@ -54,6 +54,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   const [isFamilyModalVisible, setIsFamilyModalVisible] = useState(false);
   const [isCorporateModalVisible, setIsCorporateModalVisible] = useState(false);
   const [customerData, setCustomerData] = useState<Customer>(customer);
+  const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0);
 
   // URL에서 활성 탭 복원 (초기 마운트 시에만)
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -382,6 +383,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onDocumentCountChange={setDocumentCount}
             {...(onRefresh ? { onRefresh } : {})}
             {...(onDocumentLibraryRefresh ? { onDocumentLibraryRefresh } : {})}
+            onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
           />
         </div>
 
@@ -400,6 +402,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <AnnualReportTab
             customer={customer}
             onAnnualReportCountChange={setAnnualReportCount}
+            refreshTrigger={annualReportRefreshTrigger}
           />
         </div>
       </>
