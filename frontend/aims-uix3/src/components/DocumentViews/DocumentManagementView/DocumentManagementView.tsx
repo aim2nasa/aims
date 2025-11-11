@@ -7,12 +7,14 @@
  */
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
 import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
+import { getDocumentStatistics } from '@/services/DocumentService';
 import './DocumentManagementView.css';
 
 interface DocumentManagementViewProps {
@@ -40,13 +42,11 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   visible,
   onClose,
 }) => {
-  // Mock 데이터 (Phase 2에서 실제 API로 교체)
-  const mockStats = {
-    totalDocuments: 1248,
-    pendingDocuments: 23,
-    ocrCompleted: 1180,
-    tagCompleted: 1156,
-  };
+  // 문서 통계 API 연동
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['documentStatistics'],
+    queryFn: getDocumentStatistics,
+  });
 
   const mockRecentActivities: RecentActivityItem[] = [
     {
@@ -121,30 +121,31 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           <div className="document-management-view__stats-grid">
             <StatCard
               title="전체 문서"
-              value={mockStats.totalDocuments}
+              value={stats?.total ?? 0}
               icon={<SFSymbol name="doc.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
+              isLoading={isLoading}
             />
             <StatCard
               title="처리 대기"
-              value={mockStats.pendingDocuments}
+              value={stats?.pending ?? 0}
               icon={<SFSymbol name="clock" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="warning"
-              trend={{ value: 12, isPositive: false }}
+              isLoading={isLoading}
             />
             <StatCard
               title="OCR 완료"
-              value={mockStats.ocrCompleted}
+              value={stats?.stages.ocr ?? 0}
               icon={<SFSymbol name="doc.text" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              trend={{ value: 8, isPositive: true }}
+              isLoading={isLoading}
             />
             <StatCard
               title="태그 완료"
-              value={mockStats.tagCompleted}
+              value={stats?.completed ?? 0}
               icon={<SFSymbol name="tag.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              trend={{ value: 5, isPositive: true }}
+              isLoading={isLoading}
             />
           </div>
         </section>

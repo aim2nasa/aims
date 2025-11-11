@@ -27,6 +27,7 @@ const ENDPOINTS = {
   DOCUMENT_SEARCH: '/api/documents/search',
   DOCUMENT_TAGS: '/api/documents/tags',
   DOCUMENT_STATS: '/api/documents/stats',
+  DOCUMENT_STATISTICS: '/api/documents/statistics',
   DOCUMENT_UPLOAD: '/api/documents/upload',
   DOCUMENT_DOWNLOAD: (id: string) => `/api/documents/${id}/download`,
   CUSTOMER_DOCUMENTS: (customerId: string) => `/api/customers/${customerId}/documents`,
@@ -532,6 +533,37 @@ export class DocumentService {
   }
 
   /**
+   * 문서 처리 통계 조회 (백엔드 /api/documents/statistics)
+   * 문서 처리 상태별 통계를 반환
+   */
+  static async getDocumentStatistics(): Promise<DocumentStatistics> {
+    const response = await api.get<{ success: boolean; data: DocumentStatistics }>(ENDPOINTS.DOCUMENT_STATISTICS);
+
+    // 응답 구조 검증
+    if (!response || !response.data || typeof response.data !== 'object') {
+      throw new Error('Invalid statistics response format');
+    }
+
+    const stats = response.data;
+
+    return {
+      total: Number(stats.total) || 0,
+      completed: Number(stats.completed) || 0,
+      processing: Number(stats.processing) || 0,
+      error: Number(stats.error) || 0,
+      pending: Number(stats.pending) || 0,
+      completed_with_skip: Number(stats.completed_with_skip) || 0,
+      stages: {
+        upload: Number(stats.stages?.upload) || 0,
+        meta: Number(stats.stages?.meta) || 0,
+        ocr_prep: Number(stats.stages?.ocr_prep) || 0,
+        ocr: Number(stats.stages?.ocr) || 0,
+        docembed: Number(stats.stages?.docembed) || 0,
+      },
+    };
+  }
+
+  /**
    * 문서 업로드
    */
   static async uploadDocument(file: File, metadata?: Partial<CreateDocumentData>): Promise<UploadDocumentResult> {
@@ -644,6 +676,25 @@ export interface DocumentStats {
 }
 
 /**
+ * 문서 처리 통계 인터페이스 (백엔드 /api/documents/statistics)
+ */
+export interface DocumentStatistics {
+  total: number;
+  completed: number;
+  processing: number;
+  error: number;
+  pending: number;
+  completed_with_skip: number;
+  stages: {
+    upload: number;
+    meta: number;
+    ocr_prep: number;
+    ocr: number;
+    docembed: number;
+  };
+}
+
+/**
  * 문서 업로드 결과 인터페이스
  */
 export interface UploadDocumentResult {
@@ -687,6 +738,7 @@ export const {
   getDocumentsByCustomer,
   getDocumentTags,
   getDocumentStats,
+  getDocumentStatistics,
   uploadDocument,
   downloadDocument,
 } = DocumentService;
