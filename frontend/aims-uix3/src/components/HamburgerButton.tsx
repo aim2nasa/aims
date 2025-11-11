@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from './SFSymbol';
 import { HAPTIC_TYPES } from '../hooks/useHapticFeedback';
+import Tooltip from '../shared/ui/Tooltip';
 import './HamburgerButton.css';
 
 interface HamburgerButtonProps {
@@ -25,22 +26,23 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
   }
 
   return (
-    <button
-      className={`hamburger-button apple-interactive haptic-enabled micro-button micro-haptic-light ${className}`.trim()}
-      onClick={handleClickWithHaptic}
-      aria-label={ariaLabel || (collapsed ? '메뉴 펼치기' : '메뉴 접기')}
-      title={collapsed ? '메뉴 펼치기' : '메뉴 접기'}
-    >
-      <SFSymbol
-        name={collapsed ? "sidebar-left" : "sidebar-leading"}
-        size={SFSymbolSize.CALLOUT}
-        weight={SFSymbolWeight.MEDIUM}
-        animation={SFSymbolAnimation.SCALE}
-        className="hamburger-icon"
-        interactive={true}
-        hapticType="light"
-      />
-    </button>
+    <Tooltip content={collapsed ? '메뉴 펼치기' : '메뉴 접기'}>
+      <button
+        className={`hamburger-button apple-interactive haptic-enabled micro-button micro-haptic-light ${className}`.trim()}
+        onClick={handleClickWithHaptic}
+        aria-label={ariaLabel || (collapsed ? '메뉴 펼치기' : '메뉴 접기')}
+      >
+        <SFSymbol
+          name={collapsed ? "sidebar-left" : "sidebar-leading"}
+          size={SFSymbolSize.CALLOUT}
+          weight={SFSymbolWeight.MEDIUM}
+          animation={SFSymbolAnimation.SCALE}
+          className="hamburger-icon"
+          interactive={true}
+          hapticType="light"
+        />
+      </button>
+    </Tooltip>
   );
 };
 
