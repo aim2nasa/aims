@@ -103,8 +103,8 @@
 }
 
 .usage-guide__section--clickable:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px var(--color-shadow-subtle);
+  border-color: var(--color-primary-500);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-2px);
 }
 
