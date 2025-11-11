@@ -69,7 +69,8 @@
   overflow-x: hidden;
   padding: 8px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
+  justify-content: flex-end; /* 항목들을 상단에 붙임 */
   gap: 8px;
 }
 

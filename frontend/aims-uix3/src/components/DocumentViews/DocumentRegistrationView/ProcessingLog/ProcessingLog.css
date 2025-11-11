@@ -137,16 +137,17 @@
 /* Log Container */
 .processing-log__container {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-/* 🍎 macOS-style scrollbar */
+/* 🍎 macOS-style scrollbar - 세로 */
 .processing-log__container::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .processing-log__container::-webkit-scrollbar-track {
@@ -173,6 +174,7 @@
   transition: background-color 0.15s ease;
   animation: logFadeIn 0.3s ease-out;
   min-height: 24px;
+  flex-shrink: 0;
 }
 
 @keyframes logFadeIn {
@@ -195,8 +197,7 @@
   align-items: center;
   gap: 8px;
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
+  min-width: max-content;
 }
 
 .processing-log__icon {
@@ -234,10 +235,8 @@
   flex: 1;
   line-height: 1.4;
   letter-spacing: -0.1px;
-  word-wrap: break-word;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  min-width: 0;
+  white-space: nowrap;
+  min-width: max-content;
   display: block;
 }
 
@@ -251,7 +250,5 @@
   background: var(--color-section-details-bg);
   border-radius: 4px;
   display: inline;
-  word-wrap: break-word;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  white-space: nowrap;
 }
