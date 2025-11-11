@@ -48,12 +48,14 @@ html[data-theme="dark"] .regional-tree-view {
 .regional-tree-stats {
   display: flex;
   align-items: center;
+  flex-wrap: wrap; /* RightPane 열릴 때 자동으로 줄바꿈 */
   gap: var(--spacing-lg);
   padding: 12px var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
   font-family: var(--font-family-text);
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.03));
+  container-type: inline-size; /* 컨테이너 쿼리 활성화 */
 }
 
 html[data-theme="dark"] .regional-tree-stats {
@@ -64,6 +66,18 @@ html[data-theme="dark"] .regional-tree-stats {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+/* 폭이 좁을 때 (RightPane 열림): 첫 번째 stat-item이 전체 폭 차지 */
+@container (max-width: 900px) {
+  .stat-item:first-child {
+    flex-basis: 100%;
+  }
+
+  /* 첫 번째 구분자 숨김 (두 줄 레이아웃) */
+  .stat-divider:nth-of-type(1) {
+    display: none;
+  }
 }
 
 .stat-filter-group {
