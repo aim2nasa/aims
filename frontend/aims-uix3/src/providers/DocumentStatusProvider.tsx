@@ -118,11 +118,46 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
         // ✅ FIX: /api/documents/status API가 이미 customer_relation을 반환하므로
         // 개별 문서 조회 없이 바로 사용 (N+1 쿼리 방지 + customer_name 보존)
+        // 🍎 customer_type 일괄 조회 추가 (DocumentSearchView 패턴 참고)
+        const customerIds = new Set<string>()
+        realDocuments.forEach((doc: Document) => {
+          if (doc.customer_relation?.customer_id) {
+            customerIds.add(String(doc.customer_relation.customer_id))
+          }
+        })
+
+        // customer_type 일괄 조회
+        const customerTypeMap: Record<string, string | null> = {}
+        if (customerIds.size > 0) {
+          await Promise.all(
+            Array.from(customerIds).map(async (customerId) => {
+              try {
+                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`)
+                if (customerResponse.ok) {
+                  const customerData = await customerResponse.json()
+                  if (customerData.success && customerData.data) {
+                    customerTypeMap[customerId] = customerData.data.insurance_info?.customer_type || null
+                  }
+                }
+              } catch (error) {
+                console.error(`[DocumentStatusProvider] 고객 ${customerId} 조회 오류:`, error)
+              }
+            })
+          )
+        }
+
+        // customer_type을 customer_relation에 추가
         const documentsWithCustomerRelation: Document[] = realDocuments.map((doc: Document): Document => {
+          const customerId = doc.customer_relation?.customer_id ? String(doc.customer_relation.customer_id) : null
+          const customerType = customerId ? customerTypeMap[customerId] : null
+
           return {
             ...doc,
             // API가 이미 customer_relation (customer_name 포함)을 반환함
-            customer_relation: doc.customer_relation
+            customer_relation: doc.customer_relation ? {
+              ...doc.customer_relation,
+              customer_type: customerType
+            } : undefined
           } as Document
         })
 

@@ -575,6 +575,43 @@ html[data-theme="dark"] .status-customer .customer-name-button:active {
   background: var(--color-ios-bg-hover-dark);
 }
 
+/* === 🍎 CUSTOMER ICON: 고객 타입 아이콘 (16px - CLAUDE.md 준수) === */
+.status-customer .customer-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  transition: color 0.2s ease-out;
+}
+
+.status-customer .customer-icon--personal {
+  color: var(--color-icon-blue);
+}
+
+.status-customer .customer-icon--corporate {
+  color: var(--color-icon-orange);
+}
+
+.status-customer .customer-name-text {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+html[data-theme="dark"] .status-customer .customer-name-text {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 아이콘과 이름을 나란히 배치하기 위해 flex 레이아웃 적용 */
+.status-customer .customer-name-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
 /* === 액션 버튼 === */
 .status-actions {
   display: flex;
