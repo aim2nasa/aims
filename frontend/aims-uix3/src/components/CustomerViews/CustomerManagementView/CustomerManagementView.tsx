@@ -92,6 +92,21 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
     // 최근 생성/수정된 고객 5명 선택
     return customersData.customers.slice(0, 5).map((customer) => {
+      // 고객 타입 결정
+      const customerType = customer.insurance_info?.customer_type || '개인';
+      const customerTypeIcon = customerType === '법인' ? (
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon" style={{ color: 'var(--color-icon-orange)' }}>
+          <circle cx="10" cy="10" r="10" opacity="0.2" />
+          <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+        </svg>
+      ) : (
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon" style={{ color: 'var(--color-icon-blue)' }}>
+          <circle cx="10" cy="10" r="10" opacity="0.2" />
+          <circle cx="10" cy="7" r="3" />
+          <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+        </svg>
+      );
+
       // 고객 활동 종류 결정 (생성 vs 수정)
       const getActivityInfo = () => {
         const createdAt = customer.meta?.created_at ? new Date(customer.meta.created_at) : null;
@@ -101,13 +116,24 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         if (createdAt && updatedAt && updatedAt.getTime() - createdAt.getTime() > 60000) {
           return {
             subtitle: '고객 정보 수정',
-            icon: <SFSymbol name="pencil" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
+                <path d="M16.5 2.5l1 1-11 11-2.5.5.5-2.5 11-11zm-1-1l1-1 2 2-1 1-2-2z" fill="currentColor"/>
+              </svg>
+            ),
             timestamp: updatedAt,
           };
         } else {
           return {
             subtitle: '고객 등록',
-            icon: <SFSymbol name="person.badge.plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+            icon: (
+              <svg width="16" height="16" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
+                <circle cx="8" cy="6" r="3" fill="currentColor"/>
+                <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" fill="currentColor"/>
+                <circle cx="15" cy="15" r="4" fill="var(--color-success)"/>
+                <path d="M15 13v4M13 15h4" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+              </svg>
+            ),
             timestamp: createdAt || new Date(),
           };
         }
@@ -117,7 +143,12 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
       return {
         id: customer._id || String(Math.random()),
-        title: customer.personal_info?.name || '이름 없음',
+        title: (
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            {customerTypeIcon}
+            {customer.personal_info?.name || '이름 없음'}
+          </span>
+        ),
         subtitle: activityInfo.subtitle,
         timestamp: activityInfo.timestamp,
         icon: activityInfo.icon,
@@ -170,7 +201,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         {/* 통계 섹션 */}
         <section className="customer-management-view__section">
           <h2 className="customer-management-view__section-title">
-            <SFSymbol name="chart.bar" size={SFSymbolSize.BODY} weight={SFSymbolWeight.SEMIBOLD} />
+            <svg width="14" height="14" viewBox="0 0 20 20">
+              <rect x="2" y="12" width="4" height="6" rx="1" fill="#3b82f6"/>
+              <rect x="8" y="7" width="4" height="11" rx="1" fill="#3b82f6"/>
+              <rect x="14" y="3" width="4" height="15" rx="1" fill="#3b82f6"/>
+            </svg>
             고객 통계
           </h2>
           <div className="customer-management-view__stats-grid">
@@ -185,7 +220,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <StatCard
               title="활성 고객"
               value={stats.activeCustomers}
-              icon={<SFSymbol name="person.fill.checkmark" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <circle cx="8" cy="6" r="3"/>
+                  <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z"/>
+                  <circle cx="16" cy="16" r="3.5" fill="var(--color-success)"/>
+                  <path d="M14.5 16l1 1 2.5-2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+              }
               color="success"
               isLoading={isCustomersLoading}
               {...(isCustomersError && { error: '통계 조회 실패' })}
@@ -193,7 +235,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <StatCard
               title="최근 등록"
               value={stats.recentRegistrations}
-              icon={<SFSymbol name="person.badge.plus" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <circle cx="8" cy="6" r="3"/>
+                  <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z"/>
+                  <circle cx="15" cy="15" r="4" fill="var(--color-warning)"/>
+                  <path d="M15 13v4M13 15h4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              }
               color="warning"
               isLoading={isCustomersLoading}
               {...(isCustomersError && { error: '통계 조회 실패' })}
@@ -212,28 +261,61 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         {/* 빠른 액션 섹션 */}
         <section className="customer-management-view__section">
           <h2 className="customer-management-view__section-title">
-            <SFSymbol name="bolt.fill" size={SFSymbolSize.BODY} weight={SFSymbolWeight.SEMIBOLD} />
+            <svg width="14" height="14" viewBox="0 0 20 20">
+              <path d="M10 2l2 5h5l-4 3.5 1.5 5.5L10 13l-4.5 3 1.5-5.5L3 7h5l2-5z" fill="var(--color-warning)"/>
+            </svg>
             빠른 액션
           </h2>
           <div className="customer-management-view__actions-grid">
             <QuickActionButton
-              icon={<SFSymbol name="person.fill.badge.plus" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <span className="quick-action-icon-green">
+                  <SFSymbol
+                    name="person-fill-badge-plus"
+                    size={SFSymbolSize.CALLOUT}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                </span>
+              }
               label="고객 등록"
               onClick={handleCustomerRegister}
-              variant="primary"
             />
             <QuickActionButton
-              icon={<SFSymbol name="list.bullet" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <span className="quick-action-icon-green">
+                  <SFSymbol
+                    name="list-bullet"
+                    size={SFSymbolSize.CALLOUT}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                </span>
+              }
               label="전체보기"
               onClick={handleCustomerSearch}
             />
             <QuickActionButton
-              icon={<SFSymbol name="location" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <span className="quick-action-icon-orange">
+                  <SFSymbol
+                    name="location"
+                    size={SFSymbolSize.CALLOUT}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                </span>
+              }
               label="지역별 보기"
               onClick={handleRegionalView}
             />
             <QuickActionButton
-              icon={<SFSymbol name="person.2" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              icon={
+                <span className="quick-action-icon-purple">
+                  <SFSymbol
+                    name="person-2"
+                    size={SFSymbolSize.CALLOUT}
+                    weight={SFSymbolWeight.MEDIUM}
+                  />
+                </span>
+              }
               label="관계별 보기"
               onClick={handleRelationshipMap}
             />
@@ -243,7 +325,10 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         {/* 최근 활동 섹션 */}
         <section className="customer-management-view__section">
           <h2 className="customer-management-view__section-title">
-            <SFSymbol name="clock.fill" size={SFSymbolSize.BODY} weight={SFSymbolWeight.SEMIBOLD} />
+            <svg width="14" height="14" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
+              <path d="M10 5v5l3.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+            </svg>
             최근 활동
           </h2>
           <div className="customer-management-view__recent-activity">

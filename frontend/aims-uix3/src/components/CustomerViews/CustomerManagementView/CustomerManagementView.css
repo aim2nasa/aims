@@ -28,6 +28,24 @@
   letter-spacing: 0.08em;
 }
 
+/* 고객 타입 아이콘 */
+.customer-type-icon {
+  margin-right: var(--spacing-1);
+}
+
+/* 빠른 액션 아이콘 색상 (LeftPane CustomMenu와 동일) */
+.quick-action-icon-green {
+  color: var(--color-ios-green);
+}
+
+.quick-action-icon-orange {
+  color: var(--color-ios-orange);
+}
+
+.quick-action-icon-purple {
+  color: var(--color-ios-purple);
+}
+
 /* 통계 카드 그리드 */
 .customer-management-view__stats-grid {
   display: grid;

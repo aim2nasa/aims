@@ -212,7 +212,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               icon={<SFSymbol name="plus.circle.fill" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
               label="문서 등록"
               onClick={handleDocumentRegister}
-              variant="primary"
             />
             <QuickActionButton
               icon={<SFSymbol name="magnifyingglass" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}

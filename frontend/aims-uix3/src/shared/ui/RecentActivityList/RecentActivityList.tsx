@@ -14,7 +14,7 @@ export interface RecentActivityItem {
   /** 고유 ID */
   id: string;
   /** 제목 */
-  title: string;
+  title: string | React.ReactNode;
   /** 부제목 (선택) */
   subtitle?: string;
   /** 타임스탬프 */
