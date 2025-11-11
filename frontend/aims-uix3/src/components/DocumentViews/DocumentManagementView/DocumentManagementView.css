@@ -1,0 +1,72 @@
+/**
+ * DocumentManagementView Styles
+ * @since 1.0.0
+ *
+ * 문서 관리 대시보드 레이아웃
+ */
+
+.document-management-view__content {
+  padding: var(--spacing-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 대시보드 섹션 */
+.document-management-view__section {
+  margin-bottom: var(--spacing-8);
+}
+
+.document-management-view__section-title {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* 통계 카드 그리드 */
+.document-management-view__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-4);
+}
+
+/* 빠른 액션 그리드 */
+.document-management-view__actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-3);
+  max-width: 600px;
+}
+
+/* 최근 활동 */
+.document-management-view__recent-activity {
+  max-width: 800px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .document-management-view__content {
+    padding: var(--spacing-4);
+  }
+
+  .document-management-view__stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .document-management-view__actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .document-management-view__stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .document-management-view__actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
