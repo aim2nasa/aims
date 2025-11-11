@@ -6,7 +6,7 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
@@ -14,7 +14,7 @@ import { StatCard } from '@/shared/ui/StatCard';
 import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
-import { getDocumentStatistics } from '@/services/DocumentService';
+import { getDocumentStatistics, getDocuments } from '@/services/DocumentService';
 import './DocumentManagementView.css';
 
 interface DocumentManagementViewProps {
@@ -43,48 +43,63 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   onClose,
 }) => {
   // 문서 통계 API 연동
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
   });
 
-  const mockRecentActivities: RecentActivityItem[] = [
-    {
-      id: '1',
-      title: '보험청구서.pdf',
-      subtitle: '문서 등록',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5분 전
-      icon: <SFSymbol name="doc.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '2',
-      title: '계약서_2025.pdf',
-      subtitle: 'OCR 처리 완료',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30분 전
-      icon: <SFSymbol name="doc.text" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '3',
-      title: '진단서.jpg',
-      subtitle: '태그 분류 완료',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2시간 전
-      icon: <SFSymbol name="tag.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '4',
-      title: '영수증_스캔.pdf',
-      subtitle: '문서 등록',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5시간 전
-      icon: <SFSymbol name="doc.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '5',
-      title: '증명서.pdf',
-      subtitle: 'OCR 처리 완료',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1일 전
-      icon: <SFSymbol name="doc.text" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-  ];
+  // 최근 문서 목록 조회
+  const { data: recentDocuments, isLoading: isRecentLoading } = useQuery({
+    queryKey: ['recentDocuments'],
+    queryFn: () =>
+      getDocuments({
+        limit: 5,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      }),
+  });
+
+  // 최근 활동 데이터 변환
+  const recentActivities: RecentActivityItem[] = useMemo(() => {
+    if (!recentDocuments?.documents) return [];
+
+    return recentDocuments.documents.slice(0, 5).map((doc) => {
+      // 문서 상태에 따라 활동 종류 결정
+      const getActivityInfo = (status: string) => {
+        if (status === 'completed') {
+          return {
+            subtitle: '처리 완료',
+            icon: <SFSymbol name="checkmark.circle.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          };
+        } else if (status === 'processing') {
+          return {
+            subtitle: '처리 중',
+            icon: <SFSymbol name="arrow.clockwise" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          };
+        } else if (status === 'error') {
+          return {
+            subtitle: '처리 실패',
+            icon: <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          };
+        } else {
+          return {
+            subtitle: '문서 등록',
+            icon: <SFSymbol name="doc.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+          };
+        }
+      };
+
+      const activityInfo = getActivityInfo(doc.status || 'pending');
+
+      return {
+        id: doc._id || String(Math.random()),
+        title: doc.filename || doc.originalName || '제목 없음',
+        subtitle: activityInfo.subtitle,
+        timestamp: doc.createdAt ? new Date(doc.createdAt) : new Date(),
+        icon: activityInfo.icon,
+      };
+    });
+  }, [recentDocuments]);
 
   // 빠른 액션 핸들러 (Phase 2에서 실제 네비게이션 추가)
   const handleDocumentRegister = () => {
@@ -124,28 +139,28 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               value={stats?.total ?? 0}
               icon={<SFSymbol name="doc.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
-              isLoading={isLoading}
+              isLoading={isStatsLoading}
             />
             <StatCard
               title="처리 대기"
               value={stats?.pending ?? 0}
               icon={<SFSymbol name="clock" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="warning"
-              isLoading={isLoading}
+              isLoading={isStatsLoading}
             />
             <StatCard
               title="OCR 완료"
               value={stats?.stages.ocr ?? 0}
               icon={<SFSymbol name="doc.text" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              isLoading={isLoading}
+              isLoading={isStatsLoading}
             />
             <StatCard
               title="태그 완료"
               value={stats?.completed ?? 0}
               icon={<SFSymbol name="tag.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              isLoading={isLoading}
+              isLoading={isStatsLoading}
             />
           </div>
         </section>
@@ -183,7 +198,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             최근 활동
           </h2>
           <div className="document-management-view__recent-activity">
-            <RecentActivityList items={mockRecentActivities} maxItems={5} />
+            <RecentActivityList items={recentActivities} maxItems={5} isLoading={isRecentLoading} />
           </div>
         </section>
       </div>
