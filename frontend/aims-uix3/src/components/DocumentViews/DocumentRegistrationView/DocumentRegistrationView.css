@@ -186,25 +186,77 @@ html[data-theme="dark"] .registration-guide .step-description {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 탭 아이콘 커스터마이징 */
-.document-registration-view .tabs-bar .tabs-bar__tab {
-  opacity: 1;
-  gap: 8px;
-}
-
-.document-registration-view .tabs-bar .tabs-bar__tab .tabs-bar__tab-icon {
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
+/* 🍎 Pill-style 탭 버튼 */
+.document-registration-view__tabs {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
   justify-content: center;
 }
 
-.document-registration-view .tabs-bar .tabs-bar__tab .tabs-bar__tab-icon svg {
-  color: inherit;
+.document-registration-view__tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
-.document-registration-view .tabs-bar .tabs-bar__tab--active .tabs-bar__tab-icon svg {
-  color: inherit;
+.document-registration-view__tab:hover:not(.document-registration-view__tab--active) {
+  transform: translateY(-1px);
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-hover);
+}
+
+.document-registration-view__tab--active {
+  color: var(--color-text-inverse);
+  background: var(--color-accent-blue);
+  border-color: var(--color-accent-blue);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 8px var(--color-accent-blue-translucent);
+}
+
+.document-registration-view__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* 아이콘 색상 - 비활성 상태 */
+.document-registration-view__tab-icon--orange {
+  color: var(--color-ios-orange);
+}
+
+.document-registration-view__tab-icon--blue {
+  color: var(--color-ios-blue);
+}
+
+/* 아이콘 색상 - 활성 상태 (흰색) */
+.document-registration-view__tab--active .document-registration-view__tab-icon--orange,
+.document-registration-view__tab--active .document-registration-view__tab-icon--blue {
+  color: var(--color-text-inverse);
+}
+
+/* SFSymbol 내부 요소도 색상 상속 */
+.document-registration-view__tab--active .document-registration-view__tab-icon--orange *,
+.document-registration-view__tab--active .document-registration-view__tab-icon--blue * {
+  color: var(--color-text-inverse);
+}
+
+.document-registration-view__tab--active .document-registration-view__tab-icon--orange svg,
+.document-registration-view__tab--active .document-registration-view__tab-icon--blue svg {
+  color: var(--color-text-inverse);
 }
 
 /* 🍎 RESPONSIVE: Minimal changes */

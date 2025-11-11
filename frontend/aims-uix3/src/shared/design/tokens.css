@@ -65,6 +65,7 @@
   --color-accent-blue-alpha-80: rgba(59, 130, 246, 0.8);       /* 80% opacity - strong glow */
   --color-accent-blue-alpha-50: rgba(59, 130, 246, 0.5);       /* 50% opacity - medium glow */
   --color-accent-blue-alpha-30: rgba(59, 130, 246, 0.3);       /* 30% opacity - subtle glow */
+  --color-accent-blue-translucent: rgba(59, 130, 246, 0.25);   /* 25% opacity - box-shadow for active tabs */
 
   /* Selection/Highlight Colors (for selected rows/items) */
   --color-selection-bg-light: rgba(59, 130, 246, 0.28);         /* Light mode: selected item background */

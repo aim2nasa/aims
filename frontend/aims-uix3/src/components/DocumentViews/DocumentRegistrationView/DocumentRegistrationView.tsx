@@ -9,7 +9,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Tabs, Tab } from '../../Tabs/Tabs'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
 import FileListSection from './FileListSection/FileListSection'
@@ -1203,24 +1202,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return "문서 등록"
   }
 
-  // 탭 정의
-  const tabs: Tab[] = [
-    {
-      key: 'default',
-      label: '나중에 고객 연결',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: 'block', color: 'var(--color-ios-orange)' }}>
-          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-          <path d="M8 4.5V8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      )
-    },
-    {
-      key: 'customer',
-      label: '지금 고객 연결',
-      icon: <SFSymbol name="person" style={{ color: 'var(--color-ios-blue)' }} />
-    }
-  ]
+  // 탭 아이콘 정의
+  const clockIcon = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M8 4.5V8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
 
   return (
     <CenterPaneView
@@ -1277,11 +1265,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         )}
 
         {/* 탭 네비게이션 */}
-        <Tabs
-          tabs={tabs}
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as 'default' | 'customer')}
-        />
+        <div className="document-registration-view__tabs">
+          <button
+            className={`document-registration-view__tab ${activeTab === 'default' ? 'document-registration-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('default')}
+          >
+            <span className="document-registration-view__tab-icon document-registration-view__tab-icon--orange">
+              {clockIcon}
+            </span>
+            나중에 고객 연결
+          </button>
+          <button
+            className={`document-registration-view__tab ${activeTab === 'customer' ? 'document-registration-view__tab--active' : ''}`}
+            onClick={() => setActiveTab('customer')}
+          >
+            <span className="document-registration-view__tab-icon document-registration-view__tab-icon--blue">
+              <SFSymbol name="person" />
+            </span>
+            지금 고객 연결
+          </button>
+        </div>
 
         {/* 탭별 업로드 영역 */}
         {activeTab === 'default' && (
