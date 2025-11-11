@@ -631,7 +631,54 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     createMarkers().catch(error => {
       console.error('[NaverMap] 마커 생성 중 오류:', error)
     })
-  }, [customers, isMapReady])
+  }, [customers, isMapReady, selectedRegion, selectedDistrict])
+
+  // RightPane 열림/닫힘 시 bounds 재조정 (고객 선택 시)
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current || !window.naver || markers.current.size === 0) {
+      return
+    }
+
+    // selectedCustomerId가 있을 때만 (RightPane 열릴 때) bounds 재조정
+    if (selectedCustomerId) {
+      const allPositions: Array<{ lat: number; lng: number }> = []
+
+      // 현재 화면에 표시된 모든 마커의 위치 수집
+      for (const [, group] of addressGroups.current.entries()) {
+        for (const item of group) {
+          if (item.result) {
+            allPositions.push({ lat: item.result.latitude, lng: item.result.longitude })
+          }
+        }
+      }
+
+      if (allPositions.length > 0) {
+        // 첫 번째 위치로 초기 bounds 생성
+        const firstPos = allPositions[0]!
+        const bounds = new window.naver.maps.LatLngBounds(
+          new window.naver.maps.LatLng(firstPos.lat, firstPos.lng),
+          new window.naver.maps.LatLng(firstPos.lat, firstPos.lng)
+        )
+
+        // 모든 위치를 포함하도록 bounds 확장
+        allPositions.forEach(pos => {
+          bounds.extend(new window.naver.maps.LatLng(pos.lat, pos.lng))
+        })
+
+        // RightPane이 열린 상태를 고려하여 오른쪽 padding 증가
+        mapInstance.current.fitBounds(bounds, {
+          top: 50,
+          right: 400, // RightPane 폭 (약 350px) + 여백
+          bottom: 50,
+          left: 50
+        })
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] RightPane 열림 - bounds 재조정 (고객 ${allPositions.length}명)`)
+        }
+      }
+    }
+  }, [selectedCustomerId, isMapReady])
 
   // 줌 레벨 또는 선택된 고객 변경 시 마커 아이콘 업데이트
   useEffect(() => {
