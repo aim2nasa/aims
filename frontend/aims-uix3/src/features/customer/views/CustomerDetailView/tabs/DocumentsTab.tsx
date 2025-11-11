@@ -10,7 +10,6 @@
 
 import React, { useCallback, useState, useMemo } from 'react'
 import type { Customer } from '@/entities/customer/model'
-import RefreshButton from '../../../../../components/RefreshButton/RefreshButton'
 import { Tooltip, Button } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
 import SFSymbol, {
@@ -162,11 +161,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     setItemsPerPage(limit)
     setCurrentPage(1)
   }, [])
-
-  const handleRefresh = useCallback(async () => {
-    await refresh()
-    onRefresh?.()
-  }, [onRefresh, refresh])
 
   // 🍎 documentLinked 이벤트 리스너 (문서 연결 시 즉시 반영)
   React.useEffect(() => {
@@ -540,14 +534,6 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               마지막 동기화: {lastUpdatedLabel}
             </span>
           )}
-        </div>
-        <div className="customer-documents__actions">
-          <RefreshButton
-            onClick={handleRefresh}
-            loading={isLoading}
-            size="small"
-            tooltip="문서 목록 새로고침"
-          />
         </div>
       </div>
 
