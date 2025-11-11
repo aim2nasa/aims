@@ -17,6 +17,7 @@
   /* Background Colors */
   --color-bg-primary: var(--color-neutral-0);
   --color-bg-secondary: var(--color-neutral-50);
+  --color-bg-card: var(--color-neutral-75);  /* 카드/리스트용 중간 톤 */
   --color-bg-tertiary: var(--color-neutral-100);
   --color-bg-hover: var(--color-neutral-100);
   --color-bg-active: var(--color-neutral-200);
@@ -183,6 +184,7 @@
   /* Background Colors */
   --color-bg-primary: var(--color-neutral-900);
   --color-bg-secondary: var(--color-neutral-800);
+  --color-bg-card: var(--color-neutral-900);  /* 다크 테마: primary와 동일 */
   --color-bg-tertiary: var(--color-neutral-700);
   --color-bg-hover: var(--color-neutral-800);
   --color-bg-active: var(--color-neutral-700);
@@ -393,6 +395,7 @@
     /* Dark theme variables - same as [data-theme="dark"] */
     --color-bg-primary: var(--color-neutral-900);
     --color-bg-secondary: var(--color-neutral-800);
+    --color-bg-card: var(--color-neutral-900);
     --color-bg-tertiary: var(--color-neutral-700);
     --color-bg-hover: var(--color-neutral-800);
     --color-bg-active: var(--color-neutral-700);
@@ -487,6 +490,7 @@
     /* Light theme variables - same as :root */
     --color-bg-primary: var(--color-neutral-0);
     --color-bg-secondary: var(--color-neutral-50);
+    --color-bg-card: var(--color-neutral-75);
     --color-bg-tertiary: var(--color-neutral-100);
     --color-bg-hover: var(--color-neutral-100);
     --color-bg-active: var(--color-neutral-200);

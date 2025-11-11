@@ -9,7 +9,7 @@
 .recent-activity-list {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-primary);
+  background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
@@ -56,7 +56,7 @@
   align-items: center;
   gap: var(--spacing-3);
   padding: var(--spacing-4);
-  background: var(--color-bg-primary);
+  background: var(--color-bg-card);
   transition: all var(--duration-fast) var(--easing-ease-out);
 
   /* Progressive Disclosure: 기본 서브틀 */
@@ -70,7 +70,7 @@
 
 .recent-activity-item--clickable:hover {
   opacity: 1;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-tertiary);
   transform: translateX(2px);
 }
 
@@ -184,7 +184,11 @@
 
 /* 다크 모드 */
 html[data-theme="dark"] .recent-activity-list {
-  background: var(--color-bg-primary);
+  /* bg-card가 자동으로 bg-primary로 매핑됨 */
+}
+
+html[data-theme="dark"] .recent-activity-item {
+  /* bg-card가 자동으로 bg-primary로 매핑됨 */
 }
 
 html[data-theme="dark"] .recent-activity-item--clickable:hover {

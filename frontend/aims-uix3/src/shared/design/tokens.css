@@ -25,6 +25,7 @@
   /* Neutral Colors */
   --color-neutral-0: #ffffff;
   --color-neutral-50: #f9fafb;
+  --color-neutral-75: #f6f7f9;  /* 중간 톤: 카드/리스트 배경용 */
   --color-neutral-100: #f3f4f6;
   --color-neutral-200: #e5e7eb;
   --color-neutral-300: #d1d5db;
