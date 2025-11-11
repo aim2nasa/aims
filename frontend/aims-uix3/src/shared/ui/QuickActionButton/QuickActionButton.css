@@ -1,0 +1,148 @@
+/**
+ * QuickActionButton Styles
+ * @since 1.0.0
+ *
+ * iOS 스타일 빠른 액션 버튼 컴포넌트
+ * Progressive Disclosure 원칙 준수
+ */
+
+.quick-action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-ease-out);
+  min-height: 100px;
+  aspect-ratio: 1 / 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
+
+  /* Progressive Disclosure: 기본 서브틀 */
+  opacity: 0.92;
+}
+
+/* 호버 시 강조 */
+.quick-action-button:hover:not(:disabled) {
+  opacity: 1;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, var(--opacity-shadow-md));
+}
+
+/* 클릭 시 */
+.quick-action-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, var(--opacity-shadow-sm));
+}
+
+/* 키보드 포커스 */
+.quick-action-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 비활성화 상태 */
+.quick-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 아이콘 */
+.quick-action-button__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-title-1);
+  transition: transform var(--duration-fast) var(--easing-ease-out);
+}
+
+.quick-action-button:hover:not(:disabled) .quick-action-button__icon {
+  transform: scale(1.1);
+}
+
+/* 레이블 */
+.quick-action-button__label {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0.9;
+}
+
+.quick-action-button:hover:not(:disabled) .quick-action-button__label {
+  opacity: 1;
+}
+
+/* Primary 변형 */
+.quick-action-button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.quick-action-button--primary .quick-action-button__icon {
+  color: var(--color-neutral-0);
+}
+
+.quick-action-button--primary .quick-action-button__label {
+  color: var(--color-neutral-0);
+}
+
+.quick-action-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+/* Secondary 변형 (기본) */
+.quick-action-button--secondary .quick-action-button__icon {
+  color: var(--color-primary);
+}
+
+/* 다크 모드 */
+html[data-theme="dark"] .quick-action-button {
+  background: var(--color-bg-primary);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .quick-action-button:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .quick-action-button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .quick-action-button {
+    min-height: 80px;
+    padding: var(--spacing-3);
+  }
+
+  .quick-action-button__icon {
+    font-size: var(--font-size-title-2);
+  }
+
+  .quick-action-button__label {
+    font-size: var(--font-size-caption-2);
+  }
+}
+
+/* 그리드 레이아웃 지원 */
+.quick-action-button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-3);
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .quick-action-button-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
