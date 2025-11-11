@@ -10,7 +10,7 @@
 .document-registration-content {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* 간격 축소 */
+  gap: 8px; /* 간격 축소 */
   height: 100%;
   overflow: hidden; /* 전체 페이지 스크롤 방지 */
 }
@@ -45,9 +45,155 @@
   flex-direction: column;
 }
 
+/* 🍎 등록 방법 안내 스타일 */
+.registration-guide {
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 4px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html[data-theme="dark"] .registration-guide {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.registration-guide .guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .registration-guide .guide-header {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.registration-guide .guide-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.registration-guide .guide-icon svg {
+  display: block;
+}
+
+/* Lightbulb icon colors */
+.registration-guide .guide-icon .lightbulb-bulb {
+  fill: var(--color-icon-lightbulb-fill);
+  stroke: var(--color-icon-lightbulb-stroke);
+}
+
+.registration-guide .guide-icon .lightbulb-base {
+  stroke: var(--color-icon-lightbulb-stroke);
+}
+
+.registration-guide .guide-title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subheadline);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  letter-spacing: -0.5px;
+}
+
+html[data-theme="dark"] .registration-guide .guide-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.registration-guide .guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.registration-guide .guide-section {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.registration-guide .guide-step {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.registration-guide .step-number {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-step-number-bg-light);
+  color: var(--color-step-number-text-light);
+  border: 1.5px solid var(--color-step-number-border-light);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  line-height: 1;
+}
+
+html[data-theme="dark"] .registration-guide .step-number {
+  background: var(--color-step-number-bg-dark);
+  color: var(--color-step-number-text-dark);
+  border-color: var(--color-step-number-border-dark);
+}
+
+.registration-guide .step-content {
+  flex: 1;
+  padding-top: 0;
+}
+
+.registration-guide .step-title {
+  margin: 0 0 4px;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-footnote);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  letter-spacing: -0.3px;
+}
+
+html[data-theme="dark"] .registration-guide .step-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.registration-guide .step-description {
+  margin: 2px 0;
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-caption-1);
+  font-weight: 400;
+  color: var(--color-ios-text-secondary-light);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .registration-guide .step-description {
+  color: var(--color-ios-text-secondary-dark);
+}
+
 /* 🍎 RESPONSIVE: Minimal changes */
 @media (max-width: 768px) {
   .document-registration-content {
-    gap: 16px;
+    gap: 8px;
+  }
+
+  .registration-guide .guide-section {
+    flex-direction: column;
+    gap: 12px;
   }
 }

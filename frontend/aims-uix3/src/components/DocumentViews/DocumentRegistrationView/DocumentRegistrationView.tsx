@@ -1232,6 +1232,45 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
+        {/* 🍎 등록 방법 안내 (파일이 없을 때만 표시 - Progressive Disclosure) */}
+        {uploadState.files.length === 0 && (
+          <div className="registration-guide">
+            <div className="guide-header">
+              <div className="guide-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3 className="guide-title">문서 등록 방법</h3>
+            </div>
+
+            <div className="guide-content">
+              <div className="guide-section">
+                <div className="guide-step">
+                  <span className="step-number">1</span>
+                  <div className="step-content">
+                    <h4 className="step-title">나중에 고객 연결</h4>
+                    <p className="step-description">• 파일만 먼저 업로드하고, 추후에 고객을 연결하는 방법</p>
+                    <p className="step-description">• 대량의 문서를 빠르게 등록할 때 유용</p>
+                    <p className="step-description">• 문서 라이브러리나 검색에서 고객 연결 가능</p>
+                  </div>
+                </div>
+
+                <div className="guide-step">
+                  <span className="step-number">2</span>
+                  <div className="step-content">
+                    <h4 className="step-title">지금 고객 연결</h4>
+                    <p className="step-description">• 파일 업로드 시점에 고객과 문서유형을 지정</p>
+                    <p className="step-description">• 업로드 후 자동으로 고객에게 문서 연결</p>
+                    <p className="step-description">• 특정 고객의 문서를 즉시 등록할 때 유용</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 탭 네비게이션 */}
         <Tabs
           tabs={tabs}
