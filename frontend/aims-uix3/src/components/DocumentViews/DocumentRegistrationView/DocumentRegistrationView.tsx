@@ -1208,12 +1208,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     {
       key: 'default',
       label: '나중에 고객 연결',
-      icon: <SFSymbol name="doc-text" />
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: 'block', color: 'var(--color-ios-orange)' }}>
+          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+          <path d="M8 4.5V8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      )
     },
     {
       key: 'customer',
       label: '지금 고객 연결',
-      icon: <SFSymbol name="person" />
+      icon: <SFSymbol name="person" style={{ color: 'var(--color-ios-blue)' }} />
     }
   ]
 

@@ -186,6 +186,27 @@ html[data-theme="dark"] .registration-guide .step-description {
   color: var(--color-ios-text-secondary-dark);
 }
 
+/* 탭 아이콘 커스터마이징 */
+.document-registration-view .tabs-bar .tabs-bar__tab {
+  opacity: 1;
+  gap: 8px;
+}
+
+.document-registration-view .tabs-bar .tabs-bar__tab .tabs-bar__tab-icon {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.document-registration-view .tabs-bar .tabs-bar__tab .tabs-bar__tab-icon svg {
+  color: inherit;
+}
+
+.document-registration-view .tabs-bar .tabs-bar__tab--active .tabs-bar__tab-icon svg {
+  color: inherit;
+}
+
 /* 🍎 RESPONSIVE: Minimal changes */
 @media (max-width: 768px) {
   .document-registration-content {
