@@ -37,7 +37,7 @@ html[data-theme="dark"] .center-pane-view {
 .center-pane-view__header {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 애플 디자인: X 버튼 제거로 좌측 정렬 */
+  justify-content: space-between; /* 타이틀과 액세서리 양쪽 배치 */
   padding: 20px 24px; /* 애플 표준: 8의 배수 그리드 시스템 */
   border-bottom: 0.5px solid var(--color-layout-accent-light); /* Ultra-subtle 구분선 */
   background-color: rgba(255, 255, 255, 0.7); /* 거의 투명한 배경 */
@@ -206,4 +206,11 @@ html[data-theme="dark"] .center-pane-view__placeholder {
 /* 다크 테마 아이콘 지원 */
 html[data-theme="dark"] .center-pane-view__title-icon {
   opacity: 0.7; /* 다크 테마에서 살짝 더 밝게 */
+}
+
+/* 제목 액세서리 스타일 (새로고침 버튼 등) */
+.center-pane-view__title-accessory {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }

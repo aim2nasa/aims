@@ -14,6 +14,7 @@ import { StatCard } from '@/shared/ui/StatCard';
 import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
+import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getDocumentStatistics, getDocuments } from '@/services/DocumentService';
 import './DocumentManagementView.css';
 
@@ -46,13 +47,13 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   onNavigate,
 }) => {
   // 문서 통계 API 연동
-  const { data: stats, isLoading: isStatsLoading } = useQuery({
+  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
   });
 
   // 최근 문서 목록 조회
-  const { data: recentDocuments, isLoading: isRecentLoading } = useQuery({
+  const { data: recentDocuments, isLoading: isRecentLoading, refetch: refetchRecent } = useQuery({
     queryKey: ['recentDocuments'],
     queryFn: () =>
       getDocuments({
@@ -104,6 +105,14 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     });
   }, [recentDocuments]);
 
+  // 새로고침 핸들러
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchStats(),
+      refetchRecent()
+    ]);
+  };
+
   // 빠른 액션 핸들러
   const handleDocumentRegister = () => {
     onNavigate('documents-register');
@@ -125,6 +134,13 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       visible={visible}
       title="문서 관리"
       titleIcon={<SFSymbol name="doc" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+      titleAccessory={
+        <RefreshButton
+          onClick={handleRefresh}
+          size="small"
+          tooltip="문서 통계 새로고침"
+        />
+      }
       onClose={onClose}
       marginTop={5}
       marginBottom={5}

@@ -14,6 +14,7 @@ import { StatCard } from '@/shared/ui/StatCard';
 import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
+import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
 import './CustomerManagementView.css';
 
@@ -46,7 +47,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   onNavigate,
 }) => {
   // 고객 목록 조회 (통계 계산용)
-  const { data: customersData, isLoading: isCustomersLoading } = useQuery({
+  const { data: customersData, isLoading: isCustomersLoading, refetch: refetchCustomers } = useQuery({
     queryKey: ['allCustomers'],
     queryFn: () =>
       getCustomers({
@@ -119,6 +120,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     });
   }, [customersData]);
 
+  // 새로고침 핸들러
+  const handleRefresh = async () => {
+    await refetchCustomers();
+  };
+
   // 빠른 액션 핸들러
   const handleCustomerRegister = () => {
     onNavigate('customers-register');
@@ -140,6 +146,13 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       visible={visible}
       title="고객 관리"
       titleIcon={<SFSymbol name="person" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+      titleAccessory={
+        <RefreshButton
+          onClick={handleRefresh}
+          size="small"
+          tooltip="고객 통계 새로고침"
+        />
+      }
       onClose={onClose}
       marginTop={5}
       marginBottom={5}
