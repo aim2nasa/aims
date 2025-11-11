@@ -411,24 +411,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         onAnnualReportNeedRefresh?.()
       }
 
-      // 결과 모달 표시 (비동기, 상태 복원 후)
+      // 실패한 경우만 오류 모달 표시
       if (failedDeletes.length > 0) {
-        // 일부 삭제 실패
         await confirmController.actions.openModal({
           title: '삭제 실패',
           message: `${failedDeletes.length}개의 문서 삭제에 실패했습니다.`,
           confirmText: '확인',
           showCancel: false,
         })
-      } else {
-        // 모두 성공
-        await confirmController.actions.openModal({
-          title: '삭제 완료',
-          message: `${selectedDocumentIds.size}개의 문서가 삭제되었습니다.`,
-          confirmText: '확인',
-          showCancel: false,
-        })
       }
+      // 성공한 경우: 모달 없이 바로 종료 (즉시 UI 반영됨)
     } catch (error) {
       console.error('Error in handleDeleteSelected:', error)
       setIsDeleting(false) // 에러 발생 시에도 상태 복원
