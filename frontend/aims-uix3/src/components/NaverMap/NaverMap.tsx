@@ -148,6 +148,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // 현재 줌 레벨 (마커 디자인 결정용)
   const [currentZoom, setCurrentZoom] = useState<number>(initialZoom)
 
+  // 프로그래밍 방식의 resize인지 구분하는 플래그
+  const isProgrammaticResize = useRef(false)
+
   // 지도 초기화
   useEffect(() => {
     if (!mapElement.current || !window.naver) {
@@ -222,12 +225,18 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     let resizeTimeout: NodeJS.Timeout
 
     const handleResize = () => {
+      // 프로그래밍 방식의 resize라면 무시
+      if (isProgrammaticResize.current) {
+        isProgrammaticResize.current = false
+        return
+      }
+
       // 디바운싱: 리사이즈 이벤트가 멈춘 후 200ms 뒤에 실행
       clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         if (mapInstance.current) {
-          // 네이버 지도 API에 크기 변경 알림
-          window.dispatchEvent(new Event('resize'))
+          // 플래그 설정 (무한 루프 방지)
+          isProgrammaticResize.current = true
 
           // 지도 중심 위치 재설정 (viewport 재계산 트리거)
           const currentCenter = mapInstance.current.getCenter()

@@ -573,14 +573,12 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             <button
               className="search-icon"
               onClick={() => {
-                console.log('[DocumentSearchView] 🔍 검색 아이콘 클릭')
                 // 최근 검색어 드롭다운 토글
                 const newFocusState = !isSearchInputFocused
                 setIsSearchInputFocused(newFocusState)
                 if (newFocusState) {
                   // 드롭다운 열 때 최근 검색어 다시 불러오기
                   const recent = getRecentSearchQueries()
-                  console.log('[DocumentSearchView] 📋 최근 검색어:', recent)
                   setRecentSearchQueries(recent)
                 }
               }}
@@ -596,12 +594,10 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
               onFocus={() => {
-                console.log('[DocumentSearchView] 🔍 검색 입력 필드 포커스')
                 // 입력 필드 포커스 시 최근 검색어 드롭다운 열기
                 setIsSearchInputFocused(true)
                 // 최근 검색어 다시 불러오기
                 const recent = getRecentSearchQueries()
-                console.log('[DocumentSearchView] 📋 최근 검색어:', recent)
                 setRecentSearchQueries(recent)
               }}
               onBlur={() => {
@@ -625,14 +621,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               </button>
             )}
             {/* 🍎 최근 검색어 드롭다운 */}
-            {(() => {
-              console.log('[DocumentSearchView] 🎯 드롭다운 렌더링 조건:', {
-                isSearchInputFocused,
-                recentSearchQueriesLength: recentSearchQueries.length,
-                shouldShow: isSearchInputFocused && recentSearchQueries.length > 0
-              })
-              return isSearchInputFocused && recentSearchQueries.length > 0
-            })() && (
+            {isSearchInputFocused && recentSearchQueries.length > 0 && (
               <div className="recent-search-dropdown">
                 <div className="recent-search-header">최근 검색어</div>
                 <div className="recent-search-list">
