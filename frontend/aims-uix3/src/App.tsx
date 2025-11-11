@@ -551,12 +551,34 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     updateURLParams({ view: activeDocumentView })
   }, [activeDocumentView, updateURLParams])
 
-  // 테마 시스템
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
+  // 테마 시스템 - localStorage 영속화 지원
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    try {
+      const savedTheme = localStorage.getItem('aims-theme')
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+        return savedTheme
+      }
+      return 'light'
+    } catch {
+      return 'light'
+    }
+  })
 
   // 테마 적용 및 시스템 설정 감지
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
+
+    // localStorage에 테마 설정 저장
+    try {
+      localStorage.setItem('aims-theme', theme)
+      if (import.meta.env.DEV) {
+        console.log(`[Theme] 테마 설정 저장: ${theme}`)
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('[Theme] localStorage 저장 실패:', error)
+      }
+    }
 
     // 시스템 테마일 때만 미디어 쿼리 리스너 등록
     if (theme === 'system') {
