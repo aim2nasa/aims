@@ -236,8 +236,12 @@ html[data-theme="dark"] .polling-toggle:hover {
 }
 
 .dot-active {
-  color: var(--color-primary-500);
+  color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
   animation: polling-pulse 2s ease-in-out infinite;
+}
+
+html[data-theme="dark"] .dot-active {
+  color: var(--color-ios-green-dark);
 }
 
 .dot-inactive {

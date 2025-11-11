@@ -801,6 +801,7 @@
   /* Light Theme - iOS Human Interface Guidelines 표준 색상 */
   --color-ios-blue: #007aff;           /* iOS systemBlue */
   --color-ios-green: #34c759;          /* iOS systemGreen */
+  --color-ios-green-light: #30d158;    /* iOS systemGreen 밝은 버전 (라이트 테마용) */
   --color-ios-orange: #ff9500;         /* iOS systemOrange */
   --color-ios-purple: #af52de;         /* iOS systemPurple */
   --color-ios-teal: #5ac8fa;           /* iOS systemTeal */

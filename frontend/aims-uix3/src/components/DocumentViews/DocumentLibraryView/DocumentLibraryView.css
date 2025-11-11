@@ -417,7 +417,7 @@ html[data-theme="dark"] .result-controls .last-updated {
 }
 
 /* 🍎 폴링 토글 버튼 */
-.result-controls .polling-toggle {
+.header-right-section .polling-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -430,31 +430,31 @@ html[data-theme="dark"] .result-controls .last-updated {
   opacity: 0.7;
 }
 
-.result-controls .polling-toggle:hover {
+.header-right-section .polling-toggle:hover {
   background: transparent;
   opacity: 1;
   transform: scale(1.1);
 }
 
-.result-controls .polling-dot {
+.header-right-section .polling-dot {
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보 */
   font-family: var(--font-family-text);
   transition: color 0.2s ease;
 }
 
-.result-controls .dot-active {
-  color: var(--color-ios-green-light);
+.header-right-section .dot-active {
+  color: var(--color-ios-green-light); /* 밝은 녹색 - 라이트 테마에서 더 생동감 있게 */
 }
 
-html[data-theme="dark"] .result-controls .dot-active {
+html[data-theme="dark"] .header-right-section .dot-active {
   color: var(--color-ios-green-dark);
 }
 
-.result-controls .dot-inactive {
+.header-right-section .dot-inactive {
   color: var(--color-ios-text-quaternary-light);
 }
 
-html[data-theme="dark"] .result-controls .dot-inactive {
+html[data-theme="dark"] .header-right-section .dot-inactive {
   color: var(--color-ios-text-quaternary-dark);
 }
 
