@@ -317,7 +317,7 @@ const DocumentLibraryContent: React.FC<{
                 className="library-filters__icon"
                 decorative={true}
               />
-              <span className="library-filters__label">필터:</span>
+              <span className="library-filters__label">필터</span>
             </div>
 
             {/* 드롭다운 wrapper */}

@@ -492,7 +492,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 className="customer-selector-modal__filter-icon"
                 decorative
               />
-              <span className="customer-selector-modal__filter-label">필터:</span>
+              <span className="customer-selector-modal__filter-label">필터</span>
               <span className={`customer-selector-modal__filter-value ${selectedInitial ? 'active' : 'inactive'}`}>
                 {selectedInitial || '없음'}
               </span>
