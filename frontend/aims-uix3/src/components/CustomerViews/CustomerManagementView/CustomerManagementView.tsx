@@ -146,6 +146,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     onClose();
   };
 
+  const handleRegionalView = () => {
+    onNavigate('customers-regional');
+    onClose();
+  };
+
   return (
     <CenterPaneView
       visible={visible}
@@ -216,19 +221,24 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           </h2>
           <div className="customer-management-view__actions-grid">
             <QuickActionButton
-              icon={<SFSymbol name="person.badge.plus" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              icon={<SFSymbol name="person.fill.badge.plus" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
               label="고객 등록"
               onClick={handleCustomerRegister}
               variant="primary"
             />
             <QuickActionButton
-              icon={<SFSymbol name="magnifyingglass" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
-              label="고객 검색"
+              icon={<SFSymbol name="list.bullet" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              label="전체보기"
               onClick={handleCustomerSearch}
             />
             <QuickActionButton
+              icon={<SFSymbol name="location" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
+              label="지역별 보기"
+              onClick={handleRegionalView}
+            />
+            <QuickActionButton
               icon={<SFSymbol name="person.2" size={SFSymbolSize.TITLE_1} weight={SFSymbolWeight.MEDIUM} />}
-              label="관계도"
+              label="관계별 보기"
               onClick={handleRelationshipMap}
             />
           </div>
