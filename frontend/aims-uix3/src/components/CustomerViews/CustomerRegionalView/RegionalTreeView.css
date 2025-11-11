@@ -329,20 +329,16 @@ html[data-theme="dark"] .tree-header-actions {
 }
 
 .tree-action-btn {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보/테이블 헤더 */
   font-family: var(--font-family-text);
   color: var(--color-text-secondary);
-  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-html[data-theme="dark"] .tree-action-btn {
-  background: rgba(255, 255, 255, 0.05);
+  opacity: 0.7;
+  transition: all 0.2s ease;
 }
 
 .tree-action-btn--icon-only {
@@ -355,15 +351,13 @@ html[data-theme="dark"] .tree-action-btn {
 }
 
 .tree-action-btn:hover {
-  background-color: var(--color-hover-bg);
-  color: var(--color-text-primary);
-  border-color: var(--color-accent);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .tree-action-btn:active {
   transform: scale(0.95);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* ============================================

@@ -16,7 +16,6 @@
 import React, { useState, useMemo } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import RefreshButton from '../../RefreshButton/RefreshButton'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import Tooltip from '@/shared/ui/Tooltip'
 import './RegionalTreeView.css'
@@ -491,16 +490,20 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           <span className="stat-value">{stats.districtsCount}</span>
         </div>
 
-        {/* 새로고침 버튼 */}
+        {/* 전체 보기 버튼 */}
         <div className="tree-actions">
-          <Tooltip content="새로고침">
-            <div style={{ display: 'inline-block' }}>
-              <RefreshButton
-                onClick={onRefresh ?? (() => {})}
-                loading={loading}
-                size="small"
-              />
-            </div>
+          <Tooltip content="전체 보기">
+            <button
+              type="button"
+              className="tree-action-btn tree-action-btn--icon-only"
+              onClick={() => onRefresh?.()}
+              disabled={loading}
+              aria-label="전체 보기"
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </Tooltip>
         </div>
       </div>
