@@ -7,11 +7,11 @@
  * - 문서 유형 선택
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer'
-import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../../utils/recentCustomers'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import './CustomerFileUploadArea.css'
 
 interface CustomerFileUploadAreaProps {
@@ -55,13 +55,8 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
 }) => {
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
-  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
-
-  // 최근 고객 목록 불러오기
-  useEffect(() => {
-    const recent = getRecentCustomers()
-    setRecentCustomers(recent)
-  }, [])
+  // 최근 선택한 고객 목록 (전역 상태)
+  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
   /**
    * 최근 고객 드롭다운 옵션 생성 (DocumentLinkModal과 동일)
@@ -74,15 +69,17 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
       }
     ]
 
-    recentCustomers.forEach(customer => {
+    // 전역 상태에서 최근 고객 목록 가져오기
+    const recent = getRecentCustomers()
+    recent.forEach(customer => {
       options.push({
-        value: customer.id,
+        value: customer._id,
         label: customer.name
       })
     })
 
     return options
-  }, [recentCustomers])
+  }, [recentCustomers, getRecentCustomers])
 
   /**
    * 최근 고객 드롭다운에서 선택 핸들러
@@ -94,18 +91,19 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
       return
     }
 
-    // 최근 고객 목록에서 찾기
-    const recentCustomer = recentCustomers.find(c => c.id === customerId)
+    // 전역 상태에서 최근 고객 목록 가져와서 찾기
+    const recent = getRecentCustomers()
+    const recentCustomer = recent.find(c => c._id === customerId)
     if (recentCustomer) {
       // Customer 객체 재구성
       onCustomerSelect({
-        _id: recentCustomer.id,
+        _id: recentCustomer._id,
         personal_info: {
           name: recentCustomer.name
         }
       } as Customer)
     }
-  }, [recentCustomers, onCustomerSelect])
+  }, [getRecentCustomers, onCustomerSelect])
 
   /**
    * 고객 선택 모달에서 고객 선택 핸들러
@@ -114,12 +112,9 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
     onCustomerSelect(customer)
     setIsCustomerSelectorOpen(false)
 
-    // 최근 고객 목록에 추가 (Customer 객체 전달)
+    // 최근 고객 목록에 추가 (전역 상태 자동 업데이트)
     addRecentCustomer(customer)
-    // 최근 고객 목록 다시 불러오기
-    const recent = getRecentCustomers()
-    setRecentCustomers(recent)
-  }, [onCustomerSelect])
+  }, [onCustomerSelect, addRecentCustomer])
 
   return (
     <div className="customer-file-upload-area">

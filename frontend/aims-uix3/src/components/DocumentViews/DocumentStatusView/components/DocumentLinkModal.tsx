@@ -16,7 +16,7 @@ import type { CustomerDocumentsResult } from '../../../../services/DocumentServi
 import { Button, Dropdown, type DropdownOption, Tooltip, Modal } from '../../../../shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/CustomerSelectorModal'
-import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../../utils/recentCustomersCache'
+import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/useRecentCustomersStore'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -65,7 +65,8 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
   const [linkLoading, setLinkLoading] = useState(false)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
-  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
+  // 최근 선택한 고객 목록 (전역 상태)
+  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
 
   // 단일 문서 또는 여러 문서 배열 처리
   const targetDocuments = useMemo(() => {
@@ -85,7 +86,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
 
   /**
-   * 모달이 열릴 때 상태 초기화 및 최근 고객 로드
+   * 모달이 열릴 때 상태 초기화
    */
   useEffect(() => {
     if (visible) {
@@ -94,8 +95,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       setNotes('')
       setDuplicateWarning(null)
       setFeedbackMessage(null)
-      // 최근 선택한 고객 목록 로드
-      setRecentCustomers(getRecentCustomers())
+      // 최근 선택한 고객 목록은 Zustand store에서 자동으로 관리됨
     }
   }, [visible])
 
@@ -108,10 +108,8 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     setFeedbackMessage(null)
     setIsCustomerSelectorOpen(false)
 
-    // 최근 선택 고객 목록에 추가
+    // 최근 선택 고객 목록에 추가 (전역 상태 자동 업데이트)
     addRecentCustomer(customer)
-    // UI 업데이트를 위해 최근 고객 목록 다시 로드
-    setRecentCustomers(getRecentCustomers())
 
     if (targetDocuments.length === 0) {
       return
@@ -167,7 +165,9 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       { value: '', label: '고객 미선택' }
     ]
 
-    recentCustomers.forEach(customer => {
+    // 전역 상태에서 최근 고객 목록 가져오기
+    const recent = getRecentCustomers()
+    recent.forEach(customer => {
       options.push({
         value: customer._id,
         label: customer.name
@@ -175,7 +175,7 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
     })
 
     return options
-  }, [recentCustomers])
+  }, [recentCustomers, getRecentCustomers])
 
   /**
    * 🍎 최근 고객 드롭다운에서 선택 핸들러 (DocumentSearchView와 동일)
@@ -188,13 +188,14 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
       return
     }
 
-    // 최근 고객 목록에서 찾기
-    const recentCustomer = recentCustomers.find(c => c._id === customerId)
+    // 전역 상태에서 최근 고객 목록 가져와서 찾기
+    const recent = getRecentCustomers()
+    const recentCustomer = recent.find(c => c._id === customerId)
     if (recentCustomer) {
       // Customer 객체 재구성
       await handleQuickSelectCustomer(recentCustomer)
     }
-  }, [recentCustomers, handleQuickSelectCustomer])
+  }, [getRecentCustomers, handleQuickSelectCustomer])
 
   /**
    * 연결 실행 (단일/일괄 모두 지원)

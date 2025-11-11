@@ -32,8 +32,8 @@ import { DocumentService } from '@/services/DocumentService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Customer } from '@/entities/customer'
 import type { DocumentCustomerRelation, Document } from '../../../types/documentStatus'
-import { getRecentCustomers, addRecentCustomer, type RecentCustomer } from '../../../utils/recentCustomers'
 import { getRecentSearchQueries, addRecentSearchQuery, type RecentSearchQuery } from '../../../utils/recentSearchQueries'
+import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import './DocumentSearchView.css'
 
 interface DocumentSearchViewProps {
@@ -129,8 +129,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   // 🍎 검색 실행 시점의 고객 정보 (검색 결과 설명에 사용)
   const [lastSearchCustomer, setLastSearchCustomer] = useState<Customer | null>(null)
-  // 🍎 최근 선택한 고객 목록
-  const [recentCustomers, setRecentCustomers] = useState<RecentCustomer[]>([])
+  // 🍎 최근 선택한 고객 목록 (전역 상태)
+  const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
   // 🍎 최근 검색어 목록
   const [recentSearchQueries, setRecentSearchQueries] = useState<RecentSearchQuery[]>([])
   // 🍎 검색어 입력 필드 포커스 상태
@@ -212,14 +212,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     }
   }
 
-  /**
-   * 최근 고객 목록 불러오기
-   */
-  useEffect(() => {
-    const recent = getRecentCustomers()
-    console.log('[DocumentSearchView] 최근 고객 목록:', recent)
-    setRecentCustomers(recent)
-  }, [])
+  // 🍎 최근 고객 목록은 Zustand store에서 자동으로 관리됨 (useEffect 불필요)
 
   /**
    * 최근 검색어 목록 불러오기
@@ -238,15 +231,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       { value: '', label: '고객 미선택' }
     ]
 
-    recentCustomers.forEach(customer => {
+    // 전역 상태에서 최근 고객 목록 가져오기
+    const recent = getRecentCustomers()
+    recent.forEach(customer => {
       options.push({
-        value: customer.id,
+        value: customer._id,
         label: customer.name
       })
     })
 
     return options
-  }, [recentCustomers])
+  }, [recentCustomers, getRecentCustomers])
 
   /**
    * 최근 고객 드롭다운에서 선택 핸들러
@@ -259,19 +254,20 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       return
     }
 
-    // 최근 고객 목록에서 찾기
-    const recentCustomer = recentCustomers.find(c => c.id === customerId)
+    // 전역 상태에서 최근 고객 목록 가져와서 찾기
+    const recent = getRecentCustomers()
+    const recentCustomer = recent.find(c => c._id === customerId)
     if (recentCustomer) {
       // Customer 객체 재구성 (화면 표시용)
       setSelectedCustomer({
-        _id: recentCustomer.id,
+        _id: recentCustomer._id,
         personal_info: {
           name: recentCustomer.name
         }
       } as Customer)
       handleCustomerIdChange(customerId)
     }
-  }, [recentCustomers, handleCustomerIdChange])
+  }, [getRecentCustomers, handleCustomerIdChange])
 
   /**
    * 문서 클릭 핸들러
@@ -1269,9 +1265,8 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
         onSelect={(customer) => {
           setSelectedCustomer(customer)
           handleCustomerIdChange(customer._id)
-          // 최근 고객 목록에 추가
+          // 최근 고객 목록에 추가 (전역 상태 자동 업데이트)
           addRecentCustomer(customer)
-          setRecentCustomers(getRecentCustomers())
           console.log('선택된 고객:', customer)
         }}
       />
