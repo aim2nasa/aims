@@ -73,47 +73,48 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         const createdAt = c.meta?.created_at ? new Date(c.meta.created_at) : null;
         return createdAt && createdAt >= thirtyDaysAgo;
       }).length,
-      relationshipsMapped: 0, // TODO: Phase 2-4에서 관계 API 연동 후 계산
+      relationshipsMapped: 0, // TODO: 관계 API 연동 후 계산
     };
   }, [customersData]);
 
-  const mockRecentActivities: RecentActivityItem[] = [
-    {
-      id: '1',
-      title: '김철수',
-      subtitle: '고객 등록',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10), // 10분 전
-      icon: <SFSymbol name="person.badge.plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '2',
-      title: '이영희',
-      subtitle: '관계 매핑',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45분 전
-      icon: <SFSymbol name="person.2" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '3',
-      title: '박민수',
-      subtitle: '고객 정보 수정',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3시간 전
-      icon: <SFSymbol name="pencil" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '4',
-      title: '최지우',
-      subtitle: '고객 등록',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6시간 전
-      icon: <SFSymbol name="person.badge.plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-    {
-      id: '5',
-      title: '정수진',
-      subtitle: '관계 매핑',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2일 전
-      icon: <SFSymbol name="person.2" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-    },
-  ];
+  // 최근 활동 데이터 변환
+  const recentActivities: RecentActivityItem[] = useMemo(() => {
+    if (!customersData?.customers) return [];
+
+    // 최근 생성/수정된 고객 5명 선택
+    return customersData.customers.slice(0, 5).map((customer) => {
+      // 고객 활동 종류 결정 (생성 vs 수정)
+      const getActivityInfo = () => {
+        const createdAt = customer.meta?.created_at ? new Date(customer.meta.created_at) : null;
+        const updatedAt = customer.meta?.updated_at ? new Date(customer.meta.updated_at) : null;
+
+        // 수정 시간이 생성 시간보다 최소 1분 이상 차이나면 "수정"으로 간주
+        if (createdAt && updatedAt && updatedAt.getTime() - createdAt.getTime() > 60000) {
+          return {
+            subtitle: '고객 정보 수정',
+            icon: <SFSymbol name="pencil" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+            timestamp: updatedAt,
+          };
+        } else {
+          return {
+            subtitle: '고객 등록',
+            icon: <SFSymbol name="person.badge.plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
+            timestamp: createdAt || new Date(),
+          };
+        }
+      };
+
+      const activityInfo = getActivityInfo();
+
+      return {
+        id: customer._id || String(Math.random()),
+        title: customer.personal_info?.name || '이름 없음',
+        subtitle: activityInfo.subtitle,
+        timestamp: activityInfo.timestamp,
+        icon: activityInfo.icon,
+      };
+    });
+  }, [customersData]);
 
   // 빠른 액션 핸들러 (Phase 2에서 실제 네비게이션 추가)
   const handleCustomerRegister = () => {
@@ -212,7 +213,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             최근 활동
           </h2>
           <div className="customer-management-view__recent-activity">
-            <RecentActivityList items={mockRecentActivities} maxItems={5} />
+            <RecentActivityList items={recentActivities} maxItems={5} isLoading={isCustomersLoading} />
           </div>
         </section>
       </div>
