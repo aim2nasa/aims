@@ -98,9 +98,18 @@
   transition: all 0.2s ease;
 }
 
-.usage-guide__section:hover {
+.usage-guide__section--clickable {
+  cursor: pointer;
+}
+
+.usage-guide__section--clickable:hover {
   border-color: var(--color-primary);
   box-shadow: 0 2px 8px var(--color-shadow-subtle);
+  transform: translateY(-2px);
+}
+
+.usage-guide__section--clickable:active {
+  transform: translateY(0);
 }
 
 .usage-guide__section-icon {

@@ -1120,6 +1120,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <DocumentManagementView
               visible={activeDocumentView === 'documents'}
               onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 
@@ -1157,6 +1158,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <CustomerManagementView
               visible={activeDocumentView === 'customers'}
               onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
 

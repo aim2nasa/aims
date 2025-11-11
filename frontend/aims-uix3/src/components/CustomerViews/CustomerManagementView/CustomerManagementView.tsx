@@ -24,6 +24,8 @@ interface CustomerManagementViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** 메뉴 네비게이션 핸들러 */
+  onNavigate?: (menuKey: string) => void;
 }
 
 /**
@@ -43,6 +45,7 @@ interface CustomerManagementViewProps {
 export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
   // 고객 목록 조회 (통계 계산용)
   const {
@@ -172,6 +175,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       ),
       title: '고객 등록',
       description: '새로운 고객 정보를 시스템에 등록하고 관리합니다. 개인 정보, 연락처, 보험 정보 등을 체계적으로 기록할 수 있습니다.',
+      ...(onNavigate && { onClick: () => onNavigate('customers-register') }),
     },
     {
       icon: (
@@ -184,6 +188,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       ),
       title: '전체보기',
       description: '등록된 모든 고객을 검색하고 조회합니다. 이름, 전화번호, 이메일로 빠르게 검색하고 정렬할 수 있습니다.',
+      ...(onNavigate && { onClick: () => onNavigate('customers-all') }),
     },
     {
       icon: (
@@ -196,6 +201,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       ),
       title: '지역별 보기',
       description: '고객을 지역별로 분류하여 확인합니다. 시/도, 시/군/구 단위로 고객 분포를 파악하고 지역별 관리가 가능합니다.',
+      ...(onNavigate && { onClick: () => onNavigate('customers-regional') }),
     },
     {
       icon: (
@@ -208,6 +214,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       ),
       title: '관계별 보기',
       description: '고객 간의 관계를 시각화하여 관리합니다. 가족 관계, 지인 관계 등을 연결하여 효율적인 고객 관리가 가능합니다.',
+      ...(onNavigate && { onClick: () => onNavigate('customers-relationship') }),
     },
   ];
 
@@ -245,7 +252,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <StatCard
               title="전체 고객"
               value={stats.totalCustomers}
-              icon={<SFSymbol name="person.3.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
+              icon={<SFSymbol name="person.3.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
               isLoading={isCustomersLoading}
               {...(isCustomersError && { error: '통계 조회 실패' })}
@@ -283,7 +290,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <StatCard
               title="관계 매핑"
               value={stats.relationshipsMapped}
-              icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
+              icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
               isLoading={isCustomersLoading}
               {...(isCustomersError && { error: '통계 조회 실패' })}

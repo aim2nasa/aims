@@ -18,6 +18,8 @@ export interface GuideSection {
   title: string
   /** 섹션 설명 */
   description: string
+  /** 섹션 클릭 핸들러 (선택사항) */
+  onClick?: () => void
 }
 
 export interface UsageGuideProps {
@@ -85,7 +87,19 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({
         <div className="usage-guide__content">
           <div className="usage-guide__sections">
             {sections.map((section, index) => (
-              <div key={index} className="usage-guide__section">
+              <div
+                key={index}
+                className={`usage-guide__section ${section.onClick ? 'usage-guide__section--clickable' : ''}`}
+                onClick={section.onClick}
+                role={section.onClick ? 'button' : undefined}
+                tabIndex={section.onClick ? 0 : undefined}
+                onKeyDown={section.onClick ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    section.onClick?.()
+                  }
+                } : undefined}
+              >
                 <div className="usage-guide__section-icon">
                   {section.icon}
                 </div>

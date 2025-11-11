@@ -27,6 +27,8 @@ interface DocumentManagementViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
+  /** 메뉴 네비게이션 핸들러 */
+  onNavigate?: (menuKey: string) => void;
 }
 
 /**
@@ -46,6 +48,7 @@ interface DocumentManagementViewProps {
 export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   visible,
   onClose,
+  onNavigate,
 }) => {
   /**
    * OCR 신뢰도를 5단계로 분류
@@ -267,6 +270,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       ),
       title: '문서 등록',
       description: '새로운 문서를 업로드하고 자동 분류 및 OCR 처리를 시작합니다. PDF, 이미지, 텍스트 파일 등 다양한 형식을 지원합니다.',
+      ...(onNavigate && { onClick: () => onNavigate('documents-register') }),
     },
     {
       icon: (
@@ -279,6 +283,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       ),
       title: '문서 라이브러리',
       description: '등록된 모든 문서를 검색하고 관리합니다. 파일명, 태그, 고객 연결 등 다양한 조건으로 필터링하고 정렬할 수 있습니다.',
+      ...(onNavigate && { onClick: () => onNavigate('documents-library') }),
     },
     {
       icon: (
@@ -291,6 +296,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       ),
       title: '문서 검색',
       description: '키워드, 태그, 고객, 문서 유형 등 다양한 조건으로 문서를 검색합니다. AI 기반 시맨틱 검색으로 정확한 문서를 빠르게 찾을 수 있습니다.',
+      ...(onNavigate && { onClick: () => onNavigate('documents-search') }),
     },
   ];
 
