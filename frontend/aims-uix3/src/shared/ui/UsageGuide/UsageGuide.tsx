@@ -82,6 +82,7 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({
               size={SFSymbolSize.CAPTION_1}
               weight={SFSymbolWeight.SEMIBOLD}
               className="usage-guide__chevron"
+              decorative={true}
             />
           </div>
         </Tooltip>

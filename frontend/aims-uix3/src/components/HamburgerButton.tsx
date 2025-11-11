@@ -40,6 +40,7 @@ const HamburgerButton: React.FC<HamburgerButtonProps> = ({
           className="hamburger-icon"
           interactive={true}
           hapticType="light"
+          decorative={true}
         />
       </button>
     </Tooltip>
