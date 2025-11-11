@@ -98,6 +98,11 @@
 
 **중요**: 문서 타입 아이콘은 24px (DocumentLibraryView 기준)
 
+**예외**: 초소형 아이콘 뱃지 (6-7px) - 문서 아이콘 위 겹침 라벨만 허용
+- 사용 위치: DocumentSearchView, DocumentLibraryView
+- 조건: 반드시 툴팁 제공 (접근성 보완)
+- 예시: AR 뱃지, OCR 신뢰도 뱃지, TXT 뱃지
+
 ---
 
 ## 🚫 금지 사항
