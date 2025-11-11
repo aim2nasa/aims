@@ -98,6 +98,12 @@ interface NaverMapProps {
   height?: string | number
   /** 선택 타임스탬프 (같은 고객 재선택 감지용) */
   selectionTimestamp?: number
+  /** 지도 중심 좌표 (지역 선택 시 이동) */
+  center?: { lat: number; lng: number } | null
+  /** 선택된 지역 (줌 레벨 결정용) */
+  selectedRegion?: string | null
+  /** 선택된 구/군 (줌 레벨 결정용) */
+  selectedDistrict?: string | null
 }
 
 /**
@@ -116,7 +122,10 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   selectedCustomerId = null,
   onCustomerSelect,
   height = '100%',
-  selectionTimestamp = 0
+  selectionTimestamp = 0,
+  center = null,
+  selectedRegion = null,
+  selectedDistrict = null
 }) => {
   // 초기 지도 중심 좌표 (제주도 포함 남한 전체 보기)
   const initialCenter = { lat: 36.0, lng: 127.5 }
@@ -813,6 +822,42 @@ export const NaverMap: React.FC<NaverMapProps> = ({
 
     moveToCustomer()
   }, [selectedCustomerId, customers, isMapReady, selectionTimestamp])
+
+  // 지역 선택 시 지도 중심 이동 (center prop)
+  useEffect(() => {
+    if (!isMapReady || !mapInstance.current || !window.naver || !center) {
+      return
+    }
+
+    const position = new window.naver.maps.LatLng(center.lat, center.lng)
+    mapInstance.current.setCenter(position)
+
+    // 줌 레벨 결정: 구/군 선택 시 더 크게, 지역만 선택 시 전체 보기
+    let zoomLevel = 10 // 기본값
+    if (selectedDistrict) {
+      // 구/군이 선택된 경우: 해당 구/군이 중앙에 크게 보이도록
+      zoomLevel = 14
+    } else if (selectedRegion) {
+      // 지역 유형에 따라 줌 레벨 차등 적용
+      const isMetropolitanCity = selectedRegion.includes('특별시') ||
+                                 selectedRegion.includes('광역시') ||
+                                 selectedRegion.includes('특별자치시')
+
+      if (isMetropolitanCity) {
+        // 특별시/광역시: 면적이 작으므로 더 확대하여 화면에 꽉 차게
+        zoomLevel = 11
+      } else {
+        // 도 지역: 면적이 넓으므로 적절히 확대하여 전체 지역이 보이게
+        zoomLevel = 9
+      }
+    }
+
+    mapInstance.current.setZoom(zoomLevel)
+
+    if (import.meta.env.DEV) {
+      console.log(`[NaverMap] 지도 이동: lat=${center.lat}, lng=${center.lng}, zoom=${zoomLevel}, region=${selectedRegion}, district=${selectedDistrict}`)
+    }
+  }, [center, isMapReady, selectedRegion, selectedDistrict])
 
   // 지도를 초기 상태로 리셋
   const handleReset = () => {

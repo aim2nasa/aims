@@ -477,3 +477,46 @@ html[data-theme="dark"] .type-filter-button.active {
 html[data-theme="dark"] .type-filter-separator {
   color: var(--color-ios-text-quaternary-dark);
 }
+
+/* ============================================
+   체크박스 스타일
+   ============================================ */
+
+.stat-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 보조 정보/테이블 헤더 */
+  font-family: var(--font-family-text);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease-out;
+}
+
+.stat-checkbox:hover {
+  color: var(--color-text-primary);
+}
+
+.stat-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  transition: all 0.15s ease-out;
+}
+
+.stat-checkbox input[type="checkbox"]:checked {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.stat-checkbox input[type="checkbox"]:hover {
+  border-color: var(--color-primary-500);
+}
+
+.stat-checkbox-label {
+  white-space: nowrap;
+}

@@ -18,6 +18,7 @@ import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { usePersistedState } from '@/hooks/usePersistedState'
 import Tooltip from '@/shared/ui/Tooltip'
+import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import './RegionalTreeView.css'
 import NaverMap from '../../NaverMap/NaverMap'
 
@@ -67,6 +68,331 @@ const PROVINCE_NORMALIZATION_MAP: { [key: string]: string } = {
   '경상북도': '경상북도',
   '경남': '경상남도',
   '경상남도': '경상남도',
+}
+
+/**
+ * 전체 한국 광역시/도 목록 (17개)
+ * 드롭다운에 항상 표시될 전체 지역 목록
+ */
+const ALL_PROVINCES = [
+  '서울특별시',
+  '부산광역시',
+  '대구광역시',
+  '인천광역시',
+  '광주광역시',
+  '대전광역시',
+  '울산광역시',
+  '세종특별자치시',
+  '경기도',
+  '강원특별자치도',
+  '충청북도',
+  '충청남도',
+  '전북특별자치도',
+  '전라남도',
+  '경상북도',
+  '경상남도',
+  '제주특별자치도',
+]
+
+/**
+ * 각 광역시/도의 중심 좌표 (위도, 경도)
+ * 지도 이동 시 사용 - 2024년 행정구역 기준 검증된 좌표
+ */
+const PROVINCE_CENTER_COORDS: { [key: string]: { lat: number; lng: number } } = {
+  '서울특별시': { lat: 37.5665, lng: 126.9780 },
+  '부산광역시': { lat: 35.1796, lng: 129.0756 },
+  '대구광역시': { lat: 35.8714, lng: 128.6014 },
+  '인천광역시': { lat: 37.4563, lng: 126.7052 },
+  '광주광역시': { lat: 35.1595, lng: 126.8526 },
+  '대전광역시': { lat: 36.3504, lng: 127.3845 },
+  '울산광역시': { lat: 35.5384, lng: 129.3114 },
+  '세종특별자치시': { lat: 36.4800, lng: 127.2890 },
+  '경기도': { lat: 37.2750, lng: 127.0095 }, // 수정: 수원시 인근 (기존 좌표가 너무 동쪽)
+  '강원특별자치도': { lat: 37.8228, lng: 128.1555 },
+  '충청북도': { lat: 36.6357, lng: 127.4913 }, // 수정: 청주시 인근
+  '충청남도': { lat: 36.5184, lng: 126.8000 },
+  '전북특별자치도': { lat: 35.8200, lng: 127.1088 }, // 수정: 전주시 인근
+  '전라남도': { lat: 34.8161, lng: 126.4631 }, // 수정: 무안군 인근 (전라남도청 이전)
+  '경상북도': { lat: 36.5760, lng: 128.5056 }, // 수정: 안동시 인근 (경북도청 이전)
+  '경상남도': { lat: 35.2383, lng: 128.6923 }, // 수정: 창원시 인근 (경남도청)
+  '제주특별자치도': { lat: 33.4890, lng: 126.4983 },
+}
+
+/**
+ * 주요 시/군/구의 중심 좌표
+ * 구/군 선택 시 지도 이동에 사용
+ * 형식: "지역명-구군명": { lat, lng }
+ */
+const DISTRICT_CENTER_COORDS: { [key: string]: { lat: number; lng: number } } = {
+  // 서울특별시 25개 구
+  '서울특별시-강남구': { lat: 37.5172, lng: 127.0473 },
+  '서울특별시-강동구': { lat: 37.5301, lng: 127.1238 },
+  '서울특별시-강북구': { lat: 37.6397, lng: 127.0256 },
+  '서울특별시-강서구': { lat: 37.5509, lng: 126.8495 },
+  '서울특별시-관악구': { lat: 37.4784, lng: 126.9516 },
+  '서울특별시-광진구': { lat: 37.5384, lng: 127.0822 },
+  '서울특별시-구로구': { lat: 37.4954, lng: 126.8874 },
+  '서울특별시-금천구': { lat: 37.4568, lng: 126.8955 },
+  '서울특별시-노원구': { lat: 37.6542, lng: 127.0568 },
+  '서울특별시-도봉구': { lat: 37.6688, lng: 127.0471 },
+  '서울특별시-동대문구': { lat: 37.5744, lng: 127.0396 },
+  '서울특별시-동작구': { lat: 37.5124, lng: 126.9393 },
+  '서울특별시-마포구': { lat: 37.5663, lng: 126.9019 },
+  '서울특별시-서대문구': { lat: 37.5791, lng: 126.9368 },
+  '서울특별시-서초구': { lat: 37.4837, lng: 127.0324 },
+  '서울특별시-성동구': { lat: 37.5634, lng: 127.0368 },
+  '서울특별시-성북구': { lat: 37.5894, lng: 127.0167 },
+  '서울특별시-송파구': { lat: 37.5145, lng: 127.1059 },
+  '서울특별시-양천구': { lat: 37.5170, lng: 126.8664 },
+  '서울특별시-영등포구': { lat: 37.5264, lng: 126.8962 },
+  '서울특별시-용산구': { lat: 37.5326, lng: 126.9905 },
+  '서울특별시-은평구': { lat: 37.6027, lng: 126.9291 },
+  '서울특별시-종로구': { lat: 37.5735, lng: 126.9792 },
+  '서울특별시-중구': { lat: 37.5641, lng: 126.9979 },
+  '서울특별시-중랑구': { lat: 37.6063, lng: 127.0925 },
+
+  // 부산광역시 16개 구/군
+  '부산광역시-강서구': { lat: 35.2121, lng: 128.9802 },
+  '부산광역시-금정구': { lat: 35.2430, lng: 129.0923 },
+  '부산광역시-기장군': { lat: 35.2446, lng: 129.2219 },
+  '부산광역시-남구': { lat: 35.1362, lng: 129.0845 },
+  '부산광역시-동구': { lat: 35.1295, lng: 129.0454 },
+  '부산광역시-동래구': { lat: 35.2048, lng: 129.0837 },
+  '부산광역시-부산진구': { lat: 35.1628, lng: 129.0532 },
+  '부산광역시-북구': { lat: 35.1975, lng: 128.9907 },
+  '부산광역시-사상구': { lat: 35.1522, lng: 128.9910 },
+  '부산광역시-사하구': { lat: 35.1043, lng: 128.9748 },
+  '부산광역시-서구': { lat: 35.0979, lng: 129.0246 },
+  '부산광역시-수영구': { lat: 35.1454, lng: 129.1134 },
+  '부산광역시-연제구': { lat: 35.1761, lng: 129.0816 },
+  '부산광역시-영도구': { lat: 35.0914, lng: 129.0679 },
+  '부산광역시-중구': { lat: 35.1066, lng: 129.0329 },
+  '부산광역시-해운대구': { lat: 35.1631, lng: 129.1635 },
+
+  // 대구광역시 8개 구/군
+  '대구광역시-남구': { lat: 35.8463, lng: 128.5974 },
+  '대구광역시-달서구': { lat: 35.8297, lng: 128.5326 },
+  '대구광역시-달성군': { lat: 35.7747, lng: 128.4315 },
+  '대구광역시-동구': { lat: 35.8869, lng: 128.6354 },
+  '대구광역시-북구': { lat: 35.8858, lng: 128.5828 },
+  '대구광역시-서구': { lat: 35.8718, lng: 128.5593 },
+  '대구광역시-수성구': { lat: 35.8581, lng: 128.6308 },
+  '대구광역시-중구': { lat: 35.8691, lng: 128.6060 },
+
+  // 인천광역시 10개 구/군
+  '인천광역시-강화군': { lat: 37.7467, lng: 126.4878 },
+  '인천광역시-계양구': { lat: 37.5376, lng: 126.7378 },
+  '인천광역시-남동구': { lat: 37.4475, lng: 126.7313 },
+  '인천광역시-동구': { lat: 37.4738, lng: 126.6432 },
+  '인천광역시-미추홀구': { lat: 37.4636, lng: 126.6505 },
+  '인천광역시-부평구': { lat: 37.5070, lng: 126.7219 },
+  '인천광역시-서구': { lat: 37.5452, lng: 126.6761 },
+  '인천광역시-연수구': { lat: 37.4105, lng: 126.6782 },
+  '인천광역시-옹진군': { lat: 37.4464, lng: 126.6367 },
+  '인천광역시-중구': { lat: 37.4738, lng: 126.6216 },
+
+  // 광주광역시 5개 구
+  '광주광역시-광산구': { lat: 35.1397, lng: 126.7934 },
+  '광주광역시-남구': { lat: 35.1327, lng: 126.9026 },
+  '광주광역시-동구': { lat: 35.1460, lng: 126.9228 },
+  '광주광역시-북구': { lat: 35.1740, lng: 126.9118 },
+  '광주광역시-서구': { lat: 35.1519, lng: 126.8896 },
+
+  // 대전광역시 5개 구
+  '대전광역시-대덕구': { lat: 36.3469, lng: 127.4155 },
+  '대전광역시-동구': { lat: 36.3504, lng: 127.4545 },
+  '대전광역시-서구': { lat: 36.3556, lng: 127.3835 },
+  '대전광역시-유성구': { lat: 36.3623, lng: 127.3567 },
+  '대전광역시-중구': { lat: 36.3255, lng: 127.4212 },
+
+  // 울산광역시 5개 구/군
+  '울산광역시-남구': { lat: 35.5439, lng: 129.3300 },
+  '울산광역시-동구': { lat: 35.5050, lng: 129.4163 },
+  '울산광역시-북구': { lat: 35.5819, lng: 129.3614 },
+  '울산광역시-울주군': { lat: 35.5221, lng: 129.1543 },
+  '울산광역시-중구': { lat: 35.5694, lng: 129.3324 },
+
+  // 세종특별자치시
+  '세종특별자치시-세종시': { lat: 36.4800, lng: 127.2890 },
+
+  // 경기도 주요 시
+  '경기도-고양시': { lat: 37.6583, lng: 126.8320 },
+  '경기도-수원시': { lat: 37.2636, lng: 127.0286 },
+  '경기도-성남시': { lat: 37.4201, lng: 127.1262 },
+  '경기도-용인시': { lat: 37.2410, lng: 127.1776 },
+  '경기도-부천시': { lat: 37.5034, lng: 126.7660 },
+  '경기도-안산시': { lat: 37.3219, lng: 126.8309 },
+  '경기도-안양시': { lat: 37.3943, lng: 126.9568 },
+  '경기도-남양주시': { lat: 37.6361, lng: 127.2166 },
+  '경기도-화성시': { lat: 37.1989, lng: 126.8310 },
+  '경기도-평택시': { lat: 36.9921, lng: 127.1129 },
+  '경기도-의정부시': { lat: 37.7382, lng: 127.0337 },
+  '경기도-시흥시': { lat: 37.3800, lng: 126.8031 },
+  '경기도-파주시': { lat: 37.7599, lng: 126.7800 },
+  '경기도-김포시': { lat: 37.6152, lng: 126.7158 },
+  '경기도-광명시': { lat: 37.4786, lng: 126.8644 },
+  '경기도-광주시': { lat: 37.4297, lng: 127.2551 },
+  '경기도-군포시': { lat: 37.3617, lng: 126.9352 },
+  '경기도-이천시': { lat: 37.2722, lng: 127.4349 },
+  '경기도-양주시': { lat: 37.7852, lng: 127.0458 },
+  '경기도-오산시': { lat: 37.1497, lng: 127.0773 },
+  '경기도-구리시': { lat: 37.5942, lng: 127.1295 },
+  '경기도-안성시': { lat: 37.0079, lng: 127.2797 },
+  '경기도-포천시': { lat: 37.8947, lng: 127.2003 },
+  '경기도-의왕시': { lat: 37.3449, lng: 126.9684 },
+  '경기도-하남시': { lat: 37.5390, lng: 127.2149 },
+  '경기도-여주시': { lat: 37.2980, lng: 127.6377 },
+  '경기도-양평군': { lat: 37.4913, lng: 127.4874 },
+  '경기도-동두천시': { lat: 37.9036, lng: 127.0606 },
+  '경기도-과천시': { lat: 37.4289, lng: 126.9875 },
+  '경기도-가평군': { lat: 37.8316, lng: 127.5095 },
+  '경기도-연천군': { lat: 38.0965, lng: 127.0747 },
+  // 강원도 주요 시/군
+  '강원특별자치도-춘천시': { lat: 37.8813, lng: 127.7298 },
+  '강원특별자치도-원주시': { lat: 37.3422, lng: 127.9201 },
+  '강원특별자치도-강릉시': { lat: 37.7519, lng: 128.8761 },
+  '강원특별자치도-동해시': { lat: 37.5246, lng: 129.1144 },
+  '강원특별자치도-태백시': { lat: 37.1640, lng: 128.9856 },
+  '강원특별자치도-속초시': { lat: 38.2070, lng: 128.5918 },
+  '강원특별자치도-삼척시': { lat: 37.4500, lng: 129.1656 },
+  // 충청북도 주요 시
+  '충청북도-청주시': { lat: 36.6424, lng: 127.4890 },
+  '충청북도-충주시': { lat: 36.9910, lng: 127.9260 },
+  '충청북도-제천시': { lat: 37.1326, lng: 128.1910 },
+  // 충청남도 주요 시
+  '충청남도-천안시': { lat: 36.8151, lng: 127.1139 },
+  '충청남도-공주시': { lat: 36.4465, lng: 127.1189 },
+  '충청남도-보령시': { lat: 36.3334, lng: 126.6128 },
+  '충청남도-아산시': { lat: 36.7898, lng: 127.0017 },
+  '충청남도-서산시': { lat: 36.7847, lng: 126.4504 },
+  '충청남도-논산시': { lat: 36.1870, lng: 127.0986 },
+  '충청남도-계룡시': { lat: 36.2742, lng: 127.2479 },
+  '충청남도-당진시': { lat: 36.8930, lng: 126.6473 },
+  // 전북 주요 시
+  '전북특별자치도-전주시': { lat: 35.8242, lng: 127.1480 },
+  '전북특별자치도-군산시': { lat: 35.9677, lng: 126.7369 },
+  '전북특별자치도-익산시': { lat: 35.9483, lng: 126.9575 },
+  '전북특별자치도-정읍시': { lat: 35.5698, lng: 126.8560 },
+  '전북특별자치도-남원시': { lat: 35.4163, lng: 127.3903 },
+  '전북특별자치도-김제시': { lat: 35.8034, lng: 126.8809 },
+  // 전남 주요 시
+  '전라남도-목포시': { lat: 34.8118, lng: 126.3922 },
+  '전라남도-여수시': { lat: 34.7604, lng: 127.6622 },
+  '전라남도-순천시': { lat: 34.9507, lng: 127.4872 },
+  '전라남도-나주시': { lat: 35.0160, lng: 126.7107 },
+  '전라남도-광양시': { lat: 34.9406, lng: 127.6958 },
+  // 경북 주요 시
+  '경상북도-포항시': { lat: 36.0190, lng: 129.3435 },
+  '경상북도-경주시': { lat: 35.8562, lng: 129.2247 },
+  '경상북도-김천시': { lat: 36.1399, lng: 128.1137 },
+  '경상북도-안동시': { lat: 36.5684, lng: 128.7294 },
+  '경상북도-구미시': { lat: 36.1195, lng: 128.3445 },
+  '경상북도-영주시': { lat: 36.8056, lng: 128.6240 },
+  '경상북도-영천시': { lat: 35.9733, lng: 128.9386 },
+  '경상북도-상주시': { lat: 36.4109, lng: 128.1590 },
+  '경상북도-문경시': { lat: 36.5865, lng: 128.1867 },
+  '경상북도-경산시': { lat: 35.8250, lng: 128.7414 },
+  // 경남 주요 시
+  '경상남도-창원시': { lat: 35.2280, lng: 128.6817 },
+  '경상남도-진주시': { lat: 35.1800, lng: 128.1076 },
+  '경상남도-통영시': { lat: 34.8544, lng: 128.4332 },
+  '경상남도-사천시': { lat: 35.0037, lng: 128.0642 },
+  '경상남도-김해시': { lat: 35.2286, lng: 128.8894 },
+  '경상남도-밀양시': { lat: 35.5038, lng: 128.7467 },
+  '경상남도-거제시': { lat: 34.8806, lng: 128.6217 },
+  '경상남도-양산시': { lat: 35.3350, lng: 129.0374 },
+  // 제주도
+  '제주특별자치도-제주시': { lat: 33.4996, lng: 126.5312 },
+  '제주특별자치도-서귀포시': { lat: 33.2541, lng: 126.5600 },
+}
+
+/**
+ * 각 광역시/도의 전체 구/군 목록
+ * "고객 없는 구/군 표시" 체크박스 활성화 시 사용
+ */
+const ALL_DISTRICTS: { [key: string]: string[] } = {
+  '서울특별시': [
+    '강남구', '강동구', '강북구', '강서구', '관악구',
+    '광진구', '구로구', '금천구', '노원구', '도봉구',
+    '동대문구', '동작구', '마포구', '서대문구', '서초구',
+    '성동구', '성북구', '송파구', '양천구', '영등포구',
+    '용산구', '은평구', '종로구', '중구', '중랑구'
+  ],
+  '부산광역시': [
+    '강서구', '금정구', '기장군', '남구', '동구',
+    '동래구', '부산진구', '북구', '사상구', '사하구',
+    '서구', '수영구', '연제구', '영도구', '중구', '해운대구'
+  ],
+  '대구광역시': [
+    '남구', '달서구', '달성군', '동구', '북구', '서구', '수성구', '중구'
+  ],
+  '인천광역시': [
+    '강화군', '계양구', '남동구', '동구', '미추홀구',
+    '부평구', '서구', '연수구', '옹진군', '중구'
+  ],
+  '광주광역시': [
+    '광산구', '남구', '동구', '북구', '서구'
+  ],
+  '대전광역시': [
+    '대덕구', '동구', '서구', '유성구', '중구'
+  ],
+  '울산광역시': [
+    '남구', '동구', '북구', '울주군', '중구'
+  ],
+  '세종특별자치시': [
+    '세종시'
+  ],
+  '경기도': [
+    '가평군', '고양시', '과천시', '광명시', '광주시',
+    '구리시', '군포시', '김포시', '남양주시', '동두천시',
+    '부천시', '성남시', '수원시', '시흥시', '안산시',
+    '안성시', '안양시', '양주시', '양평군', '여주시',
+    '연천군', '오산시', '용인시', '의정부시', '이천시',
+    '파주시', '평택시', '포천시', '하남시', '화성시', '의왕시'
+  ],
+  '강원특별자치도': [
+    '강릉시', '고성군', '동해시', '삼척시', '속초시',
+    '양구군', '양양군', '영월군', '원주시', '인제군',
+    '정선군', '철원군', '춘천시', '태백시', '평창군',
+    '홍천군', '화천군', '횡성군'
+  ],
+  '충청북도': [
+    '괴산군', '단양군', '보은군', '영동군', '옥천군',
+    '음성군', '제천시', '증평군', '진천군', '청주시', '충주시'
+  ],
+  '충청남도': [
+    '계룡시', '공주시', '금산군', '논산시', '당진시',
+    '보령시', '부여군', '서산시', '서천군', '아산시',
+    '예산군', '천안시', '청양군', '태안군', '홍성군'
+  ],
+  '전북특별자치도': [
+    '고창군', '군산시', '김제시', '남원시', '무주군',
+    '부안군', '순창군', '완주군', '익산시', '임실군',
+    '장수군', '전주시', '정읍시', '진안군'
+  ],
+  '전라남도': [
+    '강진군', '고흥군', '곡성군', '광양시', '구례군',
+    '나주시', '담양군', '목포시', '무안군', '보성군',
+    '순천시', '신안군', '여수시', '영광군', '영암군',
+    '완도군', '장성군', '장흥군', '진도군', '함평군',
+    '해남군', '화순군'
+  ],
+  '경상북도': [
+    '경산시', '경주시', '고령군', '구미시', '군위군',
+    '김천시', '문경시', '봉화군', '상주시', '성주군',
+    '안동시', '영덕군', '영양군', '영주시', '영천시',
+    '예천군', '울릉군', '울진군', '의성군', '청도군',
+    '청송군', '칠곡군', '포항시'
+  ],
+  '경상남도': [
+    '거제시', '거창군', '고성군', '김해시', '남해군',
+    '밀양시', '사천시', '산청군', '양산시', '의령군',
+    '진주시', '창녕군', '창원시', '통영시', '하동군',
+    '함안군', '함양군', '합천군'
+  ],
+  '제주특별자치도': [
+    '서귀포시', '제주시'
+  ]
 }
 
 /**
@@ -136,8 +462,19 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 고객 유형 필터 (F5 이후에도 유지)
   const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-regional-type-filter', 'all')
 
-  // 유형 필터링된 고객 목록
-  const filteredCustomers = useMemo(() => {
+  // 지역/구군 필터 (F5 이후에도 유지)
+  const [selectedRegion, setSelectedRegion] = usePersistedState<string>('customer-regional-selected-region', '')
+  const [selectedDistrict, setSelectedDistrict] = usePersistedState<string>('customer-regional-selected-district', '')
+
+  // 고객 없는 지역/구군 표시 여부 (F5 이후에도 유지)
+  const [showAllRegions, setShowAllRegions] = usePersistedState<boolean>('customer-regional-show-all-regions', false)
+  const [showAllDistricts, setShowAllDistricts] = usePersistedState<boolean>('customer-regional-show-all-districts', false)
+
+  // 지역 선택 시 지도 중심 좌표 (새로고침 시 초기화)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
+
+  // 1단계: 타입 필터만 적용된 고객 목록 (드롭다운 옵션 계산용)
+  const typeFilteredCustomers = useMemo(() => {
     if (customerTypeFilter === 'personal') {
       return customers.filter(c => c.insurance_info?.customer_type !== '법인')
     } else if (customerTypeFilter === 'corporate') {
@@ -145,6 +482,108 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
     }
     return customers
   }, [customers, customerTypeFilter])
+
+  // 2단계: 타입 + 지역/구군 필터 모두 적용된 최종 고객 목록
+  const filteredCustomers = useMemo(() => {
+    let result = typeFilteredCustomers
+
+    // 지역/구군 필터 적용
+    if (selectedRegion || selectedDistrict) {
+      result = result.filter(c => {
+        const address = c.personal_info?.address?.address1
+        if (!address) return false
+
+        const parts = address.split(' ')
+        const rawCity = parts[0] || ''
+        const district = parts[1] || ''
+        const city = normalizeProvinceName(rawCity)
+
+        // 지역 필터
+        if (selectedRegion && city !== selectedRegion) return false
+
+        // 구군 필터
+        if (selectedDistrict && district !== selectedDistrict) return false
+
+        return true
+      })
+    }
+
+    return result
+  }, [typeFilteredCustomers, selectedRegion, selectedDistrict])
+
+  // 드롭다운 옵션 계산 (체크박스에 따라 전체 또는 고객 있는 지역만)
+  const availableRegions = useMemo<DropdownOption[]>(() => {
+    // 고객이 실제로 등록된 지역 파악
+    const registeredRegions = new Set<string>()
+    typeFilteredCustomers.forEach(customer => {
+      const address = customer.personal_info?.address?.address1
+      if (address) {
+        const parts = address.split(' ')
+        const rawCity = parts[0] || ''
+        const city = normalizeProvinceName(rawCity)
+        if (city) {
+          registeredRegions.add(city)
+        }
+      }
+    })
+
+    // showAllRegions에 따라 필터링
+    const provinces = showAllRegions
+      ? ALL_PROVINCES // 전체 지역 표시
+      : ALL_PROVINCES.filter(province => registeredRegions.has(province)) // 고객 있는 지역만
+
+    return [
+      { value: '', label: '전체 지역' },
+      ...provinces.map(province => ({
+        value: province,
+        label: province,
+        // 체크박스 ON이면 모든 지역 선택 가능, OFF이면 고객 있는 지역만 표시되므로 항상 선택 가능
+        disabled: false
+      }))
+    ]
+  }, [typeFilteredCustomers, showAllRegions])
+
+  const availableDistricts = useMemo<DropdownOption[]>(() => {
+    if (!selectedRegion) {
+      return [{ value: '', label: '전체 구/군' }]
+    }
+
+    // 선택된 지역의 구군 중 현재 필터에서 고객이 있는 곳 파악
+    const activeDistricts = new Set<string>()
+    typeFilteredCustomers.forEach(customer => {
+      const address = customer.personal_info?.address?.address1
+      if (address) {
+        const parts = address.split(' ')
+        const rawCity = parts[0] || ''
+        const district = parts[1] || ''
+        const city = normalizeProvinceName(rawCity)
+
+        if (city === selectedRegion && district) {
+          activeDistricts.add(district)
+        }
+      }
+    })
+
+    // showAllDistricts에 따라 표시할 구군 결정
+    let districts: string[]
+    if (showAllDistricts) {
+      // 체크박스 ON: 해당 지역의 모든 행정구역 표시 (서울시 25개 구, 경기도 31개 시/군 등)
+      districts = ALL_DISTRICTS[selectedRegion] || []
+    } else {
+      // 체크박스 OFF: 현재 필터에서 고객 있는 구군만
+      districts = Array.from(activeDistricts).sort()
+    }
+
+    return [
+      { value: '', label: '전체 구/군' },
+      ...districts.map(district => ({
+        value: district,
+        label: district,
+        // 체크박스 ON이면 모든 구/군 선택 가능, OFF이면 고객 있는 구/군만 표시되므로 항상 선택 가능
+        disabled: false
+      }))
+    ]
+  }, [typeFilteredCustomers, selectedRegion, showAllDistricts])
 
   // 지역별 그룹핑 - 정규화된 광역시/도 이름 사용
   const regionalGroups = useMemo(() => {
@@ -198,6 +637,43 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 필터 변경 핸들러
   const handleTypeFilterChange = (filter: 'all' | 'personal' | 'corporate') => {
     setCustomerTypeFilter(filter)
+  }
+
+  const handleRegionChange = (region: string) => {
+    setSelectedRegion(region)
+    // 지역 변경 시 구군 선택 초기화
+    setSelectedDistrict('')
+
+    // 지역 선택 시 지도 중심 이동 (고객 유무와 관계없이 항상 이동)
+    if (region && PROVINCE_CENTER_COORDS[region]) {
+      setMapCenter(PROVINCE_CENTER_COORDS[region])
+    } else {
+      // 전체 지역 선택 시 중심 좌표 초기화
+      setMapCenter(null)
+    }
+  }
+
+  const handleDistrictChange = (district: string) => {
+    setSelectedDistrict(district)
+
+    // 구/군 선택 시 지도 이동
+    // 1순위: 구/군별 정확한 좌표 사용 (DISTRICT_CENTER_COORDS)
+    // 2순위: 없으면 광역시/도 중심 좌표 사용 (PROVINCE_CENTER_COORDS)
+    if (district && selectedRegion) {
+      const districtKey = `${selectedRegion}-${district}`
+      if (DISTRICT_CENTER_COORDS[districtKey]) {
+        // 구/군별 정확한 좌표가 있으면 사용
+        setMapCenter(DISTRICT_CENTER_COORDS[districtKey])
+      } else if (PROVINCE_CENTER_COORDS[selectedRegion]) {
+        // 없으면 광역시/도 중심 좌표 사용
+        setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+      }
+    } else {
+      // 전체 구/군 선택 시 지역 중심으로 이동
+      if (selectedRegion && PROVINCE_CENTER_COORDS[selectedRegion]) {
+        setMapCenter(PROVINCE_CENTER_COORDS[selectedRegion])
+      }
+    }
   }
 
   // 트리 데이터 생성
@@ -481,13 +957,41 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         <div className="stat-item">
           <span className="stat-icon">🗺️</span>
           <span className="stat-label">지역</span>
-          <span className="stat-value">{stats.citiesCount}</span>
+          <Dropdown
+            value={selectedRegion}
+            options={availableRegions}
+            onChange={handleRegionChange}
+            aria-label="지역 선택"
+            minWidth={150}
+          />
+          <label className="stat-checkbox">
+            <input
+              type="checkbox"
+              checked={showAllRegions}
+              onChange={(e) => setShowAllRegions(e.target.checked)}
+            />
+            <span className="stat-checkbox-label">고객 없는 지역 표시</span>
+          </label>
         </div>
         <span className="stat-divider">·</span>
         <div className="stat-item">
           <span className="stat-icon">📍</span>
           <span className="stat-label">구/군</span>
-          <span className="stat-value">{stats.districtsCount}</span>
+          <Dropdown
+            value={selectedDistrict}
+            options={availableDistricts}
+            onChange={handleDistrictChange}
+            aria-label="구/군 선택"
+            minWidth={130}
+          />
+          <label className="stat-checkbox">
+            <input
+              type="checkbox"
+              checked={showAllDistricts}
+              onChange={(e) => setShowAllDistricts(e.target.checked)}
+            />
+            <span className="stat-checkbox-label">고객 없는 구/군 표시</span>
+          </label>
         </div>
 
         {/* 전체 보기 버튼 */}
@@ -541,6 +1045,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               }
             }}
             selectionTimestamp={selectionTimestamp}
+            center={mapCenter}
+            selectedRegion={selectedRegion}
+            selectedDistrict={selectedDistrict}
             height="100%"
           />
         </div>

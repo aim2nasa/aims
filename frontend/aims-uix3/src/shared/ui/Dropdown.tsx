@@ -13,6 +13,7 @@ import './Dropdown.css';
 export interface DropdownOption {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
 export interface DropdownProps {
@@ -75,8 +76,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
   }, [isOpen]);
 
   // 옵션 선택 핸들러
-  const handleOptionClick = (optionValue: string) => {
-    onChange(optionValue);
+  const handleOptionClick = (option: DropdownOption) => {
+    if (option.disabled) return; // disabled 옵션은 선택 불가
+    onChange(option.value);
     setIsOpen(false);
   };
 
@@ -134,10 +136,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
               type="button"
               className={`ios-dropdown__option ${
                 option.value === value ? 'ios-dropdown__option--selected' : ''
-              }`}
-              onClick={() => handleOptionClick(option.value)}
+              } ${option.disabled ? 'ios-dropdown__option--disabled' : ''}`}
+              onClick={() => handleOptionClick(option)}
+              disabled={option.disabled}
               role="option"
               aria-selected={option.value === value}
+              aria-disabled={option.disabled}
             >
               {option.label}
             </button>
