@@ -6,13 +6,15 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
 import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
+import { getCustomers } from '@/services/customerService';
 import './CustomerManagementView.css';
 
 interface CustomerManagementViewProps {
@@ -40,13 +42,40 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   visible,
   onClose,
 }) => {
-  // Mock 데이터 (Phase 2에서 실제 API로 교체)
-  const mockStats = {
-    totalCustomers: 342,
-    activeCustomers: 287,
-    recentRegistrations: 15,
-    relationshipsMapped: 156,
-  };
+  // 고객 목록 조회 (통계 계산용)
+  const { data: customersData, isLoading: isCustomersLoading } = useQuery({
+    queryKey: ['allCustomers'],
+    queryFn: () =>
+      getCustomers({
+        limit: 1000, // 통계 계산을 위해 많은 수 가져오기
+      }),
+  });
+
+  // 고객 통계 계산
+  const stats = useMemo(() => {
+    if (!customersData?.customers) {
+      return {
+        totalCustomers: 0,
+        activeCustomers: 0,
+        recentRegistrations: 0,
+        relationshipsMapped: 0,
+      };
+    }
+
+    const customers = customersData.customers;
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      totalCustomers: customers.length,
+      activeCustomers: customers.filter(c => c.meta?.status === 'active').length,
+      recentRegistrations: customers.filter(c => {
+        const createdAt = c.meta?.created_at ? new Date(c.meta.created_at) : null;
+        return createdAt && createdAt >= thirtyDaysAgo;
+      }).length,
+      relationshipsMapped: 0, // TODO: Phase 2-4에서 관계 API 연동 후 계산
+    };
+  }, [customersData]);
 
   const mockRecentActivities: RecentActivityItem[] = [
     {
@@ -121,30 +150,31 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           <div className="customer-management-view__stats-grid">
             <StatCard
               title="전체 고객"
-              value={mockStats.totalCustomers}
+              value={stats.totalCustomers}
               icon={<SFSymbol name="person.3.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="primary"
+              isLoading={isCustomersLoading}
             />
             <StatCard
               title="활성 고객"
-              value={mockStats.activeCustomers}
+              value={stats.activeCustomers}
               icon={<SFSymbol name="person.fill.checkmark" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              trend={{ value: 5, isPositive: true }}
+              isLoading={isCustomersLoading}
             />
             <StatCard
               title="최근 등록"
-              value={mockStats.recentRegistrations}
+              value={stats.recentRegistrations}
               icon={<SFSymbol name="person.badge.plus" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="warning"
-              trend={{ value: 3, isPositive: true }}
+              isLoading={isCustomersLoading}
             />
             <StatCard
               title="관계 매핑"
-              value={mockStats.relationshipsMapped}
+              value={stats.relationshipsMapped}
               icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.TITLE_2} weight={SFSymbolWeight.MEDIUM} />}
               color="success"
-              trend={{ value: 8, isPositive: true }}
+              isLoading={isCustomersLoading}
             />
           </div>
         </section>
