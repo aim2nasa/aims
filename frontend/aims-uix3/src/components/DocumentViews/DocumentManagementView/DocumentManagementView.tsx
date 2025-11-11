@@ -265,7 +265,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           name="doc-badge-plus"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
-          style={{ color: 'var(--color-warning)' }}
+          style={{ color: 'var(--color-icon-doc-register)' }}
         />
       ),
       title: '문서 등록',
@@ -278,7 +278,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           name="books-vertical"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
-          style={{ color: 'var(--color-purple)' }}
+          style={{ color: 'var(--color-icon-doc-library)' }}
         />
       ),
       title: '문서 라이브러리',
@@ -291,7 +291,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           name="search-bold"
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.MEDIUM}
-          style={{ color: 'var(--color-primary)' }}
+          style={{ color: 'var(--color-icon-doc-search)' }}
         />
       ),
       title: '문서 검색',
