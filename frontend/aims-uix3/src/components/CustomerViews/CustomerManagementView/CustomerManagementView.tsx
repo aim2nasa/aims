@@ -11,9 +11,10 @@ import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
-import { QuickActionButton } from '@/shared/ui/QuickActionButton';
 import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
+import { UsageGuide } from '@/shared/ui/UsageGuide';
+import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
 import './CustomerManagementView.css';
@@ -23,8 +24,6 @@ interface CustomerManagementViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
-  /** View 변경 핸들러 */
-  onNavigate: (view: string) => void;
 }
 
 /**
@@ -44,7 +43,6 @@ interface CustomerManagementViewProps {
 export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   visible,
   onClose,
-  onNavigate,
 }) => {
   // 고객 목록 조회 (통계 계산용)
   const {
@@ -131,7 +129,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                 <circle cx="8" cy="6" r="3" fill="currentColor"/>
                 <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" fill="currentColor"/>
                 <circle cx="15" cy="15" r="4" fill="var(--color-success)"/>
-                <path d="M15 13v4M13 15h4" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <path d="M15 13v4M13 15h4" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
               </svg>
             ),
             timestamp: createdAt || new Date(),
@@ -161,22 +159,57 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     await refetchCustomers();
   };
 
-  // 빠른 액션 핸들러 - LeftPane 메뉴 클릭과 동일하게 onNavigate만 호출
-  const handleCustomerRegister = () => {
-    onNavigate('customers-register');
-  };
-
-  const handleCustomerSearch = () => {
-    onNavigate('customers-all');
-  };
-
-  const handleRelationshipMap = () => {
-    onNavigate('customers-relationship');
-  };
-
-  const handleRegionalView = () => {
-    onNavigate('customers-regional');
-  };
+  // 사용 가이드 섹션
+  const guideSections: GuideSection[] = [
+    {
+      icon: (
+        <SFSymbol
+          name="person-fill-badge-plus"
+          size={SFSymbolSize.CALLOUT}
+          weight={SFSymbolWeight.MEDIUM}
+          style={{ color: 'var(--color-success)' }}
+        />
+      ),
+      title: '고객 등록',
+      description: '새로운 고객 정보를 시스템에 등록하고 관리합니다. 개인 정보, 연락처, 보험 정보 등을 체계적으로 기록할 수 있습니다.',
+    },
+    {
+      icon: (
+        <SFSymbol
+          name="list-bullet"
+          size={SFSymbolSize.CALLOUT}
+          weight={SFSymbolWeight.MEDIUM}
+          style={{ color: 'var(--color-success)' }}
+        />
+      ),
+      title: '전체보기',
+      description: '등록된 모든 고객을 검색하고 조회합니다. 이름, 전화번호, 이메일로 빠르게 검색하고 정렬할 수 있습니다.',
+    },
+    {
+      icon: (
+        <SFSymbol
+          name="location"
+          size={SFSymbolSize.CALLOUT}
+          weight={SFSymbolWeight.MEDIUM}
+          style={{ color: 'var(--color-warning)' }}
+        />
+      ),
+      title: '지역별 보기',
+      description: '고객을 지역별로 분류하여 확인합니다. 시/도, 시/군/구 단위로 고객 분포를 파악하고 지역별 관리가 가능합니다.',
+    },
+    {
+      icon: (
+        <SFSymbol
+          name="person-2"
+          size={SFSymbolSize.CALLOUT}
+          weight={SFSymbolWeight.MEDIUM}
+          style={{ color: 'var(--color-purple)' }}
+        />
+      ),
+      title: '관계별 보기',
+      description: '고객 간의 관계를 시각화하여 관리합니다. 가족 관계, 지인 관계 등을 연결하여 효율적인 고객 관리가 가능합니다.',
+    },
+  ];
 
   return (
     <CenterPaneView
@@ -202,9 +235,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         <section className="customer-management-view__section">
           <h2 className="customer-management-view__section-title">
             <svg width="14" height="14" viewBox="0 0 20 20">
-              <rect x="2" y="12" width="4" height="6" rx="1" fill="#3b82f6"/>
-              <rect x="8" y="7" width="4" height="11" rx="1" fill="#3b82f6"/>
-              <rect x="14" y="3" width="4" height="15" rx="1" fill="#3b82f6"/>
+              <rect x="2" y="12" width="4" height="6" rx="1" fill="var(--color-primary-500)"/>
+              <rect x="8" y="7" width="4" height="11" rx="1" fill="var(--color-primary-500)"/>
+              <rect x="14" y="3" width="4" height="15" rx="1" fill="var(--color-primary-500)"/>
             </svg>
             고객 통계
           </h2>
@@ -225,7 +258,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                   <circle cx="8" cy="6" r="3"/>
                   <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z"/>
                   <circle cx="16" cy="16" r="3.5" fill="var(--color-success)"/>
-                  <path d="M14.5 16l1 1 2.5-2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <path d="M14.5 16l1 1 2.5-2.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                 </svg>
               }
               color="success"
@@ -240,7 +273,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                   <circle cx="8" cy="6" r="3"/>
                   <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z"/>
                   <circle cx="15" cy="15" r="4" fill="var(--color-warning)"/>
-                  <path d="M15 13v4M13 15h4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M15 13v4M13 15h4" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               }
               color="warning"
@@ -258,76 +291,19 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           </div>
         </section>
 
-        {/* 빠른 액션 섹션 */}
-        <section className="customer-management-view__section">
-          <h2 className="customer-management-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 20 20">
-              <path d="M10 2l2 5h5l-4 3.5 1.5 5.5L10 13l-4.5 3 1.5-5.5L3 7h5l2-5z" fill="var(--color-warning)"/>
-            </svg>
-            빠른 액션
-          </h2>
-          <div className="customer-management-view__actions-grid">
-            <QuickActionButton
-              icon={
-                <span className="quick-action-icon-green">
-                  <SFSymbol
-                    name="person-fill-badge-plus"
-                    size={SFSymbolSize.CALLOUT}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                </span>
-              }
-              label="고객 등록"
-              onClick={handleCustomerRegister}
-            />
-            <QuickActionButton
-              icon={
-                <span className="quick-action-icon-green">
-                  <SFSymbol
-                    name="list-bullet"
-                    size={SFSymbolSize.CALLOUT}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                </span>
-              }
-              label="전체보기"
-              onClick={handleCustomerSearch}
-            />
-            <QuickActionButton
-              icon={
-                <span className="quick-action-icon-orange">
-                  <SFSymbol
-                    name="location"
-                    size={SFSymbolSize.CALLOUT}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                </span>
-              }
-              label="지역별 보기"
-              onClick={handleRegionalView}
-            />
-            <QuickActionButton
-              icon={
-                <span className="quick-action-icon-purple">
-                  <SFSymbol
-                    name="person-2"
-                    size={SFSymbolSize.CALLOUT}
-                    weight={SFSymbolWeight.MEDIUM}
-                  />
-                </span>
-              }
-              label="관계별 보기"
-              onClick={handleRelationshipMap}
-            />
-          </div>
-        </section>
+        {/* 사용 가이드 */}
+        <UsageGuide
+          title="고객관리 사용 가이드"
+          sections={guideSections}
+          defaultExpanded={true}
+        />
 
         {/* 최근 활동 섹션 */}
         <section className="customer-management-view__section">
           <h2 className="customer-management-view__section-title">
             <svg width="14" height="14" viewBox="0 0 20 20">
               <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
-              <path d="M10 5v5l3.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+              <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
             </svg>
             최근 활동
           </h2>

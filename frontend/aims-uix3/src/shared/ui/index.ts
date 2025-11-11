@@ -38,3 +38,6 @@ export type { QuickActionButtonProps } from './QuickActionButton';
 
 export { RecentActivityList } from './RecentActivityList';
 export type { RecentActivityListProps, RecentActivityItem } from './RecentActivityList';
+
+export { UsageGuide } from './UsageGuide';
+export type { UsageGuideProps, GuideSection } from './UsageGuide';
