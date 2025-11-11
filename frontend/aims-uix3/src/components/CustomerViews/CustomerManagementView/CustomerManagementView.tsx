@@ -130,25 +130,21 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     await refetchCustomers();
   };
 
-  // 빠른 액션 핸들러
+  // 빠른 액션 핸들러 - LeftPane 메뉴 클릭과 동일하게 onNavigate만 호출
   const handleCustomerRegister = () => {
     onNavigate('customers-register');
-    onClose();
   };
 
   const handleCustomerSearch = () => {
     onNavigate('customers-all');
-    onClose();
   };
 
   const handleRelationshipMap = () => {
     onNavigate('customers-relationship');
-    onClose();
   };
 
   const handleRegionalView = () => {
     onNavigate('customers-regional');
-    onClose();
   };
 
   return (
