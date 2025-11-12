@@ -1326,7 +1326,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           onFilesSelected={handleFilesSelected}
           options={fileSelectionOptions}
           uploading={uploadState.uploading}
-          disabled={false}
+          disabled={uploadState.uploading}
         />
 
         {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 (공통 영역) */}
