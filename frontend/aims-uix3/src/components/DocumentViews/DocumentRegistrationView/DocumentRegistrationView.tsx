@@ -1335,7 +1335,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           )}
         </div>
 
-        {/* 고객 정보 입력 영역 + 초기화 버튼 (한 줄) */}
+        {/* 🎯 [핵심] 파일 업로드 영역 - 최상단 배치! */}
+        <FileUploadArea
+          onFilesSelected={handleFilesSelected}
+          options={fileSelectionOptions}
+          uploading={uploadState.uploading}
+          disabled={uploadState.uploading}
+        />
+
+        {/* 🔽 [선택] 고객 정보 입력 영역 */}
         <CustomerFileUploadArea
           selectedCustomer={customerFileCustomer}
           onCustomerSelect={setCustomerFileCustomer}
@@ -1357,14 +1365,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             }
           }}
           resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
-        />
-
-        {/* 파일 업로드 영역 (항상 표시) */}
-        <FileUploadArea
-          onFilesSelected={handleFilesSelected}
-          options={fileSelectionOptions}
-          uploading={uploadState.uploading}
-          disabled={uploadState.uploading}
         />
 
         {/* 파일 목록 & 처리 로그 컨테이너 - 탭으로 전환 */}

@@ -276,9 +276,14 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         {!uploading && !isDragging && (
           <div className="file-upload-area__unified-content">
             <div className="file-upload-area__plus-icon">+</div>
-            <span className="file-upload-area__hint-text">
-              파일 선택 또는 드래그
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <span className="file-upload-area__hint-text">
+                지금 바로 파일을 끌어다 놓으세요!
+              </span>
+              <span style={{ fontSize: '14px', opacity: 0.6, color: 'var(--color-text-secondary)' }}>
+                또는 클릭하여 파일 선택
+              </span>
+            </div>
           </div>
         )}
 

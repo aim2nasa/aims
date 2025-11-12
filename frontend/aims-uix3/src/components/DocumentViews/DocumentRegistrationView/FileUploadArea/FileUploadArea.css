@@ -10,11 +10,11 @@
   padding: 0;
 }
 
-/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop */
+/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 3배 확대! */
 .file-upload-area__unified-zone {
-  height: 100px; /* 전체 영역 */
+  height: 300px; /* 3배 확대 (100px → 300px) */
   background: var(--color-upload-zone-bg);
-  border: 2px dashed var(--color-upload-zone-border);
+  border: 3px dashed var(--color-upload-zone-border); /* 테두리 굵게 */
   border-radius: var(--radius-lg); /* 통일된 라운딩 */
 
   display: flex;
@@ -22,19 +22,34 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 16px;
+  padding: 32px; /* 패딩 2배 */
 
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   outline: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 서브틀한 깊이감 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 깊이감 강화 */
+
+  /* 🎯 사용자 주의 끌기: 서브틀한 pulse 애니메이션 */
+  animation: uploadZonePulse 3s ease-in-out infinite;
 }
 
-/* Hover State */
+/* 🎯 Pulse 애니메이션 (서브틀함) */
+@keyframes uploadZonePulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.15);
+  }
+}
+
+/* Hover State - 강화 */
 .file-upload-area__unified-zone:hover:not([aria-disabled="true"]) {
   background: var(--color-upload-zone-bg-hover);
   border-color: var(--color-upload-zone-border-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px); /* 더 크게 들어올림 */
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2); /* 호버 시 그림자 강화 */
+  animation: none; /* 호버 시 pulse 중지 */
 }
 
 /* Focus State */
@@ -56,32 +71,32 @@
   transform: scale(1.02);
 }
 
-/* Unified Content */
+/* Unified Content - 간격 확대 */
 .file-upload-area__unified-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 20px; /* 간격 확대 (8px → 20px) */
 }
 
-/* Plus Icon */
+/* Plus Icon - 2배 확대! */
 .file-upload-area__plus-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+  width: 80px; /* 2배 확대 (40px → 80px) */
+  height: 80px;
+  border-radius: 40px;
   background: var(--color-upload-zone-icon);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* font-size: var(--font-size-large-symbol); (24px - FONT_RULES.md: 아이콘/심볼 ) */
+  font-size: 48px; /* 아이콘 크기도 확대 */
   font-weight: 300;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .file-upload-area__unified-zone:hover:not([aria-disabled="true"]) .file-upload-area__plus-icon {
   background: var(--color-upload-zone-icon-hover);
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(90deg); /* 회전 효과 추가 */
 }
 
 /* 🍎 DROP HINTS: Subtle guidance */
@@ -99,14 +114,15 @@
 }
 
 .file-upload-area__hint-text {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */ /* 폰트 크기 축소 */
-  font-weight: 400;
+  font-size: 20px; /* 크기 확대 (11px → 20px) */
+  font-weight: 500; /* 굵게 */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  color: var(--color-file-default-light);
+  color: var(--color-text-primary);
+  letter-spacing: -0.3px;
 }
 
 html[data-theme="dark"] .file-upload-area__hint-text {
-  color: var(--color-file-default-dark);
+  color: var(--color-text-primary);
 }
 
 /* 🍎 DROP ACTIVE: Clear feedback */
