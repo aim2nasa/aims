@@ -163,20 +163,19 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
           {/* 선택된 고객 표시 또는 최근 고객 드롭다운 */}
           <div className="customer-file-upload-area__selected-customer">
             {selectedCustomer ? (
-              <>
-                <span className="selected-customer-name">
+              <div className="selected-customer-name">
+                <span className="selected-customer-text">
                   {selectedCustomer.personal_info?.name || '이름 없음'}
                 </span>
                 <button
                   className="clear-customer-button"
                   onClick={() => onCustomerSelect(null)}
                   aria-label="고객 선택 해제"
-                  title="고객 선택 해제"
                   disabled={disabled}
                 >
                   ✕
                 </button>
-              </>
+              </div>
             ) : (
               <Dropdown
                 value=""
