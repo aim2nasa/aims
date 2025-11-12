@@ -8,17 +8,17 @@
 .customer-file-upload-area {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
+  gap: var(--spacing-md); /* 여유있는 간격 */
+  padding: var(--spacing-lg); /* 넉넉한 내부 여백 */
   background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg); /* 통일된 라운딩 */
   border: 1px solid var(--color-border);
-  margin-bottom: var(--spacing-lg);
   overflow: visible;
   max-width: 800px; /* 다른 컴포넌트와 동일한 폭 */
   width: 100%;
   margin-left: auto; /* 중앙 정렬 */
   margin-right: auto; /* 중앙 정렬 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 서브틀한 깊이감 */
 }
 
 html[data-theme="dark"] .customer-file-upload-area {
@@ -59,9 +59,10 @@ html[data-theme="dark"] .customer-file-upload-area {
 
 /* 고객선택 버튼 높이 */
 .customer-file-upload-area__customer-selection .button {
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
+  height: 38px; /* 살짝 더 큰 터치 영역 */
+  min-height: 38px;
+  max-height: 38px;
+  font-weight: 500; /* 명확한 텍스트 */
 }
 
 /* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
@@ -70,9 +71,9 @@ html[data-theme="dark"] .customer-file-upload-area {
   align-items: center;
   gap: var(--spacing-2);
   flex: 1;
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
+  height: 38px; /* 버튼과 동일한 높이 */
+  min-height: 38px;
+  max-height: 38px;
   overflow: visible;
   position: relative;
 }
@@ -83,11 +84,11 @@ html[data-theme="dark"] .customer-file-upload-area {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 36px;
-  padding: 4px 10px;
+  height: 38px; /* 버튼과 동일한 높이 */
+  padding: 6px 12px; /* 여유있는 패딩 */
   background: transparent;
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: 6px;
+  border-radius: var(--radius-md); /* 통일된 라운딩 */
   font-size: var(--font-size-caption-1);
   font-family: var(--font-family-text);
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
@@ -195,14 +196,16 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   flex-direction: column;
   width: 100%;
   margin: 0 auto;
-  margin-top: 12px;
+  margin-top: var(--spacing-sm); /* 상단 여백 */
   background: var(--color-ios-bg-secondary-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md); /* 통일된 라운딩 */
   overflow: hidden;
+  border: 1px solid var(--color-ios-separator-light); /* 경계선 추가 */
 }
 
 html[data-theme="dark"] .notes-section {
   background: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
 /* 메모 토글 버튼 */
@@ -293,8 +296,8 @@ html[data-theme="dark"] .notes-input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px; /* 살짝 더 큰 터치 영역 */
+  height: 28px;
   padding: 0;
   margin: 0;
   background: transparent;

@@ -27,10 +27,11 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 4px 10px;
+  padding: 6px 12px; /* 여유있는 패딩 */
+  min-height: 38px; /* 버튼과 동일한 높이 */
   background-color: transparent;
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: 6px;
+  border-radius: var(--radius-md); /* 통일된 라운딩 */
   color: var(--color-ios-text-primary-light);
   font-size: var(--font-size-caption-1);
   font-weight: 400;
@@ -109,7 +110,7 @@ html[data-theme="dark"] .ios-dropdown__arrow {
   right: 0;
   background-color: var(--color-ios-menu-bg-light); /* CSS 변수 사용 */
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: 8px;
+  border-radius: var(--radius-md); /* 통일된 라운딩 */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   z-index: 10000; /* 높은 z-index로 다른 요소 위에 표시 */
