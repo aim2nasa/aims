@@ -9,7 +9,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import Tooltip from '@/shared/ui/Tooltip'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
 import FileListSection from './FileListSection/FileListSection'
@@ -61,6 +60,44 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
   const [customerFileDocType, setCustomerFileDocType] = useState<string>('unspecified')
   const [customerFileNotes, setCustomerFileNotes] = useState<string>('')
+
+  // UI 상태 (localStorage에서 복원)
+  const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
+    const saved = localStorage.getItem('doc-reg-guide-expanded')
+    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
+  })
+  const [isNotesExpanded, setIsNotesExpanded] = useState(() => {
+    const saved = localStorage.getItem('doc-reg-notes-expanded')
+    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
+  })
+  const [activeTab, setActiveTab] = useState<'upload' | 'log'>(() => {
+    const saved = localStorage.getItem('doc-reg-active-tab')
+    return (saved === 'log' ? 'log' : 'upload') as 'upload' | 'log'
+  })
+
+  // 가이드 접기/펼치기 토글
+  const toggleGuide = useCallback(() => {
+    setIsGuideExpanded(prev => {
+      const newValue = !prev
+      localStorage.setItem('doc-reg-guide-expanded', String(newValue))
+      return newValue
+    })
+  }, [])
+
+  // 메모 접기/펼치기 토글
+  const toggleNotes = useCallback(() => {
+    setIsNotesExpanded(prev => {
+      const newValue = !prev
+      localStorage.setItem('doc-reg-notes-expanded', String(newValue))
+      return newValue
+    })
+  }, [])
+
+  // 탭 변경 핸들러
+  const handleTabChange = useCallback((tab: 'upload' | 'log') => {
+    setActiveTab(tab)
+    localStorage.setItem('doc-reg-active-tab', tab)
+  }, [])
 
   // SessionStorage 키
   const SESSION_KEY = 'document-upload-state'
@@ -1249,18 +1286,30 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
-        {/* 🍎 등록 방법 안내 (항상 표시) */}
-        <div className="registration-guide">
+        {/* 🍎 등록 방법 안내 (접기/펼치기 가능) */}
+        <div className={`registration-guide ${isGuideExpanded ? 'registration-guide--expanded' : 'registration-guide--collapsed'}`}>
+          <button
+            type="button"
+            className="registration-guide__toggle"
+            onClick={toggleGuide}
+            aria-expanded={isGuideExpanded}
+            aria-label={isGuideExpanded ? '도움말 접기' : '도움말 펼치기'}
+          >
             <div className="guide-header">
               <div className="guide-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path className="lightbulb-bulb" d="M12 3C8.68629 3 6 5.68629 6 9C6 11.4363 7.4152 13.5392 9.42857 14.3572V17C9.42857 17.5523 9.87629 18 10.4286 18H13.5714C14.1237 18 14.5714 17.5523 14.5714 17V14.3572C16.5848 13.5392 18 11.4363 18 9C18 5.68629 15.3137 3 12 3Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   <path className="lightbulb-base" d="M9 18H15M10 21H14" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
               <h3 className="guide-title">문서 등록 방법</h3>
+              <span className="guide-toggle-icon" aria-hidden="true">
+                {isGuideExpanded ? '▲' : '▼'}
+              </span>
             </div>
+          </button>
 
+          {isGuideExpanded && (
             <div className="guide-content">
               <div className="guide-section">
                 <div className="guide-step">
@@ -1283,34 +1332,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 </div>
               </div>
             </div>
-          </div>
-
-        {/* 초기 상태로 되돌리기 버튼 */}
-        <div className="document-registration-view__reset-container">
-          <Tooltip content="문서등록을 초기 상태로 되돌립니다">
-            <button
-              type="button"
-              onClick={async () => {
-                const confirmed = await showAppleConfirm(
-                  '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
-                  '초기 상태로 되돌리기'
-                )
-                if (confirmed) {
-                  handleResetToInitialState()
-                }
-              }}
-              className="document-registration-view__reset-button"
-              aria-label="초기 상태로 되돌리기"
-            >
-              {/* 후보 6번: Material Design 스타일 단순 원형 화살표 */}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" fill="currentColor" opacity="0.7"/>
-              </svg>
-            </button>
-          </Tooltip>
+          )}
         </div>
 
-        {/* 고객 정보 입력 영역 (항상 표시) */}
+        {/* 고객 정보 입력 영역 + 초기화 버튼 (한 줄) */}
         <CustomerFileUploadArea
           selectedCustomer={customerFileCustomer}
           onCustomerSelect={setCustomerFileCustomer}
@@ -1319,6 +1344,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           notes={customerFileNotes}
           onNotesChange={setCustomerFileNotes}
           disabled={false}
+          isNotesExpanded={isNotesExpanded}
+          onToggleNotes={toggleNotes}
+          showResetButton={true}
+          onReset={async () => {
+            const confirmed = await showAppleConfirm(
+              '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
+              '초기 상태로 되돌리기'
+            )
+            if (confirmed) {
+              handleResetToInitialState()
+            }
+          }}
+          resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
         />
 
         {/* 파일 업로드 영역 (항상 표시) */}
@@ -1329,36 +1367,67 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           disabled={uploadState.uploading}
         />
 
-        {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 (공통 영역) */}
+        {/* 파일 목록 & 처리 로그 컨테이너 - 탭으로 전환 */}
         <div className="file-log-container">
-          {/* 업로드 목록 영역 - 60% */}
-          <FileListSection
-            uploadState={uploadState}
-            showSuccessMessage={showSuccessMessage}
-            stats={stats}
-            autoRegistrationLog={autoRegistrationLog}
-            onRetryFile={handleRetryFile}
-            onClearAll={async () => {
-              const confirmed = await showAppleConfirm(
-                '업로드 기록을 초기화하시겠습니까?',
-                '업로드 초기화'
-              )
-              if (confirmed) {
-                handleClearAll()
-              }
-            }}
-            onCancelAll={handleCancelAll}
-            onDismissSuccess={() => setShowSuccessMessage(false)}
-            onDismissAutoRegistration={() => setAutoRegistrationLog(null)}
-          />
+          {/* 탭 버튼 */}
+          <div className="file-log-tabs">
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'upload' ? 'tab-button--active' : ''}`}
+              onClick={() => handleTabChange('upload')}
+              aria-selected={activeTab === 'upload'}
+            >
+              <span className="tab-label">업로드 목록</span>
+              {uploadState.files.length > 0 && (
+                <span className="tab-badge">{uploadState.files.length}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={`tab-button ${activeTab === 'log' ? 'tab-button--active' : ''}`}
+              onClick={() => handleTabChange('log')}
+              aria-selected={activeTab === 'log'}
+            >
+              <span className="tab-label">처리 로그</span>
+              {processingLogs.length > 0 && (
+                <span className="tab-badge">{processingLogs.length}</span>
+              )}
+            </button>
+          </div>
 
-          {/* 처리 로그 영역 - 40% */}
-          <div className="processing-log-area">
-            <ProcessingLog
-              logs={processingLogs}
-              maxHeight={9999}
-              onClear={() => setProcessingLogs([])}
-            />
+          {/* 탭 컨텐츠 */}
+          <div className="tab-content">
+            {activeTab === 'upload' ? (
+              /* 업로드 목록 */
+              <FileListSection
+                uploadState={uploadState}
+                showSuccessMessage={showSuccessMessage}
+                stats={stats}
+                autoRegistrationLog={autoRegistrationLog}
+                onRetryFile={handleRetryFile}
+                onClearAll={async () => {
+                  const confirmed = await showAppleConfirm(
+                    '업로드 기록을 초기화하시겠습니까?',
+                    '업로드 초기화'
+                  )
+                  if (confirmed) {
+                    handleClearAll()
+                  }
+                }}
+                onCancelAll={handleCancelAll}
+                onDismissSuccess={() => setShowSuccessMessage(false)}
+                onDismissAutoRegistration={() => setAutoRegistrationLog(null)}
+              />
+            ) : (
+              /* 처리 로그 */
+              <div className="processing-log-area">
+                <ProcessingLog
+                  logs={processingLogs}
+                  maxHeight={9999}
+                  onClear={() => setProcessingLogs([])}
+                />
+              </div>
+            )}
           </div>
         </div>
 

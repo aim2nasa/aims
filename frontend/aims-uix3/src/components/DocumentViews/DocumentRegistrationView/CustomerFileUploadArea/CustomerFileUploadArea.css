@@ -30,13 +30,19 @@ html[data-theme="dark"] .customer-file-upload-area {
 .customer-file-upload-area__main-row {
   display: flex;
   flex-direction: row;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3);
   align-items: center;
   justify-content: center; /* 중앙 정렬 */
   flex-wrap: nowrap;
   overflow: visible;
   position: relative;
   z-index: 1;
+}
+
+/* 초기화 버튼 */
+.customer-file-upload-area__main-row .reset-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ===== 고객 선택 영역 (DocumentLinkModal과 동일) ===== */
@@ -174,16 +180,73 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > span.sel
   margin-bottom: var(--spacing-sm);
 }
 
-/* 메모 입력 섹션 */
+/* 메모 입력 섹션 - 접을 수 있음 */
 .notes-section {
   display: flex;
   flex-direction: column;
-  width: 100%; /* 전체 폭 사용 */
-  margin: 0 auto; /* 중앙 정렬 */
-  margin-top: 16px; /* 상단 간격 - 적당하게 */
+  width: 100%;
+  margin: 0 auto;
+  margin-top: 12px;
+  background: var(--color-ios-bg-secondary-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
+html[data-theme="dark"] .notes-section {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 메모 토글 버튼 */
+.notes-section__toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.notes-section__toggle:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .notes-section__toggle:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* 메모 헤더 */
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 메모 라벨 */
+.notes-label {
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .notes-label {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 토글 아이콘 */
+.notes-toggle-icon {
+  color: var(--color-ios-text-quaternary-light);
+  font-size: var(--font-size-caption-1);
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .notes-toggle-icon {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 메모 입력창 */
 .notes-input {
+  margin: 0 16px 16px;
   padding: 8px 12px;
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-ios-separator-light);

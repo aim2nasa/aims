@@ -26,30 +26,143 @@
   /* height는 FileUploadArea 자체 CSS에서 100px로 설정됨 */
 }
 
-/* 파일 목록 & 처리 로그 컨테이너 - 5:5 비율 고정 */
+/* 파일 목록 & 처리 로그 컨테이너 - 탭 시스템 */
 .file-log-container {
   display: flex;
   flex-direction: column;
   flex: 1; /* 남은 공간을 모두 차지 */
   min-height: 0; /* flex 자식이 overflow 되도록 */
-  gap: 16px;
+  gap: 0;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
 }
 
-/* 파일 목록 영역 - 50% */
-.file-log-container > .file-list-section {
-  flex: 5;
-  min-height: 0; /* flex 자식이 overflow 되도록 */
+/* 탭 버튼 영역 */
+.file-log-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  background: var(--color-ios-bg-primary-light);
 }
 
-/* 처리 로그 영역 - 50% */
-.processing-log-area {
-  flex: 5;
-  min-height: 0; /* flex 자식이 overflow 되도록 */
-  overflow: hidden; /* ProcessingLog 내부에서 스크롤 처리 */
+html[data-theme="dark"] .file-log-tabs {
+  border-bottom-color: var(--color-ios-separator-dark);
+  background: var(--color-ios-bg-primary-dark);
+}
+
+/* 탭 버튼 */
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--color-ios-text-secondary-light);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  position: relative;
+}
+
+html[data-theme="dark"] .tab-button {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.tab-button:hover {
+  color: var(--color-ios-text-primary-light);
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .tab-button:hover {
+  color: var(--color-ios-text-primary-dark);
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+/* 활성 탭 */
+.tab-button--active {
+  color: var(--color-primary-500);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .tab-button--active {
+  color: var(--color-primary-400);
+}
+
+/* 활성 탭 하단 인디케이터 */
+.tab-button--active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary-500);
+}
+
+html[data-theme="dark"] .tab-button--active::after {
+  background: var(--color-primary-400);
+}
+
+/* 탭 라벨 */
+.tab-label {
+  white-space: nowrap;
+}
+
+/* 탭 뱃지 (개수 표시) */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--color-primary-500);
+  color: var(--color-button-primary-text);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-caption-2);
+  font-weight: 600;
+  line-height: 1;
+}
+
+html[data-theme="dark"] .tab-badge {
+  background: var(--color-primary-400);
+}
+
+.tab-button--active .tab-badge {
+  background: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .tab-button--active .tab-badge {
+  background: var(--color-primary-500);
+}
+
+/* 탭 컨텐츠 */
+.tab-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 탭 내부의 파일 목록 영역 */
+.tab-content > .file-list-section {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 탭 내부의 처리 로그 영역 */
+.tab-content .processing-log-area {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -58,15 +171,33 @@
 .registration-guide {
   background: var(--color-ios-bg-secondary-light);
   border-radius: 12px;
-  padding: 16px;
   margin-bottom: 4px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  overflow: hidden;
 }
 
 html[data-theme="dark"] .registration-guide {
   background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 가이드 토글 버튼 */
+.registration-guide__toggle {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+.registration-guide__toggle:hover {
+  background: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .registration-guide__toggle:hover {
+  background: var(--color-ios-bg-tertiary-dark);
 }
 
 .registration-guide .guide-header {
@@ -74,13 +205,34 @@ html[data-theme="dark"] .registration-guide {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* 접힌 상태: 하단 구분선 없음 */
+.registration-guide--collapsed .guide-header {
+  border-bottom: none;
+}
+
+/* 펼쳐진 상태: 하단 구분선 표시 */
+.registration-guide--expanded .guide-header {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--color-ios-separator-light);
 }
 
-html[data-theme="dark"] .registration-guide .guide-header {
+html[data-theme="dark"] .registration-guide--expanded .guide-header {
   border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* 토글 아이콘 */
+.guide-toggle-icon {
+  margin-left: auto;
+  color: var(--color-ios-text-quaternary-light);
+  font-size: var(--font-size-caption-1);
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .guide-toggle-icon {
+  color: var(--color-ios-text-quaternary-dark);
 }
 
 .registration-guide .guide-icon {
@@ -123,6 +275,7 @@ html[data-theme="dark"] .registration-guide .guide-title {
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  padding: 0 16px 16px;
 }
 
 .registration-guide .guide-section {
