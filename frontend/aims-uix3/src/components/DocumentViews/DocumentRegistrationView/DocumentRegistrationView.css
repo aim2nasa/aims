@@ -10,7 +10,7 @@
 .document-registration-content {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* 간격 축소 */
+  gap: var(--spacing-1); /* 간격 축소: 4px */
   height: 100%;
   min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
   /* overflow는 설정하지 않음 - 자식 요소가 자체 스크롤 처리 */
@@ -244,7 +244,7 @@ html[data-theme="dark"] .registration-guide .step-description {
   justify-content: center;
   align-items: center;
   max-width: 800px;
-  margin: 0 auto var(--spacing-4) auto;
+  margin: 0 auto var(--spacing-1) auto;
 }
 
 .document-registration-view__reset-button {
