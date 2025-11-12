@@ -202,15 +202,21 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
 
         {/* 초기화 버튼 (옵션) */}
         {showResetButton && onReset && (
-          <Button
-            variant="secondary"
-            size="md"
+          <button
             onClick={onReset}
             disabled={resetDisabled}
-            className="reset-button"
+            className="customer-file-upload-area__reset-button"
+            aria-label="초기화"
+            title="초기화"
           >
-            초기화
-          </Button>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 8C2 4.68629 4.68629 2 8 2C9.88447 2 11.5551 2.93087 12.6083 4.35M14 8C14 11.3137 11.3137 14 8 14C6.11553 14 4.44487 13.0691 3.39167 11.65M12.6083 4.35H9M12.6083 4.35V1M3.39167 11.65H7M3.39167 11.65V15"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"/>
+            </svg>
+          </button>
         )}
       </div>
 
