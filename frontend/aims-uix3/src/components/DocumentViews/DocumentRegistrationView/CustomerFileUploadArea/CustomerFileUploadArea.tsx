@@ -153,11 +153,11 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
         <div className="customer-file-upload-area__customer-selection">
           <Button
             variant="secondary"
-            size="md"
+            size="sm"
             onClick={() => setIsCustomerSelectorOpen(true)}
             disabled={disabled}
           >
-            고객선택
+            고객 선택
           </Button>
 
           {/* 선택된 고객 표시 또는 최근 고객 드롭다운 */}

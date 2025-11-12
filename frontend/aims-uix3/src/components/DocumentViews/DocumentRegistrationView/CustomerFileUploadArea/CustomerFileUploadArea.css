@@ -8,21 +8,16 @@
 .customer-file-upload-area {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md); /* 여유있는 간격 */
-  padding: var(--spacing-lg); /* 넉넉한 내부 여백 */
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-lg); /* 통일된 라운딩 */
-  border: 1px solid var(--color-border);
+  gap: var(--spacing-3); /* 컴팩트한 간격 */
+  padding: var(--spacing-4); /* 적절한 내부 여백 */
+  background: transparent; /* 투명 배경으로 가볍게 */
+  border-radius: var(--radius-lg);
+  border: none; /* border 제거로 더 깔끔하게 */
   overflow: visible;
-  max-width: 800px; /* 다른 컴포넌트와 동일한 폭 */
+  max-width: 800px;
   width: 100%;
-  margin-left: auto; /* 중앙 정렬 */
-  margin-right: auto; /* 중앙 정렬 */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 서브틀한 깊이감 */
-}
-
-html[data-theme="dark"] .customer-file-upload-area {
-  background: var(--color-layout-secondary-dark);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ===== 고객 선택 & 문서 유형 같은 줄 배치 (DocumentLinkModal과 동일) ===== */
@@ -30,13 +25,22 @@ html[data-theme="dark"] .customer-file-upload-area {
 .customer-file-upload-area__main-row {
   display: flex;
   flex-direction: row;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2); /* 간격 축소 */
   align-items: center;
-  justify-content: center; /* 중앙 정렬 */
+  justify-content: space-between; /* 양쪽 정렬로 더 자연스럽게 */
   flex-wrap: nowrap;
   overflow: visible;
   position: relative;
   z-index: 1;
+  padding: var(--spacing-3);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .customer-file-upload-area__main-row {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
 /* 초기화 버튼 */
@@ -45,24 +49,26 @@ html[data-theme="dark"] .customer-file-upload-area {
   white-space: nowrap;
 }
 
-/* ===== 고객 선택 영역 (DocumentLinkModal과 동일) ===== */
+/* ===== 고객 선택 영역 ===== */
 
 .customer-file-upload-area__customer-selection {
   display: flex;
   flex-direction: row;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
   align-items: center;
-  width: 350px; /* 고정 폭 - 문서 유형과 동일 */
+  flex: 1; /* 유연한 너비 */
   overflow: visible;
   position: relative;
 }
 
-/* 고객선택 버튼 높이 */
+/* 고객선택 버튼 스타일 개선 */
 .customer-file-upload-area__customer-selection .button {
-  height: 38px; /* 살짝 더 큰 터치 영역 */
-  min-height: 38px;
-  max-height: 38px;
-  font-weight: 500; /* 명확한 텍스트 */
+  height: 36px; /* 적정 높이 */
+  min-height: 36px;
+  max-height: 36px;
+  font-size: var(--font-size-footnote); /* 통일된 폰트 크기 */
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
@@ -71,30 +77,31 @@ html[data-theme="dark"] .customer-file-upload-area {
   align-items: center;
   gap: var(--spacing-2);
   flex: 1;
-  height: 38px; /* 버튼과 동일한 높이 */
-  min-height: 38px;
-  max-height: 38px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   overflow: visible;
   position: relative;
 }
 
-/* 고객 선택됨: 이름 + X 버튼 (드롭다운 스타일) */
+/* 고객 선택됨: 이름 + X 버튼 */
 .customer-file-upload-area__selected-customer > .selected-customer-name {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 38px; /* 버튼과 동일한 높이 */
-  padding: 6px 12px; /* 여유있는 패딩 */
-  background: transparent;
+  height: 36px;
+  padding: 8px 12px;
+  background: var(--color-bg-primary);
   border: 1px solid var(--color-ios-separator-light);
-  border-radius: var(--radius-md); /* 통일된 라운딩 */
-  font-size: var(--font-size-caption-1);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-footnote);
   font-family: var(--font-family-text);
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
 }
 
 html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selected-customer-name {
+  background: var(--color-layout-content-dark);
   border-color: var(--color-ios-separator-dark);
 }
 
@@ -108,15 +115,15 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   white-space: nowrap;
 }
 
-/* X 버튼 (드롭다운 화살표와 유사한 위치) */
+/* X 버튼 */
 .customer-file-upload-area .clear-customer-button {
   background: transparent;
   border: none;
   color: var(--color-text-tertiary);
   cursor: pointer;
-  padding: 0;
-  margin-left: 8px;
-  font-size: var(--font-size-callout);
+  padding: 4px;
+  margin-left: 4px;
+  font-size: var(--font-size-footnote);
   line-height: 1;
   display: flex;
   align-items: center;
@@ -125,61 +132,75 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   height: 20px;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  border-radius: var(--radius-sm);
 }
 
 .customer-file-upload-area .clear-customer-button:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
-  transform: scale(1.2);
+  transform: scale(1.1);
+}
+
+.customer-file-upload-area .clear-customer-button:active:not(:disabled) {
+  transform: scale(0.95);
+  background: var(--color-bg-quaternary);
 }
 
 .customer-file-upload-area .clear-customer-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* ===== 문서 유형 필드 (DocumentLinkModal과 동일) ===== */
+/* ===== 문서 유형 필드 ===== */
 
 .customer-file-upload-area__field {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-1);
-  width: 350px; /* 고정 폭 - 고객 선택과 동일 */
+  flex: 1; /* 유연한 너비 */
 }
 
 /* 인라인 필드 (레이블과 입력 요소를 한 줄로) */
 .customer-file-upload-area__field--inline {
   flex-direction: row;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2);
   position: relative;
   overflow: visible;
-}
-
-.customer-file-upload-area__main-row .customer-file-upload-area__field--inline {
-  width: 350px; /* 고정 폭 유지 - 고객 선택과 동일 */
 }
 
 .customer-file-upload-area__field--inline label {
   flex-shrink: 0;
   min-width: auto;
   white-space: nowrap;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-footnote);
   font-weight: 500;
 }
 
-/* 문서 유형 드롭다운이 남은 공간 모두 차지 */
+/* 문서 유형 드롭다운 */
 .customer-file-upload-area__field--inline > div {
   flex: 1;
+  min-width: 0; /* flexbox 축소 활성화 */
 }
 
 /* 드롭다운 메뉴 높이 제한 */
 .customer-file-upload-area .ios-dropdown__menu {
   max-height: 300px;
+  min-width: 220px; /* 긴 텍스트도 보이도록 충분한 너비 보장 */
+  width: max-content; /* 내용에 맞춰 자동 조정 */
+  max-width: 300px; /* 너무 넓어지지 않도록 제한 */
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 9999;
   overscroll-behavior: contain;
   touch-action: pan-y;
+}
+
+/* 드롭다운 메뉴 항목 */
+.customer-file-upload-area .ios-dropdown__menu-item {
+  white-space: nowrap; /* 한 줄로 표시 */
+  padding: 8px 16px; /* 여유있는 패딩 */
 }
 
 /* 섹션 레이블 */
@@ -196,15 +217,14 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   flex-direction: column;
   width: 100%;
   margin: 0 auto;
-  margin-top: var(--spacing-sm); /* 상단 여백 */
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: var(--radius-md); /* 통일된 라운딩 */
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--color-ios-separator-light); /* 경계선 추가 */
+  border: 1px solid var(--color-ios-separator-light);
 }
 
 html[data-theme="dark"] .notes-section {
-  background: var(--color-ios-bg-secondary-dark);
+  background: var(--color-layout-secondary-dark);
   border-color: var(--color-ios-separator-dark);
 }
 
@@ -296,40 +316,44 @@ html[data-theme="dark"] .notes-input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px; /* 살짝 더 큰 터치 영역 */
-  height: 28px;
+  width: 32px; /* 적절한 터치 영역 */
+  height: 32px;
   padding: 0;
   margin: 0;
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
-  opacity: 0.7;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .customer-file-upload-area__reset-button:hover {
-  background: transparent;
+  background: var(--color-bg-tertiary);
   opacity: 1;
-  transform: scale(1.1);
+  border-radius: var(--radius-sm);
+  transform: scale(1.05);
 }
 
 .customer-file-upload-area__reset-button:active {
   transform: scale(0.95);
+  background: var(--color-bg-quaternary);
 }
 
 .customer-file-upload-area__reset-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+  background: transparent;
 }
 
 .customer-file-upload-area__reset-button svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   display: block;
   transition: transform 0.3s ease;
 }
 
-.customer-file-upload-area__reset-button:hover svg {
-  transform: rotate(45deg);
+.customer-file-upload-area__reset-button:hover:not(:disabled) svg {
+  transform: rotate(90deg);
 }
