@@ -13,6 +13,41 @@ const crypto = require('crypto');
 const mime = require('mime-types');
 const pdfParse = require('pdf-parse');
 const exif = require('exif-parser');
+
+// pdfjs Warning 완전 억제 - 모든 출력 채널 오버라이드
+const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+const originalStderrWrite = process.stderr.write.bind(process.stderr);
+const originalConsoleWarn = console.warn.bind(console);
+
+// stdout 필터링
+process.stdout.write = function(chunk, encoding, callback) {
+  const str = chunk.toString();
+  if (str.includes('Warning:') && (str.includes('loadFont') || str.includes('translateFont'))) {
+    if (typeof callback === 'function') callback();
+    return true;
+  }
+  return originalStdoutWrite(chunk, encoding, callback);
+};
+
+// stderr 필터링
+process.stderr.write = function(chunk, encoding, callback) {
+  const str = chunk.toString();
+  if (str.includes('Warning:') && (str.includes('loadFont') || str.includes('translateFont'))) {
+    if (typeof callback === 'function') callback();
+    return true;
+  }
+  return originalStderrWrite(chunk, encoding, callback);
+};
+
+// console.warn 필터링
+console.warn = function(...args) {
+  const msg = args.join(' ');
+  if (msg.includes('Warning:') && (msg.includes('loadFont') || msg.includes('translateFont'))) {
+    return;
+  }
+  return originalConsoleWarn(...args);
+};
+
 const { getDocument } = require('pdfjs-dist/legacy/build/pdf.js');
 
 // 오피스 문서 처리를 위한 라이브러리들
