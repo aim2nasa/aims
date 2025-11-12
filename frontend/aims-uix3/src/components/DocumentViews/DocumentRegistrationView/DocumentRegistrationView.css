@@ -173,17 +173,16 @@ html[data-theme="dark"] .tab-button--active .tab-badge {
 
 /* 🍎 등록 방법 안내 스타일 */
 .registration-guide {
-  background: var(--color-ios-bg-secondary-light);
+  background: transparent; /* 투명 배경 */
   border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 서브틀한 깊이감 */
 }
 
 html[data-theme="dark"] .registration-guide {
-  background: var(--color-ios-bg-secondary-dark);
+  background: transparent; /* 투명 배경 */
 }
 
 /* 가이드 토글 버튼 */
@@ -234,7 +233,6 @@ html[data-theme="dark"] .registration-guide--expanded .guide-header {
 
 /* 토글 아이콘 */
 .guide-toggle-icon {
-  margin-left: auto;
   color: var(--color-ios-text-quaternary-light);
   font-size: var(--font-size-caption-1);
   transition: transform var(--duration-ios-quick) var(--easing-ease-out);
