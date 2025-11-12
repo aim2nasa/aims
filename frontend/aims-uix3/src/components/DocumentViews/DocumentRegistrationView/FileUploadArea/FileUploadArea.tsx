@@ -276,7 +276,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         {!uploading && !isDragging && (
           <div className="file-upload-area__unified-content">
             <div className="file-upload-area__plus-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
                 <path d="M24 10V38M10 24H38" stroke="white" strokeWidth="4" strokeLinecap="round"/>
               </svg>
             </div>

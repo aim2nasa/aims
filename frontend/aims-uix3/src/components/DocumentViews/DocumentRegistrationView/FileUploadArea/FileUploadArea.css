@@ -10,11 +10,11 @@
   padding: 0;
 }
 
-/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 3배 확대! */
+/* 🍎 UNIFIED UPLOAD ZONE: Click or Drop - 적정 크기 */
 .file-upload-area__unified-zone {
-  height: 300px; /* 3배 확대 (100px → 300px) */
+  height: 150px; /* 적정 크기 */
   background: var(--color-upload-zone-bg);
-  border: 3px dashed var(--color-upload-zone-border); /* 테두리 굵게 */
+  border: 2px dashed var(--color-upload-zone-border);
   border-radius: var(--radius-lg); /* 통일된 라운딩 */
 
   display: flex;
@@ -22,12 +22,12 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 32px; /* 패딩 2배 */
+  padding: 20px;
 
   cursor: pointer;
   transition: all 0.3s ease;
   outline: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 깊이감 강화 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* 🎯 사용자 주의 끌기: 서브틀한 pulse 애니메이션 */
   animation: uploadZonePulse 3s ease-in-out infinite;
@@ -36,19 +36,19 @@
 /* 🎯 Pulse 애니메이션 (서브틀함) */
 @keyframes uploadZonePulse {
   0%, 100% {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
   50% {
-    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.15);
+    box-shadow: 0 2px 12px rgba(0, 122, 255, 0.12);
   }
 }
 
-/* Hover State - 강화 */
+/* Hover State */
 .file-upload-area__unified-zone:hover:not([aria-disabled="true"]) {
   background: var(--color-upload-zone-bg-hover);
   border-color: var(--color-upload-zone-border-hover);
-  transform: translateY(-2px); /* 더 크게 들어올림 */
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2); /* 호버 시 그림자 강화 */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15);
   animation: none; /* 호버 시 pulse 중지 */
 }
 
@@ -71,19 +71,19 @@
   transform: scale(1.02);
 }
 
-/* Unified Content - 간격 확대 */
+/* Unified Content */
 .file-upload-area__unified-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px; /* 간격 확대 (8px → 20px) */
+  gap: 12px;
 }
 
-/* Plus Icon - 2배 확대! */
+/* Plus Icon - 적정 크기 */
 .file-upload-area__plus-icon {
-  width: 80px; /* 2배 확대 (40px → 80px) */
-  height: 80px;
-  border-radius: 40px;
+  width: 48px; /* 적정 크기 */
+  height: 48px;
+  border-radius: 24px;
   background: var(--color-upload-zone-icon);
   display: flex;
   align-items: center;
