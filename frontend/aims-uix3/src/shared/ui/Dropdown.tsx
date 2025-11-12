@@ -26,6 +26,8 @@ export interface DropdownProps {
   width?: number | string;
   /** 최소 폭 (px 단위 숫자 또는 CSS 문자열) */
   minWidth?: number | string;
+  /** 비활성화 여부 */
+  disabled?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -36,6 +38,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   'aria-label': ariaLabel,
   width,
   minWidth,
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
@@ -104,7 +107,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className={`ios-dropdown ${className}`}
+      className={`ios-dropdown ${disabled ? 'ios-dropdown--disabled' : ''} ${className}`}
       style={containerStyle}
       aria-label={ariaLabel}
     >
@@ -112,10 +115,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
       <button
         type="button"
         className="ios-dropdown__trigger"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
+        disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-disabled={disabled}
       >
         <span className="ios-dropdown__value">{selectedOption?.label || '선택'}</span>
         <span className="ios-dropdown__arrow" aria-hidden="true">

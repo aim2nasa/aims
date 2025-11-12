@@ -7,7 +7,7 @@
  * - 문서 유형 선택
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
 import type { Customer } from '@/entities/customer'
@@ -33,6 +33,7 @@ interface CustomerFileUploadAreaProps {
 
 // 문서 유형 옵션 (DocumentLinkModal과 동일)
 const DOCUMENT_TYPE_OPTIONS: DropdownOption[] = [
+  { value: 'unspecified', label: '미지정' },
   { value: 'general', label: '일반 문서' },
   { value: 'contract', label: '계약서' },
   { value: 'claim', label: '보험금청구서' },
@@ -57,6 +58,18 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
   // 최근 선택한 고객 목록 (전역 상태)
   const { recentCustomers, addRecentCustomer, getRecentCustomers } = useRecentCustomersStore()
+
+  // 문서유형 기본값 보장 (빈 문자열이면 'unspecified'로 설정)
+  const effectiveDocumentType = documentType || 'unspecified'
+
+  /**
+   * 고객 선택 해제 시 문서유형을 "미지정"으로 리셋
+   */
+  useEffect(() => {
+    if (!selectedCustomer && documentType !== 'unspecified') {
+      onDocumentTypeChange('unspecified')
+    }
+  }, [selectedCustomer, documentType, onDocumentTypeChange])
 
   /**
    * 최근 고객 드롭다운 옵션 생성 (DocumentLinkModal과 동일)
@@ -164,9 +177,10 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
         <div className="customer-file-upload-area__field customer-file-upload-area__field--inline">
           <label htmlFor="document-type">문서 유형</label>
           <Dropdown
-            value={documentType}
+            value={effectiveDocumentType}
             options={DOCUMENT_TYPE_OPTIONS}
             onChange={onDocumentTypeChange}
+            disabled={!selectedCustomer}
             aria-label="문서 유형 선택"
           />
         </div>

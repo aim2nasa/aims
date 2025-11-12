@@ -15,6 +15,12 @@
   /* min-width는 각 사용처에서 prop으로 지정 */
 }
 
+/* Disabled 드롭다운 컨테이너 */
+.ios-dropdown--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* === TRIGGER BUTTON === */
 .ios-dropdown__trigger {
   display: flex;
@@ -53,6 +59,26 @@ html[data-theme="dark"] .ios-dropdown__trigger:hover {
 .ios-dropdown__trigger:focus {
   border-color: var(--color-primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Disabled 트리거 버튼 스타일 */
+.ios-dropdown__trigger:disabled {
+  cursor: not-allowed;
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .ios-dropdown__trigger:disabled {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.ios-dropdown__trigger:disabled:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+  border-color: var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .ios-dropdown__trigger:disabled:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
 /* === TRIGGER CONTENT === */

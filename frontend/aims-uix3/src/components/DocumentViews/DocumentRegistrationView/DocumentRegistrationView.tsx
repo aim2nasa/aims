@@ -57,12 +57,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   visible,
   onClose
 }) => {
-  // 탭 상태 관리
-  const [activeTab, setActiveTab] = useState<'default' | 'customer'>('default')
-
-  // 고객 파일 등록 탭 상태
+  // 고객 파일 등록 상태
   const [customerFileCustomer, setCustomerFileCustomer] = useState<Customer | null>(null)
-  const [customerFileDocType, setCustomerFileDocType] = useState<string>('')
+  const [customerFileDocType, setCustomerFileDocType] = useState<string>('unspecified')
   const [customerFileNotes, setCustomerFileNotes] = useState<string>('')
 
   // SessionStorage 키
@@ -493,8 +490,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       uploadService.queueFiles(validFiles)
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
 
-      // 🔗 고객 파일 등록 탭에서 업로드된 파일이면 추적 목록에 추가
-      if (activeTab === 'customer' && customerFileCustomer && customerFileDocType) {
+      // 🔗 고객이 선택되어 있으면 추적 목록에 추가 (업로드 후 자동 연결)
+      // 문서유형은 기본값 'unspecified'가 있으므로 체크 불필요
+      if (customerFileCustomer) {
         validFiles.forEach(f => {
           customerFileUploadMappingRef.current.set(f.file.name, {
             customerId: customerFileCustomer._id,
@@ -502,7 +500,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             documentType: customerFileDocType,
             notes: customerFileNotes
           })
-          console.log(`🔗 [고객 파일 등록] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}`)
+          console.log(`🔗 [고객 파일 자동 연결] 추적 추가: ${f.file.name} → 고객: ${customerFileCustomer.personal_info?.name}, 문서유형: ${customerFileDocType}`)
         })
       }
     }
@@ -512,7 +510,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       console.log('🔥 [handleFilesSelected] AR 큐 처리 시작, 큐:', arQueueRef.current.length)
       processNextArInQueue()
     }
-  }, [generateFileId, addLog, processNextArInQueue, activeTab, customerFileCustomer, customerFileDocType, customerFileNotes])
+  }, [generateFileId, addLog, processNextArInQueue, customerFileCustomer, customerFileDocType, customerFileNotes])
 
   /**
    * 파일 재시도 핸들러
@@ -584,7 +582,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
     // 3. 고객 파일 등록 폼 초기화
     setCustomerFileCustomer(null)
-    setCustomerFileDocType('')
+    setCustomerFileDocType('unspecified')
     setCustomerFileNotes('')
 
     // 4. 성공 메시지 초기화
@@ -1236,14 +1234,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return "문서 등록"
   }
 
-  // 탭 아이콘 정의
-  const clockIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
-      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M8 4.5V8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )
-
   return (
     <CenterPaneView
       visible={visible}
@@ -1259,9 +1249,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       placeholderMessage="문서를 업로드하여 시스템에 등록할 수 있습니다"
     >
       <div className="document-registration-content">
-        {/* 🍎 등록 방법 안내 (파일이 없을 때만 표시 - Progressive Disclosure) */}
-        {uploadState.files.length === 0 && (
-          <div className="registration-guide">
+        {/* 🍎 등록 방법 안내 (항상 표시) */}
+        <div className="registration-guide">
             <div className="guide-header">
               <div className="guide-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1277,48 +1266,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 <div className="guide-step">
                   <span className="step-number">1</span>
                   <div className="step-content">
-                    <h4 className="step-title">나중에 고객 연결</h4>
-                    <p className="step-description">• 파일만 먼저 업로드하고, 추후에 고객을 연결하는 방법</p>
-                    <p className="step-description">• 대량의 문서를 빠르게 등록할 때 유용</p>
-                    <p className="step-description">• 문서 라이브러리나 검색에서 고객 연결 가능</p>
+                    <h4 className="step-title">고객 정보 입력 (선택)</h4>
+                    <p className="step-description">• 고객을 선택하면 업로드 후 자동으로 연결됩니다</p>
+                    <p className="step-description">• 문서유형, 메모도 함께 입력할 수 있습니다 (기본: 미지정)</p>
+                    <p className="step-description">• 아무것도 입력하지 않고 파일만 업로드할 수도 있습니다</p>
                   </div>
                 </div>
 
                 <div className="guide-step">
                   <span className="step-number">2</span>
                   <div className="step-content">
-                    <h4 className="step-title">지금 고객 연결</h4>
-                    <p className="step-description">• 파일 업로드 시점에 고객과 문서유형을 지정</p>
-                    <p className="step-description">• 업로드 후 자동으로 고객에게 문서 연결</p>
-                    <p className="step-description">• 특정 고객의 문서를 즉시 등록할 때 유용</p>
+                    <h4 className="step-title">파일 업로드</h4>
+                    <p className="step-description">• 고객 선택함: 업로드 후 자동으로 고객에게 연결</p>
+                    <p className="step-description">• 고객 선택 안함: 업로드만 (나중에 문서 라이브러리에서 연결)</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
-
-        {/* 탭 네비게이션 */}
-        <div className="document-registration-view__tabs">
-          <button
-            className={`document-registration-view__tab ${activeTab === 'default' ? 'document-registration-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('default')}
-          >
-            <span className="document-registration-view__tab-icon document-registration-view__tab-icon--orange">
-              {clockIcon}
-            </span>
-            나중에 고객 연결
-          </button>
-          <button
-            className={`document-registration-view__tab ${activeTab === 'customer' ? 'document-registration-view__tab--active' : ''}`}
-            onClick={() => setActiveTab('customer')}
-          >
-            <span className="document-registration-view__tab-icon document-registration-view__tab-icon--blue">
-              <SFSymbol name="person" />
-            </span>
-            지금 고객 연결
-          </button>
-        </div>
 
         {/* 초기 상태로 되돌리기 버튼 */}
         <div className="document-registration-view__reset-container">
@@ -1345,36 +1310,24 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           </Tooltip>
         </div>
 
-        {/* 탭별 업로드 영역 */}
-        {activeTab === 'default' && (
-          <FileUploadArea
-            onFilesSelected={handleFilesSelected}
-            options={fileSelectionOptions}
-            uploading={uploadState.uploading}
-            disabled={false}
-          />
-        )}
+        {/* 고객 정보 입력 영역 (항상 표시) */}
+        <CustomerFileUploadArea
+          selectedCustomer={customerFileCustomer}
+          onCustomerSelect={setCustomerFileCustomer}
+          documentType={customerFileDocType}
+          onDocumentTypeChange={setCustomerFileDocType}
+          notes={customerFileNotes}
+          onNotesChange={setCustomerFileNotes}
+          disabled={false}
+        />
 
-        {activeTab === 'customer' && (
-          <>
-            <CustomerFileUploadArea
-              selectedCustomer={customerFileCustomer}
-              onCustomerSelect={setCustomerFileCustomer}
-              documentType={customerFileDocType}
-              onDocumentTypeChange={setCustomerFileDocType}
-              notes={customerFileNotes}
-              onNotesChange={setCustomerFileNotes}
-              disabled={false}
-            />
-            {/* 파일 업로드 영역 (공통) */}
-            <FileUploadArea
-              onFilesSelected={handleFilesSelected}
-              options={fileSelectionOptions}
-              uploading={uploadState.uploading}
-              disabled={!customerFileCustomer || !customerFileDocType}
-            />
-          </>
-        )}
+        {/* 파일 업로드 영역 (항상 표시) */}
+        <FileUploadArea
+          onFilesSelected={handleFilesSelected}
+          options={fileSelectionOptions}
+          uploading={uploadState.uploading}
+          disabled={false}
+        />
 
         {/* 파일 목록 & 처리 로그 컨테이너 - 6:4 비율 고정 (공통 영역) */}
         <div className="file-log-container">
