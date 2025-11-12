@@ -12,7 +12,8 @@
   flex-direction: column;
   gap: 8px; /* 간격 축소 */
   height: 100%;
-  overflow: hidden; /* 전체 페이지 스크롤 방지 */
+  min-height: 0; /* ✅ flexbox 스크롤 활성화 필수 */
+  /* overflow는 설정하지 않음 - 자식 요소가 자체 스크롤 처리 */
 }
 
 /* FileUploadArea 고정 높이 */

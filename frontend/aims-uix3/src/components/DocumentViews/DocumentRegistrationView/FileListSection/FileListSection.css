@@ -13,7 +13,8 @@
   border: 1px solid var(--color-section-border);
   border-radius: 8px;
   overflow: hidden;
-  height: 100%;
+  /* height: 100% 제거 - flex 레이아웃과 충돌 */
+  min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
 }
 
 /* Header */
@@ -65,13 +66,15 @@
 /* Content Area */
 .file-list-section__content {
   flex: 1;
+  min-height: 0; /* ✅ flexbox에서 스크롤 활성화 필수 */
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px;
-  display: flex;
-  flex-direction: column-reverse;
-  justify-content: flex-end; /* 항목들을 상단에 붙임 */
-  gap: 8px;
+}
+
+/* 자식 요소들 간격 */
+.file-list-section__content > * + * {
+  margin-top: 8px;
 }
 
 /* 🍎 macOS-style scrollbar */

@@ -1215,6 +1215,16 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return { total, completed, errors, uploading }
   }, [uploadState.files])
 
+  /**
+   * 업로드 완료 시 uploading 상태 자동 해제
+   */
+  useEffect(() => {
+    // 업로드 중인 파일이 없는데 uploading 상태가 true면 false로 변경
+    if (uploadState.uploading && stats.uploading === 0 && uploadState.files.length > 0) {
+      setUploadState(prev => ({ ...prev, uploading: false }))
+    }
+  }, [stats.uploading, uploadState.uploading, uploadState.files.length])
+
   // 제목에 진행 상태 표시
   const getTitle = () => {
     if (uploadState.uploading) {
