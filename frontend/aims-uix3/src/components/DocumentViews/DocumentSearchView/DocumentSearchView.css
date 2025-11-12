@@ -32,8 +32,7 @@
   align-items: center;
   flex: 0.9; /* 남은 공간의 90% 차지 (10% 축소) */
   min-width: 200px; /* 최소 너비 보장 */
-  background-color: var(--color-ios-bg-secondary-light);
-  border: 1px solid var(--color-primary-500);
+  background-color: transparent;
   border-radius: 10px;
   padding: 8px 12px;
   transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
@@ -41,8 +40,7 @@
 }
 
 html[data-theme="dark"] .search-input-wrapper {
-  background-color: var(--color-ios-bg-secondary-dark);
-  border-color: var(--color-primary-400);
+  background-color: transparent;
 }
 
 .search-input-wrapper:focus-within {
@@ -85,18 +83,20 @@ html[data-theme="dark"] .search-icon {
 /* 검색 입력 필드 */
 .search-input {
   flex: 1;
-  border: none;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
   background: transparent;
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
   outline: none;
-  padding: 4px 0;
+  padding: 6px 12px;
 }
 
 html[data-theme="dark"] .search-input {
   color: var(--color-ios-text-primary-dark);
+  border-color: var(--color-ios-separator-dark);
 }
 
 .search-input::placeholder {
@@ -111,7 +111,7 @@ html[data-theme="dark"] .search-input::placeholder {
 /* 🍎 검색어 지우기 버튼 - Progressive Disclosure, iOS 스타일 */
 .clear-search-button {
   position: absolute;
-  right: 8px;
+  right: 16px;
   top: 50%;
   margin-top: -8px; /* height의 절반 (16px / 2) */
   display: flex;
