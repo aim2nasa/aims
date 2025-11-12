@@ -22,7 +22,7 @@
   justify-content: space-between;
   width: 100%;
   padding: 6px 12px;
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: transparent;
   border: 1px solid var(--color-ios-separator-light);
   border-radius: 8px;
   color: var(--color-ios-text-primary-light);
@@ -35,7 +35,7 @@
 }
 
 html[data-theme="dark"] .ios-dropdown__trigger {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: transparent;
   border-color: var(--color-ios-separator-dark);
   color: var(--color-ios-text-primary-dark);
 }

@@ -33,6 +33,7 @@
   flex: 0.9; /* 남은 공간의 90% 차지 (10% 축소) */
   min-width: 200px; /* 최소 너비 보장 */
   background-color: var(--color-ios-bg-secondary-light);
+  border: 1px solid var(--color-primary-500);
   border-radius: 10px;
   padding: 8px 12px;
   transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
@@ -41,6 +42,7 @@
 
 html[data-theme="dark"] .search-input-wrapper {
   background-color: var(--color-ios-bg-secondary-dark);
+  border-color: var(--color-primary-400);
 }
 
 .search-input-wrapper:focus-within {
@@ -1468,13 +1470,13 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   padding: 6px 10px;
   min-width: 132px; /* 120px → 132px (10% 증가) */
   max-width: 220px; /* 200px → 220px (10% 증가) */
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: transparent;
   border-radius: 8px;
   flex-shrink: 0;
 }
 
 html[data-theme="dark"] .selected-customer-display {
-  background-color: var(--color-ios-bg-secondary-dark);
+  background-color: transparent;
 }
 
 .selected-customer-name {
