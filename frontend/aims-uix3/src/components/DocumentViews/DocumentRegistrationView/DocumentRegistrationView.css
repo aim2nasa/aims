@@ -348,7 +348,7 @@ html[data-theme="dark"] .registration-guide .step-title {
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
   line-height: 1.4;
-  white-space: nowrap;
+  /* white-space: nowrap 제거 - 텍스트가 자연스럽게 줄바꿈되도록 */
 }
 
 html[data-theme="dark"] .registration-guide .step-description {
@@ -397,6 +397,86 @@ html[data-theme="dark"] .registration-guide .step-description {
 /* 호버 시 SVG 회전 (45도) */
 .document-registration-view__reset-button:hover svg {
   transform: rotate(45deg);
+}
+
+/* 🍎 고객 정보 입력 (접기/펼치기) 스타일 */
+.customer-info-section {
+  background: transparent; /* 투명 배경 */
+  border-radius: var(--radius-lg); /* 12px - 통일된 라운딩 */
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible; /* 드롭다운이 잘리지 않도록 */
+}
+
+html[data-theme="dark"] .customer-info-section {
+  background: transparent; /* 투명 배경 */
+}
+
+/* 고객 정보 토글 버튼 */
+.customer-info-section__toggle {
+  width: 100%;
+  padding: 12px 16px; /* 여유있는 터치 영역 */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7; /* 기본 투명도 */
+  transition: all 0.2s ease;
+}
+
+.customer-info-section__toggle:hover {
+  background: transparent; /* 배경은 투명 유지 */
+  opacity: 1; /* 호버 시 완전 불투명 */
+  transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
+}
+
+html[data-theme="dark"] .customer-info-section__toggle:hover {
+  background: transparent; /* 다크모드도 투명 유지 */
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.customer-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* 고객 정보 아이콘 */
+.customer-info-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* 고객 정보 제목 */
+.customer-info-title {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subheadline);
+  font-weight: 600;
+  color: var(--color-ios-text-primary-light);
+  letter-spacing: -0.5px;
+}
+
+html[data-theme="dark"] .customer-info-title {
+  color: var(--color-ios-text-primary-dark);
+}
+
+/* 토글 아이콘 */
+.customer-info-toggle-icon {
+  color: var(--color-ios-text-quaternary-light);
+  font-size: var(--font-size-caption-1);
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+html[data-theme="dark"] .customer-info-toggle-icon {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 고객 정보 컨텐츠 영역 */
+.customer-info-content {
+  padding: 16px;
 }
 
 /* 🍎 RESPONSIVE: Minimal changes */

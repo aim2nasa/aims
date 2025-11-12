@@ -66,6 +66,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const saved = localStorage.getItem('doc-reg-guide-expanded')
     return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
   })
+  const [isCustomerInfoExpanded, setIsCustomerInfoExpanded] = useState(() => {
+    const saved = localStorage.getItem('doc-reg-customer-info-expanded')
+    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
+  })
   const [isNotesExpanded, setIsNotesExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-reg-notes-expanded')
     return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
@@ -80,6 +84,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     setIsGuideExpanded(prev => {
       const newValue = !prev
       localStorage.setItem('doc-reg-guide-expanded', String(newValue))
+      return newValue
+    })
+  }, [])
+
+  // 고객 정보 접기/펼치기 토글
+  const toggleCustomerInfo = useCallback(() => {
+    setIsCustomerInfoExpanded(prev => {
+      const newValue = !prev
+      localStorage.setItem('doc-reg-customer-info-expanded', String(newValue))
       return newValue
     })
   }, [])
@@ -1315,19 +1328,19 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 <div className="guide-step">
                   <span className="step-number">1</span>
                   <div className="step-content">
-                    <h4 className="step-title">고객 정보 입력 (선택)</h4>
-                    <p className="step-description">• 고객을 선택하면 업로드 후 자동으로 연결됩니다</p>
-                    <p className="step-description">• 문서유형, 메모도 함께 입력할 수 있습니다 (기본: 미지정)</p>
-                    <p className="step-description">• 아무것도 입력하지 않고 파일만 업로드할 수도 있습니다</p>
+                    <h4 className="step-title">고객 선택하기 (선택사항)</h4>
+                    <p className="step-description">• 누구의 문서인지 미리 선택하면 자동으로 정리돼요</p>
+                    <p className="step-description">• 문서 종류(계약서, 청구서 등)와 메모도 함께 입력할 수 있어요</p>
+                    <p className="step-description">• 잘 모르겠다면 건너뛰고 파일만 올려도 괜찮아요</p>
                   </div>
                 </div>
 
                 <div className="guide-step">
                   <span className="step-number">2</span>
                   <div className="step-content">
-                    <h4 className="step-title">파일 업로드</h4>
-                    <p className="step-description">• 고객 선택함: 업로드 후 자동으로 고객에게 연결</p>
-                    <p className="step-description">• 고객 선택 안함: 업로드만 (나중에 문서 라이브러리에서 연결)</p>
+                    <h4 className="step-title">파일 올리기</h4>
+                    <p className="step-description">• 고객을 선택했다면 → 자동으로 해당 고객에게 연결돼요</p>
+                    <p className="step-description">• 고객을 선택 안했다면 → 문서 라이브러리에 저장되고 나중에 연결할 수 있어요</p>
                   </div>
                 </div>
               </div>
@@ -1343,31 +1356,53 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           disabled={uploadState.uploading}
         />
 
-        {/* 🔽 [선택] 고객 정보 입력 영역 */}
-        <CustomerFileUploadArea
-          selectedCustomer={customerFileCustomer}
-          onCustomerSelect={setCustomerFileCustomer}
-          documentType={customerFileDocType}
-          onDocumentTypeChange={setCustomerFileDocType}
-          notes={customerFileNotes}
-          onNotesChange={setCustomerFileNotes}
-          disabled={false}
-          isNotesExpanded={isNotesExpanded}
-          onToggleNotes={toggleNotes}
-          showResetButton={true}
-          onReset={async () => {
-            const confirmed = await showAppleConfirm(
-              '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
-              '초기 상태로 되돌리기'
-            )
-            if (confirmed) {
-              handleResetToInitialState()
-            }
-          }}
-          resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
-        />
+        {/* 🔽 [선택] 고객 정보 입력 영역 - 접기/펼치기 */}
+        <div className={`customer-info-section ${isCustomerInfoExpanded ? 'customer-info-section--expanded' : 'customer-info-section--collapsed'}`}>
+          <button
+            type="button"
+            className="customer-info-section__toggle"
+            onClick={toggleCustomerInfo}
+            aria-expanded={isCustomerInfoExpanded}
+            aria-label={isCustomerInfoExpanded ? '고객 정보 입력 접기' : '고객 정보 입력 펼치기'}
+          >
+            <div className="customer-info-header">
+              <span className="customer-info-icon">👤</span>
+              <h3 className="customer-info-title">고객 정보 입력 (선택)</h3>
+              <span className="customer-info-toggle-icon" aria-hidden="true">
+                {isCustomerInfoExpanded ? '▲' : '▼'}
+              </span>
+            </div>
+          </button>
 
-        {/* 파일 목록 & 처리 로그 컨테이너 - 탭으로 전환 */}
+          {isCustomerInfoExpanded && (
+            <div className="customer-info-content">
+              <CustomerFileUploadArea
+                selectedCustomer={customerFileCustomer}
+                onCustomerSelect={setCustomerFileCustomer}
+                documentType={customerFileDocType}
+                onDocumentTypeChange={setCustomerFileDocType}
+                notes={customerFileNotes}
+                onNotesChange={setCustomerFileNotes}
+                disabled={false}
+                isNotesExpanded={isNotesExpanded}
+                onToggleNotes={toggleNotes}
+                showResetButton={true}
+                onReset={async () => {
+                  const confirmed = await showAppleConfirm(
+                    '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
+                    '초기 상태로 되돌리기'
+                  )
+                  if (confirmed) {
+                    handleResetToInitialState()
+                  }
+                }}
+                resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 파일 목록 & 처리 로그 컨테이너 - 탭 시스템 */}
         <div className="file-log-container">
           {/* 탭 버튼 */}
           <div className="file-log-tabs">
