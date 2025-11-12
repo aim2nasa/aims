@@ -178,6 +178,7 @@ html[data-theme="dark"] .tab-button--active .tab-badge {
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: -6px; /* 간격 대폭 축소 */
   overflow: hidden;
 }
 
@@ -188,7 +189,7 @@ html[data-theme="dark"] .registration-guide {
 /* 가이드 토글 버튼 */
 .registration-guide__toggle {
   width: 100%;
-  padding: 12px 16px; /* 여유있는 터치 영역 */
+  padding: 12px 16px 0 16px; /* 하단 패딩 완전 제거 */
   background: transparent;
   border: none;
   cursor: pointer;
