@@ -445,7 +445,7 @@ html[data-theme="dark"] .customer-info-section__toggle:hover {
 
 /* 고객 정보 아이콘 */
 .customer-info-icon {
-  font-size: 20px;
+  font-size: var(--font-size-subheadline); /* 15px - 제목과 동일 */
   line-height: 1;
 }
 

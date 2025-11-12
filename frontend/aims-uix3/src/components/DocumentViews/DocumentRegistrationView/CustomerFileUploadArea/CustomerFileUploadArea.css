@@ -184,7 +184,7 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
 
 /* 섹션 레이블 */
 .section-label {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - 라벨 표준 */
   font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-sm);
@@ -263,7 +263,7 @@ html[data-theme="dark"] .notes-toggle-icon {
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-ios-separator-light);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - 입력 요소 표준 */
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   resize: vertical;
