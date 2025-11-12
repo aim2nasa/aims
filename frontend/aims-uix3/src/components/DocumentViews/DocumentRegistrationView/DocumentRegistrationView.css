@@ -193,15 +193,20 @@ html[data-theme="dark"] .registration-guide {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background var(--duration-ios-quick) var(--easing-ease-out);
+  opacity: 0.7; /* 기본 투명도 */
+  transition: all 0.2s ease;
 }
 
 .registration-guide__toggle:hover {
-  background: var(--color-ios-bg-tertiary-light);
+  background: transparent; /* 배경은 투명 유지 */
+  opacity: 1; /* 호버 시 완전 불투명 */
+  transform: scale(1.05); /* 5% 크게 (서브틀한 효과) */
 }
 
 html[data-theme="dark"] .registration-guide__toggle:hover {
-  background: var(--color-ios-bg-tertiary-dark);
+  background: transparent; /* 다크모드도 투명 유지 */
+  opacity: 1;
+  transform: scale(1.05);
 }
 
 .registration-guide .guide-header {
