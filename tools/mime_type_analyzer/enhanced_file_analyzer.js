@@ -121,34 +121,33 @@ async function analyzePdfTextRatio(pdfPath, minTextLengthPerPage = 50) {
 
 /**
  * PDF에서 전체 텍스트 추출
+ *
+ * ✅ 수정: pdf-parse를 기본 라이브러리로 사용 (한글 텍스트 추출 정확도 개선)
+ * - 기존: pdfjs-dist 사용 시 한글 텍스트에 불필요한 공백 삽입 ("마크다운" → "마 크 다 운")
+ * - 개선: pdf-parse 사용으로 정확한 한글 텍스트 추출
+ *
+ * 관련 문서: docs/20251113_keyword_search_failure_analysis.md
  */
 async function extractPdfText(filePath) {
   try {
-    // 전체 출력 모드: 기존 동작 유지 (pdf-parse)
+    const dataBuffer = fs.readFileSync(filePath);
+    const pdfData = await pdfParse(dataBuffer);
+    const cleaned = pdfData.text.trim();
+
+    if (!cleaned.length) return null;
+
+    // 전체 출력 모드: 모든 페이지 텍스트 반환
     if (ALL_PAGES) {
-      const dataBuffer = fs.readFileSync(filePath);
-      const pdfData = await pdfParse(dataBuffer);
-      const cleaned = pdfData.text.trim();
-      return cleaned.length ? pdfData.text : null;
+      return pdfData.text;
     }
 
-    // 제한 모드: pdfjs로 앞 N페이지만 직접 추출 (페이지 구분자 미존재 PDF 대응)
-    const data = new Uint8Array(fs.readFileSync(filePath));
-    const pdf = await getDocument({ data }).promise;
-    const max = Math.min(pdf.numPages || 0, DEFAULT_MAX_PAGES);
-    let parts = [];
-    for (let i = 1; i <= max; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(it => it.str).join(" ").trim();
-      if (pageText) parts.push(pageText);
+    // 제한 모드: 페이지 수 제한 (대략 2000자/페이지 기준)
+    const maxChars = DEFAULT_MAX_PAGES * 2000;
+    if (pdfData.text.length > maxChars) {
+      return pdfData.text.substring(0, maxChars) + `\n...[TRUNCATED to ~${DEFAULT_MAX_PAGES} pages]`;
     }
-    if (parts.length === 0) return null;
-    let out = parts.join("\n\f\n");
-    if (pdf.numPages > DEFAULT_MAX_PAGES) {
-      out += `\n...[TRUNCATED to ${DEFAULT_MAX_PAGES} pages]`;
-    }
-    return out;
+
+    return pdfData.text;
   } catch (error) {
     throw new Error(`PDF 텍스트 추출 오류: ${error.message}`);
   }
