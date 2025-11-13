@@ -70,10 +70,10 @@ class HybridSearchEngine:
         - ocr.summary (OCR 요약)
         """
         entities = query_intent["entities"]
-        metadata_keywords = query_intent["metadata_keywords"]
 
-        # MongoDB 텍스트 검색 쿼리 구성
-        search_terms = entities + metadata_keywords
+        # ✅ 수정: 오직 entities만 사용 (metadata_keywords는 쿼리 의도이지 검색 키워드가 아님)
+        # Entity 쿼리에서 concepts는 "알고 싶은 정보"이지 "찾을 대상"이 아니므로 제외
+        search_terms = entities
         if not search_terms:
             return []
 
@@ -96,30 +96,35 @@ class HybridSearchEngine:
         for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
             # 매칭 점수 계산 (간단한 TF-IDF 스타일)
             score = 0.0
-            text = f"{doc.get('upload', {}).get('originalName', '')} {doc.get('meta', {}).get('full_text', '')}"
+            # 🔥 수정: None 안전 처리 (doc.get()이 None을 반환할 수 있음)
+            upload_data = doc.get('upload') or {}
+            meta_data = doc.get('meta') or {}
+            ocr_data = doc.get('ocr') or {}
+
+            text = f"{upload_data.get('originalName', '')} {meta_data.get('full_text', '')}"
 
             for term in search_terms:
                 count = text.lower().count(term.lower())
                 score += count * 0.1  # 간단한 가중치
 
             # 파일명 매칭은 높은 점수
-            original_name = doc.get('upload', {}).get('originalName', '')
+            original_name = upload_data.get('originalName', '')
             if any(term.lower() in original_name.lower() for term in search_terms):
                 score += 0.5
 
             # tags 매칭도 높은 점수
-            meta_tags = doc.get('meta', {}).get('tags', [])
-            ocr_tags = doc.get('ocr', {}).get('tags', [])
+            meta_tags = meta_data.get('tags', [])
+            ocr_tags = ocr_data.get('tags', [])
             all_tags = (meta_tags if isinstance(meta_tags, list) else []) + \
                        (ocr_tags if isinstance(ocr_tags, list) else [])
             if any(term in all_tags for term in search_terms):
                 score += 0.3
 
-            # 미리보기 텍스트 생성
-            preview = doc.get('meta', {}).get('full_text', '')[:500] or \
-                      doc.get('ocr', {}).get('full_text', '')[:500] or \
-                      doc.get('meta', {}).get('summary', '') or \
-                      doc.get('ocr', {}).get('summary', '')
+            # 미리보기 텍스트 생성 (None 안전 처리)
+            preview = (meta_data.get('full_text') or '')[:500] or \
+                      (ocr_data.get('full_text') or '')[:500] or \
+                      meta_data.get('summary', '') or \
+                      ocr_data.get('summary', '')
 
             results.append({
                 "doc_id": str(doc["_id"]),
@@ -128,8 +133,8 @@ class HybridSearchEngine:
                     "doc_id": str(doc["_id"]),
                     "original_name": original_name,
                     "preview": preview,
-                    "mime": doc.get('upload', {}).get('mimeType', ''),
-                    "uploaded_at": str(doc.get('upload', {}).get('uploaded_at', ''))
+                    "mime": upload_data.get('mimeType', ''),
+                    "uploaded_at": str(upload_data.get('uploaded_at', ''))
                 }
             })
 

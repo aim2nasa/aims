@@ -251,7 +251,10 @@ async def search_endpoint(request: SearchRequest):
             )
 
         except Exception as e:
+            import traceback
             print(f"❌ 하이브리드 검색 중 오류 발생: {e}")
+            print(f"📍 Traceback:")
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"하이브리드 검색 오류: {e}")
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")

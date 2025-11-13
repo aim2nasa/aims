@@ -11,6 +11,7 @@ Cross-Encoder 재순위화 모듈
 from typing import List, Dict
 from sentence_transformers import CrossEncoder
 import traceback
+import math
 
 
 class SearchReranker:
@@ -56,8 +57,9 @@ class SearchReranker:
             pairs = []
             for result in search_results:
                 # payload에서 preview 추출 (하이브리드 검색 결과 구조)
-                payload = result.get('payload', {})
-                preview = payload.get('preview', '')[:500]  # 최대 500자
+                # 🔥 수정: None 안전 처리 (payload.get()이 None을 반환할 수 있음)
+                payload = result.get('payload') or {}
+                preview = (payload.get('preview') or '')[:500]  # 최대 500자
 
                 # 쿼리-문서 쌍 생성
                 pairs.append([query, preview])
@@ -67,7 +69,13 @@ class SearchReranker:
 
             # 재순위화 점수 추가
             for i, result in enumerate(search_results):
-                result["rerank_score"] = float(scores[i])
+                # 🔥 점수 정규화: Cross-Encoder 범위 (-10~10) → 0~1 범위로 변환
+                # sigmoid 함수 사용: 1 / (1 + exp(-x))
+                # 0 근처 점수를 0.5로, 양수는 0.5~1.0, 음수는 0~0.5로 변환
+                raw_score = float(scores[i])
+                normalized_score = 1.0 / (1.0 + math.exp(-raw_score))
+
+                result["rerank_score"] = normalized_score
                 result["original_score"] = result.get("score", 0.0)  # 원본 점수 보존
 
             # 재순위화 점수 기준으로 정렬
