@@ -8,11 +8,11 @@
 .customer-file-upload-area {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3); /* 컴팩트한 간격 */
-  padding: var(--spacing-4); /* 적절한 내부 여백 */
-  background: transparent; /* 투명 배경으로 가볍게 */
+  gap: 0;
+  padding: 0;
+  background: transparent;
   border-radius: var(--radius-lg);
-  border: none; /* border 제거로 더 깔끔하게 */
+  border: none;
   overflow: visible;
   max-width: 800px;
   width: 100%;
@@ -20,54 +20,54 @@
   margin-right: auto;
 }
 
-/* ===== 고객 선택 & 문서 유형 같은 줄 배치 (DocumentLinkModal과 동일) ===== */
+/* ===== 하나의 경계 박스: 고객 선택 + 고객 정보 + 문서 유형 + 메모 ===== */
+
+.customer-file-upload-area__content-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-ios-separator-light);
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .customer-file-upload-area__content-box {
+  background: var(--color-layout-secondary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* ===== 첫 번째 행: 고객 선택 + 고객 정보 + 문서 유형 ===== */
 
 .customer-file-upload-area__main-row {
   display: flex;
   flex-direction: row;
-  gap: var(--spacing-2); /* 간격 축소 */
+  gap: var(--spacing-2);
   align-items: center;
-  justify-content: space-between; /* 양쪽 정렬로 더 자연스럽게 */
+  justify-content: flex-start;
   flex-wrap: nowrap;
   overflow: visible;
   position: relative;
   z-index: 1;
-  padding: var(--spacing-3);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-ios-separator-light);
+  padding: var(--spacing-3) var(--spacing-3) var(--spacing-1); /* 하단 패딩만 축소 */
+  background: transparent;
+  border: none;
 }
 
-html[data-theme="dark"] .customer-file-upload-area__main-row {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
+/* 고객 선택 버튼 스타일 */
+.customer-file-upload-area__main-row .button {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 초기화 버튼 */
 .customer-file-upload-area__main-row .reset-button {
   flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* ===== 고객 선택 영역 ===== */
-
-.customer-file-upload-area__customer-selection {
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-2);
-  align-items: center;
-  flex: 1; /* 유연한 너비 */
-  overflow: visible;
-  position: relative;
-}
-
-/* 고객선택 버튼 스타일 개선 */
-.customer-file-upload-area__customer-selection .button {
-  height: 36px; /* 적정 높이 */
-  min-height: 36px;
-  max-height: 36px;
-  font-size: var(--font-size-footnote); /* 통일된 폰트 크기 */
-  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -211,46 +211,33 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   margin-bottom: var(--spacing-sm);
 }
 
-/* 메모 입력 섹션 - 접을 수 있음 */
+/* 메모 입력 섹션 - 접을 수 있음 (content-box 안에 위치) */
 .notes-section {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin: 0 auto;
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
+  margin: 0;
+  background: transparent; /* 배경 제거 (content-box에서 처리) */
+  border-radius: 0; /* 라운딩 제거 */
   overflow: hidden;
-  border: 1px solid var(--color-ios-separator-light);
-}
-
-html[data-theme="dark"] .notes-section {
-  background: var(--color-layout-secondary-dark);
-  border-color: var(--color-ios-separator-dark);
+  border: none; /* 테두리 제거 */
 }
 
 /* 메모 토글 버튼 */
 .notes-section__toggle {
   width: 100%;
-  padding: 10px 16px;
+  padding: var(--spacing-1) var(--spacing-3) var(--spacing-3); /* 상단 패딩만 축소 */
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background var(--duration-ios-quick) var(--easing-ease-out);
-}
-
-.notes-section__toggle:hover {
-  background: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .notes-section__toggle:hover {
-  background: var(--color-ios-bg-tertiary-dark);
+  transition: none; /* 전체 배경 효과 제거 */
 }
 
 /* 메모 헤더 */
 .notes-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* 중앙 정렬 */
   gap: 8px;
 }
 
@@ -259,26 +246,47 @@ html[data-theme="dark"] .notes-section__toggle:hover {
   font-size: var(--font-size-footnote);
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
+  transition: all 0.2s ease;
 }
 
 html[data-theme="dark"] .notes-label {
   color: var(--color-ios-text-secondary-dark);
 }
 
+/* 메모 라벨 호버 */
+.notes-section__toggle:hover .notes-label {
+  color: var(--color-ios-text-primary-light);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .notes-section__toggle:hover .notes-label {
+  color: var(--color-ios-text-primary-dark);
+}
+
 /* 토글 아이콘 */
 .notes-toggle-icon {
   color: var(--color-ios-text-quaternary-light);
   font-size: var(--font-size-caption-1);
-  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+  transition: all 0.2s ease;
 }
 
 html[data-theme="dark"] .notes-toggle-icon {
   color: var(--color-ios-text-quaternary-dark);
 }
 
+/* 토글 아이콘 호버 */
+.notes-section__toggle:hover .notes-toggle-icon {
+  color: var(--color-ios-text-primary-light);
+  transform: scale(1.1);
+}
+
+html[data-theme="dark"] .notes-section__toggle:hover .notes-toggle-icon {
+  color: var(--color-ios-text-primary-dark);
+}
+
 /* 메모 입력창 */
 .notes-input {
-  margin: 0 16px 16px;
+  margin: 0 var(--spacing-3) var(--spacing-3); /* 좌우하단 통일된 간격 */
   padding: 8px 12px;
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-ios-separator-light);

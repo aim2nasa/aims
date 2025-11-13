@@ -106,6 +106,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     })
   }, [])
 
+  // 고객 정보 입력이 펼쳐질 때마다 메모를 닫기
+  useEffect(() => {
+    if (isCustomerInfoExpanded) {
+      setIsNotesExpanded(false)
+      localStorage.setItem('doc-reg-notes-expanded', 'false')
+    }
+  }, [isCustomerInfoExpanded])
+
   // 탭 변경 핸들러
   const handleTabChange = useCallback((tab: 'upload' | 'log') => {
     setActiveTab(tab)
