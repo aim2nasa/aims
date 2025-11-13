@@ -450,18 +450,39 @@ html[data-theme="dark"] .customer-info-section__toggle:hover {
   line-height: 1;
 }
 
+/* 고객 미선택 상태: 회색 */
+.customer-info-icon--unselected {
+  color: var(--color-text-tertiary);
+}
+
+/* 고객 선택됨 상태: 파란색 */
+.customer-info-icon--selected {
+  color: var(--color-ios-blue);
+}
+
 /* 고객 정보 제목 */
 .customer-info-title {
   margin: 0;
   font-family: var(--font-family-display);
   font-size: var(--font-size-subheadline);
   font-weight: 600;
-  color: var(--color-ios-text-primary-light);
+  color: var(--color-text-tertiary); /* 고객 미선택: 회색 */
   letter-spacing: -0.5px;
+  transition: color 0.2s ease;
 }
 
 html[data-theme="dark"] .customer-info-title {
-  color: var(--color-ios-text-primary-dark);
+  color: var(--color-text-tertiary);
+}
+
+/* 고객 선택됨 상태: 파란색 강조 */
+.customer-info-title--selected {
+  color: var(--color-ios-blue);
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .customer-info-title--selected {
+  color: var(--color-ios-blue);
 }
 
 /* 토글 아이콘 */

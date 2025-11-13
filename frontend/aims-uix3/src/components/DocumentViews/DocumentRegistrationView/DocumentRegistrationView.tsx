@@ -1366,8 +1366,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             aria-label={isCustomerInfoExpanded ? '고객 정보 입력 접기' : '고객 정보 입력 펼치기'}
           >
             <div className="customer-info-header">
-              <span className="customer-info-icon">👤</span>
-              <h3 className="customer-info-title">고객 정보 입력 (선택)</h3>
+              {/* 고객 선택 여부에 따라 아이콘과 색상 변경 */}
+              {customerFileCustomer ? (
+                <SFSymbol
+                  name="person-fill-badge-plus"
+                  size={SFSymbolSize.FOOTNOTE}
+                  weight={SFSymbolWeight.MEDIUM}
+                  className="customer-info-icon customer-info-icon--selected"
+                />
+              ) : (
+                <SFSymbol
+                  name="person"
+                  size={SFSymbolSize.FOOTNOTE}
+                  weight={SFSymbolWeight.REGULAR}
+                  className="customer-info-icon customer-info-icon--unselected"
+                />
+              )}
+              <h3 className={`customer-info-title ${customerFileCustomer ? 'customer-info-title--selected' : ''}`}>
+                고객 정보 입력 (선택)
+              </h3>
               <span className="customer-info-toggle-icon" aria-hidden="true">
                 {isCustomerInfoExpanded ? '▲' : '▼'}
               </span>
