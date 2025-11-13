@@ -28,6 +28,8 @@ export interface SearchQuery {
   mode?: KeywordMode
   /** 고객 ID (특정 고객의 문서만 검색) */
   customer_id?: string
+  /** AI 검색 결과 개수 (시맨틱 검색시만 사용, 기본 5개) */
+  top_k?: number
 }
 
 /**

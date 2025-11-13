@@ -46,6 +46,7 @@ class SearchRequest(BaseModel):
     search_mode: str = "semantic"
     user_id: Optional[str] = None
     customer_id: Optional[str] = None
+    top_k: int = 10  # AI 검색 결과 개수 (기본 10개)
 
 class UnifiedSearchResponse(BaseModel):
     search_mode: str
@@ -211,11 +212,11 @@ async def search_endpoint(request: SearchRequest):
             )
             timing["search_time"] = time.time() - search_start
 
-            # 3단계: Cross-Encoder 재순위화 (Top-20 → Top-5)
+            # 3단계: Cross-Encoder 재순위화 (Top-20 → Top-K)
             rerank_start = time.time()
-            top_results = reranker.rerank(request.query, search_results, top_k=5)
+            top_results = reranker.rerank(request.query, search_results, top_k=request.top_k)
             timing["rerank_time"] = time.time() - rerank_start
-            print(f"✅ 재순위화 완료: {len(top_results)}개 문서 선택")
+            print(f"✅ 재순위화 완료: {len(top_results)}개 문서 선택 (요청: Top-{request.top_k})")
 
             # 4단계: LLM 답변 생성
             llm_start = time.time()

@@ -74,6 +74,15 @@ const KEYWORD_MODE_OPTIONS: DropdownOption[] = [
   { value: 'OR', label: 'OR' },
 ]
 
+// AI 검색 결과 개수 옵션 정의
+const TOP_K_OPTIONS: DropdownOption[] = [
+  { value: '3', label: '상위 3개' },
+  { value: '5', label: '상위 5개' },
+  { value: '10', label: '상위 10개' },
+  { value: '15', label: '상위 15개' },
+  { value: '20', label: '상위 20개' },
+]
+
 export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   visible,
   onClose,
@@ -84,6 +93,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     query,
     searchMode,
     keywordMode,
+    topK,
     results,
     answer,
     isLoading,
@@ -94,6 +104,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
     handleSearchModeChange,
     handleKeywordModeChange,
     handleCustomerIdChange,
+    handleTopKChange,
     handleReset,
   } = useDocumentSearch()
 
@@ -142,6 +153,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [sortField, setSortField] = useState<SortField>('filename')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
+  // 🍎 AI 검색 결과가 올 때 자동으로 유사도 내림차순 정렬
+  useEffect(() => {
+    if (lastSearchMode === 'semantic' && results.length > 0) {
+      setSortField('similarity')
+      setSortOrder('desc')
+    } else if (lastSearchMode === 'keyword' && results.length > 0) {
+      setSortField('filename')
+      setSortOrder('asc')
+    }
+  }, [lastSearchMode, results.length])
+
   /**
    * 정렬 핸들러
    */
@@ -150,9 +172,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       // 같은 필드 클릭 시 정렬 순서 토글
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
     } else {
-      // 다른 필드 클릭 시 오름차순으로 시작
+      // 다른 필드 클릭 시 오름차순으로 시작 (유사도는 내림차순)
       setSortField(field)
-      setSortOrder('asc')
+      setSortOrder(field === 'similarity' ? 'desc' : 'asc')
     }
   }, [sortField, sortOrder])
 
@@ -664,6 +686,17 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
               onChange={(value) => handleKeywordModeChange(value as KeywordMode)}
               aria-label="키워드 모드 선택"
               width={75}
+            />
+          )}
+
+          {/* 🍎 Progressive Disclosure: AI 검색 시 결과 개수 선택 */}
+          {searchMode === 'semantic' && (
+            <Dropdown
+              value={String(topK)}
+              options={TOP_K_OPTIONS}
+              onChange={(value) => handleTopKChange(Number(value))}
+              aria-label="AI 검색 결과 개수 선택"
+              width={110}
             />
           )}
 
