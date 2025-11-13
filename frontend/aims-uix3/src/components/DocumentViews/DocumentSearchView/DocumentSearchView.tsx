@@ -137,7 +137,7 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   const [isSearchInputFocused, setIsSearchInputFocused] = useState(false)
 
   // 🍎 정렬 상태
-  type SortField = 'filename' | 'customer' | 'status' | null
+  type SortField = 'filename' | 'customer' | 'status' | 'similarity' | null
   type SortOrder = 'asc' | 'desc'
   const [sortField, setSortField] = useState<SortField>('filename')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
@@ -186,6 +186,11 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
           failed: 1
         }
         compareValue = (statusPriority[statusA] || 0) - (statusPriority[statusB] || 0)
+      } else if (sortField === 'similarity') {
+        // 유사도 정렬 (시맨틱 검색 결과만 해당)
+        const scoreA = ('score' in a ? a.score : 0) || 0
+        const scoreB = ('score' in b ? b.score : 0) || 0
+        compareValue = scoreA - scoreB
       }
 
       return sortOrder === 'asc' ? compareValue : -compareValue
@@ -867,12 +872,34 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                 </div>
                 {/* 🍎 유사도 헤더 (시맨틱 검색 시만 표시) */}
                 {searchMode === 'semantic' ? (
-                  <div className="header-similarity">
+                  <div
+                    className={`header-similarity sortable ${sortField === 'similarity' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('similarity')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('similarity')
+                      }
+                    }}
+                    aria-label={`유사도로 정렬 ${sortField === 'similarity' ? (sortOrder === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
                     <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                       <path d="M8 3v10M5 8h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                     </svg>
                     <span>유사도</span>
+                    {sortField === 'similarity' ? (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortOrder === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <div className="header-similarity">
