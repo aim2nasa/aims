@@ -78,8 +78,24 @@ class SearchReranker:
                 result["rerank_score"] = normalized_score
                 result["original_score"] = result.get("score", 0.0)  # 원본 점수 보존
 
-            # 재순위화 점수 기준으로 정렬
-            reranked = sorted(search_results, key=lambda x: x["rerank_score"], reverse=True)
+                # 🎯 파일명 매칭 우선순위 보존 (근본 해결책)
+                # 원본 점수가 5.0 이상(파일명 완벽 매칭 등)이면 원본 점수에 높은 가중치 부여
+                # 이는 "파일명이 검색 의도를 가장 정확하게 반영한다"는 원칙을 반영
+                original = result["original_score"]
+                semantic = normalized_score
+
+                if original >= 5.0:
+                    # 파일명 강한 매칭: 원본 점수 절대 우선 (2배 부스트 + semantic 미세 조정)
+                    result["final_score"] = original * 2.0 + semantic
+                elif original >= 2.0:
+                    # 파일명 일부 매칭: 균형 (원본 + semantic 2배)
+                    result["final_score"] = original + semantic * 2.0
+                else:
+                    # 파일명 매칭 약함: semantic 위주 (semantic 5배)
+                    result["final_score"] = original * 0.5 + semantic * 5.0
+
+            # 🔥 수정: final_score 기준으로 정렬 (원본 점수 + semantic 점수 조합)
+            reranked = sorted(search_results, key=lambda x: x["final_score"], reverse=True)
 
             # Top-K 반환
             return reranked[:top_k]

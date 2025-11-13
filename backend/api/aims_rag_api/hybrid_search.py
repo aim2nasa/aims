@@ -73,7 +73,7 @@ class HybridSearchEngine:
 
         # ✅ 수정: 오직 entities만 사용 (metadata_keywords는 쿼리 의도이지 검색 키워드가 아님)
         # Entity 쿼리에서 concepts는 "알고 싶은 정보"이지 "찾을 대상"이 아니므로 제외
-        search_terms = entities
+        search_terms = query_intent.get("metadata_keywords", entities)
         if not search_terms:
             return []
 
@@ -107,10 +107,16 @@ class HybridSearchEngine:
                 count = text.lower().count(term.lower())
                 score += count * 0.1  # 간단한 가중치
 
-            # 파일명 매칭은 높은 점수
-            original_name = upload_data.get('originalName', '')
-            if any(term.lower() in original_name.lower() for term in search_terms):
-                score += 0.5
+            # 파일명 매칭 점수 대폭 상향 (완벽 매칭 우선)
+            original_name = upload_data.get("originalName", "")
+            matched_terms = [term for term in search_terms if term.lower() in original_name.lower()]
+
+            if len(matched_terms) == len(search_terms):
+                # 모든 검색어가 파일명에 포함됨 → 완벽 매칭 (최우선)
+                score += 10.0
+            elif len(matched_terms) > 0:
+                # 일부 검색어만 파일명에 포함됨
+                score += 2.0 * len(matched_terms) / len(search_terms)
 
             # tags 매칭도 높은 점수
             meta_tags = meta_data.get('tags', [])
@@ -128,7 +134,7 @@ class HybridSearchEngine:
 
             results.append({
                 "doc_id": str(doc["_id"]),
-                "score": min(score, 1.0),  # 최대 1.0
+                "score": score,  # 파일명 완벽 매칭 우선을 위해 제한 제거
                 "payload": {
                     "doc_id": str(doc["_id"]),
                     "original_name": original_name,
