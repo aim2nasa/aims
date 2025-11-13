@@ -9,10 +9,18 @@ from pydantic import BaseModel
 import requests
 import json
 
+# 🔥 Phase 1: 하이브리드 검색 추가
+from query_analyzer import QueryAnalyzer
+from hybrid_search import HybridSearchEngine
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
 # CORS는 nginx에서 처리하므로 여기서는 제거
+
+# 🔥 Phase 1: 하이브리드 검색 엔진 초기화
+query_analyzer = QueryAnalyzer()
+hybrid_engine = HybridSearchEngine()
 
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
@@ -116,8 +124,10 @@ def generate_answer_with_llm(query: str, search_results: List[Dict]) -> str:
     # 검색 결과를 바탕으로 컨텍스트 생성
     context = ""
     for i, result in enumerate(search_results):
-        preview = result.payload.get('preview', '')
-        original_name = result.payload.get('original_name', '알 수 없는 문서')
+        # 🔥 수정: 하이브리드 검색 결과는 이미 Dict 형태
+        payload = result.get('payload', result)
+        preview = payload.get('preview', '')
+        original_name = payload.get('original_name', '알 수 없는 문서')
         context += f"--- 문서 조각 {i+1} (출처: {original_name}) ---\n{preview}\n\n"
 
     # LLM에게 전달할 시스템 프롬프트 및 사용자 프롬프트 구성
@@ -160,25 +170,36 @@ async def search_endpoint(request: SearchRequest):
             raise HTTPException(status_code=500, detail=f"SmartSearch API 호출 오류: {e}")
 
     elif request.search_mode == "semantic":
-        # 의미 검색 로직 (사용자 필터 적용)
-        query_vector = embed_query(request.query)
-        if not query_vector:
-            raise HTTPException(status_code=500, detail="쿼리 임베딩 실패.")
+        # 🔥 Phase 1: 하이브리드 검색 로직
+        try:
+            # 1단계: 쿼리 의도 분석
+            query_intent = query_analyzer.analyze(request.query)
+            print(f"📊 쿼리 유형: {query_intent['query_type']}")
 
-        search_results = search_qdrant(query_vector, user_id=request.user_id)
+            # 2단계: 하이브리드 검색 (top-20 가져오기, Phase 2 재순위화용)
+            search_results = hybrid_engine.search(
+                query=request.query,
+                query_intent=query_intent,
+                user_id=request.user_id,
+                top_k=20  # Phase 2에서 재순위화할 예정
+            )
 
-        # 🔥 문서별 중복 제거 (최고 점수 청크만 반환)
-        deduplicated_results = deduplicate_by_document(search_results)
+            # 3단계: Top-5로 제한 (Phase 2에서는 재순위화 후 top-5)
+            top_results = search_results[:5]
 
-        # LLM 답변 생성 (중복 제거된 결과 사용)
-        final_answer = generate_answer_with_llm(request.query, search_results)
+            # 4단계: LLM 답변 생성
+            final_answer = generate_answer_with_llm(request.query, top_results)
 
-        # 응답 구조를 통일된 형식으로 변경 (중복 제거된 결과 반환)
-        return UnifiedSearchResponse(
-            search_mode="semantic",
-            answer=final_answer,
-            search_results=deduplicated_results
-        )
+            # 응답 구조를 통일된 형식으로 변경
+            return UnifiedSearchResponse(
+                search_mode="semantic",
+                answer=final_answer,
+                search_results=top_results
+            )
+
+        except Exception as e:
+            print(f"❌ 하이브리드 검색 중 오류 발생: {e}")
+            raise HTTPException(status_code=500, detail=f"하이브리드 검색 오류: {e}")
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
 
