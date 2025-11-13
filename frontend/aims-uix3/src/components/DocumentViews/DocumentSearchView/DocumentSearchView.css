@@ -406,39 +406,87 @@ html[data-theme="dark"] .search-empty {
   text-align: center;
 }
 
-/* === 🍎 AI ANSWER: iOS Card Style === */
+/* === 🍎 AI ANSWER: Subtle Collapsible Style (Progressive Disclosure) === */
 
 .search-answer {
-  padding: 16px;
-  background-color: var(--color-ios-bg-primary-light);
-  border-left: 3px solid var(--color-primary-500);
-  border-radius: 12px;
-  animation: fadeInSlide var(--duration-ios-standard) var(--easing-ease-out);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background-color: transparent;
+  border: 1px solid var(--color-ios-separator-light);
+  border-radius: 8px;
+  transition: all var(--duration-ios-quick) var(--easing-ease-out);
+  cursor: pointer;
 }
 
 html[data-theme="dark"] .search-answer {
-  background-color: var(--color-ios-bg-primary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+/* 접혔을 때 거의 보이지 않도록 */
+.search-answer:not([open]) {
+  opacity: 0.5;
+  background-color: transparent;
+}
+
+/* 펼쳐졌을 때만 배경색 표시 */
+.search-answer[open] {
+  opacity: 1;
+  background-color: var(--color-ios-bg-secondary-light);
+  border-color: var(--color-primary-500);
+}
+
+html[data-theme="dark"] .search-answer[open] {
+  background-color: var(--color-ios-bg-secondary-dark);
 }
 
 .answer-title {
-  margin: 0 0 8px 0;
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md ) */
-  font-weight: 600;
+  margin: 0;
+  padding: 4px 0;
+  font-size: var(--font-size-caption-1); /* 12px - 더 작게 */
+  font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-ios-text-secondary-light);
+  transition: color var(--duration-ios-quick) var(--easing-ease-out);
+  list-style: none;
+  user-select: none;
+}
+
+html[data-theme="dark"] .answer-title {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+/* 호버 시에만 강조 */
+.search-answer:hover .answer-title {
   color: var(--color-primary-500);
 }
 
+/* 화살표 스타일 */
+.answer-arrow {
+  display: inline-block;
+  font-size: var(--font-size-caption-1); /* 12px */
+  opacity: 0.6;
+  transition: transform var(--duration-ios-quick) var(--easing-ease-out);
+}
+
+/* 펼쳐졌을 때 화살표 회전 */
+.search-answer[open] .answer-arrow {
+  transform: rotate(90deg);
+}
+
 .answer-content {
-  margin: 0;
-  /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
+  margin: 8px 0 0 0;
+  padding-top: 8px;
+  font-size: var(--font-size-caption-1); /* 12px - 더 작게 */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   color: var(--color-ios-text-primary-light);
   line-height: 1.5;
   font-weight: 400;
+  border-top: 1px solid var(--color-ios-separator-light);
 }
 
 html[data-theme="dark"] .answer-content {
   color: var(--color-ios-text-primary-dark);
+  border-top-color: var(--color-ios-separator-dark);
 }
 
 /* === 🍎 RESULTS HEADER === */

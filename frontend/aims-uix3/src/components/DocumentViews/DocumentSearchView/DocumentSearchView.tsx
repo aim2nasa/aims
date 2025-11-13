@@ -725,12 +725,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
             </div>
           ) : results.length > 0 ? (
             <>
-              {/* AI 답변 (시맨틱 검색시) */}
-              {answer && (
-                <div className="search-answer">
-                  <h3 className="answer-title">AI 답변</h3>
+              {/* AI 답변 (시맨틱 검색시) - 기본적으로 펼쳐짐, 접기 가능 */}
+              {answer && answer.trim() && (
+                <details className="search-answer" open>
+                  <summary className="answer-title">
+                    <span className="answer-arrow">▶</span> AI 답변 (클릭하여 숨기기)
+                  </summary>
                   <p className="answer-content">{answer}</p>
-                </div>
+                </details>
               )}
 
               {/* 검색 결과 헤더 */}
