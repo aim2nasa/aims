@@ -17,6 +17,8 @@ import { Button, Dropdown, type DropdownOption, Tooltip, Modal } from '../../../
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import CustomerSelectorModal from '../../../../shared/ui/CustomerSelectorModal/CustomerSelectorModal'
 import { useRecentCustomersStore, type RecentCustomer } from '@/shared/store/useRecentCustomersStore'
+import { SearchService } from '@/services/searchService'
+import type { SearchResultItem } from '@/entities/search'
 import './DocumentLinkModal.css'
 
 interface DocumentLinkModalProps {
@@ -83,7 +85,18 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
   const isBulkMode = !!(documents && documents.length > 0)
 
   // 단일 문서 모드에서만 사용 (일괄 모드에서는 targetDocuments 사용)
-  const documentName = useMemo(() => (document ? DocumentStatusService.extractFilename(document) : ''), [document])
+  // SearchResultItem과 Document 모두 지원
+  const documentName = useMemo(() => {
+    if (!document) return ''
+
+    // SearchResultItem인 경우 (payload, upload, meta 등의 구조)
+    if ('payload' in document || 'upload' in document) {
+      return SearchService.getOriginalName(document as SearchResultItem)
+    }
+
+    // Document 타입인 경우
+    return DocumentStatusService.extractFilename(document)
+  }, [document])
 
   /**
    * 모달이 열릴 때 상태 초기화
@@ -349,7 +362,10 @@ export const DocumentLinkModal: React.FC<DocumentLinkModalProps> = ({
             <div className="document-link-modal__document-list">
               {targetDocuments.map((doc, index) => {
                 const docId = doc._id || (doc as Record<string, string | undefined>)?.['id'] || ''
-                const docName = DocumentStatusService.extractFilename(doc)
+                // SearchResultItem과 Document 모두 지원
+                const docName = ('payload' in doc || 'upload' in doc)
+                  ? SearchService.getOriginalName(doc as SearchResultItem)
+                  : DocumentStatusService.extractFilename(doc)
                 const docStatus = DocumentStatusService.extractStatus(doc)
                 const statusLabel = DocumentStatusService.getStatusLabel(docStatus)
                 return (
