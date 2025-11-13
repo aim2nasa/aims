@@ -44,6 +44,7 @@ jobs:
           cache-dependency-path: |
             backend/api/doc_status_api/requirements.txt
             backend/api/annual_report_api/requirements.txt
+            backend/api/aims_rag_api/requirements.txt
 
       # 프론트엔드 테스트
       - name: Install frontend dependencies
@@ -110,9 +111,11 @@ jobs:
       - name: Install RAG API dependencies
         run: |
           cd backend/api/aims_rag_api
-          pip install fastapi qdrant-client openai requests pydantic pytest pytest-asyncio
+          pip install -r requirements.txt
 
       - name: Run RAG API tests
+        env:
+          OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
         run: |
           cd backend/api/aims_rag_api
           python -m pytest -v
