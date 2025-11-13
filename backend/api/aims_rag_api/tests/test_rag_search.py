@@ -10,8 +10,13 @@ aims_rag_api - RAG Search API 유닛 테스트
 
 import pytest
 import requests
+import sys
 from unittest.mock import Mock, patch, MagicMock
 from fastapi.testclient import TestClient
+
+# OpenAI를 모킹한 후에 rag_search를 import해야 함
+sys.modules['openai'] = MagicMock()
+
 from rag_search import (
     app,
     embed_query,
@@ -257,41 +262,60 @@ class TestSearchEndpoint:
         assert response.status_code == 500
         assert "SmartSearch API 호출 오류" in response.json()["detail"]
 
-    @patch('rag_search.generate_answer_with_llm')
-    @patch('rag_search.search_qdrant')
-    @patch('rag_search.embed_query')
-    def test_semantic_search_success(self, mock_embed, mock_search, mock_generate):
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_search_success(self, mock_analyzer, mock_hybrid, mock_reranker):
         """의미 검색이 성공해야 함"""
-        # Mock 설정
-        mock_embed.return_value = [0.1, 0.2, 0.3]
-        mock_search.return_value = [
-            MagicMock(
-                id=1,
-                score=0.95,
-                payload={"doc_id": "doc1", "preview": "내용 1", "original_name": "문서1.pdf"}
-            )
+        # Mock query analyzer
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["test"],
+            "metadata_keywords": ["test"]
+        }
+
+        # Mock hybrid search engine
+        mock_hybrid.search.return_value = [
+            {
+                "doc_id": "doc1",
+                "score": 0.85,
+                "payload": {"doc_id": "doc1", "preview": "내용 1", "original_name": "문서1.pdf"}
+            }
         ]
-        mock_generate.return_value = "AI generated answer"
 
-        # API 호출
-        response = client.post(
-            "/search",
-            json={"query": "test query", "search_mode": "semantic"}
-        )
+        # Mock reranker
+        mock_reranker.rerank.return_value = [
+            {
+                "doc_id": "doc1",
+                "score": 0.85,
+                "rerank_score": 0.95,
+                "payload": {"doc_id": "doc1", "preview": "내용 1", "original_name": "문서1.pdf"}
+            }
+        ]
 
-        # 검증
-        assert response.status_code == 200
-        data = response.json()
-        assert data["search_mode"] == "semantic"
-        assert data["answer"] == "AI generated answer"
-        assert len(data["search_results"]) == 1
-        assert data["search_results"][0]["score"] == 0.95
+        # Mock LLM answer generation
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = "AI generated answer"
 
-    @patch('rag_search.embed_query')
-    def test_semantic_search_embedding_failure(self, mock_embed):
-        """임베딩 실패 시 500 에러를 반환해야 함"""
-        # Mock 설정 - 임베딩 실패
-        mock_embed.return_value = None
+            # API 호출
+            response = client.post(
+                "/search",
+                json={"query": "test query", "search_mode": "semantic"}
+            )
+
+            # 검증
+            assert response.status_code == 200
+            data = response.json()
+            assert data["search_mode"] == "semantic"
+            assert data["answer"] == "AI generated answer"
+            assert len(data["search_results"]) == 1
+
+    @patch('rag_search.query_analyzer')
+    def test_semantic_search_embedding_failure(self, mock_analyzer):
+        """분석 실패 시 500 에러를 반환해야 함"""
+        # Mock 설정 - 분석 중 에러 발생
+        mock_analyzer.analyze.side_effect = Exception("Query analysis failed")
 
         # API 호출
         response = client.post(
@@ -301,7 +325,7 @@ class TestSearchEndpoint:
 
         # 검증
         assert response.status_code == 500
-        assert "쿼리 임베딩 실패" in response.json()["detail"]
+        assert "하이브리드 검색 오류" in response.json()["detail"]
 
     def test_invalid_search_mode(self):
         """유효하지 않은 검색 모드 시 400 에러를 반환해야 함"""
@@ -329,24 +353,37 @@ class TestEdgeCases:
         # 422 또는 500 응답이 예상됨 (실제 동작에 따라 다름)
         assert response.status_code in [200, 422, 500]
 
-    @patch('rag_search.generate_answer_with_llm')
-    @patch('rag_search.search_qdrant')
-    @patch('rag_search.embed_query')
-    def test_semantic_search_no_results(self, mock_embed, mock_search, mock_generate):
+    @patch('rag_search.reranker')
+    @patch('rag_search.hybrid_engine')
+    @patch('rag_search.query_analyzer')
+    def test_semantic_search_no_results(self, mock_analyzer, mock_hybrid, mock_reranker):
         """검색 결과가 없을 때 처리"""
-        # Mock 설정
-        mock_embed.return_value = [0.1, 0.2, 0.3]
-        mock_search.return_value = []
-        mock_generate.return_value = "관련 문서를 찾을 수 없습니다."
+        # Mock query analyzer
+        mock_analyzer.analyze.return_value = {
+            "query_type": "concept",
+            "entities": [],
+            "concepts": ["매우", "특이한", "질문"],
+            "metadata_keywords": ["매우", "특이한", "질문"]
+        }
 
-        # API 호출
-        response = client.post(
-            "/search",
-            json={"query": "매우 특이한 질문", "search_mode": "semantic"}
-        )
+        # Mock hybrid search - 결과 없음
+        mock_hybrid.search.return_value = []
 
-        # 검증
-        assert response.status_code == 200
-        data = response.json()
-        assert data["answer"] == "관련 문서를 찾을 수 없습니다."
-        assert data["search_results"] == []
+        # Mock reranker - 결과 없음
+        mock_reranker.rerank.return_value = []
+
+        # Mock LLM answer generation
+        with patch('rag_search.generate_answer_with_llm') as mock_generate:
+            mock_generate.return_value = "관련 문서를 찾을 수 없습니다."
+
+            # API 호출
+            response = client.post(
+                "/search",
+                json={"query": "매우 특이한 질문", "search_mode": "semantic"}
+            )
+
+            # 검증
+            assert response.status_code == 200
+            data = response.json()
+            assert data["answer"] == "관련 문서를 찾을 수 없습니다."
+            assert data["search_results"] == []
