@@ -465,22 +465,25 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
   /**
    * 유사도 점수를 5단계로 분류
+   * - 백분율과 더 직관적인 레이블 제공
    */
   const getSimilarityLevel = (score: number): {
     icon: string
     label: string
     color: string
+    percentage: string
   } => {
+    const percentage = `${Math.round(score * 100)}%`
     if (score >= 0.85) {
-      return { icon: '🟢', label: '매우 높음', color: 'excellent' }
+      return { icon: '🟢', label: '정확히 일치', color: 'excellent', percentage }
     } else if (score >= 0.70) {
-      return { icon: '🟢', label: '높음', color: 'high' }
+      return { icon: '🟢', label: '매우 관련 있음', color: 'high', percentage }
     } else if (score >= 0.50) {
-      return { icon: '🟡', label: '보통', color: 'medium' }
+      return { icon: '🟡', label: '관련 있음', color: 'medium', percentage }
     } else if (score >= 0.30) {
-      return { icon: '🟠', label: '낮음', color: 'low' }
+      return { icon: '🟠', label: '약간 관련', color: 'low', percentage }
     } else {
-      return { icon: '🔴', label: '매우 낮음', color: 'very-low' }
+      return { icon: '🔴', label: '관련성 낮음', color: 'very-low', percentage }
     }
   }
 
@@ -750,23 +753,23 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                   <div className="legend-items">
                     <div className="legend-item">
                       <span className="legend-icon">🟢</span>
-                      <span className="legend-label">매우 높음 (≥0.85)</span>
+                      <span className="legend-label">정확히 일치 (≥85%)</span>
                     </div>
                     <div className="legend-item">
                       <span className="legend-icon">🟢</span>
-                      <span className="legend-label">높음 (≥0.70)</span>
+                      <span className="legend-label">매우 관련 있음 (≥70%)</span>
                     </div>
                     <div className="legend-item">
                       <span className="legend-icon">🟡</span>
-                      <span className="legend-label">보통 (≥0.50)</span>
+                      <span className="legend-label">관련 있음 (≥50%)</span>
                     </div>
                     <div className="legend-item">
                       <span className="legend-icon">🟠</span>
-                      <span className="legend-label">낮음 (≥0.30)</span>
+                      <span className="legend-label">약간 관련 (≥30%)</span>
                     </div>
                     <div className="legend-item">
                       <span className="legend-icon">🔴</span>
-                      <span className="legend-label">매우 낮음 (&lt;0.30)</span>
+                      <span className="legend-label">관련성 낮음 (&lt;30%)</span>
                     </div>
                   </div>
                 </div>
@@ -1092,12 +1095,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
 
                         {/* 유사도 아이콘 (시맨틱 검색 시) */}
                         {score !== null && (
-                          <Tooltip content={`유사도: ${score.toFixed(4)} (${getSimilarityLevel(score).label})`}>
+                          <Tooltip content={`유사도: ${getSimilarityLevel(score).percentage} - ${getSimilarityLevel(score).label}`}>
                             <div
                               className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
-                              aria-label={`유사도 ${getSimilarityLevel(score).label}`}
+                              aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
                             >
-                              {getSimilarityLevel(score).icon}
+                              <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
+                              <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
+                              <span className="similarity-label">{getSimilarityLevel(score).label}</span>
                             </div>
                           </Tooltip>
                         )}

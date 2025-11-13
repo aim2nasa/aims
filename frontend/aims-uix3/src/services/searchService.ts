@@ -90,9 +90,60 @@ export class SearchService {
           })
         )
 
+        // customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+        const customerIds = new Set<string>()
+        enrichedResults.forEach((item) => {
+          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+            const customerId = String(item.customer_relation.customer_id)
+            customerIds.add(customerId)
+          }
+        })
+
+        // customer_name + customer_type 일괄 조회
+        const customerMap: Record<string, { name: string | null; type: string | null }> = {}
+        if (customerIds.size > 0) {
+          await Promise.all(
+            Array.from(customerIds).map(async (customerId) => {
+              try {
+                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`)
+                if (customerResponse.ok) {
+                  const customerData = await customerResponse.json()
+                  if (customerData.success && customerData.data) {
+                    customerMap[customerId] = {
+                      name: customerData.data.personal_info?.name || null,
+                      type: customerData.data.insurance_info?.customer_type || null
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error(`[SearchService] 고객 ${customerId} 조회 오류:`, error)
+              }
+            })
+          )
+        }
+
+        // 검색 결과에 customer_name + customer_type 추가
+        const finalResults = enrichedResults.map((item) => {
+          if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
+            const customerId = String(item.customer_relation.customer_id)
+            const customerInfo = customerMap[customerId]
+            if (customerInfo) {
+              return {
+                ...item,
+                customer_relation: {
+                  ...item.customer_relation,
+                  customer_name: customerInfo.name,
+                  customer_type: customerInfo.type
+                }
+              }
+            }
+          }
+          return item
+        })
+
         return {
           answer: data.answer || null,
-          search_results: enrichedResults,
+          search_results: finalResults,
           search_mode: query.search_mode,
         }
       }

@@ -481,8 +481,8 @@ html[data-theme="dark"] .search-results-header {
     50px           /* 인덱스 (#) */
     minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
     110px          /* 연결된 고객 */
-    70px           /* 상태 */
-    160px;         /* 액션 버튼 (5개: 상세/요약/전체/연결/유사도) */
+    60px           /* 상태 */
+    280px;         /* 액션 버튼 + 유사도 표시 (확장) */
   gap: 12px;
   align-items: center;
   padding: 8px 16px;
@@ -611,8 +611,8 @@ html[data-theme="dark"] .search-results-column-header .sortable.sorted {
     50px           /* 인덱스 (#) */
     minmax(250px, 1fr)  /* 파일명 (가변, 더 넓게) */
     110px          /* 연결된 고객 */
-    70px           /* 상태 */
-    160px;         /* 액션 버튼 (5개: 상세/요약/전체/연결/유사도) */
+    60px           /* 상태 */
+    280px;         /* 액션 버튼 + 유사도 표시 (확장) */
   gap: 12px;
   align-items: center;
   padding: 12px 16px;
@@ -1229,17 +1229,44 @@ html[data-theme="dark"] .row-actions .action-button[data-disabled="true"] {
 
 /* 유사도 인디케이터 (색상 원) */
 .similarity-indicator {
-  /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   line-height: 1;
   white-space: nowrap;
   cursor: help;
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
   opacity: 0.9;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--color-bg-tertiary);
 }
 
 .similarity-indicator:hover {
   opacity: 1;
-  transform: scale(1.15);
+  transform: scale(1.03);
+  background: var(--color-bg-secondary);
+}
+
+.similarity-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.similarity-percentage {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.similarity-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 유사도 레벨별 시각적 강조 */
