@@ -13,6 +13,9 @@ import json
 from query_analyzer import QueryAnalyzer
 from hybrid_search import HybridSearchEngine
 
+# 🔥 Phase 2: Cross-Encoder 재순위화 추가
+from reranker import SearchReranker
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
@@ -21,6 +24,9 @@ app = FastAPI()
 # 🔥 Phase 1: 하이브리드 검색 엔진 초기화
 query_analyzer = QueryAnalyzer()
 hybrid_engine = HybridSearchEngine()
+
+# 🔥 Phase 2: Cross-Encoder 재순위화 엔진 초기화
+reranker = SearchReranker()
 
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
@@ -171,21 +177,23 @@ async def search_endpoint(request: SearchRequest):
 
     elif request.search_mode == "semantic":
         # 🔥 Phase 1: 하이브리드 검색 로직
+        # 🔥 Phase 2: Cross-Encoder 재순위화 추가
         try:
             # 1단계: 쿼리 의도 분석
             query_intent = query_analyzer.analyze(request.query)
             print(f"📊 쿼리 유형: {query_intent['query_type']}")
 
-            # 2단계: 하이브리드 검색 (top-20 가져오기, Phase 2 재순위화용)
+            # 2단계: 하이브리드 검색 (top-20 가져오기)
             search_results = hybrid_engine.search(
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
-                top_k=20  # Phase 2에서 재순위화할 예정
+                top_k=20  # 재순위화를 위해 더 많이 가져오기
             )
 
-            # 3단계: Top-5로 제한 (Phase 2에서는 재순위화 후 top-5)
-            top_results = search_results[:5]
+            # 3단계: Cross-Encoder 재순위화 (Top-20 → Top-5)
+            top_results = reranker.rerank(request.query, search_results, top_k=5)
+            print(f"✅ 재순위화 완료: {len(top_results)}개 문서 선택")
 
             # 4단계: LLM 답변 생성
             final_answer = generate_answer_with_llm(request.query, top_results)
