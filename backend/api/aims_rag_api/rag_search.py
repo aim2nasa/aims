@@ -1,5 +1,6 @@
 # rag_search.py
 import os
+import time
 from typing import List, Dict, Optional, Any
 from openai import OpenAI
 from qdrant_client import QdrantClient, models
@@ -16,6 +17,11 @@ from hybrid_search import HybridSearchEngine
 # 🔥 Phase 2: Cross-Encoder 재순위화 추가
 from reranker import SearchReranker
 
+# 🔥 Phase 3: 검색 품질 모니터링 추가
+from search_logger import SearchLogger
+from quality_analyzer import QualityAnalyzer
+from alert_system import AlertSystem
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI()
 
@@ -27,6 +33,11 @@ hybrid_engine = HybridSearchEngine()
 
 # 🔥 Phase 2: Cross-Encoder 재순위화 엔진 초기화
 reranker = SearchReranker()
+
+# 🔥 Phase 3: 검색 로거 및 품질 분석기 초기화
+search_logger = SearchLogger()
+quality_analyzer = QualityAnalyzer()
+alert_system = AlertSystem()
 
 # 💡 T11 변경 사항 시작 - 요청 및 응답 모델 정의
 class SearchRequest(BaseModel):
@@ -178,25 +189,59 @@ async def search_endpoint(request: SearchRequest):
     elif request.search_mode == "semantic":
         # 🔥 Phase 1: 하이브리드 검색 로직
         # 🔥 Phase 2: Cross-Encoder 재순위화 추가
+        # 🔥 Phase 3: 검색 품질 모니터링 추가
         try:
+            # 전체 시작 시간
+            total_start_time = time.time()
+            timing = {}
+
             # 1단계: 쿼리 의도 분석
+            analysis_start = time.time()
             query_intent = query_analyzer.analyze(request.query)
+            timing["query_analysis_time"] = time.time() - analysis_start
             print(f"📊 쿼리 유형: {query_intent['query_type']}")
 
             # 2단계: 하이브리드 검색 (top-20 가져오기)
+            search_start = time.time()
             search_results = hybrid_engine.search(
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
                 top_k=20  # 재순위화를 위해 더 많이 가져오기
             )
+            timing["search_time"] = time.time() - search_start
 
             # 3단계: Cross-Encoder 재순위화 (Top-20 → Top-5)
+            rerank_start = time.time()
             top_results = reranker.rerank(request.query, search_results, top_k=5)
+            timing["rerank_time"] = time.time() - rerank_start
             print(f"✅ 재순위화 완료: {len(top_results)}개 문서 선택")
 
             # 4단계: LLM 답변 생성
+            llm_start = time.time()
             final_answer = generate_answer_with_llm(request.query, top_results)
+            timing["llm_time"] = time.time() - llm_start
+
+            # 전체 시간 계산
+            timing["total_time"] = time.time() - total_start_time
+
+            # 🔥 Phase 3: 검색 로그 저장
+            try:
+                log_id = search_logger.log_search(
+                    query=request.query,
+                    user_id=request.user_id or "anonymous",
+                    search_mode=request.search_mode,
+                    query_intent=query_intent,
+                    search_results=top_results,
+                    timing=timing,
+                    metadata={
+                        "customer_id": request.customer_id,
+                        "mode": request.mode
+                    }
+                )
+                print(f"📝 검색 로그 저장 완료: {log_id}")
+            except Exception as log_error:
+                print(f"⚠️ 로그 저장 실패 (검색은 정상 진행): {log_error}")
 
             # 응답 구조를 통일된 형식으로 변경
             return UnifiedSearchResponse(
@@ -210,6 +255,219 @@ async def search_endpoint(request: SearchRequest):
             raise HTTPException(status_code=500, detail=f"하이브리드 검색 오류: {e}")
     else:
         raise HTTPException(status_code=400, detail="유효하지 않은 검색 모드입니다. 'keyword' 또는 'semantic'을 사용하세요.")
+
+
+# ========================================
+# 🔥 Phase 3: 검색 품질 모니터링 API
+# ========================================
+
+class FeedbackRequest(BaseModel):
+    """사용자 피드백 요청 모델"""
+    log_id: str
+    clicked_docs: Optional[List[str]] = None
+    satisfaction_rating: Optional[int] = None
+    feedback_text: Optional[str] = None
+
+
+@app.get("/analytics/overall")
+async def get_overall_stats(days: int = 7):
+    """
+    전체 검색 통계 조회
+
+    Args:
+        days: 최근 N일 (기본 7일)
+
+    Returns:
+        전체 통계 딕셔너리
+    """
+    try:
+        stats = quality_analyzer.get_overall_stats(days=days)
+        return {"success": True, "data": stats, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"통계 조회 오류: {e}")
+
+
+@app.get("/analytics/query_types")
+async def get_query_type_breakdown(days: int = 7):
+    """
+    쿼리 유형별 통계 조회
+
+    Args:
+        days: 최근 N일
+
+    Returns:
+        쿼리 유형별 통계 딕셔너리
+    """
+    try:
+        breakdown = quality_analyzer.get_query_type_breakdown(days=days)
+        return {"success": True, "data": breakdown, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"쿼리 유형 통계 조회 오류: {e}")
+
+
+@app.get("/analytics/rerank_impact")
+async def get_rerank_impact(days: int = 7):
+    """
+    재순위화 효과 측정
+
+    Args:
+        days: 최근 N일
+
+    Returns:
+        재순위화 효과 통계
+    """
+    try:
+        impact = quality_analyzer.get_rerank_impact(days=days)
+        return {"success": True, "data": impact, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"재순위화 효과 조회 오류: {e}")
+
+
+@app.get("/analytics/failure_rate")
+async def get_failure_rate(days: int = 7, threshold_score: float = 0.3, threshold_result_count: int = 1):
+    """
+    실패율 분석
+
+    Args:
+        days: 최근 N일
+        threshold_score: 점수 임계값
+        threshold_result_count: 결과 수 임계값
+
+    Returns:
+        실패율 통계
+    """
+    try:
+        failure_rate = quality_analyzer.get_failure_rate(
+            days=days,
+            threshold_score=threshold_score,
+            threshold_result_count=threshold_result_count
+        )
+        return {"success": True, "data": failure_rate, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"실패율 조회 오류: {e}")
+
+
+@app.get("/analytics/failed_queries")
+async def get_failed_queries(days: int = 7, limit: int = 10):
+    """
+    실패한 쿼리 Top N 조회
+
+    Args:
+        days: 최근 N일
+        limit: 최대 조회 수
+
+    Returns:
+        실패 쿼리 리스트
+    """
+    try:
+        failed_queries = quality_analyzer.get_top_failed_queries(days=days, limit=limit)
+        return {"success": True, "data": failed_queries, "days": days, "limit": limit}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"실패 쿼리 조회 오류: {e}")
+
+
+@app.get("/analytics/performance_trends")
+async def get_performance_trends(days: int = 7):
+    """
+    성능 트렌드 분석 (일별)
+
+    Args:
+        days: 최근 N일
+
+    Returns:
+        일별 성능 통계
+    """
+    try:
+        trends = quality_analyzer.get_performance_trends(days=days)
+        return {"success": True, "data": trends, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"성능 트렌드 조회 오류: {e}")
+
+
+@app.get("/analytics/user_satisfaction")
+async def get_user_satisfaction(days: int = 7):
+    """
+    사용자 만족도 분석
+
+    Args:
+        days: 최근 N일
+
+    Returns:
+        만족도 통계
+    """
+    try:
+        satisfaction = quality_analyzer.get_user_satisfaction(days=days)
+        return {"success": True, "data": satisfaction, "days": days}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"만족도 조회 오류: {e}")
+
+
+@app.get("/analytics/alerts")
+async def check_alerts(days: int = 1):
+    """
+    품질 알림 체크
+
+    Args:
+        days: 최근 N일
+
+    Returns:
+        발생한 알림 리스트
+    """
+    try:
+        alerts = alert_system.run_all_checks(days=days)
+        return {
+            "success": True,
+            "data": {
+                "alert_count": len(alerts),
+                "alerts": alerts
+            },
+            "days": days
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"알림 체크 오류: {e}")
+
+
+@app.post("/feedback")
+async def submit_feedback(request: FeedbackRequest):
+    """
+    사용자 피드백 제출
+
+    Args:
+        request: 피드백 정보
+
+    Returns:
+        성공 여부
+    """
+    try:
+        search_logger.update_feedback(
+            log_id=request.log_id,
+            clicked_docs=request.clicked_docs,
+            satisfaction_rating=request.satisfaction_rating,
+            feedback_text=request.feedback_text
+        )
+        return {"success": True, "message": "피드백이 성공적으로 저장되었습니다"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"피드백 저장 오류: {e}")
+
+
+@app.get("/analytics/recent_logs")
+async def get_recent_logs(user_id: Optional[str] = None, limit: int = 100):
+    """
+    최근 검색 로그 조회
+
+    Args:
+        user_id: 사용자 ID (None이면 전체)
+        limit: 최대 조회 수
+
+    Returns:
+        검색 로그 리스트
+    """
+    try:
+        logs = search_logger.get_recent_logs(user_id=user_id, limit=limit)
+        return {"success": True, "data": logs, "count": len(logs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"로그 조회 오류: {e}")
+
 
 # 4. 전체 실행 로직
 if __name__ == '__main__':
