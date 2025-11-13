@@ -9,13 +9,7 @@
 """
 
 import pytest
-import sys
 from unittest.mock import Mock, patch, MagicMock
-
-# OpenAI를 모킹한 후에 query_analyzer를 import해야 함
-sys.modules['openai'] = MagicMock()
-
-from query_analyzer import QueryAnalyzer
 
 
 class TestQueryAnalyzer:
@@ -31,6 +25,7 @@ class TestQueryAnalyzer:
         mock_response.choices = [MagicMock(message=MagicMock(content='{"query_type": "entity", "entities": ["곽승철"], "concepts": [], "metadata_keywords": ["곽승철"]}'))]
         mock_client.chat.completions.create.return_value = mock_response
 
+        from query_analyzer import QueryAnalyzer
         analyzer = QueryAnalyzer()
         query = "곽승철에 대해서"
         result = analyzer.analyze(query)
@@ -50,6 +45,7 @@ class TestQueryAnalyzer:
         mock_response.choices = [MagicMock(message=MagicMock(content='{"query_type": "concept", "entities": [], "concepts": ["USB", "Firmware", "드라이버", "소프트웨어", "개발"], "metadata_keywords": ["USB", "Firmware", "드라이버", "소프트웨어", "개발"]}'))]
         mock_client.chat.completions.create.return_value = mock_response
 
+        from query_analyzer import QueryAnalyzer
         analyzer = QueryAnalyzer()
         query = "USB Firmware 드라이버 소프트웨어 개발"
         result = analyzer.analyze(query)
@@ -69,6 +65,7 @@ class TestQueryAnalyzer:
         mock_response.choices = [MagicMock(message=MagicMock(content='{"query_type": "mixed", "entities": ["김보성"], "concepts": ["보험", "계약", "정보"], "metadata_keywords": ["김보성", "보험", "계약", "정보"]}'))]
         mock_client.chat.completions.create.return_value = mock_response
 
+        from query_analyzer import QueryAnalyzer
         analyzer = QueryAnalyzer()
         query = "김보성님의 보험 계약 정보"
         result = analyzer.analyze(query)
@@ -87,6 +84,7 @@ class TestQueryAnalyzer:
         mock_response.choices = [MagicMock(message=MagicMock(content='{"query_type": "concept", "entities": [], "concepts": [], "metadata_keywords": []}'))]
         mock_client.chat.completions.create.return_value = mock_response
 
+        from query_analyzer import QueryAnalyzer
         analyzer = QueryAnalyzer()
         query = ""
         result = analyzer.analyze(query)

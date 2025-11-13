@@ -10,21 +10,19 @@ aims_rag_api - RAG Search API 유닛 테스트
 
 import pytest
 import requests
-import sys
 from unittest.mock import Mock, patch, MagicMock
 from fastapi.testclient import TestClient
 
-# OpenAI를 모킹한 후에 rag_search를 import해야 함
-sys.modules['openai'] = MagicMock()
-
-from rag_search import (
-    app,
-    embed_query,
-    search_qdrant,
-    generate_answer_with_llm,
-    SearchRequest,
-    UnifiedSearchResponse
-)
+# OpenAI 클라이언트 생성을 모킹
+with patch('query_analyzer.OpenAI'), patch('hybrid_search.OpenAI'), patch('rag_search.OpenAI'):
+    from rag_search import (
+        app,
+        embed_query,
+        search_qdrant,
+        generate_answer_with_llm,
+        SearchRequest,
+        UnifiedSearchResponse
+    )
 
 
 client = TestClient(app)
