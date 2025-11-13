@@ -865,6 +865,20 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                     </span>
                   )}
                 </div>
+                {/* 🍎 유사도 헤더 (시맨틱 검색 시만 표시) */}
+                {searchMode === 'semantic' ? (
+                  <div className="header-similarity">
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <path d="M8 3v10M5 8h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    </svg>
+                    <span>유사도</span>
+                  </div>
+                ) : (
+                  <div className="header-similarity">
+                    {/* 키워드 검색 시 빈 칸 */}
+                  </div>
+                )}
                 <div className="header-actions">
                   <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                     <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
@@ -1029,9 +1043,24 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         </Tooltip>
                       </div>
 
-                      {/* 액션 버튼들 */}
-                      <div className="row-actions">
+                      {/* 🍎 유사도 (시맨틱 검색 시만 표시) */}
+                      <div className="row-similarity">
+                        {score !== null && (
+                          <Tooltip content={`유사도: ${getSimilarityLevel(score).percentage} - ${getSimilarityLevel(score).label}`}>
+                            <div
+                              className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
+                              aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
+                            >
+                              <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
+                              <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
+                              <span className="similarity-label">{getSimilarityLevel(score).label}</span>
+                            </div>
+                          </Tooltip>
+                        )}
+                      </div>
 
+                      {/* 🍎 액션 버튼들 */}
+                      <div className="row-actions">
                         {/* 🍎 상세 보기 버튼 */}
                         <Tooltip content="상세 보기">
                           <button
@@ -1092,20 +1121,6 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                         <LinkIcon />
                       </button>
                     </Tooltip>
-
-                        {/* 유사도 아이콘 (시맨틱 검색 시) */}
-                        {score !== null && (
-                          <Tooltip content={`유사도: ${getSimilarityLevel(score).percentage} - ${getSimilarityLevel(score).label}`}>
-                            <div
-                              className={`similarity-indicator similarity-${getSimilarityLevel(score).color}`}
-                              aria-label={`유사도 ${getSimilarityLevel(score).percentage} ${getSimilarityLevel(score).label}`}
-                            >
-                              <span className="similarity-icon">{getSimilarityLevel(score).icon}</span>
-                              <span className="similarity-percentage">{getSimilarityLevel(score).percentage}</span>
-                              <span className="similarity-label">{getSimilarityLevel(score).label}</span>
-                            </div>
-                          </Tooltip>
-                        )}
                       </div>
                     </div>
                   )
