@@ -208,6 +208,7 @@ async def search_endpoint(request: SearchRequest):
                 query=request.query,
                 query_intent=query_intent,
                 user_id=request.user_id,
+                customer_id=request.customer_id,  # 🔥 고객별 필터링 추가
                 top_k=20  # 재순위화를 위해 더 많이 가져오기
             )
             timing["search_time"] = time.time() - search_start

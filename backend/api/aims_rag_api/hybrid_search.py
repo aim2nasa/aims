@@ -30,7 +30,7 @@ class HybridSearchEngine:
         # OpenAI 클라이언트
         self.openai_client = OpenAI()
 
-    def search(self, query: str, query_intent: Dict, user_id: str, top_k: int = 5) -> List[Dict]:
+    def search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str] = None, top_k: int = 5) -> List[Dict]:
         """
         쿼리 의도에 따라 적절한 검색 수행
 
@@ -38,6 +38,7 @@ class HybridSearchEngine:
             query: 사용자 검색 쿼리
             query_intent: 쿼리 분석 결과 (QueryAnalyzer.analyze() 반환값)
             user_id: 사용자 ID (문서 필터링용)
+            customer_id: 고객 ID (특정 고객 문서만 검색, optional)
             top_k: 반환할 최대 결과 수
 
         Returns:
@@ -57,7 +58,7 @@ class HybridSearchEngine:
             # 혼합 쿼리: 두 방법 병합
             return self._hybrid_search(query, query_intent, user_id, top_k)
 
-    def _entity_search(self, query_intent: Dict, user_id: str, top_k: int) -> List[Dict]:
+    def _entity_search(self, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
         """
         개체명 검색: MongoDB 메타데이터 기반
 
@@ -91,6 +92,7 @@ class HybridSearchEngine:
                 {"ocr.summary": {"$regex": regex_pattern, "$options": "i"}}
             ]
         }
+        # 🔥 고객별 필터링 추가        if customer_id:            mongo_filter["customer_relation.customer_id"] = customer_id
 
         results = []
         for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
@@ -148,7 +150,7 @@ class HybridSearchEngine:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def _vector_search(self, query: str, user_id: str, top_k: int) -> List[Dict]:
+    def _vector_search(self, query: str, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
         """
         벡터 검색: Qdrant 의미 검색
         """
@@ -164,6 +166,7 @@ class HybridSearchEngine:
             return []
 
         # Qdrant 검색
+        # 🔥 고객별 필터링: 동적으로 필터 조건 생성        filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]        if customer_id:            filter_conditions.append(                models.FieldCondition(key="customer_id", match=models.MatchValue(value=customer_id))            )
         try:
             search_results = self.qdrant_client.search(
                 collection_name="docembed",
@@ -195,7 +198,7 @@ class HybridSearchEngine:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def _hybrid_search(self, query: str, query_intent: Dict, user_id: str, top_k: int) -> List[Dict]:
+    def _hybrid_search(self, query: str, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
         """
         하이브리드 검색: 메타데이터 + 벡터 검색 병합
 
@@ -204,8 +207,8 @@ class HybridSearchEngine:
         - 벡터 검색: 40%
         """
         # 두 방법으로 검색 (더 많이 가져오기)
-        entity_results = self._entity_search(query_intent, user_id, top_k * 2)
-        vector_results = self._vector_search(query, user_id, top_k * 2)
+        entity_results = self._entity_search(query_intent, user_id, customer_id, top_k * 2)
+        vector_results = self._vector_search(query, user_id, customer_id, top_k * 2)
 
         # 문서별로 병합 (최고 점수 유지)
         doc_scores = {}

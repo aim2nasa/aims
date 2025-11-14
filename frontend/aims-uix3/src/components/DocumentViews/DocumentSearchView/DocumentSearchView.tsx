@@ -550,49 +550,45 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       <div className="document-search-container">
         {/* 🍎 iOS Spotlight 검색바 - 한 줄 레이아웃 */}
         <div className="search-bar-wrapper">
-          {/* 🍎 고객 선택 버튼 (키워드 검색일 때만 표시) */}
-          {searchMode === 'keyword' && (
-            <>
-              <button
-                className="customer-select-button"
-                onClick={() => setIsCustomerSelectorOpen(true)}
-                aria-label="고객 선택"
-                title="고객 선택"
-              >
-                고객선택
-              </button>
+          {/* 🍎 고객 선택 버튼 (모든 검색 모드에서 표시) */}
+          <button
+            className="customer-select-button"
+            onClick={() => setIsCustomerSelectorOpen(true)}
+            aria-label="고객 선택"
+            title="고객 선택"
+          >
+            고객선택
+          </button>
 
-              {/* 🍎 선택된 고객명 표시 또는 최근 고객 드롭다운 */}
-              <div className="selected-customer-display">
-                {selectedCustomer ? (
-                  <>
-                    <span className="selected-customer-name">
-                      {selectedCustomer.personal_info?.name}
-                    </span>
-                    <button
-                      className="clear-customer-button"
-                      onClick={() => {
-                        setSelectedCustomer(null)
-                        handleCustomerIdChange(null)
-                      }}
-                      aria-label="고객 선택 해제"
-                      title="고객 선택 해제"
-                    >
-                      ✕
-                    </button>
-                  </>
-                ) : (
-                  <Dropdown
-                    value=""
-                    options={recentCustomerOptions}
-                    onChange={handleRecentCustomerSelect}
-                    width={150}
-                    aria-label="최근 선택한 고객"
-                  />
-                )}
-              </div>
-            </>
-          )}
+          {/* 🍎 선택된 고객명 표시 또는 최근 고객 드롭다운 */}
+          <div className="selected-customer-display">
+            {selectedCustomer ? (
+              <>
+                <span className="selected-customer-name">
+                  {selectedCustomer.personal_info?.name}
+                </span>
+                <button
+                  className="clear-customer-button"
+                  onClick={() => {
+                    setSelectedCustomer(null)
+                    handleCustomerIdChange(null)
+                  }}
+                  aria-label="고객 선택 해제"
+                  title="고객 선택 해제"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <Dropdown
+                value=""
+                options={recentCustomerOptions}
+                onChange={handleRecentCustomerSelect}
+                width={150}
+                aria-label="최근 선택한 고객"
+              />
+            )}
+          </div>
 
           {/* A: 검색 입력 필드 (flex-grow) */}
           <div className="search-input-wrapper">
@@ -1222,9 +1218,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
                             <h4 className="step-title">고객 선택 (선택사항)</h4>
                             <p className="step-description">"고객선택" 버튼으로 특정 고객 지정 가능</p>
                             <p className="step-description">• 미선택: 모든 고객 문서 검색</p>
-                            <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠름)</p>
+                            <p className="step-description">• 선택: 해당 고객 문서만 검색 (더 빠르고 정확)</p>
                             <p className="step-description">• 최근 선택한 5명이 드롭다운에 표시 (첫 사용시 비어있음)</p>
-                            <p className="step-description">📌 키워드 검색에서만 가능</p>
+                            <p className="step-description">📌 키워드 검색과 AI 검색 모두 지원</p>
                           </div>
                         </div>
 
