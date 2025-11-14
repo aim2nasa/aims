@@ -14,7 +14,10 @@ const mime = require('mime-types');
 const pdfParse = require('pdf-parse');
 const exif = require('exif-parser');
 
-// pdfjs Warning 완전 억제 - 모든 출력 채널 오버라이드
+// pdfjs Warning 완전 억제
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+pdfjsLib.GlobalWorkerOptions.verbosity = pdfjsLib.VerbosityLevel.ERRORS;
+
 const originalStdoutWrite = process.stdout.write.bind(process.stdout);
 const originalStderrWrite = process.stderr.write.bind(process.stderr);
 const originalConsoleWarn = console.warn.bind(console);
@@ -22,7 +25,10 @@ const originalConsoleWarn = console.warn.bind(console);
 // stdout 필터링
 process.stdout.write = function(chunk, encoding, callback) {
   const str = chunk.toString();
-  if (str.includes('Warning:') && (str.includes('loadFont') || str.includes('translateFont'))) {
+  const lines = str.split('\n');
+  const filtered = lines.filter(line => !line.trim().startsWith('Warning:')).join('\n');
+  if (filtered !== str) {
+    if (filtered.trim()) return originalStdoutWrite(filtered, encoding, callback);
     if (typeof callback === 'function') callback();
     return true;
   }
@@ -32,7 +38,10 @@ process.stdout.write = function(chunk, encoding, callback) {
 // stderr 필터링
 process.stderr.write = function(chunk, encoding, callback) {
   const str = chunk.toString();
-  if (str.includes('Warning:') && (str.includes('loadFont') || str.includes('translateFont'))) {
+  const lines = str.split('\n');
+  const filtered = lines.filter(line => !line.trim().startsWith('Warning:')).join('\n');
+  if (filtered !== str) {
+    if (filtered.trim()) return originalStderrWrite(filtered, encoding, callback);
     if (typeof callback === 'function') callback();
     return true;
   }
@@ -42,13 +51,11 @@ process.stderr.write = function(chunk, encoding, callback) {
 // console.warn 필터링
 console.warn = function(...args) {
   const msg = args.join(' ');
-  if (msg.includes('Warning:') && (msg.includes('loadFont') || msg.includes('translateFont'))) {
-    return;
-  }
+  if (msg.trim().startsWith('Warning:')) return;
   return originalConsoleWarn(...args);
 };
 
-const { getDocument } = require('pdfjs-dist/legacy/build/pdf.js');
+const { getDocument } = pdfjsLib;
 
 // 오피스 문서 처리를 위한 라이브러리들
 const mammoth = require('mammoth'); // DOCX
@@ -93,7 +100,8 @@ async function analyzePdfTextRatio(pdfPath, minTextLengthPerPage = 50) {
 
   try {
     const data = new Uint8Array(fs.readFileSync(pdfPath));
-    const pdf = await getDocument({ data }).promise;
+    const pdf = await getDocument({ data, verbosity: pdfjsLib.VerbosityLevel.ERRORS }).promise;
+
     const totalPages = pdf.numPages;
 
     let textPages = 0;
