@@ -29,7 +29,7 @@
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-ios-separator-light);
-  overflow: hidden;
+  overflow: visible; /* 드롭다운 메뉴가 잘리지 않도록 변경 */
 }
 
 html[data-theme="dark"] .customer-file-upload-area__content-box {
