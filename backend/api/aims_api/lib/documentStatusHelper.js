@@ -6,6 +6,27 @@
 const { normalizeTimestamp } = require('./timeUtils');
 
 /**
+ * OCR/임베딩 처리가 불가능한 MIME 타입 목록
+ */
+const UNSUPPORTED_MIMES = [
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-rar',
+  'application/x-rar-compressed',
+  'audio/',
+  'video/',
+  'application/postscript'  // .ai 파일
+];
+
+/**
+ * MIME 타입이 지원되지 않는지 확인
+ */
+function isUnsupportedMimeType(mimeType) {
+  if (!mimeType) return false;
+  return UNSUPPORTED_MIMES.some(unsupported => mimeType.startsWith(unsupported));
+}
+
+/**
  * 바이트를 사람이 읽기 쉬운 형태로 변환
  */
 function formatBytes(bytes) {
@@ -36,8 +57,13 @@ function prepareDocumentResponse(doc) {
 
   // 🧮 2. 계산된 UI 값
   const hasMetaText = doc.meta && doc.meta.full_text;
+  const isUnsupported = isUnsupportedMimeType(doc.meta?.mime);
 
-  const uiStages = hasMetaText ? {
+  // 비지원 MIME 타입은 upload + meta만 (OCR/임베딩 불가)
+  const uiStages = isUnsupported ? {
+    upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
+    meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null }
+  } : hasMetaText ? {
     upload: { name: '업로드', status: 'pending', message: '대기 중', timestamp: null },
     meta: { name: '메타데이터', status: 'pending', message: '대기 중', timestamp: null },
     docembed: { name: '임베딩', status: 'pending', message: '대기 중', timestamp: null }
@@ -71,6 +97,17 @@ function prepareDocumentResponse(doc) {
     uiStages.meta.timestamp = normalizeTimestamp(doc.meta.created_at);
     displayMessages.meta = `메타데이터 추출 완료 (${doc.meta.mime})`;
     currentStage = 2;
+
+    // 비지원 MIME 타입은 meta 완료시 즉시 100% 완료
+    if (isUnsupported) {
+      progress = 100;
+      overallStatus = 'completed';
+      return {
+        raw,
+        computed: { uiStages, currentStage, overallStatus, progress, displayMessages }
+      };
+    }
+
     progress = hasMetaText ? 50 : 40;
   } else if (doc.meta && doc.meta.meta_status === 'error') {
     // meta_status가 명시적으로 'error'인 경우에만 에러 처리
