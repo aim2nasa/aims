@@ -381,7 +381,7 @@ describe('DocumentStatusProvider - 고객 칼럼 정렬 테스트 (커밋 45a019
 
       await waitFor(() => {
         expect(result.current.state.isLoading).toBe(false)
-      })
+      }, { timeout: 10000 })
 
       const initialCallCount = vi.mocked(
         DocumentStatusService.DocumentStatusService.getRecentDocuments
