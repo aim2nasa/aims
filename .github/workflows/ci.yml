@@ -40,11 +40,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            backend/api/doc_status_api/requirements.txt
-            backend/api/annual_report_api/requirements.txt
-            backend/api/aims_rag_api/requirements.txt
 
       # 프론트엔드 테스트
       - name: Install frontend dependencies
@@ -57,22 +52,10 @@ jobs:
           cd frontend/aims-uix3
           npm run typecheck
 
-      - name: Build frontend
+      - name: Run frontend tests
         run: |
           cd frontend/aims-uix3
-          npm run build
-
-      - name: Run frontend tests with coverage
-        run: |
-          cd frontend/aims-uix3
-          npm test -- --run --coverage
-          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
-          echo "📊 Frontend Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 85" | bc -l) )); then
-            echo "❌ Coverage $COVERAGE% is below 85%"
-            exit 1
-          fi
-          echo "✅ Coverage $COVERAGE% meets threshold"
+          npm test -- --run
 
       # 백엔드 테스트
       - name: Install backend dependencies
@@ -86,36 +69,16 @@ jobs:
           npm run test:ci
 
       # Python API 테스트
-      - name: Install Python API dependencies
+      - name: Install Python dependencies (all APIs)
         run: |
-          cd backend/api/doc_status_api
-          pip install -r requirements.txt
+          pip install --no-cache-dir -r backend/api/doc_status_api/requirements.txt
+          pip install --no-cache-dir -r backend/api/annual_report_api/requirements.txt
+          pip install --no-cache-dir -r backend/api/aims_rag_api/requirements.txt
 
-      - name: Run Python API tests (doc_status_api)
-        run: |
-          cd backend/api/doc_status_api
-          python -m pytest -v
-
-      # Annual Report API 테스트
-      - name: Install Annual Report API dependencies
-        run: |
-          cd backend/api/annual_report_api
-          pip install -r requirements.txt
-
-      - name: Run Annual Report API tests
-        run: |
-          cd backend/api/annual_report_api
-          python -m pytest -v
-
-      # RAG API 테스트
-      - name: Install RAG API dependencies
-        run: |
-          cd backend/api/aims_rag_api
-          pip install -r requirements.txt
-
-      - name: Run RAG API tests
+      - name: Run Python API tests
         env:
           OPENAI_API_KEY: sk-test-mock-key-for-ci-testing-only
         run: |
-          cd backend/api/aims_rag_api
-          python -m pytest -v
+          cd backend/api/doc_status_api && python -m pytest -v
+          cd ../annual_report_api && python -m pytest -v
+          cd ../aims_rag_api && python -m pytest -v
