@@ -38,7 +38,9 @@ def extract_text_from_mongo(doc_id: str, mongo_uri: str = 'mongodb://localhost:2
                 'original_name': document.get('upload', {}).get('originalName'),
                 'uploaded_at': document.get('upload', {}).get('uploaded_at'),
                 'mime': document.get('meta', {}).get('mime'),
-                'text_source': text_source
+                'text_source': text_source,
+                'owner_id': document.get('upload', {}).get('uploadedBy'),  # 🔥 문서 소유자 ID 추가
+                'customer_id': document.get('customer_relation', {}).get('customer_id')  # 🔥 고객 ID 추가 (없으면 None)
             }
             print(f"문서 ID '{doc_id}'의 텍스트 로딩 완료! (출처: {text_source})")
             return {'text': full_text, 'meta': meta}

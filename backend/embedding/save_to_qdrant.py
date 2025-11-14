@@ -27,6 +27,7 @@ def save_chunks_to_qdrant(chunks: List[Dict], qdrant_url: str = "http://localhos
         point_id = str(uuid.uuid4())
         
         # 기존의 chunk_id는 페이로드에 저장하여 정보를 보존합니다.
+        # 🔥 owner_id, customer_id도 자동으로 포함됩니다 (extract_text_from_mongo에서 추출)
         payload = {
             key: value for key, value in chunk.items() if key not in ['text', 'embedding']
         }

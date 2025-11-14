@@ -201,6 +201,7 @@ async def search_endpoint(request: SearchRequest):
             query_intent = query_analyzer.analyze(request.query)
             timing["query_analysis_time"] = time.time() - analysis_start
             print(f"📊 쿼리 유형: {query_intent['query_type']}")
+            print(f"🔍 고객 필터: customer_id={request.customer_id if request.customer_id else '전체'}")
 
             # 2단계: 하이브리드 검색 (top-20 가져오기)
             search_start = time.time()

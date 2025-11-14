@@ -48,15 +48,15 @@ class HybridSearchEngine:
 
         if query_type == "entity":
             # 개체명 쿼리: 메타데이터 검색 우선
-            return self._entity_search(query_intent, user_id, top_k)
+            return self._entity_search(query_intent, user_id, customer_id, top_k)
 
         elif query_type == "concept":
             # 개념 쿼리: 벡터 검색
-            return self._vector_search(query, user_id, top_k)
+            return self._vector_search(query, user_id, customer_id, top_k)
 
         else:  # mixed
             # 혼합 쿼리: 두 방법 병합
-            return self._hybrid_search(query, query_intent, user_id, top_k)
+            return self._hybrid_search(query, query_intent, user_id, customer_id, top_k)
 
     def _entity_search(self, query_intent: Dict, user_id: str, customer_id: Optional[str], top_k: int) -> List[Dict]:
         """
@@ -92,7 +92,11 @@ class HybridSearchEngine:
                 {"ocr.summary": {"$regex": regex_pattern, "$options": "i"}}
             ]
         }
-        # 🔥 고객별 필터링 추가        if customer_id:            mongo_filter["customer_relation.customer_id"] = customer_id
+
+        # 🔥 고객별 필터링 추가
+        if customer_id:
+            from bson import ObjectId
+            mongo_filter["customer_relation.customer_id"] = ObjectId(customer_id)
 
         results = []
         for doc in self.collection.find(mongo_filter).limit(top_k * 2):  # 여유있게 가져오기
@@ -166,14 +170,18 @@ class HybridSearchEngine:
             return []
 
         # Qdrant 검색
-        # 🔥 고객별 필터링: 동적으로 필터 조건 생성        filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]        if customer_id:            filter_conditions.append(                models.FieldCondition(key="customer_id", match=models.MatchValue(value=customer_id))            )
+        # 🔥 고객별 필터링: 동적으로 필터 조건 생성
+        filter_conditions = [models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
+        if customer_id:
+            filter_conditions.append(
+                models.FieldCondition(key="customer_id", match=models.MatchValue(value=customer_id))
+            )
+
         try:
             search_results = self.qdrant_client.search(
                 collection_name="docembed",
                 query_vector=query_vector,
-                query_filter=models.Filter(
-                    must=[models.FieldCondition(key="owner_id", match=models.MatchValue(value=user_id))]
-                ),
+                query_filter=models.Filter(must=filter_conditions),
                 limit=top_k
             )
         except Exception as e:
