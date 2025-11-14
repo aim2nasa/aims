@@ -333,27 +333,30 @@ export const DocumentUtils = {
   /**
    * 문서 타입 판별: OCR 기반 vs TXT 기반
    * @param document - Document 또는 SearchResultItem (any 타입)
-   * @returns 'ocr' | 'txt' | null
+   * @returns 'ocr' | 'txt' | 'bin'
    *
    * 판별 기준:
    * - OCR 기반: ocr 필드가 존재하고 status가 'done'
    * - TXT 기반: meta.full_text가 있거나 docembed.text_source가 'meta'
    * - null: 판별 불가
    */
-  getDocumentType: (document: any): 'ocr' | 'txt' | null => {
-    if (!document) return null;
+  getDocumentType: (document: any): 'ocr' | 'txt' | 'bin' => {
+    if (!document) return 'bin';
+
+
+    // MIME 타입 확인: 압축/미디어는 즉시 BIN
+    const mimeType = document.mimeType || '';
+    if (mimeType === 'application/zip' || mimeType === 'application/x-rar' ||
+        mimeType === 'application/x-zip-compressed') {
+      return 'bin';
+    }
+    if (mimeType.startsWith('audio/') || mimeType.startsWith('video/')) {
+      return 'bin';
+    }
 
     // 1. OCR 필드가 있고 완료된 경우 → OCR 기반
     if (document.ocr && typeof document.ocr === 'object') {
       if (document.ocr.status === 'done') {
-        return 'ocr';
-      }
-    }
-
-    // 2. stages.ocr가 있고 완료된 경우 → OCR 기반 (문서 라이브러리 API)
-    if (document.stages && typeof document.stages === 'object') {
-      const ocrStage = document.stages.ocr;
-      if (ocrStage && typeof ocrStage === 'object' && ocrStage.status === 'completed') {
         return 'ocr';
       }
     }
@@ -375,20 +378,8 @@ export const DocumentUtils = {
       }
     }
 
-    // 5. stages.meta가 있고 full_text가 있는 경우 → TXT 기반 (문서 라이브러리 API)
-    if (document.stages && typeof document.stages === 'object') {
-      const metaStage = document.stages.meta;
-      if (metaStage && typeof metaStage === 'object' && metaStage.status === 'completed') {
-        // meta stage가 완료되었지만 OCR이 없으면 TXT 기반
-        const ocrStage = document.stages.ocr;
-        if (!ocrStage || (typeof ocrStage === 'object' && ocrStage.status !== 'completed')) {
-          return 'txt';
-        }
-      }
-    }
-
-    // 6. 판별 불가
-    return null;
+    // 6. 나머지 모두 BIN (full_text 없고 OCR 없으면 BIN)
+    return 'bin';
   },
 
   /**
@@ -396,10 +387,11 @@ export const DocumentUtils = {
    * @param document - Document 또는 SearchResultItem
    * @returns 'OCR' | 'TXT' | ''
    */
-  getDocumentTypeLabel: (document: any): 'OCR' | 'TXT' | '' => {
+  getDocumentTypeLabel: (document: any): 'OCR' | 'TXT' | 'BIN' | '' => {
     const type = DocumentUtils.getDocumentType(document);
     if (type === 'ocr') return 'OCR';
     if (type === 'txt') return 'TXT';
+    if (type === 'bin') return 'BIN';
     return '';
   },
 

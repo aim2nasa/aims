@@ -80,6 +80,7 @@ export class SearchService {
                 _id: docId,
                 meta: docData.data.raw.meta,
                 ocr: docData.data.raw.ocr,
+                docembed: docData.data.raw.docembed,
                 overallStatus: docData.data.computed.overallStatus,
                 customer_relation: docData.data.raw.customer_relation
               }

@@ -9,7 +9,7 @@
  * - OCR 기반 문서 판별
  * - TXT 기반 문서 판별
  * - stages 기반 타입 판별 (문서 라이브러리 API)
- * - null 반환 조건
+ * - 'bin' 반환 조건
  */
 
 import { describe, it, expect } from 'vitest'
@@ -33,25 +33,6 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('ocr')
     })
 
-    it('stages.ocr.status가 "completed"이면 OCR 타입으로 판별되어야 함', () => {
-      // Given: 문서 라이브러리 API 응답 구조
-      const document = {
-        stages: {
-          ocr: {
-            name: 'OCR 처리',
-            status: 'completed',
-            message: 'OCR 완료',
-            timestamp: '2025-01-01T00:00:00Z'
-          }
-        }
-      }
-
-      // When
-      const result = DocumentUtils.getDocumentType(document)
-
-      // Then
-      expect(result).toBe('ocr')
-    })
 
     it('docembed.text_source가 "ocr"이면 OCR 타입으로 판별되어야 함', () => {
       // Given
@@ -106,25 +87,6 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('txt')
     })
 
-    it('stages.meta.full_text가 있으면 TXT 타입으로 판별되어야 함', () => {
-      // Given: 문서 라이브러리 API 응답 구조
-      const document = {
-        stages: {
-          meta: {
-            name: 'Meta 처리',
-            status: 'completed',
-            full_text: 'PDF에서 직접 추출한 텍스트',
-            timestamp: '2025-01-01T00:00:00Z'
-          }
-        }
-      }
-
-      // When
-      const result = DocumentUtils.getDocumentType(document)
-
-      // Then
-      expect(result).toBe('txt')
-    })
 
     it('docembed.text_source가 "meta"이면 TXT 타입으로 판별되어야 함', () => {
       // Given
@@ -142,7 +104,7 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('txt')
     })
 
-    it('meta.full_text가 빈 문자열이면 TXT로 판별되지 않아야 함', () => {
+    it("meta.full_text가 빈 문자열이면 'bin'을 반환해야 함", () => {
       // Given
       const document = {
         meta: {
@@ -155,7 +117,7 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       const result = DocumentUtils.getDocumentType(document)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
   })
 
@@ -179,27 +141,6 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('ocr')
     })
 
-    it('stages.ocr completed와 stages.meta full_text가 모두 있으면 OCR 우선', () => {
-      // Given
-      const document = {
-        stages: {
-          ocr: {
-            status: 'completed',
-            message: 'OCR 완료'
-          },
-          meta: {
-            status: 'completed',
-            full_text: 'Meta 텍스트'
-          }
-        }
-      }
-
-      // When
-      const result = DocumentUtils.getDocumentType(document)
-
-      // Then
-      expect(result).toBe('ocr')
-    })
 
     it('docembed.text_source가 meta이고 stages.ocr이 미완료면 TXT', () => {
       // Given: OCR은 미완료, docembed는 meta 소스
@@ -223,24 +164,24 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
     })
   })
 
-  describe('null 반환 조건', () => {
-    it('document가 null이면 null을 반환해야 함', () => {
+  describe("'bin' 반환 조건", () => {
+    it("document가 null이면 'bin'을 반환해야 함", () => {
       // When
       const result = DocumentUtils.getDocumentType(null)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
 
-    it('document가 undefined이면 null을 반환해야 함', () => {
+    it("document가 undefined이면 'bin'을 반환해야 함", () => {
       // When
       const result = DocumentUtils.getDocumentType(undefined)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
 
-    it('OCR도 TXT도 없으면 null을 반환해야 함', () => {
+    it("OCR도 TXT도 없으면 'bin'을 반환해야 함", () => {
       // Given: OCR과 TXT 정보가 없는 문서
       const document = {
         _id: 'test-doc',
@@ -252,10 +193,10 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       const result = DocumentUtils.getDocumentType(document)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
 
-    it('ocr이 있지만 status가 done이 아니고 meta도 없으면 null', () => {
+    it("ocr이 있지만 status가 done이 아니고 meta도 없으면 'bin'", () => {
       // Given
       const document = {
         ocr: {
@@ -269,7 +210,7 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       const result = DocumentUtils.getDocumentType(document)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
   })
 
@@ -290,23 +231,8 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('txt')
     })
 
-    it('stages가 객체가 아니면 무시되어야 함', () => {
-      // Given
-      const document = {
-        stages: 'not-an-object', // 문자열
-        meta: {
-          full_text: 'Meta 텍스트'
-        }
-      }
 
-      // When
-      const result = DocumentUtils.getDocumentType(document)
-
-      // Then: stages 무시되고 meta 기반으로 판별
-      expect(result).toBe('txt')
-    })
-
-    it('meta.full_text가 숫자 0이면 TXT로 판별되지 않아야 함', () => {
+    it("meta.full_text가 숫자 0이면 'bin'을 반환해야 함", () => {
       // Given
       const document = {
         meta: {
@@ -318,7 +244,7 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       const result = DocumentUtils.getDocumentType(document)
 
       // Then
-      expect(result).toBeNull()
+      expect(result).toBe('bin')
     })
   })
 
@@ -343,56 +269,6 @@ describe('DocumentUtils.getDocumentType - Unit Tests (commit a0c1a96)', () => {
       expect(result).toBe('ocr')
     })
 
-    it('문서 라이브러리 API 응답 구조 (stages 필드)', () => {
-      // Given: 문서 라이브러리 API 응답
-      const libraryDocument = {
-        _id: '12345',
-        originalName: 'test.pdf',
-        stages: {
-          upload: {
-            status: 'completed',
-            originalName: 'test.pdf'
-          },
-          meta: {
-            status: 'completed',
-            full_text: 'PDF 텍스트',
-            mime: 'application/pdf'
-          },
-          ocr: {
-            status: 'pending' // OCR 대기 중
-          }
-        }
-      }
 
-      // When
-      const result = DocumentUtils.getDocumentType(libraryDocument)
-
-      // Then: OCR이 완료되지 않았으므로 TXT
-      expect(result).toBe('txt')
-    })
-
-    it('문서 라이브러리 API - OCR 완료 + TXT 동시 존재', () => {
-      // Given
-      const document = {
-        _id: '12345',
-        originalName: 'test.pdf',
-        stages: {
-          meta: {
-            status: 'completed',
-            full_text: 'PDF 텍스트'
-          },
-          ocr: {
-            status: 'completed', // OCR 완료
-            message: 'OCR 완료 (신뢰도: 0.95)'
-          }
-        }
-      }
-
-      // When
-      const result = DocumentUtils.getDocumentType(document)
-
-      // Then: OCR 우선
-      expect(result).toBe('ocr')
-    })
   })
 })

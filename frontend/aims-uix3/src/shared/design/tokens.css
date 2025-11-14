@@ -847,6 +847,11 @@
   --color-badge-txt-dark: rgba(37, 99, 235, 0.85); /* Blue 600, 85% opacity - TXT badge dark */
   --color-badge-txt-glow: rgba(59, 130, 246, 0.5);  /* TXT badge hover glow light */
   --color-badge-txt-glow-dark: rgba(59, 130, 246, 0.6); /* TXT badge hover glow dark */
+  /* BIN Badge Colors - Gray theme for binary files */
+  --color-badge-bin: #9ca3af;                      /* Gray 400 - BIN badge light */
+  --color-badge-bin-dark: #6b7280;                 /* Gray 500 - BIN badge dark */
+  --color-badge-bin-glow: rgba(156, 163, 175, 0.4); /* BIN badge hover glow */
+
 
   /* Badge Common Colors */
   --color-badge-text: #ffffff;                     /* Badge text color (white) */

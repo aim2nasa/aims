@@ -678,6 +678,9 @@ app.get('/api/documents/status', async (req, res) => {
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
         customer_relation: customerRelation,
+        meta: doc.meta,
+        ocr: doc.ocr,
+        docembed: doc.docembed,
         ...statusInfo
       };
     }));
