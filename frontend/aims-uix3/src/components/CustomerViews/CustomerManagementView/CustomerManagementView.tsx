@@ -17,6 +17,8 @@ import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
+import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
+import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import './CustomerManagementView.css';
 
 interface CustomerManagementViewProps {
@@ -69,6 +71,8 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         activeCustomers: 0,
         recentRegistrations: 0,
         relationshipsMapped: 0,
+        personalCustomers: 0,
+        corporateCustomers: 0,
       };
     }
 
@@ -84,8 +88,26 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         return createdAt && createdAt >= thirtyDaysAgo;
       }).length,
       relationshipsMapped: 0, // TODO: 관계 API 연동 후 계산
+      personalCustomers: customers.filter(c => c.insurance_info?.customer_type !== '법인').length,
+      corporateCustomers: customers.filter(c => c.insurance_info?.customer_type === '법인').length,
     };
   }, [customersData]);
+
+  // 파이 차트 데이터 준비
+  const pieChartData: FileTypeData[] = useMemo(() => {
+    return [
+      {
+        label: '개인',
+        count: stats.personalCustomers,
+        color: 'var(--color-primary-500)'
+      },
+      {
+        label: '법인',
+        count: stats.corporateCustomers,
+        color: 'var(--color-warning)'
+      }
+    ];
+  }, [stats]);
 
   // 최근 활동 데이터 변환
   const recentActivities: RecentActivityItem[] = useMemo(() => {
@@ -296,6 +318,17 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               {...(isCustomersError && { error: '통계 조회 실패' })}
             />
           </div>
+
+          {/* 파이 차트 */}
+          {stats.totalCustomers > 0 && (
+            <div className="customer-management-view__pie-chart">
+              <FileTypePieChart
+                data={pieChartData}
+                size={200}
+                innerRadius={50}
+              />
+            </div>
+          )}
         </section>
 
         {/* 사용 가이드 */}

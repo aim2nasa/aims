@@ -53,6 +53,15 @@
   gap: var(--spacing-4);
 }
 
+/* 파이 차트 */
+.customer-management-view__pie-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--spacing-6);
+  padding: var(--spacing-4);
+}
+
 /* 빠른 액션 그리드 */
 .customer-management-view__actions-grid {
   display: grid;
