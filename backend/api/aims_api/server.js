@@ -36,6 +36,50 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&');
 }
 
+/**
+ * 명백한 BIN 타입 체크 (OCR 비용 절감)
+ * FILE_BADGE_SYSTEM.md 참조
+ * @param {string} mimeType - MIME 타입
+ * @returns {boolean} - BIN 타입 여부
+ */
+function isBinaryMimeType(mimeType) {
+  if (!mimeType) return false;
+
+  const BIN_MIME_TYPES = [
+    // 압축
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+    'application/x-bzip2',
+
+    // 오디오
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/wav',
+    'audio/flac',
+    'audio/aac',
+    'audio/ogg',
+
+    // 비디오
+    'video/mp4',
+    'video/mpeg',
+    'video/x-msvideo',
+    'video/quicktime',
+    'video/x-matroska',
+    'video/x-ms-wmv',
+
+    // 실행 파일
+    'application/x-msdownload',
+    'application/x-executable',
+    'application/x-sharedlib',
+  ];
+
+  return BIN_MIME_TYPES.includes(mimeType.toLowerCase());
+}
+
 // 🔍 포괄적인 요청 디버깅 미들웨어 (모든 요청 로깅)
 app.use((req, res, next) => {
   const timestamp = utcNowISO();
@@ -599,7 +643,7 @@ app.get('/api/documents/status', async (req, res) => {
         { $match: filter },
         {
           $addFields: {
-            // badgeType 계산 로직 (FILE_BADGE_SYSTEM.md 분류 트리 준수)
+            // badgeType 계산 로직 (FILE_BADGE_SYSTEM.md OCR 비용 최적화)
             badgeType: {
               $cond: {
                 // Level 1: meta.full_text에 실제 데이터가 있으면 "TXT"
@@ -612,11 +656,50 @@ app.get('/api/documents/status', async (req, res) => {
                 then: "TXT",
                 else: {
                   $cond: {
-                    // Level 2: ocr.full_text 있으면 "OCR" (MIME 무관)
-                    if: { $ne: [{ $ifNull: ["$ocr.full_text", null] }, null] },
-                    then: "OCR",
-                    // Level 3: 나머지 모두 "BIN"
-                    else: "BIN"
+                    // Level 2: 명백한 BIN MIME 체크 (OCR 건너뜀 💰)
+                    if: {
+                      $in: [
+                        { $toLower: { $ifNull: ["$metadata.mimetype", ""] } },
+                        [
+                          // 압축
+                          "application/zip",
+                          "application/x-zip-compressed",
+                          "application/x-rar-compressed",
+                          "application/x-7z-compressed",
+                          "application/x-tar",
+                          "application/gzip",
+                          "application/x-bzip2",
+                          // 오디오
+                          "audio/mpeg",
+                          "audio/mp4",
+                          "audio/wav",
+                          "audio/flac",
+                          "audio/aac",
+                          "audio/ogg",
+                          // 비디오
+                          "video/mp4",
+                          "video/mpeg",
+                          "video/x-msvideo",
+                          "video/quicktime",
+                          "video/x-matroska",
+                          "video/x-ms-wmv",
+                          // 실행 파일
+                          "application/x-msdownload",
+                          "application/x-executable",
+                          "application/x-sharedlib"
+                        ]
+                      ]
+                    },
+                    then: "BIN",
+                    else: {
+                      $cond: {
+                        // Level 3: ocr.full_text 있으면 "OCR"
+                        if: { $ne: [{ $ifNull: ["$ocr.full_text", null] }, null] },
+                        then: "OCR",
+                        // Level 4: 나머지 모두 "BIN"
+                        else: "BIN"
+                      }
+                    }
                   }
                 }
               }
@@ -924,13 +1007,23 @@ app.get('/api/documents/statistics', async (req, res) => {
       if (currentStage >= 4) stats.stages.ocr++;
       if (currentStage >= 5) stats.stages.docembed++;
 
-      // badgeType 계산 (FILE_BADGE_SYSTEM.md 분류 트리 준수)
-      let badgeType = 'BIN'; // 기본값
+      // badgeType 계산 (FILE_BADGE_SYSTEM.md OCR 비용 최적화)
+      let badgeType = 'BIN';
+
+      // Level 1: meta.full_text 확인
       if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
         badgeType = 'TXT';
-      } else if (doc.ocr?.full_text) {
+      }
+      // Level 2: 명백한 BIN MIME 체크 (OCR 건너뜀 💰)
+      else if (isBinaryMimeType(doc.metadata?.mimetype)) {
+        badgeType = 'BIN';
+      }
+      // Level 3: OCR 텍스트 확인
+      else if (doc.ocr?.full_text) {
         badgeType = 'OCR';
       }
+      // Level 4: 나머지 모두 BIN (기본값 유지)
+
       stats.badgeTypes[badgeType]++;
     });
 
