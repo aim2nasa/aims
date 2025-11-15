@@ -16,7 +16,7 @@
 .status-list-header {
   display: grid;
   grid-template-columns:
-    24px           /* 파일 타입 아이콘 */
+    35px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
@@ -43,7 +43,7 @@
 .document-status-list--delete-mode .status-list-header {
   grid-template-columns:
     24px           /* 체크박스 */
-    24px           /* 파일 타입 아이콘 */
+    35px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
@@ -309,7 +309,7 @@ html[data-theme="dark"] .empty-message {
 .status-item {
   display: grid;
   grid-template-columns:
-    24px           /* 파일 타입 아이콘 */
+    35px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) */
     minmax(150px, 1fr)  /* 파일명 (가변, 최소 150px) */
     80px           /* 크기 */
     80px           /* 타입 */
@@ -332,7 +332,7 @@ html[data-theme="dark"] .empty-message {
 .document-status-list--delete-mode .status-item {
   grid-template-columns:
     24px           /* 체크박스 */
-    24px           /* 파일 타입 아이콘 */
+    35px           /* 유형 (아이콘 + 모든 뱃지, 우측정렬) */
     minmax(150px, 1fr)  /* 파일명 */
     80px           /* 크기 */
     80px           /* 타입 */
@@ -737,8 +737,7 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
+  justify-content: flex-end;
   height: 24px;
   flex-shrink: 0;
 }
@@ -1137,6 +1136,92 @@ html[data-theme="dark"] .status-item:hover .document-icon.file-icon--text {
 
 .document-notes-btn:active {
   transform: scale(0.95);
+}
+
+/* === 🍎 BADGE TYPE COLUMN: 처리유형 칼럼 스타일 === */
+.header-badge-type {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.document-badge-type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.document-txt-badge,
+.document-ocr-badge,
+.document-bin-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.document-txt-badge {
+  background: var(--color-ios-blue-light);
+  color: white;
+}
+
+html[data-theme="dark"] .document-txt-badge {
+  background: var(--color-ios-blue-dark);
+}
+
+.document-ocr-badge {
+  color: white;
+}
+
+.document-ocr-badge.ocr-excellent,
+.document-ocr-badge.ocr-high {
+  background: var(--color-ios-green-light);
+}
+
+html[data-theme="dark"] .document-ocr-badge.ocr-excellent,
+html[data-theme="dark"] .document-ocr-badge.ocr-high {
+  background: var(--color-ios-green-dark);
+}
+
+.document-ocr-badge.ocr-medium {
+  background: var(--color-ios-yellow-light);
+}
+
+html[data-theme="dark"] .document-ocr-badge.ocr-medium {
+  background: var(--color-ios-yellow-dark);
+}
+
+.document-ocr-badge.ocr-low {
+  background: var(--color-ios-orange-light);
+}
+
+html[data-theme="dark"] .document-ocr-badge.ocr-low {
+  background: var(--color-ios-orange-dark);
+}
+
+.document-ocr-badge.ocr-very-low {
+  background: var(--color-ios-red-light);
+}
+
+html[data-theme="dark"] .document-ocr-badge.ocr-very-low {
+  background: var(--color-ios-red-dark);
+}
+
+.document-bin-badge {
+  background: var(--color-neutral-300);
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .document-bin-badge {
+  background: var(--color-neutral-600);
+  color: var(--color-ios-text-secondary-dark);
 }
 
 /* === ACCESSIBILITY === */

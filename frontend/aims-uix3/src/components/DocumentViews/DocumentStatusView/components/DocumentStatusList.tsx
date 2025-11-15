@@ -32,9 +32,9 @@ export interface DocumentStatusListProps {
   onFullTextClick?: (document: Document) => void
   onLinkClick?: (document: Document) => void
   // 🍎 Sort props
-  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null
+  sortField?: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null
   sortDirection?: 'asc' | 'desc'
-  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => void
+  onColumnSort?: (field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType') => void
   // 🍎 Delete mode props
   isDeleteMode?: boolean
   selectedDocumentIds?: Set<string>
@@ -256,7 +256,26 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             />
           </div>
         )}
-        <div className="header-icon"></div>
+        {/* 🍎 처리유형 칼럼 */}
+        <div
+          className={`header-badge-type ${onColumnSort ? 'header-sortable' : ''}`}
+          onClick={() => onColumnSort?.('badgeType')}
+          role={onColumnSort ? 'button' : undefined}
+          tabIndex={onColumnSort ? 0 : undefined}
+          aria-label={onColumnSort ? '유형으로 정렬' : undefined}
+        >
+          <span>유형</span>
+          {onColumnSort && (
+            sortField === 'badgeType' ? (
+              <span className="sort-indicator">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+            ) : (
+              <span className="sort-indicator sort-indicator--both">
+                <span className="sort-arrow">▲</span>
+                <span className="sort-arrow">▼</span>
+              </span>
+            )
+          )}
+        </div>
         <div
           className={`header-filename ${onColumnSort ? 'header-sortable' : ''}`}
           onClick={() => onColumnSort?.('filename')}
@@ -475,7 +494,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               return null
             })()}
 
-            {/* 파일 타입 아이콘 */}
+            {/* 🍎 유형 칼럼: 아이콘 + 모든 뱃지 (AR, TXT, OCR, BIN) */}
             <div className="document-icon-wrapper">
               <div className={`document-icon ${DocumentUtils.getFileTypeClass(document.mimeType, DocumentStatusService.extractFilename(document))}`}>
                 <SFSymbol
@@ -493,7 +512,7 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </div>
                 </Tooltip>
               )}
-              {/* 🍎 OCR BADGE: OCR 처리 완료 문서 신뢰도 표시 */}
+              {/* 🍎 TXT/OCR/BIN BADGE: 처리 유형 표시 */}
               {(() => {
                 const confidence = getOcrConfidence(document)
                 if (confidence === null) {
@@ -533,36 +552,6 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
             {/* 파일명 */}
             <div className="status-filename">
               {DocumentStatusService.extractFilename(document)}
-              {/* 메모 버튼: customer_relation에 notes가 있는 경우에만 표시 */}
-              {document.customer_relation?.notes &&
-               typeof document.customer_relation.notes === 'string' &&
-               document.customer_relation.notes.trim() !== '' && (
-                <Tooltip
-                  content={
-                    document.customer_relation.notes.length > 50
-                      ? `${document.customer_relation.notes.substring(0, 50)}...`
-                      : document.customer_relation.notes
-                  }
-                >
-                  <button
-                    className="document-notes-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedNotes({
-                        documentName: DocumentStatusService.extractFilename(document),
-                        customerName: document.customer_relation?.customer_name,
-                        customerId: document.customer_relation?.customer_id,
-                        documentId: document._id ?? document.id,
-                        notes: document.customer_relation?.notes || ''
-                      })
-                      setNotesModalVisible(true)
-                    }}
-                    aria-label="메모 보기"
-                  >
-                    📝
-                  </button>
-                </Tooltip>
-              )}
             </div>
 
             {/* 크기 */}

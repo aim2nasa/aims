@@ -59,7 +59,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   const [totalCount, setTotalCount] = useState<number>(0)
 
   // 🍎 Sort State
-  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | null>('uploadDate')
+  const [sortField, setSortField] = useState<'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType' | null>('uploadDate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   // 🍎 Customer Link Filter State
@@ -80,6 +80,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         setError(null)
 
         // 🍎 백엔드 정렬 파라미터 생성
+        // badgeType은 프론트엔드에서 클라이언트 사이드 정렬
         let sortParam: string | undefined = undefined
         if (sortField === 'status') {
           sortParam = sortDirection === 'asc' ? 'status_asc' : 'status_desc'
@@ -93,6 +94,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           sortParam = sortDirection === 'asc' ? 'mimeType_asc' : 'mimeType_desc'
         } else if (sortField === 'customer') {
           sortParam = sortDirection === 'asc' ? 'customer_asc' : 'customer_desc'
+        } else if (sortField === 'badgeType') {
+          // badgeType은 백엔드 정렬 없이 프론트엔드에서 처리
+          sortParam = undefined
         }
 
         // 🔍 검색어 준비 (trim 처리)
@@ -147,7 +151,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
 
         // customer_type을 customer_relation에 추가
-        const documentsWithCustomerRelation: Document[] = realDocuments.map((doc: Document): Document => {
+        let documentsWithCustomerRelation: Document[] = realDocuments.map((doc: Document): Document => {
           const customerId = doc.customer_relation?.customer_id ? String(doc.customer_relation.customer_id) : null
           const customerType = customerId ? customerTypeMap[customerId] : null
 
@@ -160,6 +164,29 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
             } : undefined
           } as Document
         })
+
+        // 🍎 badgeType 클라이언트 사이드 정렬
+        if (sortField === 'badgeType' && documentsWithCustomerRelation.length > 0) {
+          const getBadgeType = (doc: Document): string => {
+            // OCR confidence 확인
+            const hasOcrConfidence = doc.ocr && typeof doc.ocr !== 'string' && doc.ocr.confidence
+            const hasOcrInStages = doc.stages?.ocr && typeof doc.stages.ocr !== 'string' && doc.stages.ocr.message?.includes('신뢰도')
+            if (hasOcrConfidence || hasOcrInStages) return 'OCR'
+
+            // TXT/BIN 판단 (DocumentUtils.getDocumentTypeLabel 로직)
+            const mime = doc.mimeType || ''
+            if (mime.startsWith('text/') || mime === 'application/json') return 'TXT'
+            if (mime.startsWith('image/') || mime.startsWith('application/pdf')) return 'OCR' // OCR 대상
+            return 'BIN'
+          }
+
+          documentsWithCustomerRelation = [...documentsWithCustomerRelation].sort((a, b) => {
+            const typeA = getBadgeType(a)
+            const typeB = getBadgeType(b)
+            const comparison = typeA.localeCompare(typeB)
+            return sortDirection === 'asc' ? comparison : -comparison
+          })
+        }
 
         // 실제 DB 문서와 중복되지 않는 임시 문서들만 유지
         setDocuments((prevDocs) => {
@@ -362,7 +389,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   }, [])
 
   // 🍎 Sort Handler
-  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer') => {
+  const handleColumnSort = useCallback((field: 'filename' | 'status' | 'uploadDate' | 'fileSize' | 'mimeType' | 'customer' | 'badgeType') => {
     if (sortField === field) {
       // Same field: toggle direction
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'
