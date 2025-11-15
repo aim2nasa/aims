@@ -514,6 +514,51 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
               )}
               {/* 🍎 TXT/OCR/BIN BADGE: 처리 유형 표시 */}
               {(() => {
+                // 🔥 백엔드 badgeType 필드 우선 사용 (정렬과 일관성 유지)
+                const backendBadgeType = (document as any).badgeType
+                if (backendBadgeType) {
+                  if (backendBadgeType === 'OCR') {
+                    const confidence = getOcrConfidence(document)
+                    if (confidence !== null) {
+                      const level = getOcrConfidenceLevel(confidence)
+                      return (
+                        <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                          <div className={`document-ocr-badge ocr-${level.color}`}>
+                            OCR
+                          </div>
+                        </Tooltip>
+                      )
+                    }
+                    // confidence 없으면 기본 OCR 뱃지
+                    return (
+                      <Tooltip content="OCR 처리 완료">
+                        <div className="document-ocr-badge ocr-medium">
+                          OCR
+                        </div>
+                      </Tooltip>
+                    )
+                  }
+                  if (backendBadgeType === 'TXT') {
+                    return (
+                      <Tooltip content="TXT 기반 문서">
+                        <div className="document-txt-badge">
+                          TXT
+                        </div>
+                      </Tooltip>
+                    )
+                  }
+                  if (backendBadgeType === 'BIN') {
+                    return (
+                      <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
+                        <div className="document-bin-badge">
+                          BIN
+                        </div>
+                      </Tooltip>
+                    )
+                  }
+                }
+
+                // 🔄 하위 호환성: badgeType 없으면 기존 로직 사용
                 const confidence = getOcrConfidence(document)
                 if (confidence === null) {
                   // OCR 뱃지가 없는 경우, TXT 또는 BIN 타입 표시

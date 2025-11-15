@@ -490,6 +490,9 @@ app.get('/api/documents/status', async (req, res) => {
     const { page = 1, limit = 10, status, search, sort, customerLink } = req.query;
     const skip = (page - 1) * limit;
 
+    // 🔍 정렬 파라미터 디버깅
+    console.error(`\n🔍🔍🔍 [정렬 디버깅] sort=${sort}, page=${page}, limit=${limit}`);
+
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.query.userId || req.headers['x-user-id'];
     if (!userId) {
@@ -588,6 +591,67 @@ app.get('/api/documents/status', async (req, res) => {
         { $skip: skip },
         { $limit: parseInt(limit) }
       ]).toArray();
+    } else if (sort === 'badgeType_asc' || sort === 'badgeType_desc') {
+      // badgeType 정렬: OCR/TXT/BIN 타입별 정렬
+      console.error(`\n⚡⚡⚡ [badgeType 정렬 실행] sort=${sort}, sortOrder=${sort === 'badgeType_asc' ? 1 : -1}`);
+      const sortOrder = sort === 'badgeType_asc' ? 1 : -1;
+      documents = await db.collection(COLLECTION_NAME).aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            // badgeType 계산 로직 (프론트엔드와 동일)
+            badgeType: {
+              $cond: {
+                // 1. OCR confidence가 있거나 stages.ocr.message에 "신뢰도"가 있으면 "OCR"
+                if: {
+                  $or: [
+                    { $ne: [{ $ifNull: ["$ocr.confidence", null] }, null] },
+                    { $regexMatch: { input: { $ifNull: [{ $toString: "$stages.ocr.message" }, ""] }, regex: "신뢰도" } }
+                  ]
+                },
+                then: "OCR",
+                else: {
+                  $cond: {
+                    // 2. MIME type이 text/* 또는 application/json이면 "TXT"
+                    if: {
+                      $or: [
+                        { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^text/" } },
+                        { $eq: ["$meta.mime", "application/json"] }
+                      ]
+                    },
+                    then: "TXT",
+                    else: {
+                      $cond: {
+                        // 3. MIME type이 image/* 또는 application/pdf이면 "OCR"
+                        if: {
+                          $or: [
+                            { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^image/" } },
+                            { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^application/pdf" } }
+                          ]
+                        },
+                        then: "OCR",
+                        // 4. 그 외는 "BIN"
+                        else: "BIN"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        { $sort: { badgeType: sortOrder, 'upload.uploaded_at': -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
+      ]).toArray();
+
+      // 디버깅: badgeType 계산 결과 확인
+      if (documents.length > 0) {
+        console.error('📊📊📊 [badgeType 정렬 결과]');
+        documents.slice(0, 5).forEach(doc => {
+          console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, mime=${doc.meta?.mime}, ocr.confidence=${doc.ocr?.confidence}`);
+        });
+      }
     } else {
       // 일반 정렬 조건 구성
       let sortCriteria = { 'upload.uploaded_at': -1 }; // 기본: 최신순
@@ -678,6 +742,7 @@ app.get('/api/documents/status', async (req, res) => {
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
         customer_relation: customerRelation,
+        badgeType: doc.badgeType,  // 🔥 MongoDB aggregation에서 계산한 badgeType 포함
         meta: doc.meta,
         ocr: doc.ocr,
         docembed: doc.docembed,
