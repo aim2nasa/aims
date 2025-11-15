@@ -212,4 +212,57 @@ function getBadge(file) {
 - **비용 절감률: 약 1-2% (지속적 누적)**
 
 ---
-*최종 업데이트: 2025.11.15 - OCR 비용 최적화 로직 추가*
+
+## ⚠️ 현재 구현의 한계 (2025.11.15)
+
+### 문제점: 실제 OCR 비용 절감 효과 없음
+
+**현재 구현 상태:**
+- ✅ **뱃지 분류는 정확함** - TXT/OCR/BIN 올바르게 표시
+- ❌ **실제 OCR 비용 절감 효과 없음** - OCR은 이미 실행된 후 분류
+
+**근본 원인:**
+
+현재 `server.js`의 `isBinaryMimeType()` 로직은 **이미 OCR이 실행되고 MongoDB에 저장된 문서**를 분류하는 것입니다:
+
+```javascript
+// Level 3: OCR 텍스트 확인
+else if (doc.ocr?.full_text) {  // ← 이미 OCR이 실행된 후!
+  badgeType = 'OCR';
+}
+```
+
+이 체크는 OCR 실행 **후** 결과를 확인하므로, **비용은 이미 발생한 상태**입니다.
+
+**실제 비용 절감을 위해 필요한 것:**
+
+OCR을 **실행하기 전**에 MIME 타입을 체크해야 합니다:
+
+1. **n8n 워크플로우** 또는
+2. **Python OCR 처리 스크립트**
+
+에서 다음 로직 구현 필요:
+
+```python
+# OCR 실행 전 체크 (실제 비용 절감!)
+if isBinaryMimeType(file.mimetype):
+    # OCR 건너뛰기 → 비용 절감!
+    skip_ocr = True
+    return
+else:
+    # OCR 시도
+    result = run_ocr(file)
+```
+
+**해결 방안:**
+
+- [ ] n8n 워크플로우에 BIN MIME 사전 필터링 추가
+- [ ] Python OCR 파이프라인에 MIME 체크 로직 추가
+- [ ] OCR 실행 전 단계에서 명백한 바이너리 파일 건너뛰기
+
+**현재 상태:**
+- 구현 위치: `backend/api/aims_api/server.js` (사후 분류용)
+- 필요 위치: OCR 실행 스크립트 (사전 필터링용)
+
+---
+*최종 업데이트: 2025.11.15 - OCR 비용 최적화 로직 추가 (한계점 명시)*
