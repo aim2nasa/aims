@@ -267,17 +267,20 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       {
         label: 'TXT',
         count: stats.badgeTypes.TXT ?? 0,
-        color: 'var(--color-success)'
+        color: 'var(--color-success)',
+        description: '텍스트 추출 가능 문서'
       },
       {
         label: 'OCR',
         count: stats.badgeTypes.OCR ?? 0,
-        color: 'var(--color-primary-500)'
+        color: 'var(--color-primary-500)',
+        description: '이미지 문서로 OCR 처리됨, 신뢰도별 색상 표시'
       },
       {
         label: 'BIN',
         count: stats.badgeTypes.BIN ?? 0,
-        color: 'var(--color-neutral-600)'
+        color: 'var(--color-neutral-600)',
+        description: '텍스트 추출 불가능한 바이너리 파일'
       }
     ];
   }, [stats]);

@@ -19,6 +19,8 @@ export interface FileTypeData {
   count: number
   /** 차트 색상 (CSS 변수 사용) */
   color: string
+  /** 파일 타입 설명 (선택적) */
+  description?: string
 }
 
 export interface FileTypePieChartProps {
@@ -177,14 +179,21 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
       <div className="file-type-pie-chart__legend">
         {slices.map((slice, index) => (
           <div key={index} className="file-type-pie-chart__legend-item">
-            <div
-              className="file-type-pie-chart__legend-color"
-              style={{ backgroundColor: slice.color }}
-            />
-            <span className="file-type-pie-chart__legend-label">{slice.label}</span>
-            <span className="file-type-pie-chart__legend-value">
-              {slice.count} ({slice.percentage.toFixed(0)}%)
-            </span>
+            <div className="file-type-pie-chart__legend-item-header">
+              <div
+                className="file-type-pie-chart__legend-color"
+                style={{ backgroundColor: slice.color }}
+              />
+              <span className="file-type-pie-chart__legend-label">{slice.label}</span>
+              <span className="file-type-pie-chart__legend-value">
+                {slice.count} ({slice.percentage.toFixed(0)}%)
+              </span>
+            </div>
+            {slice.description && (
+              <div className="file-type-pie-chart__legend-description">
+                {slice.description}
+              </div>
+            )}
           </div>
         ))}
       </div>
