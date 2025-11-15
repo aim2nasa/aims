@@ -599,41 +599,24 @@ app.get('/api/documents/status', async (req, res) => {
         { $match: filter },
         {
           $addFields: {
-            // badgeType 계산 로직 (프론트엔드와 동일)
+            // badgeType 계산 로직 (FILE_BADGE_SYSTEM.md 분류 트리 준수)
             badgeType: {
               $cond: {
-                // 1. OCR confidence가 있거나 stages.ocr.message에 "신뢰도"가 있으면 "OCR"
+                // Level 1: meta.full_text에 실제 데이터가 있으면 "TXT"
                 if: {
-                  $or: [
-                    { $ne: [{ $ifNull: ["$ocr.confidence", null] }, null] },
-                    { $regexMatch: { input: { $ifNull: [{ $toString: "$stages.ocr.message" }, ""] }, regex: "신뢰도" } }
+                  $and: [
+                    { $ne: [{ $ifNull: ["$meta.full_text", null] }, null] },
+                    { $ne: ["$meta.full_text", ""] }
                   ]
                 },
-                then: "OCR",
+                then: "TXT",
                 else: {
                   $cond: {
-                    // 2. MIME type이 text/* 또는 application/json이면 "TXT"
-                    if: {
-                      $or: [
-                        { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^text/" } },
-                        { $eq: ["$meta.mime", "application/json"] }
-                      ]
-                    },
-                    then: "TXT",
-                    else: {
-                      $cond: {
-                        // 3. MIME type이 image/* 또는 application/pdf이면 "OCR"
-                        if: {
-                          $or: [
-                            { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^image/" } },
-                            { $regexMatch: { input: { $ifNull: ["$meta.mime", ""] }, regex: "^application/pdf" } }
-                          ]
-                        },
-                        then: "OCR",
-                        // 4. 그 외는 "BIN"
-                        else: "BIN"
-                      }
-                    }
+                    // Level 2: ocr.full_text 있으면 "OCR" (MIME 무관)
+                    if: { $ne: [{ $ifNull: ["$ocr.full_text", null] }, null] },
+                    then: "OCR",
+                    // Level 3: 나머지 모두 "BIN"
+                    else: "BIN"
                   }
                 }
               }
@@ -649,7 +632,9 @@ app.get('/api/documents/status', async (req, res) => {
       if (documents.length > 0) {
         console.error('📊📊📊 [badgeType 정렬 결과]');
         documents.slice(0, 5).forEach(doc => {
-          console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, mime=${doc.meta?.mime}, ocr.confidence=${doc.ocr?.confidence}`);
+          const hasMetaFullText = doc.meta?.full_text ? 'O' : 'X';
+          const hasOcrFullText = doc.ocr?.full_text ? 'O' : 'X';
+          console.error(`  - ${doc.upload?.originalName}: badgeType=${doc.badgeType}, meta.full_text=${hasMetaFullText}, ocr.full_text=${hasOcrFullText}, ocr.confidence=${doc.ocr?.confidence}`);
         });
       }
     } else {
@@ -734,6 +719,24 @@ app.get('/api/documents/status', async (req, res) => {
 
       // 기존 analyzeDocumentStatus 방식대로 응답 구성
       const statusInfo = analyzeDocumentStatus(doc);
+
+      // badgeType 계산 (MongoDB aggregation 결과 없으면 JavaScript로 계산)
+      let badgeType = doc.badgeType;
+      if (!badgeType) {
+        // Level 1: meta.full_text에 실제 데이터가 있으면 TXT
+        if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
+          badgeType = 'TXT';
+        }
+        // Level 2: ocr.full_text 있으면 OCR (MIME 무관)
+        else if (doc.ocr?.full_text) {
+          badgeType = 'OCR';
+        }
+        // Level 3: 나머지 BIN
+        else {
+          badgeType = 'BIN';
+        }
+      }
+
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
@@ -742,7 +745,7 @@ app.get('/api/documents/status', async (req, res) => {
         mimeType: doc.meta?.mime,
         is_annual_report: doc.is_annual_report,
         customer_relation: customerRelation,
-        badgeType: doc.badgeType,  // 🔥 MongoDB aggregation에서 계산한 badgeType 포함
+        badgeType: badgeType,  // 🔥 항상 badgeType 포함
         meta: doc.meta,
         ocr: doc.ocr,
         docembed: doc.docembed,

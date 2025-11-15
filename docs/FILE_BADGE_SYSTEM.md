@@ -10,22 +10,18 @@
 
 ## 📷 OCR 시도 대상 파일
 
-**Meta에서 full_text 추출 실패 시 OCR을 시도하는 MIME 타입:**
+**Meta에서 full_text 추출 실패 시 모든 파일에 OCR 시도:**
 
-| 카테고리 | MIME 타입 | 확장자 예시 |
-|---------|----------|------------|
-| **이미지** | image/jpeg | .jpg, .jpeg |
-| | image/png | .png |
-| | image/gif | .gif |
-| | image/bmp | .bmp |
-| | image/tiff | .tif, .tiff |
-| | image/webp | .webp |
-| **PDF** | application/pdf | .pdf (스캔본) |
+- **MIME 타입 무관**: `meta.full_text`가 null이면 어떤 파일이든 OCR 시도
+- 이미지 (JPG, PNG, GIF, BMP, TIFF, WebP)
+- PDF (스캔본)
+- Office 문서 (PPT, PPTX, DOC, DOCX, XLS, XLSX)
+- 한글 문서 (HWP)
+- 기타 모든 파일 형식
 
-**OCR 시도하지 않는 파일:**
-- 압축: application/zip, application/x-rar
-- 미디어: audio/*, video/*
-- 텍스트: text/plain (이미 Meta에서 처리)
+**OCR 처리 결과:**
+- OCR 성공 시 → `ocr.full_text`에 텍스트 저장 → **OCR 뱃지**
+- OCR 실패 시 → `ocr.full_text` null 유지 → **BIN 뱃지**
 
 ## 🌳 완전 분류 트리
 
