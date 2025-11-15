@@ -48,6 +48,14 @@
   gap: var(--spacing-3);
 }
 
+/* 파이 차트 */
+.document-management-view__pie-chart {
+  margin-top: var(--spacing-6);
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 /* 빠른 액션 그리드 */
 .document-management-view__actions-grid {
   display: grid;

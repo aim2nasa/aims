@@ -1,0 +1,150 @@
+/**
+ * FileTypePieChart Styles
+ * @since 1.0.0
+ *
+ * iOS/Apple 디자인 시스템 기반 파이 차트 스타일
+ *
+ * 🍎 Design Principles:
+ * - Progressive Disclosure: 기본 상태는 서브틀
+ * - Clarity: 명확한 정보 전달
+ * - Deference: UI가 콘텐츠를 방해하지 않음
+ */
+
+/* === 전체 컨테이너 === */
+.file-type-pie-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--easing-ease-out);
+}
+
+/* Progressive Disclosure: 기본 상태는 서브틀 */
+.file-type-pie-chart {
+  opacity: 0.95;
+}
+
+.file-type-pie-chart:hover {
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, var(--opacity-shadow-md));
+}
+
+/* === SVG 차트 === */
+.file-type-pie-chart__svg {
+  width: 100%;
+  height: auto;
+  max-width: 120px;
+}
+
+/* 파이 조각 */
+.file-type-pie-chart__slice {
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-type-pie-chart__slice:hover {
+  opacity: 0.85;
+}
+
+.file-type-pie-chart__path {
+  stroke: var(--color-bg-card);
+  stroke-width: 2;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-type-pie-chart__slice:hover .file-type-pie-chart__path {
+  filter: brightness(1.1);
+}
+
+/* 중앙 텍스트 (도넛 차트) */
+.file-type-pie-chart__center-text {
+  font-family: var(--font-family-system);
+  pointer-events: none;
+}
+
+.file-type-pie-chart__total-label {
+  font-size: var(--font-size-caption-2); /* 11px - 뱃지/힌트 */
+  font-weight: var(--font-weight-medium);
+  fill: var(--color-text-secondary);
+}
+
+.file-type-pie-chart__total-count {
+  font-size: var(--font-size-caption-1); /* 12px - 보조 정보 */
+  font-weight: var(--font-weight-bold);
+  fill: var(--color-text-primary);
+}
+
+/* === 레전드 === */
+.file-type-pie-chart__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  width: 100%;
+}
+
+.file-type-pie-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.file-type-pie-chart__legend-item:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.file-type-pie-chart__legend-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.file-type-pie-chart__legend-label {
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 30px;
+}
+
+.file-type-pie-chart__legend-value {
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 다크 모드 === */
+html[data-theme="dark"] .file-type-pie-chart {
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .file-type-pie-chart:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .file-type-pie-chart__path {
+  stroke: var(--color-bg-card);
+}
+
+/* === 반응형 === */
+@media (max-width: 768px) {
+  .file-type-pie-chart {
+    padding: var(--spacing-1);
+  }
+
+  .file-type-pie-chart__svg {
+    max-width: 100px;
+  }
+
+  .file-type-pie-chart__legend-item {
+    padding: var(--spacing-1);
+  }
+}
