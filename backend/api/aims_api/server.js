@@ -905,19 +905,33 @@ app.get('/api/documents/statistics', async (req, res) => {
         ocr_prep: 0,
         ocr: 0,
         docembed: 0
+      },
+      badgeTypes: {
+        TXT: 0,
+        OCR: 0,
+        BIN: 0
       }
     };
 
     documents.forEach(doc => {
       const { overallStatus, currentStage } = analyzeDocumentStatus(doc);
       stats[overallStatus]++;
-      
+
       // 현재 단계별 통계
       if (currentStage >= 1) stats.stages.upload++;
       if (currentStage >= 2) stats.stages.meta++;
       if (currentStage >= 3) stats.stages.ocr_prep++;
       if (currentStage >= 4) stats.stages.ocr++;
       if (currentStage >= 5) stats.stages.docembed++;
+
+      // badgeType 계산 (FILE_BADGE_SYSTEM.md 분류 트리 준수)
+      let badgeType = 'BIN'; // 기본값
+      if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
+        badgeType = 'TXT';
+      } else if (doc.ocr?.full_text) {
+        badgeType = 'OCR';
+      }
+      stats.badgeTypes[badgeType]++;
     });
 
     res.json({

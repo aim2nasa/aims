@@ -560,6 +560,11 @@ export class DocumentService {
         ocr: Number(stats.stages?.ocr) || 0,
         docembed: Number(stats.stages?.docembed) || 0,
       },
+      badgeTypes: {
+        TXT: Number(stats.badgeTypes?.TXT) || 0,
+        OCR: Number(stats.badgeTypes?.OCR) || 0,
+        BIN: Number(stats.badgeTypes?.BIN) || 0,
+      },
     };
   }
 
@@ -691,6 +696,11 @@ export interface DocumentStatistics {
     ocr_prep: number;
     ocr: number;
     docembed: number;
+  };
+  badgeTypes: {
+    TXT: number;
+    OCR: number;
+    BIN: number;
   };
 }
 

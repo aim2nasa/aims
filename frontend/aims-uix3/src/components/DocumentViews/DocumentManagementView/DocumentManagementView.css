@@ -44,8 +44,8 @@
 /* 통계 카드 그리드 */
 .document-management-view__stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-4);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-3);
 }
 
 /* 빠른 액션 그리드 */

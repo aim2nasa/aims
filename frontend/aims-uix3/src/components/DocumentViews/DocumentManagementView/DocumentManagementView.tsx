@@ -391,6 +391,51 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               isLoading={isStatsLoading}
               {...(isStatsError && { error: '통계 조회 실패' })}
             />
+            <StatCard
+              title="TXT 파일"
+              value={stats?.badgeTypes?.TXT ?? 0}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <rect x="4" y="2" width="12" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <line x1="7" y1="6" x2="13" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="7" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="7" y1="12" x2="11" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              }
+              color="success"
+              isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
+            />
+            <StatCard
+              title="OCR 파일"
+              value={stats?.badgeTypes?.OCR ?? 0}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <rect x="3" y="2" width="14" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M6 6h8M6 9h8M6 12h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="14" cy="14" r="3" fill="var(--color-primary-500)"/>
+                  <path d="M12.5 14l1 1 1.5-2" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+              }
+              color="primary"
+              isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
+            />
+            <StatCard
+              title="BIN 파일"
+              value={stats?.badgeTypes?.BIN ?? 0}
+              icon={
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M4 6h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M7 3h6v3H7z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <line x1="8" y1="9" x2="8" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              }
+              color="neutral"
+              isLoading={isStatsLoading}
+              {...(isStatsError && { error: '통계 조회 실패' })}
+            />
           </div>
         </section>
 

@@ -50,7 +50,10 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
       completed: 0,
       processing: 0,
       error: 0,
-      pending: 0
+      pending: 0,
+      txt: 0,
+      ocr: 0,
+      bin: 0
     }
 
     documents.forEach((doc) => {
@@ -59,6 +62,11 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
       else if (status === 'processing') counts.processing++
       else if (status === 'error') counts.error++
       else if (status === 'pending') counts.pending++
+
+      // badgeType별 카운트
+      if (doc.badgeType === 'TXT') counts.txt++
+      else if (doc.badgeType === 'OCR') counts.ocr++
+      else if (doc.badgeType === 'BIN') counts.bin++
     })
 
     return counts
@@ -117,27 +125,75 @@ export const DocumentStatusStats: React.FC<DocumentStatusStatsProps> = ({
     }
   ]
 
+  // 뱃지 타입 카드 정의
+  const badgeTypeCards = [
+    {
+      label: 'TXT',
+      count: stats.txt,
+      icon: '📝',
+      className: 'badge-card-txt',
+      description: 'Meta 텍스트 추출'
+    },
+    {
+      label: 'OCR',
+      count: stats.ocr,
+      icon: '📷',
+      className: 'badge-card-ocr',
+      description: 'OCR 텍스트 추출'
+    },
+    {
+      label: 'BIN',
+      count: stats.bin,
+      icon: '📦',
+      className: 'badge-card-bin',
+      description: '바이너리 파일'
+    }
+  ]
+
   return (
-    <div className="document-status-stats" role="group" aria-label="문서 상태별 통계">
-      {statusCards.map((card) => (
-        <button
-          key={card.key}
-          className={`status-card ${card.className} ${activeFilter === card.key ? 'status-card--active' : ''} focus-ring`}
-          onClick={() => onFilterChange(card.key)}
-          onKeyDown={(e) => handleKeyPress(e, card.key)}
-          aria-label={`${card.label} 문서 ${card.count}개`}
-          aria-pressed={activeFilter === card.key}
-          tabIndex={0}
-        >
-          <div className="status-card-icon" aria-hidden="true">
-            {card.icon}
+    <div className="document-status-stats-container">
+      {/* 문서 상태별 통계 */}
+      <div className="document-status-stats" role="group" aria-label="문서 상태별 통계">
+        {statusCards.map((card) => (
+          <button
+            key={card.key}
+            className={`status-card ${card.className} ${activeFilter === card.key ? 'status-card--active' : ''} focus-ring`}
+            onClick={() => onFilterChange(card.key)}
+            onKeyDown={(e) => handleKeyPress(e, card.key)}
+            aria-label={`${card.label} 문서 ${card.count}개`}
+            aria-pressed={activeFilter === card.key}
+            tabIndex={0}
+          >
+            <div className="status-card-icon" aria-hidden="true">
+              {card.icon}
+            </div>
+            <div className="status-card-content">
+              <span className="status-card-label">{card.label}</span>
+              <span className="status-card-count">{card.count}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* 뱃지 타입별 통계 */}
+      <div className="badge-type-stats" role="group" aria-label="파일 타입별 통계">
+        {badgeTypeCards.map((card) => (
+          <div
+            key={card.label}
+            className={`badge-type-card ${card.className}`}
+            aria-label={`${card.label} 파일 ${card.count}개`}
+            title={card.description}
+          >
+            <div className="badge-type-card-icon" aria-hidden="true">
+              {card.icon}
+            </div>
+            <div className="badge-type-card-content">
+              <span className="badge-type-card-label">{card.label}</span>
+              <span className="badge-type-card-count">{card.count}</span>
+            </div>
           </div>
-          <div className="status-card-content">
-            <span className="status-card-label">{card.label}</span>
-            <span className="status-card-count">{card.count}</span>
-          </div>
-        </button>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
