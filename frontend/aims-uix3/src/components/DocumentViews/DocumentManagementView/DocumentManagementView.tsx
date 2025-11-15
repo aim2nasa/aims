@@ -393,7 +393,11 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             />
             <StatCard
               title="TXT 파일"
-              value={stats?.badgeTypes?.TXT ?? 0}
+              value={
+                stats?.total && stats.total > 0
+                  ? `${stats.badgeTypes?.TXT ?? 0} (${Math.round(((stats.badgeTypes?.TXT ?? 0) / stats.total) * 100)}%)`
+                  : stats?.badgeTypes?.TXT ?? 0
+              }
               icon={
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <rect x="4" y="2" width="12" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
@@ -408,7 +412,11 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             />
             <StatCard
               title="OCR 파일"
-              value={stats?.badgeTypes?.OCR ?? 0}
+              value={
+                stats?.total && stats.total > 0
+                  ? `${stats.badgeTypes?.OCR ?? 0} (${Math.round(((stats.badgeTypes?.OCR ?? 0) / stats.total) * 100)}%)`
+                  : stats?.badgeTypes?.OCR ?? 0
+              }
               icon={
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <rect x="3" y="2" width="14" height="16" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
@@ -423,7 +431,11 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             />
             <StatCard
               title="BIN 파일"
-              value={stats?.badgeTypes?.BIN ?? 0}
+              value={
+                stats?.total && stats.total > 0
+                  ? `${stats.badgeTypes?.BIN ?? 0} (${Math.round(((stats.badgeTypes?.BIN ?? 0) / stats.total) * 100)}%)`
+                  : stats?.badgeTypes?.BIN ?? 0
+              }
               icon={
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M4 6h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
