@@ -410,7 +410,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           console.log(`[NaverMap] 저장된 지도 상태: center=${JSON.stringify(savedState.center)}, zoom=${savedState.zoom}`)
         }
 
-        // 400ms 후 저장된 지도 상태로 복원 (RightPane 애니메이션과 자연스럽게 동기화)
+        // 300ms 후 저장된 지도 상태로 복원 (RightPane 애니메이션 중반부터 시작하여 부드러운 동기화)
         rightPaneAnimationTimeoutId.current = setTimeout(() => {
           try {
             const map = mapInstance.current
@@ -441,7 +441,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
               console.error('[NaverMap] ❌ 지도 상태 복원 중 예외 발생:', error)
             }
           }
-        }, 400)
+        }, 300)
       }
     })
 

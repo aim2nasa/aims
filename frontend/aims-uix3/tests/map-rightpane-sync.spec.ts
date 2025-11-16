@@ -168,7 +168,7 @@ test.describe('지도 RightPane 동기화 테스트', () => {
 
     // 8. RightPane X 버튼 클릭
     await page.click('.base-viewer__close-button')
-    await page.waitForTimeout(1200) // RightPane 애니메이션(600ms) + setTimeout(400ms) + 여유(200ms)
+    await page.waitForTimeout(1100) // RightPane 애니메이션(600ms) + setTimeout(300ms) + 여유(200ms)
 
     // 9. RightPane이 닫혔는지 확인
     const rpWidthAfterClose = await rightPane.evaluate(el => el.getBoundingClientRect().width)
