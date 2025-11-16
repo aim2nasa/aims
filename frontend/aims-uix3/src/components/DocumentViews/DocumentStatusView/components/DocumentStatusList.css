@@ -1159,12 +1159,12 @@ html[data-theme="dark"] .status-item:hover .document-icon.file-icon--text {
 .document-txt-badge,
 .document-ocr-badge,
 .document-bin-badge {
-  font-size: 9px;
+  font-size: 6px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 1px 3px;
+  border-radius: 2px;
   text-align: center;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .document-txt-badge {
