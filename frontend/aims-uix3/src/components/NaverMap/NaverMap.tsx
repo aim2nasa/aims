@@ -1006,6 +1006,15 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       return
     }
 
+    // RightPane이 이미 열려있는 상태에서는 지도 이동 안 함
+    // (이미 마커가 사용자 지도 중앙에 올바르게 위치해 있음)
+    if (hasAdjustedForRightPane.current) {
+      if (import.meta.env.DEV) {
+        console.log('[NaverMap] RightPane 열림 상태 - 지도 이동 생략 (이미 올바른 위치)')
+      }
+      return
+    }
+
     const selectedCustomer = customers.find(c => c._id === selectedCustomerId)
     if (!selectedCustomer?.personal_info?.address?.address1) {
       return
