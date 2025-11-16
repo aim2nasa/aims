@@ -124,6 +124,16 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       DocumentStatusService.getRecentDocuments(1, 5, 'uploadTime_desc'),
   });
 
+  // 전체 문서 목록 조회 (파일 타입 통계용)
+  const {
+    data: allDocuments,
+    refetch: refetchAllDocuments
+  } = useQuery({
+    queryKey: ['allDocumentsForStats'],
+    queryFn: () =>
+      DocumentStatusService.getRecentDocuments(1, 10000, 'uploadTime_desc'), // 전체 조회
+  });
+
   // 최근 활동 데이터 변환
   const recentActivities: RecentActivityItem[] = useMemo(() => {
     if (!recentDocuments?.documents) return [];
@@ -255,12 +265,61 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   const handleRefresh = async () => {
     await Promise.all([
       refetchStats(),
-      refetchRecent()
+      refetchRecent(),
+      refetchAllDocuments()
     ]);
   };
 
-  // 파이 차트 데이터 준비
-  const pieChartData: FileTypeData[] = useMemo(() => {
+  /**
+   * 파일 타입 분류 헬퍼
+   */
+  const getFileTypeCategory = (mimeType: string | undefined, filename: string | undefined): string => {
+    const mime = (mimeType || '').toLowerCase();
+    const name = (filename || '').toLowerCase();
+
+    // PDF
+    if (mime.includes('pdf') || name.endsWith('.pdf')) {
+      return 'PDF';
+    }
+    // Word
+    if (mime.includes('word') || mime.includes('msword') ||
+        name.endsWith('.doc') || name.endsWith('.docx')) {
+      return 'Word';
+    }
+    // Excel
+    if (mime.includes('excel') || mime.includes('spreadsheet') ||
+        name.endsWith('.xls') || name.endsWith('.xlsx')) {
+      return 'Excel';
+    }
+    // PowerPoint
+    if (mime.includes('powerpoint') || mime.includes('presentation') ||
+        name.endsWith('.ppt') || name.endsWith('.pptx')) {
+      return 'PowerPoint';
+    }
+    // Image
+    if (mime.includes('image/') ||
+        name.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/)) {
+      return 'Image';
+    }
+    // ZIP/Archive
+    if (mime.includes('zip') || mime.includes('compressed') || mime.includes('archive') ||
+        name.match(/\.(zip|rar|7z|tar|gz)$/)) {
+      return 'ZIP';
+    }
+    // PostScript
+    if (mime.includes('postscript') || name.endsWith('.ps') || name.endsWith('.eps')) {
+      return 'PostScript';
+    }
+    // Text
+    if (mime.includes('text/') || name.endsWith('.txt')) {
+      return 'Text';
+    }
+    // 기타
+    return 'Other';
+  };
+
+  // 파일 타입 파이 차트 데이터
+  const fileTypePieData: FileTypeData[] = useMemo(() => {
     if (!stats?.badgeTypes) return [];
 
     return [
@@ -284,6 +343,72 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       }
     ];
   }, [stats]);
+
+  // 처리 상태 파이 차트 데이터
+  const statusPieData: FileTypeData[] = useMemo(() => {
+    if (!stats) return [];
+
+    return [
+      {
+        label: '완료',
+        count: stats.completed ?? 0,
+        color: 'var(--color-success)',
+        description: '모든 처리 단계가 완료된 문서'
+      },
+      {
+        label: '처리중',
+        count: stats.processing ?? 0,
+        color: 'var(--color-primary-500)',
+        description: '현재 처리 중인 문서'
+      },
+      {
+        label: '대기',
+        count: stats.pending ?? 0,
+        color: 'var(--color-warning)',
+        description: '처리 대기 중인 문서'
+      },
+      {
+        label: '실패',
+        count: stats.error ?? 0,
+        color: 'var(--color-error)',
+        description: '처리 실패한 문서'
+      }
+    ].filter(item => item.count > 0); // 0인 항목은 제외
+  }, [stats]);
+
+  // 실제 파일 타입 파이 차트 데이터 (MIME type 기반)
+  const actualFileTypePieData: FileTypeData[] = useMemo(() => {
+    if (!allDocuments?.documents) return [];
+
+    const typeCounts: Record<string, number> = {};
+
+    allDocuments.documents.forEach(doc => {
+      const fileType = getFileTypeCategory(doc.mimeType, doc.filename || doc.originalName);
+      typeCounts[fileType] = (typeCounts[fileType] || 0) + 1;
+    });
+
+    const typeColors: Record<string, string> = {
+      'PDF': 'var(--color-error)',
+      'Word': 'var(--color-primary-500)',
+      'Excel': 'var(--color-success)',
+      'PowerPoint': 'var(--color-warning)',
+      'Image': 'var(--color-ios-blue)',
+      'ZIP': 'var(--color-ios-purple)',
+      'PostScript': 'var(--color-ios-orange)',
+      'Text': 'var(--color-neutral-600)',
+      'Other': 'var(--color-text-tertiary)'
+    };
+
+    return Object.entries(typeCounts)
+      .map(([label, count]) => ({
+        label,
+        count,
+        color: typeColors[label] || 'var(--color-text-tertiary)',
+        description: `${label} 파일`
+      }))
+      .sort((a, b) => b.count - a.count) // 개수 많은 순으로 정렬
+      .filter(item => item.count > 0);
+  }, [allDocuments]);
 
   // 사용 가이드 섹션
   const guideSections: GuideSection[] = [
@@ -421,14 +546,44 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
             />
           </div>
 
-          {/* 파일 타입 비율 차트 */}
-          {!isStatsLoading && !isStatsError && pieChartData.length > 0 && (
-            <div className="document-management-view__pie-chart">
-              <FileTypePieChart
-                data={pieChartData}
-                size={120}
-                innerRadius={30}
-              />
+          {/* 파이 차트 그리드 */}
+          {!isStatsLoading && !isStatsError && stats && stats.total > 0 && (
+            <div className="document-management-view__pie-charts-grid">
+              {/* 파일 타입 차트 */}
+              {fileTypePieData.length > 0 && (
+                <div className="pie-chart-item">
+                  <h3 className="pie-chart-title">파일 타입</h3>
+                  <FileTypePieChart
+                    data={fileTypePieData}
+                    size={180}
+                    innerRadius={45}
+                  />
+                </div>
+              )}
+
+              {/* 처리 상태 차트 */}
+              {statusPieData.length > 0 && (
+                <div className="pie-chart-item">
+                  <h3 className="pie-chart-title">처리 상태</h3>
+                  <FileTypePieChart
+                    data={statusPieData}
+                    size={180}
+                    innerRadius={45}
+                  />
+                </div>
+              )}
+
+              {/* 파일 형식 차트 */}
+              {actualFileTypePieData.length > 0 && (
+                <div className="pie-chart-item">
+                  <h3 className="pie-chart-title">파일 형식</h3>
+                  <FileTypePieChart
+                    data={actualFileTypePieData}
+                    size={180}
+                    innerRadius={45}
+                  />
+                </div>
+              )}
             </div>
           )}
         </section>

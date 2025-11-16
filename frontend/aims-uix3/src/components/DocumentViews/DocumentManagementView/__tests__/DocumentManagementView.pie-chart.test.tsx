@@ -94,8 +94,8 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const pieChart = container.querySelector('.document-management-view__pie-chart')
-        expect(pieChart).toBeInTheDocument()
+        const pieChartsGrid = container.querySelector('.document-management-view__pie-charts-grid')
+        expect(pieChartsGrid).toBeInTheDocument()
       })
     })
 
@@ -113,8 +113,8 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(statsCards.length).toBeGreaterThan(0) // 통계 카드는 렌더링됨
       })
 
-      const pieChart = container.querySelector('.document-management-view__pie-chart')
-      expect(pieChart).not.toBeInTheDocument()
+      const pieChartsGrid = container.querySelector('.document-management-view__pie-charts-grid')
+      expect(pieChartsGrid).not.toBeInTheDocument()
     })
 
     it('파이 차트가 FileTypePieChart 컴포넌트를 사용해야 함', async () => {
@@ -214,7 +214,7 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
   })
 
   describe('[회귀 방지] 파이 차트 스타일 및 크기', () => {
-    it('파이 차트가 120px 크기로 렌더링되어야 함', async () => {
+    it('파이 차트가 180px 크기로 렌더링되어야 함', async () => {
       mockGetDocumentStatistics.mockResolvedValue(createMockStats({
         TXT: 3,
         OCR: 5,
@@ -225,12 +225,12 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
 
       await waitFor(() => {
         const svg = container.querySelector('.file-type-pie-chart svg')
-        expect(svg).toHaveAttribute('width', '120')
-        expect(svg).toHaveAttribute('height', '120')
+        expect(svg).toHaveAttribute('width', '180')
+        expect(svg).toHaveAttribute('height', '180')
       })
     })
 
-    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=30)', async () => {
+    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=45)', async () => {
       mockGetDocumentStatistics.mockResolvedValue(createMockStats({
         TXT: 3,
         OCR: 5,
@@ -245,7 +245,7 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
       })
     })
 
-    it('파이 차트가 올바른 CSS 클래스를 가져야 함', async () => {
+    it('파이 차트 그리드가 올바른 CSS 클래스를 가져야 함', async () => {
       mockGetDocumentStatistics.mockResolvedValue(createMockStats({
         TXT: 3,
         OCR: 5,
@@ -255,9 +255,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const pieChart = container.querySelector('.document-management-view__pie-chart')
-        expect(pieChart).toBeInTheDocument()
-        expect(pieChart).toHaveClass('document-management-view__pie-chart')
+        const pieChartsGrid = container.querySelector('.document-management-view__pie-charts-grid')
+        expect(pieChartsGrid).toBeInTheDocument()
+        expect(pieChartsGrid).toHaveClass('document-management-view__pie-charts-grid')
       })
     })
   })
