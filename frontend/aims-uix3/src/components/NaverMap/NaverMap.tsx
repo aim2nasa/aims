@@ -28,6 +28,10 @@ interface NaverBounds {
   extend(latlng: NaverLatLng): void
 }
 
+interface NaverProjection {
+  fromCoordToOffset(latlng: NaverLatLng): NaverPoint
+}
+
 interface NaverMarker {
   setMap(map: NaverMap | null): void
   setIcon(icon: { content: string; anchor: NaverPoint }): void
@@ -46,6 +50,7 @@ interface NaverMap {
   getZoom(): number
   setZoom(zoom: number): void
   panBy(point: NaverPoint): void
+  getProjection(): NaverProjection
   fitBounds(bounds: NaverBounds, options?: { top?: number; right?: number; bottom?: number; left?: number }): void
 }
 
@@ -151,6 +156,12 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // 프로그래밍 방식의 resize인지 구분하는 플래그
   const isProgrammaticResize = useRef(false)
 
+  // 선택된 고객 위치 저장 (지도 크기 변경 시 중앙 유지용)
+  const selectedCustomerPosition = useRef<{ lat: number; lng: number } | null>(null)
+
+  // RightPane 열림 감지 플래그 (한 번만 실행)
+  const hasAdjustedForRightPane = useRef<boolean>(false)
+
   // 지도 초기화
   useEffect(() => {
     if (!mapElement.current || !window.naver) {
@@ -255,6 +266,111 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize)
       clearTimeout(resizeTimeout)
+    }
+  }, [isMapReady])
+
+  // ⭐⭐⭐ RightPane 열림/닫힘 감지 및 지도 조정
+  useEffect(() => {
+    if (!mapElement.current || !mapInstance.current) {
+      return
+    }
+
+    // RightPane DOM 요소 관찰 (absolute positioning이므로 직접 관찰)
+    const rp = document.querySelector('.layout-rightpane-container')
+    if (!rp) {
+      return
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (!mapInstance.current || !window.naver) {
+        return
+      }
+
+      const rpRect = rp.getBoundingClientRect()
+      const currentRPWidth = rpRect.width
+
+      if (import.meta.env.DEV) {
+        console.log(`[NaverMap] ResizeObserver 실행: RightPane width=${Math.round(currentRPWidth)}px, hasAdjusted=${hasAdjustedForRightPane.current}`)
+      }
+
+      // RightPane이 열렸으면 (width가 200px 이상) 그리고 아직 조정하지 않았으면
+      if (currentRPWidth > 200 && !hasAdjustedForRightPane.current) {
+        hasAdjustedForRightPane.current = true
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] RightPane 열림 감지! width=${Math.round(currentRPWidth)}px`)
+        }
+
+        // 500ms 후 마커 위치 조정 (RightPane 애니메이션 완료 대기)
+        setTimeout(() => {
+          if (!mapInstance.current || !window.naver) {
+            return
+          }
+
+          // selectedCustomerId로부터 위치 재계산
+          const currentCenter = mapInstance.current.getCenter()
+          if (!currentCenter) {
+            return
+          }
+
+          const tree = document.querySelector('.regional-tree-container')
+          const rpNow = document.querySelector('.layout-rightpane-container')
+
+          if (!tree || !rpNow) {
+            return
+          }
+
+          const treeRect = tree.getBoundingClientRect()
+          const rpRectNow = rpNow.getBoundingClientRect()
+
+          // RightPane이 실제로 열려있는지 확인
+          if (rpRectNow.width < 200) {
+            return
+          }
+
+          // 사용자 지도 영역 중앙 계산 (Tree 오른쪽 ~ RP 왼쪽)
+          const userMapCenter = (treeRect.right + rpRectNow.left) / 2
+
+          // Naver Maps API Projection을 사용하여 마커의 화면상 위치 계산
+          const map = mapInstance.current
+          const projection = map.getProjection()
+          const markerLatLng = currentCenter // 현재 지도 중심 사용
+          const markerPoint = projection.fromCoordToOffset(markerLatLng)
+
+          // 지도 컨테이너의 화면상 위치
+          const mapContainer = map.getElement()
+          const mapRect = mapContainer.getBoundingClientRect()
+
+          // 마커의 절대 화면 좌표 (viewport 기준)
+          const markerScreenX = mapRect.left + markerPoint.x
+
+          // offset 계산 및 조정
+          const offset = userMapCenter - markerScreenX
+
+          if (Math.abs(offset) > 5) {
+            map.panBy(new window.naver.maps.Point(-offset, 0))
+
+            if (import.meta.env.DEV) {
+              console.log(`[NaverMap] RightPane 열림 감지 - 마커 위치 조정`)
+              console.log(`  RightPane width: ${Math.round(currentRPWidth)}px`)
+              console.log(`  사용자 지도 중앙: ${Math.round(userMapCenter)}px`)
+              console.log(`  마커 화면 위치: ${Math.round(markerScreenX)}px`)
+              console.log(`  panBy(${Math.round(-offset)}, 0)`)
+            }
+          }
+        }, 500)
+      }
+
+      // RightPane이 닫혔으면 플래그 리셋
+      if (currentRPWidth < 50) {
+        hasAdjustedForRightPane.current = false
+      }
+    })
+
+    resizeObserver.observe(rp)
+
+    return () => {
+      resizeObserver.disconnect()
     }
   }, [isMapReady])
 
@@ -839,61 +955,12 @@ export const NaverMap: React.FC<NaverMapProps> = ({
       const map = mapInstance.current
       if (!map) return
 
-      // RP가 열려있을 때만 사용자 지도 중앙으로 조정
-      const tree = document.querySelector('.regional-tree-container')
-      const rp = document.querySelector('.layout-rightpane-container')
+      // 선택된 고객 위치 저장 (지도 크기 변경 시 사용)
+      selectedCustomerPosition.current = { lat: result.latitude, lng: result.longitude }
 
-      if (tree && rp) {
-        const treeRect = tree.getBoundingClientRect()
-        const rpRect = rp.getBoundingClientRect()
-
-        // 사용자 지도 영역 계산 (Tree 오른쪽부터 RP 왼쪽까지)
-        const userMapCenter = (treeRect.right + rpRect.left) / 2
-
-        // 일단 기본 위치로 setCenter
-        map.setCenter(position)
-        map.setZoom(15)
-
-        // setCenter 완료 후 실제 마커 위치 기반으로 조정
-        setTimeout(() => {
-          const mapContainer = map.getElement()
-          const allDivs = mapContainer.querySelectorAll('div')
-          let markerScreenX = null
-
-          // 파란색 배경을 가진 div 찾기
-          for (const div of allDivs) {
-            const style = window.getComputedStyle(div)
-            const bgColor = style.backgroundColor
-
-            if (bgColor.includes('0, 122, 255') || bgColor.includes('rgb(0, 100')) {
-              const rect = div.getBoundingClientRect()
-              if (rect.width > 0 && rect.height > 0) {
-                markerScreenX = rect.left + rect.width / 2
-                break
-              }
-            }
-          }
-
-          if (markerScreenX) {
-            const actualOffset = userMapCenter - markerScreenX
-
-            if (Math.abs(actualOffset) > 5) {
-              map.panBy(new window.naver.maps.Point(-actualOffset, 0))
-
-              if (import.meta.env.DEV) {
-                console.log(`[NaverMap] RP 열림: 마커 위치 조정`)
-                console.log(`  사용자 지도 중앙: ${Math.round(userMapCenter)}px`)
-                console.log(`  마커 실제 위치: ${Math.round(markerScreenX)}px`)
-                console.log(`  panBy(${Math.round(-actualOffset)}, 0)`)
-              }
-            }
-          }
-        }, 300)
-      } else {
-        // RP 없으면 기본 동작
-        map.setCenter(position)
-        map.setZoom(15)
-      }
+      // 기본 지도 이동 (전체 지도 영역 기준)
+      map.setCenter(position)
+      map.setZoom(15)
 
       if (import.meta.env.DEV) {
         console.log(`[NaverMap] 선택된 고객으로 이동: ${selectedCustomer.personal_info.name}`)
