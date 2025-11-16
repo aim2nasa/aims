@@ -162,8 +162,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('3 (100%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0%)')
+        expect(legendValues[0]).toHaveTextContent('3 (100.00%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
       })
     })
 
@@ -190,8 +190,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0%)')
-        expect(legendValues[1]).toHaveTextContent('2 (100%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[1]).toHaveTextContent('2 (100.00%)')
       })
     })
 
@@ -217,8 +217,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('3 (75%)')
-        expect(legendValues[1]).toHaveTextContent('1 (25%)')
+        expect(legendValues[0]).toHaveTextContent('3 (75.00%)')
+        expect(legendValues[1]).toHaveTextContent('1 (25.00%)')
       })
     })
 
@@ -244,8 +244,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         // insurance_info가 없으면 개인으로 분류됨
-        expect(legendValues[0]).toHaveTextContent('2 (67%)')
-        expect(legendValues[1]).toHaveTextContent('1 (33%)')
+        expect(legendValues[0]).toHaveTextContent('2 (66.67%)')
+        expect(legendValues[1]).toHaveTextContent('1 (33.33%)')
       })
     })
   })

@@ -149,9 +149,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('5 (100%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0%)')
-        expect(legendValues[2]).toHaveTextContent('0 (0%)')
+        expect(legendValues[0]).toHaveTextContent('5 (100.00%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[2]).toHaveTextContent('0 (0.00%)')
       })
     })
 
@@ -169,9 +169,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0%)')
-        expect(legendValues[1]).toHaveTextContent('8 (100%)')
-        expect(legendValues[2]).toHaveTextContent('0 (0%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[1]).toHaveTextContent('8 (100.00%)')
+        expect(legendValues[2]).toHaveTextContent('0 (0.00%)')
       })
     })
 
@@ -189,9 +189,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0%)')
-        expect(legendValues[2]).toHaveTextContent('3 (100%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[2]).toHaveTextContent('3 (100.00%)')
       })
     })
 
@@ -206,9 +206,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
 
       await waitFor(() => {
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('10 (50%)')
-        expect(legendValues[1]).toHaveTextContent('8 (40%)')
-        expect(legendValues[2]).toHaveTextContent('2 (10%)')
+        expect(legendValues[0]).toHaveTextContent('10 (50.00%)')
+        expect(legendValues[1]).toHaveTextContent('8 (40.00%)')
+        expect(legendValues[2]).toHaveTextContent('2 (10.00%)')
       })
     })
   })

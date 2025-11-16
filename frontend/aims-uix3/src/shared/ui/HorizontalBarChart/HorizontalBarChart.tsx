@@ -59,7 +59,7 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
                       <div className="horizontal-bar-chart__bar-label">
                         <span className="horizontal-bar-chart__label-text">{item.label}</span>
                         <span className="horizontal-bar-chart__label-count">
-                          {item.count} ({percentage.toFixed(0)}%)
+                          {item.count} ({percentage.toFixed(2)}%)
                         </span>
                       </div>
                     </div>
