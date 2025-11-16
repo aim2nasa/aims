@@ -162,6 +162,15 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // RightPane 열림 감지 플래그 (한 번만 실행)
   const hasAdjustedForRightPane = useRef<boolean>(false)
 
+  // RightPane 애니메이션 타이머 ID
+  const rightPaneAnimationTimeoutId = useRef<NodeJS.Timeout | null>(null)
+
+  // RightPane 열림 시점의 지도 상태 저장 (닫힘 시 복원)
+  const mapStateBeforeRightPane = useRef<{
+    center: { lat: number; lng: number } | null
+    zoom: number | null
+  }>({ center: null, zoom: null })
+
   // 지도 초기화
   useEffect(() => {
     if (!mapElement.current || !window.naver) {
@@ -301,6 +310,22 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           console.log(`[NaverMap] RightPane 열림 감지! width=${Math.round(currentRPWidth)}px`)
         }
 
+        // 현재 지도 상태 저장 (RightPane 닫을 때 복원용)
+        const map = mapInstance.current
+        if (map) {
+          const center = map.getCenter()
+          const zoom = map.getZoom()
+
+          mapStateBeforeRightPane.current = {
+            center: { lat: center.lat(), lng: center.lng() },
+            zoom
+          }
+
+          if (import.meta.env.DEV) {
+            console.log(`[NaverMap] 지도 상태 저장: center=(${center.lat()}, ${center.lng()}), zoom=${zoom}`)
+          }
+        }
+
         // 500ms 후 마커 위치 조정 (RightPane 애니메이션 완료 대기)
         setTimeout(() => {
           if (!mapInstance.current || !window.naver) {
@@ -350,6 +375,9 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           if (Math.abs(offset) > 5) {
             map.panBy(new window.naver.maps.Point(-offset, 0))
 
+            // 플래그 설정: RightPane 열림으로 지도 조정했음
+            hasAdjustedForRightPane.current = true
+
             if (import.meta.env.DEV) {
               console.log(`[NaverMap] RightPane 열림 감지 - 마커 위치 조정`)
               console.log(`  RightPane width: ${Math.round(currentRPWidth)}px`)
@@ -361,9 +389,59 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         }, 500)
       }
 
-      // RightPane이 닫혔으면 플래그 리셋
-      if (currentRPWidth < 50) {
+      // RightPane이 닫혔으면 플래그 리셋 + 저장된 지도 상태로 복원
+      if (currentRPWidth < 50 && hasAdjustedForRightPane.current) {
         hasAdjustedForRightPane.current = false
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] RightPane 닫힘 감지! width=${Math.round(currentRPWidth)}px`)
+        }
+
+        // 기존 애니메이션 타이머 취소 (있다면)
+        if (rightPaneAnimationTimeoutId.current) {
+          clearTimeout(rightPaneAnimationTimeoutId.current)
+          rightPaneAnimationTimeoutId.current = null
+        }
+
+        // 저장된 지도 상태
+        const savedState = mapStateBeforeRightPane.current
+
+        if (import.meta.env.DEV) {
+          console.log(`[NaverMap] 저장된 지도 상태: center=${JSON.stringify(savedState.center)}, zoom=${savedState.zoom}`)
+        }
+
+        // 700ms 후 저장된 지도 상태로 복원 (RightPane 애니메이션 600ms + 여유 100ms)
+        rightPaneAnimationTimeoutId.current = setTimeout(() => {
+          try {
+            const map = mapInstance.current
+
+            if (!map || !window.naver) {
+              return
+            }
+
+            if (!savedState.center || savedState.zoom === null) {
+              if (import.meta.env.DEV) {
+                console.log('[NaverMap] 저장된 지도 상태가 없어서 복원 생략')
+              }
+              return
+            }
+
+            // 저장된 중심과 줌으로 복원
+            const savedCenter = new window.naver.maps.LatLng(savedState.center.lat, savedState.center.lng)
+            map.setCenter(savedCenter)
+            map.setZoom(savedState.zoom)
+
+            if (import.meta.env.DEV) {
+              console.log(`[NaverMap] 지도 상태 복원 완료: center=(${savedState.center.lat}, ${savedState.center.lng}), zoom=${savedState.zoom}`)
+            }
+
+            rightPaneAnimationTimeoutId.current = null
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error('[NaverMap] ❌ 지도 상태 복원 중 예외 발생:', error)
+            }
+          }
+        }, 700)
       }
     })
 
