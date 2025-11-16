@@ -125,7 +125,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       DocumentStatusService.getRecentDocuments(1, 5, 'uploadTime_desc'),
   });
 
-  // 전체 문서 목록 조회 (파일 타입 통계용)
+  // 전체 문서 목록 조회 (문서 유형 통계용)
   const {
     data: allDocuments,
     refetch: refetchAllDocuments
@@ -140,7 +140,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     if (!recentDocuments?.documents) return [];
 
     return recentDocuments.documents.slice(0, 5).map((doc) => {
-      // 파일 타입 아이콘 생성 (문서 라이브러리와 동일)
+      // 문서 유형 아이콘 생성 (문서 라이브러리와 동일)
       const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.filename || doc.originalName);
       const fileTypeClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.filename || doc.originalName);
 
@@ -272,7 +272,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   };
 
   /**
-   * 파일 타입 분류 헬퍼 - 확장자 기반
+   * 문서 타입 분류 헬퍼 - 확장자 기반
    */
   const getFileTypeCategory = (mimeType: string | undefined, filename: string | undefined): string => {
     const name = (filename || '').toLowerCase();
@@ -294,7 +294,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     return 'UNKNOWN';
   };
 
-  // 파일 타입 파이 차트 데이터
+  // 문서 유형 파이 차트 데이터
   const fileTypePieData: FileTypeData[] = useMemo(() => {
     if (!stats?.badgeTypes) return [];
 
@@ -352,7 +352,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     ].filter(item => item.count > 0); // 0인 항목은 제외
   }, [stats]);
 
-  // 실제 파일 타입 파이 차트 데이터 (MIME type 기반)
+  // 실제 문서 타입 데이터 (MIME type 기반)
   const actualFileTypePieData: FileTypeData[] = useMemo(() => {
     if (!allDocuments?.documents) return [];
 
@@ -549,10 +549,10 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
           {/* 파이 차트 그리드 */}
           {!isStatsLoading && !isStatsError && stats && stats.total > 0 && (
             <div className="document-management-view__pie-charts-grid">
-              {/* 파일 타입 차트 */}
+              {/* 문서 유형 차트 */}
               {fileTypePieData.length > 0 && (
                 <div className="pie-chart-item">
-                  <h3 className="pie-chart-title">파일 타입</h3>
+                  <h3 className="pie-chart-title">문서 유형</h3>
                   <FileTypePieChart
                     data={fileTypePieData}
                     size={180}
@@ -573,14 +573,14 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                 </div>
               )}
 
-              {/* 파일 형식 차트 */}
+              {/* 문서 타입 차트 */}
               {actualFileTypePieData.length > 0 && (
                 <div className="pie-chart-item">
-                  <h3 className="pie-chart-title">파일 형식</h3>
+                  <h3 className="pie-chart-title">문서 타입</h3>
                   <HorizontalBarChart
                     categories={[
                       {
-                        title: '파일 형식',
+                        title: '문서 타입',
                         data: actualFileTypePieData
                       }
                     ]}
