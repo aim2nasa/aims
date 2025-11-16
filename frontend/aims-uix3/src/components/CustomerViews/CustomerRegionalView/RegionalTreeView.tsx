@@ -13,7 +13,7 @@
  * />
  * ```
  */
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import type { Customer } from '../../../entities/customer/model'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { usePersistedState } from '@/hooks/usePersistedState'
@@ -459,6 +459,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 같은 고객 재선택을 감지하기 위한 타임스탬프
   const [selectionTimestamp, setSelectionTimestamp] = useState(0)
 
+  // 로컬 선택된 고객 ID (지도 표시용, RightPane 열지 않음)
+  const [localSelectedCustomerId, setLocalSelectedCustomerId] = useState<string | null>(null)
+
   // 고객 유형 필터 (F5 이후에도 유지)
   const [customerTypeFilter, setCustomerTypeFilter] = usePersistedState<'all' | 'personal' | 'corporate'>('customer-regional-type-filter', 'all')
 
@@ -633,6 +636,49 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       noAddressCount: noAddressCustomers.length
     }
   }, [regionalGroups, customers])
+
+  // selectedCustomerId가 변경될 때 해당 고객의 폴더 자동으로 펼치기
+  useEffect(() => {
+    if (!selectedCustomerId) return
+
+    // 선택된 고객 찾기
+    const selectedCustomer = customers.find(c => c._id === selectedCustomerId)
+    if (!selectedCustomer) return
+
+    const address = selectedCustomer.personal_info?.address?.address1
+    if (address) {
+      const parts = address.split(' ')
+      const rawCity = parts[0] || ''
+      const district = parts[1] || ''
+
+      if (rawCity && district) {
+        const city = normalizeProvinceName(rawCity)
+        const districtKey = `${city}-${district}`
+
+        // 시/도와 시/군/구 노드를 expandedKeys에 추가
+        setExpandedKeys(prev => {
+          const newSet = new Set(prev)
+          newSet.add(city) // 시/도 펼치기
+          newSet.add(districtKey) // 시/군/구 펼치기
+          return Array.from(newSet)
+        })
+      }
+    } else {
+      // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
+      setExpandedKeys(prev => {
+        const newSet = new Set(prev)
+        newSet.add('no-address')
+        return Array.from(newSet)
+      })
+    }
+  }, [selectedCustomerId, customers])
+
+  // 외부에서 selectedCustomerId가 변경되면 localSelectedCustomerId도 동기화
+  useEffect(() => {
+    if (selectedCustomerId) {
+      setLocalSelectedCustomerId(selectedCustomerId)
+    }
+  }, [selectedCustomerId])
 
   // 필터 변경 핸들러
   /**
@@ -873,6 +919,9 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         })
       }
 
+      // 로컬 선택 상태 업데이트 (지도 표시용)
+      setLocalSelectedCustomerId(customer._id)
+
       onCustomerSelect(customer._id)
       // 같은 고객을 다시 선택해도 지도가 이동하도록 타임스탬프 업데이트
       setSelectionTimestamp(Date.now())
@@ -956,7 +1005,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
             {node.customers!.map(customer => (
               <div
                 key={customer._id}
-                className={`tree-customer-item tree-customer-item-level-${level + 1} ${selectedCustomerId === customer._id ? 'selected' : ''}`}
+                className={`tree-customer-item tree-customer-item-level-${level + 1} ${(localSelectedCustomerId || selectedCustomerId) === customer._id ? 'selected' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleCustomerClick(customer)
@@ -1114,7 +1163,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         <div className="regional-map-container">
           <NaverMap
             customers={filteredCustomers}
-            selectedCustomerId={selectedCustomerId}
+            selectedCustomerId={localSelectedCustomerId || selectedCustomerId}
             onCustomerSelect={(customerId: string) => {
               // 고객 ID로 고객 객체 찾기
               const customer = filteredCustomers.find(c => c._id === customerId)
