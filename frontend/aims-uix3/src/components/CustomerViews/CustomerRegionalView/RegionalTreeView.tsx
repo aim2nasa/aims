@@ -412,8 +412,10 @@ interface RegionalTreeViewProps {
   customers: Customer[]
   /** 현재 선택된 고객 ID */
   selectedCustomerId?: string | null
-  /** 고객 선택 시 호출되는 콜백 함수 */
+  /** 트리에서 고객 선택 시 호출되는 콜백 함수 (RightPane 열지 않음) */
   onCustomerSelect?: (customerId: string) => void
+  /** 지도에서 고객 클릭 시 호출되는 콜백 함수 (RightPane 열기) */
+  onCustomerClickFromMap?: (customerId: string) => void
   /** 로딩 상태 */
   loading?: boolean
   /** 새로고침 핸들러 */
@@ -447,6 +449,7 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   customers,
   selectedCustomerId,
   onCustomerSelect,
+  onCustomerClickFromMap,
   loading = false,
   onRefresh
 }) => {
@@ -1168,7 +1171,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
               // 고객 ID로 고객 객체 찾기
               const customer = filteredCustomers.find(c => c._id === customerId)
               if (customer) {
+                // 로컬 상태 업데이트 및 폴더 자동 펼치기
                 handleCustomerClick(customer)
+                // 지도에서 클릭 시 RightPane 열기
+                onCustomerClickFromMap?.(customerId)
               }
             }}
             selectionTimestamp={selectionTimestamp}

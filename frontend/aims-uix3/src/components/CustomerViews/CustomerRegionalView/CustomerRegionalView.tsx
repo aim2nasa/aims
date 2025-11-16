@@ -6,7 +6,7 @@
  * Document-Controller-View 패턴 준수
  */
 
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import RegionalTreeView from './RegionalTreeView'
 import { useCustomerDocument } from '@/hooks/useCustomerDocument'
@@ -44,10 +44,22 @@ interface CustomerRegionalViewProps {
 export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   visible,
   onClose,
+  onCustomerClick,
   selectedCustomer
 }) => {
   // Document-View 패턴: CustomerDocument 구독
   const { customers, isLoading, loadCustomers, refresh } = useCustomerDocument()
+
+  // 고객 ID로 빠른 조회를 위한 맵
+  const customerMap = useMemo(() => {
+    const map = new Map<string, Customer>()
+    customers.forEach(customer => {
+      if (customer?._id) {
+        map.set(customer._id, customer)
+      }
+    })
+    return map
+  }, [customers])
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -73,11 +85,24 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     }
   }, [refresh])
 
-  // 고객 선택 핸들러 (RightPane 표시 안 함)
+  // 트리에서 고객 선택 핸들러 (RightPane 표시 안 함)
   const handleCustomerSelect = useCallback((_customerId: string) => {
     // 고객 선택만 처리, RightPane은 열지 않음
     // 선택된 고객을 트리에 표시하는 용도로만 사용
   }, [])
+
+  // 지도에서 고객 클릭 핸들러 (RightPane 표시)
+  const handleCustomerClickFromMap = useCallback((customerId: string) => {
+    const customer = customerMap.get(customerId)
+    if (!customer) {
+      return
+    }
+
+    // App.tsx의 handleCustomerClick을 호출하여 RightPane 열기
+    if (onCustomerClick) {
+      onCustomerClick(customerId, customer)
+    }
+  }, [customerMap, onCustomerClick])
 
   return (
     <CenterPaneView
@@ -95,6 +120,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
         customers={customers}
         selectedCustomerId={selectedCustomer?._id || null}
         onCustomerSelect={handleCustomerSelect}
+        onCustomerClickFromMap={handleCustomerClickFromMap}
         loading={isLoading}
         onRefresh={async () => {
           await refresh({ limit: 10000 })
