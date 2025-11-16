@@ -73,12 +73,72 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         relationshipsMapped: 0,
         personalCustomers: 0,
         corporateCustomers: 0,
+        maleCustomers: 0,
+        femaleCustomers: 0,
+        unknownGenderCustomers: 0,
+        under30: 0,
+        thirties: 0,
+        forties: 0,
+        fifties: 0,
+        over60: 0,
+        unknownAge: 0,
       };
     }
 
     const customers = customersData.customers;
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // 연령 계산 헬퍼
+    const getAge = (birthDate: string | undefined) => {
+      if (!birthDate) return null;
+      const birth = new Date(birthDate);
+      const age = now.getFullYear() - birth.getFullYear();
+      const monthDiff = now.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+        return age - 1;
+      }
+      return age;
+    };
+
+    let maleCount = 0;
+    let femaleCount = 0;
+    let unknownGenderCount = 0;
+    let under30Count = 0;
+    let thirtiesCount = 0;
+    let fortiesCount = 0;
+    let fiftiesCount = 0;
+    let over60Count = 0;
+    let unknownAgeCount = 0;
+
+    customers.forEach(customer => {
+      // 성별 통계
+      const gender = customer.personal_info?.gender;
+      if (gender === 'M') {
+        maleCount++;
+      } else if (gender === 'F') {
+        femaleCount++;
+      } else {
+        unknownGenderCount++;
+      }
+
+      // 연령대 통계
+      const birthDate = customer.personal_info?.birth_date;
+      const age = birthDate ? getAge(birthDate) : null;
+      if (age === null) {
+        unknownAgeCount++;
+      } else if (age < 30) {
+        under30Count++;
+      } else if (age >= 30 && age < 40) {
+        thirtiesCount++;
+      } else if (age >= 40 && age < 50) {
+        fortiesCount++;
+      } else if (age >= 50 && age < 60) {
+        fiftiesCount++;
+      } else {
+        over60Count++;
+      }
+    });
 
     return {
       totalCustomers: customers.length,
@@ -90,11 +150,20 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       relationshipsMapped: 0, // TODO: 관계 API 연동 후 계산
       personalCustomers: customers.filter(c => c.insurance_info?.customer_type !== '법인').length,
       corporateCustomers: customers.filter(c => c.insurance_info?.customer_type === '법인').length,
+      maleCustomers: maleCount,
+      femaleCustomers: femaleCount,
+      unknownGenderCustomers: unknownGenderCount,
+      under30: under30Count,
+      thirties: thirtiesCount,
+      forties: fortiesCount,
+      fifties: fiftiesCount,
+      over60: over60Count,
+      unknownAge: unknownAgeCount,
     };
   }, [customersData]);
 
   // 파이 차트 데이터 준비
-  const pieChartData: FileTypeData[] = useMemo(() => {
+  const customerTypePieData: FileTypeData[] = useMemo(() => {
     return [
       {
         label: '개인',
@@ -107,6 +176,79 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         color: 'var(--color-warning)'
       }
     ];
+  }, [stats]);
+
+  // 성별 파이 차트
+  const genderPieData: FileTypeData[] = useMemo(() => {
+    const data: FileTypeData[] = [
+      {
+        label: '남성',
+        count: stats.maleCustomers,
+        color: 'var(--color-primary-500)'
+      },
+      {
+        label: '여성',
+        count: stats.femaleCustomers,
+        color: 'var(--color-ios-purple)'
+      }
+    ];
+    // 미상이 있을 경우에만 추가
+    if (stats.unknownGenderCustomers > 0) {
+      data.push({
+        label: '미상',
+        count: stats.unknownGenderCustomers,
+        color: 'var(--color-text-tertiary)'
+      });
+    }
+    return data;
+  }, [stats]);
+
+  // 연령대 파이 차트
+  const agePieData: FileTypeData[] = useMemo(() => {
+    const data: FileTypeData[] = [];
+    if (stats.under30 > 0) {
+      data.push({
+        label: '20대 이하',
+        count: stats.under30,
+        color: 'var(--color-ios-blue)'
+      });
+    }
+    if (stats.thirties > 0) {
+      data.push({
+        label: '30대',
+        count: stats.thirties,
+        color: 'var(--color-success)'
+      });
+    }
+    if (stats.forties > 0) {
+      data.push({
+        label: '40대',
+        count: stats.forties,
+        color: 'var(--color-warning)'
+      });
+    }
+    if (stats.fifties > 0) {
+      data.push({
+        label: '50대',
+        count: stats.fifties,
+        color: 'var(--color-ios-orange)'
+      });
+    }
+    if (stats.over60 > 0) {
+      data.push({
+        label: '60대 이상',
+        count: stats.over60,
+        color: 'var(--color-ios-purple)'
+      });
+    }
+    if (stats.unknownAge > 0) {
+      data.push({
+        label: '미상',
+        count: stats.unknownAge,
+        color: 'var(--color-text-tertiary)'
+      });
+    }
+    return data;
   }, [stats]);
 
   // 최근 활동 데이터 변환
@@ -319,14 +461,33 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             />
           </div>
 
-          {/* 파이 차트 */}
+          {/* 파이 차트 그리드 */}
           {stats.totalCustomers > 0 && (
-            <div className="customer-management-view__pie-chart">
-              <FileTypePieChart
-                data={pieChartData}
-                size={200}
-                innerRadius={50}
-              />
+            <div className="customer-management-view__pie-charts-grid">
+              <div className="pie-chart-item">
+                <h3 className="pie-chart-title">고객 유형</h3>
+                <FileTypePieChart
+                  data={customerTypePieData}
+                  size={180}
+                  innerRadius={45}
+                />
+              </div>
+              <div className="pie-chart-item">
+                <h3 className="pie-chart-title">성별 분포</h3>
+                <FileTypePieChart
+                  data={genderPieData}
+                  size={180}
+                  innerRadius={45}
+                />
+              </div>
+              <div className="pie-chart-item">
+                <h3 className="pie-chart-title">연령대 분포</h3>
+                <FileTypePieChart
+                  data={agePieData}
+                  size={180}
+                  innerRadius={45}
+                />
+              </div>
             </div>
           )}
         </section>

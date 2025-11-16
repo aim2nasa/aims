@@ -53,13 +53,46 @@
   gap: var(--spacing-4);
 }
 
-/* 파이 차트 */
-.customer-management-view__pie-chart {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* 파이 차트 그리드 */
+.customer-management-view__pie-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-6);
   margin-top: var(--spacing-6);
   padding: var(--spacing-4);
+}
+
+.pie-chart-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.pie-chart-title {
+  font-size: var(--font-size-caption-1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding-left: var(--spacing-2);
+}
+
+/* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
+.customer-management-view__pie-charts-grid .file-type-pie-chart {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+}
+
+/* SVG 크기 고정 */
+.customer-management-view__pie-charts-grid .file-type-pie-chart__svg {
+  max-width: 180px;
+  flex-shrink: 0;
+}
+
+/* 레전드를 우측에 배치 */
+.customer-management-view__pie-charts-grid .file-type-pie-chart__legend {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 빠른 액션 그리드 */
@@ -86,6 +119,16 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .customer-management-view__pie-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 작은 화면에서는 다시 세로 배치 */
+  .customer-management-view__pie-charts-grid .file-type-pie-chart {
+    flex-direction: column;
+    align-items: center;
+  }
+
   .customer-management-view__actions-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -93,6 +136,10 @@
 
 @media (max-width: 480px) {
   .customer-management-view__stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-management-view__pie-charts-grid {
     grid-template-columns: 1fr;
   }
 

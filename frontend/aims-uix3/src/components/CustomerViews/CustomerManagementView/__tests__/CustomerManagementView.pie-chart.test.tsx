@@ -3,13 +3,15 @@
  * @since 2025-11-16
  * @commit a7cccb55
  *
- * 고객관리 대시보드 법인/개인 비율 파이 차트 기능 회귀 방지 테스트
+ * 고객관리 대시보드 다중 파이 차트 기능 회귀 방지 테스트
  *
  * 테스트 범위:
  * - 법인/개인 고객 통계 계산
- * - 파이 차트 렌더링
+ * - 성별/연령대 통계 계산
+ * - 파이 차트 그리드 렌더링
  * - 데이터 없을 때 처리
  * - 파이 차트 크기 및 스타일
+ * - 가로 레이아웃 (차트 좌측, 레전드 우측)
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -89,8 +91,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const pieChart = container.querySelector('.customer-management-view__pie-chart')
-        expect(pieChart).toBeInTheDocument()
+        const pieChartsGrid = container.querySelector('.customer-management-view__pie-charts-grid')
+        expect(pieChartsGrid).toBeInTheDocument()
       })
     })
 
@@ -109,8 +111,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         expect(statsCards.length).toBeGreaterThan(0) // 통계 카드는 렌더링됨
       })
 
-      const pieChart = container.querySelector('.customer-management-view__pie-chart')
-      expect(pieChart).not.toBeInTheDocument()
+      const pieChartsGrid = container.querySelector('.customer-management-view__pie-charts-grid')
+      expect(pieChartsGrid).not.toBeInTheDocument()
     })
 
     it('파이 차트가 FileTypePieChart 컴포넌트를 사용해야 함', async () => {
@@ -156,7 +158,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const legendLabel = screen.getByText('개인')
         expect(legendLabel).toBeInTheDocument()
 
-        const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
+        // 첫 번째 파이 차트 (고객 유형)의 레전드 값만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         expect(legendValues[0]).toHaveTextContent('3 (100%)')
         expect(legendValues[1]).toHaveTextContent('0 (0%)')
       })
@@ -181,7 +186,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const legendLabel = screen.getByText('법인')
         expect(legendLabel).toBeInTheDocument()
 
-        const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
+        // 첫 번째 파이 차트 (고객 유형)의 레전드 값만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         expect(legendValues[0]).toHaveTextContent('0 (0%)')
         expect(legendValues[1]).toHaveTextContent('2 (100%)')
       })
@@ -205,7 +213,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
+        // 첫 번째 파이 차트 (고객 유형)의 레전드 값만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         expect(legendValues[0]).toHaveTextContent('3 (75%)')
         expect(legendValues[1]).toHaveTextContent('1 (25%)')
       })
@@ -228,7 +239,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
+        // 첫 번째 파이 차트 (고객 유형)의 레전드 값만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         // insurance_info가 없으면 개인으로 분류됨
         expect(legendValues[0]).toHaveTextContent('2 (67%)')
         expect(legendValues[1]).toHaveTextContent('1 (33%)')
@@ -237,7 +251,7 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
   })
 
   describe('[회귀 방지] 파이 차트 스타일 및 크기', () => {
-    it('파이 차트가 200px 크기로 렌더링되어야 함', async () => {
+    it('파이 차트가 180px 크기로 렌더링되어야 함', async () => {
       const mockCustomers: Customer[] = [
         createMockCustomer({ insurance_info: { customer_type: '개인' } } as Partial<Customer>)
       ]
@@ -253,12 +267,12 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
 
       await waitFor(() => {
         const svg = container.querySelector('.file-type-pie-chart svg')
-        expect(svg).toHaveAttribute('width', '200')
-        expect(svg).toHaveAttribute('height', '200')
+        expect(svg).toHaveAttribute('width', '180')
+        expect(svg).toHaveAttribute('height', '180')
       })
     })
 
-    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=50)', async () => {
+    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=45)', async () => {
       const mockCustomers: Customer[] = [
         createMockCustomer({ insurance_info: { customer_type: '개인' } } as Partial<Customer>)
       ]
@@ -278,7 +292,7 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       })
     })
 
-    it('파이 차트가 올바른 CSS 클래스를 가져야 함', async () => {
+    it('파이 차트 그리드가 올바른 CSS 클래스를 가져야 함', async () => {
       const mockCustomers: Customer[] = [
         createMockCustomer({ insurance_info: { customer_type: '개인' } } as Partial<Customer>)
       ]
@@ -293,9 +307,9 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const pieChart = container.querySelector('.customer-management-view__pie-chart')
-        expect(pieChart).toBeInTheDocument()
-        expect(pieChart).toHaveClass('customer-management-view__pie-chart')
+        const pieChartsGrid = container.querySelector('.customer-management-view__pie-charts-grid')
+        expect(pieChartsGrid).toBeInTheDocument()
+        expect(pieChartsGrid).toHaveClass('customer-management-view__pie-charts-grid')
       })
     })
   })
@@ -317,7 +331,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const paths = container.querySelectorAll('.file-type-pie-chart__path')
+        // 첫 번째 파이 차트 (고객 유형)의 색상만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const paths = firstPieChart.querySelectorAll('.file-type-pie-chart__path')
         expect(paths[0]).toHaveAttribute('fill', 'var(--color-primary-500)')
         expect(paths[1]).toHaveAttribute('fill', 'var(--color-warning)')
       })
@@ -339,7 +356,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        const colorIndicators = container.querySelectorAll('.file-type-pie-chart__legend-color')
+        // 첫 번째 파이 차트 (고객 유형)의 레전드 색상만 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const colorIndicators = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-color')
         expect(colorIndicators[0]).toHaveStyle({ backgroundColor: 'var(--color-primary-500)' })
         expect(colorIndicators[1]).toHaveStyle({ backgroundColor: 'var(--color-warning)' })
       })
@@ -364,8 +384,10 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
       const { container } = renderComponent()
 
       await waitFor(() => {
-        // 전체 고객 수 확인 (중앙 텍스트)
-        const totalCount = container.querySelector('.file-type-pie-chart__total-count')
+        // 첫 번째 파이 차트 (고객 유형)의 전체 고객 수 확인
+        const pieChartItems = container.querySelectorAll('.pie-chart-item')
+        const firstPieChart = pieChartItems[0]!
+        const totalCount = firstPieChart.querySelector('.file-type-pie-chart__total-count')
         expect(totalCount).toHaveTextContent('3')
 
         // 통계 카드의 전체 고객 수와 일치하는지 확인
