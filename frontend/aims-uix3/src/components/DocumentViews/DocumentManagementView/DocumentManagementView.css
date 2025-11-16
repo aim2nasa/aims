@@ -57,11 +57,21 @@
   padding: var(--spacing-4);
 }
 
-/* 세 번째 파이 차트 (파일 형식)는 다음 줄에 전체 폭으로 */
+/* 세 번째 차트 (파일 형식)는 다음 줄에 전체 폭으로 */
 .document-management-view__pie-charts-grid .pie-chart-item:nth-child(3) {
   grid-column: 1 / -1;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
+}
+
+/* 파일 형식 가로 막대 차트 제목 숨김 (이미 pie-chart-title이 있음) */
+.document-management-view__pie-charts-grid .horizontal-bar-chart__title {
+  display: none;
+}
+
+/* 파일 형식 카테고리 제목 숨김 (카드 내부의 '파일형식' 문구 제거) */
+.document-management-view__pie-charts-grid .horizontal-bar-chart__category-title {
+  display: none;
 }
 
 .pie-chart-item {

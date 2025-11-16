@@ -22,6 +22,7 @@ import { DocumentUtils } from '@/entities/document';
 import { Tooltip } from '@/shared/ui';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
+import HorizontalBarChart from '@/shared/ui/HorizontalBarChart';
 import './DocumentManagementView.css';
 
 interface DocumentManagementViewProps {
@@ -577,10 +578,13 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
               {actualFileTypePieData.length > 0 && (
                 <div className="pie-chart-item">
                   <h3 className="pie-chart-title">파일 형식</h3>
-                  <FileTypePieChart
-                    data={actualFileTypePieData}
-                    size={180}
-                    innerRadius={45}
+                  <HorizontalBarChart
+                    categories={[
+                      {
+                        title: '파일 형식',
+                        data: actualFileTypePieData
+                      }
+                    ]}
                   />
                 </div>
               )}
