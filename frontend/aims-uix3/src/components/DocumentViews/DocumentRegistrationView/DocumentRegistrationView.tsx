@@ -1391,7 +1391,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 />
               )}
               <h3 className={`customer-info-title ${customerFileCustomer ? 'customer-info-title--selected' : ''}`}>
-                고객 정보 입력
+                고객 및 문서 유형
               </h3>
               <span className="customer-info-toggle-icon" aria-hidden="true">
                 {isCustomerInfoExpanded ? '▲' : '▼'}
