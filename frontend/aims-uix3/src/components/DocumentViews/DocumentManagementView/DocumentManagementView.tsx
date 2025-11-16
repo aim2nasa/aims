@@ -272,51 +272,26 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   };
 
   /**
-   * 파일 타입 분류 헬퍼
+   * 파일 타입 분류 헬퍼 - 확장자 기반
    */
   const getFileTypeCategory = (mimeType: string | undefined, filename: string | undefined): string => {
-    const mime = (mimeType || '').toLowerCase();
     const name = (filename || '').toLowerCase();
 
-    // PDF
-    if (mime.includes('pdf') || name.endsWith('.pdf')) {
-      return 'PDF';
+    // 확장자 추출
+    const match = name.match(/\.([a-z0-9]+)$/);
+    if (match && match[1]) {
+      return match[1].toUpperCase(); // 'pdf' -> 'PDF', 'docx' -> 'DOCX'
     }
-    // Word
-    if (mime.includes('word') || mime.includes('msword') ||
-        name.endsWith('.doc') || name.endsWith('.docx')) {
-      return 'Word';
-    }
-    // Excel
-    if (mime.includes('excel') || mime.includes('spreadsheet') ||
-        name.endsWith('.xls') || name.endsWith('.xlsx')) {
-      return 'Excel';
-    }
-    // PowerPoint
-    if (mime.includes('powerpoint') || mime.includes('presentation') ||
-        name.endsWith('.ppt') || name.endsWith('.pptx')) {
-      return 'PowerPoint';
-    }
-    // Image
-    if (mime.includes('image/') ||
-        name.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/)) {
-      return 'Image';
-    }
-    // ZIP/Archive
-    if (mime.includes('zip') || mime.includes('compressed') || mime.includes('archive') ||
-        name.match(/\.(zip|rar|7z|tar|gz)$/)) {
-      return 'ZIP';
-    }
-    // PostScript
-    if (mime.includes('postscript') || name.endsWith('.ps') || name.endsWith('.eps')) {
-      return 'PostScript';
-    }
-    // Text
-    if (mime.includes('text/') || name.endsWith('.txt')) {
-      return 'Text';
-    }
-    // 기타
-    return 'Other';
+
+    // 확장자 없으면 MIME type으로 추정
+    const mime = (mimeType || '').toLowerCase();
+    if (mime.includes('pdf')) return 'PDF';
+    if (mime.includes('word')) return 'DOCX';
+    if (mime.includes('excel')) return 'XLSX';
+    if (mime.includes('powerpoint')) return 'PPTX';
+    if (mime.includes('image/')) return 'IMAGE';
+
+    return 'UNKNOWN';
   };
 
   // 파일 타입 파이 차트 데이터
@@ -389,15 +364,39 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     });
 
     const typeColors: Record<string, string> = {
+      // PDF
       'PDF': 'var(--color-error)',
-      'Word': 'var(--color-primary-500)',
-      'Excel': 'var(--color-success)',
-      'PowerPoint': 'var(--color-warning)',
-      'Image': 'var(--color-ios-blue)',
+      // Word 계열 - 파란색
+      'DOCX': 'var(--color-primary-500)',
+      'DOC': 'var(--color-ios-blue)',
+      // Excel 계열 - 녹색
+      'XLSX': 'var(--color-success)',
+      'XLS': 'var(--color-ios-green)',
+      // PowerPoint 계열 - 주황색
+      'PPTX': 'var(--color-warning)',
+      'PPT': 'var(--color-ios-orange)',
+      // 이미지 계열 - 하늘색/보라색
+      'JPG': 'var(--color-ios-blue)',
+      'JPEG': 'var(--color-ios-blue)',
+      'PNG': 'var(--color-ios-teal)',
+      'GIF': 'var(--color-ios-purple)',
+      'BMP': 'var(--color-ios-indigo)',
+      'WEBP': 'var(--color-ios-cyan)',
+      'TIFF': 'var(--color-ios-purple)',
+      'IMAGE': 'var(--color-ios-blue)',
+      // 압축 파일 계열 - 보라색
       'ZIP': 'var(--color-ios-purple)',
-      'PostScript': 'var(--color-ios-orange)',
-      'Text': 'var(--color-neutral-600)',
-      'Other': 'var(--color-text-tertiary)'
+      'RAR': 'var(--color-ios-purple)',
+      '7Z': 'var(--color-ios-purple)',
+      'TAR': 'var(--color-ios-indigo)',
+      'GZ': 'var(--color-ios-indigo)',
+      // PostScript
+      'PS': 'var(--color-ios-orange)',
+      'EPS': 'var(--color-ios-orange)',
+      // 텍스트
+      'TXT': 'var(--color-neutral-600)',
+      // 기타
+      'UNKNOWN': 'var(--color-text-tertiary)'
     };
 
     return Object.entries(typeCounts)
@@ -405,7 +404,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
         label,
         count,
         color: typeColors[label] || 'var(--color-text-tertiary)',
-        description: `${label} 파일`
+        description: `${label.toLowerCase()} 파일`
       }))
       .sort((a, b) => b.count - a.count) // 개수 많은 순으로 정렬
       .filter(item => item.count > 0);
