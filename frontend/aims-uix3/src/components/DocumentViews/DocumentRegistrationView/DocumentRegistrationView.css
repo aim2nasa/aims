@@ -349,7 +349,9 @@ html[data-theme="dark"] .registration-guide .step-title {
   font-weight: 400;
   color: var(--color-ios-text-secondary-light);
   line-height: 1.4;
-  /* white-space: nowrap 제거 - 텍스트가 자연스럽게 줄바꿈되도록 */
+  /* 들여쓰기: bullet point(•) 뒤에 정렬 */
+  padding-left: 1.2em;
+  text-indent: -1.2em;
 }
 
 html[data-theme="dark"] .registration-guide .step-description {
