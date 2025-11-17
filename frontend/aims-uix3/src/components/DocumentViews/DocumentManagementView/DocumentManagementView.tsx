@@ -15,7 +15,6 @@ import { RecentActivityList } from '@/shared/ui/RecentActivityList';
 import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
-import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getDocumentStatistics } from '@/services/DocumentService';
 import { DocumentStatusService } from '@/services/DocumentStatusService';
 import { DocumentUtils } from '@/entities/document';
@@ -107,7 +106,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     data: stats,
     isLoading: isStatsLoading,
     isError: isStatsError,
-    refetch: refetchStats
   } = useQuery({
     queryKey: ['documentStatistics'],
     queryFn: getDocumentStatistics,
@@ -118,7 +116,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     data: recentDocuments,
     isLoading: isRecentLoading,
     isError: isRecentError,
-    refetch: refetchRecent
   } = useQuery({
     queryKey: ['recentDocuments'],
     queryFn: () =>
@@ -128,7 +125,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   // 전체 문서 목록 조회 (문서 유형 통계용)
   const {
     data: allDocuments,
-    refetch: refetchAllDocuments
   } = useQuery({
     queryKey: ['allDocumentsForStats'],
     queryFn: () =>
@@ -261,15 +257,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       };
     });
   }, [recentDocuments]);
-
-  // 새로고침 핸들러
-  const handleRefresh = async () => {
-    await Promise.all([
-      refetchStats(),
-      refetchRecent(),
-      refetchAllDocuments()
-    ]);
-  };
 
   /**
    * 문서 타입 분류 헬퍼 - 확장자 기반
@@ -458,13 +445,6 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
       visible={visible}
       title="문서 관리"
       titleIcon={<SFSymbol name="doc" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
-      titleAccessory={
-        <RefreshButton
-          onClick={handleRefresh}
-          size="small"
-          tooltip="문서 통계 새로고침"
-        />
-      }
       onClose={onClose}
       marginTop={5}
       marginBottom={5}
