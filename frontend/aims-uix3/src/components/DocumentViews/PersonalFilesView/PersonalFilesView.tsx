@@ -478,17 +478,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               }}
               style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
-              {isActive ? (
-                // 열린 폴더 (선택됨)
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H14c.55 0 1 .45 1 1v1H1V5c0-.55.45-1 1-1zm-1 3h14v5c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V7z" fill="currentColor"/>
-                </svg>
-              ) : (
-                // 닫힌 폴더 (선택 안됨)
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
-                </svg>
-              )}
+              <span className="folder-icon">
+                {isActive ? '📂' : '📁'}
+              </span>
               <span className="folder-name">{folder.name}</span>
             </button>
           </div>
@@ -553,17 +545,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       handleFolderClick(null)
                     }}
                   >
-                    {currentFolderId === null ? (
-                      // 열린 폴더 (선택됨)
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H14c.55 0 1 .45 1 1v1H1V5c0-.55.45-1 1-1zm-1 3h14v5c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V7z" fill="currentColor"/>
-                      </svg>
-                    ) : (
-                      // 닫힌 폴더 (선택 안됨)
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
-                      </svg>
-                    )}
+                    <span className="folder-icon">
+                      {currentFolderId === null ? '📂' : '📁'}
+                    </span>
                     <span className="folder-name">내 드라이브</span>
                   </button>
                 </div>

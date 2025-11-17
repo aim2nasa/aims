@@ -100,7 +100,7 @@
   color: var(--color-button-primary-bg);
 }
 
-.folder-tree-row.active svg {
+.folder-tree-row.active .folder-icon {
   color: var(--color-button-primary-bg);
 }
 
@@ -131,10 +131,15 @@
   padding: var(--spacing-1) 0;
 }
 
-.folder-name-button svg,
-.folder-name-button .sf-symbol {
+.folder-icon {
   flex-shrink: 0;
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  opacity: 0.7;
+  transition: opacity 0.1s ease;
+}
+
+.folder-tree-row:hover .folder-icon {
+  opacity: 1;
 }
 
 .folder-name {
