@@ -9,8 +9,10 @@
  * - RelationshipModal 공통 컴포넌트 사용
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { RelationshipModal, type RelationshipType } from '../RelationshipModal/RelationshipModal';
+import { FamilySelectorModal } from '@/shared/ui/FamilySelectorModal/FamilySelectorModal';
+import type { Customer } from '@/entities/customer/model';
 
 // 가족관계등록부 범위 내 관계 유형만 허용
 const FAMILY_RELATIONSHIP_TYPES: RelationshipType[] = [
@@ -47,24 +49,60 @@ export const FamilyRelationshipModal: React.FC<FamilyRelationshipModalProps> = (
   customerId,
   onSuccess
 }) => {
+  // 가족 선택 모달 표시 여부
+  const [showFamilySelector, setShowFamilySelector] = useState(false);
+  // 선택된 고객 (RelationshipModal에 전달하기 위해)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  // 가족 선택 버튼 클릭 핸들러
+  const handleSelectorButtonClick = useCallback(() => {
+    setShowFamilySelector(true);
+  }, []);
+
+  // 가족 선택 완료 핸들러
+  const handleFamilySelect = useCallback((customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowFamilySelector(false);
+  }, []);
+
+  // 모달 닫기 시 상태 초기화
+  const handleCancel = useCallback(() => {
+    setSelectedCustomer(null);
+    setShowFamilySelector(false);
+    onCancel();
+  }, [onCancel]);
+
   return (
-    <RelationshipModal
-      visible={visible}
-      onCancel={onCancel}
-      customerId={customerId}
-      {...(onSuccess ? { onSuccess } : {})}
-      title="가족 관계 추가"
-      titleIcon={
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
-          <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z"/>
-        </svg>
-      }
-      memberLabel="가족 구성원"
-      relationshipCategory="family"
-      relationshipTypes={FAMILY_RELATIONSHIP_TYPES}
-      allowCustomRelation={false}
-      filterCustomerType="개인"
-    />
+    <>
+      <RelationshipModal
+        visible={visible}
+        onCancel={handleCancel}
+        customerId={customerId}
+        {...(onSuccess ? { onSuccess } : {})}
+        title="가족 관계 추가"
+        titleIcon={
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M7.646 1.146a.5.5 0 01.708 0l6 6A.5.5 0 0114 7.5h-.5V14a1 1 0 01-1 1h-3.5a.5.5 0 01-.5-.5V11H7.5v3.5a.5.5 0 01-.5.5H3.5a1 1 0 01-1-1V7.5H2a.5.5 0 01-.354-.854l6-6z"/>
+          </svg>
+        }
+        memberLabel="가족 구성원"
+        relationshipCategory="family"
+        relationshipTypes={FAMILY_RELATIONSHIP_TYPES}
+        allowCustomRelation={false}
+        filterCustomerType="개인"
+        useSelectorModal={true}
+        onSelectorButtonClick={handleSelectorButtonClick}
+        selectorButtonLabel="가족 선택"
+        selectedCustomerFromExternal={selectedCustomer}
+      />
+
+      {/* 가족 선택 모달 */}
+      <FamilySelectorModal
+        visible={showFamilySelector}
+        onClose={() => setShowFamilySelector(false)}
+        onSelect={handleFamilySelect}
+      />
+    </>
   );
 };
 

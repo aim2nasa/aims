@@ -26,6 +26,14 @@ export interface CustomerSelectorModalProps {
   onClose: () => void;
   /** 고객 선택 완료 핸들러 */
   onSelect: (customer: Customer) => void;
+  /** 선택 불가능한 고객 ID 목록 */
+  disabledCustomerIds?: Set<string>;
+  /** 선택 불가능한 고객에 대한 툴팁 메시지 */
+  disabledTooltip?: string;
+  /** 모달 제목 (기본값: "고객 선택") */
+  title?: string;
+  /** 고객 타입 필터 (설정 시 탭 숨김) */
+  filterCustomerType?: '개인' | '법인';
 }
 
 /**
@@ -47,6 +55,10 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   visible,
   onClose,
   onSelect,
+  disabledCustomerIds,
+  disabledTooltip = '선택할 수 없습니다',
+  title = '고객 선택',
+  filterCustomerType,
 }) => {
   // CustomerDocument 훅 사용
   const { customers: allCustomers, isLoading, loadCustomers } = useCustomerDocument();
@@ -54,7 +66,13 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   // 검색 쿼리
   const [searchQuery, setSearchQuery] = useState('');
   // 활성 탭 ('all' | 'personal' | 'corporate')
-  const [activeTab, setActiveTab] = useState<'all' | 'personal' | 'corporate'>('all');
+  // filterCustomerType이 설정되어 있으면 해당 타입으로 고정
+  const getInitialTab = (): 'all' | 'personal' | 'corporate' => {
+    if (filterCustomerType === '개인') return 'personal';
+    if (filterCustomerType === '법인') return 'corporate';
+    return 'all';
+  };
+  const [activeTab, setActiveTab] = useState<'all' | 'personal' | 'corporate'>(getInitialTab());
   // 선택된 고객
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   // 선택된 초성 필터 (ㄱ,ㄴ,ㄷ,...)
@@ -75,9 +93,16 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       loadCustomers({ limit: 10000, page: 1 });
       setSelectedCustomer(null);
       setSearchQuery('');
-      setActiveTab('all');
+      // filterCustomerType이 설정되어 있으면 해당 타입으로 고정
+      if (filterCustomerType === '개인') {
+        setActiveTab('personal');
+      } else if (filterCustomerType === '법인') {
+        setActiveTab('corporate');
+      } else {
+        setActiveTab('all');
+      }
     }
-  }, [visible, loadCustomers]);
+  }, [visible, loadCustomers, filterCustomerType]);
 
   // 개인/법인으로 분류 및 정렬
   const { personalCustomers, corporateCustomers } = useMemo(() => {
@@ -302,8 +327,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
 
   // 고객 선택
   const handleSelectCustomer = useCallback((customer: Customer) => {
+    // 선택 불가능한 고객은 선택되지 않음
+    if (disabledCustomerIds?.has(customer._id)) {
+      return;
+    }
     setSelectedCustomer(customer);
-  }, []);
+  }, [disabledCustomerIds]);
 
   // 확인 버튼
   const handleConfirm = useCallback(() => {
@@ -329,7 +358,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     <DraggableModal
       visible={visible}
       onClose={onClose}
-      title="고객 선택"
+      title={title}
       initialWidth={1100}
       initialHeight={700}
       minWidth={500}
@@ -378,8 +407,8 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
         </div>
       </div>
 
-      {/* 탭 (검색 중이 아닐 때만 표시) */}
-      {!isSearching && (
+      {/* 탭 (검색 중이 아닐 때만 표시, filterCustomerType이 없을 때만 표시) */}
+      {!isSearching && !filterCustomerType && (
         <>
           <div className="customer-selector-modal__tabs">
             <button
@@ -423,7 +452,12 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
             </button>
           </div>
 
-          {/* 초성 인덱스 */}
+        </>
+      )}
+
+      {/* 초성 인덱스 (검색 중이 아닐 때만 표시) */}
+      {!isSearching && (
+        <>
           <div className="customer-selector-modal__initials">
             {/* 초성 타입 토글 버튼 (iOS 키보드 스타일) */}
             <button
@@ -668,15 +702,17 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
                 const addressDisplay = fullAddress.length > 30 ? fullAddress.substring(0, 27) + '...' : fullAddress;
                 const customerType = customer.insurance_info?.customer_type;
                 const isCorporate = customerType === '법인';
+                const isDisabled = disabledCustomerIds?.has(customer._id) || false;
 
                 return (
                   <div
                     key={customer._id}
                     className={`customer-selector-modal__customer-row ${
                       selectedCustomer?._id === customer._id ? 'selected' : ''
-                    }`}
+                    } ${isDisabled ? 'disabled' : ''}`}
                     style={{ gridTemplateColumns: columnWidthRatios.map(w => `${w}%`).join(' ') }}
                     onClick={() => handleSelectCustomer(customer)}
+                    title={isDisabled ? disabledTooltip : undefined}
                   >
                     <div className="cell-name">
                       {customer.personal_info?.name || '이름 없음'}

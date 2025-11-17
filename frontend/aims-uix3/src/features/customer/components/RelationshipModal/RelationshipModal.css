@@ -198,3 +198,61 @@
 .relationship-modal__button--primary:active:not(:disabled) {
   background-color: var(--color-primary-700);
 }
+
+/* 선택 버튼 모드 */
+.relationship-modal__selector-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.relationship-modal__selector-button {
+  width: 100%;
+}
+
+.relationship-modal__selected-customer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3);
+  background: var(--color-bg-secondary);
+  border: 1.5px solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.relationship-modal__selected-customer-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1;
+}
+
+.relationship-modal__selected-customer-info svg {
+  color: var(--color-icon-primary);
+  flex-shrink: 0;
+}
+
+.relationship-modal__selected-customer-info span {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.relationship-modal__change-button {
+  padding: var(--spacing-1) var(--spacing-3);
+  background: transparent;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.relationship-modal__change-button:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

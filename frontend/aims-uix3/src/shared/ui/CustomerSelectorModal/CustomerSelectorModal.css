@@ -485,6 +485,18 @@ html[data-theme="dark"] .customer-selector-modal__customer-row.selected:hover {
   border-color: var(--color-primary-400);
 }
 
+/* 선택 불가능한 행 (disabled) */
+.customer-selector-modal__customer-row.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: var(--color-bg-tertiary);
+}
+
+.customer-selector-modal__customer-row.disabled:hover {
+  background: var(--color-bg-tertiary);
+}
+
 /* ===== Table Cells ===== */
 
 .customer-selector-modal__customer-row > div {

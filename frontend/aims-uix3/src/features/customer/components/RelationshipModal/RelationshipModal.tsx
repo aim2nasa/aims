@@ -39,6 +39,12 @@ export interface RelationshipModalProps {
   relationshipTypes: RelationshipType[];  // 관계 타입 목록
   allowCustomRelation?: boolean;  // 사용자 입력 관계 허용 여부
   filterCustomerType?: '개인' | '법인';  // 검색할 고객 유형 필터
+
+  // 고객 선택 방식 커스터마이즈
+  useSelectorModal?: boolean;  // true이면 검색 입력 대신 선택 버튼 표시
+  onSelectorButtonClick?: () => void;  // 선택 버튼 클릭 핸들러
+  selectorButtonLabel?: string;  // 선택 버튼 레이블
+  selectedCustomerFromExternal?: Customer | null;  // 외부에서 선택한 고객
 }
 
 export const RelationshipModal: React.FC<RelationshipModalProps> = ({
@@ -52,7 +58,11 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
   relationshipCategory,
   relationshipTypes,
   allowCustomRelation = false,
-  filterCustomerType = '개인'
+  filterCustomerType = '개인',
+  useSelectorModal = false,
+  onSelectorButtonClick,
+  selectorButtonLabel = '선택',
+  selectedCustomerFromExternal
 }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedRelationType, setSelectedRelationType] = useState<string | null>(null);
@@ -159,6 +169,14 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
       identifyRelatedCustomers();
     }
   }, [visible, resetForm, identifyRelatedCustomers]);
+
+  // 외부에서 선택한 고객을 내부 상태로 동기화
+  useEffect(() => {
+    if (selectedCustomerFromExternal) {
+      setSelectedCustomer(selectedCustomerFromExternal);
+      setSearchText(selectedCustomerFromExternal.personal_info?.name || '');
+    }
+  }, [selectedCustomerFromExternal]);
 
   // 폼 유효성 검사
   const isFormValid = selectedCustomer && (
@@ -360,7 +378,42 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
                 </div>
                 {selectedCustomer && <span className="relationship-modal__badge">선택됨</span>}
               </div>
-              <div className="autocomplete-wrapper relationship-modal__search">
+
+              {/* 선택 버튼 모드 */}
+              {useSelectorModal ? (
+                <div className="relationship-modal__selector-button-wrapper">
+                  {selectedCustomer ? (
+                    <div className="relationship-modal__selected-customer">
+                      <div className="relationship-modal__selected-customer-info">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="8" cy="5" r="2.5" />
+                          <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" />
+                        </svg>
+                        <span>{selectedCustomer.personal_info?.name || '이름 없음'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="relationship-modal__change-button"
+                        onClick={onSelectorButtonClick}
+                      >
+                        변경
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      onClick={onSelectorButtonClick}
+                      type="button"
+                      className="relationship-modal__selector-button"
+                    >
+                      {selectorButtonLabel}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                /* 검색 입력 모드 */
+                <div className="autocomplete-wrapper relationship-modal__search">
                 <input
                   type="text"
                   className="form-input relationship-modal__input"
@@ -426,7 +479,8 @@ export const RelationshipModal: React.FC<RelationshipModalProps> = ({
                 {searchText && !searchLoading && customers.length === 0 && !selectedCustomer && (
                   <div className="autocomplete-empty">검색 결과가 없습니다</div>
                 )}
-              </div>
+                </div>
+              )}
             </section>
 
             {/* 관계 유형 선택 */}
