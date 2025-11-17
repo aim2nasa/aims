@@ -77,30 +77,33 @@
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-2);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-caption-1);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   padding: 0 var(--spacing-2);
+  white-space: nowrap;
 }
 
 .stat-card-detail-item {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-caption-1);
 }
 
 .stat-card-detail-label {
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
+  font-size: var(--font-size-caption-1);
 }
 
 .stat-card-detail-value {
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-callout);
   color: var(--color-text-primary);
 }
 
@@ -108,6 +111,7 @@
   color: var(--color-text-tertiary);
   opacity: 0.5;
   margin: 0 var(--spacing-1);
+  font-size: var(--font-size-caption-1);
 }
 
 /* 파이 차트 그리드 */
