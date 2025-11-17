@@ -579,12 +579,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
             {/* 즐겨찾기 */}
             <button className="sidebar-item">
-              <SFSymbol
-                name="star.fill"
-                size={SFSymbolSize.FOOTNOTE}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1.5l1.854 3.757 4.146.603-3 2.924.708 4.128L8 11.019l-3.708 1.893.708-4.128-3-2.924 4.146-.603L8 1.5z" fill="currentColor"/>
+              </svg>
               <span>즐겨찾기</span>
             </button>
           </div>

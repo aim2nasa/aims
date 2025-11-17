@@ -108,6 +108,11 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* 즐겨찾기 아이콘 색상 */
+.sidebar-item svg {
+  color: var(--color-favorite);
+}
+
 /* 폴더 트리 */
 .folder-tree {
   display: flex;
