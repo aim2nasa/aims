@@ -6,20 +6,21 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
-import { RecentActivityList } from '@/shared/ui/RecentActivityList';
-import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
+import { Dropdown } from '@/shared/ui/Dropdown';
 import './CustomerManagementView.css';
+
+type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
 
 interface CustomerManagementViewProps {
   /** View 표시 여부 */
@@ -49,6 +50,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   onClose,
   onNavigate,
 }) => {
+  // 최근 활동 기간 선택 상태
+  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1month');
+
   // 고객 목록 조회 (통계 계산용)
   const {
     data: customersData,
@@ -350,75 +354,49 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     }));
   }, [stats]);
 
-  // 최근 활동 데이터 변환
-  const recentActivities: RecentActivityItem[] = useMemo(() => {
+  // 최근 활동 데이터 - 기간별 필터링 및 정렬
+  const recentCustomers = useMemo(() => {
     if (!customersData?.customers) return [];
 
-    // 최근 생성/수정된 고객 5명 선택
-    return customersData.customers.slice(0, 5).map((customer) => {
-      // 고객 타입 결정
-      const customerType = customer.insurance_info?.customer_type || '개인';
-      const customerTypeIcon = customerType === '법인' ? (
-        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon" style={{ color: 'var(--color-icon-orange)' }}>
-          <circle cx="10" cy="10" r="10" opacity="0.2" />
-          <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
-        </svg>
-      ) : (
-        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon" style={{ color: 'var(--color-icon-blue)' }}>
-          <circle cx="10" cy="10" r="10" opacity="0.2" />
-          <circle cx="10" cy="7" r="3" />
-          <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-        </svg>
-      );
+    const now = new Date();
+    let cutoffDate: Date;
 
-      // 고객 활동 종류 결정 (생성 vs 수정)
-      const getActivityInfo = () => {
-        const createdAt = customer.meta?.created_at ? new Date(customer.meta.created_at) : null;
-        const updatedAt = customer.meta?.updated_at ? new Date(customer.meta.updated_at) : null;
+    // 기간에 따른 기준 날짜 계산
+    switch (activityPeriod) {
+      case '1week':
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '1month':
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '3months':
+        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '6months':
+        cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        break;
+      case '1year':
+        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+    }
 
-        // 수정 시간이 생성 시간보다 최소 1분 이상 차이나면 "수정"으로 간주
-        if (createdAt && updatedAt && updatedAt.getTime() - createdAt.getTime() > 60000) {
-          return {
-            subtitle: '고객 정보 수정',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
-                <path d="M16.5 2.5l1 1-11 11-2.5.5.5-2.5 11-11zm-1-1l1-1 2 2-1 1-2-2z" fill="currentColor"/>
-              </svg>
-            ),
-            timestamp: updatedAt,
-          };
-        } else {
-          return {
-            subtitle: '고객 등록',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
-                <circle cx="8" cy="6" r="3" fill="currentColor"/>
-                <path d="M8 10c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" fill="currentColor"/>
-                <circle cx="15" cy="15" r="4" fill="var(--color-success)"/>
-                <path d="M15 13v4M13 15h4" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-              </svg>
-            ),
-            timestamp: createdAt || new Date(),
-          };
-        }
-      };
+    // 각 고객의 최신 활동 시간 계산 및 정렬
+    const sorted = [...customersData.customers]
+      .map(customer => {
+        const created = customer.meta?.created_at ? new Date(customer.meta.created_at).getTime() : 0;
+        const updated = customer.meta?.updated_at ? new Date(customer.meta.updated_at).getTime() : 0;
+        const latest = Math.max(created, updated);
+        return { customer, latest };
+      })
+      .filter(({ latest }) => {
+        // 기간 필터링
+        return latest >= cutoffDate.getTime();
+      })
+      .sort((a, b) => b.latest - a.latest) // 내림차순 (최신이 위로)
+      .map(({ customer }) => customer);
 
-      const activityInfo = getActivityInfo();
-
-      return {
-        id: customer._id || String(Math.random()),
-        title: (
-          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-            {customerTypeIcon}
-            {customer.personal_info?.name || '이름 없음'}
-          </span>
-        ),
-        subtitle: activityInfo.subtitle,
-        timestamp: activityInfo.timestamp,
-        icon: activityInfo.icon,
-      };
-    });
-  }, [customersData]);
+    return sorted;
+  }, [customersData, activityPeriod]);
 
   // 새로고침 핸들러
   const handleRefresh = async () => {
@@ -608,20 +586,136 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
         {/* 최근 활동 섹션 */}
         <section className="customer-management-view__section">
-          <h2 className="customer-management-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 20 20">
-              <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
-              <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-            </svg>
-            최근 활동
-          </h2>
-          <div className="customer-management-view__recent-activity">
-            <RecentActivityList
-              items={recentActivities}
-              maxItems={5}
-              isLoading={isCustomersLoading}
-              {...(isCustomersError && { error: '최근 활동 조회 실패' })}
+          <div className="customer-management-view__section-header">
+            <h2 className="customer-management-view__section-title">
+              <svg width="14" height="14" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
+                <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+              </svg>
+              최근 활동 ({recentCustomers.length}개)
+            </h2>
+            <Dropdown
+              value={activityPeriod}
+              options={[
+                { value: '1week', label: '최근 1주일' },
+                { value: '1month', label: '최근 1개월' },
+                { value: '3months', label: '최근 3개월' },
+                { value: '6months', label: '최근 6개월' },
+                { value: '1year', label: '최근 1년' },
+              ]}
+              onChange={(value) => setActivityPeriod(value as ActivityPeriod)}
+              aria-label="활동 기간 선택"
             />
+          </div>
+          <div className="customer-management-view__recent-activity">
+            {isCustomersLoading && (
+              <div className="recent-activity-loading">
+                <div className="loading-spinner" />
+                <p>고객 목록을 불러오는 중...</p>
+              </div>
+            )}
+
+            {isCustomersError && (
+              <div className="recent-activity-error">최근 활동 조회 실패</div>
+            )}
+
+            {!isCustomersLoading && !isCustomersError && recentCustomers.length === 0 && (
+              <div className="recent-activity-empty">최근 활동이 없습니다</div>
+            )}
+
+            {!isCustomersLoading && !isCustomersError && recentCustomers.length > 0 && (
+              <div className="recent-activity-table">
+                {/* 헤더 */}
+                <div className="recent-activity-header">
+                  <div className="recent-header-activity">활동</div>
+                  <div className="recent-header-icon"></div>
+                  <div className="recent-header-name">이름</div>
+                  <div className="recent-header-phone">연락처</div>
+                  <div className="recent-header-address">주소</div>
+                  <div className="recent-header-time">시간</div>
+                </div>
+
+                {/* 데이터 행 */}
+                {recentCustomers.map((customer) => {
+                  const customerType = customer.insurance_info?.customer_type || '개인';
+                  const customerTypeIcon = customerType === '법인' ? (
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon-corporate">
+                      <circle cx="10" cy="10" r="10" opacity="0.2" />
+                      <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                    </svg>
+                  ) : (
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon-personal">
+                      <circle cx="10" cy="10" r="10" opacity="0.2" />
+                      <circle cx="10" cy="7" r="3" />
+                      <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                    </svg>
+                  );
+
+                  const phone = customer.personal_info?.mobile_phone || '-';
+
+                  const address = customer.personal_info?.address;
+                  let shortAddress = '-';
+                  if (address?.address1) {
+                    const fullAddress = `${address.address1} ${address.address2 || ''}`.trim();
+                    shortAddress = fullAddress.length > 30 ? fullAddress.substring(0, 27) + '...' : fullAddress;
+                  }
+
+                  const createdAt = customer.meta?.created_at ? new Date(customer.meta.created_at) : null;
+                  const updatedAt = customer.meta?.updated_at ? new Date(customer.meta.updated_at) : null;
+
+                  // 활동 타입 결정 (등록 vs 수정)
+                  const isModified = updatedAt && createdAt && updatedAt.getTime() - createdAt.getTime() > 60000;
+                  const displayTime = isModified ? updatedAt : createdAt;
+
+                  const activityIcon = isModified ? (
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="activity-icon-edit">
+                      <path d="M16.5 2.5l1 1-11 11-2.5.5.5-2.5 11-11zm-1-1l1-1 2 2-1 1-2-2z" />
+                    </svg>
+                  ) : (
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" className="activity-icon-new">
+                      <circle cx="8" cy="6" r="2.5"/>
+                      <path d="M8 9c-2.5 0-4 1.5-4 3v1.5h8V12c0-1.5-1.5-3-4-3z"/>
+                      <circle cx="15" cy="15" r="3.5" />
+                      <path d="M15 13.5v3M13.5 15h3" stroke="var(--color-text-inverse)" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  );
+
+                  const activityText = isModified ? '정보 수정' : '고객 등록';
+
+                  const formatTime = (date: Date | null) => {
+                    if (!date) return '-';
+                    const now = new Date();
+                    const diff = now.getTime() - date.getTime();
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+
+                    if (minutes < 1) return '방금 전';
+                    if (minutes < 60) return `${minutes}분 전`;
+                    if (hours < 24) return `${hours}시간 전`;
+                    if (days < 30) return `${days}일 전`;
+
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${month}.${day}`;
+                  };
+
+                  return (
+                    <div key={customer._id} className="recent-activity-row">
+                      <div className="recent-cell-activity">
+                        {activityIcon}
+                        <span className="activity-text">{activityText}</span>
+                      </div>
+                      <div className="recent-cell-icon">{customerTypeIcon}</div>
+                      <div className="recent-cell-name">{customer.personal_info?.name || '이름 없음'}</div>
+                      <div className="recent-cell-phone">{phone}</div>
+                      <div className="recent-cell-address">{shortAddress}</div>
+                      <div className="recent-cell-time">{formatTime(displayTime)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </div>
