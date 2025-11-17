@@ -6,6 +6,11 @@
  * ✅ CSS_SYSTEM.md 준수: CSS 변수 사용, 하드코딩 금지
  */
 
+/* CenterPaneView 콘텐츠 영역 padding 제거 */
+.personal-files-view-wrapper .center-pane-view__content {
+  padding: 0;
+}
+
 /* 메인 컨테이너 - 2컬럼 레이아웃 */
 .personal-files-view {
   display: grid;

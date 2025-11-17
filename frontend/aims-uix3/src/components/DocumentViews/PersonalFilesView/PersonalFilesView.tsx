@@ -495,7 +495,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }
 
   return (
-    <CenterPaneView visible={visible} onClose={onClose} title="내 파일">
+    <CenterPaneView
+      visible={visible}
+      onClose={onClose}
+      title="내 파일"
+      marginTop={0}
+      marginBottom={0}
+      marginLeft={0}
+      marginRight={0}
+      className="personal-files-view-wrapper"
+    >
       <div className="personal-files-view">
         {/* 좌측: 폴더 트리 */}
         <div className="files-sidebar">
