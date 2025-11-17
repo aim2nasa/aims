@@ -111,9 +111,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 검색 실행 (debounce 적용, 필터 및 정렬 포함)
   const performSearch = useCallback(async () => {
-    // 검색어, 필터, 정렬 옵션이 모두 기본값이면 현재 폴더 로드
+    // 검색어, 필터, 정렬 옵션이 모두 기본값이면 아무것도 안 함 (폴더 클릭으로 처리됨)
     if (!searchTerm.trim() && typeFilter === 'all' && sortBy === 'name' && sortDirection === 'asc') {
-      await loadFolderContents(currentFolderId)
       return
     }
 
@@ -143,7 +142,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, typeFilter, sortBy, sortDirection, currentFolderId, loadFolderContents])
+  }, [searchTerm, typeFilter, sortBy, sortDirection])
 
   // 초기 로드
   useEffect(() => {
@@ -178,6 +177,11 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 폴더 클릭 - 우측 목록 업데이트
   const handleFolderClick = useCallback((folderId: string | null) => {
+    // 구글 드라이브처럼 폴더 클릭 시 검색/필터 초기화
+    setSearchTerm('')
+    setTypeFilter('all')
+    setSortBy('name')
+    setSortDirection('asc')
     setCurrentFolderId(folderId)
     loadFolderContents(folderId)
   }, [loadFolderContents])
@@ -435,7 +439,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             {hasChildren && (
               <button
                 className="folder-expand-button"
-                onClick={() => toggleFolder(folder._id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFolder(folder._id)
+                }}
                 aria-label={isExpanded ? '폴더 닫기' : '폴더 열기'}
               >
                 <SFSymbol
@@ -448,7 +455,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             )}
             <button
               className="folder-name-button"
-              onClick={() => handleFolderClick(folder._id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleFolderClick(folder._id)
+              }}
               style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -498,7 +508,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 >
                   <button
                     className="folder-expand-button"
-                    onClick={() => setMyDriveExpanded(!myDriveExpanded)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMyDriveExpanded(!myDriveExpanded)
+                    }}
                     aria-label={myDriveExpanded ? '내 드라이브 닫기' : '내 드라이브 열기'}
                   >
                     <SFSymbol
@@ -510,7 +523,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   </button>
                   <button
                     className="folder-name-button"
-                    onClick={() => handleFolderClick(null)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleFolderClick(null)
+                    }}
                   >
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
