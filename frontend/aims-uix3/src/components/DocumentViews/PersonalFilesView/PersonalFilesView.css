@@ -90,8 +90,18 @@
 }
 
 .folder-tree-row.active {
-  background: var(--color-bg-tertiary);
+  background: var(--color-primary-alpha-20);
+  border-left: 3px solid var(--color-button-primary-bg);
+  padding-left: calc(var(--spacing-3) - 3px);
   font-weight: var(--font-weight-semibold);
+}
+
+.folder-tree-row.active .folder-name-button {
+  color: var(--color-button-primary-bg);
+}
+
+.folder-tree-row.active svg {
+  color: var(--color-button-primary-bg);
 }
 
 .folder-expand-button {

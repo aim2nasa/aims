@@ -55,7 +55,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   visible,
   onClose,
 }) => {
-  const [items, setItems] = useState<PersonalFileItem[]>([])
+  const [items, setItems] = useState<PersonalFileItem[]>([]) // 좌측 트리용
+  const [currentFolderItems, setCurrentFolderItems] = useState<PersonalFileItem[]>([]) // 우측 목록용
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
   const [breadcrumbs, setBreadcrumbs] = useState<{ _id: string | null; name: string }[]>([])
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set())
@@ -99,8 +100,24 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
     try {
       const data = await personalFilesService.getFolderContents(folderId)
-      setItems(data.items)
+
+      // 우측 목록 업데이트
+      setCurrentFolderItems(data.items)
       setBreadcrumbs(data.breadcrumbs)
+
+      // 좌측 트리 업데이트 (해당 폴더의 하위 폴더들을 merge)
+      if (folderId) {
+        setItems(prev => {
+          // 기존에 해당 폴더의 하위 항목들을 제거
+          const filtered = prev.filter(item => item.parentId !== folderId)
+          // 새로 가져온 하위 폴더들만 추가
+          const newFolders = data.items.filter(item => item.type === 'folder')
+          return [...filtered, ...newFolders]
+        })
+      } else {
+        // 루트인 경우 items도 함께 초기화
+        setItems(data.items)
+      }
     } catch (err) {
       console.error('폴더 로드 오류:', err)
       setError(err instanceof Error ? err.message : '폴더를 불러오는데 실패했습니다')
@@ -133,7 +150,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       if (sortDirection) searchOptions.sortDirection = sortDirection
 
       const result = await personalFilesService.searchFiles(searchOptions)
-      setItems(result.items)
+      setCurrentFolderItems(result.items)
       // 검색/필터 결과에서는 breadcrumb을 "검색 결과"로 표시
       setBreadcrumbs([{ _id: null, name: '검색 결과' }])
     } catch (err) {
@@ -461,9 +478,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               }}
               style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
-              </svg>
+              {isActive ? (
+                // 열린 폴더 (선택됨)
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H14c.55 0 1 .45 1 1v1H1V5c0-.55.45-1 1-1zm-1 3h14v5c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V7z" fill="currentColor"/>
+                </svg>
+              ) : (
+                // 닫힌 폴더 (선택 안됨)
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
+                </svg>
+              )}
               <span className="folder-name">{folder.name}</span>
             </button>
           </div>
@@ -528,9 +553,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       handleFolderClick(null)
                     }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
-                    </svg>
+                    {currentFolderId === null ? (
+                      // 열린 폴더 (선택됨)
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H14c.55 0 1 .45 1 1v1H1V5c0-.55.45-1 1-1zm-1 3h14v5c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V7z" fill="currentColor"/>
+                      </svg>
+                    ) : (
+                      // 닫힌 폴더 (선택 안됨)
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
+                      </svg>
+                    )}
                     <span className="folder-name">내 드라이브</span>
                   </button>
                 </div>
@@ -726,7 +759,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <div className="empty-state">
                 <p style={{ color: 'var(--color-destructive)' }}>{error}</p>
               </div>
-            ) : items.length === 0 ? (
+            ) : currentFolderItems.length === 0 ? (
               <div className="empty-state">
                 <p>파일이 없습니다</p>
               </div>
@@ -739,7 +772,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div className="header-modified">수정한 날짜</div>
                   <div className="header-actions">작업</div>
                 </div>
-                {items.map(item => (
+                {currentFolderItems.map(item => (
                   <div
                     key={item._id}
                     className={`file-list-row ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
@@ -792,7 +825,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             ) : (
               // 그리드 뷰
               <div className="files-grid">
-                {items.map(item => (
+                {currentFolderItems.map(item => (
                   <div
                     key={item._id}
                     className={`file-grid-item ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
