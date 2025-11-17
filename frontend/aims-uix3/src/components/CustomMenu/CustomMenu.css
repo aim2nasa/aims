@@ -453,6 +453,7 @@
   flex: 1;
   font-weight: inherit;
   transition: opacity var(--duration-fast) var(--easing-ease-out);
+  margin-left: 4px; /* 아이콘과 텍스트 사이 간격 */
 
   /* 🍎 텍스트 선택 방지 - 부모(.layout-leftpane)에서 상속됨 */
 }
@@ -530,7 +531,7 @@
   opacity: 0.95;
 
   /* 애플 스타일 그림자 */
-  box-shadow: 0 4px 20px var(--color-menu-shadow);
+  box-shadow: var(--shadow-tooltip);
 
   /* 부드러운 나타남 효과 */
   animation: tooltipAppear var(--duration-fast) var(--easing-ease-out);
@@ -577,9 +578,6 @@
 
   /* 🎨 문서 관리 섹션 - SF Symbol 아이콘 색상 */
   --color-menu-icon-doc: var(--color-ios-teal);            /* doc - iOS systemTeal */
-
-  /* 그림자 및 효과 */
-  --color-menu-shadow: rgba(0, 0, 0, 0.1);
 }
 
 /* Dark Theme - iOS/macOS 다크모드 시스템 컬러 */
@@ -603,9 +601,6 @@
 
   /* 🌙 문서 관리 섹션 - 다크모드 SF Symbol 아이콘 색상 */
   --color-menu-icon-doc: var(--color-ios-teal-dark);       /* doc - iOS systemTeal (Dark) */
-
-  /* 그림자 및 효과 */
-  --color-menu-shadow: rgba(0, 0, 0, 0.3);
 }
 
 /* === 🎨 SF Symbol 아이콘별 색상 적용 === */

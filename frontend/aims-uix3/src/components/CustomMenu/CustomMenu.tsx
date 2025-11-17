@@ -82,9 +82,11 @@ const MenuIcons = {
     />
   ),
   Folder: () => (
-    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z" fill="currentColor"/>
-    </svg>
+    <SFSymbol
+      name="folder"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 

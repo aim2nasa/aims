@@ -1561,6 +1561,28 @@
   content: none;
 }
 
+/* FOLDER SYMBOL - 폴더 아이콘 */
+.sf-symbol--folder .sf-symbol__shape::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.8em;
+  height: 0.7em;
+
+  /* iOS 표준 폴더 아이콘 */
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M1.5 3.5C1.5 2.67157 2.17157 2 3 2H6.08579C6.351 2 6.60536 2.10536 6.79289 2.29289L7.70711 3.20711C7.89464 3.39464 8.149 3.5 8.41421 3.5H13C13.8284 3.5 14.5 4.17157 14.5 5V12.5C14.5 13.3284 13.8284 14 13 14H3C2.17157 14 1.5 13.3284 1.5 12.5V3.5Z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+.sf-symbol--folder .sf-symbol__shape::after {
+  content: none;
+}
+
 /* === HIGH CONTRAST MODE === */
 
 @media (prefers-contrast: high) {
