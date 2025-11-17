@@ -138,6 +138,10 @@
   transition: opacity 0.1s ease;
 }
 
+.folder-icon-large {
+  font-size: var(--font-size-large-title); /* 28px - FONT_SIZE_STANDARDS.md: 그리드 뷰 아이콘 */
+}
+
 .folder-tree-row:hover .folder-icon {
   opacity: 1;
 }

@@ -771,12 +771,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     onDrop={item.type === 'folder' ? (e) => handleDrop(e, item._id) : undefined}
                   >
                     <div className="row-name">
-                      <SFSymbol
-                        name={getFileIcon(item)}
-                        size={SFSymbolSize.BODY}
-                        weight={SFSymbolWeight.REGULAR}
-                        decorative={true}
-                      />
+                      {item.type === 'folder' ? (
+                        <span className="folder-icon">📁</span>
+                      ) : (
+                        <SFSymbol
+                          name={getFileIcon(item)}
+                          size={SFSymbolSize.BODY}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      )}
                       <span>{item.name}</span>
                     </div>
                     <div className="row-size">
@@ -824,12 +828,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     onDrop={item.type === 'folder' ? (e) => handleDrop(e, item._id) : undefined}
                   >
                     <div className="grid-item-icon">
-                      <SFSymbol
-                        name={getFileIcon(item)}
-                        size={SFSymbolSize.LARGE_TITLE}
-                        weight={SFSymbolWeight.REGULAR}
-                        decorative={true}
-                      />
+                      {item.type === 'folder' ? (
+                        <span className="folder-icon folder-icon-large">📁</span>
+                      ) : (
+                        <SFSymbol
+                          name={getFileIcon(item)}
+                          size={SFSymbolSize.LARGE_TITLE}
+                          weight={SFSymbolWeight.REGULAR}
+                          decorative={true}
+                        />
+                      )}
                     </div>
                     <div className="grid-item-name">
                       {item.name}
