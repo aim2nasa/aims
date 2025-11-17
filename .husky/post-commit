@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# 🔒 재진입 방지 (무한 루프 방지)
+if [ -n "$AIMS_VERSION_BUMP_IN_PROGRESS" ]; then
+  exit 0
+fi
+
+export AIMS_VERSION_BUMP_IN_PROGRESS=1
+
 # 마지막 커밋 메시지 가져오기
 COMMIT_MSG=$(git log -1 --pretty=%B)
 
@@ -19,13 +26,13 @@ fi
 if echo "$COMMIT_MSG" | grep -q "^feat:"; then
   echo "🔼 Auto-bumping minor version (feat commit)..."
   (cd frontend/aims-uix3 && npm version minor -m 'chore: 버전 %s (auto)' --no-git-tag-version) || exit 1
-  git add frontend/aims-uix3/package.json
+  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json
   git commit --amend --no-edit --no-verify
   echo "✅ Minor version bumped!"
 elif echo "$COMMIT_MSG" | grep -q "^fix:"; then
-  echo "🔼 Auto-bumping patch version (fix commit)...  "
+  echo "🔼 Auto-bumping patch version (fix commit)..."
   (cd frontend/aims-uix3 && npm version patch -m 'chore: 버전 %s (auto)' --no-git-tag-version) || exit 1
-  git add frontend/aims-uix3/package.json
+  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json
   git commit --amend --no-edit --no-verify
   echo "✅ Patch version bumped!"
 else
