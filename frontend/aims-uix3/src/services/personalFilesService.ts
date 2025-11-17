@@ -101,8 +101,13 @@ export const personalFilesService = {
    * 파일 업로드
    * @param file - 업로드할 파일
    * @param parentId - 부모 폴더 ID
+   * @param onProgress - 업로드 진행률 콜백
    */
-  async uploadFile(file: File, parentId?: string | null): Promise<PersonalFileItem> {
+  async uploadFile(
+    file: File,
+    parentId?: string | null,
+    onProgress?: (progress: number) => void
+  ): Promise<PersonalFileItem> {
     const formData = new FormData();
     formData.append('file', file);
     if (parentId) {
@@ -116,6 +121,14 @@ export const personalFilesService = {
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            onProgress(percentCompleted);
+          }
         }
       }
     );

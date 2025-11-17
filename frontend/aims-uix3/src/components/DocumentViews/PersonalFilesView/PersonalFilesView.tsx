@@ -6,10 +6,10 @@
  * 좌측: 폴더 트리 네비게이션
  * 우측: 파일/폴더 목록
  *
- * 2단계: 백엔드 API 연동 완료
+ * 3단계: 파일 업로드/다운로드 기능 추가
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip } from '@/shared/ui'
@@ -63,6 +63,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 폴더 내용 로드
   const loadFolderContents = useCallback(async (folderId: string | null) => {
@@ -106,6 +109,53 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setCurrentFolderId(folderId)
     loadFolderContents(folderId)
   }, [loadFolderContents])
+
+  // 파일 업로드 버튼 클릭
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  // 파일 선택 후 업로드
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadProgress(0)
+    setError(null)
+
+    try {
+      await personalFilesService.uploadFile(file, currentFolderId, (progress) => {
+        setUploadProgress(progress)
+      })
+
+      // 업로드 완료 후 목록 새로고침
+      await loadFolderContents(currentFolderId)
+
+      // 파일 input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (err) {
+      console.error('파일 업로드 오류:', err)
+      setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }, [currentFolderId, loadFolderContents])
+
+  // 파일 다운로드
+  const handleFileDownload = useCallback(async (fileId: string, fileName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    try {
+      await personalFilesService.downloadFile(fileId, fileName)
+    } catch (err) {
+      console.error('파일 다운로드 오류:', err)
+      setError(err instanceof Error ? err.message : '파일 다운로드에 실패했습니다')
+    }
+  }, [])
 
   // 검색 필터링
   const filteredItems = useMemo(() => {
@@ -232,6 +282,30 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
             {/* 검색 및 뷰 모드 */}
             <div className="toolbar-actions">
+              {/* 파일 업로드 */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+                aria-label="파일 선택"
+              />
+              <Tooltip content="파일 업로드">
+                <button
+                  className="upload-button"
+                  onClick={handleUploadClick}
+                  disabled={uploading}
+                  aria-label="파일 업로드"
+                >
+                  <SFSymbol
+                    name="arrow.up.doc"
+                    size={SFSymbolSize.FOOTNOTE}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+
               {/* 검색 */}
               <div className="search-box">
                 <SFSymbol
@@ -284,6 +358,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             </div>
           </div>
 
+          {/* 업로드 진행률 표시 */}
+          {uploading && (
+            <div className="upload-progress">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${uploadProgress}%` }} />
+              </div>
+              <span className="progress-text">업로드 중... {uploadProgress}%</span>
+            </div>
+          )}
+
           {/* 파일 목록 */}
           <div className={`files-content ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}>
             {loading ? (
@@ -305,6 +389,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div className="header-name">이름</div>
                   <div className="header-size">크기</div>
                   <div className="header-modified">수정한 날짜</div>
+                  <div className="header-actions">작업</div>
                 </div>
                 {filteredItems.map(item => (
                   <div
@@ -326,6 +411,24 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     </div>
                     <div className="row-modified">
                       {formatDate(item.updatedAt)}
+                    </div>
+                    <div className="row-actions">
+                      {item.type === 'file' && (
+                        <Tooltip content="다운로드">
+                          <button
+                            className="download-button"
+                            onClick={(e) => handleFileDownload(item._id, item.name, e)}
+                            aria-label="다운로드"
+                          >
+                            <SFSymbol
+                              name="arrow.down.circle"
+                              size={SFSymbolSize.FOOTNOTE}
+                              weight={SFSymbolWeight.REGULAR}
+                              decorative={true}
+                            />
+                          </button>
+                        </Tooltip>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -353,6 +456,22 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     <div className="grid-item-info">
                       {item.type === 'file' && item.size ? formatFileSize(item.size) : ''}
                     </div>
+                    {item.type === 'file' && (
+                      <Tooltip content="다운로드">
+                        <button
+                          className="grid-download-button"
+                          onClick={(e) => handleFileDownload(item._id, item.name, e)}
+                          aria-label="다운로드"
+                        >
+                          <SFSymbol
+                            name="arrow.down.circle"
+                            size={SFSymbolSize.FOOTNOTE}
+                            weight={SFSymbolWeight.REGULAR}
+                            decorative={true}
+                          />
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
                 ))}
               </div>
