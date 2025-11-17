@@ -180,7 +180,6 @@ html[data-theme="dark"] .tree-node__badge {
 .tree-children {
   padding-left: 20px;
   margin-left: 8px;
-  border-left: 1px solid var(--color-border);
 }
 
 .tree-group {
