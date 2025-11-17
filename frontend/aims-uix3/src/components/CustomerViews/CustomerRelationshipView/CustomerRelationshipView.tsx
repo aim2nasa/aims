@@ -12,7 +12,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
-import RefreshButton from '../../RefreshButton/RefreshButton';
 import Tooltip from '@/shared/ui/Tooltip';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
@@ -939,15 +938,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                   </button>
                 )}
               </div>
-              <RefreshButton
-                onClick={async () => {
-                  await refresh({ limit: 10000 });
-                  await loadRelationshipsData();
-                }}
-                loading={loading}
-                tooltip="관계 데이터 새로고침"
-                size="small"
-              />
             </div>
           </div>
           {/* 가족 관계 섹션 - 가족 그룹이 있을 때만 표시 */}

@@ -282,46 +282,6 @@ describe('CustomerRelationshipView - 신규 기능 테스트', () => {
     });
   });
 
-  describe('새로고침 버튼', () => {
-    it('새로고침 버튼이 렌더링되어야 한다', async () => {
-      renderComponent();
-
-      await waitFor(() => {
-        const refreshButton = screen.getByLabelText('관계 데이터 새로고침');
-        expect(refreshButton).toBeInTheDocument();
-      });
-    });
-
-    it('새로고침 버튼 클릭 시 데이터를 다시 불러와야 한다', async () => {
-      const user = userEvent.setup();
-      const mockRefresh = vi.fn().mockResolvedValue(undefined);
-
-      vi.mocked(useCustomerDocument).mockReturnValue({
-        customers: mockCustomers,
-        isLoading: false,
-        loadCustomers: vi.fn(),
-        refresh: mockRefresh,
-        total: mockCustomers.length,
-        hasMore: false,
-        error: null,
-        lastUpdated: new Date()
-      } as any);
-
-      renderComponent();
-
-      await waitFor(() => {
-        expect(screen.getByLabelText('관계 데이터 새로고침')).toBeInTheDocument();
-      });
-
-      const refreshButton = screen.getByLabelText('관계 데이터 새로고침');
-      await user.click(refreshButton);
-
-      await waitFor(() => {
-        expect(mockRefresh).toHaveBeenCalledWith({ limit: 10000 });
-      });
-    });
-  });
-
   describe('빈 상태', () => {
     it('관계 데이터가 없을 때 빈 상태 메시지가 표시되어야 한다', async () => {
       vi.mocked(RelationshipService.getAllRelationshipsWithCustomers).mockResolvedValue({

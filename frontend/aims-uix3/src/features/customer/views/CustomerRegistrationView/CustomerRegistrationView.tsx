@@ -7,12 +7,11 @@
  * iOS Settings 스타일의 카드형 레이아웃
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useCustomerRegistrationController } from '../../controllers/useCustomerRegistrationController';
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController';
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { Button } from '../../../../shared/ui/Button';
-import RefreshButton from '../../../../components/RefreshButton/RefreshButton';
 import { BasicInfoSection } from './components/BasicInfoSection';
 import { ContactSection } from './components/ContactSection';
 import { AddressSection } from './components/AddressSection';
@@ -20,7 +19,6 @@ import { InsuranceInfoSection } from './components/InsuranceInfoSection';
 import './CustomerRegistrationView.css';
 
 export const CustomerRegistrationView: React.FC = () => {
-  const [resetClicked, setResetClicked] = useState(false);
 
   // 🍎 애플 스타일 확인 모달
   const confirmController = useAppleConfirmController();
@@ -31,7 +29,6 @@ export const CustomerRegistrationView: React.FC = () => {
     isSubmitting,
     handleChange,
     handleSubmit,
-    handleReset,
   } = useCustomerRegistrationController({
     onSuccess: async (_customerId, customerName) => {
       // 애플 스타일 성공 모달 표시 (취소 버튼 없이)
@@ -59,25 +56,10 @@ export const CustomerRegistrationView: React.FC = () => {
     },
   });
 
-  const handleResetClick = () => {
-    setResetClicked(true);
-    setTimeout(() => setResetClicked(false), 200);
-    handleReset();
-  };
-
   return (
     <React.Fragment>
       <div className="customer-registration">
         <div className="customer-registration__inner">
-          {/* Header with Refresh Button */}
-          <div className="customer-registration__header">
-            <RefreshButton
-              onClick={handleReset}
-              tooltip="폼 초기화"
-              size="small"
-            />
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="customer-registration__form">
             {/* Basic Info Section */}
@@ -117,16 +99,6 @@ export const CustomerRegistrationView: React.FC = () => {
 
             {/* Actions */}
             <div className="customer-registration__actions">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleResetClick}
-                disabled={isSubmitting}
-                leftIcon={<span>{resetClicked ? '🔃' : '🔄'}</span>}
-              >
-                초기화
-              </Button>
               <Button
                 type="submit"
                 variant="primary"
