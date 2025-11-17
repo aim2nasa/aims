@@ -13,7 +13,6 @@ import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
-import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
 import { getAllRelationshipsWithCustomers } from '@/services/relationshipService';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
@@ -59,7 +58,6 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     data: customersData,
     isLoading: isCustomersLoading,
     isError: isCustomersError,
-    refetch: refetchCustomers
   } = useQuery({
     queryKey: ['allCustomers'],
     queryFn: () =>
@@ -530,11 +528,6 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     return sorted;
   }, [customersData, activityPeriod]);
 
-  // 새로고침 핸들러
-  const handleRefresh = async () => {
-    await refetchCustomers();
-  };
-
   // 사용 가이드 섹션
   const guideSections: GuideSection[] = [
     {
@@ -596,13 +589,6 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       visible={visible}
       title="고객 관리"
       titleIcon={<SFSymbol name="person" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
-      titleAccessory={
-        <RefreshButton
-          onClick={handleRefresh}
-          size="small"
-          tooltip="고객 통계 새로고침"
-        />
-      }
       onClose={onClose}
       marginTop={5}
       marginBottom={5}
