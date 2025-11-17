@@ -69,6 +69,12 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 리사이저 상태
+  const [sidebarWidth, setSidebarWidth] = useState(240)
+  const [isResizing, setIsResizing] = useState(false)
+  const resizeStartXRef = useRef(0)
+  const resizeStartWidthRef = useRef(0)
+
   // 필터 및 정렬 상태
   const [typeFilter, setTypeFilter] = useState<'all' | 'file' | 'folder'>('all')
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'size'>('name')
@@ -438,6 +444,50 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setDragOverFolderId(null)
   }, [])
 
+  // 리사이저 핸들러
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+    resizeStartXRef.current = e.clientX
+    resizeStartWidthRef.current = sidebarWidth
+  }, [sidebarWidth])
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return
+
+    const deltaX = e.clientX - resizeStartXRef.current
+    const newWidth = resizeStartWidthRef.current + deltaX
+
+    // 브라우저 너비 기준 비율 제한 (15% ~ 40%)
+    const viewportWidth = window.innerWidth
+    const minWidth = Math.max(180, viewportWidth * 0.15)  // 최소 15% (절대 최소값 180px)
+    const maxWidth = Math.min(600, viewportWidth * 0.4)   // 최대 40% (절대 최대값 600px)
+
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
+    setSidebarWidth(clampedWidth)
+  }, [isResizing])
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false)
+  }, [])
+
+  // 리사이저 이벤트 리스너
+  useEffect(() => {
+    if (!isResizing) return
+
+    document.addEventListener('mousemove', handleResizeMove)
+    document.addEventListener('mouseup', handleResizeEnd)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove)
+      document.removeEventListener('mouseup', handleResizeEnd)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd])
+
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
     const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
@@ -505,7 +555,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       marginRight={0}
       className="personal-files-view-wrapper"
     >
-      <div className="personal-files-view">
+      <div className="personal-files-view" style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}>
         {/* 좌측: 폴더 트리 */}
         <div className="files-sidebar">
           <div className="sidebar-section">
@@ -566,6 +616,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 리사이저 핸들 */}
+        <div
+          className={`files-resizer ${isResizing ? 'resizing' : ''}`}
+          onMouseDown={handleResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="사이드바 크기 조절"
+        >
+          <div className="files-resizer-line" />
         </div>
 
         {/* 우측: 파일 목록 */}

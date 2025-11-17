@@ -11,14 +11,52 @@
   padding: 0;
 }
 
-/* 메인 컨테이너 - 2컬럼 레이아웃 */
+/* 메인 컨테이너 - 3컬럼 레이아웃 (사이드바 + 리사이저 + 메인) */
 .personal-files-view {
+  --sidebar-width: 240px;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: var(--sidebar-width) 4px 1fr;
   gap: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+/* ===== 리사이저 핸들 ===== */
+.files-resizer {
+  position: relative;
+  cursor: col-resize;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  z-index: 10;
+}
+
+.files-resizer:hover {
+  background: var(--color-primary-alpha-20);
+}
+
+.files-resizer.resizing {
+  background: var(--color-button-primary-bg);
+}
+
+.files-resizer-line {
+  width: 1px;
+  height: 100%;
+  background: var(--color-border);
+  pointer-events: none;
+}
+
+.files-resizer:hover .files-resizer-line {
+  background: var(--color-button-primary-bg);
+  width: 2px;
+}
+
+.files-resizer.resizing .files-resizer-line {
+  background: var(--color-button-primary-bg);
+  width: 2px;
 }
 
 /* ===== 좌측 사이드바 ===== */
@@ -27,7 +65,6 @@
   flex-direction: column;
   gap: var(--spacing-4);
   background: var(--color-bg-secondary);
-  border-right: 1px solid var(--color-border);
   overflow-y: auto;
   padding: var(--spacing-3) 0;
 }
@@ -665,7 +702,7 @@
 /* 반응형 */
 @media (max-width: 1024px) {
   .personal-files-view {
-    grid-template-columns: 200px 1fr;
+    --sidebar-width: 200px;
   }
 
   .search-input {
@@ -678,7 +715,8 @@
     grid-template-columns: 1fr;
   }
 
-  .files-sidebar {
+  .files-sidebar,
+  .files-resizer {
     display: none;
   }
 
