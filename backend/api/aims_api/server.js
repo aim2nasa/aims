@@ -138,6 +138,8 @@ const QDRANT_COLLECTION = 'docembed';
 
 // 고객 관계 관리 라우트 import
 const { setupCustomerRelationshipRoutes } = require('./customer-relationships-routes');
+// 개인 파일 관리 라우트 import
+const personalFilesRoutes = require('./routes/personal-files-routes');
 
 let db;
 let fallbackHandlersRegistered = false;
@@ -3424,6 +3426,9 @@ MongoClient.connect(MONGO_URI)
 
     // 고객 관계 라우트 설정
     setupCustomerRelationshipRoutes(app, db);
+    
+    // 개인 파일 관리 라우트 설정
+    app.use('/api/personal-files', personalFilesRoutes);
     registerFallbackHandlers();
   })
   .catch(error => {
@@ -3468,6 +3473,17 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n📊 Annual Report APIs:`);
   console.log(`  POST /api/annual-report/parse - Annual Report 파싱 요청`);
   console.log(`  GET  /api/annual-report/status/:file_id - 파싱 상태 조회`);
+  console.log(`  GET  /api/customers/:customerId/annual-reports - 고객 Annual Reports 목록`);
+  console.log(`  GET  /api/customers/:customerId/annual-reports/latest - 최신 Annual Report 조회`);
+
+  console.log(`
+📁 Personal Files APIs:`);
+  console.log(`  GET  /api/personal-files/folders/:folderId? - 폴더 내용 조회`);
+  console.log(`  POST /api/personal-files/folders - 폴더 생성`);
+  console.log(`  POST /api/personal-files/upload - 파일 업로드`);
+  console.log(`  PUT  /api/personal-files/:itemId/rename - 항목 이름 변경`);
+  console.log(`  DELETE /api/personal-files/:itemId - 항목 삭제`);
+  console.log(`  GET  /api/personal-files/:fileId/download - 파일 다운로드`);
   console.log(`  GET  /api/customers/:customerId/annual-reports - 고객 Annual Reports 목록`);
   console.log(`  GET  /api/customers/:customerId/annual-reports/latest - 최신 Annual Report 조회`);
 

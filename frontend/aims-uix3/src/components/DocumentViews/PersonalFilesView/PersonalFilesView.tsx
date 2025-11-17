@@ -1,52 +1,25 @@
 /**
  * PersonalFilesView Component
- * @since 1.0.0
+ * @since 2.0.0
  *
  * Google Drive 스타일의 개인 파일 관리 View
  * 좌측: 폴더 트리 네비게이션
  * 우측: 파일/폴더 목록
+ *
+ * 2단계: 백엔드 API 연동 완료
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip } from '@/shared/ui'
+import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
   visible: boolean
   onClose: () => void
 }
-
-interface FileSystemItem {
-  id: string
-  name: string
-  type: 'folder' | 'file'
-  parentId: string | null
-  size?: number
-  mimeType?: string
-  modifiedDate: Date
-  starred?: boolean
-}
-
-// Mock 데이터
-const mockItems: FileSystemItem[] = [
-  // 최상위 폴더
-  { id: 'folder-1', name: '2024년 업무', type: 'folder', parentId: null, modifiedDate: new Date('2024-11-15'), starred: false },
-  { id: 'folder-2', name: '고객 자료', type: 'folder', parentId: null, modifiedDate: new Date('2024-11-14'), starred: true },
-  { id: 'folder-3', name: '보험 상품', type: 'folder', parentId: null, modifiedDate: new Date('2024-11-10'), starred: false },
-
-  // 2024년 업무 하위 폴더
-  { id: 'folder-1-1', name: 'Q1 실적', type: 'folder', parentId: 'folder-1', modifiedDate: new Date('2024-03-31'), starred: false },
-  { id: 'folder-1-2', name: 'Q2 실적', type: 'folder', parentId: 'folder-1', modifiedDate: new Date('2024-06-30'), starred: false },
-
-  // 파일들
-  { id: 'file-1', name: '2024년 영업 계획서.pdf', type: 'file', parentId: 'folder-1', size: 2457600, mimeType: 'application/pdf', modifiedDate: new Date('2024-11-15'), starred: false },
-  { id: 'file-2', name: 'Q1 분석 보고서.docx', type: 'file', parentId: 'folder-1-1', size: 512000, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', modifiedDate: new Date('2024-03-31'), starred: false },
-  { id: 'file-3', name: '고객 미팅 메모.docx', type: 'file', parentId: 'folder-2', size: 102400, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', modifiedDate: new Date('2024-11-14'), starred: true },
-  { id: 'file-4', name: '보험 상품 비교표.xlsx', type: 'file', parentId: 'folder-3', size: 819200, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', modifiedDate: new Date('2024-11-10'), starred: false },
-  { id: 'file-5', name: '계약서 양식.pdf', type: 'file', parentId: null, size: 1048576, mimeType: 'application/pdf', modifiedDate: new Date('2024-11-12'), starred: false },
-]
 
 // 파일 크기 포맷팅
 const formatFileSize = (bytes: number): string => {
@@ -58,7 +31,8 @@ const formatFileSize = (bytes: number): string => {
 }
 
 // 날짜 포맷팅
-const formatDate = (date: Date): string => {
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -66,7 +40,7 @@ const formatDate = (date: Date): string => {
 }
 
 // 파일 타입 아이콘 가져오기
-const getFileIcon = (item: FileSystemItem): string => {
+const getFileIcon = (item: PersonalFileItem): string => {
   if (item.type === 'folder') return 'folder'
 
   if (item.mimeType?.includes('pdf')) return 'doc.text'
@@ -81,11 +55,38 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   visible,
   onClose,
 }) => {
-  const [items] = useState<FileSystemItem[]>(mockItems)
+  const [items, setItems] = useState<PersonalFileItem[]>([])
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+  const [breadcrumbs, setBreadcrumbs] = useState<{ _id: string | null; name: string }[]>([])
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // 폴더 내용 로드
+  const loadFolderContents = useCallback(async (folderId: string | null) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const data = await personalFilesService.getFolderContents(folderId)
+      setItems(data.items)
+      setBreadcrumbs(data.breadcrumbs)
+    } catch (err) {
+      console.error('폴더 로드 오류:', err)
+      setError(err instanceof Error ? err.message : '폴더를 불러오는데 실패했습니다')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // 초기 로드
+  useEffect(() => {
+    if (visible) {
+      loadFolderContents(null)
+    }
+  }, [visible, loadFolderContents])
 
   // 폴더 확장/축소
   const toggleFolder = useCallback((folderId: string) => {
@@ -103,50 +104,28 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 폴더 클릭 - 우측 목록 업데이트
   const handleFolderClick = useCallback((folderId: string | null) => {
     setCurrentFolderId(folderId)
-  }, [])
-
-  // 현재 폴더의 아이템들 가져오기
-  const currentFolderItems = useMemo(() => {
-    return items.filter(item => item.parentId === currentFolderId)
-  }, [items, currentFolderId])
+    loadFolderContents(folderId)
+  }, [loadFolderContents])
 
   // 검색 필터링
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return currentFolderItems
-    return currentFolderItems.filter(item =>
+    if (!searchTerm) return items
+    return items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [currentFolderItems, searchTerm])
-
-  // 브레드크럼 경로 생성
-  const breadcrumbPath = useMemo(() => {
-    const path: FileSystemItem[] = []
-    let current = currentFolderId
-
-    while (current) {
-      const folder = items.find(item => item.id === current)
-      if (folder) {
-        path.unshift(folder)
-        current = folder.parentId
-      } else {
-        break
-      }
-    }
-
-    return path
-  }, [items, currentFolderId])
+  }, [items, searchTerm])
 
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
     const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
 
     return folders.map(folder => {
-      const isExpanded = expandedFolderIds.has(folder.id)
-      const hasChildren = items.some(item => item.type === 'folder' && item.parentId === folder.id)
-      const isActive = currentFolderId === folder.id
+      const isExpanded = expandedFolderIds.has(folder._id)
+      const hasChildren = items.some(item => item.type === 'folder' && item.parentId === folder._id)
+      const isActive = currentFolderId === folder._id
 
       return (
-        <div key={folder.id} className="folder-tree-item">
+        <div key={folder._id} className="folder-tree-item">
           <div
             className={`folder-tree-row ${isActive ? 'active' : ''}`}
             style={{ paddingLeft: `${level * 16 + 8}px` }}
@@ -154,7 +133,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             {hasChildren && (
               <button
                 className="folder-expand-button"
-                onClick={() => toggleFolder(folder.id)}
+                onClick={() => toggleFolder(folder._id)}
                 aria-label={isExpanded ? '폴더 닫기' : '폴더 열기'}
               >
                 <SFSymbol
@@ -167,7 +146,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             )}
             <button
               className="folder-name-button"
-              onClick={() => handleFolderClick(folder.id)}
+              onClick={() => handleFolderClick(folder._id)}
               style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
               <SFSymbol
@@ -181,7 +160,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           </div>
           {isExpanded && hasChildren && (
             <div className="folder-tree-children">
-              {renderFolderTree(folder.id, level + 1)}
+              {renderFolderTree(folder._id, level + 1)}
             </div>
           )}
         </div>
@@ -238,20 +217,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           <div className="files-toolbar">
             {/* 브레드크럼 */}
             <div className="breadcrumb">
-              <button
-                className="breadcrumb-item"
-                onClick={() => handleFolderClick(null)}
-              >
-                내 드라이브
-              </button>
-              {breadcrumbPath.map((folder) => (
-                <React.Fragment key={folder.id}>
-                  <span className="breadcrumb-separator">/</span>
+              {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={crumb._id || 'root'}>
+                  {index > 0 && <span className="breadcrumb-separator">/</span>}
                   <button
                     className="breadcrumb-item"
-                    onClick={() => handleFolderClick(folder.id)}
+                    onClick={() => handleFolderClick(crumb._id)}
                   >
-                    {folder.name}
+                    {crumb.name}
                   </button>
                 </React.Fragment>
               ))}
@@ -313,7 +286,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
           {/* 파일 목록 */}
           <div className={`files-content ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}>
-            {filteredItems.length === 0 ? (
+            {loading ? (
+              <div className="empty-state">
+                <p>로딩 중...</p>
+              </div>
+            ) : error ? (
+              <div className="empty-state">
+                <p style={{ color: 'var(--color-destructive)' }}>{error}</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
               <div className="empty-state">
                 <p>파일이 없습니다</p>
               </div>
@@ -327,9 +308,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </div>
                 {filteredItems.map(item => (
                   <div
-                    key={item.id}
+                    key={item._id}
                     className="file-list-row"
-                    onClick={() => item.type === 'folder' && handleFolderClick(item.id)}
+                    onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
                   >
                     <div className="row-name">
                       <SFSymbol
@@ -339,21 +320,12 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                         decorative={true}
                       />
                       <span>{item.name}</span>
-                      {item.starred && (
-                        <SFSymbol
-                          name="star.fill"
-                          size={SFSymbolSize.CAPTION_1}
-                          weight={SFSymbolWeight.REGULAR}
-                          className="star-icon"
-                          decorative={true}
-                        />
-                      )}
                     </div>
                     <div className="row-size">
                       {item.type === 'file' && item.size ? formatFileSize(item.size) : '—'}
                     </div>
                     <div className="row-modified">
-                      {formatDate(item.modifiedDate)}
+                      {formatDate(item.updatedAt)}
                     </div>
                   </div>
                 ))}
@@ -363,9 +335,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <div className="files-grid">
                 {filteredItems.map(item => (
                   <div
-                    key={item.id}
+                    key={item._id}
                     className="file-grid-item"
-                    onClick={() => item.type === 'folder' && handleFolderClick(item.id)}
+                    onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
                   >
                     <div className="grid-item-icon">
                       <SFSymbol
@@ -377,15 +349,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     </div>
                     <div className="grid-item-name">
                       {item.name}
-                      {item.starred && (
-                        <SFSymbol
-                          name="star.fill"
-                          size={SFSymbolSize.CAPTION_1}
-                          weight={SFSymbolWeight.REGULAR}
-                          className="star-icon"
-                          decorative={true}
-                        />
-                      )}
                     </div>
                     <div className="grid-item-info">
                       {item.type === 'file' && item.size ? formatFileSize(item.size) : ''}

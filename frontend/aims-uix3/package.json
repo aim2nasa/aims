@@ -1,7 +1,7 @@
 {
   "name": "aims-uix3",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.87.4",
+    "axios": "^1.13.2",
     "pdfjs-dist": "^5.3.93",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
