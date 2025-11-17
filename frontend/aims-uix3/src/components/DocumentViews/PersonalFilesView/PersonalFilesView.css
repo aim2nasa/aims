@@ -190,7 +190,7 @@
 
 /* 업로드 버튼 */
 .upload-button {
-  background: var(--color-primary);
+  background: var(--color-button-primary-bg);
   border: none;
   cursor: pointer;
   padding: var(--spacing-2);
@@ -198,8 +198,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-bg-primary);
+  color: var(--color-button-primary-text);
   transition: all var(--duration-fast) var(--easing-ease-out);
+  min-width: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
 }
 
 .upload-button:hover:not(:disabled) {
@@ -233,7 +236,7 @@
 
 .progress-fill {
   height: 100%;
-  background: var(--color-primary);
+  background: var(--color-button-primary-bg);
   transition: width var(--duration-normal) var(--easing-ease-out);
   border-radius: var(--radius-full);
 }
@@ -298,13 +301,13 @@
 
 .view-mode-button:hover {
   background: var(--color-bg-tertiary);
-  border-color: var(--color-primary);
+  border-color: var(--color-button-primary-bg);
 }
 
 .view-mode-button.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-bg-primary);
+  background: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
 }
 
 /* ===== 파일 목록 컨텐츠 ===== */
@@ -373,9 +376,9 @@
 }
 
 .file-list-row.drag-over {
-  background: var(--color-primary);
+  background: var(--color-button-primary-bg);
   opacity: 0.1;
-  border-color: var(--color-primary);
+  border-color: var(--color-button-primary-bg);
 }
 
 .row-name {
@@ -417,7 +420,7 @@
 
 .download-button:hover {
   background: var(--color-bg-tertiary);
-  color: var(--color-primary);
+  color: var(--color-button-primary-bg);
   transform: scale(1.1);
 }
 
@@ -450,7 +453,7 @@
 
 .file-grid-item:hover {
   background: var(--color-bg-tertiary);
-  border-color: var(--color-primary);
+  border-color: var(--color-button-primary-bg);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -461,9 +464,9 @@
 }
 
 .file-grid-item.drag-over {
-  background: var(--color-primary);
+  background: var(--color-button-primary-bg);
   opacity: 0.1;
-  border-color: var(--color-primary);
+  border-color: var(--color-button-primary-bg);
 }
 
 .grid-item-icon {
@@ -514,9 +517,9 @@
 }
 
 .grid-download-button:hover {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-bg-primary);
+  background: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   transform: scale(1.1);
 }
 
