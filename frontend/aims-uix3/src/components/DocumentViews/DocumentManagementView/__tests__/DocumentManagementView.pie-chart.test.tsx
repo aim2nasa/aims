@@ -149,9 +149,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('5 (100.00%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
-        expect(legendValues[2]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[0]).toHaveTextContent('5 (100.0%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.0%)')
+        expect(legendValues[2]).toHaveTextContent('0 (0.0%)')
       })
     })
 
@@ -169,9 +169,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
-        expect(legendValues[1]).toHaveTextContent('8 (100.00%)')
-        expect(legendValues[2]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.0%)')
+        expect(legendValues[1]).toHaveTextContent('8 (100.0%)')
+        expect(legendValues[2]).toHaveTextContent('0 (0.0%)')
       })
     })
 
@@ -189,9 +189,9 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
         expect(legendLabel).toBeInTheDocument()
 
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
-        expect(legendValues[2]).toHaveTextContent('3 (100.00%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.0%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.0%)')
+        expect(legendValues[2]).toHaveTextContent('3 (100.0%)')
       })
     })
 
@@ -206,15 +206,15 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
 
       await waitFor(() => {
         const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('10 (50.00%)')
-        expect(legendValues[1]).toHaveTextContent('8 (40.00%)')
-        expect(legendValues[2]).toHaveTextContent('2 (10.00%)')
+        expect(legendValues[0]).toHaveTextContent('10 (50.0%)')
+        expect(legendValues[1]).toHaveTextContent('8 (40.0%)')
+        expect(legendValues[2]).toHaveTextContent('2 (10.0%)')
       })
     })
   })
 
   describe('[회귀 방지] 파이 차트 스타일 및 크기', () => {
-    it('파이 차트가 180px 크기로 렌더링되어야 함', async () => {
+    it('파이 차트가 150px 크기로 렌더링되어야 함', async () => {
       mockGetDocumentStatistics.mockResolvedValue(createMockStats({
         TXT: 3,
         OCR: 5,
@@ -225,12 +225,12 @@ describe('DocumentManagementView - Pie Chart (커밋 18b2ec8e)', () => {
 
       await waitFor(() => {
         const svg = container.querySelector('.file-type-pie-chart svg')
-        expect(svg).toHaveAttribute('width', '180')
-        expect(svg).toHaveAttribute('height', '180')
+        expect(svg).toHaveAttribute('width', '150')
+        expect(svg).toHaveAttribute('height', '150')
       })
     })
 
-    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=45)', async () => {
+    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=38)', async () => {
       mockGetDocumentStatistics.mockResolvedValue(createMockStats({
         TXT: 3,
         OCR: 5,

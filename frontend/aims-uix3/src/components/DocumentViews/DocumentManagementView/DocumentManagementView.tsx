@@ -555,8 +555,8 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                   <h3 className="pie-chart-title">문서 유형</h3>
                   <FileTypePieChart
                     data={fileTypePieData}
-                    size={180}
-                    innerRadius={45}
+                    size={150}
+                    innerRadius={38}
                   />
                 </div>
               )}
@@ -567,8 +567,8 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                   <h3 className="pie-chart-title">처리 상태</h3>
                   <FileTypePieChart
                     data={statusPieData}
-                    size={180}
-                    innerRadius={45}
+                    size={150}
+                    innerRadius={38}
                   />
                 </div>
               )}

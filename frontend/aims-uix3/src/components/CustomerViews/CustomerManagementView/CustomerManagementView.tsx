@@ -82,6 +82,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         fifties: 0,
         over60: 0,
         unknownAge: 0,
+        regionCounts: {} as Record<string, number>,
       };
     }
 
@@ -101,6 +102,60 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       return age;
     };
 
+    // 지역 추출 헬퍼 (주소에서 시/도 추출)
+    const extractRegion = (address: string | undefined): string => {
+      if (!address) return '미상';
+
+      // 주소에서 첫 번째 공백 전까지 추출 (시/도 이름)
+      const firstSpace = address.indexOf(' ');
+      if (firstSpace === -1) return '미상';
+
+      const region = address.substring(0, firstSpace).trim();
+
+      // 유효한 시/도 이름인지 확인
+      const validRegions = [
+        '서울특별시', '서울',
+        '부산광역시', '부산',
+        '대구광역시', '대구',
+        '인천광역시', '인천',
+        '광주광역시', '광주',
+        '대전광역시', '대전',
+        '울산광역시', '울산',
+        '세종특별자치시', '세종',
+        '경기도', '경기',
+        '강원도', '강원',
+        '충청북도', '충북',
+        '충청남도', '충남',
+        '전라북도', '전북',
+        '전라남도', '전남',
+        '경상북도', '경북',
+        '경상남도', '경남',
+        '제주특별자치도', '제주'
+      ];
+
+      // 짧은 이름을 전체 이름으로 정규화
+      const normalized = region
+        .replace('서울', '서울특별시')
+        .replace('부산', '부산광역시')
+        .replace('대구', '대구광역시')
+        .replace('인천', '인천광역시')
+        .replace('광주', '광주광역시')
+        .replace('대전', '대전광역시')
+        .replace('울산', '울산광역시')
+        .replace('세종', '세종특별자치시')
+        .replace('경기', '경기도')
+        .replace('강원', '강원도')
+        .replace('충북', '충청북도')
+        .replace('충남', '충청남도')
+        .replace('전북', '전라북도')
+        .replace('전남', '전라남도')
+        .replace('경북', '경상북도')
+        .replace('경남', '경상남도')
+        .replace('제주', '제주특별자치도');
+
+      return validRegions.includes(normalized) ? normalized : '미상';
+    };
+
     let maleCount = 0;
     let femaleCount = 0;
     let unknownGenderCount = 0;
@@ -110,6 +165,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
     let fiftiesCount = 0;
     let over60Count = 0;
     let unknownAgeCount = 0;
+    const regionCounts: Record<string, number> = {};
 
     customers.forEach(customer => {
       // 성별 통계
@@ -138,6 +194,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       } else {
         over60Count++;
       }
+
+      // 지역별 통계
+      const address = customer.personal_info?.address?.address1;
+      const region = extractRegion(address);
+      regionCounts[region] = (regionCounts[region] || 0) + 1;
     });
 
     return {
@@ -159,6 +220,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       fifties: fiftiesCount,
       over60: over60Count,
       unknownAge: unknownAgeCount,
+      regionCounts,
     };
   }, [customersData]);
 
@@ -249,6 +311,43 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       });
     }
     return data;
+  }, [stats]);
+
+  // 지역별 파이 차트
+  const regionPieData: FileTypeData[] = useMemo(() => {
+    // 지역별 색상 매핑 (17개 시/도 + 미상)
+    const regionColors: Record<string, string> = {
+      '서울특별시': 'var(--color-ios-blue)',
+      '부산광역시': 'var(--color-ios-cyan)',
+      '대구광역시': 'var(--color-ios-purple)',
+      '인천광역시': 'var(--color-ios-teal)',
+      '광주광역시': 'var(--color-ios-green)',
+      '대전광역시': 'var(--color-ios-orange)',
+      '울산광역시': 'var(--color-ios-pink)',
+      '세종특별자치시': 'var(--color-ios-indigo)',
+      '경기도': 'var(--color-primary-500)',
+      '강원도': 'var(--color-success)',
+      '충청북도': 'var(--color-warning)',
+      '충청남도': '#FFB340',
+      '전라북도': '#FF6B6B',
+      '전라남도': '#4ECDC4',
+      '경상북도': '#9B59B6',
+      '경상남도': '#3498DB',
+      '제주특별자치도': '#E67E22',
+      '미상': 'var(--color-text-tertiary)'
+    };
+
+    // regionCounts를 배열로 변환하고, 미상은 마지막으로
+    const entries = Object.entries(stats.regionCounts);
+    const unknown = entries.filter(([region]) => region === '미상');
+    const known = entries.filter(([region]) => region !== '미상').sort((a, b) => b[1] - a[1]);
+    const sortedEntries = [...known, ...unknown];
+
+    return sortedEntries.map(([region, count]) => ({
+      label: region.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '').replace('도', ''),
+      count,
+      color: regionColors[region] || 'var(--color-text-tertiary)'
+    }));
   }, [stats]);
 
   // 최근 활동 데이터 변환
@@ -468,24 +567,32 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                 <h3 className="pie-chart-title">고객 유형</h3>
                 <FileTypePieChart
                   data={customerTypePieData}
-                  size={180}
-                  innerRadius={45}
+                  size={150}
+                  innerRadius={38}
                 />
               </div>
               <div className="pie-chart-item">
                 <h3 className="pie-chart-title">성별 분포</h3>
                 <FileTypePieChart
                   data={genderPieData}
-                  size={180}
-                  innerRadius={45}
+                  size={150}
+                  innerRadius={38}
                 />
               </div>
               <div className="pie-chart-item">
                 <h3 className="pie-chart-title">연령대 분포</h3>
                 <FileTypePieChart
                   data={agePieData}
-                  size={180}
-                  innerRadius={45}
+                  size={150}
+                  innerRadius={38}
+                />
+              </div>
+              <div className="pie-chart-item">
+                <h3 className="pie-chart-title">지역별 가입</h3>
+                <FileTypePieChart
+                  data={regionPieData}
+                  size={150}
+                  innerRadius={38}
                 />
               </div>
             </div>

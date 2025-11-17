@@ -186,7 +186,7 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
               />
               <span className="file-type-pie-chart__legend-label">{slice.label}</span>
               <span className="file-type-pie-chart__legend-value">
-                {slice.count} ({slice.percentage.toFixed(2)}%)
+                {slice.count} ({slice.percentage.toFixed(1)}%)
               </span>
             </div>
             {slice.description && (

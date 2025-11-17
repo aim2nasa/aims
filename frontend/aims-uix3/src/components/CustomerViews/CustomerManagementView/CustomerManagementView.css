@@ -80,12 +80,12 @@
 .customer-management-view__pie-charts-grid .file-type-pie-chart {
   flex-direction: row;
   align-items: flex-start;
-  gap: var(--spacing-3);
+  gap: 0px;
 }
 
 /* SVG 크기 고정 */
 .customer-management-view__pie-charts-grid .file-type-pie-chart__svg {
-  max-width: 180px;
+  max-width: 150px;
   flex-shrink: 0;
 }
 
@@ -93,6 +93,7 @@
 .customer-management-view__pie-charts-grid .file-type-pie-chart__legend {
   flex: 1;
   min-width: 0;
+  margin-left: -10px;
 }
 
 /* 빠른 액션 그리드 */

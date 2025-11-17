@@ -50,8 +50,8 @@ describe('FileTypePieChart', () => {
       const { container } = render(<FileTypePieChart data={data} />)
 
       const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-      expect(legendValues[0]).toHaveTextContent('80 (80.00%)')
-      expect(legendValues[1]).toHaveTextContent('20 (20.00%)')
+      expect(legendValues[0]).toHaveTextContent('80 (80.0%)')
+      expect(legendValues[1]).toHaveTextContent('20 (20.0%)')
     })
   })
 
@@ -138,8 +138,8 @@ describe('FileTypePieChart', () => {
       const { container } = render(<FileTypePieChart data={data} />)
 
       const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-      expect(legendValues[0]).toHaveTextContent('75 (75.00%)')
-      expect(legendValues[1]).toHaveTextContent('25 (25.00%)')
+      expect(legendValues[0]).toHaveTextContent('75 (75.0%)')
+      expect(legendValues[1]).toHaveTextContent('25 (25.0%)')
     })
 
     it('소수점 백분율을 올바르게 반올림해야 함', () => {
@@ -152,9 +152,9 @@ describe('FileTypePieChart', () => {
       const { container } = render(<FileTypePieChart data={data} />)
 
       const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-      expect(legendValues[0]).toHaveTextContent('33 (33.00%)')
-      expect(legendValues[1]).toHaveTextContent('33 (33.00%)')
-      expect(legendValues[2]).toHaveTextContent('34 (34.00%)')
+      expect(legendValues[0]).toHaveTextContent('33 (33.0%)')
+      expect(legendValues[1]).toHaveTextContent('33 (33.0%)')
+      expect(legendValues[2]).toHaveTextContent('34 (34.0%)')
     })
   })
 
@@ -168,7 +168,7 @@ describe('FileTypePieChart', () => {
 
       expect(screen.getByText('TXT')).toBeInTheDocument()
       const legendValue = container.querySelector('.file-type-pie-chart__legend-value')
-      expect(legendValue).toHaveTextContent('100 (100.00%)')
+      expect(legendValue).toHaveTextContent('100 (100.0%)')
     })
 
     it('개수가 0인 항목도 표시해야 함', () => {
@@ -181,7 +181,7 @@ describe('FileTypePieChart', () => {
 
       expect(screen.getByText('OCR')).toBeInTheDocument()
       const legendValues = container.querySelectorAll('.file-type-pie-chart__legend-value')
-      expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
+      expect(legendValues[1]).toHaveTextContent('0 (0.0%)')
     })
 
     it('모든 항목의 개수가 0이면 0% 표시해야 함', () => {

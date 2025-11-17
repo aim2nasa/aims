@@ -162,8 +162,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('3 (100.00%)')
-        expect(legendValues[1]).toHaveTextContent('0 (0.00%)')
+        expect(legendValues[0]).toHaveTextContent('3 (100.0%)')
+        expect(legendValues[1]).toHaveTextContent('0 (0.0%)')
       })
     })
 
@@ -190,8 +190,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('0 (0.00%)')
-        expect(legendValues[1]).toHaveTextContent('2 (100.00%)')
+        expect(legendValues[0]).toHaveTextContent('0 (0.0%)')
+        expect(legendValues[1]).toHaveTextContent('2 (100.0%)')
       })
     })
 
@@ -217,8 +217,8 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const pieChartItems = container.querySelectorAll('.pie-chart-item')
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
-        expect(legendValues[0]).toHaveTextContent('3 (75.00%)')
-        expect(legendValues[1]).toHaveTextContent('1 (25.00%)')
+        expect(legendValues[0]).toHaveTextContent('3 (75.0%)')
+        expect(legendValues[1]).toHaveTextContent('1 (25.0%)')
       })
     })
 
@@ -244,14 +244,14 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
         const firstPieChart = pieChartItems[0]!
         const legendValues = firstPieChart.querySelectorAll('.file-type-pie-chart__legend-value')
         // insurance_info가 없으면 개인으로 분류됨
-        expect(legendValues[0]).toHaveTextContent('2 (66.67%)')
-        expect(legendValues[1]).toHaveTextContent('1 (33.33%)')
+        expect(legendValues[0]).toHaveTextContent('2 (66.7%)')
+        expect(legendValues[1]).toHaveTextContent('1 (33.3%)')
       })
     })
   })
 
   describe('[회귀 방지] 파이 차트 스타일 및 크기', () => {
-    it('파이 차트가 180px 크기로 렌더링되어야 함', async () => {
+    it('파이 차트가 150px 크기로 렌더링되어야 함', async () => {
       const mockCustomers: Customer[] = [
         createMockCustomer({ insurance_info: { customer_type: '개인' } } as Partial<Customer>)
       ]
@@ -267,12 +267,12 @@ describe('CustomerManagementView - Pie Chart (커밋 a7cccb55)', () => {
 
       await waitFor(() => {
         const svg = container.querySelector('.file-type-pie-chart svg')
-        expect(svg).toHaveAttribute('width', '180')
-        expect(svg).toHaveAttribute('height', '180')
+        expect(svg).toHaveAttribute('width', '150')
+        expect(svg).toHaveAttribute('height', '150')
       })
     })
 
-    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=45)', async () => {
+    it('파이 차트가 도넛 차트 형태여야 함 (innerRadius=38)', async () => {
       const mockCustomers: Customer[] = [
         createMockCustomer({ insurance_info: { customer_type: '개인' } } as Partial<Customer>)
       ]
