@@ -149,3 +149,19 @@ html[data-theme="dark"] .naver-map-progress-bar {
 html[data-theme="dark"] .naver-map-progress-fill {
   background: linear-gradient(90deg, #0A84FF 0%, #00D4FF 100%);
 }
+
+/* 선택된 마커 깜빡임 애니메이션 */
+@keyframes marker-blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2);
+  }
+}
+
+.marker-blink {
+  animation: marker-blink 1s ease-in-out infinite;
+}

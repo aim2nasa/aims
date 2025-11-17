@@ -646,7 +646,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           // 그룹 마커: 줌 레벨에 따라 다른 디자인
           if (showNumbers) {
             // 줌 레벨 높음: 숫자 표시 (빨간색, 단일 고객과 동일 크기)
-            markerContent = `<div style="
+            markerContent = `<div class="${hasSelectedCustomer ? 'marker-blink' : ''}" style="
               width: 24px;
               height: 24px;
               display: flex;
@@ -672,7 +672,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
             </div>`
           } else {
             // 줌 레벨 낮음: 이중 원 디자인 (빨간색, 단일 고객과 동일 크기)
-            markerContent = `<div style="
+            markerContent = `<div class="${hasSelectedCustomer ? 'marker-blink' : ''}" style="
               width: 24px;
               height: 24px;
               display: flex;
@@ -722,7 +722,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           if (!customer) continue
           const isSelected = customer._id === selectedCustomerId
 
-          markerContent = `<div style="
+          markerContent = `<div class="${isSelected ? 'marker-blink' : ''}" style="
             width: 24px;
             height: 24px;
             display: flex;
@@ -912,7 +912,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         // 그룹 마커: 줌 레벨에 따라 다른 디자인
         if (showNumbers) {
           // 줌 레벨 높음: 숫자 표시 (빨간색, 단일 고객과 동일 크기)
-          markerContent = `<div style="
+          markerContent = `<div class="${hasSelectedCustomer ? 'marker-blink' : ''}" style="
             width: 24px;
             height: 24px;
             display: flex;
@@ -938,7 +938,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
           </div>`
         } else {
           // 줌 레벨 낮음: 이중 원 디자인 (빨간색, 단일 고객과 동일 크기)
-          markerContent = `<div style="
+          markerContent = `<div class="${hasSelectedCustomer ? 'marker-blink' : ''}" style="
             width: 24px;
             height: 24px;
             display: flex;
@@ -963,7 +963,7 @@ export const NaverMap: React.FC<NaverMapProps> = ({
         if (!customer) continue
         const isSelected = customer._id === selectedCustomerId
 
-        markerContent = `<div style="
+        markerContent = `<div class="${isSelected ? 'marker-blink' : ''}" style="
           width: 24px;
           height: 24px;
           display: flex;
