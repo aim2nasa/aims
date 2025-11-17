@@ -153,9 +153,6 @@ export const NaverMap: React.FC<NaverMapProps> = ({
   // 현재 줌 레벨 (마커 디자인 결정용)
   const [currentZoom, setCurrentZoom] = useState<number>(initialZoom)
 
-  // 프로그래밍 방식의 resize인지 구분하는 플래그
-  const isProgrammaticResize = useRef(false)
-
   // 선택된 고객 위치 저장 (지도 크기 변경 시 중앙 유지용)
   const selectedCustomerPosition = useRef<{ lat: number; lng: number } | null>(null)
 
@@ -236,44 +233,60 @@ export const NaverMap: React.FC<NaverMapProps> = ({
     }
   }, [])
 
-  // ⭐⭐⭐ 브라우저 줌/리사이즈 감지 및 지도 크기 재계산
+  // ⭐⭐⭐ 지도 컨테이너 크기 변경 감지 및 중앙 유지 (ResizeObserver)
   useEffect(() => {
-    if (!mapInstance.current) {
+    if (!mapElement.current || !mapInstance.current || !window.naver) {
       return
     }
 
     let resizeTimeout: NodeJS.Timeout
 
-    const handleResize = () => {
-      // 프로그래밍 방식의 resize라면 무시
-      if (isProgrammaticResize.current) {
-        isProgrammaticResize.current = false
-        return
-      }
-
-      // 디바운싱: 리사이즈 이벤트가 멈춘 후 200ms 뒤에 실행
+    const resizeObserver = new ResizeObserver(() => {
+      // 디바운싱: 리사이즈 이벤트가 멈춘 후 100ms 뒤에 실행
       clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
-        if (mapInstance.current) {
-          // 플래그 설정 (무한 루프 방지)
-          isProgrammaticResize.current = true
+        if (!mapInstance.current || !window.naver) {
+          return
+        }
 
-          // 지도 중심 위치 재설정 (viewport 재계산 트리거)
-          const currentCenter = mapInstance.current.getCenter()
-          mapInstance.current.setCenter(currentCenter)
+        // 선택된 고객 위치가 있으면 그 위치로, 없으면 현재 중심으로
+        let centerToUse
+        if (selectedCustomerPosition.current) {
+          centerToUse = new window.naver.maps.LatLng(
+            selectedCustomerPosition.current.lat,
+            selectedCustomerPosition.current.lng
+          )
+        } else {
+          centerToUse = mapInstance.current.getCenter()
+        }
 
-          if (import.meta.env.DEV) {
-            console.log('[NaverMap] ⭐ 브라우저 줌/리사이즈 감지 - 지도 크기 재계산')
+        // 현재 줌 레벨 저장
+        const currentZoom = mapInstance.current.getZoom()
+
+        // 지도 중심 위치 재설정 (viewport 재계산 트리거)
+        mapInstance.current.setCenter(centerToUse)
+        mapInstance.current.setZoom(currentZoom)
+
+        // 네이버 지도 API에 명시적으로 resize 이벤트 전달 (렌더링 강제)
+        setTimeout(() => {
+          if (mapInstance.current) {
+            window.dispatchEvent(new Event('resize'))
+          }
+        }, 50)
+
+        if (import.meta.env.DEV) {
+          console.log('[NaverMap] ⭐ 지도 컨테이너 크기 변경 감지 - 중앙 유지 및 재렌더링')
+          if (selectedCustomerPosition.current) {
+            console.log(`[NaverMap] 선택된 고객 위치로 중앙 유지: (${selectedCustomerPosition.current.lat}, ${selectedCustomerPosition.current.lng})`)
           }
         }
-      }, 200)
-    }
+      }, 100)
+    })
 
-    // 윈도우 리사이즈 이벤트 리스너 (브라우저 줌 포함)
-    window.addEventListener('resize', handleResize)
+    resizeObserver.observe(mapElement.current)
 
     return () => {
-      window.removeEventListener('resize', handleResize)
+      resizeObserver.disconnect()
       clearTimeout(resizeTimeout)
     }
   }, [isMapReady])
