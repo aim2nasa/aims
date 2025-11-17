@@ -221,6 +221,39 @@ export const personalFilesService = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * 파일/폴더 검색
+   * @param options - 검색 옵션
+   */
+  async searchFiles(options: {
+    q?: string;           // 검색어
+    type?: 'file' | 'folder';  // 타입 필터
+    dateFrom?: string;    // 시작 날짜 (YYYY-MM-DD)
+    dateTo?: string;      // 종료 날짜 (YYYY-MM-DD)
+    sortBy?: 'name' | 'createdAt' | 'size';  // 정렬 기준
+    sortDirection?: 'asc' | 'desc';  // 정렬 방향
+  }): Promise<{ items: PersonalFileItem[]; count: number }> {
+    const params = new URLSearchParams();
+
+    if (options.q) params.append('q', options.q);
+    if (options.type) params.append('type', options.type);
+    if (options.dateFrom) params.append('dateFrom', options.dateFrom);
+    if (options.dateTo) params.append('dateTo', options.dateTo);
+    if (options.sortBy) params.append('sortBy', options.sortBy);
+    if (options.sortDirection) params.append('sortDirection', options.sortDirection);
+
+    const response = await axios.get<ApiResponse<{ items: PersonalFileItem[]; count: number }>>(
+      `${API_BASE}/search?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || '검색 실패');
+    }
+
+    return response.data.data;
   }
 };
 

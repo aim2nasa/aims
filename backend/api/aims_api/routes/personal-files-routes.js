@@ -685,4 +685,86 @@ router.get('/:fileId/download', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * 9. 파일/폴더 검색
+ * GET /api/personal-files/search?q=검색어&type=file&dateFrom=2025-01-01&dateTo=2025-01-31&sortBy=name&sortDirection=asc
+ */
+router.get('/search', authenticateToken, async (req, res) => {
+  const client = new MongoClient(mongoUrl);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    const collection = db.collection('personal_files');
+
+    const userId = req.user.userId;
+    const {
+      q,           // 검색어
+      type,        // 'file' | 'folder'
+      dateFrom,    // 시작 날짜 (YYYY-MM-DD)
+      dateTo,      // 종료 날짜 (YYYY-MM-DD)
+      sortBy = 'name',      // 'name' | 'createdAt' | 'size'
+      sortDirection = 'asc' // 'asc' | 'desc'
+    } = req.query;
+
+    // 기본 쿼리 (사용자 ID, 삭제되지 않은 항목)
+    const query = {
+      userId,
+      isDeleted: false
+    };
+
+    // 검색어가 있으면 이름 검색 (대소문자 무시)
+    if (q) {
+      query.name = { $regex: q, $options: 'i' };
+    }
+
+    // 파일 타입 필터
+    if (type) {
+      query.type = type;
+    }
+
+    // 날짜 범위 필터
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) {
+        query.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        query.createdAt.$lte = new Date(dateTo);
+      }
+    }
+
+    // 정렬 옵션 생성
+    const sortOptions = {};
+    if (sortBy === 'name') {
+      sortOptions.name = sortDirection === 'desc' ? -1 : 1;
+    } else if (sortBy === 'createdAt') {
+      sortOptions.createdAt = sortDirection === 'desc' ? -1 : 1;
+    } else if (sortBy === 'size') {
+      sortOptions.size = sortDirection === 'desc' ? -1 : 1;
+    }
+
+    // 검색 실행
+    const results = await collection.find(query).sort(sortOptions).toArray();
+
+    res.json({
+      success: true,
+      data: {
+        items: results,
+        count: results.length
+      }
+    });
+
+  } catch (error) {
+    console.error('검색 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다',
+      error: error.message
+    });
+  } finally {
+    await client.close();
+  }
+});
+
 module.exports = router;

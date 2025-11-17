@@ -91,6 +91,27 @@ async function testPersonalFilesAPI() {
     console.log('✅ 성공:', JSON.stringify(deleteResponse.data, null, 2));
     console.log('');
 
+    // 8. 검색 (이름 검색)
+    console.log('8️⃣ 검색 - 이름 (GET /search?q=하위)');
+    const searchResponse = await axios.get(`${API_BASE}/search?q=하위`, { headers });
+    console.log('✅ 성공:', JSON.stringify(searchResponse.data, null, 2));
+    console.log('');
+
+    // 9. 검색 (타입 필터)
+    console.log('9️⃣ 검색 - 타입 필터 (GET /search?type=folder)');
+    const searchTypeResponse = await axios.get(`${API_BASE}/search?type=folder`, { headers });
+    console.log('✅ 성공:', JSON.stringify(searchTypeResponse.data, null, 2));
+    console.log('');
+
+    // 10. 검색 (정렬)
+    console.log('🔟 검색 - 정렬 (GET /search?sortBy=createdAt&sortDirection=desc)');
+    const searchSortResponse = await axios.get(
+      `${API_BASE}/search?sortBy=createdAt&sortDirection=desc`,
+      { headers }
+    );
+    console.log('✅ 성공:', JSON.stringify(searchSortResponse.data, null, 2));
+    console.log('');
+
     console.log('🎉 모든 테스트 성공!');
 
   } catch (error) {
