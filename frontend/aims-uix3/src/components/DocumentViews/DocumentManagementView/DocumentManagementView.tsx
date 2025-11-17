@@ -6,13 +6,11 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CenterPaneView from '../../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
-import { RecentActivityList } from '@/shared/ui/RecentActivityList';
-import type { RecentActivityItem } from '@/shared/ui/RecentActivityList';
 import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { getDocumentStatistics } from '@/services/DocumentService';
@@ -22,7 +20,10 @@ import { Tooltip } from '@/shared/ui';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import HorizontalBarChart from '@/shared/ui/HorizontalBarChart';
+import { Dropdown } from '@/shared/ui/Dropdown';
 import './DocumentManagementView.css';
+
+type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
 
 interface DocumentManagementViewProps {
   /** View 표시 여부 */
@@ -52,6 +53,9 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
   onClose,
   onNavigate,
 }) => {
+  // 최근 활동 기간 선택 상태
+  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1month');
+
   /**
    * OCR 신뢰도를 5단계로 분류
    */
@@ -111,152 +115,210 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     queryFn: getDocumentStatistics,
   });
 
-  // 최근 문서 목록 조회 (DocumentStatusService 사용)
-  const {
-    data: recentDocuments,
-    isLoading: isRecentLoading,
-    isError: isRecentError,
-  } = useQuery({
-    queryKey: ['recentDocuments'],
-    queryFn: () =>
-      DocumentStatusService.getRecentDocuments(1, 5, 'uploadTime_desc'),
-  });
-
-  // 전체 문서 목록 조회 (문서 유형 통계용)
+  // 전체 문서 목록 조회 (문서 유형 통계 및 최근 활동용)
   const {
     data: allDocuments,
+    isLoading: isRecentLoading,
+    isError: isRecentError,
   } = useQuery({
     queryKey: ['allDocumentsForStats'],
     queryFn: () =>
       DocumentStatusService.getRecentDocuments(1, 10000, 'uploadTime_desc'), // 전체 조회
   });
 
-  // 최근 활동 데이터 변환
-  const recentActivities: RecentActivityItem[] = useMemo(() => {
-    if (!recentDocuments?.documents) return [];
 
-    return recentDocuments.documents.slice(0, 5).map((doc) => {
-      // 문서 유형 아이콘 생성 (문서 라이브러리와 동일)
-      const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.filename || doc.originalName);
-      const fileTypeClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.filename || doc.originalName);
-
-      // 문서 상태에 따라 활동 종류 결정
-      const getActivityInfo = (status: string) => {
-        if (status === 'completed') {
-          return {
-            subtitle: '처리 완료',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-success)' }}>
-                <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.2"/>
-                <path d="M6 10l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-            ),
-          };
-        } else if (status === 'processing') {
-          return {
-            subtitle: '처리 중',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
-                <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
-                <path d="M10 2 A 8 8 0 0 1 18 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="0 10 10"
-                    to="360 10 10"
-                    dur="1s"
-                    repeatCount="indefinite"
-                  />
-                </path>
-              </svg>
-            ),
-          };
-        } else if (status === 'error') {
-          return {
-            subtitle: '처리 실패',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-error)' }}>
-                <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.2"/>
-                <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            ),
-          };
-        } else {
-          return {
-            subtitle: '문서 등록',
-            icon: (
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-text-secondary)' }}>
-                <rect x="4" y="2" width="10" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                <line x1="7" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <line x1="7" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="15" cy="15" r="4" fill="var(--color-success)"/>
-                <path d="M15 13v4M13 15h4" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            ),
-          };
-        }
-      };
-
-      const activityInfo = getActivityInfo(doc.status || 'pending');
-
-      // AR 뱃지 확인 (상단)
-      const isAnnualReport = doc.is_annual_report === true;
-
-      // 하단 뱃지: OCR 또는 TXT 중 하나만
-      const ocrConfidence = getOcrConfidence(doc);
-      const ocrLevel = ocrConfidence !== null ? getOcrConfidenceLevel(ocrConfidence) : null;
-
-      // TXT 뱃지 확인 (OCR이 없을 때만, DocumentStatusList와 동일한 로직)
-      const typeLabel = ocrConfidence === null ? DocumentUtils.getDocumentTypeLabel(doc) : null;
-      const showTxtBadge = typeLabel === 'TXT';
-
+  /**
+   * 문서 활동 정보 생성
+   */
+  const getActivityInfo = (status: string) => {
+    if (status === 'completed') {
       return {
-        id: doc._id || String(Math.random()),
-        title: (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <div className="document-icon-wrapper">
-              <div className={`document-icon ${fileTypeClass}`}>
-                <SFSymbol
-                  name={fileIcon}
-                  size={SFSymbolSize.CAPTION_1}
-                  weight={SFSymbolWeight.REGULAR}
-                  decorative={true}
-                />
-              </div>
-
-              {/* 상단 뱃지: AR */}
-              {isAnnualReport && (
-                <Tooltip content="Annual Report">
-                  <div className="document-ar-badge">
-                    AR
-                  </div>
-                </Tooltip>
-              )}
-
-              {/* 하단 뱃지: OCR 또는 TXT 중 하나만 */}
-              {ocrConfidence !== null && ocrLevel ? (
-                <Tooltip content={`OCR 신뢰도: ${(ocrConfidence * 100).toFixed(1)}% (${ocrLevel.label})`}>
-                  <div className={`document-ocr-badge ocr-${ocrLevel.color}`}>
-                    OCR
-                  </div>
-                </Tooltip>
-              ) : showTxtBadge ? (
-                <Tooltip content="TXT 기반 문서">
-                  <div className="document-txt-badge">
-                    TXT
-                  </div>
-                </Tooltip>
-              ) : null}
-            </div>
-            {doc.filename || doc.originalName || '제목 없음'}
-          </span>
+        text: '처리 완료',
+        icon: (
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-success)' }}>
+            <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.2"/>
+            <path d="M6 10l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          </svg>
         ),
-        subtitle: activityInfo.subtitle,
-        timestamp: doc.created_at ? new Date(doc.created_at) : doc.uploaded_at ? new Date(doc.uploaded_at) : new Date(),
-        icon: activityInfo.icon,
       };
+    } else if (status === 'processing') {
+      return {
+        text: '처리 중',
+        icon: (
+          <svg width="13" height="13" viewBox="0 0 20 20" style={{ color: 'var(--color-text-secondary)' }}>
+            <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
+            <path d="M10 2 A 8 8 0 0 1 18 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from="0 10 10"
+                to="360 10 10"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </svg>
+        ),
+      };
+    } else if (status === 'error') {
+      return {
+        text: '처리 실패',
+        icon: (
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-error)' }}>
+            <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.2"/>
+            <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        ),
+      };
+    } else {
+      return {
+        text: '문서 등록',
+        icon: (
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style={{ color: 'var(--color-text-secondary)' }}>
+            <rect x="4" y="2" width="10" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <line x1="7" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="7" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="15" cy="15" r="4" fill="var(--color-success)"/>
+            <path d="M15 13v4M13 15h4" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        ),
+      };
+    }
+  };
+
+  /**
+   * 문서의 날짜 추출 (created_at, uploaded_at, 또는 MongoDB ObjectId에서)
+   */
+  const getDocumentDate = (doc: any): Date | null => {
+    // 1. created_at 시도
+    if (doc.created_at) {
+      return new Date(doc.created_at);
+    }
+
+    // 2. uploaded_at 시도
+    if (doc.uploaded_at) {
+      return new Date(doc.uploaded_at);
+    }
+
+    // 3. MongoDB ObjectId에서 타임스탬프 추출
+    if (doc._id && typeof doc._id === 'string' && doc._id.length === 24) {
+      const timestamp = parseInt(doc._id.substring(0, 8), 16) * 1000; // 밀리초로 변환
+      return new Date(timestamp);
+    }
+
+    return null;
+  };
+
+  /**
+   * 기간별 문서 개수 계산
+   */
+  const getDocumentCountByPeriod = (period: ActivityPeriod): number => {
+    if (!allDocuments?.documents) return 0;
+
+    const now = new Date();
+    const cutoff = new Date();
+
+    switch (period) {
+      case '1week':
+        cutoff.setDate(now.getDate() - 7);
+        break;
+      case '1month':
+        cutoff.setMonth(now.getMonth() - 1);
+        break;
+      case '3months':
+        cutoff.setMonth(now.getMonth() - 3);
+        break;
+      case '6months':
+        cutoff.setMonth(now.getMonth() - 6);
+        break;
+      case '1year':
+        cutoff.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+
+    return allDocuments.documents.filter((doc) => {
+      const docDate = getDocumentDate(doc);
+      if (!docDate) return false;
+      return docDate >= cutoff;
+    }).length;
+  };
+
+  /**
+   * 최근 문서 목록 (테이블 표시용, 기간 필터링 적용)
+   */
+  const recentDocumentList = useMemo(() => {
+    if (!allDocuments?.documents) return [];
+
+    // 기간 계산
+    const now = new Date();
+    const cutoffDate = new Date();
+
+    switch (activityPeriod) {
+      case '1week':
+        cutoffDate.setDate(now.getDate() - 7);
+        break;
+      case '1month':
+        cutoffDate.setMonth(now.getMonth() - 1);
+        break;
+      case '3months':
+        cutoffDate.setMonth(now.getMonth() - 3);
+        break;
+      case '6months':
+        cutoffDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1year':
+        cutoffDate.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+
+    // 기간 내 문서 필터링 및 정렬 (최신순)
+    const filtered = allDocuments.documents.filter((doc) => {
+      const docDate = getDocumentDate(doc);
+      if (!docDate) return false;
+      return docDate >= cutoffDate;
     });
-  }, [recentDocuments]);
+
+    // 날짜 기준 내림차순 정렬 (최신이 위로)
+    return filtered.sort((a, b) => {
+      const dateA = getDocumentDate(a);
+      const dateB = getDocumentDate(b);
+      if (!dateA || !dateB) return 0;
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [allDocuments, activityPeriod]);
+
+  /**
+   * 시간 표시 포맷 (상대 시간)
+   */
+  const formatRelativeTime = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return '방금 전';
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 7) return `${diffDays}일 전`;
+
+    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  };
+
+  /**
+   * 파일 크기 포맷 (바이트 → KB/MB)
+   */
+  const formatFileSize = (bytes: number | undefined): string => {
+    if (!bytes || bytes === 0) return '-';
+
+    if (bytes < 1024) {
+      return `${bytes}B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)}KB`;
+    } else {
+      return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+    }
+  };
 
   /**
    * 문서 타입 분류 헬퍼 - 확장자 기반
@@ -580,20 +642,142 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
 
         {/* 최근 활동 섹션 */}
         <section className="document-management-view__section">
-          <h2 className="document-management-view__section-title">
-            <svg width="14" height="14" viewBox="0 0 20 20">
-              <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
-              <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-            </svg>
-            최근 활동
-          </h2>
-          <div className="document-management-view__recent-activity">
-            <RecentActivityList
-              items={recentActivities}
-              maxItems={5}
-              isLoading={isRecentLoading}
-              {...(isRecentError && { error: '최근 활동 조회 실패' })}
+          <div className="document-management-view__section-header">
+            <h2 className="document-management-view__section-title">
+              <svg width="14" height="14" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="9" fill="var(--color-success)"/>
+                <path d="M10 5v5l3.5 3.5" stroke="var(--color-text-inverse)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+              </svg>
+              최근 활동 ({getDocumentCountByPeriod(activityPeriod)}개)
+            </h2>
+            <Dropdown
+              value={activityPeriod}
+              onChange={(value) => setActivityPeriod(value as ActivityPeriod)}
+              options={[
+                { value: '1week', label: '최근 1주일' },
+                { value: '1month', label: '최근 1개월' },
+                { value: '3months', label: '최근 3개월' },
+                { value: '6months', label: '최근 6개월' },
+                { value: '1year', label: '최근 1년' }
+              ]}
             />
+          </div>
+          <div className="document-management-view__recent-activity">
+            {isRecentLoading ? (
+              <div className="recent-activity-loading">최근 활동을 불러오는 중...</div>
+            ) : isRecentError ? (
+              <div className="recent-activity-error">최근 활동 조회 실패</div>
+            ) : recentDocumentList.length === 0 ? (
+              <div className="recent-activity-empty">최근 활동이 없습니다</div>
+            ) : (
+              <div className="recent-activity-table">
+                {/* 테이블 헤더 */}
+                <div className="recent-activity-header">
+                  <div className="recent-header-activity">활동</div>
+                  <div className="recent-header-icon"></div>
+                  <div className="recent-header-name">문서명</div>
+                  <div className="recent-header-size">파일크기</div>
+                  <div className="recent-header-type">유형</div>
+                  <div className="recent-header-customer">연결고객</div>
+                  <div className="recent-header-time">시간</div>
+                </div>
+
+                {/* 데이터 행 */}
+                {recentDocumentList.map((doc) => {
+                  const fileIcon = DocumentUtils.getFileIcon(doc.mimeType, doc.filename || doc.originalName);
+                  const fileTypeClass = DocumentUtils.getFileTypeClass(doc.mimeType, doc.filename || doc.originalName);
+                  const activityInfo = getActivityInfo(doc.status || 'pending');
+                  const fileType = getFileTypeCategory(doc.mimeType, doc.filename || doc.originalName);
+                  const timestamp = getDocumentDate(doc) || new Date();
+
+                  // 파일 크기 추출 (여러 소스에서 시도)
+                  const fileSize = doc.size || doc.fileSize || doc.file_size;
+
+                  // 연결된 고객 정보
+                  const linkedCustomer = doc.customer_relation?.customer_name || null;
+
+                  // AR 뱃지 확인
+                  const isAnnualReport = doc.is_annual_report === true;
+
+                  // OCR/TXT 뱃지 확인
+                  const ocrConfidence = getOcrConfidence(doc);
+                  const ocrLevel = ocrConfidence !== null ? getOcrConfidenceLevel(ocrConfidence) : null;
+                  const typeLabel = ocrConfidence === null ? DocumentUtils.getDocumentTypeLabel(doc) : null;
+                  const showTxtBadge = typeLabel === 'TXT';
+
+                  return (
+                    <div key={doc._id || String(Math.random())} className="recent-activity-row">
+                      {/* 활동 */}
+                      <div className="recent-cell-activity">
+                        <span className="activity-text">{activityInfo.text}</span>
+                      </div>
+
+                      {/* 아이콘 */}
+                      <div className="recent-cell-icon">
+                        {activityInfo.icon}
+                      </div>
+
+                      {/* 문서명 (파일 아이콘 + 뱃지 포함) */}
+                      <div className="recent-cell-name">
+                        <div className="document-icon-wrapper">
+                          <div className={`document-icon ${fileTypeClass}`}>
+                            <SFSymbol
+                              name={fileIcon}
+                              size={SFSymbolSize.CAPTION_1}
+                              weight={SFSymbolWeight.REGULAR}
+                              decorative={true}
+                            />
+                          </div>
+
+                          {/* AR 뱃지 */}
+                          {isAnnualReport && (
+                            <Tooltip content="Annual Report">
+                              <div className="document-ar-badge">
+                                AR
+                              </div>
+                            </Tooltip>
+                          )}
+
+                          {/* OCR 또는 TXT 뱃지 */}
+                          {ocrConfidence !== null && ocrLevel ? (
+                            <Tooltip content={`OCR 신뢰도: ${(ocrConfidence * 100).toFixed(1)}% (${ocrLevel.label})`}>
+                              <div className={`document-ocr-badge ocr-${ocrLevel.color}`}>
+                                OCR
+                              </div>
+                            </Tooltip>
+                          ) : showTxtBadge ? (
+                            <Tooltip content="TXT 기반 문서">
+                              <div className="document-txt-badge">
+                                TXT
+                              </div>
+                            </Tooltip>
+                          ) : null}
+                        </div>
+                        <span className="document-filename">
+                          {doc.filename || doc.originalName || '제목 없음'}
+                        </span>
+                      </div>
+
+                      {/* 파일크기 */}
+                      <div className="recent-cell-size">{formatFileSize(fileSize)}</div>
+
+                      {/* 유형 */}
+                      <div className="recent-cell-type">{fileType}</div>
+
+                      {/* 연결고객 */}
+                      <div className="recent-cell-customer">
+                        {linkedCustomer || '-'}
+                      </div>
+
+                      {/* 시간 */}
+                      <div className="recent-cell-time">
+                        {formatRelativeTime(timestamp)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </div>
