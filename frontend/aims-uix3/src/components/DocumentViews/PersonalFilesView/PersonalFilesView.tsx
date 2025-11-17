@@ -12,7 +12,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
-import { Tooltip } from '@/shared/ui'
+import { Tooltip, Modal, Button } from '@/shared/ui'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import './PersonalFilesView.css'
 
@@ -66,6 +66,11 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 폴더 생성 모달 상태
+  const [showNewFolderModal, setShowNewFolderModal] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [creatingFolder, setCreatingFolder] = useState(false)
 
   // 폴더 내용 로드
   const loadFolderContents = useCallback(async (folderId: string | null) => {
@@ -156,6 +161,40 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setError(err instanceof Error ? err.message : '파일 다운로드에 실패했습니다')
     }
   }, [])
+
+  // 새 폴더 모달 열기
+  const handleNewFolderClick = useCallback(() => {
+    setShowNewFolderModal(true)
+    setNewFolderName('')
+  }, [])
+
+  // 새 폴더 모달 닫기
+  const handleCloseFolderModal = useCallback(() => {
+    setShowNewFolderModal(false)
+    setNewFolderName('')
+  }, [])
+
+  // 폴더 생성
+  const handleCreateFolder = useCallback(async () => {
+    if (!newFolderName.trim()) {
+      setError('폴더 이름을 입력해주세요')
+      return
+    }
+
+    setCreatingFolder(true)
+    setError(null)
+
+    try {
+      await personalFilesService.createFolder(newFolderName.trim(), currentFolderId)
+      await loadFolderContents(currentFolderId)
+      handleCloseFolderModal()
+    } catch (err) {
+      console.error('폴더 생성 오류:', err)
+      setError(err instanceof Error ? err.message : '폴더 생성에 실패했습니다')
+    } finally {
+      setCreatingFolder(false)
+    }
+  }, [newFolderName, currentFolderId, loadFolderContents, handleCloseFolderModal])
 
   // 검색 필터링
   const filteredItems = useMemo(() => {
@@ -299,6 +338,22 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 >
                   <SFSymbol
                     name="arrow.up.doc"
+                    size={SFSymbolSize.FOOTNOTE}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
+
+              {/* 새 폴더 */}
+              <Tooltip content="새 폴더">
+                <button
+                  className="upload-button"
+                  onClick={handleNewFolderClick}
+                  aria-label="새 폴더"
+                >
+                  <SFSymbol
+                    name="folder.badge.plus"
                     size={SFSymbolSize.FOOTNOTE}
                     weight={SFSymbolWeight.MEDIUM}
                     decorative={true}
@@ -479,6 +534,70 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 폴더 생성 모달 */}
+      <Modal
+        visible={showNewFolderModal}
+        onClose={handleCloseFolderModal}
+        title="새 폴더"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
+            <Button variant="secondary" onClick={handleCloseFolderModal}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateFolder}
+              loading={creatingFolder}
+              disabled={!newFolderName.trim()}
+            >
+              만들기
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ padding: 'var(--spacing-3)' }}>
+          <div style={{ marginBottom: 'var(--spacing-2)' }}>
+            <label
+              htmlFor="folder-name-input"
+              style={{
+                display: 'block',
+                fontSize: 'var(--font-size-footnote)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-1)'
+              }}
+            >
+              폴더 이름
+            </label>
+            <input
+              id="folder-name-input"
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && newFolderName.trim()) {
+                  handleCreateFolder()
+                }
+              }}
+              placeholder="폴더 이름을 입력하세요"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: 'var(--spacing-2)',
+                fontSize: 'var(--font-size-body)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                outline: 'none',
+                backgroundColor: 'var(--color-bg-primary)',
+                color: 'var(--color-text-primary)',
+                transition: 'border-color var(--duration-fast) var(--easing-ease-out)'
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
     </CenterPaneView>
   )
 }
