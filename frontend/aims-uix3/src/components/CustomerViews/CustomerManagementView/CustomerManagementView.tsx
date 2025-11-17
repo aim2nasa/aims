@@ -759,7 +759,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             {!isCustomersLoading && !isCustomersError && recentCustomers.length > 0 && (
               <div className="recent-activity-table">
                 {/* 헤더 */}
-                <div className="recent-activity-header">
+                <div className="customer-recent-activity-header">
                   <div className="recent-header-activity">활동</div>
                   <div className="recent-header-icon"></div>
                   <div className="recent-header-name">이름</div>
@@ -834,7 +834,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                   };
 
                   return (
-                    <div key={customer._id} className="recent-activity-row">
+                    <div key={customer._id} className="customer-recent-activity-row">
                       <div className="recent-cell-activity">
                         {activityIcon}
                         <span className="activity-text">{activityText}</span>

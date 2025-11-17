@@ -3,6 +3,7 @@
  * @since 1.0.0
  *
  * 고객 관리 대시보드 레이아웃
+ * 최근 활동 칼럼 폭: 활동 90px, 아이콘 40px, 이름 120px, 연락처 170px, 주소 350px, 시간 60px
  */
 
 .customer-management-view__content {
@@ -205,10 +206,10 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, var(--opacity-shadow-sm));
 }
 
-/* 헤더 */
-.recent-activity-header {
+/* 헤더 - 고유한 클래스명, 시간 칼럼 최소화 */
+.customer-recent-activity-header {
   display: grid;
-  grid-template-columns: 100px 40px 120px 150px 1fr 100px;
+  grid-template-columns: 85px 35px 200px 200px 1fr 55px;
   gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
   background: var(--color-bg-secondary);
@@ -220,10 +221,15 @@
   letter-spacing: 0.05em;
 }
 
-/* 데이터 행 */
-.recent-activity-row {
+/* 헤더 개별 칼럼 정렬 */
+.customer-recent-activity-header .recent-header-time {
+  text-align: right;
+}
+
+/* 데이터 행 - 고유한 클래스명, 시간 칼럼 최소화 */
+.customer-recent-activity-row {
   display: grid;
-  grid-template-columns: 100px 40px 120px 150px 1fr 100px;
+  grid-template-columns: 85px 35px 200px 200px 1fr 55px;
   gap: var(--spacing-3);
   padding: var(--spacing-2) var(--spacing-4);
   align-items: center;
@@ -232,11 +238,11 @@
   min-height: 36px;
 }
 
-.recent-activity-row:last-child {
+.customer-recent-activity-row:last-child {
   border-bottom: none;
 }
 
-.recent-activity-row:hover {
+.customer-recent-activity-row:hover {
   background: var(--color-bg-tertiary);
 }
 
@@ -332,11 +338,11 @@ html[data-theme="dark"] .recent-activity-table {
   background: var(--color-bg-primary);
 }
 
-html[data-theme="dark"] .recent-activity-header {
+html[data-theme="dark"] .customer-recent-activity-header {
   background: var(--color-bg-secondary);
 }
 
-html[data-theme="dark"] .recent-activity-row:hover {
+html[data-theme="dark"] .customer-recent-activity-row:hover {
   background: var(--color-bg-secondary);
 }
 
