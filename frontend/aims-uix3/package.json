@@ -1,7 +1,7 @@
 {
   "name": "aims-uix3",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,10 @@
     "clean": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf dist",
     "clean:deps": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf node_modules/.cache",
     "clean:all": "rm -rf .vite && rm -rf node_modules/.vite && rm -rf node_modules/.cache && rm -rf node_modules && rm -rf dist",
-    "reset": "npm run clean:all && npm install"
+    "reset": "npm run clean:all && npm install",
+    "release:patch": "npm version patch -m 'chore: 버전 %s' && git push --follow-tags",
+    "release:minor": "npm version minor -m 'chore: 버전 %s' && git push --follow-tags",
+    "release:major": "npm version major -m 'chore: 버전 %s' && git push --follow-tags"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.87.4",

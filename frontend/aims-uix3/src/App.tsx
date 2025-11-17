@@ -12,6 +12,7 @@ import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useUserStore } from './stores/user'
 import { getCurrentUser } from './entities/user/api'
 import type { Customer } from './entities/customer'
+import { APP_VERSION } from './config/version'
 
 // Lazy loading으로 성능 최적화
 const LayoutControlModal = lazy(() => import('./components/LayoutControlModal'))
@@ -1066,6 +1067,26 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 onClick={toggleLeftPaneCollapsed}
               />
             </Suspense>
+          </div>
+
+          {/* 🍎 애플 스타일 버전 표시 - 서브틀하게 하단에 배치 */}
+          <div
+            className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
+            style={{
+              marginTop: 'auto',
+              paddingTop: 'var(--spacing-4)',
+              fontSize: 'var(--font-size-caption-2)',
+              color: 'var(--color-text-tertiary)',
+              opacity: 0.6,
+              textAlign: leftPaneCollapsed ? 'center' : 'left',
+              transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
+              userSelect: 'none'
+            }}
+            aria-label={`버전 ${APP_VERSION}`}
+          >
+            <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
+              v{APP_VERSION}
+            </div>
           </div>
         </nav>
       )}
