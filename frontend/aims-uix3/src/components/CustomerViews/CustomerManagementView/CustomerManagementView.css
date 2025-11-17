@@ -60,6 +60,56 @@
   gap: var(--spacing-4);
 }
 
+/* 관계 통계 카드 래퍼 */
+.stat-card-wrapper {
+  position: relative;
+}
+
+/* 관계 카드의 value 숨기기 (가족/법인만 표시) */
+.stat-card-wrapper .stat-card__value {
+  display: none;
+}
+
+/* 관계 통계 상세 정보 */
+.stat-card-details {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  padding: 0 var(--spacing-2);
+}
+
+.stat-card-detail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-body);
+}
+
+.stat-card-detail-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.stat-card-detail-value {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-title-3);
+  color: var(--color-text-primary);
+}
+
+.stat-card-detail-separator {
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  margin: 0 var(--spacing-1);
+}
+
 /* 파이 차트 그리드 */
 .customer-management-view__pie-charts-grid {
   display: grid;

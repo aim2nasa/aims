@@ -15,6 +15,7 @@ import { UsageGuide } from '@/shared/ui/UsageGuide';
 import type { GuideSection } from '@/shared/ui/UsageGuide';
 import { RefreshButton } from '../../RefreshButton/RefreshButton';
 import { getCustomers } from '@/services/customerService';
+import { getAllRelationshipsWithCustomers } from '@/services/relationshipService';
 import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
@@ -67,6 +68,16 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       }),
   });
 
+  // 관계 데이터 조회 (관계 매핑 통계용)
+  const {
+    data: relationshipsData,
+    isLoading: isRelationshipsLoading,
+  } = useQuery({
+    queryKey: ['allRelationships'],
+    queryFn: getAllRelationshipsWithCustomers,
+    staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
+  });
+
   // 고객 통계 계산
   const stats = useMemo(() => {
     if (!customersData?.customers) {
@@ -75,6 +86,8 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         activeCustomers: 0,
         recentRegistrations: 0,
         relationshipsMapped: 0,
+        familyRelationships: 0,
+        corporateRelationships: 0,
         personalCustomers: 0,
         corporateCustomers: 0,
         maleCustomers: 0,
@@ -205,6 +218,92 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       regionCounts[region] = (regionCounts[region] || 0) + 1;
     });
 
+    // 관계 매핑된 고객 수 및 카테고리별 그룹 수 계산 (관계별 보기와 동일한 방식)
+    let relationshipsMappedCount = 0;
+    let familyGroupsCount = 0;
+    let corporateGroupsCount = 0;
+
+    if (relationshipsData?.relationships) {
+      const customersWithRelationships = new Set<string>();
+      const familyNetworks = new Map<string, Set<string>>();
+      const processed = new Set<string>();
+      const corporateCompanies = new Set<string>();
+
+      // 1. 가족 그룹 네트워크 구축
+      relationshipsData.relationships.forEach(rel => {
+        const category = rel.relationship_info?.relationship_category;
+        const fromCustomer = rel.from_customer;
+        const toCustomer = rel.related_customer;
+        const fromId = typeof fromCustomer === 'string' ? fromCustomer : fromCustomer?._id;
+        const toId = typeof toCustomer === 'string' ? toCustomer : toCustomer?._id;
+
+        if (!fromId || !toId) return;
+
+        // 가족 관계 네트워크 구축 (개인 고객 간)
+        if (category === 'family' &&
+            typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '개인' &&
+            typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '개인') {
+          if (!familyNetworks.has(fromId)) {
+            familyNetworks.set(fromId, new Set());
+          }
+          if (!familyNetworks.has(toId)) {
+            familyNetworks.set(toId, new Set());
+          }
+          familyNetworks.get(fromId)!.add(toId);
+          familyNetworks.get(toId)!.add(fromId);
+        }
+
+        // 법인 관계 확인
+        if ((category === 'professional' || category === 'corporate')) {
+          if (typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '법인') {
+            corporateCompanies.add(fromId);
+          }
+          if (typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '법인') {
+            corporateCompanies.add(toId);
+          }
+        }
+
+        // 관계가 있는 모든 고객 추적
+        customersWithRelationships.add(fromId);
+        customersWithRelationships.add(toId);
+      });
+
+      // 2. 가족 그룹 개수 계산 (연결된 네트워크 개수)
+      familyNetworks.forEach((_, customerId) => {
+        if (processed.has(customerId)) return;
+
+        const familyGroupIds = new Set<string>();
+        const stack = [customerId];
+
+        while (stack.length > 0) {
+          const currentId = stack.pop()!;
+          if (familyGroupIds.has(currentId)) continue;
+
+          familyGroupIds.add(currentId);
+          processed.add(currentId);
+
+          const connections = familyNetworks.get(currentId);
+          if (connections) {
+            connections.forEach(nextId => {
+              if (!familyGroupIds.has(nextId)) {
+                stack.push(nextId);
+              }
+            });
+          }
+        }
+
+        // 2명 이상인 가족 그룹만 카운트
+        if (familyGroupIds.size >= 2) {
+          familyGroupsCount++;
+        }
+      });
+
+      // 3. 법인 그룹 개수 = 법인 고객 개수
+      corporateGroupsCount = corporateCompanies.size;
+
+      relationshipsMappedCount = customersWithRelationships.size;
+    }
+
     return {
       totalCustomers: customers.length,
       activeCustomers: customers.filter(c => c.meta?.status === 'active').length,
@@ -212,7 +311,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         const createdAt = c.meta?.created_at ? new Date(c.meta.created_at) : null;
         return createdAt && createdAt >= thirtyDaysAgo;
       }).length,
-      relationshipsMapped: 0, // TODO: 관계 API 연동 후 계산
+      relationshipsMapped: relationshipsMappedCount,
+      familyRelationships: familyGroupsCount,
+      corporateRelationships: corporateGroupsCount,
       personalCustomers: customers.filter(c => c.insurance_info?.customer_type !== '법인').length,
       corporateCustomers: customers.filter(c => c.insurance_info?.customer_type === '법인').length,
       maleCustomers: maleCount,
@@ -226,7 +327,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       unknownAge: unknownAgeCount,
       regionCounts,
     };
-  }, [customersData]);
+  }, [customersData, relationshipsData]);
 
   // 파이 차트 데이터 준비
   const customerTypePieData: FileTypeData[] = useMemo(() => {
@@ -528,14 +629,29 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
               isLoading={isCustomersLoading}
               {...(isCustomersError && { error: '통계 조회 실패' })}
             />
-            <StatCard
-              title="관계 매핑"
-              value={stats.relationshipsMapped}
-              icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
-              color="success"
-              isLoading={isCustomersLoading}
-              {...(isCustomersError && { error: '통계 조회 실패' })}
-            />
+            <div className="stat-card-wrapper">
+              <StatCard
+                title="관계"
+                value={stats.familyRelationships + stats.corporateRelationships}
+                icon={<SFSymbol name="person.2.fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+                color="success"
+                isLoading={isCustomersLoading || isRelationshipsLoading}
+                {...(isCustomersError && { error: '통계 조회 실패' })}
+              />
+              {!isCustomersLoading && !isRelationshipsLoading && !isCustomersError && (
+                <div className="stat-card-details">
+                  <span className="stat-card-detail-item">
+                    <span className="stat-card-detail-label">가족:</span>
+                    <span className="stat-card-detail-value">{stats.familyRelationships}</span>
+                  </span>
+                  <span className="stat-card-detail-separator">•</span>
+                  <span className="stat-card-detail-item">
+                    <span className="stat-card-detail-label">법인:</span>
+                    <span className="stat-card-detail-value">{stats.corporateRelationships}</span>
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 파이 차트 그리드 */}
