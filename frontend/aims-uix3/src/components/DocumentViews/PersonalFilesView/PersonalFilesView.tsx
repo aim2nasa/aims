@@ -72,6 +72,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [newFolderName, setNewFolderName] = useState('')
   const [creatingFolder, setCreatingFolder] = useState(false)
 
+  // 컨텍스트 메뉴 상태
+  const [showContextMenu, setShowContextMenu] = useState(false)
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
+  const [selectedItem, setSelectedItem] = useState<PersonalFileItem | null>(null)
+
+  // 이름 변경 모달 상태
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+  const [renamingItem, setRenamingItem] = useState(false)
+
   // 폴더 내용 로드
   const loadFolderContents = useCallback(async (folderId: string | null) => {
     setLoading(true)
@@ -195,6 +205,98 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setCreatingFolder(false)
     }
   }, [newFolderName, currentFolderId, loadFolderContents, handleCloseFolderModal])
+
+  // 우클릭 컨텍스트 메뉴
+  const handleContextMenu = useCallback((e: React.MouseEvent, item: PersonalFileItem) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedItem(item)
+    setContextMenuPosition({ x: e.clientX, y: e.clientY })
+    setShowContextMenu(true)
+  }, [])
+
+  // 컨텍스트 메뉴 닫기
+  const handleCloseContextMenu = useCallback(() => {
+    setShowContextMenu(false)
+    setSelectedItem(null)
+  }, [])
+
+  // 이름 변경 모달 열기
+  const handleRenameClick = useCallback(() => {
+    if (!selectedItem) return
+    setRenameValue(selectedItem.name)
+    setShowRenameModal(true)
+    handleCloseContextMenu()
+  }, [selectedItem, handleCloseContextMenu])
+
+  // 이름 변경 모달 닫기
+  const handleCloseRenameModal = useCallback(() => {
+    setShowRenameModal(false)
+    setRenameValue('')
+  }, [])
+
+  // 이름 변경 실행
+  const handleRenameItem = useCallback(async () => {
+    if (!selectedItem || !renameValue.trim()) {
+      setError('이름을 입력해주세요')
+      return
+    }
+
+    setRenamingItem(true)
+    setError(null)
+
+    try {
+      await personalFilesService.renameItem(selectedItem._id, renameValue.trim())
+      await loadFolderContents(currentFolderId)
+      handleCloseRenameModal()
+    } catch (err) {
+      console.error('이름 변경 오류:', err)
+      setError(err instanceof Error ? err.message : '이름 변경에 실패했습니다')
+    } finally {
+      setRenamingItem(false)
+    }
+  }, [selectedItem, renameValue, currentFolderId, loadFolderContents, handleCloseRenameModal])
+
+  // 삭제
+  const handleDeleteClick = useCallback(async () => {
+    if (!selectedItem) return
+
+    if (!confirm(`"${selectedItem.name}"${selectedItem.type === 'folder' ? ' 폴더와 모든 하위 항목을' : '을(를)'} 삭제하시겠습니까?`)) {
+      handleCloseContextMenu()
+      return
+    }
+
+    try {
+      await personalFilesService.deleteItem(selectedItem._id)
+      await loadFolderContents(currentFolderId)
+      handleCloseContextMenu()
+    } catch (err) {
+      console.error('삭제 오류:', err)
+      setError(err instanceof Error ? err.message : '삭제에 실패했습니다')
+    }
+  }, [selectedItem, currentFolderId, loadFolderContents, handleCloseContextMenu])
+
+  // 컨텍스트 메뉴에서 새 폴더 생성
+  const handleNewFolderFromContext = useCallback(() => {
+    if (!selectedItem || selectedItem.type !== 'folder') return
+    setCurrentFolderId(selectedItem._id)
+    loadFolderContents(selectedItem._id)
+    handleCloseContextMenu()
+    setTimeout(() => setShowNewFolderModal(true), 100)
+  }, [selectedItem, loadFolderContents, handleCloseContextMenu])
+
+  // 컨텍스트 메뉴 외부 클릭 감지
+  useEffect(() => {
+    if (!showContextMenu) return
+
+    const handleClickOutside = () => {
+      setShowContextMenu(false)
+      setSelectedItem(null)
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showContextMenu])
 
   // 검색 필터링
   const filteredItems = useMemo(() => {
@@ -451,6 +553,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     key={item._id}
                     className="file-list-row"
                     onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
+                    onContextMenu={(e) => handleContextMenu(e, item)}
                   >
                     <div className="row-name">
                       <SFSymbol
@@ -496,6 +599,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     key={item._id}
                     className="file-grid-item"
                     onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
+                    onContextMenu={(e) => handleContextMenu(e, item)}
                   >
                     <div className="grid-item-icon">
                       <SFSymbol
@@ -582,6 +686,116 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 }
               }}
               placeholder="폴더 이름을 입력하세요"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: 'var(--spacing-2)',
+                fontSize: 'var(--font-size-body)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                outline: 'none',
+                backgroundColor: 'var(--color-bg-primary)',
+                color: 'var(--color-text-primary)',
+                transition: 'border-color var(--duration-fast) var(--easing-ease-out)'
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 컨텍스트 메뉴 */}
+      {showContextMenu && selectedItem && (
+        <div
+          className="context-menu"
+          style={{
+            position: 'fixed',
+            left: `${contextMenuPosition.x}px`,
+            top: `${contextMenuPosition.y}px`,
+            zIndex: 1000
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button className="context-menu-item" onClick={handleRenameClick}>
+            <SFSymbol
+              name="pencil"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            <span>이름 변경</span>
+          </button>
+
+          {selectedItem.type === 'folder' && (
+            <button className="context-menu-item" onClick={handleNewFolderFromContext}>
+              <SFSymbol
+                name="folder.badge.plus"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative={true}
+              />
+              <span>새 폴더</span>
+            </button>
+          )}
+
+          <button className="context-menu-item context-menu-item--danger" onClick={handleDeleteClick}>
+            <SFSymbol
+              name="trash"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            <span>삭제</span>
+          </button>
+        </div>
+      )}
+
+      {/* 이름 변경 모달 */}
+      <Modal
+        visible={showRenameModal}
+        onClose={handleCloseRenameModal}
+        title="이름 변경"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
+            <Button variant="secondary" onClick={handleCloseRenameModal}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleRenameItem}
+              loading={renamingItem}
+              disabled={!renameValue.trim()}
+            >
+              변경
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ padding: 'var(--spacing-3)' }}>
+          <div style={{ marginBottom: 'var(--spacing-2)' }}>
+            <label
+              htmlFor="rename-input"
+              style={{
+                display: 'block',
+                fontSize: 'var(--font-size-footnote)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-1)'
+              }}
+            >
+              {selectedItem?.type === 'folder' ? '폴더 이름' : '파일 이름'}
+            </label>
+            <input
+              id="rename-input"
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && renameValue.trim()) {
+                  handleRenameItem()
+                }
+              }}
+              placeholder="새 이름을 입력하세요"
               autoFocus
               style={{
                 width: '100%',
