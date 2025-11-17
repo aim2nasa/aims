@@ -228,6 +228,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
       const familyNetworks = new Map<string, Set<string>>();
       const processed = new Set<string>();
       const corporateCompanies = new Set<string>();
+      const familyGroupRepresentatives = new Set<string>(); // 가족 그룹 대표자 ID 저장
 
       // 1. 가족 그룹 네트워크 구축
       relationshipsData.relationships.forEach(rel => {
@@ -253,12 +254,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           familyNetworks.get(toId)!.add(fromId);
         }
 
-        // 법인 관계 확인
+        // 법인 관계 확인 (관계별 보기와 동일: 법인-직원 관계만)
         if ((category === 'professional' || category === 'corporate')) {
-          if (typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '법인') {
+          // 한쪽이 법인이고 다른 쪽이 법인이 아닌 경우만 처리
+          if (typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type === '법인' &&
+              typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type !== '법인') {
             corporateCompanies.add(fromId);
-          }
-          if (typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '법인') {
+          } else if (typeof toCustomer === 'object' && toCustomer?.insurance_info?.customer_type === '법인' &&
+                     typeof fromCustomer === 'object' && fromCustomer?.insurance_info?.customer_type !== '법인') {
             corporateCompanies.add(toId);
           }
         }
@@ -268,7 +271,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         customersWithRelationships.add(toId);
       });
 
-      // 2. 가족 그룹 개수 계산 (연결된 네트워크 개수)
+      // 2. 가족 그룹 개수 계산 (관계별 보기와 동일: 대표자 기준)
       familyNetworks.forEach((_, customerId) => {
         if (processed.has(customerId)) return;
 
@@ -292,11 +295,39 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           }
         }
 
-        // 2명 이상인 가족 그룹만 카운트
+        // 2명 이상인 가족 그룹만 처리
         if (familyGroupIds.size >= 2) {
-          familyGroupsCount++;
+          // 관계별 보기와 동일: family_representative 찾기
+          const groupRelationships = relationshipsData.relationships.filter(rel => {
+            const fromId = typeof rel.from_customer === 'string' ? rel.from_customer : rel.from_customer?._id;
+            const toId = typeof rel.related_customer === 'string' ? rel.related_customer : rel.related_customer?._id;
+            return !!fromId && !!toId && familyGroupIds.has(fromId) && familyGroupIds.has(toId);
+          });
+
+          // family_representative가 설정된 관계 찾기
+          const relationshipWithRep = groupRelationships.find(rel => {
+            const rep = rel.family_representative;
+            if (!rep) return false;
+            const repId = typeof rep === 'object' ? rep._id : rep;
+            return repId && familyGroupIds.has(repId);
+          });
+
+          // 대표자 결정: family_representative가 있으면 사용, 없으면 첫 번째 멤버
+          let representativeId: string;
+          if (relationshipWithRep?.family_representative) {
+            const rep = relationshipWithRep.family_representative;
+            representativeId = typeof rep === 'object' ? rep._id : rep;
+          } else {
+            representativeId = Array.from(familyGroupIds)[0]!;
+          }
+
+          // 대표자 ID를 저장 (관계별 보기와 동일)
+          familyGroupRepresentatives.add(representativeId);
         }
       });
+
+      // 가족 그룹 개수 = 대표자 개수
+      familyGroupsCount = familyGroupRepresentatives.size;
 
       // 3. 법인 그룹 개수 = 법인 고객 개수
       corporateGroupsCount = corporateCompanies.size;
