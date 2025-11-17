@@ -1142,13 +1142,13 @@ html[data-theme="dark"] .document-date {
   /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 500;
-  color: var(--color-ios-text-quaternary-light);
+  color: var(--color-ios-text-secondary-light);  /* 🔧 수정: quaternary → secondary (더 진함) */
   text-align: center;
   white-space: nowrap;
 }
 
 html[data-theme="dark"] .document-type {
-  color: var(--color-ios-text-quaternary-dark);
+  color: var(--color-ios-text-secondary-dark);  /* 🔧 수정: quaternary → secondary (더 진함) */
 }
 
 /* === 🍎 STATUS ICON: Document processing status === */
