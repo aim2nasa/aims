@@ -6,8 +6,21 @@
  */
 
 import axios from 'axios';
+import { api, API_CONFIG } from '@/shared/lib/api';
 
-const API_BASE = 'http://tars.giize.com:3010/api/personal-files';
+const API_BASE = '/api/personal-files';
+
+/**
+ * AIMS 표준 헤더 생성 (x-user-id 방식)
+ */
+const getHeaders = () => {
+  const currentUserId = typeof window !== 'undefined'
+    ? localStorage.getItem('aims-current-user-id') || 'tester'
+    : 'tester';
+  return {
+    'x-user-id': currentUserId
+  };
+};
 
 /**
  * 파일 시스템 항목 인터페이스
@@ -45,16 +58,6 @@ interface ApiResponse<T> {
 }
 
 /**
- * 인증 헤더 생성
- */
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
-  return {
-    Authorization: `Bearer ${token}`
-  };
-};
-
-/**
  * Personal Files Service
  */
 export const personalFilesService = {
@@ -63,19 +66,17 @@ export const personalFilesService = {
    * @param folderId - 폴더 ID (null이면 루트)
    */
   async getFolderContents(folderId?: string | null): Promise<FolderContents> {
-    const url = folderId
+    const endpoint = folderId
       ? `${API_BASE}/folders/${folderId}`
       : `${API_BASE}/folders`;
 
-    const response = await axios.get<ApiResponse<FolderContents>>(url, {
-      headers: getAuthHeaders()
-    });
+    const response = await api.get<ApiResponse<FolderContents>>(endpoint);
 
-    if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || '폴더 조회 실패');
+    if (!response.success || !response.data) {
+      throw new Error(response.message || '폴더 조회 실패');
     }
 
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -84,17 +85,16 @@ export const personalFilesService = {
    * @param parentId - 부모 폴더 ID
    */
   async createFolder(name: string, parentId?: string | null): Promise<PersonalFileItem> {
-    const response = await axios.post<ApiResponse<PersonalFileItem>>(
+    const response = await api.post<ApiResponse<PersonalFileItem>>(
       `${API_BASE}/folders`,
-      { name, parentId },
-      { headers: getAuthHeaders() }
+      { name, parentId }
     );
 
-    if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || '폴더 생성 실패');
+    if (!response.success || !response.data) {
+      throw new Error(response.message || '폴더 생성 실패');
     }
 
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -115,11 +115,11 @@ export const personalFilesService = {
     }
 
     const response = await axios.post<ApiResponse<PersonalFileItem>>(
-      `${API_BASE}/upload`,
+      `${API_CONFIG.BASE_URL}${API_BASE}/upload`,
       formData,
       {
         headers: {
-          ...getAuthHeaders(),
+          ...getHeaders(),
           'Content-Type': 'multipart/form-data'
         },
         onUploadProgress: (progressEvent) => {
@@ -146,14 +146,13 @@ export const personalFilesService = {
    * @param newName - 새 이름
    */
   async renameItem(itemId: string, newName: string): Promise<void> {
-    const response = await axios.put<ApiResponse<void>>(
+    const response = await api.put<ApiResponse<void>>(
       `${API_BASE}/${itemId}/rename`,
-      { newName },
-      { headers: getAuthHeaders() }
+      { newName }
     );
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || '이름 변경 실패');
+    if (!response.success) {
+      throw new Error(response.message || '이름 변경 실패');
     }
   },
 
@@ -162,13 +161,12 @@ export const personalFilesService = {
    * @param itemId - 항목 ID
    */
   async deleteItem(itemId: string): Promise<void> {
-    const response = await axios.delete<ApiResponse<void>>(
-      `${API_BASE}/${itemId}`,
-      { headers: getAuthHeaders() }
+    const response = await api.delete<ApiResponse<void>>(
+      `${API_BASE}/${itemId}`
     );
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || '삭제 실패');
+    if (!response.success) {
+      throw new Error(response.message || '삭제 실패');
     }
   },
 
@@ -178,14 +176,13 @@ export const personalFilesService = {
    * @param targetFolderId - 대상 폴더 ID (null이면 루트)
    */
   async moveItem(itemId: string, targetFolderId: string | null): Promise<void> {
-    const response = await axios.put<ApiResponse<void>>(
+    const response = await api.put<ApiResponse<void>>(
       `${API_BASE}/${itemId}/move`,
-      { targetFolderId },
-      { headers: getAuthHeaders() }
+      { targetFolderId }
     );
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || '이동 실패');
+    if (!response.success) {
+      throw new Error(response.message || '이동 실패');
     }
   },
 
@@ -194,8 +191,10 @@ export const personalFilesService = {
    * @param fileId - 파일 ID
    */
   getDownloadUrl(fileId: string): string {
-    const token = localStorage.getItem('authToken');
-    return `${API_BASE}/${fileId}/download?token=${encodeURIComponent(token || '')}`;
+    const currentUserId = typeof window !== 'undefined'
+      ? localStorage.getItem('aims-current-user-id') || 'tester'
+      : 'tester';
+    return `${API_CONFIG.BASE_URL}${API_BASE}/${fileId}/download?x-user-id=${encodeURIComponent(currentUserId)}`;
   },
 
   /**
@@ -205,9 +204,9 @@ export const personalFilesService = {
    */
   async downloadFile(fileId: string, fileName: string): Promise<void> {
     const response = await axios.get(
-      `${API_BASE}/${fileId}/download`,
+      `${API_CONFIG.BASE_URL}${API_BASE}/${fileId}/download`,
       {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         responseType: 'blob'
       }
     );
@@ -244,16 +243,15 @@ export const personalFilesService = {
     if (options.sortBy) params.append('sortBy', options.sortBy);
     if (options.sortDirection) params.append('sortDirection', options.sortDirection);
 
-    const response = await axios.get<ApiResponse<{ items: PersonalFileItem[]; count: number }>>(
-      `${API_BASE}/search?${params.toString()}`,
-      { headers: getAuthHeaders() }
+    const response = await api.get<ApiResponse<{ items: PersonalFileItem[]; count: number }>>(
+      `${API_BASE}/search?${params.toString()}`
     );
 
-    if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || '검색 실패');
+    if (!response.success || !response.data) {
+      throw new Error(response.message || '검색 실패');
     }
 
-    return response.data.data;
+    return response.data;
   }
 };
 

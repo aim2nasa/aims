@@ -22,29 +22,20 @@ const dbName = 'docupload';
 // 파일 저장소 기본 경로
 const BASE_STORAGE_PATH = '/data/files/users';
 
-// JWT 인증 미들웨어
+// AIMS 표준 인증 미들웨어 (x-user-id 헤더 방식)
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const userId = req.headers['x-user-id'];
 
-  if (!token) {
+  if (!userId) {
     return res.status(401).json({
       success: false,
-      message: '인증 토큰이 없습니다'
+      message: '사용자 ID가 없습니다'
     });
   }
 
-  const jwt = require('jsonwebtoken');
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        message: '토큰이 유효하지 않습니다'
-      });
-    }
-    req.user = user;
-    next();
-  });
+  // AIMS 표준: req.user 객체에 userId 설정
+  req.user = { userId };
+  next();
 };
 
 // 사용자별 저장소 경로 생성
@@ -70,9 +61,11 @@ const storage = multer.diskStorage({
     cb(null, storagePath);
   },
   filename: (req, file, cb) => {
+    // 파일명 UTF-8 인코딩 변환 (한글 깨짐 방지)
+    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
+    const ext = path.extname(originalName);
+    const basename = path.basename(originalName, ext);
     cb(null, `${basename}-${uniqueSuffix}${ext}`);
   }
 });
@@ -296,10 +289,13 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     const { parentId } = req.body;
     const userId = req.user.userId;
 
+    // 파일명 UTF-8 인코딩 변환 (한글 깨짐 방지)
+    const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
     // 파일 정보 DB 저장
     const newFile = {
       userId,
-      name: req.file.originalname,
+      name: originalName,
       type: 'file',
       mimeType: req.file.mimetype,
       size: req.file.size,

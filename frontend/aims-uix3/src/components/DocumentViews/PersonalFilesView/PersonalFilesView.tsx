@@ -9,7 +9,7 @@
  * 3단계: 파일 업로드/다운로드 기능 추가
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
@@ -67,6 +67,11 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 필터 및 정렬 상태
+  const [typeFilter, setTypeFilter] = useState<'all' | 'file' | 'folder'>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'size'>('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
   // 폴더 생성 모달 상태
   const [showNewFolderModal, setShowNewFolderModal] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
@@ -103,12 +108,59 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [])
 
+  // 검색 실행 (debounce 적용, 필터 및 정렬 포함)
+  const performSearch = useCallback(async () => {
+    // 검색어, 필터, 정렬 옵션이 모두 기본값이면 현재 폴더 로드
+    if (!searchTerm.trim() && typeFilter === 'all' && sortBy === 'name' && sortDirection === 'asc') {
+      await loadFolderContents(currentFolderId)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const searchOptions: {
+        q?: string
+        type?: 'file' | 'folder'
+        sortBy?: 'name' | 'createdAt' | 'size'
+        sortDirection?: 'asc' | 'desc'
+      } = {}
+
+      if (searchTerm.trim()) searchOptions.q = searchTerm.trim()
+      if (typeFilter !== 'all') searchOptions.type = typeFilter
+      if (sortBy) searchOptions.sortBy = sortBy
+      if (sortDirection) searchOptions.sortDirection = sortDirection
+
+      const result = await personalFilesService.searchFiles(searchOptions)
+      setItems(result.items)
+      // 검색/필터 결과에서는 breadcrumb을 "검색 결과"로 표시
+      setBreadcrumbs([{ _id: null, name: '검색 결과' }])
+    } catch (err) {
+      console.error('검색 오류:', err)
+      setError(err instanceof Error ? err.message : '검색에 실패했습니다')
+    } finally {
+      setLoading(false)
+    }
+  }, [searchTerm, typeFilter, sortBy, sortDirection, currentFolderId, loadFolderContents])
+
   // 초기 로드
   useEffect(() => {
     if (visible) {
       loadFolderContents(null)
     }
   }, [visible, loadFolderContents])
+
+  // 검색/필터/정렬 debounce (500ms)
+  useEffect(() => {
+    if (!visible) return
+
+    const timer = setTimeout(() => {
+      performSearch()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm, typeFilter, sortBy, sortDirection, visible, performSearch])
 
   // 폴더 확장/축소
   const toggleFolder = useCallback((folderId: string) => {
@@ -364,14 +416,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setDragOverFolderId(null)
   }, [])
 
-  // 검색 필터링
-  const filteredItems = useMemo(() => {
-    if (!searchTerm) return items
-    return items.filter(item =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [items, searchTerm])
-
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
     const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
@@ -526,6 +570,39 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 </button>
               </Tooltip>
 
+              <div className="toolbar-divider" />
+
+              {/* 타입 필터 */}
+              <div className="type-filter-group">
+                <Tooltip content="전체">
+                  <button
+                    className={`type-filter-button ${typeFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setTypeFilter('all')}
+                    aria-label="전체"
+                  >
+                    전체
+                  </button>
+                </Tooltip>
+                <Tooltip content="파일만">
+                  <button
+                    className={`type-filter-button ${typeFilter === 'file' ? 'active' : ''}`}
+                    onClick={() => setTypeFilter('file')}
+                    aria-label="파일만"
+                  >
+                    파일
+                  </button>
+                </Tooltip>
+                <Tooltip content="폴더만">
+                  <button
+                    className={`type-filter-button ${typeFilter === 'folder' ? 'active' : ''}`}
+                    onClick={() => setTypeFilter('folder')}
+                    aria-label="폴더만"
+                  >
+                    폴더
+                  </button>
+                </Tooltip>
+              </div>
+
               {/* 검색 */}
               <div className="search-box">
                 <SFSymbol
@@ -542,6 +619,27 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   placeholder="파일 검색"
                   className="search-input"
                 />
+              </div>
+
+              {/* 정렬 */}
+              <div className="sort-controls">
+                <select
+                  value={`${sortBy}-${sortDirection}`}
+                  onChange={(e) => {
+                    const [newSortBy, newSortDirection] = e.target.value.split('-') as [typeof sortBy, typeof sortDirection]
+                    setSortBy(newSortBy)
+                    setSortDirection(newSortDirection)
+                  }}
+                  className="sort-select"
+                  aria-label="정렬 방식"
+                >
+                  <option value="name-asc">이름 ↑</option>
+                  <option value="name-desc">이름 ↓</option>
+                  <option value="createdAt-desc">최신순</option>
+                  <option value="createdAt-asc">오래된순</option>
+                  <option value="size-desc">크기 ↓</option>
+                  <option value="size-asc">크기 ↑</option>
+                </select>
               </div>
 
               {/* 뷰 모드 전환 */}
@@ -598,7 +696,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <div className="empty-state">
                 <p style={{ color: 'var(--color-destructive)' }}>{error}</p>
               </div>
-            ) : filteredItems.length === 0 ? (
+            ) : items.length === 0 ? (
               <div className="empty-state">
                 <p>파일이 없습니다</p>
               </div>
@@ -611,7 +709,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div className="header-modified">수정한 날짜</div>
                   <div className="header-actions">작업</div>
                 </div>
-                {filteredItems.map(item => (
+                {items.map(item => (
                   <div
                     key={item._id}
                     className={`file-list-row ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
@@ -664,7 +762,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             ) : (
               // 그리드 뷰
               <div className="files-grid">
-                {filteredItems.map(item => (
+                {items.map(item => (
                   <div
                     key={item._id}
                     className={`file-grid-item ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
