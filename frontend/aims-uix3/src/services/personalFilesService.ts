@@ -173,6 +173,23 @@ export const personalFilesService = {
   },
 
   /**
+   * 항목 이동
+   * @param itemId - 이동할 항목 ID
+   * @param targetFolderId - 대상 폴더 ID (null이면 루트)
+   */
+  async moveItem(itemId: string, targetFolderId: string | null): Promise<void> {
+    const response = await axios.put<ApiResponse<void>>(
+      `${API_BASE}/${itemId}/move`,
+      { targetFolderId },
+      { headers: getAuthHeaders() }
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || '이동 실패');
+    }
+  },
+
+  /**
    * 파일 다운로드 URL 생성
    * @param fileId - 파일 ID
    */

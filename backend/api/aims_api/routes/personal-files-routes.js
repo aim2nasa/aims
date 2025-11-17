@@ -517,7 +517,131 @@ async function deleteChildrenRecursively(collection, userId, parentId) {
 }
 
 /**
- * 6. 파일 다운로드
+ * 모든 부모 폴더 ID 조회 (순환 참조 방지용)
+ */
+async function getAllParentIds(collection, folderId) {
+  const parentIds = [];
+  let currentId = folderId;
+
+  while (currentId) {
+    const folder = await collection.findOne({ _id: currentId });
+    if (!folder || !folder.parentId) break;
+
+    parentIds.push(folder.parentId.toString());
+    currentId = folder.parentId;
+  }
+
+  return parentIds;
+}
+
+/**
+ * 6. 항목 이동
+ * PUT /api/personal-files/:itemId/move
+ * Body: { targetFolderId: string | null }
+ */
+router.put('/:itemId/move', authenticateToken, async (req, res) => {
+  const client = new MongoClient(mongoUrl);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    const collection = db.collection('personal_files');
+
+    const { itemId } = req.params;
+    const { targetFolderId } = req.body;
+    const userId = req.user.userId;
+
+    // 이동할 항목 조회
+    const item = await collection.findOne({
+      _id: new ObjectId(itemId),
+      userId,
+      isDeleted: false
+    });
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: '항목을 찾을 수 없습니다'
+      });
+    }
+
+    // 대상 폴더 유효성 검사
+    const targetParentId = targetFolderId ? new ObjectId(targetFolderId) : null;
+
+    if (targetFolderId) {
+      const targetFolder = await collection.findOne({
+        _id: targetParentId,
+        userId,
+        type: 'folder',
+        isDeleted: false
+      });
+
+      if (!targetFolder) {
+        return res.status(404).json({
+          success: false,
+          message: '대상 폴더를 찾을 수 없습니다'
+        });
+      }
+
+      // 순환 참조 방지: 폴더를 자기 자신의 하위 폴더로 이동 불가
+      if (item.type === 'folder') {
+        const parentIds = await getAllParentIds(collection, targetParentId);
+        if (parentIds.includes(itemId)) {
+          return res.status(400).json({
+            success: false,
+            message: '폴더를 자기 자신의 하위 폴더로 이동할 수 없습니다'
+          });
+        }
+      }
+    }
+
+    // 대상 위치에 같은 이름 존재 확인
+    const existing = await collection.findOne({
+      userId,
+      name: item.name,
+      parentId: targetParentId,
+      type: item.type,
+      isDeleted: false,
+      _id: { $ne: new ObjectId(itemId) }
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: '대상 폴더에 같은 이름이 이미 존재합니다'
+      });
+    }
+
+    // 항목 이동 (parentId 변경)
+    await collection.updateOne(
+      { _id: new ObjectId(itemId) },
+      {
+        $set: {
+          parentId: targetParentId,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: '이동되었습니다'
+    });
+
+  } catch (error) {
+    console.error('항목 이동 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다',
+      error: error.message
+    });
+  } finally {
+    await client.close();
+  }
+});
+
+/**
+ * 7. 파일 다운로드
  * GET /api/personal-files/:fileId/download
  */
 router.get('/:fileId/download', authenticateToken, async (req, res) => {
