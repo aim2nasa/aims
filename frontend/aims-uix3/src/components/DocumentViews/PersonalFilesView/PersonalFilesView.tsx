@@ -59,6 +59,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
   const [breadcrumbs, setBreadcrumbs] = useState<{ _id: string | null; name: string }[]>([])
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set())
+  const [myDriveExpanded, setMyDriveExpanded] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [loading, setLoading] = useState(false)
@@ -450,12 +451,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               onClick={() => handleFolderClick(folder._id)}
               style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
-              <SFSymbol
-                name="folder.fill"
-                size={SFSymbolSize.FOOTNOTE}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
+              </svg>
               <span className="folder-name">{folder.name}</span>
             </button>
           </div>
@@ -477,20 +475,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           <div className="sidebar-section">
             <div className="sidebar-title">빠른 액세스</div>
 
-            {/* 내 드라이브 */}
-            <button
-              className={`sidebar-item ${currentFolderId === null ? 'active' : ''}`}
-              onClick={() => handleFolderClick(null)}
-            >
-              <SFSymbol
-                name="folder.fill"
-                size={SFSymbolSize.FOOTNOTE}
-                weight={SFSymbolWeight.REGULAR}
-                decorative={true}
-              />
-              <span>내 드라이브</span>
-            </button>
-
             {/* 즐겨찾기 */}
             <button className="sidebar-item">
               <SFSymbol
@@ -503,11 +487,41 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             </button>
           </div>
 
-          {/* 폴더 트리 */}
+          {/* 폴더 트리 - Google Drive 스타일 */}
           <div className="sidebar-section">
-            <div className="sidebar-title">폴더</div>
             <div className="folder-tree">
-              {renderFolderTree(null)}
+              {/* 내 드라이브 (루트) */}
+              <div className="folder-tree-item">
+                <div
+                  className={`folder-tree-row ${currentFolderId === null ? 'active' : ''}`}
+                  style={{ paddingLeft: '8px' }}
+                >
+                  <button
+                    className="folder-expand-button"
+                    onClick={() => setMyDriveExpanded(!myDriveExpanded)}
+                    aria-label={myDriveExpanded ? '내 드라이브 닫기' : '내 드라이브 열기'}
+                  >
+                    <SFSymbol
+                      name={myDriveExpanded ? 'chevron.down' : 'chevron.right'}
+                      size={SFSymbolSize.CAPTION_2}
+                      weight={SFSymbolWeight.MEDIUM}
+                      decorative={true}
+                    />
+                  </button>
+                  <button
+                    className="folder-name-button"
+                    onClick={() => handleFolderClick(null)}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
+                    </svg>
+                    <span className="folder-name">내 드라이브</span>
+                  </button>
+                </div>
+
+                {/* 하위 폴더들 */}
+                {myDriveExpanded && renderFolderTree(null, 1)}
+              </div>
             </div>
           </div>
         </div>

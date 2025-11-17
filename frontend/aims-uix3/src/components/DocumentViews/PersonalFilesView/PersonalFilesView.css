@@ -118,6 +118,13 @@
   color: var(--color-text-primary);
   text-align: left;
   flex: 1;
+  padding: var(--spacing-1) 0;
+}
+
+.folder-name-button svg,
+.folder-name-button .sf-symbol {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 .folder-name {
