@@ -82,6 +82,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [renameValue, setRenameValue] = useState('')
   const [renamingItem, setRenamingItem] = useState(false)
 
+  // 드래그 앤 드롭 상태
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null)
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
+
   // 폴더 내용 로드
   const loadFolderContents = useCallback(async (folderId: string | null) => {
     setLoading(true)
@@ -297,6 +301,68 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
   }, [showContextMenu])
+
+  // 드래그 시작
+  const handleDragStart = useCallback((e: React.DragEvent, item: PersonalFileItem) => {
+    e.stopPropagation()
+    setDraggingItemId(item._id)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', item._id)
+  }, [])
+
+  // 드래그 오버 (드롭 허용)
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  // 폴더에 드래그 진입
+  const handleDragEnter = useCallback((e: React.DragEvent, folderId: string | null) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOverFolderId(folderId)
+  }, [])
+
+  // 폴더에서 드래그 벗어남
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // relatedTarget이 자식 요소가 아닐 때만 제거 (이벤트 버블링 방지)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverFolderId(null)
+    }
+  }, [])
+
+  // 드롭
+  const handleDrop = useCallback(async (e: React.DragEvent, targetFolderId: string | null) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const itemId = e.dataTransfer.getData('text/plain')
+    if (!itemId || itemId === targetFolderId) {
+      setDraggingItemId(null)
+      setDragOverFolderId(null)
+      return
+    }
+
+    try {
+      await personalFilesService.moveItem(itemId, targetFolderId)
+      await loadFolderContents(currentFolderId)
+    } catch (err) {
+      console.error('항목 이동 오류:', err)
+      setError(err instanceof Error ? err.message : '항목 이동에 실패했습니다')
+    } finally {
+      setDraggingItemId(null)
+      setDragOverFolderId(null)
+    }
+  }, [currentFolderId, loadFolderContents])
+
+  // 드래그 종료
+  const handleDragEnd = useCallback(() => {
+    setDraggingItemId(null)
+    setDragOverFolderId(null)
+  }, [])
 
   // 검색 필터링
   const filteredItems = useMemo(() => {
@@ -551,9 +617,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 {filteredItems.map(item => (
                   <div
                     key={item._id}
-                    className="file-list-row"
+                    className={`file-list-row ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
                     onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
                     onContextMenu={(e) => handleContextMenu(e, item)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={item.type === 'folder' ? handleDragOver : undefined}
+                    onDragEnter={item.type === 'folder' ? (e) => handleDragEnter(e, item._id) : undefined}
+                    onDragLeave={item.type === 'folder' ? handleDragLeave : undefined}
+                    onDrop={item.type === 'folder' ? (e) => handleDrop(e, item._id) : undefined}
                   >
                     <div className="row-name">
                       <SFSymbol
@@ -597,9 +670,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 {filteredItems.map(item => (
                   <div
                     key={item._id}
-                    className="file-grid-item"
+                    className={`file-grid-item ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
                     onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
                     onContextMenu={(e) => handleContextMenu(e, item)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={item.type === 'folder' ? handleDragOver : undefined}
+                    onDragEnter={item.type === 'folder' ? (e) => handleDragEnter(e, item._id) : undefined}
+                    onDragLeave={item.type === 'folder' ? handleDragLeave : undefined}
+                    onDrop={item.type === 'folder' ? (e) => handleDrop(e, item._id) : undefined}
                   >
                     <div className="grid-item-icon">
                       <SFSymbol
