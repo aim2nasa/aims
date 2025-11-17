@@ -771,11 +771,17 @@
   color: var(--color-icon-doc-status); /* iOS systemRed - #ff3b30 */
 }
 
+/* 내 파일 - iOS systemGreen */
+.menu-icon-green {
+  color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
+}
+
 /* 선택 상태에서는 모든 아이콘이 흰색으로 통일 */
 .custom-menu-item.selected .menu-icon-orange,
 .custom-menu-item.selected .menu-icon-purple,
 .custom-menu-item.selected .menu-icon-blue,
-.custom-menu-item.selected .menu-icon-red {
+.custom-menu-item.selected .menu-icon-red,
+.custom-menu-item.selected .menu-icon-green {
   color: var(--color-neutral-0);
 }
 

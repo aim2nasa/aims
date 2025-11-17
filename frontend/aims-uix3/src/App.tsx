@@ -21,6 +21,7 @@ const CustomMenu = lazy(() => import('./components/CustomMenu/CustomMenu'))
 const DocumentRegistrationView = lazy(() => import('./components/DocumentViews/DocumentRegistrationView/DocumentRegistrationView'))
 const DocumentLibraryView = lazy(() => import('./components/DocumentViews/DocumentLibraryView/DocumentLibraryView'))
 const DocumentSearchView = lazy(() => import('./components/DocumentViews/DocumentSearchView/DocumentSearchView'))
+const PersonalFilesView = lazy(() => import('./components/DocumentViews/PersonalFilesView/PersonalFilesView'))
 const DocumentManagementView = lazy(() => import('./components/DocumentViews/DocumentManagementView/DocumentManagementView'))
 const CustomerManagementView = lazy(() => import('./components/CustomerViews/CustomerManagementView/CustomerManagementView'))
 const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/CustomerRegistrationView/CustomerRegistrationView'))
@@ -374,6 +375,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "documents-register" ||
         activeDocumentView === "documents-library" ||
         activeDocumentView === "documents-search" ||
+        activeDocumentView === "documents-my-files" ||
         activeDocumentView === "dsd" ||
         activeDocumentView === "customers" ||
         activeDocumentView === "customers-register" ||
@@ -665,7 +667,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const handleMenuClick = useCallback((menuKey: string) => {
     const allViewKeys = [
       // 문서 관리 View들
-      'documents', 'documents-register', 'documents-library', 'documents-search', 'dsd',
+      'documents', 'documents-register', 'documents-library', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
       'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship',
       // 설정 View들
@@ -1171,6 +1173,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               onClose={closeDocumentView}
               onDocumentClick={handleDocumentClick}
               onCustomerClick={handleCustomerClick}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <PersonalFilesView
+              visible={activeDocumentView === 'documents-my-files'}
+              onClose={closeDocumentView}
             />
           </Suspense>
 
