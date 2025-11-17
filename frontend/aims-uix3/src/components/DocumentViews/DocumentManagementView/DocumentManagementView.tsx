@@ -699,11 +699,12 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                   // AR 뱃지 확인
                   const isAnnualReport = doc.is_annual_report === true;
 
-                  // OCR/TXT 뱃지 확인
+                  // OCR/TXT/BIN 뱃지 확인
                   const ocrConfidence = getOcrConfidence(doc);
                   const ocrLevel = ocrConfidence !== null ? getOcrConfidenceLevel(ocrConfidence) : null;
                   const typeLabel = ocrConfidence === null ? DocumentUtils.getDocumentTypeLabel(doc) : null;
                   const showTxtBadge = typeLabel === 'TXT';
+                  const showBinBadge = typeLabel === 'BIN';
 
                   return (
                     <div key={doc._id || String(Math.random())} className="recent-activity-row">
@@ -738,7 +739,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                             </Tooltip>
                           )}
 
-                          {/* OCR 또는 TXT 뱃지 */}
+                          {/* OCR, TXT, BIN 뱃지 */}
                           {ocrConfidence !== null && ocrLevel ? (
                             <Tooltip content={`OCR 신뢰도: ${(ocrConfidence * 100).toFixed(1)}% (${ocrLevel.label})`}>
                               <div className={`document-ocr-badge ocr-${ocrLevel.color}`}>
@@ -749,6 +750,12 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
                             <Tooltip content="TXT 기반 문서">
                               <div className="document-txt-badge">
                                 TXT
+                              </div>
+                            </Tooltip>
+                          ) : showBinBadge ? (
+                            <Tooltip content="BIN 기반 문서 (텍스트 추출 불가)">
+                              <div className="document-bin-badge">
+                                BIN
                               </div>
                             </Tooltip>
                           ) : null}

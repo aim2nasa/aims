@@ -540,6 +540,33 @@ html[data-theme="dark"] .document-txt-badge {
   border-color: var(--color-ios-bg-primary-dark);
 }
 
+/* BIN BADGE: BIN 기반 문서 표시 (하단 중앙) */
+.document-bin-badge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-badge-text);
+  background-color: var(--color-badge-bin);
+  border: 1.5px solid var(--color-ios-bg-primary-light);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px var(--color-badge-shadow);
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .document-bin-badge {
+  background-color: var(--color-badge-bin-dark);
+  border-color: var(--color-ios-bg-primary-dark);
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
   .document-management-view__content {
