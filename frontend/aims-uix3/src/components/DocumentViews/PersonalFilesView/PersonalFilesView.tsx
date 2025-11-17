@@ -106,6 +106,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
     try {
       const data = await personalFilesService.getFolderContents(folderId)
+      console.log(`📁 loadFolderContents(${folderId}):`, data)
 
       // 우측 목록 업데이트
       setCurrentFolderItems(data.items)
@@ -118,11 +119,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           const filtered = prev.filter(item => item.parentId !== folderId)
           // 새로 가져온 하위 폴더들만 추가
           const newFolders = data.items.filter(item => item.type === 'folder')
-          return [...filtered, ...newFolders]
+          const result = [...filtered, ...newFolders]
+          console.log(`🌲 items 업데이트 (folderId=${folderId}):`, result)
+          return result
         })
       } else {
-        // 루트인 경우 items도 함께 초기화
-        setItems(data.items)
+        // 루트인 경우 폴더만 초기화
+        const rootFolders = data.items.filter(item => item.type === 'folder')
+        console.log(`🌲 items 초기화 (루트):`, rootFolders)
+        setItems(rootFolders)
       }
     } catch (err) {
       console.error('폴더 로드 오류:', err)
@@ -186,17 +191,26 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [searchTerm, typeFilter, sortBy, sortDirection, visible, performSearch])
 
   // 폴더 확장/축소
-  const toggleFolder = useCallback((folderId: string) => {
-    setExpandedFolderIds(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(folderId)) {
+  const toggleFolder = useCallback(async (folderId: string) => {
+    const isCurrentlyExpanded = expandedFolderIds.has(folderId)
+
+    if (isCurrentlyExpanded) {
+      // 축소
+      setExpandedFolderIds(prev => {
+        const newSet = new Set(prev)
         newSet.delete(folderId)
-      } else {
+        return newSet
+      })
+    } else {
+      // 확장 - 먼저 하위 폴더 로드
+      await loadFolderContents(folderId)
+      setExpandedFolderIds(prev => {
+        const newSet = new Set(prev)
         newSet.add(folderId)
-      }
-      return newSet
-    })
-  }, [])
+        return newSet
+      })
+    }
+  }, [expandedFolderIds, loadFolderContents])
 
   // 폴더 클릭 - 우측 목록 업데이트
   const handleFolderClick = useCallback((folderId: string | null) => {
@@ -491,10 +505,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
     const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
+    console.log(`🌳 renderFolderTree(parentId=${parentId}, level=${level}):`, folders.map(f => f.name))
 
     return folders.map(folder => {
       const isExpanded = expandedFolderIds.has(folder._id)
-      const hasChildren = items.some(item => item.type === 'folder' && item.parentId === folder._id)
       const isActive = currentFolderId === folder._id
 
       return (
@@ -503,30 +517,32 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             className={`folder-tree-row ${isActive ? 'active' : ''}`}
             style={{ paddingLeft: `${level * 16 + 8}px` }}
           >
-            {hasChildren && (
-              <button
-                className="folder-expand-button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toggleFolder(folder._id)
-                }}
-                aria-label={isExpanded ? '폴더 닫기' : '폴더 열기'}
-              >
-                <SFSymbol
-                  name={isExpanded ? 'chevron.down' : 'chevron.right'}
-                  size={SFSymbolSize.CAPTION_2}
-                  weight={SFSymbolWeight.MEDIUM}
-                  decorative={true}
-                />
-              </button>
-            )}
+            <button
+              className="folder-expand-button"
+              onClick={(e) => {
+                e.stopPropagation()
+                console.log(`▶️ chevron 클릭: ${folder.name} (expanded=${isExpanded})`)
+                toggleFolder(folder._id)
+              }}
+              aria-label={isExpanded ? '폴더 닫기' : '폴더 열기'}
+            >
+              {isExpanded ? (
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
             <button
               className="folder-name-button"
               onClick={(e) => {
                 e.stopPropagation()
+                console.log(`📁 폴더 클릭: ${folder.name}`)
                 handleFolderClick(folder._id)
               }}
-              style={{ paddingLeft: hasChildren ? '0' : '20px' }}
             >
               <span className="folder-icon">
                 {isActive ? '📂' : '📁'}
@@ -534,7 +550,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <span className="folder-name">{folder.name}</span>
             </button>
           </div>
-          {isExpanded && hasChildren && (
+          {isExpanded && (
             <div className="folder-tree-children">
               {renderFolderTree(folder._id, level + 1)}
             </div>
@@ -590,12 +606,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     }}
                     aria-label={myDriveExpanded ? '내 드라이브 닫기' : '내 드라이브 열기'}
                   >
-                    <SFSymbol
-                      name={myDriveExpanded ? 'chevron.down' : 'chevron.right'}
-                      size={SFSymbolSize.CAPTION_2}
-                      weight={SFSymbolWeight.MEDIUM}
-                      decorative={true}
-                    />
+                    {myDriveExpanded ? (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                   </button>
                   <button
                     className="folder-name-button"
