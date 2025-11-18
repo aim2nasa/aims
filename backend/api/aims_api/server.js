@@ -838,6 +838,7 @@ app.get('/api/documents/status', async (req, res) => {
         docembed: doc.docembed,
         ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
         customerId: doc.customerId || null,  // 🆕 내 파일 기능
+        folderId: doc.folderId || null,  // 🆕 내 파일 폴더 구조
         ...statusInfo
       };
     }));

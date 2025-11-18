@@ -763,4 +763,84 @@ router.get('/search', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * 10. 문서 라이브러리 파일을 폴더로 이동
+ * PUT /api/personal-files/documents/:documentId/move
+ * Body: { targetFolderId: string | null }
+ *
+ * docupload.files 컬렉션의 문서에 folderId를 설정하여
+ * 폴더 구조에 논리적으로 연결합니다.
+ */
+router.put('/documents/:documentId/move', authenticateToken, async (req, res) => {
+  const client = new MongoClient(mongoUrl);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    const filesCollection = db.collection('files');
+    const foldersCollection = db.collection('personal_files');
+
+    const { documentId } = req.params;
+    const { targetFolderId } = req.body;
+    const userId = req.user.userId;
+
+    // 문서 존재 확인 (customerId === userId인 문서만 이동 가능)
+    const document = await filesCollection.findOne({
+      _id: new ObjectId(documentId),
+      customerId: userId
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: '문서를 찾을 수 없거나 권한이 없습니다'
+      });
+    }
+
+    // 대상 폴더 유효성 검사
+    const targetParentId = targetFolderId ? new ObjectId(targetFolderId) : null;
+
+    if (targetFolderId) {
+      const targetFolder = await foldersCollection.findOne({
+        _id: targetParentId,
+        userId,
+        type: 'folder',
+        isDeleted: false
+      });
+
+      if (!targetFolder) {
+        return res.status(404).json({
+          success: false,
+          message: '대상 폴더를 찾을 수 없습니다'
+        });
+      }
+    }
+
+    // 문서에 folderId 설정
+    await filesCollection.updateOne(
+      { _id: new ObjectId(documentId) },
+      {
+        $set: {
+          folderId: targetParentId
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: '문서가 이동되었습니다'
+    });
+
+  } catch (error) {
+    console.error('문서 이동 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다',
+      error: error.message
+    });
+  } finally {
+    await client.close();
+  }
+});
+
 module.exports = router;

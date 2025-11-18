@@ -63,10 +63,11 @@ const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
     name: doc.filename || doc.file_name || doc.originalName || doc.name || '알 수 없는 파일',
     type: 'file',
     size: typeof fileSize === 'string' ? parseInt(fileSize, 10) : fileSize,
-    parentId: null, // 루트에 표시
+    parentId: null, // 기본값, folderId가 있으면 나중에 덮어씀
     createdAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
     updatedAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
-    isDeleted: false
+    isDeleted: false,
+    isLibraryDocument: true // 문서 라이브러리 파일임을 표시
   }
 
   // mimeType이 있을 때만 추가 (exactOptionalPropertyTypes 대응)
@@ -143,27 +144,46 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
       let finalItems = data.items
 
-      // 2. 루트 폴더일 때만: customerId === userId인 문서들도 함께 표시
-      if (folderId === null) {
-        try {
-          console.log('📄 내 파일 조회 시작 (customerId === userId)...')
-          const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
-          const allDocs = docsResponse.documents || []
+      // 2. customerId === userId인 문서들 조회 (folderId 기반 필터링)
+      try {
+        console.log(`📄 내 파일 조회 시작 (customerId === userId, folderId === ${folderId})...`)
+        const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
+        const allDocs = docsResponse.documents || []
 
-          // customerId === userId인 문서만 필터링
-          const myDocs = allDocs.filter(doc => doc.customerId && doc.customerId === userId)
-          console.log(`✅ 내 파일 ${myDocs.length}개 발견:`, myDocs.map(d => d.filename))
+        // customerId === userId이고, folderId가 현재 폴더와 일치하는 문서만 필터링
+        const myDocs = allDocs.filter(doc => {
+          // customerId 체크
+          if (!doc.customerId || doc.customerId !== userId) return false
 
-          // Document → PersonalFileItem 변환
-          const myFileItems = myDocs.map(convertDocumentToFileItem)
+          // folderId 체크 (undefined는 null로 간주)
+          const docFolderId = (doc as any).folderId || null
+          const targetFolderId = folderId
 
-          // 폴더 시스템 파일과 합치기
-          finalItems = [...data.items, ...myFileItems]
-          console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
-        } catch (docErr) {
-          console.error('⚠️ 내 파일 조회 실패:', docErr)
-          // 실패해도 폴더 시스템은 정상 표시
-        }
+          // 둘 다 null이거나, 둘 다 같은 값일 때만 표시
+          if (docFolderId === null && targetFolderId === null) return true
+          if (docFolderId && targetFolderId && docFolderId.toString() === targetFolderId.toString()) return true
+
+          return false
+        })
+        console.log(`✅ 내 파일 ${myDocs.length}개 발견 (folderId=${folderId}):`, myDocs.map(d => d.filename))
+
+        // Document → PersonalFileItem 변환 (folderId 포함)
+        const myFileItems = myDocs.map(doc => {
+          const item = convertDocumentToFileItem(doc)
+          // folderId를 PersonalFileItem의 parentId로 변환
+          const docFolderId = (doc as any).folderId
+          if (docFolderId) {
+            item.parentId = docFolderId.toString()
+          }
+          return item
+        })
+
+        // 폴더 시스템 파일과 합치기
+        finalItems = [...data.items, ...myFileItems]
+        console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
+      } catch (docErr) {
+        console.error('⚠️ 내 파일 조회 실패:', docErr)
+        // 실패해도 폴더 시스템은 정상 표시
       }
 
       // 우측 목록 업데이트
@@ -521,7 +541,25 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
 
     try {
-      await personalFilesService.moveItem(itemId, targetFolderId)
+      // 드래그된 항목 찾기
+      const draggedItem = currentFolderItems.find(item => item._id === itemId)
+
+      if (!draggedItem) {
+        throw new Error('이동할 항목을 찾을 수 없습니다')
+      }
+
+      // 문서 라이브러리 파일인지 폴더 시스템 항목인지 확인
+      if (draggedItem.isLibraryDocument) {
+        // 문서 라이브러리 파일 이동 (files 컬렉션)
+        console.log(`📄 문서 이동: ${itemId} → 폴더 ${targetFolderId}`)
+        await personalFilesService.moveDocument(itemId, targetFolderId)
+      } else {
+        // 폴더 시스템 항목 이동 (personal_files 컬렉션)
+        console.log(`📁 폴더/파일 이동: ${itemId} → 폴더 ${targetFolderId}`)
+        await personalFilesService.moveItem(itemId, targetFolderId)
+      }
+
+      // 현재 폴더 새로고침
       await loadFolderContents(currentFolderId)
     } catch (err) {
       console.error('항목 이동 오류:', err)
@@ -530,7 +568,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setDraggingItemId(null)
       setDragOverFolderId(null)
     }
-  }, [currentFolderId, loadFolderContents])
+  }, [currentFolderId, loadFolderContents, currentFolderItems])
 
   // 드래그 종료
   const handleDragEnd = useCallback(() => {
@@ -623,12 +661,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     return folders.map(folder => {
       const isExpanded = expandedFolderIds.has(folder._id)
       const isActive = currentFolderId === folder._id
+      const isDragOver = dragOverFolderId === folder._id
 
       return (
         <div key={folder._id} className="folder-tree-item">
           <div
-            className={`folder-tree-row ${isActive ? 'active' : ''}`}
+            className={`folder-tree-row ${isActive ? 'active' : ''} ${isDragOver ? 'drag-over' : ''}`}
             style={{ paddingLeft: `${level * 16 + 8}px` }}
+            onDragOver={handleDragOver}
+            onDragEnter={(e) => handleDragEnter(e, folder._id)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, folder._id)}
           >
             <button
               className="folder-expand-button"
@@ -705,8 +748,12 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               {/* 내 드라이브 (루트) */}
               <div className="folder-tree-item">
                 <div
-                  className={`folder-tree-row ${currentFolderId === null ? 'active' : ''}`}
+                  className={`folder-tree-row ${currentFolderId === null ? 'active' : ''} ${dragOverFolderId === null && draggingItemId ? 'drag-over' : ''}`}
                   style={{ paddingLeft: '8px' }}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleDragEnter(e, null)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, null)}
                 >
                   <button
                     className="folder-expand-button"

@@ -36,6 +36,7 @@ export interface PersonalFileItem {
   updatedAt: string;
   isDeleted: boolean;
   storagePath?: string;
+  isLibraryDocument?: boolean; // 문서 라이브러리 파일인지 여부
 }
 
 /**
@@ -252,6 +253,22 @@ export const personalFilesService = {
     }
 
     return response.data;
+  },
+
+  /**
+   * 문서 라이브러리 파일을 폴더로 이동
+   * @param documentId - 문서 ID
+   * @param targetFolderId - 대상 폴더 ID (null이면 루트)
+   */
+  async moveDocument(documentId: string, targetFolderId: string | null): Promise<void> {
+    const response = await api.put<ApiResponse<void>>(
+      `${API_BASE}/documents/${documentId}/move`,
+      { targetFolderId }
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || '문서 이동 실패');
+    }
   }
 };
 

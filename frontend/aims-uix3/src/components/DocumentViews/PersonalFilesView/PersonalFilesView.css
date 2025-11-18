@@ -143,6 +143,12 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.folder-tree-row.drag-over {
+  background: var(--color-primary-alpha-40);
+  border-left: 3px solid var(--color-button-primary-bg);
+  padding-left: calc(var(--spacing-3) - 3px);
+}
+
 .folder-tree-row.active .folder-name-button {
   color: var(--color-button-primary-bg);
 }
