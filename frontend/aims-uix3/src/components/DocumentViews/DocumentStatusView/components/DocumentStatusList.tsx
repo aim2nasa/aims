@@ -19,6 +19,7 @@ import {
   SummaryIcon
 } from '../../components/DocumentActionIcons'
 import { DocumentNotesModal } from './DocumentNotesModal'
+import { useUserStore } from '../../../../stores/user'
 import './DocumentStatusList.css'
 
 export interface DocumentStatusListProps {
@@ -124,6 +125,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onCustomerClick,
   onRefresh
 }) => {
+  // 현재 로그인한 사용자 ID (내 파일 기능용)
+  const { userId } = useUserStore()
+
   // 메모 모달 상태 관리
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [selectedNotes, setSelectedNotes] = useState<{
@@ -661,6 +665,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   </div>
                   <span className="customer-name-text">{document.customer_relation.customer_name}</span>
                 </button>
+              ) : (userId && document.customerId && userId === document.customerId) ? (
+                <span className="customer-id-text">{userId}</span>
               ) : (
                 <span className="customer-none">-</span>
               )}

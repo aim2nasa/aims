@@ -52,7 +52,9 @@ function prepareDocumentResponse(doc) {
     ocr: doc.ocr || null,
     text: doc.text || null,
     docembed: doc.docembed || null,
-    customer_relation: doc.customer_relation || null
+    customer_relation: doc.customer_relation || null,
+    ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
+    customerId: doc.customerId || null  // 🆕 내 파일 기능
   };
 
   // 🧮 2. 계산된 UI 값

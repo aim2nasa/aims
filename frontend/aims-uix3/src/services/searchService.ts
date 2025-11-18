@@ -82,7 +82,9 @@ export class SearchService {
                 ocr: docData.data.raw.ocr,
                 docembed: docData.data.raw.docembed,
                 overallStatus: docData.data.computed.overallStatus,
-                customer_relation: docData.data.raw.customer_relation
+                customer_relation: docData.data.raw.customer_relation,
+                ownerId: docData.data.raw.ownerId,  // 🆕 내 파일 기능
+                customerId: docData.data.raw.customerId  // 🆕 내 파일 기능
               }
             } catch (error) {
               console.error(`[SearchService] 문서 ${docId} 조회 오류:`, error)

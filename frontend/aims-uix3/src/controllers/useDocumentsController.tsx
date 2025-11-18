@@ -73,6 +73,8 @@ export const useDocumentsController = () => {
             return {
               ...doc,
               customer_relation: detailedDoc.data?.raw?.customer_relation,
+              ownerId: detailedDoc.data?.raw?.ownerId,  // 🆕 내 파일 기능
+              customerId: detailedDoc.data?.raw?.customerId,  // 🆕 내 파일 기능
               stages: detailedDoc.data?.stages,
               computed: detailedDoc.data?.computed,
               overallStatus: detailedDoc.data?.computed?.overallStatus,

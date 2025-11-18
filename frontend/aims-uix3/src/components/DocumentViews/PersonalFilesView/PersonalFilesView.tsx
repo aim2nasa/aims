@@ -14,6 +14,8 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
+import { uploadService } from '../DocumentRegistrationView/services/uploadService'
+import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
@@ -67,7 +69,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [_uploadingFiles, setUploadingFiles] = useState<UploadFile[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 현재 사용자 ID
+  const userId = typeof window !== 'undefined'
+    ? localStorage.getItem('aims-current-user-id') || 'tester'
+    : 'tester'
 
   // 리사이저 상태
   const [sidebarWidth, setSidebarWidth] = useState(240)
@@ -178,6 +186,41 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     return () => clearTimeout(timer)
   }, [searchTerm, visible, performSearch])
 
+  // 업로드 상태 콜백 설정
+  useEffect(() => {
+    uploadService.setStatusCallback((fileId, status, error) => {
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId ? { ...f, status, error } : f)
+      )
+
+      // 업로드 완료 시 목록 새로고침
+      if (status === 'completed') {
+        setTimeout(() => {
+          loadFolderContents(currentFolderId)
+          // 업로드 목록에서 제거
+          setUploadingFiles(prev => prev.filter(f => f.id !== fileId))
+          // UI 상태 초기화
+          setUploading(false)
+          setUploadProgress(0)
+        }, 1000)
+      } else if (status === 'error') {
+        setUploading(false)
+        setUploadProgress(0)
+      }
+    })
+
+    uploadService.setProgressCallback(({ fileId, progress }) => {
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId ? { ...f, progress } : f)
+      )
+      setUploadProgress(progress)
+    })
+
+    return () => {
+      uploadService.cleanup()
+    }
+  }, [loadFolderContents, currentFolderId])
+
   // 폴더 확장/축소
   const toggleFolder = useCallback(async (folderId: string) => {
     const isCurrentlyExpanded = expandedFolderIds.has(folderId)
@@ -217,34 +260,33 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [])
 
   // 파일 선택 후 업로드
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || [])
+    if (selectedFiles.length === 0) return
 
     setUploading(true)
     setUploadProgress(0)
     setError(null)
 
-    try {
-      await personalFilesService.uploadFile(file, currentFolderId, (progress) => {
-        setUploadProgress(progress)
-      })
+    const newUploadFiles: UploadFile[] = selectedFiles.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file,
+      fileSize: file.size,
+      status: 'pending' as const,
+      progress: 0,
+      customerId: userId  // 🆕 내 파일: customerId = userId (규약)
+    }))
 
-      // 업로드 완료 후 목록 새로고침
-      await loadFolderContents(currentFolderId)
+    setUploadingFiles(prev => [...prev, ...newUploadFiles])
 
-      // 파일 input 초기화
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    } catch (err) {
-      console.error('파일 업로드 오류:', err)
-      setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다')
-    } finally {
-      setUploading(false)
-      setUploadProgress(0)
+    // uploadService에 큐잉 (docprep-main webhook 호출)
+    uploadService.queueFiles(newUploadFiles)
+
+    // 파일 input 초기화
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
-  }, [currentFolderId, loadFolderContents])
+  }, [userId])
 
   // 파일 다운로드
   const handleFileDownload = useCallback(async (fileId: string, fileName: string, e: React.MouseEvent) => {

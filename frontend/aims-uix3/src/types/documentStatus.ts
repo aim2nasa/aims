@@ -175,6 +175,10 @@ export interface Document {
   // 고객 연결 정보
   customer_relation?: DocumentCustomerRelation
 
+  // 소유자 및 고객 ID (내 파일 기능용)
+  ownerId?: string
+  customerId?: string
+
   // Annual Report 여부
   is_annual_report?: boolean
 
@@ -235,6 +239,8 @@ export interface RawDocumentData {
   text: TextData | null
   docembed: DocEmbedData | null
   customer_relation?: DocumentCustomerRelation
+  ownerId?: string  // 🆕 내 파일 기능
+  customerId?: string  // 🆕 내 파일 기능
 }
 
 /**

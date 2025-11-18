@@ -612,6 +612,29 @@ html[data-theme="dark"] .status-customer .customer-name-text {
   gap: 0;
 }
 
+/* 내 파일 뱃지 */
+.status-customer .personal-file-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+  font-size: var(--font-size-caption-2);
+  font-weight: 400;
+}
+
+html[data-theme="dark"] .status-customer .personal-file-badge {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.status-customer .personal-file-badge svg {
+  color: var(--color-icon-gray);
+  flex-shrink: 0;
+}
+
 /* === 액션 버튼 === */
 .status-actions {
   display: flex;
@@ -1222,6 +1245,13 @@ html[data-theme="dark"] .document-ocr-badge.ocr-very-low {
 html[data-theme="dark"] .document-bin-badge {
   background: var(--color-neutral-600);
   color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 내 파일 표시 === */
+.customer-id-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 /* === ACCESSIBILITY === */

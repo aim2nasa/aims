@@ -914,6 +914,12 @@
               "name": "ownerId",
               "value": "={{ $json.body.userId }}",
               "type": "string"
+            },
+            {
+              "id": "customerId-assignment",
+              "name": "customerId",
+              "value": "={{ $json.body.customerId }}",
+              "type": "string"
             }
           ]
         },
@@ -932,7 +938,7 @@
       "parameters": {
         "operation": "insert",
         "collection": "files",
-        "fields": "ownerId",
+        "fields": "ownerId,customerId",
         "options": {}
       },
       "type": "n8n-nodes-base.mongoDb",

@@ -44,6 +44,8 @@ export interface UploadFile {
   completedAt?: Date | undefined
   /** 파일이 폴더에서 온 경우의 상대 경로 */
   relativePath?: string | undefined
+  /** 고객 ID - "내 파일"에서 업로드 시 userId와 동일 */
+  customerId?: string | undefined
 }
 
 // 업로드 에러 정보

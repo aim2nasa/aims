@@ -500,7 +500,9 @@ app.get('/api/documents', async (req, res) => {
         progress: progress,
         filePath: doc.upload?.destPath,
         is_annual_report: doc.is_annual_report || false,
-        customer_relation: customerRelation
+        customer_relation: customerRelation,
+        ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
+        customerId: doc.customerId || null  // 🆕 내 파일 기능
       };
     });
 
@@ -834,6 +836,8 @@ app.get('/api/documents/status', async (req, res) => {
         meta: doc.meta,
         ocr: doc.ocr,
         docembed: doc.docembed,
+        ownerId: doc.ownerId || null,  // 🆕 내 파일 기능
+        customerId: doc.customerId || null,  // 🆕 내 파일 기능
         ...statusInfo
       };
     }));

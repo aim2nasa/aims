@@ -131,7 +131,7 @@ export class UploadService {
    * 개별 파일 업로드 (자동 재시도 지원)
    */
   private async uploadFile(uploadFile: UploadFile): Promise<void> {
-    const { id, file } = uploadFile
+    const { id, file, customerId } = uploadFile
     const controller = new AbortController()
 
     try {
@@ -143,6 +143,12 @@ export class UploadService {
 
       // FormData 생성 (사용자 컨텍스트 포함)
       const formData = UserContextService.createFormData(file)
+
+      // 🆕 "내 파일" 등록: customerId가 있으면 추가 (userId === customerId인 경우)
+      if (customerId) {
+        formData.append('customerId', customerId)
+        console.log(`[UploadService] 내 파일 업로드 - customerId: ${customerId}`)
+      }
 
       // XMLHttpRequest로 업로드 (진행률 추적을 위해)
       const result = await this.uploadWithProgress(formData, id, controller.signal)
