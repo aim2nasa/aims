@@ -9,7 +9,7 @@
  * 3단계: 파일 업로드/다운로드 기능 추가
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
@@ -137,10 +137,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [])
 
-  // 검색 실행 (debounce 적용, 필터 및 정렬 포함)
+  // 검색 실행 (검색어만 API 호출)
   const performSearch = useCallback(async () => {
-    // 검색어, 필터, 정렬 옵션이 모두 기본값이면 아무것도 안 함 (폴더 클릭으로 처리됨)
-    if (!searchTerm.trim() && typeFilter === 'all' && sortBy === 'name' && sortDirection === 'asc') {
+    // 검색어가 없으면 API 호출하지 않음 (타입 필터/정렬은 클라이언트에서 처리)
+    if (!searchTerm.trim()) {
       return
     }
 
@@ -148,21 +148,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setError(null)
 
     try {
-      const searchOptions: {
-        q?: string
-        type?: 'file' | 'folder'
-        sortBy?: 'name' | 'createdAt' | 'size'
-        sortDirection?: 'asc' | 'desc'
-      } = {}
-
-      if (searchTerm.trim()) searchOptions.q = searchTerm.trim()
-      if (typeFilter !== 'all') searchOptions.type = typeFilter
-      if (sortBy) searchOptions.sortBy = sortBy
-      if (sortDirection) searchOptions.sortDirection = sortDirection
-
-      const result = await personalFilesService.searchFiles(searchOptions)
+      const result = await personalFilesService.searchFiles({ q: searchTerm.trim() })
       setCurrentFolderItems(result.items)
-      // 검색/필터 결과에서는 breadcrumb을 "검색 결과"로 표시
+      // 검색 결과에서는 breadcrumb을 "검색 결과"로 표시
       setBreadcrumbs([{ _id: null, name: '검색 결과' }])
     } catch (err) {
       console.error('검색 오류:', err)
@@ -170,7 +158,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, typeFilter, sortBy, sortDirection])
+  }, [searchTerm])
 
   // 초기 로드
   useEffect(() => {
@@ -179,7 +167,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [visible, loadFolderContents])
 
-  // 검색/필터/정렬 debounce (500ms)
+  // 검색 debounce (500ms) - 필터/정렬은 클라이언트에서 처리
   useEffect(() => {
     if (!visible) return
 
@@ -188,7 +176,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [searchTerm, typeFilter, sortBy, sortDirection, visible, performSearch])
+  }, [searchTerm, visible, performSearch])
 
   // 폴더 확장/축소
   const toggleFolder = useCallback(async (folderId: string) => {
@@ -501,6 +489,39 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       document.body.style.userSelect = ''
     }
   }, [isResizing, handleResizeMove, handleResizeEnd])
+
+  // 클라이언트 필터링 및 정렬 (현재 폴더 계층 구조 유지)
+  const filteredAndSortedItems = useMemo(() => {
+    console.log(`🔍 필터링/정렬 시작 - typeFilter: ${typeFilter}, sortBy: ${sortBy}, sortDirection: ${sortDirection}`)
+
+    // 1. 타입 필터링
+    let filtered = currentFolderItems
+    if (typeFilter === 'file') {
+      filtered = currentFolderItems.filter(item => item.type === 'file')
+    } else if (typeFilter === 'folder') {
+      filtered = currentFolderItems.filter(item => item.type === 'folder')
+    }
+
+    // 2. 정렬
+    const sorted = [...filtered].sort((a, b) => {
+      let comparison = 0
+
+      if (sortBy === 'name') {
+        comparison = a.name.localeCompare(b.name, 'ko-KR')
+      } else if (sortBy === 'createdAt') {
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      } else if (sortBy === 'size') {
+        const aSize = a.size || 0
+        const bSize = b.size || 0
+        comparison = aSize - bSize
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+
+    console.log(`✅ 필터링/정렬 완료 - ${currentFolderItems.length}개 → ${sorted.length}개`)
+    return sorted
+  }, [currentFolderItems, typeFilter, sortBy, sortDirection])
 
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
@@ -829,7 +850,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <div className="empty-state">
                 <p style={{ color: 'var(--color-destructive)' }}>{error}</p>
               </div>
-            ) : currentFolderItems.length === 0 ? (
+            ) : filteredAndSortedItems.length === 0 ? (
               <div className="empty-state">
                 <p>파일이 없습니다</p>
               </div>
@@ -842,7 +863,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div className="header-modified">수정한 날짜</div>
                   <div className="header-actions">작업</div>
                 </div>
-                {currentFolderItems.map(item => (
+                {filteredAndSortedItems.map(item => (
                   <div
                     key={item._id}
                     className={`file-list-row ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
@@ -899,7 +920,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             ) : (
               // 그리드 뷰
               <div className="files-grid">
-                {currentFolderItems.map(item => (
+                {filteredAndSortedItems.map(item => (
                   <div
                     key={item._id}
                     className={`file-grid-item ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
