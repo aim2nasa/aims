@@ -14,6 +14,8 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
+import { DocumentStatusService } from '@/services/DocumentStatusService'
+import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
 import './PersonalFilesView.css'
@@ -51,6 +53,28 @@ const getFileIcon = (item: PersonalFileItem): string => {
   if (item.mimeType?.includes('image')) return 'photo'
 
   return 'doc'
+}
+
+// Document를 PersonalFileItem으로 변환
+const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
+  const fileSize = doc.fileSize || doc.file_size || doc.size || 0
+  const item: PersonalFileItem = {
+    _id: doc._id || doc.id || '',
+    name: doc.filename || doc.file_name || doc.originalName || doc.name || '알 수 없는 파일',
+    type: 'file',
+    size: typeof fileSize === 'string' ? parseInt(fileSize, 10) : fileSize,
+    parentId: null, // 루트에 표시
+    createdAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
+    updatedAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
+    isDeleted: false
+  }
+
+  // mimeType이 있을 때만 추가 (exactOptionalPropertyTypes 대응)
+  if (doc.mimeType) {
+    item.mimeType = doc.mimeType
+  }
+
+  return item
 }
 
 export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
@@ -113,11 +137,37 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setError(null)
 
     try {
+      // 1. 폴더/파일 시스템 데이터 조회
       const data = await personalFilesService.getFolderContents(folderId)
       console.log(`📁 loadFolderContents(${folderId}):`, data)
 
+      let finalItems = data.items
+
+      // 2. 루트 폴더일 때만: customerId === userId인 문서들도 함께 표시
+      if (folderId === null) {
+        try {
+          console.log('📄 내 파일 조회 시작 (customerId === userId)...')
+          const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
+          const allDocs = docsResponse.documents || []
+
+          // customerId === userId인 문서만 필터링
+          const myDocs = allDocs.filter(doc => doc.customerId && doc.customerId === userId)
+          console.log(`✅ 내 파일 ${myDocs.length}개 발견:`, myDocs.map(d => d.filename))
+
+          // Document → PersonalFileItem 변환
+          const myFileItems = myDocs.map(convertDocumentToFileItem)
+
+          // 폴더 시스템 파일과 합치기
+          finalItems = [...data.items, ...myFileItems]
+          console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
+        } catch (docErr) {
+          console.error('⚠️ 내 파일 조회 실패:', docErr)
+          // 실패해도 폴더 시스템은 정상 표시
+        }
+      }
+
       // 우측 목록 업데이트
-      setCurrentFolderItems(data.items)
+      setCurrentFolderItems(finalItems)
       setBreadcrumbs(data.breadcrumbs)
 
       // 좌측 트리 업데이트 (해당 폴더의 하위 폴더들을 merge)
@@ -143,7 +193,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [userId])
 
   // 검색 실행 (검색어만 API 호출)
   const performSearch = useCallback(async () => {
