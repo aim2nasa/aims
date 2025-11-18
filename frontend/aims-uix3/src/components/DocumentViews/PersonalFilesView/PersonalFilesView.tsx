@@ -975,7 +975,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       ) : (
                         <SFSymbol
                           name={getFileIcon(item)}
-                          size={SFSymbolSize.BODY}
+                          size={SFSymbolSize.CALLOUT}
                           weight={SFSymbolWeight.REGULAR}
                           decorative={true}
                         />
@@ -1032,7 +1032,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       ) : (
                         <SFSymbol
                           name={getFileIcon(item)}
-                          size={SFSymbolSize.LARGE_TITLE}
+                          size={SFSymbolSize.CALLOUT}
                           weight={SFSymbolWeight.REGULAR}
                           decorative={true}
                         />
