@@ -951,14 +951,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               />
               <Tooltip content="파일 업로드">
                 <button
-                  className="upload-button"
+                  className="upload-button upload-file-button"
                   onClick={handleUploadClick}
                   disabled={uploading}
                   aria-label="파일 업로드"
+                  style={{ color: 'var(--color-primary-400)' }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <path d="M3 14h10c.55 0 1-.45 1-1V6h-3c-.55 0-1-.45-1-1V2H3c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1z" fill="currentColor" opacity="0.5"/>
-                    <path d="M11 2l3 3h-3V2z" fill="currentColor" opacity="0.5"/>
+                    <path d="M3 14h10c.55 0 1-.45 1-1V6h-3c-.55 0-1-.45-1-1V2H3c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1z" fill="currentColor"/>
+                    <path d="M11 2l3 3h-3V2z" fill="currentColor"/>
                     <path d="M8 11V6M8 6L6 8M8 6l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
@@ -967,9 +968,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               {/* 새 폴더 */}
               <Tooltip content="새 폴더">
                 <button
-                  className="upload-button"
+                  className="upload-button new-folder-button"
                   onClick={handleNewFolderClick}
                   aria-label="새 폴더"
+                  style={{ color: 'var(--color-success)' }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                     <path d="M2 4c0-.55.45-1 1-1h3.586c.265 0 .52.105.707.293L8.414 4.414c.187.188.442.293.707.293H13c.55 0 1 .45 1 1v6c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4z" fill="currentColor"/>
@@ -1037,12 +1039,25 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     onClick={() => setViewMode('list')}
                     aria-label="리스트 뷰"
                   >
-                    <SFSymbol
-                      name="list.bullet"
-                      size={SFSymbolSize.FOOTNOTE}
-                      weight={SFSymbolWeight.MEDIUM}
-                      decorative={true}
-                    />
+                    {viewMode === 'list' ? (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+                        <rect x="6" y="3" width="8" height="2.5" rx="0.5" fill="currentColor"/>
+                        <rect x="2" y="7" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+                        <rect x="6" y="7" width="8" height="2.5" rx="0.5" fill="currentColor"/>
+                        <rect x="2" y="11" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+                        <rect x="6" y="11" width="8" height="2.5" rx="0.5" fill="currentColor"/>
+                      </svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="2.5" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="6" y="3" width="8" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="2" y="7" width="2.5" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="6" y="7" width="8" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="2" y="11" width="2.5" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="6" y="11" width="8" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/>
+                      </svg>
+                    )}
                   </button>
                 </Tooltip>
                 <Tooltip content="그리드 뷰">
@@ -1051,12 +1066,21 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     onClick={() => setViewMode('grid')}
                     aria-label="그리드 뷰"
                   >
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/>
-                      <rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor"/>
-                      <rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor"/>
-                      <rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor"/>
-                    </svg>
+                    {viewMode === 'grid' ? (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/>
+                        <rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor"/>
+                        <rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor"/>
+                        <rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor"/>
+                      </svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                      </svg>
+                    )}
                   </button>
                 </Tooltip>
               </div>

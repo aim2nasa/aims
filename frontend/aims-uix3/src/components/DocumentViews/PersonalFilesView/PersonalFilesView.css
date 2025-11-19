@@ -267,9 +267,9 @@
   gap: var(--spacing-3);
 }
 
-/* 업로드 버튼 */
-.upload-button {
-  background: var(--color-button-primary-bg);
+/* 업로드 버튼 기본 */
+.toolbar-actions .upload-button {
+  background: transparent;
   border: none;
   cursor: pointer;
   padding: var(--spacing-2);
@@ -277,22 +277,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-button-primary-text);
   transition: all var(--duration-fast) var(--easing-ease-out);
   min-width: 32px;
   min-height: 32px;
   flex-shrink: 0;
 }
 
-.upload-button:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+.toolbar-actions .upload-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
-.upload-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* 파일 업로드 버튼 - 파란색 */
+.toolbar-actions .upload-file-button {
+  color: var(--color-primary);
+}
+
+.toolbar-actions .upload-file-button:hover:not(:disabled) {
+  background: transparent;
+  transform: scale(1.1);
+}
+
+/* 새 폴더 버튼 - 초록색 */
+.toolbar-actions .new-folder-button {
+  color: var(--color-success);
+}
+
+.toolbar-actions .new-folder-button:hover:not(:disabled) {
+  background: transparent;
+  transform: scale(1.1);
 }
 
 /* 업로드 진행률 표시 */
@@ -408,33 +421,40 @@
 }
 
 /* 뷰 모드 토글 */
-.view-mode-toggle {
+.toolbar-actions .view-mode-toggle {
   display: flex;
   gap: var(--spacing-1);
 }
 
-.view-mode-button {
+.toolbar-actions .view-mode-toggle .view-mode-button {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: none;
   cursor: pointer;
   padding: var(--spacing-2);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-.view-mode-button:hover {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-button-primary-bg);
+.toolbar-actions .view-mode-toggle .view-mode-button:hover {
+  background: transparent;
+  opacity: 0.8;
+  transform: scale(1.1);
 }
 
-.view-mode-button.active {
-  background: var(--color-button-primary-bg);
-  border-color: var(--color-button-primary-bg);
-  color: var(--color-button-primary-text);
+.toolbar-actions .view-mode-toggle .view-mode-button.active {
+  background: transparent;
+  color: var(--color-primary-400);
+  opacity: 1;
+}
+
+.toolbar-actions .view-mode-toggle .view-mode-button.active:hover {
+  background: transparent;
+  transform: scale(1.1);
 }
 
 /* ===== 파일 목록 컨텐츠 ===== */
