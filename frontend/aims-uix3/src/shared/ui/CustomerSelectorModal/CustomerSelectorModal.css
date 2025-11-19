@@ -33,26 +33,28 @@
 }
 
 .customer-selector-modal__search-wrapper {
-  position: relative;
+  position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
   display: flex;
   align-items: center;
 }
 
 .customer-selector-modal__search-icon {
-  position: absolute;
-  left: var(--spacing-3);
+  position: absolute;  /* ❌ 표준: 절대 위치 */
+  left: 10px;          /* ❌ 표준: 고정 좌표 (var(--spacing-3) = 12px → 10px) */
+  top: 50%;            /* ❌ 표준: 세로 중앙 */
+  transform: translateY(-50%);  /* ❌ 표준: 정확한 중앙 정렬 */
   color: var(--color-text-tertiary);
   pointer-events: none;
-  z-index: 1;
+  z-index: 1;  /* ❌ 표준: input 위에 표시 */
 }
 
 .customer-selector-modal__search-input {
   width: 100%;
-  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) 36px;
-  border: 1.5px solid var(--color-border-primary);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+  border: 1.5px solid var(--color-border-primary);  /* 모달 특성: 더 강한 경계선 */
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-sm);
-  background: var(--color-bg-primary);
+  background: var(--color-bg-primary);  /* 모달 특성: 배경색 유지 */
   color: var(--color-text-primary);
   transition: all var(--duration-fast) var(--easing-ease-out);
 }

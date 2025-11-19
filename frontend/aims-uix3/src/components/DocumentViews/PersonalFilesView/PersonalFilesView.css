@@ -346,36 +346,39 @@
   text-align: center;
 }
 
-/* 검색 박스 */
+/* 검색 박스 - 디자인 표준 적용 */
 .search-box {
-  position: relative;
+  position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
   display: flex;
   align-items: center;
-  background: transparent;
+  background: transparent;  /* ❌ 표준: 투명 */
   border: none;
   border-radius: var(--radius-md);
   padding: 0;
+  overflow: visible;  /* ❌ 표준: 아이콘 잘림 방지 */
 }
 
 .search-icon {
-  position: absolute;
-  left: var(--spacing-2);
+  position: absolute;  /* ❌ 표준: 절대 위치 */
+  left: 10px;          /* ❌ 표준: 고정 좌표 */
+  top: 50%;            /* ❌ 표준: 세로 중앙 */
+  transform: translateY(-50%);  /* ❌ 표준: 정확한 중앙 정렬 */
   color: var(--color-text-quaternary);
   flex-shrink: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 1;  /* ❌ 표준: input 위에 표시 */
 }
 
 .search-input {
-  border: 1px solid var(--color-border-secondary);
+  border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
   border-radius: var(--radius-md);
-  background: transparent;
+  background: transparent;  /* ❌ 표준: 투명 배경 */
   color: var(--color-text-primary);
   font-size: var(--font-size-footnote);
   outline: none;
-  width: 200px;
+  width: 300px;  /* ✅ 변경 가능: 300px로 확장 (DocumentLibraryView와 동일) */
   padding: var(--spacing-2) var(--spacing-3);
-  padding-left: calc(var(--spacing-2) + 13px + var(--spacing-2));
+  padding-left: 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
   transition: border-color var(--duration-fast) var(--easing-ease-out);
 }
 
@@ -385,6 +388,11 @@
 
 .search-input::placeholder {
   color: var(--color-text-quaternary);
+}
+
+/* 다크 모드 지원 */
+html[data-theme="dark"] .search-input {
+  border-color: rgba(255, 255, 255, 0.12);  /* ❌ 표준: 다크 모드 경계선 */
 }
 
 /* 툴바 구분선 */
