@@ -15,6 +15,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
+import { DocumentUtils } from '@/entities/document'
 import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
@@ -43,18 +44,6 @@ const formatDate = (dateString: string): string => {
   return `${year}.${month}.${day}`
 }
 
-// 파일 타입 아이콘 가져오기
-const getFileIcon = (item: PersonalFileItem): string => {
-  if (item.type === 'folder') return 'folder'
-
-  if (item.mimeType?.includes('pdf')) return 'doc.text'
-  if (item.mimeType?.includes('word')) return 'doc.text'
-  if (item.mimeType?.includes('sheet') || item.mimeType?.includes('excel')) return 'tablecells'
-  if (item.mimeType?.includes('image')) return 'photo'
-
-  return 'doc'
-}
-
 // Document를 PersonalFileItem으로 변환
 const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
   const fileSize = doc.fileSize || doc.file_size || doc.size || 0
@@ -67,7 +56,8 @@ const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
     createdAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
     updatedAt: doc.uploaded_at || doc.created_at || doc.timestamp || new Date().toISOString(),
     isDeleted: false,
-    isLibraryDocument: true // 문서 라이브러리 파일임을 표시
+    isLibraryDocument: true, // 문서 라이브러리 파일임을 표시
+    document: doc // 🍎 원본 Document 저장 (뱃지 표시용)
   }
 
   // mimeType이 있을 때만 추가 (exactOptionalPropertyTypes 대응)
@@ -76,6 +66,56 @@ const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
   }
 
   return item
+}
+
+/**
+ * OCR 신뢰도를 5단계로 분류
+ * 0.0 ~ 1.0 범위의 신뢰도를 색상 레벨로 변환
+ */
+const getOcrConfidenceLevel = (confidence: number): {
+  color: string
+  label: string
+} => {
+  if (confidence >= 0.95) {
+    return { color: 'excellent', label: '매우 높음' }
+  } else if (confidence >= 0.85) {
+    return { color: 'high', label: '높음' }
+  } else if (confidence >= 0.70) {
+    return { color: 'medium', label: '보통' }
+  } else if (confidence >= 0.50) {
+    return { color: 'low', label: '낮음' }
+  } else {
+    return { color: 'very-low', label: '매우 낮음' }
+  }
+}
+
+/**
+ * Document에서 OCR confidence 추출
+ */
+const getOcrConfidence = (document: Document): number | null => {
+  // 1. document.ocr?.confidence 먼저 시도
+  if (document.ocr && typeof document.ocr !== 'string') {
+    const directConfidence = document.ocr.confidence
+    if (directConfidence) {
+      const parsed = parseFloat(directConfidence)
+      if (!isNaN(parsed)) return parsed
+    }
+  }
+
+  // 2. stages.ocr.message에서 파싱 시도
+  const stageOcr = document.stages?.ocr
+  if (stageOcr && typeof stageOcr !== 'string') {
+    const ocrMessage = stageOcr.message
+    if (ocrMessage && typeof ocrMessage === 'string') {
+      const match = ocrMessage.match(/신뢰도:\s*([\d.]+)/)
+      if (match && match[1]) {
+        const parsed = parseFloat(match[1])
+        if (!isNaN(parsed)) return parsed
+      }
+    }
+  }
+
+  return null
 }
 
 export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
@@ -1121,16 +1161,110 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   >
                     <div className="row-name">
                       {item.type === 'folder' ? (
-                        <span className="folder-icon">📁</span>
+                        <>
+                          <span className="folder-icon">📁</span>
+                          <span>{item.name}</span>
+                        </>
                       ) : (
-                        <SFSymbol
-                          name={getFileIcon(item)}
-                          size={SFSymbolSize.CALLOUT}
-                          weight={SFSymbolWeight.REGULAR}
-                          decorative={true}
-                        />
+                        <>
+                          <div className="document-icon-wrapper">
+                            <div className={`document-icon ${DocumentUtils.getFileTypeClass(item.mimeType, item.name)}`}>
+                              <SFSymbol
+                                name={DocumentUtils.getFileIcon(item.mimeType, item.name)}
+                                size={SFSymbolSize.CAPTION_1}
+                                weight={SFSymbolWeight.REGULAR}
+                                decorative={true}
+                              />
+                            </div>
+                            {/* 🍎 AR BADGE */}
+                            {item.document?.is_annual_report && (
+                              <Tooltip content="Annual Report">
+                                <div className="document-ar-badge">
+                                  AR
+                                </div>
+                              </Tooltip>
+                            )}
+                            {/* 🍎 TXT/OCR/BIN BADGE */}
+                            {item.document && (() => {
+                              const backendBadgeType = (item.document as any).badgeType
+                              if (backendBadgeType) {
+                                if (backendBadgeType === 'OCR') {
+                                  const confidence = getOcrConfidence(item.document)
+                                  if (confidence !== null) {
+                                    const level = getOcrConfidenceLevel(confidence)
+                                    return (
+                                      <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                                        <div className={`document-ocr-badge ocr-${level.color}`}>
+                                          OCR
+                                        </div>
+                                      </Tooltip>
+                                    )
+                                  }
+                                  return (
+                                    <Tooltip content="OCR 처리 완료">
+                                      <div className="document-ocr-badge ocr-medium">
+                                        OCR
+                                      </div>
+                                    </Tooltip>
+                                  )
+                                }
+                                if (backendBadgeType === 'TXT') {
+                                  return (
+                                    <Tooltip content="TXT 기반 문서">
+                                      <div className="document-txt-badge">
+                                        TXT
+                                      </div>
+                                    </Tooltip>
+                                  )
+                                }
+                                if (backendBadgeType === 'BIN') {
+                                  return (
+                                    <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
+                                      <div className="document-bin-badge">
+                                        BIN
+                                      </div>
+                                    </Tooltip>
+                                  )
+                                }
+                              }
+
+                              // 하위 호환성
+                              const confidence = getOcrConfidence(item.document)
+                              if (confidence === null) {
+                                const typeLabel = DocumentUtils.getDocumentTypeLabel(item.document)
+                                if (typeLabel === 'TXT') {
+                                  return (
+                                    <Tooltip content="TXT 기반 문서">
+                                      <div className="document-txt-badge">
+                                        TXT
+                                      </div>
+                                    </Tooltip>
+                                  )
+                                }
+                                if (typeLabel === 'BIN') {
+                                  return (
+                                    <Tooltip content="바이너리 파일 (텍스트 추출 불가)">
+                                      <div className="document-bin-badge">
+                                        BIN
+                                      </div>
+                                    </Tooltip>
+                                  )
+                                }
+                                return null
+                              }
+                              const level = getOcrConfidenceLevel(confidence)
+                              return (
+                                <Tooltip content={`OCR 신뢰도: ${(confidence * 100).toFixed(1)}% (${level.label})`}>
+                                  <div className={`document-ocr-badge ocr-${level.color}`}>
+                                    OCR
+                                  </div>
+                                </Tooltip>
+                              )
+                            })()}
+                          </div>
+                          <span>{item.name}</span>
+                        </>
                       )}
-                      <span>{item.name}</span>
                     </div>
                     <div className="row-size">
                       {item.type === 'file' && item.size ? formatFileSize(item.size) : '—'}
@@ -1180,12 +1314,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       {item.type === 'folder' ? (
                         <span className="folder-icon folder-icon-large">📁</span>
                       ) : (
-                        <SFSymbol
-                          name={getFileIcon(item)}
-                          size={SFSymbolSize.CALLOUT}
-                          weight={SFSymbolWeight.REGULAR}
-                          decorative={true}
-                        />
+                        <div className={`document-icon ${DocumentUtils.getFileTypeClass(item.mimeType, item.name)}`}>
+                          <SFSymbol
+                            name={DocumentUtils.getFileIcon(item.mimeType, item.name)}
+                            size={SFSymbolSize.CALLOUT}
+                            weight={SFSymbolWeight.REGULAR}
+                            decorative={true}
+                          />
+                        </div>
                       )}
                     </div>
                     <div className="grid-item-name">

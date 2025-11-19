@@ -37,6 +37,8 @@ export interface PersonalFileItem {
   isDeleted: boolean;
   storagePath?: string;
   isLibraryDocument?: boolean; // 문서 라이브러리 파일인지 여부
+  // 🍎 문서 라이브러리 파일의 원본 Document 정보 (뱃지 표시용)
+  document?: any; // Document 타입 (순환 참조 방지를 위해 any 사용)
 }
 
 /**
