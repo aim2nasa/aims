@@ -1200,6 +1200,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       </span>
                     )}
                   </div>
+                  <div className="header-status">
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>상태</span>
+                  </div>
                   <div className="header-actions">
                     <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                       <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
@@ -1334,6 +1341,31 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     </div>
                     <div className="row-modified">
                       {formatDate(item.updatedAt)}
+                    </div>
+                    <div className="row-status">
+                      {item.type === 'file' && item.document ? (() => {
+                        const status = DocumentStatusService.extractStatus(item.document)
+                        const progress = DocumentStatusService.extractProgress(item.document)
+                        const statusLabel = DocumentStatusService.getStatusLabel(status)
+                        const statusIcon = DocumentStatusService.getStatusIcon(status)
+
+                        return (
+                          <>
+                            <Tooltip content={statusLabel}>
+                              <div className={`status-icon status-${status}`}>
+                                {statusIcon}
+                              </div>
+                            </Tooltip>
+                            <div className="status-text">
+                              {status === 'processing' && progress ? (
+                                <span className="progress-text">{progress}%</span>
+                              ) : (
+                                <span className="status-label">{statusLabel}</span>
+                              )}
+                            </div>
+                          </>
+                        )
+                      })() : <span>—</span>}
                     </div>
                     <div className="row-actions">
                       {item.type === 'file' && item.document && (

@@ -487,7 +487,7 @@
 
 .files-list-header {
   display: grid;
-  grid-template-columns: 1fr 120px 150px 80px;
+  grid-template-columns: minmax(200px, 1fr) 100px 140px 110px 115px;
   gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
   background: var(--color-bg-secondary);
@@ -506,9 +506,15 @@
   gap: 4px;
 }
 
+/* 크기, 수정한 날짜 헤더는 우측 정렬 */
+.files-list-header .header-size,
+.files-list-header .header-modified {
+  justify-content: flex-end;
+}
+
 .file-list-row {
   display: grid;
-  grid-template-columns: 1fr 120px 150px 80px;
+  grid-template-columns: minmax(200px, 1fr) 100px 140px 110px 115px;
   gap: var(--spacing-3);
   padding: var(--spacing-2) var(--spacing-4);
   align-items: center;
@@ -552,6 +558,7 @@
 .row-modified {
   font-size: var(--font-size-footnote);
   color: var(--color-text-secondary);
+  text-align: right;
 }
 
 .row-actions {
@@ -1382,4 +1389,72 @@ html[data-theme="dark"] .action-btn[data-disabled="true"] {
   align-items: center;
   gap: 4px;
   justify-content: flex-end;
+}
+
+/* ===== 상태 칼럼 스타일 (DocumentStatusList와 동일) ===== */
+
+/* 상태 셀 - flex 레이아웃 (아이콘 + 텍스트) */
+.row-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 상태 아이콘 */
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-footnote);
+  flex-shrink: 0;
+}
+
+.status-icon.status-completed {
+  color: var(--color-success);
+}
+
+.status-icon.status-processing {
+  color: var(--color-primary-500);
+  animation: processing-pulse 2s ease-in-out infinite;
+}
+
+@keyframes processing-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-icon.status-error {
+  color: var(--color-error);
+}
+
+.status-icon.status-pending {
+  color: var(--color-warning);
+}
+
+.status-icon.status-timeout {
+  color: var(--color-error);
+  opacity: 0.7;
+}
+
+/* 상태 텍스트 */
+.status-text {
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  color: var(--color-ios-text-tertiary-light);
+  white-space: nowrap;
+}
+
+html[data-theme="dark"] .status-text {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.status-text .progress-text {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--color-primary-500);
+}
+
+.status-text .status-label {
+  font-weight: 400;
 }
