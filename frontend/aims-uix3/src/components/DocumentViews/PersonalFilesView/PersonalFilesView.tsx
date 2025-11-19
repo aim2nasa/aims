@@ -433,6 +433,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     setRenameValue('')
   }, [])
 
+  // 테이블 헤더 정렬 핸들러
+  const handleSort = useCallback((field: typeof sortBy) => {
+    if (sortBy === field) {
+      // 같은 필드 클릭 시 정렬 순서 토글
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // 다른 필드 클릭 시 필드 변경 + 기본 정렬 순서
+      setSortBy(field)
+      setSortDirection(field === 'name' ? 'asc' : 'desc')
+    }
+  }, [sortBy, sortDirection])
+
   // 이름 변경 실행
   const handleRenameItem = useCallback(async () => {
     if (!selectedItem || !renameValue.trim()) {
@@ -997,10 +1009,86 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               // 리스트 뷰
               <div className="files-list">
                 <div className="files-list-header">
-                  <div className="header-name">이름</div>
-                  <div className="header-size">크기</div>
-                  <div className="header-modified">수정한 날짜</div>
-                  <div className="header-actions">작업</div>
+                  <div
+                    className={`header-name sortable ${sortBy === 'name' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('name')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('name')
+                      }
+                    }}
+                    aria-label={`이름으로 정렬 ${sortBy === 'name' ? (sortDirection === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <path d="M4 1h5l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="currentColor"/>
+                      <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
+                    </svg>
+                    <span>이름</span>
+                    {sortBy === 'name' && (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={`header-size sortable ${sortBy === 'size' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('size')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('size')
+                      }
+                    }}
+                    aria-label={`크기로 정렬 ${sortBy === 'size' ? (sortDirection === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <rect x="2" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      <rect x="6" y="7" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                    </svg>
+                    <span>크기</span>
+                    {sortBy === 'size' && (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={`header-modified sortable ${sortBy === 'createdAt' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('createdAt')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('createdAt')
+                      }
+                    }}
+                    aria-label={`수정한 날짜로 정렬 ${sortBy === 'createdAt' ? (sortDirection === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      <path d="M2 6h12" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    <span>수정한 날짜</span>
+                    {sortBy === 'createdAt' && (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="header-actions">
+                    <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                      <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
+                      <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
+                    </svg>
+                    <span>작업</span>
+                  </div>
                 </div>
                 {filteredAndSortedItems.map(item => (
                   <div
