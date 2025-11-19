@@ -30,6 +30,8 @@ export interface UserProfileMenuProps {
   };
   /** 앵커 요소 (메뉴를 표시할 기준 위치) */
   anchorElement: HTMLElement | null;
+  /** 메뉴 클릭 핸들러 (LeftPane 메뉴와 연동) */
+  onMenuClick?: (menuKey: string) => void;
 }
 
 /**
@@ -45,7 +47,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   isOpen,
   onClose,
   user,
-  anchorElement
+  anchorElement,
+  onMenuClick
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
@@ -128,6 +131,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     openAccountSettingsView();
   };
 
+  const handleMyFiles = () => {
+    if (onMenuClick) {
+      onMenuClick('documents-my-files');
+    }
+    onClose();
+  };
+
   const handleLogout = () => {
     // TODO: 로그아웃 확인 다이얼로그
     const confirmed = window.confirm('정말 로그아웃하시겠습니까?');
@@ -164,7 +174,16 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
           {/* 메뉴 아이템들 */}
           <div className="user-profile-menu__items">
-            {/* 그룹 1: 계정 관리 */}
+            {/* 그룹 1: 빠른 네비게이션 */}
+            <UserProfileMenuItem
+              icon="folder"
+              label="내 파일"
+              onClick={handleMyFiles}
+              showDivider={true}
+              iconColor="green"
+            />
+
+            {/* 그룹 2: 계정 관리 */}
             {isDevMode && (
               <UserProfileMenuItem
                 icon="person.2"

@@ -38,6 +38,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   theme,
   onLayoutControlOpen,
   onThemeToggle,
+  onMenuClick,
   className = '',
   controller
 }) => {
@@ -259,6 +260,7 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
                 ...(displayUser.avatarUrl && { avatarUrl: displayUser.avatarUrl })
               }}
               anchorElement={userAvatarRef.current}
+              {...(onMenuClick && { onMenuClick })}
             />
           );
         })()}

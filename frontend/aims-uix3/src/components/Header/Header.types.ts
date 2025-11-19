@@ -15,6 +15,8 @@ export interface HeaderProps {
   onLayoutControlOpen: () => void;
   /** 테마 토글 핸들러 */
   onThemeToggle: () => void;
+  /** 메뉴 클릭 핸들러 */
+  onMenuClick?: (menuKey: string) => void;
   /** 추가 CSS 클래스명 */
   className?: string;
 }

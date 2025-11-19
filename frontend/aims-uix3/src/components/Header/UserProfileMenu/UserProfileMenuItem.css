@@ -40,6 +40,23 @@
   color: var(--color-text-primary);
 }
 
+/* 아이콘 색상 - CustomMenu와 동일한 iOS 색상 */
+.user-profile-menu-item__icon--green {
+  color: var(--color-ios-green); /* iOS systemGreen - #34c759 */
+}
+
+.user-profile-menu-item__icon--blue {
+  color: var(--color-ios-blue); /* iOS systemBlue - #007aff */
+}
+
+.user-profile-menu-item__icon--orange {
+  color: var(--color-ios-orange); /* iOS systemOrange - #ff9500 */
+}
+
+.user-profile-menu-item__icon--purple {
+  color: var(--color-ios-purple); /* iOS systemPurple - #af52de */
+}
+
 /* 호버 상태 */
 .user-profile-menu-item:hover:not(:disabled) {
   background: var(--color-bg-hover);

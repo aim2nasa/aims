@@ -23,6 +23,8 @@ export interface UserProfileMenuItemProps {
   showDivider?: boolean;
   /** 비활성화 여부 */
   disabled?: boolean;
+  /** 아이콘 색상 (예: 'green') */
+  iconColor?: 'green' | 'blue' | 'orange' | 'purple';
 }
 
 /**
@@ -39,7 +41,8 @@ export const UserProfileMenuItem: React.FC<UserProfileMenuItemProps> = ({
   onClick,
   isDangerous = false,
   showDivider = false,
-  disabled = false
+  disabled = false,
+  iconColor
 }) => {
   const handleClick = () => {
     if (!disabled) {
@@ -73,7 +76,10 @@ export const UserProfileMenuItem: React.FC<UserProfileMenuItemProps> = ({
           size={SFSymbolSize.CALLOUT}
           weight={SFSymbolWeight.SEMIBOLD}
           decorative={true}
-          className="user-profile-menu-item__icon"
+          className={[
+            'user-profile-menu-item__icon',
+            iconColor ? `user-profile-menu-item__icon--${iconColor}` : ''
+          ].filter(Boolean).join(' ')}
         />
         <span className="user-profile-menu-item__label">
           {label}

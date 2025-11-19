@@ -1061,6 +1061,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         theme={theme}
         onLayoutControlOpen={handleModalOpen}
         onThemeToggle={toggleTheme}
+        onMenuClick={handleMenuClick}
       />
 
       {/* Developer Mode Badge - Global (Header Center) */}
