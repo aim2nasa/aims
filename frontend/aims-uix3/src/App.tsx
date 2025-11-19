@@ -34,6 +34,8 @@ const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
 const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
+const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
+import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
 import DownloadHelper from './utils/downloadHelper'
 
 interface SmartSearchUploadRaw {
@@ -238,6 +240,34 @@ const adaptToDownloadHelper = (doc: SelectedDocument) => {
     payload
   };
 }
+const convertToPreviewDocumentInfo = (doc: SelectedDocument): PreviewDocumentInfo => {
+  const originalName = doc.upload?.originalName || doc.payload?.originalName || doc.meta?.originalName || '문서';
+  const fileUrl = doc.fileUrl || null;
+  const mimeType = doc.meta?.mime || doc.payload?.mime;
+  const uploadedAt = doc.upload?.uploadedAt || doc.payload?.uploadedAt;
+  const sizeBytes = doc.meta?.sizeBytes ?? doc.payload?.sizeBytes ?? null;
+
+  // exactOptionalPropertyTypes 대응: undefined가 아닌 경우에만 프로퍼티 포함
+  const result: PreviewDocumentInfo = {
+    id: doc._id,
+    originalName,
+    fileUrl,
+    document: doc as any, // CustomerDocumentItem 타입과 호환
+    rawDetail: doc as any
+  };
+
+  if (mimeType !== undefined) {
+    result.mimeType = mimeType;
+  }
+  if (uploadedAt !== undefined) {
+    result.uploadedAt = uploadedAt;
+  }
+  if (sizeBytes !== null) {
+    result.sizeBytes = sizeBytes;
+  }
+
+  return result;
+};
 
 // 상태 영속화를 위한 전역 저장소 (LocalStorage + 컴포넌트 리마운트와 독립)
 const STORAGE_KEYS = {
@@ -314,6 +344,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // RightPane 고객 상세 상태
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [rightPaneContentType, setRightPaneContentType] = useState<'document' | 'customer' | null>(null)
+ 
+  // 문서 프리뷰 모달 상태
+  const [previewModalVisible, setPreviewModalVisible] = useState(false)
+  const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
 
   // 고객 전체보기 새로고침을 위한 ref
   const customerAllViewRefreshRef = useRef<(() => void) | null>(null)
@@ -824,6 +858,25 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       }
     }
   }, [])
+  // RightPane 더블클릭 핸들러 - 모달로 전환
+  const handleRightPaneDoubleClick = useCallback(() => {
+    if (rightPaneContentType === 'document' && selectedDocument) {
+      // RightPane 닫기
+      setRightPaneVisible(false);
+
+      // transition 완료 후 (600ms) 콘텐츠 정리 및 모달 열기
+      setTimeout(() => {
+        setSelectedDocument(null);
+        setRightPaneContentType(null);
+        updateURLParams({ documentId: null });
+
+        // 모달 열기
+        const previewDoc = convertToPreviewDocumentInfo(selectedDocument);
+        setPreviewModalDocument(previewDoc);
+        setPreviewModalVisible(true);
+      }, 600);
+    }
+  }, [rightPaneContentType, selectedDocument, updateURLParams]);
   // 🍎 Progressive Disclosure: LeftPane 토글 with 애니메이션 상태 관리
   const toggleLeftPaneCollapsed = useCallback(() => {
     setLeftPaneCollapsed(prev => {
@@ -1357,6 +1410,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         {/* RightPane - 컨테이너 내부에서 우측에 위치 */}
         <div
           className="layout-rightpane-content"
+          onDoubleClick={handleRightPaneDoubleClick}
           style={{
             flex: 1,
             padding: (selectedDocument || selectedCustomer) ? '0' : (rightPaneVisible ? 'var(--spacing-6) var(--spacing-5)' : '0'),
@@ -1548,6 +1602,20 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           handleGapRightChange={handleGapRightChange}
           handleGapTopChange={handleGapTopChange}
           handleGapBottomChange={handleGapBottomChange}
+        />
+      </Suspense>
+
+      {/* 문서 프리뷰 모달 */}
+      <Suspense fallback={null}>
+        <CustomerDocumentPreviewModal
+          visible={previewModalVisible}
+          isLoading={false}
+          error={null}
+          document={previewModalDocument}
+          onClose={() => {
+            setPreviewModalVisible(false);
+            setPreviewModalDocument(null);
+          }}
         />
       </Suspense>
 
