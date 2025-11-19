@@ -191,6 +191,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [renamingItem, setRenamingItem] = useState(false)
+  const [itemToRename, setItemToRename] = useState<PersonalFileItem | null>(null)
 
   // 폴더 이동 모달 상태
   const [showMoveModal, setShowMoveModal] = useState(false)
@@ -731,6 +732,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 이름 변경 모달 열기
   const handleRenameClick = useCallback(() => {
     if (!selectedItem) return
+    // 이름 변경할 항목을 별도로 저장 (컨텍스트 메뉴 닫을 때 selectedItem이 null이 되므로)
+    setItemToRename(selectedItem)
     setRenameValue(selectedItem.name)
     setShowRenameModal(true)
     handleCloseContextMenu()
@@ -740,6 +743,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const handleCloseRenameModal = useCallback(() => {
     setShowRenameModal(false)
     setRenameValue('')
+    setItemToRename(null)
   }, [])
 
   // 테이블 헤더 정렬 핸들러
@@ -756,25 +760,49 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 이름 변경 실행
   const handleRenameItem = useCallback(async () => {
-    if (!selectedItem || !renameValue.trim()) {
+    console.log('🔧 [Rename] 시작:', { itemToRename, renameValue })
+
+    if (!itemToRename || !renameValue.trim()) {
+      console.log('❌ [Rename] 검증 실패: 이름 없음')
       setError('이름을 입력해주세요')
       return
     }
 
     setRenamingItem(true)
     setError(null)
+    console.log('🚀 [Rename] API 호출 시작:', itemToRename._id, '→', renameValue.trim())
 
     try {
-      await personalFilesService.renameItem(selectedItem._id, renameValue.trim())
+      await personalFilesService.renameItem(itemToRename._id, renameValue.trim())
+      console.log('✅ [Rename] API 호출 성공')
+
+      // 🍎 캐시 무효화 (이름이 변경된 아이템)
+      folderItemCache.current.delete(itemToRename._id)
+      console.log('✅ [Rename] 캐시 무효화 완료')
+
+      // 🍎 좌측 트리에서도 이름 업데이트 (삭제 로직과 동일한 패턴)
+      if (itemToRename.type === 'folder') {
+        setItems(prev => prev.map(item =>
+          item._id === itemToRename._id
+            ? { ...item, name: renameValue.trim() }
+            : item
+        ))
+        console.log('✅ [Rename] 트리 업데이트 완료')
+      }
+
       await loadFolderContents(currentFolderId)
+      console.log('✅ [Rename] 폴더 새로고침 완료')
+
       handleCloseRenameModal()
+      console.log('✅ [Rename] 모달 닫기 완료')
     } catch (err) {
-      console.error('이름 변경 오류:', err)
+      console.error('❌ [Rename] 오류:', err)
       setError(err instanceof Error ? err.message : '이름 변경에 실패했습니다')
     } finally {
       setRenamingItem(false)
+      console.log('🏁 [Rename] 완료')
     }
-  }, [selectedItem, renameValue, currentFolderId, loadFolderContents, handleCloseRenameModal])
+  }, [itemToRename, renameValue, currentFolderId, loadFolderContents, handleCloseRenameModal])
 
   // 삭제
   const handleDeleteClick = useCallback(async () => {
@@ -2157,7 +2185,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 marginBottom: 'var(--spacing-1)'
               }}
             >
-              {selectedItem?.type === 'folder' ? '폴더 이름' : '파일 이름'}
+              {itemToRename?.type === 'folder' ? '폴더 이름' : '파일 이름'}
             </label>
             <input
               id="rename-input"
