@@ -25,91 +25,97 @@
   overflow: visible; /* 드롭다운이 잘리지 않도록 */
 }
 
-/* A: iOS Spotlight 서치필드 (10% 축소) */
-.search-input-wrapper {
-  position: relative;
+/* A: iOS Spotlight 서치필드 (10% 축소) - 디자인 표준 적용 */
+.document-search-container .search-input-wrapper {
+  position: relative;  /* ❌ 표준: 자식 absolute 위치의 기준 */
   display: flex;
   align-items: center;
-  flex: 0.9; /* 남은 공간의 90% 차지 (10% 축소) */
-  min-width: 200px; /* 최소 너비 보장 */
-  background-color: transparent;
+  flex: 0.9; /* ✅ 현재 폭 유지: 남은 공간의 90% 차지 (창 폭에 따라 변함) */
+  min-width: 200px; /* ✅ 변경 가능: 최소 너비 보장 */
+  background-color: transparent;  /* ❌ 표준: 투명 */
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 6px 8px;
   transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
-  overflow: visible; /* 드롭다운이 잘리지 않도록 */
+  overflow: visible; /* ❌ 표준: 드롭다운이 잘리지 않도록 */
 }
 
-html[data-theme="dark"] .search-input-wrapper {
-  background-color: transparent;
+html[data-theme="dark"] .document-search-container .search-input-wrapper {
+  background-color: transparent;  /* ❌ 표준: 투명 */
 }
 
-.search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-light);
+.document-search-container .search-input-wrapper:focus-within {
+  background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
 }
 
-html[data-theme="dark"] .search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-dark);
+html[data-theme="dark"] .document-search-container .search-input-wrapper:focus-within {
+  background-color: transparent;  /* ❌ 표준: focus 시에도 투명 유지 */
 }
 
-/* 🍎 검색 아이콘 (클릭 가능, 최근 검색어 드롭다운 토글) */
-.search-icon {
-  margin-right: 8px;
+/* 🍎 검색 아이콘 (클릭 가능, 최근 검색어 드롭다운 토글) - 디자인 표준 적용 */
+.document-search-container .search-icon {
+  position: absolute;  /* ❌ 표준: 절대 위치 */
+  left: 10px;          /* ❌ 표준: 고정 좌표 */
+  top: 50%;            /* ❌ 표준: 세로 중앙 */
+  transform: translateY(-50%);  /* ❌ 표준: 정확한 중앙 정렬 */
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--color-ios-text-quaternary-light);
+  color: var(--color-ios-text-quaternary-light);  /* ❌ 표준: CSS 변수 */
   flex-shrink: 0;
-  cursor: pointer;
+  cursor: pointer;  /* 클릭 가능 (최근 검색어 토글 기능) */
   transition: all var(--duration-ios-quick) var(--easing-ease-out);
   opacity: 0.6;
+  z-index: 1;  /* ❌ 표준: input 위에 표시 */
   /* font-size: var(--font-size-subheadline); (15px - FONT_RULES.md: 16px deprecated ) */
 }
 
-html[data-theme="dark"] .search-icon {
+html[data-theme="dark"] .document-search-container .search-icon {
   background: transparent;
-  color: var(--color-ios-text-quaternary-dark);
+  color: var(--color-ios-text-quaternary-dark);  /* ❌ 표준: CSS 변수 */
 }
 
-.search-icon:hover {
+.document-search-container .search-icon:hover {
   background: transparent;
   opacity: 1;
-  transform: scale(1.1);
+  transform: translateY(-50%) scale(1.1);
 }
 
-.search-icon:active {
-  transform: scale(0.95);
+.document-search-container .search-icon:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
-/* 검색 입력 필드 */
-.search-input {
+/* 검색 입력 필드 - 디자인 표준 적용 */
+.document-search-container .search-input {
   flex: 1;
-  border: 1px solid var(--color-ios-separator-light);
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
   border-radius: 8px;
-  background: transparent;
+  background: transparent;  /* ❌ 표준: 투명 배경 */
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
-  color: var(--color-ios-text-primary-light);
+  color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
   outline: none;
-  padding: 6px 12px;
+  padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+  transition: border-color 0.2s ease-out;
 }
 
-html[data-theme="dark"] .search-input {
-  color: var(--color-ios-text-primary-dark);
-  border-color: var(--color-ios-separator-dark);
+html[data-theme="dark"] .document-search-container .search-input {
+  color: var(--color-ios-text-primary-dark);  /* ❌ 표준: CSS 변수 */
+  border-color: rgba(255, 255, 255, 0.12);  /* ❌ 표준: 다크 모드 경계선 */
 }
 
-.search-input::placeholder {
-  color: var(--color-ios-text-placeholder-light);
+.document-search-container .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-light);  /* ❌ 표준: CSS 변수 */
   font-weight: 400;
 }
 
-html[data-theme="dark"] .search-input::placeholder {
-  color: var(--color-ios-text-placeholder-dark);
+html[data-theme="dark"] .document-search-container .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-dark);  /* ❌ 표준: CSS 변수 */
 }
 
 /* 🍎 검색어 지우기 버튼 - Progressive Disclosure, iOS 스타일 */
-.clear-search-button {
+.document-search-container .clear-search-button {
   position: absolute;
   right: 16px;
   top: 50%;
@@ -133,26 +139,26 @@ html[data-theme="dark"] .search-input::placeholder {
   line-height: 1;
 }
 
-html[data-theme="dark"] .clear-search-button {
+html[data-theme="dark"] .document-search-container .clear-search-button {
   background: transparent;
   color: var(--color-ios-text-quaternary-dark);
 }
 
-.clear-search-button:hover {
+.document-search-container .clear-search-button:hover {
   opacity: 1;
   transform: scale(1.15);
 }
 
-.clear-search-button:active {
+.document-search-container .clear-search-button:active {
   transform: scale(0.95);
 }
 
-.clear-search-button:focus-visible {
+.document-search-container .clear-search-button:focus-visible {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
 }
 
-html[data-theme="dark"] .clear-search-button:focus-visible {
+html[data-theme="dark"] .document-search-container .clear-search-button:focus-visible {
   outline-color: var(--color-primary-300);
 }
 
