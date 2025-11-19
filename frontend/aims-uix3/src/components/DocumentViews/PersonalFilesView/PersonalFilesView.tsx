@@ -214,9 +214,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [isLinkModalVisible, setIsLinkModalVisible] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
+  // 🍎 문서 → 파일 아이템 변환 캐시 (깜빡임 방지)
+  const docToFileItemCache = useRef<Map<string, PersonalFileItem>>(new Map())
+
+  // 🍎 폴더 시스템 아이템 캐시 (깜빡임 방지)
+  const folderItemCache = useRef<Map<string, PersonalFileItem>>(new Map())
+
   // 폴더 내용 로드
-  const loadFolderContents = useCallback(async (folderId: string | null) => {
-    setLoading(true)
+  const loadFolderContents = useCallback(async (folderId: string | null, options?: { silentRefresh?: boolean }) => {
+    // 🍎 폴링 중에는 로딩 상태 변경하지 않음 (깜빡임 방지)
+    if (!options?.silentRefresh) {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -224,7 +233,24 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       const data = await personalFilesService.getFolderContents(folderId)
       if (import.meta.env.DEV) console.log(`📁 loadFolderContents(${folderId}):`, data)
 
-      let finalItems = data.items
+      // 🍎 폴더 시스템 아이템 캐싱 (참조 유지)
+      const cachedFolderItems = data.items.map(item => {
+        const cached = folderItemCache.current.get(item._id)
+
+        // 캐시에 없거나 내용이 변경되었으면 새로 저장
+        if (!cached ||
+            cached.name !== item.name ||
+            cached.size !== item.size ||
+            cached.updatedAt !== item.updatedAt) {
+          folderItemCache.current.set(item._id, item)
+          return item
+        }
+
+        // 캐시된 객체 재사용 (참조 유지!)
+        return cached
+      })
+
+      let finalItems = cachedFolderItems
 
       // 2. customerId === userId인 문서들 조회 (folderId 기반 필터링)
       try {
@@ -249,14 +275,50 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         })
         if (import.meta.env.DEV) console.log(`✅ 내 파일 ${myDocs.length}개 발견 (folderId=${folderId}):`, myDocs.map(d => d.filename))
 
-        // Document → PersonalFileItem 변환 (folderId 포함)
+        // Document → PersonalFileItem 변환 (캐시 사용으로 깜빡임 방지)
         const myFileItems = myDocs.map(doc => {
-          const item = convertDocumentToFileItem(doc)
-          // folderId를 PersonalFileItem의 parentId로 변환
-          const docFolderId = (doc as any).folderId
-          if (docFolderId) {
-            item.parentId = docFolderId.toString()
+          const docId = doc._id || doc.id || ''
+
+          // 캐시에서 기존 아이템 찾기
+          let item = docToFileItemCache.current.get(docId)
+
+          // 비교할 값들을 미리 계산 (타입 정규화 필수!)
+          const docName = doc.filename || doc.file_name || doc.originalName || doc.name || '알 수 없는 파일'
+          const rawSize = doc.fileSize || doc.file_size || doc.size || 0
+          const docSize = typeof rawSize === 'string' ? parseInt(rawSize, 10) : rawSize
+
+          // 🍎 문서 상태 변경 감지 (폴링 업데이트용)
+          const docStatus = doc.status || doc.overallStatus
+          const docProgress = doc.progress
+
+          // 캐시에 없으면 무조건 새로 생성
+          if (!item) {
+            item = convertDocumentToFileItem(doc)
+            const docFolderId = (doc as any).folderId
+            if (docFolderId) {
+              item.parentId = docFolderId.toString()
+            }
+            docToFileItemCache.current.set(docId, item)
+            return item
           }
+
+          // 캐시가 있으면 변경사항 체크
+          const hasChanged =
+            item.name !== docName ||
+            item.size !== docSize ||
+            item.document?.status !== docStatus ||
+            item.document?.overallStatus !== docStatus ||
+            item.document?.progress !== docProgress
+
+          if (hasChanged) {
+            item = convertDocumentToFileItem(doc)
+            const docFolderId = (doc as any).folderId
+            if (docFolderId) {
+              item.parentId = docFolderId.toString()
+            }
+            docToFileItemCache.current.set(docId, item)
+          }
+
           return item
         })
 
@@ -268,35 +330,119 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         // 실패해도 폴더 시스템은 정상 표시
       }
 
-      // 우측 목록 업데이트
-      setCurrentFolderItems(finalItems)
-      setBreadcrumbs(data.breadcrumbs)
+      // 🍎 깜빡임 방지: 객체 참조 유지 전략 (문서 라이브러리와 동일)
+      setCurrentFolderItems(prev => {
+        // 1. ID 맵 생성 (빠른 조회)
+        const prevMap = new Map(prev.map(item => [item._id, item]))
 
-      // 마지막 업데이트 시간 기록
+        // 2. ID가 같은 항목은 기존 객체 재사용, 새 항목만 추가
+        const mergedItems = finalItems.map(newItem => {
+          const existingItem = prevMap.get(newItem._id)
+
+          // 기존 항목이 없으면 새 객체 사용
+          if (!existingItem) {
+            return newItem
+          }
+
+          // 기존 항목이 있으면 변경 감지
+          // 파일명이나 크기가 바뀌었으면 새 객체 사용
+          if (
+            existingItem.name !== newItem.name ||
+            existingItem.size !== newItem.size ||
+            existingItem.updatedAt !== newItem.updatedAt
+          ) {
+            return newItem
+          }
+
+          // 변경 없으면 기존 객체 재사용 (참조 유지 → React 리렌더링 스킵)
+          return existingItem
+        })
+
+        // 3. 삭제된 항목 확인
+        if (prev.length !== mergedItems.length) {
+          return mergedItems
+        }
+
+        // 4. 새로운 항목 추가 확인
+        const prevIds = new Set(prev.map(item => item._id))
+        const newIds = new Set(mergedItems.map(item => item._id))
+        for (const id of newIds) {
+          if (!prevIds.has(id)) {
+            return mergedItems
+          }
+        }
+
+        // 5. 모든 항목이 기존 객체를 재사용했는지 확인 (순서 무관, 참조만 확인)
+        const allReused = mergedItems.every(item => prevMap.get(item._id) === item)
+
+        // 모든 항목이 재사용되었으면 기존 배열 유지
+        return allReused ? prev : mergedItems
+      })
+
+      // 🍎 Breadcrumbs 변경 감지
+      setBreadcrumbs(prev => {
+        // 길이가 다르면 변경됨
+        if (prev.length !== data.breadcrumbs.length) {
+          return data.breadcrumbs
+        }
+
+        // 내용이 같으면 기존 배열 유지
+        const isSame = prev.every((item, index) =>
+          item._id === data.breadcrumbs[index]?._id &&
+          item.name === data.breadcrumbs[index]?.name
+        )
+
+        return isSame ? prev : data.breadcrumbs
+      })
+
+      // 🍎 마지막 업데이트 시간 기록 (문서 라이브러리와 동일)
       setLastUpdated(new Date())
 
-      // 좌측 트리 업데이트 (해당 폴더의 하위 폴더들을 merge)
-      if (folderId) {
-        setItems(prev => {
+      // 🍎 좌측 트리 업데이트 (변경 감지 추가)
+      setItems(prev => {
+        let newItems: PersonalFileItem[]
+
+        if (folderId) {
           // 기존에 해당 폴더의 하위 항목들을 제거
           const filtered = prev.filter(item => item.parentId !== folderId)
           // 새로 가져온 하위 폴더들만 추가
           const newFolders = data.items.filter(item => item.type === 'folder')
-          const result = [...filtered, ...newFolders]
-          if (import.meta.env.DEV) console.log(`🌲 items 업데이트 (folderId=${folderId}):`, result)
-          return result
-        })
-      } else {
-        // 루트인 경우 폴더만 초기화
-        const rootFolders = data.items.filter(item => item.type === 'folder')
-        if (import.meta.env.DEV) console.log(`🌲 items 초기화 (루트):`, rootFolders)
-        setItems(rootFolders)
-      }
+          newItems = [...filtered, ...newFolders]
+        } else {
+          // 루트인 경우 폴더만 초기화
+          newItems = data.items.filter(item => item.type === 'folder')
+        }
+
+        // 변경 감지: ID 목록이 같으면 기존 배열 유지
+        if (prev.length === newItems.length) {
+          const prevIds = new Set(prev.map(item => item._id))
+          const newIds = new Set(newItems.map(item => item._id))
+
+          // 모든 ID가 같으면 변경 없음
+          if (prevIds.size === newIds.size) {
+            let allSame = true
+            for (const id of newIds) {
+              if (!prevIds.has(id)) {
+                allSame = false
+                break
+              }
+            }
+            if (allSame) {
+              return prev // 변경 없음
+            }
+          }
+        }
+
+        return newItems // 변경 있음
+      })
     } catch (err) {
       console.error('폴더 로드 오류:', err)
       setError(err instanceof Error ? err.message : '폴더를 불러오는데 실패했습니다')
     } finally {
-      setLoading(false)
+      // 🍎 폴링 중에는 로딩 상태 변경하지 않음 (깜빡임 방지)
+      if (!options?.silentRefresh) {
+        setLoading(false)
+      }
     }
   }, [userId])
 
@@ -366,7 +512,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     if (!isPageVisible) return
 
     const interval = setInterval(() => {
-      loadFolderContents(currentFolderId)
+      loadFolderContents(currentFolderId, { silentRefresh: true })
     }, 5000)
 
     return () => clearInterval(interval)
@@ -939,20 +1085,20 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [isResizing, handleResizeMove, handleResizeEnd])
 
-  // 클라이언트 필터링 및 정렬 (현재 폴더 계층 구조 유지)
+  // 🍎 깜빡임 방지: useMemo는 의존성이 변하지 않으면 이전 결과를 재사용
+  // currentFolderItems 참조가 유지되면 sort도 재실행되지 않음
   const filteredAndSortedItems = useMemo(() => {
-    // Excessive log removed
+    let result = currentFolderItems
 
-    // 1. 타입 필터링
-    let filtered = currentFolderItems
+    // 1. 타입 필터링 (필터 없으면 원본 유지)
     if (typeFilter === 'file') {
-      filtered = currentFolderItems.filter(item => item.type === 'file')
+      result = currentFolderItems.filter(item => item.type === 'file')
     } else if (typeFilter === 'folder') {
-      filtered = currentFolderItems.filter(item => item.type === 'folder')
+      result = currentFolderItems.filter(item => item.type === 'folder')
     }
 
-    // 2. 정렬
-    const sorted = [...filtered].sort((a, b) => {
+    // 2. 정렬 (useMemo가 캐싱하므로 의존성 불변시 재실행 안 됨)
+    const sorted = result.slice().sort((a, b) => {
       let comparison = 0
 
       if (sortBy === 'name') {
@@ -968,7 +1114,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       return sortDirection === 'asc' ? comparison : -comparison
     })
 
-    // Excessive log removed
     return sorted
   }, [currentFolderItems, typeFilter, sortBy, sortDirection])
 
