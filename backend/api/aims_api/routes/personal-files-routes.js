@@ -14,6 +14,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const axios = require('axios');
 
 // MongoDB 설정
 const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
@@ -462,8 +463,32 @@ router.delete('/:itemId', authenticateToken, async (req, res) => {
       }
     );
 
-    // 폴더인 경우 하위 항목도 모두 삭제
+    // 폴더인 경우 하위 항목과 연결된 문서들도 모두 삭제
     if (item.type === 'folder') {
+      // 문서 라이브러리에서 연결된 문서 삭제
+      try {
+        const documentIds = await collectDocumentIdsFromFolder(db, userId, new ObjectId(itemId));
+        
+        if (documentIds.length > 0) {
+          console.log(`🗑️ 폴더 삭제: ${documentIds.length}개의 연결된 문서 삭제 시작`);
+          
+          // 각 문서에 대해 DELETE /api/documents/:id 호출
+          for (const docId of documentIds) {
+            try {
+              await axios.delete(`http://localhost:3010/api/documents/${docId}`);
+              console.log(`✅ 문서 삭제 완료: ${docId}`);
+            } catch (docError) {
+              console.warn(`⚠️ 문서 삭제 실패: ${docId}`, docError.message);
+              // 개별 문서 삭제 실패해도 폴더 삭제는 계속 진행
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ 문서 라이브러리 삭제 중 오류:', error.message);
+        // 문서 삭제 실패해도 폴더 소프트 삭제는 진행
+      }
+      
+      // 하위 폴더들도 재귀적으로 소프트 삭제
       await deleteChildrenRecursively(collection, userId, new ObjectId(itemId));
     }
 
@@ -528,6 +553,41 @@ async function getAllParentIds(collection, folderId) {
   }
 
   return parentIds;
+}
+
+/**
+ * 폴더와 모든 하위 폴더에 연결된 문서 ID 수집
+ */
+async function collectDocumentIdsFromFolder(db, userId, folderId) {
+  const personalFilesCollection = db.collection('personal_files');
+  const filesCollection = db.collection('files');
+  
+  // 폴더 ID 수집 (재귀적으로 모든 하위 폴더 포함)
+  const folderIds = [folderId];
+  
+  async function collectFolderIds(parentId) {
+    const subFolders = await personalFilesCollection.find({
+      userId,
+      parentId,
+      type: 'folder',
+      isDeleted: false
+    }).toArray();
+    
+    for (const folder of subFolders) {
+      folderIds.push(folder._id);
+      await collectFolderIds(folder._id);
+    }
+  }
+  
+  await collectFolderIds(folderId);
+  
+  // 모든 폴더 ID에 연결된 문서 찾기
+  const documents = await filesCollection.find({
+    customerId: userId,
+    folderId: { $in: folderIds }
+  }).toArray();
+  
+  return documents.map(doc => doc._id.toString());
 }
 
 /**

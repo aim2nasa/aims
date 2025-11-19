@@ -10,6 +10,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import AppleConfirmModal from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
+import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
@@ -182,6 +184,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [renameValue, setRenameValue] = useState('')
   const [renamingItem, setRenamingItem] = useState(false)
 
+
+  // AppleConfirmModal 컨트롤러
+  const confirmModal = useAppleConfirmController()
   // 드래그 앤 드롭 상태
   const [draggingItemId, setDraggingItemId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
@@ -550,20 +555,34 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const handleDeleteClick = useCallback(async () => {
     if (!selectedItem) return
 
-    if (!confirm(`"${selectedItem.name}"${selectedItem.type === 'folder' ? ' 폴더와 모든 하위 항목을' : '을(를)'} 삭제하시겠습니까?`)) {
+    const confirmed = await confirmModal.actions.openModal({
+      title: selectedItem.type === 'folder' ? '폴더 삭제' : '파일 삭제',
+      message: selectedItem.type === 'folder'
+        ? `"${selectedItem.name}" 폴더와 모든 하위 항목을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`
+        : `"${selectedItem.name}" 파일을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`,
+      confirmText: '삭제',
+      cancelText: '취소',
+      showCancel: true,
+      confirmStyle: 'destructive',
+      iconType: 'warning'
+    })
+
+    if (!confirmed) {
       handleCloseContextMenu()
       return
     }
 
     try {
       await personalFilesService.deleteItem(selectedItem._id)
+      // 좌측 트리에서도 삭제된 폴더 제거
+      setItems(prev => prev.filter(item => item._id !== selectedItem._id))
       await loadFolderContents(currentFolderId)
       handleCloseContextMenu()
     } catch (err) {
       console.error('삭제 오류:', err)
       setError(err instanceof Error ? err.message : '삭제에 실패했습니다')
     }
-  }, [selectedItem, currentFolderId, loadFolderContents, handleCloseContextMenu])
+  }, [selectedItem, currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal])
 
   // 컨텍스트 메뉴에서 새 폴더 생성
   const handleNewFolderFromContext = useCallback(() => {
@@ -854,6 +873,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }
 
   return (
+    <>
     <CenterPaneView
       visible={visible}
       onClose={onClose}
@@ -1773,6 +1793,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         onLink={async () => undefined}
       />
     </CenterPaneView>
+
+    {/* Apple Confirm Modal */}
+    <AppleConfirmModal
+      state={confirmModal.state}
+      actions={confirmModal.actions}
+    />
+    </>
   )
 }
 
