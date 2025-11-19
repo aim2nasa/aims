@@ -17,6 +17,7 @@ import MoveFolderModal from './MoveFolderModal'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
+import { api } from '@/shared/lib/api'
 import personalFilesService, { type PersonalFileItem } from '@/services/personalFilesService'
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { DocumentUtils } from '@/entities/document'
@@ -777,13 +778,20 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 삭제
   const handleDeleteClick = useCallback(async () => {
-    if (!selectedItem) return
+    if (!selectedItem) {
+      console.warn('⚠️ selectedItem이 null입니다')
+      return
+    }
+
+    // selectedItem을 로컬 변수로 저장 (모달 열리는 동안 값이 변경되어도 안전)
+    const itemToDelete = selectedItem
+    console.log('🗑️ 삭제 시작:', itemToDelete.name, itemToDelete._id, 'isLibraryDocument:', itemToDelete.isLibraryDocument)
 
     const confirmed = await confirmModal.actions.openModal({
-      title: selectedItem.type === 'folder' ? '폴더 삭제' : '파일 삭제',
-      message: selectedItem.type === 'folder'
-        ? `"${selectedItem.name}" 폴더와 모든 하위 항목을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`
-        : `"${selectedItem.name}" 파일을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`,
+      title: itemToDelete.type === 'folder' ? '폴더 삭제' : '파일 삭제',
+      message: itemToDelete.type === 'folder'
+        ? `"${itemToDelete.name}" 폴더와 모든 하위 항목을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`
+        : `"${itemToDelete.name}" 파일을 삭제하시겠습니까?\n\n삭제된 항목은 복구할 수 있습니다.`,
       confirmText: '삭제',
       cancelText: '취소',
       showCancel: true,
@@ -792,22 +800,49 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     })
 
     if (!confirmed) {
+      console.log('❌ 삭제 취소됨')
       handleCloseContextMenu()
       return
     }
 
+    console.log('✅ 삭제 확인됨, API 호출 시작...')
 
     try {
-      await personalFilesService.deleteItem(selectedItem._id)
+      // 문서 라이브러리 파일과 폴더 시스템 항목을 구분하여 삭제
+      if (itemToDelete.isLibraryDocument) {
+        // 문서 라이브러리 파일 삭제 (files 컬렉션)
+        console.log('📄 문서 라이브러리 파일 삭제:', itemToDelete._id)
+        await api.delete(`/api/documents/${itemToDelete._id}`)
+      } else {
+        // 폴더 시스템 항목 삭제 (personal_files 컬렉션)
+        console.log('📁 폴더 시스템 항목 삭제:', itemToDelete._id)
+        await personalFilesService.deleteItem(itemToDelete._id)
+      }
+      console.log('✅ API 삭제 성공')
+
       // 좌측 트리에서도 삭제된 폴더 제거
-      setItems(prev => prev.filter(item => item._id !== selectedItem._id))
+      setItems(prev => prev.filter(item => item._id !== itemToDelete._id))
+
+      console.log('🔄 폴더 내용 새로고침 시작...')
       await loadFolderContents(currentFolderId)
+      console.log('✅ 폴더 내용 새로고침 완료')
+
       handleCloseContextMenu()
     } catch (err) {
-      console.error('삭제 오류:', err)
-      setError(err instanceof Error ? err.message : '삭제에 실패했습니다')
+      console.error('❌ 삭제 오류:', err)
+      const errorMessage = err instanceof Error ? err.message : '삭제에 실패했습니다'
+      setError(errorMessage)
+
+      // 에러를 사용자에게 명확하게 알림
+      await confirmModal.actions.openModal({
+        title: '삭제 실패',
+        message: `파일/폴더 삭제 중 오류가 발생했습니다.\n\n오류: ${errorMessage}`,
+        confirmText: '확인',
+        showCancel: false,
+        iconType: 'warning'
+      })
     }
-  }, [selectedItem, currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal])
+  }, [currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal])
 
   // 전체 폴더 목록 로드 (이동 모달용) - 재귀적으로 모든 폴더 수집
   const loadAllFolders = useCallback(async () => {
