@@ -1317,9 +1317,39 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   return null
                 }
 
+                const lastCrumb = breadcrumbs[breadcrumbs.length - 1]
+                if (!lastCrumb) return null
+
+                // 공간이 매우 부족하면 마지막 경로만 표시
+                if (breadcrumbWidth > 0 && breadcrumbWidth < 150) {
+                  return (
+                    <button
+                      className="breadcrumb-item"
+                      onClick={() => handleFolderClick(lastCrumb._id)}
+                    >
+                      {lastCrumb.name}
+                    </button>
+                  )
+                }
+
+                // 공간이 부족하면 ".. > 마지막" 표시
+                if (breadcrumbWidth > 0 && breadcrumbWidth < 250 && breadcrumbs.length > 1) {
+                  return (
+                    <>
+                      <span className="breadcrumb-ellipsis">..</span>
+                      <span className="breadcrumb-separator"> &gt; </span>
+                      <button
+                        className="breadcrumb-item"
+                        onClick={() => handleFolderClick(lastCrumb._id)}
+                      >
+                        {lastCrumb.name}
+                      </button>
+                    </>
+                  )
+                }
+
                 // 표시 가능한 breadcrumb 개수 계산
                 // 평균 breadcrumb 너비: 100px (텍스트 + 여백 + 구분자)
-                // 최소 3개는 항상 표시 (첫 번째 + .. + 마지막)
                 const avgItemWidth = 100
                 const maxVisibleCount = breadcrumbWidth > 0
                   ? Math.max(3, Math.floor(breadcrumbWidth / avgItemWidth))
