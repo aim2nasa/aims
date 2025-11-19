@@ -155,6 +155,11 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const breadcrumbRef = useRef<HTMLDivElement>(null)
   const [breadcrumbWidth, setBreadcrumbWidth] = useState(0)
 
+  // 폴링 관련 상태
+  const [isPollingEnabled, setIsPollingEnabled] = useState(true)
+  const [isPageVisible, setIsPageVisible] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
   // 현재 사용자 ID
   const userId = typeof window !== 'undefined'
     ? localStorage.getItem('aims-current-user-id') || 'tester'
@@ -267,6 +272,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setCurrentFolderItems(finalItems)
       setBreadcrumbs(data.breadcrumbs)
 
+      // 마지막 업데이트 시간 기록
+      setLastUpdated(new Date())
+
       // 좌측 트리 업데이트 (해당 폴더의 하위 폴더들을 merge)
       if (folderId) {
         setItems(prev => {
@@ -321,6 +329,48 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       loadFolderContents(null)
     }
   }, [visible, loadFolderContents])
+
+  /**
+   * Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === 'visible'
+      setIsPageVisible(isVisible)
+
+      // 탭이 다시 보이면 즉시 데이터 새로고침
+      if (isVisible) {
+        loadFolderContents(currentFolderId)
+      }
+    }
+
+    // 초기 상태 설정
+    setIsPageVisible(document.visibilityState === 'visible')
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadFolderContents, currentFolderId])
+
+  /**
+   * 실시간 폴링 (5초마다)
+   * 페이지가 보이고(isPageVisible) 폴링이 활성화(isPollingEnabled)되어 있을 때만 실행
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!visible) return
+    if (!isPollingEnabled) return
+    if (!isPageVisible) return
+
+    const interval = setInterval(() => {
+      loadFolderContents(currentFolderId)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [isPollingEnabled, isPageVisible, visible, loadFolderContents, currentFolderId])
 
   // 검색 debounce (500ms) - 필터/정렬은 클라이언트에서 처리
   useEffect(() => {
@@ -384,6 +434,23 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     return () => {
       observer.disconnect()
     }
+  }, [])
+
+  // 폴링 토글
+  const togglePolling = useCallback(() => {
+    setIsPollingEnabled((prev) => !prev)
+  }, [])
+
+  // 마지막 업데이트 시간 포맷팅
+  const formatLastUpdated = useCallback((date: Date | null): string => {
+    if (!date) return ''
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
   }, [])
 
   // 폴더 확장/축소
@@ -1279,6 +1346,44 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   </button>
                 </Tooltip>
               </div>
+
+              {/* 폴링 컨트롤 영역 */}
+              <div className="toolbar-divider" />
+
+              {/* 최근 업데이트 시간 */}
+              {lastUpdated && (
+                <span className="last-updated">
+                  {formatLastUpdated(lastUpdated)}
+                </span>
+              )}
+
+              {/* 폴링 토글 버튼 */}
+              <Tooltip content={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}>
+                <button
+                  className={`polling-toggle ${isPollingEnabled ? 'polling-active' : 'polling-inactive'}`}
+                  onClick={togglePolling}
+                  aria-label={isPollingEnabled ? '실시간 업데이트 끄기' : '실시간 업데이트 켜기'}
+                >
+                  <span className={`polling-dot ${isPollingEnabled ? 'dot-active' : 'dot-inactive'}`}>●</span>
+                </button>
+              </Tooltip>
+
+              {/* 새로고침 버튼 */}
+              <Tooltip content="새로고침">
+                <button
+                  className="refresh-button"
+                  onClick={() => loadFolderContents(currentFolderId)}
+                  disabled={loading}
+                  aria-label="새로고침"
+                >
+                  <SFSymbol
+                    name="arrow.clockwise"
+                    size={SFSymbolSize.CAPTION_1}
+                    weight={SFSymbolWeight.MEDIUM}
+                    decorative={true}
+                  />
+                </button>
+              </Tooltip>
             </div>
           </div>
 
