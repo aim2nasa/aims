@@ -729,6 +729,26 @@ html[data-theme="dark"] .search-input {
   background: var(--color-bg-active);
 }
 
+/* 아이콘 레이아웃 */
+.context-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 아이콘 색상 */
+.context-menu-icon--rename svg {
+  color: var(--color-info);
+}
+
+.context-menu-icon--move svg {
+  color: var(--color-warning);
+}
+
+.context-menu-icon--new svg {
+  color: var(--color-success);
+}
+
 .context-menu button.context-menu-item--danger {
   color: var(--color-button-destructive-bg);
 }

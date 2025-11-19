@@ -2080,33 +2080,32 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <button className="context-menu-item" onClick={handleRenameClick}>
-            <SFSymbol
-              name="pencil"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
+            <span className="context-menu-icon context-menu-icon--rename">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d="M11.5 1.5l3 3-8 8H3.5v-3l8-8z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9.5 3.5l3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            </span>
             <span>이름 변경</span>
           </button>
           <button className="context-menu-item" onClick={handleMoveClick}>
-            <SFSymbol
-              name="folder"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
+            <span className="context-menu-icon context-menu-icon--move">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
+              </svg>
+            </span>
             <span>이동...</span>
           </button>
 
 
           {selectedItem.type === 'folder' && (
             <button className="context-menu-item" onClick={handleNewFolderFromContext}>
-              <SFSymbol
-                name="folder.badge.plus"
-                size={SFSymbolSize.CAPTION_1}
-                weight={SFSymbolWeight.MEDIUM}
-                decorative={true}
-              />
+              <span className="context-menu-icon context-menu-icon--new">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </span>
               <span>새 폴더</span>
             </button>
           )}
