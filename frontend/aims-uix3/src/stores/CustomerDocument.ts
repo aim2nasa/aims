@@ -155,13 +155,13 @@ export class CustomerDocument {
   subscribe(callback: ObserverCallback): () => void {
     this.observers.add(callback);
     if (import.meta.env.DEV) {
-      console.log('[CustomerDocument] 구독자 추가됨. 총:', this.observers.size);
+      if (import.meta.env.DEV) console.log('[CustomerDocument] 구독자 추가됨. 총:', this.observers.size);
     }
 
     return () => {
       this.observers.delete(callback);
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 구독자 제거됨. 총:', this.observers.size);
+        if (import.meta.env.DEV) console.log('[CustomerDocument] 구독자 제거됨. 총:', this.observers.size);
       }
     };
   }
@@ -171,7 +171,7 @@ export class CustomerDocument {
    */
   private notify(): void {
     if (import.meta.env.DEV) {
-      console.log('[CustomerDocument] 모든 구독자에게 알림 전송. 구독자 수:', this.observers.size);
+      if (import.meta.env.DEV) console.log('[CustomerDocument] 모든 구독자에게 알림 전송. 구독자 수:', this.observers.size);
     }
     this.lastUpdated = Date.now();
     this.observers.forEach(callback => {
@@ -246,7 +246,7 @@ export class CustomerDocument {
       this.notify(); // 로딩 시작 알림
 
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 목록 로드 시작:', query);
+        if (import.meta.env.DEV) console.log('[CustomerDocument] 고객 목록 로드 시작:', query);
       }
       const response = await CustomerService.getCustomers(query);
 
@@ -261,7 +261,7 @@ export class CustomerDocument {
       this.hasMore = hasMore;
 
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 목록 로드 완료:', {
+        if (import.meta.env.DEV) console.log('[CustomerDocument] 고객 목록 로드 완료:', {
           count: this.customers.length,
           total: this.total,
           hasMore: this.hasMore

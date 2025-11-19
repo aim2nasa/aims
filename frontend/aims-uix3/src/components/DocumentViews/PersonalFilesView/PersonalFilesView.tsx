@@ -199,13 +199,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     try {
       // 1. 폴더/파일 시스템 데이터 조회
       const data = await personalFilesService.getFolderContents(folderId)
-      console.log(`📁 loadFolderContents(${folderId}):`, data)
+      if (import.meta.env.DEV) console.log(`📁 loadFolderContents(${folderId}):`, data)
 
       let finalItems = data.items
 
       // 2. customerId === userId인 문서들 조회 (folderId 기반 필터링)
       try {
-        console.log(`📄 내 파일 조회 시작 (customerId === userId, folderId === ${folderId})...`)
+        if (import.meta.env.DEV) console.log(`📄 내 파일 조회 시작 (customerId === userId, folderId === ${folderId})...`)
         const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
         const allDocs = docsResponse.documents || []
 
@@ -224,7 +224,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
           return false
         })
-        console.log(`✅ 내 파일 ${myDocs.length}개 발견 (folderId=${folderId}):`, myDocs.map(d => d.filename))
+        if (import.meta.env.DEV) console.log(`✅ 내 파일 ${myDocs.length}개 발견 (folderId=${folderId}):`, myDocs.map(d => d.filename))
 
         // Document → PersonalFileItem 변환 (folderId 포함)
         const myFileItems = myDocs.map(doc => {
@@ -239,7 +239,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
         // 폴더 시스템 파일과 합치기
         finalItems = [...data.items, ...myFileItems]
-        console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
+        if (import.meta.env.DEV) console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
       } catch (docErr) {
         console.error('⚠️ 내 파일 조회 실패:', docErr)
         // 실패해도 폴더 시스템은 정상 표시
@@ -257,13 +257,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           // 새로 가져온 하위 폴더들만 추가
           const newFolders = data.items.filter(item => item.type === 'folder')
           const result = [...filtered, ...newFolders]
-          console.log(`🌲 items 업데이트 (folderId=${folderId}):`, result)
+          if (import.meta.env.DEV) console.log(`🌲 items 업데이트 (folderId=${folderId}):`, result)
           return result
         })
       } else {
         // 루트인 경우 폴더만 초기화
         const rootFolders = data.items.filter(item => item.type === 'folder')
-        console.log(`🌲 items 초기화 (루트):`, rootFolders)
+        if (import.meta.env.DEV) console.log(`🌲 items 초기화 (루트):`, rootFolders)
         setItems(rootFolders)
       }
     } catch (err) {
@@ -739,7 +739,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 클라이언트 필터링 및 정렬 (현재 폴더 계층 구조 유지)
   const filteredAndSortedItems = useMemo(() => {
-    console.log(`🔍 필터링/정렬 시작 - typeFilter: ${typeFilter}, sortBy: ${sortBy}, sortDirection: ${sortDirection}`)
+    // Excessive log removed
 
     // 1. 타입 필터링
     let filtered = currentFolderItems
@@ -766,14 +766,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       return sortDirection === 'asc' ? comparison : -comparison
     })
 
-    console.log(`✅ 필터링/정렬 완료 - ${currentFolderItems.length}개 → ${sorted.length}개`)
+    // Excessive log removed
     return sorted
   }, [currentFolderItems, typeFilter, sortBy, sortDirection])
 
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
     const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
-    console.log(`🌳 renderFolderTree(parentId=${parentId}, level=${level}):`, folders.map(f => f.name))
+    // Excessive log removed - called on every render
 
     return folders.map(folder => {
       const isExpanded = expandedFolderIds.has(folder._id)

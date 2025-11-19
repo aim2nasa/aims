@@ -342,7 +342,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
   }, [selectedCustomer, onSelect, onClose]);
 
-  console.log('[CustomerSelectorModal] 렌더링:', {
+  if (import.meta.env.DEV) console.log('[CustomerSelectorModal] 렌더링:', {
     visible,
     isLoading,
     allCustomersCount: allCustomers.length,
