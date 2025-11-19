@@ -328,31 +328,39 @@
 
 /* 검색 박스 */
 .search-box {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
   background: transparent;
+  border: none;
   border-radius: var(--radius-md);
-  padding: var(--spacing-2) var(--spacing-3);
-  transition: background var(--duration-fast) var(--easing-ease-out);
-}
-
-.search-box:focus-within {
-  background: transparent;
+  padding: 0;
 }
 
 .search-icon {
+  position: absolute;
+  left: var(--spacing-2);
   color: var(--color-text-quaternary);
   flex-shrink: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .search-input {
-  border: none;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-primary);
   font-size: var(--font-size-footnote);
   outline: none;
   width: 200px;
+  padding: var(--spacing-2) var(--spacing-3);
+  padding-left: calc(var(--spacing-2) + 13px + var(--spacing-2));
+  transition: border-color var(--duration-fast) var(--easing-ease-out);
+}
+
+.search-input:focus {
+  border-color: var(--color-border-focus);
 }
 
 .search-input::placeholder {
