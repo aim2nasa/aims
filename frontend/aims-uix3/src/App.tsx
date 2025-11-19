@@ -589,10 +589,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [activeDocumentView, updateURLParams])
 
   // 테마 시스템 - localStorage 영속화 지원
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       const savedTheme = localStorage.getItem('aims-theme')
-      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+      if (savedTheme === 'light' || savedTheme === 'dark') {
         return savedTheme
       }
       return 'light'
@@ -601,7 +601,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   })
 
-  // 테마 적용 및 시스템 설정 감지
+  // 테마 적용
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
 
@@ -616,39 +616,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         console.error('[Theme] localStorage 저장 실패:', error)
       }
     }
-
-    // 시스템 테마일 때만 미디어 쿼리 리스너 등록
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-      const handleSystemThemeChange = () => {
-        // 시스템 설정이 변경되었을 때 재렌더링 트리거
-        // CSS는 이미 @media (prefers-color-scheme: dark) 로 처리됨
-        if (import.meta.env.DEV) {
-          console.log(`[Theme] 시스템 테마 변경 감지: ${mediaQuery.matches ? 'dark' : 'light'}`)
-        }
-      }
-
-      // 초기 로그
-      if (import.meta.env.DEV) {
-        console.log(`[Theme] 시스템 테마 모드 활성화 - 현재: ${mediaQuery.matches ? 'dark' : 'light'}`)
-      }
-
-      mediaQuery.addEventListener('change', handleSystemThemeChange)
-
-      return () => {
-        mediaQuery.removeEventListener('change', handleSystemThemeChange)
-      }
-    }
-
-    // 시스템 테마가 아닐 때는 정리 함수 불필요
-    return () => {}
   }, [theme])
 
   const toggleTheme = () => {
     // iOS 16+ 미디움 햅틱 피드백 - 인터페이스 변경
     haptic.triggerHaptic('medium')
-    setTheme(prev => prev === 'light' ? 'dark' : prev === 'dark' ? 'system' : 'light')
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
   }
 
   // 브라우저 리사이즈 상태 관리
