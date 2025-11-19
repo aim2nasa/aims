@@ -1029,27 +1029,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 />
               </div>
 
-              {/* 정렬 */}
-              <div className="sort-controls">
-                <select
-                  value={`${sortBy}-${sortDirection}`}
-                  onChange={(e) => {
-                    const [newSortBy, newSortDirection] = e.target.value.split('-') as [typeof sortBy, typeof sortDirection]
-                    setSortBy(newSortBy)
-                    setSortDirection(newSortDirection)
-                  }}
-                  className="sort-select"
-                  aria-label="정렬 방식"
-                >
-                  <option value="name-asc">이름 ↑</option>
-                  <option value="name-desc">이름 ↓</option>
-                  <option value="createdAt-desc">최신순</option>
-                  <option value="createdAt-asc">오래된순</option>
-                  <option value="size-desc">크기 ↓</option>
-                  <option value="size-asc">크기 ↑</option>
-                </select>
-              </div>
-
               {/* 뷰 모드 전환 */}
               <div className="view-mode-toggle">
                 <Tooltip content="리스트 뷰">

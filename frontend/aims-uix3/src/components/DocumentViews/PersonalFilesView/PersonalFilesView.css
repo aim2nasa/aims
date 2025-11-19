@@ -399,35 +399,6 @@
   color: var(--color-button-primary-text);
 }
 
-/* 정렬 컨트롤 */
-.sort-controls {
-  display: flex;
-  align-items: center;
-}
-
-.sort-select {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-1) var(--spacing-3);
-  font-size: var(--font-size-caption-1);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  outline: none;
-  transition: all var(--duration-fast) var(--easing-ease-out);
-  min-width: 100px;
-}
-
-.sort-select:hover {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-button-primary-bg);
-}
-
-.sort-select:focus {
-  border-color: var(--color-button-primary-bg);
-  box-shadow: 0 0 0 2px var(--color-primary-alpha-20);
-}
-
 /* 뷰 모드 토글 */
 .view-mode-toggle {
   display: flex;
