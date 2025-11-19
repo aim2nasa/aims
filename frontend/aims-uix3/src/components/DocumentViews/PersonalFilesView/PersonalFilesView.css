@@ -331,14 +331,14 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  background: var(--color-bg-secondary);
+  background: transparent;
   border-radius: var(--radius-md);
   padding: var(--spacing-2) var(--spacing-3);
   transition: background var(--duration-fast) var(--easing-ease-out);
 }
 
 .search-box:focus-within {
-  background: var(--color-bg-tertiary);
+  background: transparent;
 }
 
 .search-icon {
