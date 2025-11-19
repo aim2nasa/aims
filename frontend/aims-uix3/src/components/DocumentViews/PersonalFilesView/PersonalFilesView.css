@@ -709,7 +709,7 @@ html[data-theme="dark"] .search-input {
   min-width: 180px;
 }
 
-.context-menu-item {
+.context-menu button.context-menu-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
@@ -721,21 +721,29 @@ html[data-theme="dark"] .search-input {
   cursor: pointer;
   font-size: var(--font-size-footnote);
   color: var(--color-text-primary);
-  transition: background var(--duration-fast) var(--easing-ease-out);
+  transition: all var(--duration-fast) var(--easing-ease-out);
   text-align: left;
 }
 
-.context-menu-item:hover {
+.context-menu button.context-menu-item:hover {
   background: var(--color-bg-tertiary);
 }
 
-.context-menu-item--danger {
-  color: var(--color-destructive);
+.context-menu button.context-menu-item--danger {
+  color: var(--color-button-destructive-bg);
 }
 
-.context-menu-item--danger:hover {
-  background: var(--color-destructive);
-  color: var(--color-bg-primary);
+.context-menu button.context-menu-item--danger:hover {
+  background: var(--color-button-destructive-bg);
+  color: var(--color-button-destructive-text);
+}
+
+.context-menu button.context-menu-item--danger:hover .sf-symbol {
+  color: var(--color-button-destructive-text);
+}
+
+.context-menu button.context-menu-item--danger:hover .sf-symbol--trash .sf-symbol__shape::before {
+  opacity: 1;
 }
 
 /* 반응형 */

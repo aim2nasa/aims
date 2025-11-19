@@ -2070,6 +2070,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       {showContextMenu && selectedItem && createPortal(
         <div
           className="context-menu"
+          data-theme={document.documentElement.getAttribute('data-theme') || 'light'}
           style={{
             position: 'fixed',
             left: `${contextMenuPosition.x}px`,
