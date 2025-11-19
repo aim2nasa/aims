@@ -862,7 +862,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           {/* 폴더 트리 - Google Drive 스타일 */}
           <div className="sidebar-section">
             <div className="folder-tree">
-              {/* 내 드라이브 (루트) */}
+              {/* 내 파일 (루트) */}
               <div className="folder-tree-item">
                 <div
                   className={`folder-tree-row ${currentFolderId === null ? 'active' : ''} ${dragOverFolderId === null && draggingItemId ? 'drag-over' : ''}`}
@@ -878,7 +878,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       e.stopPropagation()
                       setMyDriveExpanded(!myDriveExpanded)
                     }}
-                    aria-label={myDriveExpanded ? '내 드라이브 닫기' : '내 드라이브 열기'}
+                    aria-label={myDriveExpanded ? '내 파일 닫기' : '내 파일 열기'}
                   >
                     {myDriveExpanded ? (
                       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -900,7 +900,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                     <span className="folder-icon">
                       {currentFolderId === null ? '📂' : '📁'}
                     </span>
-                    <span className="folder-name">내 드라이브</span>
+                    <span className="folder-name">내 파일</span>
                   </button>
                 </div>
 
