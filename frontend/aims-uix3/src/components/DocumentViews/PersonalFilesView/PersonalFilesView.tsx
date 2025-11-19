@@ -920,40 +920,72 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const handleMove = useCallback(async (targetFolderId: string | null) => {
     if (!selectedItem) return
 
+    console.log('🚚 [Move] 시작:', {
+      item: selectedItem.name,
+      itemId: selectedItem._id,
+      from: currentFolderId,
+      to: targetFolderId
+    })
+
     try {
       // 문서 라이브러리 파일인지 폴더 시스템 항목인지 확인
       if (selectedItem.isLibraryDocument) {
         // 문서 라이브러리 파일 이동
         await personalFilesService.moveDocument(selectedItem._id, targetFolderId)
+        console.log('✅ [Move] 문서 라이브러리 파일 이동 완료')
       } else {
         // 폴더 시스템 항목 이동
         await personalFilesService.moveItem(selectedItem._id, targetFolderId)
+        console.log('✅ [Move] 폴더 시스템 항목 이동 완료')
       }
+
+      // 🍎 캐시 무효화 (이동 관련 모든 폴더)
+      folderItemCache.current.delete(selectedItem._id) // 이동한 항목 자체
+      if (currentFolderId) {
+        folderItemCache.current.delete(currentFolderId) // 원본 폴더 (항목이 사라짐)
+      }
+      if (targetFolderId) {
+        folderItemCache.current.delete(targetFolderId) // 목적지 폴더 (항목이 추가됨)
+      }
+      console.log('✅ [Move] 캐시 무효화 완료')
 
       // 즉시 UI 업데이트 (Optimistic Update)
       // 1. 우측 목록(currentFolderItems)에서 제거
       setCurrentFolderItems(prev => prev.filter(item => item._id !== selectedItem._id))
 
-      // 2. 좌측 트리(items)에서도 제거 (폴더든 파일이든)
+      // 2. 좌측 트리 전체 다시 로드 + 목적지 폴더 자동 확장
       if (selectedItem.type === 'folder') {
-        setItems(prev => prev.filter(item => item._id !== selectedItem._id))
+        // 🍎 핵심: 루트부터 다시 로드하여 전체 폴더 구조 업데이트
+        await loadFolderContents(null) // 루트 로드 → items 업데이트
+        await loadAllFolders() // 모달용 폴더 목록도 업데이트
+
+        // 목적지 폴더를 자동으로 확장 (이동한 폴더를 즉시 볼 수 있도록)
+        if (targetFolderId) {
+          setExpandedFolderIds(prev => new Set([...prev, targetFolderId]))
+          console.log('✅ [Move] 목적지 폴더 자동 확장:', targetFolderId)
+        }
+
+        console.log('✅ [Move] 좌측 트리 전체 새로고침 완료')
       }
 
       // 3. 백엔드와 동기화 (정확한 상태 보장)
       await loadFolderContents(currentFolderId)
+      console.log('✅ [Move] 원본 폴더 새로고침 완료')
 
-      // 목적지 폴더가 확장되어 있으면 해당 폴더도 새로고침
-      if (targetFolderId && expandedFolderIds.has(targetFolderId)) {
+      // 4. 목적지 폴더의 내용도 새로고침 (확장 여부와 무관하게 항상)
+      if (targetFolderId) {
         await loadFolderContents(targetFolderId)
+        console.log('✅ [Move] 목적지 폴더 새로고침 완료')
       }
 
       setShowMoveModal(false)
       setSelectedItem(null)
+      console.log('🏁 [Move] 완료')
     } catch (err) {
-      console.error('이동 오류:', err)
+      console.error('❌ [Move] 오류:', err)
       setError(err instanceof Error ? err.message : '이동에 실패했습니다')
     }
-  }, [selectedItem, currentFolderId, loadFolderContents, expandedFolderIds])
+  }, [selectedItem, currentFolderId, loadFolderContents, expandedFolderIds, loadAllFolders])
 
 
   // 컨텍스트 메뉴에서 새 폴더 생성
