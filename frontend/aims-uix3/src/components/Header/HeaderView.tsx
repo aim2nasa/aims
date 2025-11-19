@@ -194,14 +194,8 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
           </Tooltip>
         )}
 
-        {/* 테마 토글 */}
-        <div
-          className="header-theme-container"
-          style={{
-            opacity: isDevMode ? 1 : (state.showControls ? 1 : 0), // 개발자 모드에서는 항상 표시
-            transform: isDevMode ? 'translateY(0)' : (state.showControls ? 'translateY(0)' : 'translateY(-8px)')
-          }}
-        >
+        {/* 테마 토글 - 항상 표시 */}
+        <div className="header-theme-container">
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
         </div>
 

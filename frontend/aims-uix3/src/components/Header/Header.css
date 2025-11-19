@@ -267,9 +267,9 @@
     opacity var(--duration-fast) var(--easing-ease-out),
     transform var(--duration-fast) var(--easing-ease-out);
 
-  /* 기본 상태: 투명 */
-  opacity: 0;
-  transform: translateY(-8px);
+  /* 기본 상태: 항상 표시 */
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* === Progressive Disclosure 인디케이터 === */
