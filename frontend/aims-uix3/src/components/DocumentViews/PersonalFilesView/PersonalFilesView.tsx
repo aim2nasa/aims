@@ -1027,9 +1027,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <path className="pdf-icon-fold" d="M9 1v3h3" strokeWidth="0.8" fill="none"/>
                     </svg>
                     <span>이름</span>
-                    {sortBy === 'name' && (
+                    {sortBy === 'name' ? (
                       <span className="sort-indicator" aria-hidden="true">
                         {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
                       </span>
                     )}
                   </div>
@@ -1051,9 +1056,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <rect x="6" y="7" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                     </svg>
                     <span>크기</span>
-                    {sortBy === 'size' && (
+                    {sortBy === 'size' ? (
                       <span className="sort-indicator" aria-hidden="true">
                         {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
                       </span>
                     )}
                   </div>
@@ -1076,9 +1086,14 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       <path d="M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
                     <span>수정한 날짜</span>
-                    {sortBy === 'createdAt' && (
+                    {sortBy === 'createdAt' ? (
                       <span className="sort-indicator" aria-hidden="true">
                         {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
                       </span>
                     )}
                   </div>

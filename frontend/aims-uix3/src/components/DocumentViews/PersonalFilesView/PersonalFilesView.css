@@ -499,6 +499,13 @@
   letter-spacing: 0.05em;
 }
 
+/* 헤더 셀 flex 레이아웃 - 아이콘+텍스트+정렬 인디케이터 한 줄 정렬 */
+.files-list-header > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .file-list-row {
   display: grid;
   grid-template-columns: 1fr 120px 150px 80px;
@@ -798,20 +805,38 @@ html[data-theme="dark"] .files-list-header .sortable.sorted {
   opacity: 0.8;
 }
 
-.files-list-header .sort-indicator {
+/* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+.files-list-header .sort-indicator:not(.sort-indicator--both) {
   color: var(--color-ios-interactive-light);
   font-weight: 700;
   opacity: 1;
 }
 
-html[data-theme="dark"] .files-list-header .sort-indicator {
+html[data-theme="dark"] .files-list-header .sort-indicator:not(.sort-indicator--both) {
   color: var(--color-ios-interactive-dark);
+}
+
+/* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+.files-list-header .sort-indicator--both {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 0.6;
+  margin-left: 2px;
+  gap: 2px;
+}
+
+.files-list-header .sort-indicator--both .sort-arrow {
+  display: block;
+  font-size: var(--font-size-caption-2);
+  line-height: 0.6;
+  height: 6px;
 }
 
 /* 헤더 아이콘 */
 .files-list-header .header-icon-svg {
   flex-shrink: 0;
-  margin-right: 6px;
 }
 
 /* PDF icon fold stroke color (CSS 변수 사용 - CLAUDE.md 준수) */
