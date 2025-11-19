@@ -148,6 +148,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [_uploadingFiles, setUploadingFiles] = useState<UploadFile[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const breadcrumbRef = useRef<HTMLDivElement>(null)
+  const [breadcrumbWidth, setBreadcrumbWidth] = useState(0)
 
   // 현재 사용자 ID
   const userId = typeof window !== 'undefined'
@@ -349,6 +351,24 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       uploadService.cleanup()
     }
   }, [loadFolderContents, currentFolderId])
+
+  // Breadcrumb 너비 측정 (공간에 맞게 동적으로 표시 개수 조절)
+  useEffect(() => {
+    if (!breadcrumbRef.current) return
+
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width
+        setBreadcrumbWidth(width)
+      }
+    })
+
+    observer.observe(breadcrumbRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   // 폴더 확장/축소
   const toggleFolder = useCallback(async (folderId: string) => {
@@ -927,18 +947,75 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           {/* 툴바 */}
           <div className="files-toolbar">
             {/* 브레드크럼 */}
-            <div className="breadcrumb">
-              {breadcrumbs.map((crumb, index) => (
-                <React.Fragment key={crumb._id || 'root'}>
-                  {index > 0 && <span className="breadcrumb-separator">/</span>}
-                  <button
-                    className="breadcrumb-item"
-                    onClick={() => handleFolderClick(crumb._id)}
-                  >
-                    {crumb.name}
-                  </button>
-                </React.Fragment>
-              ))}
+            <div className="breadcrumb" ref={breadcrumbRef}>
+              {(() => {
+                // 빈 배열이면 아무것도 표시하지 않음
+                if (breadcrumbs.length === 0) {
+                  return null
+                }
+
+                // 표시 가능한 breadcrumb 개수 계산
+                // 평균 breadcrumb 너비: 100px (텍스트 + 여백 + 구분자)
+                // 최소 3개는 항상 표시 (첫 번째 + .. + 마지막)
+                const avgItemWidth = 100
+                const maxVisibleCount = breadcrumbWidth > 0
+                  ? Math.max(3, Math.floor(breadcrumbWidth / avgItemWidth))
+                  : 5 // 기본값 (너비 측정 전)
+
+                // 모든 경로를 표시할 수 있으면 모두 표시
+                if (breadcrumbs.length <= maxVisibleCount) {
+                  return breadcrumbs.map((crumb, index) => (
+                    <React.Fragment key={crumb._id || 'root'}>
+                      {index > 0 && <span className="breadcrumb-separator"> &gt; </span>}
+                      <button
+                        className="breadcrumb-item"
+                        onClick={() => handleFolderClick(crumb._id)}
+                      >
+                        {crumb.name}
+                      </button>
+                    </React.Fragment>
+                  ))
+                }
+
+                // 공간이 부족하면 축약: 첫 번째 > .. > 마지막 N개
+                // 마지막 개수 = maxVisibleCount - 2 (첫 번째와 ellipsis 제외)
+                const lastCount = Math.max(1, maxVisibleCount - 2)
+                const firstCrumb = breadcrumbs[0]
+
+                // TypeScript 타입 가드
+                if (!firstCrumb) return null
+
+                return (
+                  <>
+                    {/* 첫 번째 (루트) */}
+                    <button
+                      className="breadcrumb-item"
+                      onClick={() => handleFolderClick(firstCrumb._id)}
+                    >
+                      {firstCrumb.name}
+                    </button>
+
+                    {/* 구분자 */}
+                    <span className="breadcrumb-separator"> &gt; </span>
+
+                    {/* 생략 표시 (..) */}
+                    <span className="breadcrumb-ellipsis">..</span>
+
+                    {/* 마지막 N개 */}
+                    {breadcrumbs.slice(-lastCount).map((crumb, index) => (
+                      <React.Fragment key={crumb._id || `end-${index}`}>
+                        <span className="breadcrumb-separator"> &gt; </span>
+                        <button
+                          className="breadcrumb-item"
+                          onClick={() => handleFolderClick(crumb._id)}
+                        >
+                          {crumb.name}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  </>
+                )
+              })()}
             </div>
 
             {/* 검색 및 뷰 모드 */}

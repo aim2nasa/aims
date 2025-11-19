@@ -260,6 +260,13 @@
   color: var(--color-text-tertiary);
 }
 
+.breadcrumb-ellipsis {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-1) var(--spacing-2);
+  user-select: none;
+}
+
 /* 툴바 액션 */
 .toolbar-actions {
   display: flex;
