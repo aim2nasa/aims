@@ -34,6 +34,7 @@ import './PersonalFilesView.css'
 interface PersonalFilesViewProps {
   visible: boolean
   onClose: () => void
+  onDocumentClick?: (documentId: string) => void
 }
 
 // 파일 크기 포맷팅
@@ -131,6 +132,7 @@ const getOcrConfidence = (document: Document): number | null => {
 export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   visible,
   onClose,
+  onDocumentClick,
 }) => {
   const [items, setItems] = useState<PersonalFileItem[]>([]) // 좌측 트리용
   const [currentFolderItems, setCurrentFolderItems] = useState<PersonalFileItem[]>([]) // 우측 목록용
@@ -1222,7 +1224,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div
                     key={item._id}
                     className={`file-list-row ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
-                    onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
+                    onClick={() => {
+                      if (item.type === 'folder') {
+                        handleFolderClick(item._id)
+                      } else if (item.type === 'file' && item.document && onDocumentClick) {
+                        onDocumentClick(item.document._id)
+                      }
+                    }}
                     onContextMenu={(e) => handleContextMenu(e, item)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, item)}
@@ -1426,7 +1434,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   <div
                     key={item._id}
                     className={`file-grid-item ${draggingItemId === item._id ? 'dragging' : ''} ${item.type === 'folder' && dragOverFolderId === item._id ? 'drag-over' : ''}`}
-                    onClick={() => item.type === 'folder' && handleFolderClick(item._id)}
+                    onClick={() => {
+                      if (item.type === 'folder') {
+                        handleFolderClick(item._id)
+                      } else if (item.type === 'file' && item.document && onDocumentClick) {
+                        onDocumentClick(item.document._id)
+                      }
+                    }}
                     onContextMenu={(e) => handleContextMenu(e, item)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, item)}

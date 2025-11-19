@@ -1180,6 +1180,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <PersonalFilesView
               visible={activeDocumentView === 'documents-my-files'}
               onClose={closeDocumentView}
+              onDocumentClick={handleDocumentClick}
             />
           </Suspense>
 
