@@ -19,6 +19,16 @@ import { DocumentUtils } from '@/entities/document'
 import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
+import {
+  EyeIcon,
+  SummaryIcon,
+  DocumentIcon,
+  LinkIcon
+} from '../components/DocumentActionIcons'
+import DocumentDetailModal from '../DocumentStatusView/components/DocumentDetailModal'
+import DocumentSummaryModal from '../DocumentStatusView/components/DocumentSummaryModal'
+import DocumentFullTextModal from '../DocumentStatusView/components/DocumentFullTextModal'
+import DocumentLinkModal from '../DocumentStatusView/components/DocumentLinkModal'
 import './PersonalFilesView.css'
 
 interface PersonalFilesViewProps {
@@ -171,6 +181,13 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 드래그 앤 드롭 상태
   const [draggingItemId, setDraggingItemId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
+
+  // 액션 모달 상태
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
+  const [isSummaryModalVisible, setIsSummaryModalVisible] = useState(false)
+  const [isFullTextModalVisible, setIsFullTextModalVisible] = useState(false)
+  const [isLinkModalVisible, setIsLinkModalVisible] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
   // 폴더 내용 로드
   const loadFolderContents = useCallback(async (folderId: string | null) => {
@@ -626,6 +643,52 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const handleDragEnd = useCallback(() => {
     setDraggingItemId(null)
     setDragOverFolderId(null)
+  }, [])
+
+  // 액션 버튼 핸들러
+  const handleDetailClick = useCallback((document: Document, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(document)
+    setIsDetailModalVisible(true)
+  }, [])
+
+  const handleSummaryClick = useCallback((document: Document, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(document)
+    setIsSummaryModalVisible(true)
+  }, [])
+
+  const handleFullTextClick = useCallback((document: Document, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(document)
+    setIsFullTextModalVisible(true)
+  }, [])
+
+  const handleLinkClick = useCallback((document: Document, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedDocument(document)
+    setIsLinkModalVisible(true)
+  }, [])
+
+  // 모달 닫기 핸들러
+  const handleCloseDetailModal = useCallback(() => {
+    setIsDetailModalVisible(false)
+    setSelectedDocument(null)
+  }, [])
+
+  const handleCloseSummaryModal = useCallback(() => {
+    setIsSummaryModalVisible(false)
+    setSelectedDocument(null)
+  }, [])
+
+  const handleCloseFullTextModal = useCallback(() => {
+    setIsFullTextModalVisible(false)
+    setSelectedDocument(null)
+  }, [])
+
+  const handleCloseLinkModal = useCallback(() => {
+    setIsLinkModalVisible(false)
+    setSelectedDocument(null)
   }, [])
 
   // 리사이저 핸들러
@@ -1273,21 +1336,49 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       {formatDate(item.updatedAt)}
                     </div>
                     <div className="row-actions">
-                      {item.type === 'file' && (
-                        <Tooltip content="다운로드">
-                          <button
-                            className="download-button"
-                            onClick={(e) => handleFileDownload(item._id, item.name, e)}
-                            aria-label="다운로드"
-                          >
-                            <SFSymbol
-                              name="arrow.down.circle"
-                              size={SFSymbolSize.FOOTNOTE}
-                              weight={SFSymbolWeight.REGULAR}
-                              decorative={true}
-                            />
-                          </button>
-                        </Tooltip>
+                      {item.type === 'file' && item.document && (
+                        <>
+                          <Tooltip content="상세 보기">
+                            <button
+                              type="button"
+                              className="action-btn action-btn--detail"
+                              onClick={(e) => handleDetailClick(item.document!, e)}
+                              aria-label="상세 보기"
+                            >
+                              <EyeIcon />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="요약 보기">
+                            <button
+                              type="button"
+                              className="action-btn action-btn--summary"
+                              onClick={(e) => handleSummaryClick(item.document!, e)}
+                              aria-label="요약 보기"
+                            >
+                              <SummaryIcon />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="전체 텍스트 보기">
+                            <button
+                              type="button"
+                              className="action-btn action-btn--full"
+                              onClick={(e) => handleFullTextClick(item.document!, e)}
+                              aria-label="전체 텍스트 보기"
+                            >
+                              <DocumentIcon />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="고객에게 연결">
+                            <button
+                              type="button"
+                              className="action-btn action-btn--link"
+                              onClick={(e) => handleLinkClick(item.document!, e)}
+                              aria-label="고객에게 연결"
+                            >
+                              <LinkIcon />
+                            </button>
+                          </Tooltip>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1527,6 +1618,34 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           </div>
         </div>
       </Modal>
+
+      {/* 액션 모달들 */}
+      <DocumentDetailModal
+        visible={isDetailModalVisible}
+        onClose={handleCloseDetailModal}
+        document={selectedDocument}
+      />
+      <DocumentSummaryModal
+        visible={isSummaryModalVisible}
+        onClose={handleCloseSummaryModal}
+        document={selectedDocument}
+      />
+      <DocumentFullTextModal
+        visible={isFullTextModalVisible}
+        onClose={handleCloseFullTextModal}
+        document={selectedDocument}
+      />
+      <DocumentLinkModal
+        visible={isLinkModalVisible}
+        onClose={handleCloseLinkModal}
+        document={selectedDocument}
+        onFetchCustomerDocuments={async (customerId: string) => ({
+          customer_id: customerId,
+          documents: [],
+          total: 0
+        })}
+        onLink={async () => undefined}
+      />
     </CenterPaneView>
   )
 }

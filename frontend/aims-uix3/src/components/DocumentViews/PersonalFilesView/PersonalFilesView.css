@@ -1292,3 +1292,94 @@ html[data-theme="dark"] .file-list-row:hover .document-bin-badge,
 html[data-theme="dark"] .file-grid-item:hover .document-bin-badge {
   box-shadow: 0 0 8px var(--color-badge-bin-glow-dark);
 }
+
+/* ===== 액션 버튼 스타일 (DocumentStatusList와 동일) ===== */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-ios-text-secondary-light);
+  transition: all var(--duration-fast) var(--easing-ease-out);
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+html[data-theme="dark"] .action-btn {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.action-btn--detail { color: var(--color-primary-600); }
+html[data-theme="dark"] .action-btn--detail { color: var(--color-primary-300); }
+
+.action-btn--summary { color: var(--color-ios-orange); }
+html[data-theme="dark"] .action-btn--summary { color: var(--color-ios-orange); }
+
+.action-btn--full { color: var(--color-primary-700); }
+html[data-theme="dark"] .action-btn--full { color: var(--color-primary-200); }
+
+.action-btn--link { color: var(--color-success-600); }
+html[data-theme="dark"] .action-btn--link { color: var(--color-success-300); }
+
+.action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.action-btn--detail:hover { color: var(--color-primary-700); }
+html[data-theme="dark"] .action-btn--detail:hover { color: var(--color-primary-200); }
+
+.action-btn--summary:hover { color: var(--color-ios-orange-strong); }
+html[data-theme="dark"] .action-btn--summary:hover { color: var(--color-ios-orange-light); }
+
+.action-btn--full:hover { color: var(--color-primary-800); }
+html[data-theme="dark"] .action-btn--full:hover { color: var(--color-primary-100); }
+
+.action-btn--link:hover { color: var(--color-success-700); }
+html[data-theme="dark"] .action-btn--link:hover { color: var(--color-success-200); }
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] .action-btn:focus-visible {
+  outline-color: var(--color-primary-300);
+}
+
+.action-btn[data-disabled="true"] {
+  opacity: 0.25;
+  cursor: not-allowed;
+  transform: none;
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .action-btn[data-disabled="true"] {
+  color: var(--color-ios-text-tertiary-dark);
+  opacity: 0.2;
+}
+
+.action-btn[data-disabled="true"]:hover {
+  transform: none;
+}
+
+/* 액션 버튼 컨테이너 레이아웃 */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
