@@ -1,0 +1,173 @@
+/**
+ * MoveFolderModal Styles
+ *
+ * iOS/macOS 스타일 폴더 이동 모달
+ */
+
+.move-folder-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.move-folder-info {
+  padding: 12px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+}
+
+.move-folder-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* 폴더 트리 컨테이너 */
+.move-folder-tree-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--color-bg-primary);
+}
+
+/* 폴더 트리 아이템 */
+.move-folder-tree-item {
+  margin: 2px 0;
+}
+
+.move-folder-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.move-folder-tree-row:hover:not(.disabled) {
+  background: var(--color-bg-hover);
+}
+
+.move-folder-tree-row.selected {
+  background: var(--color-accent-blue);
+  color: var(--color-neutral-0);
+  font-weight: 600;
+  box-shadow: 0 2px 8px var(--color-accent-blue-alpha-50);
+}
+
+.move-folder-tree-row.selected .move-folder-icon {
+  color: var(--color-neutral-0);
+}
+
+.move-folder-tree-row.selected .move-folder-check-icon {
+  color: var(--color-neutral-0);
+}
+
+.move-folder-tree-row.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.move-folder-tree-row.root {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* 확장/축소 버튼 */
+.move-folder-expand-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.move-folder-expand-button:hover {
+  color: var(--color-text-primary);
+}
+
+.move-folder-expand-spacer {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* 폴더 아이콘 */
+.move-folder-icon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.move-folder-tree-row.disabled .move-folder-icon {
+  color: var(--color-text-tertiary);
+}
+
+/* 폴더 이름 */
+.move-folder-name {
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 선택 체크마크 */
+.move-folder-check-icon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+  width: 16px;
+  height: 16px;
+}
+
+/* 비활성화 뱃지 */
+.move-folder-disabled-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* 하위 폴더 */
+.move-folder-tree-children {
+  margin-left: 0;
+}
+
+/* 액션 버튼 */
+.move-folder-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 스크롤바 스타일 */
+.move-folder-tree-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.move-folder-tree-container::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+}
+
+.move-folder-tree-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.move-folder-tree-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}

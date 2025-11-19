@@ -12,6 +12,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import AppleConfirmModal from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
+import MoveFolderModal from './MoveFolderModal'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import { Tooltip, Modal, Button } from '@/shared/ui'
@@ -183,6 +184,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [renamingItem, setRenamingItem] = useState(false)
+
+  // 폴더 이동 모달 상태
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [allFoldersForMove, setAllFoldersForMove] = useState<PersonalFileItem[]>([])
+
+  // 디버그: showMoveModal 상태 변경 감지
+  useEffect(() => {
+    console.log("🟡 showMoveModal 변경:", showMoveModal)
+  }, [showMoveModal])
 
 
   // AppleConfirmModal 컨트롤러
@@ -572,6 +582,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       return
     }
 
+
     try {
       await personalFilesService.deleteItem(selectedItem._id)
       // 좌측 트리에서도 삭제된 폴더 제거
@@ -583,6 +594,90 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setError(err instanceof Error ? err.message : '삭제에 실패했습니다')
     }
   }, [selectedItem, currentFolderId, loadFolderContents, handleCloseContextMenu, confirmModal])
+
+  // 전체 폴더 목록 로드 (이동 모달용) - 재귀적으로 모든 폴더 수집
+  const loadAllFolders = useCallback(async () => {
+    try {
+      const allFolders: PersonalFileItem[] = []
+
+      // 재귀적으로 폴더 수집
+      const collectFolders = async (parentId: string | null) => {
+        const response = await personalFilesService.getFolderContents(parentId)
+        const folders = response.items.filter(item => item.type === 'folder')
+
+        for (const folder of folders) {
+          allFolders.push(folder)
+          // 하위 폴더도 재귀적으로 수집
+          await collectFolders(folder._id)
+        }
+      }
+
+      await collectFolders(null) // 루트부터 시작
+      console.log('📂 전체 폴더 로드:', allFolders.length, '개')
+      setAllFoldersForMove(allFolders)
+      return allFolders
+    } catch (err) {
+      console.error('전체 폴더 로드 오류:', err)
+      return []
+    }
+  }, [])
+
+  // 이동 모달 열기
+  const handleMoveClick = useCallback(async () => {
+    console.log('🔵 handleMoveClick 호출됨', { selectedItem })
+    if (!selectedItem) {
+      console.log('❌ selectedItem이 없음')
+      return
+    }
+    console.log('✅ 모달 열기:', selectedItem.name)
+    // 컨텍스트 메뉴만 닫고 selectedItem은 유지 (모달에서 사용)
+    setShowContextMenu(false)
+
+    // 전체 폴더 목록 로드
+    await loadAllFolders()
+
+    setShowMoveModal(true)
+  }, [selectedItem, loadAllFolders])
+
+  // 폴더/파일 이동 실행
+  const handleMove = useCallback(async (targetFolderId: string | null) => {
+    if (!selectedItem) return
+
+    try {
+      // 문서 라이브러리 파일인지 폴더 시스템 항목인지 확인
+      if (selectedItem.isLibraryDocument) {
+        // 문서 라이브러리 파일 이동
+        await personalFilesService.moveDocument(selectedItem._id, targetFolderId)
+      } else {
+        // 폴더 시스템 항목 이동
+        await personalFilesService.moveItem(selectedItem._id, targetFolderId)
+      }
+
+      // 즉시 UI 업데이트 (Optimistic Update)
+      // 1. 우측 목록(currentFolderItems)에서 제거
+      setCurrentFolderItems(prev => prev.filter(item => item._id !== selectedItem._id))
+
+      // 2. 좌측 트리(items)에서도 제거 (폴더든 파일이든)
+      if (selectedItem.type === 'folder') {
+        setItems(prev => prev.filter(item => item._id !== selectedItem._id))
+      }
+
+      // 3. 백엔드와 동기화 (정확한 상태 보장)
+      await loadFolderContents(currentFolderId)
+
+      // 목적지 폴더가 확장되어 있으면 해당 폴더도 새로고침
+      if (targetFolderId && expandedFolderIds.has(targetFolderId)) {
+        await loadFolderContents(targetFolderId)
+      }
+
+      setShowMoveModal(false)
+      setSelectedItem(null)
+    } catch (err) {
+      console.error('이동 오류:', err)
+      setError(err instanceof Error ? err.message : '이동에 실패했습니다')
+    }
+  }, [selectedItem, currentFolderId, loadFolderContents, expandedFolderIds])
+
 
   // 컨텍스트 메뉴에서 새 폴더 생성
   const handleNewFolderFromContext = useCallback(() => {
@@ -1676,6 +1771,16 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             />
             <span>이름 변경</span>
           </button>
+          <button className="context-menu-item" onClick={handleMoveClick}>
+            <SFSymbol
+              name="folder"
+              size={SFSymbolSize.CAPTION_1}
+              weight={SFSymbolWeight.MEDIUM}
+              decorative={true}
+            />
+            <span>이동...</span>
+          </button>
+
 
           {selectedItem.type === 'folder' && (
             <button className="context-menu-item" onClick={handleNewFolderFromContext}>
@@ -1798,6 +1903,15 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     <AppleConfirmModal
       state={confirmModal.state}
       actions={confirmModal.actions}
+    />
+
+    {/* Move Folder Modal */}
+    <MoveFolderModal
+      visible={showMoveModal}
+      onClose={() => { setShowMoveModal(false); setSelectedItem(null); }}
+      onMove={handleMove}
+      currentItem={selectedItem}
+      allItems={allFoldersForMove}
     />
     </>
   )
