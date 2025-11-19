@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import AppleConfirmModal from '../DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { useAppleConfirmController } from '@/controllers/useAppleConfirmController'
 import MoveFolderModal from './MoveFolderModal'
@@ -1750,8 +1751,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         </div>
       </Modal>
 
-      {/* 컨텍스트 메뉴 */}
-      {showContextMenu && selectedItem && (
+      {/* 컨텍스트 메뉴 - Portal로 body에 렌더링하여 부모 transform 영향 회피 */}
+      {showContextMenu && selectedItem && createPortal(
         <div
           className="context-menu"
           style={{
@@ -1803,7 +1804,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             />
             <span>삭제</span>
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 이름 변경 모달 */}
