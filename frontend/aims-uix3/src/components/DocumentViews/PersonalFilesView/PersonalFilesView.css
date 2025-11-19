@@ -726,7 +726,7 @@ html[data-theme="dark"] .search-input {
 }
 
 .context-menu button.context-menu-item:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-active);
 }
 
 .context-menu button.context-menu-item--danger {
