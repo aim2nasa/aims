@@ -66,57 +66,65 @@ html[data-theme="dark"] .library-unified-header {
   flex-shrink: 0;
 }
 
-.search-input-wrapper {
+.document-library-view .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   width: 300px;  /* 🔧 축소: 350px → 300px */
   max-width: 300px;
-  background-color: var(--color-ios-bg-secondary-light);
+  background-color: transparent;
   border-radius: 10px;
   padding: 6px 8px;
   transition: background-color 0.2s ease-out;
   flex-shrink: 1;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
-html[data-theme="dark"] .search-input-wrapper {
-  background-color: var(--color-ios-bg-secondary-dark);
+html[data-theme="dark"] .document-library-view .search-input-wrapper {
+  background-color: transparent;
 }
 
-.search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-light);
+.document-library-view .search-input-wrapper:focus-within {
+  background-color: transparent;
 }
 
-html[data-theme="dark"] .search-input-wrapper:focus-within {
-  background-color: var(--color-ios-bg-tertiary-dark);
+html[data-theme="dark"] .document-library-view .search-input-wrapper:focus-within {
+  background-color: transparent;
 }
 
-.search-icon {
-  margin-right: 4px;  /* 🔧 축소: 8px → 4px */
+.document-library-view .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--color-ios-text-quaternary-light);
-  flex-shrink: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
-html[data-theme="dark"] .search-icon {
+html[data-theme="dark"] .document-library-view .search-icon {
   color: var(--color-ios-text-quaternary-dark);
 }
 
-.search-input {
+.document-library-view .search-input {
   flex: 1;
-  border: none;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
   background: transparent;
   /* font-size: var(--font-size-footnote); (13px - FONT_RULES.md ) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-weight: 400;
   color: var(--color-ios-text-primary-light);
   outline: none;
-  padding: 4px 0;
+  padding: 4px 8px 4px 26px;
+  transition: border-color 0.2s ease-out;
 }
 
-html[data-theme="dark"] .search-input {
+html[data-theme="dark"] .document-library-view .search-input {
   color: var(--color-ios-text-primary-dark);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .search-input::placeholder {
