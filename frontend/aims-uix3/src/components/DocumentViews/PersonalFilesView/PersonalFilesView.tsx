@@ -631,6 +631,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     loadFolderContents(folderId)
   }, [loadFolderContents])
 
+  // 상위 폴더로 이동
+  const handleGoUpFolder = useCallback(() => {
+    if (!currentFolderId || breadcrumbs.length < 2) return
+
+    // breadcrumbs에서 현재 폴더의 부모 찾기
+    const parentCrumb = breadcrumbs[breadcrumbs.length - 2]
+    if (parentCrumb) {
+      handleFolderClick(parentCrumb._id)
+    }
+  }, [currentFolderId, breadcrumbs, handleFolderClick])
+
   // 파일 업로드 버튼 클릭
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click()
@@ -1366,6 +1377,26 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         <div className="files-main">
           {/* 툴바 */}
           <div className="files-toolbar">
+            {/* 상위 폴더 버튼 */}
+            <Tooltip content="상위 폴더">
+              <button
+                className="up-folder-button"
+                onClick={handleGoUpFolder}
+                disabled={!currentFolderId}
+                aria-label="상위 폴더"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M8 12V4M8 4L4 8M8 4L12 8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </Tooltip>
+
             {/* 브레드크럼 */}
             <div className="breadcrumb" ref={breadcrumbRef}>
               {(() => {
