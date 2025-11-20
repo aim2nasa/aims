@@ -993,8 +993,19 @@ app.get('/webhook/get-status/:document_id', async (req, res) => {
  */
 app.get('/api/documents/statistics', async (req, res) => {
   try {
-    const documents = await db.collection(COLLECTION_NAME).find({}).toArray();
-    
+    // userId 추출 (헤더 또는 쿼리)
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // 사용자별 필터링 (ownerId 기준)
+    const filter = { ownerId: userId };
+    const documents = await db.collection(COLLECTION_NAME).find(filter).toArray();
+
     const stats = {
       total: documents.length,
       completed: 0,

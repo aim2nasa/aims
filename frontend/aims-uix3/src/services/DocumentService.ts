@@ -537,7 +537,19 @@ export class DocumentService {
    * 문서 처리 상태별 통계를 반환
    */
   static async getDocumentStatistics(): Promise<DocumentStatistics> {
-    const response = await api.get<{ success: boolean; data: DocumentStatistics }>(ENDPOINTS.DOCUMENT_STATISTICS);
+    // 현재 사용자 ID 가져오기
+    const userId = typeof window !== 'undefined'
+      ? localStorage.getItem('aims-current-user-id') || 'tester'
+      : 'tester';
+
+    const response = await api.get<{ success: boolean; data: DocumentStatistics }>(
+      ENDPOINTS.DOCUMENT_STATISTICS,
+      {
+        headers: {
+          'x-user-id': userId
+        }
+      }
+    );
 
     // 응답 구조 검증
     if (!response || !response.data || typeof response.data !== 'object') {
