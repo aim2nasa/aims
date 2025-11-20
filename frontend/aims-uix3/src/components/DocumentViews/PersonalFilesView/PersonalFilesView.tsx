@@ -1065,11 +1065,23 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
 
     try {
-      // 드래그된 항목 찾기
-      const draggedItem = currentFolderItems.find(item => item._id === itemId)
+      // 드래그된 항목 찾기 (전체 items 배열에서 검색)
+      const draggedItem = items.find(item => item._id === itemId)
 
       if (!draggedItem) {
         throw new Error('이동할 항목을 찾을 수 없습니다')
+      }
+
+      // 폴더를 자신의 하위 폴더로 이동하는 것 방지 (순환 참조)
+      if (draggedItem.type === 'folder' && targetFolderId) {
+        let currentParent: string | null = targetFolderId
+        while (currentParent) {
+          if (currentParent === draggedItem._id) {
+            throw new Error('폴더를 자신의 하위 폴더로 이동할 수 없습니다')
+          }
+          const parentFolder = items.find(item => item._id === currentParent)
+          currentParent = parentFolder?.parentId || null
+        }
       }
 
       // 문서 라이브러리 파일인지 폴더 시스템 항목인지 확인
@@ -1083,6 +1095,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         await personalFilesService.moveItem(itemId, targetFolderId)
       }
 
+      // 폴더 이동이면 전체 트리 업데이트, 파일 이동이면 현재 폴더만 새로고침
+      if (draggedItem.type === 'folder') {
+        // 🍎 핵심: 전체 폴더 구조를 재귀적으로 로드하여 좌측 트리 즉시 업데이트
+        const allFolders = await loadAllFolders()
+        setItems(allFolders)
+
+        // 목적지 폴더를 자동으로 확장 (이동한 폴더를 즉시 볼 수 있도록)
+        if (targetFolderId) {
+          setExpandedFolderIds(prev => new Set(prev).add(targetFolderId))
+        }
+      }
+
       // 현재 폴더 새로고침
       await loadFolderContents(currentFolderId)
     } catch (err) {
@@ -1092,7 +1116,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setDraggingItemId(null)
       setDragOverFolderId(null)
     }
-  }, [currentFolderId, loadFolderContents, currentFolderItems])
+  }, [currentFolderId, loadFolderContents, items, loadAllFolders])
 
   // 드래그 종료
   const handleDragEnd = useCallback(() => {
@@ -1249,6 +1273,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           <div
             className={`folder-tree-row ${isActive ? 'active' : ''} ${isDragOver ? 'drag-over' : ''}`}
             style={{ paddingLeft: `${level * 16 + 8}px` }}
+            draggable
+            onDragStart={(e) => handleDragStart(e, folder)}
+            onDragEnd={handleDragEnd}
             onDragOver={handleDragOver}
             onDragEnter={(e) => handleDragEnter(e, folder._id)}
             onDragLeave={handleDragLeave}
@@ -1257,6 +1284,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           >
             <button
               className="folder-expand-button"
+              draggable={false}
               onClick={(e) => {
                 e.stopPropagation()
                 console.log(`▶️ chevron 클릭: ${folder.name} (expanded=${isExpanded})`)
@@ -1276,6 +1304,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             </button>
             <button
               className="folder-name-button"
+              draggable={false}
               onClick={(e) => {
                 e.stopPropagation()
                 console.log(`📁 폴더 클릭: ${folder.name}`)
