@@ -2128,16 +2128,19 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                               <DocumentIcon />
                             </button>
                           </Tooltip>
-                          <Tooltip content="고객에게 연결">
-                            <button
-                              type="button"
-                              className="action-btn action-btn--link"
-                              onClick={(e) => handleLinkClick(item.document!, e)}
-                              aria-label="고객에게 연결"
-                            >
-                              <LinkIcon />
-                            </button>
-                          </Tooltip>
+                          {/* 내 파일(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
+                          {!(item.document.ownerId && item.document.customerId && item.document.ownerId === item.document.customerId) && (
+                            <Tooltip content="고객에게 연결">
+                              <button
+                                type="button"
+                                className="action-btn action-btn--link"
+                                onClick={(e) => handleLinkClick(item.document!, e)}
+                                aria-label="고객에게 연결"
+                              >
+                                <LinkIcon />
+                              </button>
+                            </Tooltip>
+                          )}
                         </>
                       )}
                     </div>
