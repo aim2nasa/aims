@@ -2095,7 +2095,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                             </div>
                           </>
                         )
-                      })() : <span>—</span>}
+                      })() : null}
                     </div>
                     <div className="row-actions">
                       {item.type === 'file' && item.document && (
