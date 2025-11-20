@@ -1497,16 +1497,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   )
                 }
 
-                // 3. 전체 경로 문자열 길이 계산 (이름들 + 구분자 " > ")
+                // 3. 여유 공간 계산 (버튼 패딩, 간격 등 고려)
+                const availableWidth = breadcrumbWidth - 40
                 const separatorWidth = measureTextWidth(' > ')
+                const ellipsisWidth = measureTextWidth('..')
+
+                // 4. 전체 경로 문자열 길이 계산
                 const fullPathWidth = breadcrumbs.reduce((total, crumb, index) => {
                   const nameWidth = measureTextWidth(crumb.name)
                   const sepWidth = index > 0 ? separatorWidth : 0
                   return total + nameWidth + sepWidth
                 }, 0)
-
-                // 4. 여유 공간 (버튼 패딩, 간격 등 고려해서 -40px)
-                const availableWidth = breadcrumbWidth - 40
 
                 // 5. 전체 경로가 공간에 맞으면 → 전체 표시
                 if (availableWidth > 0 && fullPathWidth <= availableWidth) {
@@ -1523,7 +1524,61 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   ))
                 }
 
-                // 6. 넘치면 → ".. > 마지막" (약식 표시)
+                // 6. 점진적 축약 (Progressive Truncation)
+                // 경로가 3개 이상일 때만 시도
+                if (breadcrumbs.length >= 3) {
+                  const firstCrumb = breadcrumbs[0]
+                  if (!firstCrumb) return null
+
+                  // 마지막 N개를 점점 줄여가며 시도 (N: length-2부터 1까지)
+                  for (let lastCount = breadcrumbs.length - 2; lastCount >= 1; lastCount--) {
+                    const lastCrumbs = breadcrumbs.slice(-lastCount)
+
+                    // 패턴: "첫 > .. > 마지막 N개" 너비 계산
+                    const firstWidth = measureTextWidth(firstCrumb.name)
+                    const lastWidth = lastCrumbs.reduce((total, crumb) => {
+                      const nameWidth = measureTextWidth(crumb.name)
+                      const sepWidth = separatorWidth // 각 마지막 항목 앞에 구분자
+                      return total + nameWidth + sepWidth
+                    }, 0)
+
+                    const patternWidth = firstWidth + separatorWidth + ellipsisWidth + lastWidth
+
+                    // 공간에 맞으면 이 패턴 사용
+                    if (patternWidth <= availableWidth) {
+                      return (
+                        <>
+                          {/* 첫 번째 */}
+                          <button
+                            className="breadcrumb-item"
+                            onClick={() => handleFolderClick(firstCrumb._id)}
+                          >
+                            {firstCrumb.name}
+                          </button>
+                          <span className="breadcrumb-separator"> &gt; </span>
+
+                          {/* 생략 표시 */}
+                          <span className="breadcrumb-ellipsis">..</span>
+
+                          {/* 마지막 N개 */}
+                          {lastCrumbs.map((crumb) => (
+                            <React.Fragment key={crumb._id}>
+                              <span className="breadcrumb-separator"> &gt; </span>
+                              <button
+                                className="breadcrumb-item"
+                                onClick={() => handleFolderClick(crumb._id)}
+                              >
+                                {crumb.name}
+                              </button>
+                            </React.Fragment>
+                          ))}
+                        </>
+                      )
+                    }
+                  }
+                }
+
+                // 7. 최종 fallback: ".. > 마지막" (가장 축약된 형태)
                 return (
                   <>
                     <span className="breadcrumb-ellipsis">..</span>
