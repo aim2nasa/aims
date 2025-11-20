@@ -1521,6 +1521,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
                 aria-label="파일 선택"
