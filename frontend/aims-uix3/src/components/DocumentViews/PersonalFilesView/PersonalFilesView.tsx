@@ -2067,7 +2067,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       )}
                     </div>
                     <div className="row-size">
-                      {item.type === 'file' && item.size ? formatFileSize(item.size) : '—'}
+                      {item.type === 'file' && item.size ? formatFileSize(item.size) : null}
                     </div>
                     <div className="row-modified">
                       {formatDate(item.updatedAt)}
