@@ -566,15 +566,31 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
   }, [loadFolderContents, currentFolderId])
 
-  // Breadcrumb 너비 측정 (공간에 맞게 동적으로 표시 개수 조절)
+  // 텍스트 너비 측정 헬퍼 (Canvas 사용)
+  const measureTextWidth = useCallback((text: string): number => {
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (!context) return text.length * 8 // fallback: 대략 8px per char
+
+    // breadcrumb CSS 폰트와 동일하게 설정
+    context.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    const metrics = context.measureText(text)
+    return metrics.width
+  }, [])
+
+  // Breadcrumb 너비 측정 (공간 크기 파악)
   useEffect(() => {
     if (!breadcrumbRef.current) return
 
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width
-        setBreadcrumbWidth(width)
-      }
+    const updateWidth = () => {
+      if (!breadcrumbRef.current) return
+      setBreadcrumbWidth(breadcrumbRef.current.clientWidth)
+    }
+
+    updateWidth()
+
+    const observer = new ResizeObserver(() => {
+      updateWidth()
     })
 
     observer.observe(breadcrumbRef.current)
@@ -582,7 +598,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     return () => {
       observer.disconnect()
     }
-  }, [])
+  }, [breadcrumbs])
 
   // 폴링 토글
   const togglePolling = useCallback(() => {
@@ -1453,8 +1469,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                 const lastCrumb = breadcrumbs[breadcrumbs.length - 1]
                 if (!lastCrumb) return null
 
-                // 공간이 매우 부족하면 마지막 경로만 표시
-                if (breadcrumbWidth > 0 && breadcrumbWidth < 150) {
+                // 🍎 핵심: 주어진 공간과 예상 문자열 길이를 미리 비교!
+
+                // 1. 공간 극소 (100px 미만): 마지막만
+                if (breadcrumbWidth > 0 && breadcrumbWidth < 100) {
                   return (
                     <button
                       className="breadcrumb-item"
@@ -1465,31 +1483,33 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   )
                 }
 
-                // 공간이 부족하면 ".. > 마지막" 표시
-                if (breadcrumbWidth > 0 && breadcrumbWidth < 250 && breadcrumbs.length > 1) {
+                // 2. 단일 항목: 그대로 표시
+                if (breadcrumbs.length === 1) {
+                  const singleCrumb = breadcrumbs[0]
+                  if (!singleCrumb) return null
                   return (
-                    <>
-                      <span className="breadcrumb-ellipsis">..</span>
-                      <span className="breadcrumb-separator"> &gt; </span>
-                      <button
-                        className="breadcrumb-item"
-                        onClick={() => handleFolderClick(lastCrumb._id)}
-                      >
-                        {lastCrumb.name}
-                      </button>
-                    </>
+                    <button
+                      className="breadcrumb-item"
+                      onClick={() => handleFolderClick(singleCrumb._id)}
+                    >
+                      {singleCrumb.name}
+                    </button>
                   )
                 }
 
-                // 표시 가능한 breadcrumb 개수 계산
-                // 평균 breadcrumb 너비: 100px (텍스트 + 여백 + 구분자)
-                const avgItemWidth = 100
-                const maxVisibleCount = breadcrumbWidth > 0
-                  ? Math.max(3, Math.floor(breadcrumbWidth / avgItemWidth))
-                  : 5 // 기본값 (너비 측정 전)
+                // 3. 전체 경로 문자열 길이 계산 (이름들 + 구분자 " > ")
+                const separatorWidth = measureTextWidth(' > ')
+                const fullPathWidth = breadcrumbs.reduce((total, crumb, index) => {
+                  const nameWidth = measureTextWidth(crumb.name)
+                  const sepWidth = index > 0 ? separatorWidth : 0
+                  return total + nameWidth + sepWidth
+                }, 0)
 
-                // 모든 경로를 표시할 수 있으면 모두 표시
-                if (breadcrumbs.length <= maxVisibleCount) {
+                // 4. 여유 공간 (버튼 패딩, 간격 등 고려해서 -40px)
+                const availableWidth = breadcrumbWidth - 40
+
+                // 5. 전체 경로가 공간에 맞으면 → 전체 표시
+                if (availableWidth > 0 && fullPathWidth <= availableWidth) {
                   return breadcrumbs.map((crumb, index) => (
                     <React.Fragment key={crumb._id || 'root'}>
                       {index > 0 && <span className="breadcrumb-separator"> &gt; </span>}
@@ -1503,42 +1523,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   ))
                 }
 
-                // 공간이 부족하면 축약: 첫 번째 > .. > 마지막 N개
-                // 마지막 개수 = maxVisibleCount - 2 (첫 번째와 ellipsis 제외)
-                const lastCount = Math.max(1, maxVisibleCount - 2)
-                const firstCrumb = breadcrumbs[0]
-
-                // TypeScript 타입 가드
-                if (!firstCrumb) return null
-
+                // 6. 넘치면 → ".. > 마지막" (약식 표시)
                 return (
                   <>
-                    {/* 첫 번째 (루트) */}
+                    <span className="breadcrumb-ellipsis">..</span>
+                    <span className="breadcrumb-separator"> &gt; </span>
                     <button
                       className="breadcrumb-item"
-                      onClick={() => handleFolderClick(firstCrumb._id)}
+                      onClick={() => handleFolderClick(lastCrumb._id)}
                     >
-                      {firstCrumb.name}
+                      {lastCrumb.name}
                     </button>
-
-                    {/* 구분자 */}
-                    <span className="breadcrumb-separator"> &gt; </span>
-
-                    {/* 생략 표시 (..) */}
-                    <span className="breadcrumb-ellipsis">..</span>
-
-                    {/* 마지막 N개 */}
-                    {breadcrumbs.slice(-lastCount).map((crumb, index) => (
-                      <React.Fragment key={crumb._id || `end-${index}`}>
-                        <span className="breadcrumb-separator"> &gt; </span>
-                        <button
-                          className="breadcrumb-item"
-                          onClick={() => handleFolderClick(crumb._id)}
-                        >
-                          {crumb.name}
-                        </button>
-                      </React.Fragment>
-                    ))}
                   </>
                 )
               })()}

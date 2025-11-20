@@ -261,7 +261,9 @@
   align-items: center;
   gap: var(--spacing-1);
   flex: 1;
-  overflow-x: auto;
+  overflow: hidden; /* 2줄 넘김 방지 및 overflow 감지용 */
+  flex-wrap: nowrap; /* 절대 줄바꿈 안 함 */
+  min-width: 0; /* flex shrink 허용 */
 }
 
 .breadcrumb-item {
