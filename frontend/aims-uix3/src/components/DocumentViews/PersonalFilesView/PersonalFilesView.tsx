@@ -174,7 +174,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 필터 및 정렬 상태
   const [typeFilter, setTypeFilter] = useState<'all' | 'file' | 'folder'>('all')
-  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'size'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'size' | 'status'>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   // 폴더 생성 모달 상태
@@ -1212,6 +1212,17 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         const aSize = a.size || 0
         const bSize = b.size || 0
         comparison = aSize - bSize
+      } else if (sortBy === 'status') {
+        // 폴더는 상태가 없으므로 뒤로
+        if (a.type === 'folder' && b.type === 'file') return 1
+        if (a.type === 'file' && b.type === 'folder') return -1
+
+        // 둘 다 파일인 경우 상태 비교
+        if (a.type === 'file' && b.type === 'file') {
+          const aStatus = a.document?.status || a.document?.overallStatus || ''
+          const bStatus = b.document?.status || b.document?.overallStatus || ''
+          comparison = aStatus.localeCompare(bStatus, 'ko-KR')
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison
@@ -1805,12 +1816,34 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="header-status">
+                  <div
+                    className={`header-status sortable ${sortBy === 'status' ? 'sorted' : ''}`}
+                    onClick={() => handleSort('status')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSort('status')
+                      }
+                    }}
+                    aria-label={`상태로 정렬 ${sortBy === 'status' ? (sortDirection === 'asc' ? '(오름차순)' : '(내림차순)') : ''}`}
+                  >
                     <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                       <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
                       <path d="M5 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span>상태</span>
+                    {sortBy === 'status' ? (
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortDirection === 'asc' ? '▲' : '▼'}
+                      </span>
+                    ) : (
+                      <span className="sort-indicator sort-indicator--both" aria-hidden="true">
+                        <span className="sort-arrow">▲</span>
+                        <span className="sort-arrow">▼</span>
+                      </span>
+                    )}
                   </div>
                   <div className="header-actions">
                     <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
