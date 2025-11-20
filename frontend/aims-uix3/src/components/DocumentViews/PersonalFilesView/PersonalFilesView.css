@@ -376,7 +376,7 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-footnote);
   outline: none;
-  width: 300px;  /* ✅ 변경 가능: 300px로 확장 (DocumentLibraryView와 동일) */
+  width: 225px;  /* ✅ 컴팩트: 300px → 225px (1/4 축소) */
   padding: var(--spacing-2) var(--spacing-3);
   padding-left: 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
   transition: border-color var(--duration-fast) var(--easing-ease-out);
