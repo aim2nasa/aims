@@ -1390,7 +1390,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         </div>
 
         {/* 우측: 파일 목록 */}
-        <div className="files-main">
+        <div className="files-main" onContextMenu={(e) => e.preventDefault()}>
           {/* 툴바 */}
           <div className="files-toolbar">
             {/* 상위 폴더 버튼 */}
@@ -1731,7 +1731,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             ) : viewMode === 'list' ? (
               // 리스트 뷰
               <div className="files-list" onContextMenu={(e) => handleContextMenu(e)}>
-                <div className="files-list-header">
+                <div className="files-list-header" onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                   <div
                     className={`header-name sortable ${sortBy === 'name' ? 'sorted' : ''}`}
                     onClick={() => handleSort('name')}
