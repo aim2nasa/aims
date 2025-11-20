@@ -541,7 +541,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       // 업로드 완료 시 목록 새로고침
       if (status === 'completed') {
         setTimeout(() => {
-          loadFolderContents(currentFolderId)
+          loadFolderContents(currentFolderId, { silentRefresh: true })
           // 업로드 목록에서 제거
           setUploadingFiles(prev => prev.filter(f => f.id !== fileId))
           // UI 상태 초기화
