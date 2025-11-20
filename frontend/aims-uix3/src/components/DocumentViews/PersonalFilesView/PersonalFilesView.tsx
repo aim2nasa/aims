@@ -1244,6 +1244,11 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
     // 2. 정렬 (useMemo가 캐싱하므로 의존성 불변시 재실행 안 됨)
     const sorted = result.slice().sort((a, b) => {
+      // 🍎 업계 표준: 폴더 먼저, 파일 나중 (Windows, macOS, Google Drive)
+      if (a.type === 'folder' && b.type === 'file') return -1
+      if (a.type === 'file' && b.type === 'folder') return 1
+
+      // 같은 타입끼리는 sortBy 기준으로 정렬
       let comparison = 0
 
       if (sortBy === 'name') {
@@ -1255,10 +1260,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         const bSize = b.size || 0
         comparison = aSize - bSize
       } else if (sortBy === 'status') {
-        // 폴더는 상태가 없으므로 뒤로
-        if (a.type === 'folder' && b.type === 'file') return 1
-        if (a.type === 'file' && b.type === 'folder') return -1
-
         // 둘 다 파일인 경우 상태 비교
         if (a.type === 'file' && b.type === 'file') {
           const aStatus = a.document?.status || a.document?.overallStatus || ''
