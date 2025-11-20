@@ -18,6 +18,7 @@ interface DocumentStatusProviderProps {
   children: React.ReactNode
   initialFiles?: Document[]
   searchQuery?: string
+  fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'
 }
 
 /**
@@ -26,7 +27,8 @@ interface DocumentStatusProviderProps {
 export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   children,
   initialFiles = [],
-  searchQuery = ''
+  searchQuery = '',
+  fileScope = 'all'
 }) => {
   // State
   const [documents, setDocuments] = useState<Document[]>([])
@@ -105,10 +107,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         // 🍎 고객 연결 필터 파라미터 준비
         const customerLinkParam = customerLinkFilter === 'all' ? undefined : customerLinkFilter
 
+        // 🍎 파일 범위 필터 파라미터 준비
+        const fileScopeParam = fileScope === 'all' ? undefined : fileScope
+
         // 🍎 페이지네이션 기반으로 변경: page와 limit 전달
         // 🔍 검색어도 함께 전달하여 백엔드에서 전체 라이브러리 검색
-        // 🍎 고객 연결 필터도 백엔드로 전달
-        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, customerLinkParam)
+        // 🍎 고객 연결 필터 및 파일 범위 필터도 백엔드로 전달
+        const data = await DocumentStatusService.getRecentDocuments(currentPage, itemsPerPage, sortParam, searchQuery, customerLinkParam, fileScopeParam)
         const realDocuments = data.files || data.data?.documents || data.documents || []
 
         // 🍎 백엔드 pagination 정보 저장
@@ -195,7 +200,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
         }
       }
     },
-    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, customerLinkFilter]
+    [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, customerLinkFilter, fileScope]
   )
 
   /**

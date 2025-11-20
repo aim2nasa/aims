@@ -535,11 +535,11 @@ app.get('/api/documents', async (req, res) => {
  */
 app.get('/api/documents/status', async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search, sort, customerLink } = req.query;
+    const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'all' } = req.query;
     const skip = (page - 1) * limit;
 
     // 🔍 정렬 파라미터 디버깅
-    console.error(`\n🔍🔍🔍 [정렬 디버깅] sort=${sort}, page=${page}, limit=${limit}`);
+    console.error(`\n🔍🔍🔍 [정렬 디버깅] sort=${sort}, page=${page}, limit=${limit}, fileScope=${fileScope}`);
 
     // userId 추출 (헤더 또는 쿼리)
     const userId = req.query.userId || req.headers['x-user-id'];
@@ -554,6 +554,19 @@ app.get('/api/documents/status', async (req, res) => {
     let filter = {
       ownerId: userId
     };
+
+    // 🍎 파일 범위 필터 추가
+    if (fileScope === 'excludeMyFiles') {
+      // 내 파일 제외: ownerId !== customerId 또는 customerId 없음
+      filter.$or = [
+        { customerId: { $exists: false } },
+        { customerId: null },
+        { $expr: { $ne: ['$ownerId', '$customerId'] } }
+      ];
+    } else if (fileScope === 'onlyMyFiles') {
+      // 내 파일만: ownerId === customerId
+      filter.$expr = { $eq: ['$ownerId', '$customerId'] };
+    }
 
     // 🍎 고객 연결 필터 추가
     if (customerLink === 'linked') {

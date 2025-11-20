@@ -324,10 +324,11 @@ const DocumentLibraryContent: React.FC<{
             <div className="library-filters__dropdown-wrapper" ref={filterDropdownRef}>
               {/* 드롭다운 버튼 */}
               <button
+                type="button"
                 className={`library-filters__dropdown-button ${state.customerLinkFilter !== 'all' ? 'library-filters__dropdown-button--active' : ''}`}
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                 aria-label="고객 연결 필터 선택"
-                aria-expanded={isFilterDropdownOpen}
+                aria-expanded={isFilterDropdownOpen ? 'true' : 'false'}
               >
                 <span>
                   {state.customerLinkFilter === 'all' && '필터없음'}
@@ -764,7 +765,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
         )}
 
         {/* 🍎 타겟 영역: 상단 바 + 헤더 + 문서 리스트 + 페이지네이션 */}
-        <DocumentStatusProvider searchQuery={searchQuery}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles">
           <DocumentLibraryContent
             isDeleteMode={isDeleteMode}
             isBulkLinkMode={isBulkLinkMode}
@@ -796,7 +797,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
 
       {/* 일괄 고객 연결 모달 */}
       {isDocumentLinkModalVisible && (
-        <DocumentStatusProvider searchQuery={searchQuery}>
+        <DocumentStatusProvider searchQuery={searchQuery} fileScope="excludeMyFiles">
           <DocumentLinkModalWrapper
             visible={isDocumentLinkModalVisible}
             documents={selectedDocumentsForLink}

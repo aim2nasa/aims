@@ -89,8 +89,9 @@ export class DocumentStatusService {
    * @param sort 정렬 옵션
    * @param search 검색어 (파일명 검색)
    * @param customerLink 고객 연결 필터 ('linked' | 'unlinked' | undefined)
+   * @param fileScope 파일 범위 필터 ('all' | 'excludeMyFiles' | 'onlyMyFiles')
    */
-  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked'): Promise<DocumentStatusResponse> {
+  static async getRecentDocuments(page: number = 1, limit: number = 10, sort?: string, search?: string, customerLink?: 'linked' | 'unlinked', fileScope?: 'all' | 'excludeMyFiles' | 'onlyMyFiles'): Promise<DocumentStatusResponse> {
     try {
       // Get current userId from localStorage
       const userId = typeof window !== 'undefined'
@@ -109,6 +110,9 @@ export class DocumentStatusService {
       }
       if (customerLink) {
         params.append('customerLink', customerLink)
+      }
+      if (fileScope) {
+        params.append('fileScope', fileScope)
       }
 
       const response = await fetch(`${API_BASE_URL}/api/documents/status?${params.toString()}`, {
