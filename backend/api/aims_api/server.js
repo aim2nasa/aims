@@ -9,11 +9,17 @@ const FormData = require('form-data');
 const { QdrantClient } = require('@qdrant/js-client-rest');
 const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHelper');
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5177',
+  credentials: true
+}));
 app.use(express.json({ charset: 'utf-8' }));
 app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
+app.use(cookieParser());
 
 // Multer 설정 (메모리 저장 - 프록시용)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -3453,9 +3459,17 @@ MongoClient.connect(MONGO_URI)
     console.log('MongoDB 연결 성공');
     db = client.db(DB_NAME);
 
+    // Passport 초기화
+    require('./config/passport')(db);
+    app.use(passport.initialize());
+
+    // 인증 라우트 등록
+    const authRoutes = require('./routes/auth')(db);
+    app.use('/api/auth', authRoutes);
+
     // 고객 관계 라우트 설정
     setupCustomerRelationshipRoutes(app, db);
-    
+
     // 개인 파일 관리 라우트 설정
     app.use('/api/personal-files', personalFilesRoutes);
     registerFallbackHandlers();
