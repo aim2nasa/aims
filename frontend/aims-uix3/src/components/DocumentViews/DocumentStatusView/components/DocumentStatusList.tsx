@@ -433,6 +433,8 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
         const statusIcon = DocumentStatusService.getStatusIcon(status)
         const isLinked = Boolean(document.customer_relation)
         const isAnnualReport = document.is_annual_report === true
+        // 내 파일 여부 확인 (ownerId === customerId)
+        const isMyFile = document.ownerId && document.customerId && document.ownerId === document.customerId
         // AR 문서는 자동 연결되므로 처리 완료되어도 버튼 비활성화 유지
         const canLink = status === 'completed' && !isLinked && !isAnnualReport
         const linkTooltip = isLinked ? '이미 고객과 연결됨' : '고객에게 연결'
@@ -710,23 +712,27 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
                   <DocumentIcon />
                 </button>
               </Tooltip>
-              <Tooltip content={linkTooltip}>
-                <button
-                  className="action-btn action-btn--link"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (canLink) {
-                      onLinkClick?.(document)
-                    }
-                  }}
-                  aria-label={linkTooltip}
-                  aria-disabled={!canLink}
-                  data-disabled={!canLink}
-                  tabIndex={canLink ? 0 : -1}
-                >
-                  <LinkIcon />
-                </button>
-              </Tooltip>
+              {/* 내 파일(ownerId === customerId)이 아닐 때만 "고객에게 연결" 버튼 표시 */}
+              {!isMyFile && (
+                <Tooltip content={linkTooltip}>
+                  <button
+                    type="button"
+                    className="action-btn action-btn--link"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (canLink) {
+                        onLinkClick?.(document)
+                      }
+                    }}
+                    aria-label={linkTooltip}
+                    aria-disabled={!canLink ? 'true' : 'false'}
+                    data-disabled={!canLink}
+                    tabIndex={canLink ? 0 : -1}
+                  >
+                    <LinkIcon />
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </div>
         )
