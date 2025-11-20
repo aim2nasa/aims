@@ -1,0 +1,75 @@
+/**
+ * 로그인 페이지 스타일
+ */
+
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 48px 32px;
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.login-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.login-header p {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.login-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kakao-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 24px;
+  background: #FEE500;
+  color: #371D1E;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kakao-login-button:hover {
+  background: #FDD835;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.kakao-login-button:active {
+  transform: translateY(0);
+}
+
+.kakao-login-button svg {
+  flex-shrink: 0;
+}
