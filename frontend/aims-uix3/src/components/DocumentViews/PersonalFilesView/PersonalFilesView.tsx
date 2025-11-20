@@ -723,10 +723,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   }, [newFolderName, currentFolderId, loadFolderContents, handleCloseFolderModal])
 
   // 우클릭 컨텍스트 메뉴
-  const handleContextMenu = useCallback((e: React.MouseEvent, item: PersonalFileItem) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, item?: PersonalFileItem) => {
     e.preventDefault()
     e.stopPropagation()
-    setSelectedItem(item)
+    setSelectedItem(item || null)
     setContextMenuPosition({ x: e.clientX, y: e.clientY })
     setShowContextMenu(true)
   }, [])
@@ -1696,7 +1696,10 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           )}
 
           {/* 파일 목록 */}
-          <div className={`files-content ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}>
+          <div
+            className={`files-content ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
+            onContextMenu={(e) => handleContextMenu(e)}
+          >
             {loading ? (
               <div className="empty-state">
                 <p>로딩 중...</p>
@@ -1711,7 +1714,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               </div>
             ) : viewMode === 'list' ? (
               // 리스트 뷰
-              <div className="files-list">
+              <div className="files-list" onContextMenu={(e) => handleContextMenu(e)}>
                 <div className="files-list-header">
                   <div
                     className={`header-name sortable ${sortBy === 'name' ? 'sorted' : ''}`}
@@ -2025,7 +2028,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               </div>
             ) : (
               // 그리드 뷰
-              <div className="files-grid">
+              <div className="files-grid" onContextMenu={(e) => handleContextMenu(e)}>
                 {filteredAndSortedItems.map(item => (
                   <div
                     key={item._id}
@@ -2155,7 +2158,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       </Modal>
 
       {/* 컨텍스트 메뉴 - Portal로 body에 렌더링하여 부모 transform 영향 회피 */}
-      {showContextMenu && selectedItem && createPortal(
+      {showContextMenu && createPortal(
         <div
           className="context-menu"
           data-theme={document.documentElement.getAttribute('data-theme') || 'light'}
@@ -2167,27 +2170,52 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button className="context-menu-item" onClick={handleRenameClick}>
-            <span className="context-menu-icon context-menu-icon--rename">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                <path d="M11.5 1.5l3 3-8 8H3.5v-3l8-8z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M9.5 3.5l3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-            </span>
-            <span>이름 변경</span>
-          </button>
-          <button className="context-menu-item" onClick={handleMoveClick}>
-            <span className="context-menu-icon context-menu-icon--move">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
-              </svg>
-            </span>
-            <span>이동...</span>
-          </button>
+          {selectedItem ? (
+            // 항목이 선택된 경우: 기존 메뉴들
+            <>
+              <button className="context-menu-item" onClick={handleRenameClick}>
+                <span className="context-menu-icon context-menu-icon--rename">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.5 1.5l3 3-8 8H3.5v-3l8-8z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9.5 3.5l3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                </span>
+                <span>이름 변경</span>
+              </button>
+              <button className="context-menu-item" onClick={handleMoveClick}>
+                <span className="context-menu-icon context-menu-icon--move">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
+                  </svg>
+                </span>
+                <span>이동...</span>
+              </button>
 
+              {selectedItem.type === 'folder' && (
+                <button className="context-menu-item" onClick={handleNewFolderFromContext}>
+                  <span className="context-menu-icon context-menu-icon--new">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                  <span>새 폴더</span>
+                </button>
+              )}
 
-          {selectedItem.type === 'folder' && (
-            <button className="context-menu-item" onClick={handleNewFolderFromContext}>
+              <button className="context-menu-item context-menu-item--danger" onClick={handleDeleteClick}>
+                <SFSymbol
+                  name="trash"
+                  size={SFSymbolSize.CAPTION_1}
+                  weight={SFSymbolWeight.MEDIUM}
+                  decorative={true}
+                />
+                <span>삭제</span>
+              </button>
+            </>
+          ) : (
+            // 빈 공간 우클릭: "새 폴더"만 표시
+            <button className="context-menu-item" onClick={handleNewFolderClick}>
               <span className="context-menu-icon context-menu-icon--new">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                   <path d="M2 4h4l1.5-1.5h6.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2"/>
@@ -2197,16 +2225,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
               <span>새 폴더</span>
             </button>
           )}
-
-          <button className="context-menu-item context-menu-item--danger" onClick={handleDeleteClick}>
-            <SFSymbol
-              name="trash"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-            <span>삭제</span>
-          </button>
         </div>,
         document.body
       )}
