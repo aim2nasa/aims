@@ -1081,8 +1081,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     }
 
     try {
-      // 드래그된 항목 찾기 (전체 items 배열에서 검색)
+      // 드래그된 항목 찾기 (좌측 트리 + 우측 목록에서 검색)
       const draggedItem = items.find(item => item._id === itemId)
+                        || currentFolderItems.find(item => item._id === itemId)
 
       if (!draggedItem) {
         throw new Error('이동할 항목을 찾을 수 없습니다')
@@ -1132,7 +1133,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       setDraggingItemId(null)
       setDragOverFolderId(null)
     }
-  }, [currentFolderId, loadFolderContents, items, loadAllFolders])
+  }, [currentFolderId, loadFolderContents, items, currentFolderItems, loadAllFolders])
 
   // 드래그 종료
   const handleDragEnd = useCallback(() => {
