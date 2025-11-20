@@ -1222,8 +1222,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 폴더 트리 렌더링 (재귀)
   const renderFolderTree = (parentId: string | null, level: number = 0) => {
-    const folders = items.filter(item => item.type === 'folder' && item.parentId === parentId)
-    // Excessive log removed - called on every render
+    const folders = items
+      .filter(item => item.type === 'folder' && item.parentId === parentId)
+      .sort((a, b) => a.name.localeCompare(b.name)) // 이름순 오름차순 고정
 
     return folders.map(folder => {
       const isExpanded = expandedFolderIds.has(folder._id)
