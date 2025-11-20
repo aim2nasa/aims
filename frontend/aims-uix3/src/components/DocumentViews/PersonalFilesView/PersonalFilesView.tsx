@@ -955,9 +955,9 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
       // 2. 좌측 트리 전체 다시 로드 + 목적지 폴더 자동 확장
       if (selectedItem.type === 'folder') {
-        // 🍎 핵심: 루트부터 다시 로드하여 전체 폴더 구조 업데이트
-        await loadFolderContents(null) // 루트 로드 → items 업데이트
-        await loadAllFolders() // 모달용 폴더 목록도 업데이트
+        // 🍎 핵심: 전체 폴더 구조를 재귀적으로 로드하여 좌측 트리 즉시 업데이트
+        const allFolders = await loadAllFolders() // 모든 폴더 재귀 로드
+        setItems(allFolders) // 좌측 트리에 즉시 반영
 
         // 목적지 폴더를 자동으로 확장 (이동한 폴더를 즉시 볼 수 있도록)
         if (targetFolderId) {
