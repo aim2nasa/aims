@@ -690,6 +690,8 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 새 폴더 모달 열기
   const handleNewFolderClick = useCallback(() => {
+    setShowContextMenu(false)
+    setSelectedItem(null)
     setShowNewFolderModal(true)
     setNewFolderName('')
   }, [])
@@ -1251,6 +1253,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
             onDragEnter={(e) => handleDragEnter(e, folder._id)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, folder._id)}
+            onContextMenu={(e) => handleContextMenu(e, folder)}
           >
             <button
               className="folder-expand-button"
@@ -1309,7 +1312,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     >
       <div className="personal-files-view" style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}>
         {/* 좌측: 폴더 트리 */}
-        <div className="files-sidebar">
+        <div className="files-sidebar" onContextMenu={(e) => e.preventDefault()}>
           <div className="sidebar-section">
             <div className="sidebar-title">빠른 액세스</div>
 
@@ -1334,6 +1337,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
                   onDragEnter={(e) => handleDragEnter(e, null)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, null)}
+                  onContextMenu={(e) => handleContextMenu(e)}
                 >
                   <button
                     className="folder-expand-button"
