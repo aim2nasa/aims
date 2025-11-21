@@ -713,7 +713,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           attempts++;
 
           try {
-            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+            const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+              headers: { 'x-user-id': userIdForFetch }
+            });
             const response = await docResponse.json();
 
             // 문서 처리 완료 확인 (overallStatus === 'completed')
@@ -823,7 +826,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         attempts++;
 
         try {
-          const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+          const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+              headers: { 'x-user-id': userIdForFetch }
+            });
           const response = await docResponse.json();
 
           if (response.success && response.data?.computed?.overallStatus === 'completed') {
@@ -916,7 +922,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         attempts++;
 
         try {
-          const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`);
+          const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+              headers: { 'x-user-id': userIdForFetch }
+            });
           const response = await docResponse.json();
 
           // 문서 처리 완료 확인 (overallStatus === 'completed')

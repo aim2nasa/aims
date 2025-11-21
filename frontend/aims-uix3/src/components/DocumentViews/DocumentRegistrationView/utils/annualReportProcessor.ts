@@ -44,7 +44,10 @@ export async function processAnnualReportFile(
       // 각 document_id로 file_hash 조회
       for (const doc of customerDocs.documents) {
         try {
-          const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`);
+          const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+      const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`, {
+        headers: { 'x-user-id': userId }
+      });
           const docData = await docStatus.json();
 
           if (docData.success && docData.data?.raw?.meta?.file_hash) {

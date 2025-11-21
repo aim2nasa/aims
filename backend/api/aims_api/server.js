@@ -893,9 +893,21 @@ app.get('/api/documents/status', async (req, res) => {
 /**
  * 특정 문서의 상세 상태를 조회하는 API
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.get('/api/documents/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -904,13 +916,14 @@ app.get('/api/documents/:id/status', async (req, res) => {
       });
     }
 
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 조회 가능
     const document = await db.collection(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({ _id: new ObjectId(id), ownerId: userId });
 
     if (!document) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -1081,10 +1094,22 @@ app.get('/api/documents/statistics', async (req, res) => {
 /**
  * 문서 재처리 요청 API (실패한 문서의 재처리)
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.post('/api/documents/:id/retry', async (req, res) => {
   try {
     const { id } = req.params;
     const { stage } = req.body; // 'ocr' 또는 'docembed'
+
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1093,13 +1118,14 @@ app.post('/api/documents/:id/retry', async (req, res) => {
       });
     }
 
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 재처리 가능
     const document = await db.collection(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({ _id: new ObjectId(id), ownerId: userId });
 
     if (!document) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -1152,11 +1178,24 @@ app.post('/api/documents/:id/retry', async (req, res) => {
  * 실시간 상태 업데이트를 위한 WebSocket 또는 Server-Sent Events
  * 여기서는 간단한 폴링용 API로 구현
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.get('/api/documents/status/live', async (req, res) => {
   try {
-    // 처리 중인 문서들만 조회
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 조회
     const processingDocs = await db.collection(COLLECTION_NAME)
       .find({
+        ownerId: userId,
         $or: [
           { 'ocr.status': 'running' },
           { 'ocr.queue': true },
@@ -1190,9 +1229,21 @@ app.get('/api/documents/status/live', async (req, res) => {
 /**
  * 문서에 Annual Report 플래그 및 메타데이터 설정 API
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.patch('/api/documents/set-annual-report', async (req, res) => {
   try {
     const { filename, metadata } = req.body;
+
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}, metadata:`, metadata);
 
@@ -1203,9 +1254,9 @@ app.patch('/api/documents/set-annual-report', async (req, res) => {
       });
     }
 
-    // 파일명으로 문서 찾기 (최신 업로드 우선 - 동일 파일명 대응)
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 수정 가능
     const document = await db.collection(COLLECTION_NAME)
-      .find({ 'upload.originalName': filename })
+      .find({ 'upload.originalName': filename, ownerId: userId })
       .sort({ 'upload.uploaded_at': -1 })
       .limit(1)
       .toArray()
@@ -1213,9 +1264,9 @@ app.patch('/api/documents/set-annual-report', async (req, res) => {
 
     if (!document) {
       console.log(`❌ [Set AR Flag] 문서를 찾을 수 없음: ${filename}`);
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -1261,9 +1312,21 @@ app.patch('/api/documents/set-annual-report', async (req, res) => {
 /**
  * 문서 삭제 API (단일 문서)
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1272,13 +1335,14 @@ app.delete('/api/documents/:id', async (req, res) => {
       });
     }
 
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 삭제 가능
     const document = await db.collection(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({ _id: new ObjectId(id), ownerId: userId });
 
     if (!document) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -1394,11 +1458,23 @@ app.delete('/api/documents/:id', async (req, res) => {
 /**
  * 문서 복수 삭제 API (Python API 프록시)
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.delete('/api/documents', async (req, res) => {
   try {
     const { document_ids } = req.body;
 
-    console.log(`🗑️  [문서 삭제] 복수 삭제 요청: ${document_ids?.length}건`);
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    console.log(`🗑️  [문서 삭제] 복수 삭제 요청: ${document_ids?.length}건 (userId: ${userId})`);
 
     if (!document_ids || !Array.isArray(document_ids) || document_ids.length === 0) {
       return res.status(400).json({
@@ -1407,11 +1483,30 @@ app.delete('/api/documents', async (req, res) => {
       });
     }
 
-    // Python API (포트 8080)로 프록시
+    // ⭐ 소유권 검증: 삭제 대상 문서가 모두 해당 설계사의 것인지 확인
+    const objectIds = document_ids.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+    const ownedDocs = await db.collection(COLLECTION_NAME)
+      .find({ _id: { $in: objectIds }, ownerId: userId })
+      .project({ _id: 1 })
+      .toArray();
+
+    const ownedDocIds = ownedDocs.map(d => d._id.toString());
+    const unauthorizedIds = document_ids.filter(id => !ownedDocIds.includes(id));
+
+    if (unauthorizedIds.length > 0) {
+      console.log(`⚠️ [문서 삭제] 권한 없는 문서 삭제 시도: ${unauthorizedIds.join(', ')}`);
+      return res.status(403).json({
+        success: false,
+        error: '일부 문서에 대한 접근 권한이 없습니다.',
+        unauthorized_ids: unauthorizedIds
+      });
+    }
+
+    // Python API (포트 8080)로 프록시 (검증된 문서만)
     const pythonApiUrl = 'http://172.17.0.1:8080/documents';
 
     const response = await axios.delete(pythonApiUrl, {
-      data: { document_ids },
+      data: { document_ids: ownedDocIds },
       timeout: 30000 // 30초 타임아웃 (대량 삭제 고려)
     });
 
@@ -2344,14 +2439,14 @@ app.post('/api/customers/:id/documents', async (req, res) => {
       });
     }
 
-    // 문서 존재 확인
+    // ⭐ 문서 소유권 검증: 해당 설계사의 문서만 연결 가능
     const document = await db.collection(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(document_id) });
+      .findOne({ _id: new ObjectId(document_id), ownerId: userId });
 
     if (!document) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -2444,14 +2539,14 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
       });
     }
 
-    // 문서 존재 확인
+    // ⭐ 문서 소유권 검증: 해당 설계사의 문서만 연결 해제 가능
     const document = await db.collection(COLLECTION_NAME)
-      .findOne({ _id: new ObjectId(document_id) });
+      .findOne({ _id: new ObjectId(document_id), ownerId: userId });
 
     if (!document) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '문서를 찾을 수 없습니다.'
+        error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -3101,11 +3196,35 @@ app.post('/api/annual-report/parse', async (req, res) => {
 /**
  * Annual Report 파싱 상태 조회 프록시
  */
+/**
+ * ⭐ 설계사별 문서 데이터 격리 적용
+ */
 app.get('/api/annual-report/status/:file_id', async (req, res) => {
   try {
     const { file_id } = req.params;
 
-    console.log(`🔍 [Annual Report] 상태 조회 요청: ${file_id}`);
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // ⭐ 소유권 검증: 해당 설계사의 문서만 조회 가능
+    if (ObjectId.isValid(file_id)) {
+      const document = await db.collection(COLLECTION_NAME)
+        .findOne({ _id: new ObjectId(file_id), ownerId: userId });
+      if (!document) {
+        return res.status(403).json({
+          success: false,
+          error: '문서를 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
+    }
+
+    console.log(`🔍 [Annual Report] 상태 조회 요청: ${file_id}, userId: ${userId}`);
 
     const pythonApiUrl = `http://172.17.0.1:8004/annual-report/status/${file_id}`;
 
@@ -3136,6 +3255,9 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
 /**
  * 고객의 Annual Reports 목록 조회 프록시
  */
+/**
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
 app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
   try {
     const { customerId } = req.params;
@@ -3148,6 +3270,18 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
         success: false,
         message: 'userId required'
       });
+    }
+
+    // ⭐ 고객 소유권 검증: 해당 설계사의 고객만 조회 가능
+    if (ObjectId.isValid(customerId)) {
+      const customer = await db.collection(CUSTOMERS_COLLECTION)
+        .findOne({ _id: new ObjectId(customerId), 'meta.created_by': userId });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
     }
 
     console.log(`📋 [Annual Report] 고객 Annual Reports 조회: ${customerId}, userId: ${userId}`);
@@ -3258,6 +3392,9 @@ app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) =>
 /**
  * 고객의 최신 Annual Report 조회 프록시
  */
+/**
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
 app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => {
   const { customerId } = req.params; // catch 블록에서도 접근 가능하도록 밖으로 이동
 
@@ -3269,6 +3406,18 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
         success: false,
         message: 'userId required'
       });
+    }
+
+    // ⭐ 고객 소유권 검증: 해당 설계사의 고객만 조회 가능
+    if (ObjectId.isValid(customerId)) {
+      const customer = await db.collection(CUSTOMERS_COLLECTION)
+        .findOne({ _id: new ObjectId(customerId), 'meta.created_by': userId });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
     }
 
     console.log(`📋 [Annual Report] 최신 Annual Report 조회: ${customerId}, userId: ${userId}`);
@@ -3315,6 +3464,9 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
 /**
  * 고객의 Annual Reports 삭제 프록시
  */
+/**
+ * ⭐ 설계사별 고객 데이터 격리 적용
+ */
 app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
   try {
     const { customerId } = req.params;
@@ -3327,6 +3479,18 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
         success: false,
         message: 'userId required'
       });
+    }
+
+    // ⭐ 고객 소유권 검증: 해당 설계사의 고객만 삭제 가능
+    if (ObjectId.isValid(customerId)) {
+      const customer = await db.collection(CUSTOMERS_COLLECTION)
+        .findOne({ _id: new ObjectId(customerId), 'meta.created_by': userId });
+      if (!customer) {
+        return res.status(403).json({
+          success: false,
+          error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+        });
+      }
     }
 
     console.log(`🗑️  [Annual Report] 삭제 요청: customer=${customerId}, userId=${userId}, indices=${JSON.stringify(indices)}`);
@@ -3378,6 +3542,9 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
 
 /**
  * 고객의 중복 Annual Reports 정리 프록시
+ */
+/**
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', async (req, res) => {
   try {

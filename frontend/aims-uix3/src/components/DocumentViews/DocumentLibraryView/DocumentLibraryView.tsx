@@ -688,10 +688,12 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
       // 선택된 모든 문서 삭제
       const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
         try {
+          const userIdForDelete = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
           const response = await fetch(`/api/documents/${docId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
+              'x-user-id': userIdForDelete,
             },
           })
 
