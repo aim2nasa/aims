@@ -9,10 +9,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
 import { useAccountSettingsStore } from '../../../shared/store/useAccountSettingsStore';
+import { useAuthStore } from '../../../shared/stores/authStore';
 import { AccountSettingsModal } from '../../../features/AccountSettings';
 import './UserProfileMenu.css';
 
@@ -52,9 +54,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
 
   // 개발자 모드 상태
   const { isDevMode } = useDevModeStore();
+
+  // 인증 상태
+  const { logout: authLogout } = useAuthStore();
 
   // 계정 설정 모달 상태
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
@@ -139,11 +145,16 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   };
 
   const handleLogout = () => {
-    // TODO: 로그아웃 확인 다이얼로그
     const confirmed = window.confirm('정말 로그아웃하시겠습니까?');
     if (confirmed) {
-      // TODO: 실제 로그아웃 처리
-      alert('로그아웃 기능은 추후 구현 예정입니다.');
+      // authStore 상태 초기화
+      authLogout();
+
+      // 레거시 API용 사용자 ID 제거
+      localStorage.removeItem('aims-current-user-id');
+
+      // 로그인 페이지로 이동
+      navigate('/login', { replace: true });
     }
     onClose();
   };

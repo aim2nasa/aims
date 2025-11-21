@@ -19,6 +19,20 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UserProfileMenu from './UserProfileMenu';
 
+// Mock react-router-dom
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate
+}));
+
+// Mock authStore
+const mockLogout = vi.fn();
+vi.mock('../../../shared/stores/authStore', () => ({
+  useAuthStore: () => ({
+    logout: mockLogout
+  })
+}));
+
 // Mock child components
 vi.mock('./UserProfileHeader', () => ({
   default: ({ name, email }: { name: string; email: string }) => (
@@ -76,6 +90,9 @@ describe('UserProfileMenu', () => {
 
     // Mock window.innerWidth
     Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+
+    // Mock localStorage
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {});
 
     vi.clearAllMocks();
   });
@@ -411,9 +428,8 @@ describe('UserProfileMenu', () => {
       confirmSpy.mockRestore();
     });
 
-    it('"로그아웃" 확인 후 alert를 표시하고 onClose를 호출해야 한다', async () => {
+    it('"로그아웃" 확인 후 authLogout 호출, localStorage 제거, /login으로 이동해야 한다', async () => {
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       const handleClose = vi.fn();
       const user = userEvent.setup();
 
@@ -429,13 +445,12 @@ describe('UserProfileMenu', () => {
       const logoutButton = screen.getByTestId('menu-item-로그아웃');
       await user.click(logoutButton);
 
-      expect(alertSpy).toHaveBeenCalledWith(
-        expect.stringContaining('로그아웃 기능')
-      );
+      expect(mockLogout).toHaveBeenCalled();
+      expect(localStorage.removeItem).toHaveBeenCalledWith('aims-current-user-id');
+      expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
       expect(handleClose).toHaveBeenCalled();
 
       confirmSpy.mockRestore();
-      alertSpy.mockRestore();
     });
 
     it('"로그아웃" 취소 시 onClose를 호출해야 한다', async () => {
