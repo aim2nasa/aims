@@ -26,9 +26,7 @@ module.exports = function(db) {
    * 카카오 로그인 시작
    */
   router.get('/kakao',
-    passport.authenticate('kakao', {
-      session: false
-    })
+    passport.authenticate('kakao', { session: false })
   );
 
   /**

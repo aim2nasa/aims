@@ -14,8 +14,15 @@ module.exports = function(db) {
     console.warn('⚠️  KAKAO_CLIENT_ID가 실제 값이 아닙니다. 테스트 모드로 작동합니다.');
   }
 
+  // 커스텀 카카오 전략 (prompt 파라미터 지원)
+  class KakaoStrategyWithPrompt extends KakaoStrategy {
+    authorizationParams(options) {
+      return { prompt: 'login' };  // 매번 로그인 화면 표시
+    }
+  }
+
   // 카카오 로그인 전략
-  passport.use(new KakaoStrategy({
+  passport.use(new KakaoStrategyWithPrompt({
     clientID: kakaoClientId,
     clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
     callbackURL: process.env.KAKAO_CALLBACK_URL
