@@ -342,18 +342,6 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     }
   }, [selectedCustomer, onSelect, onClose]);
 
-  if (import.meta.env.DEV) console.log('[CustomerSelectorModal] 렌더링:', {
-    visible,
-    isLoading,
-    allCustomersCount: allCustomers.length,
-    personalCount: personalCustomers.length,
-    corporateCount: corporateCustomers.length,
-    isSearching,
-    searchResultsCount: searchResults.length,
-    displayedCustomersCount: displayedCustomers.length,
-    selectedInitial
-  });
-
   return (
     <DraggableModal
       visible={visible}

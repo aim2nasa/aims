@@ -99,7 +99,6 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           // badgeType은 백엔드에서 정렬 (전체 DB 대상)
           sortParam = sortDirection === 'asc' ? 'badgeType_asc' : 'badgeType_desc'
         }
-        if (import.meta.env.DEV) console.log(`📡 [백엔드 요청] sortField=${sortField}, sortDirection=${sortDirection}, sortParam=${sortParam}, page=${currentPage}, limit=${itemsPerPage}`)
 
         // 🔍 검색어 준비 (trim 처리)
         const searchQuery = searchTerm.trim() || undefined
