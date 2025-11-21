@@ -1088,33 +1088,35 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             />
           </Suspense>
 
-          {/* 햄버거 버튼 - aims-uix2 스타일 */}
-          <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`}>
-            <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
-              <HamburgerButton
-                collapsed={leftPaneCollapsed}
-                onClick={toggleLeftPaneCollapsed}
-              />
-            </Suspense>
-          </div>
+          {/* 햄버거 버튼 + 버전 - 맨 아래 오른쪽 배치 */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: leftPaneCollapsed ? 'center' : 'flex-end' }}>
+            {/* 버전 표시 - 햄버거 버튼 바로 위 */}
+            <div
+              className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
+              style={{
+                paddingBottom: 'var(--spacing-2)',
+                fontSize: 'var(--font-size-caption-2)',
+                color: 'var(--color-text-tertiary)',
+                opacity: 0.6,
+                textAlign: leftPaneCollapsed ? 'center' : 'left',
+                transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
+                userSelect: 'none'
+              }}
+              aria-label={`버전 ${APP_VERSION}`}
+            >
+              <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
+                v{APP_VERSION}
+              </div>
+            </div>
 
-          {/* 🍎 애플 스타일 버전 표시 - 서브틀하게 하단에 배치 */}
-          <div
-            className={`version-display ${leftPaneCollapsed ? 'version-display--collapsed' : 'version-display--expanded'}`}
-            style={{
-              marginTop: 'auto',
-              paddingTop: 'var(--spacing-4)',
-              fontSize: 'var(--font-size-caption-2)',
-              color: 'var(--color-text-tertiary)',
-              opacity: 0.6,
-              textAlign: leftPaneCollapsed ? 'center' : 'left',
-              transition: 'all var(--duration-apple-graceful) var(--easing-apple-smooth)',
-              userSelect: 'none'
-            }}
-            aria-label={`버전 ${APP_VERSION}`}
-          >
-            <div style={{ fontSize: leftPaneCollapsed ? '9px' : '10px', lineHeight: '1.2' }}>
-              v{APP_VERSION}
+            {/* 햄버거 버튼 */}
+            <div className={`hamburger-container ${leftPaneCollapsed ? 'hamburger-container--collapsed' : 'hamburger-container--expanded'}`} style={{ marginTop: 0 }}>
+              <Suspense fallback={<div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-skeleton-base)', borderRadius: '4px', opacity: 0.6 }} />}>
+                <HamburgerButton
+                  collapsed={leftPaneCollapsed}
+                  onClick={toggleLeftPaneCollapsed}
+                />
+              </Suspense>
             </div>
           </div>
         </nav>

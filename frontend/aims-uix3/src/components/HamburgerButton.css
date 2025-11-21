@@ -50,14 +50,20 @@
   text-size-adjust: 100%;
 
   /* 색상 - 통일된 CSS 변수 활용 */
-  background-color: var(--color-layout-hamburger-bg);
+  background-color: transparent;
   color: var(--color-layout-hamburger-icon);
+  opacity: 0.7;
+
+  /* 🍎 배경 투명 - box-shadow 제거 */
+  box-shadow: none;
 }
 
-/* 🍎 애플 스타일 호버 - 단순한 배경색 변화만 (iOS/macOS 표준) */
+/* 🍎 애플 스타일 호버 - 투명 배경 유지, opacity + scale 효과만 */
 .hamburger-button:hover {
-  background-color: var(--color-layout-hamburger-hover);
-  /* 🍎 애플 철학: transform, box-shadow 효과 제거 - 미니멀리즘 준수 */
+  background-color: transparent;
+  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: none;
 }
 
 /* 포커스 상태 - 접근성 고려 */
@@ -72,10 +78,11 @@
   box-shadow: 0 0 0 2px var(--color-primary-100);
 }
 
-/* 🍎 애플 스타일 액티브 - 단순한 배경색 변화만 */
+/* 🍎 애플 스타일 액티브 - 투명 배경 유지, scale 효과만 */
 .hamburger-button:active {
-  background-color: var(--color-layout-hamburger-active);
-  /* 🍎 애플 철학: transform, box-shadow 효과 제거 */
+  background-color: transparent;
+  transform: scale(0.95);
+  box-shadow: none;
 }
 
 /* 햄버거 아이콘 SVG 스타일 */
@@ -96,6 +103,16 @@
   /* 🔬 Pixel-Perfect 렌더링: 1px 선명도 보장 */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+
+  /* 🍎 배경 투명 - interactive 상태의 배경색 제거 */
+  background-color: transparent;
+}
+
+/* SFSymbol interactive 배경 제거 */
+.hamburger-icon.sf-symbol--interactive,
+.hamburger-icon.sf-symbol--interactive:hover,
+.hamburger-icon.sf-symbol--interactive:active {
+  background-color: transparent;
 }
 
 /* 버튼 비활성화 상태 */
