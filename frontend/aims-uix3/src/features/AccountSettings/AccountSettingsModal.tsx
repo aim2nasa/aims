@@ -44,7 +44,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const { currentUser, updateCurrentUser } = useUserStore()
 
   // 소셜 로그인 사용자 정보 (authStore)
-  const { user: authUser, isAuthenticated } = useAuthStore()
+  const { user: authUser, isAuthenticated, setUser: setAuthUser } = useAuthStore()
 
   // 사용자 정보 상태
   const [user, setUser] = useState<User | null>(null)
@@ -179,6 +179,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
       // 전역 상태 업데이트 (모든 컴포넌트에 즉시 반영)
       updateCurrentUser(updatedUser)
+
+      // authStore도 업데이트 (프로필 메뉴 등에 즉시 반영)
+      if (authUser) {
+        setAuthUser({
+          ...authUser,
+          name: updatedUser.name,
+          email: updatedUser.email
+        })
+      }
 
       onClose()
 

@@ -92,11 +92,19 @@ export async function updateUser(
   _userId: string,
   updates: Partial<Omit<User, 'id' | 'role'>>
 ): Promise<User> {
-  // 이름 업데이트는 /api/auth/profile 사용
-  if (updates.name) {
-    const response = await api.put<AuthMeResponse>('/api/auth/profile', {
-      name: updates.name
-    })
+  // 프로필 업데이트 (이름, 이메일)
+  const updatePayload: { name?: string; email?: string } = {}
+
+  if (updates.name !== undefined) {
+    updatePayload.name = updates.name
+  }
+  if (updates.email !== undefined) {
+    updatePayload.email = updates.email
+  }
+
+  // 업데이트할 내용이 있으면 API 호출
+  if (Object.keys(updatePayload).length > 0) {
+    const response = await api.put<AuthMeResponse>('/api/auth/profile', updatePayload)
 
     if (!response.success) {
       throw new Error('프로필 업데이트 실패')
@@ -118,6 +126,6 @@ export async function updateUser(
     return user
   }
 
-  // 다른 필드 업데이트는 추후 구현
+  // 업데이트할 필드가 없으면 현재 사용자 정보 반환
   return getCurrentUser()
 }

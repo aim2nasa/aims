@@ -124,11 +124,31 @@ export async function apiRequest<T = unknown>(
   const currentUserId = typeof window !== 'undefined'
     ? localStorage.getItem('aims-current-user-id') || 'tester'
     : 'tester';
-  const requestHeaders = {
+
+  // JWT 토큰 가져오기 (authStore의 persist 저장소에서)
+  let token: string | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        const parsed = JSON.parse(authStorage);
+        token = parsed?.state?.token || null;
+      }
+    } catch {
+      // 파싱 실패 시 무시
+    }
+  }
+
+  const requestHeaders: Record<string, string> = {
     ...API_CONFIG.DEFAULT_HEADERS,
     'x-user-id': currentUserId, // ⭐ localStorage에서 현재 사용자 ID 가져오기
-    ...headers,
+    ...(headers as Record<string, string>),
   };
+
+  // JWT 토큰이 있으면 Authorization 헤더 추가
+  if (token) {
+    requestHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   // 요청 옵션 구성
   const requestOptions: RequestInit = {

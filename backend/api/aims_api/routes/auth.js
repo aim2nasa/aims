@@ -105,39 +105,57 @@ module.exports = function(db) {
 
   /**
    * PUT /api/auth/profile
-   * 프로필 업데이트 (이름 설정)
+   * 프로필 업데이트 (이름, 이메일 설정)
    */
   router.put('/profile', authenticateJWT, async (req, res) => {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      const { name } = req.body;
+      const { name, email } = req.body;
 
-      // 이름 유효성 검사
-      if (!name || typeof name !== 'string') {
-        return res.status(400).json({
-          success: false,
-          message: '이름을 입력해주세요'
-        });
+      // 업데이트할 필드 준비
+      const updateFields = { profileCompleted: true };
+
+      // 이름 유효성 검사 및 설정
+      if (name !== undefined) {
+        if (typeof name !== 'string') {
+          return res.status(400).json({
+            success: false,
+            message: '이름 형식이 올바르지 않습니다'
+          });
+        }
+        const trimmedName = name.trim();
+        if (trimmedName.length < 1 || trimmedName.length > 20) {
+          return res.status(400).json({
+            success: false,
+            message: '이름은 1-20자로 입력해주세요'
+          });
+        }
+        updateFields.name = trimmedName;
       }
 
-      const trimmedName = name.trim();
-      if (trimmedName.length < 1 || trimmedName.length > 20) {
-        return res.status(400).json({
-          success: false,
-          message: '이름은 1-20자로 입력해주세요'
-        });
+      // 이메일 유효성 검사 및 설정
+      if (email !== undefined) {
+        if (typeof email !== 'string') {
+          return res.status(400).json({
+            success: false,
+            message: '이메일 형식이 올바르지 않습니다'
+          });
+        }
+        const trimmedEmail = email.trim();
+        if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+          return res.status(400).json({
+            success: false,
+            message: '올바른 이메일 형식이 아닙니다'
+          });
+        }
+        updateFields.email = trimmedEmail || null;
       }
 
       // 프로필 업데이트
       await usersCollection.updateOne(
         { _id: new ObjectId(req.user.id) },
-        {
-          $set: {
-            name: trimmedName,
-            profileCompleted: true
-          }
-        }
+        { $set: updateFields }
       );
 
       const user = await usersCollection.findOne(
