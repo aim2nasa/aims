@@ -754,7 +754,7 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
   }, [selectedDocumentIds, confirmModal, onDocumentDeleted, loadDocuments, searchParams])
 
   return (
-    <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리">
+    <CenterPaneView visible={visible} onClose={onClose} title="문서 라이브러리" titleIcon={<span className="menu-icon-purple"><SFSymbol name="books-vertical" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}>
       <div className="document-library-view">
         {/* Error 표시 */}
         {error && (

@@ -1351,6 +1351,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
       visible={visible}
       onClose={onClose}
       title="내 파일"
+      titleIcon={<span className="menu-icon-green"><SFSymbol name="folder" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}
       marginTop={0}
       marginBottom={0}
       marginLeft={0}
