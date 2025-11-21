@@ -7,12 +7,13 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || 'http://tars.giize.com:3010';
 
 export interface User {
-  id: string;
-  kakaoId?: string;
-  name: string;
+  _id: string;
+  name: string | null;
   email: string | null;
   avatarUrl: string | null;
   role: string;
+  authProvider?: string;
+  profileCompleted?: boolean;
 }
 
 export interface AuthResponse {
@@ -41,6 +42,27 @@ export const getCurrentUser = async (token: string): Promise<User> => {
 
   if (!response.data.success || !response.data.user) {
     throw new Error('사용자 정보를 가져올 수 없습니다');
+  }
+
+  return response.data.user;
+};
+
+/**
+ * 프로필 업데이트 (이름 설정)
+ */
+export const updateProfile = async (token: string, name: string): Promise<User> => {
+  const response = await axios.put<AuthResponse>(
+    `${API_BASE_URL}/api/auth/profile`,
+    { name },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.data.success || !response.data.user) {
+    throw new Error('프로필 업데이트에 실패했습니다');
   }
 
   return response.data.user;

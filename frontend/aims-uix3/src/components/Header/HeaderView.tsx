@@ -17,6 +17,7 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Tooltip from '../../shared/ui/Tooltip'
 import { useDevModeStore } from '../../shared/store/useDevModeStore'
 import { useUserStore } from '../../stores/user'
+import { useAuthStore } from '../../shared/stores/authStore'
 import { UserProfileMenu } from './UserProfileMenu'
 import './Header.css'
 
@@ -47,8 +48,11 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
   // 개발자 모드 상태 (Ctrl+Shift+D로 토글)
   const { isDevMode } = useDevModeStore()
 
-  // 현재 사용자 정보
+  // 현재 사용자 정보 (레거시)
   const { userId, setUserId, currentUser, availableUsers, loading } = useUserStore()
+
+  // 소셜 로그인 사용자 정보
+  const { user: authUser, isAuthenticated } = useAuthStore()
 
   // 사용자 프로필 메뉴 상태
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -207,8 +211,14 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
               <span className="header-user-avatar-loading-text">...</span>
             </div>
           ) : (() => {
-            // 전역 currentUser 우선 사용, 없으면 availableUsers에서 찾기 (fallback)
-            const displayUser = currentUser || availableUsers.find(u => u.id === userId);
+            // authStore 사용자 우선 사용 (소셜 로그인), 없으면 레거시 시스템 사용
+            const authUserDisplay = isAuthenticated && authUser ? {
+              id: authUser._id,
+              name: authUser.name || '사용자',
+              email: authUser.email || '',
+              avatarUrl: authUser.avatarUrl || undefined
+            } : null;
+            const displayUser = authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
             const userName = displayUser?.name || userId;
             const userInitial = userName.charAt(0).toUpperCase();
             const avatarUrl = displayUser?.avatarUrl;
@@ -245,8 +255,14 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
         {/* 사용자 프로필 메뉴 */}
         {!loading && (() => {
-          // 전역 currentUser가 있으면 사용, 없으면 availableUsers에서 찾기 (fallback)
-          const displayUser = currentUser || availableUsers.find(u => u.id === userId);
+          // authStore 사용자 우선 사용 (소셜 로그인), 없으면 레거시 시스템 사용
+          const authUserDisplay = isAuthenticated && authUser ? {
+            id: authUser._id,
+            name: authUser.name || '사용자',
+            email: authUser.email || '',
+            avatarUrl: authUser.avatarUrl || undefined
+          } : null;
+          const displayUser = authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
           if (!displayUser) return null;
 
           return (

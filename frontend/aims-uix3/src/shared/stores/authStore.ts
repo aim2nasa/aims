@@ -6,12 +6,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface User {
-  id: string;
-  kakaoId?: string;
-  name: string;
+  _id: string;
+  name: string | null;
   email: string | null;
   avatarUrl: string | null;
   role: string;
+  authProvider?: string;
+  profileCompleted?: boolean;
 }
 
 interface AuthState {

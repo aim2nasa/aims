@@ -43,6 +43,9 @@ export default function AuthCallbackPage() {
         const user = await getCurrentUser(token);
         setUser(user);
 
+        // 레거시 API용 사용자 ID 저장
+        localStorage.setItem('aims-current-user-id', user._id);
+
         // 메인 페이지로 리다이렉트
         navigate('/', { replace: true });
       } catch (err) {
