@@ -343,6 +343,13 @@ export const DocumentUtils = {
   getDocumentType: (document: any): 'ocr' | 'txt' | 'bin' => {
     if (!document) return 'bin';
 
+    // 🔥 우선순위 1: 백엔드가 계산한 badgeType 사용 (고객 문서 탭용)
+    if (document.badgeType) {
+      const type = document.badgeType.toLowerCase();
+      if (type === 'txt') return 'txt';
+      if (type === 'ocr') return 'ocr';
+      if (type === 'bin') return 'bin';
+    }
 
     // MIME 타입 확인: 압축/미디어는 즉시 BIN
     const mimeType = document.mimeType || '';

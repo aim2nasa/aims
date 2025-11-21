@@ -2760,6 +2760,14 @@ app.get('/api/customers/:id/documents', async (req, res) => {
       const statusInfo = analyzeDocumentStatus(doc);
       const customerDoc = customer.documents.find(d => d.document_id.equals(doc._id));
 
+      // badgeType 계산 (FILE_BADGE_SYSTEM.md 기준)
+      let badgeType = 'BIN';
+      if (doc.meta?.full_text && doc.meta.full_text.trim().length > 0) {
+        badgeType = 'TXT';
+      } else if (doc.ocr?.full_text) {
+        badgeType = 'OCR';
+      }
+
       return {
         _id: doc._id,
         originalName: doc.upload?.originalName || 'Unknown File',
@@ -2770,6 +2778,7 @@ app.get('/api/customers/:id/documents', async (req, res) => {
         notes: customerDoc?.notes,
         linkedAt: normalizeTimestamp(customerDoc?.upload_date),
         ar_metadata: doc.ar_metadata,
+        badgeType: badgeType,  // 🔥 TXT/OCR/BIN 뱃지 타입 추가
         ...statusInfo
       };
     });

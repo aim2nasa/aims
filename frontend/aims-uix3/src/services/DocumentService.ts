@@ -69,6 +69,7 @@ export interface CustomerDocumentItem {
   isAnnualReport?: boolean;
   ocrConfidence?: number | string;
   stages?: any;
+  badgeType?: 'TXT' | 'OCR' | 'BIN';  // 🔥 백엔드에서 계산된 뱃지 타입
   ar_metadata?: {
     issue_date?: string;
     customer_name?: string;
@@ -396,6 +397,9 @@ export class DocumentService {
             }
           }
 
+          // badgeType 추출
+          const badgeType = toString(item['badgeType']) as 'TXT' | 'OCR' | 'BIN' | undefined;
+
           const result: CustomerDocumentItem = {
             _id: id
           };
@@ -412,6 +416,7 @@ export class DocumentService {
           if (isAnnualReport) result.isAnnualReport = true;
           if (typeof ocrConfidence === 'number') result.ocrConfidence = ocrConfidence;
           if (stages) result.stages = stages as any;
+          if (badgeType) result.badgeType = badgeType;  // 🔥 백엔드 badgeType 추가
 
           return result;
         })
