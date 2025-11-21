@@ -23,7 +23,21 @@ docker build -t $IMAGE_NAME .
 
 # 3. 컨테이너 실행 (환경변수 전달)
 echo "🚀 새 컨테이너 실행..."
-docker run -d --network host   -e PORT="3010"   -e MONGO_URI="mongodb://tars:27017/"   -e DB_NAME="docupload"   -e NAVER_MAP_ACCESS_KEY="${NAVER_MAP_ACCESS_KEY}"   -e NAVER_MAP_SECRET_KEY="${NAVER_MAP_SECRET_KEY}"   --name $CONTAINER_NAME   $IMAGE_NAME
+docker run -d --network host \
+  -e PORT="3010" \
+  -e MONGO_URI="mongodb://tars:27017/" \
+  -e DB_NAME="docupload" \
+  -e NAVER_MAP_ACCESS_KEY="${NAVER_MAP_ACCESS_KEY}" \
+  -e NAVER_MAP_SECRET_KEY="${NAVER_MAP_SECRET_KEY}" \
+  -e JWT_SECRET="${JWT_SECRET}" \
+  -e JWT_EXPIRES_IN="${JWT_EXPIRES_IN}" \
+  -e SESSION_SECRET="${SESSION_SECRET}" \
+  -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID}" \
+  -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET}" \
+  -e KAKAO_CALLBACK_URL="${KAKAO_CALLBACK_URL}" \
+  -e FRONTEND_URL="${FRONTEND_URL}" \
+  --name $CONTAINER_NAME \
+  $IMAGE_NAME
 
 echo "✅ AIMS Main API 재배포 완료"
 echo ""
