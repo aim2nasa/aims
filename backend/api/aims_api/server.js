@@ -2487,6 +2487,38 @@ app.post('/api/customers/:id/documents', async (req, res) => {
     const qdrantResult = await syncQdrantCustomerRelation(document_id, id);
     console.log(`📊 [Qdrant 동기화 결과] ${qdrantResult.message}, 업데이트된 청크: ${qdrantResult.chunksUpdated || 0}개`);
 
+    // 📋 AR 문서인 경우 파싱 큐에 추가
+    if (document.is_annual_report === true) {
+      try {
+        const queueDoc = {
+          file_id: new ObjectId(document_id),
+          customer_id: new ObjectId(id),
+          status: 'pending',
+          retry_count: 0,
+          created_at: utcNowDate(),
+          updated_at: utcNowDate(),
+          processed_at: null,
+          error_message: null,
+          metadata: {
+            filename: document.filename || 'unknown',
+            mime_type: document.mimeType || 'unknown'
+          }
+        };
+
+        // 중복 방지: file_id가 이미 존재하면 무시
+        await db.collection('ar_parse_queue').updateOne(
+          { file_id: new ObjectId(document_id) },
+          { $setOnInsert: queueDoc },
+          { upsert: true }
+        );
+
+        console.log(`✅ AR 파싱 큐에 작업 추가: file_id=${document_id}, customer_id=${id}`);
+      } catch (queueError) {
+        console.error(`❌ AR 파싱 큐 추가 실패: ${queueError.message}`);
+        // 큐 추가 실패는 치명적이지 않으므로 계속 진행
+      }
+    }
+
     res.json({
       success: true,
       message: '문서가 고객에게 성공적으로 연결되었습니다.',

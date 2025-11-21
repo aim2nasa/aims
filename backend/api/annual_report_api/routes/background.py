@@ -35,6 +35,103 @@ class TriggerParsingResponse(BaseModel):
     skipped_count: int = 0
 
 
+def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
+    """
+    단일 AR 문서를 파싱하는 함수 (큐 워커용)
+
+    Args:
+        db: MongoDB database 객체
+        file_id: 문서 ID (str)
+        customer_id: 고객 ID (str)
+
+    Returns:
+        dict: {"success": bool, "message": str, "error": str (optional)}
+    """
+    try:
+        # 1. 문서 조회
+        doc = db["files"].find_one({"_id": ObjectId(file_id)})
+
+        if not doc:
+            return {"success": False, "error": f"문서를 찾을 수 없음: {file_id}"}
+
+        if not doc.get("is_annual_report"):
+            return {"success": False, "error": "AR 문서가 아님"}
+
+        # 2. 파일 경로 확인
+        file_path = doc.get("filePath")
+        if not file_path:
+            return {"success": False, "error": "파일 경로 없음"}
+
+        import os
+        full_path = os.path.join(settings.DATA_DIR, file_path)
+        if not os.path.exists(full_path):
+            return {"success": False, "error": f"파일이 존재하지 않음: {full_path}"}
+
+        # 3. AR 파싱 실행
+        logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")
+
+        customer_name = doc.get("ar_metadata", {}).get("customer_name")
+        result = parse_annual_report(full_path, customer_name=customer_name)
+
+        if "error" in result:
+            logger.error(f"❌ [Queue Parsing] 파싱 실패: {result['error']}")
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {
+                    "ar_parsing_status": "error",
+                    "ar_parsing_error": result["error"]
+                }}
+            )
+            return {"success": False, "error": result["error"]}
+
+        # 4. MongoDB 저장
+        logger.info(f"💾 [Queue Parsing] DB 저장 중...")
+        metadata = doc.get("ar_metadata", {})
+        save_result = save_annual_report(
+            db=db,
+            customer_id=customer_id,
+            report_data=result,
+            metadata=metadata,
+            source_file_id=file_id
+        )
+
+        if save_result["success"]:
+            logger.info(f"✅ [Queue Parsing] 파싱 완료: {result.get('metadata', {}).get('issue_date', 'unknown')}")
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {
+                    "ar_parsing_status": "completed",
+                    "ar_parsing_completed_at": {"$currentDate": True}
+                }}
+            )
+            return {"success": True, "message": "파싱 완료"}
+        else:
+            error_msg = save_result.get("message", "DB 저장 실패")
+            logger.error(f"❌ [Queue Parsing] DB 저장 실패: {error_msg}")
+            db["files"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {
+                    "ar_parsing_status": "error",
+                    "ar_parsing_error": error_msg
+                }}
+            )
+            return {"success": False, "error": error_msg}
+
+    except Exception as e:
+        logger.error(f"❌ [Queue Parsing] 예외 발생: {e}", exc_info=True)
+        try:
+            db["files"].update_one(
+                {"_id": ObjectId(file_id)},
+                {"$set": {
+                    "ar_parsing_status": "error",
+                    "ar_parsing_error": str(e)
+                }}
+            )
+        except Exception as update_error:
+            logger.error(f"❌ [Queue Parsing] 상태 업데이트 실패: {update_error}")
+        return {"success": False, "error": str(e)}
+
+
 def process_ar_documents_background(db, customer_id: Optional[str] = None, specific_file_id: Optional[str] = None):
     """
     백그라운드에서 AR 문서들을 파싱하는 함수

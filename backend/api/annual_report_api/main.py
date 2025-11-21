@@ -10,6 +10,7 @@ import logging
 import asyncio
 
 from config import settings
+from services.queue_manager import ARParseQueueManager
 
 # 로깅 설정
 logging.basicConfig(
@@ -37,34 +38,86 @@ app.add_middleware(
 # MongoDB 클라이언트 (전역)
 mongo_client: MongoClient = None
 db = None
+queue_manager: ARParseQueueManager = None
 
 # 백그라운드 태스크 실행 중 플래그
 background_task_running = False
 
-async def periodic_ar_check():
-    """30초마다 미처리 AR 문서 자동 처리"""
+async def queue_worker():
+    """큐 기반 AR 파싱 워커 (1초마다 폴링)"""
     global background_task_running
-    from routes.background import process_ar_documents_background
+    from routes.background import parse_single_ar_document
 
-    # 서버 시작 후 5초 대기 (서버 완전 시작 대기)
-    await asyncio.sleep(5)
+    # 서버 시작 후 3초 대기 (서버 완전 시작 대기)
+    await asyncio.sleep(3)
 
     background_task_running = True
-    logger.info("🔄 백그라운드 AR 자동 처리 시작 (30초 간격)")
+    logger.info("🔄 큐 기반 AR 파싱 워커 시작 (1초 폴링)")
+
+    # 시작 시 좀비 작업 복구 (5분 타임아웃)
+    reset_count = await asyncio.to_thread(queue_manager.reset_stale_processing_tasks, 300)
+    if reset_count > 0:
+        logger.info(f"🔧 좀비 작업 {reset_count}건 복구 완료")
 
     while background_task_running:
         try:
-            logger.info("🔍 [자동 검사] 미처리 AR 문서 확인 중...")
-            await asyncio.to_thread(process_ar_documents_background, db)
-            await asyncio.sleep(30)  # 30초 대기
+            # 큐에서 작업 하나 가져오기
+            task = await asyncio.to_thread(queue_manager.dequeue)
+
+            if task:
+                task_id = task["_id"]
+                file_id = task["file_id"]
+                customer_id = task["customer_id"]
+
+                logger.info(f"📄 큐에서 작업 가져옴: file_id={file_id}, retry={task['retry_count']}")
+
+                try:
+                    # AR 파싱 실행
+                    result = await asyncio.to_thread(
+                        parse_single_ar_document,
+                        db,
+                        str(file_id),
+                        str(customer_id)
+                    )
+
+                    if result and result.get("success"):
+                        # 성공: completed 상태로 변경
+                        await asyncio.to_thread(queue_manager.mark_completed, task_id)
+                        logger.info(f"✅ AR 파싱 완료: file_id={file_id}")
+                    else:
+                        # 실패: 재시도 (retry=True)
+                        error_msg = result.get("error", "Unknown error") if result else "Parsing failed"
+                        await asyncio.to_thread(
+                            queue_manager.mark_failed,
+                            task_id,
+                            error_msg,
+                            retry=True
+                        )
+                        logger.warning(f"⚠️  AR 파싱 실패 (재시도 예약): file_id={file_id}, error={error_msg}")
+
+                except Exception as parse_error:
+                    # 예외 발생: 재시도
+                    await asyncio.to_thread(
+                        queue_manager.mark_failed,
+                        task_id,
+                        str(parse_error),
+                        retry=True
+                    )
+                    logger.error(f"❌ AR 파싱 예외: file_id={file_id}, error={parse_error}", exc_info=True)
+
+                # 작업 처리 후 즉시 다음 작업 확인 (딜레이 없음)
+            else:
+                # 큐가 비어있으면 1초 대기
+                await asyncio.sleep(1)
+
         except Exception as e:
-            logger.error(f"❌ [자동 검사] 오류: {e}", exc_info=True)
-            await asyncio.sleep(30)
+            logger.error(f"❌ 워커 루프 오류: {e}", exc_info=True)
+            await asyncio.sleep(1)  # 오류 발생 시 1초 대기 후 재시도
 
 @app.on_event("startup")
 async def startup_event():
     """애플리케이션 시작 시 실행"""
-    global mongo_client, db
+    global mongo_client, db, queue_manager
 
     try:
         # MongoDB 연결
@@ -83,8 +136,17 @@ async def startup_event():
         else:
             logger.info("✅ OPENAI_API_KEY 설정 확인")
 
-        # 백그라운드 자동 처리 태스크 시작
-        asyncio.create_task(periodic_ar_check())
+        # 큐 관리자 초기화
+        queue_manager = ARParseQueueManager(db)
+        logger.info("✅ AR 파싱 큐 관리자 초기화 완료")
+
+        # 큐 통계 출력
+        stats = queue_manager.get_stats()
+        logger.info(f"📊 큐 통계: pending={stats['pending']}, processing={stats['processing']}, "
+                   f"completed={stats['completed']}, failed={stats['failed']}")
+
+        # 백그라운드 큐 워커 시작
+        asyncio.create_task(queue_worker())
 
     except ConnectionFailure as e:
         logger.error(f"❌ MongoDB 연결 실패: {e}")
@@ -177,5 +239,5 @@ if __name__ == "__main__":
         "main:app",
         host=settings.API_HOST,
         port=settings.API_PORT,
-        reload=True  # 개발 모드
+        reload=False  # 운영 모드
     )
