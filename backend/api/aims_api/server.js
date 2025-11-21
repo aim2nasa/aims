@@ -2307,11 +2307,21 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
 
 /**
  * 고객에 문서 연결 API
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.post('/api/customers/:id/documents', async (req, res) => {
   try {
     const { id } = req.params;
     const { document_id, relationship_type, notes, assigned_by } = req.body;
+
+    // ⭐ 설계사별 고객 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
@@ -2320,14 +2330,17 @@ app.post('/api/customers/:id/documents', async (req, res) => {
       });
     }
 
-    // 고객 존재 확인
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 연결 가능
     const customer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
 
     if (!customer) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '고객을 찾을 수 없습니다.'
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -2395,10 +2408,20 @@ app.post('/api/customers/:id/documents', async (req, res) => {
 
 /**
  * 고객에서 문서 연결 해제 API
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
   try {
     const { id, document_id } = req.params;
+
+    // ⭐ 설계사별 고객 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
@@ -2407,14 +2430,17 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
       });
     }
 
-    // 고객 존재 확인
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 연결 해제 가능
     const customer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
 
     if (!customer) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '고객을 찾을 수 없습니다.'
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -2483,11 +2509,21 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
 
 /**
  * 고객 문서 메모 수정 API
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.patch('/api/customers/:id/documents/:document_id', async (req, res) => {
   try {
     const { id, document_id } = req.params;
     const { notes } = req.body;
+
+    // ⭐ 설계사별 고객 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
@@ -2504,14 +2540,17 @@ app.patch('/api/customers/:id/documents/:document_id', async (req, res) => {
       });
     }
 
-    // 고객 존재 확인
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 메모 수정 가능
     const customer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
 
     if (!customer) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '고객을 찾을 수 없습니다.'
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 
@@ -3144,10 +3183,34 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
 
 /**
  * 고객의 AR 파싱 대기/진행 중인 문서 목록 조회
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) => {
   try {
     const { customerId } = req.params;
+
+    // ⭐ 설계사별 고객 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 조회 가능
+    const customer = await db.collection(CUSTOMERS_COLLECTION)
+      .findOne({
+        _id: new ObjectId(customerId),
+        'meta.created_by': userId
+      });
+
+    if (!customer) {
+      return res.status(403).json({
+        success: false,
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
+      });
+    }
 
     console.log(`📋 [Annual Report] AR 파싱 대기 문서 조회: ${customerId}`);
 
@@ -3383,10 +3446,20 @@ app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', async (
 
 /**
  * 고객 주소 이력 조회 API
+ * ⭐ 설계사별 고객 데이터 격리 적용
  */
 app.get('/api/customers/:id/address-history', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ⭐ 설계사별 고객 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -3395,14 +3468,17 @@ app.get('/api/customers/:id/address-history', async (req, res) => {
       });
     }
 
-    // 고객 존재 확인
+    // ⭐ 소유권 검증: 해당 설계사의 고객만 조회 가능
     const customer = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne({
+        _id: new ObjectId(id),
+        'meta.created_by': userId
+      });
 
     if (!customer) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        error: '고객을 찾을 수 없습니다.'
+        error: '고객을 찾을 수 없거나 접근 권한이 없습니다.'
       });
     }
 

@@ -150,7 +150,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
   const loadPendingDocuments = async () => {
     try {
-      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/annual-reports/pending`);
+      // ⭐ 설계사별 고객 데이터 격리
+      const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/annual-reports/pending`, {
+        headers: { 'x-user-id': currentUserId }
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -171,7 +175,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
       // ⭐ 먼저 Documents 탭의 문서들을 가져와서 중복 AR 정리
       try {
-        const docsResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/documents`);
+        // ⭐ 설계사별 고객 데이터 격리
+        const docsUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+        const docsResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/documents`, {
+          headers: { 'x-user-id': docsUserId }
+        });
         const docsData = await docsResponse.json();
 
         if (docsData.success && docsData.data?.documents) {

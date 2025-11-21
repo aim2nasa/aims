@@ -89,8 +89,15 @@ export const useCustomersController = ({
         params.append('hasDocuments', String(validatedQuery.hasDocuments));
       }
 
+      // ⭐ 설계사별 고객 데이터 격리: userId 헤더 추가
+      const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+
       // API 호출
-      const response = await fetch(`http://tars.giize.com:3010/api/customers?${params.toString()}`);
+      const response = await fetch(`http://tars.giize.com:3010/api/customers?${params.toString()}`, {
+        headers: {
+          'x-user-id': currentUserId
+        }
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
