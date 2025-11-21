@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import logging
+import asyncio
 
 from config import settings
 
@@ -37,6 +38,29 @@ app.add_middleware(
 mongo_client: MongoClient = None
 db = None
 
+# 백그라운드 태스크 실행 중 플래그
+background_task_running = False
+
+async def periodic_ar_check():
+    """30초마다 미처리 AR 문서 자동 처리"""
+    global background_task_running
+    from routes.background import process_ar_documents_background
+
+    # 서버 시작 후 5초 대기 (서버 완전 시작 대기)
+    await asyncio.sleep(5)
+
+    background_task_running = True
+    logger.info("🔄 백그라운드 AR 자동 처리 시작 (30초 간격)")
+
+    while background_task_running:
+        try:
+            logger.info("🔍 [자동 검사] 미처리 AR 문서 확인 중...")
+            await asyncio.to_thread(process_ar_documents_background, db)
+            await asyncio.sleep(30)  # 30초 대기
+        except Exception as e:
+            logger.error(f"❌ [자동 검사] 오류: {e}", exc_info=True)
+            await asyncio.sleep(30)
+
 @app.on_event("startup")
 async def startup_event():
     """애플리케이션 시작 시 실행"""
@@ -59,6 +83,9 @@ async def startup_event():
         else:
             logger.info("✅ OPENAI_API_KEY 설정 확인")
 
+        # 백그라운드 자동 처리 태스크 시작
+        asyncio.create_task(periodic_ar_check())
+
     except ConnectionFailure as e:
         logger.error(f"❌ MongoDB 연결 실패: {e}")
         raise
@@ -69,7 +96,11 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """애플리케이션 종료 시 실행"""
-    global mongo_client
+    global mongo_client, background_task_running
+
+    # 백그라운드 태스크 종료
+    background_task_running = False
+    logger.info("🛑 백그라운드 AR 자동 처리 종료")
 
     if mongo_client:
         logger.info("Closing MongoDB connection...")

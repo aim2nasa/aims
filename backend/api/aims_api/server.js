@@ -2471,6 +2471,7 @@ app.post('/api/customers/:id/documents', async (req, res) => {
       { _id: new ObjectId(document_id) },
       {
         $set: {
+          customerId: new ObjectId(id),  // 🔥 AR 파싱을 위한 customerId 필드 추가
           customer_relation: {
             customer_id: new ObjectId(id),
             relationship_type: relationship_type || 'general',
