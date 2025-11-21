@@ -703,13 +703,17 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
             <section className="account-settings-view__section account-settings-view__section--danger">
               <h3 className="account-settings-view__section-title">위험 영역</h3>
-              <button
-                className="account-settings-view__link account-settings-view__link--danger"
-                onClick={() => setShowDeleteModal(true)}
-              >
-                <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
-                <span>계정 삭제</span>
-              </button>
+              <Tooltip content="계정과 모든 데이터가 영구적으로 삭제됩니다" placement="top">
+                <button
+                  type="button"
+                  className="account-settings-view__link account-settings-view__link--danger"
+                  onClick={() => setShowDeleteModal(true)}
+                  aria-label="계정 삭제"
+                >
+                  <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
+                  <span>계정 삭제</span>
+                </button>
+              </Tooltip>
             </section>
           </div>
         )

@@ -189,7 +189,7 @@ const CustomMenuItem = ({
   )
 
   const content = collapsed ? (
-    <Tooltip content={item.tooltipTitle}>
+    <Tooltip content={item.tooltipTitle} placement="right">
       {menuContent}
     </Tooltip>
   ) : (

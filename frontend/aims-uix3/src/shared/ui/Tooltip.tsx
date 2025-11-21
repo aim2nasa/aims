@@ -1,10 +1,11 @@
 /**
  * AIMS UIX-3 Tooltip Component
  * @since 2025-10-02
- * @version 1.0.1 - 위치 계산 로직 수정
+ * @version 1.1.0 - 마우스 위치 기반 툴팁 표시
  *
  * 🍎 iOS 스타일 툴팁 컴포넌트
  * - 호버 시 부드럽게 나타나는 툴팁
+ * - 마우스 위치 기반 툴팁 배치
  * - Progressive Disclosure 철학 적용
  * - 접근성 준수 (ARIA)
  */
@@ -42,38 +43,39 @@ export const Tooltip: React.FC<TooltipProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const timeoutRef = useRef<number | undefined>(undefined)
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   /**
-   * 툴팁이 표시된 후 위치 계산
+   * 툴팁이 표시된 후 위치 계산 (마우스 위치 기반)
    */
   useEffect(() => {
-    if (!isVisible || !triggerRef.current || !tooltipRef.current) return
+    if (!isVisible || !tooltipRef.current) return
 
-    const triggerRect = triggerRef.current.getBoundingClientRect()
     const tooltipRect = tooltipRef.current.getBoundingClientRect()
 
     let top = 0
     let left = 0
 
+    // 마우스 위치 기준으로 툴팁 배치
     switch (placement) {
       case 'top':
-        top = triggerRect.top - tooltipRect.height - 8
-        left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+        top = mousePos.y - tooltipRect.height - 12
+        left = mousePos.x - tooltipRect.width / 2
         break
       case 'bottom':
-        top = triggerRect.bottom + 8
-        left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+        top = mousePos.y + 12
+        left = mousePos.x - tooltipRect.width / 2
         break
       case 'left':
-        top = triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
-        left = triggerRect.left - tooltipRect.width - 8
+        top = mousePos.y - tooltipRect.height / 2
+        left = mousePos.x - tooltipRect.width - 12
         break
       case 'right':
-        top = triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2
-        left = triggerRect.right + 8
+        top = mousePos.y - tooltipRect.height / 2
+        left = mousePos.x + 12
         break
     }
 
@@ -83,15 +85,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
     if (left + tooltipRect.width > window.innerWidth - padding) {
       left = window.innerWidth - tooltipRect.width - padding
     }
-    if (top < padding) top = triggerRect.bottom + 8 // top이 화면 밖이면 bottom으로
+    if (top < padding) top = mousePos.y + 12 // top이 화면 밖이면 bottom으로
 
     setPosition({ top, left })
-  }, [isVisible, placement])
+  }, [isVisible, placement, mousePos])
 
   /**
    * 마우스 진입 시 지연 후 툴팁 표시
    */
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY })
     timeoutRef.current = window.setTimeout(() => {
       setIsVisible(true)
     }, delay)
