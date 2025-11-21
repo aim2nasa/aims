@@ -1,11 +1,12 @@
 /**
  * AIMS UIX-3 Tooltip Component
  * @since 2025-10-02
- * @version 1.1.0 - 마우스 위치 기반 툴팁 표시
+ * @version 1.2.0 - 하이브리드 위치 계산 (요소 기반 수직 + 마우스 기반 수평)
  *
  * 🍎 iOS 스타일 툴팁 컴포넌트
  * - 호버 시 부드럽게 나타나는 툴팁
- * - 마우스 위치 기반 툴팁 배치
+ * - 수직 위치: 요소 기준 (버튼을 가리지 않음)
+ * - 수평 위치: 마우스 기준 (마우스 근처에 표시)
  * - Progressive Disclosure 철학 적용
  * - 접근성 준수 (ARIA)
  */
@@ -49,33 +50,34 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   /**
-   * 툴팁이 표시된 후 위치 계산 (마우스 위치 기반)
+   * 툴팁이 표시된 후 위치 계산 (하이브리드: 요소 기반 수직 + 마우스 기반 수평)
    */
   useEffect(() => {
-    if (!isVisible || !tooltipRef.current) return
+    if (!isVisible || !tooltipRef.current || !triggerRef.current) return
 
     const tooltipRect = tooltipRef.current.getBoundingClientRect()
+    const triggerRect = triggerRef.current.getBoundingClientRect()
 
     let top = 0
     let left = 0
 
-    // 마우스 위치 기준으로 툴팁 배치
+    // 수직: 요소 기준 (버튼을 가리지 않음), 수평: 마우스 기준 (마우스 근처)
     switch (placement) {
       case 'top':
-        top = mousePos.y - tooltipRect.height - 12
-        left = mousePos.x - tooltipRect.width / 2
+        top = triggerRect.top - tooltipRect.height - 8  // 요소 위
+        left = mousePos.x - tooltipRect.width / 2       // 마우스 X 기준
         break
       case 'bottom':
-        top = mousePos.y + 12
-        left = mousePos.x - tooltipRect.width / 2
+        top = triggerRect.bottom + 8                    // 요소 아래
+        left = mousePos.x - tooltipRect.width / 2       // 마우스 X 기준
         break
       case 'left':
-        top = mousePos.y - tooltipRect.height / 2
-        left = mousePos.x - tooltipRect.width - 12
+        top = mousePos.y - tooltipRect.height / 2       // 마우스 Y 기준
+        left = triggerRect.left - tooltipRect.width - 8 // 요소 왼쪽
         break
       case 'right':
-        top = mousePos.y - tooltipRect.height / 2
-        left = mousePos.x + 12
+        top = mousePos.y - tooltipRect.height / 2       // 마우스 Y 기준
+        left = triggerRect.right + 8                    // 요소 오른쪽
         break
     }
 
@@ -85,7 +87,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     if (left + tooltipRect.width > window.innerWidth - padding) {
       left = window.innerWidth - tooltipRect.width - padding
     }
-    if (top < padding) top = mousePos.y + 12 // top이 화면 밖이면 bottom으로
+    if (top < padding) top = triggerRect.bottom + 8 // top이 화면 밖이면 bottom으로
 
     setPosition({ top, left })
   }, [isVisible, placement, mousePos])
