@@ -14,6 +14,7 @@ import Button from '@/shared/ui/Button'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/shared/stores/authStore'
 import './AccountSettingsModal.css'
 
 export interface AccountSettingsModalProps {
@@ -42,6 +43,9 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   // 전역 상태
   const { currentUser, updateCurrentUser } = useUserStore()
 
+  // 소셜 로그인 사용자 정보 (authStore)
+  const { user: authUser, isAuthenticated } = useAuthStore()
+
   // 사용자 정보 상태
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -60,7 +64,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // 사용자 정보 로드 (전역 상태에 없을 때만 API 호출)
+  // 사용자 정보 로드 (authStore 우선, 없으면 레거시 currentUser, 없으면 API 호출)
   useEffect(() => {
     if (!visible) return
 
@@ -69,7 +73,28 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         setIsLoading(true)
         setLoadError(null)
 
-        // 전역 상태에 이미 있으면 API 호출 불필요
+        // 1. authStore 사용자 정보 우선 사용 (소셜 로그인)
+        if (isAuthenticated && authUser) {
+          const authUserData: User = {
+            id: authUser._id,
+            name: authUser.name || '',
+            email: authUser.email || '',
+            role: authUser.role,
+            ...(authUser.avatarUrl && { avatarUrl: authUser.avatarUrl })
+          }
+          setUser(authUserData)
+          setFormData({
+            name: authUserData.name,
+            email: authUserData.email,
+            phone: '',
+            department: '',
+            position: ''
+          })
+          setIsLoading(false)
+          return
+        }
+
+        // 2. 레거시 전역 상태에 이미 있으면 API 호출 불필요
         if (currentUser) {
           setUser(currentUser)
           setFormData({
@@ -83,7 +108,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           return
         }
 
-        // 전역 상태에 없으면 API 호출
+        // 3. 전역 상태에 없으면 API 호출
         const userData = await getCurrentUser()
         setUser(userData)
         setFormData({
@@ -102,7 +127,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
 
     loadUserData()
-  }, [visible, currentUser])
+  }, [visible, currentUser, isAuthenticated, authUser])
 
   // 전역 currentUser 변경 감지 (다른 곳에서 저장한 경우)
   // 편집 중일 때는 사용자 입력을 보존하기 위해 동기화 스킵
