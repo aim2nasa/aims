@@ -300,7 +300,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
     fetchDocuments(true)
     checkApiHealth()
-  }, [fetchDocuments, checkApiHealth])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 초기 로드는 마운트 시 한 번만 실행 (fetchDocuments를 dependency에 포함하면 무한 루프)
+  }, [])
 
   /**
    * initialFiles 변경 시 임시 문서 추가
@@ -457,7 +459,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   useEffect(() => {
     if (typeof window === 'undefined') return
     fetchDocuments(false)
-  }, [currentPage, itemsPerPage, sortField, sortDirection, fetchDocuments])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // fetchDocuments를 dependency에 포함하면 무한 루프 발생 (fetchDocuments 자체가 자주 재생성됨)
+  }, [currentPage, itemsPerPage, sortField, sortDirection])
 
   // State 객체
   const state: DocumentStatusState = useMemo(
