@@ -17,6 +17,8 @@ import { useAccountSettingsStore } from '../../../shared/store/useAccountSetting
 import { useAuthStore } from '../../../shared/stores/authStore';
 import { deleteAccount } from '../../../entities/auth/api';
 import { AccountSettingsModal } from '../../../features/AccountSettings';
+import { AppleConfirmModal } from '../../DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
+import { useAppleConfirmController } from '../../../controllers/useAppleConfirmController';
 import './UserProfileMenu.css';
 
 export interface UserProfileMenuProps {
@@ -68,6 +70,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   // 계정 설정 View 상태 (Zustand store 사용)
   const { openAccountSettingsView } = useAccountSettingsStore();
+
+  // 확인 모달 컨트롤러
+  const { state: confirmState, actions: confirmActions } = useAppleConfirmController();
 
   // 메뉴 위치 계산
   const [position, setPosition] = React.useState({ top: 0, right: 0 });
@@ -145,8 +150,16 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
-  const handleLogout = () => {
-    const confirmed = window.confirm('정말 로그아웃하시겠습니까?');
+  const handleLogout = async () => {
+    onClose();
+    const confirmed = await confirmActions.openModal({
+      title: '로그아웃',
+      message: '정말 로그아웃하시겠습니까?',
+      confirmText: '로그아웃',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      iconType: 'warning'
+    });
     if (confirmed) {
       // authStore 상태 초기화
       authLogout();
@@ -157,15 +170,18 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       // 로그인 페이지로 이동
       navigate('/login', { replace: true });
     }
-    onClose();
   };
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      '⚠️ 계정을 완전히 삭제합니다.\n\n' +
-      '이 작업은 되돌릴 수 없습니다.\n' +
-      '정말 삭제하시겠습니까?'
-    );
+    onClose();
+    const confirmed = await confirmActions.openModal({
+      title: '계정 삭제',
+      message: '계정을 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n정말 삭제하시겠습니까?',
+      confirmText: '삭제',
+      cancelText: '취소',
+      confirmStyle: 'destructive',
+      iconType: 'error'
+    });
     if (confirmed && token) {
       try {
         await deleteAccount(token);
@@ -176,19 +192,31 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         // 레거시 API용 사용자 ID 제거
         localStorage.removeItem('aims-current-user-id');
 
-        alert('계정이 삭제되었습니다.');
+        // 삭제 완료 알림
+        await confirmActions.openModal({
+          title: '삭제 완료',
+          message: '계정이 삭제되었습니다.',
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'success'
+        });
 
         // 로그인 페이지로 이동
         navigate('/login', { replace: true });
       } catch (error) {
         console.error('계정 삭제 실패:', error);
-        alert('계정 삭제에 실패했습니다.');
+        await confirmActions.openModal({
+          title: '오류',
+          message: '계정 삭제에 실패했습니다.',
+          confirmText: '확인',
+          showCancel: false,
+          iconType: 'error'
+        });
       }
     }
-    onClose();
   };
 
-  if (!isOpen && !isAccountSettingsOpen) return null;
+  if (!isOpen && !isAccountSettingsOpen && !confirmState.isOpen) return null;
 
   const menuContent = (
     <>
@@ -266,6 +294,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
         onClose={() => setIsAccountSettingsOpen(false)}
         onAdvancedSettingsClick={handleAdvancedSettings}
       />
+
+      {/* 확인 모달 */}
+      <AppleConfirmModal state={confirmState} actions={confirmActions} />
     </>
   );
 

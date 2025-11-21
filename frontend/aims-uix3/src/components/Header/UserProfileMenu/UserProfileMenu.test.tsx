@@ -413,29 +413,7 @@ describe('UserProfileMenu', () => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    it('"로그아웃" 클릭 시 확인 다이얼로그를 표시해야 한다', async () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-      const user = userEvent.setup();
-
-      render(
-        <UserProfileMenu
-          isOpen={true}
-          onClose={vi.fn()}
-          user={mockUser}
-          anchorElement={mockAnchorElement}
-        />
-      );
-
-      const logoutButton = screen.getByTestId('menu-item-로그아웃');
-      await user.click(logoutButton);
-
-      expect(confirmSpy).toHaveBeenCalledWith('정말 로그아웃하시겠습니까?');
-
-      confirmSpy.mockRestore();
-    });
-
-    it('"로그아웃" 확인 후 authLogout 호출, localStorage 제거, /login으로 이동해야 한다', async () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    it('"로그아웃" 클릭 시 메뉴를 닫고 확인 모달을 표시해야 한다', async () => {
       const handleClose = vi.fn();
       const user = userEvent.setup();
 
@@ -450,17 +428,47 @@ describe('UserProfileMenu', () => {
 
       const logoutButton = screen.getByTestId('menu-item-로그아웃');
       await user.click(logoutButton);
+
+      // 로그아웃 버튼 클릭 시 메뉴가 먼저 닫히고 확인 모달이 표시됨
+      expect(handleClose).toHaveBeenCalled();
+
+      // AppleConfirmModal이 표시되는지 확인 (모달의 메시지로 확인)
+      await waitFor(() => {
+        expect(screen.getByText('정말 로그아웃하시겠습니까?')).toBeInTheDocument();
+      });
+    });
+
+    it('"로그아웃" 확인 버튼 클릭 후 authLogout 호출, localStorage 제거, /login으로 이동해야 한다', async () => {
+      const handleClose = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <UserProfileMenu
+          isOpen={true}
+          onClose={handleClose}
+          user={mockUser}
+          anchorElement={mockAnchorElement}
+        />
+      );
+
+      const logoutButton = screen.getByTestId('menu-item-로그아웃');
+      await user.click(logoutButton);
+
+      // AppleConfirmModal이 표시될 때까지 대기
+      await waitFor(() => {
+        expect(screen.getByText('정말 로그아웃하시겠습니까?')).toBeInTheDocument();
+      });
+
+      // 확인 모달의 로그아웃 버튼 클릭
+      const confirmButton = screen.getByRole('button', { name: '로그아웃' });
+      await user.click(confirmButton);
 
       expect(mockLogout).toHaveBeenCalled();
       expect(localStorage.removeItem).toHaveBeenCalledWith('aims-current-user-id');
       expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
-      expect(handleClose).toHaveBeenCalled();
-
-      confirmSpy.mockRestore();
     });
 
-    it('"로그아웃" 취소 시 onClose를 호출해야 한다', async () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('"로그아웃" 취소 버튼 클릭 시 로그아웃하지 않아야 한다', async () => {
       const handleClose = vi.fn();
       const user = userEvent.setup();
 
@@ -476,9 +484,17 @@ describe('UserProfileMenu', () => {
       const logoutButton = screen.getByTestId('menu-item-로그아웃');
       await user.click(logoutButton);
 
-      expect(handleClose).toHaveBeenCalled();
+      // AppleConfirmModal이 표시될 때까지 대기
+      await waitFor(() => {
+        expect(screen.getByText('정말 로그아웃하시겠습니까?')).toBeInTheDocument();
+      });
 
-      confirmSpy.mockRestore();
+      // 취소 버튼 클릭
+      const cancelButton = screen.getByRole('button', { name: '취소' });
+      await user.click(cancelButton);
+
+      expect(mockLogout).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalledWith('/login', { replace: true });
     });
   });
 
