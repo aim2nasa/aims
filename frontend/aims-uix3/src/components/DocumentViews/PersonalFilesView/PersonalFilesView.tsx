@@ -233,7 +233,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
     try {
       // 1. 폴더/파일 시스템 데이터 조회
       const data = await personalFilesService.getFolderContents(folderId)
-      if (import.meta.env.DEV) console.log(`📁 loadFolderContents(${folderId}):`, data)
 
       // 🍎 폴더 시스템 아이템 캐싱 (참조 유지)
       const cachedFolderItems = data.items.map(item => {
@@ -256,7 +255,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
       // 2. customerId === userId인 문서들 조회 (folderId 기반 필터링)
       try {
-        if (import.meta.env.DEV) console.log(`📄 내 파일 조회 시작 (customerId === userId, folderId === ${folderId})...`)
         const docsResponse = await DocumentStatusService.getRecentDocuments(1, 1000)
         const allDocs = docsResponse.documents || []
 
@@ -275,7 +273,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
           return false
         })
-        if (import.meta.env.DEV) console.log(`✅ 내 파일 ${myDocs.length}개 발견 (folderId=${folderId}):`, myDocs.map(d => d.filename))
 
         // Document → PersonalFileItem 변환 (캐시 사용으로 깜빡임 방지)
         const myFileItems = myDocs.map(doc => {
@@ -326,7 +323,6 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
         // 폴더 시스템 파일과 합치기
         finalItems = [...data.items, ...myFileItems]
-        if (import.meta.env.DEV) console.log(`📋 최종 목록: ${finalItems.length}개 (폴더: ${data.items.length}, 내 파일: ${myFileItems.length})`)
       } catch (docErr) {
         console.error('⚠️ 내 파일 조회 실패:', docErr)
         // 실패해도 폴더 시스템은 정상 표시
