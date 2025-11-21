@@ -31,7 +31,7 @@ const MenuIcons = {
   ),
   Team: () => (
     <SFSymbol
-      name="person-2"
+      name="heart-fill"
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
@@ -298,7 +298,7 @@ const CustomMenu = ({
         },
         {
           key: 'customers-relationship',
-          icon: <MenuIcons.Team />,
+          icon: <span className="menu-icon-pink"><MenuIcons.Team /></span>,
           label: '관계별 보기',
           tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
         }
@@ -327,7 +327,7 @@ const CustomMenu = ({
       },
       {
         key: 'customers-relationship',
-        icon: <MenuIcons.Team />,
+        icon: <span className="menu-icon-pink"><MenuIcons.Team /></span>,
         label: '',
         tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
       }

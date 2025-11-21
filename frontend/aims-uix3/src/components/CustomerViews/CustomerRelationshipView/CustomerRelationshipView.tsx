@@ -770,7 +770,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
       <CenterPaneView
         visible={visible}
         title="관계별 보기"
-        titleIcon={<SFSymbol name="person-2" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+        titleIcon={<span className="menu-icon-pink"><SFSymbol name="heart-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}
         onClose={onClose}
         marginTop={7}
         marginBottom={7}
@@ -792,7 +792,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     <CenterPaneView
       visible={visible}
       title="관계별 보기"
-      titleIcon={<SFSymbol name="person-2" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
+      titleIcon={<span className="menu-icon-pink"><SFSymbol name="heart-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>}
       onClose={onClose}
       marginTop={7}
       marginBottom={7}
