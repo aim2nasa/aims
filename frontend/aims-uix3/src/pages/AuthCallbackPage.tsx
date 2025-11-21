@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { getCurrentUser } from '@/entities/auth/api';
+import { syncUserIdFromStorage } from '@/stores/user';
 import './AuthCallbackPage.css';
 
 export default function AuthCallbackPage() {
@@ -43,8 +44,9 @@ export default function AuthCallbackPage() {
         const user = await getCurrentUser(token);
         setUser(user);
 
-        // 레거시 API용 사용자 ID 저장
+        // 레거시 API용 사용자 ID 저장 및 동기화
         localStorage.setItem('aims-current-user-id', user._id);
+        syncUserIdFromStorage();
 
         // 메인 페이지로 리다이렉트
         navigate('/', { replace: true });

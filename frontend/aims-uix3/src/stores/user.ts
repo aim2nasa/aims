@@ -56,6 +56,20 @@ function notifySubscribers() {
 }
 
 /**
+ * localStorage에서 userId를 다시 읽어 동기화 (페이지 리로드 없이)
+ * 소셜 로그인 후 호출하여 레거시 시스템과 동기화
+ */
+export function syncUserIdFromStorage(): void {
+  if (typeof window === 'undefined') return;
+
+  const storedUserId = localStorage.getItem('aims-current-user-id');
+  if (storedUserId && storedUserId !== currentUserId) {
+    currentUserId = storedUserId;
+    notifySubscribers();
+  }
+}
+
+/**
  * 모든 구독자에게 사용자 정보 변경 알림
  */
 function notifyUserInfoSubscribers() {
