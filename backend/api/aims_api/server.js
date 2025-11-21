@@ -1776,33 +1776,46 @@ app.get('/api/customers', async (req, res) => {
 
 /**
  * 윈도우식 중복명 처리를 위한 고유한 고객명 생성 함수
+ * @param {string} originalName - 원본 고객명
+ * @param {string} userId - 설계사(사용자) ID - 설계사별로 고객명 중복 체크
  */
-async function generateUniqueCustomerName(originalName) {
-  // 원본 이름으로 먼저 검색
+async function generateUniqueCustomerName(originalName, userId) {
+  // 해당 설계사의 고객 중에서만 중복 체크
+  const filter = { 'personal_info.name': originalName };
+  if (userId) {
+    filter['meta.created_by'] = userId;
+  }
+
+  // 원본 이름으로 먼저 검색 (해당 설계사 소속 고객만)
   const existingCustomer = await db.collection(CUSTOMERS_COLLECTION)
-    .findOne({ 'personal_info.name': originalName });
-  
+    .findOne(filter);
+
   // 중복이 없으면 원본 이름 반환
   if (!existingCustomer) {
     return originalName;
   }
-  
+
   // 중복이 있으면 (1), (2), ... 형태로 번호 붙이기
   let counter = 1;
   let uniqueName;
-  
+
   while (true) {
     uniqueName = `${originalName} (${counter})`;
-    
+
+    const duplicateFilter = { 'personal_info.name': uniqueName };
+    if (userId) {
+      duplicateFilter['meta.created_by'] = userId;
+    }
+
     const duplicateCheck = await db.collection(CUSTOMERS_COLLECTION)
-      .findOne({ 'personal_info.name': uniqueName });
-    
+      .findOne(duplicateFilter);
+
     if (!duplicateCheck) {
       return uniqueName;
     }
-    
+
     counter++;
-    
+
     // 무한 루프 방지 (최대 100개까지)
     if (counter > 100) {
       return `${originalName} (${Date.now()})`;
@@ -1835,7 +1848,7 @@ app.post('/api/customers', async (req, res) => {
       });
     }
 
-    const uniqueName = await generateUniqueCustomerName(originalName);
+    const uniqueName = await generateUniqueCustomerName(originalName, userId);
 
     const newCustomer = {
       ...customerData,
