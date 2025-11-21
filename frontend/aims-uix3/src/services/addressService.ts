@@ -42,6 +42,11 @@ export class AddressService {
       throw new Error('고객 ID가 필요합니다');
     }
 
+    // ⭐ 설계사별 데이터 격리: localStorage에서 userId 가져오기
+    const userId = typeof window !== 'undefined'
+      ? localStorage.getItem('aims-current-user-id') || 'tester'
+      : 'tester';
+
     try {
       const response = await fetch(
         `${API_BASE_URL}/customers/${customerId}/address-history`,
@@ -49,6 +54,7 @@ export class AddressService {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': userId, // ⭐ 백엔드 필수 헤더
           },
         }
       );

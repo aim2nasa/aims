@@ -57,6 +57,7 @@ describe('AddressService', () => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'x-user-id': 'tester', // ⭐ 설계사별 데이터 격리
           },
         }
       );
