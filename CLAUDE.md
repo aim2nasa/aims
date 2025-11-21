@@ -1054,3 +1054,22 @@ import Tooltip from '@/shared/ui/Tooltip'
 2. 없으면 SVG 직접 사용 (AllCustomersView/DocumentLibraryView 참조)
 3. Tooltip은 named export: `import { Tooltip } from '@/shared/ui/Tooltip'`
 
+
+---
+
+## 🔒 보안 문서 관리
+
+### 보안 이슈 기록 규칙
+
+**모든 보안 관련 이슈는 `docs/SECURITY_ROADMAP.md`에 기록합니다.**
+
+- 새로운 보안 취약점 발견 시 → SECURITY_ROADMAP.md에 추가
+- 보안 강화 작업 계획 시 → SECURITY_ROADMAP.md에 우선순위와 함께 기록
+- 보안 점검 결과 → SECURITY_ROADMAP.md에 업데이트
+
+### 관련 보안 문서
+
+| 문서 | 용도 |
+|------|------|
+| [SECURITY_ROADMAP.md](docs/SECURITY_ROADMAP.md) | 향후 보안 이슈 및 로드맵 (지속 업데이트) |
+| [DATA_ISOLATION_STATUS.md](docs/DATA_ISOLATION_STATUS.md) | 설계사별 데이터 격리 현황 |
