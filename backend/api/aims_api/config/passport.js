@@ -31,29 +31,29 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ kakaoId });
 
       if (user) {
-        // 기존 사용자 업데이트
+        // 기존 사용자: lastLogin만 업데이트 (이름은 사용자가 직접 설정)
         await usersCollection.updateOne(
           { kakaoId },
           {
             $set: {
-              name,
-              email,
               avatarUrl,
-              lastLogin: new Date(),
-              authProvider: 'kakao'
+              lastLogin: new Date()
             }
           }
         );
         user = await usersCollection.findOne({ kakaoId });
       } else {
-        // 새 사용자 생성
+        // 새 사용자 생성 (설계안 준수)
         const newUser = {
           kakaoId,
-          name,
+          naverId: null,
+          googleId: null,
+          name: null,  // 프로필 설정에서 입력
           email,
           avatarUrl,
           role: 'user',
           authProvider: 'kakao',
+          profileCompleted: false,  // 프로필 미완료
           createdAt: new Date(),
           lastLogin: new Date()
         };

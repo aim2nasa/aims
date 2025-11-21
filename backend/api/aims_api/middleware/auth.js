@@ -8,10 +8,9 @@ const jwt = require('jsonwebtoken');
  * JWT 토큰 생성
  */
 function generateToken(user) {
+  // 설계안: JWT에는 _id, name, role만 포함 (소셜 ID 노출 금지)
   const payload = {
     id: user._id.toString(),
-    kakaoId: user.kakaoId,
-    email: user.email,
     name: user.name,
     role: user.role || 'user'
   };

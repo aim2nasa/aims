@@ -57,6 +57,7 @@ module.exports = function(db) {
   /**
    * GET /api/auth/me
    * 현재 로그인한 사용자 정보 조회
+   * 설계안: 소셜 ID(kakaoId 등) 노출 금지
    */
   router.get('/me', authenticateJWT, async (req, res) => {
     try {
@@ -65,7 +66,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, kakaoId: 1, name: 1, email: 1, avatarUrl: 1, role: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
       );
 
       if (!user) {
@@ -78,12 +79,13 @@ module.exports = function(db) {
       res.json({
         success: true,
         user: {
-          id: user._id.toString(),
-          kakaoId: user.kakaoId,
+          _id: user._id.toString(),
           name: user.name,
           email: user.email,
           avatarUrl: user.avatarUrl,
-          role: user.role
+          role: user.role,
+          authProvider: user.authProvider,
+          profileCompleted: user.profileCompleted ?? true
         }
       });
     } catch (error) {
@@ -91,6 +93,69 @@ module.exports = function(db) {
       res.status(500).json({
         success: false,
         message: 'Failed to get user information'
+      });
+    }
+  });
+
+  /**
+   * PUT /api/auth/profile
+   * 프로필 업데이트 (이름 설정)
+   */
+  router.put('/profile', authenticateJWT, async (req, res) => {
+    try {
+      const { ObjectId } = require('mongodb');
+      const usersCollection = db.collection('users');
+      const { name } = req.body;
+
+      // 이름 유효성 검사
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: '이름을 입력해주세요'
+        });
+      }
+
+      const trimmedName = name.trim();
+      if (trimmedName.length < 1 || trimmedName.length > 20) {
+        return res.status(400).json({
+          success: false,
+          message: '이름은 1-20자로 입력해주세요'
+        });
+      }
+
+      // 프로필 업데이트
+      await usersCollection.updateOne(
+        { _id: new ObjectId(req.user.id) },
+        {
+          $set: {
+            name: trimmedName,
+            profileCompleted: true
+          }
+        }
+      );
+
+      const user = await usersCollection.findOne(
+        { _id: new ObjectId(req.user.id) },
+        { projection: { _id: 1, name: 1, email: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
+      );
+
+      res.json({
+        success: true,
+        user: {
+          _id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+          role: user.role,
+          authProvider: user.authProvider,
+          profileCompleted: user.profileCompleted
+        }
+      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      res.status(500).json({
+        success: false,
+        message: '프로필 업데이트에 실패했습니다'
       });
     }
   });
