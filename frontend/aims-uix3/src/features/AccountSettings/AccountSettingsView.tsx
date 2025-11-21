@@ -57,7 +57,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   const { currentUser, updateCurrentUser } = useUserStore()
 
   // 소셜 로그인 사용자 정보 (authStore)
-  const { user: authUser, isAuthenticated } = useAuthStore()
+  const { user: authUser, isAuthenticated, setUser: setAuthUser } = useAuthStore()
 
   // 현재 탭
   const [activeTab, setActiveTab] = useState<TabId>('profile')
@@ -259,6 +259,15 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
       // 전역 상태 업데이트 (모든 컴포넌트에 즉시 반영)
       updateCurrentUser(updatedUser)
+
+      // authStore도 업데이트 (프로필 메뉴 등에 즉시 반영)
+      if (authUser) {
+        setAuthUser({
+          ...authUser,
+          name: updatedUser.name,
+          email: updatedUser.email
+        })
+      }
 
       // 성공 메시지 (선택적)
       console.log('✅ 사용자 정보가 저장되었습니다')
