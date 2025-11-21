@@ -23,15 +23,23 @@ module.exports = function(db) {
 
   /**
    * GET /api/auth/kakao
-   * 카카오 로그인 시작
+   * 카카오 로그인 시작 (기존 계정으로 빠른 로그인)
    */
   router.get('/kakao',
     passport.authenticate('kakao', { session: false })
   );
 
   /**
+   * GET /api/auth/kakao/switch
+   * 카카오 로그인 (다른 계정으로 로그인 - 매번 로그인 화면 표시)
+   */
+  router.get('/kakao/switch',
+    passport.authenticate('kakao-switch', { session: false })
+  );
+
+  /**
    * GET /api/auth/kakao/callback
-   * 카카오 로그인 콜백
+   * 카카오 로그인 콜백 (kakao, kakao-switch 공통)
    */
   router.get('/kakao/callback',
     passport.authenticate('kakao', {

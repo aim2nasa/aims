@@ -14,24 +14,11 @@ module.exports = function(db) {
     console.warn('⚠️  KAKAO_CLIENT_ID가 실제 값이 아닙니다. 테스트 모드로 작동합니다.');
   }
 
-  // 커스텀 카카오 전략 (prompt 파라미터 지원)
-  class KakaoStrategyWithPrompt extends KakaoStrategy {
-    authorizationParams(options) {
-      return { prompt: 'login' };  // 매번 로그인 화면 표시
-    }
-  }
-
-  // 카카오 로그인 전략
-  passport.use(new KakaoStrategyWithPrompt({
-    clientID: kakaoClientId,
-    clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
-    callbackURL: process.env.KAKAO_CALLBACK_URL
-  },
-  async function(accessToken, refreshToken, profile, done) {
+  // 공통 카카오 인증 콜백
+  const kakaoVerifyCallback = async (accessToken, refreshToken, profile, done) => {
     try {
       const kakaoId = profile.id;
       const email = profile._json.kakao_account?.email || null;
-      const name = profile.displayName || profile.username;
       const avatarUrl = profile._json.properties?.profile_image || null;
 
       // 기존 사용자 찾기
@@ -72,7 +59,28 @@ module.exports = function(db) {
     } catch (error) {
       return done(error, null);
     }
-  }));
+  };
+
+  // 커스텀 카카오 전략 (prompt=login: 다른 계정으로 로그인)
+  class KakaoStrategyWithPrompt extends KakaoStrategy {
+    authorizationParams() {
+      return { prompt: 'login' };
+    }
+  }
+
+  // 기본 전략: 기존 계정으로 빠른 로그인 (prompt 없음)
+  passport.use('kakao', new KakaoStrategy({
+    clientID: kakaoClientId,
+    clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
+    callbackURL: process.env.KAKAO_CALLBACK_URL
+  }, kakaoVerifyCallback));
+
+  // 다른 계정 전략: 매번 로그인 화면 표시
+  passport.use('kakao-switch', new KakaoStrategyWithPrompt({
+    clientID: kakaoClientId,
+    clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
+    callbackURL: process.env.KAKAO_CALLBACK_URL
+  }, kakaoVerifyCallback));
 
   // 세션에 사용자 ID 저장
   passport.serializeUser((user, done) => {

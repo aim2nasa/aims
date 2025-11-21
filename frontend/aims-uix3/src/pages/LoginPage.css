@@ -73,3 +73,20 @@
 .kakao-login-button svg {
   flex-shrink: 0;
 }
+
+/* 다른 계정으로 로그인 버튼 - 테두리 스타일 */
+.kakao-login-button--secondary {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.kakao-login-button--secondary:hover {
+  background: var(--color-bg-tertiary);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.kakao-login-button--secondary svg path {
+  fill: var(--color-text-secondary);
+}

@@ -24,10 +24,17 @@ export interface AuthResponse {
 }
 
 /**
- * 카카오 로그인 시작 (백엔드로 리다이렉트)
+ * 카카오 로그인 시작 - 기존 계정으로 빠른 로그인
  */
 export const startKakaoLogin = () => {
   window.location.href = `${API_BASE_URL}/api/auth/kakao`;
+};
+
+/**
+ * 카카오 로그인 시작 - 다른 계정으로 로그인 (매번 로그인 화면 표시)
+ */
+export const startKakaoLoginSwitch = () => {
+  window.location.href = `${API_BASE_URL}/api/auth/kakao/switch`;
 };
 
 /**
