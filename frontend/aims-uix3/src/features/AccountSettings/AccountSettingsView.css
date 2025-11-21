@@ -687,4 +687,39 @@ html[data-theme="dark"] .account-settings-view__edit-button-inline:hover {
     transition: none;
   }
 }
+/* === DELETE MODAL === */
+
+.account-settings-view__delete-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.account-settings-view__delete-modal-content {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.account-settings-view__delete-modal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-bg-error-subtle, rgba(255, 59, 48, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.account-settings-view__delete-modal-title {
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.account-settings-view__delete-modal-desc {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
 /* Real test 1 - 1762508478 */

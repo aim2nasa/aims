@@ -12,8 +12,10 @@ import React, { useState, useEffect } from 'react'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
+import Modal from '@/shared/ui/Modal/Modal'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import { getCurrentUser, updateUser, type User } from '@/entities/user/api'
+import { deleteAccount } from '@/entities/auth/api'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/shared/stores/authStore'
 import './AccountSettingsView.css'
@@ -57,7 +59,7 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   const { currentUser, updateCurrentUser } = useUserStore()
 
   // 소셜 로그인 사용자 정보 (authStore)
-  const { user: authUser, isAuthenticated, setUser: setAuthUser } = useAuthStore()
+  const { user: authUser, isAuthenticated, setUser: setAuthUser, token, logout } = useAuthStore()
 
   // 현재 탭
   const [activeTab, setActiveTab] = useState<TabId>('profile')
@@ -89,6 +91,10 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 편집 모드 상태
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  // 계정 삭제 모달 상태
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 아바타 이미지 상태
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(undefined)
@@ -292,6 +298,33 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     })
     setAvatarPreview(user.avatarUrl)
     setIsEditing(false)
+  }
+
+  // 계정 삭제 핸들러
+  const handleDeleteAccount = async () => {
+    if (!token) {
+      alert('로그인이 필요합니다.')
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      await deleteAccount(token)
+
+      // 로그아웃 처리
+      logout()
+      localStorage.removeItem('auth-storage')
+
+      // 삭제 완료 후 로그인 페이지로 이동
+      setShowDeleteModal(false)
+      onClose()
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('계정 삭제 실패:', error)
+      alert(error instanceof Error ? error.message : '계정 삭제에 실패했습니다.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // 탭별 콘텐츠 렌더링
@@ -670,10 +703,12 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
             <section className="account-settings-view__section account-settings-view__section--danger">
               <h3 className="account-settings-view__section-title">위험 영역</h3>
-              <button className="account-settings-view__link account-settings-view__link--danger">
+              <button
+                className="account-settings-view__link account-settings-view__link--danger"
+                onClick={() => setShowDeleteModal(true)}
+              >
                 <SFSymbol name="trash" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} />
                 <span>계정 삭제</span>
-                <span className="account-settings-view__badge">준비중</span>
               </button>
             </section>
           </div>
@@ -746,6 +781,51 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
 
       {/* 탭 콘텐츠 */}
       {renderTabContent()}
+
+      {/* 계정 삭제 확인 모달 */}
+      <Modal
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="계정 삭제"
+        size="sm"
+        backdropClosable={!isDeleting}
+        escapeToClose={!isDeleting}
+        footer={
+          <div className="account-settings-view__delete-modal-footer">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              size="md"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </div>
+        }
+        ariaLabel="계정 삭제 확인"
+      >
+        <div className="account-settings-view__delete-modal-content">
+          <div className="account-settings-view__delete-modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="var(--color-text-error, #FF3B30)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <p className="account-settings-view__delete-modal-title">
+            정말 계정을 삭제하시겠습니까?
+          </p>
+          <p className="account-settings-view__delete-modal-desc">
+            이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.
+          </p>
+        </div>
+      </Modal>
     </CenterPaneView>
   )
 }
