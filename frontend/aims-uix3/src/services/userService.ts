@@ -38,6 +38,9 @@ interface AuthMeResponse {
     _id: string
     name: string | null
     email: string | null
+    phone: string | null
+    department: string | null
+    position: string | null
     avatarUrl: string | null
     role: string
     authProvider: string
@@ -66,6 +69,15 @@ export async function getCurrentUser(): Promise<User> {
     profileCompleted: response.user.profileCompleted
   }
 
+  if (response.user.phone) {
+    user.phone = response.user.phone
+  }
+  if (response.user.department) {
+    user.department = response.user.department
+  }
+  if (response.user.position) {
+    user.position = response.user.position
+  }
   if (response.user.avatarUrl) {
     user.avatarUrl = response.user.avatarUrl
   }
@@ -92,14 +104,23 @@ export async function updateUser(
   _userId: string,
   updates: Partial<Omit<User, 'id' | 'role'>>
 ): Promise<User> {
-  // 프로필 업데이트 (이름, 이메일)
-  const updatePayload: { name?: string; email?: string } = {}
+  // 프로필 업데이트 (이름, 이메일, 전화번호, 지점, 직급)
+  const updatePayload: { name?: string; email?: string; phone?: string; department?: string; position?: string } = {}
 
   if (updates.name !== undefined) {
     updatePayload.name = updates.name
   }
   if (updates.email !== undefined) {
     updatePayload.email = updates.email
+  }
+  if (updates.phone !== undefined) {
+    updatePayload.phone = updates.phone
+  }
+  if (updates.department !== undefined) {
+    updatePayload.department = updates.department
+  }
+  if (updates.position !== undefined) {
+    updatePayload.position = updates.position
   }
 
   // 업데이트할 내용이 있으면 API 호출
@@ -119,6 +140,15 @@ export async function updateUser(
       profileCompleted: response.user.profileCompleted
     }
 
+    if (response.user.phone) {
+      user.phone = response.user.phone
+    }
+    if (response.user.department) {
+      user.department = response.user.department
+    }
+    if (response.user.position) {
+      user.position = response.user.position
+    }
     if (response.user.avatarUrl) {
       user.avatarUrl = response.user.avatarUrl
     }

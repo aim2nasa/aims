@@ -72,7 +72,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, name: 1, email: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
       );
 
       if (!user) {
@@ -88,6 +88,9 @@ module.exports = function(db) {
           _id: user._id.toString(),
           name: user.name,
           email: user.email,
+          phone: user.phone,
+          department: user.department,
+          position: user.position,
           avatarUrl: user.avatarUrl,
           role: user.role,
           authProvider: user.authProvider,
@@ -105,13 +108,13 @@ module.exports = function(db) {
 
   /**
    * PUT /api/auth/profile
-   * 프로필 업데이트 (이름, 이메일 설정)
+   * 프로필 업데이트 (이름, 이메일, 전화번호, 지점, 직급)
    */
   router.put('/profile', authenticateJWT, async (req, res) => {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      const { name, email } = req.body;
+      const { name, email, phone, department, position } = req.body;
 
       // 업데이트할 필드 준비
       const updateFields = { profileCompleted: true };
@@ -152,6 +155,21 @@ module.exports = function(db) {
         updateFields.email = trimmedEmail || null;
       }
 
+      // 전화번호 설정
+      if (phone !== undefined) {
+        updateFields.phone = typeof phone === 'string' ? phone.trim() || null : null;
+      }
+
+      // 지점 설정
+      if (department !== undefined) {
+        updateFields.department = typeof department === 'string' ? department.trim() || null : null;
+      }
+
+      // 직급 설정
+      if (position !== undefined) {
+        updateFields.position = typeof position === 'string' ? position.trim() || null : null;
+      }
+
       // 프로필 업데이트
       await usersCollection.updateOne(
         { _id: new ObjectId(req.user.id) },
@@ -160,7 +178,7 @@ module.exports = function(db) {
 
       const user = await usersCollection.findOne(
         { _id: new ObjectId(req.user.id) },
-        { projection: { _id: 1, name: 1, email: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
+        { projection: { _id: 1, name: 1, email: 1, phone: 1, department: 1, position: 1, avatarUrl: 1, role: 1, authProvider: 1, profileCompleted: 1 } }
       );
 
       res.json({
@@ -169,6 +187,9 @@ module.exports = function(db) {
           _id: user._id.toString(),
           name: user.name,
           email: user.email,
+          phone: user.phone,
+          department: user.department,
+          position: user.position,
           avatarUrl: user.avatarUrl,
           role: user.role,
           authProvider: user.authProvider,
