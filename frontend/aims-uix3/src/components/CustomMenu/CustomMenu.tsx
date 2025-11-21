@@ -362,7 +362,7 @@ const CustomMenu = ({
           key: 'documents-my-files',
           icon: <span className="menu-icon-green"><MenuIcons.Folder /></span>,
           label: '내 파일',
-          tooltipTitle: 'Google Drive 스타일의 개인 파일 관리',
+          tooltipTitle: '내 파일 보관함',
         }
       ]
     },
@@ -391,7 +391,7 @@ const CustomMenu = ({
         key: 'documents-my-files',
         icon: <span className="menu-icon-green"><MenuIcons.Folder /></span>,
         label: '',
-        tooltipTitle: 'Google Drive 스타일의 개인 파일 관리',
+        tooltipTitle: '내 파일 보관함',
       }
     ] : [])
   ], [collapsed, hasSearchResults, searchResultsCount])
