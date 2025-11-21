@@ -25,12 +25,11 @@ module.exports = function(db) {
       let user = await usersCollection.findOne({ kakaoId });
 
       if (user) {
-        // 기존 사용자: lastLogin만 업데이트 (이름은 사용자가 직접 설정)
+        // 기존 사용자: lastLogin만 업데이트 (avatarUrl은 사용자가 직접 설정한 것 유지)
         await usersCollection.updateOne(
           { kakaoId },
           {
             $set: {
-              avatarUrl,
               lastLogin: new Date()
             }
           }

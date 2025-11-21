@@ -201,8 +201,45 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     }
   }
 
+  // 이미지를 200x200으로 리사이즈하는 함수
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const reader = new FileReader()
+
+      reader.onload = (e) => {
+        img.src = e.target?.result as string
+      }
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Canvas not supported'))
+          return
+        }
+
+        // 정사각형 크롭 (중앙 기준)
+        const size = Math.min(img.width, img.height)
+        const offsetX = (img.width - size) / 2
+        const offsetY = (img.height - size) / 2
+
+        canvas.width = 200
+        canvas.height = 200
+        ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 200, 200)
+
+        // JPEG로 압축 (품질 0.8)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+
+      img.onerror = () => reject(new Error('이미지 로드 실패'))
+      reader.onerror = () => reject(new Error('파일 읽기 실패'))
+      reader.readAsDataURL(file)
+    })
+  }
+
   // 아바타 파일 선택 핸들러
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // 이미지 파일 검증
@@ -211,18 +248,20 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         return
       }
 
-      // 파일 크기 검증 (5MB 제한)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('파일 크기는 5MB 이하여야 합니다.')
+      // 파일 크기 검증 (10MB 제한)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('파일 크기는 10MB 이하여야 합니다.')
         return
       }
 
-      // FileReader로 미리보기 생성
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string)
+      try {
+        // 200x200으로 리사이즈
+        const resizedImage = await resizeImage(file)
+        setAvatarPreview(resizedImage)
+      } catch (error) {
+        console.error('이미지 리사이즈 실패:', error)
+        alert('이미지 처리 중 오류가 발생했습니다.')
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -271,7 +310,8 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setAuthUser({
           ...authUser,
           name: updatedUser.name,
-          email: updatedUser.email
+          email: updatedUser.email,
+          avatarUrl: updatedUser.avatarUrl || null
         })
       }
 

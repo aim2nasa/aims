@@ -114,7 +114,7 @@ module.exports = function(db) {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      const { name, email, phone, department, position } = req.body;
+      const { name, email, phone, department, position, avatarUrl } = req.body;
 
       // 업데이트할 필드 준비
       const updateFields = { profileCompleted: true };
@@ -168,6 +168,11 @@ module.exports = function(db) {
       // 직급 설정
       if (position !== undefined) {
         updateFields.position = typeof position === 'string' ? position.trim() || null : null;
+      }
+
+      // 아바타 설정 (base64 data URL)
+      if (avatarUrl !== undefined) {
+        updateFields.avatarUrl = typeof avatarUrl === 'string' ? avatarUrl : null;
       }
 
       // 프로필 업데이트

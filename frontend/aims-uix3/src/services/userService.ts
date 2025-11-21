@@ -104,8 +104,8 @@ export async function updateUser(
   _userId: string,
   updates: Partial<Omit<User, 'id' | 'role'>>
 ): Promise<User> {
-  // 프로필 업데이트 (이름, 이메일, 전화번호, 지점, 직급)
-  const updatePayload: { name?: string; email?: string; phone?: string; department?: string; position?: string } = {}
+  // 프로필 업데이트 (이름, 이메일, 전화번호, 지점, 직급, 아바타)
+  const updatePayload: { name?: string; email?: string; phone?: string; department?: string; position?: string; avatarUrl?: string } = {}
 
   if (updates.name !== undefined) {
     updatePayload.name = updates.name
@@ -121,6 +121,9 @@ export async function updateUser(
   }
   if (updates.position !== undefined) {
     updatePayload.position = updates.position
+  }
+  if (updates.avatarUrl !== undefined) {
+    updatePayload.avatarUrl = updates.avatarUrl
   }
 
   // 업데이트할 내용이 있으면 API 호출
