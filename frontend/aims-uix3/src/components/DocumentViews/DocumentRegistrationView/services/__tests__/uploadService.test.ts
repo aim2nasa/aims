@@ -126,14 +126,37 @@ describe('UploadService', () => {
       const progressCallback = vi.fn()
       uploadService.setProgressCallback(progressCallback)
 
-      expect(uploadService['progressCallback']).toBe(progressCallback)
+      expect(uploadService['progressCallbacks'].has(progressCallback)).toBe(true)
     })
 
     it('상태 콜백을 설정할 수 있어야 함', () => {
       const statusCallback = vi.fn()
       uploadService.setStatusCallback(statusCallback)
 
-      expect(uploadService['statusCallback']).toBe(statusCallback)
+      expect(uploadService['statusCallbacks'].has(statusCallback)).toBe(true)
+    })
+
+    it('다중 구독자를 지원해야 함', () => {
+      const callback1 = vi.fn()
+      const callback2 = vi.fn()
+
+      uploadService.setProgressCallback(callback1)
+      uploadService.setProgressCallback(callback2)
+
+      expect(uploadService['progressCallbacks'].size).toBe(2)
+      expect(uploadService['progressCallbacks'].has(callback1)).toBe(true)
+      expect(uploadService['progressCallbacks'].has(callback2)).toBe(true)
+    })
+
+    it('unsubscribe 함수를 반환해야 함', () => {
+      const callback = vi.fn()
+      const unsubscribe = uploadService.setStatusCallback(callback)
+
+      expect(uploadService['statusCallbacks'].has(callback)).toBe(true)
+
+      unsubscribe()
+
+      expect(uploadService['statusCallbacks'].has(callback)).toBe(false)
     })
   })
 
@@ -287,8 +310,8 @@ describe('UploadService', () => {
 
       uploadService.cleanup()
 
-      expect(uploadService['progressCallback']).toBeUndefined()
-      expect(uploadService['statusCallback']).toBeUndefined()
+      expect(uploadService['progressCallbacks'].size).toBe(0)
+      expect(uploadService['statusCallbacks'].size).toBe(0)
     })
 
     it('cleanup 호출 시 진행 중인 업로드는 유지되어야 함', async () => {

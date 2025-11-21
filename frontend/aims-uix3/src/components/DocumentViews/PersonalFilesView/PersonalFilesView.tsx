@@ -533,7 +533,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
 
   // 업로드 상태 콜백 설정
   useEffect(() => {
-    uploadService.setStatusCallback((fileId, status, error) => {
+    const unsubscribeStatus = uploadService.setStatusCallback((fileId, status, error) => {
       setUploadingFiles(prev =>
         prev.map(f => f.id === fileId ? { ...f, status, error } : f)
       )
@@ -552,17 +552,18 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
         setUploading(false)
         setUploadProgress(0)
       }
-    })
+    }, 'PersonalFilesView')
 
-    uploadService.setProgressCallback(({ fileId, progress }) => {
+    const unsubscribeProgress = uploadService.setProgressCallback(({ fileId, progress }) => {
       setUploadingFiles(prev =>
         prev.map(f => f.id === fileId ? { ...f, progress } : f)
       )
       setUploadProgress(progress)
-    })
+    }, 'PersonalFilesView')
 
     return () => {
-      uploadService.cleanup()
+      unsubscribeStatus()
+      unsubscribeProgress()
     }
   }, [loadFolderContents, currentFolderId])
 

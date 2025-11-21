@@ -39,21 +39,43 @@ export class UploadService {
   private uploadQueue: UploadFile[] = []
   private isProcessing = false
 
-  private progressCallback?: ProgressCallback | undefined
-  private statusCallback?: StatusCallback | undefined
+  private progressCallbacks = new Set<ProgressCallback>()
+  private statusCallbacks = new Set<StatusCallback>()
 
   /**
-   * 진행률 콜백 설정
+   * 진행률 콜백 등록 (다중 구독자 지원)
+   * @returns unsubscribe 함수
    */
-  setProgressCallback(callback: ProgressCallback): void {
-    this.progressCallback = callback
+  setProgressCallback(callback: ProgressCallback, owner?: string): () => void {
+    this.progressCallbacks.add(callback)
+    if (import.meta.env.DEV) {
+      console.log(`✅ [UploadService] progressCallback 등록 (${owner || 'unknown'}) - 총 ${this.progressCallbacks.size}개`)
+    }
+    // unsubscribe 함수 반환
+    return () => {
+      this.progressCallbacks.delete(callback)
+      if (import.meta.env.DEV) {
+        console.log(`❌ [UploadService] progressCallback 제거 (${owner || 'unknown'}) - 남은 ${this.progressCallbacks.size}개`)
+      }
+    }
   }
 
   /**
-   * 상태 변경 콜백 설정
+   * 상태 변경 콜백 등록 (다중 구독자 지원)
+   * @returns unsubscribe 함수
    */
-  setStatusCallback(callback: StatusCallback): void {
-    this.statusCallback = callback
+  setStatusCallback(callback: StatusCallback, owner?: string): () => void {
+    this.statusCallbacks.add(callback)
+    if (import.meta.env.DEV) {
+      console.log(`✅ [UploadService] statusCallback 등록 (${owner || 'unknown'}) - 총 ${this.statusCallbacks.size}개`)
+    }
+    // unsubscribe 함수 반환
+    return () => {
+      this.statusCallbacks.delete(callback)
+      if (import.meta.env.DEV) {
+        console.log(`❌ [UploadService] statusCallback 제거 (${owner || 'unknown'}) - 남은 ${this.statusCallbacks.size}개`)
+      }
+    }
   }
 
   /**
@@ -77,7 +99,7 @@ export class UploadService {
     if (controller) {
       controller.abort()
       this.activeUploads.delete(fileId)
-      this.statusCallback?.(fileId, 'cancelled')
+      this.statusCallbacks.forEach(callback => callback(fileId, 'cancelled'))
     }
 
     // 큐에서도 제거
@@ -91,13 +113,13 @@ export class UploadService {
     // 활성 업로드들 취소
     this.activeUploads.forEach((controller, fileId) => {
       controller.abort()
-      this.statusCallback?.(fileId, 'cancelled')
+      this.statusCallbacks.forEach(callback => callback(fileId, 'cancelled'))
     })
     this.activeUploads.clear()
 
     // 큐 비우기
     this.uploadQueue.forEach(file => {
-      this.statusCallback?.(file.id, 'cancelled')
+      this.statusCallbacks.forEach(callback => callback(file.id, 'cancelled'))
     })
     this.uploadQueue = []
 
@@ -139,7 +161,7 @@ export class UploadService {
       this.activeUploads.set(id, controller)
 
       // 상태를 업로딩으로 변경
-      this.statusCallback?.(id, 'uploading')
+      this.statusCallbacks.forEach(callback => callback(id, 'uploading'))
 
       // FormData 생성 (사용자 컨텍스트 포함)
       const formData = UserContextService.createFormData(file)
@@ -159,14 +181,14 @@ export class UploadService {
       // 경고 케이스: 지원하지 않는 파일 형식
       if (result.warn) {
         const errorMessage = result.userMessage || '지원하지 않는 파일 형식입니다'
-        this.statusCallback?.(id, 'warning', errorMessage)
+        this.statusCallbacks.forEach(callback => callback(id, 'warning', errorMessage))
         if (import.meta.env.DEV) {
           console.log(`[UploadService] 파일 업로드 경고: ${file.name}`, result)
         }
       }
       // 성공 케이스: OCR 큐잉, 텍스트 완료, 기본 성공
       else {
-        this.statusCallback?.(id, 'completed')
+        this.statusCallbacks.forEach(callback => callback(id, 'completed'))
         if (import.meta.env.DEV) {
           console.log(`[UploadService] 파일 업로드 성공: ${file.name}`, result)
         }
@@ -181,15 +203,15 @@ export class UploadService {
           if (import.meta.env.DEV) {
             console.log(`[UploadService] 업로드 취소됨: ${file.name}`)
           }
-          this.statusCallback?.(id, 'cancelled')
+          this.statusCallbacks.forEach(callback => callback(id, 'cancelled'))
         } else {
           const response = (error as ErrorWithResponse).response
           const errorMessage = this.getErrorMessage(error, response)
-          this.statusCallback?.(id, 'error', errorMessage)
+          this.statusCallbacks.forEach(callback => callback(id, 'error', errorMessage))
           console.error(`[UploadService] 파일 업로드 실패: ${file.name}`, error)
         }
       } else {
-        this.statusCallback?.(id, 'error', '알 수 없는 오류가 발생했습니다')
+        this.statusCallbacks.forEach(callback => callback(id, 'error', '알 수 없는 오류가 발생했습니다'))
         console.error(`[UploadService] 알 수 없는 오류: ${file.name}`, error)
       }
     }
@@ -212,12 +234,12 @@ export class UploadService {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100)
 
-          this.progressCallback?.({
+          this.progressCallbacks.forEach(callback => callback({
             fileId,
             progress,
             loaded: event.loaded,
             total: event.total
-          })
+          }))
         }
       })
 
@@ -348,11 +370,11 @@ export class UploadService {
    */
   cleanup(): void {
     if (import.meta.env.DEV) {
-      console.log('[UploadService] cleanup 호출됨 - 콜백만 정리 (업로드는 계속)')
+      console.log('[UploadService] cleanup 호출됨 - 모든 콜백 제거 (업로드는 계속)')
     }
-    // 콜백만 정리하고 진행 중인 업로드는 그대로 유지
-    this.progressCallback = undefined
-    this.statusCallback = undefined
+    // 모든 콜백 제거 (진행 중인 업로드는 그대로 유지)
+    this.progressCallbacks.clear()
+    this.statusCallbacks.clear()
   }
 }
 

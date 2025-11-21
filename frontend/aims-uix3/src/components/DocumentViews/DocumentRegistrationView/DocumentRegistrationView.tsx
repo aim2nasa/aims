@@ -685,7 +685,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
       const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester'
+        },
         body: JSON.stringify({ filename: fileName, metadata })
       });
       const responseData = await response.json();
