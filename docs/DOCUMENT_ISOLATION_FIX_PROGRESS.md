@@ -120,7 +120,7 @@ if (!document) {
 
 ---
 
-## Phase 4: 프론트엔드 x-user-id 헤더 추가 (8곳) - ✅ 완료
+## Phase 4: 프론트엔드 x-user-id 헤더 추가 (11곳) - ✅ 완료
 
 ### 수정된 파일
 
@@ -132,6 +132,8 @@ if (!document) {
 | 4 | DocumentFullTextModal.tsx | 1곳 |
 | 5 | DocumentSummaryModal.tsx | 1곳 |
 | 6 | annualReportProcessor.ts | 1곳 |
+| 7 | DocumentStatusService.ts | 2곳 (getDocumentStatus, getDocumentDetailViaWebhook) |
+| 8 | App.tsx | 1곳 (handleDocumentClick) |
 
 ### 적용된 패턴
 
@@ -163,8 +165,8 @@ const response = await fetch(`/api/documents/${docId}/status`, {
 - **Phase 1 (Document API)**: 6/6 ✅
 - **Phase 2 (Annual Report API)**: 5/5 ✅
 - **Phase 3 (고객-문서 연결)**: 2/2 ✅
-- **Phase 4 (프론트엔드)**: 8/8 ✅
-- **총 수정**: 21개 취약점 해결
+- **Phase 4 (프론트엔드)**: 11/11 ✅
+- **총 수정**: 24개 취약점 해결
 
 ### 보안 개선 사항
 
@@ -199,6 +201,6 @@ const response = await fetch(`/api/documents/${docId}/status`, {
 설계사별 데이터 격리가 완전히 구현되었습니다:
 
 1. **고객 데이터**: 13개 취약점 해결 (이전 작업)
-2. **문서 데이터**: 21개 취약점 해결 (현재 작업)
+2. **문서 데이터**: 24개 취약점 해결 (현재 작업)
 
-**총 34개 취약점 해결**으로 설계사 간 데이터 격리가 100% 완성되었습니다.
+**총 37개 취약점 해결**으로 설계사 간 데이터 격리가 100% 완성되었습니다.

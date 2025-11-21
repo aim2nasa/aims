@@ -1,7 +1,7 @@
 # 설계사별 데이터 격리 현황
 
 **최종 업데이트**: 2025-11-22
-**총 수정된 취약점**: 34개
+**총 수정된 취약점**: 37개
 
 ---
 
@@ -49,7 +49,7 @@
 | POST /api/customers/:id/documents | ownerId (문서) |
 | DELETE /api/customers/:id/documents/:doc_id | ownerId (문서) |
 
-### 프론트엔드 (8곳)
+### 프론트엔드 (11곳)
 
 모든 직접 fetch 호출에 `x-user-id` 헤더 추가:
 - DocumentRegistrationView.tsx (3곳)
@@ -58,6 +58,8 @@
 - DocumentFullTextModal.tsx
 - DocumentSummaryModal.tsx
 - annualReportProcessor.ts
+- DocumentStatusService.ts (2곳: getDocumentStatus, getDocumentDetailViaWebhook)
+- App.tsx (handleDocumentClick)
 
 ---
 

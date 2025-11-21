@@ -718,7 +718,10 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     try {
       // /api/documents/:id/status API로 문서 상세 정보 조회
-      const response = await fetch(`/api/documents/${documentId}/status`)
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+      const response = await fetch(`/api/documents/${documentId}/status`, {
+        headers: { 'x-user-id': userId }
+      })
 
       if (!response.ok) {
         throw new Error(`API 오류: ${response.status}`)

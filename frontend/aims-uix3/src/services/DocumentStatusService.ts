@@ -141,10 +141,12 @@ export class DocumentStatusService {
    */
   static async getDocumentStatus(documentId: string): Promise<DocumentDetailResponse> {
     try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
       const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/status`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         mode: 'cors'
       })
@@ -166,10 +168,12 @@ export class DocumentStatusService {
    */
   static async getDocumentDetailViaWebhook(documentId: string): Promise<Document | Record<string, unknown> | null> {
     try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
       const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/status`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-user-id': userId
         },
         mode: 'cors'
       })
