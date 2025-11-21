@@ -95,3 +95,14 @@ export const refreshToken = async (token: string): Promise<string> => {
 export const logout = async (): Promise<void> => {
   await axios.post<AuthResponse>(`${API_BASE_URL}/api/auth/logout`);
 };
+
+/**
+ * 계정 완전 삭제 (개발/테스트용)
+ */
+export const deleteAccount = async (token: string): Promise<void> => {
+  await axios.delete<AuthResponse>(`${API_BASE_URL}/api/auth/account`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};

@@ -15,6 +15,7 @@ import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
 import { useAccountSettingsStore } from '../../../shared/store/useAccountSettingsStore';
 import { useAuthStore } from '../../../shared/stores/authStore';
+import { deleteAccount } from '../../../entities/auth/api';
 import { AccountSettingsModal } from '../../../features/AccountSettings';
 import './UserProfileMenu.css';
 
@@ -60,7 +61,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const { isDevMode } = useDevModeStore();
 
   // 인증 상태
-  const { logout: authLogout } = useAuthStore();
+  const { logout: authLogout, token } = useAuthStore();
 
   // 계정 설정 모달 상태
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
@@ -159,6 +160,34 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     onClose();
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      '⚠️ 계정을 완전히 삭제합니다.\n\n' +
+      '이 작업은 되돌릴 수 없습니다.\n' +
+      '정말 삭제하시겠습니까?'
+    );
+    if (confirmed && token) {
+      try {
+        await deleteAccount(token);
+
+        // authStore 상태 초기화
+        authLogout();
+
+        // 레거시 API용 사용자 ID 제거
+        localStorage.removeItem('aims-current-user-id');
+
+        alert('계정이 삭제되었습니다.');
+
+        // 로그인 페이지로 이동
+        navigate('/login', { replace: true });
+      } catch (error) {
+        console.error('계정 삭제 실패:', error);
+        alert('계정 삭제에 실패했습니다.');
+      }
+    }
+    onClose();
+  };
+
   if (!isOpen && !isAccountSettingsOpen) return null;
 
   const menuContent = (
@@ -215,7 +244,18 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               label="로그아웃"
               onClick={handleLogout}
               isDangerous={true}
+              showDivider={isDevMode}
             />
+
+            {/* 계정 삭제 - 개발자 모드에서만 표시 */}
+            {isDevMode && (
+              <UserProfileMenuItem
+                icon="trash"
+                label="계정 완전 삭제"
+                onClick={handleDeleteAccount}
+                isDangerous={true}
+              />
+            )}
           </div>
         </div>
       )}

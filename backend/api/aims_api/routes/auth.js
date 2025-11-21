@@ -172,6 +172,41 @@ module.exports = function(db) {
   });
 
   /**
+   * DELETE /api/auth/account
+   * 계정 완전 삭제 (개발/테스트용)
+   */
+  router.delete('/account', authenticateJWT, async (req, res) => {
+    try {
+      const { ObjectId } = require('mongodb');
+      const usersCollection = db.collection('users');
+      const userId = new ObjectId(req.user.id);
+
+      // 사용자 삭제
+      const result = await usersCollection.deleteOne({ _id: userId });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      console.log(`[Auth] User account deleted: ${req.user.id}`);
+
+      res.json({
+        success: true,
+        message: 'Account deleted successfully'
+      });
+    } catch (error) {
+      console.error('Account deletion error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete account'
+      });
+    }
+  });
+
+  /**
    * POST /api/auth/refresh
    * JWT 토큰 갱신
    */

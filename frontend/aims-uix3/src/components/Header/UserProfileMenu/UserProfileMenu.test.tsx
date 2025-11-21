@@ -29,8 +29,14 @@ vi.mock('react-router-dom', () => ({
 const mockLogout = vi.fn();
 vi.mock('../../../shared/stores/authStore', () => ({
   useAuthStore: () => ({
-    logout: mockLogout
+    logout: mockLogout,
+    token: 'mock-token'
   })
+}));
+
+// Mock deleteAccount API
+vi.mock('../../../entities/auth/api', () => ({
+  deleteAccount: vi.fn()
 }));
 
 // Mock child components
