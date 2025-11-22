@@ -1533,7 +1533,7 @@ class DocumentViewer:
             self.root.clipboard_clear()
             self.root.clipboard_append(content)
             self.root.update()
-            messagebox.showinfo("복사 완료", "Raw 데이터가 클립보드에 복사되었습니다.")
+            print("클립보드 복사 완료")
         except Exception as e:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
 
@@ -1583,11 +1583,9 @@ class DocumentViewer:
             self.update_raw_viewer()
 
             if total_count > 10000:
-                messagebox.showinfo("로드 완료",
-                    f"총 {total_count}개 중 최근 {len(self.raw_documents)}개 로드\n"
-                    f"(메모리 효율을 위해 10000개로 제한)")
+                print(f"총 {total_count}개 중 최근 {len(self.raw_documents)}개 로드 (메모리 효율을 위해 10000개로 제한)")
             else:
-                messagebox.showinfo("로드 완료", f"{len(self.raw_documents)}개 문서 로드 완료")
+                print(f"{len(self.raw_documents)}개 문서 로드 완료")
 
         except Exception as e:
             messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
@@ -1875,10 +1873,7 @@ class DocumentViewer:
             deleted_count = result.deleted_count
 
             # 결과 메시지
-            messagebox.showinfo(
-                "삭제 완료",
-                f"{deleted_count}개의 문서가 삭제되었습니다."
-            )
+            print(f"{deleted_count}개의 문서가 삭제되었습니다.")
 
             # Raw 데이터 목록 새로고침 (삭제 후 자동 로드)
             self.load_raw_collection_data()
@@ -2011,11 +2006,9 @@ class DocumentViewer:
             self.update_qdrant_viewer()
 
             if total_count > 10000:
-                messagebox.showinfo("로드 완료",
-                    f"총 {total_count}개 중 최근 {len(self.qdrant_points)}개 로드\n"
-                    f"(메모리 효율을 위해 10000개로 제한)")
+                print(f"총 {total_count}개 중 최근 {len(self.qdrant_points)}개 로드 (메모리 효율을 위해 10000개로 제한)")
             else:
-                messagebox.showinfo("로드 완료", f"{len(self.qdrant_points)}개 포인트 로드 완료")
+                print(f"{len(self.qdrant_points)}개 포인트 로드 완료")
 
         except Exception as e:
             messagebox.showerror("로드 실패", f"데이터 로드 실패: {e}")
@@ -2108,7 +2101,7 @@ class DocumentViewer:
             self.root.clipboard_clear()
             self.root.clipboard_append(content)
             self.root.update()
-            messagebox.showinfo("복사 완료", "Qdrant 데이터가 클립보드에 복사되었습니다.")
+            print("클립보드 복사 완료")
         except Exception as e:
             messagebox.showerror("복사 실패", f"클립보드 복사 실패: {e}")
 
@@ -2139,8 +2132,11 @@ class DocumentViewer:
         try:
             # 컬렉션 초기화
             if self.qdrant.clear_collection(selected_collection):
-                messagebox.showinfo("초기화 완료", f"'{selected_collection}' 컬렉션이 초기화되었습니다.")
-                # Qdrant에서 데이터 다시 로드 (삭제 확인)
+                print(f"Qdrant '{selected_collection}' 컬렉션 초기화 완료")
+                # 메모리에 남아있는 이전 데이터 먼저 완전 제거
+                self.qdrant_points = []
+                self.current_qdrant_index = 0
+                # Qdrant에서 데이터 다시 로드 (초기화 확인)
                 self.load_qdrant_collection_data()
             else:
                 messagebox.showerror("초기화 실패", "컬렉션 초기화에 실패했습니다.")
@@ -2175,13 +2171,17 @@ class DocumentViewer:
             print(f"UI: Attempting to clear {selected_db}.{selected_collection}")
             # 컬렉션 초기화
             if self.mongo.clear_collection(selected_db, selected_collection):
-                messagebox.showinfo("초기화 완료", 
-                    f"'{selected_db}.{selected_collection}' 컬렉션이 초기화되었습니다.\n"
-                    f"콘솔에서 삭제된 문서 수를 확인하세요.")
-                # MongoDB에서 데이터 다시 로드 (삭제 확인)
+                print(f"MongoDB '{selected_db}.{selected_collection}' 컬렉션 초기화 완료")
+                # 메모리에 남아있는 이전 데이터 먼저 완전 제거
+                self.raw_documents = []
+                self.documents = []
+                self.tag_to_docs = {}
+                self.doc_id_to_doc = {}
+                self.current_raw_index = 0
+                # MongoDB에서 데이터 다시 로드 (초기화 확인)
                 self.load_raw_collection_data()
             else:
-                messagebox.showerror("초기화 실패", 
+                messagebox.showerror("초기화 실패",
                     "컬렉션 초기화에 실패했습니다.\n"
                     "콘솔에서 에러 메시지를 확인하세요.")
 
