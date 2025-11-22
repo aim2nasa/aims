@@ -79,7 +79,10 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
   pageNav
 }) => {
   return (
-    <div className="viewer-controls">
+    <div
+      className="viewer-controls"
+      onDoubleClick={(e) => e.stopPropagation()} // 더블클릭 이벤트 전파 차단 (페이지 네비게이션 클릭 시 모달 전환 방지)
+    >
       {/* Left - Reset Button */}
       <div className="viewer-controls__left">
         {isModified && (
