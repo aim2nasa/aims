@@ -19,6 +19,7 @@ export interface ViewerControlsActions {
   zoomIn: () => void
   zoomOut: () => void
   resetView: () => void
+  resetPosition: () => void
   handleMouseDown: (e: React.MouseEvent) => void
   handleMouseMove: (e: React.MouseEvent) => void
   handleMouseUp: () => void
@@ -65,6 +66,11 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
     setPosition({ x: 0, y: 0 })
   }, [initialScale])
 
+  // 위치만 리셋 (scale은 유지)
+  const resetPosition = useCallback(() => {
+    setPosition({ x: 0, y: 0 })
+  }, [])
+
   // 마우스 드래그 시작
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (scale <= 1.0) return // 확대되지 않았으면 드래그 불가
@@ -107,6 +113,7 @@ export const useViewerControls = (initialScale: number = 1.0): UseViewerControls
     zoomIn,
     zoomOut,
     resetView,
+    resetPosition,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp

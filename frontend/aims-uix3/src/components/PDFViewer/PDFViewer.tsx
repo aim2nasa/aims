@@ -81,9 +81,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialS
   const previousPage = () => changePage(-1)
   const nextPage = () => changePage(1)
 
-  // 페이지 변경 시 위치 초기화
+  // 페이지 변경 시 위치만 초기화 (scale은 유지)
   useEffect(() => {
-    controls.resetView()
+    controls.resetPosition()
   }, [pageNumber])
 
   // 컨테이너 크기에 따른 PDF 너비 동적 조정
