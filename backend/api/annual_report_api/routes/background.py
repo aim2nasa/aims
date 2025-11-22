@@ -58,20 +58,20 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
             return {"success": False, "error": "AR 문서가 아님"}
 
         # 2. 파일 경로 확인
-        file_path = doc.get("filePath")
+        file_path = doc.get("upload", {}).get("destPath")
         if not file_path:
             return {"success": False, "error": "파일 경로 없음"}
 
         import os
-        full_path = os.path.join(settings.DATA_DIR, file_path)
-        if not os.path.exists(full_path):
-            return {"success": False, "error": f"파일이 존재하지 않음: {full_path}"}
+        # file_path는 이미 절대 경로 (/data/files/users/...)
+        if not os.path.exists(file_path):
+            return {"success": False, "error": f"파일이 존재하지 않음: {file_path}"}
 
         # 3. AR 파싱 실행
         logger.info(f"🔍 [Queue Parsing] 파싱 시작: {file_path}")
 
         customer_name = doc.get("ar_metadata", {}).get("customer_name")
-        result = parse_annual_report(full_path, customer_name=customer_name)
+        result = parse_annual_report(file_path, customer_name=customer_name)
 
         if "error" in result:
             logger.error(f"❌ [Queue Parsing] 파싱 실패: {result['error']}")
