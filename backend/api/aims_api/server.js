@@ -3390,34 +3390,41 @@ app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) =>
 
     console.log(`📋 [Annual Report] AR 파싱 대기 문서 조회: ${customerId}`);
 
-    // AR 파싱 대기 또는 진행 중인 문서 조회
-    const pendingDocs = await db.collection(COLLECTION_NAME).find({
-      'customer_relation.customer_id': new ObjectId(customerId),
-      is_annual_report: true,
-      $or: [
-        { ar_parsing_status: { $exists: false } },
-        { ar_parsing_status: 'pending' },
-        { ar_parsing_status: 'processing' }
-      ]
+    // ⭐ 새로운 큐 시스템: ar_parse_queue 컬렉션에서 조회
+    const pendingQueue = await db.collection('ar_parse_queue').find({
+      customer_id: new ObjectId(customerId),
+      status: { $in: ['pending', 'processing'] }
+    }).toArray();
+
+    // 파일 정보 가져오기
+    const fileIds = pendingQueue.map(q => q.file_id);
+    const files = await db.collection(COLLECTION_NAME).find({
+      _id: { $in: fileIds }
     }).project({
       _id: 1,
       'upload.originalName': 1,
-      'upload.uploaded_at': 1,
-      ar_parsing_status: 1,
-      'ar_metadata.issue_date': 1
+      'upload.uploaded_at': 1
     }).toArray();
+
+    // 파일 정보와 큐 정보 매핑
+    const fileMap = new Map(files.map(f => [f._id.toString(), f]));
+    const pendingDocs = pendingQueue.map(queue => {
+      const file = fileMap.get(queue.file_id.toString());
+      return {
+        file_id: queue.file_id.toString(),
+        filename: file?.upload?.originalName || queue.metadata?.filename || 'Unknown',
+        uploaded_at: normalizeTimestamp(file?.upload?.uploaded_at),
+        status: queue.status,
+        created_at: normalizeTimestamp(queue.created_at),
+        retry_count: queue.retry_count || 0
+      };
+    });
 
     res.json({
       success: true,
       data: {
         pending_count: pendingDocs.length,
-        documents: pendingDocs.map(doc => ({
-          file_id: doc._id.toString(),
-          filename: doc.upload?.originalName || 'Unknown',
-          uploaded_at: normalizeTimestamp(doc.upload?.uploaded_at),
-          status: doc.ar_parsing_status || 'pending',
-          issue_date: doc.ar_metadata?.issue_date
-        }))
+        documents: pendingDocs
       }
     });
   } catch (error) {
