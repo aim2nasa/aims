@@ -74,6 +74,7 @@
   flex-direction: column;
   background-color: var(--color-layout-secondary-light);
   opacity: 1;
+  overflow: hidden; /* 자식 요소의 overflow 제어 */
 }
 
 [data-theme="dark"] .customer-document-preview__content {
@@ -201,4 +202,20 @@
   bottom: 10px;
   width: 4px;
   cursor: ew-resize;
+}
+
+/* === Viewer Container Override === */
+/* PDFViewer/ImageViewer를 모달 내에서 flex 자식으로 사용 */
+.customer-document-preview__content .viewer-container {
+  flex: 1;
+  height: auto;
+}
+
+/* === DraggableModal Content Override === */
+/* DraggableModal의 기본 스크롤 동작을 비활성화하고 PDFViewer 자체 스크롤 사용 */
+.customer-document-preview .draggable-modal__content {
+  overflow: hidden; /* 기본 overflow-y: auto 제거 */
+  padding: 0;       /* 기본 padding: 20px 제거 */
+  display: flex;
+  flex-direction: column;
 }
