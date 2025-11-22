@@ -211,14 +211,18 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
               <span className="header-user-avatar-loading-text">...</span>
             </div>
           ) : (() => {
-            // authStore 사용자 우선 사용 (소셜 로그인), 없으면 레거시 시스템 사용
-            const authUserDisplay = isAuthenticated && authUser ? {
-              id: authUser._id,
-              name: authUser.name || '사용자',
-              email: authUser.email || '',
-              avatarUrl: authUser.avatarUrl || undefined
-            } : null;
-            const displayUser = authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
+            // 개발자 모드: userId로 직접 조회, 일반 모드: authStore 우선 (소셜 로그인)
+            const displayUser = isDevMode
+              ? availableUsers.find(u => u.id === userId)
+              : (() => {
+                  const authUserDisplay = isAuthenticated && authUser ? {
+                    id: authUser._id,
+                    name: authUser.name || '사용자',
+                    email: authUser.email || '',
+                    avatarUrl: authUser.avatarUrl || undefined
+                  } : null;
+                  return authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
+                })();
             const userName = displayUser?.name || userId;
             const userInitial = userName.charAt(0).toUpperCase();
             const avatarUrl = displayUser?.avatarUrl;
@@ -255,14 +259,18 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
 
         {/* 사용자 프로필 메뉴 */}
         {!loading && (() => {
-          // authStore 사용자 우선 사용 (소셜 로그인), 없으면 레거시 시스템 사용
-          const authUserDisplay = isAuthenticated && authUser ? {
-            id: authUser._id,
-            name: authUser.name || '사용자',
-            email: authUser.email || '',
-            avatarUrl: authUser.avatarUrl || undefined
-          } : null;
-          const displayUser = authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
+          // 개발자 모드: userId로 직접 조회, 일반 모드: authStore 우선 (소셜 로그인)
+          const displayUser = isDevMode
+            ? availableUsers.find(u => u.id === userId)
+            : (() => {
+                const authUserDisplay = isAuthenticated && authUser ? {
+                  id: authUser._id,
+                  name: authUser.name || '사용자',
+                  email: authUser.email || '',
+                  avatarUrl: authUser.avatarUrl || undefined
+                } : null;
+                return authUserDisplay || currentUser || availableUsers.find(u => u.id === userId);
+              })();
           if (!displayUser) return null;
 
           return (
