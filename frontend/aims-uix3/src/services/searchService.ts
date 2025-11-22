@@ -63,7 +63,10 @@ export class SearchService {
 
             try {
               // MongoDB에서 전체 문서 정보 조회
-              const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`)
+              const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+              const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`, {
+                headers: { 'x-user-id': userId }
+              })
               if (!docResponse.ok) {
                 console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
                 return item
@@ -81,7 +84,11 @@ export class SearchService {
                 meta: docData.data.raw.meta,
                 ocr: docData.data.raw.ocr,
                 docembed: docData.data.raw.docembed,
+                text: docData.data.raw.text,
+                upload: docData.data.raw.upload,
+                stages: docData.data.computed.uiStages,
                 overallStatus: docData.data.computed.overallStatus,
+                progress: docData.data.computed.progress,
                 customer_relation: docData.data.raw.customer_relation,
                 ownerId: docData.data.raw.ownerId,  // 🆕 내 파일 기능
                 customerId: docData.data.raw.customerId  // 🆕 내 파일 기능
@@ -328,19 +335,31 @@ export class SearchService {
    * @returns 문서 요약
    */
   static getSummary(item: SearchResultItem): string {
-    // 1. meta.summary
+    // 1. meta.summary가 있으면 사용
     if (item.meta?.summary && item.meta.summary !== 'null' && item.meta.summary.trim() !== '') {
       return item.meta.summary
     }
 
-    // 2. ocr.summary
-    if (item.ocr?.summary && item.ocr.summary !== 'null' && item.ocr.summary.trim() !== '') {
+    // 2. ocr.summary가 있으면 사용
+    if (item.ocr?.summary && item.ocr?.summary !== 'null' && item.ocr.summary.trim() !== '') {
       return item.ocr.summary
     }
 
-    // 3. docsum.summary
+    // 3. docsum.summary가 있으면 사용
     if ('docsum' in item && item.docsum?.summary && item.docsum.summary !== 'null' && item.docsum.summary.trim() !== '') {
       return item.docsum.summary
+    }
+
+    // 4. summary들이 모두 없으면 meta.full_text의 앞 200자 사용
+    if (item.meta?.full_text && item.meta.full_text.trim()) {
+      const cleanText = item.meta.full_text.trim()
+      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
+    }
+
+    // 5. meta.full_text도 없으면 ocr.full_text의 앞 200자 사용
+    if (item.ocr?.full_text && item.ocr.full_text.trim()) {
+      const cleanText = item.ocr.full_text.trim()
+      return cleanText.length > 200 ? cleanText.substring(0, 200) + '...' : cleanText
     }
 
     return '요약 없음'
