@@ -58,6 +58,12 @@
   --color-button-destructive-bg-hover: var(--color-error-700);
   --color-button-destructive-text: var(--color-neutral-0);
 
+  --color-button-dev-bg: rgba(255, 149, 0, 0.15);
+  --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
+  --color-button-dev-border: rgba(255, 149, 0, 0.3);
+  --color-button-dev-text: #ff9500;
+  --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
+
   /* Input Colors */
   --color-input-bg: var(--color-neutral-0);
   --color-input-bg-disabled: var(--color-neutral-50);
@@ -225,6 +231,12 @@
   --color-button-destructive-bg: var(--color-error-600);
   --color-button-destructive-bg-hover: var(--color-error-500);
   --color-button-destructive-text: var(--color-neutral-0);
+
+  --color-button-dev-bg: rgba(255, 149, 0, 0.15);
+  --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
+  --color-button-dev-border: rgba(255, 149, 0, 0.3);
+  --color-button-dev-text: #ff9500;
+  --color-button-dev-shadow: rgba(255, 149, 0, 0.2);
 
   /* Input Colors */
   --color-input-bg: var(--color-neutral-800);

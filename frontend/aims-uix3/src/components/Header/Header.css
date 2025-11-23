@@ -141,6 +141,11 @@
   pointer-events: none;
 }
 
+/* 사용자 아바타는 애니메이션 중에도 클릭 가능하도록 예외 처리 */
+.header-progressive--animating .header-user-avatar {
+  pointer-events: auto;
+}
+
 /* === 브랜딩 영역 === */
 
 .header-branding {

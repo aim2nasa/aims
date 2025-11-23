@@ -229,7 +229,16 @@ module.exports = function(db) {
     try {
       const { ObjectId } = require('mongodb');
       const usersCollection = db.collection('users');
-      const userId = new ObjectId(req.user.id);
+
+      // ObjectId 형식이면 ObjectId로 변환, 아니면 문자열 그대로 사용 (dev-user 등)
+      let userId;
+      try {
+        userId = ObjectId.isValid(req.user.id) && req.user.id.length === 24
+          ? new ObjectId(req.user.id)
+          : req.user.id;
+      } catch {
+        userId = req.user.id;
+      }
 
       // 사용자 삭제
       const result = await usersCollection.deleteOne({ _id: userId });

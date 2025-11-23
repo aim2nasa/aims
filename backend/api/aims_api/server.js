@@ -11,6 +11,7 @@ const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHe
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
+const { generateToken } = require('./middleware/auth');
 
 const app = express();
 app.use(cors({
@@ -1597,6 +1598,73 @@ app.get('/api/users', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 사용자 목록 조회 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 개발 전용: 개발 계정 자동 생성/조회 API
+ * POST /api/dev/ensure-user
+ *
+ * 개발 환경에서 항상 일관된 계정을 사용하기 위한 엔드포인트
+ * - dev-user 계정이 존재하면 조회
+ * - 없으면 자동으로 생성
+ * - 실제 JWT 토큰 발급 (계정 삭제 등 인증 필요 기능 사용 가능)
+ */
+app.post('/api/dev/ensure-user', async (req, res) => {
+  try {
+    const DEV_USER_ID = 'dev-user';
+    const DEV_USER = {
+      _id: DEV_USER_ID,
+      name: '개발자 (Dev)',
+      email: 'dev@aims.local',
+      role: 'agent',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Dev&backgroundColor=c0ffc0',
+      authProvider: 'dev',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const usersCollection = db.collection('users');
+
+    // 개발 계정 존재 여부 확인
+    let user = await usersCollection.findOne({ _id: DEV_USER_ID });
+
+    if (!user) {
+      // 없으면 생성
+      await usersCollection.insertOne(DEV_USER);
+      user = DEV_USER;
+      console.log(`✅ 개발 전용 계정 생성: ${DEV_USER_ID}`);
+    } else {
+      console.log(`ℹ️  개발 전용 계정 존재 확인: ${DEV_USER_ID}`);
+    }
+
+    // 실제 JWT 토큰 발급 (계정 삭제 등 인증 필요 기능에서 사용)
+    const token = generateToken({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        authProvider: user.authProvider
+      },
+      token,  // JWT 토큰 추가
+      message: user._id === DEV_USER_ID && !user.createdAt ? '기존 계정 조회' : '새 계정 생성'
+    });
+  } catch (error) {
+    console.error('❌ 개발 계정 생성/조회 실패:', error);
     res.status(500).json({
       success: false,
       error: error.message

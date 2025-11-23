@@ -90,3 +90,21 @@
 .kakao-login-button--secondary svg path {
   fill: var(--color-text-secondary);
 }
+
+/* 개발용 로그인 건너뛰기 버튼 */
+.dev-login-button {
+  margin-top: 16px;
+  background: var(--color-button-dev-bg);
+  border: 1px solid var(--color-button-dev-border);
+  color: var(--color-button-dev-text);
+}
+
+.dev-login-button:hover {
+  background: var(--color-button-dev-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-button-dev-shadow);
+}
+
+.dev-login-button .dev-icon {
+  font-size: 14px;
+}

@@ -9,8 +9,12 @@ const jwt = require('jsonwebtoken');
  */
 function generateToken(user) {
   // 설계안: JWT에는 _id, name, role만 포함 (소셜 ID 노출 금지)
+  // user.id 또는 user._id 둘 다 지원
+  const userId = user.id || user._id;
+  const userIdString = userId && userId.toString ? userId.toString() : userId;
+
   const payload = {
-    id: user._id.toString(),
+    id: userIdString,
     name: user.name,
     role: user.role || 'user'
   };
