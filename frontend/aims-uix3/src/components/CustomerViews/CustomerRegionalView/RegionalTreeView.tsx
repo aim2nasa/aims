@@ -21,6 +21,9 @@ import Tooltip from '@/shared/ui/Tooltip'
 import { Dropdown, type DropdownOption } from '@/shared/ui/Dropdown'
 import './RegionalTreeView.css'
 import NaverMap from '../../NaverMap/NaverMap'
+import { CustomerAddressInputModal } from './CustomerAddressInputModal'
+import { CustomerService } from '@/services/customerService'
+import type { FormattedAddress } from '@/features/customer/api/addressApi'
 
 /**
  * 광역시/도 이름 정규화 맵
@@ -479,6 +482,10 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
   // 지역 선택 시 지도 중심 좌표 (새로고침 시 초기화)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
 
+  // 주소 입력 모달 상태
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [selectedCustomerForAddress, setSelectedCustomerForAddress] = useState<Customer | null>(null)
+
   // 1단계: 타입 필터만 적용된 고객 목록 (드롭다운 옵션 계산용)
   const typeFilteredCustomers = useMemo(() => {
     if (customerTypeFilter === 'personal') {
@@ -666,13 +673,17 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           return Array.from(newSet)
         })
       }
-    } else {
-      // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
-      setExpandedKeys(prev => {
-        const newSet = new Set(prev)
-        newSet.add('no-address')
-        return Array.from(newSet)
-      })
+      else {
+        // 주소 없는 고객인 경우 - 주소 입력 모달 표시
+        setSelectedCustomerForAddress(selectedCustomer)
+        setIsAddressModalOpen(true)
+        setExpandedKeys(prev => {
+          const newSet = new Set(prev)
+          newSet.add('no-address')
+          return Array.from(newSet)
+        })
+        return // 모달에서 주소 입력 후 다시 처리
+      }
     }
   }, [selectedCustomerId, customers])
 
@@ -915,11 +926,14 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
         }
       } else {
         // 주소 없는 고객인 경우 "주소 미입력" 폴더 펼치기
+        setSelectedCustomerForAddress(customer)
+        setIsAddressModalOpen(true)
         setExpandedKeys(prev => {
           const newSet = new Set(prev)
           newSet.add('no-address')
           return Array.from(newSet)
         })
+        return // 모달에서 주소 입력 후 다시 처리
       }
 
       // 로컬 선택 상태 업데이트 (지도 표시용)
@@ -930,6 +944,42 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
       setSelectionTimestamp(Date.now())
     }
   }
+
+  // 주소 저장 핸들러
+  const handleAddressSave = async (customerId: string, address: FormattedAddress) => {
+    try {
+      // 기존 고객 정보 찾기
+      const customer = customers.find(c => c._id === customerId)
+      if (!customer) {
+        throw new Error('고객 정보를 찾을 수 없습니다')
+      }
+
+      // personal_info 병합 (기존 정보 유지하면서 주소만 업데이트)
+      await CustomerService.updateCustomer(customerId, {
+        personal_info: {
+          ...customer.personal_info,
+          address: {
+            postal_code: address.postal_code,
+            address1: address.address1,
+            address2: address.address2
+          }
+        }
+      })
+
+      // 모달 닫기
+      setIsAddressModalOpen(false)
+      setSelectedCustomerForAddress(null)
+
+      // 고객 목록 새로고침
+      if (onRefresh) {
+        await onRefresh()
+      }
+    } catch (error) {
+      console.error('[RegionalTreeView] 주소 저장 실패:', error)
+      throw error
+    }
+  }
+
 
   // 고객 타입 아이콘 (전체 보기와 동일한 SVG)
   const getCustomerTypeIcon = (customer: Customer) => {
@@ -1185,6 +1235,16 @@ export const RegionalTreeView = React.memo<RegionalTreeViewProps>(({
           />
         </div>
       </div>
+      {/* 주소 입력 모달 */}
+      <CustomerAddressInputModal
+        isOpen={isAddressModalOpen}
+        customer={selectedCustomerForAddress}
+        onClose={() => {
+          setIsAddressModalOpen(false);
+          setSelectedCustomerForAddress(null);
+        }}
+        onSave={handleAddressSave}
+      />
     </div>
   )
 }, (prevProps, nextProps) => {

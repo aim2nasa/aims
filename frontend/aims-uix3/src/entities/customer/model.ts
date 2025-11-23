@@ -35,7 +35,7 @@ export const AddressHistoryItemSchema = z.object({
  * 개인 정보 스키마
  */
 export const PersonalInfoSchema = z.object({
-  name: z.string().min(1, '이름은 필수입니다'),
+  name: z.string().optional(),
   name_en: z.string().optional(),
   birth_date: z.string().nullable().optional(),
   gender: z.enum(['M', 'F']).optional(),

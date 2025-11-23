@@ -1,0 +1,116 @@
+/**
+ * Customer Address Input Modal Styles
+ * @since 2025-11-24
+ *
+ * 주소 미입력 고객의 주소 입력 모달 스타일
+ * iOS Settings 스타일 적용
+ */
+
+.customer-address-input-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px 0;
+}
+
+/* 주소 입력 섹션 */
+.address-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.address-input-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 주소 검색 트리거 */
+.address-search-trigger {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* 선택된 주소 표시 */
+.selected-address-display {
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.selected-address-display h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.address-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.address-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.address-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+/* 액션 버튼 */
+.address-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 다크 모드 대응 */
+html[data-theme="dark"] .selected-address-display {
+  background: var(--color-bg-tertiary);
+}
+
+/* 상세주소 입력 필드 */
+.address-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.address-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha-10);
+}
+
+.address-input:disabled {
+  background-color: var(--color-bg-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}

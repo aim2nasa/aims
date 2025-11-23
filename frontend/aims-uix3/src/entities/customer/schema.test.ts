@@ -61,21 +61,13 @@ describe('PersonalInfoSchema', () => {
     expect(() => PersonalInfoSchema.parse(validPersonalInfo)).not.toThrow();
   });
 
-  it('이름이 필수이다', () => {
-    const invalidPersonalInfo = {
+  it('이름이 optional이다', () => {
+    const validPersonalInfo = {
       email: 'test@example.com',
     };
 
-    // name 필드가 없으면 에러 발생
-    expect(() => PersonalInfoSchema.parse(invalidPersonalInfo)).toThrow();
-  });
-
-  it('빈 이름을 거부한다', () => {
-    const invalidPersonalInfo = {
-      name: '',
-    };
-
-    expect(() => PersonalInfoSchema.parse(invalidPersonalInfo)).toThrow();
+    // name 필드가 없어도 유효
+    expect(() => PersonalInfoSchema.parse(validPersonalInfo)).not.toThrow();
   });
 
   it('유효하지 않은 이메일을 거부한다', () => {

@@ -80,22 +80,15 @@ describe('useCustomerRegistrationController', () => {
       expect(result.current.formData.mobile_phone).toBe('010-1234-5678');
     });
 
-    it('필드 변경 시 해당 필드의 에러를 제거해야 함', () => {
+    it('필드 변경 시 formData가 업데이트되어야 함', () => {
       const { result } = renderHook(() => useCustomerRegistrationController());
 
-      // 에러 설정 (빈 name으로 제출 시도)
-      act(() => {
-        result.current.handleSubmit();
-      });
-
-      expect(result.current.errors).not.toEqual({});
-
-      // 필드 변경으로 에러 제거
+      // 필드 변경
       act(() => {
         result.current.handleChange('name', '홍길동');
       });
 
-      // name 필드 에러만 제거됨
+      // formData 업데이트 확인
       expect(result.current.formData.name).toBe('홍길동');
     });
 
@@ -121,15 +114,19 @@ describe('useCustomerRegistrationController', () => {
   });
 
   describe('handleSubmit - 검증', () => {
-    it('name이 없으면 검증 실패해야 함', async () => {
+    it('name이 없어도 제출할 수 있어야 함 (name은 optional)', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+      } as Response);
+
       const { result } = renderHook(() => useCustomerRegistrationController());
 
       await act(async () => {
         await result.current.handleSubmit();
       });
 
-      expect(result.current.errors).not.toEqual({});
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalled();
     });
 
     it('name이 있으면 검증 통과해야 함', async () => {
@@ -446,12 +443,14 @@ describe('useCustomerRegistrationController', () => {
       });
     });
 
-    it('에러를 초기화해야 함', () => {
+    it('에러를 초기화해야 함', async () => {
+      vi.mocked(global.fetch).mockRejectedValue(new Error('서버 에러'));
+
       const { result } = renderHook(() => useCustomerRegistrationController());
 
-      // 에러 발생
-      act(() => {
-        result.current.handleSubmit();
+      // 에러 발생 (API 에러)
+      await act(async () => {
+        await result.current.handleSubmit();
       });
 
       expect(result.current.errors).not.toEqual({});
