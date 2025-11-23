@@ -18,7 +18,12 @@ import 'react-pdf/dist/Page/TextLayer.css'
 import './PDFViewer.css'
 
 // PDF.js 워커 설정
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`
+// 프로덕션: CDN 사용 (더 안정적), 개발: 로컬 파일
+if (import.meta.env.PROD) {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+} else {
+  pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`
+}
 
 interface PDFViewerProps {
   /** PDF 파일 URL */
@@ -50,28 +55,19 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialS
   const [pageNumber, setPageNumber] = useState(1)
   const [containerWidth, setContainerWidth] = useState(600)
   const [error, setError] = useState<string | null>(null)
-  const [isRetrying, setIsRetrying] = useState(false)
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
     setPageNumber(1)
     setError(null)
-    setIsRetrying(false)
   }, [])
 
   const onDocumentLoadError = useCallback((error: Error) => {
     setError(error.message || 'PDF 파일을 불러오는 데 실패했습니다.')
-
-    // Worker 관련 오류인 경우 CDN fallback 시도
-    if (error.message?.includes('worker') && !isRetrying) {
-      setIsRetrying(true)
-      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
-    }
-  }, [isRetrying])
+  }, [])
 
   const handleRetry = useCallback(() => {
     setError(null)
-    setIsRetrying(false)
   }, [])
 
   const changePage = useCallback((offset: number) => {
@@ -129,18 +125,16 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ file, onDownload, initialS
           loading={
             <div className="viewer-loading">
               <div className="viewer-loading__spinner" aria-label="로딩 중" />
-              <span>{isRetrying ? 'CDN으로 재시도 중...' : '문서를 불러오는 중...'}</span>
+              <span>문서를 불러오는 중...</span>
             </div>
           }
           error={
             <div className="viewer-error">
               <span className="viewer-error__icon" aria-hidden="true">⚠️</span>
               <p className="viewer-error__message">{error || 'PDF 파일을 불러오는 데 실패했습니다.'}</p>
-              {!isRetrying && (
-                <button className="retry-button" onClick={handleRetry}>
-                  다시 시도
-                </button>
-              )}
+              <button type="button" className="retry-button" onClick={handleRetry}>
+                다시 시도
+              </button>
             </div>
           }
         >
