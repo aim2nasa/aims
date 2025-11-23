@@ -472,11 +472,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const urlCustomerId = urlParams.get('customerId')
     const urlDocumentId = urlParams.get('documentId')
 
-    // 활성 View 복원 (URL 우선, 그 다음 LocalStorage)
-    const viewToRestore = urlView || persistentState.activeDocumentView
-    if (viewToRestore) {
-      setActiveDocumentView(viewToRestore)
-    }
+    // 활성 View 복원 (URL 우선, 그 다음 LocalStorage, 기본값: 고객 관리)
+    const viewToRestore = urlView || persistentState.activeDocumentView || 'customers'
+    setActiveDocumentView(viewToRestore)
 
     // 고객 ID가 URL에 있으면 고객 정보 로드
     if (urlCustomerId) {
