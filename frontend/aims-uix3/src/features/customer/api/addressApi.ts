@@ -1,4 +1,4 @@
-const ADDRESS_API_URL = 'http://tars.giize.com:3010/api/address';
+const ADDRESS_API_URL = '/api/address';
 
 export interface AddressSearchResult {
   roadAddr: string;

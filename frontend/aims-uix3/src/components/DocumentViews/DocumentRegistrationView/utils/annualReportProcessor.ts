@@ -45,7 +45,7 @@ export async function processAnnualReportFile(
       for (const doc of customerDocs.documents) {
         try {
           const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const docStatus = await fetch(`http://tars.giize.com:3010/api/documents/${doc._id}/status`, {
+      const docStatus = await fetch(`/api/documents/${doc._id}/status`, {
         headers: { 'x-user-id': userId }
       });
           const docData = await docStatus.json();

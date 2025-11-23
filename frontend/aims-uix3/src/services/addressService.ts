@@ -15,7 +15,7 @@ import { formatDateTime } from '@/shared/lib/timeUtils';
 /**
  * API 기본 URL
  */
-const API_BASE_URL = 'http://tars.giize.com:3010/api';
+const API_BASE_URL = '/api';
 
 /**
  * AddressService 클래스

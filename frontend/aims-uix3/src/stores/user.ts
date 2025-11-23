@@ -122,7 +122,7 @@ export function useUserStore() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://tars.giize.com:3010/api/users');
+        const response = await fetch('/api/users');
         const result = await response.json();
 
         // 브라우저 환경에서만 setState 호출

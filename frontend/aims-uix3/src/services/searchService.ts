@@ -64,7 +64,7 @@ export class SearchService {
             try {
               // MongoDB에서 전체 문서 정보 조회
               const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-              const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${docId}/status`, {
+              const docResponse = await fetch(`/api/documents/${docId}/status`, {
                 headers: { 'x-user-id': userId }
               })
               if (!docResponse.ok) {
@@ -117,7 +117,7 @@ export class SearchService {
               try {
                 // ⭐ 설계사별 고객 데이터 격리
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`, {
+                const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: { 'x-user-id': currentUserId }
                 })
                 if (customerResponse.ok) {
@@ -182,7 +182,7 @@ export class SearchService {
               try {
                 // ⭐ 설계사별 고객 데이터 격리
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`, {
+                const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: { 'x-user-id': currentUserId }
                 })
                 if (customerResponse.ok) {

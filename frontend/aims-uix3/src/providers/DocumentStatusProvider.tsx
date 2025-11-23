@@ -142,7 +142,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
               try {
                 // ⭐ 설계사별 고객 데이터 격리
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-                const customerResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customerId}`, {
+                const customerResponse = await fetch(`/api/customers/${customerId}`, {
                   headers: { 'x-user-id': currentUserId }
                 })
                 if (customerResponse.ok) {

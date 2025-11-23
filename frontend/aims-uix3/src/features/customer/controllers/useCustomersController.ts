@@ -93,7 +93,7 @@ export const useCustomersController = ({
       const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
 
       // API 호출
-      const response = await fetch(`http://tars.giize.com:3010/api/customers?${params.toString()}`, {
+      const response = await fetch(`/api/customers?${params.toString()}`, {
         headers: {
           'x-user-id': currentUserId
         }

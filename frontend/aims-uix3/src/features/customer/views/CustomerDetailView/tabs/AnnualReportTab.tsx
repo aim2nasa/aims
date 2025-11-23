@@ -152,7 +152,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     try {
       // ⭐ 설계사별 고객 데이터 격리
       const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-      const response = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/annual-reports/pending`, {
+      const response = await fetch(`/api/customers/${customer._id}/annual-reports/pending`, {
         headers: { 'x-user-id': currentUserId }
       });
       const data = await response.json();
@@ -177,7 +177,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       try {
         // ⭐ 설계사별 고객 데이터 격리
         const docsUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-        const docsResponse = await fetch(`http://tars.giize.com:3010/api/customers/${customer._id}/documents`, {
+        const docsResponse = await fetch(`/api/customers/${customer._id}/documents`, {
           headers: { 'x-user-id': docsUserId }
         });
         const docsData = await docsResponse.json();

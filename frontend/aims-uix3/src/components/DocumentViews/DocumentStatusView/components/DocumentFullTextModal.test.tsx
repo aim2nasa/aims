@@ -142,7 +142,7 @@ describe('DocumentFullTextModal', () => {
       // API 호출 확인
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          'http://tars.giize.com:3010/api/documents/doc456/status',
+          '/api/documents/doc456/status',
           { headers: { 'x-user-id': 'tester' } }
         );
       });

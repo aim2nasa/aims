@@ -52,7 +52,7 @@ describe('AddressService', () => {
       const result = await AddressService.getAddressHistory('customer123');
 
       expect(fetch).toHaveBeenCalledWith(
-        'http://tars.giize.com:3010/api/customers/customer123/address-history',
+        '/api/customers/customer123/address-history',
         {
           method: 'GET',
           headers: {

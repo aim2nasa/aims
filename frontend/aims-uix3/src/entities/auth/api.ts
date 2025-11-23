@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || 'http://tars.giize.com:3010';
+const API_BASE_URL = import.meta.env['VITE_API_BASE_URL'] || '';
 
 export interface User {
   _id: string;

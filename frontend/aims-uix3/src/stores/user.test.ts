@@ -122,7 +122,7 @@ describe('User Store', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://tars.giize.com:3010/api/users');
+      expect(mockFetch).toHaveBeenCalledWith('/api/users');
       expect(result.current.availableUsers).toHaveLength(2);
       expect(result.current.availableUsers[0]?.id).toBe('tester');
       expect(result.current.availableUsers[1]?.id).toBe('user2');

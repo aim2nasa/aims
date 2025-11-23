@@ -7,7 +7,7 @@
 import type { Customer } from '@/entities/customer';
 
 // Node.js API (3010)를 프록시로 사용 (포트 8004는 외부 접속 불가)
-const ANNUAL_REPORT_API_URL = 'http://tars.giize.com:3010/api';
+const ANNUAL_REPORT_API_URL = '/api';
 
 // ==================== 타입 정의 ====================
 
@@ -477,7 +477,7 @@ export class AnnualReportApi {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
       const response = await fetch(
-        `http://tars.giize.com:3010/api/customers?search=${encodeURIComponent(name)}&userId=${encodeURIComponent(userId)}`
+        `/api/customers?search=${encodeURIComponent(name)}&userId=${encodeURIComponent(userId)}`
       );
 
       if (!response.ok) {

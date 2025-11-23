@@ -12,7 +12,7 @@ const API_DEBUG = false;
 
 // API 설정
 export const API_CONFIG = {
-  BASE_URL: import.meta.env['VITE_API_BASE_URL'] || 'http://tars.giize.com:3010',
+  BASE_URL: import.meta.env['VITE_API_BASE_URL'] || '',
   TIMEOUT: 10000, // 10초
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',

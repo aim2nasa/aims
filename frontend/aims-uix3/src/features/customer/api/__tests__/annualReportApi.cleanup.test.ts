@@ -105,7 +105,7 @@ describe('AnnualReportApi.cleanupDuplicates', () => {
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `http://tars.giize.com:3010/api/customers/${mockCustomerId}/annual-reports/cleanup-duplicates?userId=${mockUserId}`,
+        `/api/customers/${mockCustomerId}/annual-reports/cleanup-duplicates?userId=${mockUserId}`,
         expect.objectContaining({
           method: 'POST',
           headers: {

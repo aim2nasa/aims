@@ -350,7 +350,7 @@ describe('useCustomerRegistrationController', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://tars.giize.com:3010/api/customers',
+        '/api/customers',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({

@@ -23,7 +23,7 @@ import type {
 } from '../types/documentStatus'
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
 
-const API_BASE_URL = import.meta.env['VITE_API_URL'] || 'http://tars.giize.com:3010'
+const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
 // @ts-ignore - 다른 모듈에서 사용될 수 있음
 const N8N_WEBHOOK_URL = 'https://n8nd.giize.com/webhook/smartsearch'
 

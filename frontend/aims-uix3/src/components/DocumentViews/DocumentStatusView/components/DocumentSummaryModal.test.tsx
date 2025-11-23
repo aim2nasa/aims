@@ -144,7 +144,7 @@ describe('DocumentSummaryModal', () => {
       // API 호출 확인
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          'http://tars.giize.com:3010/api/documents/doc123/status',
+          '/api/documents/doc123/status',
           { headers: { 'x-user-id': 'tester' } }
         );
       });

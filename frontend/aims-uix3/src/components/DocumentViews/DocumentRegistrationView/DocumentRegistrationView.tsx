@@ -683,7 +683,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 매핑된 metadata 가져오기
       const metadata = arMetadataMappingRef.current.get(fileName);
 
-      const response = await fetch('http://tars.giize.com:3010/api/documents/set-annual-report', {
+      const response = await fetch('/api/documents/set-annual-report', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -717,7 +717,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           try {
             const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
               headers: { 'x-user-id': userIdForFetch }
             });
             const response = await docResponse.json();
@@ -744,7 +744,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               try {
                 const currentUserId = UserContextService.getContext().identifierValue;
                 console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}, userId=${currentUserId}`);
-                const bgParseResponse = await fetch('http://tars.giize.com:3010/api/ar-background/trigger-parsing', {
+                const bgParseResponse = await fetch('/api/ar-background/trigger-parsing', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -830,7 +830,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
         try {
           const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
               headers: { 'x-user-id': userIdForFetch }
             });
           const response = await docResponse.json();
@@ -926,7 +926,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
         try {
           const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const docResponse = await fetch(`http://tars.giize.com:3010/api/documents/${documentId}/status`, {
+            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
               headers: { 'x-user-id': userIdForFetch }
             });
           const response = await docResponse.json();
