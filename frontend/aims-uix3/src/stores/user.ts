@@ -27,11 +27,18 @@ export interface User {
 
 /**
  * 현재 사용자 ID를 저장하는 전역 변수
- * 초기값: localStorage에서 복원하거나 'tester'
+ * 초기값: localStorage에서 복원 (없으면 빈 문자열)
+ * ⚠️ 실제 MongoDB ObjectId여야 함 ('tester', 'dev-user' 같은 문자열 금지)
  */
 let currentUserId = typeof window !== 'undefined'
-  ? localStorage.getItem('aims-current-user-id') || 'tester'
-  : 'tester';
+  ? (() => {
+      const storedId = localStorage.getItem('aims-current-user-id');
+      if (!storedId) {
+        console.warn('[UserStore] ⚠️ 사용자 ID가 localStorage에 없습니다. 로그인이 필요합니다.');
+      }
+      return storedId || '';
+    })()
+  : '';
 
 /**
  * 현재 사용자 상세 정보를 저장하는 전역 변수
@@ -132,20 +139,16 @@ export function useUserStore() {
           setAvailableUsers(result.data);
         } else {
           console.error('❌ 사용자 목록 로드 실패:', result.error);
-          // 실패 시 기본 사용자만 표시
-          setAvailableUsers([
-            { id: 'tester', name: '테스트 설계사', email: 'tester@example.com', role: 'agent' }
-          ]);
+          // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
+          setAvailableUsers([]);
         }
       } catch (error) {
         // 브라우저 환경에서만 에러 처리 및 setState 호출
         if (typeof window === 'undefined') return;
 
         console.error('❌ 사용자 목록 API 호출 실패:', error);
-        // 실패 시 기본 사용자만 표시
-        setAvailableUsers([
-          { id: 'tester', name: '테스트 설계사', email: 'tester@example.com', role: 'agent' }
-        ]);
+        // 실패 시 빈 배열 (하드코딩된 테스트 사용자 제거)
+        setAvailableUsers([]);
       } finally {
         // 브라우저 환경에서만 setLoading 호출
         if (typeof window !== 'undefined') {

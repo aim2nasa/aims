@@ -122,8 +122,14 @@ export async function apiRequest<T = unknown>(
 
   // 헤더 구성
   const currentUserId = typeof window !== 'undefined'
-    ? localStorage.getItem('aims-current-user-id') || 'tester'
-    : 'tester';
+    ? (() => {
+        const storedId = localStorage.getItem('aims-current-user-id');
+        if (!storedId && import.meta.env.DEV) {
+          console.warn('[API] ⚠️ 사용자 ID가 localStorage에 없습니다. x-user-id 헤더가 빈 값으로 전송됩니다.');
+        }
+        return storedId || '';
+      })()
+    : '';
 
   // JWT 토큰 가져오기 (authStore의 persist 저장소에서)
   let token: string | null = null;

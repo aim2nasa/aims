@@ -104,15 +104,14 @@ describe('User Store', () => {
       // 이 테스트는 기본값 동작을 확인
       const { result } = renderHook(() => useUserStore());
 
-      // 기본값 또는 localStorage에서 읽은 값
+      // 기본값 (빈 문자열) 또는 localStorage에서 읽은 값
       expect(typeof result.current.userId).toBe('string');
-      expect(result.current.userId.length).toBeGreaterThan(0);
     });
 
-    it('localStorage에 사용자 ID가 없으면 "tester"를 기본값으로 사용해야 한다', () => {
+    it('localStorage에 사용자 ID가 없으면 빈 문자열을 반환해야 한다', () => {
       const { result } = renderHook(() => useUserStore());
 
-      expect(result.current.userId).toBe('tester');
+      expect(result.current.userId).toBe('');
     });
 
     it('사용자 목록을 API에서 로드해야 한다', async () => {
@@ -128,7 +127,7 @@ describe('User Store', () => {
       expect(result.current.availableUsers[1]?.id).toBe('user2');
     });
 
-    it('API 로드 실패 시 기본 사용자만 표시해야 한다', async () => {
+    it('API 로드 실패 시 빈 배열을 반환해야 한다', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const { result } = renderHook(() => useUserStore());
@@ -137,8 +136,7 @@ describe('User Store', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.availableUsers).toHaveLength(1);
-      expect(result.current.availableUsers[0]?.id).toBe('tester');
+      expect(result.current.availableUsers).toHaveLength(0);
     });
   });
 
@@ -266,7 +264,7 @@ describe('User Store', () => {
       expect(result.current.availableUsers[1]?.name).toBe('설계사2');
     });
 
-    it('API 응답이 success: false일 때 기본 사용자를 표시해야 한다', async () => {
+    it('API 응답이 success: false일 때 빈 배열을 반환해야 한다', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -281,8 +279,7 @@ describe('User Store', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.availableUsers).toHaveLength(1);
-      expect(result.current.availableUsers[0]?.id).toBe('tester');
+      expect(result.current.availableUsers).toHaveLength(0);
     });
   });
 });

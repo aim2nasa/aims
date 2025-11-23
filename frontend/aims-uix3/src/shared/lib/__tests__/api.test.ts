@@ -463,7 +463,7 @@ describe('apiRequest', () => {
       );
     });
 
-    it('localStorage에 사용자 ID가 없으면 "tester"를 기본값으로 사용해야 함', async () => {
+    it('localStorage에 사용자 ID가 없으면 빈 문자열을 사용해야 함', async () => {
       // localStorage에 사용자 ID 없음
 
       await apiRequest('/test');
@@ -472,7 +472,7 @@ describe('apiRequest', () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-user-id': 'tester'
+            'x-user-id': ''
           })
         })
       );

@@ -1610,13 +1610,17 @@ app.get('/api/users', async (req, res) => {
  * POST /api/dev/ensure-user
  *
  * 개발 환경에서 항상 일관된 계정을 사용하기 위한 엔드포인트
- * - dev-user 계정이 존재하면 조회
+ * - dev 계정이 존재하면 조회
  * - 없으면 자동으로 생성
  * - 실제 JWT 토큰 발급 (계정 삭제 등 인증 필요 기능 사용 가능)
+ * - MongoDB ObjectId 사용 (고정값: 000000000000000000000001)
  */
 app.post('/api/dev/ensure-user', async (req, res) => {
   try {
-    const DEV_USER_ID = 'dev-user';
+    const { ObjectId } = require('mongodb');
+
+    // 개발 계정 고정 ObjectId (항상 동일한 ID 사용)
+    const DEV_USER_ID = new ObjectId('000000000000000000000001');
     const DEV_USER = {
       _id: DEV_USER_ID,
       name: '개발자 (Dev)',
@@ -1624,8 +1628,9 @@ app.post('/api/dev/ensure-user', async (req, res) => {
       role: 'agent',
       avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Dev&backgroundColor=c0ffc0',
       authProvider: 'dev',
+      profileCompleted: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      lastLogin: new Date()
     };
 
     const usersCollection = db.collection('users');
@@ -1637,14 +1642,20 @@ app.post('/api/dev/ensure-user', async (req, res) => {
       // 없으면 생성
       await usersCollection.insertOne(DEV_USER);
       user = DEV_USER;
-      console.log(`✅ 개발 전용 계정 생성: ${DEV_USER_ID}`);
+      console.log(`✅ 개발 전용 계정 생성: ${DEV_USER_ID.toString()}`);
     } else {
-      console.log(`ℹ️  개발 전용 계정 존재 확인: ${DEV_USER_ID}`);
+      // 마지막 로그인 시간 업데이트
+      await usersCollection.updateOne(
+        { _id: DEV_USER_ID },
+        { $set: { lastLogin: new Date() } }
+      );
+      user.lastLogin = new Date();
+      console.log(`ℹ️  개발 전용 계정 존재 확인: ${DEV_USER_ID.toString()}`);
     }
 
     // 실제 JWT 토큰 발급 (계정 삭제 등 인증 필요 기능에서 사용)
     const token = generateToken({
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       role: user.role
@@ -1653,15 +1664,16 @@ app.post('/api/dev/ensure-user', async (req, res) => {
     res.json({
       success: true,
       user: {
-        _id: user._id,
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
         avatarUrl: user.avatarUrl,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        profileCompleted: user.profileCompleted
       },
       token,  // JWT 토큰 추가
-      message: user._id === DEV_USER_ID && !user.createdAt ? '기존 계정 조회' : '새 계정 생성'
+      message: '개발 계정 로그인 완료'
     });
   } catch (error) {
     console.error('❌ 개발 계정 생성/조회 실패:', error);
