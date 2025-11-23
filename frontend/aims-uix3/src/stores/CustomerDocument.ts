@@ -346,14 +346,12 @@ export class CustomerDocument {
       }
       await CustomerService.deleteCustomer(id);
 
-      // 로컬 상태 업데이트
-      this.customers = this.customers.filter(c => c._id !== id);
-      this.total -= 1;
-
       if (import.meta.env.DEV) {
-        console.log('[CustomerDocument] 고객 삭제 완료:', id);
+        console.log('[CustomerDocument] 고객 삭제 완료, 최신 데이터 로드 중:', id);
       }
-      this.notify(); // 삭제 완료 알림
+
+      // 삭제 후 서버에서 최신 데이터 다시 로드
+      await this.loadCustomers({ limit: 10000, page: 1 });
     } catch (error) {
       console.error('[CustomerDocument] 고객 삭제 실패:', error);
       throw error;

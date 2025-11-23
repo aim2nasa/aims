@@ -570,6 +570,13 @@ describe('CustomerDocument', () => {
       await document.loadCustomers()
 
       vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
+      // deleteCustomer가 loadCustomers를 호출하므로 삭제 후 결과를 모킹
+      const remainingCustomer = customers[1]
+      if (!remainingCustomer) throw new Error('Test setup error: customer2 not found')
+      vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
+        customers: [remainingCustomer], // customer2만 남음
+        pagination: { total: 1, hasMore: false, page: 1, limit: 10000 },
+      })
 
       await document.deleteCustomer('customer1')
 
@@ -823,6 +830,11 @@ describe('CustomerDocument', () => {
 
       // Delete
       vi.mocked(CustomerService.deleteCustomer).mockResolvedValueOnce(undefined)
+      // deleteCustomer가 loadCustomers를 호출하므로 삭제 후 빈 결과를 모킹
+      vi.mocked(CustomerService.getCustomers).mockResolvedValueOnce({
+        customers: [],
+        pagination: { total: 0, hasMore: false, page: 1, limit: 10000 },
+      })
 
       await document.deleteCustomer('customer1')
 
