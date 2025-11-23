@@ -75,7 +75,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
       // 유형 필터링
       if (customerTypeFilter === 'personal') {
-        customers = customers.filter(c => c.insurance_info?.customer_type !== '법인');
+        customers = customers.filter(c => c.insurance_info?.customer_type === '개인');
       } else if (customerTypeFilter === 'corporate') {
         customers = customers.filter(c => c.insurance_info?.customer_type === '법인');
       }
@@ -218,7 +218,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
     // 개인/법인 고객 수 계산 (전체 기준)
     const customerTypeCounts = useMemo(() => {
-      const personal = allCustomers.filter(c => c.insurance_info?.customer_type !== '법인').length;
+      const personal = allCustomers.filter(c => c.insurance_info?.customer_type === '개인').length;
       const corporate = allCustomers.filter(c => c.insurance_info?.customer_type === '법인').length;
       return { personal, corporate, total: allCustomers.length };
     }, [allCustomers]);
