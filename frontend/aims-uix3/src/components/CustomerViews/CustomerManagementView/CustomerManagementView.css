@@ -124,19 +124,7 @@
   padding: var(--spacing-4);
 }
 
-.pie-chart-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
 
-.pie-chart-title {
-  font-size: var(--font-size-caption-1);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin: 0;
-  padding-left: var(--spacing-2);
-}
 
 /* 파이 차트를 가로로 배치 (차트 좌측, 레전드 우측) */
 .customer-management-view__pie-charts-grid .file-type-pie-chart {

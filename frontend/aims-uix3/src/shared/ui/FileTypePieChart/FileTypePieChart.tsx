@@ -113,9 +113,18 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
   // 전체 개수 계산
   const total = data.reduce((sum, item) => sum + item.count, 0)
 
+  // 레전드용 데이터 (전체 항목 포함, percentage 추가)
+  const legendData = data.map((item) => ({
+    ...item,
+    percentage: (item.count / total) * 100
+  }))
+
+  // 0이 아닌 항목만 필터링 (차트 렌더링용)
+  const nonZeroData = data.filter(item => item.count > 0)
+
   // 각 데이터 포인트의 각도 계산
   let currentAngle = 0
-  const slices = data.map((item) => {
+  const slices = nonZeroData.map((item) => {
     const percentage = (item.count / total) * 100
     const angle = (item.count / total) * 360
     const startAngle = currentAngle
@@ -132,6 +141,10 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
     }
   })
 
+  // 단일 항목 100%인 경우 circle로 렌더링
+  const isSingleFullCircle = slices.length === 1 && slices[0]?.percentage === 100
+  const firstSlice = slices[0]
+
   return (
     <div className="file-type-pie-chart">
       <svg
@@ -142,19 +155,59 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
         role="img"
         aria-label="파일 타입별 비율 차트"
       >
-        {slices.map((slice, index) => (
-          <g key={index} className="file-type-pie-chart__slice">
-            <path
-              d={slice.path}
-              fill={slice.color}
-              className="file-type-pie-chart__path"
-              data-label={slice.label}
-            />
+        {isSingleFullCircle && firstSlice ? (
+          /* 단일 항목 100% - circle 사용 */
+          <g className="file-type-pie-chart__slice">
+            {innerRadius > 0 ? (
+              /* 도넛 차트 */
+              <>
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={radius}
+                  fill={firstSlice.color}
+                  className="file-type-pie-chart__path"
+                  data-label={firstSlice.label}
+                />
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r={innerRadius}
+                  fill="var(--color-bg-primary)"
+                  className="file-type-pie-chart__path-hole"
+                />
+              </>
+            ) : (
+              /* 일반 파이 차트 */
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r={radius}
+                fill={firstSlice.color}
+                className="file-type-pie-chart__path"
+                data-label={firstSlice.label}
+              />
+            )}
             <title>
-              {slice.label}: {slice.count}개 ({slice.percentage.toFixed(1)}%)
+              {firstSlice.label}: {firstSlice.count}개 ({firstSlice.percentage.toFixed(1)}%)
             </title>
           </g>
-        ))}
+        ) : (
+          /* 다중 항목 - path 사용 */
+          slices.map((slice, index) => (
+            <g key={index} className="file-type-pie-chart__slice">
+              <path
+                d={slice.path}
+                fill={slice.color}
+                className="file-type-pie-chart__path"
+                data-label={slice.label}
+              />
+              <title>
+                {slice.label}: {slice.count}개 ({slice.percentage.toFixed(1)}%)
+              </title>
+            </g>
+          ))
+        )}
 
         {/* 중앙 텍스트 (도넛 차트일 경우) */}
         {innerRadius > 0 && (
@@ -177,21 +230,21 @@ export const FileTypePieChart: React.FC<FileTypePieChartProps> = ({
 
       {/* 레전드 */}
       <div className="file-type-pie-chart__legend">
-        {slices.map((slice, index) => (
+        {legendData.map((item, index) => (
           <div key={index} className="file-type-pie-chart__legend-item">
             <div className="file-type-pie-chart__legend-item-header">
               <div
                 className="file-type-pie-chart__legend-color"
-                style={{ backgroundColor: slice.color }}
+                style={{ backgroundColor: item.color }}
               />
-              <span className="file-type-pie-chart__legend-label">{slice.label}</span>
+              <span className="file-type-pie-chart__legend-label">{item.label}</span>
               <span className="file-type-pie-chart__legend-value">
-                {slice.count} ({slice.percentage.toFixed(1)}%)
+                {item.count} ({item.percentage.toFixed(1)}%)
               </span>
             </div>
-            {slice.description && (
+            {item.description && (
               <div className="file-type-pie-chart__legend-description">
-                {slice.description}
+                {item.description}
               </div>
             )}
           </div>
