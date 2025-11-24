@@ -196,13 +196,14 @@ class ExcelRefinerApp:
             messagebox.showwarning("경고", "엑셀 파일(.xlsx, .xls)만 지원됩니다.")
 
     def validate_policy_numbers(self):
-        """증권번호 중복 검증"""
+        """증권번호 중복 검증 (엄격 모드)"""
         if not self.dataframes:
             messagebox.showwarning("경고", "먼저 엑셀 파일을 로드하세요")
             return
 
         total_duplicates = 0
         duplicate_info = []
+        empty_count = 0
 
         # 각 시트별로 검증
         for sheet_name, df in self.dataframes.items():
@@ -216,19 +217,31 @@ class ExcelRefinerApp:
             if not policy_col:
                 continue
 
-            # 중복된 증권번호 찾기
-            duplicated_mask = df[policy_col].duplicated(keep=False)
+            # 증권번호 정규화 (문자열 변환 + 공백 제거)
+            normalized = df[policy_col].apply(lambda x: str(x).strip() if pd.notna(x) else '')
+
+            # 빈 값 체크
+            empty_mask = (normalized == '') | (normalized == 'nan')
+            empty_indices = df[empty_mask].index.tolist()
+
+            if len(empty_indices) > 0:
+                empty_count += len(empty_indices)
+                duplicate_info.append(f"[{sheet_name}] 빈 증권번호 {len(empty_indices)}건")
+
+            # 정규화된 값으로 중복 체크
+            duplicated_mask = normalized.duplicated(keep=False)
             duplicated_indices = df[duplicated_mask].index.tolist()
 
+            # 빈 값은 중복 목록에서 제외 (별도 표시)
+            duplicated_indices = [idx for idx in duplicated_indices if idx not in empty_indices]
+
             if duplicated_indices:
-                # 중복된 증권번호 값들
-                duplicate_values = df.loc[duplicated_indices, policy_col].unique()
                 duplicate_count = len(duplicated_indices)
                 total_duplicates += duplicate_count
+                duplicate_info.append(f"[{sheet_name}] 중복 {duplicate_count}건")
 
-                duplicate_info.append(f"[{sheet_name}] {duplicate_count}건")
-
-                # Treeview에서 중복 행들을 맨 위로 재배치
+            # 문제가 있는 행이 있으면 Treeview 재배치
+            if duplicated_indices or empty_indices:
                 tree = self.treeviews.get(sheet_name)
                 if tree:
                     # 기존 모든 아이템 삭제
@@ -238,16 +251,24 @@ class ExcelRefinerApp:
                     # DataFrame 칼럼 정보
                     columns = list(df.columns)
 
-                    # 1. 중복된 행들을 먼저 삽입 (맨 위)
+                    # 1. 빈 증권번호 행들을 먼저 삽입 (노란색)
+                    for idx in empty_indices:
+                        row = df.iloc[idx]
+                        values = [self.format_cell_value(col, row[col]) for col in columns]
+                        # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+                        tree.insert("", tk.END, text=str(idx + 2), values=values, tags=('empty',))
+
+                    # 2. 중복된 행들을 그 다음에 삽입 (빨간색)
                     for idx in duplicated_indices:
                         row = df.iloc[idx]
                         values = [self.format_cell_value(col, row[col]) for col in columns]
                         # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
                         tree.insert("", tk.END, text=str(idx + 2), values=values, tags=('duplicate',))
 
-                    # 2. 정상 행들을 그 다음에 삽입
+                    # 3. 정상 행들을 그 다음에 삽입
+                    problem_indices = set(empty_indices + duplicated_indices)
                     for idx in df.index:
-                        if idx not in duplicated_indices:
+                        if idx not in problem_indices:
                             row = df.iloc[idx]
                             values = [self.format_cell_value(col, row[col]) for col in columns]
                             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
@@ -255,16 +276,38 @@ class ExcelRefinerApp:
                             tree.insert("", tk.END, text=str(idx + 2), values=values, tags=(tag,))
 
         # 결과 표시
-        if total_duplicates > 0:
+        if total_duplicates > 0 or empty_count > 0:
             info_msg = "\n".join(duplicate_info)
-            messagebox.showwarning(
-                "중복 발견",
-                f"증권번호 중복이 발견되었습니다!\n\n{info_msg}\n\n중복된 행은 빨간색으로 표시되며,\n맨 위로 이동되었습니다."
+            msg_parts = []
+
+            if total_duplicates > 0:
+                msg_parts.append(f"❌ 중복된 증권번호: {total_duplicates}건")
+
+            if empty_count > 0:
+                msg_parts.append(f"⚠️ 빈 증권번호: {empty_count}건")
+
+            msg_parts.append(f"\n{info_msg}")
+            msg_parts.append("\n빈 증권번호: 노란색")
+            msg_parts.append("중복 증권번호: 빨간색")
+            msg_parts.append("\n문제가 있는 행들이 맨 위로 이동되었습니다.")
+
+            messagebox.showerror(
+                "검증 실패",
+                "\n".join(msg_parts)
             )
-            self.status_label.config(text=f"⚠️ 증권번호 중복 {total_duplicates}건 발견")
+            self.status_label.config(
+                text=f"❌ 검증 실패: 중복 {total_duplicates}건 / 빈 값 {empty_count}건",
+                fg="red"
+            )
         else:
-            messagebox.showinfo("검증 완료", "증권번호 중복이 없습니다. ✓")
-            self.status_label.config(text="✅ 증권번호 검증 완료 (중복 없음)")
+            messagebox.showinfo(
+                "검증 통과",
+                "✅ 모든 증권번호가 고유합니다!\n\n모든 증권번호가 서로 다른 값이며,\n빈 값도 없습니다."
+            )
+            self.status_label.config(
+                text="✅ 증권번호 검증 통과 (100% 고유)",
+                fg="green"
+            )
 
     def load_excel_file(self, file_path):
         """엑셀 파일 로드 및 표시"""
@@ -290,7 +333,8 @@ class ExcelRefinerApp:
                 total_rows += len(df)
 
             self.status_label.config(
-                text=f"✅ 로드 완료: {len(excel_file.sheet_names)}개 시트, 총 {total_rows:,}행"
+                text=f"✅ 로드 완료: {len(excel_file.sheet_names)}개 시트, 총 {total_rows:,}행",
+                fg="gray"
             )
 
         except Exception as e:
@@ -457,6 +501,8 @@ class ExcelRefinerApp:
         # 줄무늬 효과를 위한 태그 설정
         tree.tag_configure('oddrow', background='white')
         tree.tag_configure('evenrow', background='#F5F5F5')
+        # 빈 증권번호 표시 태그 (노란색 배경)
+        tree.tag_configure('empty', background='#FFF9C4', foreground='#F57C00')
         # 중복 행 표시 태그 (빨간색 배경)
         tree.tag_configure('duplicate', background='#FFE5E5', foreground='#D32F2F')
 
