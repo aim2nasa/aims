@@ -25,6 +25,7 @@ class ExcelRefinerApp:
         # 파일 경로 저장
         self.file_path = None
         self.dataframes = {}  # 시트명: DataFrame 저장
+        self.treeviews = {}  # 시트명: Treeview 저장
 
         # 스타일 설정
         self.setup_styles()
@@ -104,6 +105,18 @@ class ExcelRefinerApp:
         )
         browse_btn.pack(side=tk.RIGHT)
 
+        # 검증 버튼
+        validate_btn = tk.Button(
+            top_frame,
+            text="✓ 증권번호 검증",
+            command=self.validate_policy_numbers,
+            font=("Arial", 10),
+            bg="#FF9800",
+            fg="white",
+            padx=10
+        )
+        validate_btn.pack(side=tk.RIGHT, padx=5)
+
         # 메인 프레임: 탭으로 시트별 표시
         main_frame = tk.Frame(self.root, padx=10, pady=5)
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -182,6 +195,75 @@ class ExcelRefinerApp:
         else:
             messagebox.showwarning("경고", "엑셀 파일(.xlsx, .xls)만 지원됩니다.")
 
+    def validate_policy_numbers(self):
+        """증권번호 중복 검증"""
+        if not self.dataframes:
+            messagebox.showwarning("경고", "먼저 엑셀 파일을 로드하세요")
+            return
+
+        total_duplicates = 0
+        duplicate_info = []
+
+        # 각 시트별로 검증
+        for sheet_name, df in self.dataframes.items():
+            # 증권번호 칼럼 찾기
+            policy_col = None
+            for col in df.columns:
+                if '증권' in col or '증권번호' in col:
+                    policy_col = col
+                    break
+
+            if not policy_col:
+                continue
+
+            # 중복된 증권번호 찾기
+            duplicated_mask = df[policy_col].duplicated(keep=False)
+            duplicated_indices = df[duplicated_mask].index.tolist()
+
+            if duplicated_indices:
+                # 중복된 증권번호 값들
+                duplicate_values = df.loc[duplicated_indices, policy_col].unique()
+                duplicate_count = len(duplicated_indices)
+                total_duplicates += duplicate_count
+
+                duplicate_info.append(f"[{sheet_name}] {duplicate_count}건")
+
+                # Treeview에서 중복 행들을 맨 위로 재배치
+                tree = self.treeviews.get(sheet_name)
+                if tree:
+                    # 기존 모든 아이템 삭제
+                    for item in tree.get_children():
+                        tree.delete(item)
+
+                    # DataFrame 칼럼 정보
+                    columns = list(df.columns)
+
+                    # 1. 중복된 행들을 먼저 삽입 (맨 위)
+                    for idx in duplicated_indices:
+                        row = df.iloc[idx]
+                        values = [self.format_cell_value(col, row[col]) for col in columns]
+                        tree.insert("", tk.END, text=str(idx + 1), values=values, tags=('duplicate',))
+
+                    # 2. 정상 행들을 그 다음에 삽입
+                    for idx in df.index:
+                        if idx not in duplicated_indices:
+                            row = df.iloc[idx]
+                            values = [self.format_cell_value(col, row[col]) for col in columns]
+                            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+                            tree.insert("", tk.END, text=str(idx + 1), values=values, tags=(tag,))
+
+        # 결과 표시
+        if total_duplicates > 0:
+            info_msg = "\n".join(duplicate_info)
+            messagebox.showwarning(
+                "중복 발견",
+                f"증권번호 중복이 발견되었습니다!\n\n{info_msg}\n\n중복된 행은 빨간색으로 표시되며,\n맨 위로 이동되었습니다."
+            )
+            self.status_label.config(text=f"⚠️ 증권번호 중복 {total_duplicates}건 발견")
+        else:
+            messagebox.showinfo("검증 완료", "증권번호 중복이 없습니다. ✓")
+            self.status_label.config(text="✅ 증권번호 검증 완료 (중복 없음)")
+
     def load_excel_file(self, file_path):
         """엑셀 파일 로드 및 표시"""
         try:
@@ -190,6 +272,7 @@ class ExcelRefinerApp:
                 self.notebook.forget(tab)
 
             self.dataframes.clear()
+            self.treeviews.clear()
 
             # 엑셀 파일 읽기
             excel_file = pd.ExcelFile(file_path)
@@ -370,6 +453,8 @@ class ExcelRefinerApp:
         # 줄무늬 효과를 위한 태그 설정
         tree.tag_configure('oddrow', background='white')
         tree.tag_configure('evenrow', background='#F5F5F5')
+        # 중복 행 표시 태그 (빨간색 배경)
+        tree.tag_configure('duplicate', background='#FFE5E5', foreground='#D32F2F')
 
         # 데이터 삽입 (포맷팅 적용)
         for idx, row in df.iterrows():
@@ -378,6 +463,9 @@ class ExcelRefinerApp:
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
             # 행 번호는 1부터 시작 (text 파라미터에 행 번호)
             tree.insert("", tk.END, text=str(idx + 1), values=values, tags=(tag,))
+
+        # Treeview 저장 (검증 기능에서 사용)
+        self.treeviews[sheet_name] = tree
 
         tree.pack(fill=tk.BOTH, expand=True)
 
