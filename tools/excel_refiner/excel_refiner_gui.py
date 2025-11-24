@@ -242,7 +242,8 @@ class ExcelRefinerApp:
                     for idx in duplicated_indices:
                         row = df.iloc[idx]
                         values = [self.format_cell_value(col, row[col]) for col in columns]
-                        tree.insert("", tk.END, text=str(idx + 1), values=values, tags=('duplicate',))
+                        # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+                        tree.insert("", tk.END, text=str(idx + 2), values=values, tags=('duplicate',))
 
                     # 2. 정상 행들을 그 다음에 삽입
                     for idx in df.index:
@@ -250,7 +251,8 @@ class ExcelRefinerApp:
                             row = df.iloc[idx]
                             values = [self.format_cell_value(col, row[col]) for col in columns]
                             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
-                            tree.insert("", tk.END, text=str(idx + 1), values=values, tags=(tag,))
+                            # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+                            tree.insert("", tk.END, text=str(idx + 2), values=values, tags=(tag,))
 
         # 결과 표시
         if total_duplicates > 0:
@@ -395,14 +397,16 @@ class ExcelRefinerApp:
                     row = df.iloc[idx]
                     vals = [self.format_cell_value(c, row[c]) for c in columns]
                     tag = 'evenrow' if i % 2 == 0 else 'oddrow'
-                    tree.insert("", tk.END, text=str(idx + 1), values=vals, tags=(tag,))
+                    # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+                    tree.insert("", tk.END, text=str(idx + 2), values=vals, tags=(tag,))
             else:
                 # 칼럼 정렬
                 sorted_df = df.sort_values(by=col, ascending=asc)
                 for i, (idx, row) in enumerate(sorted_df.iterrows()):
                     vals = [self.format_cell_value(c, row[c]) for c in columns]
                     tag = 'evenrow' if i % 2 == 0 else 'oddrow'
-                    tree.insert("", tk.END, text=str(idx + 1), values=vals, tags=(tag,))
+                    # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+                    tree.insert("", tk.END, text=str(idx + 2), values=vals, tags=(tag,))
 
             # 헤더 업데이트
             symbol = ' ▲' if asc else ' ▼'
@@ -461,8 +465,8 @@ class ExcelRefinerApp:
             values = [self.format_cell_value(col, row[col]) for col in columns]
             # 홀수/짝수 행에 다른 배경색
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
-            # 행 번호는 1부터 시작 (text 파라미터에 행 번호)
-            tree.insert("", tk.END, text=str(idx + 1), values=values, tags=(tag,))
+            # 엑셀 행 번호 = DataFrame 인덱스 + 2 (헤더가 1행)
+            tree.insert("", tk.END, text=str(idx + 2), values=values, tags=(tag,))
 
         # Treeview 저장 (검증 기능에서 사용)
         self.treeviews[sheet_name] = tree
