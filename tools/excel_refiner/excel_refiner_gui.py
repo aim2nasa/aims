@@ -2,10 +2,12 @@
 """
 엑셀 정제 도구 (GUI)
 - 엑셀 파일의 모든 시트를 읽어서 표 형식으로 표시
+- 드래그앤드롭 지원
 """
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -29,6 +31,9 @@ class ExcelRefinerApp:
 
         # UI 구성
         self.create_widgets()
+
+        # 드래그앤드롭 설정
+        self.setup_drag_drop()
 
     def setup_styles(self):
         """Treeview 스타일 설정 (엑셀 스타일)"""
@@ -114,7 +119,7 @@ class ExcelRefinerApp:
         # 상태바
         self.status_label = tk.Label(
             bottom_frame,
-            text="파일을 선택하세요",
+            text="파일을 선택하거나 드래그앤드롭하세요",
             font=("Arial", 9),
             fg="gray",
             anchor=tk.W,
@@ -153,6 +158,29 @@ class ExcelRefinerApp:
 
             # 엑셀 파일 로드
             self.load_excel_file(file_path)
+
+    def setup_drag_drop(self):
+        """드래그앤드롭 설정"""
+        # 전체 윈도우에 드롭 가능하도록 설정
+        self.root.drop_target_register(DND_FILES)
+        self.root.dnd_bind('<<Drop>>', self.on_drop)
+
+    def on_drop(self, event):
+        """드롭 이벤트 핸들러"""
+        # 드롭된 파일 경로 추출 (중괄호 제거)
+        file_path = event.data.strip('{}')
+
+        # 엑셀 파일인지 확인
+        if file_path.lower().endswith(('.xlsx', '.xls')):
+            self.file_path = file_path
+            display_name = Path(file_path).name
+            self.file_label.config(text=display_name, fg="black")
+            self.status_label.config(text=f"✅ 파일 로딩 중: {display_name}")
+
+            # 엑셀 파일 로드
+            self.load_excel_file(file_path)
+        else:
+            messagebox.showwarning("경고", "엑셀 파일(.xlsx, .xls)만 지원됩니다.")
 
     def load_excel_file(self, file_path):
         """엑셀 파일 로드 및 표시"""
@@ -355,7 +383,7 @@ class ExcelRefinerApp:
 
 
 def main():
-    root = tk.Tk()
+    root = TkinterDnD.Tk()
     app = ExcelRefinerApp(root)
     root.mainloop()
 
