@@ -12,8 +12,17 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
+
+def read_version():
+    """VERSION 파일에서 버전 정보 읽기"""
+    version_file = Path(__file__).parent / 'VERSION'
+    if version_file.exists():
+        return f"v{version_file.read_text().strip()}"
+    return "v0.2.0"
+
+
 # 버전 정보
-VERSION = f"v0.1.{datetime.now().strftime('%Y%m%d')}"
+VERSION = read_version()
 
 
 class ExcelRefinerApp:
