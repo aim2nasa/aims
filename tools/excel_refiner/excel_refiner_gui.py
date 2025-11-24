@@ -105,6 +105,30 @@ class ExcelRefinerApp:
         )
         browse_btn.pack(side=tk.RIGHT)
 
+        # 정제된 파일 저장 버튼
+        save_refined_btn = tk.Button(
+            top_frame,
+            text="💾 정제된 파일 저장",
+            command=self.save_refined_file,
+            font=("Arial", 10),
+            bg="#2196F3",
+            fg="white",
+            padx=10
+        )
+        save_refined_btn.pack(side=tk.RIGHT, padx=5)
+
+        # 선택 행 삭제 버튼
+        delete_btn = tk.Button(
+            top_frame,
+            text="🗑 선택 행 삭제",
+            command=self.delete_selected_rows,
+            font=("Arial", 10),
+            bg="#F44336",
+            fg="white",
+            padx=10
+        )
+        delete_btn.pack(side=tk.RIGHT, padx=5)
+
         # 검증 버튼
         validate_btn = tk.Button(
             top_frame,
@@ -309,6 +333,116 @@ class ExcelRefinerApp:
                 fg="green"
             )
 
+    def delete_selected_rows(self):
+        """선택된 행들을 삭제"""
+        if not self.dataframes:
+            messagebox.showwarning("경고", "먼저 엑셀 파일을 로드하세요")
+            return
+
+        # 현재 활성 탭 가져오기
+        current_tab = self.notebook.index(self.notebook.select())
+        sheet_names = list(self.dataframes.keys())
+
+        if current_tab >= len(sheet_names):
+            return
+
+        sheet_name = sheet_names[current_tab]
+        tree = self.treeviews.get(sheet_name)
+
+        if not tree:
+            return
+
+        # 선택된 아이템들 가져오기
+        selected_items = tree.selection()
+
+        if not selected_items:
+            messagebox.showinfo("알림", "삭제할 행을 선택하세요")
+            return
+
+        # 확인 메시지
+        count = len(selected_items)
+        if not messagebox.askyesno("확인", f"선택된 {count}개 행을 삭제하시겠습니까?"):
+            return
+
+        # 삭제할 행 번호들 추출 (엑셀 행 번호 -> DataFrame 인덱스)
+        rows_to_delete = []
+        for item in selected_items:
+            # text는 엑셀 행 번호 (DataFrame 인덱스 + 2)
+            excel_row = int(tree.item(item)['text'])
+            df_index = excel_row - 2
+            rows_to_delete.append(df_index)
+
+        # DataFrame에서 행 삭제
+        df = self.dataframes[sheet_name]
+        df = df.drop(rows_to_delete)
+        # 인덱스 재설정
+        df = df.reset_index(drop=True)
+        self.dataframes[sheet_name] = df
+
+        # Treeview에서 선택된 행들 삭제
+        for item in selected_items:
+            tree.delete(item)
+
+        # 남은 행들의 행 번호 업데이트
+        for idx, item in enumerate(tree.get_children()):
+            tree.item(item, text=str(idx + 2))
+
+        self.status_label.config(
+            text=f"✅ {count}개 행 삭제 완료 (남은 행: {len(df):,}개)",
+            fg="gray"
+        )
+
+    def save_refined_file(self):
+        """정제된 데이터를 새 엑셀 파일로 저장"""
+        if not self.dataframes:
+            messagebox.showwarning("경고", "먼저 엑셀 파일을 로드하세요")
+            return
+
+        # 저장할 파일 경로 선택
+        if self.file_path:
+            # 원본 파일명에 "_정제됨" 추가
+            original_path = Path(self.file_path)
+            default_name = original_path.stem + "_정제됨" + original_path.suffix
+        else:
+            default_name = "정제된_엑셀.xlsx"
+
+        save_path = filedialog.asksaveasfilename(
+            title="정제된 파일 저장",
+            defaultextension=".xlsx",
+            initialfile=default_name,
+            filetypes=[
+                ("Excel files", "*.xlsx"),
+                ("All files", "*.*")
+            ]
+        )
+
+        if not save_path:
+            return
+
+        try:
+            # 모든 시트를 엑셀 파일로 저장
+            with pd.ExcelWriter(save_path, engine='openpyxl') as writer:
+                for sheet_name, df in self.dataframes.items():
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+            total_rows = sum(len(df) for df in self.dataframes.values())
+            messagebox.showinfo(
+                "저장 완료",
+                f"✅ 정제된 파일이 저장되었습니다!\n\n"
+                f"파일: {Path(save_path).name}\n"
+                f"시트: {len(self.dataframes)}개\n"
+                f"총 행수: {total_rows:,}개"
+            )
+
+            self.status_label.config(
+                text=f"✅ 파일 저장 완료: {Path(save_path).name}",
+                fg="green"
+            )
+
+        except Exception as e:
+            messagebox.showerror("오류", f"파일 저장 실패:\n{e}")
+            self.status_label.config(text=f"❌ 저장 오류: {e}", fg="red")
+
     def load_excel_file(self, file_path):
         """엑셀 파일 로드 및 표시"""
         try:
@@ -406,7 +540,8 @@ class ExcelRefinerApp:
             show='tree headings',  # tree 칼럼 표시 (행 번호용)
             xscrollcommand=h_scroll.set,
             yscrollcommand=v_scroll.set,
-            style="Excel.Treeview"
+            style="Excel.Treeview",
+            selectmode='extended'  # 다중 선택 가능
         )
 
         h_scroll.config(command=tree.xview)
