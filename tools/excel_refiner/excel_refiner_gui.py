@@ -255,13 +255,65 @@ class ExcelRefinerApp:
         h_scroll.config(command=tree.xview)
         v_scroll.config(command=tree.yview)
 
+        # 정렬 상태
+        sort_state = {'col': None, 'asc': True}
+
+        def sort_tree(col):
+            """칼럼 정렬 (행 번호 포함)"""
+            # 정렬 방향 결정
+            if sort_state['col'] == col:
+                sort_state['asc'] = not sort_state['asc']
+            else:
+                sort_state['col'] = col
+                sort_state['asc'] = True
+
+            asc = sort_state['asc']
+
+            # 데이터 삭제
+            for item in tree.get_children():
+                tree.delete(item)
+
+            # 정렬
+            if col == '#':
+                # 행 번호 정렬 (인덱스 기준)
+                indices = list(df.index)
+                if not asc:
+                    indices.reverse()
+
+                for i, idx in enumerate(indices):
+                    row = df.iloc[idx]
+                    vals = [self.format_cell_value(c, row[c]) for c in columns]
+                    tag = 'evenrow' if i % 2 == 0 else 'oddrow'
+                    tree.insert("", tk.END, text=str(idx + 1), values=vals, tags=(tag,))
+            else:
+                # 칼럼 정렬
+                sorted_df = df.sort_values(by=col, ascending=asc)
+                for i, (idx, row) in enumerate(sorted_df.iterrows()):
+                    vals = [self.format_cell_value(c, row[c]) for c in columns]
+                    tag = 'evenrow' if i % 2 == 0 else 'oddrow'
+                    tree.insert("", tk.END, text=str(idx + 1), values=vals, tags=(tag,))
+
+            # 헤더 업데이트
+            symbol = ' ▲' if asc else ' ▼'
+            if col == '#':
+                tree.heading('#0', text='#' + symbol, command=lambda: sort_tree('#'))
+                for c in columns:
+                    tree.heading(c, text=c, command=lambda cx=c: sort_tree(cx))
+            else:
+                tree.heading('#0', text='#', command=lambda: sort_tree('#'))
+                for c in columns:
+                    if c == col:
+                        tree.heading(c, text=c + symbol, command=lambda cx=c: sort_tree(cx))
+                    else:
+                        tree.heading(c, text=c, command=lambda cx=c: sort_tree(cx))
+
         # 행 번호 칼럼 설정 (#0)
-        tree.heading('#0', text='#')
+        tree.heading('#0', text='#', command=lambda: sort_tree('#'))
         tree.column('#0', width=50, minwidth=50, stretch=False, anchor='center')
 
         # 칼럼 헤더 설정 및 너비 자동 조정
         for col in columns:
-            tree.heading(col, text=col)
+            tree.heading(col, text=col, command=lambda c=col: sort_tree(c))
 
             # 칼럼 데이터 최대 길이 계산
             max_len = len(str(col))  # 헤더 길이
