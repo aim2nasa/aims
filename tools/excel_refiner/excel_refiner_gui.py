@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+"""
+엑셀 정제 도구 (GUI)
+- 엑셀 파일의 모든 시트를 읽어서 표 형식으로 표시
+"""
+
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+import pandas as pd
+from pathlib import Path
+from datetime import datetime
+
+# 버전 정보
+VERSION = f"v0.1.{datetime.now().strftime('%Y%m%d')}"
+
+
+class ExcelRefinerApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title(f"📊 엑셀 정제 도구 - {VERSION}")
+        self.root.geometry("1200x800")
+
+        # 파일 경로 저장
+        self.file_path = None
+        self.dataframes = {}  # 시트명: DataFrame 저장
+
+        # 스타일 설정
+        self.setup_styles()
+
+        # UI 구성
+        self.create_widgets()
+
+    def setup_styles(self):
+        """Treeview 스타일 설정 (엑셀 스타일)"""
+        style = ttk.Style()
+
+        # 테마 설정
+        style.theme_use('clam')
+
+        # Treeview 스타일
+        style.configure(
+            "Excel.Treeview",
+            background="white",
+            foreground="black",
+            rowheight=25,
+            fieldbackground="white",
+            borderwidth=1,
+            relief="solid"
+        )
+
+        # 헤더 스타일
+        style.configure(
+            "Excel.Treeview.Heading",
+            background="#E0E0E0",
+            foreground="black",
+            borderwidth=1,
+            relief="solid",
+            font=("Arial", 9, "bold")
+        )
+
+        # 선택된 행 스타일
+        style.map(
+            "Excel.Treeview",
+            background=[('selected', '#B3D9FF')],
+            foreground=[('selected', 'black')]
+        )
+
+        # 줄무늬 효과
+        style.configure("Excel.Treeview", rowheight=22)
+
+        # 테두리 스타일
+        style.layout("Excel.Treeview", [
+            ('Excel.Treeview.treearea', {'sticky': 'nswe'})
+        ])
+
+    def create_widgets(self):
+        # 상단 프레임: 파일 선택
+        top_frame = tk.Frame(self.root, padx=10, pady=10)
+        top_frame.pack(fill=tk.X)
+
+        tk.Label(top_frame, text="엑셀 파일:", font=("Arial", 10)).pack(side=tk.LEFT)
+
+        self.file_label = tk.Label(
+            top_frame,
+            text="파일을 선택하세요",
+            fg="gray",
+            font=("Arial", 9)
+        )
+        self.file_label.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+
+        browse_btn = tk.Button(
+            top_frame,
+            text="📂 파일 선택",
+            command=self.browse_file,
+            font=("Arial", 10),
+            bg="#4CAF50",
+            fg="white",
+            padx=10
+        )
+        browse_btn.pack(side=tk.RIGHT)
+
+        # 메인 프레임: 탭으로 시트별 표시
+        main_frame = tk.Frame(self.root, padx=10, pady=5)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 탭 노트북
+        self.notebook = ttk.Notebook(main_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # 하단 프레임: 상태바
+        bottom_frame = tk.Frame(self.root)
+        bottom_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
+        # 상태바
+        self.status_label = tk.Label(
+            bottom_frame,
+            text="파일을 선택하세요",
+            font=("Arial", 9),
+            fg="gray",
+            anchor=tk.W,
+            padx=10,
+            pady=5
+        )
+        self.status_label.pack(fill=tk.X, side=tk.LEFT, expand=True)
+
+        # 버전 라벨
+        version_label = tk.Label(
+            bottom_frame,
+            text=VERSION,
+            font=("Arial", 8),
+            fg="#999999",
+            anchor=tk.E,
+            padx=10,
+            pady=5
+        )
+        version_label.pack(side=tk.RIGHT)
+
+    def browse_file(self):
+        """파일 선택 다이얼로그"""
+        file_path = filedialog.askopenfilename(
+            title="엑셀 파일 선택",
+            filetypes=[
+                ("Excel files", "*.xlsx *.xls"),
+                ("All files", "*.*")
+            ]
+        )
+
+        if file_path:
+            self.file_path = file_path
+            display_name = Path(file_path).name
+            self.file_label.config(text=display_name, fg="black")
+            self.status_label.config(text=f"✅ 파일 로딩 중: {display_name}")
+
+            # 엑셀 파일 로드
+            self.load_excel_file(file_path)
+
+    def load_excel_file(self, file_path):
+        """엑셀 파일 로드 및 표시"""
+        try:
+            # 기존 탭 모두 제거
+            for tab in self.notebook.tabs():
+                self.notebook.forget(tab)
+
+            self.dataframes.clear()
+
+            # 엑셀 파일 읽기
+            excel_file = pd.ExcelFile(file_path)
+            total_rows = 0
+
+            # 각 시트별로 탭 생성
+            for sheet_name in excel_file.sheet_names:
+                df = pd.read_excel(file_path, sheet_name=sheet_name)
+                self.dataframes[sheet_name] = df
+
+                # 시트용 탭 생성
+                self.create_sheet_tab(sheet_name, df)
+                total_rows += len(df)
+
+            self.status_label.config(
+                text=f"✅ 로드 완료: {len(excel_file.sheet_names)}개 시트, 총 {total_rows:,}행"
+            )
+
+        except Exception as e:
+            messagebox.showerror("오류", f"파일 로드 실패:\n{e}")
+            self.status_label.config(text=f"❌ 오류: {e}")
+
+    def format_cell_value(self, col_name, value):
+        """셀 값을 칼럼명에 따라 포맷팅"""
+        if pd.isna(value):
+            return ""
+
+        # 날짜 칼럼 (계약일, 생년월일 등)
+        if '일' in col_name and isinstance(value, (pd.Timestamp, datetime)):
+            return value.strftime('%Y-%m-%d')
+
+        # 보험료, 금액 칼럼 (천단위 쉼표)
+        if '료' in col_name or '금액' in col_name or '원' in col_name:
+            try:
+                num = float(value)
+                return f"{int(num):,}"
+            except:
+                return str(value)
+
+        # 증권번호 (숫자지만 쉼표 없이)
+        if '증권' in col_name or '번호' in col_name:
+            try:
+                return str(int(float(value)))
+            except:
+                return str(value)
+
+        # 기타
+        return str(value)
+
+    def create_sheet_tab(self, sheet_name, df):
+        """시트별 탭 생성"""
+        # 탭용 프레임
+        tab_frame = tk.Frame(self.notebook)
+        self.notebook.add(tab_frame, text=f"📄 {sheet_name} ({len(df)}행)")
+
+        # 상단: 시트 정보
+        info_frame = tk.Frame(tab_frame, padx=5, pady=5)
+        info_frame.pack(fill=tk.X)
+
+        info_text = f"행: {len(df):,} | 열: {len(df.columns)}"
+        tk.Label(
+            info_frame,
+            text=info_text,
+            font=("Arial", 9),
+            fg="#666666"
+        ).pack(side=tk.LEFT)
+
+        # Treeview용 프레임 (스크롤바 포함)
+        tree_frame = tk.Frame(tab_frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # 수평 스크롤바
+        h_scroll = ttk.Scrollbar(tree_frame, orient=tk.HORIZONTAL)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # 수직 스크롤바
+        v_scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL)
+        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Treeview 생성 (엑셀 스타일 적용)
+        columns = list(df.columns)
+        tree = ttk.Treeview(
+            tree_frame,
+            columns=columns,
+            show='tree headings',  # tree 칼럼 표시 (행 번호용)
+            xscrollcommand=h_scroll.set,
+            yscrollcommand=v_scroll.set,
+            style="Excel.Treeview"
+        )
+
+        h_scroll.config(command=tree.xview)
+        v_scroll.config(command=tree.yview)
+
+        # 행 번호 칼럼 설정 (#0)
+        tree.heading('#0', text='#')
+        tree.column('#0', width=50, minwidth=50, stretch=False, anchor='center')
+
+        # 칼럼 헤더 설정 및 너비 자동 조정
+        for col in columns:
+            tree.heading(col, text=col)
+
+            # 칼럼 데이터 최대 길이 계산
+            max_len = len(str(col))  # 헤더 길이
+
+            # 데이터 샘플링 (처음 100행만 체크 - 성능 고려)
+            sample_data = df[col].head(100)
+            for val in sample_data:
+                if pd.notna(val):
+                    formatted_val = self.format_cell_value(col, val)
+                    max_len = max(max_len, len(str(formatted_val)))
+
+            # 픽셀 너비 계산 (대략 1글자당 8px, 여백 20px)
+            col_width = min(max(max_len * 8 + 20, 80), 400)
+
+            # 칼럼별 정렬 설정
+            if any(keyword in col for keyword in ['증권', '번호', '료', '금액', '원']):
+                # 숫자 칼럼은 우측 정렬
+                tree.column(col, width=col_width, minwidth=80, anchor='e')
+            elif any(keyword in col for keyword in ['계약일', '이체일', '납입주기', '납입기간', '주수', '기간']):
+                # 날짜, 기간 칼럼은 중앙 정렬
+                tree.column(col, width=col_width, minwidth=80, anchor='center')
+            else:
+                # 기타는 왼쪽 정렬
+                tree.column(col, width=col_width, minwidth=80)
+
+        # 줄무늬 효과를 위한 태그 설정
+        tree.tag_configure('oddrow', background='white')
+        tree.tag_configure('evenrow', background='#F5F5F5')
+
+        # 데이터 삽입 (포맷팅 적용)
+        for idx, row in df.iterrows():
+            values = [self.format_cell_value(col, row[col]) for col in columns]
+            # 홀수/짝수 행에 다른 배경색
+            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+            # 행 번호는 1부터 시작 (text 파라미터에 행 번호)
+            tree.insert("", tk.END, text=str(idx + 1), values=values, tags=(tag,))
+
+        tree.pack(fill=tk.BOTH, expand=True)
+
+
+def main():
+    root = tk.Tk()
+    app = ExcelRefinerApp(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
