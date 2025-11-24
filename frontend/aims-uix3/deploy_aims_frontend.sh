@@ -79,55 +79,35 @@ BUILD_SIZE=$(du -sh dist | cut -f1)
 FILE_COUNT=$(find dist -type f | wc -l)
 echo "✓ 빌드 완료 (${BUILD_TIME}초, ${FILE_COUNT}개 파일, ${BUILD_SIZE})"
 
-# 4. nginx 설정 확인 및 업데이트
+# 4. nginx 설정 확인 (sudo 필요시 수동 실행)
 echo ""
 echo "🔧 4단계: nginx 설정 확인..."
 
-NGINX_CONFIG="/etc/nginx/sites-available/aims"
 EXPECTED_ROOT="/home/rossi/aims/frontend/aims-uix3/dist"
+echo "→ 배포 경로: $EXPECTED_ROOT"
+echo "→ nginx 설정은 이미 올바르게 설정되어 있어야 합니다"
+echo "→ 최초 배포시에만 수동으로 nginx 설정이 필요합니다"
 
-# 현재 root 경로 확인
-CURRENT_ROOT=$(sudo grep -o 'root [^;]*' "$NGINX_CONFIG" | grep -v "acme-challenge" | head -1 | awk '{print $2}')
+# 5. 홈 디렉토리 권한 확인 및 수정
+echo ""
+echo "🔐 5단계: 디렉토리 권한 확인..."
 
-if [ "$CURRENT_ROOT" != "$EXPECTED_ROOT" ]; then
-    echo "→ nginx 설정 업데이트 필요 (현재: $CURRENT_ROOT)"
+HOME_DIR="$HOME"
+HOME_PERMS=$(stat -c "%a" "$HOME_DIR")
 
-    if [ ! -f "nginx-aims.conf" ]; then
-        echo "❌ 오류: nginx-aims.conf 파일을 찾을 수 없습니다"
-        exit 1
-    fi
-
-    # 기존 설정 백업
-    BACKUP_FILE="${NGINX_CONFIG}.backup.$(date +%Y%m%d_%H%M%S)"
-    echo "→ 기존 설정 백업: $BACKUP_FILE"
-    sudo cp "$NGINX_CONFIG" "$BACKUP_FILE"
-
-    # 새 설정 적용
-    echo "→ 새 설정 적용 중..."
-    sudo cp nginx-aims.conf "$NGINX_CONFIG"
-
-    # nginx 설정 테스트
-    echo "→ nginx 설정 검증 중..."
-    if sudo nginx -t 2>&1 | grep -q "successful"; then
-        echo "✓ nginx 설정 검증 성공"
-
-        # nginx 리로드
-        echo "→ nginx 리로드 중..."
-        sudo systemctl reload nginx
-        echo "✓ nginx 설정 업데이트 및 리로드 완료"
-    else
-        echo "❌ nginx 설정 오류 발생, 이전 설정으로 복구 중..."
-        sudo cp "$BACKUP_FILE" "$NGINX_CONFIG"
-        sudo systemctl reload nginx
-        exit 1
-    fi
+# 751 이상의 권한이 필요 (nginx가 접근하려면 others에게 x 권한 필요)
+if [ "$HOME_PERMS" -lt 751 ]; then
+    echo "→ 홈 디렉토리 권한 부족 (현재: $HOME_PERMS)"
+    echo "→ nginx 접근을 위해 권한 수정 중..."
+    chmod 751 "$HOME_DIR"
+    echo "✓ 홈 디렉토리 권한 수정 완료 (751)"
 else
-    echo "✓ nginx 설정 이미 올바름 ($CURRENT_ROOT)"
+    echo "✓ 홈 디렉토리 권한 정상 ($HOME_PERMS)"
 fi
 
-# 5. nginx 상태 확인
+# 6. nginx 상태 확인
 echo ""
-echo "🚀 5단계: 배포 완료 확인..."
+echo "🚀 6단계: 배포 완료 확인..."
 
 # nginx 상태 확인
 NGINX_STATUS=$(systemctl is-active nginx)
