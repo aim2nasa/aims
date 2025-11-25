@@ -304,6 +304,26 @@
   background: var(--color-bg-hover);
 }
 
+/* 검증 중 (클릭 직후) */
+.excel-refiner__th--validating {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+  animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+.excel-refiner__th--validating:hover {
+  background: var(--color-primary-600);
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* 검증 성공 (오류 없음) */
 .excel-refiner__th--validation-success {
   background: var(--color-success-500);
@@ -340,6 +360,11 @@
 .excel-refiner__th-badge--error {
   background: var(--color-neutral-0);
   color: var(--color-error-600);
+}
+
+.excel-refiner__th-badge--validating {
+  background: var(--color-neutral-0);
+  color: var(--color-primary-600);
 }
 
 .excel-refiner__tr {

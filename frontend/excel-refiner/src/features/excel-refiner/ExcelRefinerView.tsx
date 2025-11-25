@@ -25,6 +25,9 @@ export function ExcelRefinerView() {
   // 검증 대상 컬럼 (사용자가 클릭한 컬럼)
   const [validatingColumns, setValidatingColumns] = useState<Set<number>>(new Set())
 
+  // 검증 진행 중인 컬럼 (클릭 직후 ~ 검증 완료 전)
+  const [validatingInProgress, setValidatingInProgress] = useState<Set<number>>(new Set())
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -125,13 +128,36 @@ export function ExcelRefinerView() {
   }, [])
 
   // 컬럼 헤더 클릭 - 검증 활성화 (해제는 별도 버튼으로)
-  const handleColumnClick = useCallback((colIndex: number) => {
-    setValidatingColumns(prev => {
+  const handleColumnClick = useCallback((colIndex: number, columnName: string) => {
+    // 검증 로직이 정의된 컬럼만 클릭 가능
+    const type = getValidationType(columnName)
+    if (type === 'default') return
+
+    // 이미 검증된 컬럼이면 무시
+    if (validatingColumns.has(colIndex)) return
+
+    // 먼저 "검증 중" 상태 표시
+    setValidatingInProgress(prev => {
       const next = new Set(prev)
       next.add(colIndex)
       return next
     })
-  }, [])
+
+    // 약간의 지연 후 실제 검증 시작 (UI 업데이트를 위한 시간 확보)
+    setTimeout(() => {
+      setValidatingColumns(prev => {
+        const next = new Set(prev)
+        next.add(colIndex)
+        return next
+      })
+      // 검증 완료 후 "검증 중" 상태 해제
+      setValidatingInProgress(prev => {
+        const next = new Set(prev)
+        next.delete(colIndex)
+        return next
+      })
+    }, 100)
+  }, [validatingColumns])
 
   // 검증 초기화
   const handleClearValidation = useCallback(() => {
@@ -417,26 +443,36 @@ export function ExcelRefinerView() {
                   <tr>
                     <th className="excel-refiner__th excel-refiner__th--row-num">#</th>
                     {currentSheet.columns.map((col, index) => {
-                      const isValidating = validatingColumns.has(index)
+                      const isInProgress = validatingInProgress.has(index)
+                      const isValidated = validatingColumns.has(index)
                       const result = columnValidationResults.get(index)
                       const hasIssues = result && (!result.valid || result.duplicates.length > 0)
                       const type = getValidationType(col)
+                      const isValidatable = type !== 'default'
+
+                      // 검증 가능한 컬럼만 클릭 가능 스타일 적용
+                      let thClassName = 'excel-refiner__th'
+                      if (isValidatable) {
+                        thClassName += ' excel-refiner__th--clickable'
+                      }
+                      if (isInProgress) {
+                        thClassName += ' excel-refiner__th--validating'
+                      } else if (isValidated) {
+                        thClassName += hasIssues
+                          ? ' excel-refiner__th--validation-error'
+                          : ' excel-refiner__th--validation-success'
+                      }
 
                       return (
                         <th
                           key={index}
-                          className={`excel-refiner__th excel-refiner__th--clickable ${
-                            isValidating
-                              ? hasIssues
-                                ? 'excel-refiner__th--validation-error'
-                                : 'excel-refiner__th--validation-success'
-                              : ''
-                          }`}
-                          onClick={() => handleColumnClick(index)}
-                          title={`클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : '기본'} 검증)`}
+                          className={thClassName}
+                          onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
+                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : '고객명'} 검증)` : undefined}
                         >
                           {col || `열 ${index + 1}`}
-                          {renderColumnBadge(index, col)}
+                          {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
+                          {!isInProgress && renderColumnBadge(index, col)}
                         </th>
                       )
                     })}
