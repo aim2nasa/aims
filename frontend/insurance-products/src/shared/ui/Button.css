@@ -1,0 +1,220 @@
+/**
+ * Insurance Products Button Styles
+ * aims-uix3 Button.css 기반 단순화 버전
+ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  white-space: nowrap;
+  user-select: none;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-system);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default),
+    color var(--duration-fast) var(--easing-default),
+    transform var(--duration-fast) var(--easing-default);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* === SIZE VARIANTS === */
+
+.button--sm {
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  min-height: 2rem;
+}
+
+.button--md {
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-base);
+  min-height: 2.5rem;
+}
+
+.button--lg {
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-6);
+  font-size: var(--font-size-lg);
+  min-height: 3rem;
+}
+
+/* === STYLE VARIANTS === */
+
+/* Primary */
+.button--primary {
+  background-color: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+}
+
+.button--primary:hover:not(:disabled) {
+  background-color: var(--color-button-primary-bg-hover);
+  border-color: var(--color-button-primary-bg-hover);
+}
+
+.button--primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Secondary */
+.button--secondary {
+  background-color: var(--color-button-secondary-bg);
+  border-color: var(--color-button-secondary-border);
+  color: var(--color-button-secondary-text);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background-color: var(--color-button-secondary-bg-hover);
+}
+
+.button--secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Ghost */
+.button--ghost {
+  background-color: var(--color-button-ghost-bg);
+  border-color: transparent;
+  color: var(--color-button-ghost-text);
+}
+
+.button--ghost:hover:not(:disabled) {
+  background-color: var(--color-button-ghost-bg-hover);
+}
+
+.button--ghost:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Destructive */
+.button--destructive {
+  background-color: var(--color-button-destructive-bg);
+  border-color: var(--color-button-destructive-bg);
+  color: var(--color-button-destructive-text);
+}
+
+.button--destructive:hover:not(:disabled) {
+  background-color: var(--color-button-destructive-bg-hover);
+  border-color: var(--color-button-destructive-bg-hover);
+}
+
+.button--destructive:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Link */
+.button--link {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-primary-600);
+  text-decoration: underline;
+  padding: var(--spacing-1) var(--spacing-2);
+  min-height: auto;
+}
+
+.button--link:hover:not(:disabled) {
+  color: var(--color-primary-700);
+  text-decoration: none;
+}
+
+/* === STATE MODIFIERS === */
+
+.button:disabled,
+.button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button--loading {
+  cursor: wait;
+}
+
+.button--loading .button__content {
+  opacity: 0.7;
+}
+
+.button--full-width {
+  width: 100%;
+}
+
+/* === ICON ELEMENTS === */
+
+.button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.button__icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* === LOADING SPINNER === */
+
+.button__spinner {
+  flex-shrink: 0;
+  animation: button-spin 1s linear infinite;
+}
+
+.button__spinner--sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.button__spinner--md {
+  width: 1rem;
+  height: 1rem;
+}
+
+.button__spinner--lg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.button__spinner-path {
+  opacity: 0.75;
+}
+
+@keyframes button-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* === CONTENT === */
+
+.button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === ACCESSIBILITY === */
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .button__spinner {
+    animation: none;
+  }
+}
