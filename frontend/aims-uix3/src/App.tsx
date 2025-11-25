@@ -1040,28 +1040,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
       {/* Developer Mode Badge - Global (Header Center) */}
       {isDevMode && (
-        <div
-          className="dev-mode-badge-global"
-          style={{
-            position: 'fixed',
-            top: '12px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 12px',
-            background: 'rgba(255, 149, 0, 0.15)',
-            border: '1px solid rgba(255, 149, 0, 0.3)',
-            borderRadius: '12px',
-            fontSize: '11px',
-            fontWeight: '600',
-            color: '#ff9500',
-            zIndex: 9999,
-            pointerEvents: 'none',
-            animation: 'devBadgePulse 2s ease-in-out infinite'
-          }}
-        >
+        <div className="dev-mode-badge-global">
           🔧 개발자 모드
         </div>
       )}

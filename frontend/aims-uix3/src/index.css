@@ -267,13 +267,33 @@ input:disabled, textarea:disabled, select:disabled {
 
 /* === DEVELOPER MODE === */
 
+.dev-mode-badge-global {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-dev-mode-bg);
+  border: 1px solid var(--color-dev-mode-border);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-dev-mode);
+  z-index: 9999;
+  pointer-events: none;
+  animation: devBadgePulse 2s ease-in-out infinite;
+}
+
 @keyframes devBadgePulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
+    transform: translateX(-50%) scale(1);
   }
   50% {
     opacity: 0.85;
-    transform: scale(0.98);
+    transform: translateX(-50%) scale(0.98);
   }
 }
