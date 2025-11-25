@@ -83,6 +83,9 @@ export function InsuranceProductsView() {
   // 개발자 모드 (Ctrl+Shift+D로 토글 - aims-uix3와 동일)
   const [isDevMode, setIsDevMode] = useState(false)
 
+  // 도큐먼트 뷰어
+  const [viewingProduct, setViewingProduct] = useState<InsuranceProduct | null>(null)
+
   // 개발자 모드 단축키 핸들러
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -704,8 +707,14 @@ export function InsuranceProductsView() {
                   return (
                     <tr
                       key={id}
-                      className={`product-row ${isDeleteMode && isSelected ? 'product-row--selected' : ''}`}
-                      onClick={() => isDeleteMode && product._id && handleDeleteSelect(product._id)}
+                      className={`product-row ${isDeleteMode && isSelected ? 'product-row--selected' : ''} ${!isDeleteMode ? 'product-row--clickable' : ''}`}
+                      onClick={() => {
+                        if (isDeleteMode && product._id) {
+                          handleDeleteSelect(product._id)
+                        } else if (!isDeleteMode) {
+                          setViewingProduct(product)
+                        }
+                      }}
                     >
                       {isDeleteMode && (
                         <td className="col-checkbox">
@@ -761,6 +770,33 @@ export function InsuranceProductsView() {
       {loading && (
         <div className="loading-overlay">
           <div className="loading-spinner" />
+        </div>
+      )}
+
+      {/* 도큐먼트 뷰어 모달 */}
+      {viewingProduct && (
+        <div className="doc-viewer-overlay" onClick={() => setViewingProduct(null)}>
+          <div className="doc-viewer-modal" onClick={e => e.stopPropagation()}>
+            <div className="doc-viewer-header">
+              <h3>MongoDB Document</h3>
+              <button type="button" className="doc-viewer-close" onClick={() => setViewingProduct(null)}>
+                ✕
+              </button>
+            </div>
+            <pre className="doc-viewer-content">
+              {JSON.stringify({
+                _id: viewingProduct._id ? `ObjectId('${viewingProduct._id}')` : undefined,
+                category: viewingProduct.category,
+                productName: viewingProduct.productName,
+                saleStartDate: viewingProduct.saleStartDate,
+                saleEndDate: viewingProduct.saleEndDate,
+                status: viewingProduct.status,
+                surveyDate: viewingProduct.surveyDate,
+                createdAt: viewingProduct.createdAt,
+                updatedAt: viewingProduct.updatedAt
+              }, null, 2)}
+            </pre>
+          </div>
         </div>
       )}
     </div>
