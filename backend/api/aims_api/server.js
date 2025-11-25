@@ -3876,6 +3876,293 @@ app.post('/api/customers/:id/address-history', async (req, res) => {
   }
 });
 
+// ==================== Insurance Products API ====================
+
+const INSURANCE_PRODUCTS_COLLECTION = 'insurance_products';
+
+/**
+ * GET /api/insurance-products
+ * 보험상품 목록 조회
+ */
+app.get('/api/insurance-products', async (req, res) => {
+  try {
+    const { category, status, search, surveyDate, limit = 1000, skip = 0 } = req.query;
+
+    const query = {};
+
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    if (search) {
+      query.productName = { $regex: escapeRegex(search), $options: 'i' };
+    }
+    if (surveyDate) {
+      query.surveyDate = surveyDate;
+    }
+
+    const products = await db.collection(INSURANCE_PRODUCTS_COLLECTION)
+      .find(query)
+      .sort({ category: 1, productName: 1 })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    const total = await db.collection(INSURANCE_PRODUCTS_COLLECTION).countDocuments(query);
+
+    res.json({
+      success: true,
+      data: products,
+      total,
+      limit: parseInt(limit),
+      skip: parseInt(skip)
+    });
+
+  } catch (error) {
+    console.error('보험상품 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '보험상품 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/insurance-products/bulk
+ * 보험상품 일괄 등록 (기존 데이터 대체)
+ */
+app.post('/api/insurance-products/bulk', async (req, res) => {
+  try {
+    const { products, surveyDate } = req.body;
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '등록할 상품 목록이 필요합니다.'
+      });
+    }
+
+    // 조사일 기준으로 기존 데이터 삭제 (선택적)
+    if (surveyDate) {
+      await db.collection(INSURANCE_PRODUCTS_COLLECTION).deleteMany({ surveyDate });
+    }
+
+    // 타임스탬프 추가
+    const now = utcNowDate();
+    const productsWithTimestamp = products.map(p => ({
+      ...p,
+      createdAt: now,
+      updatedAt: now
+    }));
+
+    // 일괄 삽입
+    const result = await db.collection(INSURANCE_PRODUCTS_COLLECTION).insertMany(productsWithTimestamp);
+
+    res.json({
+      success: true,
+      message: `${result.insertedCount}개 상품이 등록되었습니다.`,
+      insertedCount: result.insertedCount,
+      surveyDate
+    });
+
+  } catch (error) {
+    console.error('보험상품 일괄 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '보험상품 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/insurance-products
+ * 단일 보험상품 등록
+ */
+app.post('/api/insurance-products', async (req, res) => {
+  try {
+    const product = req.body;
+
+    if (!product.productName || !product.category) {
+      return res.status(400).json({
+        success: false,
+        error: '상품명과 구분은 필수입니다.'
+      });
+    }
+
+    const now = utcNowDate();
+    const newProduct = {
+      ...product,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const result = await db.collection(INSURANCE_PRODUCTS_COLLECTION).insertOne(newProduct);
+
+    res.json({
+      success: true,
+      message: '상품이 등록되었습니다.',
+      data: { ...newProduct, _id: result.insertedId }
+    });
+
+  } catch (error) {
+    console.error('보험상품 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '보험상품 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/insurance-products/:id
+ * 보험상품 수정
+ */
+app.put('/api/insurance-products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 상품 ID입니다.'
+      });
+    }
+
+    delete updates._id; // _id는 수정 불가
+    updates.updatedAt = utcNowDate();
+
+    const result = await db.collection(INSURANCE_PRODUCTS_COLLECTION).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updates }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '상품을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '상품이 수정되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('보험상품 수정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '보험상품 수정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/insurance-products/:id
+ * 보험상품 삭제
+ */
+app.delete('/api/insurance-products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 상품 ID입니다.'
+      });
+    }
+
+    const result = await db.collection(INSURANCE_PRODUCTS_COLLECTION).deleteOne({
+      _id: new ObjectId(id)
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '상품을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '상품이 삭제되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('보험상품 삭제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '보험상품 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/insurance-products/statistics
+ * 보험상품 통계
+ */
+app.get('/api/insurance-products/statistics', async (req, res) => {
+  try {
+    const { surveyDate } = req.query;
+    const query = surveyDate ? { surveyDate } : {};
+
+    const stats = await db.collection(INSURANCE_PRODUCTS_COLLECTION).aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          active: { $sum: { $cond: [{ $eq: ['$status', '판매중'] }, 1, 0] } },
+          discontinued: { $sum: { $cond: [{ $eq: ['$status', '판매중지'] }, 1, 0] } }
+        }
+      }
+    ]).toArray();
+
+    const byCategory = await db.collection(INSURANCE_PRODUCTS_COLLECTION).aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    const surveyDates = await db.collection(INSURANCE_PRODUCTS_COLLECTION).distinct('surveyDate');
+
+    res.json({
+      success: true,
+      data: {
+        total: stats[0]?.total || 0,
+        active: stats[0]?.active || 0,
+        discontinued: stats[0]?.discontinued || 0,
+        byCategory: byCategory.reduce((acc, c) => {
+          acc[c._id] = c.count;
+          return acc;
+        }, {}),
+        surveyDates: surveyDates.sort().reverse()
+      }
+    });
+
+  } catch (error) {
+    console.error('보험상품 통계 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '통계 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
 // ==================== MongoDB 연결 & 서버 시작 ====================
 
 // 고객 관계 관리 라우트 설정
