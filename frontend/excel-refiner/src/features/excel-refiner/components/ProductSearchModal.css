@@ -135,6 +135,27 @@
   background: var(--color-primary-100);
 }
 
+.product-search-modal__apply-all {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.product-search-modal__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.product-search-modal__checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 .product-search-modal__footer {
   display: flex;
   justify-content: flex-end;

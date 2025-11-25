@@ -59,6 +59,9 @@ export function ExcelRefinerView() {
   const [productSearchKeyword, setProductSearchKeyword] = useState('')
   const [productSearchRowIndex, setProductSearchRowIndex] = useState<number | null>(null)
 
+  // 액션 로그 메시지 (일시적으로 표시)
+  const [actionLog, setActionLog] = useState<string | null>(null)
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -445,15 +448,28 @@ export function ExcelRefinerView() {
   }, [])
 
   // 상품 선택 시 데이터 업데이트
-  const handleProductSelect = useCallback((productName: string, productId: string) => {
-    if (productSearchRowIndex === null || productNameColumnIndex === null) return
+  const handleProductSelect = useCallback((productName: string, productId: string, applyToAll: boolean) => {
+    if (productSearchRowIndex === null || productNameColumnIndex === null || !currentSheet) return
+
+    // 클릭한 셀의 원래 상품명 가져오기
+    const originalProductName = cellToString(currentSheet.data[productSearchRowIndex][productNameColumnIndex] as CellValue)
+
+    // applyToAll이 true면 동일한 상품명을 가진 모든 행 찾기
+    const rowsToUpdate: number[] = applyToAll
+      ? currentSheet.data
+          .map((row, idx) => ({ idx, value: cellToString(row[productNameColumnIndex] as CellValue) }))
+          .filter(item => item.value === originalProductName)
+          .map(item => item.idx)
+      : [productSearchRowIndex]
 
     // 데이터 업데이트
     setSheets(prev => {
       const updated = [...prev]
       const newData = [...updated[activeSheetIndex].data]
-      newData[productSearchRowIndex] = [...newData[productSearchRowIndex]]
-      newData[productSearchRowIndex][productNameColumnIndex] = productName
+      rowsToUpdate.forEach(rowIdx => {
+        newData[rowIdx] = [...newData[rowIdx]]
+        newData[rowIdx][productNameColumnIndex] = productName
+      })
       updated[activeSheetIndex] = {
         ...updated[activeSheetIndex],
         data: newData
@@ -464,9 +480,11 @@ export function ExcelRefinerView() {
     // productMatchResult 업데이트: unmatched에서 제거하고 modified로 이동
     setProductMatchResult(prev => {
       if (!prev) return prev
-      const newUnmatched = prev.unmatched.filter(idx => idx !== productSearchRowIndex)
+      const newUnmatched = prev.unmatched.filter(idx => !rowsToUpdate.includes(idx))
       const newModified = new Map(prev.modified)
-      newModified.set(productSearchRowIndex, productId)
+      rowsToUpdate.forEach(rowIdx => {
+        newModified.set(rowIdx, productId)
+      })
       return {
         ...prev,
         unmatched: newUnmatched,
@@ -474,10 +492,14 @@ export function ExcelRefinerView() {
       }
     })
 
+    // 로그 메시지 표시
+    setActionLog(`✓ ${rowsToUpdate.length}개 행의 상품명이 변경되었습니다`)
+    setTimeout(() => setActionLog(null), 5000) // 5초 후 자동 삭제
+
     // 모달 닫기
     setIsProductSearchOpen(false)
     setProductSearchRowIndex(null)
-  }, [productSearchRowIndex, productNameColumnIndex, activeSheetIndex])
+  }, [productSearchRowIndex, productNameColumnIndex, activeSheetIndex, currentSheet])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
@@ -744,6 +766,12 @@ export function ExcelRefinerView() {
                   </Button>
                 )}
               </div>
+              {/* 액션 로그 메시지 */}
+              {actionLog && (
+                <div className="excel-refiner__action-log">
+                  {actionLog}
+                </div>
+              )}
             </div>
 
             {/* 데이터 테이블 */}

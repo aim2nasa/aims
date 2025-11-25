@@ -17,7 +17,7 @@ interface ProductSearchModalProps {
   isOpen: boolean
   onClose: () => void
   initialKeyword: string
-  onSelect: (productName: string, productId: string) => void
+  onSelect: (productName: string, productId: string, applyToAll: boolean) => void
 }
 
 export function ProductSearchModal({
@@ -29,6 +29,7 @@ export function ProductSearchModal({
   const [keyword, setKeyword] = useState(initialKeyword)
   const [products, setProducts] = useState<InsuranceProduct[]>([])
   const [loading, setLoading] = useState(false)
+  const [applyToAll, setApplyToAll] = useState(false)
 
   // 모달 열릴 때 상품 목록 로드 및 키워드 초기화
   useEffect(() => {
@@ -63,9 +64,14 @@ export function ProductSearchModal({
     })
   }, [products, keyword])
 
+  // 검색 결과가 1개일 때 자동으로 일괄 적용 체크
+  useEffect(() => {
+    setApplyToAll(filteredProducts.length === 1)
+  }, [filteredProducts.length])
+
   // 상품 선택
   const handleSelect = (product: InsuranceProduct) => {
-    onSelect(product.productName, product._id)
+    onSelect(product.productName, product._id, applyToAll)
     onClose()
   }
 
@@ -137,6 +143,20 @@ export function ProductSearchModal({
             ))
           )}
         </div>
+
+        {/* 일괄 적용 체크박스 (검색 결과 1개일 때만 표시) */}
+        {filteredProducts.length === 1 && (
+          <div className="product-search-modal__apply-all">
+            <label className="product-search-modal__checkbox-label">
+              <input
+                type="checkbox"
+                checked={applyToAll}
+                onChange={e => setApplyToAll(e.target.checked)}
+              />
+              <span>동일한 상품명 모두 변경</span>
+            </label>
+          </div>
+        )}
 
         <div className="product-search-modal__footer">
           <Button variant="ghost" size="sm" onClick={onClose}>

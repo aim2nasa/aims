@@ -310,6 +310,26 @@
   gap: var(--spacing-2);
 }
 
+.excel-refiner__action-log {
+  font-size: var(--font-size-sm);
+  color: var(--color-success-600);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-success-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn var(--duration-fast) var(--easing-default);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* === TABLE === */
 
 .excel-refiner__table-container {
