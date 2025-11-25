@@ -158,14 +158,23 @@ export function ExcelRefinerView() {
   const handleDeleteSelected = useCallback(() => {
     if (selectedRows.size === 0 || !currentSheet) return
 
+    // 삭제할 행 정보 수집
+    const selectedIndices = Array.from(selectedRows).sort((a, b) => a - b)
+    const rowNumbers = selectedIndices.map(i => i + 2) // 엑셀 행 번호
+    const beforeCount = currentSheet.data.length
+
     const confirmed = window.confirm(
-      `선택한 ${selectedRows.size}개 행을 삭제하시겠습니까?`
+      `선택한 ${selectedRows.size}개 행을 삭제하시겠습니까?\n\n삭제할 행 번호: ${rowNumbers.join(', ')}\n현재 총 행 수: ${beforeCount}행`
     )
 
     if (!confirmed) return
 
     // 선택된 행 제외하고 새 데이터 생성
     const newData = currentSheet.data.filter((_, index) => !selectedRows.has(index))
+    const afterCount = newData.length
+
+    // 삭제 완료 메시지
+    alert(`삭제 완료!\n\n삭제된 행: ${rowNumbers.join(', ')} (${selectedRows.size}개)\n이전: ${beforeCount}행 → 이후: ${afterCount}행\n\n※ 중복이 해소된 행은 문제 행 목록에서 제외되어 아래로 이동합니다.`)
 
     // 시트 데이터 업데이트
     setSheets(prev => {

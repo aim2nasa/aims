@@ -322,14 +322,6 @@
   background: var(--color-bg-hover);
 }
 
-.excel-refiner__tr--selected {
-  background: var(--color-selection-bg);
-}
-
-.excel-refiner__tr--selected:hover {
-  background: var(--color-selection-bg-hover);
-}
-
 .excel-refiner__tr--empty {
   background: var(--color-row-empty);
 }
@@ -344,6 +336,21 @@
 
 .excel-refiner__tr--duplicate:hover {
   background: var(--color-row-duplicate-hover);
+}
+
+/* 선택 상태는 항상 최우선 (status 색상보다 우선) */
+.excel-refiner__tr--selected,
+.excel-refiner__tr--selected.excel-refiner__tr--empty,
+.excel-refiner__tr--selected.excel-refiner__tr--duplicate {
+  background: var(--color-selection-bg);
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: -2px;
+}
+
+.excel-refiner__tr--selected:hover,
+.excel-refiner__tr--selected.excel-refiner__tr--empty:hover,
+.excel-refiner__tr--selected.excel-refiner__tr--duplicate:hover {
+  background: var(--color-selection-bg-hover);
 }
 
 .excel-refiner__td--validation {
