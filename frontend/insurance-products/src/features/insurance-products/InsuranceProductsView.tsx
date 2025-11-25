@@ -400,89 +400,59 @@ export function InsuranceProductsView() {
       {error && <div className="message message--error">{error}</div>}
       {successMessage && <div className="message message--success">{successMessage}</div>}
 
-      {/* 업로드 섹션 */}
-      <div className="upload-section">
-        {/* 기준일 선택 */}
-        <div className="survey-date-picker">
-          <label className="survey-date-picker__label">기준일 <span className="required">*</span></label>
+      {/* 업로드 섹션 - 컴팩트 한 줄 레이아웃 */}
+      <div className="upload-section-compact">
+        {/* 기준일 */}
+        <div className="upload-item">
+          <label className="upload-item__label">기준일 <span className="required">*</span></label>
           <input
             type="date"
-            className="survey-date-picker__input"
+            className="upload-item__input"
             value={formatDateToInput(surveyDate)}
             onChange={e => setSurveyDate(formatDateToDisplay(e.target.value))}
           />
-          <span className="survey-date-picker__display">{surveyDate || '미선택'}</span>
         </div>
 
-        {/* 파일 드롭존들 */}
-        <div className="upload-zones">
-          {/* 판매중 파일 */}
-          <div className="upload-zone-wrapper">
-            <h3 className="upload-zone-title status--active">판매중 상품 <span className="required">*</span></h3>
-            {activeFile ? (
-              <div className="uploaded-file">
-                <div className="uploaded-file__info">
-                  <span className="uploaded-file__name">{activeFile.name}</span>
-                  <span className="uploaded-file__count">{activeProducts.length}개 상품</span>
-                </div>
-                <button className="uploaded-file__remove" onClick={handleRemoveActiveFile}>
-                  ×
-                </button>
-              </div>
-            ) : (
-              <div
-                className={`dropzone dropzone--small ${isDragOverActive ? 'dropzone--active' : ''}`}
-                onDragOver={handleDragOverActive}
-                onDragLeave={handleDragLeaveActive}
-                onDrop={handleDropActive}
-              >
-                <div className="dropzone__content">
-                  <p className="dropzone__text">판매중 상품 파일</p>
-                  <p className="dropzone__hint">드래그 또는 클릭</p>
-                  <input
-                    type="file"
-                    className="dropzone__input"
-                    accept=".md,.xlsx,.xls"
-                    onChange={handleActiveFileSelect}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+        {/* 판매중 파일 */}
+        <div className="upload-item">
+          <span className="upload-item__label status--active">판매중 상품 <span className="required">*</span></span>
+          {activeFile ? (
+            <div className="upload-item__file">
+              <span className="upload-item__filename" title={activeFile.name}>{activeFile.name} ({activeProducts.length}개)</span>
+              <button className="upload-item__remove" onClick={handleRemoveActiveFile}>×</button>
+            </div>
+          ) : (
+            <label
+              className={`upload-item__dropzone ${isDragOverActive ? 'upload-item__dropzone--active' : ''}`}
+              onDragOver={handleDragOverActive}
+              onDragLeave={handleDragLeaveActive}
+              onDrop={handleDropActive}
+            >
+              파일 선택
+              <input type="file" accept=".md,.xlsx,.xls" onChange={handleActiveFileSelect} hidden />
+            </label>
+          )}
+        </div>
 
-          {/* 판매중지 파일 */}
-          <div className="upload-zone-wrapper">
-            <h3 className="upload-zone-title status--discontinued">판매중지 상품 <span className="required">*</span></h3>
-            {discontinuedFile ? (
-              <div className="uploaded-file">
-                <div className="uploaded-file__info">
-                  <span className="uploaded-file__name">{discontinuedFile.name}</span>
-                  <span className="uploaded-file__count">{discontinuedProducts.length}개 상품</span>
-                </div>
-                <button className="uploaded-file__remove" onClick={handleRemoveDiscontinuedFile}>
-                  ×
-                </button>
-              </div>
-            ) : (
-              <div
-                className={`dropzone dropzone--small ${isDragOverDiscontinued ? 'dropzone--active' : ''}`}
-                onDragOver={handleDragOverDiscontinued}
-                onDragLeave={handleDragLeaveDiscontinued}
-                onDrop={handleDropDiscontinued}
-              >
-                <div className="dropzone__content">
-                  <p className="dropzone__text">판매중지 상품 파일</p>
-                  <p className="dropzone__hint">드래그 또는 클릭</p>
-                  <input
-                    type="file"
-                    className="dropzone__input"
-                    accept=".md,.xlsx,.xls"
-                    onChange={handleDiscontinuedFileSelect}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+        {/* 판매중지 파일 */}
+        <div className="upload-item">
+          <span className="upload-item__label status--discontinued">판매중지 상품 <span className="required">*</span></span>
+          {discontinuedFile ? (
+            <div className="upload-item__file">
+              <span className="upload-item__filename" title={discontinuedFile.name}>{discontinuedFile.name} ({discontinuedProducts.length}개)</span>
+              <button className="upload-item__remove" onClick={handleRemoveDiscontinuedFile}>×</button>
+            </div>
+          ) : (
+            <label
+              className={`upload-item__dropzone ${isDragOverDiscontinued ? 'upload-item__dropzone--active' : ''}`}
+              onDragOver={handleDragOverDiscontinued}
+              onDragLeave={handleDragLeaveDiscontinued}
+              onDrop={handleDropDiscontinued}
+            >
+              파일 선택
+              <input type="file" accept=".md,.xlsx,.xls" onChange={handleDiscontinuedFileSelect} hidden />
+            </label>
+          )}
         </div>
       </div>
 
