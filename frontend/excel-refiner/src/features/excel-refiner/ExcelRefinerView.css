@@ -259,7 +259,6 @@
 }
 
 .excel-refiner__table {
-  width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-sm);
 }
@@ -306,7 +305,7 @@
 }
 
 .excel-refiner__th-text {
-  flex: 1;
+  /* flex: 1 제거 - 컬럼 너비가 내용에 맞게 조정되도록 */
 }
 
 .excel-refiner__sort-btn {
