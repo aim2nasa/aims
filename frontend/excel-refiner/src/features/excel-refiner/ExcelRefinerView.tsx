@@ -538,7 +538,7 @@ export function ExcelRefinerView() {
                           key={index}
                           className={thClassName}
                           onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
-                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : '고객명'} 검증)` : '클릭하여 정렬'}
+                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : '계약일'} 검증)` : '클릭하여 정렬'}
                         >
                           <div className="excel-refiner__th-content">
                             <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
