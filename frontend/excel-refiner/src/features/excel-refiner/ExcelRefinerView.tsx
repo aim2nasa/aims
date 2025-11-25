@@ -138,32 +138,38 @@ export function ExcelRefinerView() {
     setValidatingColumns(new Set())
   }, [])
 
-  // 행 선택 토글
-  const handleRowSelect = useCallback((rowIndex: number, e: React.MouseEvent) => {
+  // 마지막 클릭한 행 (정렬된 뷰 기준)
+  const [lastClickedViewIndex, setLastClickedViewIndex] = useState<number | null>(null)
+
+  // 행 선택 토글 (정렬된 뷰 기준으로 범위 선택)
+  const handleRowSelect = useCallback((originalIndex: number, viewIndex: number, e: React.MouseEvent) => {
     setSelectedRows(prev => {
       const next = new Set(prev)
 
-      if (e.shiftKey && prev.size > 0) {
-        const lastSelected = [...prev].pop()!
-        const start = Math.min(lastSelected, rowIndex)
-        const end = Math.max(lastSelected, rowIndex)
+      if (e.shiftKey && lastClickedViewIndex !== null) {
+        // 정렬된 뷰 기준으로 범위 선택
+        const start = Math.min(lastClickedViewIndex, viewIndex)
+        const end = Math.max(lastClickedViewIndex, viewIndex)
         for (let i = start; i <= end; i++) {
-          next.add(i)
+          if (sortedDataWithIndices[i]) {
+            next.add(sortedDataWithIndices[i].originalIndex)
+          }
         }
       } else if (e.ctrlKey || e.metaKey) {
-        if (next.has(rowIndex)) {
-          next.delete(rowIndex)
+        if (next.has(originalIndex)) {
+          next.delete(originalIndex)
         } else {
-          next.add(rowIndex)
+          next.add(originalIndex)
         }
       } else {
         next.clear()
-        next.add(rowIndex)
+        next.add(originalIndex)
       }
 
       return next
     })
-  }, [])
+    setLastClickedViewIndex(viewIndex)
+  }, [lastClickedViewIndex, sortedDataWithIndices])
 
   // 문제 행 모두 선택
   const handleSelectProblematic = useCallback(() => {
@@ -437,7 +443,7 @@ export function ExcelRefinerView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedDataWithIndices.map(({ row, originalIndex }) => {
+                  {sortedDataWithIndices.map(({ row, originalIndex }, viewIndex) => {
                     const status = getRowValidationStatus(originalIndex)
                     const isSelected = selectedRows.has(originalIndex)
 
@@ -445,7 +451,7 @@ export function ExcelRefinerView() {
                       <tr
                         key={originalIndex}
                         className={`excel-refiner__tr excel-refiner__tr--${status} ${isSelected ? 'excel-refiner__tr--selected' : ''}`}
-                        onClick={(e) => handleRowSelect(originalIndex, e)}
+                        onClick={(e) => handleRowSelect(originalIndex, viewIndex, e)}
                       >
                         <td className="excel-refiner__td excel-refiner__td--row-num">
                           {getExcelRowNumber(originalIndex)}
