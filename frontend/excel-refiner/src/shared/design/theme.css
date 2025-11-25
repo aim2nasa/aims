@@ -1,0 +1,158 @@
+/**
+ * Excel Refiner Theme System
+ * aims-uix3 theme.css 기반 단순화 버전
+ */
+
+/* === LIGHT THEME (기본) === */
+:root,
+[data-theme="light"] {
+  /* Background */
+  --color-bg-primary: var(--color-neutral-0);
+  --color-bg-secondary: var(--color-neutral-50);
+  --color-bg-tertiary: var(--color-neutral-100);
+  --color-bg-hover: var(--color-neutral-100);
+  --color-bg-active: var(--color-neutral-200);
+
+  /* Text */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-inverse: var(--color-neutral-0);
+
+  /* Border */
+  --color-border-primary: var(--color-neutral-200);
+  --color-border-secondary: var(--color-neutral-300);
+  --color-border-focus: var(--color-primary-500);
+  --color-border-error: var(--color-error-500);
+
+  /* Button - Primary */
+  --color-button-primary-bg: var(--color-primary-600);
+  --color-button-primary-bg-hover: var(--color-primary-700);
+  --color-button-primary-text: var(--color-neutral-0);
+
+  /* Button - Secondary */
+  --color-button-secondary-bg: var(--color-neutral-0);
+  --color-button-secondary-bg-hover: var(--color-neutral-50);
+  --color-button-secondary-text: var(--color-neutral-700);
+  --color-button-secondary-border: var(--color-neutral-300);
+
+  /* Button - Ghost */
+  --color-button-ghost-bg: transparent;
+  --color-button-ghost-bg-hover: var(--color-neutral-100);
+  --color-button-ghost-text: var(--color-neutral-700);
+
+  /* Button - Destructive */
+  --color-button-destructive-bg: var(--color-error-600);
+  --color-button-destructive-bg-hover: var(--color-error-500);
+  --color-button-destructive-text: var(--color-neutral-0);
+
+  /* Input */
+  --color-input-bg: var(--color-neutral-0);
+  --color-input-border: var(--color-neutral-300);
+  --color-input-border-focus: var(--color-primary-500);
+  --color-input-text: var(--color-neutral-900);
+  --color-input-placeholder: var(--color-neutral-400);
+
+  /* Status */
+  --color-status-success: var(--color-success-600);
+  --color-status-success-bg: var(--color-success-50);
+  --color-status-error: var(--color-error-600);
+  --color-status-error-bg: var(--color-error-50);
+  --color-status-warning: var(--color-warning-600);
+  --color-status-warning-bg: var(--color-warning-50);
+
+  /* Selection (for table rows) */
+  --color-selection-bg: rgba(59, 130, 246, 0.15);
+  --color-selection-bg-hover: rgba(59, 130, 246, 0.2);
+
+  /* Validation Highlight Colors */
+  --color-row-error: rgba(239, 68, 68, 0.15);
+  --color-row-warning: rgba(245, 158, 11, 0.15);
+  --color-row-duplicate: rgba(168, 85, 247, 0.15);
+}
+
+/* === DARK THEME === */
+[data-theme="dark"] {
+  /* Background */
+  --color-bg-primary: var(--color-neutral-900);
+  --color-bg-secondary: var(--color-neutral-800);
+  --color-bg-tertiary: var(--color-neutral-700);
+  --color-bg-hover: var(--color-neutral-800);
+  --color-bg-active: var(--color-neutral-700);
+
+  /* Text */
+  --color-text-primary: var(--color-neutral-100);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-inverse: var(--color-neutral-900);
+
+  /* Border */
+  --color-border-primary: var(--color-neutral-700);
+  --color-border-secondary: var(--color-neutral-600);
+  --color-border-focus: var(--color-primary-400);
+  --color-border-error: var(--color-error-400);
+
+  /* Button - Primary */
+  --color-button-primary-bg: var(--color-primary-500);
+  --color-button-primary-bg-hover: var(--color-primary-400);
+  --color-button-primary-text: var(--color-neutral-0);
+
+  /* Button - Secondary */
+  --color-button-secondary-bg: var(--color-neutral-800);
+  --color-button-secondary-bg-hover: var(--color-neutral-700);
+  --color-button-secondary-text: var(--color-neutral-200);
+  --color-button-secondary-border: var(--color-neutral-600);
+
+  /* Button - Ghost */
+  --color-button-ghost-bg: transparent;
+  --color-button-ghost-bg-hover: var(--color-neutral-800);
+  --color-button-ghost-text: var(--color-neutral-200);
+
+  /* Button - Destructive */
+  --color-button-destructive-bg: var(--color-error-600);
+  --color-button-destructive-bg-hover: var(--color-error-500);
+  --color-button-destructive-text: var(--color-neutral-0);
+
+  /* Input */
+  --color-input-bg: var(--color-neutral-800);
+  --color-input-border: var(--color-neutral-600);
+  --color-input-border-focus: var(--color-primary-400);
+  --color-input-text: var(--color-neutral-100);
+  --color-input-placeholder: var(--color-neutral-500);
+
+  /* Status */
+  --color-status-success: var(--color-success-400);
+  --color-status-success-bg: rgba(34, 197, 94, 0.15);
+  --color-status-error: var(--color-error-400);
+  --color-status-error-bg: rgba(239, 68, 68, 0.15);
+  --color-status-warning: var(--color-warning-400);
+  --color-status-warning-bg: rgba(245, 158, 11, 0.15);
+
+  /* Selection (for table rows) */
+  --color-selection-bg: rgba(59, 130, 246, 0.25);
+  --color-selection-bg-hover: rgba(59, 130, 246, 0.3);
+
+  /* Validation Highlight Colors */
+  --color-row-error: rgba(239, 68, 68, 0.2);
+  --color-row-warning: rgba(245, 158, 11, 0.2);
+  --color-row-duplicate: rgba(168, 85, 247, 0.2);
+}
+
+/* === THEME TRANSITIONS === */
+*,
+*::before,
+*::after {
+  transition:
+    background-color var(--duration-ios-quick) var(--easing-ios-default),
+    border-color var(--duration-ios-quick) var(--easing-ios-default),
+    color var(--duration-ios-quick) var(--easing-ios-default);
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms;
+  }
+}

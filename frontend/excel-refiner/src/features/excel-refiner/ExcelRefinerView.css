@@ -1,0 +1,361 @@
+/**
+ * Excel Refiner View Styles
+ */
+
+.excel-refiner {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-bg-secondary);
+}
+
+/* === HEADER === */
+
+.excel-refiner__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4) var(--spacing-6);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.excel-refiner__header h1 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.excel-refiner__version {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* === MAIN === */
+
+.excel-refiner__main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === DROPZONE === */
+
+.excel-refiner__dropzone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-8);
+  border: 2px dashed var(--color-border-secondary);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-primary);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__dropzone--active {
+  border-color: var(--color-primary-500);
+  background: var(--color-selection-bg);
+}
+
+.excel-refiner__dropzone-content {
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.excel-refiner__dropzone-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-4);
+  opacity: 0.5;
+}
+
+.excel-refiner__dropzone-content p {
+  margin-bottom: var(--spacing-4);
+  font-size: var(--font-size-base);
+}
+
+.excel-refiner__file-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background-color var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__file-label:hover {
+  background: var(--color-button-primary-bg-hover);
+}
+
+.excel-refiner__file-label--small {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-xs);
+}
+
+.excel-refiner__file-input {
+  display: none;
+}
+
+/* === CONTENT === */
+
+.excel-refiner__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  margin: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-primary);
+}
+
+/* === TOOLBAR === */
+
+.excel-refiner__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+}
+
+.excel-refiner__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.excel-refiner__filename {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__row-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* === TABS === */
+
+.excel-refiner__tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+  overflow-x: auto;
+}
+
+.excel-refiner__tab {
+  padding: var(--spacing-2) var(--spacing-4);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__tab:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__tab--active {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* === VALIDATION === */
+
+.excel-refiner__validation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+}
+
+.excel-refiner__validation-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.excel-refiner__validation-column {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary-600);
+}
+
+.excel-refiner__validation-warning {
+  color: var(--color-status-warning);
+  font-style: italic;
+}
+
+.excel-refiner__validation-result {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.excel-refiner__validation-status {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.excel-refiner__validation-status--success {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success);
+}
+
+.excel-refiner__validation-status--error {
+  background: var(--color-status-error-bg);
+  color: var(--color-status-error);
+}
+
+.excel-refiner__validation-detail {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* === ACTIONS === */
+
+.excel-refiner__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.excel-refiner__actions-left,
+.excel-refiner__actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+/* === TABLE === */
+
+.excel-refiner__table-container {
+  flex: 1;
+  overflow: auto;
+}
+
+.excel-refiner__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.excel-refiner__th,
+.excel-refiner__td {
+  padding: var(--spacing-2) var(--spacing-3);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-primary);
+  white-space: nowrap;
+}
+
+.excel-refiner__th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-tertiary);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.excel-refiner__th:hover {
+  background: var(--color-bg-hover);
+}
+
+.excel-refiner__th--row-num,
+.excel-refiner__td--row-num {
+  width: var(--size-row-num-width);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-secondary);
+}
+
+.excel-refiner__th--validation {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__th--validation:hover {
+  background: var(--color-primary-600);
+}
+
+.excel-refiner__th-badge {
+  margin-left: var(--spacing-2);
+  padding: var(--size-badge-padding) var(--spacing-2);
+  background: var(--color-neutral-0);
+  color: var(--color-primary-600);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.excel-refiner__tr {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__tr:hover {
+  background: var(--color-bg-hover);
+}
+
+.excel-refiner__tr--selected {
+  background: var(--color-selection-bg);
+}
+
+.excel-refiner__tr--selected:hover {
+  background: var(--color-selection-bg-hover);
+}
+
+.excel-refiner__tr--empty {
+  background: var(--color-row-empty);
+}
+
+.excel-refiner__tr--empty:hover {
+  background: var(--color-row-empty-hover);
+}
+
+.excel-refiner__tr--duplicate {
+  background: var(--color-row-duplicate);
+}
+
+.excel-refiner__tr--duplicate:hover {
+  background: var(--color-row-duplicate-hover);
+}
+
+.excel-refiner__td--validation {
+  font-weight: var(--font-weight-medium);
+}
+
+/* === FOOTER === */
+
+.excel-refiner__footer {
+  padding: var(--spacing-2) var(--spacing-6);
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border-primary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
