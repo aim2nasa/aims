@@ -588,6 +588,55 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* === CELL EDITING === */
+
+.excel-refiner__td--editable {
+  cursor: text;
+}
+
+.excel-refiner__td--editable:hover {
+  background: var(--color-bg-hover);
+}
+
+/* 편집 중인 셀은 상대 위치 */
+.excel-refiner__td--editing {
+  position: relative;
+}
+
+/* 편집 중 원래 텍스트 숨김 (폭 유지용) */
+.excel-refiner__cell-text--hidden {
+  visibility: hidden;
+}
+
+.excel-refiner__cell-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-1) var(--spacing-2);
+  margin: 0;
+  border: 2px solid var(--color-primary-500);
+  border-radius: 0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.excel-refiner__cell-input:focus {
+  border-color: var(--color-primary-600);
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+.excel-refiner__cell-input--right {
+  text-align: right;
+}
+
 /* === DEV MODE BADGE === */
 
 .excel-refiner__dev-mode-badge {
