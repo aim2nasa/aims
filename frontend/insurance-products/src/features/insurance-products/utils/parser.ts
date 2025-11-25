@@ -23,18 +23,29 @@ function extractSurveyDate(text: string): string {
 }
 
 /**
+ * 파일명에서 판매 상태 추출
+ * 파일명에 "판매중지" 또는 "중지"가 포함되어 있으면 판매중지
+ */
+function extractStatusFromFileName(fileName: string): ProductStatus {
+  const lowerName = fileName.toLowerCase()
+  if (lowerName.includes('판매중지') || lowerName.includes('중지')) {
+    return '판매중지'
+  }
+  return '판매중'
+}
+
+/**
  * 판매기간 파싱
  * "2025.09.01 ~" 또는 "2019.04.01 ~ 2020.04.09" 형식
  */
-function parseSalePeriod(period: string): { startDate: string; endDate?: string; status: ProductStatus } {
+function parseSalePeriod(period: string): { startDate: string; endDate?: string } {
   const trimmed = period.trim()
   const parts = trimmed.split('~').map(p => p.trim())
 
   const startDate = parts[0] || ''
   const endDate = parts[1] && parts[1] !== '' ? parts[1] : undefined
-  const status: ProductStatus = endDate ? '판매중지' : '판매중'
 
-  return { startDate, endDate, status }
+  return { startDate, endDate }
 }
 
 /**
@@ -52,6 +63,7 @@ export function parseMdFile(content: string, fileName: string): ParseResult {
   const errors: string[] = []
   const products: InsuranceProduct[] = []
   const surveyDate = extractSurveyDate(fileName)
+  const status = extractStatusFromFileName(fileName)
 
   // 라인별로 분리
   const lines = content.split('\n').filter(line => line.trim())
@@ -78,7 +90,7 @@ export function parseMdFile(content: string, fileName: string): ParseResult {
       continue
     }
 
-    const { startDate, endDate, status } = parseSalePeriod(salePeriod)
+    const { startDate, endDate } = parseSalePeriod(salePeriod)
 
     products.push({
       category: categoryStr,
@@ -105,6 +117,7 @@ export function parseExcelFile(data: ArrayBuffer, fileName: string): ParseResult
   const errors: string[] = []
   const products: InsuranceProduct[] = []
   const surveyDate = extractSurveyDate(fileName)
+  const status = extractStatusFromFileName(fileName)
 
   try {
     const workbook = XLSX.read(data, { type: 'array' })
@@ -127,7 +140,7 @@ export function parseExcelFile(data: ArrayBuffer, fileName: string): ParseResult
         continue
       }
 
-      const { startDate, endDate, status } = parseSalePeriod(String(salePeriod || ''))
+      const { startDate, endDate } = parseSalePeriod(String(salePeriod || ''))
 
       products.push({
         category,
