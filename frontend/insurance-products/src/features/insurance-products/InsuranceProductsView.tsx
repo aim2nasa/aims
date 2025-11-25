@@ -76,6 +76,10 @@ export function InsuranceProductsView() {
   // Selection State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
+  // 삭제 모드 상태
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // 메시지 자동 제거
   const showMessage = useCallback((type: 'error' | 'success', message: string) => {
     if (type === 'error') {
@@ -233,32 +237,15 @@ export function InsuranceProductsView() {
     }))
   }, [])
 
-  // 행 선택
-  const handleRowSelect = useCallback((id: string, e: React.MouseEvent) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-
-      if (e.ctrlKey || e.metaKey) {
-        if (next.has(id)) {
-          next.delete(id)
-        } else {
-          next.add(id)
-        }
-      } else {
-        next.clear()
-        next.add(id)
-      }
-
-      return next
-    })
-  }, [])
-
   // 전체 선택
   const handleSelectAll = useCallback(() => {
     if (selectedIds.size === filteredProducts.length) {
       setSelectedIds(new Set())
     } else {
-      const ids = filteredProducts.map((_, i) => `temp-${i}`)
+      // DB에서 불러온 상품은 _id가 있음
+      const ids = filteredProducts
+        .map(p => p._id)
+        .filter((id): id is string => !!id)
       setSelectedIds(new Set(ids))
     }
   }, [filteredProducts, selectedIds])
@@ -346,18 +333,6 @@ export function InsuranceProductsView() {
     handleLoadFromDb(false)
   }, [])
 
-  // 모두 초기화
-  const handleClear = useCallback(() => {
-    setProducts([])
-    setActiveFile(null)
-    setDiscontinuedFile(null)
-    setActiveProducts([])
-    setDiscontinuedProducts([])
-    setSelectedIds(new Set())
-    setParseErrors([])
-    setError(null)
-    setSuccessMessage(null)
-  }, [])
 
   // 파일 제거
   const handleRemoveActiveFile = useCallback(() => {
@@ -369,6 +344,67 @@ export function InsuranceProductsView() {
     setDiscontinuedFile(null)
     setDiscontinuedProducts([])
   }, [])
+
+  // 삭제 모드 토글
+  const handleToggleDeleteMode = useCallback(() => {
+    if (isDeleteMode) {
+      setSelectedIds(new Set())
+    }
+    setIsDeleteMode(!isDeleteMode)
+  }, [isDeleteMode])
+
+  // 삭제 모드에서 행 선택
+  const handleDeleteSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }, [])
+
+  // 선택된 상품 삭제
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) {
+      showMessage('error', '삭제할 상품을 선택해주세요.')
+      return
+    }
+
+    const confirmed = window.confirm(`선택한 ${selectedIds.size}개의 상품을 삭제하시겠습니까?`)
+    if (!confirmed) return
+
+    setIsDeleting(true)
+
+    try {
+      const deletePromises = Array.from(selectedIds).map(async (id) => {
+        const response = await fetch(`${API_BASE}/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        if (!response.ok) throw new Error(`Failed to delete ${id}`)
+        return { success: true, id }
+      })
+
+      const results = await Promise.all(deletePromises)
+      const successCount = results.filter(r => r.success).length
+
+      // 로컬 상태에서 삭제된 상품 제거
+      setProducts(prev => prev.filter(p => !selectedIds.has(p._id || '')))
+      setSelectedIds(new Set())
+      setIsDeleteMode(false)
+      showMessage('success', `${successCount}개 상품이 삭제되었습니다.`)
+
+      // DB에서 다시 불러오기
+      handleLoadFromDb()
+    } catch (err) {
+      showMessage('error', `삭제 오류: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [selectedIds, showMessage, handleLoadFromDb])
 
   // 정렬 아이콘
   const getSortIcon = (field: SortField) => {
@@ -466,8 +502,25 @@ export function InsuranceProductsView() {
       {/* 데이터가 있을 때만 표시 */}
       {hasDataToShow && (
         <>
-          {/* 통계 */}
+          {/* 통계 + 삭제 모드 */}
           <div className="stats-bar">
+            {/* 삭제 버튼 */}
+            <button
+              className={`delete-mode-btn ${isDeleteMode ? 'delete-mode-btn--active' : ''}`}
+              onClick={handleToggleDeleteMode}
+              title={isDeleteMode ? '삭제 완료' : '삭제'}
+            >
+              {isDeleteMode ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+
             <div className="stat">
               <span className="stat__label">전체</span>
               <span className="stat__value">{stats.total}</span>
@@ -480,13 +533,34 @@ export function InsuranceProductsView() {
               <span className="stat__label">판매중지</span>
               <span className="stat__value">{stats.discontinued}</span>
             </div>
-            <div className="stat__divider" />
-            {(Object.entries(stats.byCategory) as [ProductCategory, number][]).map(([cat, count]) => (
-              <div key={cat} className={`stat ${CATEGORY_COLORS[cat]}`}>
-                <span className="stat__label">{CATEGORY_LABELS[cat]}</span>
-                <span className="stat__value">{count}</span>
-              </div>
-            ))}
+
+            {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
+            {isDeleteMode && (
+              <>
+                <div className="stat__divider" />
+                <span className="selected-count">{selectedIds.size}개 선택됨</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting || selectedIds.size === 0}
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </Button>
+              </>
+            )}
+
+            {!isDeleteMode && (
+              <>
+                <div className="stat__divider" />
+                {(Object.entries(stats.byCategory) as [ProductCategory, number][]).map(([cat, count]) => (
+                  <div key={cat} className={`stat ${CATEGORY_COLORS[cat]}`}>
+                    <span className="stat__label">{CATEGORY_LABELS[cat]}</span>
+                    <span className="stat__value">{count}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* 필터/검색/액션 바 */}
@@ -524,12 +598,6 @@ export function InsuranceProductsView() {
                 onChange={e => setFilters(f => ({ ...f, searchTerm: e.target.value }))}
               />
             </div>
-
-            <div className="toolbar__actions">
-              <Button variant="ghost" onClick={handleClear}>
-                초기화
-              </Button>
-            </div>
           </div>
 
           {/* 테이블 */}
@@ -537,13 +605,15 @@ export function InsuranceProductsView() {
             <table className="product-table">
               <thead>
                 <tr>
-                  <th className="col-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === filteredProducts.length && filteredProducts.length > 0}
-                      onChange={handleSelectAll}
-                    />
-                  </th>
+                  {isDeleteMode && (
+                    <th className="col-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === filteredProducts.length && filteredProducts.length > 0}
+                        onChange={handleSelectAll}
+                      />
+                    </th>
+                  )}
                   <th className="col-category sortable" onClick={() => handleSort('category')}>
                     구분 {getSortIcon('category')}
                   </th>
@@ -572,17 +642,19 @@ export function InsuranceProductsView() {
                   return (
                     <tr
                       key={id}
-                      className={`product-row ${isSelected ? 'product-row--selected' : ''}`}
-                      onClick={(e) => handleRowSelect(id, e)}
+                      className={`product-row ${isDeleteMode && isSelected ? 'product-row--selected' : ''}`}
+                      onClick={() => isDeleteMode && product._id && handleDeleteSelect(product._id)}
                     >
-                      <td className="col-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </td>
+                      {isDeleteMode && (
+                        <td className="col-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => product._id && handleDeleteSelect(product._id)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </td>
+                      )}
                       <td className="col-category">
                         <span className={`category-badge ${CATEGORY_COLORS[product.category]}`}>
                           {CATEGORY_LABELS[product.category]}

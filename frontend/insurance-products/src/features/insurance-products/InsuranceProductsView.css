@@ -540,6 +540,44 @@
   }
 }
 
+/* === DELETE MODE === */
+
+.delete-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.delete-mode-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.delete-mode-btn--active {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success);
+}
+
+.delete-mode-btn--active:hover {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success);
+}
+
+.selected-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
 /* === DARK THEME ADJUSTMENTS === */
 
 [data-theme="dark"] .category--protection {
