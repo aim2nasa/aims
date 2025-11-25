@@ -547,6 +547,84 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* === DEV MODE BADGE === */
+
+.excel-refiner__dev-mode-badge {
+  position: fixed;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-warning-500);
+  color: var(--color-neutral-0);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+}
+
+/* === DELETE MODE === */
+
+.excel-refiner__delete-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__delete-mode-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__delete-mode-btn--active {
+  background: var(--color-error-500);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__delete-mode-btn--active:hover {
+  background: var(--color-error-600);
+}
+
+.excel-refiner__selected-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-left: var(--spacing-2);
+}
+
+/* === CHECKBOX COLUMN === */
+
+.excel-refiner__th--checkbox,
+.excel-refiner__td--checkbox {
+  width: 40px;
+  text-align: center;
+  padding: var(--spacing-2);
+}
+
+.excel-refiner__th--checkbox input,
+.excel-refiner__td--checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* === DELETE MODE ROW STYLE === */
+
+.excel-refiner__tr--delete-mode {
+  cursor: pointer;
+}
+
+.excel-refiner__tr--delete-mode:hover {
+  background: var(--color-bg-hover);
+}
+
 /* === FOOTER === */
 
 .excel-refiner__footer {

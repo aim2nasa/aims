@@ -3,7 +3,7 @@
  * 엑셀 파일 정제 도구의 메인 컴포넌트
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
 import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from './hooks/useValidation'
@@ -47,8 +47,37 @@ export function ExcelRefinerView() {
   // 상품명 상태 필터 (범례 클릭 시 해당 상태 행을 맨 위로)
   const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'modified' | 'unmatched' | null>(null)
 
+  // 삭제 모드 상태 (aims-uix3 패턴)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+
+  // 개발자 모드 (Ctrl+Shift+D로 토글 - aims-uix3와 동일)
+  const [isDevMode, setIsDevMode] = useState(false)
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
+
+  // 개발자 모드 단축키 핸들러 (Ctrl+Shift+D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDevMode(prev => {
+          const next = !prev
+          console.log(`🔧 개발자 모드: ${next ? 'ON' : 'OFF'}`)
+          // 개발자 모드 해제 시 삭제 모드도 해제
+          if (!next) {
+            setIsDeleteMode(false)
+            setSelectedRows(new Set())
+          }
+          return next
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [])
 
   // 컬럼별 검증 결과 계산
   const columnValidationResults = useMemo(() => {
@@ -308,38 +337,37 @@ export function ExcelRefinerView() {
     setProductNameColumnIndex(null)
   }, [])
 
-  // 마지막 클릭한 행 (정렬된 뷰 기준)
-  const [lastClickedViewIndex, setLastClickedViewIndex] = useState<number | null>(null)
+  // 삭제 모드 토글
+  const handleToggleDeleteMode = useCallback(() => {
+    if (isDeleteMode) {
+      setSelectedRows(new Set())
+    }
+    setIsDeleteMode(!isDeleteMode)
+  }, [isDeleteMode])
 
-  // 행 선택 토글 (정렬된 뷰 기준으로 범위 선택)
-  const handleRowSelect = useCallback((originalIndex: number, viewIndex: number, e: React.MouseEvent) => {
+  // 삭제 모드에서 행 선택/해제
+  const handleDeleteSelect = useCallback((rowIndex: number) => {
     setSelectedRows(prev => {
-      const next = new Set(prev)
-
-      if (e.shiftKey && lastClickedViewIndex !== null) {
-        // 정렬된 뷰 기준으로 범위 선택
-        const start = Math.min(lastClickedViewIndex, viewIndex)
-        const end = Math.max(lastClickedViewIndex, viewIndex)
-        for (let i = start; i <= end; i++) {
-          if (sortedDataWithIndices[i]) {
-            next.add(sortedDataWithIndices[i].originalIndex)
-          }
-        }
-      } else if (e.ctrlKey || e.metaKey) {
-        if (next.has(originalIndex)) {
-          next.delete(originalIndex)
-        } else {
-          next.add(originalIndex)
-        }
+      const newSet = new Set(prev)
+      if (newSet.has(rowIndex)) {
+        newSet.delete(rowIndex)
       } else {
-        next.clear()
-        next.add(originalIndex)
+        newSet.add(rowIndex)
       }
-
-      return next
+      return newSet
     })
-    setLastClickedViewIndex(viewIndex)
-  }, [lastClickedViewIndex, sortedDataWithIndices])
+  }, [])
+
+  // 전체 선택/해제 (삭제 모드)
+  const handleSelectAll = useCallback(() => {
+    if (!currentSheet) return
+    if (selectedRows.size === sortedDataWithIndices.length) {
+      setSelectedRows(new Set())
+    } else {
+      const allIndices = sortedDataWithIndices.map(item => item.originalIndex)
+      setSelectedRows(new Set(allIndices))
+    }
+  }, [currentSheet, sortedDataWithIndices, selectedRows.size])
 
   // 문제 행 모두 선택
   const handleSelectProblematic = useCallback(() => {
@@ -351,7 +379,7 @@ export function ExcelRefinerView() {
     setSelectedRows(new Set())
   }, [])
 
-  // 선택 행 삭제
+  // 선택 행 삭제 (two-step confirmation - aims-uix3 패턴)
   const handleDeleteSelected = useCallback(() => {
     if (selectedRows.size === 0 || !currentSheet) return
 
@@ -359,16 +387,25 @@ export function ExcelRefinerView() {
     const rowNumbers = selectedIndices.map(i => i + 2)
     const beforeCount = currentSheet.data.length
 
-    const confirmed = window.confirm(
-      `선택한 ${selectedRows.size}개 행을 삭제하시겠습니까?\n\n삭제할 행 번호: ${rowNumbers.join(', ')}\n현재 총 행 수: ${beforeCount}행`
+    // 1단계: 경고 메시지
+    const warning = window.confirm(
+      `⚠️ 경고: 선택한 ${selectedRows.size}개의 행을 삭제합니다.\n\n` +
+      `삭제할 행 번호: ${rowNumbers.join(', ')}\n` +
+      `현재 총 행 수: ${beforeCount}행\n\n` +
+      `계속하시겠습니까?`
     )
+    if (!warning) return
 
-    if (!confirmed) return
+    // 2단계: 최종 확인
+    const finalConfirm = window.confirm(
+      `🗑️ 최종 확인\n\n` +
+      `정말로 ${selectedRows.size}개의 행을 삭제하시겠습니까?\n\n` +
+      `[확인]을 누르면 즉시 삭제됩니다.`
+    )
+    if (!finalConfirm) return
 
     const newData = currentSheet.data.filter((_, index) => !selectedRows.has(index))
     const afterCount = newData.length
-
-    alert(`삭제 완료!\n\n삭제된 행: ${rowNumbers.join(', ')} (${selectedRows.size}개)\n이전: ${beforeCount}행 → 이후: ${afterCount}행`)
 
     setSheets(prev => {
       const updated = [...prev]
@@ -379,7 +416,11 @@ export function ExcelRefinerView() {
       return updated
     })
 
+    // 삭제 후 상태 초기화
     setSelectedRows(new Set())
+    setIsDeleteMode(false)
+
+    alert(`✓ 삭제 완료!\n\n삭제된 행: ${selectedRows.size}개\n이전: ${beforeCount}행 → 이후: ${afterCount}행`)
   }, [selectedRows, currentSheet, activeSheetIndex])
 
   // 정제된 파일 저장
@@ -446,6 +487,13 @@ export function ExcelRefinerView() {
 
   return (
     <div className="excel-refiner">
+      {/* 개발자 모드 인디케이터 (aims-uix3 스타일) */}
+      {isDevMode && (
+        <div className="excel-refiner__dev-mode-badge">
+          🔧 개발자 모드
+        </div>
+      )}
+
       {/* 헤더 */}
       <header className="excel-refiner__header">
         <h1>Excel Refiner</h1>
@@ -493,10 +541,41 @@ export function ExcelRefinerView() {
             {/* 툴바 */}
             <div className="excel-refiner__toolbar">
               <div className="excel-refiner__toolbar-left">
+                {/* 삭제 모드 토글 버튼 - 항상 표시 */}
+                <button
+                  type="button"
+                  className={`excel-refiner__delete-mode-btn ${isDeleteMode ? 'excel-refiner__delete-mode-btn--active' : ''}`}
+                  onClick={handleToggleDeleteMode}
+                  title={isDeleteMode ? '삭제 완료' : '행 삭제'}
+                >
+                  {isDeleteMode ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
                 <span className="excel-refiner__filename">{fileName}</span>
                 <span className="excel-refiner__row-count">
                   ({currentSheet.data.length}행)
                 </span>
+                {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
+                {isDeleteMode && (
+                  <>
+                    <span className="excel-refiner__selected-count">{selectedRows.size}개 선택됨</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteSelected}
+                      disabled={selectedRows.size === 0}
+                    >
+                      삭제
+                    </Button>
+                  </>
+                )}
               </div>
               <div className="excel-refiner__toolbar-right">
                 <label className="excel-refiner__file-label excel-refiner__file-label--small">
@@ -590,7 +669,8 @@ export function ExcelRefinerView() {
             {/* 액션 바 */}
             <div className="excel-refiner__actions">
               <div className="excel-refiner__actions-left">
-                {problematicRows.length > 0 && (
+                {/* 삭제 모드일 때만 문제 행 선택 버튼 표시 */}
+                {isDeleteMode && problematicRows.length > 0 && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -599,23 +679,14 @@ export function ExcelRefinerView() {
                     문제 행 선택 ({problematicRows.length})
                   </Button>
                 )}
-                {selectedRows.size > 0 && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearSelection}
-                    >
-                      선택 해제
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteSelected}
-                    >
-                      선택 삭제 ({selectedRows.size})
-                    </Button>
-                  </>
+                {isDeleteMode && selectedRows.size > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearSelection}
+                  >
+                    선택 해제
+                  </Button>
                 )}
               </div>
               <div className="excel-refiner__actions-right">
@@ -634,6 +705,17 @@ export function ExcelRefinerView() {
               <table className="excel-refiner__table">
                 <thead>
                   <tr>
+                    {/* 삭제 모드일 때 체크박스 컬럼 */}
+                    {isDeleteMode && (
+                      <th className="excel-refiner__th excel-refiner__th--checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.size === sortedDataWithIndices.length && sortedDataWithIndices.length > 0}
+                          onChange={handleSelectAll}
+                          title="전체 선택/해제"
+                        />
+                      </th>
+                    )}
                     <th className={`excel-refiner__th excel-refiner__th--row-num ${sortColumn === -1 ? 'excel-refiner__th--sorted' : ''}`}>
                       <div className="excel-refiner__th-content">
                         <span className="excel-refiner__th-text">#</span>
@@ -698,16 +780,33 @@ export function ExcelRefinerView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedDataWithIndices.map(({ row, originalIndex }, viewIndex) => {
+                  {sortedDataWithIndices.map(({ row, originalIndex }) => {
                     const status = getRowValidationStatus(originalIndex)
                     const isSelected = selectedRows.has(originalIndex)
 
                     return (
                       <tr
                         key={originalIndex}
-                        className={`excel-refiner__tr excel-refiner__tr--${status} ${isSelected ? 'excel-refiner__tr--selected' : ''}`}
-                        onClick={(e) => handleRowSelect(originalIndex, viewIndex, e)}
+                        className={`excel-refiner__tr excel-refiner__tr--${status} ${isSelected ? 'excel-refiner__tr--selected' : ''} ${isDeleteMode ? 'excel-refiner__tr--delete-mode' : ''}`}
+                        onClick={() => {
+                          // 삭제 모드일 때만 행 클릭으로 선택
+                          if (isDeleteMode) {
+                            handleDeleteSelect(originalIndex)
+                          }
+                        }}
                       >
+                        {/* 삭제 모드일 때 체크박스 */}
+                        {isDeleteMode && (
+                          <td className="excel-refiner__td excel-refiner__td--checkbox">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleDeleteSelect(originalIndex)}
+                              onClick={(e) => e.stopPropagation()}
+                              title={`행 ${getExcelRowNumber(originalIndex)} 선택`}
+                            />
+                          </td>
+                        )}
                         <td className="excel-refiner__td excel-refiner__td--row-num">
                           {getExcelRowNumber(originalIndex)}
                         </td>
