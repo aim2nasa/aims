@@ -16,12 +16,26 @@ export interface ValidationResult {
   valid: boolean
 }
 
+// 보험상품 정보
+export interface InsuranceProduct {
+  _id: string
+  productName: string
+  category?: string
+  saleStartDate?: string
+  saleEndDate?: string
+  status?: string
+  surveyDate?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 // 상품명 매칭 결과
 export interface ProductMatchResult {
   originalMatch: Map<number, string>   // 원래부터 정확히 매칭 (행 인덱스 → ObjectId)
   modified: Map<number, string>        // 수정되어 매칭됨 (행 인덱스 → ObjectId)
   unmatched: number[]                  // 매칭 안 된 행 인덱스
   productNames: Map<string, string>    // 상품명 → ObjectId
+  allProducts: Map<string, InsuranceProduct>  // ObjectId → 전체 상품 정보
 }
 
 export interface ValidationConfig {

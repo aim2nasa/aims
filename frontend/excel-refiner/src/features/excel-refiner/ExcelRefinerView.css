@@ -675,3 +675,85 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
+
+/* === MONGODB DOCUMENT VIEWER MODAL === */
+
+.doc-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-overlay);
+  z-index: 10000;
+}
+
+.doc-viewer-modal {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.doc-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+}
+
+.doc-viewer-header h3 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-500);
+}
+
+.doc-viewer-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.doc-viewer-close:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.doc-viewer-content {
+  margin: 0;
+  padding: var(--spacing-4);
+  overflow: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-primary);
+  background: var(--color-neutral-100);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.doc-viewer-loading {
+  padding: var(--spacing-8);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  text-align: center;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+}

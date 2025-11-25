@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
 import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from './hooks/useValidation'
-import type { SheetData, CellValue, ValidationResult, ProductMatchResult } from './types/excel'
+import type { SheetData, CellValue, ValidationResult, ProductMatchResult, InsuranceProduct } from './types/excel'
 import { ProductSearchModal } from './components/ProductSearchModal'
 import './ExcelRefinerView.css'
 
@@ -61,6 +61,9 @@ export function ExcelRefinerView() {
 
   // 액션 로그 메시지 (일시적으로 표시)
   const [actionLog, setActionLog] = useState<string | null>(null)
+
+  // 상품 정보 뷰어 모달 상태
+  const [viewingProduct, setViewingProduct] = useState<InsuranceProduct | null>(null)
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
@@ -511,6 +514,15 @@ export function ExcelRefinerView() {
     setIsProductSearchOpen(true)
   }, [])
 
+  // 정확 매칭/수정 매칭 상품명 클릭 - MongoDB Document 모달 열기
+  const handleMatchedProductClick = useCallback((objectId: string) => {
+    if (!productMatchResult?.allProducts) return
+    const product = productMatchResult.allProducts.get(objectId)
+    if (product) {
+      setViewingProduct(product)
+    }
+  }, [productMatchResult])
+
   // 상품 선택 시 데이터 업데이트
   const handleProductSelect = useCallback((productName: string, productId: string, applyToAll: boolean) => {
     if (productSearchRowIndex === null || productNameColumnIndex === null || !currentSheet) return
@@ -960,15 +972,20 @@ export function ExcelRefinerView() {
                           // 상품명 칼럼에만 매칭 상태 색상 적용
                           let productTitle: string | undefined
                           let isUnmatchedProduct = false
-                          if (colIndex === productNameColumnIndex) {
+                          let matchedProductId: string | null = null
+                          if (colIndex === productNameColumnIndex && productMatchResult) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
                               tdClassName += ` excel-refiner__td--product-${productStatus}`
                               // 호버 시 설명 툴팁
                               if (productStatus === 'original') {
-                                productTitle = '✓ 정확 매칭: DB 상품명과 정확히 일치'
+                                productTitle = '✓ 정확 매칭: 클릭하여 상품 정보 보기'
+                                matchedProductId = productMatchResult.originalMatch.get(originalIndex) || null
+                                tdClassName += ' excel-refiner__td--clickable'
                               } else if (productStatus === 'modified') {
-                                productTitle = '⚠ 수정 매칭: 공백/대소문자 정규화 후 매칭됨 (자동 수정됨)'
+                                productTitle = '⚠ 수정 매칭: 클릭하여 상품 정보 보기'
+                                matchedProductId = productMatchResult.modified.get(originalIndex) || null
+                                tdClassName += ' excel-refiner__td--clickable'
                               } else if (productStatus === 'unmatched') {
                                 productTitle = '✕ 미매칭: 클릭하여 상품 검색'
                                 isUnmatchedProduct = true
@@ -979,15 +996,25 @@ export function ExcelRefinerView() {
 
                           const cellValue = cellToString(row[colIndex] as CellValue)
 
+                          // 클릭 핸들러 결정
+                          const handleCellClick = matchedProductId
+                            ? (e: React.MouseEvent) => {
+                                e.stopPropagation()
+                                handleMatchedProductClick(matchedProductId!)
+                              }
+                            : isUnmatchedProduct
+                            ? (e: React.MouseEvent) => {
+                                e.stopPropagation()
+                                handleUnmatchedProductClick(originalIndex, cellValue)
+                              }
+                            : undefined
+
                           return (
                             <td
                               key={colIndex}
                               className={tdClassName}
                               title={productTitle}
-                              onClick={isUnmatchedProduct ? (e) => {
-                                e.stopPropagation()
-                                handleUnmatchedProductClick(originalIndex, cellValue)
-                              } : undefined}
+                              onClick={handleCellClick}
                             >
                               {cellValue}
                             </td>
@@ -1022,6 +1049,34 @@ export function ExcelRefinerView() {
         initialKeyword={productSearchKeyword}
         onSelect={handleProductSelect}
       />
+
+      {/* MongoDB Document 뷰어 모달 */}
+      {viewingProduct && (
+        <div className="doc-viewer-overlay" onClick={() => setViewingProduct(null)}>
+          <div className="doc-viewer-modal" onClick={e => e.stopPropagation()}>
+            <div className="doc-viewer-header">
+              <h3>MongoDB Document</h3>
+              <button type="button" className="doc-viewer-close" onClick={() => setViewingProduct(null)}>
+                ✕
+              </button>
+            </div>
+            <pre className="doc-viewer-content">
+              {JSON.stringify({
+                _id: viewingProduct._id ? `ObjectId('${viewingProduct._id}')` : undefined,
+                category: viewingProduct.category,
+                productName: viewingProduct.productName,
+                saleStartDate: viewingProduct.saleStartDate,
+                saleEndDate: viewingProduct.saleEndDate,
+                status: viewingProduct.status,
+                surveyDate: viewingProduct.surveyDate,
+                createdAt: viewingProduct.createdAt,
+                updatedAt: viewingProduct.updatedAt
+              }, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

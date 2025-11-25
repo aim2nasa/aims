@@ -261,7 +261,17 @@ export function getRowStatus(
 /**
  * 보험상품 목록 가져오기
  */
-export async function fetchInsuranceProducts(): Promise<Array<{ _id: string; productName: string }>> {
+export async function fetchInsuranceProducts(): Promise<Array<{
+  _id: string
+  productName: string
+  category?: string
+  saleStartDate?: string
+  saleEndDate?: string
+  status?: string
+  surveyDate?: string
+  createdAt?: string
+  updatedAt?: string
+}>> {
   try {
     const response = await fetch(INSURANCE_PRODUCTS_API)
     const data = await response.json()
@@ -294,8 +304,12 @@ export async function validateProductNames(
   // 정규화된 상품명 → 원본 상품명 맵 (매칭용)
   const normalizedToOriginal = new Map<string, string>()
 
+  // ObjectId → 전체 상품 정보 맵
+  const allProducts = new Map<string, typeof insuranceProducts[0]>()
+
   insuranceProducts.forEach(product => {
     productNameMap.set(product.productName, product._id)
+    allProducts.set(product._id, product)
     // 정규화: 공백 제거, 소문자 변환
     const normalized = product.productName.replace(/\s+/g, '').toLowerCase()
     normalizedToOriginal.set(normalized, product.productName)
@@ -338,6 +352,7 @@ export async function validateProductNames(
     originalMatch,
     modified,
     unmatched,
-    productNames: productNameMap
+    productNames: productNameMap,
+    allProducts
   }
 }
