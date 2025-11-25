@@ -58,6 +58,7 @@
   --font-family-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-family-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
+  --font-size-2xs: 0.625rem;  /* 10px */
   --font-size-xs: 0.75rem;    /* 12px */
   --font-size-sm: 0.875rem;   /* 14px */
   --font-size-base: 1rem;     /* 16px */
@@ -76,6 +77,7 @@
 
   /* === SPACING === */
   --spacing-0: 0;
+  --spacing-px: 1px;      /* 1px */
   --spacing-1: 0.25rem;   /* 4px */
   --spacing-2: 0.5rem;    /* 8px */
   --spacing-3: 0.75rem;   /* 12px */

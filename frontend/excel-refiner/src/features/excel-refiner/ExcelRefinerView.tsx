@@ -534,6 +534,8 @@ export function ExcelRefinerView() {
                         >
                           <div className="excel-refiner__th-content">
                             <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
+                            {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
+                            {!isInProgress && renderColumnBadge(index, col)}
                             <button
                               type="button"
                               className="excel-refiner__sort-btn"
@@ -543,8 +545,6 @@ export function ExcelRefinerView() {
                               {isSorted ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
                             </button>
                           </div>
-                          {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
-                          {!isInProgress && renderColumnBadge(index, col)}
                         </th>
                       )
                     })}
