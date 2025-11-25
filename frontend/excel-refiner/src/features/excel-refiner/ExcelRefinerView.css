@@ -311,12 +311,36 @@
 }
 
 .excel-refiner__action-log {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
   font-size: var(--font-size-sm);
   color: var(--color-success-600);
   padding: var(--spacing-1) var(--spacing-3);
   background: var(--color-success-50);
   border-radius: var(--radius-md);
   animation: fadeIn var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__action-log-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-success-600);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__action-log-clear:hover {
+  opacity: 1;
+  background: var(--color-success-100);
 }
 
 @keyframes fadeIn {
