@@ -155,19 +155,17 @@ export function ProductSearchModal({
           )}
         </div>
 
-        {/* 일괄 적용 체크박스 (검색 결과 1개일 때만 표시) */}
-        {filteredProducts.length === 1 && (
-          <div className="product-search-modal__apply-all">
-            <label className="product-search-modal__checkbox-label">
-              <input
-                type="checkbox"
-                checked={applyToAll}
-                onChange={e => setApplyToAll(e.target.checked)}
-              />
-              <span>동일한 상품명 모두 변경</span>
-            </label>
-          </div>
-        )}
+        {/* 일괄 적용 체크박스 (검색 결과 1개일 때 자동 체크) */}
+        <div className="product-search-modal__apply-all">
+          <label className="product-search-modal__checkbox-label">
+            <input
+              type="checkbox"
+              checked={applyToAll}
+              onChange={e => setApplyToAll(e.target.checked)}
+            />
+            <span>동일한 상품명 모두 변경</span>
+          </label>
+        </div>
 
         <div className="product-search-modal__footer">
           <Button variant="ghost" size="sm" onClick={onClose}>
