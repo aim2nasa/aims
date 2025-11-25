@@ -125,8 +125,8 @@
 .upload-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
-  padding: var(--spacing-4);
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-primary);
@@ -169,7 +169,7 @@
 .upload-zones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3);
 }
 
 .upload-zone-wrapper {
@@ -200,7 +200,7 @@
 
 .dropzone--small {
   flex: none;
-  height: 120px;
+  height: 64px;
 }
 
 .dropzone--small .dropzone__text {
@@ -211,11 +211,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-3);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-md);
-  height: 120px;
+  height: 64px;
   box-sizing: border-box;
 }
 
@@ -464,6 +464,7 @@
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
 }
 
 .category--protection {
@@ -502,6 +503,7 @@
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
 }
 
 .status--active {
