@@ -6,8 +6,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
-import { validateColumn, getValidationType, getRowStatus, getProblematicRows } from './hooks/useValidation'
-import type { SheetData, CellValue, ValidationResult } from './types/excel'
+import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from './hooks/useValidation'
+import type { SheetData, CellValue, ValidationResult, ProductMatchResult } from './types/excel'
 import './ExcelRefinerView.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
@@ -40,6 +40,10 @@ export function ExcelRefinerView() {
   const [sortColumn, setSortColumn] = useState<number | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
+  // 상품명 검증 결과 (행 인덱스 → ObjectId 매칭)
+  const [productMatchResult, setProductMatchResult] = useState<ProductMatchResult | null>(null)
+  const [productNameColumnIndex, setProductNameColumnIndex] = useState<number | null>(null)
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -59,14 +63,18 @@ export function ExcelRefinerView() {
     return results
   }, [currentSheet?.data, currentSheet?.columns, validatingColumns])
 
-  // 전체 문제 행 인덱스 (모든 검증 컬럼 결합)
+  // 전체 문제 행 인덱스 (모든 검증 컬럼 결합 + 상품명 미매칭)
   const problematicRows = useMemo(() => {
     const allRows: number[] = []
     columnValidationResults.forEach(result => {
       allRows.push(...getProblematicRows(result))
     })
+    // 상품명 미매칭 행 추가
+    if (productMatchResult) {
+      allRows.push(...productMatchResult.unmatched)
+    }
     return [...new Set(allRows)].sort((a, b) => a - b)
-  }, [columnValidationResults])
+  }, [columnValidationResults, productMatchResult])
 
   // 정렬된 데이터 (컬럼 정렬 → 문제 행 우선)
   const sortedDataWithIndices = useMemo(() => {
@@ -182,7 +190,7 @@ export function ExcelRefinerView() {
   }, [sortColumn])
 
   // 컬럼 헤더 클릭 - 검증 활성화 (해제는 별도 버튼으로)
-  const handleColumnClick = useCallback((colIndex: number, columnName: string) => {
+  const handleColumnClick = useCallback(async (colIndex: number, columnName: string) => {
     // 검증 로직이 정의된 컬럼만 클릭 가능
     const type = getValidationType(columnName)
     if (type === 'default') return
@@ -197,7 +205,62 @@ export function ExcelRefinerView() {
       return next
     })
 
-    // 약간의 지연 후 실제 검증 시작 (UI 업데이트를 위한 시간 확보)
+    // 상품명 검증은 비동기로 처리
+    if (type === 'productName' && currentSheet) {
+      try {
+        const result = await validateProductNames(currentSheet.data, colIndex)
+        setProductMatchResult(result)
+        setProductNameColumnIndex(colIndex)
+
+        // 수정된 상품명만 보험상품 관리의 상품명으로 대체 (originalMatch는 이미 정확함)
+        if (result.modified.size > 0) {
+          // 역방향 맵: ObjectId → 상품명
+          const idToName = new Map<string, string>()
+          result.productNames.forEach((id, name) => {
+            idToName.set(id, name)
+          })
+
+          setSheets(prev => {
+            const updated = [...prev]
+            const newData = [...updated[activeSheetIndex].data]
+
+            // modified된 상품명만 정확한 상품명으로 대체
+            result.modified.forEach((objectId, rowIndex) => {
+              const originalProductName = idToName.get(objectId)
+              if (originalProductName && newData[rowIndex]) {
+                newData[rowIndex] = [...newData[rowIndex]]
+                newData[rowIndex][colIndex] = originalProductName
+              }
+            })
+
+            updated[activeSheetIndex] = {
+              ...updated[activeSheetIndex],
+              data: newData
+            }
+            return updated
+          })
+        }
+
+        // 검증 컬럼에 추가
+        setValidatingColumns(prev => {
+          const next = new Set(prev)
+          next.add(colIndex)
+          return next
+        })
+      } catch (error) {
+        console.error('상품명 검증 오류:', error)
+        alert('상품명 검증 중 오류가 발생했습니다.')
+      } finally {
+        setValidatingInProgress(prev => {
+          const next = new Set(prev)
+          next.delete(colIndex)
+          return next
+        })
+      }
+      return
+    }
+
+    // 일반 검증 (동기)
     setTimeout(() => {
       setValidatingColumns(prev => {
         const next = new Set(prev)
@@ -211,11 +274,13 @@ export function ExcelRefinerView() {
         return next
       })
     }, 100)
-  }, [validatingColumns])
+  }, [validatingColumns, currentSheet, activeSheetIndex])
 
   // 검증 초기화
   const handleClearValidation = useCallback(() => {
     setValidatingColumns(new Set())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
   }, [])
 
   // 마지막 클릭한 행 (정렬된 뷰 기준)
@@ -305,10 +370,24 @@ export function ExcelRefinerView() {
 
   // 컬럼 검증 배지 렌더링
   const renderColumnBadge = (colIndex: number, columnName: string) => {
+    const type = getValidationType(columnName)
+
+    // 상품명 검증 결과 표시
+    if (type === 'productName' && productMatchResult && productNameColumnIndex === colIndex) {
+      const originalCount = productMatchResult.originalMatch.size
+      const modifiedCount = productMatchResult.modified.size
+      const unmatchedCount = productMatchResult.unmatched.length
+
+      if (unmatchedCount === 0) {
+        return <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓ {originalCount + modifiedCount}</span>
+      } else {
+        return <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{unmatchedCount} 미매칭</span>
+      }
+    }
+
     const result = columnValidationResults.get(colIndex)
     if (!result) return null
 
-    const type = getValidationType(columnName)
     const issueCount = result.empties.length + result.duplicates.length
 
     if (result.valid && result.duplicates.length === 0) {
@@ -321,7 +400,17 @@ export function ExcelRefinerView() {
     }
   }
 
-  // 행 상태 계산
+  // 상품명 셀 상태 계산 (상품명 칼럼에만 적용)
+  const getProductCellStatus = (rowIndex: number): 'original' | 'modified' | 'unmatched' | null => {
+    if (!productMatchResult || productNameColumnIndex === null) return null
+
+    if (productMatchResult.originalMatch.has(rowIndex)) return 'original'
+    if (productMatchResult.modified.has(rowIndex)) return 'modified'
+    if (productMatchResult.unmatched.includes(rowIndex)) return 'unmatched'
+    return null
+  }
+
+  // 행 상태 계산 (상품명 미매칭은 셀 레벨에서만 적용, 행 레벨 제외)
   const getRowValidationStatus = (rowIndex: number): 'normal' | 'empty' | 'duplicate' => {
     for (const [, result] of columnValidationResults) {
       const status = getRowStatus(rowIndex, result)
@@ -446,6 +535,28 @@ export function ExcelRefinerView() {
                   )}
                 </div>
               )}
+
+              {/* 상품명 검증 색상 범례 */}
+              {productMatchResult && (
+                <div className="excel-refiner__validation-legend">
+                  <span
+                    className="excel-refiner__legend-label"
+                    title="수작업으로 입력하여 틀릴 수 있는 상품명을 보험상품 DB에 등록된 정확한 이름과 비교 검증합니다."
+                  >상품명 검증:</span>
+                  <span
+                    className="excel-refiner__legend-item excel-refiner__legend-item--original"
+                    title="보험상품 DB에 등록된 상품명과 정확히 일치합니다. 수정이 필요 없습니다."
+                  >정확 매칭 ({productMatchResult.originalMatch.size})</span>
+                  <span
+                    className="excel-refiner__legend-item excel-refiner__legend-item--modified"
+                    title="공백이나 대소문자 차이가 있었지만 DB 상품명으로 자동 수정되었습니다."
+                  >수정 매칭 ({productMatchResult.modified.size})</span>
+                  <span
+                    className="excel-refiner__legend-item excel-refiner__legend-item--unmatched"
+                    title="보험상품 DB에서 찾을 수 없는 상품명입니다. 상품명을 확인해주세요."
+                  >미매칭 ({productMatchResult.unmatched.length})</span>
+                </div>
+              )}
             </div>
 
             {/* 액션 바 */}
@@ -538,7 +649,7 @@ export function ExcelRefinerView() {
                           key={index}
                           className={thClassName}
                           onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
-                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : '계약일'} 검증)` : '클릭하여 정렬'}
+                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : type === 'productName' ? '상품명' : '계약일'} 검증)` : '클릭하여 정렬'}
                         >
                           <div className="excel-refiner__th-content">
                             <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
@@ -581,8 +692,26 @@ export function ExcelRefinerView() {
                           if (validatingColumns.has(colIndex)) {
                             tdClassName += ' excel-refiner__td--validation'
                           }
+
+                          // 상품명 칼럼에만 매칭 상태 색상 적용
+                          let productTitle: string | undefined
+                          if (colIndex === productNameColumnIndex) {
+                            const productStatus = getProductCellStatus(originalIndex)
+                            if (productStatus) {
+                              tdClassName += ` excel-refiner__td--product-${productStatus}`
+                              // 호버 시 설명 툴팁
+                              if (productStatus === 'original') {
+                                productTitle = '✓ 정확 매칭: DB 상품명과 정확히 일치'
+                              } else if (productStatus === 'modified') {
+                                productTitle = '⚠ 수정 매칭: 공백/대소문자 정규화 후 매칭됨 (자동 수정됨)'
+                              } else if (productStatus === 'unmatched') {
+                                productTitle = '✕ 미매칭: DB에서 찾을 수 없는 상품명'
+                              }
+                            }
+                          }
+
                           return (
-                            <td key={colIndex} className={tdClassName}>
+                            <td key={colIndex} className={tdClassName} title={productTitle}>
                               {cellToString(row[colIndex] as CellValue)}
                             </td>
                           )

@@ -4,8 +4,11 @@
  */
 
 import { useMemo } from 'react'
-import type { CellValue, ValidationResult } from '../types/excel'
+import type { CellValue, ValidationResult, ProductMatchResult } from '../types/excel'
 import { cellToString } from '../utils/excel'
+
+// 보험상품 API URL (Vite 프록시를 통해 tars.giize.com:3010으로 전달)
+const INSURANCE_PRODUCTS_API = '/api/insurance-products'
 
 /**
  * 증권번호 검증 함수
@@ -171,7 +174,7 @@ export function validateCustomerName(
 /**
  * 컬럼명에 따른 검증 타입 결정
  */
-export type ValidationType = 'policyNumber' | 'customerName' | 'contractDate' | 'default'
+export type ValidationType = 'policyNumber' | 'customerName' | 'contractDate' | 'productName' | 'default'
 
 export function getValidationType(columnName: string): ValidationType {
   const name = columnName.toLowerCase()
@@ -183,6 +186,9 @@ export function getValidationType(columnName: string): ValidationType {
   }
   if (name.includes('계약일')) {
     return 'contractDate'
+  }
+  if (name.includes('상품명') || name.includes('상품') || name.includes('보험명')) {
+    return 'productName'
   }
   return 'default'
 }
@@ -250,4 +256,88 @@ export function getRowStatus(
   if (result.empties.includes(rowIndex)) return 'empty'
   if (result.duplicates.includes(rowIndex)) return 'duplicate'
   return 'normal'
+}
+
+/**
+ * 보험상품 목록 가져오기
+ */
+export async function fetchInsuranceProducts(): Promise<Array<{ _id: string; productName: string }>> {
+  try {
+    const response = await fetch(INSURANCE_PRODUCTS_API)
+    const data = await response.json()
+    if (data.success && data.data) {
+      return data.data
+    }
+    return []
+  } catch (error) {
+    console.error('보험상품 조회 오류:', error)
+    return []
+  }
+}
+
+/**
+ * 상품명 검증 함수 (비동기)
+ * - 보험상품 DB에서 상품명 조회
+ * - originalMatch: 정확히 일치하는 상품명 (수정 불필요)
+ * - modified: 공백/대소문자 등 정규화 후 매칭된 상품명
+ * - unmatched: 매칭 안 됨
+ */
+export async function validateProductNames(
+  data: CellValue[][],
+  columnIndex: number
+): Promise<ProductMatchResult> {
+  // 보험상품 목록 가져오기
+  const insuranceProducts = await fetchInsuranceProducts()
+
+  // 상품명 → ObjectId 맵 생성 (원본)
+  const productNameMap = new Map<string, string>()
+  // 정규화된 상품명 → 원본 상품명 맵 (매칭용)
+  const normalizedToOriginal = new Map<string, string>()
+
+  insuranceProducts.forEach(product => {
+    productNameMap.set(product.productName, product._id)
+    // 정규화: 공백 제거, 소문자 변환
+    const normalized = product.productName.replace(/\s+/g, '').toLowerCase()
+    normalizedToOriginal.set(normalized, product.productName)
+  })
+
+  // 매칭 결과
+  const originalMatch = new Map<number, string>()  // 원래부터 정확히 매칭
+  const modified = new Map<number, string>()        // 수정되어 매칭됨
+  const unmatched: number[] = []
+
+  data.forEach((row, index) => {
+    const rawValue = cellToString(row[columnIndex])
+    const value = rawValue.trim()
+
+    // 빈값 체크
+    if (!value || value.toLowerCase() === 'nan') {
+      unmatched.push(index)
+      return
+    }
+
+    // 1. 정확히 매칭되는지 확인 (원본 그대로)
+    if (productNameMap.has(value)) {
+      originalMatch.set(index, productNameMap.get(value)!)
+      return
+    }
+
+    // 2. 정규화 후 매칭 시도
+    const normalizedValue = value.replace(/\s+/g, '').toLowerCase()
+    if (normalizedToOriginal.has(normalizedValue)) {
+      const originalProductName = normalizedToOriginal.get(normalizedValue)!
+      modified.set(index, productNameMap.get(originalProductName)!)
+      return
+    }
+
+    // 3. 매칭 실패
+    unmatched.push(index)
+  })
+
+  return {
+    originalMatch,
+    modified,
+    unmatched,
+    productNames: productNameMap
+  }
 }

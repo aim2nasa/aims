@@ -234,6 +234,43 @@
   color: var(--color-text-secondary);
 }
 
+.excel-refiner__validation-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-left: auto;
+}
+
+.excel-refiner__legend-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.excel-refiner__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+}
+
+.excel-refiner__legend-item--original {
+  background: var(--color-success-50);
+  color: var(--color-success-600);
+}
+
+.excel-refiner__legend-item--modified {
+  background: var(--color-warning-50);
+  color: var(--color-warning-600);
+}
+
+.excel-refiner__legend-item--unmatched {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+}
+
 /* === ACTIONS === */
 
 .excel-refiner__actions {
@@ -442,6 +479,29 @@
   background: var(--color-row-duplicate-hover);
 }
 
+/* === 상품명 셀 상태 (상품명 칼럼에만 적용) === */
+
+/* 원래부터 정확히 매칭된 상품명 - 초록색 */
+.excel-refiner__td--product-original {
+  background: var(--color-success-50);
+  color: var(--color-success-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 수정되어 매칭된 상품명 - 노란색/주황색 */
+.excel-refiner__td--product-modified {
+  background: var(--color-warning-50);
+  color: var(--color-warning-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 매칭 안 된 상품명 - 빨간색 */
+.excel-refiner__td--product-unmatched {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+  font-weight: var(--font-weight-medium);
+}
+
 /* 선택 상태는 항상 최우선 (status 색상보다 우선) */
 .excel-refiner__tr--selected,
 .excel-refiner__tr--selected.excel-refiner__tr--empty,
@@ -455,6 +515,19 @@
 .excel-refiner__tr--selected.excel-refiner__tr--empty:hover,
 .excel-refiner__tr--selected.excel-refiner__tr--duplicate:hover {
   background: var(--color-selection-bg-hover);
+}
+
+/* 선택된 행에서도 상품명 셀 색상은 유지 (조금 더 진하게) */
+.excel-refiner__tr--selected .excel-refiner__td--product-original {
+  background: var(--color-product-original-selected);
+}
+
+.excel-refiner__tr--selected .excel-refiner__td--product-modified {
+  background: var(--color-product-modified-selected);
+}
+
+.excel-refiner__tr--selected .excel-refiner__td--product-unmatched {
+  background: var(--color-product-unmatched-selected);
 }
 
 .excel-refiner__td--validation {

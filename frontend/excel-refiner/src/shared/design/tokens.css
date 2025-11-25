@@ -50,6 +50,11 @@
   --color-row-duplicate: rgba(239, 68, 68, 0.25);
   --color-row-duplicate-hover: rgba(239, 68, 68, 0.35);
 
+  /* === PRODUCT STATUS SELECTED COLORS (선택된 행의 상품명 셀) === */
+  --color-product-original-selected: rgba(34, 197, 94, 0.25);
+  --color-product-modified-selected: rgba(245, 158, 11, 0.25);
+  --color-product-unmatched-selected: rgba(239, 68, 68, 0.25);
+
   /* === SIZES === */
   --size-row-num-width: 60px;
   --size-badge-padding: 2px;
