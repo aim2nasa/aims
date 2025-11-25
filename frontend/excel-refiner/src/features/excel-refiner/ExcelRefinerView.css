@@ -524,6 +524,18 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* 클릭 가능한 셀 (미매칭 상품명) */
+.excel-refiner__td--clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.excel-refiner__td--clickable:hover {
+  background: var(--color-error-100);
+}
+
 /* 선택 상태는 항상 최우선 (status 색상보다 우선) */
 .excel-refiner__tr--selected,
 .excel-refiner__tr--selected.excel-refiner__tr--empty,

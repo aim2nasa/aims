@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
 import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from './hooks/useValidation'
 import type { SheetData, CellValue, ValidationResult, ProductMatchResult } from './types/excel'
+import { ProductSearchModal } from './components/ProductSearchModal'
 import './ExcelRefinerView.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
@@ -52,6 +53,11 @@ export function ExcelRefinerView() {
 
   // 개발자 모드 (Ctrl+Shift+D로 토글 - aims-uix3와 동일)
   const [isDevMode, setIsDevMode] = useState(false)
+
+  // 상품 검색 모달 상태
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
+  const [productSearchKeyword, setProductSearchKeyword] = useState('')
+  const [productSearchRowIndex, setProductSearchRowIndex] = useState<number | null>(null)
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
@@ -430,6 +436,48 @@ export function ExcelRefinerView() {
     const refinedFileName = getRefinedFileName(fileName)
     exportExcel(sheets, refinedFileName)
   }, [sheets, fileName])
+
+  // 미매칭 상품명 클릭 - 검색 모달 열기
+  const handleUnmatchedProductClick = useCallback((rowIndex: number, currentProductName: string) => {
+    setProductSearchKeyword(currentProductName)
+    setProductSearchRowIndex(rowIndex)
+    setIsProductSearchOpen(true)
+  }, [])
+
+  // 상품 선택 시 데이터 업데이트
+  const handleProductSelect = useCallback((productName: string, productId: string) => {
+    if (productSearchRowIndex === null || productNameColumnIndex === null) return
+
+    // 데이터 업데이트
+    setSheets(prev => {
+      const updated = [...prev]
+      const newData = [...updated[activeSheetIndex].data]
+      newData[productSearchRowIndex] = [...newData[productSearchRowIndex]]
+      newData[productSearchRowIndex][productNameColumnIndex] = productName
+      updated[activeSheetIndex] = {
+        ...updated[activeSheetIndex],
+        data: newData
+      }
+      return updated
+    })
+
+    // productMatchResult 업데이트: unmatched에서 제거하고 modified로 이동
+    setProductMatchResult(prev => {
+      if (!prev) return prev
+      const newUnmatched = prev.unmatched.filter(idx => idx !== productSearchRowIndex)
+      const newModified = new Map(prev.modified)
+      newModified.set(productSearchRowIndex, productId)
+      return {
+        ...prev,
+        unmatched: newUnmatched,
+        modified: newModified
+      }
+    })
+
+    // 모달 닫기
+    setIsProductSearchOpen(false)
+    setProductSearchRowIndex(null)
+  }, [productSearchRowIndex, productNameColumnIndex, activeSheetIndex])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
@@ -820,6 +868,7 @@ export function ExcelRefinerView() {
 
                           // 상품명 칼럼에만 매칭 상태 색상 적용
                           let productTitle: string | undefined
+                          let isUnmatchedProduct = false
                           if (colIndex === productNameColumnIndex) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
@@ -830,14 +879,26 @@ export function ExcelRefinerView() {
                               } else if (productStatus === 'modified') {
                                 productTitle = '⚠ 수정 매칭: 공백/대소문자 정규화 후 매칭됨 (자동 수정됨)'
                               } else if (productStatus === 'unmatched') {
-                                productTitle = '✕ 미매칭: DB에서 찾을 수 없는 상품명'
+                                productTitle = '✕ 미매칭: 클릭하여 상품 검색'
+                                isUnmatchedProduct = true
+                                tdClassName += ' excel-refiner__td--clickable'
                               }
                             }
                           }
 
+                          const cellValue = cellToString(row[colIndex] as CellValue)
+
                           return (
-                            <td key={colIndex} className={tdClassName} title={productTitle}>
-                              {cellToString(row[colIndex] as CellValue)}
+                            <td
+                              key={colIndex}
+                              className={tdClassName}
+                              title={productTitle}
+                              onClick={isUnmatchedProduct ? (e) => {
+                                e.stopPropagation()
+                                handleUnmatchedProductClick(originalIndex, cellValue)
+                              } : undefined}
+                            >
+                              {cellValue}
                             </td>
                           )
                         })}
@@ -859,6 +920,17 @@ export function ExcelRefinerView() {
             : '파일을 드래그하여 시작하세요'}
         </span>
       </footer>
+
+      {/* 상품 검색 모달 */}
+      <ProductSearchModal
+        isOpen={isProductSearchOpen}
+        onClose={() => {
+          setIsProductSearchOpen(false)
+          setProductSearchRowIndex(null)
+        }}
+        initialKeyword={productSearchKeyword}
+        onSelect={handleProductSelect}
+      />
     </div>
   )
 }
