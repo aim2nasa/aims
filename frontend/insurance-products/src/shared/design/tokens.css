@@ -58,6 +58,14 @@
   --color-category-endowment: rgba(236, 72, 153, 0.15);
   --color-category-savings: rgba(6, 182, 212, 0.15);
 
+  /* === CATEGORY TEXT COLORS === */
+  --color-category-variable-text: #7c3aed;
+  --color-category-endowment-text: #db2777;
+  --color-category-savings-text: #0891b2;
+
+  /* === OVERLAY COLORS === */
+  --color-overlay-backdrop: rgba(0, 0, 0, 0.3);
+
   /* === TYPOGRAPHY === */
   --font-family-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-family-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;

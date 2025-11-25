@@ -473,7 +473,7 @@
 
 .category--variable {
   background: var(--color-category-variable);
-  color: #7c3aed;
+  color: var(--color-category-variable-text);
 }
 
 .category--pension {
@@ -488,12 +488,12 @@
 
 .category--endowment {
   background: var(--color-category-endowment);
-  color: #db2777;
+  color: var(--color-category-endowment-text);
 }
 
 .category--savings {
   background: var(--color-category-savings);
-  color: #0891b2;
+  color: var(--color-category-savings-text);
 }
 
 .status-badge {
@@ -553,7 +553,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-overlay-backdrop);
   z-index: 1000;
 }
 
@@ -578,22 +578,10 @@
   color: var(--color-primary-400);
 }
 
-[data-theme="dark"] .category--variable {
-  color: #a78bfa;
-}
-
 [data-theme="dark"] .category--pension {
   color: var(--color-success-400);
 }
 
 [data-theme="dark"] .category--corporate {
   color: var(--color-warning-400);
-}
-
-[data-theme="dark"] .category--endowment {
-  color: #f472b6;
-}
-
-[data-theme="dark"] .category--savings {
-  color: #22d3ee;
 }

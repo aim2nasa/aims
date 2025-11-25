@@ -132,6 +132,11 @@
   --color-status-active-text: #4ade80;
   --color-status-discontinued: rgba(239, 68, 68, 0.25);
   --color-status-discontinued-text: #f87171;
+
+  /* Category Text Colors - Dark */
+  --color-category-variable-text: #a78bfa;
+  --color-category-endowment-text: #f472b6;
+  --color-category-savings-text: #22d3ee;
 }
 
 /* === THEME TRANSITIONS === */
