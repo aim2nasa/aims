@@ -429,13 +429,59 @@ export function ExcelRefinerView() {
       return updated
     })
 
+    // productMatchResult 업데이트: 삭제된 행 제거 및 인덱스 재계산
+    if (productMatchResult) {
+      setProductMatchResult(prev => {
+        if (!prev) return prev
+
+        // 인덱스 재매핑 함수: 삭제된 행보다 큰 인덱스는 삭제된 개수만큼 감소
+        const remapIndex = (oldIndex: number): number => {
+          let newIndex = oldIndex
+          for (const deletedIdx of selectedIndices) {
+            if (deletedIdx < oldIndex) {
+              newIndex--
+            }
+          }
+          return newIndex
+        }
+
+        // originalMatch 재계산
+        const newOriginalMatch = new Map<number, string>()
+        prev.originalMatch.forEach((objectId, rowIndex) => {
+          if (!selectedRows.has(rowIndex)) {
+            newOriginalMatch.set(remapIndex(rowIndex), objectId)
+          }
+        })
+
+        // modified 재계산
+        const newModified = new Map<number, string>()
+        prev.modified.forEach((objectId, rowIndex) => {
+          if (!selectedRows.has(rowIndex)) {
+            newModified.set(remapIndex(rowIndex), objectId)
+          }
+        })
+
+        // unmatched 재계산
+        const newUnmatched = prev.unmatched
+          .filter(rowIndex => !selectedRows.has(rowIndex))
+          .map(rowIndex => remapIndex(rowIndex))
+
+        return {
+          ...prev,
+          originalMatch: newOriginalMatch,
+          modified: newModified,
+          unmatched: newUnmatched
+        }
+      })
+    }
+
     // 삭제 후 상태 초기화
     setSelectedRows(new Set())
     setIsDeleteMode(false)
 
     // 액션 로그 표시
     setActionLog(`✓ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
-  }, [selectedRows, currentSheet, activeSheetIndex])
+  }, [selectedRows, currentSheet, activeSheetIndex, productMatchResult])
 
   // 정제된 파일 저장
   const handleSaveRefined = useCallback(() => {
