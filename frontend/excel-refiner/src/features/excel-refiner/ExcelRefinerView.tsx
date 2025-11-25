@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
 import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from './hooks/useValidation'
 import type { SheetData, CellValue, ValidationResult, ProductMatchResult, InsuranceProduct } from './types/excel'
+import { ProductSearchModal } from './components/ProductSearchModal'
 import './ExcelRefinerView.css'
 
 // 우측 정렬이 필요한 컬럼명 패턴
@@ -58,6 +59,11 @@ export function ExcelRefinerView() {
 
   // 상품 정보 뷰어 모달 상태
   const [viewingProduct, setViewingProduct] = useState<InsuranceProduct | null>(null)
+
+  // 상품 검색 모달 상태
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
+  const [productSearchKeyword, setProductSearchKeyword] = useState('')
+  const [productSearchRowIndex, setProductSearchRowIndex] = useState<number | null>(null)
 
   // 셀 편집 상태
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; colIndex: number; value: string } | null>(null)
@@ -513,6 +519,66 @@ export function ExcelRefinerView() {
     }
   }, [productMatchResult])
 
+  // 미매칭 상품명 더블클릭 - 검색 모달 열기
+  const handleUnmatchedProductClick = useCallback((rowIndex: number, currentProductName: string) => {
+    setProductSearchKeyword(currentProductName)
+    setProductSearchRowIndex(rowIndex)
+    setIsProductSearchOpen(true)
+  }, [])
+
+  // 상품 선택 시 데이터 업데이트
+  const handleProductSelect = useCallback((productName: string, productId: string, applyToAll: boolean) => {
+    if (productSearchRowIndex === null || productNameColumnIndex === null || !currentSheet) return
+
+    // 클릭한 셀의 원래 상품명 가져오기
+    const originalProductName = cellToString(currentSheet.data[productSearchRowIndex][productNameColumnIndex] as CellValue)
+
+    // applyToAll이 true면 동일한 상품명을 가진 모든 행 찾기
+    const rowsToUpdate: number[] = applyToAll
+      ? currentSheet.data
+          .map((row, idx) => ({ idx, value: cellToString(row[productNameColumnIndex] as CellValue) }))
+          .filter(item => item.value === originalProductName)
+          .map(item => item.idx)
+      : [productSearchRowIndex]
+
+    // 데이터 업데이트
+    setSheets(prev => {
+      const updated = [...prev]
+      const newData = [...updated[activeSheetIndex].data]
+      rowsToUpdate.forEach(rowIdx => {
+        newData[rowIdx] = [...newData[rowIdx]]
+        newData[rowIdx][productNameColumnIndex] = productName
+      })
+      updated[activeSheetIndex] = {
+        ...updated[activeSheetIndex],
+        data: newData
+      }
+      return updated
+    })
+
+    // productMatchResult 업데이트: unmatched에서 제거하고 modified로 이동
+    setProductMatchResult(prev => {
+      if (!prev) return prev
+      const newUnmatched = prev.unmatched.filter(idx => !rowsToUpdate.includes(idx))
+      const newModified = new Map(prev.modified)
+      rowsToUpdate.forEach(rowIdx => {
+        newModified.set(rowIdx, productId)
+      })
+      return {
+        ...prev,
+        unmatched: newUnmatched,
+        modified: newModified
+      }
+    })
+
+    // 로그 메시지 표시
+    setActionLog(`✓ "${originalProductName}" → "${productName}" (${rowsToUpdate.length}개 행)`)
+
+    // 모달 닫기
+    setIsProductSearchOpen(false)
+    setProductSearchRowIndex(null)
+  }, [productSearchRowIndex, productNameColumnIndex, activeSheetIndex, currentSheet])
+
   // 셀 더블클릭 - 편집 모드 진입 (모든 셀 편집 가능)
   const handleCellDoubleClick = useCallback((rowIndex: number, colIndex: number, value: string) => {
     setEditingCell({ rowIndex, colIndex, value })
@@ -955,6 +1021,7 @@ export function ExcelRefinerView() {
 
                           // 상품명 칼럼에만 매칭 상태 색상 적용
                           let matchedProductId: string | null = null
+                          let isUnmatchedProduct = false
                           if (colIndex === productNameColumnIndex && productMatchResult) {
                             const productStatus = getProductCellStatus(originalIndex)
                             if (productStatus) {
@@ -963,6 +1030,8 @@ export function ExcelRefinerView() {
                                 matchedProductId = productMatchResult.originalMatch.get(originalIndex) || null
                               } else if (productStatus === 'modified') {
                                 matchedProductId = productMatchResult.modified.get(originalIndex) || null
+                              } else if (productStatus === 'unmatched') {
+                                isUnmatchedProduct = true
                               }
                             }
                           }
@@ -972,16 +1041,22 @@ export function ExcelRefinerView() {
                           // 현재 셀이 편집 중인지 확인
                           const isEditing = editingCell?.rowIndex === originalIndex && editingCell?.colIndex === colIndex
 
-                          // 모든 셀 편집 가능
-                          tdClassName += ' excel-refiner__td--editable'
+                          // 미매칭 상품명 외에는 편집 가능
+                          if (!isUnmatchedProduct) {
+                            tdClassName += ' excel-refiner__td--editable'
+                          }
                           if (isEditing) {
                             tdClassName += ' excel-refiner__td--editing'
                           }
 
-                          // 더블클릭 핸들러 (모든 셀 편집 가능)
+                          // 더블클릭 핸들러: 미매칭 → 검색 모달, 그 외 → 편집
                           const handleDoubleClick = (e: React.MouseEvent) => {
                             e.stopPropagation()
-                            handleCellDoubleClick(originalIndex, colIndex, cellValue)
+                            if (isUnmatchedProduct) {
+                              handleUnmatchedProductClick(originalIndex, cellValue)
+                            } else {
+                              handleCellDoubleClick(originalIndex, colIndex, cellValue)
+                            }
                           }
 
                           // 우클릭 핸들러 (매칭된 상품명 → MongoDB Document 보기)
@@ -993,11 +1068,19 @@ export function ExcelRefinerView() {
                               }
                             : undefined
 
+                          // 툴팁 결정
+                          let cellTitle = '더블클릭하여 편집'
+                          if (isUnmatchedProduct) {
+                            cellTitle = '더블클릭: 상품 검색'
+                          } else if (matchedProductId) {
+                            cellTitle = '우클릭: 상품 정보 | 더블클릭: 편집'
+                          }
+
                           return (
                             <td
                               key={colIndex}
                               className={tdClassName}
-                              title={matchedProductId ? '우클릭: 상품 정보 보기 | 더블클릭: 편집' : '더블클릭하여 편집'}
+                              title={cellTitle}
                               onDoubleClick={handleDoubleClick}
                               onContextMenu={handleContextMenu}
                             >
@@ -1037,6 +1120,17 @@ export function ExcelRefinerView() {
             : '파일을 드래그하여 시작하세요'}
         </span>
       </footer>
+
+      {/* 상품 검색 모달 */}
+      <ProductSearchModal
+        isOpen={isProductSearchOpen}
+        onClose={() => {
+          setIsProductSearchOpen(false)
+          setProductSearchRowIndex(null)
+        }}
+        initialKeyword={productSearchKeyword}
+        onSelect={handleProductSelect}
+      />
 
       {/* MongoDB Document 뷰어 모달 */}
       {viewingProduct && (
