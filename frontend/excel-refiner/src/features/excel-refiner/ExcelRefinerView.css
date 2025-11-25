@@ -295,6 +295,41 @@
   background: var(--color-bg-secondary);
 }
 
+.excel-refiner__th--sortable {
+  cursor: default;
+}
+
+.excel-refiner__th-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.excel-refiner__th-text {
+  flex: 1;
+}
+
+.excel-refiner__sort-btn {
+  padding: var(--spacing-1);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__sort-btn:hover {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__th--sorted .excel-refiner__sort-btn {
+  opacity: 1;
+  color: var(--color-primary-600);
+}
+
 .excel-refiner__th--clickable {
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--easing-default);
@@ -304,6 +339,10 @@
 
 .excel-refiner__th--clickable:hover {
   background: var(--color-primary-400);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__th--clickable:hover .excel-refiner__sort-btn {
   color: var(--color-neutral-0);
 }
 

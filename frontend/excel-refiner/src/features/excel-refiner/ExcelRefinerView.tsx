@@ -28,6 +28,10 @@ export function ExcelRefinerView() {
   // 검증 진행 중인 컬럼 (클릭 직후 ~ 검증 완료 전)
   const [validatingInProgress, setValidatingInProgress] = useState<Set<number>>(new Set())
 
+  // 정렬 상태
+  const [sortColumn, setSortColumn] = useState<number | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -56,25 +60,53 @@ export function ExcelRefinerView() {
     return [...new Set(allRows)].sort((a, b) => a - b)
   }, [columnValidationResults])
 
-  // 정렬된 데이터 (문제 행을 맨 위로)
+  // 정렬된 데이터 (컬럼 정렬 → 문제 행 우선)
   const sortedDataWithIndices = useMemo(() => {
     if (!currentSheet?.data) return []
 
     const indexed = currentSheet.data.map((row, idx) => ({ row, originalIndex: idx }))
 
-    if (problematicRows.length === 0) {
-      return indexed
+    // 컬럼 정렬 적용
+    if (sortColumn !== null) {
+      indexed.sort((a, b) => {
+        // "#" 컬럼 (행 번호) 정렬
+        if (sortColumn === -1) {
+          return sortDirection === 'asc'
+            ? a.originalIndex - b.originalIndex
+            : b.originalIndex - a.originalIndex
+        }
+
+        const aVal = cellToString(a.row[sortColumn] as CellValue).toLowerCase()
+        const bVal = cellToString(b.row[sortColumn] as CellValue).toLowerCase()
+
+        // 숫자 비교 시도
+        const aNum = parseFloat(aVal.replace(/,/g, ''))
+        const bNum = parseFloat(bVal.replace(/,/g, ''))
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortDirection === 'asc' ? aNum - bNum : bNum - aNum
+        }
+
+        // 문자열 비교
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1
+        return 0
+      })
     }
 
-    const problematicSet = new Set(problematicRows)
-    return indexed.sort((a, b) => {
-      const aProblematic = problematicSet.has(a.originalIndex)
-      const bProblematic = problematicSet.has(b.originalIndex)
-      if (aProblematic && !bProblematic) return -1
-      if (!aProblematic && bProblematic) return 1
-      return a.originalIndex - b.originalIndex
-    })
-  }, [currentSheet?.data, problematicRows])
+    // 문제 행 우선 정렬 (검증 활성화시)
+    if (problematicRows.length > 0) {
+      const problematicSet = new Set(problematicRows)
+      indexed.sort((a, b) => {
+        const aProblematic = problematicSet.has(a.originalIndex)
+        const bProblematic = problematicSet.has(b.originalIndex)
+        if (aProblematic && !bProblematic) return -1
+        if (!aProblematic && bProblematic) return 1
+        return 0
+      })
+    }
+
+    return indexed
+  }, [currentSheet?.data, problematicRows, sortColumn, sortDirection])
 
   // 파일 처리
   const handleFile = useCallback(async (file: File) => {
@@ -125,7 +157,21 @@ export function ExcelRefinerView() {
     setActiveSheetIndex(index)
     setSelectedRows(new Set())
     setValidatingColumns(new Set())
+    setSortColumn(null)
+    setSortDirection('asc')
   }, [])
+
+  // 컬럼 정렬
+  const handleSortClick = useCallback((colIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation() // 검증 클릭과 분리
+    if (sortColumn === colIndex) {
+      // 같은 컬럼 클릭 시 방향 토글
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(colIndex)
+      setSortDirection('asc')
+    }
+  }, [sortColumn])
 
   // 컬럼 헤더 클릭 - 검증 활성화 (해제는 별도 버튼으로)
   const handleColumnClick = useCallback((colIndex: number, columnName: string) => {
@@ -441,7 +487,19 @@ export function ExcelRefinerView() {
               <table className="excel-refiner__table">
                 <thead>
                   <tr>
-                    <th className="excel-refiner__th excel-refiner__th--row-num">#</th>
+                    <th className={`excel-refiner__th excel-refiner__th--row-num ${sortColumn === -1 ? 'excel-refiner__th--sorted' : ''}`}>
+                      <div className="excel-refiner__th-content">
+                        <span className="excel-refiner__th-text">#</span>
+                        <button
+                          type="button"
+                          className="excel-refiner__sort-btn"
+                          onClick={(e) => handleSortClick(-1, e)}
+                          title={sortColumn === -1 ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}
+                        >
+                          {sortColumn === -1 ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                        </button>
+                      </div>
+                    </th>
                     {currentSheet.columns.map((col, index) => {
                       const isInProgress = validatingInProgress.has(index)
                       const isValidated = validatingColumns.has(index)
@@ -449,9 +507,10 @@ export function ExcelRefinerView() {
                       const hasIssues = result && (!result.valid || result.duplicates.length > 0)
                       const type = getValidationType(col)
                       const isValidatable = type !== 'default'
+                      const isSorted = sortColumn === index
 
-                      // 검증 가능한 컬럼만 클릭 가능 스타일 적용
-                      let thClassName = 'excel-refiner__th'
+                      // 검증 가능한 컬럼만 검증 클릭 스타일 적용
+                      let thClassName = 'excel-refiner__th excel-refiner__th--sortable'
                       if (isValidatable) {
                         thClassName += ' excel-refiner__th--clickable'
                       }
@@ -462,15 +521,28 @@ export function ExcelRefinerView() {
                           ? ' excel-refiner__th--validation-error'
                           : ' excel-refiner__th--validation-success'
                       }
+                      if (isSorted) {
+                        thClassName += ' excel-refiner__th--sorted'
+                      }
 
                       return (
                         <th
                           key={index}
                           className={thClassName}
                           onClick={isValidatable ? () => handleColumnClick(index, col) : undefined}
-                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : '고객명'} 검증)` : undefined}
+                          title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : '고객명'} 검증)` : '클릭하여 정렬'}
                         >
-                          {col || `열 ${index + 1}`}
+                          <div className="excel-refiner__th-content">
+                            <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
+                            <button
+                              type="button"
+                              className="excel-refiner__sort-btn"
+                              onClick={(e) => handleSortClick(index, e)}
+                              title={isSorted ? (sortDirection === 'asc' ? '내림차순 정렬' : '오름차순 정렬') : '오름차순 정렬'}
+                            >
+                              {isSorted ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                            </button>
+                          </div>
                           {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
                           {!isInProgress && renderColumnBadge(index, col)}
                         </th>
