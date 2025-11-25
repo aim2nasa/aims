@@ -585,8 +585,15 @@ export function ExcelRefinerView() {
                     onChange={handleFileSelect}
                     className="excel-refiner__file-input"
                   />
-                  <span>다른 파일</span>
+                  <span>엑셀열기</span>
                 </label>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveRefined}
+                >
+                  다운로드
+                </Button>
               </div>
             </div>
 
@@ -688,15 +695,6 @@ export function ExcelRefinerView() {
                     선택 해제
                   </Button>
                 )}
-              </div>
-              <div className="excel-refiner__actions-right">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveRefined}
-                >
-                  정제된 파일 저장
-                </Button>
               </div>
             </div>
 

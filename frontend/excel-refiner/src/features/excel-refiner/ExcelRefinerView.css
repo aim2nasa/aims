@@ -97,7 +97,10 @@
 
 .excel-refiner__file-label--small {
   padding: var(--spacing-1) var(--spacing-3);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  min-height: 2rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .excel-refiner__file-input {
@@ -129,6 +132,12 @@
 }
 
 .excel-refiner__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.excel-refiner__toolbar-right {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
