@@ -44,6 +44,9 @@ export function ExcelRefinerView() {
   const [productMatchResult, setProductMatchResult] = useState<ProductMatchResult | null>(null)
   const [productNameColumnIndex, setProductNameColumnIndex] = useState<number | null>(null)
 
+  // 상품명 상태 필터 (범례 클릭 시 해당 상태 행을 맨 위로)
+  const [productStatusFilter, setProductStatusFilter] = useState<'original' | 'modified' | 'unmatched' | null>(null)
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -109,8 +112,30 @@ export function ExcelRefinerView() {
       })
     }
 
-    // 문제 행 우선 정렬 (검증 활성화시)
-    if (problematicRows.length > 0) {
+    // 상품명 상태 필터 우선 정렬 (범례 클릭 시)
+    if (productStatusFilter && productMatchResult) {
+      indexed.sort((a, b) => {
+        let aMatch = false
+        let bMatch = false
+
+        if (productStatusFilter === 'original') {
+          aMatch = productMatchResult.originalMatch.has(a.originalIndex)
+          bMatch = productMatchResult.originalMatch.has(b.originalIndex)
+        } else if (productStatusFilter === 'modified') {
+          aMatch = productMatchResult.modified.has(a.originalIndex)
+          bMatch = productMatchResult.modified.has(b.originalIndex)
+        } else if (productStatusFilter === 'unmatched') {
+          aMatch = productMatchResult.unmatched.includes(a.originalIndex)
+          bMatch = productMatchResult.unmatched.includes(b.originalIndex)
+        }
+
+        if (aMatch && !bMatch) return -1
+        if (!aMatch && bMatch) return 1
+        return 0
+      })
+    }
+    // 문제 행 우선 정렬 (검증 활성화시, 상품명 필터가 없을 때만)
+    else if (problematicRows.length > 0) {
       const problematicSet = new Set(problematicRows)
       indexed.sort((a, b) => {
         const aProblematic = problematicSet.has(a.originalIndex)
@@ -122,7 +147,7 @@ export function ExcelRefinerView() {
     }
 
     return indexed
-  }, [currentSheet?.data, problematicRows, sortColumn, sortDirection])
+  }, [currentSheet?.data, problematicRows, sortColumn, sortDirection, productStatusFilter, productMatchResult])
 
   // 파일 처리
   const handleFile = useCallback(async (file: File) => {
@@ -544,16 +569,19 @@ export function ExcelRefinerView() {
                     title="수작업으로 입력하여 틀릴 수 있는 상품명을 보험상품 DB에 등록된 정확한 이름과 비교 검증합니다."
                   >상품명 검증:</span>
                   <span
-                    className="excel-refiner__legend-item excel-refiner__legend-item--original"
-                    title="보험상품 DB에 등록된 상품명과 정확히 일치합니다. 수정이 필요 없습니다."
+                    className={`excel-refiner__legend-item excel-refiner__legend-item--original${productStatusFilter === 'original' ? ' excel-refiner__legend-item--active' : ''}`}
+                    title="보험상품 DB에 등록된 상품명과 정확히 일치합니다. 수정이 필요 없습니다. (클릭하면 맨 위로 정렬)"
+                    onClick={() => setProductStatusFilter(productStatusFilter === 'original' ? null : 'original')}
                   >정확 매칭 ({productMatchResult.originalMatch.size})</span>
                   <span
-                    className="excel-refiner__legend-item excel-refiner__legend-item--modified"
-                    title="공백이나 대소문자 차이가 있었지만 DB 상품명으로 자동 수정되었습니다."
+                    className={`excel-refiner__legend-item excel-refiner__legend-item--modified${productStatusFilter === 'modified' ? ' excel-refiner__legend-item--active' : ''}`}
+                    title="공백이나 대소문자 차이가 있었지만 DB 상품명으로 자동 수정되었습니다. (클릭하면 맨 위로 정렬)"
+                    onClick={() => setProductStatusFilter(productStatusFilter === 'modified' ? null : 'modified')}
                   >수정 매칭 ({productMatchResult.modified.size})</span>
                   <span
-                    className="excel-refiner__legend-item excel-refiner__legend-item--unmatched"
-                    title="보험상품 DB에서 찾을 수 없는 상품명입니다. 상품명을 확인해주세요."
+                    className={`excel-refiner__legend-item excel-refiner__legend-item--unmatched${productStatusFilter === 'unmatched' ? ' excel-refiner__legend-item--active' : ''}`}
+                    title="보험상품 DB에서 찾을 수 없는 상품명입니다. 상품명을 확인해주세요. (클릭하면 맨 위로 정렬)"
+                    onClick={() => setProductStatusFilter(productStatusFilter === 'unmatched' ? null : 'unmatched')}
                   >미매칭 ({productMatchResult.unmatched.length})</span>
                 </div>
               )}

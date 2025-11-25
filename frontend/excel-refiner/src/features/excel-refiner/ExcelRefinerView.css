@@ -254,6 +254,19 @@
   font-size: var(--font-size-xs);
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__legend-item:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.excel-refiner__legend-item--active {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+  font-weight: var(--font-weight-semibold);
 }
 
 .excel-refiner__legend-item--original {
