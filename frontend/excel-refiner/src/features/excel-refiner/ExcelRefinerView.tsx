@@ -201,6 +201,16 @@ export function ExcelRefinerView() {
       setActiveSheetIndex(0)
       setSelectedRows(new Set())
       setValidatingColumns(new Set())
+      setValidatingInProgress(new Set())
+      // 상품명 검증 상태 초기화
+      setProductMatchResult(null)
+      setProductNameColumnIndex(null)
+      setProductStatusFilter(null)
+      // 정렬 상태 초기화
+      setSortColumn(null)
+      setSortDirection('asc')
+      // 삭제 모드 해제
+      setIsDeleteMode(false)
 
       // 액션 로그 표시
       const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
