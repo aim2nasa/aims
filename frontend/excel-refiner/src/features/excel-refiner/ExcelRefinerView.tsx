@@ -201,6 +201,10 @@ export function ExcelRefinerView() {
       setActiveSheetIndex(0)
       setSelectedRows(new Set())
       setValidatingColumns(new Set())
+
+      // 액션 로그 표시
+      const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
+      setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)
     } catch (error) {
       console.error('파일 파싱 오류:', error)
       alert('파일을 읽는 중 오류가 발생했습니다.')
@@ -429,7 +433,8 @@ export function ExcelRefinerView() {
     setSelectedRows(new Set())
     setIsDeleteMode(false)
 
-    alert(`✓ 삭제 완료!\n\n삭제된 행: ${selectedRows.size}개\n이전: ${beforeCount}행 → 이후: ${afterCount}행`)
+    // 액션 로그 표시
+    setActionLog(`✓ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
   }, [selectedRows, currentSheet, activeSheetIndex])
 
   // 정제된 파일 저장
@@ -438,6 +443,9 @@ export function ExcelRefinerView() {
 
     const refinedFileName = getRefinedFileName(fileName)
     exportExcel(sheets, refinedFileName)
+
+    // 액션 로그 표시
+    setActionLog(`✓ "${refinedFileName}" 저장 완료`)
   }, [sheets, fileName])
 
   // 미매칭 상품명 클릭 - 검색 모달 열기
@@ -492,9 +500,8 @@ export function ExcelRefinerView() {
       }
     })
 
-    // 로그 메시지 표시
-    setActionLog(`✓ ${rowsToUpdate.length}개 행의 상품명이 변경되었습니다`)
-    setTimeout(() => setActionLog(null), 5000) // 5초 후 자동 삭제
+    // 로그 메시지 표시 (다른 액션이 발생할 때까지 유지)
+    setActionLog(`✓ "${originalProductName}" → "${productName}" (${rowsToUpdate.length}개 행)`)
 
     // 모달 닫기
     setIsProductSearchOpen(false)
