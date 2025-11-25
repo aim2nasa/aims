@@ -245,6 +245,27 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+}
+
+.stat--clickable {
+  cursor: pointer;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.stat--clickable:hover {
+  background: var(--color-bg-hover);
+}
+
+.stat--selected {
+  background: var(--color-bg-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-border-secondary);
 }
 
 .stat__label {
@@ -590,4 +611,37 @@
 
 [data-theme="dark"] .category--corporate {
   color: var(--color-warning-400);
+}
+
+/* === DEVELOPER MODE BADGE === */
+
+.dev-mode-badge {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 149, 0, 0.15);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff9500;
+  z-index: 9999;
+  pointer-events: none;
+  animation: devBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes devBadgePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(0.98);
+  }
 }

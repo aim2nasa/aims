@@ -80,6 +80,33 @@ export function InsuranceProductsView() {
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // 개발자 모드 (Ctrl+Shift+D로 토글 - aims-uix3와 동일)
+  const [isDevMode, setIsDevMode] = useState(false)
+
+  // 개발자 모드 단축키 핸들러
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+D (aims-uix3와 동일)
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDevMode(prev => {
+          const next = !prev
+          console.log(`🔧 개발자 모드: ${next ? 'ON' : 'OFF'}`)
+          // 개발자 모드 해제 시 삭제 모드도 해제
+          if (!next) {
+            setIsDeleteMode(false)
+            setSelectedIds(new Set())
+          }
+          return next
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true) // capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [])
+
   // 메시지 자동 제거
   const showMessage = useCallback((type: 'error' | 'success', message: string) => {
     if (type === 'error') {
@@ -373,8 +400,21 @@ export function InsuranceProductsView() {
       return
     }
 
-    const confirmed = window.confirm(`선택한 ${selectedIds.size}개의 상품을 삭제하시겠습니까?`)
-    if (!confirmed) return
+    // 1단계: 경고 메시지
+    const warning = window.confirm(
+      `⚠️ 경고: 선택한 ${selectedIds.size}개의 상품을 DB에서 영구 삭제합니다.\n\n` +
+      `이 작업은 되돌릴 수 없습니다.\n\n` +
+      `계속하시겠습니까?`
+    )
+    if (!warning) return
+
+    // 2단계: 최종 확인
+    const finalConfirm = window.confirm(
+      `🗑️ 최종 확인\n\n` +
+      `정말로 ${selectedIds.size}개의 상품을 삭제하시겠습니까?\n\n` +
+      `[확인]을 누르면 즉시 삭제됩니다.`
+    )
+    if (!finalConfirm) return
 
     setIsDeleting(true)
 
@@ -420,6 +460,13 @@ export function InsuranceProductsView() {
 
   return (
     <div className="insurance-products">
+      {/* 개발자 모드 인디케이터 (aims-uix3 스타일) */}
+      {isDevMode && (
+        <div className="dev-mode-badge">
+          🔧 개발자 모드
+        </div>
+      )}
+
       {/* 헤더 */}
       <header className="insurance-products__header">
         <div className="insurance-products__title-area">
@@ -504,35 +551,46 @@ export function InsuranceProductsView() {
         <>
           {/* 통계 + 삭제 모드 */}
           <div className="stats-bar">
-            {/* 삭제 버튼 */}
-            <button
-              className={`delete-mode-btn ${isDeleteMode ? 'delete-mode-btn--active' : ''}`}
-              onClick={handleToggleDeleteMode}
-              title={isDeleteMode ? '삭제 완료' : '삭제'}
-            >
-              {isDeleteMode ? (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </button>
+            {/* 삭제 버튼 - 개발자 모드에서만 표시 */}
+            {isDevMode && (
+              <button
+                className={`delete-mode-btn ${isDeleteMode ? 'delete-mode-btn--active' : ''}`}
+                onClick={handleToggleDeleteMode}
+                title={isDeleteMode ? '삭제 완료' : '삭제 (개발자 모드)'}
+              >
+                {isDeleteMode ? (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            )}
 
-            <div className="stat">
+            <button
+              className={`stat stat--clickable ${filters.category === 'all' && filters.status === 'all' ? 'stat--selected' : ''}`}
+              onClick={() => setFilters(f => ({ ...f, category: 'all', status: 'all' }))}
+            >
               <span className="stat__label">전체</span>
               <span className="stat__value">{stats.total}</span>
-            </div>
-            <div className="stat stat--active">
+            </button>
+            <button
+              className={`stat stat--clickable stat--active ${filters.status === '판매중' ? 'stat--selected' : ''}`}
+              onClick={() => setFilters(f => ({ ...f, category: 'all', status: '판매중' }))}
+            >
               <span className="stat__label">판매중</span>
               <span className="stat__value">{stats.active}</span>
-            </div>
-            <div className="stat stat--discontinued">
+            </button>
+            <button
+              className={`stat stat--clickable stat--discontinued ${filters.status === '판매중지' ? 'stat--selected' : ''}`}
+              onClick={() => setFilters(f => ({ ...f, category: 'all', status: '판매중지' }))}
+            >
               <span className="stat__label">판매중지</span>
               <span className="stat__value">{stats.discontinued}</span>
-            </div>
+            </button>
 
             {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
             {isDeleteMode && (
@@ -554,10 +612,14 @@ export function InsuranceProductsView() {
               <>
                 <div className="stat__divider" />
                 {(Object.entries(stats.byCategory) as [ProductCategory, number][]).map(([cat, count]) => (
-                  <div key={cat} className={`stat ${CATEGORY_COLORS[cat]}`}>
+                  <button
+                    key={cat}
+                    className={`stat stat--clickable ${CATEGORY_COLORS[cat]} ${filters.category === cat ? 'stat--selected' : ''}`}
+                    onClick={() => setFilters(f => ({ ...f, category: cat, status: 'all' }))}
+                  >
                     <span className="stat__label">{CATEGORY_LABELS[cat]}</span>
                     <span className="stat__value">{count}</span>
-                  </div>
+                  </button>
                 ))}
               </>
             )}
