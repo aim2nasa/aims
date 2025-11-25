@@ -3,7 +3,7 @@
  * 보험상품 관리 메인 컴포넌트
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button } from '@/shared/ui'
 import { parseFile } from './utils/parser'
 import type {
@@ -314,7 +314,7 @@ export function InsuranceProductsView() {
   }, [activeProducts, discontinuedProducts, surveyDate, showMessage])
 
   // DB에서 불러오기
-  const handleLoadFromDb = useCallback(async () => {
+  const handleLoadFromDb = useCallback(async (showSuccessMessage = true) => {
     setLoading(true)
 
     try {
@@ -328,7 +328,9 @@ export function InsuranceProductsView() {
         setDiscontinuedFile(null)
         setActiveProducts([])
         setDiscontinuedProducts([])
-        showMessage('success', `${data.data.length}개 상품을 불러왔습니다.`)
+        if (showSuccessMessage) {
+          showMessage('success', `${data.data.length}개 상품을 불러왔습니다.`)
+        }
       } else {
         showMessage('error', data.error || 'DB 조회 실패')
       }
@@ -338,6 +340,11 @@ export function InsuranceProductsView() {
       setLoading(false)
     }
   }, [showMessage])
+
+  // 페이지 마운트 시 자동으로 DB에서 불러오기
+  useEffect(() => {
+    handleLoadFromDb(false)
+  }, [])
 
   // 모두 초기화
   const handleClear = useCallback(() => {
@@ -381,18 +388,6 @@ export function InsuranceProductsView() {
       <header className="insurance-products__header">
         <div className="insurance-products__title-area">
           <h1>보험상품 관리</h1>
-        </div>
-        <div className="insurance-products__actions">
-          <Button variant="secondary" onClick={handleLoadFromDb} disabled={loading}>
-            DB에서 불러오기
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSaveToDb}
-            disabled={loading || !canSaveToDb}
-          >
-            DB에 저장
-          </Button>
         </div>
       </header>
 
@@ -453,6 +448,18 @@ export function InsuranceProductsView() {
               <input type="file" accept=".md,.xlsx,.xls" onChange={handleDiscontinuedFileSelect} hidden />
             </label>
           )}
+        </div>
+
+        {/* DB 저장 버튼 */}
+        <div className="upload-item upload-item--action">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSaveToDb}
+            disabled={loading || !canSaveToDb}
+          >
+            DB에 저장
+          </Button>
         </div>
       </div>
 
