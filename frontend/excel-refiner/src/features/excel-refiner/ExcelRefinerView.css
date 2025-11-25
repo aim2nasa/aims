@@ -338,7 +338,6 @@
 
 .excel-refiner__th--clickable {
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--easing-default);
   background: var(--color-info-50);
   border-bottom: 2px solid var(--color-primary-400);
 }
@@ -421,7 +420,6 @@
 
 .excel-refiner__tr {
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--easing-default);
 }
 
 .excel-refiner__tr:hover {
