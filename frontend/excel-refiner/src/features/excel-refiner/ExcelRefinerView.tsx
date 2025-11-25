@@ -6,8 +6,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Button } from '@/shared/ui'
 import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from './utils/excel'
-import { useValidation, getRowStatus, getProblematicRows } from './hooks/useValidation'
-import type { SheetData, CellValue } from './types/excel'
+import { validateColumn, getValidationType, getRowStatus, getProblematicRows } from './hooks/useValidation'
+import type { SheetData, CellValue, ValidationResult } from './types/excel'
 import './ExcelRefinerView.css'
 
 export function ExcelRefinerView() {
@@ -22,39 +22,47 @@ export function ExcelRefinerView() {
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false)
 
+  // 검증 대상 컬럼 (사용자가 클릭한 컬럼)
+  const [validatingColumns, setValidatingColumns] = useState<Set<number>>(new Set())
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
-  // 증권번호 컬럼 자동 감지
-  const policyNumberColumnIndex = useMemo(() => {
-    if (!currentSheet?.columns) return null
-    const index = currentSheet.columns.findIndex(col =>
-      col.includes('증권번호') || col.toLowerCase().includes('policy')
-    )
-    return index >= 0 ? index : null
-  }, [currentSheet?.columns])
+  // 컬럼별 검증 결과 계산
+  const columnValidationResults = useMemo(() => {
+    if (!currentSheet?.data || validatingColumns.size === 0) {
+      return new Map<number, ValidationResult>()
+    }
 
-  // 검증 결과 (증권번호 컬럼에만 적용)
-  const validationResult = useValidation(currentSheet?.data || null, policyNumberColumnIndex)
+    const results = new Map<number, ValidationResult>()
+    validatingColumns.forEach(colIndex => {
+      if (colIndex >= 0 && colIndex < currentSheet.columns.length) {
+        const columnName = currentSheet.columns[colIndex]
+        results.set(colIndex, validateColumn(currentSheet.data, colIndex, columnName))
+      }
+    })
+    return results
+  }, [currentSheet?.data, currentSheet?.columns, validatingColumns])
 
-  // 문제 행 인덱스
+  // 전체 문제 행 인덱스 (모든 검증 컬럼 결합)
   const problematicRows = useMemo(() => {
-    if (!validationResult) return []
-    return getProblematicRows(validationResult)
-  }, [validationResult])
+    const allRows: number[] = []
+    columnValidationResults.forEach(result => {
+      allRows.push(...getProblematicRows(result))
+    })
+    return [...new Set(allRows)].sort((a, b) => a - b)
+  }, [columnValidationResults])
 
   // 정렬된 데이터 (문제 행을 맨 위로)
   const sortedDataWithIndices = useMemo(() => {
     if (!currentSheet?.data) return []
 
-    // 원본 인덱스와 함께 데이터 배열 생성
     const indexed = currentSheet.data.map((row, idx) => ({ row, originalIndex: idx }))
 
-    if (!validationResult || validationResult.valid) {
+    if (problematicRows.length === 0) {
       return indexed
     }
 
-    // 문제 행을 맨 위로 정렬
     const problematicSet = new Set(problematicRows)
     return indexed.sort((a, b) => {
       const aProblematic = problematicSet.has(a.originalIndex)
@@ -63,7 +71,7 @@ export function ExcelRefinerView() {
       if (!aProblematic && bProblematic) return 1
       return a.originalIndex - b.originalIndex
     })
-  }, [currentSheet?.data, validationResult, problematicRows])
+  }, [currentSheet?.data, problematicRows])
 
   // 파일 처리
   const handleFile = useCallback(async (file: File) => {
@@ -78,6 +86,7 @@ export function ExcelRefinerView() {
       setFileName(file.name)
       setActiveSheetIndex(0)
       setSelectedRows(new Set())
+      setValidatingColumns(new Set())
     } catch (error) {
       console.error('파일 파싱 오류:', error)
       alert('파일을 읽는 중 오류가 발생했습니다.')
@@ -112,6 +121,20 @@ export function ExcelRefinerView() {
   const handleSheetChange = useCallback((index: number) => {
     setActiveSheetIndex(index)
     setSelectedRows(new Set())
+    setValidatingColumns(new Set())
+  }, [])
+
+  // 컬럼 헤더 클릭 - 검증 토글
+  const handleColumnClick = useCallback((colIndex: number) => {
+    setValidatingColumns(prev => {
+      const next = new Set(prev)
+      if (next.has(colIndex)) {
+        next.delete(colIndex)
+      } else {
+        next.add(colIndex)
+      }
+      return next
+    })
   }, [])
 
   // 행 선택 토글
@@ -120,7 +143,6 @@ export function ExcelRefinerView() {
       const next = new Set(prev)
 
       if (e.shiftKey && prev.size > 0) {
-        // Shift 클릭: 범위 선택
         const lastSelected = [...prev].pop()!
         const start = Math.min(lastSelected, rowIndex)
         const end = Math.max(lastSelected, rowIndex)
@@ -128,14 +150,12 @@ export function ExcelRefinerView() {
           next.add(i)
         }
       } else if (e.ctrlKey || e.metaKey) {
-        // Ctrl/Cmd 클릭: 토글
         if (next.has(rowIndex)) {
           next.delete(rowIndex)
         } else {
           next.add(rowIndex)
         }
       } else {
-        // 일반 클릭: 단일 선택
         next.clear()
         next.add(rowIndex)
       }
@@ -158,9 +178,8 @@ export function ExcelRefinerView() {
   const handleDeleteSelected = useCallback(() => {
     if (selectedRows.size === 0 || !currentSheet) return
 
-    // 삭제할 행 정보 수집
     const selectedIndices = Array.from(selectedRows).sort((a, b) => a - b)
-    const rowNumbers = selectedIndices.map(i => i + 2) // 엑셀 행 번호
+    const rowNumbers = selectedIndices.map(i => i + 2)
     const beforeCount = currentSheet.data.length
 
     const confirmed = window.confirm(
@@ -169,14 +188,11 @@ export function ExcelRefinerView() {
 
     if (!confirmed) return
 
-    // 선택된 행 제외하고 새 데이터 생성
     const newData = currentSheet.data.filter((_, index) => !selectedRows.has(index))
     const afterCount = newData.length
 
-    // 삭제 완료 메시지
-    alert(`삭제 완료!\n\n삭제된 행: ${rowNumbers.join(', ')} (${selectedRows.size}개)\n이전: ${beforeCount}행 → 이후: ${afterCount}행\n\n※ 중복이 해소된 행은 문제 행 목록에서 제외되어 아래로 이동합니다.`)
+    alert(`삭제 완료!\n\n삭제된 행: ${rowNumbers.join(', ')} (${selectedRows.size}개)\n이전: ${beforeCount}행 → 이후: ${afterCount}행`)
 
-    // 시트 데이터 업데이트
     setSheets(prev => {
       const updated = [...prev]
       updated[activeSheetIndex] = {
@@ -186,7 +202,6 @@ export function ExcelRefinerView() {
       return updated
     })
 
-    // 선택 초기화
     setSelectedRows(new Set())
   }, [selectedRows, currentSheet, activeSheetIndex])
 
@@ -198,8 +213,35 @@ export function ExcelRefinerView() {
     exportExcel(sheets, refinedFileName)
   }, [sheets, fileName])
 
-  // 데이터 행 번호 (엑셀 기준: 헤더가 1행이므로 데이터는 2행부터)
+  // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
+
+  // 컬럼 검증 배지 렌더링
+  const renderColumnBadge = (colIndex: number, columnName: string) => {
+    const result = columnValidationResults.get(colIndex)
+    if (!result) return null
+
+    const type = getValidationType(columnName)
+    const issueCount = result.empties.length + result.duplicates.length
+
+    if (result.valid && result.duplicates.length === 0) {
+      return <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓</span>
+    } else {
+      const label = type === 'customerName'
+        ? `${result.empties.length}오류 ${result.duplicates.length}경고`
+        : `${issueCount}`
+      return <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{label}</span>
+    }
+  }
+
+  // 행 상태 계산
+  const getRowValidationStatus = (rowIndex: number): 'normal' | 'empty' | 'duplicate' => {
+    for (const [, result] of columnValidationResults) {
+      const status = getRowStatus(rowIndex, result)
+      if (status !== 'normal') return status
+    }
+    return 'normal'
+  }
 
   return (
     <div className="excel-refiner">
@@ -274,6 +316,7 @@ export function ExcelRefinerView() {
                 {sheets.map((sheet, index) => (
                   <button
                     key={sheet.name}
+                    type="button"
                     className={`excel-refiner__tab ${index === activeSheetIndex ? 'excel-refiner__tab--active' : ''}`}
                     onClick={() => handleSheetChange(index)}
                   >
@@ -283,35 +326,27 @@ export function ExcelRefinerView() {
               </div>
             )}
 
-            {/* 검증 패널 */}
+            {/* 검증 안내 */}
             <div className="excel-refiner__validation">
               <div className="excel-refiner__validation-header">
-                <span>증권번호 검증:</span>
-                {policyNumberColumnIndex !== null ? (
+                <span>컬럼 헤더를 클릭하여 검증하세요</span>
+                {validatingColumns.size > 0 && (
                   <span className="excel-refiner__validation-column">
-                    {currentSheet.columns[policyNumberColumnIndex]} (열 {policyNumberColumnIndex + 1})
-                  </span>
-                ) : (
-                  <span className="excel-refiner__validation-warning">
-                    증권번호 컬럼을 찾을 수 없습니다
+                    (선택: {validatingColumns.size}개 컬럼)
                   </span>
                 )}
               </div>
 
-              {validationResult && (
+              {validatingColumns.size > 0 && (
                 <div className="excel-refiner__validation-result">
-                  <div className={`excel-refiner__validation-status ${validationResult.valid ? 'excel-refiner__validation-status--success' : 'excel-refiner__validation-status--error'}`}>
-                    {validationResult.valid ? '검증 통과' : '검증 실패'}
-                  </div>
-                  {!validationResult.valid && (
-                    <>
-                      <span className="excel-refiner__validation-detail">
-                        빈 값: {validationResult.empties.length}개
-                      </span>
-                      <span className="excel-refiner__validation-detail">
-                        중복: {validationResult.duplicates.length}개
-                      </span>
-                    </>
+                  {problematicRows.length === 0 ? (
+                    <div className="excel-refiner__validation-status excel-refiner__validation-status--success">
+                      모든 검증 통과
+                    </div>
+                  ) : (
+                    <div className="excel-refiner__validation-status excel-refiner__validation-status--error">
+                      문제 발견: {problematicRows.length}행
+                    </div>
                   )}
                 </div>
               )}
@@ -320,7 +355,7 @@ export function ExcelRefinerView() {
             {/* 액션 바 */}
             <div className="excel-refiner__actions">
               <div className="excel-refiner__actions-left">
-                {validationResult && !validationResult.valid && (
+                {problematicRows.length > 0 && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -365,22 +400,35 @@ export function ExcelRefinerView() {
                 <thead>
                   <tr>
                     <th className="excel-refiner__th excel-refiner__th--row-num">#</th>
-                    {currentSheet.columns.map((col, index) => (
-                      <th
-                        key={index}
-                        className={`excel-refiner__th ${policyNumberColumnIndex === index ? 'excel-refiner__th--validation' : ''}`}
-                      >
-                        {col || `열 ${index + 1}`}
-                        {policyNumberColumnIndex === index && (
-                          <span className="excel-refiner__th-badge">검증</span>
-                        )}
-                      </th>
-                    ))}
+                    {currentSheet.columns.map((col, index) => {
+                      const isValidating = validatingColumns.has(index)
+                      const result = columnValidationResults.get(index)
+                      const hasIssues = result && (!result.valid || result.duplicates.length > 0)
+                      const type = getValidationType(col)
+
+                      return (
+                        <th
+                          key={index}
+                          className={`excel-refiner__th excel-refiner__th--clickable ${
+                            isValidating
+                              ? hasIssues
+                                ? 'excel-refiner__th--validation-error'
+                                : 'excel-refiner__th--validation-success'
+                              : ''
+                          }`}
+                          onClick={() => handleColumnClick(index)}
+                          title={`클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : '기본'} 검증)`}
+                        >
+                          {col || `열 ${index + 1}`}
+                          {renderColumnBadge(index, col)}
+                        </th>
+                      )
+                    })}
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDataWithIndices.map(({ row, originalIndex }) => {
-                    const status = getRowStatus(originalIndex, validationResult)
+                    const status = getRowValidationStatus(originalIndex)
                     const isSelected = selectedRows.has(originalIndex)
 
                     return (
@@ -395,7 +443,7 @@ export function ExcelRefinerView() {
                         {currentSheet.columns.map((_, colIndex) => (
                           <td
                             key={colIndex}
-                            className={`excel-refiner__td ${policyNumberColumnIndex === colIndex ? 'excel-refiner__td--validation' : ''}`}
+                            className={`excel-refiner__td ${validatingColumns.has(colIndex) ? 'excel-refiner__td--validation' : ''}`}
                           >
                             {cellToString(row[colIndex] as CellValue)}
                           </td>
