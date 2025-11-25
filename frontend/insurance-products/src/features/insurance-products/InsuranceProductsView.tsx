@@ -21,15 +21,46 @@ import './InsuranceProductsView.css'
 // API Base URL
 const API_BASE = '/api/insurance-products'
 
+// 오늘 날짜 (YYYY.MM.DD)
+function getTodayString(): string {
+  const today = new Date()
+  return `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
+}
+
+// 날짜 형식 변환 (input date -> YYYY.MM.DD)
+function formatDateToDisplay(dateStr: string): string {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-')
+  return `${year}.${month}.${day}`
+}
+
+// 날짜 형식 변환 (YYYY.MM.DD -> input date)
+function formatDateToInput(dateStr: string): string {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('.')
+  return `${year}-${month}-${day}`
+}
+
 export function InsuranceProductsView() {
   // State
   const [products, setProducts] = useState<InsuranceProduct[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
   const [parseErrors, setParseErrors] = useState<string[]>([])
-  const [surveyDate, setSurveyDate] = useState<string>('')
+
+  // 기준일 선택 (UI에서 입력)
+  const [surveyDate, setSurveyDate] = useState<string>(getTodayString())
+
+  // 파일 업로드 상태 (판매중, 판매중지 각각)
+  const [activeFile, setActiveFile] = useState<File | null>(null)
+  const [discontinuedFile, setDiscontinuedFile] = useState<File | null>(null)
+  const [activeProducts, setActiveProducts] = useState<InsuranceProduct[]>([])
+  const [discontinuedProducts, setDiscontinuedProducts] = useState<InsuranceProduct[]>([])
+
+  // 드래그 상태
+  const [isDragOverActive, setIsDragOverActive] = useState(false)
+  const [isDragOverDiscontinued, setIsDragOverDiscontinued] = useState(false)
 
   // Filter & Sort State
   const [filters, setFilters] = useState<FilterOptions>({
@@ -56,66 +87,104 @@ export function InsuranceProductsView() {
     }
   }, [])
 
-  // 파일 처리
-  const handleFiles = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return
+  // 판매중 파일 처리
+  const handleActiveFile = useCallback(async (file: File) => {
+    const result: ParseResult = await parseFile(file)
 
-    setLoading(true)
-    setParseErrors([])
+    // 상태를 '판매중'으로 강제 설정
+    const productsWithStatus = result.products.map(p => ({
+      ...p,
+      status: '판매중' as ProductStatus,
+      surveyDate
+    }))
 
-    const allProducts: InsuranceProduct[] = []
-    const allErrors: string[] = []
-    let lastSurveyDate = ''
+    setActiveFile(file)
+    setActiveProducts(productsWithStatus)
 
-    for (const file of Array.from(files)) {
-      const result: ParseResult = await parseFile(file)
-
-      if (result.products.length > 0) {
-        allProducts.push(...result.products)
-        lastSurveyDate = result.surveyDate
-      }
-
-      if (result.errors.length > 0) {
-        allErrors.push(`[${file.name}]`, ...result.errors)
-      }
+    if (result.errors.length > 0) {
+      setParseErrors(prev => [...prev, `[판매중 - ${file.name}]`, ...result.errors])
     }
+  }, [surveyDate])
 
-    setProducts(allProducts)
-    setSurveyDate(lastSurveyDate)
-    setParseErrors(allErrors)
-    setLoading(false)
+  // 판매중지 파일 처리
+  const handleDiscontinuedFile = useCallback(async (file: File) => {
+    const result: ParseResult = await parseFile(file)
 
-    if (allProducts.length > 0) {
-      showMessage('success', `${allProducts.length}개 상품을 불러왔습니다.`)
+    // 상태를 '판매중지'로 강제 설정
+    const productsWithStatus = result.products.map(p => ({
+      ...p,
+      status: '판매중지' as ProductStatus,
+      surveyDate
+    }))
+
+    setDiscontinuedFile(file)
+    setDiscontinuedProducts(productsWithStatus)
+
+    if (result.errors.length > 0) {
+      setParseErrors(prev => [...prev, `[판매중지 - ${file.name}]`, ...result.errors])
     }
-  }, [showMessage])
+  }, [surveyDate])
 
-  // 드래그 앤 드롭 핸들러
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  // 드래그 앤 드롭 핸들러 (판매중)
+  const handleDragOverActive = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragOver(true)
+    setIsDragOverActive(true)
   }, [])
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeaveActive = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragOver(false)
+    setIsDragOverActive(false)
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDropActive = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragOver(false)
-    handleFiles(e.dataTransfer.files)
-  }, [handleFiles])
+    setIsDragOverActive(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleActiveFile(file)
+  }, [handleActiveFile])
 
-  // 파일 선택
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files)
-    e.target.value = '' // 같은 파일 다시 선택 가능하게
-  }, [handleFiles])
+  // 드래그 앤 드롭 핸들러 (판매중지)
+  const handleDragOverDiscontinued = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOverDiscontinued(true)
+  }, [])
+
+  const handleDragLeaveDiscontinued = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOverDiscontinued(false)
+  }, [])
+
+  const handleDropDiscontinued = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOverDiscontinued(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleDiscontinuedFile(file)
+  }, [handleDiscontinuedFile])
+
+  // 파일 선택 핸들러
+  const handleActiveFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleActiveFile(file)
+    e.target.value = ''
+  }, [handleActiveFile])
+
+  const handleDiscontinuedFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleDiscontinuedFile(file)
+    e.target.value = ''
+  }, [handleDiscontinuedFile])
+
+  // 전체 상품 목록 (파일 업로드 모드와 DB 조회 모드 구분)
+  const allProducts = useMemo(() => {
+    if (activeProducts.length > 0 || discontinuedProducts.length > 0) {
+      return [...activeProducts, ...discontinuedProducts]
+    }
+    return products
+  }, [products, activeProducts, discontinuedProducts])
 
   // 필터링 & 정렬된 상품 목록
   const filteredProducts = useMemo(() => {
-    let result = [...products]
+    let result = [...allProducts]
 
     // 필터 적용
     if (filters.category !== 'all') {
@@ -140,21 +209,21 @@ export function InsuranceProductsView() {
     })
 
     return result
-  }, [products, filters, sort])
+  }, [allProducts, filters, sort])
 
   // 통계 계산
   const stats = useMemo(() => {
-    const total = products.length
-    const active = products.filter(p => p.status === '판매중').length
-    const discontinued = products.filter(p => p.status === '판매중지').length
+    const total = allProducts.length
+    const active = allProducts.filter(p => p.status === '판매중').length
+    const discontinued = allProducts.filter(p => p.status === '판매중지').length
 
-    const byCategory = products.reduce((acc, p) => {
+    const byCategory = allProducts.reduce((acc, p) => {
       acc[p.category] = (acc[p.category] || 0) + 1
       return acc
     }, {} as Record<ProductCategory, number>)
 
     return { total, active, discontinued, byCategory }
-  }, [products])
+  }, [allProducts])
 
   // 정렬 토글
   const handleSort = useCallback((field: SortField) => {
@@ -170,14 +239,12 @@ export function InsuranceProductsView() {
       const next = new Set(prev)
 
       if (e.ctrlKey || e.metaKey) {
-        // Ctrl/Cmd + 클릭: 토글
         if (next.has(id)) {
           next.delete(id)
         } else {
           next.add(id)
         }
       } else {
-        // 단일 선택
         next.clear()
         next.add(id)
       }
@@ -196,35 +263,46 @@ export function InsuranceProductsView() {
     }
   }, [filteredProducts, selectedIds])
 
-  // 선택 삭제
-  const handleDeleteSelected = useCallback(() => {
-    if (selectedIds.size === 0) return
-
-    setProducts(prev => prev.filter((_, i) => !selectedIds.has(`temp-${i}`)))
-    setSelectedIds(new Set())
-    showMessage('success', `${selectedIds.size}개 항목이 삭제되었습니다.`)
-  }, [selectedIds, showMessage])
-
-  // DB 저장
+  // DB 저장 (세트 업로드)
   const handleSaveToDb = useCallback(async () => {
-    if (products.length === 0) {
-      showMessage('error', '저장할 상품이 없습니다.')
+    // 필수 조건 검증
+    if (!surveyDate) {
+      showMessage('error', '기준일을 선택해주세요.')
+      return
+    }
+    if (activeProducts.length === 0) {
+      showMessage('error', '판매중 상품 파일을 업로드해주세요.')
+      return
+    }
+    if (discontinuedProducts.length === 0) {
+      showMessage('error', '판매중지 상품 파일을 업로드해주세요.')
       return
     }
 
+    const productsToSave = [...activeProducts, ...discontinuedProducts]
     setLoading(true)
 
     try {
       const response = await fetch(`${API_BASE}/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products, surveyDate })
+        body: JSON.stringify({
+          products: productsToSave,
+          surveyDate
+        })
       })
 
       const data = await response.json()
 
       if (data.success) {
-        showMessage('success', `${products.length}개 상품이 DB에 저장되었습니다.`)
+        showMessage('success', `${productsToSave.length}개 상품이 DB에 저장되었습니다.`)
+        // 저장 후 상태 초기화
+        setActiveFile(null)
+        setDiscontinuedFile(null)
+        setActiveProducts([])
+        setDiscontinuedProducts([])
+        // DB에서 다시 불러오기
+        handleLoadFromDb()
       } else {
         showMessage('error', data.error || 'DB 저장 실패')
       }
@@ -233,7 +311,7 @@ export function InsuranceProductsView() {
     } finally {
       setLoading(false)
     }
-  }, [products, surveyDate, showMessage])
+  }, [activeProducts, discontinuedProducts, surveyDate, showMessage])
 
   // DB에서 불러오기
   const handleLoadFromDb = useCallback(async () => {
@@ -245,6 +323,11 @@ export function InsuranceProductsView() {
 
       if (data.success && data.data) {
         setProducts(data.data)
+        // 파일 업로드 상태 초기화
+        setActiveFile(null)
+        setDiscontinuedFile(null)
+        setActiveProducts([])
+        setDiscontinuedProducts([])
         showMessage('success', `${data.data.length}개 상품을 불러왔습니다.`)
       } else {
         showMessage('error', data.error || 'DB 조회 실패')
@@ -259,11 +342,25 @@ export function InsuranceProductsView() {
   // 모두 초기화
   const handleClear = useCallback(() => {
     setProducts([])
+    setActiveFile(null)
+    setDiscontinuedFile(null)
+    setActiveProducts([])
+    setDiscontinuedProducts([])
     setSelectedIds(new Set())
     setParseErrors([])
-    setSurveyDate('')
     setError(null)
     setSuccessMessage(null)
+  }, [])
+
+  // 파일 제거
+  const handleRemoveActiveFile = useCallback(() => {
+    setActiveFile(null)
+    setActiveProducts([])
+  }, [])
+
+  const handleRemoveDiscontinuedFile = useCallback(() => {
+    setDiscontinuedFile(null)
+    setDiscontinuedProducts([])
   }, [])
 
   // 정렬 아이콘
@@ -272,19 +369,28 @@ export function InsuranceProductsView() {
     return sort.order === 'asc' ? '↑' : '↓'
   }
 
+  // 데이터 표시 여부
+  const hasDataToShow = allProducts.length > 0
+
+  // DB 저장 가능 여부 (판매중 파일 + 판매중지 파일 + 기준일 모두 필요)
+  const canSaveToDb = surveyDate && activeProducts.length > 0 && discontinuedProducts.length > 0
+
   return (
     <div className="insurance-products">
       {/* 헤더 */}
       <header className="insurance-products__header">
         <div className="insurance-products__title-area">
           <h1>보험상품 관리</h1>
-          {surveyDate && <span className="survey-date">조사일: {surveyDate}</span>}
         </div>
         <div className="insurance-products__actions">
           <Button variant="secondary" onClick={handleLoadFromDb} disabled={loading}>
             DB에서 불러오기
           </Button>
-          <Button variant="primary" onClick={handleSaveToDb} disabled={loading || products.length === 0}>
+          <Button
+            variant="primary"
+            onClick={handleSaveToDb}
+            disabled={loading || !canSaveToDb}
+          >
             DB에 저장
           </Button>
         </div>
@@ -294,34 +400,94 @@ export function InsuranceProductsView() {
       {error && <div className="message message--error">{error}</div>}
       {successMessage && <div className="message message--success">{successMessage}</div>}
 
-      {/* 드롭존 */}
-      {products.length === 0 ? (
-        <div
-          className={`dropzone ${isDragOver ? 'dropzone--active' : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className="dropzone__content">
-            <div className="dropzone__icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            </div>
-            <p className="dropzone__text">MD 또는 Excel 파일을 드래그하세요</p>
-            <p className="dropzone__hint">또는 클릭하여 파일 선택</p>
-            <input
-              type="file"
-              className="dropzone__input"
-              accept=".md,.xlsx,.xls"
-              multiple
-              onChange={handleFileSelect}
-            />
+      {/* 업로드 섹션 */}
+      <div className="upload-section">
+        {/* 기준일 선택 */}
+        <div className="survey-date-picker">
+          <label className="survey-date-picker__label">기준일 <span className="required">*</span></label>
+          <input
+            type="date"
+            className="survey-date-picker__input"
+            value={formatDateToInput(surveyDate)}
+            onChange={e => setSurveyDate(formatDateToDisplay(e.target.value))}
+          />
+          <span className="survey-date-picker__display">{surveyDate || '미선택'}</span>
+        </div>
+
+        {/* 파일 드롭존들 */}
+        <div className="upload-zones">
+          {/* 판매중 파일 */}
+          <div className="upload-zone-wrapper">
+            <h3 className="upload-zone-title status--active">판매중 상품 <span className="required">*</span></h3>
+            {activeFile ? (
+              <div className="uploaded-file">
+                <div className="uploaded-file__info">
+                  <span className="uploaded-file__name">{activeFile.name}</span>
+                  <span className="uploaded-file__count">{activeProducts.length}개 상품</span>
+                </div>
+                <button className="uploaded-file__remove" onClick={handleRemoveActiveFile}>
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div
+                className={`dropzone dropzone--small ${isDragOverActive ? 'dropzone--active' : ''}`}
+                onDragOver={handleDragOverActive}
+                onDragLeave={handleDragLeaveActive}
+                onDrop={handleDropActive}
+              >
+                <div className="dropzone__content">
+                  <p className="dropzone__text">판매중 상품 파일</p>
+                  <p className="dropzone__hint">드래그 또는 클릭</p>
+                  <input
+                    type="file"
+                    className="dropzone__input"
+                    accept=".md,.xlsx,.xls"
+                    onChange={handleActiveFileSelect}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 판매중지 파일 */}
+          <div className="upload-zone-wrapper">
+            <h3 className="upload-zone-title status--discontinued">판매중지 상품 <span className="required">*</span></h3>
+            {discontinuedFile ? (
+              <div className="uploaded-file">
+                <div className="uploaded-file__info">
+                  <span className="uploaded-file__name">{discontinuedFile.name}</span>
+                  <span className="uploaded-file__count">{discontinuedProducts.length}개 상품</span>
+                </div>
+                <button className="uploaded-file__remove" onClick={handleRemoveDiscontinuedFile}>
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div
+                className={`dropzone dropzone--small ${isDragOverDiscontinued ? 'dropzone--active' : ''}`}
+                onDragOver={handleDragOverDiscontinued}
+                onDragLeave={handleDragLeaveDiscontinued}
+                onDrop={handleDropDiscontinued}
+              >
+                <div className="dropzone__content">
+                  <p className="dropzone__text">판매중지 상품 파일</p>
+                  <p className="dropzone__hint">드래그 또는 클릭</p>
+                  <input
+                    type="file"
+                    className="dropzone__input"
+                    accept=".md,.xlsx,.xls"
+                    onChange={handleDiscontinuedFileSelect}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      ) : (
+      </div>
+
+      {/* 데이터가 있을 때만 표시 */}
+      {hasDataToShow && (
         <>
           {/* 통계 */}
           <div className="stats-bar">
@@ -383,25 +549,6 @@ export function InsuranceProductsView() {
             </div>
 
             <div className="toolbar__actions">
-              <label className="file-upload-btn">
-                <span className="button button--ghost button--md">
-                  <span className="button__content">파일 추가</span>
-                </span>
-                <input
-                  type="file"
-                  accept=".md,.xlsx,.xls"
-                  multiple
-                  onChange={handleFileSelect}
-                  style={{ display: 'none' }}
-                />
-              </label>
-
-              {selectedIds.size > 0 && (
-                <Button variant="destructive" onClick={handleDeleteSelected}>
-                  선택 삭제 ({selectedIds.size})
-                </Button>
-              )}
-
               <Button variant="ghost" onClick={handleClear}>
                 초기화
               </Button>
@@ -434,6 +581,9 @@ export function InsuranceProductsView() {
                   </th>
                   <th className="col-status sortable" onClick={() => handleSort('status')}>
                     상태 {getSortIcon('status')}
+                  </th>
+                  <th className="col-survey-date sortable" onClick={() => handleSort('surveyDate')}>
+                    기준일 {getSortIcon('surveyDate')}
                   </th>
                 </tr>
               </thead>
@@ -469,6 +619,7 @@ export function InsuranceProductsView() {
                           {product.status}
                         </span>
                       </td>
+                      <td className="col-survey-date">{product.surveyDate}</td>
                     </tr>
                   )
                 })}
@@ -478,7 +629,7 @@ export function InsuranceProductsView() {
 
           {/* 결과 요약 */}
           <div className="result-summary">
-            {filteredProducts.length}개 상품 표시 (전체 {products.length}개 중)
+            {filteredProducts.length}개 상품 표시 (전체 {allProducts.length}개 중)
           </div>
         </>
       )}

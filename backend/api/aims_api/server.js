@@ -3932,7 +3932,11 @@ app.get('/api/insurance-products', async (req, res) => {
 
 /**
  * POST /api/insurance-products/bulk
- * 보험상품 일괄 등록 (기존 데이터 대체)
+ * 보험상품 일괄 등록
+ *
+ * 로직:
+ * 1. 같은 기준일의 데이터가 이미 있으면: 해당 기준일 데이터 모두 삭제 후 새 데이터로 대체
+ * 2. 다른 기준일이면: productName 기준으로 upsert (기존 상품 업데이트, 새 상품 추가, 없어진 상품 삭제)
  */
 app.post('/api/insurance-products/bulk', async (req, res) => {
   try {
@@ -3945,28 +3949,83 @@ app.post('/api/insurance-products/bulk', async (req, res) => {
       });
     }
 
-    // 조사일 기준으로 기존 데이터 삭제 (선택적)
-    if (surveyDate) {
-      await db.collection(INSURANCE_PRODUCTS_COLLECTION).deleteMany({ surveyDate });
+    if (!surveyDate) {
+      return res.status(400).json({
+        success: false,
+        error: '기준일(surveyDate)이 필요합니다.'
+      });
     }
 
-    // 타임스탬프 추가
     const now = utcNowDate();
-    const productsWithTimestamp = products.map(p => ({
-      ...p,
-      createdAt: now,
-      updatedAt: now
-    }));
+    const collection = db.collection(INSURANCE_PRODUCTS_COLLECTION);
 
-    // 일괄 삽입
-    const result = await db.collection(INSURANCE_PRODUCTS_COLLECTION).insertMany(productsWithTimestamp);
+    // 기존 데이터 확인
+    const existingDataWithSameDate = await collection.findOne({ surveyDate });
 
-    res.json({
-      success: true,
-      message: `${result.insertedCount}개 상품이 등록되었습니다.`,
-      insertedCount: result.insertedCount,
-      surveyDate
-    });
+    if (existingDataWithSameDate) {
+      // 같은 기준일 데이터 존재: 해당 기준일 데이터 삭제 후 새로 삽입
+      const deleteResult = await collection.deleteMany({ surveyDate });
+      console.log(`같은 기준일(${surveyDate}) 데이터 ${deleteResult.deletedCount}개 삭제`);
+
+      const productsWithTimestamp = products.map(p => ({
+        ...p,
+        surveyDate,
+        createdAt: now,
+        updatedAt: now
+      }));
+
+      const insertResult = await collection.insertMany(productsWithTimestamp);
+
+      res.json({
+        success: true,
+        message: `기존 ${deleteResult.deletedCount}개 삭제, ${insertResult.insertedCount}개 상품 등록 (기준일: ${surveyDate})`,
+        insertedCount: insertResult.insertedCount,
+        deletedCount: deleteResult.deletedCount,
+        surveyDate
+      });
+
+    } else {
+      // 다른 기준일: productName 기준으로 upsert (삭제 없음)
+      // 상품은 삭제되지 않음 - 상태만 변경됨 (판매중 → 판매중지)
+      let updatedCount = 0;
+      let insertedCount = 0;
+
+      for (const product of products) {
+        const existingProduct = await collection.findOne({ productName: product.productName });
+
+        if (existingProduct) {
+          // 기존 상품 업데이트 (상태, 기준일 등)
+          await collection.updateOne(
+            { productName: product.productName },
+            {
+              $set: {
+                ...product,
+                surveyDate,
+                updatedAt: now
+              }
+            }
+          );
+          updatedCount++;
+        } else {
+          // 새 상품 추가
+          await collection.insertOne({
+            ...product,
+            surveyDate,
+            createdAt: now,
+            updatedAt: now
+          });
+          insertedCount++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `${updatedCount}개 업데이트, ${insertedCount}개 추가 (기준일: ${surveyDate})`,
+        updatedCount,
+        insertedCount,
+        surveyDate
+      });
+    }
 
   } catch (error) {
     console.error('보험상품 일괄 등록 오류:', error);

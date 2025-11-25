@@ -51,7 +51,7 @@ export interface FilterOptions {
 }
 
 // 정렬 옵션
-export type SortField = 'productName' | 'category' | 'saleStartDate' | 'saleEndDate' | 'status'
+export type SortField = 'productName' | 'category' | 'saleStartDate' | 'saleEndDate' | 'status' | 'surveyDate'
 export type SortOrder = 'asc' | 'desc'
 
 export interface SortOptions {
