@@ -10,6 +10,14 @@ import { validateColumn, getValidationType, getRowStatus, getProblematicRows } f
 import type { SheetData, CellValue, ValidationResult } from './types/excel'
 import './ExcelRefinerView.css'
 
+// 우측 정렬이 필요한 컬럼명 패턴
+const RIGHT_ALIGN_PATTERNS = ['증권번호', '보험료', '이체일', '납입주기', '납입기간', '납입상태', '연락처', '계약일', '피보험자']
+
+function isRightAlignColumn(columnName: string): boolean {
+  if (!columnName) return false
+  return RIGHT_ALIGN_PATTERNS.some(pattern => columnName.includes(pattern))
+}
+
 export function ExcelRefinerView() {
   // 파일 상태
   const [fileName, setFileName] = useState<string | null>(null)
@@ -564,14 +572,21 @@ export function ExcelRefinerView() {
                         <td className="excel-refiner__td excel-refiner__td--row-num">
                           {getExcelRowNumber(originalIndex)}
                         </td>
-                        {currentSheet.columns.map((_, colIndex) => (
-                          <td
-                            key={colIndex}
-                            className={`excel-refiner__td ${validatingColumns.has(colIndex) ? 'excel-refiner__td--validation' : ''}`}
-                          >
-                            {cellToString(row[colIndex] as CellValue)}
-                          </td>
-                        ))}
+                        {currentSheet.columns.map((colName, colIndex) => {
+                          const isRightAlign = isRightAlignColumn(colName)
+                          let tdClassName = 'excel-refiner__td'
+                          if (isRightAlign) {
+                            tdClassName += ' excel-refiner__td--right'
+                          }
+                          if (validatingColumns.has(colIndex)) {
+                            tdClassName += ' excel-refiner__td--validation'
+                          }
+                          return (
+                            <td key={colIndex} className={tdClassName}>
+                              {cellToString(row[colIndex] as CellValue)}
+                            </td>
+                          )
+                        })}
                       </tr>
                     )
                   })}

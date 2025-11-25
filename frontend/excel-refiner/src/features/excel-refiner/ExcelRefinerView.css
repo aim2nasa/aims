@@ -271,6 +271,10 @@
   white-space: nowrap;
 }
 
+.excel-refiner__td--right {
+  text-align: right;
+}
+
 .excel-refiner__th {
   position: sticky;
   top: 0;
@@ -301,6 +305,7 @@
 .excel-refiner__th-content {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-1);
   flex-wrap: nowrap;
   white-space: nowrap;
