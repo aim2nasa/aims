@@ -30,11 +30,13 @@ export function ProductSearchModal({
   const [products, setProducts] = useState<InsuranceProduct[]>([])
   const [loading, setLoading] = useState(false)
   const [applyToAll, setApplyToAll] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<InsuranceProduct | null>(null)
 
   // 모달 열릴 때 상품 목록 로드 및 키워드 초기화
   useEffect(() => {
     if (isOpen) {
       setKeyword(initialKeyword)
+      setSelectedProduct(null)
       loadProducts()
     }
   }, [isOpen, initialKeyword])
@@ -64,14 +66,23 @@ export function ProductSearchModal({
     })
   }, [products, keyword])
 
-  // 검색 결과가 1개일 때 자동으로 일괄 적용 체크
+  // 검색 결과가 1개일 때 자동으로 일괄 적용 체크 및 자동 선택
   useEffect(() => {
     setApplyToAll(filteredProducts.length === 1)
-  }, [filteredProducts.length])
+    if (filteredProducts.length === 1) {
+      setSelectedProduct(filteredProducts[0])
+    }
+  }, [filteredProducts])
 
-  // 상품 선택
-  const handleSelect = (product: InsuranceProduct) => {
-    onSelect(product.productName, product._id, applyToAll)
+  // 상품 클릭 - 선택만 (적용은 확인 버튼으로)
+  const handleItemClick = (product: InsuranceProduct) => {
+    setSelectedProduct(product)
+  }
+
+  // 확인 버튼 - 실제 적용
+  const handleConfirm = () => {
+    if (!selectedProduct) return
+    onSelect(selectedProduct.productName, selectedProduct._id, applyToAll)
     onClose()
   }
 
@@ -135,8 +146,8 @@ export function ProductSearchModal({
               <button
                 key={product._id}
                 type="button"
-                className="product-search-modal__item"
-                onClick={() => handleSelect(product)}
+                className={`product-search-modal__item ${selectedProduct?._id === product._id ? 'product-search-modal__item--selected' : ''}`}
+                onClick={() => handleItemClick(product)}
               >
                 {product.productName}
               </button>
@@ -161,6 +172,14 @@ export function ProductSearchModal({
         <div className="product-search-modal__footer">
           <Button variant="ghost" size="sm" onClick={onClose}>
             취소
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleConfirm}
+            disabled={!selectedProduct}
+          >
+            확인
           </Button>
         </div>
       </div>
