@@ -124,17 +124,18 @@ export function ExcelRefinerView() {
     setValidatingColumns(new Set())
   }, [])
 
-  // 컬럼 헤더 클릭 - 검증 토글
+  // 컬럼 헤더 클릭 - 검증 활성화 (해제는 별도 버튼으로)
   const handleColumnClick = useCallback((colIndex: number) => {
     setValidatingColumns(prev => {
       const next = new Set(prev)
-      if (next.has(colIndex)) {
-        next.delete(colIndex)
-      } else {
-        next.add(colIndex)
-      }
+      next.add(colIndex)
       return next
     })
+  }, [])
+
+  // 검증 초기화
+  const handleClearValidation = useCallback(() => {
+    setValidatingColumns(new Set())
   }, [])
 
   // 행 선택 토글
@@ -331,9 +332,18 @@ export function ExcelRefinerView() {
               <div className="excel-refiner__validation-header">
                 <span>컬럼 헤더를 클릭하여 검증하세요</span>
                 {validatingColumns.size > 0 && (
-                  <span className="excel-refiner__validation-column">
-                    (선택: {validatingColumns.size}개 컬럼)
-                  </span>
+                  <>
+                    <span className="excel-refiner__validation-column">
+                      (선택: {validatingColumns.size}개 컬럼)
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearValidation}
+                    >
+                      검증 초기화
+                    </Button>
+                  </>
                 )}
               </div>
 
