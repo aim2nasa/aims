@@ -29,6 +29,8 @@ import {
   type ValidationType
 } from '@aims/excel-refiner-core'
 import { CustomerService } from '@/services/customerService'
+import { ContractService } from '@/services/contractService'
+import { useAuthStore } from '@/shared/stores/authStore'
 import { ProductSearchModal } from './ProductSearchModal'
 import './ExcelRefiner.css'
 
@@ -41,6 +43,9 @@ function isRightAlignColumn(columnName: string): boolean {
 }
 
 export function ExcelRefiner() {
+  // 로그인 사용자 정보
+  const { user } = useAuthStore()
+
   // 파일 상태
   const [fileName, setFileName] = useState<string | null>(null)
   const [sheets, setSheets] = useState<SheetData[]>([])
@@ -913,17 +918,22 @@ export function ExcelRefiner() {
     const { customerNames } = importConfirmModal
     setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })
 
-    if (customerNames.length === 0) return
+    if (customerNames.length === 0 || !currentSheet || !user?._id) {
+      if (!user?._id) {
+        alert('로그인이 필요합니다.')
+      }
+      return
+    }
 
     setIsImporting(true)
-    setImportProgress({ current: 0, total: customerNames.length, message: '고객 생성 준비 중...' })
+    setImportProgress({ current: 0, total: 3, message: '1/3: 고객 생성 준비 중...' })
 
-    let createdCount = 0
-    let skippedCount = 0
-    const errors: string[] = []
+    let customerCreatedCount = 0
+    let customerSkippedCount = 0
+    const customerErrors: string[] = []
 
     try {
-      // 기존 고객 목록 조회 (전체)
+      // === 1단계: 고객 생성 ===
       const existingResponse = await CustomerService.getCustomers({ limit: 100000 })
       const existingNames = new Set(
         existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
@@ -932,51 +942,127 @@ export function ExcelRefiner() {
       for (let i = 0; i < customerNames.length; i++) {
         const name = customerNames[i]!
         setImportProgress({
-          current: i + 1,
-          total: customerNames.length,
-          message: `${name} 처리 중...`
+          current: 1,
+          total: 3,
+          message: `1/3: 고객 생성 중 (${i + 1}/${customerNames.length}) - ${name}`
         })
 
-        // 동일 이름 존재 확인
         if (existingNames.has(name.toLowerCase())) {
-          skippedCount++
+          customerSkippedCount++
           continue
         }
 
         try {
-          // 고객 생성
           await CustomerService.createCustomer({
-            personal_info: {
-              name: name
-            },
+            personal_info: { name },
             contracts: [],
             documents: [],
             consultations: []
           })
-          createdCount++
-          existingNames.add(name.toLowerCase()) // 중복 방지
+          customerCreatedCount++
+          existingNames.add(name.toLowerCase())
         } catch (err) {
-          errors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+          customerErrors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
         }
       }
 
-      // 결과 메시지
-      let resultMsg = `✓ 고객 생성 완료\n- 생성: ${createdCount}명\n- 건너뜀 (기존 고객): ${skippedCount}명`
-      if (errors.length > 0) {
-        resultMsg += `\n- 오류: ${errors.length}건`
-      }
-      setActionLog(resultMsg.replace(/\n/g, ' | '))
+      // === 2단계: Excel 데이터에서 계약 추출 ===
+      setImportProgress({ current: 2, total: 3, message: '2/3: 계약 데이터 추출 중...' })
 
-      if (errors.length > 0) {
-        console.error('고객 생성 오류:', errors)
+      // 컬럼 인덱스 찾기
+      const colIndexMap: Record<string, number> = {}
+      const columnMapping: Record<string, string> = {
+        '고객명': 'customer_name',
+        '상품명': 'product_name',
+        '계약일': 'contract_date',
+        '증권번호': 'policy_number',
+        '보험료': 'premium',
+        '이체일': 'payment_day',
+        '납입주기': 'payment_cycle',
+        '납입기간': 'payment_period',
+        '피보험자': 'insured_person',
+        '납입상태': 'payment_status'
       }
+
+      currentSheet.columns.forEach((colName, idx) => {
+        for (const [korName, engName] of Object.entries(columnMapping)) {
+          if (colName.includes(korName)) {
+            colIndexMap[engName] = idx
+            break
+          }
+        }
+      })
+
+      // 필수 컬럼 확인
+      if (colIndexMap['policy_number'] === undefined) {
+        alert('증권번호 컬럼을 찾을 수 없습니다.')
+        return
+      }
+
+      // 계약 데이터 추출
+      const contracts = currentSheet.data.map(row => {
+        const getValue = (field: string): string => {
+          const idx = colIndexMap[field]
+          if (idx === undefined) return ''
+          return cellToString(row[idx] as CellValue).trim()
+        }
+
+        const getNumberValue = (field: string): number => {
+          const val = getValue(field)
+          const num = parseInt(val.replace(/[^0-9]/g, ''), 10)
+          return isNaN(num) ? 0 : num
+        }
+
+        return {
+          customer_name: getValue('customer_name'),
+          product_name: getValue('product_name'),
+          contract_date: getValue('contract_date') || null,
+          policy_number: getValue('policy_number'),
+          premium: getNumberValue('premium'),
+          payment_day: getNumberValue('payment_day') || null,
+          payment_cycle: getValue('payment_cycle') || null,
+          payment_period: getValue('payment_period') || null,
+          insured_person: getValue('insured_person') || null,
+          payment_status: getValue('payment_status') || null
+        }
+      }).filter(c => c.policy_number) // 증권번호가 있는 행만
+
+      if (contracts.length === 0) {
+        setActionLog(`✓ 고객 생성: ${customerCreatedCount}명 | 건너뜀: ${customerSkippedCount}명 | 계약: 0건 (증권번호 없음)`)
+        return
+      }
+
+      // === 3단계: 계약 일괄 등록 ===
+      setImportProgress({ current: 3, total: 3, message: `3/3: 계약 등록 중 (${contracts.length}건)...` })
+
+      const bulkResult = await ContractService.createContractsBulk({
+        agent_id: user._id,
+        contracts
+      })
+
+      // 최종 결과 메시지
+      const contractResult = bulkResult.data
+      let resultMsg = `✓ 가져오기 완료 | 고객: ${customerCreatedCount}명 생성, ${customerSkippedCount}명 건너뜀`
+      resultMsg += ` | 계약: ${contractResult.insertedCount}건 등록, ${contractResult.skippedCount}건 건너뜀`
+
+      if (customerErrors.length > 0 || contractResult.errorCount > 0) {
+        resultMsg += ` | 오류: ${customerErrors.length + contractResult.errorCount}건`
+      }
+
+      setActionLog(resultMsg)
+
+      if (customerErrors.length > 0) {
+        console.error('고객 생성 오류:', customerErrors)
+      }
+
     } catch (err) {
-      alert(`고객 조회 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+      console.error('가져오기 오류:', err)
+      alert(`가져오기 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
     } finally {
       setIsImporting(false)
       setImportProgress(null)
     }
-  }, [importConfirmModal])
+  }, [importConfirmModal, currentSheet, user])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2

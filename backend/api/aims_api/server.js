@@ -4222,6 +4222,453 @@ app.get('/api/insurance-products/statistics', async (req, res) => {
   }
 });
 
+// ==================== Contracts API ====================
+
+const CONTRACTS_COLLECTION = 'contracts';
+
+/**
+ * GET /api/contracts
+ * 계약 목록 조회
+ */
+app.get('/api/contracts', async (req, res) => {
+  try {
+    const { agent_id, customer_id, search, limit = 1000, skip = 0 } = req.query;
+
+    const query = {};
+
+    // agent_id 필터 (필수)
+    if (agent_id) {
+      query.agent_id = new ObjectId(agent_id);
+    }
+
+    // customer_id 필터
+    if (customer_id) {
+      query.customer_id = new ObjectId(customer_id);
+    }
+
+    // 검색어 (고객명 또는 상품명)
+    if (search) {
+      const searchRegex = { $regex: escapeRegex(search), $options: 'i' };
+      query.$or = [
+        { customer_name: searchRegex },
+        { product_name: searchRegex },
+        { policy_number: searchRegex }
+      ];
+    }
+
+    const contracts = await db.collection(CONTRACTS_COLLECTION)
+      .find(query)
+      .sort({ 'meta.created_at': -1 })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .toArray();
+
+    const total = await db.collection(CONTRACTS_COLLECTION).countDocuments(query);
+
+    res.json({
+      success: true,
+      data: contracts,
+      total,
+      limit: parseInt(limit),
+      skip: parseInt(skip)
+    });
+
+  } catch (error) {
+    console.error('계약 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/contracts/:id
+ * 계약 상세 조회
+ */
+app.get('/api/contracts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 계약 ID입니다.'
+      });
+    }
+
+    const contract = await db.collection(CONTRACTS_COLLECTION).findOne({
+      _id: new ObjectId(id)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: '계약을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: contract
+    });
+
+  } catch (error) {
+    console.error('계약 상세 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 조회에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts
+ * 단일 계약 등록
+ */
+app.post('/api/contracts', async (req, res) => {
+  try {
+    const contract = req.body;
+
+    if (!contract.agent_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'agent_id는 필수입니다.'
+      });
+    }
+
+    if (!contract.policy_number) {
+      return res.status(400).json({
+        success: false,
+        error: '증권번호는 필수입니다.'
+      });
+    }
+
+    // 증권번호 중복 체크
+    const existing = await db.collection(CONTRACTS_COLLECTION).findOne({
+      policy_number: contract.policy_number
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        error: '이미 존재하는 증권번호입니다.',
+        existingId: existing._id
+      });
+    }
+
+    const now = utcNowDate();
+    const newContract = {
+      agent_id: new ObjectId(contract.agent_id),
+      customer_id: contract.customer_id ? new ObjectId(contract.customer_id) : null,
+      insurer_id: contract.insurer_id ? new ObjectId(contract.insurer_id) : null,
+      product_id: contract.product_id ? new ObjectId(contract.product_id) : null,
+      customer_name: contract.customer_name || '',
+      product_name: contract.product_name || '',
+      contract_date: contract.contract_date || null,
+      policy_number: contract.policy_number,
+      premium: Number(contract.premium) || 0,
+      payment_day: contract.payment_day ? Number(contract.payment_day) : null,
+      payment_cycle: contract.payment_cycle || null,
+      payment_period: contract.payment_period || null,
+      insured_person: contract.insured_person || null,
+      payment_status: contract.payment_status || null,
+      meta: {
+        created_at: now,
+        updated_at: now,
+        created_by: contract.agent_id,
+        source: contract.source || 'manual'
+      }
+    };
+
+    const result = await db.collection(CONTRACTS_COLLECTION).insertOne(newContract);
+
+    res.json({
+      success: true,
+      message: '계약이 등록되었습니다.',
+      data: { ...newContract, _id: result.insertedId }
+    });
+
+  } catch (error) {
+    console.error('계약 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts/bulk
+ * 일괄 계약 등록 (Excel Import용)
+ */
+app.post('/api/contracts/bulk', async (req, res) => {
+  try {
+    const { contracts, agent_id } = req.body;
+
+    if (!agent_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'agent_id는 필수입니다.'
+      });
+    }
+
+    if (!Array.isArray(contracts) || contracts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '계약 데이터가 비어있습니다.'
+      });
+    }
+
+    const now = utcNowDate();
+    const agentObjectId = new ObjectId(agent_id);
+
+    // 고객 목록 조회 (이름으로 매칭)
+    const customers = await db.collection('customers').find({}).toArray();
+    const customerMap = new Map();
+    customers.forEach(c => {
+      const name = c.personal_info?.name?.trim().toLowerCase();
+      if (name) customerMap.set(name, c._id);
+    });
+
+    // 상품 목록 조회 (상품명으로 매칭)
+    const products = await db.collection(INSURANCE_PRODUCTS_COLLECTION).find({}).toArray();
+    const productMap = new Map();
+    products.forEach(p => {
+      const name = p.productName?.trim().toLowerCase();
+      if (name) productMap.set(name, p._id);
+    });
+
+    // 기존 증권번호 조회 (중복 체크용)
+    const existingPolicyNumbers = new Set();
+    const existingContracts = await db.collection(CONTRACTS_COLLECTION)
+      .find({ agent_id: agentObjectId }, { projection: { policy_number: 1 } })
+      .toArray();
+    existingContracts.forEach(c => {
+      if (c.policy_number) existingPolicyNumbers.add(c.policy_number);
+    });
+
+    const toInsert = [];
+    const skipped = [];
+    const errors = [];
+
+    for (const contract of contracts) {
+      // 증권번호 중복 체크
+      if (!contract.policy_number) {
+        errors.push({ contract, reason: '증권번호 누락' });
+        continue;
+      }
+
+      if (existingPolicyNumbers.has(contract.policy_number)) {
+        skipped.push({ contract, reason: '이미 존재하는 증권번호' });
+        continue;
+      }
+
+      // FK 매칭
+      const customerName = contract.customer_name?.trim().toLowerCase();
+      const productName = contract.product_name?.trim().toLowerCase();
+      const customerId = customerMap.get(customerName) || null;
+      const productId = productMap.get(productName) || null;
+
+      const newContract = {
+        agent_id: agentObjectId,
+        customer_id: customerId,
+        insurer_id: null,
+        product_id: productId,
+        customer_name: contract.customer_name || '',
+        product_name: contract.product_name || '',
+        contract_date: contract.contract_date || null,
+        policy_number: contract.policy_number,
+        premium: Number(contract.premium) || 0,
+        payment_day: contract.payment_day ? Number(contract.payment_day) : null,
+        payment_cycle: contract.payment_cycle || null,
+        payment_period: contract.payment_period || null,
+        insured_person: contract.insured_person || null,
+        payment_status: contract.payment_status || null,
+        meta: {
+          created_at: now,
+          updated_at: now,
+          created_by: agent_id,
+          source: 'excel_import'
+        }
+      };
+
+      toInsert.push(newContract);
+      existingPolicyNumbers.add(contract.policy_number); // 현재 배치 내 중복 방지
+    }
+
+    let insertedCount = 0;
+    if (toInsert.length > 0) {
+      const result = await db.collection(CONTRACTS_COLLECTION).insertMany(toInsert);
+      insertedCount = result.insertedCount;
+    }
+
+    res.json({
+      success: true,
+      message: `${insertedCount}건 등록, ${skipped.length}건 건너뜀, ${errors.length}건 오류`,
+      data: {
+        insertedCount,
+        skippedCount: skipped.length,
+        errorCount: errors.length,
+        skipped: skipped.slice(0, 10), // 처음 10개만 반환
+        errors: errors.slice(0, 10)
+      }
+    });
+
+  } catch (error) {
+    console.error('계약 일괄 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 일괄 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/contracts/:id
+ * 계약 수정
+ */
+app.put('/api/contracts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 계약 ID입니다.'
+      });
+    }
+
+    delete updates._id;
+    delete updates.meta;
+
+    // ObjectId 필드 변환
+    if (updates.customer_id) updates.customer_id = new ObjectId(updates.customer_id);
+    if (updates.product_id) updates.product_id = new ObjectId(updates.product_id);
+    if (updates.insurer_id) updates.insurer_id = new ObjectId(updates.insurer_id);
+
+    const result = await db.collection(CONTRACTS_COLLECTION).updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...updates,
+          'meta.updated_at': utcNowDate()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '계약을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '계약이 수정되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('계약 수정 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 수정에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/contracts/:id
+ * 계약 삭제
+ */
+app.delete('/api/contracts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않은 계약 ID입니다.'
+      });
+    }
+
+    const result = await db.collection(CONTRACTS_COLLECTION).deleteOne({
+      _id: new ObjectId(id)
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '계약을 찾을 수 없습니다.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: '계약이 삭제되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('계약 삭제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/contracts/bulk
+ * 계약 일괄 삭제
+ */
+app.delete('/api/contracts/bulk', async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '삭제할 계약 ID 목록이 필요합니다.'
+      });
+    }
+
+    const objectIds = ids.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+
+    if (objectIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '유효한 계약 ID가 없습니다.'
+      });
+    }
+
+    const result = await db.collection(CONTRACTS_COLLECTION).deleteMany({
+      _id: { $in: objectIds }
+    });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount}건 삭제되었습니다.`,
+      deletedCount: result.deletedCount
+    });
+
+  } catch (error) {
+    console.error('계약 일괄 삭제 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '계약 일괄 삭제에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
 // ==================== MongoDB 연결 & 서버 시작 ====================
 
 // 고객 관계 관리 라우트 설정
