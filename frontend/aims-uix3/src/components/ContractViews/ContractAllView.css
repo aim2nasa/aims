@@ -1,6 +1,6 @@
 /**
  * ContractAllView Styles
- * 전체계약 뷰 스타일
+ * 전체계약 뷰 스타일 - DocumentLibraryView 패턴
  */
 
 .contract-all-view {
@@ -11,13 +11,17 @@
   overflow: hidden;
 }
 
-/* 결과 헤더 */
+/* === 결과 헤더 === */
 .contract-result-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-2) 0;
-  margin-bottom: var(--spacing-2);
+  justify-content: space-between;
+  padding: 0 4px 4px 4px;
+  border-bottom: 1px solid var(--color-ios-separator-subtle-light);
+}
+
+html[data-theme="dark"] .contract-result-header {
+  border-bottom-color: var(--color-ios-separator-subtle-dark);
 }
 
 .contract-result-header .result-count {
@@ -25,6 +29,8 @@
   align-items: center;
   gap: var(--spacing-2);
   font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  font-weight: 500;
   color: var(--color-ios-text-secondary-light);
 }
 
@@ -32,7 +38,7 @@ html[data-theme="dark"] .contract-result-header .result-count {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 새로고침 버튼 */
+/* === 새로고침 버튼 === */
 .refresh-icon-button {
   display: flex;
   align-items: center;
@@ -53,99 +59,233 @@ html[data-theme="dark"] .refresh-icon-button {
 }
 
 .refresh-icon-button:hover {
-  background: var(--color-ios-bg-tertiary-light);
+  background: transparent;
   color: var(--color-ios-text-secondary-light);
+  transform: scale(1.1);
 }
 
 html[data-theme="dark"] .refresh-icon-button:hover {
-  background: var(--color-ios-bg-tertiary-dark);
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 계약 목록 */
+/* === 계약 목록 === */
 .contract-list {
+  min-height: 0; /* 🔥 FIX: flex item이 parent를 넘지 않도록 */
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;  /* 수평 스크롤 활성화 */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 4px;
 }
 
-/* 컬럼 헤더 */
+/* === 스크롤바 === */
+.contract-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contract-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contract-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+/* === 🍎 COLUMN HEADER: macOS Finder-style === */
 .contract-list-header {
   display: grid;
   grid-template-columns:
-    minmax(80px, 1fr)    /* 고객명 */
-    minmax(150px, 2fr)   /* 상품명 */
+    100px                /* 고객명 */
+    minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     100px                /* 증권번호 */
     100px                /* 보험료 */
     70px                 /* 납입주기 */
     80px;                /* 납입상태 */
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  background: var(--color-ios-bg-secondary-light);
-  border-radius: 8px;
-  margin-bottom: var(--spacing-1);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 32px;
+  min-width: 850px;      /* 최소 너비 - 수평 스크롤 트리거 */
+  background: #f5f6f7;   /* 완전 불투명 배경 */
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  font-size: var(--font-size-caption-1); /* 12px */
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
 
 html[data-theme="dark"] .contract-list-header {
-  background: var(--color-ios-bg-secondary-dark);
+  background: #374151;   /* 완전 불투명 다크 배경 */
+  border-bottom-color: var(--color-ios-separator-dark);
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 .contract-list-header > div {
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-caption-1);
-  font-weight: 500;
-  color: var(--color-ios-text-secondary-light);
+  gap: 4px;
+  min-width: 0;
 }
 
-html[data-theme="dark"] .contract-list-header > div {
-  color: var(--color-ios-text-secondary-dark);
+.contract-list-header > div > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
+/* 헤더 아이콘 */
+.contract-list-header .header-icon-svg {
+  flex-shrink: 0;
+}
+
+/* 🍎 SORTABLE HEADER: 클릭 가능한 칼럼 */
 .header-sortable {
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
 }
 
 .header-sortable:hover {
-  color: var(--color-ios-text-primary-light);
+  background-color: var(--color-ios-bg-tertiary-light);
 }
 
 html[data-theme="dark"] .header-sortable:hover {
-  color: var(--color-ios-text-primary-dark);
+  background-color: var(--color-ios-bg-tertiary-dark);
 }
 
-.sort-icon {
-  font-size: 10px;
-  opacity: 0.6;
+.header-sortable:active {
+  background-color: var(--color-ios-bg-hover-light);
 }
 
+html[data-theme="dark"] .header-sortable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
+.sort-indicator {
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: sort indicators */
+  font-family: var(--font-family-text);
+  font-weight: 600;
+  margin-left: 2px;
+  color: var(--color-primary-600);
+  opacity: 0.9;
+}
+
+/* 단일 방향 정렬 인디케이터 - 선택된 컬럼 강조 */
+.sort-indicator:not(.sort-indicator--both) {
+  color: var(--color-sort-indicator-active); /* 선택된 정렬 컬럼 강조 */
+  font-weight: 700;
+  opacity: 1;
+}
+
+/* 양방향 정렬 인디케이터 - 세로로 쌓기 */
+.sort-indicator--both {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 0.6;
+  margin-left: 2px;
+  gap: 2px;
+}
+
+.sort-indicator--both .sort-arrow {
+  display: block;
+  font-size: var(--font-size-caption-2); /* 11px */
+  line-height: 0.6;
+  height: 6px;
+}
+
+html[data-theme="dark"] .sort-indicator {
+  color: var(--color-primary-300);
+}
+
+.header-sortable:hover .sort-indicator {
+  opacity: 1;
+}
+
+/* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
+.header-customer .header-icon-svg {
+  color: var(--color-icon-blue);
+}
+
+.header-product .header-icon-svg {
+  color: var(--color-icon-purple);
+}
+
+.header-date .header-icon-svg {
+  color: var(--color-icon-green);
+}
+
+.header-policy .header-icon-svg {
+  color: var(--color-icon-orange);
+}
+
+.header-premium .header-icon-svg {
+  color: var(--color-icon-yellow);
+}
+
+.header-cycle .header-icon-svg {
+  color: var(--color-icon-teal);
+}
+
+.header-status .header-icon-svg {
+  color: var(--color-icon-green);
+}
+
+/* 정렬 방향 */
 .header-premium,
 .header-policy {
   justify-content: flex-end;
 }
 
-/* 계약 행 */
+.header-cycle,
+.header-status {
+  justify-content: center;
+}
+
+/* === 계약 행 === */
 .contract-item {
   display: grid;
   grid-template-columns:
-    minmax(80px, 1fr)    /* 고객명 */
-    minmax(150px, 2fr)   /* 상품명 */
+    100px                /* 고객명 */
+    minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     100px                /* 증권번호 */
     100px                /* 보험료 */
     70px                 /* 납입주기 */
     80px;                /* 납입상태 */
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: 6px;
-  cursor: default;
-  transition: background 0.15s ease-out;
+  gap: 12px;
+  align-items: center;
+  min-width: 850px;      /* 헤더와 동일 - 수평 스크롤 */
+  height: 32px;
+  padding: 6px 12px;
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+html[data-theme="dark"] .contract-item {
+  background: var(--color-ios-bg-primary-dark);
 }
 
 .contract-item:hover {
@@ -190,7 +330,7 @@ html[data-theme="dark"] .contract-product {
   text-align: center;
 }
 
-/* 납입상태 */
+/* === 납입상태 === */
 .contract-status {
   text-align: center;
   padding: 2px 8px;
@@ -229,7 +369,7 @@ html[data-theme="dark"] .contract-status--default {
   color: var(--color-gray-400);
 }
 
-/* 로딩 */
+/* === 로딩 === */
 .contract-loading {
   display: flex;
   flex-direction: column;
@@ -262,7 +402,7 @@ html[data-theme="dark"] .loading-spinner {
   to { transform: rotate(360deg); }
 }
 
-/* 빈 상태 */
+/* === 빈 상태 === */
 .contract-empty {
   display: flex;
   flex-direction: column;
@@ -287,7 +427,7 @@ html[data-theme="dark"] .contract-empty {
   opacity: 0.7;
 }
 
-/* 에러 */
+/* === 에러 === */
 .contract-error {
   display: flex;
   flex-direction: column;
@@ -307,28 +447,182 @@ html[data-theme="dark"] .contract-error {
   margin: 0;
 }
 
-/* 페이지네이션 */
+/* === PAGINATION - iOS Style === */
+
 .contract-pagination {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) 0;
-  border-top: 1px solid var(--color-ios-separator-light);
-  margin-top: var(--spacing-2);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-ios-separator-subtle-light);
 }
 
 html[data-theme="dark"] .contract-pagination {
-  border-top-color: var(--color-ios-separator-dark);
+  border-top-color: var(--color-ios-separator-subtle-dark);
 }
 
+/* 🍎 PAGINATION SPACER */
+.pagination-spacer {
+  flex: 1;
+}
+
+.pagination-spacer-single {
+  height: 53px; /* pagination 높이와 동일 */
+}
+
+/* 🍎 PAGINATION CONTROLS - Center group */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 🍎 PAGINATION BUTTONS - Apple iOS Style */
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-ios-text-primary-light);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-theme="dark"] .pagination-button {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: transparent;
+}
+
+.pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-700);
+  transform: scale(1.15);
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) {
+  background-color: transparent;
+}
+
+html[data-theme="dark"] .pagination-button:hover:not(:disabled) .pagination-arrow {
+  color: var(--color-primary-300);
+  transform: scale(1.15);
+}
+
+.pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-tertiary-light);
+  transform: scale(0.96);
+}
+
+html[data-theme="dark"] .pagination-button:active:not(:disabled) {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* 🍎 PAGINATION ARROW - Large and Clear */
+.pagination-arrow {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  color: inherit;
+  -webkit-user-select: none;
+  user-select: none;
+  display: inline-block;
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .pagination-arrow {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-button:disabled .pagination-arrow {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+/* 🍎 PAGINATION ARROW CLICKED STATE - Apple Subtle Animation */
+.pagination-arrow--clicked {
+  color: var(--color-primary-700);
+}
+
+html[data-theme="dark"] .pagination-arrow--clicked {
+  color: var(--color-primary-300);
+}
+
+/* Direction-specific animations */
+.pagination-button--prev .pagination-arrow--clicked {
+  transform: translateX(-2px) scale(1.05);
+}
+
+.pagination-button--next .pagination-arrow--clicked {
+  transform: translateX(2px) scale(1.05);
+}
+
+/* 🍎 PAGINATION INFO */
 .pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  font-weight: 500;
   color: var(--color-ios-text-secondary-light);
   min-width: 60px;
-  text-align: center;
+  justify-content: center;
 }
 
 html[data-theme="dark"] .pagination-info {
   color: var(--color-ios-text-secondary-dark);
+}
+
+/* === 반응형 === */
+@media (max-width: 768px) {
+  .contract-list-header,
+  .contract-item {
+    grid-template-columns:
+      minmax(60px, 1fr)    /* 고객명 */
+      minmax(100px, 1.5fr) /* 상품명 */
+      80px                 /* 계약일 */
+      80px                 /* 보험료 */
+      60px;                /* 납입상태 */
+  }
+
+  .header-policy,
+  .header-cycle,
+  .contract-policy,
+  .contract-cycle {
+    display: none;
+  }
+}
+
+/* === 접근성 감소 모션 === */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+
+  .pagination-button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .pagination-arrow {
+    transition: none;
+  }
 }

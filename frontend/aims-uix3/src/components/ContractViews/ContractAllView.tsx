@@ -3,7 +3,7 @@
  * @since 1.0.0
  *
  * 전체계약 뷰
- * AllCustomersView 패턴 기반 구현
+ * DocumentLibraryView 패턴 기반 구현
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
@@ -39,6 +39,10 @@ export default function ContractAllView({
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 50
+
+  // 페이지네이션 클릭 애니메이션 상태
+  const [prevArrowClicked, setPrevArrowClicked] = useState(false)
+  const [nextArrowClicked, setNextArrowClicked] = useState(false)
 
   // 데이터 로드
   const loadContracts = useCallback(async () => {
@@ -133,6 +137,23 @@ export default function ContractAllView({
     }
   }
 
+  // 페이지 이동 핸들러
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setPrevArrowClicked(true)
+      setCurrentPage(prev => prev - 1)
+      setTimeout(() => setPrevArrowClicked(false), 150)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (currentPage < pagination.totalPages) {
+      setNextArrowClicked(true)
+      setCurrentPage(prev => prev + 1)
+      setTimeout(() => setNextArrowClicked(false), 150)
+    }
+  }
+
   // 보험료 포맷
   const formatPremium = (premium: number) => {
     return premium.toLocaleString('ko-KR') + '원'
@@ -148,12 +169,23 @@ export default function ContractAllView({
     }
   }
 
-  // 정렬 아이콘
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <span className="sort-icon">⇅</span>
+  // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
+  const renderSortIndicator = (field: SortField) => {
+    if (sortField === field) {
+      // 현재 정렬 중인 컬럼: 단일 화살표
+      return (
+        <span className="sort-indicator">
+          {sortDirection === 'asc' ? '▲' : '▼'}
+        </span>
+      )
     }
-    return <span className="sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+    // 정렬되지 않은 컬럼: 양방향 화살표
+    return (
+      <span className="sort-indicator sort-indicator--both">
+        <span className="sort-arrow">▲</span>
+        <span className="sort-arrow">▼</span>
+      </span>
+    )
   }
 
   const isEmpty = contracts.length === 0 && !isLoading
@@ -237,31 +269,60 @@ export default function ContractAllView({
           {!isEmpty && !isLoading && (
             <div className="contract-list-header">
               <div className="header-customer header-sortable" onClick={() => handleColumnSort('customer_name')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                </svg>
                 <span>고객명</span>
-                {renderSortIcon('customer_name')}
+                {renderSortIndicator('customer_name')}
               </div>
               <div className="header-product header-sortable" onClick={() => handleColumnSort('product_name')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 6h6M5 8h6M5 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
                 <span>상품명</span>
-                {renderSortIcon('product_name')}
+                {renderSortIndicator('product_name')}
               </div>
               <div className="header-date header-sortable" onClick={() => handleColumnSort('contract_date')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M2 6h12" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
                 <span>계약일</span>
-                {renderSortIcon('contract_date')}
+                {renderSortIndicator('contract_date')}
               </div>
               <div className="header-policy header-sortable" onClick={() => handleColumnSort('policy_number')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <path d="M4 2h8l2 2v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 7h6M5 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
                 <span>증권번호</span>
-                {renderSortIcon('policy_number')}
+                {renderSortIndicator('policy_number')}
               </div>
               <div className="header-premium header-sortable" onClick={() => handleColumnSort('premium')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 4v8M6 6h4M6 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
                 <span>보험료</span>
-                {renderSortIcon('premium')}
+                {renderSortIndicator('premium')}
               </div>
               <div className="header-cycle">
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 4v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
                 <span>납입주기</span>
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('payment_status')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 <span>납입상태</span>
-                {renderSortIcon('payment_status')}
+                {renderSortIndicator('payment_status')}
               </div>
             </div>
           )}
@@ -287,26 +348,44 @@ export default function ContractAllView({
         {/* 페이지네이션 */}
         {pagination.totalPages > 1 && (
           <div className="contract-pagination">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              이전
-            </Button>
-            <span className="pagination-info">
-              {currentPage} / {pagination.totalPages}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-              disabled={currentPage === pagination.totalPages}
-            >
-              다음
-            </Button>
+            {/* 왼쪽 여백 */}
+            <div className="pagination-spacer"></div>
+
+            {/* 중앙 컨트롤 */}
+            <div className="pagination-controls">
+              <button
+                type="button"
+                className="pagination-button pagination-button--prev"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                aria-label="이전 페이지"
+              >
+                <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>‹</span>
+              </button>
+
+              <span className="pagination-info">
+                {currentPage} / {pagination.totalPages}
+              </span>
+
+              <button
+                type="button"
+                className="pagination-button pagination-button--next"
+                onClick={handleNextPage}
+                disabled={currentPage === pagination.totalPages}
+                aria-label="다음 페이지"
+              >
+                <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>›</span>
+              </button>
+            </div>
+
+            {/* 오른쪽 여백 */}
+            <div className="pagination-spacer"></div>
           </div>
+        )}
+
+        {/* 페이지가 1개일 때 빈 공간 유지 */}
+        {pagination.totalPages <= 1 && !isEmpty && !isLoading && (
+          <div className="pagination-spacer-single"></div>
         )}
       </div>
     </CenterPaneView>
