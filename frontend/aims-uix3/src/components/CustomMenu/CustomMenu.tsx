@@ -105,7 +105,7 @@ const MenuIcons = {
   ),
   ContractImport: () => (
     <SFSymbol
-      name="arrow-right-square"
+      name="tablecells"
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
