@@ -31,13 +31,18 @@
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-/* 아이콘 스타일 */
+/* 아이콘 스타일 - CustomMenu와 동일한 크기 규정 적용 */
 .user-profile-menu-item__icon {
   width: 17px;
   height: 17px;
   flex-shrink: 0;
-  font-size: var(--font-size-body); /* 16px - FONT_SIZE_STANDARDS.md: menu icons */
   color: var(--color-text-primary);
+}
+
+/* SF Symbol 아이콘 크기 통일 (CustomMenu 측정값: 16.9px) */
+.user-profile-menu-item .sf-symbol,
+.user-profile-menu-item .sf-symbol__shape {
+  font-size: 16.9px;
 }
 
 /* 아이콘 색상 - CustomMenu와 동일한 iOS 색상 */
