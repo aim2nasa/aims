@@ -25,7 +25,8 @@ import {
   type CellValue,
   type ValidationResult,
   type ProductMatchResult,
-  type InsuranceProduct
+  type InsuranceProduct,
+  type ValidationType
 } from '@aims/excel-refiner-core'
 import { ProductSearchModal } from './ProductSearchModal'
 import './ExcelRefiner.css'
@@ -416,6 +417,148 @@ export function ExcelRefiner() {
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
   }, [])
+
+  // 필수컬럼검증 (고객명, 상품명, 계약일, 증권번호 순차 검증)
+  const handleValidateAllRequired = useCallback(async () => {
+    if (!currentSheet) return
+
+    // 검증 가능한 컬럼 찾기 (순서: 고객명 → 상품명 → 계약일 → 증권번호)
+    const requiredTypes: Array<{ type: ValidationType; label: string }> = [
+      { type: 'customerName', label: '고객명' },
+      { type: 'productName', label: '상품명' },
+      { type: 'contractDate', label: '계약일' },
+      { type: 'policyNumber', label: '증권번호' }
+    ]
+
+    const columnsToValidate: Array<{ colIndex: number; columnName: string; type: ValidationType; label: string }> = []
+
+    // 각 타입별로 컬럼 찾기
+    requiredTypes.forEach(({ type, label }) => {
+      const colIndex = currentSheet.columns.findIndex(col => getValidationType(col) === type)
+      if (colIndex !== -1) {
+        const columnName = currentSheet.columns[colIndex] as string
+        columnsToValidate.push({ colIndex, columnName, type, label })
+      }
+    })
+
+    if (columnsToValidate.length === 0) {
+      setActionLog('⚠️ 검증 가능한 필수 컬럼이 없습니다.')
+      return
+    }
+
+    // 범례 필터 초기화
+    setProductStatusFilter(null)
+
+    // 결과 요약을 위한 변수
+    const results: Array<{ label: string; hasIssues: boolean; issueCount: number }> = []
+
+    // 순차적으로 검증 실행
+    for (const { colIndex, columnName, type, label } of columnsToValidate) {
+      // 이미 검증된 컬럼이면 건너뛰기
+      if (validatingColumns.has(colIndex)) {
+        // 기존 결과에서 이슈 수 가져오기
+        if (type === 'productName' && productMatchResult) {
+          results.push({ label, hasIssues: productMatchResult.unmatched.length > 0, issueCount: productMatchResult.unmatched.length })
+        } else {
+          const existingResult = columnValidationResults.get(colIndex)
+          if (existingResult) {
+            const issueCount = existingResult.empties.length + existingResult.duplicates.length
+            results.push({ label, hasIssues: issueCount > 0, issueCount })
+          }
+        }
+        continue
+      }
+
+      // 검증 중 상태 표시
+      setValidatingInProgress(prev => {
+        const next = new Set(prev)
+        next.add(colIndex)
+        return next
+      })
+
+      // 상품명은 비동기 검증
+      if (type === 'productName') {
+        try {
+          const result = await validateProductNames(currentSheet.data, colIndex)
+          setProductMatchResult(result)
+          setProductNameColumnIndex(colIndex)
+
+          // 수정된 상품명 대체
+          if (result.modified.size > 0) {
+            const idToName = new Map<string, string>()
+            result.productNames.forEach((id, name) => {
+              idToName.set(id, name)
+            })
+
+            setSheets(prev => {
+              const updated = [...prev]
+              const sheet = updated[activeSheetIndex]
+              if (!sheet) return prev
+
+              const newData = [...sheet.data]
+              result.modified.forEach((objectId, rowIndex) => {
+                const originalProductName = idToName.get(objectId)
+                if (originalProductName && newData[rowIndex]) {
+                  newData[rowIndex] = [...newData[rowIndex]]
+                  newData[rowIndex][colIndex] = originalProductName
+                }
+              })
+
+              updated[activeSheetIndex] = {
+                name: sheet.name,
+                columns: sheet.columns,
+                data: newData
+              }
+              return updated
+            })
+          }
+
+          results.push({ label, hasIssues: result.unmatched.length > 0, issueCount: result.unmatched.length })
+        } catch (error) {
+          console.error('상품명 검증 오류:', error)
+          results.push({ label, hasIssues: true, issueCount: -1 })
+        }
+      } else {
+        // 일반 검증 (동기)
+        await new Promise(resolve => setTimeout(resolve, 50)) // UI 업데이트를 위한 짧은 대기
+        const validationResult = validateColumn(currentSheet.data, colIndex, columnName)
+        const issueCount = validationResult.empties.length + validationResult.duplicates.length
+        results.push({ label, hasIssues: issueCount > 0, issueCount })
+      }
+
+      // 검증 완료 - 컬럼 추가
+      setValidatingColumns(prev => {
+        const next = new Set(prev)
+        next.add(colIndex)
+        return next
+      })
+
+      // 검증 중 상태 해제
+      setValidatingInProgress(prev => {
+        const next = new Set(prev)
+        next.delete(colIndex)
+        return next
+      })
+
+      // 마지막으로 클릭된 컬럼 업데이트
+      setLastClickedColumn(colIndex)
+    }
+
+    // 결과 요약 로그 생성
+    const failedCount = results.filter(r => r.hasIssues).length
+    const totalIssues = results.reduce((sum, r) => sum + (r.issueCount > 0 ? r.issueCount : 0), 0)
+
+    const summary = results.map(r => {
+      if (r.issueCount === -1) return `${r.label}(오류)`
+      return r.hasIssues ? `${r.label}(${r.issueCount})` : `${r.label}(✓)`
+    }).join(', ')
+
+    if (failedCount === 0) {
+      setActionLog(`✓ 필수컬럼검증 완료: ${summary}`)
+    } else {
+      setActionLog(`⚠️ 필수컬럼검증: ${summary} - 총 ${totalIssues}건 문제`)
+    }
+  }, [currentSheet, activeSheetIndex, validatingColumns, productMatchResult, columnValidationResults])
 
   // 삭제 모드 토글
   const handleToggleDeleteMode = useCallback(() => {
@@ -837,6 +980,14 @@ export function ExcelRefiner() {
             <div className="excel-refiner__validation">
               <div className="excel-refiner__validation-header">
                 <span>컬럼 헤더를 클릭하여 검증하세요</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleValidateAllRequired}
+                  title="고객명, 상품명, 계약일, 증권번호 컬럼을 순차 검증합니다"
+                >
+                  필수컬럼검증
+                </Button>
                 {validatingColumns.size > 0 && (
                   <>
                     <span className="excel-refiner__validation-column">
