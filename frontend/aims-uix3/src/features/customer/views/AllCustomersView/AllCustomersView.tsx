@@ -8,11 +8,13 @@
  */
 
 import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } from 'react';
-import { SFSymbol, SFSymbolSize } from '../../../../components/SFSymbol';
-import { Dropdown } from '@/shared/ui';
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
+import { Dropdown, Tooltip, Modal } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useDevModeStore } from '@/shared/store/useDevModeStore';
+import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import './AllCustomersView.css';
 
@@ -51,6 +53,18 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     // UI 상태 (새로고침 시 초기화되어도 됨)
     const [prevArrowClicked, setPrevArrowClicked] = useState(false);
     const [nextArrowClicked, setNextArrowClicked] = useState(false);
+
+    // 개발자 모드 상태
+    const { isDevMode } = useDevModeStore();
+
+    // 삭제 모드 상태
+    const [isDeleteMode, setIsDeleteMode] = useState(false);
+    const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+      isOpen: boolean;
+      count: number;
+    }>({ isOpen: false, count: 0 });
 
     // Document-View 패턴: CustomerDocument 구독
     const {
@@ -277,6 +291,65 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
     };
 
+    // 삭제 모드 핸들러
+    const handleToggleDeleteMode = () => {
+      if (isDeleteMode) {
+        // 삭제 모드 종료 시 선택 초기화
+        setSelectedCustomerIds(new Set());
+      }
+      setIsDeleteMode(!isDeleteMode);
+    };
+
+    const handleSelectCustomer = (customerId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setSelectedCustomerIds(prev => {
+        const next = new Set(prev);
+        if (next.has(customerId)) {
+          next.delete(customerId);
+        } else {
+          next.add(customerId);
+        }
+        return next;
+      });
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        const allIds = visibleCustomers.map(c => c._id).filter(Boolean);
+        setSelectedCustomerIds(new Set(allIds));
+      } else {
+        setSelectedCustomerIds(new Set());
+      }
+    };
+
+    const handleDeleteSelected = () => {
+      if (selectedCustomerIds.size === 0) return;
+      setDeleteConfirmModal({
+        isOpen: true,
+        count: selectedCustomerIds.size,
+      });
+    };
+
+    const handleConfirmDelete = async () => {
+      setDeleteConfirmModal({ isOpen: false, count: 0 });
+      setIsDeleting(true);
+
+      try {
+        const ids = Array.from(selectedCustomerIds);
+        await CustomerService.deleteCustomers(ids);
+
+        // 삭제 완료 후 새로고침 및 상태 초기화
+        await refresh();
+        setSelectedCustomerIds(new Set());
+        setIsDeleteMode(false);
+      } catch (error) {
+        console.error('[AllCustomersView] 고객 삭제 실패:', error);
+        alert('고객 삭제 중 오류가 발생했습니다.');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
     const getCustomerIcon = (customer: Customer) => {
       const customerType = customer.insurance_info?.customer_type;
       if (customerType === '법인') {
@@ -407,6 +480,31 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         {!isLoading && (
           <div className="customer-library-result-header">
             <div className="result-count">
+              {/* 개발자 모드일 때만 삭제 버튼 표시 */}
+              {isDevMode && (
+                <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+                  <button
+                    type="button"
+                    className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                    onClick={handleToggleDeleteMode}
+                    aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+                  >
+                    {isDeleteMode ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <SFSymbol
+                        name="trash"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                </Tooltip>
+              )}
+
               <button
                 className={`type-filter-button ${customerTypeFilter === 'all' ? 'active' : ''}`}
                 onClick={() => handleTypeFilterChange('all')}
@@ -428,6 +526,23 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 법인 {customerTypeCounts.corporate}
               </button>
               <span className="type-filter-separator">)</span>
+
+              {/* 삭제 모드일 때 선택 수 및 삭제 버튼 */}
+              {isDeleteMode && (
+                <>
+                  <span className="selected-count-inline">
+                    {selectedCustomerIds.size}개 선택됨
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting || selectedCustomerIds.size === 0}
+                  >
+                    {isDeleting ? '삭제 중...' : '삭제'}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -437,6 +552,17 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
           {/* 컬럼 헤더 */}
           {!isEmpty && !isLoading && (
             <div className="customer-list-header">
+              {/* 삭제 모드일 때 전체 선택 체크박스 */}
+              {isDeleteMode && (
+                <div className="header-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedCustomerIds.size === visibleCustomers.length && visibleCustomers.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    aria-label="전체 선택"
+                  />
+                </div>
+              )}
               <div className="header-icon"></div>
               <div className="header-name header-sortable" onClick={() => handleColumnSort('name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -604,13 +730,28 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             visibleCustomers.map((customer) => (
               <div
                 key={customer._id}
-                className="customer-item"
+                className={`customer-item ${isDeleteMode && selectedCustomerIds.has(customer._id) ? 'customer-item--selected' : ''}`}
                 onClick={() => {
-                  if (onCustomerClick) {
+                  if (isDeleteMode) {
+                    // 삭제 모드에서는 체크박스 토글
+                    handleSelectCustomer(customer._id, { stopPropagation: () => {} } as React.MouseEvent);
+                  } else if (onCustomerClick) {
                     onCustomerClick(customer._id, customer);
                   }
                 }}
               >
+                {/* 삭제 모드일 때 체크박스 */}
+                {isDeleteMode && (
+                  <div className="customer-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomerIds.has(customer._id)}
+                      onChange={() => {}}
+                      onClick={(e) => handleSelectCustomer(customer._id, e)}
+                      aria-label={`${customer.personal_info?.name || '고객'} 선택`}
+                    />
+                  </div>
+                )}
                 <div className="customer-icon">{getCustomerIcon(customer)}</div>
                 <span className="customer-name">{customer.personal_info?.name || '이름 없음'}</span>
                 <span className="customer-birth">{getCustomerBirthDate(customer)}</span>
@@ -679,6 +820,33 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             {pagination.totalPages <= 1 && <div className="pagination-spacer"></div>}
           </div>
         )}
+
+        {/* 삭제 확인 모달 */}
+        <Modal
+          visible={deleteConfirmModal.isOpen}
+          onClose={() => setDeleteConfirmModal({ isOpen: false, count: 0 })}
+          title="고객 삭제"
+          size="sm"
+        >
+          <div className="delete-confirm-content">
+            <p>선택한 <strong>{deleteConfirmModal.count}명</strong>의 고객을 삭제하시겠습니까?</p>
+            <p className="delete-warning">이 작업은 되돌릴 수 없습니다.</p>
+            <div className="delete-confirm-actions">
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteConfirmModal({ isOpen: false, count: 0 })}
+              >
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+              >
+                삭제
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }

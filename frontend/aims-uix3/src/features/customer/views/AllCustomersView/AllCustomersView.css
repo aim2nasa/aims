@@ -959,3 +959,188 @@ html[data-theme="dark"] .pagination-total {
     transform: none;
   }
 }
+
+/* === 🍎 DELETE MODE: 삭제 모드 스타일 === */
+
+/* 삭제 모드 토글 버튼 */
+.customer-library-container .edit-mode-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+html[data-theme="dark"] .customer-library-container .edit-mode-icon-button {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.customer-library-container .edit-mode-icon-button:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-ios-text-secondary-light);
+}
+
+html[data-theme="dark"] .customer-library-container .edit-mode-icon-button:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.customer-library-container .edit-mode-icon-button--active {
+  background: var(--color-success-100);
+  color: var(--color-success-700);
+}
+
+html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active {
+  background: var(--color-success-900);
+  color: var(--color-success-300);
+}
+
+.customer-library-container .edit-mode-icon-button--active:hover {
+  background: var(--color-success-200);
+  color: var(--color-success-800);
+}
+
+html[data-theme="dark"] .customer-library-container .edit-mode-icon-button--active:hover {
+  background: var(--color-success-800);
+  color: var(--color-success-200);
+}
+
+/* 선택된 개수 인라인 표시 */
+.customer-library-container .selected-count-inline {
+  font-size: var(--font-size-caption-1);
+  font-family: var(--font-family-text);
+  font-weight: 500;
+  color: var(--color-error-600);
+  margin-left: 12px;
+  margin-right: 8px;
+}
+
+html[data-theme="dark"] .customer-library-container .selected-count-inline {
+  color: var(--color-error-400);
+}
+
+/* 헤더 체크박스 */
+.header-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.header-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-600);
+}
+
+/* 고객 행 체크박스 */
+.customer-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.customer-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary-600);
+}
+
+/* 삭제 모드일 때 헤더 그리드 조정 */
+.customer-list-header:has(.header-checkbox) {
+  grid-template-columns:
+    24px           /* 체크박스 */
+    24px           /* 아이콘 */
+    minmax(100px, 1.5fr)  /* 이름 */
+    110px          /* 생년월일 */
+    60px           /* 성별 */
+    120px          /* 전화번호 */
+    minmax(150px, 2fr)  /* 이메일 */
+    minmax(150px, 2fr)  /* 주소 */
+    80px           /* 유형 */
+    80px           /* 상태 */
+    160px;         /* 등록일 */
+}
+
+/* 삭제 모드일 때 고객 행 그리드 조정 */
+.customer-item:has(.customer-checkbox) {
+  grid-template-columns:
+    24px           /* 체크박스 */
+    24px           /* 아이콘 */
+    minmax(100px, 1.5fr)  /* 이름 */
+    110px          /* 생년월일 */
+    60px           /* 성별 */
+    120px          /* 전화번호 */
+    minmax(150px, 2fr)  /* 이메일 */
+    minmax(150px, 2fr)  /* 주소 */
+    80px           /* 유형 */
+    80px           /* 상태 */
+    160px;         /* 등록일 */
+}
+
+/* 선택된 고객 행 스타일 */
+.customer-item--selected {
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+}
+
+html[data-theme="dark"] .customer-item--selected {
+  background: var(--color-primary-900);
+  border: 1px solid var(--color-primary-700);
+}
+
+.customer-item--selected:hover {
+  background: var(--color-primary-100);
+}
+
+html[data-theme="dark"] .customer-item--selected:hover {
+  background: var(--color-primary-800);
+}
+
+/* 삭제 확인 모달 */
+.delete-confirm-content {
+  padding: 16px 0;
+  text-align: center;
+}
+
+.delete-confirm-content p {
+  margin: 0 0 8px 0;
+  font-family: var(--font-family-text);
+  font-size: var(--font-size-body);
+  color: var(--color-ios-text-primary-light);
+}
+
+html[data-theme="dark"] .delete-confirm-content p {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.delete-confirm-content .delete-warning {
+  font-size: var(--font-size-caption-1);
+  color: var(--color-error-600);
+  margin-bottom: 20px;
+}
+
+html[data-theme="dark"] .delete-confirm-content .delete-warning {
+  color: var(--color-error-400);
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
