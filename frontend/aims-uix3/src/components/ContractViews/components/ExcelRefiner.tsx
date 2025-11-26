@@ -416,6 +416,7 @@ export function ExcelRefiner() {
     setValidatingColumns(new Set())
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
+    setActionLog(null)
   }, [])
 
   // 필수컬럼검증 (고객명, 상품명, 계약일, 증권번호 순차 검증)
