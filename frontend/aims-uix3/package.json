@@ -26,6 +26,7 @@
     "release:major": "npm version major -m 'chore: 버전 %s' && git push --follow-tags"
   },
   "dependencies": {
+    "@aims/excel-refiner-core": "*",
     "@tanstack/react-query": "^5.87.4",
     "axios": "^1.13.2",
     "pdfjs-dist": "^5.3.93",

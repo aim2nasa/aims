@@ -10,8 +10,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
-import { fetchInsuranceProducts } from '../hooks/useValidation'
-import type { InsuranceProduct } from '../types/excel'
+import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core'
 import './ProductSearchModal.css'
 
 interface ProductSearchModalProps {

@@ -10,9 +10,23 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
-import { parseExcel, exportExcel, isValidExcelFile, getRefinedFileName, cellToString } from '../utils/excel'
-import { validateColumn, getValidationType, getRowStatus, getProblematicRows, validateProductNames } from '../hooks/useValidation'
-import type { SheetData, CellValue, ValidationResult, ProductMatchResult, InsuranceProduct } from '../types/excel'
+import {
+  parseExcel,
+  exportExcel,
+  isValidExcelFile,
+  getRefinedFileName,
+  cellToString,
+  validateColumn,
+  getValidationType,
+  getRowStatus,
+  getProblematicRows,
+  validateProductNames,
+  type SheetData,
+  type CellValue,
+  type ValidationResult,
+  type ProductMatchResult,
+  type InsuranceProduct
+} from '@aims/excel-refiner-core'
 import { ProductSearchModal } from './ProductSearchModal'
 import './ExcelRefiner.css'
 

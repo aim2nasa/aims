@@ -1,0 +1,16 @@
+{
+  "name": "aims-frontend",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "excel-refiner",
+    "aims-uix3"
+  ],
+  "scripts": {
+    "dev:excel-refiner": "npm -w excel-refiner run dev",
+    "dev:aims-uix3": "npm -w aims-uix3 run dev",
+    "build:excel-refiner": "npm -w excel-refiner run build",
+    "build:aims-uix3": "npm -w aims-uix3 run build",
+    "build:all": "npm -w excel-refiner run build && npm -w aims-uix3 run build"
+  }
+}

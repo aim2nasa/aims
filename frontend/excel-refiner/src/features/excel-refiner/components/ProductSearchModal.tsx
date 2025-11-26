@@ -5,13 +5,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/shared/ui'
-import { fetchInsuranceProducts } from '../hooks/useValidation'
+import { fetchInsuranceProducts, type InsuranceProduct } from '@aims/excel-refiner-core'
 import './ProductSearchModal.css'
-
-interface InsuranceProduct {
-  _id: string
-  productName: string
-}
 
 interface ProductSearchModalProps {
   isOpen: boolean
