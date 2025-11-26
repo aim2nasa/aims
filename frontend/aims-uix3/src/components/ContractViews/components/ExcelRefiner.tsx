@@ -977,6 +977,9 @@ export function ExcelRefiner() {
               name,
               ...(phone && { mobile_phone: phone })
             },
+            insurance_info: {
+              customer_type: '개인'  // 명시적으로 지정되지 않으면 개인 고객으로 생성
+            },
             contracts: [],
             documents: [],
             consultations: []
