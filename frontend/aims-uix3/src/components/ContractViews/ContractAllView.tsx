@@ -213,11 +213,15 @@ export default function ContractAllView({
     return premium.toLocaleString('ko-KR') + '원'
   }
 
-  // 계약일 포맷
+  // 계약일 포맷 (고정 폭: YYYY. MM. DD.)
   const formatDate = (date: string | null) => {
     if (!date) return '-'
     try {
-      return new Date(date).toLocaleDateString('ko-KR')
+      const d = new Date(date)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}. ${month}. ${day}.`
     } catch {
       return date
     }
