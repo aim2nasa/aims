@@ -426,7 +426,7 @@ export function ExcelRefiner() {
 
   // 필수컬럼검증 (고객명, 상품명, 계약일, 증권번호 순차 검증)
   const handleValidateAllRequired = useCallback(async () => {
-    if (!currentSheet) return
+    if (!currentSheet || isImporting) return
 
     // 검증 가능한 컬럼 찾기 (순서: 고객명 → 상품명 → 계약일 → 증권번호)
     const requiredTypes: Array<{ type: ValidationType; label: string }> = [
@@ -455,32 +455,46 @@ export function ExcelRefiner() {
     // 범례 필터 초기화
     setProductStatusFilter(null)
 
+    // 프로그레스바 초기화
+    setIsImporting(true)
+    setImportProgress({ current: 0, total: columnsToValidate.length, message: '필수컬럼 검증 준비 중...' })
+
     // 결과 요약을 위한 변수
     const results: Array<{ label: string; hasIssues: boolean; issueCount: number }> = []
 
-    // 순차적으로 검증 실행
-    for (const { colIndex, columnName, type, label } of columnsToValidate) {
-      // 이미 검증된 컬럼이면 건너뛰기
-      if (validatingColumns.has(colIndex)) {
-        // 기존 결과에서 이슈 수 가져오기
-        if (type === 'productName' && productMatchResult) {
-          results.push({ label, hasIssues: productMatchResult.unmatched.length > 0, issueCount: productMatchResult.unmatched.length })
-        } else {
-          const existingResult = columnValidationResults.get(colIndex)
-          if (existingResult) {
-            const issueCount = existingResult.empties.length + existingResult.duplicates.length
-            results.push({ label, hasIssues: issueCount > 0, issueCount })
-          }
-        }
-        continue
-      }
+    try {
+      // 순차적으로 검증 실행
+      for (let i = 0; i < columnsToValidate.length; i++) {
+        const { colIndex, columnName, type, label } = columnsToValidate[i]!
 
-      // 검증 중 상태 표시
-      setValidatingInProgress(prev => {
-        const next = new Set(prev)
-        next.add(colIndex)
-        return next
-      })
+        // 프로그레스 업데이트
+        setImportProgress({
+          current: i + 1,
+          total: columnsToValidate.length,
+          message: `${label} 검증 중...`
+        })
+
+        // 이미 검증된 컬럼이면 건너뛰기
+        if (validatingColumns.has(colIndex)) {
+          // 기존 결과에서 이슈 수 가져오기
+          if (type === 'productName' && productMatchResult) {
+            results.push({ label, hasIssues: productMatchResult.unmatched.length > 0, issueCount: productMatchResult.unmatched.length })
+          } else {
+            const existingResult = columnValidationResults.get(colIndex)
+            if (existingResult) {
+              const issueCount = existingResult.empties.length + existingResult.duplicates.length
+              results.push({ label, hasIssues: issueCount > 0, issueCount })
+            }
+          }
+          continue
+        }
+
+        // 검증 중 상태 표시
+        setValidatingInProgress(prev => {
+          const next = new Set(prev)
+          next.add(colIndex)
+          return next
+        })
 
       // 상품명은 비동기 검증
       if (type === 'productName') {
@@ -550,21 +564,25 @@ export function ExcelRefiner() {
       setLastClickedColumn(colIndex)
     }
 
-    // 결과 요약 로그 생성
-    const failedCount = results.filter(r => r.hasIssues).length
-    const totalIssues = results.reduce((sum, r) => sum + (r.issueCount > 0 ? r.issueCount : 0), 0)
+      // 결과 요약 로그 생성
+      const failedCount = results.filter(r => r.hasIssues).length
+      const totalIssues = results.reduce((sum, r) => sum + (r.issueCount > 0 ? r.issueCount : 0), 0)
 
-    const summary = results.map(r => {
-      if (r.issueCount === -1) return `${r.label}(오류)`
-      return r.hasIssues ? `${r.label}(${r.issueCount})` : `${r.label}(✓)`
-    }).join(', ')
+      const summary = results.map(r => {
+        if (r.issueCount === -1) return `${r.label}(오류)`
+        return r.hasIssues ? `${r.label}(${r.issueCount})` : `${r.label}(✓)`
+      }).join(', ')
 
-    if (failedCount === 0) {
-      setActionLog(`✓ 필수컬럼검증 완료: ${summary}`)
-    } else {
-      setActionLog(`⚠️ 필수컬럼검증: ${summary} - 총 ${totalIssues}건 문제`)
+      if (failedCount === 0) {
+        setActionLog(`✓ 필수컬럼검증 완료: ${summary}`)
+      } else {
+        setActionLog(`⚠️ 필수컬럼검증: ${summary} - 총 ${totalIssues}건 문제`)
+      }
+    } finally {
+      setIsImporting(false)
+      setImportProgress(null)
     }
-  }, [currentSheet, activeSheetIndex, validatingColumns, productMatchResult, columnValidationResults])
+  }, [currentSheet, activeSheetIndex, validatingColumns, productMatchResult, columnValidationResults, isImporting])
 
   // 삭제 모드 토글
   const handleToggleDeleteMode = useCallback(() => {
