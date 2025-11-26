@@ -105,6 +105,9 @@ export function ExcelRefiner() {
     customerNames: string[]
   }>({ isOpen: false, customerCount: 0, customerNames: [] })
 
+  // 고객명-연락처 매핑 (계약 가져오기 시 사용)
+  const [customerPhoneMap, setCustomerPhoneMap] = useState<Map<string, string>>(new Map())
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -890,12 +893,25 @@ export function ExcelRefiner() {
       return
     }
 
-    // 고유한 고객명 추출
+    // 연락처 컬럼 찾기
+    const contactColIndex = currentSheet.columns.findIndex(
+      col => col.includes('연락처')
+    )
+
+    // 고유한 고객명 및 연락처 매핑 추출
     const customerNames = new Set<string>()
+    const customerPhoneMap = new Map<string, string>() // 고객명 → 연락처
     currentSheet.data.forEach(row => {
       const name = cellToString(row[customerNameColIndex] as CellValue).trim()
       if (name) {
         customerNames.add(name)
+        // 첫 번째로 발견된 연락처를 사용 (같은 고객이 여러 계약을 가질 수 있음)
+        if (contactColIndex !== -1 && !customerPhoneMap.has(name)) {
+          const phone = cellToString(row[contactColIndex] as CellValue).trim()
+          if (phone) {
+            customerPhoneMap.set(name, phone)
+          }
+        }
       }
     })
 
@@ -905,7 +921,8 @@ export function ExcelRefiner() {
       return
     }
 
-    // 확인 모달 열기
+    // 확인 모달 열기 (customerPhoneMap을 전달하기 위해 state 저장)
+    setCustomerPhoneMap(customerPhoneMap)
     setImportConfirmModal({
       isOpen: true,
       customerCount: uniqueNames.length,
@@ -953,8 +970,13 @@ export function ExcelRefiner() {
         }
 
         try {
+          // 연락처 정보 가져오기
+          const phone = customerPhoneMap.get(name)
           await CustomerService.createCustomer({
-            personal_info: { name },
+            personal_info: {
+              name,
+              ...(phone && { mobile_phone: phone })
+            },
             contracts: [],
             documents: [],
             consultations: []
@@ -1062,7 +1084,7 @@ export function ExcelRefiner() {
       setIsImporting(false)
       setImportProgress(null)
     }
-  }, [importConfirmModal, currentSheet, user])
+  }, [importConfirmModal, currentSheet, user, customerPhoneMap])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
