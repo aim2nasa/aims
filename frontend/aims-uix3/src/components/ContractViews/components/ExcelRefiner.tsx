@@ -959,9 +959,17 @@ export function ExcelRefiner() {
                       if (isInProgress) {
                         thClassName += ' excel-refiner__th--validating'
                       } else if (isValidated) {
-                        thClassName += hasIssues
-                          ? ' excel-refiner__th--validation-error'
-                          : ' excel-refiner__th--validation-success'
+                        // 상품명 칼럼은 미매칭 여부에 따라 error/success 구분
+                        if (type === 'productName' && productMatchResult && productNameColumnIndex === index) {
+                          const hasUnmatched = productMatchResult.unmatched.length > 0
+                          thClassName += hasUnmatched
+                            ? ' excel-refiner__th--validation-error'
+                            : ' excel-refiner__th--validation-success'
+                        } else {
+                          thClassName += hasIssues
+                            ? ' excel-refiner__th--validation-error'
+                            : ' excel-refiner__th--validation-success'
+                        }
                       }
                       if (isSorted) {
                         thClassName += ' excel-refiner__th--sorted'
