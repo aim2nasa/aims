@@ -280,6 +280,14 @@ const CustomMenu = ({
         }
         setExpandedKeys(['customers', 'documents'])
       }, 600)
+
+      // 3단계: 900ms 후 계약관리도 펼침
+      setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 3단계 - 계약관리 추가 펼침')
+        }
+        setExpandedKeys(['customers', 'documents', 'contracts'])
+      }, 900)
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
