@@ -87,6 +87,28 @@ const MenuIcons = {
       size={SFSymbolSize.CALLOUT}
       weight={SFSymbolWeight.MEDIUM}
     />
+  ),
+  // 계약 관리 아이콘
+  Contract: () => (
+    <SFSymbol
+      name="briefcase-fill"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
+  ),
+  ContractAll: () => (
+    <SFSymbol
+      name="tablecells"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
+  ),
+  ContractImport: () => (
+    <SFSymbol
+      name="arrow-right-square"
+      size={SFSymbolSize.CALLOUT}
+      weight={SFSymbolWeight.MEDIUM}
+    />
   )
 }
 
@@ -392,6 +414,44 @@ const CustomMenu = ({
         icon: <span className="menu-icon-green"><MenuIcons.Folder /></span>,
         label: '',
         tooltipTitle: '내 파일 보관함',
+      }
+    ] : []),
+
+    // 계약 관리
+    {
+      key: 'contracts',
+      icon: <span className="menu-icon-blue"><MenuIcons.Contract /></span>,
+      label: collapsed ? '' : '계약 관리',
+      tooltipTitle: '계약 관리',
+      children: collapsed ? undefined : [
+        {
+          key: 'contracts-all',
+          icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
+          label: '전체계약',
+          tooltipTitle: '모든 계약을 보여줍니다',
+        },
+        {
+          key: 'contracts-import',
+          icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
+          label: '계약 가져오기',
+          tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+        }
+      ]
+    },
+
+    // collapsed 상태에서 계약 서브메뉴 표시
+    ...(collapsed ? [
+      {
+        key: 'contracts-all',
+        icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
+        label: '',
+        tooltipTitle: '모든 계약을 보여줍니다',
+      },
+      {
+        key: 'contracts-import',
+        icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
+        label: '',
+        tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
       }
     ] : [])
   ], [collapsed, hasSearchResults, searchResultsCount])

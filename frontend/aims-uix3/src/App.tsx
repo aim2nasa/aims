@@ -28,6 +28,9 @@ const CustomerRegistrationView = lazy(() => import('./components/CustomerViews/C
 const CustomerAllView = lazy(() => import('./components/CustomerViews/CustomerAllView/CustomerAllView'))
 const CustomerRegionalView = lazy(() => import('./components/CustomerViews/CustomerRegionalView/CustomerRegionalView'))
 const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/CustomerRelationshipView/CustomerRelationshipView'))
+const ContractManagementView = lazy(() => import('./components/ContractViews/ContractManagementView'))
+const ContractAllView = lazy(() => import('./components/ContractViews/ContractAllView'))
+const ContractImportView = lazy(() => import('./components/ContractViews/ContractImportView'))
 const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
@@ -416,6 +419,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "customers-all" ||
         activeDocumentView === "customers-regional" ||
         activeDocumentView === "customers-relationship" ||
+        activeDocumentView === "contracts" ||
+        activeDocumentView === "contracts-all" ||
+        activeDocumentView === "contracts-import" ||
         activeDocumentView === "account-settings") {
       setPaginationVisible(false)
       // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
@@ -675,6 +681,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       'documents', 'documents-register', 'documents-library', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
       'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship',
+      // 계약 관리 View들
+      'contracts', 'contracts-all', 'contracts-import',
       // 설정 View들
       'account-settings'
     ]
@@ -1240,6 +1248,29 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           <Suspense fallback={null}>
             <AccountSettingsView
               visible={activeDocumentView === 'account-settings'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          {/* 계약 관리 View 오버레이들 */}
+          <Suspense fallback={null}>
+            <ContractManagementView
+              visible={activeDocumentView === 'contracts'}
+              onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <ContractAllView
+              visible={activeDocumentView === 'contracts-all'}
+              onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <ContractImportView
+              visible={activeDocumentView === 'contracts-import'}
               onClose={closeDocumentView}
             />
           </Suspense>

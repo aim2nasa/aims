@@ -1,0 +1,10 @@
+/**
+ * ContractImportView Styles
+ * 계약 가져오기 뷰 스타일
+ */
+
+.contract-import-view {
+  padding: var(--spacing-6);
+  height: 100%;
+  overflow: auto;
+}

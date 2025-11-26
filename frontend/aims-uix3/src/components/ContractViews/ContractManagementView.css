@@ -1,0 +1,84 @@
+/**
+ * ContractManagementView Styles
+ * 계약 관리 메인 뷰 스타일
+ */
+
+.contract-management-view {
+  padding: var(--spacing-6);
+}
+
+.contract-management-view__menu-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-4);
+  max-width: 600px;
+}
+
+.contract-management-view__menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-out);
+}
+
+.contract-management-view__menu-card:hover {
+  background: var(--color-bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 텍스트 span만 스타일 적용 (아이콘 span 제외) */
+.contract-management-view__menu-card > span:last-child {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* 아이콘 색상 클래스 - CustomMenu.css와 동일한 iOS 색상 사용 */
+.contract-management-view__menu-card .menu-icon-blue {
+  color: var(--color-ios-blue, #007AFF);
+}
+
+.contract-management-view__menu-card .menu-icon-purple {
+  color: var(--color-ios-purple, #AF52DE);
+}
+
+.contract-management-view__menu-card .menu-icon-green {
+  color: var(--color-ios-green, #34C759);
+}
+
+.contract-management-view__menu-card .menu-icon-orange {
+  color: var(--color-icon-doc-register, #FF9500);
+}
+
+.contract-management-view__menu-card .menu-icon-pink {
+  color: var(--color-ios-pink, #FF2D55);
+}
+
+/* CenterPaneView 헤더 아이콘 색상 */
+.menu-icon-blue {
+  color: var(--color-ios-blue, #007AFF);
+}
+
+.menu-icon-purple {
+  color: var(--color-ios-purple, #AF52DE);
+}
+
+.menu-icon-green {
+  color: var(--color-ios-green, #34C759);
+}
+
+.menu-icon-orange {
+  color: var(--color-icon-doc-register, #FF9500);
+}
+
+.menu-icon-pink {
+  color: var(--color-ios-pink, #FF2D55);
+}
