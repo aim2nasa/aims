@@ -40,7 +40,7 @@ export const ContractSchema = z.object({
   contract_date: z.string().nullable(),    // 계약일
   policy_number: z.string(),               // 증권번호 (unique)
   premium: z.number().default(0),          // 보험료 (원)
-  payment_day: z.number().min(1).max(31).nullable(),  // 이체일
+  payment_day: z.string().nullable(),  // 이체일 (원본 텍스트 그대로: 0일, 말일, 15일 등)
   payment_cycle: z.string().nullable(),    // 납입주기 (월납, 연납, 일시납)
   payment_period: z.string().nullable(),   // 납입기간 (10년, 20년, 종신)
   insured_person: z.string().nullable(),   // 피보험자
@@ -63,7 +63,7 @@ export const CreateContractSchema = z.object({
   contract_date: z.string().nullable().optional(),
   policy_number: z.string(),
   premium: z.number().default(0),
-  payment_day: z.number().min(1).max(31).nullable().optional(),
+  payment_day: z.string().nullable().optional(),
   payment_cycle: z.string().nullable().optional(),
   payment_period: z.string().nullable().optional(),
   insured_person: z.string().nullable().optional(),
@@ -82,7 +82,7 @@ export const BulkCreateContractsSchema = z.object({
     contract_date: z.string().nullable().optional(),
     policy_number: z.string(),
     premium: z.number().default(0),
-    payment_day: z.number().min(1).max(31).nullable().optional(),
+    payment_day: z.string().nullable().optional(),
     payment_cycle: z.string().nullable().optional(),
     payment_period: z.string().nullable().optional(),
     insured_person: z.string().nullable().optional(),
@@ -102,7 +102,7 @@ export const UpdateContractSchema = z.object({
   contract_date: z.string().nullable().optional(),
   policy_number: z.string().optional(),
   premium: z.number().optional(),
-  payment_day: z.number().min(1).max(31).nullable().optional(),
+  payment_day: z.string().nullable().optional(),
   payment_cycle: z.string().nullable().optional(),
   payment_period: z.string().nullable().optional(),
   insured_person: z.string().nullable().optional(),

@@ -2043,17 +2043,15 @@ app.post('/api/customers', async (req, res) => {
 
     const result = await db.collection(CUSTOMERS_COLLECTION).insertOne(newCustomer);
 
+    // 생성된 고객 전체 데이터 반환 (프론트엔드 Zod 검증과 호환)
+    const createdCustomer = {
+      _id: result.insertedId.toString(),
+      ...newCustomer
+    };
+
     res.json({
       success: true,
-      data: {
-        customer_id: result.insertedId,
-        customer_name: uniqueName,
-        was_renamed: originalName !== uniqueName,
-        original_name: originalName !== uniqueName ? originalName : undefined,
-        message: originalName !== uniqueName 
-          ? `고객이 성공적으로 등록되었습니다. (이름이 "${originalName}"에서 "${uniqueName}"으로 변경됨)`
-          : '고객이 성공적으로 등록되었습니다.'
-      }
+      data: createdCustomer
     });
   } catch (error) {
     console.error('고객 등록 오류:', error);
@@ -4370,7 +4368,7 @@ app.post('/api/contracts', async (req, res) => {
       contract_date: contract.contract_date || null,
       policy_number: contract.policy_number,
       premium: Number(contract.premium) || 0,
-      payment_day: contract.payment_day ? Number(contract.payment_day) : null,
+      payment_day: contract.payment_day || null,  // 원본 텍스트 그대로 저장
       payment_cycle: contract.payment_cycle || null,
       payment_period: contract.payment_period || null,
       insured_person: contract.insured_person || null,
@@ -4483,7 +4481,7 @@ app.post('/api/contracts/bulk', async (req, res) => {
         contract_date: contract.contract_date || null,
         policy_number: contract.policy_number,
         premium: Number(contract.premium) || 0,
-        payment_day: contract.payment_day ? Number(contract.payment_day) : null,
+        payment_day: contract.payment_day || null,  // 원본 텍스트 그대로 저장
         payment_cycle: contract.payment_cycle || null,
         payment_period: contract.payment_period || null,
         insured_person: contract.insured_person || null,

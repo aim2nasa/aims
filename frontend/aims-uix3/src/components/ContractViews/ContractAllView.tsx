@@ -23,7 +23,7 @@ interface ContractAllViewProps {
   onClose: () => void
 }
 
-type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_cycle' | 'payment_status'
+type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
 const ITEMS_PER_PAGE_OPTIONS = [
@@ -142,9 +142,17 @@ export default function ContractAllView({
           aVal = a.premium || 0
           bVal = b.premium || 0
           break
+        case 'payment_day':
+          aVal = a.payment_day || 0
+          bVal = b.payment_day || 0
+          break
         case 'payment_cycle':
           aVal = a.payment_cycle || ''
           bVal = b.payment_cycle || ''
+          break
+        case 'insured_person':
+          aVal = a.insured_person || ''
+          bVal = b.insured_person || ''
           break
         case 'payment_status':
           aVal = a.payment_status || ''
@@ -539,6 +547,15 @@ export default function ContractAllView({
                 <span>보험료</span>
                 {renderSortIndicator('premium')}
               </div>
+              <div className="header-payment-day header-sortable" onClick={() => handleColumnSort('payment_day')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M2 6h12" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="8" cy="10" r="1.5" fill="currentColor"/>
+                </svg>
+                <span>이체일</span>
+                {renderSortIndicator('payment_day')}
+              </div>
               <div className="header-cycle header-sortable" onClick={() => handleColumnSort('payment_cycle')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
@@ -546,6 +563,15 @@ export default function ContractAllView({
                 </svg>
                 <span>납입주기</span>
                 {renderSortIndicator('payment_cycle')}
+              </div>
+              <div className="header-insured header-sortable" onClick={() => handleColumnSort('insured_person')}>
+                <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
+                  <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
+                  <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z" fill="currentColor"/>
+                  <path d="M12 4l2 2-2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+                </svg>
+                <span>피보험자</span>
+                {renderSortIndicator('insured_person')}
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('payment_status')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -593,7 +619,9 @@ export default function ContractAllView({
               <span className="contract-date">{formatDate(contract.contract_date)}</span>
               <span className="contract-policy">{formatPolicyNumber(contract.policy_number)}</span>
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
+              <span className="contract-payment-day">{contract.payment_day || '-'}</span>
               <span className="contract-cycle">{contract.payment_cycle || '-'}</span>
+              <span className="contract-insured">{contract.insured_person || '-'}</span>
               <span className={`contract-status contract-status--${contract.payment_status === '납입중' ? 'active' : contract.payment_status === '납입완료' ? 'completed' : 'default'}`}>
                 {contract.payment_status || '-'}
               </span>

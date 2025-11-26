@@ -104,10 +104,14 @@ export class CustomerService {
     // 입력 데이터 검증
     const validatedData = CustomerUtils.validateCreateData(data);
 
-    const response = await api.post<unknown>(ENDPOINTS.CUSTOMERS, validatedData);
+    const response = await api.post<{ success: boolean; data: unknown }>(ENDPOINTS.CUSTOMERS, validatedData);
 
-    // 응답 검증
-    return CustomerUtils.validate(response);
+    // 응답에서 data 추출 후 검증
+    const customerData = response && typeof response === 'object' && 'data' in response
+      ? response.data
+      : response;
+
+    return CustomerUtils.validate(customerData);
   }
 
   /**

@@ -972,7 +972,7 @@ export function ExcelRefiner() {
         try {
           // 연락처 정보 가져오기
           const phone = customerPhoneMap.get(name)
-          await CustomerService.createCustomer({
+          const result = await CustomerService.createCustomer({
             personal_info: {
               name,
               ...(phone && { mobile_phone: phone })
@@ -981,9 +981,13 @@ export function ExcelRefiner() {
             documents: [],
             consultations: []
           })
+          if (import.meta.env.DEV) {
+            console.log(`[고객 생성 성공] ${name}:`, result)
+          }
           customerCreatedCount++
           existingNames.add(name.toLowerCase())
         } catch (err) {
+          console.error(`[고객 생성 실패] ${name}:`, err)
           customerErrors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
         }
       }
@@ -1041,7 +1045,7 @@ export function ExcelRefiner() {
           contract_date: getValue('contract_date') || null,
           policy_number: getValue('policy_number'),
           premium: getNumberValue('premium'),
-          payment_day: getNumberValue('payment_day') || null,
+          payment_day: getValue('payment_day') || null,  // 원본 텍스트 그대로 저장
           payment_cycle: getValue('payment_cycle') || null,
           payment_period: getValue('payment_period') || null,
           insured_person: getValue('insured_person') || null,
