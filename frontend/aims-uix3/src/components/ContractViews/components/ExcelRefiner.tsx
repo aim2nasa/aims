@@ -28,6 +28,7 @@ import {
   type InsuranceProduct,
   type ValidationType
 } from '@aims/excel-refiner-core'
+import { CustomerService } from '@/services/customerService'
 import { ProductSearchModal } from './ProductSearchModal'
 import './ExcelRefiner.css'
 
@@ -87,6 +88,10 @@ export function ExcelRefiner() {
 
   // 셀 편집 상태
   const [editingCell, setEditingCell] = useState<{ rowIndex: number; colIndex: number; value: string } | null>(null)
+
+  // 계약 가져오기 진행 상태
+  const [isImporting, setIsImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number; message: string } | null>(null)
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
@@ -841,6 +846,103 @@ export function ExcelRefiner() {
     }
   }, [handleCellEditSave, handleCellEditCancel])
 
+  // 계약 가져오기 핸들러
+  const handleImportContracts = useCallback(async () => {
+    if (!currentSheet) return
+
+    // 고객명 컬럼 찾기
+    const customerNameColIndex = currentSheet.columns.findIndex(
+      col => getValidationType(col) === 'customerName'
+    )
+
+    if (customerNameColIndex === -1) {
+      alert('고객명 컬럼을 찾을 수 없습니다.')
+      return
+    }
+
+    // 고유한 고객명 추출
+    const customerNames = new Set<string>()
+    currentSheet.data.forEach(row => {
+      const name = cellToString(row[customerNameColIndex] as CellValue).trim()
+      if (name) {
+        customerNames.add(name)
+      }
+    })
+
+    const uniqueNames = Array.from(customerNames)
+    if (uniqueNames.length === 0) {
+      alert('고객명 데이터가 없습니다.')
+      return
+    }
+
+    // 확인 다이얼로그
+    const confirmMsg = `${uniqueNames.length}명의 고객을 생성하시겠습니까?\n\n` +
+      `(동일한 이름의 기존 고객이 있으면 생성하지 않습니다)`
+    if (!window.confirm(confirmMsg)) return
+
+    setIsImporting(true)
+    setImportProgress({ current: 0, total: uniqueNames.length, message: '고객 생성 준비 중...' })
+
+    let createdCount = 0
+    let skippedCount = 0
+    const errors: string[] = []
+
+    try {
+      // 기존 고객 목록 조회 (전체)
+      const existingResponse = await CustomerService.getCustomers({ limit: 100000 })
+      const existingNames = new Set(
+        existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
+      )
+
+      for (let i = 0; i < uniqueNames.length; i++) {
+        const name = uniqueNames[i]!
+        setImportProgress({
+          current: i + 1,
+          total: uniqueNames.length,
+          message: `${name} 처리 중...`
+        })
+
+        // 동일 이름 존재 확인
+        if (existingNames.has(name.toLowerCase())) {
+          skippedCount++
+          continue
+        }
+
+        try {
+          // 고객 생성
+          await CustomerService.createCustomer({
+            personal_info: {
+              name: name
+            },
+            contracts: [],
+            documents: [],
+            consultations: []
+          })
+          createdCount++
+          existingNames.add(name.toLowerCase()) // 중복 방지
+        } catch (err) {
+          errors.push(`${name}: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+        }
+      }
+
+      // 결과 메시지
+      let resultMsg = `✓ 고객 생성 완료\n- 생성: ${createdCount}명\n- 건너뜀 (기존 고객): ${skippedCount}명`
+      if (errors.length > 0) {
+        resultMsg += `\n- 오류: ${errors.length}건`
+      }
+      setActionLog(resultMsg.replace(/\n/g, ' | '))
+
+      if (errors.length > 0) {
+        console.error('고객 생성 오류:', errors)
+      }
+    } catch (err) {
+      alert(`고객 조회 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+    } finally {
+      setIsImporting(false)
+      setImportProgress(null)
+    }
+  }, [currentSheet])
+
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
 
@@ -1008,9 +1110,19 @@ export function ExcelRefiner() {
               {validatingColumns.size > 0 && (
                 <div className="excel-refiner__validation-result">
                   {problematicRows.length === 0 ? (
-                    <div className="excel-refiner__validation-status excel-refiner__validation-status--success">
-                      모든 검증 통과
-                    </div>
+                    <>
+                      <div className="excel-refiner__validation-status excel-refiner__validation-status--success">
+                        모든 검증 통과
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleImportContracts}
+                        disabled={isImporting}
+                      >
+                        {isImporting ? '가져오는 중...' : '계약 가져오기'}
+                      </Button>
+                    </>
                   ) : (
                     <div className="excel-refiner__validation-status excel-refiner__validation-status--error">
                       문제 발견: {problematicRows.length}행
@@ -1099,8 +1211,22 @@ export function ExcelRefiner() {
                   </Button>
                 )}
               </div>
+              {/* 진행 상태 표시 */}
+              {importProgress && (
+                <div className="excel-refiner__import-progress">
+                  <span className="excel-refiner__import-progress-text">
+                    {importProgress.message} ({importProgress.current}/{importProgress.total})
+                  </span>
+                  <div className="excel-refiner__import-progress-bar">
+                    <div
+                      className="excel-refiner__import-progress-fill"
+                      style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               {/* 액션 로그 메시지 */}
-              {actionLog && (
+              {actionLog && !importProgress && (
                 <div className="excel-refiner__action-log">
                   {actionLog}
                   <button

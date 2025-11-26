@@ -861,3 +861,34 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   word-break: break-word;
   border-radius: var(--radius-md);
 }
+
+/* === IMPORT PROGRESS === */
+
+.excel-refiner__import-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-selection-bg);
+  border-radius: var(--radius-md);
+  min-width: 200px;
+}
+
+.excel-refiner__import-progress-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.excel-refiner__import-progress-bar {
+  height: 4px;
+  background: var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.excel-refiner__import-progress-fill {
+  height: 100%;
+  background: var(--color-primary-500);
+  border-radius: var(--radius-sm);
+  transition: width var(--duration-fast) var(--easing-default);
+}
