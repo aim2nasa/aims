@@ -107,7 +107,7 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
-      title="지역별 보기"
+      title="지역별 고객 보기"
       titleIcon={<SFSymbol name="location" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={6}

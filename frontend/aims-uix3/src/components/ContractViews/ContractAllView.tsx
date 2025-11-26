@@ -418,7 +418,7 @@ export default function ContractAllView({
   return (
     <CenterPaneView
       visible={visible}
-      title="전체계약"
+      title="전체 계약 보기"
       titleIcon={
         <span className="menu-icon-purple">
           <SFSymbol
@@ -430,7 +430,7 @@ export default function ContractAllView({
       }
       onClose={onClose}
       placeholderIcon="tablecells"
-      placeholderMessage="전체계약 목록이 여기에 표시됩니다."
+      placeholderMessage="전체 계약 보기 목록이 여기에 표시됩니다."
     >
       <div className="contract-all-view">
         {/* 검색 바 */}

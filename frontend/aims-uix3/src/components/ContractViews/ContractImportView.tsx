@@ -28,14 +28,14 @@ export default function ContractImportView({
       titleIcon={
         <span className="menu-icon-green">
           <SFSymbol
-            name="arrow-right-square"
+            name="tablecells"
             size={SFSymbolSize.CALLOUT}
             weight={SFSymbolWeight.MEDIUM}
           />
         </span>
       }
       onClose={onClose}
-      placeholderIcon="arrow-right-square"
+      placeholderIcon="tablecells"
       placeholderMessage="엑셀 파일에서 계약 정보를 가져옵니다."
     >
       <div className="contract-import-view">

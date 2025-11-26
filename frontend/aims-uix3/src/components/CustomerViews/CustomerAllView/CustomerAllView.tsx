@@ -56,7 +56,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   return (
     <CenterPaneView
       visible={visible}
-      title="전체보기"
+      title="전체 고객 보기"
       titleIcon={<SFSymbol name="list-bullet" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={4}

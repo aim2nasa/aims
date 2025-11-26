@@ -40,7 +40,7 @@ export const CustomerRegistrationView: React.FC<CustomerRegistrationViewProps> =
   return (
     <CenterPaneView
       visible={visible}
-      title="고객 등록"
+      title="새 고객 등록"
       titleIcon={<SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />}
       onClose={onClose}
       marginTop={3}

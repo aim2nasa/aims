@@ -552,7 +552,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           style={{ color: 'var(--color-success)' }}
         />
       ),
-      title: '전체보기',
+      title: '전체 고객 보기',
       description: '등록된 모든 고객을 검색하고 조회합니다. 이름, 전화번호, 이메일로 빠르게 검색하고 정렬할 수 있습니다.',
       ...(onNavigate && { onClick: () => onNavigate('customers-all') }),
     },
@@ -565,7 +565,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           style={{ color: 'var(--color-warning)' }}
         />
       ),
-      title: '지역별 보기',
+      title: '지역별 고객 보기',
       description: '고객을 지역별로 분류하여 확인합니다. 시/도, 시/군/구 단위로 고객 분포를 파악하고 지역별 관리가 가능합니다.',
       ...(onNavigate && { onClick: () => onNavigate('customers-regional') }),
     },
@@ -578,7 +578,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
           style={{ color: 'var(--color-ios-purple)' }}
         />
       ),
-      title: '관계별 보기',
+      title: '관계별 고객 보기',
       description: '고객 간의 관계를 시각화하여 관리합니다. 가족 관계, 지인 관계 등을 연결하여 효율적인 고객 관리가 가능합니다.',
       ...(onNavigate && { onClick: () => onNavigate('customers-relationship') }),
     },

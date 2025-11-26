@@ -52,7 +52,7 @@ export default function ContractManagementView({
                 weight={SFSymbolWeight.MEDIUM}
               />
             </span>
-            <span>전체계약</span>
+            <span>전체 계약 보기</span>
           </button>
           <button
             type="button"
