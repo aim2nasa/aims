@@ -892,3 +892,37 @@ html[data-theme="dark"] .excel-refiner__td--product-unmatched {
   border-radius: var(--radius-sm);
   transition: width var(--duration-fast) var(--easing-default);
 }
+
+/* === CONFIRM MODAL === */
+
+.excel-refiner__confirm-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-2);
+}
+
+.excel-refiner__confirm-message {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.excel-refiner__confirm-message strong {
+  color: var(--color-primary-600);
+}
+
+.excel-refiner__confirm-note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.excel-refiner__confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
+}

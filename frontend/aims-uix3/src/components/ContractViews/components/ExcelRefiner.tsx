@@ -93,6 +93,13 @@ export function ExcelRefiner() {
   const [isImporting, setIsImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; message: string } | null>(null)
 
+  // 계약 가져오기 확인 모달 상태
+  const [importConfirmModal, setImportConfirmModal] = useState<{
+    isOpen: boolean
+    customerCount: number
+    customerNames: string[]
+  }>({ isOpen: false, customerCount: 0, customerNames: [] })
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
 
@@ -864,8 +871,8 @@ export function ExcelRefiner() {
     }
   }, [handleCellEditSave, handleCellEditCancel])
 
-  // 계약 가져오기 핸들러
-  const handleImportContracts = useCallback(async () => {
+  // 계약 가져오기 버튼 클릭 - 확인 모달 열기
+  const handleImportContracts = useCallback(() => {
     if (!currentSheet) return
 
     // 고객명 컬럼 찾기
@@ -893,13 +900,23 @@ export function ExcelRefiner() {
       return
     }
 
-    // 확인 다이얼로그
-    const confirmMsg = `${uniqueNames.length}명의 고객을 생성하시겠습니까?\n\n` +
-      `(동일한 이름의 기존 고객이 있으면 생성하지 않습니다)`
-    if (!window.confirm(confirmMsg)) return
+    // 확인 모달 열기
+    setImportConfirmModal({
+      isOpen: true,
+      customerCount: uniqueNames.length,
+      customerNames: uniqueNames
+    })
+  }, [currentSheet])
+
+  // 계약 가져오기 확인 후 실행
+  const handleConfirmImport = useCallback(async () => {
+    const { customerNames } = importConfirmModal
+    setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })
+
+    if (customerNames.length === 0) return
 
     setIsImporting(true)
-    setImportProgress({ current: 0, total: uniqueNames.length, message: '고객 생성 준비 중...' })
+    setImportProgress({ current: 0, total: customerNames.length, message: '고객 생성 준비 중...' })
 
     let createdCount = 0
     let skippedCount = 0
@@ -912,11 +929,11 @@ export function ExcelRefiner() {
         existingResponse.customers.map(c => c.personal_info?.name?.trim().toLowerCase()).filter(Boolean)
       )
 
-      for (let i = 0; i < uniqueNames.length; i++) {
-        const name = uniqueNames[i]!
+      for (let i = 0; i < customerNames.length; i++) {
+        const name = customerNames[i]!
         setImportProgress({
           current: i + 1,
-          total: uniqueNames.length,
+          total: customerNames.length,
           message: `${name} 처리 중...`
         })
 
@@ -959,7 +976,7 @@ export function ExcelRefiner() {
       setIsImporting(false)
       setImportProgress(null)
     }
-  }, [currentSheet])
+  }, [importConfirmModal])
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
@@ -1532,6 +1549,40 @@ export function ExcelRefiner() {
             }, null, 2)}
           </pre>
         )}
+      </Modal>
+
+      {/* 계약 가져오기 확인 모달 */}
+      <Modal
+        visible={importConfirmModal.isOpen}
+        onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })}
+        title="계약 가져오기"
+        size="sm"
+        backdropClosable
+      >
+        <div className="excel-refiner__confirm-modal">
+          <p className="excel-refiner__confirm-message">
+            <strong>{importConfirmModal.customerCount}명</strong>의 고객을 생성하시겠습니까?
+          </p>
+          <p className="excel-refiner__confirm-note">
+            동일한 이름의 기존 고객이 있으면 생성하지 않습니다.
+          </p>
+          <div className="excel-refiner__confirm-actions">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })}
+            >
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleConfirmImport}
+            >
+              확인
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
