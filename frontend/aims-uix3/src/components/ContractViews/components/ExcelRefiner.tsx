@@ -244,6 +244,28 @@ export function ExcelRefiner() {
     if (file) handleFile(file)
   }, [handleFile])
 
+  // 엑셀 닫기 (초기 상태로 복귀)
+  const handleCloseExcel = useCallback(() => {
+    setFileName(null)
+    setSheets([])
+    setActiveSheetIndex(0)
+    setSelectedRows(new Set())
+    setValidatingColumns(new Set())
+    setValidatingInProgress(new Set())
+    setSortColumn(null)
+    setSortDirection('asc')
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
+    setProductStatusFilter(null)
+    setIsDeleteMode(false)
+    setActionLog(null)
+    setViewingProduct(null)
+    setIsProductSearchOpen(false)
+    setProductSearchKeyword('')
+    setProductSearchRowIndex(null)
+    setEditingCell(null)
+  }, [])
+
   // 시트 탭 변경
   const handleSheetChange = useCallback((index: number) => {
     setActiveSheetIndex(index)
@@ -755,6 +777,14 @@ export function ExcelRefiner() {
                   />
                   <span>엑셀열기</span>
                 </label>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCloseExcel}
+                >
+                  엑셀닫기
+                </Button>
+                <div className="excel-refiner__toolbar-spacer" />
                 <Button
                   variant="primary"
                   size="sm"
