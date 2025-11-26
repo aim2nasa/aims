@@ -98,8 +98,8 @@
   --color-accent-blue-translucent: rgba(59, 130, 246, 0.25);   /* 25% opacity - box-shadow for active tabs */
 
   /* Selection/Highlight Colors (for selected rows/items) */
-  --color-selection-bg-light: rgba(59, 130, 246, 0.28);         /* Light mode: selected item background */
-  --color-selection-bg-light-hover: rgba(59, 130, 246, 0.33);   /* Light mode: selected item hover background */
+  --color-selection-bg-light: rgba(59, 130, 246, 0.45);         /* Light mode: selected item background */
+  --color-selection-bg-light-hover: rgba(59, 130, 246, 0.52);   /* Light mode: selected item hover background */
   --color-selection-bg-dark: rgba(59, 130, 246, 0.35);          /* Dark mode: selected item background */
   --color-selection-bg-dark-hover: rgba(59, 130, 246, 0.40);    /* Dark mode: selected item hover background */
   --color-selection-glow-light: rgba(59, 130, 246, 0.4);        /* Light mode: selection glow effect */
