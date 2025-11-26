@@ -11,6 +11,7 @@ import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
 import { Dropdown } from '@/shared/ui'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import { ContractService } from '@/services/contractService'
 import type { Contract } from '@/entities/contract'
 import './ContractAllView.css'
@@ -54,6 +55,9 @@ export default function ContractAllView({
   // 페이지네이션 클릭 애니메이션 상태
   const [prevArrowClicked, setPrevArrowClicked] = useState(false)
   const [nextArrowClicked, setNextArrowClicked] = useState(false)
+
+  // 증권번호 표시 형식 (false: 앞자리 0 제거, true: 10자리 전체 표시)
+  const [showFullPolicyNumber, setShowFullPolicyNumber] = useState(false)
 
   // 데이터 로드
   const loadContracts = useCallback(async () => {
@@ -227,6 +231,23 @@ export default function ContractAllView({
     }
   }
 
+  // 증권번호 포맷 (10자리 전체 또는 앞자리 0 제거)
+  const formatPolicyNumber = (policyNumber: string | null) => {
+    if (!policyNumber) return '-'
+    if (showFullPolicyNumber) {
+      // 10자리로 앞자리 0 채우기
+      return policyNumber.padStart(10, '0')
+    } else {
+      // 앞자리 0 제거
+      return policyNumber.replace(/^0+/, '') || '0'
+    }
+  }
+
+  // 증권번호 표시 형식 토글
+  const togglePolicyNumberFormat = () => {
+    setShowFullPolicyNumber(prev => !prev)
+  }
+
   // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
   const renderSortIndicator = (field: SortField) => {
     if (sortField === field) {
@@ -373,6 +394,16 @@ export default function ContractAllView({
                 </svg>
                 <span>증권번호</span>
                 {renderSortIndicator('policy_number')}
+                <Tooltip content={showFullPolicyNumber ? "간략 표시" : "10자리 표시"}>
+                  <button
+                    type="button"
+                    className="format-toggle-btn"
+                    onClick={(e) => { e.stopPropagation(); togglePolicyNumberFormat(); }}
+                    aria-label={showFullPolicyNumber ? "간략 표시" : "10자리 표시"}
+                  >
+                    {showFullPolicyNumber ? '00' : '·'}
+                  </button>
+                </Tooltip>
               </div>
               <div className="header-premium header-sortable" onClick={() => handleColumnSort('premium')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
@@ -409,7 +440,7 @@ export default function ContractAllView({
                 {contract.product_name || '-'}
               </span>
               <span className="contract-date">{formatDate(contract.contract_date)}</span>
-              <span className="contract-policy">{contract.policy_number || '-'}</span>
+              <span className="contract-policy">{formatPolicyNumber(contract.policy_number)}</span>
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
               <span className="contract-cycle">{contract.payment_cycle || '-'}</span>
               <span className={`contract-status contract-status--${contract.payment_status === '납입중' ? 'active' : contract.payment_status === '납입완료' ? 'completed' : 'default'}`}>

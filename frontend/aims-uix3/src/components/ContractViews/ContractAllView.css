@@ -185,7 +185,7 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
     120px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
-    100px                /* 증권번호 */
+    115px                /* 증권번호 */
     100px                /* 보험료 */
     90px                 /* 납입주기 */
     100px;               /* 납입상태 */
@@ -193,7 +193,7 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
   gap: 12px;
   padding: 8px 12px;
   height: 32px;          /* AllCustomersView와 동일 */
-  min-width: 890px;      /* 최소 너비 - 수평 스크롤 트리거 */
+  min-width: 905px;      /* 최소 너비 - 수평 스크롤 트리거 */
   background: #f5f6f7;   /* 완전 불투명 배경 */
   border-bottom: 1px solid var(--color-ios-separator-light);
   font-size: var(--font-size-caption-1); /* 12px */
@@ -257,6 +257,68 @@ html[data-theme="dark"] .header-sortable:hover {
 
 html[data-theme="dark"] .header-sortable:active {
   background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* 🍎 CLICKABLE HEADER: 클릭 가능한 컬럼 (토글용) */
+.header-clickable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 0.15s ease-out;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+}
+
+.header-clickable:hover {
+  background-color: var(--color-ios-bg-tertiary-light);
+}
+
+html[data-theme="dark"] .header-clickable:hover {
+  background-color: var(--color-ios-bg-tertiary-dark);
+}
+
+.header-clickable:active {
+  background-color: var(--color-ios-bg-hover-light);
+}
+
+html[data-theme="dark"] .header-clickable:active {
+  background-color: var(--color-ios-bg-hover-dark);
+}
+
+/* 🍎 FORMAT TOGGLE BUTTON: 증권번호 표시 형식 토글 버튼 */
+.format-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ios-text-tertiary-light);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  opacity: 0.6;
+}
+
+html[data-theme="dark"] .format-toggle-btn {
+  color: var(--color-ios-text-tertiary-dark);
+}
+
+.format-toggle-btn:hover {
+  opacity: 1;
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .format-toggle-btn:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+  color: var(--color-primary-400);
 }
 
 /* === 🍎 SORT INDICATOR: 정렬 방향 표시 === */
@@ -350,13 +412,13 @@ html[data-theme="dark"] .sort-indicator {
     120px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
-    100px                /* 증권번호 */
+    115px                /* 증권번호 */
     100px                /* 보험료 */
     90px                 /* 납입주기 */
     100px;               /* 납입상태 */
   gap: 12px;
   align-items: center;
-  min-width: 890px;      /* 헤더와 동일 - 수평 스크롤 */
+  min-width: 905px;      /* 헤더와 동일 - 수평 스크롤 */
   height: 32px;
   padding: 6px 12px;
   background: var(--color-ios-bg-primary-light);
