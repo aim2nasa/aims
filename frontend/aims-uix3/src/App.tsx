@@ -305,7 +305,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const [isDraggingBRB, setIsDraggingBRB] = useState(false)
 
   // Developer Mode - Global State
-  const { isDevMode, toggleDevMode } = useDevModeStore()
+  const { toggleDevMode } = useDevModeStore()
 
   // User Store - 사용자 정보 전역 관리
   const { updateCurrentUser } = useUserStore()
@@ -1045,13 +1045,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         onThemeToggle={toggleTheme}
         onMenuClick={handleMenuClick}
       />
-
-      {/* Developer Mode Badge - Global (Header Center) */}
-      {isDevMode && (
-        <div className="dev-mode-badge-global">
-          🔧 개발자 모드
-        </div>
-      )}
 
       {/* LeftPane - 독립 레이어 */}
       {leftPaneVisible && (

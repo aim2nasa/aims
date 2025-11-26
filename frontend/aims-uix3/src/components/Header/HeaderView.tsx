@@ -141,6 +141,12 @@ export const HeaderView: React.FC<HeaderViewProps> = ({
         <h1 className="header-title">
           AIMS UIX3
         </h1>
+        {/* Developer Mode Badge - AIMS UIX3 우측 */}
+        {isDevMode && (
+          <div className="header-dev-badge">
+            🔧 DEV
+          </div>
+        )}
       </div>
 
       {/* 제어 요소들 - Progressive Disclosure */}
