@@ -419,7 +419,7 @@ const CustomMenu = ({
         {
           key: 'contracts-all',
           icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
-          label: '전체 계약',
+          label: '전체 계약 보기',
           tooltipTitle: '모든 계약을 보여줍니다',
         }
       ]
@@ -445,13 +445,13 @@ const CustomMenu = ({
         {
           key: 'documents-library',
           icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-          label: '라이브러리',
-          tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
+          label: '전체 문서 보기',
+          tooltipTitle: '모든 문서를 보여줍니다',
         },
         {
           key: 'documents-search',
           icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
-          label: '검색',
+          label: '문서 검색',
           tooltipTitle: '문서를 검색합니다',
         }
       ]
@@ -463,7 +463,7 @@ const CustomMenu = ({
         key: 'documents-library',
         icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
         label: '',
-        tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
+        tooltipTitle: '모든 문서를 보여줍니다',
       },
       {
         key: 'documents-search',
