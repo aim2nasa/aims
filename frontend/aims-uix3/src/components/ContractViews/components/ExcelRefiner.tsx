@@ -322,8 +322,10 @@ export function ExcelRefiner() {
 
     // 마지막으로 클릭된 컬럼 표시
     setLastClickedColumn(colIndex)
+    // 범례 필터 초기화 (컬럼 클릭이 우선)
+    setProductStatusFilter(null)
 
-    // 이미 검증된 컬럼이면 무시
+    // 이미 검증된 컬럼이면 무시 (lastClickedColumn은 이미 업데이트됨)
     if (validatingColumns.has(colIndex)) return
 
     // 먼저 "검증 중" 상태 표시
