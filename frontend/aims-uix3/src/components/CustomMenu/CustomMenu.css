@@ -811,3 +811,12 @@
 .custom-menu::-webkit-scrollbar-thumb:hover {
   opacity: 0.6;
 }
+
+/* === SF Symbol 아이콘 크기 통일 (계약 가져오기 기준 1.3배) === */
+.custom-menu .sf-symbol {
+  font-size: 1.3em;
+}
+
+.custom-menu .sf-symbol__shape {
+  font-size: inherit;
+}

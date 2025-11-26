@@ -392,21 +392,22 @@ html[data-theme="dark"] {
 **LeftPane CustomMenu 아이콘이 모든 아이콘의 기준이다!**
 
 1. **기준 크기:**
-   - LeftPane CustomMenu 아이콘: **16px** (SFSymbolSize.CALLOUT)
+   - LeftPane CustomMenu 아이콘: **17px** (SFSymbolSize.CALLOUT × 1.3)
+   - CustomMenu.css에서 `.custom-menu .sf-symbol { font-size: 1.3em; }` 적용
    - 이것이 AIMS 프로젝트의 **최대 아이콘 크기**
 
 2. **절대 규칙:**
-   - **어떠한 아이콘도 LeftPane CustomMenu 아이콘(16px)보다 커서는 안 된다**
-   - 모든 아이콘은 16px **이하**여야 함
-   - 16px과 **같거나 작아야** 함
+   - **어떠한 아이콘도 LeftPane CustomMenu 아이콘(17px)보다 커서는 안 된다**
+   - 모든 아이콘은 17px **이하**여야 함
+   - 17px과 **같거나 작아야** 함
 
 3. **허용 크기:**
    ```
    ✅ 12px (SFSymbolSize.CAPTION_2)
    ✅ 13px (SFSymbolSize.CAPTION_1)
    ✅ 15px (SFSymbolSize.FOOTNOTE)
-   ✅ 16px (SFSymbolSize.CALLOUT) - 최대 크기
-   ❌ 17px (SFSymbolSize.BODY) - 금지
+   ✅ 16px (SFSymbolSize.CALLOUT)
+   ✅ 17px (SFSymbolSize.BODY 또는 CALLOUT × 1.3) - 최대 크기
    ❌ 20px - 금지
    ❌ 24px - 금지
    ```
@@ -427,23 +428,23 @@ html[data-theme="dark"] {
 
 6. **위반 예시 및 수정:**
    ```tsx
-   // ❌ 잘못된 예 - 20px는 16px보다 큼
+   // ❌ 잘못된 예 - 20px는 17px보다 큼
    const baseProps = {
      width: 20,
      height: 20
    }
 
-   // ✅ 올바른 예 - 16px 이하
+   // ✅ 올바른 예 - 17px 이하
    const baseProps = {
-     width: 16,
-     height: 16
+     width: 17,
+     height: 17
    }
 
-   // ❌ 잘못된 예 - BODY(17px)는 CALLOUT(16px)보다 큼
-   <SFSymbol name="icon" size={SFSymbolSize.BODY} />
+   // ❌ 잘못된 예 - TITLE_3(20px)는 최대 크기(17px)보다 큼
+   <SFSymbol name="icon" size={SFSymbolSize.TITLE_3} />
 
-   // ✅ 올바른 예 - CALLOUT(16px) 이하
-   <SFSymbol name="icon" size={SFSymbolSize.CALLOUT} />
+   // ✅ 올바른 예 - BODY(17px) 이하
+   <SFSymbol name="icon" size={SFSymbolSize.BODY} />
    ```
 
 7. **아이콘 배경 및 호버 효과 규칙:**
@@ -480,7 +481,7 @@ html[data-theme="dark"] {
    - 이유: 문서 구분을 위한 시각적 강조 필요
 
 **기억하라**:
-- LeftPane CustomMenu 아이콘(16px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
+- LeftPane CustomMenu 아이콘(17px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
 - 아이콘 배경은 투명! 호버 시 튀어나오는 효과(opacity + scale)만 사용!
 
 ### 🔧 아이콘 캐싱 문제 해결 - 필독! 🔧
