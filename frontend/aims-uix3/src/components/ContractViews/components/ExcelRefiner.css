@@ -431,6 +431,20 @@ html[data-theme="dark"] .excel-refiner__legend-item--unmatched {
   color: var(--color-primary-600);
 }
 
+/* 마지막 클릭된 컬럼 인디케이터 */
+.excel-refiner__th-last-clicked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-500);
+  margin-right: var(--spacing-1);
+  flex-shrink: 0;
+}
+
+.excel-refiner__th--clickable .excel-refiner__th-last-clicked {
+  color: var(--color-neutral-0);
+}
+
 /* 클릭 가능한 검증 칼럼 - 입체 버튼 스타일 */
 .excel-refiner__th--clickable {
   cursor: pointer;

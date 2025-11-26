@@ -60,6 +60,9 @@ export function ExcelRefiner() {
   const [sortColumn, setSortColumn] = useState<number | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
+  // 마지막으로 클릭된 컬럼 (검증 클릭)
+  const [lastClickedColumn, setLastClickedColumn] = useState<number | null>(null)
+
   // 상품명 검증 결과 (행 인덱스 → ObjectId 매칭)
   const [productMatchResult, setProductMatchResult] = useState<ProductMatchResult | null>(null)
   const [productNameColumnIndex, setProductNameColumnIndex] = useState<number | null>(null)
@@ -292,6 +295,9 @@ export function ExcelRefiner() {
     // 검증 로직이 정의된 컬럼만 클릭 가능
     const type = getValidationType(columnName)
     if (type === 'default') return
+
+    // 마지막으로 클릭된 컬럼 표시
+    setLastClickedColumn(colIndex)
 
     // 이미 검증된 컬럼이면 무시
     if (validatingColumns.has(colIndex)) return
@@ -1003,6 +1009,13 @@ export function ExcelRefiner() {
                           title={isValidatable ? `클릭하여 검증 (${type === 'policyNumber' ? '증권번호' : type === 'customerName' ? '고객명' : type === 'productName' ? '상품명' : '계약일'} 검증)` : '클릭하여 정렬'}
                         >
                           <div className="excel-refiner__th-content">
+                            {lastClickedColumn === index && (
+                              <span className="excel-refiner__th-last-clicked" title="마지막 클릭">
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                                  <circle cx="8" cy="8" r="4" />
+                                </svg>
+                              </span>
+                            )}
                             <span className="excel-refiner__th-text">{col || `열 ${index + 1}`}</span>
                             {isInProgress && <span className="excel-refiner__th-badge excel-refiner__th-badge--validating">...</span>}
                             {!isInProgress && renderColumnBadge(index, col)}
