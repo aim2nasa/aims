@@ -20,7 +20,7 @@ interface ContractAllViewProps {
   onClose: () => void
 }
 
-type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_status'
+type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_cycle' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
 const ITEMS_PER_PAGE_OPTIONS = [
@@ -123,6 +123,10 @@ export default function ContractAllView({
         case 'premium':
           aVal = a.premium || 0
           bVal = b.premium || 0
+          break
+        case 'payment_cycle':
+          aVal = a.payment_cycle || ''
+          bVal = b.payment_cycle || ''
           break
         case 'payment_status':
           aVal = a.payment_status || ''
@@ -374,12 +378,13 @@ export default function ContractAllView({
                 <span>보험료</span>
                 {renderSortIndicator('premium')}
               </div>
-              <div className="header-cycle">
+              <div className="header-cycle header-sortable" onClick={() => handleColumnSort('payment_cycle')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M8 4v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 <span>납입주기</span>
+                {renderSortIndicator('payment_cycle')}
               </div>
               <div className="header-status header-sortable" onClick={() => handleColumnSort('payment_status')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
