@@ -33,10 +33,10 @@
 
 /* 아이콘 스타일 */
 .user-profile-menu-item__icon {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   flex-shrink: 0;
-  font-size: var(--font-size-callout); /* 16px - FONT_SIZE_STANDARDS.md: menu icons */
+  font-size: var(--font-size-body); /* 16px - FONT_SIZE_STANDARDS.md: menu icons */
   color: var(--color-text-primary);
 }
 

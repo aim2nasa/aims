@@ -265,33 +265,41 @@ const CustomMenu = ({
       }
       setExpandedKeys([]) // 강제로 모든 서브메뉴 접기
 
-      // 1단계: 300ms 후 고객관리 펼침
+      // 1단계: 200ms 후 자주 사용 펼침
       setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 1단계 - 고객관리 펼침')
+          console.log('[CustomMenu] 1단계 - 자주 사용 펼침')
         }
-        setExpandedKeys(['customers'])
-      }, 300)
+        setExpandedKeys(['quick-actions'])
+      }, 200)
 
-      // 2단계: 600ms 후 문서관리도 펼침 (전동 커튼 효과)
+      // 2단계: 400ms 후 고객도 펼침
       setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 2단계 - 문서관리 추가 펼침')
+          console.log('[CustomMenu] 2단계 - 고객 추가 펼침')
         }
-        setExpandedKeys(['customers', 'documents'])
+        setExpandedKeys(['quick-actions', 'customers'])
+      }, 400)
+
+      // 3단계: 600ms 후 계약도 펼침
+      setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log('[CustomMenu] 3단계 - 계약 추가 펼침')
+        }
+        setExpandedKeys(['quick-actions', 'customers', 'contracts'])
       }, 600)
 
-      // 3단계: 900ms 후 계약관리도 펼침
+      // 4단계: 800ms 후 문서도 펼침
       setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log('[CustomMenu] 3단계 - 계약관리 추가 펼침')
+          console.log('[CustomMenu] 4단계 - 문서 추가 펼침')
         }
-        setExpandedKeys(['customers', 'documents', 'contracts'])
-      }, 900)
+        setExpandedKeys(['quick-actions', 'customers', 'contracts', 'documents'])
+      }, 800)
     }
   }, [collapsed]) // collapsed 상태 변화만 감지
 
-  // 메뉴 데이터 구조 - color.png와 완전 동일한 구조 (navigation hook에서 사용하기 위해 먼저 정의)
+  // 메뉴 데이터 구조 - UX 최적화된 새로운 구조
   const menuItems: MenuItem[] = useMemo(() => [
     // 검색 결과 (동적 표시)
     ...(hasSearchResults ? [{
@@ -301,41 +309,35 @@ const CustomMenu = ({
       tooltipTitle: `검색 결과 (${searchResultsCount}개)`,
     }] : []),
 
-    // 고객 관리 - color.png의 파란색 섹션
+    // ━━━ 빠른 작업 ━━━
     {
-      key: 'customers',
-      icon: <MenuIcons.User />,
-      label: collapsed ? '' : '고객 관리',
-      tooltipTitle: '고객 관리',
+      key: 'quick-actions',
+      icon: <span className="menu-icon-orange"><SFSymbol name="bolt-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
+      label: collapsed ? '' : '빠른 작업',
+      tooltipTitle: '빠른 작업',
       children: collapsed ? undefined : [
         {
           key: 'customers-register',
           icon: <SFSymbol name="person-fill-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} />,
-          label: '고객 등록',
+          label: '새 고객 등록',
           tooltipTitle: '새로운 고객을 등록합니다',
         },
         {
-          key: 'customers-all',
-          icon: <MenuIcons.List />,
-          label: '전체보기',
-          tooltipTitle: '모든 고객을 보여줍니다',
+          key: 'documents-register',
+          icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
+          label: '새 문서 등록',
+          tooltipTitle: '새로운 문서를 등록합니다',
         },
         {
-          key: 'customers-regional',
-          icon: <MenuIcons.Location />,
-          label: '지역별 보기',
-          tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
-        },
-        {
-          key: 'customers-relationship',
-          icon: <span className="menu-icon-pink"><MenuIcons.Team /></span>,
-          label: '관계별 보기',
-          tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
+          key: 'contracts-import',
+          icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
+          label: '계약 가져오기',
+          tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
         }
       ]
     },
 
-    // collapsed 상태에서 서브메뉴들을 개별적으로 표시
+    // collapsed 상태에서 자주 사용 서브메뉴 표시
     ...(collapsed ? [
       {
         key: 'customers-register',
@@ -343,6 +345,50 @@ const CustomMenu = ({
         label: '',
         tooltipTitle: '새로운 고객을 등록합니다',
       },
+      {
+        key: 'documents-register',
+        icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
+        label: '',
+        tooltipTitle: '새로운 문서를 등록합니다',
+      },
+      {
+        key: 'contracts-import',
+        icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
+        label: '',
+        tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+      }
+    ] : []),
+
+    // ━━━ 고객 ━━━
+    {
+      key: 'customers',
+      icon: <MenuIcons.User />,
+      label: collapsed ? '' : '고객',
+      tooltipTitle: '고객',
+      children: collapsed ? undefined : [
+        {
+          key: 'customers-all',
+          icon: <MenuIcons.List />,
+          label: '전체 고객 보기',
+          tooltipTitle: '모든 고객을 보여줍니다',
+        },
+        {
+          key: 'customers-regional',
+          icon: <MenuIcons.Location />,
+          label: '지역별 고객 보기',
+          tooltipTitle: '지역별로 고객을 분류하여 보여줍니다',
+        },
+        {
+          key: 'customers-relationship',
+          icon: <span className="menu-icon-pink"><MenuIcons.Team /></span>,
+          label: '관계별 고객 보기',
+          tooltipTitle: '가족 관계별로 고객을 분류하여 보여줍니다',
+        }
+      ]
+    },
+
+    // collapsed 상태에서 고객 서브메뉴 표시
+    ...(collapsed ? [
       {
         key: 'customers-all',
         icon: <MenuIcons.List />,
@@ -363,86 +409,18 @@ const CustomMenu = ({
       }
     ] : []),
 
-    // 문서 관리 - color.png의 청록색 섹션
-    {
-      key: 'documents',
-      icon: <MenuIcons.FileText />,
-      label: collapsed ? '' : '문서 관리',
-      tooltipTitle: '문서 관리',
-      children: collapsed ? undefined : [
-        {
-          key: 'documents-register',
-          icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-          label: '문서 등록',
-          tooltipTitle: '새로운 문서를 등록합니다',
-        },
-        {
-          key: 'documents-library',
-          icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-          label: '문서 라이브러리',
-          tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
-        },
-        {
-          key: 'documents-search',
-          icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
-          label: '문서 검색',
-          tooltipTitle: '문서를 검색합니다',
-        },
-        {
-          key: 'documents-my-files',
-          icon: <span className="menu-icon-green"><MenuIcons.Folder /></span>,
-          label: '내 파일',
-          tooltipTitle: '내 파일 보관함',
-        }
-      ]
-    },
-
-    // collapsed 상태에서 문서 서브메뉴 표시
-    ...(collapsed ? [
-      {
-        key: 'documents-register',
-        icon: <span className="menu-icon-orange"><SFSymbol name="doc-badge-plus" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-        label: '',
-        tooltipTitle: '새로운 문서를 등록합니다',
-      },
-      {
-        key: 'documents-library',
-        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
-        label: '',
-        tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
-      },
-      {
-        key: 'documents-search',
-        icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
-        label: '',
-        tooltipTitle: '문서를 검색합니다',
-      },
-      {
-        key: 'documents-my-files',
-        icon: <span className="menu-icon-green"><MenuIcons.Folder /></span>,
-        label: '',
-        tooltipTitle: '내 파일 보관함',
-      }
-    ] : []),
-
-    // 계약 관리
+    // ━━━ 계약 ━━━
     {
       key: 'contracts',
       icon: <span className="menu-icon-blue"><MenuIcons.Contract /></span>,
-      label: collapsed ? '' : '계약 관리',
-      tooltipTitle: '계약 관리',
+      label: collapsed ? '' : '계약',
+      tooltipTitle: '계약',
       children: collapsed ? undefined : [
         {
           key: 'contracts-all',
           icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
-          label: '전체계약',
+          label: '전체 계약',
           tooltipTitle: '모든 계약을 보여줍니다',
-        },
-        {
-          key: 'contracts-import',
-          icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
-          label: '계약 가져오기',
-          tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
         }
       ]
     },
@@ -454,12 +432,44 @@ const CustomMenu = ({
         icon: <span className="menu-icon-purple"><MenuIcons.ContractAll /></span>,
         label: '',
         tooltipTitle: '모든 계약을 보여줍니다',
+      }
+    ] : []),
+
+    // ━━━ 문서 ━━━
+    {
+      key: 'documents',
+      icon: <MenuIcons.FileText />,
+      label: collapsed ? '' : '문서',
+      tooltipTitle: '문서',
+      children: collapsed ? undefined : [
+        {
+          key: 'documents-library',
+          icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
+          label: '라이브러리',
+          tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
+        },
+        {
+          key: 'documents-search',
+          icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
+          label: '검색',
+          tooltipTitle: '문서를 검색합니다',
+        }
+      ]
+    },
+
+    // collapsed 상태에서 문서 서브메뉴 표시
+    ...(collapsed ? [
+      {
+        key: 'documents-library',
+        icon: <span className="menu-icon-purple"><MenuIcons.Library /></span>,
+        label: '',
+        tooltipTitle: '모든 문서를 라이브러리 형태로 관리합니다',
       },
       {
-        key: 'contracts-import',
-        icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
+        key: 'documents-search',
+        icon: <span className="menu-icon-blue"><MenuIcons.SearchBold /></span>,
         label: '',
-        tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+        tooltipTitle: '문서를 검색합니다',
       }
     ] : [])
   ], [collapsed, hasSearchResults, searchResultsCount])

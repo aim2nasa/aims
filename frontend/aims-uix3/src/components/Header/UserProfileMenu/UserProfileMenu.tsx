@@ -245,7 +245,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             {/* 그룹 1: 빠른 네비게이션 */}
             <UserProfileMenuItem
               icon="folder"
-              label="내 파일"
+              label="내 보관함"
               onClick={handleMyFiles}
               showDivider={true}
               iconColor="green"
