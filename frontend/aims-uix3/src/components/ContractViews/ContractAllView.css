@@ -9,6 +9,116 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  gap: 12px;
+}
+
+/* === 🍎 SEARCH BAR: iOS-style search field === */
+.contract-search-bar {
+  width: 100%;
+}
+
+.contract-all-view .search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 6px 8px;
+  transition: background-color 0.2s ease-out;
+  overflow: visible;
+}
+
+html[data-theme="dark"] .contract-all-view .search-input-wrapper {
+  background-color: transparent;
+}
+
+.contract-all-view .search-input-wrapper:focus-within {
+  background-color: transparent;
+}
+
+html[data-theme="dark"] .contract-all-view .search-input-wrapper:focus-within {
+  background-color: transparent;
+}
+
+.contract-all-view .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-ios-text-quaternary-light);
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-theme="dark"] .contract-all-view .search-icon {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.contract-all-view .search-input {
+  flex: 1;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-weight: 400;
+  color: var(--color-ios-text-primary-light);
+  outline: none;
+  padding: 4px 8px 4px 26px;
+  transition: border-color 0.2s ease-out;
+}
+
+html[data-theme="dark"] .contract-all-view .search-input {
+  color: var(--color-ios-text-primary-dark);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.contract-all-view .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-light);
+  font-weight: 400;
+}
+
+html[data-theme="dark"] .contract-all-view .search-input::placeholder {
+  color: var(--color-ios-text-placeholder-dark);
+}
+
+.contract-all-view .search-clear-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-ios-text-quaternary-light);
+  transition: color 0.15s ease-out;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+html[data-theme="dark"] .contract-all-view .search-clear-button {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.contract-all-view .search-clear-button:hover {
+  color: var(--color-ios-interactive-light);
+  background: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .contract-all-view .search-clear-button:hover {
+  color: var(--color-ios-interactive-dark);
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+/* 검색 결과 정보 */
+.search-result-info {
+  color: var(--color-ios-text-tertiary-light);
+  font-weight: 400;
+}
+
+html[data-theme="dark"] .search-result-info {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* === 결과 헤더 === */
@@ -35,36 +145,6 @@ html[data-theme="dark"] .contract-result-header {
 }
 
 html[data-theme="dark"] .contract-result-header .result-count {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-/* === 새로고침 버튼 === */
-.refresh-icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-ios-text-tertiary-light);
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-}
-
-html[data-theme="dark"] .refresh-icon-button {
-  color: var(--color-ios-text-tertiary-dark);
-}
-
-.refresh-icon-button:hover {
-  background: transparent;
-  color: var(--color-ios-text-secondary-light);
-  transform: scale(1.1);
-}
-
-html[data-theme="dark"] .refresh-icon-button:hover {
   color: var(--color-ios-text-secondary-dark);
 }
 
@@ -112,7 +192,7 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  min-height: 32px;
+  height: 32px;          /* AllCustomersView와 동일 */
   min-width: 850px;      /* 최소 너비 - 수평 스크롤 트리거 */
   background: #f5f6f7;   /* 완전 불투명 배경 */
   border-bottom: 1px solid var(--color-ios-separator-light);
@@ -463,13 +543,16 @@ html[data-theme="dark"] .contract-pagination {
   border-top-color: var(--color-ios-separator-subtle-dark);
 }
 
+/* 🍎 PAGINATION LIMIT - iOS Native Style */
+.pagination-limit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* 🍎 PAGINATION SPACER */
 .pagination-spacer {
   flex: 1;
-}
-
-.pagination-spacer-single {
-  height: 53px; /* pagination 높이와 동일 */
 }
 
 /* 🍎 PAGINATION CONTROLS - Center group */
@@ -590,6 +673,31 @@ html[data-theme="dark"] .pagination-arrow--clicked {
 
 html[data-theme="dark"] .pagination-info {
   color: var(--color-ios-text-secondary-dark);
+}
+
+.pagination-current {
+  color: var(--color-ios-text-primary-light);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .pagination-current {
+  color: var(--color-ios-text-primary-dark);
+}
+
+.pagination-separator {
+  color: var(--color-ios-text-quaternary-light);
+}
+
+html[data-theme="dark"] .pagination-separator {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.pagination-total {
+  color: var(--color-ios-text-tertiary-light);
+}
+
+html[data-theme="dark"] .pagination-total {
+  color: var(--color-ios-text-tertiary-dark);
 }
 
 /* === 반응형 === */

@@ -9,8 +9,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
-import { Tooltip } from '@/shared/ui'
 import Button from '@/shared/ui/Button'
+import { Dropdown } from '@/shared/ui'
 import { ContractService } from '@/services/contractService'
 import type { Contract } from '@/entities/contract'
 import './ContractAllView.css'
@@ -23,6 +23,14 @@ interface ContractAllViewProps {
 type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
+const ITEMS_PER_PAGE_OPTIONS = [
+  { value: '10', label: '10개씩' },
+  { value: '15', label: '15개씩' },
+  { value: '20', label: '20개씩' },
+  { value: '50', label: '50개씩' },
+  { value: '100', label: '100개씩' },
+]
+
 export default function ContractAllView({
   visible,
   onClose
@@ -32,13 +40,16 @@ export default function ContractAllView({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 검색 상태
+  const [searchValue, setSearchValue] = useState('')
+
   // 정렬 상태
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 50
+  const [itemsPerPage, setItemsPerPage] = useState('50')
 
   // 페이지네이션 클릭 애니메이션 상태
   const [prevArrowClicked, setPrevArrowClicked] = useState(false)
@@ -66,11 +77,29 @@ export default function ContractAllView({
     }
   }, [visible, loadContracts])
 
+  // 검색 필터링된 계약 목록
+  const filteredContracts = useMemo(() => {
+    if (!searchValue.trim()) return contracts
+
+    const searchLower = searchValue.toLowerCase().trim()
+    return contracts.filter(contract => {
+      const customerName = contract.customer_name?.toLowerCase() || ''
+      const productName = contract.product_name?.toLowerCase() || ''
+      const policyNumber = contract.policy_number?.toLowerCase() || ''
+
+      return (
+        customerName.includes(searchLower) ||
+        productName.includes(searchLower) ||
+        policyNumber.includes(searchLower)
+      )
+    })
+  }, [contracts, searchValue])
+
   // 정렬된 계약 목록
   const sortedContracts = useMemo(() => {
-    if (!sortField) return contracts
+    if (!sortField) return filteredContracts
 
-    return [...contracts].sort((a, b) => {
+    return [...filteredContracts].sort((a, b) => {
       let aVal: string | number = ''
       let bVal: string | number = ''
 
@@ -111,21 +140,41 @@ export default function ContractAllView({
       if (strA > strB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [contracts, sortField, sortDirection])
+  }, [filteredContracts, sortField, sortDirection])
 
   // 페이지네이션
+  const itemsPerPageNumber = parseInt(itemsPerPage, 10)
   const pagination = useMemo(() => {
     const totalItems = sortedContracts.length
-    const totalPages = Math.ceil(totalItems / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = Math.min(startIndex + itemsPerPage, totalItems)
-    return { totalItems, totalPages, startIndex, endIndex }
-  }, [sortedContracts.length, currentPage])
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPageNumber))
+    const safeCurrentPage = Math.min(currentPage, totalPages)
+    const startIndex = (safeCurrentPage - 1) * itemsPerPageNumber
+    const endIndex = Math.min(startIndex + itemsPerPageNumber, totalItems)
+    return { totalItems, totalPages, startIndex, endIndex, currentPage: safeCurrentPage }
+  }, [sortedContracts.length, currentPage, itemsPerPageNumber])
 
   // 현재 페이지 계약 목록
   const visibleContracts = useMemo(() => {
     return sortedContracts.slice(pagination.startIndex, pagination.endIndex)
   }, [sortedContracts, pagination.startIndex, pagination.endIndex])
+
+  // 검색 핸들러
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchValue(value)
+    setCurrentPage(1) // 검색 시 첫 페이지로 이동
+  }
+
+  const handleClearSearch = () => {
+    setSearchValue('')
+    setCurrentPage(1)
+  }
+
+  // 페이지당 항목 수 변경 핸들러
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(value)
+    setCurrentPage(1)
+  }
 
   // 정렬 핸들러
   const handleColumnSort = (field: SortField) => {
@@ -135,6 +184,7 @@ export default function ContractAllView({
       setSortField(field)
       setSortDirection('asc')
     }
+    setCurrentPage(1) // 정렬 시 첫 페이지로 이동
   }
 
   // 페이지 이동 핸들러
@@ -208,6 +258,33 @@ export default function ContractAllView({
       placeholderMessage="전체계약 목록이 여기에 표시됩니다."
     >
       <div className="contract-all-view">
+        {/* 검색 바 */}
+        <div className="contract-search-bar">
+          <div className="search-input-wrapper">
+            <div className="search-icon">
+              <SFSymbol name="magnifyingglass" size={SFSymbolSize.BODY} />
+            </div>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="고객명, 상품명, 증권번호로 검색..."
+              value={searchValue}
+              onChange={handleSearchInputChange}
+            />
+            {searchValue && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="search-clear-button"
+                aria-label="검색어 지우기"
+              >
+                <SFSymbol name="xmark.circle.fill" size={SFSymbolSize.CAPTION_1} />
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* 에러 메시지 */}
         {error && (
           <div className="contract-error">
@@ -222,22 +299,10 @@ export default function ContractAllView({
         {!isLoading && !error && (
           <div className="contract-result-header">
             <div className="result-count">
-              <Tooltip content="새로고침">
-                <button
-                  type="button"
-                  className="refresh-icon-button"
-                  onClick={loadContracts}
-                  aria-label="새로고침"
-                >
-                  <SFSymbol
-                    name="arrow.clockwise"
-                    size={SFSymbolSize.CAPTION_1}
-                    weight={SFSymbolWeight.MEDIUM}
-                    decorative={true}
-                  />
-                </button>
-              </Tooltip>
-              <span>총 {contracts.length}건</span>
+              <span>총 {filteredContracts.length}건</span>
+              {searchValue && contracts.length !== filteredContracts.length && (
+                <span className="search-result-info"> (전체 {contracts.length}건 중)</span>
+              )}
             </div>
           </div>
         )}
@@ -346,46 +411,58 @@ export default function ContractAllView({
         </div>
 
         {/* 페이지네이션 */}
-        {pagination.totalPages > 1 && (
+        {!isLoading && !isEmpty && (
           <div className="contract-pagination">
-            {/* 왼쪽 여백 */}
-            <div className="pagination-spacer"></div>
-
-            {/* 중앙 컨트롤 */}
-            <div className="pagination-controls">
-              <button
-                type="button"
-                className="pagination-button pagination-button--prev"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-                aria-label="이전 페이지"
-              >
-                <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>‹</span>
-              </button>
-
-              <span className="pagination-info">
-                {currentPage} / {pagination.totalPages}
-              </span>
-
-              <button
-                type="button"
-                className="pagination-button pagination-button--next"
-                onClick={handleNextPage}
-                disabled={currentPage === pagination.totalPages}
-                aria-label="다음 페이지"
-              >
-                <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>›</span>
-              </button>
+            {/* 페이지당 항목 수 선택 */}
+            <div className="pagination-limit">
+              <Dropdown
+                value={itemsPerPage}
+                options={ITEMS_PER_PAGE_OPTIONS}
+                onChange={handleItemsPerPageChange}
+                aria-label="페이지당 항목 수"
+              />
             </div>
 
-            {/* 오른쪽 여백 */}
-            <div className="pagination-spacer"></div>
-          </div>
-        )}
+            {/* 페이지 네비게이션 - 페이지가 2개 이상일 때만 표시 */}
+            {pagination.totalPages > 1 && (
+              <div className="pagination-controls">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePrevPage}
+                  disabled={pagination.currentPage === 1}
+                  className="pagination-button pagination-button--prev"
+                  aria-label="이전 페이지"
+                >
+                  <span className={`pagination-arrow ${prevArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                    ‹
+                  </span>
+                </Button>
 
-        {/* 페이지가 1개일 때 빈 공간 유지 */}
-        {pagination.totalPages <= 1 && !isEmpty && !isLoading && (
-          <div className="pagination-spacer-single"></div>
+                <div className="pagination-info">
+                  <span className="pagination-current">{pagination.currentPage}</span>
+                  <span className="pagination-separator">/</span>
+                  <span className="pagination-total">{pagination.totalPages}</span>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  className="pagination-button pagination-button--next"
+                  aria-label="다음 페이지"
+                >
+                  <span className={`pagination-arrow ${nextArrowClicked ? 'pagination-arrow--clicked' : ''}`}>
+                    ›
+                  </span>
+                </Button>
+              </div>
+            )}
+
+            {/* 페이지가 1개일 때 빈 공간 유지 */}
+            {pagination.totalPages <= 1 && <div className="pagination-spacer"></div>}
+          </div>
         )}
       </div>
     </CenterPaneView>
