@@ -174,20 +174,44 @@ export function ExcelRefiner() {
         return 0
       })
     }
-    // 문제 행 우선 정렬 (검증 활성화시, 상품명 필터가 없을 때만)
-    else if (problematicRows.length > 0) {
-      const problematicSet = new Set(problematicRows)
-      indexed.sort((a, b) => {
-        const aProblematic = problematicSet.has(a.originalIndex)
-        const bProblematic = problematicSet.has(b.originalIndex)
-        if (aProblematic && !bProblematic) return -1
-        if (!aProblematic && bProblematic) return 1
-        return 0
-      })
+    // 문제 행 우선 정렬 (마지막 클릭된 컬럼 기준, 오류 상태일 때만)
+    else if (lastClickedColumn !== null) {
+      // 마지막 클릭된 컬럼의 문제 행만 가져오기
+      let lastClickedProblematicRows: number[] = []
+
+      // 상품명 컬럼인 경우
+      if (lastClickedColumn === productNameColumnIndex && productMatchResult) {
+        // 미매칭이 있을 때만 (오류 상태)
+        if (productMatchResult.unmatched.length > 0) {
+          lastClickedProblematicRows = productMatchResult.unmatched
+        }
+      } else {
+        // 일반 검증 컬럼인 경우
+        const result = columnValidationResults.get(lastClickedColumn)
+        if (result) {
+          const hasIssues = !result.valid || result.duplicates.length > 0
+          // 오류가 있을 때만 정렬
+          if (hasIssues) {
+            lastClickedProblematicRows = getProblematicRows(result)
+          }
+        }
+      }
+
+      // 오류 행이 있을 때만 정렬
+      if (lastClickedProblematicRows.length > 0) {
+        const problematicSet = new Set(lastClickedProblematicRows)
+        indexed.sort((a, b) => {
+          const aProblematic = problematicSet.has(a.originalIndex)
+          const bProblematic = problematicSet.has(b.originalIndex)
+          if (aProblematic && !bProblematic) return -1
+          if (!aProblematic && bProblematic) return 1
+          return 0
+        })
+      }
     }
 
     return indexed
-  }, [currentSheet?.data, problematicRows, sortColumn, sortDirection, productStatusFilter, productMatchResult])
+  }, [currentSheet?.data, sortColumn, sortDirection, productStatusFilter, productMatchResult, lastClickedColumn, productNameColumnIndex, columnValidationResults])
 
   // 파일 처리
   const handleFile = useCallback(async (file: File) => {
