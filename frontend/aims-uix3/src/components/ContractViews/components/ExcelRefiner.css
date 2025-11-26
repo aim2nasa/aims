@@ -44,9 +44,10 @@
 }
 
 .excel-refiner__dropzone-icon {
+  display: block;
   width: 64px;
   height: 64px;
-  margin-bottom: var(--spacing-4);
+  margin: 0 auto var(--spacing-4) auto;
   opacity: 0.5;
 }
 
