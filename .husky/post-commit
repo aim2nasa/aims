@@ -34,7 +34,7 @@ if echo "$COMMIT_MSG" | grep -q "^feat:"; then
   # 락 파일 생성 (amend 후 재실행 방지)
   echo "$CURRENT_SHA" > "$LOCK_FILE"
   (cd frontend/aims-uix3 && npm version minor -m 'chore: 버전 %s (auto)' --no-git-tag-version) || exit 1
-  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json
+  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json frontend/package-lock.json
   git commit --amend --no-edit --no-verify
   echo "✅ Minor version bumped!"
 elif echo "$COMMIT_MSG" | grep -q "^fix:"; then
@@ -42,7 +42,7 @@ elif echo "$COMMIT_MSG" | grep -q "^fix:"; then
   # 락 파일 생성 (amend 후 재실행 방지)
   echo "$CURRENT_SHA" > "$LOCK_FILE"
   (cd frontend/aims-uix3 && npm version patch -m 'chore: 버전 %s (auto)' --no-git-tag-version) || exit 1
-  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json
+  git add frontend/aims-uix3/package.json frontend/aims-uix3/package-lock.json frontend/package-lock.json
   git commit --amend --no-edit --no-verify
   echo "✅ Patch version bumped!"
 else
