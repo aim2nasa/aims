@@ -791,7 +791,7 @@ export function ExcelRefiner() {
                       (선택: {validatingColumns.size}개 컬럼)
                     </span>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={handleClearValidation}
                     >
