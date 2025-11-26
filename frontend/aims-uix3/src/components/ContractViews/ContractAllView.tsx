@@ -14,13 +14,17 @@ import { Dropdown } from '@/shared/ui'
 import { Tooltip } from '@/shared/ui/Tooltip'
 import Modal from '@/shared/ui/Modal'
 import { ContractService } from '@/services/contractService'
+import { CustomerService } from '@/services/customerService'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Contract } from '@/entities/contract'
+import type { Customer } from '@/entities/customer'
 import './ContractAllView.css'
 
 interface ContractAllViewProps {
   visible: boolean
   onClose: () => void
+  /** 고객 클릭 핸들러 - RightPane에 고객 상세 정보 표시 */
+  onCustomerClick?: (customerId: string, customer: Customer) => void
 }
 
 type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
@@ -36,7 +40,8 @@ const ITEMS_PER_PAGE_OPTIONS = [
 
 export default function ContractAllView({
   visible,
-  onClose
+  onClose,
+  onCustomerClick
 }: ContractAllViewProps) {
   // 데이터 상태
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -73,6 +78,12 @@ export default function ContractAllView({
     count: number
   }>({ isOpen: false, count: 0 })
 
+  // 미등록 고객 알림 모달 상태
+  const [notRegisteredModal, setNotRegisteredModal] = useState<{
+    isOpen: boolean
+    name: string
+  }>({ isOpen: false, name: '' })
+
   // 데이터 로드
   const loadContracts = useCallback(async () => {
     setIsLoading(true)
@@ -94,6 +105,60 @@ export default function ContractAllView({
       loadContracts()
     }
   }, [visible, loadContracts])
+
+  // 고객명 클릭 핸들러 - 등록된 고객이면 RightPane에 표시
+  const handleCustomerNameClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onCustomerClick) return
+
+    // customer_id가 있으면 등록된 고객
+    if (contract.customer_id) {
+      try {
+        const customer = await CustomerService.getCustomer(contract.customer_id)
+        onCustomerClick(contract.customer_id, customer)
+      } catch (err) {
+        console.error('[ContractAllView] 고객 조회 실패:', err)
+        setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+      }
+    } else {
+      // customer_id가 없으면 이름으로 검색
+      try {
+        const response = await CustomerService.searchCustomers(contract.customer_name || '')
+        const matchedCustomer = response.customers.find(
+          c => c.personal_info?.name === contract.customer_name
+        )
+        if (matchedCustomer) {
+          onCustomerClick(matchedCustomer._id, matchedCustomer)
+        } else {
+          setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+        }
+      } catch (err) {
+        console.error('[ContractAllView] 고객 검색 실패:', err)
+        setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+      }
+    }
+  }, [onCustomerClick])
+
+  // 피보험자 클릭 핸들러 - 등록된 고객인지 이름으로 검색
+  const handleInsuredPersonClick = useCallback(async (insuredName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onCustomerClick || !insuredName || insuredName === '-') return
+
+    try {
+      const response = await CustomerService.searchCustomers(insuredName)
+      const matchedCustomer = response.customers.find(
+        c => c.personal_info?.name === insuredName
+      )
+      if (matchedCustomer) {
+        onCustomerClick(matchedCustomer._id, matchedCustomer)
+      } else {
+        setNotRegisteredModal({ isOpen: true, name: insuredName })
+      }
+    } catch (err) {
+      console.error('[ContractAllView] 피보험자 검색 실패:', err)
+      setNotRegisteredModal({ isOpen: true, name: insuredName })
+    }
+  }, [onCustomerClick])
 
   // 검색 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
@@ -612,7 +677,12 @@ export default function ContractAllView({
                   />
                 </div>
               )}
-              <span className="contract-customer">{contract.customer_name || '-'}</span>
+              <span
+                className={`contract-customer ${onCustomerClick ? 'contract-customer--clickable' : ''}`}
+                onClick={onCustomerClick ? (e) => handleCustomerNameClick(contract, e) : undefined}
+              >
+                {contract.customer_name || '-'}
+              </span>
               <span className="contract-product" title={contract.product_name || '-'}>
                 {contract.product_name || '-'}
               </span>
@@ -621,7 +691,12 @@ export default function ContractAllView({
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
               <span className="contract-payment-day">{contract.payment_day || '-'}</span>
               <span className="contract-cycle">{contract.payment_cycle || '-'}</span>
-              <span className="contract-insured">{contract.insured_person || '-'}</span>
+              <span
+                className={`contract-insured ${onCustomerClick && contract.insured_person ? 'contract-insured--clickable' : ''}`}
+                onClick={onCustomerClick && contract.insured_person ? (e) => handleInsuredPersonClick(contract.insured_person!, e) : undefined}
+              >
+                {contract.insured_person || '-'}
+              </span>
               <span className={`contract-status contract-status--${contract.payment_status === '납입중' ? 'active' : contract.payment_status === '납입완료' ? 'completed' : 'default'}`}>
                 {contract.payment_status || '-'}
               </span>
@@ -707,6 +782,31 @@ export default function ContractAllView({
               onClick={handleConfirmDelete}
             >
               삭제
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 미등록 고객 알림 모달 */}
+      <Modal
+        visible={notRegisteredModal.isOpen}
+        onClose={() => setNotRegisteredModal({ isOpen: false, name: '' })}
+        title="고객 정보"
+        size="sm"
+      >
+        <div className="not-registered-content">
+          <div className="not-registered-icon">
+            <SFSymbol name="person.crop.circle.badge.exclamationmark" size={SFSymbolSize.LARGE_TITLE} />
+          </div>
+          <p className="not-registered-message">
+            <strong>"{notRegisteredModal.name}"</strong>은(는) 등록된 고객이 아닙니다.
+          </p>
+          <div className="not-registered-actions">
+            <Button
+              variant="primary"
+              onClick={() => setNotRegisteredModal({ isOpen: false, name: '' })}
+            >
+              확인
             </Button>
           </div>
         </div>

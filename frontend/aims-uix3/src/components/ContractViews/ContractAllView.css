@@ -501,6 +501,60 @@ html[data-theme="dark"] .contract-product {
   text-align: center;
 }
 
+/* === 클릭 가능한 고객명/피보험자 === */
+/* .contract-item > span (specificity: 11) 보다 높아야 함 */
+.contract-item .contract-customer--clickable,
+.contract-item .contract-insured--clickable {
+  cursor: pointer;
+  color: var(--color-ios-blue);
+  transition: all 0.15s ease;
+}
+
+.contract-item .contract-customer--clickable:hover,
+.contract-item .contract-insured--clickable:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+html[data-theme="dark"] .contract-item .contract-customer--clickable,
+html[data-theme="dark"] .contract-item .contract-insured--clickable {
+  color: var(--color-ios-blue-dark);
+}
+
+/* === 미등록 고객 알림 모달 === */
+.not-registered-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.not-registered-icon {
+  color: var(--color-ios-orange);
+}
+
+html[data-theme="dark"] .not-registered-icon {
+  color: var(--color-ios-orange-dark);
+}
+
+.not-registered-message {
+  font-size: var(--font-size-body);
+  color: var(--color-ios-text-secondary-light);
+  line-height: 1.5;
+}
+
+html[data-theme="dark"] .not-registered-message {
+  color: var(--color-ios-text-secondary-dark);
+}
+
+.not-registered-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
 /* === 납입상태 === */
 .contract-status {
   text-align: center;

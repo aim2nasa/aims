@@ -1258,6 +1258,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <ContractAllView
               visible={activeDocumentView === 'contracts-all'}
               onClose={closeDocumentView}
+              onCustomerClick={handleCustomerClick}
             />
           </Suspense>
 
