@@ -768,15 +768,6 @@ export function ExcelRefiner() {
                 </span>
               </div>
               <div className="excel-refiner__toolbar-right">
-                <label className="excel-refiner__file-label excel-refiner__file-label--small">
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleFileSelect}
-                    className="excel-refiner__file-input"
-                  />
-                  <span>엑셀열기</span>
-                </label>
                 <Button
                   variant="secondary"
                   size="sm"
@@ -784,7 +775,6 @@ export function ExcelRefiner() {
                 >
                   엑셀닫기
                 </Button>
-                <div className="excel-refiner__toolbar-spacer" />
                 <Button
                   variant="primary"
                   size="sm"

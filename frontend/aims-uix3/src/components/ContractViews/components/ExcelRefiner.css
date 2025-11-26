@@ -122,10 +122,6 @@
   gap: var(--spacing-2);
 }
 
-.excel-refiner__toolbar-spacer {
-  width: var(--spacing-4);
-}
-
 .excel-refiner__filename {
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
