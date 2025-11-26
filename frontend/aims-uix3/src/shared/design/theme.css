@@ -84,6 +84,13 @@
   --color-status-info: var(--color-info-600);
   --color-status-info-bg: var(--color-info-50);
 
+  /* Selection Colors (for Excel Refiner & table rows) */
+  --color-selection-bg: var(--color-selection-bg-light);
+  --color-selection-bg-hover: var(--color-selection-bg-light-hover);
+  --color-product-original-selected: var(--color-product-original-selected-light);
+  --color-product-modified-selected: var(--color-product-modified-selected-light);
+  --color-product-unmatched-selected: var(--color-product-unmatched-selected-light);
+
   /* Effect Colors */
   --color-effect-vite-glow: #646cffaa;
   --color-effect-react-glow: #61dafbaa;
@@ -257,6 +264,13 @@
   --color-status-error-bg: rgba(239, 68, 68, 0.1);
   --color-status-info: var(--color-info-400);
   --color-status-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Selection Colors (for Excel Refiner & table rows) - Dark Theme */
+  --color-selection-bg: var(--color-selection-bg-dark);
+  --color-selection-bg-hover: var(--color-selection-bg-dark-hover);
+  --color-product-original-selected: var(--color-product-original-selected-dark);
+  --color-product-modified-selected: var(--color-product-modified-selected-dark);
+  --color-product-unmatched-selected: var(--color-product-unmatched-selected-dark);
 
   /* Effect Colors - Dark Theme */
   --color-effect-vite-glow: #646cffcc;

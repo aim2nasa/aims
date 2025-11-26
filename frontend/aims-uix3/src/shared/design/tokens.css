@@ -45,6 +45,29 @@
   --color-info: #3b82f6;
   --color-favorite: #fbbf24; /* 즐겨찾기/별 아이콘 색상 (amber-400) */
 
+  /* Success Color Scale (for Excel Refiner & validation) */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+
+  /* Warning Color Scale (for Excel Refiner & validation) */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+
+  /* Error Color Scale (for Excel Refiner & validation) */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+
+  /* Info Color Scale (for Excel Refiner & validation) */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+
   /* Status Background Colors (for badges/alerts) */
   --color-success-bg: rgba(34, 197, 94, 0.1);
   --color-error-bg: rgba(239, 68, 68, 0.1);
@@ -84,6 +107,27 @@
   --color-selection-glow-dark: rgba(59, 130, 246, 0.5);         /* Dark mode: selection glow effect */
   --color-selection-glow-dark-hover: rgba(59, 130, 246, 0.6);   /* Dark mode: selection glow hover */
   --color-selection-glow-pulse: rgba(59, 130, 246, 0.2);        /* Pulse animation peak glow */
+
+  /* Row Status Colors (for Excel Refiner table rows) */
+  --color-row-empty: rgba(245, 158, 11, 0.25);                   /* Empty value: warning orange */
+  --color-row-empty-hover: rgba(245, 158, 11, 0.35);             /* Empty value hover */
+  --color-row-duplicate: rgba(239, 68, 68, 0.25);                /* Duplicate value: error red */
+  --color-row-duplicate-hover: rgba(239, 68, 68, 0.35);          /* Duplicate value hover */
+
+  /* Product Status Colors (for product name matching) */
+  --color-product-original: rgba(34, 197, 94, 0.25);             /* Exactly matched: success green */
+  --color-product-modified: rgba(245, 158, 11, 0.25);            /* Modified matched: warning orange */
+  --color-product-unmatched: rgba(239, 68, 68, 0.25);            /* Unmatched: error red */
+
+  /* Product Status Colors - Selected State (Light Theme) */
+  --color-product-original-selected-light: rgba(34, 197, 94, 0.35);
+  --color-product-modified-selected-light: rgba(245, 158, 11, 0.35);
+  --color-product-unmatched-selected-light: rgba(239, 68, 68, 0.35);
+
+  /* Product Status Colors - Selected State (Dark Theme) */
+  --color-product-original-selected-dark: rgba(34, 197, 94, 0.45);
+  --color-product-modified-selected-dark: rgba(245, 158, 11, 0.45);
+  --color-product-unmatched-selected-dark: rgba(239, 68, 68, 0.45);
 
   /* === OPACITY VALUES === */
   --opacity-overlay: 0.5;

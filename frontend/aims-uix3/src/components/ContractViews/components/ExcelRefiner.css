@@ -1,0 +1,703 @@
+/**
+ * Excel Refiner View Styles
+ * aims-uix3 CSS 변수 시스템 사용
+ */
+
+.excel-refiner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-secondary);
+}
+
+/* === MAIN === */
+
+.excel-refiner__main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === DROPZONE === */
+
+.excel-refiner__dropzone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-8);
+  border: 2px dashed var(--color-border-secondary);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-primary);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__dropzone--active {
+  border-color: var(--color-primary-500);
+  background: var(--color-selection-bg);
+}
+
+.excel-refiner__dropzone-content {
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.excel-refiner__dropzone-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-4);
+  opacity: 0.5;
+}
+
+.excel-refiner__dropzone-content p {
+  margin-bottom: var(--spacing-4);
+  font-size: var(--font-size-base);
+}
+
+.excel-refiner__file-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background-color var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__file-label:hover {
+  background: var(--color-button-primary-bg-hover);
+}
+
+.excel-refiner__file-label--small {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  min-height: 2rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.excel-refiner__file-input {
+  display: none;
+}
+
+/* === CONTENT === */
+
+.excel-refiner__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  margin: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-primary);
+}
+
+/* === TOOLBAR === */
+
+.excel-refiner__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+}
+
+.excel-refiner__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.excel-refiner__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.excel-refiner__filename {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__row-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* === TABS === */
+
+.excel-refiner__tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+  overflow-x: auto;
+}
+
+.excel-refiner__tab {
+  padding: var(--spacing-2) var(--spacing-4);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__tab:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__tab--active {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* === VALIDATION === */
+
+.excel-refiner__validation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+  flex-wrap: wrap;
+}
+
+.excel-refiner__validation-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.excel-refiner__validation-column {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary-600);
+}
+
+.excel-refiner__validation-result {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.excel-refiner__validation-status {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.excel-refiner__validation-status--success {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success);
+}
+
+.excel-refiner__validation-status--error {
+  background: var(--color-status-error-bg);
+  color: var(--color-status-error);
+}
+
+.excel-refiner__validation-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-left: auto;
+}
+
+.excel-refiner__legend-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.excel-refiner__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__legend-item:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.excel-refiner__legend-item--active {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.excel-refiner__legend-item--original {
+  background: var(--color-success-50);
+  color: var(--color-success-600);
+}
+
+.excel-refiner__legend-item--modified {
+  background: var(--color-warning-50);
+  color: var(--color-warning-600);
+}
+
+.excel-refiner__legend-item--unmatched {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+}
+
+/* === ACTIONS === */
+
+.excel-refiner__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.excel-refiner__actions-left,
+.excel-refiner__actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.excel-refiner__action-log {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-success-600);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-success-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__action-log-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-success-600);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__action-log-clear:hover {
+  opacity: 1;
+  background: var(--color-success-100);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === TABLE === */
+
+.excel-refiner__table-container {
+  flex: 1;
+  overflow: auto;
+}
+
+.excel-refiner__table {
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.excel-refiner__th,
+.excel-refiner__td {
+  padding: var(--spacing-2) var(--spacing-3);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-primary);
+  white-space: nowrap;
+}
+
+.excel-refiner__td--right {
+  text-align: right;
+}
+
+.excel-refiner__th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-tertiary);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.excel-refiner__th:hover {
+  background: var(--color-bg-hover);
+}
+
+.excel-refiner__th--row-num,
+.excel-refiner__td--row-num {
+  width: 48px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-secondary);
+}
+
+.excel-refiner__th--sortable {
+  cursor: default;
+}
+
+.excel-refiner__th-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.excel-refiner__sort-btn {
+  padding: var(--spacing-1);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__sort-btn:hover {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__th--sorted .excel-refiner__sort-btn {
+  opacity: 1;
+  color: var(--color-primary-600);
+}
+
+.excel-refiner__th--clickable {
+  cursor: pointer;
+  background: var(--color-info-50);
+  border-bottom: 2px solid var(--color-primary-400);
+}
+
+.excel-refiner__th--clickable:hover {
+  background: var(--color-primary-400);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__th--clickable:hover .excel-refiner__sort-btn {
+  color: var(--color-neutral-0);
+}
+
+/* 검증 중 (클릭 직후) */
+.excel-refiner__th--validating {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-0);
+  animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+.excel-refiner__th--validating:hover {
+  background: var(--color-primary-600);
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 검증 성공 (오류 없음) */
+.excel-refiner__th--validation-success {
+  background: var(--color-success-500);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__th--validation-success:hover {
+  background: var(--color-success-600);
+}
+
+/* 검증 오류 있음 */
+.excel-refiner__th--validation-error {
+  background: var(--color-error-500);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__th--validation-error:hover {
+  background: var(--color-error-600);
+}
+
+.excel-refiner__th-badge {
+  margin-left: var(--spacing-1);
+  padding: 1px var(--spacing-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption-2);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  line-height: var(--line-height-tight);
+}
+
+.excel-refiner__th-badge--success {
+  background: var(--color-neutral-0);
+  color: var(--color-success-600);
+}
+
+.excel-refiner__th-badge--error {
+  background: var(--color-neutral-0);
+  color: var(--color-error-600);
+}
+
+.excel-refiner__th-badge--validating {
+  background: var(--color-neutral-0);
+  color: var(--color-primary-600);
+}
+
+.excel-refiner__tr {
+  cursor: pointer;
+}
+
+.excel-refiner__tr:hover {
+  background: var(--color-bg-hover);
+}
+
+.excel-refiner__tr--empty {
+  background: var(--color-row-empty);
+}
+
+.excel-refiner__tr--empty:hover {
+  background: var(--color-row-empty-hover);
+}
+
+.excel-refiner__tr--duplicate {
+  background: var(--color-row-duplicate);
+}
+
+.excel-refiner__tr--duplicate:hover {
+  background: var(--color-row-duplicate-hover);
+}
+
+/* === 상품명 셀 상태 (상품명 칼럼에만 적용) === */
+
+/* 원래부터 정확히 매칭된 상품명 - 초록색 */
+.excel-refiner__td--product-original {
+  background: var(--color-success-50);
+  color: var(--color-success-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 수정되어 매칭된 상품명 - 노란색/주황색 */
+.excel-refiner__td--product-modified {
+  background: var(--color-warning-50);
+  color: var(--color-warning-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 매칭 안 된 상품명 - 빨간색 */
+.excel-refiner__td--product-unmatched {
+  background: var(--color-error-50);
+  color: var(--color-error-600);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 선택 상태는 항상 최우선 (status 색상보다 우선) */
+.excel-refiner__tr--selected,
+.excel-refiner__tr--selected.excel-refiner__tr--empty,
+.excel-refiner__tr--selected.excel-refiner__tr--duplicate {
+  background: var(--color-selection-bg);
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: -2px;
+}
+
+.excel-refiner__tr--selected:hover,
+.excel-refiner__tr--selected.excel-refiner__tr--empty:hover,
+.excel-refiner__tr--selected.excel-refiner__tr--duplicate:hover {
+  background: var(--color-selection-bg-hover);
+}
+
+/* 선택된 행에서도 상품명 셀 색상은 유지 (조금 더 진하게) */
+.excel-refiner__tr--selected .excel-refiner__td--product-original {
+  background: var(--color-product-original-selected);
+}
+
+.excel-refiner__tr--selected .excel-refiner__td--product-modified {
+  background: var(--color-product-modified-selected);
+}
+
+.excel-refiner__tr--selected .excel-refiner__td--product-unmatched {
+  background: var(--color-product-unmatched-selected);
+}
+
+.excel-refiner__td--validation {
+  font-weight: var(--font-weight-medium);
+}
+
+/* === CELL EDITING === */
+
+.excel-refiner__td--editable {
+  cursor: text;
+}
+
+.excel-refiner__td--editable:hover {
+  background: var(--color-bg-hover);
+}
+
+/* 편집 중인 셀은 상대 위치 */
+.excel-refiner__td--editing {
+  position: relative;
+}
+
+/* 편집 중 원래 텍스트 숨김 (폭 유지용) */
+.excel-refiner__cell-text--hidden {
+  visibility: hidden;
+}
+
+.excel-refiner__cell-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-1) var(--spacing-2);
+  margin: 0;
+  border: 2px solid var(--color-primary-500);
+  border-radius: 0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.excel-refiner__cell-input:focus {
+  border-color: var(--color-primary-600);
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+}
+
+.excel-refiner__cell-input--right {
+  text-align: right;
+}
+
+/* === DELETE MODE === */
+
+.excel-refiner__delete-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.excel-refiner__delete-mode-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.excel-refiner__delete-mode-btn--active {
+  background: var(--color-error-500);
+  color: var(--color-neutral-0);
+}
+
+.excel-refiner__delete-mode-btn--active:hover {
+  background: var(--color-error-600);
+}
+
+.excel-refiner__selected-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-left: var(--spacing-2);
+}
+
+/* === CHECKBOX COLUMN === */
+
+.excel-refiner__th--checkbox,
+.excel-refiner__td--checkbox {
+  width: 40px;
+  text-align: center;
+  padding: var(--spacing-2);
+}
+
+.excel-refiner__th--checkbox input,
+.excel-refiner__td--checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* === DELETE MODE ROW STYLE === */
+
+.excel-refiner__tr--delete-mode {
+  cursor: pointer;
+}
+
+.excel-refiner__tr--delete-mode:hover {
+  background: var(--color-bg-hover);
+}
+
+/* === FOOTER === */
+
+.excel-refiner__footer {
+  padding: var(--spacing-2) var(--spacing-6);
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border-primary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* === DOC VIEWER CONTENT (for MongoDB Document modal) === */
+
+.excel-refiner__doc-viewer-content {
+  margin: 0;
+  padding: var(--spacing-4);
+  overflow: auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-primary);
+  background: var(--color-neutral-100);
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: var(--radius-md);
+}
