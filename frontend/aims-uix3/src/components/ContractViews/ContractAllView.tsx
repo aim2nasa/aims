@@ -12,7 +12,9 @@ import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
 import { Dropdown } from '@/shared/ui'
 import { Tooltip } from '@/shared/ui/Tooltip'
+import Modal from '@/shared/ui/Modal'
 import { ContractService } from '@/services/contractService'
+import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Contract } from '@/entities/contract'
 import './ContractAllView.css'
 
@@ -58,6 +60,18 @@ export default function ContractAllView({
 
   // 증권번호 표시 형식 (false: 앞자리 0 제거, true: 10자리 전체 표시)
   const [showFullPolicyNumber, setShowFullPolicyNumber] = useState(false)
+
+  // 개발자 모드 상태
+  const { isDevMode } = useDevModeStore()
+
+  // 삭제 모드 상태
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean
+    count: number
+  }>({ isOpen: false, count: 0 })
 
   // 데이터 로드
   const loadContracts = useCallback(async () => {
@@ -248,6 +262,65 @@ export default function ContractAllView({
     setShowFullPolicyNumber(prev => !prev)
   }
 
+  // 삭제 모드 핸들러
+  const handleToggleDeleteMode = () => {
+    if (isDeleteMode) {
+      // 삭제 모드 종료 시 선택 초기화
+      setSelectedContractIds(new Set())
+    }
+    setIsDeleteMode(!isDeleteMode)
+  }
+
+  const handleSelectContract = (contractId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setSelectedContractIds(prev => {
+      const next = new Set(prev)
+      if (next.has(contractId)) {
+        next.delete(contractId)
+      } else {
+        next.add(contractId)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = visibleContracts.map(c => c._id).filter(Boolean)
+      setSelectedContractIds(new Set(allIds))
+    } else {
+      setSelectedContractIds(new Set())
+    }
+  }
+
+  const handleDeleteSelected = () => {
+    if (selectedContractIds.size === 0) return
+    setDeleteConfirmModal({
+      isOpen: true,
+      count: selectedContractIds.size,
+    })
+  }
+
+  const handleConfirmDelete = async () => {
+    setDeleteConfirmModal({ isOpen: false, count: 0 })
+    setIsDeleting(true)
+
+    try {
+      const ids = Array.from(selectedContractIds)
+      await ContractService.deleteContracts(ids)
+
+      // 삭제 완료 후 새로고침 및 상태 초기화
+      await loadContracts()
+      setSelectedContractIds(new Set())
+      setIsDeleteMode(false)
+    } catch (error) {
+      console.error('[ContractAllView] 계약 삭제 실패:', error)
+      alert('계약 삭제 중 오류가 발생했습니다.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
   const renderSortIndicator = (field: SortField) => {
     if (sortField === field) {
@@ -328,9 +401,51 @@ export default function ContractAllView({
         {!isLoading && !error && (
           <div className="contract-result-header">
             <div className="result-count">
+              {/* 개발자 모드일 때만 삭제 버튼 표시 */}
+              {isDevMode && (
+                <Tooltip content={isDeleteMode ? '삭제 완료' : '삭제'}>
+                  <button
+                    type="button"
+                    className={`edit-mode-icon-button ${isDeleteMode ? 'edit-mode-icon-button--active' : ''}`}
+                    onClick={handleToggleDeleteMode}
+                    aria-label={isDeleteMode ? '삭제 완료' : '삭제'}
+                  >
+                    {isDeleteMode ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <SFSymbol
+                        name="trash"
+                        size={SFSymbolSize.CAPTION_1}
+                        weight={SFSymbolWeight.MEDIUM}
+                        decorative={true}
+                      />
+                    )}
+                  </button>
+                </Tooltip>
+              )}
+
               <span>총 {filteredContracts.length}건</span>
               {searchValue && contracts.length !== filteredContracts.length && (
                 <span className="search-result-info"> (전체 {contracts.length}건 중)</span>
+              )}
+
+              {/* 삭제 모드일 때 선택 수 및 삭제 버튼 */}
+              {isDeleteMode && (
+                <>
+                  <span className="selected-count-inline">
+                    {selectedContractIds.size}개 선택됨
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting || selectedContractIds.size === 0}
+                  >
+                    {isDeleting ? '삭제 중...' : '삭제'}
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -361,7 +476,18 @@ export default function ContractAllView({
 
           {/* 컬럼 헤더 */}
           {!isEmpty && !isLoading && (
-            <div className="contract-list-header">
+            <div className={`contract-list-header ${isDeleteMode ? 'contract-list-header--delete-mode' : ''}`}>
+              {/* 삭제 모드일 때 전체 선택 체크박스 */}
+              {isDeleteMode && (
+                <div className="header-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedContractIds.size === visibleContracts.length && visibleContracts.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    aria-label="전체 선택"
+                  />
+                </div>
+              )}
               <div className="header-customer header-sortable" onClick={() => handleColumnSort('customer_name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
@@ -434,7 +560,32 @@ export default function ContractAllView({
 
           {/* 계약 행 */}
           {!isEmpty && !isLoading && visibleContracts.map((contract) => (
-            <div key={contract._id} className="contract-item">
+            <div
+              key={contract._id}
+              className={`contract-item ${isDeleteMode ? 'contract-item--delete-mode' : ''}`}
+              onClick={isDeleteMode ? (e) => handleSelectContract(contract._id, e) : undefined}
+            >
+              {/* 삭제 모드일 때 체크박스 */}
+              {isDeleteMode && (
+                <div className="item-checkbox" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selectedContractIds.has(contract._id)}
+                    onChange={() => {
+                      setSelectedContractIds(prev => {
+                        const next = new Set(prev)
+                        if (next.has(contract._id)) {
+                          next.delete(contract._id)
+                        } else {
+                          next.add(contract._id)
+                        }
+                        return next
+                      })
+                    }}
+                    aria-label={`${contract.customer_name} 계약 선택`}
+                  />
+                </div>
+              )}
               <span className="contract-customer">{contract.customer_name || '-'}</span>
               <span className="contract-product" title={contract.product_name || '-'}>
                 {contract.product_name || '-'}
@@ -505,6 +656,33 @@ export default function ContractAllView({
           </div>
         )}
       </div>
+
+      {/* 삭제 확인 모달 */}
+      <Modal
+        visible={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, count: 0 })}
+        title="계약 삭제"
+        size="sm"
+      >
+        <div className="delete-confirm-content">
+          <p>선택한 <strong>{deleteConfirmModal.count}건</strong>의 계약을 삭제하시겠습니까?</p>
+          <p className="delete-warning">이 작업은 되돌릴 수 없습니다.</p>
+          <div className="delete-confirm-actions">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteConfirmModal({ isOpen: false, count: 0 })}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+            >
+              삭제
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </CenterPaneView>
   )
 }
