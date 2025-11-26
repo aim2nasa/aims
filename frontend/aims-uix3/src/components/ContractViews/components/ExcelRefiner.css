@@ -572,6 +572,15 @@ html[data-theme="dark"] .excel-refiner__th--clickable:active {
   background: var(--color-success-600);
 }
 
+html[data-theme="dark"] .excel-refiner__th--validation-success {
+  background: var(--color-success-500);
+  color: var(--color-neutral-0);
+}
+
+html[data-theme="dark"] .excel-refiner__th--validation-success:hover {
+  background: var(--color-success-600);
+}
+
 /* 검증 오류 있음 */
 .excel-refiner__th--validation-error {
   background: var(--color-error-500);
@@ -579,6 +588,15 @@ html[data-theme="dark"] .excel-refiner__th--clickable:active {
 }
 
 .excel-refiner__th--validation-error:hover {
+  background: var(--color-error-600);
+}
+
+html[data-theme="dark"] .excel-refiner__th--validation-error {
+  background: var(--color-error-500);
+  color: var(--color-neutral-0);
+}
+
+html[data-theme="dark"] .excel-refiner__th--validation-error:hover {
   background: var(--color-error-600);
 }
 
