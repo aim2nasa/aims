@@ -1078,6 +1078,20 @@ export function ExcelRefiner() {
         resultMsg += ` | 오류: ${customerErrors.length + contractResult.errorCount}건`
       }
 
+      // 중복 증권번호로 건너뛴 계약 상세 정보 표시
+      if (contractResult.skipped && contractResult.skipped.length > 0) {
+        const skippedPolicies = contractResult.skipped
+          .map(s => s.contract?.policy_number)
+          .filter(Boolean) as string[]
+        if (skippedPolicies.length > 0) {
+          const displayPolicies = skippedPolicies.slice(0, 5).join(', ')
+          resultMsg += ` | 중복: ${displayPolicies}`
+          if (contractResult.skippedCount > 5) {
+            resultMsg += ` 외 ${contractResult.skippedCount - 5}건`
+          }
+        }
+      }
+
       setActionLog(resultMsg)
 
       if (customerErrors.length > 0) {
