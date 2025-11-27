@@ -87,8 +87,8 @@ function clearPersistedState(): void {
 }
 
 export function ExcelRefiner() {
-  // 🍎 애플 스타일 알림 모달
-  const { showAlert } = useAppleConfirm()
+  // 🍎 애플 스타일 알림/확인 모달
+  const { showAlert, showConfirm } = useAppleConfirm()
 
   // 로그인 사용자 정보
   const { user } = useAuthStore()
@@ -771,35 +771,106 @@ export function ExcelRefiner() {
     setSelectedRows(new Set(problematicRows))
   }, [problematicRows])
 
+  // 문제 행 원클릭 삭제 (삭제 모드 없이 바로 삭제)
+  const handleDeleteProblematicRows = useCallback(async () => {
+    if (problematicRows.length === 0 || !currentSheet) return
+
+    const beforeCount = currentSheet.data.length
+    const rowsToDelete = new Set(problematicRows)
+
+    // AppleConfirmModal로 삭제 확인
+    const confirmed = await showConfirm({
+      title: '문제 행 삭제',
+      message: `${problematicRows.length}개의 문제 행을 삭제하시겠습니까?`,
+      confirmText: '삭제',
+      confirmStyle: 'destructive',
+      cancelText: '취소'
+    })
+    if (!confirmed) return
+
+    const selectedIndices = Array.from(rowsToDelete).sort((a, b) => a - b)
+    const newData = currentSheet.data.filter((_, index) => !rowsToDelete.has(index))
+    const afterCount = newData.length
+
+    setSheets(prev => {
+      const updated = [...prev]
+      const sheet = updated[activeSheetIndex]
+      if (!sheet) return prev
+      updated[activeSheetIndex] = {
+        name: sheet.name,
+        columns: sheet.columns,
+        data: newData
+      }
+      return updated
+    })
+
+    // productMatchResult 업데이트: 삭제된 행 제거 및 인덱스 재계산
+    if (productMatchResult) {
+      setProductMatchResult(prev => {
+        if (!prev) return prev
+
+        const remapIndex = (oldIndex: number): number => {
+          let newIndex = oldIndex
+          for (const deletedIdx of selectedIndices) {
+            if (deletedIdx < oldIndex) {
+              newIndex--
+            }
+          }
+          return newIndex
+        }
+
+        const newOriginalMatch = new Map<number, string>()
+        prev.originalMatch.forEach((objectId, rowIndex) => {
+          if (!rowsToDelete.has(rowIndex)) {
+            newOriginalMatch.set(remapIndex(rowIndex), objectId)
+          }
+        })
+
+        const newModified = new Map<number, string>()
+        prev.modified.forEach((objectId, rowIndex) => {
+          if (!rowsToDelete.has(rowIndex)) {
+            newModified.set(remapIndex(rowIndex), objectId)
+          }
+        })
+
+        const newUnmatched = prev.unmatched
+          .filter(rowIndex => !rowsToDelete.has(rowIndex))
+          .map(rowIndex => remapIndex(rowIndex))
+
+        return {
+          ...prev,
+          originalMatch: newOriginalMatch,
+          modified: newModified,
+          unmatched: newUnmatched
+        }
+      })
+    }
+
+    // 액션 로그 표시
+    setActionLog(`✓ ${problematicRows.length}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
+  }, [problematicRows, currentSheet, activeSheetIndex, productMatchResult, showConfirm])
+
   // 선택 해제
   const handleClearSelection = useCallback(() => {
     setSelectedRows(new Set())
   }, [])
 
-  // 선택 행 삭제 (two-step confirmation)
-  const handleDeleteSelected = useCallback(() => {
+  // 선택 행 삭제 (AppleConfirmModal 사용)
+  const handleDeleteSelected = useCallback(async () => {
     if (selectedRows.size === 0 || !currentSheet) return
 
     const selectedIndices = Array.from(selectedRows).sort((a, b) => a - b)
-    const rowNumbers = selectedIndices.map(i => i + 2)
     const beforeCount = currentSheet.data.length
 
-    // 1단계: 경고 메시지
-    const warning = window.confirm(
-      `⚠️ 경고: 선택한 ${selectedRows.size}개의 행을 삭제합니다.\n\n` +
-      `삭제할 행 번호: ${rowNumbers.join(', ')}\n` +
-      `현재 총 행 수: ${beforeCount}행\n\n` +
-      `계속하시겠습니까?`
-    )
-    if (!warning) return
-
-    // 2단계: 최종 확인
-    const finalConfirm = window.confirm(
-      `🗑️ 최종 확인\n\n` +
-      `정말로 ${selectedRows.size}개의 행을 삭제하시겠습니까?\n\n` +
-      `[확인]을 누르면 즉시 삭제됩니다.`
-    )
-    if (!finalConfirm) return
+    // AppleConfirmModal로 삭제 확인
+    const confirmed = await showConfirm({
+      title: '행 삭제',
+      message: `선택한 ${selectedRows.size}개의 행을 삭제하시겠습니까?`,
+      confirmText: '삭제',
+      confirmStyle: 'destructive',
+      cancelText: '취소'
+    })
+    if (!confirmed) return
 
     const newData = currentSheet.data.filter((_, index) => !selectedRows.has(index))
     const afterCount = newData.length
@@ -868,7 +939,7 @@ export function ExcelRefiner() {
 
     // 액션 로그 표시
     setActionLog(`✓ ${selectedRows.size}개 행 삭제 (${beforeCount}행 → ${afterCount}행)`)
-  }, [selectedRows, currentSheet, activeSheetIndex, productMatchResult])
+  }, [selectedRows, currentSheet, activeSheetIndex, productMatchResult, showConfirm])
 
   // 정제된 파일 저장
   const handleSaveRefined = useCallback(() => {
@@ -1744,6 +1815,16 @@ export function ExcelRefiner() {
                     </svg>
                   )}
                 </button>
+                {/* 삭제 모드가 아닐 때: 문제 행 원클릭 삭제 버튼 */}
+                {!isDeleteMode && problematicRows.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteProblematicRows}
+                  >
+                    문제 행 삭제 ({problematicRows.length})
+                  </Button>
+                )}
                 {/* 삭제 모드: 선택 개수 + 삭제 버튼 */}
                 {isDeleteMode && (
                   <>
