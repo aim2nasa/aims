@@ -8,6 +8,7 @@
  */
 
 import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect } from 'react';
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { Dropdown, Tooltip, Modal } from '@/shared/ui';
 import Button from '@/shared/ui/Button';
@@ -40,6 +41,9 @@ type SortDirection = 'asc' | 'desc';
 
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
   function AllCustomersView({ onCustomerClick }, ref) {
+    // 🍎 애플 스타일 알림 모달
+    const { showAlert } = useAppleConfirm();
+
     // F5 이후에도 유지되는 상태들
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
     const [searchValue, setSearchValue] = usePersistedState('customer-all-search', '');
@@ -350,7 +354,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         setIsDeleteMode(false);
       } catch (error) {
         console.error('[AllCustomersView] 고객 삭제 실패:', error);
-        alert('고객 삭제 중 오류가 발생했습니다.');
+        showAlert({
+          title: '삭제 실패',
+          message: '고객 삭제 중 오류가 발생했습니다.',
+          iconType: 'error'
+        });
       } finally {
         setIsDeleting(false);
       }
@@ -370,7 +378,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
 
       try {
         const result = await CustomerService.deleteAllCustomers();
-        alert(`${result.deletedCount}명의 고객이 삭제되었습니다.`);
+        showAlert({
+          title: '삭제 완료',
+          message: `${result.deletedCount}명의 고객이 삭제되었습니다.`,
+          iconType: 'success'
+        });
 
         // 삭제 완료 후 새로고침 및 상태 초기화
         await refresh();
@@ -378,7 +390,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         setIsDeleteMode(false);
       } catch (error) {
         console.error('[AllCustomersView] 고객 전체 삭제 실패:', error);
-        alert('고객 전체 삭제 중 오류가 발생했습니다.');
+        showAlert({
+          title: '삭제 실패',
+          message: '고객 전체 삭제 중 오류가 발생했습니다.',
+          iconType: 'error'
+        });
       } finally {
         setIsDeleting(false);
       }

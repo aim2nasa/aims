@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
 import { Tooltip } from '@/shared/ui/Tooltip'
@@ -86,6 +87,9 @@ function clearPersistedState(): void {
 }
 
 export function ExcelRefiner() {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   // 로그인 사용자 정보
   const { user } = useAuthStore()
 
@@ -328,7 +332,11 @@ export function ExcelRefiner() {
   // 파일 처리
   const handleFile = useCallback(async (file: File) => {
     if (!isValidExcelFile(file)) {
-      alert('엑셀 파일(.xlsx, .xls)만 지원합니다.')
+      showAlert({
+        title: '파일 형식 오류',
+        message: '엑셀 파일(.xlsx, .xls)만 지원합니다.',
+        iconType: 'warning'
+      })
       return
     }
 
@@ -356,9 +364,13 @@ export function ExcelRefiner() {
       setActionLog(`✓ "${file.name}" 로드 완료 (${parsedSheets.length}개 시트, ${totalRows}행)`)
     } catch (error) {
       console.error('파일 파싱 오류:', error)
-      alert('파일을 읽는 중 오류가 발생했습니다.')
+      showAlert({
+        title: '파일 읽기 오류',
+        message: '파일을 읽는 중 오류가 발생했습니다.',
+        iconType: 'error'
+      })
     }
-  }, [])
+  }, [showAlert])
 
   // 드래그앤드롭 핸들러
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -509,7 +521,11 @@ export function ExcelRefiner() {
         })
       } catch (error) {
         console.error('상품명 검증 오류:', error)
-        alert('상품명 검증 중 오류가 발생했습니다.')
+        showAlert({
+          title: '검증 오류',
+          message: '상품명 검증 중 오류가 발생했습니다.',
+          iconType: 'error'
+        })
       } finally {
         setValidatingInProgress(prev => {
           const next = new Set(prev)
@@ -1008,7 +1024,11 @@ export function ExcelRefiner() {
     )
 
     if (customerNameColIndex === -1) {
-      alert('고객명 컬럼을 찾을 수 없습니다.')
+      showAlert({
+        title: '컬럼 오류',
+        message: '고객명 컬럼을 찾을 수 없습니다.',
+        iconType: 'warning'
+      })
       return
     }
 
@@ -1036,7 +1056,11 @@ export function ExcelRefiner() {
 
     const uniqueNames = Array.from(customerNames)
     if (uniqueNames.length === 0) {
-      alert('고객명 데이터가 없습니다.')
+      showAlert({
+        title: '데이터 오류',
+        message: '고객명 데이터가 없습니다.',
+        iconType: 'warning'
+      })
       return
     }
 
@@ -1056,7 +1080,11 @@ export function ExcelRefiner() {
 
     if (customerNames.length === 0 || !currentSheet || !user?._id) {
       if (!user?._id) {
-        alert('로그인이 필요합니다.')
+        showAlert({
+          title: '로그인 필요',
+          message: '로그인이 필요합니다.',
+          iconType: 'warning'
+        })
       }
       return
     }
@@ -1144,7 +1172,11 @@ export function ExcelRefiner() {
 
       // 필수 컬럼 확인
       if (colIndexMap['policy_number'] === undefined) {
-        alert('증권번호 컬럼을 찾을 수 없습니다.')
+        showAlert({
+          title: '컬럼 오류',
+          message: '증권번호 컬럼을 찾을 수 없습니다.',
+          iconType: 'warning'
+        })
         return
       }
 
@@ -1228,7 +1260,11 @@ export function ExcelRefiner() {
 
     } catch (err) {
       console.error('가져오기 오류:', err)
-      alert(`가져오기 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+      showAlert({
+        title: '가져오기 오류',
+        message: `가져오기 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`,
+        iconType: 'error'
+      })
       // 오류 발생 시 결과 초기화 (완전 실패)
       setImportResult({
         total: 0,

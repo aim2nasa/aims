@@ -4,8 +4,18 @@
  */
 
 import '@testing-library/jest-dom'
+import type { ReactNode } from 'react'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+
+// useAppleConfirm hook mock (AppleConfirmProvider 없이도 테스트 가능)
+vi.mock('@/contexts/AppleConfirmProvider', () => ({
+  useAppleConfirm: () => ({
+    showAlert: vi.fn().mockResolvedValue(true),
+    showConfirm: vi.fn().mockResolvedValue(true)
+  }),
+  AppleConfirmProvider: ({ children }: { children: ReactNode }) => children
+}))
 
 // 각 테스트 후 자동 cleanup
 afterEach(() => {

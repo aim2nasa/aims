@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import DraggableModal from '@/shared/ui/DraggableModal';
 import Button from '@/shared/ui/Button';
 import type { Customer } from '@/entities/customer/model';
@@ -40,6 +41,9 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
   onCustomerSelected,
   fileName,
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm();
+
   console.log('[CustomerIdentificationModal] 🔍 받은 고객 목록:', customers);
   console.log('[CustomerIdentificationModal] 🔍 첫 번째 고객:', customers[0]);
   console.log('[CustomerIdentificationModal] 🔍 첫 번째 고객 _id:', customers[0]?._id);
@@ -123,7 +127,11 @@ export const CustomerIdentificationModal: React.FC<CustomerIdentificationModalPr
       } catch (error) {
         console.error('[CustomerIdentificationModal] ❌ 신규 고객 생성 실패:', error);
         console.error('[CustomerIdentificationModal] ❌ 에러 상세:', JSON.stringify(error, null, 2));
-        alert('고객 생성에 실패했습니다. 다시 시도해주세요.');
+        showAlert({
+          title: '생성 실패',
+          message: '고객 생성에 실패했습니다. 다시 시도해주세요.',
+          iconType: 'error'
+        });
       } finally {
         setIsCreatingCustomer(false);
       }

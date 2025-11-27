@@ -10,6 +10,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import UserProfileHeader from './UserProfileHeader';
 import UserProfileMenuItem from './UserProfileMenuItem';
 import { useDevModeStore } from '../../../shared/store/useDevModeStore';
@@ -55,6 +56,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   anchorElement,
   onMenuClick
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm();
+
   const menuRef = useRef<HTMLDivElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
@@ -129,7 +133,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   // 핸들러들
   const handleSwitchAccount = () => {
     // TODO: 계정 전환 UI 표시 (개발자 모드)
-    alert('계정 전환 기능은 Header의 개발자 모드(Ctrl+Shift+D)에서 사용 가능합니다.');
+    showAlert({
+      title: '안내',
+      message: '계정 전환 기능은 Header의 개발자 모드(Ctrl+Shift+D)에서 사용 가능합니다.',
+      iconType: 'info'
+    });
     onClose();
   };
 

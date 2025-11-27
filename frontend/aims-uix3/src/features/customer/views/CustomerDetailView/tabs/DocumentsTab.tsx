@@ -9,6 +9,7 @@
  */
 
 import React, { useCallback, useState, useMemo } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import type { Customer } from '@/entities/customer/model'
 import { Tooltip, Button } from '@/shared/ui'
 import { Dropdown } from '@/shared/ui'
@@ -60,6 +61,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   onDocumentLibraryRefresh,
   onAnnualReportNeedRefresh
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
   const confirmController = useAppleConfirmController()
   const {
     documents,
@@ -259,10 +262,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       await refresh()
     } catch (error) {
       console.error('[DocumentsTab] 메모 저장 실패:', error)
-      alert('메모 저장에 실패했습니다.')
+      showAlert({
+        title: '저장 실패',
+        message: '메모 저장에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, customer, refresh])
+  }, [selectedNotes, customer, refresh, showAlert])
 
   /**
    * 메모 삭제 핸들러 (빈 문자열로 저장)
@@ -288,10 +295,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       await refresh()
     } catch (error) {
       console.error('[DocumentsTab] 메모 삭제 실패:', error)
-      alert('메모 삭제에 실패했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: '메모 삭제에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, customer, refresh])
+  }, [selectedNotes, customer, refresh, showAlert])
 
   // 🍎 삭제 모드 토글 핸들러 (DocumentLibraryView와 동일)
   const handleToggleDeleteMode = useCallback(() => {

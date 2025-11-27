@@ -7,6 +7,7 @@ import { useHapticFeedback, initializeHapticStyles, HAPTIC_TYPES } from './hooks
 import { GapConfig, DEFAULT_GAPS } from './types/layout'
 import Header from './components/Header'
 import { DocumentSearchProvider } from './contexts/DocumentSearchProvider'
+import { AppleConfirmProvider } from './contexts/AppleConfirmProvider'
 import { useDevModeStore } from './shared/store/useDevModeStore'
 import { useAccountSettingsStore } from './shared/store/useAccountSettingsStore'
 import { useUserStore } from './stores/user'
@@ -1617,12 +1618,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   )
 }
 
-// DocumentSearchProvider로 App 감싸기
+// DocumentSearchProvider와 AppleConfirmProvider로 App 감싸기
 function AppWithProviders(props: AppProps) {
   return (
-    <DocumentSearchProvider>
-      <App {...props} />
-    </DocumentSearchProvider>
+    <AppleConfirmProvider>
+      <DocumentSearchProvider>
+        <App {...props} />
+      </DocumentSearchProvider>
+    </AppleConfirmProvider>
   )
 }
 

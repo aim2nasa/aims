@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import Button from '@/shared/ui/Button'
@@ -43,6 +44,9 @@ export default function ContractAllView({
   onClose,
   onCustomerClick
 }: ContractAllViewProps) {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   // 데이터 상태
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -394,7 +398,11 @@ export default function ContractAllView({
       setIsDeleteMode(false)
     } catch (error) {
       console.error('[ContractAllView] 계약 삭제 실패:', error)
-      alert('계약 삭제 중 오류가 발생했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: '계약 삭제 중 오류가 발생했습니다.',
+        iconType: 'error'
+      })
     } finally {
       setIsDeleting(false)
     }
@@ -414,7 +422,11 @@ export default function ContractAllView({
 
     try {
       const result = await ContractService.deleteAllContracts()
-      alert(`${result.deletedCount}건의 계약이 삭제되었습니다.`)
+      showAlert({
+        title: '삭제 완료',
+        message: `${result.deletedCount}건의 계약이 삭제되었습니다.`,
+        iconType: 'success'
+      })
 
       // 삭제 완료 후 새로고침 및 상태 초기화
       await loadContracts()
@@ -422,7 +434,11 @@ export default function ContractAllView({
       setIsDeleteMode(false)
     } catch (error) {
       console.error('[ContractAllView] 계약 전체 삭제 실패:', error)
-      alert('계약 전체 삭제 중 오류가 발생했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: '계약 전체 삭제 중 오류가 발생했습니다.',
+        iconType: 'error'
+      })
     } finally {
       setIsDeleting(false)
     }

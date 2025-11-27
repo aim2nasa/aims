@@ -5,12 +5,14 @@
 import { useNavigate } from 'react-router-dom';
 import { startKakaoLogin, startKakaoLoginSwitch } from '@/entities/auth/api';
 import { useAuthStore } from '@/shared/stores/authStore';
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { syncUserIdFromStorage } from '@/stores/user';
 import './LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setToken, setUser } = useAuthStore();
+  const { showAlert } = useAppleConfirm();
 
   /**
    * 개발 환경 전용: 로그인 건너뛰기
@@ -62,7 +64,11 @@ export default function LoginPage() {
       navigate('/', { replace: true });
     } catch (error) {
       console.error('개발용 로그인 실패:', error);
-      alert('개발용 로그인에 실패했습니다. 백엔드 서버를 확인해주세요.');
+      showAlert({
+        title: '로그인 실패',
+        message: '개발용 로그인에 실패했습니다. 백엔드 서버를 확인해주세요.',
+        iconType: 'error'
+      });
     }
   };
 

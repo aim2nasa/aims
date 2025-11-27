@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { useDocumentSearch } from '@/contexts/useDocumentSearch'
 import { SearchService } from '@/services/searchService'
@@ -89,6 +90,9 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
   onDocumentClick,
   onCustomerClick
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   const {
     query,
     searchMode,
@@ -425,10 +429,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       await handleSearch()
     } catch (error) {
       console.error('[DocumentSearchView] 메모 저장 실패:', error)
-      alert('메모 저장에 실패했습니다.')
+      showAlert({
+        title: '저장 실패',
+        message: '메모 저장에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, handleSearch])
+  }, [selectedNotes, handleSearch, showAlert])
 
   /**
    * 🍎 메모 삭제 핸들러 (빈 문자열로 저장)
@@ -454,10 +462,14 @@ export const DocumentSearchView: React.FC<DocumentSearchViewProps> = ({
       await handleSearch()
     } catch (error) {
       console.error('[DocumentSearchView] 메모 삭제 실패:', error)
-      alert('메모 삭제에 실패했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: '메모 삭제에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, handleSearch])
+  }, [selectedNotes, handleSearch, showAlert])
 
   /**
    * 🍎 고객별 문서 조회 핸들러

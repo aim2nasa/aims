@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import Modal from '@/shared/ui/Modal/Modal'
 import Button from '@/shared/ui/Button'
 import { Tooltip } from '@/shared/ui/Tooltip'
@@ -40,6 +41,9 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   onClose,
   onAdvancedSettingsClick
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   // 전역 상태
   const { currentUser, updateCurrentUser } = useUserStore()
 
@@ -195,7 +199,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       console.log('✅ 사용자 정보가 저장되었습니다')
     } catch (error) {
       console.error('❌ 사용자 정보 저장 실패:', error)
-      alert(error instanceof Error ? error.message : '저장에 실패했습니다')
+      showAlert({
+        title: '저장 실패',
+        message: error instanceof Error ? error.message : '저장에 실패했습니다',
+        iconType: 'error'
+      })
     } finally {
       setIsSaving(false)
     }

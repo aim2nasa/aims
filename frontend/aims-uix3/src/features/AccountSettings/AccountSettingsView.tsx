@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
@@ -55,6 +56,9 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   visible,
   onClose
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   // 전역 상태
   const { currentUser, updateCurrentUser } = useUserStore()
 
@@ -244,13 +248,21 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
     if (file) {
       // 이미지 파일 검증
       if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드할 수 있습니다.')
+        showAlert({
+          title: '파일 형식 오류',
+          message: '이미지 파일만 업로드할 수 있습니다.',
+          iconType: 'warning'
+        })
         return
       }
 
       // 파일 크기 검증 (10MB 제한)
       if (file.size > 10 * 1024 * 1024) {
-        alert('파일 크기는 10MB 이하여야 합니다.')
+        showAlert({
+          title: '파일 크기 초과',
+          message: '파일 크기는 10MB 이하여야 합니다.',
+          iconType: 'warning'
+        })
         return
       }
 
@@ -260,7 +272,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
         setAvatarPreview(resizedImage)
       } catch (error) {
         console.error('이미지 리사이즈 실패:', error)
-        alert('이미지 처리 중 오류가 발생했습니다.')
+        showAlert({
+          title: '이미지 처리 오류',
+          message: '이미지 처리 중 오류가 발생했습니다.',
+          iconType: 'error'
+        })
       }
     }
   }
@@ -319,7 +335,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       console.log('✅ 사용자 정보가 저장되었습니다')
     } catch (error) {
       console.error('❌ 사용자 정보 저장 실패:', error)
-      alert(error instanceof Error ? error.message : '저장에 실패했습니다')
+      showAlert({
+        title: '저장 실패',
+        message: error instanceof Error ? error.message : '저장에 실패했습니다',
+        iconType: 'error'
+      })
     } finally {
       setIsSaving(false)
     }
@@ -343,7 +363,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
   // 계정 삭제 핸들러
   const handleDeleteAccount = async () => {
     if (!token) {
-      alert('로그인이 필요합니다.')
+      showAlert({
+        title: '로그인 필요',
+        message: '로그인이 필요합니다.',
+        iconType: 'warning'
+      })
       return
     }
 
@@ -361,7 +385,11 @@ export const AccountSettingsView: React.FC<AccountSettingsViewProps> = ({
       window.location.href = '/login'
     } catch (error) {
       console.error('계정 삭제 실패:', error)
-      alert(error instanceof Error ? error.message : '계정 삭제에 실패했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: error instanceof Error ? error.message : '계정 삭제에 실패했습니다.',
+        iconType: 'error'
+      })
     } finally {
       setIsDeleting(false)
     }

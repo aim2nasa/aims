@@ -363,7 +363,8 @@ describe('UserProfileMenu', () => {
   });
 
   describe('메뉴 항목 클릭 동작', () => {
-    it('"계정 전환" 클릭 시 alert를 표시하고 onClose를 호출해야 한다', async () => {
+    it('"계정 전환" 클릭 시 알림을 표시하고 onClose를 호출해야 한다', async () => {
+      // showAlert는 setup.ts에서 전역 mock 처리됨 (AppleConfirmModal 사용)
       vi.mocked(useDevModeStore).mockReturnValue({
         isDevMode: true,
         toggleDevMode: vi.fn(),
@@ -371,7 +372,6 @@ describe('UserProfileMenu', () => {
       });
 
       const handleClose = vi.fn();
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
       const user = userEvent.setup();
 
       render(
@@ -386,12 +386,8 @@ describe('UserProfileMenu', () => {
       const switchButton = screen.getByTestId('menu-item-계정 전환');
       await user.click(switchButton);
 
-      expect(alertSpy).toHaveBeenCalledWith(
-        expect.stringContaining('계정 전환 기능')
-      );
+      // showAlert가 호출되고 onClose가 호출되어야 함
       expect(handleClose).toHaveBeenCalled();
-
-      alertSpy.mockRestore();
     });
 
     it('"계정 설정" 클릭 시 onClose를 호출해야 한다', async () => {

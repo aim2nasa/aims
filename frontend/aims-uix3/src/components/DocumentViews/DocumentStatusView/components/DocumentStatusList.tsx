@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback } from 'react'
+import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { Tooltip } from '@/shared/ui'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import { DocumentUtils } from '@/entities/document'
@@ -125,6 +126,9 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
   onCustomerClick,
   onRefresh
 }) => {
+  // 🍎 애플 스타일 알림 모달
+  const { showAlert } = useAppleConfirm()
+
   // 현재 로그인한 사용자 ID (내 파일 기능용)
   const { userId } = useUserStore()
 
@@ -163,10 +167,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       }
     } catch (error) {
       console.error('[DocumentStatusList] 메모 저장 실패:', error)
-      alert('메모 저장에 실패했습니다.')
+      showAlert({
+        title: '저장 실패',
+        message: '메모 저장에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, onRefresh])
+  }, [selectedNotes, onRefresh, showAlert])
 
   /**
    * 메모 삭제 핸들러 (빈 문자열로 저장)
@@ -194,10 +202,14 @@ export const DocumentStatusList: React.FC<DocumentStatusListProps> = ({
       }
     } catch (error) {
       console.error('[DocumentStatusList] 메모 삭제 실패:', error)
-      alert('메모 삭제에 실패했습니다.')
+      showAlert({
+        title: '삭제 실패',
+        message: '메모 삭제에 실패했습니다.',
+        iconType: 'error'
+      })
       throw error
     }
-  }, [selectedNotes, onRefresh])
+  }, [selectedNotes, onRefresh, showAlert])
 
   // 로딩 상태
   if (isLoading && isEmpty) {
