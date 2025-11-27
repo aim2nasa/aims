@@ -776,9 +776,9 @@
 
   /* 더 뚜렷한 검색 아이콘 - 두꺼운 선 */
   background: currentColor;
-  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='35' r='28' fill='none' stroke='currentColor' stroke-width='8'/%3e%3cpath d='58 58l30 30' stroke='currentColor' stroke-width='8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
   mask-size: contain;
-  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3ccircle cx='35' cy='35' r='28' fill='none' stroke='currentColor' stroke-width='8'/%3e%3cpath d='58 58l30 30' stroke='currentColor' stroke-width='8' stroke-linecap='round'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M10 2a8 8 0 105.3 14.03l5.34 5.34 1.42-1.42-5.34-5.34A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z' fill='black'/%3e%3c/svg%3e") no-repeat center;
   -webkit-mask-size: contain;
 }
 

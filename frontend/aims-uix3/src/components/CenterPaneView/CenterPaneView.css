@@ -54,6 +54,9 @@ html[data-theme="dark"] .center-pane-view__header {
 /* 제목 스타일 - 애플 정제된 타이포그래피 */
 .center-pane-view__title {
   margin: 0;
+  display: flex; /* 아이콘과 텍스트 수직 중앙 정렬 */
+  align-items: center;
+  gap: 8px; /* 아이콘과 텍스트 간격 */
   font-size: var(--font-size-subheadline); /* 15px - FONT_SIZE_STANDARDS.md: 페이지 제목 */
   font-weight: var(--font-weight-semibold);
   color: var(--color-header-title); /* 60% 투명도 애플 서브틀 색상 */
@@ -198,10 +201,19 @@ html[data-theme="dark"] .center-pane-view__placeholder {
 }
 /* 제목 아이콘 스타일 */
 .center-pane-view__title-icon {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  margin-right: 8px;
+  flex-shrink: 0;
   opacity: 0.6;
+}
+
+/* SF Symbol 아이콘 크기 통일 (LeftPane CustomMenu와 동일: 1.3em) */
+.center-pane-view__title-icon .sf-symbol {
+  font-size: 1.3em;
+}
+
+.center-pane-view__title-icon .sf-symbol__shape {
+  font-size: inherit;
 }
 
 /* 다크 테마 아이콘 지원 */

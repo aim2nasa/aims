@@ -392,14 +392,16 @@ html[data-theme="dark"] {
 **LeftPane CustomMenu 아이콘이 모든 아이콘의 기준이다!**
 
 1. **기준 크기:**
-   - LeftPane CustomMenu 아이콘: **17px** (SFSymbolSize.CALLOUT × 1.3)
+   - LeftPane CustomMenu 아이콘: **~20.8px** (SFSymbolSize.CALLOUT(16px) × 1.3em)
    - CustomMenu.css에서 `.custom-menu .sf-symbol { font-size: 1.3em; }` 적용
-   - 이것이 AIMS 프로젝트의 **최대 아이콘 크기**
+   - **CenterPane 제목 아이콘도 동일한 크기 적용**
+   - CenterPaneView.css에서 `.center-pane-view__title-icon .sf-symbol { font-size: 1.3em; }` 적용
+   - LeftPane과 CenterPane의 아이콘 크기가 일치해야 시각적 일관성 유지
 
 2. **절대 규칙:**
-   - **어떠한 아이콘도 LeftPane CustomMenu 아이콘(17px)보다 커서는 안 된다**
-   - 모든 아이콘은 17px **이하**여야 함
-   - 17px과 **같거나 작아야** 함
+   - **LeftPane과 CenterPane의 아이콘 크기는 반드시 동일해야 한다**
+   - 두 영역 모두 CSS에서 `font-size: 1.3em` 배율 적용
+   - 다른 영역의 아이콘은 이보다 클 수 없음
 
 3. **허용 크기:**
    ```
@@ -407,9 +409,9 @@ html[data-theme="dark"] {
    ✅ 13px (SFSymbolSize.CAPTION_1)
    ✅ 15px (SFSymbolSize.FOOTNOTE)
    ✅ 16px (SFSymbolSize.CALLOUT)
-   ✅ 17px (SFSymbolSize.BODY 또는 CALLOUT × 1.3) - 최대 크기
-   ❌ 20px - 금지
-   ❌ 24px - 금지
+   ✅ 17px (SFSymbolSize.BODY)
+   ✅ ~20.8px (CALLOUT × 1.3em) - LeftPane/CenterPane 제목 아이콘
+   ❌ 24px 이상 - 금지 (문서 타입 아이콘 예외)
    ```
 
 4. **아이콘 배경 규칙:**
@@ -481,7 +483,7 @@ html[data-theme="dark"] {
    - 이유: 문서 구분을 위한 시각적 강조 필요
 
 **기억하라**:
-- LeftPane CustomMenu 아이콘(17px)이 최대 크기! 이보다 큰 아이콘은 존재해서는 안 된다!
+- LeftPane과 CenterPane의 아이콘 크기는 반드시 동일! (`font-size: 1.3em` 배율 적용)
 - 아이콘 배경은 투명! 호버 시 튀어나오는 효과(opacity + scale)만 사용!
 
 ### 🔧 아이콘 캐싱 문제 해결 - 필독! 🔧
