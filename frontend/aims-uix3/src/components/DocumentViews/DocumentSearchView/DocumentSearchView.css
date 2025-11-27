@@ -34,7 +34,7 @@
   min-width: 200px; /* ✅ 변경 가능: 최소 너비 보장 */
   background-color: transparent;  /* ❌ 표준: 투명 */
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 0 8px; /* 검색 바 컴포넌트 높이 통일을 위해 vertical padding 제거 */
   transition: background-color var(--duration-ios-quick) var(--easing-ease-out);
   overflow: visible; /* ❌ 표준: 드롭다운이 잘리지 않도록 */
 }
@@ -88,6 +88,7 @@ html[data-theme="dark"] .document-search-container .search-icon {
 .document-search-container .search-input {
   flex: 1;
   width: 100%;
+  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
   border: 1px solid rgba(0, 0, 0, 0.12);  /* ❌ 표준: 미세한 경계선 */
   border-radius: 8px;
   background: transparent;  /* ❌ 표준: 투명 배경 */
@@ -96,8 +97,9 @@ html[data-theme="dark"] .document-search-container .search-icon {
   font-weight: 400;
   color: var(--color-ios-text-primary-light);  /* ❌ 표준: CSS 변수 */
   outline: none;
-  padding: 4px 8px 4px 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
+  padding: 0 8px 0 26px;  /* ❌ 표준: 왼쪽 26px로 아이콘 공간 확보 */
   transition: border-color 0.2s ease-out;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .document-search-container .search-input {
@@ -240,7 +242,8 @@ html[data-theme="dark"] .reset-button:focus-visible {
 /* 검색 버튼 - iOS 스타일 */
 .search-button {
   flex-shrink: 0; /* 축소 방지 */
-  padding: 8px 20px;
+  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
+  padding: 0 20px;
   border: none;
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
@@ -1567,7 +1570,8 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
 /* === 🍎 고객 선택 버튼 (AIMS 공통 버튼 스타일) === */
 .customer-select-button {
   flex-shrink: 0;
-  padding: 8px 20px;
+  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
+  padding: 0 20px;
   border: none;
   background-color: var(--color-primary-500);
   color: var(--color-neutral-0);
@@ -1594,12 +1598,14 @@ html[data-theme="dark"] .search-results-section::-webkit-scrollbar-thumb:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  height: 38px; /* 검색 바 컴포넌트 높이 통일 */
+  padding: 0 10px;
   min-width: 132px; /* 120px → 132px (10% 증가) */
   max-width: 220px; /* 200px → 220px (10% 증가) */
   background-color: transparent;
   border-radius: 8px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .selected-customer-display {
