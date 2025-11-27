@@ -500,10 +500,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     }
 
-    // 상태 업데이트 - 새 파일을 맨 앞에 추가
+    // 상태 업데이트 - 이전 업로드 기록 초기화 후 새 파일만
     setUploadState(prev => ({
       ...prev,
-      files: [...newUploadFiles, ...prev.files]
+      files: newUploadFiles
     }))
 
     // 유효한 파일들만 업로드 큐에 추가
@@ -1305,15 +1305,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             uploadStats={stats}
             onCancelUpload={handleCancelAll}
             onRetryFile={handleRetryFile}
-            onClearUpload={async () => {
-              const confirmed = await showAppleConfirm(
-                '업로드 기록을 초기화하시겠습니까?',
-                '업로드 초기화'
-              )
-              if (confirmed) {
-                handleClearAll()
-              }
-            }}
+            onClearUpload={handleClearAll}
           />
         </div>
 
