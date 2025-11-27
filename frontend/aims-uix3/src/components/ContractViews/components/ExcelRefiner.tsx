@@ -358,6 +358,10 @@ export function ExcelRefiner() {
       setSortDirection('asc')
       // 삭제 모드 해제
       setIsDeleteMode(false)
+      // 이전 import 결과 초기화 (중요: 이전 파일의 import 결과가 남아있으면 자동 import된 것처럼 보임)
+      setImportResult(null)
+      setIsImporting(false)
+      setImportProgress(null)
 
       // 액션 로그 표시
       const totalRows = parsedSheets.reduce((sum, s) => sum + s.data.length, 0)
@@ -417,6 +421,10 @@ export function ExcelRefiner() {
     setProductSearchKeyword('')
     setProductSearchRowIndex(null)
     setEditingCell(null)
+    // import 상태 초기화
+    setImportResult(null)
+    setIsImporting(false)
+    setImportProgress(null)
     // sessionStorage 정리
     clearPersistedState()
   }, [])
