@@ -10,7 +10,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button, Dropdown, type DropdownOption } from '@/shared/ui'
 import { CustomerSelectorModal } from '@/shared/ui/CustomerSelectorModal'
-import Tooltip from '@/shared/ui/Tooltip'
 import type { Customer } from '@/entities/customer'
 import { useRecentCustomersStore } from '@/shared/store/useRecentCustomersStore'
 import './CustomerFileUploadArea.css'
@@ -34,12 +33,6 @@ interface CustomerFileUploadAreaProps {
   isNotesExpanded: boolean
   /** 메모 영역 토글 핸들러 */
   onToggleNotes: () => void
-  /** 초기화 버튼 표시 여부 */
-  showResetButton?: boolean
-  /** 초기화 핸들러 */
-  onReset?: () => void
-  /** 초기화 버튼 비활성화 여부 */
-  resetDisabled?: boolean
 }
 
 // 문서 유형 옵션 (DocumentLinkModal과 동일)
@@ -65,10 +58,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
   onNotesChange,
   disabled,
   isNotesExpanded,
-  onToggleNotes,
-  showResetButton = false,
-  onReset,
-  resetDisabled = false
+  onToggleNotes
 }) => {
   // 고객 선택 모달 상태
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false)
@@ -149,7 +139,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
     <div className="customer-file-upload-area">
       {/* 하나의 경계 박스: 고객 선택 + 고객 정보 + 문서 유형 + 메모 */}
       <div className="customer-file-upload-area__content-box">
-        {/* 첫 번째 행: 고객 선택 버튼 + 고객 정보 + 초기화 */}
+        {/* 첫 번째 행: 고객 선택 버튼 + 고객 정보 */}
         <div className="customer-file-upload-area__main-row">
           {/* 고객 선택 버튼 */}
           <Button
@@ -187,26 +177,6 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
               />
             )}
           </div>
-
-          {/* 초기화 버튼 (고객 선택 시에만 표시) */}
-          {selectedCustomer && showResetButton && onReset && (
-            <Tooltip content="초기화">
-              <button
-                onClick={onReset}
-                disabled={resetDisabled}
-                className="customer-file-upload-area__reset-button"
-                aria-label="초기화"
-              >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M2 8C2 4.68629 4.68629 2 8 2C9.88447 2 11.5551 2.93087 12.6083 4.35M14 8C14 11.3137 11.3137 14 8 14C6.11553 14 4.44487 13.0691 3.39167 11.65M12.6083 4.35H9M12.6083 4.35V1M3.39167 11.65H7M3.39167 11.65V15"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </Tooltip>
-          )}
         </div>
 
         {/* 추가 옵션 (문서 유형 + 메모) - 고객 선택 시에만 표시 */}

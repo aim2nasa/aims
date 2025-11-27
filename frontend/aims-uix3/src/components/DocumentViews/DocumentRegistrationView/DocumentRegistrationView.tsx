@@ -593,25 +593,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [SESSION_KEY])
 
   /**
-   * 문서등록 초기페이지로 완전히 되돌리기
-   */
-  const handleResetToInitialState = useCallback(() => {
-    // 1. 파일 목록 초기화
-    handleClearAll()
-
-    // 2. 처리 로그 초기화
-    setProcessingLogs([])
-
-    // 3. 고객 파일 등록 폼 초기화
-    setCustomerFileCustomer(null)
-    setCustomerFileDocType('unspecified')
-    setCustomerFileNotes('')
-
-    // 4. 로그 추가
-    addLog('info', '초기 상태로 되돌아갔습니다')
-  }, [handleClearAll, addLog])
-
-  /**
    * 업로드 진행률 콜백
    */
   const handleProgress = useCallback((event: UploadProgressEvent) => {
@@ -1302,17 +1283,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
               disabled={false}
               isNotesExpanded={isNotesExpanded}
               onToggleNotes={toggleNotes}
-              showResetButton={true}
-              onReset={async () => {
-                const confirmed = await showAppleConfirm(
-                  '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
-                  '초기 상태로 되돌리기'
-                )
-                if (confirmed) {
-                  handleResetToInitialState()
-                }
-              }}
-              resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
             />
           </div>
         </div>

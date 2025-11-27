@@ -64,12 +64,6 @@ html[data-theme="dark"] .customer-file-upload-area__content-box {
   flex-shrink: 0;
 }
 
-/* 초기화 버튼 */
-.customer-file-upload-area__main-row .reset-button {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
 /* 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
 .customer-file-upload-area__selected-customer {
   display: flex;
@@ -342,51 +336,4 @@ html[data-theme="dark"] .options-field__textarea {
 
 .options-field__textarea::placeholder {
   color: var(--color-text-tertiary);
-}
-
-/* 초기화 버튼 */
-.customer-file-upload-area__reset-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px; /* 적절한 터치 영역 */
-  height: 32px;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: none;
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.customer-file-upload-area__reset-button:hover {
-  background: var(--color-bg-tertiary);
-  opacity: 1;
-  border-radius: var(--radius-sm);
-  transform: scale(1.05);
-}
-
-.customer-file-upload-area__reset-button:active {
-  transform: scale(0.95);
-  background: var(--color-bg-quaternary);
-}
-
-.customer-file-upload-area__reset-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  background: transparent;
-}
-
-.customer-file-upload-area__reset-button svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.customer-file-upload-area__reset-button:hover:not(:disabled) svg {
-  transform: rotate(90deg);
 }
