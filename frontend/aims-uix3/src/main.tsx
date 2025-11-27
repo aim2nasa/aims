@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/app/queryClient'
 import { CustomerProvider } from '@/providers/CustomerProvider'
+import { AppleConfirmProvider } from '@/contexts/AppleConfirmProvider'
 import './index.css'
 import './shared/design/tokens.css'
 import './shared/design/theme.css'
@@ -16,9 +17,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <CustomerProvider>
-          <AppRouter />
-        </CustomerProvider>
+        <AppleConfirmProvider>
+          <CustomerProvider>
+            <AppRouter />
+          </CustomerProvider>
+        </AppleConfirmProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
