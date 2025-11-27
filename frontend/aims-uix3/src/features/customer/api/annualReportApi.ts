@@ -159,6 +159,30 @@ export interface CustomerIdentificationResult {
   metadata: CheckAnnualReportResponse['metadata'];
 }
 
+// ==================== 헬퍼 함수 ====================
+
+/**
+ * JWT 토큰을 포함한 Authorization 헤더 가져오기
+ * @returns Authorization 헤더 객체 또는 빈 객체
+ */
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      const token = parsed?.state?.token;
+      if (token) {
+        return { 'Authorization': `Bearer ${token}` };
+      }
+    }
+  } catch {
+    // 파싱 실패 시 무시
+  }
+  return {};
+}
+
 // ==================== API 클래스 ====================
 
 export class AnnualReportApi {
@@ -176,6 +200,7 @@ export class AnnualReportApi {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(request),
       });
@@ -210,7 +235,8 @@ export class AnnualReportApi {
   static async getParseStatus(fileId: string): Promise<ParseStatusResponse> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/annual-report/status/${fileId}`
+        `${ANNUAL_REPORT_API_URL}/annual-report/status/${fileId}`,
+        { headers: getAuthHeaders() }
       );
 
       const data = await response.json();
@@ -245,12 +271,13 @@ export class AnnualReportApi {
    */
   static async getAnnualReports(
     customerId: string,
-    userId: string,
+    _userId: string,
     limit: number = 10
   ): Promise<AnnualReportsListResponse> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}&userId=${encodeURIComponent(userId)}`
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports?limit=${limit}`,
+        { headers: getAuthHeaders() }
       );
 
       const data = await response.json();
@@ -287,11 +314,12 @@ export class AnnualReportApi {
    */
   static async getLatestAnnualReport(
     customerId: string,
-    userId: string
+    _userId: string
   ): Promise<LatestAnnualReportResponse> {
     try {
       const response = await fetch(
-        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest?userId=${encodeURIComponent(userId)}`
+        `${ANNUAL_REPORT_API_URL}/customers/${customerId}/annual-reports/latest`,
+        { headers: getAuthHeaders() }
       );
 
       // 404는 데이터 없음 (정상 케이스)
@@ -408,6 +436,7 @@ export class AnnualReportApi {
 
       const response = await fetch(`${ANNUAL_REPORT_API_URL}/annual-report/check`, {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -448,6 +477,7 @@ export class AnnualReportApi {
 
       const response = await fetch(`${ANNUAL_REPORT_API_URL}/annual-report/parse-file`, {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -473,11 +503,12 @@ export class AnnualReportApi {
    * @param userId 사용자 ID (설계사 계정)
    * @returns 고객 목록
    */
-  static async searchCustomersByName(name: string, userId: string): Promise<Customer[]> {
+  static async searchCustomersByName(name: string, _userId: string): Promise<Customer[]> {
     try {
       // 고객 검색은 Node.js API (3010)를 사용
       const response = await fetch(
-        `/api/customers?search=${encodeURIComponent(name)}&userId=${encodeURIComponent(userId)}`
+        `/api/customers?search=${encodeURIComponent(name)}`,
+        { headers: getAuthHeaders() }
       );
 
       if (!response.ok) {
@@ -512,8 +543,9 @@ export class AnnualReportApi {
         {
           method: 'DELETE',
           headers: {
-            'Content-Type': 'application/json',
-          },
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
           body: JSON.stringify({ indices }),
         }
       );
@@ -571,8 +603,9 @@ export class AnnualReportApi {
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-          },
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
           body: JSON.stringify({
             issue_date: issueDate,
             reference_linked_at: referenceLinkedAt,
