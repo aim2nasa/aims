@@ -190,12 +190,14 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
         {/* 관리 메뉴 섹션 */}
         <section className="quick-actions-view__section">
           <h2 className="quick-actions-view__section-title">
-            <SFSymbol
-              name="square-grid-2x2"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              style={{ color: 'var(--color-ios-purple)' }}
-            />
+            <span className="menu-icon-purple">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/>
+                <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor"/>
+                <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor"/>
+                <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/>
+              </svg>
+            </span>
             관리 메뉴
           </h2>
           <div className="quick-actions-view__menu-cards">

@@ -40,23 +40,24 @@
   justify-content: center;
   gap: var(--spacing-2);
   padding: var(--spacing-5);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
   text-align: center;
+  box-shadow: var(--shadow-lg);
 }
 
 .quick-actions-view__action-card:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-active);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xl);
 }
 
 .quick-actions-view__action-card:active {
   transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .action-card-title {
@@ -90,17 +91,18 @@
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-5);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--duration-fast) var(--easing-ease-out);
   text-align: left;
+  box-shadow: var(--shadow-lg);
 }
 
 .quick-actions-view__menu-card:hover {
-  background: var(--color-bg-tertiary);
-  box-shadow: var(--shadow-md);
+  background: var(--color-bg-active);
+  box-shadow: var(--shadow-xl);
 }
 
 .menu-card-header {
