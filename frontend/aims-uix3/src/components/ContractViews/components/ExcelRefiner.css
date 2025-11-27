@@ -31,11 +31,22 @@
   border-radius: var(--radius-xl);
   background: var(--color-bg-primary);
   transition: all var(--duration-fast) var(--easing-default);
+  overflow: auto;
 }
 
 .excel-refiner__dropzone--active {
   border-color: var(--color-primary-500);
   background: var(--color-selection-bg);
+}
+
+.excel-refiner__dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-8);
+  width: 100%;
 }
 
 .excel-refiner__dropzone-content {
@@ -84,6 +95,109 @@
 
 .excel-refiner__file-input {
   display: none;
+}
+
+/* === FORMAT GUIDE === */
+
+.excel-refiner__format-guide {
+  padding: var(--spacing-4);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.excel-refiner__format-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.excel-refiner__format-guide-header svg {
+  flex-shrink: 0;
+  color: var(--color-success-500);
+}
+
+.excel-refiner__format-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-primary);
+}
+
+.excel-refiner__format-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.excel-refiner__format-th {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  border-bottom: 2px solid var(--color-border-primary);
+}
+
+.excel-refiner__format-th--required {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+html[data-theme="dark"] .excel-refiner__format-th--required {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.excel-refiner__format-td {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.excel-refiner__format-td--right {
+  text-align: right;
+}
+
+.excel-refiner__format-table tbody tr:last-child .excel-refiner__format-td {
+  border-bottom: none;
+}
+
+.excel-refiner__format-table tbody tr:hover .excel-refiner__format-td {
+  background: var(--color-bg-hover);
+}
+
+.excel-refiner__format-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-3);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.excel-refiner__format-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.excel-refiner__format-legend-item--required {
+  color: var(--color-primary-600);
+}
+
+html[data-theme="dark"] .excel-refiner__format-legend-item--required {
+  color: var(--color-primary-400);
 }
 
 /* === CONTENT === */

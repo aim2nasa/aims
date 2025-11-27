@@ -1173,29 +1173,93 @@ export function ExcelRefiner() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="excel-refiner__dropzone-content">
-              <svg
-                className="excel-refiner__dropzone-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="12" y1="18" x2="12" y2="12" />
-                <line x1="9" y1="15" x2="15" y2="15" />
-              </svg>
-              <p>엑셀 파일을 여기에 드래그하거나</p>
-              <label className="excel-refiner__file-label">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileSelect}
-                  className="excel-refiner__file-input"
-                />
-                <span>파일 선택</span>
-              </label>
+            <div className="excel-refiner__dropzone-inner">
+              {/* 엑셀 표준 포맷 가이드 - 상단 중앙 배치 */}
+              <div className="excel-refiner__format-guide">
+                <div className="excel-refiner__format-guide-header">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="2" y1="5.5" x2="14" y2="5.5" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="5.5" y1="2" x2="5.5" y2="14" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="9" y1="2" x2="9" y2="14" stroke="currentColor" strokeWidth="1.2"/>
+                  </svg>
+                  <span>엑셀 표준 포맷 예시</span>
+                </div>
+                <div className="excel-refiner__format-table-wrapper">
+                  <table className="excel-refiner__format-table">
+                    <thead>
+                      <tr>
+                        <th className="excel-refiner__format-th excel-refiner__format-th--required">고객명</th>
+                        <th className="excel-refiner__format-th excel-refiner__format-th--required">상품명</th>
+                        <th className="excel-refiner__format-th excel-refiner__format-th--required">계약일</th>
+                        <th className="excel-refiner__format-th excel-refiner__format-th--required">증권번호</th>
+                        <th className="excel-refiner__format-th">보험료(원)</th>
+                        <th className="excel-refiner__format-th">이체일</th>
+                        <th className="excel-refiner__format-th">납입주기</th>
+                        <th className="excel-refiner__format-th">납입기간</th>
+                        <th className="excel-refiner__format-th">피보험자</th>
+                        <th className="excel-refiner__format-th">납입상태</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="excel-refiner__format-td">홍길동</td>
+                        <td className="excel-refiner__format-td">무배당프로미라이프</td>
+                        <td className="excel-refiner__format-td">2024-01-15</td>
+                        <td className="excel-refiner__format-td">1234567890</td>
+                        <td className="excel-refiner__format-td excel-refiner__format-td--right">150,000</td>
+                        <td className="excel-refiner__format-td">15일</td>
+                        <td className="excel-refiner__format-td">월납</td>
+                        <td className="excel-refiner__format-td">20년</td>
+                        <td className="excel-refiner__format-td">홍길동</td>
+                        <td className="excel-refiner__format-td">정상</td>
+                      </tr>
+                      <tr>
+                        <td className="excel-refiner__format-td">김철수</td>
+                        <td className="excel-refiner__format-td">The건강한종신보험</td>
+                        <td className="excel-refiner__format-td">2023-06-20</td>
+                        <td className="excel-refiner__format-td">9876543210</td>
+                        <td className="excel-refiner__format-td excel-refiner__format-td--right">200,000</td>
+                        <td className="excel-refiner__format-td">25일</td>
+                        <td className="excel-refiner__format-td">월납</td>
+                        <td className="excel-refiner__format-td">종신</td>
+                        <td className="excel-refiner__format-td">김철수</td>
+                        <td className="excel-refiner__format-td">정상</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="excel-refiner__format-legend">
+                  <span className="excel-refiner__format-legend-item excel-refiner__format-legend-item--required">■ 필수 컬럼</span>
+                  <span className="excel-refiner__format-legend-item">□ 선택 컬럼</span>
+                </div>
+              </div>
+
+              {/* 파일 업로드 영역 - 하단 배치 */}
+              <div className="excel-refiner__dropzone-content">
+                <svg
+                  className="excel-refiner__dropzone-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+                <p>엑셀 파일을 여기에 드래그하거나</p>
+                <label className="excel-refiner__file-label">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileSelect}
+                    className="excel-refiner__file-input"
+                  />
+                  <span>파일 선택</span>
+                </label>
+              </div>
             </div>
           </div>
         ) : (
