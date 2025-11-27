@@ -598,6 +598,13 @@ export function ExcelRefiner() {
         return next
       })
 
+      // 검증 완료 이력에 추가 (누적)
+      setValidatedColumnsHistory(prev => {
+        const next = new Set(prev)
+        next.add(colIndex)
+        return next
+      })
+
       // 검증 중 상태 해제
       setValidatingInProgress(prev => {
         const next = new Set(prev)
