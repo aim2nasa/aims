@@ -1527,7 +1527,7 @@ export function ExcelRefiner() {
 
               {validatingColumns.size > 0 && (
                 <div className="excel-refiner__validation-result">
-                  {problematicRows.length === 0 ? (
+                  {wizardStep?.step === 4 && problematicRows.length === 0 ? (
                     <>
                       <div className="excel-refiner__validation-status excel-refiner__validation-status--success">
                         모든 검증 통과
@@ -1541,11 +1541,11 @@ export function ExcelRefiner() {
                         {isImporting ? '가져오는 중...' : '계약 가져오기'}
                       </Button>
                     </>
-                  ) : (
+                  ) : problematicRows.length > 0 ? (
                     <div className="excel-refiner__validation-status excel-refiner__validation-status--error">
                       문제 발견: {problematicRows.length}행
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )}
 
