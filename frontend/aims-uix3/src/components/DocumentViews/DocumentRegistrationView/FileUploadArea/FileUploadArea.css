@@ -59,8 +59,34 @@
 
 /* Disabled State */
 .file-upload-area__unified-zone[aria-disabled="true"] {
-  opacity: 0.5;
+  opacity: 1;
   cursor: not-allowed;
+  background: var(--color-section-bg);
+  border-color: var(--color-border);
+  border-style: dashed;
+  animation: none;
+}
+
+/* Disabled Content - 고객 선택 안내 */
+.file-upload-area__disabled-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.file-upload-area__disabled-icon {
+  color: var(--color-text-quaternary);
+  opacity: 0.6;
+}
+
+.file-upload-area__disabled-text {
+  font-size: var(--font-size-footnote);
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: var(--color-text-tertiary);
+  letter-spacing: -0.3px;
 }
 
 /* Dragging State */

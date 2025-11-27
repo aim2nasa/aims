@@ -65,10 +65,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const saved = localStorage.getItem('doc-reg-guide-expanded')
     return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
   })
-  const [isCustomerInfoExpanded, setIsCustomerInfoExpanded] = useState(() => {
-    const saved = localStorage.getItem('doc-reg-customer-info-expanded')
-    return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
-  })
   const [isNotesExpanded, setIsNotesExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-reg-notes-expanded')
     return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
@@ -83,15 +79,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     })
   }, [])
 
-  // 고객 정보 접기/펼치기 토글
-  const toggleCustomerInfo = useCallback(() => {
-    setIsCustomerInfoExpanded(prev => {
-      const newValue = !prev
-      localStorage.setItem('doc-reg-customer-info-expanded', String(newValue))
-      return newValue
-    })
-  }, [])
-
   // 메모 접기/펼치기 토글
   const toggleNotes = useCallback(() => {
     setIsNotesExpanded(prev => {
@@ -100,14 +87,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       return newValue
     })
   }, [])
-
-  // 고객 정보 입력이 펼쳐질 때마다 메모를 닫기
-  useEffect(() => {
-    if (isCustomerInfoExpanded) {
-      setIsNotesExpanded(false)
-      localStorage.setItem('doc-reg-notes-expanded', 'false')
-    }
-  }, [isCustomerInfoExpanded])
 
   // SessionStorage 키
   const SESSION_KEY = 'document-upload-state'
@@ -1291,10 +1270,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 <div className="guide-step">
                   <span className="step-number">1</span>
                   <div className="step-content">
-                    <h4 className="step-title">고객 및 문서 유형 지정하기 (선택사항)</h4>
-                    <p className="step-description">• 고객을 선택하고 문서 유형(계약서, 청구서 등)을 지정하면 고객의 어떤 문서인지 명확해져요</p>
-                    <p className="step-description">• 메모를 추가하면 나중에 문서를 찾을 때 도움이 돼요</p>
-                    <p className="step-description">• 잘 모르겠다면 건너뛰고 파일만 올려도 괜찮아요</p>
+                    <h4 className="step-title">고객 선택하기 (필수)</h4>
+                    <p className="step-description">• 문서를 등록할 고객을 먼저 선택해주세요</p>
+                    <p className="step-description">• 문서 유형과 메모는 선택사항이에요</p>
                   </div>
                 </div>
 
@@ -1302,8 +1280,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                   <span className="step-number">2</span>
                   <div className="step-content">
                     <h4 className="step-title">파일 올리기</h4>
-                    <p className="step-description">• 고객 및 문서 유형을 지정했다면 → 자동으로 해당 고객에게 연결되고 문서 유형이 기록돼요</p>
-                    <p className="step-description">• 지정하지 않았다면 → 문서 라이브러리에 저장되고 나중에 연결할 수 있어요</p>
+                    <p className="step-description">• 고객을 선택하면 파일 업로드가 활성화돼요</p>
+                    <p className="step-description">• 업로드된 문서는 선택한 고객에게 자동 연결돼요</p>
                   </div>
                 </div>
               </div>
@@ -1311,76 +1289,41 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           )}
         </div>
 
-        {/* 🎯 [핵심] 파일 업로드 영역 - 최상단 배치! */}
+        {/* 🎯 [필수] 고객 선택 영역 - 항상 펼쳐진 상태 */}
+        <div className="customer-info-section customer-info-section--always-expanded">
+          <div className="customer-info-content">
+            <CustomerFileUploadArea
+              selectedCustomer={customerFileCustomer}
+              onCustomerSelect={setCustomerFileCustomer}
+              documentType={customerFileDocType}
+              onDocumentTypeChange={setCustomerFileDocType}
+              notes={customerFileNotes}
+              onNotesChange={setCustomerFileNotes}
+              disabled={false}
+              isNotesExpanded={isNotesExpanded}
+              onToggleNotes={toggleNotes}
+              showResetButton={true}
+              onReset={async () => {
+                const confirmed = await showAppleConfirm(
+                  '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
+                  '초기 상태로 되돌리기'
+                )
+                if (confirmed) {
+                  handleResetToInitialState()
+                }
+              }}
+              resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
+            />
+          </div>
+        </div>
+
+        {/* 🎯 [핵심] 파일 업로드 영역 - 고객 선택 후 활성화 */}
         <FileUploadArea
           onFilesSelected={handleFilesSelected}
           options={fileSelectionOptions}
           uploading={uploadState.uploading}
-          disabled={uploadState.uploading}
+          disabled={!customerFileCustomer || uploadState.uploading}
         />
-
-        {/* 🔽 [선택] 고객 정보 입력 영역 - 접기/펼치기 */}
-        <div className={`customer-info-section ${isCustomerInfoExpanded ? 'customer-info-section--expanded' : 'customer-info-section--collapsed'}`}>
-          <button
-            type="button"
-            className="customer-info-section__toggle"
-            onClick={toggleCustomerInfo}
-            aria-expanded={isCustomerInfoExpanded ? "true" : "false"}
-            aria-label={isCustomerInfoExpanded ? '고객 정보 입력 접기' : '고객 정보 입력 펼치기'}
-          >
-            <div className="customer-info-header">
-              {/* 고객 선택 여부에 따라 아이콘과 색상 변경 */}
-              {customerFileCustomer ? (
-                <SFSymbol
-                  name="person-fill-badge-plus"
-                  size={SFSymbolSize.FOOTNOTE}
-                  weight={SFSymbolWeight.MEDIUM}
-                  className="customer-info-icon customer-info-icon--selected"
-                />
-              ) : (
-                <SFSymbol
-                  name="person"
-                  size={SFSymbolSize.FOOTNOTE}
-                  weight={SFSymbolWeight.REGULAR}
-                  className="customer-info-icon customer-info-icon--unselected"
-                />
-              )}
-              <h3 className={`customer-info-title ${customerFileCustomer ? 'customer-info-title--selected' : ''}`}>
-                고객 및 문서 유형
-              </h3>
-              <span className="customer-info-toggle-icon" aria-hidden="true">
-                {isCustomerInfoExpanded ? '▲' : '▼'}
-              </span>
-            </div>
-          </button>
-
-          {isCustomerInfoExpanded && (
-            <div className="customer-info-content">
-              <CustomerFileUploadArea
-                selectedCustomer={customerFileCustomer}
-                onCustomerSelect={setCustomerFileCustomer}
-                documentType={customerFileDocType}
-                onDocumentTypeChange={setCustomerFileDocType}
-                notes={customerFileNotes}
-                onNotesChange={setCustomerFileNotes}
-                disabled={false}
-                isNotesExpanded={isNotesExpanded}
-                onToggleNotes={toggleNotes}
-                showResetButton={true}
-                onReset={async () => {
-                  const confirmed = await showAppleConfirm(
-                    '초기 상태로 되돌리시겠습니까?\n모든 내용이 초기화됩니다.',
-                    '초기 상태로 되돌리기'
-                  )
-                  if (confirmed) {
-                    handleResetToInitialState()
-                  }
-                }}
-                resetDisabled={uploadState.uploading || (uploadState.files.length === 0 && !customerFileCustomer)}
-              />
-            </div>
-          )}
-        </div>
 
         {/* 처리 로그 (업로드 진행률 및 파일 요약 통합) */}
         <div className="file-log-container">

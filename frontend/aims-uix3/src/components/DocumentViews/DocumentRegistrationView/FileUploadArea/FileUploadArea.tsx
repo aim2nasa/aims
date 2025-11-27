@@ -22,6 +22,8 @@ interface FileUploadAreaProps {
   uploading?: boolean
   /** 비활성화 여부 */
   disabled?: boolean
+  /** 비활성화 시 표시할 메시지 */
+  disabledMessage?: string
   /** 추가 CSS 클래스 */
   className?: string
 }
@@ -40,6 +42,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   options = {},
   uploading = false,
   disabled = false,
+  disabledMessage = '고객을 먼저 선택하세요',
   className = ''
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -273,7 +276,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         aria-label="파일 업로드: 클릭하거나 파일을 드래그하세요"
         aria-disabled={disabled || uploading}
       >
-        {!uploading && !isDragging && (
+        {!uploading && !isDragging && !disabled && (
           <div className="file-upload-area__unified-content">
             <div className="file-upload-area__plus-icon">
               <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
@@ -288,6 +291,21 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
                 또는 클릭하여 파일 선택
               </span>
             </div>
+          </div>
+        )}
+
+        {/* 비활성화 상태: 고객 선택 안내 */}
+        {disabled && !uploading && (
+          <div className="file-upload-area__disabled-content">
+            <SFSymbol
+              name="person"
+              size={SFSymbolSize.TITLE_3}
+              weight={SFSymbolWeight.LIGHT}
+              className="file-upload-area__disabled-icon"
+            />
+            <span className="file-upload-area__disabled-text">
+              {disabledMessage}
+            </span>
           </div>
         )}
 
