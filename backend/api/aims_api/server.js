@@ -4306,14 +4306,22 @@ const CONTRACTS_COLLECTION = 'contracts';
  */
 app.get('/api/contracts', async (req, res) => {
   try {
-    const { agent_id, customer_id, search, limit = 1000, skip = 0 } = req.query;
+    // ⭐ 설계사별 데이터 격리: userId 검증
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required for data isolation'
+      });
+    }
+
+    const { customer_id, search, limit = 1000, skip = 0 } = req.query;
 
     const query = {};
 
-    // agent_id 필터 (필수)
-    if (agent_id) {
-      query.agent_id = new ObjectId(agent_id);
-    }
+    // agent_id 필터 (필수 - 데이터 격리)
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+    query.agent_id = agentObjectId;
 
     // customer_id 필터
     if (customer_id) {
