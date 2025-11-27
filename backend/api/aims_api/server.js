@@ -4414,6 +4414,15 @@ app.post('/api/contracts/bulk', async (req, res) => {
       });
     }
 
+    // agent_id 유효성 검사
+    if (!ObjectId.isValid(agent_id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'agent_id가 유효하지 않습니다.',
+        details: `받은 값: "${agent_id}" (24자리 hex 문자열이어야 합니다)`
+      });
+    }
+
     if (!Array.isArray(contracts) || contracts.length === 0) {
       return res.status(400).json({
         success: false,

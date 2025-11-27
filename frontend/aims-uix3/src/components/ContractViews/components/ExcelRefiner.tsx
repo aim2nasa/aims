@@ -98,6 +98,14 @@ export function ExcelRefiner() {
   const [isImporting, setIsImporting] = useState(false)
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; message: string } | null>(null)
 
+  // 계약 가져오기 결과 상태 (등록 완료 후 표시용)
+  const [importResult, setImportResult] = useState<{
+    total: number       // 전체 계약 수
+    inserted: number    // 등록된 계약 수
+    skipped: number     // 건너뛴 계약 수
+    errors: number      // 오류 계약 수
+  } | null>(null)
+
   // 계약 가져오기 확인 모달 상태
   const [importConfirmModal, setImportConfirmModal] = useState<{
     isOpen: boolean
@@ -1094,6 +1102,14 @@ export function ExcelRefiner() {
 
       setActionLog(resultMsg)
 
+      // 계약 등록 결과 저장 (Wizard 4단계 색상 표시용)
+      setImportResult({
+        total: contracts.length,
+        inserted: contractResult.insertedCount,
+        skipped: contractResult.skippedCount,
+        errors: contractResult.errorCount
+      })
+
       if (customerErrors.length > 0) {
         console.error('고객 생성 오류:', customerErrors)
       }
@@ -1101,6 +1117,13 @@ export function ExcelRefiner() {
     } catch (err) {
       console.error('가져오기 오류:', err)
       alert(`가져오기 중 오류 발생: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+      // 오류 발생 시 결과 초기화 (완전 실패)
+      setImportResult({
+        total: 0,
+        inserted: 0,
+        skipped: 0,
+        errors: 1
+      })
     } finally {
       setIsImporting(false)
       setImportProgress(null)
@@ -1109,6 +1132,78 @@ export function ExcelRefiner() {
 
   // 데이터 행 번호
   const getExcelRowNumber = (dataIndex: number) => dataIndex + 2
+
+  // Wizard 단계 계산
+  const wizardStep = useMemo(() => {
+    if (!currentSheet) return null
+
+    // 필수 컬럼 타입
+    const requiredTypes = ['customerName', 'productName', 'contractDate', 'policyNumber']
+
+    // 현재 시트에서 필수 컬럼 찾기
+    const requiredColIndices: number[] = []
+    currentSheet.columns.forEach((col, idx) => {
+      const type = getValidationType(col)
+      if (requiredTypes.includes(type)) {
+        requiredColIndices.push(idx)
+      }
+    })
+
+    // 검증된 필수 컬럼 수
+    const validatedRequiredCount = requiredColIndices.filter(idx => validatingColumns.has(idx)).length
+
+    // 검증 진행 중인지
+    const isValidating = validatingInProgress.size > 0
+
+    // 등록 결과 상태 계산 (step 4 색상용)
+    // 'success': 100% 성공 (녹색), 'partial': 부분 성공 (주황색), 'error': 완전 실패 (빨간색), null: 아직 등록 안함
+    let resultStatus: 'success' | 'partial' | 'error' | null = null
+    if (importResult) {
+      if (importResult.inserted === 0 && importResult.total > 0) {
+        // 0% 등록 = 완전 실패
+        resultStatus = 'error'
+      } else if (importResult.inserted === importResult.total && importResult.total > 0) {
+        // 100% 등록 = 완전 성공
+        resultStatus = 'success'
+      } else if (importResult.inserted > 0) {
+        // 부분 등록
+        resultStatus = 'partial'
+      } else if (importResult.errors > 0) {
+        // 오류만 있는 경우
+        resultStatus = 'error'
+      }
+    }
+
+    // Step 결정
+    if (validatedRequiredCount === 0) {
+      // 아직 검증 시작 안함
+      return { step: 1, label: '필수컬럼검증', message: "'필수컬럼검증' 버튼을 클릭하여 데이터를 검증하세요.", resultStatus: null }
+    } else if (isValidating) {
+      // 검증 진행 중
+      return { step: 2, label: '검증 중', message: '데이터를 검증하고 있습니다. 잠시만 기다려주세요...', resultStatus: null }
+    } else if (problematicRows.length > 0) {
+      // 문제 발견
+      return { step: 3, label: '데이터 수정', message: `${problematicRows.length}개의 문제 행이 발견되었습니다. 수정 후 다시 검증하세요.`, resultStatus: null }
+    } else if (validatedRequiredCount === requiredColIndices.length && requiredColIndices.length > 0) {
+      // 모든 필수 컬럼 검증 완료, 문제 없음
+      // 등록 결과가 있으면 결과 메시지 표시
+      if (importResult && resultStatus) {
+        let message = ''
+        if (resultStatus === 'success') {
+          message = `${importResult.inserted}건 모두 등록 완료`
+        } else if (resultStatus === 'partial') {
+          message = `${importResult.inserted}/${importResult.total}건 등록 (${importResult.skipped}건은 이미 등록된 증권번호)`
+        } else {
+          message = `0/${importResult.total}건 등록 (모두 이미 등록된 증권번호)`
+        }
+        return { step: 4, label: '등록', message, resultStatus }
+      }
+      return { step: 4, label: '가져오기', message: "'계약 가져오기' 버튼을 클릭하여 계약 데이터를 등록하세요.", resultStatus: null }
+    } else {
+      // 일부 필수 컬럼만 검증됨
+      return { step: 2, label: '검증 계속', message: `필수 컬럼 ${validatedRequiredCount}/${requiredColIndices.length}개 검증 완료. 계속 검증하세요.`, resultStatus: null }
+    }
+  }, [currentSheet, validatingColumns, validatingInProgress.size, problematicRows.length, importResult])
 
   // 컬럼 검증 배지 렌더링
   const renderColumnBadge = (colIndex: number, columnName: string) => {
@@ -1304,6 +1399,51 @@ export function ExcelRefiner() {
                     {sheet.name}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Wizard 안내 - 파일 로드 후 단계별 가이드 */}
+            {wizardStep && (
+              <div className={`excel-refiner__wizard excel-refiner__wizard--step-${wizardStep.step}`}>
+                <div className="excel-refiner__wizard-steps">
+                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 1 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 1 ? 'excel-refiner__wizard-step--completed' : ''}`}>
+                    <span className="excel-refiner__wizard-step-number">1</span>
+                    <span className="excel-refiner__wizard-step-label">검증</span>
+                  </div>
+                  <div className="excel-refiner__wizard-connector" />
+                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 2 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 2 ? 'excel-refiner__wizard-step--completed' : ''}`}>
+                    <span className="excel-refiner__wizard-step-number">2</span>
+                    <span className="excel-refiner__wizard-step-label">진행</span>
+                  </div>
+                  <div className="excel-refiner__wizard-connector" />
+                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 3 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.step > 3 ? 'excel-refiner__wizard-step--completed' : ''}`}>
+                    <span className="excel-refiner__wizard-step-number">3</span>
+                    <span className="excel-refiner__wizard-step-label">수정</span>
+                  </div>
+                  <div className="excel-refiner__wizard-connector" />
+                  <div className={`excel-refiner__wizard-step ${wizardStep.step >= 4 ? 'excel-refiner__wizard-step--active' : ''} ${wizardStep.resultStatus ? `excel-refiner__wizard-step--result-${wizardStep.resultStatus}` : ''}`}>
+                    <span className="excel-refiner__wizard-step-number">
+                      {wizardStep.resultStatus === 'success' ? '✓' : wizardStep.resultStatus === 'error' ? '✕' : '4'}
+                    </span>
+                    <span className="excel-refiner__wizard-step-label">
+                      {wizardStep.resultStatus && importResult
+                        ? `등록 ${Math.round((importResult.inserted / (importResult.total || 1)) * 100)}%`
+                        : '등록'}
+                    </span>
+                  </div>
+                </div>
+                <div className={`excel-refiner__wizard-message ${wizardStep.resultStatus ? `excel-refiner__wizard-message--${wizardStep.resultStatus}` : ''}`}>
+                  <span className="excel-refiner__wizard-message-icon">
+                    {wizardStep.step === 1 && '👆'}
+                    {wizardStep.step === 2 && '⏳'}
+                    {wizardStep.step === 3 && '⚠️'}
+                    {wizardStep.step === 4 && !wizardStep.resultStatus && '✅'}
+                    {wizardStep.step === 4 && wizardStep.resultStatus === 'success' && '🎉'}
+                    {wizardStep.step === 4 && wizardStep.resultStatus === 'partial' && '⚠️'}
+                    {wizardStep.step === 4 && wizardStep.resultStatus === 'error' && '❌'}
+                  </span>
+                  <span className="excel-refiner__wizard-message-text">{wizardStep.message}</span>
+                </div>
               </div>
             )}
 
