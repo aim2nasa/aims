@@ -164,6 +164,15 @@ export class ContractService {
   }
 
   /**
+   * 개발 환경 전용: 모든 계약 삭제
+   * 주의: 개발 환경에서만 사용!
+   */
+  static async deleteAllContracts(): Promise<{ deletedCount: number }> {
+    const response = await api.delete<{ success: boolean; deletedCount: number }>('/api/dev/contracts/all');
+    return { deletedCount: response.deletedCount };
+  }
+
+  /**
    * 특정 고객의 계약 목록 조회
    */
   static async getContractsByCustomer(customerId: string): Promise<Contract[]> {

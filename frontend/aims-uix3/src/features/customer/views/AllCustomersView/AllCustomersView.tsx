@@ -66,6 +66,12 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       count: number;
     }>({ isOpen: false, count: 0 });
 
+    // 전체 삭제 확인 모달 상태 (개발 환경 전용)
+    const [deleteAllConfirmModal, setDeleteAllConfirmModal] = useState<{
+      isOpen: boolean;
+      totalCount: number;
+    }>({ isOpen: false, totalCount: 0 });
+
     // Document-View 패턴: CustomerDocument 구독
     const {
       customers: allCustomers,
@@ -350,6 +356,34 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       }
     };
 
+    // 전체 삭제 핸들러 (개발 환경 전용)
+    const handleDeleteAll = () => {
+      setDeleteAllConfirmModal({
+        isOpen: true,
+        totalCount: allCustomers.length
+      });
+    };
+
+    const handleConfirmDeleteAll = async () => {
+      setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 });
+      setIsDeleting(true);
+
+      try {
+        const result = await CustomerService.deleteAllCustomers();
+        alert(`${result.deletedCount}명의 고객이 삭제되었습니다.`);
+
+        // 삭제 완료 후 새로고침 및 상태 초기화
+        await refresh();
+        setSelectedCustomerIds(new Set());
+        setIsDeleteMode(false);
+      } catch (error) {
+        console.error('[AllCustomersView] 고객 전체 삭제 실패:', error);
+        alert('고객 전체 삭제 중 오류가 발생했습니다.');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
     const getCustomerIcon = (customer: Customer) => {
       const customerType = customer.insurance_info?.customer_type;
       if (customerType === '법인') {
@@ -541,6 +575,17 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                   >
                     {isDeleting ? '삭제 중...' : '삭제'}
                   </Button>
+                  {/* 전체 삭제 버튼 (개발 환경 전용) */}
+                  {import.meta.env.DEV && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteAll}
+                      disabled={isDeleting || allCustomers.length === 0}
+                    >
+                      전체 삭제
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -843,6 +888,34 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                 onClick={handleConfirmDelete}
               >
                 삭제
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* 전체 삭제 확인 모달 (개발 환경 전용) */}
+        <Modal
+          visible={deleteAllConfirmModal.isOpen}
+          onClose={() => setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 })}
+          title="⚠️ 전체 고객 삭제"
+          size="sm"
+        >
+          <div className="delete-confirm-content">
+            <p><strong>현재 등록된 모든 고객 ({deleteAllConfirmModal.totalCount}명)</strong>을 삭제하시겠습니까?</p>
+            <p className="delete-warning">⚠️ 이 작업은 되돌릴 수 없습니다!</p>
+            <p className="delete-warning">개발 환경 전용 기능입니다.</p>
+            <div className="delete-confirm-actions">
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 })}
+              >
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteAll}
+              >
+                전체 삭제
               </Button>
             </div>
           </div>

@@ -78,6 +78,12 @@ export default function ContractAllView({
     count: number
   }>({ isOpen: false, count: 0 })
 
+  // 전체 삭제 확인 모달 상태 (개발 환경 전용)
+  const [deleteAllConfirmModal, setDeleteAllConfirmModal] = useState<{
+    isOpen: boolean
+    totalCount: number
+  }>({ isOpen: false, totalCount: 0 })
+
   // 미등록 고객 알림 모달 상태
   const [notRegisteredModal, setNotRegisteredModal] = useState<{
     isOpen: boolean
@@ -394,6 +400,34 @@ export default function ContractAllView({
     }
   }
 
+  // 전체 삭제 핸들러 (개발 환경 전용)
+  const handleDeleteAll = () => {
+    setDeleteAllConfirmModal({
+      isOpen: true,
+      totalCount: contracts.length
+    })
+  }
+
+  const handleConfirmDeleteAll = async () => {
+    setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 })
+    setIsDeleting(true)
+
+    try {
+      const result = await ContractService.deleteAllContracts()
+      alert(`${result.deletedCount}건의 계약이 삭제되었습니다.`)
+
+      // 삭제 완료 후 새로고침 및 상태 초기화
+      await loadContracts()
+      setSelectedContractIds(new Set())
+      setIsDeleteMode(false)
+    } catch (error) {
+      console.error('[ContractAllView] 계약 전체 삭제 실패:', error)
+      alert('계약 전체 삭제 중 오류가 발생했습니다.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // 정렬 인디케이터 (DocumentLibraryView 동일 패턴)
   const renderSortIndicator = (field: SortField) => {
     if (sortField === field) {
@@ -518,6 +552,17 @@ export default function ContractAllView({
                   >
                     {isDeleting ? '삭제 중...' : '삭제'}
                   </Button>
+                  {/* 전체 삭제 버튼 (개발 환경 전용) */}
+                  {import.meta.env.DEV && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteAll}
+                      disabled={isDeleting || contracts.length === 0}
+                    >
+                      전체 삭제
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -782,6 +827,34 @@ export default function ContractAllView({
               onClick={handleConfirmDelete}
             >
               삭제
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 전체 삭제 확인 모달 (개발 환경 전용) */}
+      <Modal
+        visible={deleteAllConfirmModal.isOpen}
+        onClose={() => setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 })}
+        title="⚠️ 전체 계약 삭제"
+        size="sm"
+      >
+        <div className="delete-confirm-content">
+          <p><strong>현재 등록된 모든 계약 ({deleteAllConfirmModal.totalCount}건)</strong>을 삭제하시겠습니까?</p>
+          <p className="delete-warning">⚠️ 이 작업은 되돌릴 수 없습니다!</p>
+          <p className="delete-warning">개발 환경 전용 기능입니다.</p>
+          <div className="delete-confirm-actions">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteAllConfirmModal({ isOpen: false, totalCount: 0 })}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteAll}
+            >
+              전체 삭제
             </Button>
           </div>
         </div>

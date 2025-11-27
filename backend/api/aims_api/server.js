@@ -1685,6 +1685,82 @@ app.post('/api/dev/ensure-user', async (req, res) => {
 });
 
 /**
+ * 개발 환경 전용: 모든 고객 삭제
+ * DELETE /api/dev/customers/all
+ * 주의: 개발 환경에서만 사용! 프로덕션에서는 절대 사용 금지!
+ */
+app.delete('/api/dev/customers/all', async (req, res) => {
+  try {
+    // 요청한 사용자(설계사)의 고객만 삭제
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // 고객은 meta.created_by로 설계사 ID를 저장함 (문자열)
+    const result = await db.collection(CUSTOMERS_COLLECTION).deleteMany({
+      'meta.created_by': userId
+    });
+
+    console.log(`🗑️ [DEV] 고객 전체 삭제: meta.created_by=${userId}, deletedCount=${result.deletedCount}`);
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount}명의 고객이 삭제되었습니다.`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('❌ 고객 전체 삭제 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 개발 환경 전용: 모든 계약 삭제
+ * DELETE /api/dev/contracts/all
+ * 주의: 개발 환경에서만 사용! 프로덕션에서는 절대 사용 금지!
+ */
+app.delete('/api/dev/contracts/all', async (req, res) => {
+  try {
+    // 요청한 사용자(설계사)의 계약만 삭제
+    const userId = req.query.userId || req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId is required'
+      });
+    }
+
+    // agent_id가 ObjectId로 저장되어 있으므로 변환 필요
+    const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+
+    const result = await db.collection(CONTRACTS_COLLECTION).deleteMany({
+      agent_id: agentObjectId
+    });
+
+    console.log(`🗑️ [DEV] 계약 전체 삭제: agent_id=${userId}, deletedCount=${result.deletedCount}`);
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount}건의 계약이 삭제되었습니다.`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('❌ 계약 전체 삭제 실패:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * 특정 사용자 정보 조회 API
  * GET /api/users/:id
  * 개발자 모드 및 계정 설정에서 사용

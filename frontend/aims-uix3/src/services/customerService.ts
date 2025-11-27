@@ -303,6 +303,15 @@ export class CustomerService {
   }
 
   /**
+   * 개발 환경 전용: 모든 고객 삭제
+   * 주의: 개발 환경에서만 사용!
+   */
+  static async deleteAllCustomers(): Promise<{ deletedCount: number }> {
+    const response = await api.delete<{ success: boolean; deletedCount: number }>('/api/dev/customers/all');
+    return { deletedCount: response.deletedCount };
+  }
+
+  /**
    * 고객 일괄 복원
    */
   static async restoreCustomers(ids: string[]): Promise<Customer[]> {
