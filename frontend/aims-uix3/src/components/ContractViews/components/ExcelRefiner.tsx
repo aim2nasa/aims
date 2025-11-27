@@ -10,6 +10,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import {
   parseExcel,
   exportExcel,
@@ -1183,7 +1184,7 @@ export function ExcelRefiner() {
       return { step: 2, label: '검증 중', message: '데이터를 검증하고 있습니다. 잠시만 기다려주세요...', resultStatus: null }
     } else if (problematicRows.length > 0) {
       // 문제 발견
-      return { step: 3, label: '데이터 수정', message: `${problematicRows.length}개의 문제 행이 발견되었습니다. 수정 후 다시 검증하세요.`, resultStatus: null }
+      return { step: 3, label: '데이터 수정', message: `${problematicRows.length}개 문제 발견 → '검증 초기화' 클릭 → 컬럼별로 검증하며 수정`, resultStatus: null }
     } else if (validatedRequiredCount === requiredColIndices.length && requiredColIndices.length > 0) {
       // 모든 필수 컬럼 검증 완료, 문제 없음
       // 등록 결과가 있으면 결과 메시지 표시
@@ -1205,6 +1206,37 @@ export function ExcelRefiner() {
     }
   }, [currentSheet, validatingColumns, validatingInProgress.size, problematicRows.length, importResult])
 
+  // 컬럼별 검증 실패 이유 생성
+  const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
+    if (type === 'productName' && productResult) {
+      const unmatchedCount = productResult.unmatched.length
+      if (unmatchedCount === 0) return '모든 상품명이 DB에 매칭됨'
+      return `${unmatchedCount}개 미매칭\n• DB에 등록되지 않은 상품명\n• 빈 값도 미매칭으로 처리됨\n→ 상품명 클릭하여 수정`
+    }
+
+    if (!result) return ''
+
+    if (type === 'policyNumber') {
+      const parts: string[] = []
+      if (result.empties.length > 0) parts.push(`• 빈 값: ${result.empties.length}개`)
+      if (result.duplicates.length > 0) parts.push(`• 중복: ${result.duplicates.length}개`)
+      if (parts.length === 0) return '모든 증권번호 유효'
+      return `${result.empties.length + result.duplicates.length}개 오류\n${parts.join('\n')}\n→ 셀을 직접 수정하세요`
+    }
+
+    if (type === 'contractDate') {
+      if (result.empties.length === 0) return '모든 계약일 유효'
+      return `${result.empties.length}개 오류\n• 빈 값\n• YYYY-MM-DD 형식 아님\n• 존재하지 않는 날짜 (예: 2월 30일)\n→ 셀을 직접 수정하세요`
+    }
+
+    if (type === 'customerName') {
+      if (result.empties.length === 0) return '모든 고객명 유효'
+      return `${result.empties.length}개 오류\n• 빈 값\n• 숫자만 있는 경우\n• 특수문자 포함\n• 더미 데이터 (테스트, 홍길동 등)\n→ 셀을 직접 수정하세요`
+    }
+
+    return ''
+  }
+
   // 컬럼 검증 배지 렌더링
   const renderColumnBadge = (colIndex: number, columnName: string) => {
     const type = getValidationType(columnName)
@@ -1214,11 +1246,20 @@ export function ExcelRefiner() {
       const originalCount = productMatchResult.originalMatch.size
       const modifiedCount = productMatchResult.modified.size
       const unmatchedCount = productMatchResult.unmatched.length
+      const tooltip = getValidationTooltip(type, null, productMatchResult)
 
       if (unmatchedCount === 0) {
-        return <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓ {originalCount + modifiedCount}</span>
+        return (
+          <Tooltip content={tooltip}>
+            <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓ {originalCount + modifiedCount}</span>
+          </Tooltip>
+        )
       } else {
-        return <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{unmatchedCount} 미매칭</span>
+        return (
+          <Tooltip content={tooltip}>
+            <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{unmatchedCount} 미매칭</span>
+          </Tooltip>
+        )
       }
     }
 
@@ -1226,14 +1267,23 @@ export function ExcelRefiner() {
     if (!result) return null
 
     const issueCount = result.empties.length + result.duplicates.length
+    const tooltip = getValidationTooltip(type, result)
 
     if (result.valid && result.duplicates.length === 0) {
-      return <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓</span>
+      return (
+        <Tooltip content={tooltip || '검증 완료'}>
+          <span className="excel-refiner__th-badge excel-refiner__th-badge--success">✓</span>
+        </Tooltip>
+      )
     } else {
       const label = type === 'customerName'
         ? `${result.empties.length}오류 ${result.duplicates.length}경고`
         : `${issueCount}`
-      return <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{label}</span>
+      return (
+        <Tooltip content={tooltip}>
+          <span className="excel-refiner__th-badge excel-refiner__th-badge--error">{label}</span>
+        </Tooltip>
+      )
     }
   }
 

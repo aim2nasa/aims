@@ -29,7 +29,8 @@
   border-radius: 6px;
   /* font-size: var(--font-size-caption-1); () */
   /* font-weight: var(--font-weight-medium); () */
-  white-space: nowrap;
+  white-space: pre-line;
+  max-width: 280px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
