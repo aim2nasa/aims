@@ -570,29 +570,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [])
 
   /**
-   * 상태 완전 초기화 (수동)
-   */
-  const handleClearAll = useCallback(() => {
-    uploadService.cancelAllUploads()
-    setUploadState({
-      files: [],
-      uploading: false,
-      totalProgress: 0,
-      completedCount: 0,
-      errors: [],
-      context: {
-        identifierType: 'userId',
-        identifierValue: typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester'
-      }
-    })
-    try {
-      sessionStorage.removeItem(SESSION_KEY)
-    } catch (error) {
-      console.warn('[DocumentRegistrationView] Failed to clear state:', error)
-    }
-  }, [SESSION_KEY])
-
-  /**
    * 업로드 진행률 콜백
    */
   const handleProgress = useCallback((event: UploadProgressEvent) => {
@@ -1305,7 +1282,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             uploadStats={stats}
             onCancelUpload={handleCancelAll}
             onRetryFile={handleRetryFile}
-            onClearUpload={handleClearAll}
           />
         </div>
 

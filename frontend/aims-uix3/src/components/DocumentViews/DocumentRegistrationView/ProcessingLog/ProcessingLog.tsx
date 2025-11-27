@@ -34,8 +34,6 @@ interface ProcessingLogProps {
   onCancelUpload?: () => void
   /** 파일 재시도 핸들러 */
   onRetryFile?: (fileId: string) => void
-  /** 업로드 기록 초기화 핸들러 */
-  onClearUpload?: () => void
 }
 
 type SortOrder = 'oldest-first' | 'newest-first'
@@ -48,8 +46,7 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   uploadState,
   uploadStats,
   onCancelUpload,
-  onRetryFile,
-  onClearUpload
+  onRetryFile
 }) => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest-first') // 기본값: 최신순 (위→아래로 최신이 맨 위)
   const [isFileSummaryExpanded, setIsFileSummaryExpanded] = useState(true) // 파일 요약 펼침 상태
@@ -59,9 +56,6 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   // 업로드 상태 확인
   const hasFiles = uploadState && uploadState.files.length > 0
   const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
-  const allCompleted = hasFiles && uploadState.files.every(
-    f => f.status === 'completed' || f.status === 'warning' || f.status === 'error'
-  )
 
   // 파일 상태별 분류
   const completedFiles = uploadState?.files.filter(f => f.status === 'completed' || f.status === 'warning') || []
@@ -262,19 +256,6 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
                   <div className="file-summary__list">
                     {errorFiles.map(renderFileItem)}
                   </div>
-                </div>
-              )}
-
-              {/* 업로드 초기화 버튼 */}
-              {allCompleted && onClearUpload && (
-                <div className="file-summary__actions">
-                  <button
-                    type="button"
-                    className="file-summary__clear-button"
-                    onClick={onClearUpload}
-                  >
-                    업로드 기록 초기화
-                  </button>
                 </div>
               )}
             </div>
