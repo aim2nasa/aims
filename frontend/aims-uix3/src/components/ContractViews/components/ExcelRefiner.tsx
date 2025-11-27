@@ -1014,7 +1014,7 @@ export function ExcelRefiner() {
 
     // 연락처 컬럼 찾기
     const contactColIndex = currentSheet.columns.findIndex(
-      col => col.includes('연락처')
+      col => col && col.includes('연락처')
     )
 
     // 고유한 고객명 및 연락처 매핑 추출
@@ -1133,6 +1133,7 @@ export function ExcelRefiner() {
       }
 
       currentSheet.columns.forEach((colName, idx) => {
+        if (!colName) return // null 체크
         for (const [korName, engName] of Object.entries(columnMapping)) {
           if (colName.includes(korName)) {
             colIndexMap[engName] = idx
