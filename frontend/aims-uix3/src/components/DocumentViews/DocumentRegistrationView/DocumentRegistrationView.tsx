@@ -1277,7 +1277,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           <ProcessingLog
             logs={processingLogs}
             maxHeight={9999}
-            onClear={() => setProcessingLogs([])}
+            onClear={() => {
+              setProcessingLogs([])
+              setUploadState(prev => ({ ...prev, files: [] }))
+            }}
             uploadState={uploadState}
             uploadStats={stats}
             onCancelUpload={handleCancelAll}
