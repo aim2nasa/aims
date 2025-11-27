@@ -501,14 +501,7 @@
   /* transform, filter, animation 모두 제거 - 미니멀리즘 준수 */
 }
 
-.custom-menu-item.selected .menu-icon .icon-shape,
-.custom-menu-item.selected .menu-icon .icon-shape::before,
-.custom-menu-item.selected .menu-icon .icon-shape::after {
-  /* 🍎 애플 표준: 아이콘 색상만 변경, 효과 완전 제거 */
-  background: var(--color-menu-icon-selected);
-  border-color: var(--color-menu-icon-selected);
-  /* filter, box-shadow, transform 모두 제거 */
-}
+/* 선택 상태에서도 icon-shape 원래 색상 유지 */
 
 /* 🍎 애플 스타일: 모든 메뉴 동일한 선택 상태 - 개별 색상 제거 */
 /* iOS에서는 모든 메뉴 아이템이 동일한 선택 스타일을 가짐 */
@@ -639,17 +632,7 @@
   color: var(--color-ios-green);
 }
 
-/* 선택 상태에서는 모든 아이콘이 흰색으로 통일 */
-.custom-menu-item.selected .sf-symbol--person,
-.custom-menu-item.selected .sf-symbol--list-bullet,
-.custom-menu-item.selected .sf-symbol--location,
-.custom-menu-item.selected .sf-symbol--person-2,
-.custom-menu-item.selected .sf-symbol--doc,
-.custom-menu-item.selected .sf-symbol--chart-bar,
-.custom-menu-item.selected .sf-symbol--magnifyingglass,
-.custom-menu-item.selected .sf-symbol--person-fill-badge-plus {
-  color: var(--color-neutral-0);
-}
+/* 선택 상태에서도 SF Symbol 아이콘 원래 색상 유지 */
 
 /* === 🍎 Apple Design Philosophy: 메뉴 호버 효과 완전 제거 === */
 
@@ -776,15 +759,7 @@
   color: #ff2d55; /* iOS systemPink */
 }
 
-/* 선택 상태에서는 모든 아이콘이 흰색으로 통일 */
-.custom-menu-item.selected .menu-icon-orange,
-.custom-menu-item.selected .menu-icon-purple,
-.custom-menu-item.selected .menu-icon-blue,
-.custom-menu-item.selected .menu-icon-red,
-.custom-menu-item.selected .menu-icon-green,
-.custom-menu-item.selected .menu-icon-pink {
-  color: var(--color-neutral-0);
-}
+/* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */
 
 /* === SMOOTH SCROLLING === */
 .custom-menu {
