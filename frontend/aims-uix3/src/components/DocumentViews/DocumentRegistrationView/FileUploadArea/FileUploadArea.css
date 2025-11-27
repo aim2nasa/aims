@@ -62,7 +62,7 @@
   opacity: 1;
   cursor: not-allowed;
   background: var(--color-section-bg);
-  border-color: var(--color-border);
+  border-color: var(--color-text-disabled);
   border-style: dashed;
   animation: none;
 }
@@ -77,7 +77,7 @@
 }
 
 .file-upload-area__disabled-icon {
-  color: var(--color-text-quaternary);
+  color: var(--color-text-disabled);
   opacity: 0.6;
 }
 
