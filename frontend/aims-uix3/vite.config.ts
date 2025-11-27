@@ -12,6 +12,9 @@ export default defineConfig({
     cssReloadPlugin()  // CSS 변경 시 전체 리로드 강제 (Windows 안정성)
   ],
   server: {
+    // 개발 서버 포트 고정 (카카오 OAuth 콜백 URL과 일치해야 함)
+    port: 5177,
+    strictPort: true,  // 포트 사용 중이면 에러 (다른 포트로 변경 금지)
     proxy: {
       // API 요청을 백엔드 서버로 프록시
       '/api': {
@@ -37,8 +40,6 @@ export default defineConfig({
       // Windows에서 안정적인 파일 감시
       usePolling: false
     },
-    // 개발 서버 안정성 설정
-    strictPort: false,
     cors: true
   },
   // CSS 설정: HMR 비활성화, 전체 새로고침 사용

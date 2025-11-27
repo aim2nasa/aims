@@ -6,6 +6,15 @@ const express = require('express');
 const passport = require('passport');
 const { generateToken, authenticateJWT } = require('../middleware/auth');
 
+// 허용된 리다이렉트 도메인 목록 (보안)
+const ALLOWED_REDIRECT_ORIGINS = [
+  'https://aims.giize.com',
+  'http://localhost:5177',
+  'http://localhost:5173',
+  'http://127.0.0.1:5177',
+  'http://127.0.0.1:5173'
+];
+
 module.exports = function(db) {
   const router = express.Router();
 
@@ -24,22 +33,42 @@ module.exports = function(db) {
   /**
    * GET /api/auth/kakao
    * 카카오 로그인 시작 (기존 계정으로 빠른 로그인)
+   * ?redirect=origin 파라미터로 리다이렉트 대상 지정 가능
    */
-  router.get('/kakao',
-    passport.authenticate('kakao', { session: false })
-  );
+  router.get('/kakao', (req, res, next) => {
+    // redirect origin 저장 (state 파라미터로 전달)
+    const redirectOrigin = req.query.redirect;
+    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+      // state에 redirect origin 인코딩하여 전달
+      return passport.authenticate('kakao', {
+        session: false,
+        state: Buffer.from(redirectOrigin).toString('base64')
+      })(req, res, next);
+    }
+    passport.authenticate('kakao', { session: false })(req, res, next);
+  });
 
   /**
    * GET /api/auth/kakao/switch
    * 카카오 로그인 (다른 계정으로 로그인 - 매번 로그인 화면 표시)
+   * ?redirect=origin 파라미터로 리다이렉트 대상 지정 가능
    */
-  router.get('/kakao/switch',
-    passport.authenticate('kakao-switch', { session: false })
-  );
+  router.get('/kakao/switch', (req, res, next) => {
+    // redirect origin 저장 (state 파라미터로 전달)
+    const redirectOrigin = req.query.redirect;
+    if (redirectOrigin && ALLOWED_REDIRECT_ORIGINS.includes(redirectOrigin)) {
+      return passport.authenticate('kakao-switch', {
+        session: false,
+        state: Buffer.from(redirectOrigin).toString('base64')
+      })(req, res, next);
+    }
+    passport.authenticate('kakao-switch', { session: false })(req, res, next);
+  });
 
   /**
    * GET /api/auth/kakao/callback
    * 카카오 로그인 콜백 (kakao, kakao-switch 공통)
+   * state 파라미터에서 redirect origin 추출하여 동적 리다이렉트
    */
   router.get('/kakao/callback',
     passport.authenticate('kakao', {
@@ -51,8 +80,23 @@ module.exports = function(db) {
         // JWT 토큰 생성
         const token = generateToken(req.user);
 
+        // state에서 redirect origin 추출
+        let frontendUrl = process.env.FRONTEND_URL;
+        if (req.query.state) {
+          try {
+            const decodedOrigin = Buffer.from(req.query.state, 'base64').toString('utf-8');
+            // 허용된 도메인인지 검증
+            if (ALLOWED_REDIRECT_ORIGINS.includes(decodedOrigin)) {
+              frontendUrl = decodedOrigin;
+              console.log(`[Auth] Dynamic redirect to: ${frontendUrl}`);
+            }
+          } catch (e) {
+            console.error('[Auth] Failed to decode state:', e);
+          }
+        }
+
         // 프론트엔드로 리다이렉트 (토큰 포함)
-        res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
       } catch (error) {
         console.error('Token generation error:', error);
         res.redirect(`${process.env.FRONTEND_URL}/login?error=token_generation_failed`);

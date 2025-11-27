@@ -25,16 +25,20 @@ export interface AuthResponse {
 
 /**
  * 카카오 로그인 시작 - 기존 계정으로 빠른 로그인
+ * 현재 origin을 redirect 파라미터로 전달하여 개발/상용 서버 모두 지원
  */
 export const startKakaoLogin = () => {
-  window.location.href = `${API_BASE_URL}/api/auth/kakao`;
+  const redirectOrigin = encodeURIComponent(window.location.origin);
+  window.location.href = `${API_BASE_URL}/api/auth/kakao?redirect=${redirectOrigin}`;
 };
 
 /**
  * 카카오 로그인 시작 - 다른 계정으로 로그인 (매번 로그인 화면 표시)
+ * 현재 origin을 redirect 파라미터로 전달하여 개발/상용 서버 모두 지원
  */
 export const startKakaoLoginSwitch = () => {
-  window.location.href = `${API_BASE_URL}/api/auth/kakao/switch`;
+  const redirectOrigin = encodeURIComponent(window.location.origin);
+  window.location.href = `${API_BASE_URL}/api/auth/kakao/switch?redirect=${redirectOrigin}`;
 };
 
 /**
