@@ -221,6 +221,23 @@ html[data-theme="dark"] .center-pane-view__title-icon {
   opacity: 0.7; /* 다크 테마에서 살짝 더 밝게 */
 }
 
+/* 제목 아이콘 색상 클래스 유지 (CustomMenu와 동일) */
+.center-pane-view__title-icon .menu-icon-pink {
+  color: #ff2d55; /* iOS systemPink */
+}
+
+.center-pane-view__title-icon .menu-icon-red {
+  color: var(--color-icon-doc-status); /* iOS systemRed */
+}
+
+.center-pane-view__title-icon .menu-icon-green {
+  color: var(--color-ios-green); /* iOS systemGreen */
+}
+
+.center-pane-view__title-icon .menu-icon-purple {
+  color: var(--color-ios-purple, #AF52DE); /* iOS systemPurple */
+}
+
 /* 제목 액세서리 스타일 (새로고침 버튼 등) */
 .center-pane-view__title-accessory {
   display: inline-flex;

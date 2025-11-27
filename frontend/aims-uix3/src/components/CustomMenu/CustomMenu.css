@@ -502,6 +502,17 @@
 }
 
 /* 선택 상태에서도 icon-shape 원래 색상 유지 */
+.custom-menu-item.selected .menu-icon-pink {
+  color: #ff2d55; /* iOS systemPink - 선택 시에도 원래 색상 유지 */
+}
+
+.custom-menu-item.selected .menu-icon-red {
+  color: var(--color-icon-doc-status); /* iOS systemRed - 선택 시에도 원래 색상 유지 */
+}
+
+.custom-menu-item.selected .menu-icon-green {
+  color: var(--color-ios-green); /* iOS systemGreen - 선택 시에도 원래 색상 유지 */
+}
 
 /* 🍎 애플 스타일: 모든 메뉴 동일한 선택 상태 - 개별 색상 제거 */
 /* iOS에서는 모든 메뉴 아이템이 동일한 선택 스타일을 가짐 */
