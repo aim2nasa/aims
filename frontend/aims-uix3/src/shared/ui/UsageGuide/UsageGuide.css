@@ -93,8 +93,9 @@
   gap: 12px;
   padding: 12px;
   border-radius: 6px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-secondary);
+  box-shadow: var(--shadow-lg);
   transition: all 0.2s ease;
 }
 
@@ -104,7 +105,7 @@
 
 .usage-guide__section--clickable:hover {
   border-color: var(--color-primary-500);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: var(--shadow-xl);
   transform: translateY(-2px);
 }
 
