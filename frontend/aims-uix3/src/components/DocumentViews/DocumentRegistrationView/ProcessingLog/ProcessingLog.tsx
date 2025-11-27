@@ -4,13 +4,17 @@
  *
  * 🍎 Apple-style 문서 처리 로그 뷰
  * - AR 감지, 업로드 진행, 에러 등의 처리 로그 표시
- * - 접기/펼치기 기능
+ * - 업로드 진행률 표시 통합
+ * - 업로드 완료 시 파일 목록 요약 표시
  * - 자동 스크롤 (최신 로그)
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { ProcessingLog as Log, LOG_CONFIG } from '../types/logTypes'
+import { UploadState, UploadFile } from '../types/uploadTypes'
+import ProgressIndicator from '../ProgressIndicator/ProgressIndicator'
 import Tooltip from '@/shared/ui/Tooltip'
+import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol'
 import './ProcessingLog.css'
 
 interface ProcessingLogProps {
@@ -18,6 +22,20 @@ interface ProcessingLogProps {
   maxHeight?: number
   className?: string
   onClear?: () => void
+  /** 업로드 상태 (통합된 진행률 표시용) */
+  uploadState?: UploadState
+  /** 업로드 통계 */
+  uploadStats?: {
+    completed: number
+    errors: number
+    uploading: number
+  }
+  /** 업로드 취소 핸들러 */
+  onCancelUpload?: () => void
+  /** 파일 재시도 핸들러 */
+  onRetryFile?: (fileId: string) => void
+  /** 업로드 기록 초기화 핸들러 */
+  onClearUpload?: () => void
 }
 
 type SortOrder = 'oldest-first' | 'newest-first'
@@ -26,11 +44,35 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
   logs,
   maxHeight = 300,
   className = '',
-  onClear
+  onClear,
+  uploadState,
+  uploadStats,
+  onCancelUpload,
+  onRetryFile,
+  onClearUpload
 }) => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest-first') // 기본값: 최신순 (위→아래로 최신이 맨 위)
+  const [isFileSummaryExpanded, setIsFileSummaryExpanded] = useState(true) // 파일 요약 펼침 상태
   const logContainerRef = useRef<HTMLDivElement>(null)
   const prevLogsLengthRef = useRef(logs.length)
+
+  // 업로드 상태 확인
+  const hasFiles = uploadState && uploadState.files.length > 0
+  const isUploading = uploadState?.uploading || (uploadStats?.uploading ?? 0) > 0
+  const allCompleted = hasFiles && uploadState.files.every(
+    f => f.status === 'completed' || f.status === 'warning' || f.status === 'error'
+  )
+
+  // 파일 상태별 분류
+  const completedFiles = uploadState?.files.filter(f => f.status === 'completed' || f.status === 'warning') || []
+  const errorFiles = uploadState?.files.filter(f => f.status === 'error') || []
+
+  // 파일 크기 포맷팅
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   // 정렬된 로그 목록
   const sortedLogs = useMemo(() => {
@@ -105,8 +147,141 @@ export const ProcessingLog: React.FC<ProcessingLogProps> = ({
     URL.revokeObjectURL(url)
   }
 
+  // 파일 아이템 렌더링
+  const renderFileItem = (file: UploadFile) => {
+    const getStatusIcon = () => {
+      switch (file.status) {
+        case 'completed':
+        case 'warning':
+          return <SFSymbol name="checkmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--success" />
+        case 'error':
+          return <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--error" />
+        case 'uploading':
+          return <span className="file-item__spinner" />
+        default:
+          return <SFSymbol name="clock" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-item__icon file-item__icon--pending" />
+      }
+    }
+
+    return (
+      <div key={file.id} className={`file-item file-item--${file.status}`}>
+        <div className="file-item__status">
+          {getStatusIcon()}
+        </div>
+        <div className="file-item__info">
+          <span className="file-item__name">{file.file.name}</span>
+          <span className="file-item__size">{formatFileSize(file.fileSize)}</span>
+        </div>
+        {file.status === 'uploading' && (
+          <div className="file-item__progress">
+            <div className="file-item__progress-bar" style={{ width: `${file.progress}%` }} />
+          </div>
+        )}
+        {file.status === 'error' && file.error && (
+          <span className="file-item__error">{file.error}</span>
+        )}
+        {file.status === 'error' && onRetryFile && (
+          <button
+            type="button"
+            className="file-item__retry"
+            onClick={() => onRetryFile(file.id)}
+            aria-label="재시도"
+          >
+            재시도
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className={`processing-log ${className}`}>
+      {/* 업로드 진행률 표시 (업로드 중일 때만) */}
+      {uploadState && isUploading && (
+        <div className="processing-log__progress">
+          <ProgressIndicator
+            uploadState={uploadState}
+            onCancel={onCancelUpload || (() => {})}
+          />
+        </div>
+      )}
+
+      {/* 업로드 파일 요약 (파일이 있을 때만) */}
+      {hasFiles && !isUploading && (
+        <div className="processing-log__file-summary">
+          <button
+            type="button"
+            className="file-summary__toggle"
+            onClick={() => setIsFileSummaryExpanded(!isFileSummaryExpanded)}
+            aria-expanded={isFileSummaryExpanded ? "true" : "false"}
+          >
+            <div className="file-summary__header">
+              <SFSymbol
+                name="doc"
+                size={SFSymbolSize.FOOTNOTE}
+                weight={SFSymbolWeight.MEDIUM}
+                className="file-summary__icon"
+              />
+              <span className="file-summary__title">업로드 결과</span>
+              <span className="file-summary__count">
+                {completedFiles.length}/{uploadState?.files.length || 0}
+              </span>
+              {errorFiles.length > 0 && (
+                <span className="file-summary__error-count">
+                  {errorFiles.length} 실패
+                </span>
+              )}
+              <span className="file-summary__chevron" aria-hidden="true">
+                {isFileSummaryExpanded ? '▲' : '▼'}
+              </span>
+            </div>
+          </button>
+
+          {isFileSummaryExpanded && (
+            <div className="file-summary__content">
+              {/* 완료된 파일 */}
+              {completedFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <SFSymbol name="checkmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-summary__section-icon file-summary__section-icon--success" />
+                    <span>완료 ({completedFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {completedFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
+              {/* 실패한 파일 */}
+              {errorFiles.length > 0 && (
+                <div className="file-summary__section">
+                  <div className="file-summary__section-header">
+                    <SFSymbol name="xmark" size={SFSymbolSize.CAPTION_1} weight={SFSymbolWeight.MEDIUM} className="file-summary__section-icon file-summary__section-icon--error" />
+                    <span>실패 ({errorFiles.length})</span>
+                  </div>
+                  <div className="file-summary__list">
+                    {errorFiles.map(renderFileItem)}
+                  </div>
+                </div>
+              )}
+
+              {/* 업로드 초기화 버튼 */}
+              {allCompleted && onClearUpload && (
+                <div className="file-summary__actions">
+                  <button
+                    type="button"
+                    className="file-summary__clear-button"
+                    onClick={onClearUpload}
+                  >
+                    업로드 기록 초기화
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="processing-log__header">
         <div className="processing-log__header-left">

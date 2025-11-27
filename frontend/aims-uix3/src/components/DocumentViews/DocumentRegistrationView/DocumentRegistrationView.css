@@ -26,7 +26,7 @@
   /* height는 FileUploadArea 자체 CSS에서 100px로 설정됨 */
 }
 
-/* 파일 목록 & 처리 로그 컨테이너 - 탭 시스템 */
+/* 처리 로그 컨테이너 */
 .file-log-container {
   display: flex;
   flex-direction: column;
@@ -37,138 +37,14 @@
   margin-left: auto;
   margin-right: auto;
   width: 100%;
-  background: var(--color-bg-secondary); /* 배경 추가 */
   border-radius: var(--radius-lg); /* 통일된 라운딩 */
   overflow: hidden; /* 라운딩 효과 */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* 서브틀한 깊이감 */
 }
 
-/* 탭 버튼 영역 */
-.file-log-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-ios-separator-light);
-  background: var(--color-ios-bg-primary-light);
-}
-
-html[data-theme="dark"] .file-log-tabs {
-  border-bottom-color: var(--color-ios-separator-dark);
-  background: var(--color-ios-bg-primary-dark);
-}
-
-/* 탭 버튼 */
-.tab-button {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 16px; /* 여유있는 패딩 */
-  background: transparent;
-  border: none;
-  color: var(--color-ios-text-secondary-light);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-footnote);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration-ios-quick) var(--easing-ease-out);
-  position: relative;
-}
-
-html[data-theme="dark"] .tab-button {
-  color: var(--color-ios-text-secondary-dark);
-}
-
-.tab-button:hover {
-  color: var(--color-ios-text-primary-light);
-  background: var(--color-ios-bg-tertiary-light);
-}
-
-html[data-theme="dark"] .tab-button:hover {
-  color: var(--color-ios-text-primary-dark);
-  background: var(--color-ios-bg-tertiary-dark);
-}
-
-/* 활성 탭 */
-.tab-button--active {
-  color: var(--color-primary-500);
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .tab-button--active {
-  color: var(--color-primary-400);
-}
-
-/* 활성 탭 하단 인디케이터 */
-.tab-button--active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-primary-500);
-}
-
-html[data-theme="dark"] .tab-button--active::after {
-  background: var(--color-primary-400);
-}
-
-/* 탭 라벨 */
-.tab-label {
-  white-space: nowrap;
-}
-
-/* 탭 뱃지 (개수 표시) */
-.tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
-  background: var(--color-primary-500);
-  color: var(--color-button-primary-text);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-caption-2);
-  font-weight: 600;
-  line-height: 1;
-}
-
-html[data-theme="dark"] .tab-badge {
-  background: var(--color-primary-400);
-}
-
-.tab-button--active .tab-badge {
-  background: var(--color-primary-600);
-}
-
-html[data-theme="dark"] .tab-button--active .tab-badge {
-  background: var(--color-primary-500);
-}
-
-/* 탭 컨텐츠 */
-.tab-content {
+/* 처리 로그 영역 */
+.file-log-container .processing-log {
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 탭 내부의 파일 목록 영역 */
-.tab-content > .file-list-section {
-  flex: 1;
-  min-height: 0;
-}
-
-/* 탭 내부의 처리 로그 영역 */
-.tab-content .processing-log-area {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 /* 🍎 등록 방법 안내 스타일 */

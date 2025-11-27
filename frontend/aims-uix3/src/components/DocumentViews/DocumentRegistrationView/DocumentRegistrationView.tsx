@@ -11,7 +11,6 @@ import CenterPaneView from '../../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../SFSymbol'
 import FileUploadArea from './FileUploadArea/FileUploadArea'
 import CustomerFileUploadArea from './CustomerFileUploadArea/CustomerFileUploadArea'
-import FileListSection from './FileListSection/FileListSection'
 import ProcessingLog from './ProcessingLog/ProcessingLog'
 import { showAppleConfirm, showOversizedFilesModal } from '../../../utils/appleConfirm'
 import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './types/uploadTypes'
@@ -74,10 +73,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     const saved = localStorage.getItem('doc-reg-notes-expanded')
     return saved === null ? false : saved === 'true' // 기본값: 접힌 상태
   })
-  const [activeTab, setActiveTab] = useState<'upload' | 'log'>(() => {
-    const saved = localStorage.getItem('doc-reg-active-tab')
-    return (saved === 'log' ? 'log' : 'upload') as 'upload' | 'log'
-  })
 
   // 가이드 접기/펼치기 토글
   const toggleGuide = useCallback(() => {
@@ -113,12 +108,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       localStorage.setItem('doc-reg-notes-expanded', 'false')
     }
   }, [isCustomerInfoExpanded])
-
-  // 탭 변경 핸들러
-  const handleTabChange = useCallback((tab: 'upload' | 'log') => {
-    setActiveTab(tab)
-    localStorage.setItem('doc-reg-active-tab', tab)
-  }, [])
 
   // SessionStorage 키
   const SESSION_KEY = 'document-upload-state'
@@ -181,8 +170,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   // 업로드 상태 관리
   const [uploadState, setUploadState] = useState<UploadState>(getInitialState)
 
-  // 자동 성공 메시지 숨김 타이머
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
   // Annual Report 고객 식별 모달 상태
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
@@ -198,8 +185,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     customers: Customer[]
   }>>([])
 
-  // Annual Report 자동 등록 로그 메시지
-  const [autoRegistrationLog, setAutoRegistrationLog] = useState<string | null>(null)
 
   // 🏷️ AR 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
   const arFilenamesRef = useRef<Set<string>>(new Set())
@@ -643,11 +628,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     setCustomerFileDocType('unspecified')
     setCustomerFileNotes('')
 
-    // 4. 성공 메시지 초기화
-    setShowSuccessMessage(false)
-    setAutoRegistrationLog(null)
-
-    // 5. 로그 추가
+    // 4. 로그 추가
     addLog('info', '초기 상태로 되돌아갔습니다')
   }, [handleClearAll, addLog])
 
@@ -1222,44 +1203,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return undefined
   }, [uploadState, SESSION_KEY])
 
-  /**
-   * 성공 메시지 자동 숨김
-   */
-  useEffect(() => {
-    const allCompleted = uploadState.files.length > 0 &&
-      uploadState.files.every(f => f.status === 'completed' || f.status === 'warning' || f.status === 'error')
-    const hasSuccessfulUploads = uploadState.files.some(f => f.status === 'completed' || f.status === 'warning')
-
-    if (allCompleted && hasSuccessfulUploads && !uploadState.uploading) {
-      setShowSuccessMessage(true)
-
-      // 3초 후 성공 메시지 숨김
-      const timer = setTimeout(() => {
-        setShowSuccessMessage(false)
-      }, 3000)
-
-      return () => clearTimeout(timer)
-    } else {
-      setShowSuccessMessage(false)
-    }
-
-    return undefined
-  }, [uploadState.files, uploadState.uploading])
-
-  /**
-   * Annual Report 자동 등록 로그 자동 숨김
-   */
-  useEffect(() => {
-    if (autoRegistrationLog) {
-      // 5초 후 로그 메시지 숨김
-      const timer = setTimeout(() => {
-        setAutoRegistrationLog(null)
-      }, 5000)
-
-      return () => clearTimeout(timer)
-    }
-    return undefined
-  }, [autoRegistrationLog])
 
   /**
    * 파일 선택 옵션
@@ -1325,7 +1268,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             type="button"
             className="registration-guide__toggle"
             onClick={toggleGuide}
-            aria-expanded={isGuideExpanded}
+            aria-expanded={isGuideExpanded ? "true" : "false"}
             aria-label={isGuideExpanded ? '도움말 접기' : '도움말 펼치기'}
           >
             <div className="guide-header">
@@ -1382,7 +1325,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             type="button"
             className="customer-info-section__toggle"
             onClick={toggleCustomerInfo}
-            aria-expanded={isCustomerInfoExpanded}
+            aria-expanded={isCustomerInfoExpanded ? "true" : "false"}
             aria-label={isCustomerInfoExpanded ? '고객 정보 입력 접기' : '고객 정보 입력 펼치기'}
           >
             <div className="customer-info-header">
@@ -1439,68 +1382,26 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           )}
         </div>
 
-        {/* 파일 목록 & 처리 로그 컨테이너 - 탭 시스템 */}
+        {/* 처리 로그 (업로드 진행률 및 파일 요약 통합) */}
         <div className="file-log-container">
-          {/* 탭 버튼 */}
-          <div className="file-log-tabs">
-            <button
-              type="button"
-              className={`tab-button ${activeTab === 'upload' ? 'tab-button--active' : ''}`}
-              onClick={() => handleTabChange('upload')}
-              aria-selected={activeTab === 'upload'}
-            >
-              <span className="tab-label">업로드 목록</span>
-              {uploadState.files.length > 0 && (
-                <span className="tab-badge">{uploadState.files.length}</span>
-              )}
-            </button>
-            <button
-              type="button"
-              className={`tab-button ${activeTab === 'log' ? 'tab-button--active' : ''}`}
-              onClick={() => handleTabChange('log')}
-              aria-selected={activeTab === 'log'}
-            >
-              <span className="tab-label">처리 로그</span>
-              {processingLogs.length > 0 && (
-                <span className="tab-badge">{processingLogs.length}</span>
-              )}
-            </button>
-          </div>
-
-          {/* 탭 컨텐츠 */}
-          <div className="tab-content">
-            {activeTab === 'upload' ? (
-              /* 업로드 목록 */
-              <FileListSection
-                uploadState={uploadState}
-                showSuccessMessage={showSuccessMessage}
-                stats={stats}
-                autoRegistrationLog={autoRegistrationLog}
-                onRetryFile={handleRetryFile}
-                onClearAll={async () => {
-                  const confirmed = await showAppleConfirm(
-                    '업로드 기록을 초기화하시겠습니까?',
-                    '업로드 초기화'
-                  )
-                  if (confirmed) {
-                    handleClearAll()
-                  }
-                }}
-                onCancelAll={handleCancelAll}
-                onDismissSuccess={() => setShowSuccessMessage(false)}
-                onDismissAutoRegistration={() => setAutoRegistrationLog(null)}
-              />
-            ) : (
-              /* 처리 로그 */
-              <div className="processing-log-area">
-                <ProcessingLog
-                  logs={processingLogs}
-                  maxHeight={9999}
-                  onClear={() => setProcessingLogs([])}
-                />
-              </div>
-            )}
-          </div>
+          <ProcessingLog
+            logs={processingLogs}
+            maxHeight={9999}
+            onClear={() => setProcessingLogs([])}
+            uploadState={uploadState}
+            uploadStats={stats}
+            onCancelUpload={handleCancelAll}
+            onRetryFile={handleRetryFile}
+            onClearUpload={async () => {
+              const confirmed = await showAppleConfirm(
+                '업로드 기록을 초기화하시겠습니까?',
+                '업로드 초기화'
+              )
+              if (confirmed) {
+                handleClearAll()
+              }
+            }}
+          />
         </div>
 
         {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
