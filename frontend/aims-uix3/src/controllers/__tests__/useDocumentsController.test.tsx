@@ -84,8 +84,8 @@ describe('useDocumentsController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // persistent state 초기화 (usePersistedState는 localStorage 사용)
-    localStorage.clear()
+    // persistent state 초기화 (usePersistedState는 sessionStorage 사용)
+    sessionStorage.clear()
 
     // 기본 모킹 설정 - DocumentService.getDocuments
     vi.mocked(DocumentService.getDocuments).mockResolvedValue({
@@ -178,7 +178,7 @@ describe('useDocumentsController', () => {
   afterEach(() => {
     vi.clearAllTimers()
     // persistent state 정리
-    localStorage.clear()
+    sessionStorage.clear()
   })
 
   // ===== 1. 초기 상태 테스트 =====

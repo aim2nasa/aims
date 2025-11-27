@@ -1,13 +1,17 @@
 /**
  * usePersistedState Hook Tests
  * @since 1.0.0
+ * @version 1.1.0
  *
- * LocalStorage와 동기화되는 React state hook 테스트
- * - localStorage 읽기/쓰기
+ * SessionStorage와 동기화되는 React state hook 테스트
+ * - sessionStorage 읽기/쓰기
  * - 직렬화/역직렬화
  * - 에러 처리
  * - 상태 초기화
  * - 타입 안정성
+ *
+ * @changelog
+ * - 1.1.0: sessionStorage → sessionStorage 변경
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -16,25 +20,25 @@ import { usePersistedState, clearPersistedState, clearAllViewStates } from '../u
 
 describe('usePersistedState', () => {
   beforeEach(() => {
-    // localStorage 초기화
-    localStorage.clear()
+    // sessionStorage 초기화
+    sessionStorage.clear()
     vi.clearAllMocks()
   })
 
   afterEach(() => {
-    localStorage.clear()
+    sessionStorage.clear()
   })
 
   describe('초기화', () => {
-    it('LocalStorage에 값이 없으면 initialValue를 사용해야 함', () => {
+    it('SessionStorage에 값이 없으면 initialValue를 사용해야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-key', 'initial'))
 
       expect(result.current[0]).toBe('initial')
-      expect(localStorage.getItem('test-key')).toBe(JSON.stringify('initial'))
+      expect(sessionStorage.getItem('test-key')).toBe(JSON.stringify('initial'))
     })
 
-    it('LocalStorage에 저장된 값이 있으면 그 값을 복원해야 함', () => {
-      localStorage.setItem('test-key', JSON.stringify('saved-value'))
+    it('SessionStorage에 저장된 값이 있으면 그 값을 복원해야 함', () => {
+      sessionStorage.setItem('test-key', JSON.stringify('saved-value'))
 
       const { result } = renderHook(() => usePersistedState('test-key', 'initial'))
 
@@ -47,7 +51,7 @@ describe('usePersistedState', () => {
       const { result } = renderHook(() => usePersistedState('test-obj', initialValue))
 
       expect(result.current[0]).toEqual(initialValue)
-      expect(localStorage.getItem('test-obj')).toBe(JSON.stringify(initialValue))
+      expect(sessionStorage.getItem('test-obj')).toBe(JSON.stringify(initialValue))
     })
 
     it('배열을 initialValue로 사용할 수 있어야 함', () => {
@@ -56,28 +60,28 @@ describe('usePersistedState', () => {
       const { result } = renderHook(() => usePersistedState('test-array', initialValue))
 
       expect(result.current[0]).toEqual(initialValue)
-      expect(localStorage.getItem('test-array')).toBe(JSON.stringify(initialValue))
+      expect(sessionStorage.getItem('test-array')).toBe(JSON.stringify(initialValue))
     })
 
     it('null을 initialValue로 사용할 수 있어야 함', () => {
       const { result } = renderHook(() => usePersistedState<string | null>('test-null', null))
 
       expect(result.current[0]).toBe(null)
-      expect(localStorage.getItem('test-null')).toBe('null')
+      expect(sessionStorage.getItem('test-null')).toBe('null')
     })
 
     it('숫자를 initialValue로 사용할 수 있어야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-number', 42))
 
       expect(result.current[0]).toBe(42)
-      expect(localStorage.getItem('test-number')).toBe('42')
+      expect(sessionStorage.getItem('test-number')).toBe('42')
     })
 
     it('boolean을 initialValue로 사용할 수 있어야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-bool', true))
 
       expect(result.current[0]).toBe(true)
-      expect(localStorage.getItem('test-bool')).toBe('true')
+      expect(sessionStorage.getItem('test-bool')).toBe('true')
     })
   })
 
@@ -92,7 +96,7 @@ describe('usePersistedState', () => {
       expect(result.current[0]).toBe('updated')
     })
 
-    it('setState를 호출하면 localStorage에 저장되어야 함', async () => {
+    it('setState를 호출하면 sessionStorage에 저장되어야 함', async () => {
       const { result } = renderHook(() => usePersistedState('test-key', 'initial'))
 
       act(() => {
@@ -101,7 +105,7 @@ describe('usePersistedState', () => {
 
       // useEffect가 실행될 때까지 대기
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-key')).toBe(JSON.stringify('updated'))
+        expect(sessionStorage.getItem('test-key')).toBe(JSON.stringify('updated'))
       })
     })
 
@@ -133,7 +137,7 @@ describe('usePersistedState', () => {
       expect(result.current[0]).toEqual({ name: 'Jane', age: 25 })
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-obj')).toBe(
+        expect(sessionStorage.getItem('test-obj')).toBe(
           JSON.stringify({ name: 'Jane', age: 25 })
         )
       })
@@ -149,7 +153,7 @@ describe('usePersistedState', () => {
       expect(result.current[0]).toEqual(['a', 'b', 'c'])
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-array')).toBe(JSON.stringify(['a', 'b', 'c']))
+        expect(sessionStorage.getItem('test-array')).toBe(JSON.stringify(['a', 'b', 'c']))
       })
     })
 
@@ -165,7 +169,7 @@ describe('usePersistedState', () => {
       expect(result.current[0]).toBe(3)
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-key')).toBe('3')
+        expect(sessionStorage.getItem('test-key')).toBe('3')
       })
     })
   })
@@ -178,7 +182,7 @@ describe('usePersistedState', () => {
         count: 42
       }
 
-      localStorage.setItem('test-complex', JSON.stringify(complexObject))
+      sessionStorage.setItem('test-complex', JSON.stringify(complexObject))
 
       const { result } = renderHook(() => usePersistedState('test-complex', {}))
 
@@ -189,42 +193,42 @@ describe('usePersistedState', () => {
       const { result } = renderHook(() => usePersistedState('test-empty-obj', {}))
 
       expect(result.current[0]).toEqual({})
-      expect(localStorage.getItem('test-empty-obj')).toBe('{}')
+      expect(sessionStorage.getItem('test-empty-obj')).toBe('{}')
     })
 
     it('빈 배열을 올바르게 처리해야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-empty-array', []))
 
       expect(result.current[0]).toEqual([])
-      expect(localStorage.getItem('test-empty-array')).toBe('[]')
+      expect(sessionStorage.getItem('test-empty-array')).toBe('[]')
     })
 
     it('빈 문자열을 올바르게 처리해야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-empty-string', ''))
 
       expect(result.current[0]).toBe('')
-      expect(localStorage.getItem('test-empty-string')).toBe('""')
+      expect(sessionStorage.getItem('test-empty-string')).toBe('""')
     })
 
     it('0을 올바르게 처리해야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-zero', 0))
 
       expect(result.current[0]).toBe(0)
-      expect(localStorage.getItem('test-zero')).toBe('0')
+      expect(sessionStorage.getItem('test-zero')).toBe('0')
     })
 
     it('false를 올바르게 처리해야 함', () => {
       const { result } = renderHook(() => usePersistedState('test-false', false))
 
       expect(result.current[0]).toBe(false)
-      expect(localStorage.getItem('test-false')).toBe('false')
+      expect(sessionStorage.getItem('test-false')).toBe('false')
     })
   })
 
   describe('에러 처리', () => {
-    it('localStorage 읽기 실패 시 initialValue를 사용해야 함', () => {
+    it('sessionStorage 읽기 실패 시 initialValue를 사용해야 함', () => {
       // 잘못된 JSON 저장
-      localStorage.setItem('test-invalid', '{invalid json}')
+      sessionStorage.setItem('test-invalid', '{invalid json}')
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -239,10 +243,10 @@ describe('usePersistedState', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('localStorage.setItem 실패 시 에러를 로그하고 계속 실행해야 함', async () => {
+    it('sessionStorage.setItem 실패 시 에러를 로그하고 계속 실행해야 함', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      // localStorage.setItem을 실패하도록 모킹
+      // sessionStorage.setItem을 실패하도록 모킹
       const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('Storage quota exceeded')
       })
@@ -266,9 +270,9 @@ describe('usePersistedState', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('localStorage가 비활성화된 환경에서도 동작해야 함', () => {
+    it('sessionStorage가 비활성화된 환경에서도 동작해야 함', () => {
       const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-        throw new Error('localStorage is not available')
+        throw new Error('sessionStorage is not available')
       })
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -303,12 +307,12 @@ describe('usePersistedState', () => {
       expect(result2.current[0]).toBe('value2')
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('key1')).toBe(JSON.stringify('updated1'))
-        expect(localStorage.getItem('key2')).toBe(JSON.stringify('value2'))
+        expect(sessionStorage.getItem('key1')).toBe(JSON.stringify('updated1'))
+        expect(sessionStorage.getItem('key2')).toBe(JSON.stringify('value2'))
       })
     })
 
-    it('hook이 unmount되어도 localStorage 값은 유지되어야 함', async () => {
+    it('hook이 unmount되어도 sessionStorage 값은 유지되어야 함', async () => {
       const { result, unmount } = renderHook(() => usePersistedState('test-key', 'initial'))
 
       act(() => {
@@ -316,16 +320,16 @@ describe('usePersistedState', () => {
       })
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
+        expect(sessionStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
       })
 
       unmount()
 
-      // unmount 후에도 localStorage에 값이 남아있어야 함
-      expect(localStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
+      // unmount 후에도 sessionStorage에 값이 남아있어야 함
+      expect(sessionStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
     })
 
-    it('hook을 재마운트하면 localStorage의 값을 복원해야 함', async () => {
+    it('hook을 재마운트하면 sessionStorage의 값을 복원해야 함', async () => {
       const { result: result1, unmount } = renderHook(() =>
         usePersistedState('test-key', 'initial')
       )
@@ -335,7 +339,7 @@ describe('usePersistedState', () => {
       })
 
       await vi.waitFor(() => {
-        expect(localStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
+        expect(sessionStorage.getItem('test-key')).toBe(JSON.stringify('persisted'))
       })
 
       unmount()
@@ -401,16 +405,16 @@ describe('usePersistedState', () => {
 
 describe('clearPersistedState', () => {
   beforeEach(() => {
-    localStorage.clear()
+    sessionStorage.clear()
     vi.clearAllMocks()
   })
 
-  it('지정한 키를 localStorage에서 삭제해야 함', () => {
-    localStorage.setItem('test-key', 'value')
+  it('지정한 키를 sessionStorage에서 삭제해야 함', () => {
+    sessionStorage.setItem('test-key', 'value')
 
     clearPersistedState('test-key')
 
-    expect(localStorage.getItem('test-key')).toBeNull()
+    expect(sessionStorage.getItem('test-key')).toBeNull()
   })
 
   it('존재하지 않는 키를 삭제해도 에러가 발생하지 않아야 함', () => {
@@ -419,7 +423,7 @@ describe('clearPersistedState', () => {
     }).not.toThrow()
   })
 
-  it('localStorage.removeItem 실패 시 에러를 로그해야 함', () => {
+  it('sessionStorage.removeItem 실패 시 에러를 로그해야 함', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
       throw new Error('removeItem failed')
@@ -437,19 +441,19 @@ describe('clearPersistedState', () => {
   })
 
   it('다른 키에는 영향을 주지 않아야 함', () => {
-    localStorage.setItem('key1', 'value1')
-    localStorage.setItem('key2', 'value2')
+    sessionStorage.setItem('key1', 'value1')
+    sessionStorage.setItem('key2', 'value2')
 
     clearPersistedState('key1')
 
-    expect(localStorage.getItem('key1')).toBeNull()
-    expect(localStorage.getItem('key2')).toBe('value2')
+    expect(sessionStorage.getItem('key1')).toBeNull()
+    expect(sessionStorage.getItem('key2')).toBe('value2')
   })
 })
 
 describe('clearAllViewStates', () => {
   beforeEach(() => {
-    localStorage.clear()
+    sessionStorage.clear()
     vi.clearAllMocks()
   })
 
@@ -462,9 +466,9 @@ describe('clearAllViewStates', () => {
       'document-status-filter'
     ]
 
-    // 키들을 localStorage에 저장
+    // 키들을 sessionStorage에 저장
     keys.forEach(key => {
-      localStorage.setItem(key, 'test-value')
+      sessionStorage.setItem(key, 'test-value')
     })
 
     const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -473,7 +477,7 @@ describe('clearAllViewStates', () => {
 
     // 모든 키가 삭제되었는지 확인
     keys.forEach(key => {
-      expect(localStorage.getItem(key)).toBeNull()
+      expect(sessionStorage.getItem(key)).toBeNull()
     })
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -484,27 +488,27 @@ describe('clearAllViewStates', () => {
   })
 
   it('일부 키만 존재해도 에러 없이 실행되어야 함', () => {
-    localStorage.setItem('customer-all-search', 'value')
-    localStorage.setItem('document-library-filter', 'value')
+    sessionStorage.setItem('customer-all-search', 'value')
+    sessionStorage.setItem('document-library-filter', 'value')
 
     expect(() => {
       clearAllViewStates()
     }).not.toThrow()
   })
 
-  it('localStorage가 비어있어도 에러 없이 실행되어야 함', () => {
+  it('sessionStorage가 비어있어도 에러 없이 실행되어야 함', () => {
     expect(() => {
       clearAllViewStates()
     }).not.toThrow()
   })
 
   it('View 상태가 아닌 다른 키에는 영향을 주지 않아야 함', () => {
-    localStorage.setItem('user-token', 'abc123')
-    localStorage.setItem('theme-preference', 'dark')
+    sessionStorage.setItem('user-token', 'abc123')
+    sessionStorage.setItem('theme-preference', 'dark')
 
     clearAllViewStates()
 
-    expect(localStorage.getItem('user-token')).toBe('abc123')
-    expect(localStorage.getItem('theme-preference')).toBe('dark')
+    expect(sessionStorage.getItem('user-token')).toBe('abc123')
+    expect(sessionStorage.getItem('theme-preference')).toBe('dark')
   })
 })

@@ -10,7 +10,7 @@
  * - topK 드롭다운 옵션 (3, 5, 10, 15, 20)
  * - topK 기본값 (10)
  * - topK 값 변경 시 상태 업데이트
- * - localStorage 저장 및 복원
+ * - sessionStorage 저장 및 복원
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -78,8 +78,8 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // localStorage 초기화
-    localStorage.clear()
+    // sessionStorage 초기화
+    sessionStorage.clear()
 
     mockSearchDocuments.mockResolvedValue({
       search_results: [],
@@ -272,8 +272,8 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
     })
   })
 
-  describe('[회귀 방지] localStorage 저장', () => {
-    it('topK 값 변경 시 localStorage에 저장되어야 함', async () => {
+  describe('[회귀 방지] sessionStorage 저장', () => {
+    it('topK 값 변경 시 sessionStorage에 저장되어야 함', async () => {
       const user = userEvent.setup()
       const { container } = renderComponent()
 
@@ -293,16 +293,16 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       const topK5Option = await screen.findByRole('option', { name: '상위 5개' })
       await user.click(topK5Option)
 
-      // localStorage 확인
+      // sessionStorage 확인
       await waitFor(() => {
-        const stored = localStorage.getItem('document-search-top-k')
+        const stored = sessionStorage.getItem('document-search-top-k')
         expect(stored).toBe('5')
       })
     })
 
-    it('localStorage에 저장된 topK 값이 복원되어야 함', async () => {
-      // localStorage에 topK 15 저장
-      localStorage.setItem('document-search-top-k', '15')
+    it('sessionStorage에 저장된 topK 값이 복원되어야 함', async () => {
+      // sessionStorage에 topK 15 저장
+      sessionStorage.setItem('document-search-top-k', '15')
 
       const user = userEvent.setup()
       const { container } = renderComponent()
@@ -344,7 +344,7 @@ describe('DocumentSearchView - Top-K Customization (커밋 6aeec063)', () => {
       await user.click(topK3Option)
 
       await waitFor(() => {
-        expect(localStorage.getItem('document-search-top-k')).toBe('3')
+        expect(sessionStorage.getItem('document-search-top-k')).toBe('3')
       })
 
       unmount1()

@@ -1,19 +1,22 @@
 /**
  * usePersistedState Hook
  * @since 2025-10-20
- * @version 1.0.0
+ * @version 1.1.0
  *
- * LocalStorage와 동기화되는 React state hook
- * F5 새로고침 후에도 상태가 유지됨
+ * SessionStorage와 동기화되는 React state hook
+ * F5 새로고침 후에도 상태가 유지되며, 브라우저 종료 시 초기화됨
+ *
+ * @changelog
+ * - 1.1.0: localStorage → sessionStorage 변경 (검색어, 필터 등 세션별 초기화가 자연스러움)
  */
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
 /**
- * LocalStorage와 동기화되는 state를 생성
+ * SessionStorage와 동기화되는 state를 생성
  *
- * @param key - LocalStorage 키 (앱 전체에서 고유해야 함)
- * @param initialValue - 초기값 (LocalStorage에 값이 없을 때 사용)
+ * @param key - SessionStorage 키 (앱 전체에서 고유해야 함)
+ * @param initialValue - 초기값 (SessionStorage에 값이 없을 때 사용)
  * @returns [state, setState] - useState와 동일한 인터페이스
  *
  * @example
@@ -27,10 +30,10 @@ export function usePersistedState<T>(
   key: string,
   initialValue: T
 ): [T, Dispatch<SetStateAction<T>>] {
-  // LocalStorage에서 초기값 복원
+  // SessionStorage에서 초기값 복원
   const [state, setState] = useState<T>(() => {
     try {
-      const item = localStorage.getItem(key);
+      const item = sessionStorage.getItem(key);
       if (item) {
         return JSON.parse(item) as T;
       }
@@ -40,10 +43,10 @@ export function usePersistedState<T>(
     return initialValue;
   });
 
-  // state 변경 시 LocalStorage에 저장
+  // state 변경 시 SessionStorage에 저장
   useEffect(() => {
     try {
-      localStorage.setItem(key, JSON.stringify(state));
+      sessionStorage.setItem(key, JSON.stringify(state));
     } catch (error) {
       console.error(`[usePersistedState] "${key}" 저장 실패:`, error);
     }
@@ -53,11 +56,11 @@ export function usePersistedState<T>(
 }
 
 /**
- * LocalStorage 키를 삭제하고 초기값으로 리셋
+ * SessionStorage 키를 삭제하고 초기값으로 리셋
  */
 export function clearPersistedState(key: string): void {
   try {
-    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
   } catch (error) {
     console.error(`[usePersistedState] "${key}" 삭제 실패:`, error);
   }
