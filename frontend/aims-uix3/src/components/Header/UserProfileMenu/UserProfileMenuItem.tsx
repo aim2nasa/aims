@@ -24,7 +24,7 @@ export interface UserProfileMenuItemProps {
   /** 비활성화 여부 */
   disabled?: boolean;
   /** 아이콘 색상 (예: 'green') */
-  iconColor?: 'green' | 'blue' | 'orange' | 'purple';
+  iconColor?: 'green' | 'blue' | 'orange' | 'purple' | 'yellow';
 }
 
 /**

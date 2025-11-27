@@ -1118,6 +1118,7 @@
   border-radius: 0.04em;
 }
 
+/* TRAY FULL (서류함) SYMBOL - 문서 저장소 */.sf-symbol--tray-full .sf-symbol__shape::before {  content: '';  position: absolute;  top: 50%;  left: 50%;  transform: translate(-50%, -50%);  width: 0.85em;  height: 0.7em;  /* 서류함 아이콘 - 문서가 쌓인 트레이 */  background: currentColor;  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;  mask-size: contain;  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3e%3cpath d='M2 14v4c0 1 1 2 2 2h16c1 0 2-1 2-2v-4H2zm3-2h14l2-6H3l2 6zm1-8h12v2H6V4zm2-4h8v2H8V0z' fill='black'/%3e%3c/svg%3e") no-repeat center;  -webkit-mask-size: contain;}
 /* DOC TEXT (Word) SYMBOL - 텍스트 라인 */
 .sf-symbol--doc-text .sf-symbol__shape::before {
   content: '';
@@ -1462,8 +1463,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 1.2em;
-  height: 1.2em;
+  width: 0.85em;
+  height: 0.85em;
   background-color: currentColor;
   -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>');
   mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>');
@@ -1479,17 +1480,20 @@
   content: none;
 }
 
-/* ARROW.RIGHT.SQUARE (Logout) SYMBOL - 로그아웃 아이콘 */
+/* ARROW.RIGHT.SQUARE (Logout) SYMBOL - 로그아웃 아이콘 (SVG 마스크 방식) */
 .sf-symbol--arrow-right-square .sf-symbol__shape::before {
-  content: '↪';
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(90deg);
-  font-size: 1em;
-  line-height: 1;
-  opacity: 1;
-  font-weight: bold;
+  transform: translate(-50%, -50%);
+  width: 0.85em;
+  height: 0.85em;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3e%3c/svg%3e") no-repeat center;
+  -webkit-mask-size: contain;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
 }
 
 .sf-symbol--arrow-right-square .sf-symbol__shape::after {
@@ -1568,8 +1572,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 0.8em;
-  height: 0.7em;
+  width: 0.9em;
+  height: 0.75em;
 
   /* iOS 표준 폴더 아이콘 */
   background: currentColor;

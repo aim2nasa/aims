@@ -248,7 +248,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               label="내 보관함"
               onClick={handleMyFiles}
               showDivider={true}
-              iconColor="green"
+              iconColor="yellow"
             />
 
             {/* 그룹 2: 계정 관리 */}

@@ -62,6 +62,10 @@
   color: var(--color-ios-purple); /* iOS systemPurple - #af52de */
 }
 
+.user-profile-menu-item__icon--yellow {
+  color: var(--color-folder-yellow); /* Windows Explorer 폴더 노란색 */
+}
+
 /* 호버 상태 */
 .user-profile-menu-item:hover:not(:disabled) {
   background: var(--color-bg-hover);

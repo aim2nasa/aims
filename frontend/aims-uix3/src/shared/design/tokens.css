@@ -858,6 +858,7 @@
   --color-ios-teal: #5ac8fa;           /* iOS systemTeal */
   --color-ios-indigo: #5856d6;         /* iOS systemIndigo */
   --color-ios-yellow: #ffcc00;         /* iOS systemYellow */
+  --color-folder-yellow: #F7C94B;      /* Windows Explorer 폴더 노란색 */
 
   /* Dark Theme - iOS 다크모드 전용 색상 */
   --color-ios-blue-dark: #0a84ff;      /* iOS systemBlue Dark */
