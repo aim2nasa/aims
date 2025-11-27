@@ -149,7 +149,7 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
     <div className="customer-file-upload-area">
       {/* 하나의 경계 박스: 고객 선택 + 고객 정보 + 문서 유형 + 메모 */}
       <div className="customer-file-upload-area__content-box">
-        {/* 첫 번째 행: 고객 선택 버튼 + 고객 정보 + 문서 유형 + 초기화 */}
+        {/* 첫 번째 행: 고객 선택 버튼 + 고객 정보 + 초기화 */}
         <div className="customer-file-upload-area__main-row">
           {/* 고객 선택 버튼 */}
           <Button
@@ -188,20 +188,8 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
             )}
           </div>
 
-          {/* 문서 유형 */}
-          <div className="customer-file-upload-area__field customer-file-upload-area__field--inline">
-            <label htmlFor="document-type">문서 유형</label>
-            <Dropdown
-              value={effectiveDocumentType}
-              options={DOCUMENT_TYPE_OPTIONS}
-              onChange={onDocumentTypeChange}
-              disabled={!selectedCustomer}
-              aria-label="문서 유형 선택"
-            />
-          </div>
-
-          {/* 초기화 버튼 (옵션) */}
-          {showResetButton && onReset && (
+          {/* 초기화 버튼 (고객 선택 시에만 표시) */}
+          {selectedCustomer && showResetButton && onReset && (
             <Tooltip content="초기화">
               <button
                 onClick={onReset}
@@ -221,35 +209,54 @@ export const CustomerFileUploadArea: React.FC<CustomerFileUploadAreaProps> = ({
           )}
         </div>
 
-        {/* 메모 입력 영역 (같은 박스 안, 구분선 없이) */}
-        <div className={`notes-section ${isNotesExpanded ? 'notes-section--expanded' : 'notes-section--collapsed'}`}>
-          <button
-            type="button"
-            className="notes-section__toggle"
-            onClick={onToggleNotes}
-            aria-expanded={isNotesExpanded}
-            aria-label={isNotesExpanded ? '메모 접기' : '메모 펼치기'}
-          >
-            <div className="notes-header">
-              <span className="notes-label">메모</span>
-              <span className="notes-toggle-icon" aria-hidden="true">
-                {isNotesExpanded ? '▲' : '▼'}
-              </span>
-            </div>
-          </button>
+        {/* 추가 옵션 (문서 유형 + 메모) - 고객 선택 시에만 표시 */}
+        {selectedCustomer && (
+          <div className={`options-section ${isNotesExpanded ? 'options-section--expanded' : 'options-section--collapsed'}`}>
+            <button
+              type="button"
+              className="options-section__toggle"
+              onClick={onToggleNotes}
+              aria-expanded={isNotesExpanded ? "true" : "false"}
+              aria-label={isNotesExpanded ? '추가 옵션 접기' : '추가 옵션 펼치기'}
+            >
+              <div className="options-header">
+                <span className="options-label">추가 옵션</span>
+                <span className="options-toggle-icon" aria-hidden="true">
+                  {isNotesExpanded ? '▲' : '▼'}
+                </span>
+              </div>
+            </button>
 
-          {isNotesExpanded && (
-            <textarea
-              className="notes-input"
-              value={notes}
-              onChange={(e) => onNotesChange(e.target.value)}
-              placeholder="이 문서와 고객의 관계에 대한 참고 메모를 남겨주세요."
-              rows={1}
-              disabled={disabled || !selectedCustomer}
-              aria-label="메모"
-            />
-          )}
-        </div>
+            {isNotesExpanded && (
+              <div className="options-content">
+                {/* 문서 유형 */}
+                <div className="options-field">
+                  <label className="options-field__label">문서 유형</label>
+                  <Dropdown
+                    value={effectiveDocumentType}
+                    options={DOCUMENT_TYPE_OPTIONS}
+                    onChange={onDocumentTypeChange}
+                    aria-label="문서 유형 선택"
+                  />
+                </div>
+
+                {/* 메모 */}
+                <div className="options-field">
+                  <label className="options-field__label">메모</label>
+                  <textarea
+                    className="options-field__textarea"
+                    value={notes}
+                    onChange={(e) => onNotesChange(e.target.value)}
+                    placeholder="이 문서에 대한 참고 메모를 남겨주세요."
+                    rows={2}
+                    disabled={disabled}
+                    aria-label="메모"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 고객 선택 모달 */}

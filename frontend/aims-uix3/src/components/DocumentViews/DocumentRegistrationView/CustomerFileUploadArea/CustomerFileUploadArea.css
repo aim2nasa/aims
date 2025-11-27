@@ -210,111 +210,137 @@ html[data-theme="dark"] .customer-file-upload-area__selected-customer > .selecte
   margin-bottom: var(--spacing-sm);
 }
 
-/* 메모 입력 섹션 - 접을 수 있음 (content-box 안에 위치) */
-.notes-section {
+/* ===== 추가 옵션 섹션 (문서 유형 + 메모) ===== */
+
+.options-section {
   display: flex;
   flex-direction: column;
   width: 100%;
   margin: 0;
-  background: transparent; /* 배경 제거 (content-box에서 처리) */
-  border-radius: 0; /* 라운딩 제거 */
-  overflow: hidden;
-  border: none; /* 테두리 제거 */
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  border: none;
 }
 
-/* 메모 토글 버튼 */
-.notes-section__toggle {
+/* 추가 옵션 토글 버튼 */
+.options-section__toggle {
   width: 100%;
-  padding: var(--spacing-1) var(--spacing-3) var(--spacing-3); /* 상단 패딩만 축소 */
+  padding: var(--spacing-1) var(--spacing-3);
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: none; /* 전체 배경 효과 제거 */
+  transition: none;
 }
 
-/* 메모 헤더 */
-.notes-header {
+.options-section__toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 추가 옵션 헤더 */
+.options-header {
   display: flex;
   align-items: center;
-  justify-content: center; /* 중앙 정렬 */
+  justify-content: center;
   gap: 8px;
 }
 
-/* 메모 라벨 */
-.notes-label {
+/* 추가 옵션 라벨 */
+.options-label {
   font-size: var(--font-size-footnote);
   font-weight: 500;
   color: var(--color-ios-text-secondary-light);
   transition: all 0.2s ease;
 }
 
-html[data-theme="dark"] .notes-label {
+html[data-theme="dark"] .options-label {
   color: var(--color-ios-text-secondary-dark);
 }
 
-/* 메모 라벨 호버 */
-.notes-section__toggle:hover .notes-label {
+/* 추가 옵션 라벨 호버 */
+.options-section__toggle:hover:not(:disabled) .options-label {
   color: var(--color-ios-text-primary-light);
   transform: scale(1.05);
 }
 
-html[data-theme="dark"] .notes-section__toggle:hover .notes-label {
+html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-label {
   color: var(--color-ios-text-primary-dark);
 }
 
 /* 토글 아이콘 */
-.notes-toggle-icon {
+.options-toggle-icon {
   color: var(--color-ios-text-quaternary-light);
   font-size: var(--font-size-caption-1);
   transition: all 0.2s ease;
 }
 
-html[data-theme="dark"] .notes-toggle-icon {
+html[data-theme="dark"] .options-toggle-icon {
   color: var(--color-ios-text-quaternary-dark);
 }
 
 /* 토글 아이콘 호버 */
-.notes-section__toggle:hover .notes-toggle-icon {
+.options-section__toggle:hover:not(:disabled) .options-toggle-icon {
   color: var(--color-ios-text-primary-light);
   transform: scale(1.1);
 }
 
-html[data-theme="dark"] .notes-section__toggle:hover .notes-toggle-icon {
+html[data-theme="dark"] .options-section__toggle:hover:not(:disabled) .options-toggle-icon {
   color: var(--color-ios-text-primary-dark);
 }
 
+/* 추가 옵션 컨텐츠 영역 */
+.options-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-3);
+}
+
+/* 추가 옵션 필드 */
+.options-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.options-field__label {
+  font-size: var(--font-size-caption-1);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
 /* 메모 입력창 */
-.notes-input {
-  margin: 0 var(--spacing-3) var(--spacing-3); /* 좌우하단 통일된 간격 */
+.options-field__textarea {
   padding: 8px 12px;
   background: var(--color-bg-primary);
   border: 1.5px solid var(--color-ios-separator-light);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-footnote); /* 13px - 입력 요소 표준 */
+  font-size: var(--font-size-footnote);
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   resize: vertical;
-  min-height: 60px;
+  min-height: 48px;
   transition: all var(--duration-fast) var(--easing-ease-out);
 }
 
-html[data-theme="dark"] .notes-input {
+html[data-theme="dark"] .options-field__textarea {
   background: var(--color-layout-content-dark);
   border-color: var(--color-ios-separator-dark);
 }
 
-.notes-input:focus {
+.options-field__textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus-ring);
 }
 
-.notes-input:disabled {
+.options-field__textarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.notes-input::placeholder {
+.options-field__textarea::placeholder {
   color: var(--color-text-tertiary);
 }
 
