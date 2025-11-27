@@ -31,6 +31,7 @@ const CustomerRelationshipView = lazy(() => import('./components/CustomerViews/C
 const ContractManagementView = lazy(() => import('./components/ContractViews/ContractManagementView'))
 const ContractAllView = lazy(() => import('./components/ContractViews/ContractAllView'))
 const ContractImportView = lazy(() => import('./components/ContractViews/ContractImportView'))
+const QuickActionsView = lazy(() => import('./components/QuickActionsViews/QuickActionsView'))
 const BaseViewer = lazy(() => import('./components/BaseViewer'))
 const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
@@ -422,6 +423,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "contracts" ||
         activeDocumentView === "contracts-all" ||
         activeDocumentView === "contracts-import" ||
+        activeDocumentView === "quick-actions" ||
         activeDocumentView === "account-settings") {
       setPaginationVisible(false)
       // RightPane은 문서/고객이 선택되지 않은 경우에만 숨김
@@ -677,6 +679,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 메뉴 클릭 핸들러 - 모든 View 지원
   const handleMenuClick = useCallback((menuKey: string) => {
     const allViewKeys = [
+      // 빠른 작업
+      'quick-actions',
       // 문서 관리 View들
       'documents', 'documents-register', 'documents-library', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
@@ -1266,6 +1270,15 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <ContractImportView
               visible={activeDocumentView === 'contracts-import'}
               onClose={closeDocumentView}
+            />
+          </Suspense>
+
+          {/* 빠른 작업 View */}
+          <Suspense fallback={null}>
+            <QuickActionsView
+              visible={activeDocumentView === 'quick-actions'}
+              onClose={closeDocumentView}
+              onNavigate={handleMenuClick}
             />
           </Suspense>
         </main>
