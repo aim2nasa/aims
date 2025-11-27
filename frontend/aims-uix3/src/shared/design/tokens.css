@@ -854,6 +854,7 @@
   --color-ios-green: #34c759;          /* iOS systemGreen */
   --color-ios-green-light: #30d158;    /* iOS systemGreen 밝은 버전 (라이트 테마용) */
   --color-ios-orange: #ff9500;         /* iOS systemOrange */
+  --color-ios-pink: #ff2d55;           /* iOS systemPink - 관계별 보기 아이콘 */
   --color-ios-purple: #af52de;         /* iOS systemPurple */
   --color-ios-teal: #5ac8fa;           /* iOS systemTeal */
   --color-ios-indigo: #5856d6;         /* iOS systemIndigo */
@@ -864,6 +865,7 @@
   --color-ios-blue-dark: #0a84ff;      /* iOS systemBlue Dark */
   --color-ios-green-dark: #30d158;     /* iOS systemGreen Dark */
   --color-ios-orange-dark: #ff9f0a;    /* iOS systemOrange Dark */
+  --color-ios-pink-dark: #ff375f;      /* iOS systemPink Dark */
   --color-ios-purple-dark: #bf5af2;    /* iOS systemPurple Dark */
   --color-ios-teal-dark: #64d2ff;      /* iOS systemTeal Dark */
   --color-ios-indigo-dark: #5e5ce6;    /* iOS systemIndigo Dark */

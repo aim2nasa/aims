@@ -204,7 +204,7 @@ html[data-theme="dark"] .center-pane-view__placeholder {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  opacity: 0.6;
+  /* opacity 제거: LeftPane과 동일한 색상 유지 */
 }
 
 /* SF Symbol 아이콘 크기 통일 (LeftPane CustomMenu와 동일: 1.3em) */
@@ -216,14 +216,10 @@ html[data-theme="dark"] .center-pane-view__placeholder {
   font-size: inherit;
 }
 
-/* 다크 테마 아이콘 지원 */
-html[data-theme="dark"] .center-pane-view__title-icon {
-  opacity: 0.7; /* 다크 테마에서 살짝 더 밝게 */
-}
 
 /* 제목 아이콘 색상 클래스 유지 (CustomMenu와 동일) */
 .center-pane-view__title-icon .menu-icon-pink {
-  color: #ff2d55; /* iOS systemPink */
+  color: var(--color-ios-pink); /* iOS systemPink */
 }
 
 .center-pane-view__title-icon .menu-icon-red {

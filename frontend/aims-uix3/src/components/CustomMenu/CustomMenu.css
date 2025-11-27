@@ -503,7 +503,7 @@
 
 /* 선택 상태에서도 icon-shape 원래 색상 유지 */
 .custom-menu-item.selected .menu-icon-pink {
-  color: #ff2d55; /* iOS systemPink - 선택 시에도 원래 색상 유지 */
+  color: var(--color-ios-pink); /* iOS systemPink - 선택 시에도 원래 색상 유지 */
 }
 
 .custom-menu-item.selected .menu-icon-red {
@@ -767,7 +767,7 @@
 
 /* 관계별 보기 - iOS systemPink */
 .menu-icon-pink {
-  color: #ff2d55; /* iOS systemPink */
+  color: var(--color-ios-pink); /* iOS systemPink */
 }
 
 /* 선택 상태에서도 menu-icon 클래스 원래 색상 유지 */
