@@ -64,6 +64,9 @@ export function ExcelRefiner() {
   // 검증 진행 중인 컬럼 (클릭 직후 ~ 검증 완료 전)
   const [validatingInProgress, setValidatingInProgress] = useState<Set<number>>(new Set())
 
+  // 검증 완료 이력 (컬럼별 클릭 시에도 누적됨, 4개 필수 컬럼 완료 추적용)
+  const [validatedColumnsHistory, setValidatedColumnsHistory] = useState<Set<number>>(new Set())
+
   // 정렬 상태
   const [sortColumn, setSortColumn] = useState<number | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -258,6 +261,7 @@ export function ExcelRefiner() {
       setSelectedRows(new Set())
       setValidatingColumns(new Set())
       setValidatingInProgress(new Set())
+      setValidatedColumnsHistory(new Set())
       // 상품명 검증 상태 초기화
       setProductMatchResult(null)
       setProductNameColumnIndex(null)
@@ -309,6 +313,7 @@ export function ExcelRefiner() {
     setSelectedRows(new Set())
     setValidatingColumns(new Set())
     setValidatingInProgress(new Set())
+    setValidatedColumnsHistory(new Set())
     setSortColumn(null)
     setSortDirection('asc')
     setProductMatchResult(null)
@@ -328,6 +333,7 @@ export function ExcelRefiner() {
     setActiveSheetIndex(index)
     setSelectedRows(new Set())
     setValidatingColumns(new Set())
+    setValidatedColumnsHistory(new Set())
     setSortColumn(null)
     setSortDirection('asc')
   }, [])
@@ -344,7 +350,7 @@ export function ExcelRefiner() {
     }
   }, [sortColumn])
 
-  // 컬럼 헤더 클릭 - 검증 활성화 (해제는 별도 버튼으로)
+  // 컬럼 헤더 클릭 - 검증 활성화 (항상 하나의 컬럼만 검증 상태 유지)
   const handleColumnClick = useCallback(async (colIndex: number, columnName: string) => {
     // 검증 로직이 정의된 컬럼만 클릭 가능
     const type = getValidationType(columnName)
@@ -355,8 +361,10 @@ export function ExcelRefiner() {
     // 범례 필터 초기화 (컬럼 클릭이 우선)
     setProductStatusFilter(null)
 
-    // 이미 검증된 컬럼이면 무시 (lastClickedColumn은 이미 업데이트됨)
-    if (validatingColumns.has(colIndex)) return
+    // 검증 초기화 (항상 하나의 컬럼만 검증 상태 유지)
+    setValidatingColumns(new Set())
+    setProductMatchResult(null)
+    setProductNameColumnIndex(null)
 
     // 먼저 "검증 중" 상태 표시
     setValidatingInProgress(prev => {
@@ -405,8 +413,14 @@ export function ExcelRefiner() {
           })
         }
 
-        // 검증 컬럼에 추가
+        // 검증 컬럼에 추가 (현재 활성 상태)
         setValidatingColumns(prev => {
+          const next = new Set(prev)
+          next.add(colIndex)
+          return next
+        })
+        // 검증 완료 이력에 추가 (누적)
+        setValidatedColumnsHistory(prev => {
           const next = new Set(prev)
           next.add(colIndex)
           return next
@@ -431,6 +445,12 @@ export function ExcelRefiner() {
         next.add(colIndex)
         return next
       })
+      // 검증 완료 이력에 추가 (누적)
+      setValidatedColumnsHistory(prev => {
+        const next = new Set(prev)
+        next.add(colIndex)
+        return next
+      })
       // 검증 완료 후 "검증 중" 상태 해제
       setValidatingInProgress(prev => {
         const next = new Set(prev)
@@ -443,6 +463,7 @@ export function ExcelRefiner() {
   // 검증 초기화
   const handleClearValidation = useCallback(() => {
     setValidatingColumns(new Set())
+    setValidatedColumnsHistory(new Set())
     setProductMatchResult(null)
     setProductNameColumnIndex(null)
     setActionLog(null)
@@ -1150,8 +1171,8 @@ export function ExcelRefiner() {
       }
     })
 
-    // 검증된 필수 컬럼 수
-    const validatedRequiredCount = requiredColIndices.filter(idx => validatingColumns.has(idx)).length
+    // 검증된 필수 컬럼 수 (이력 기반 - 컬럼별 클릭으로도 누적됨)
+    const validatedRequiredCount = requiredColIndices.filter(idx => validatedColumnsHistory.has(idx)).length
 
     // 검증 진행 중인지
     const isValidating = validatingInProgress.size > 0
@@ -1204,7 +1225,7 @@ export function ExcelRefiner() {
       // 일부 필수 컬럼만 검증됨
       return { step: 2, label: '검증 계속', message: `필수 컬럼 ${validatedRequiredCount}/${requiredColIndices.length}개 검증 완료. 계속 검증하세요.`, resultStatus: null }
     }
-  }, [currentSheet, validatingColumns, validatingInProgress.size, problematicRows.length, importResult])
+  }, [currentSheet, validatedColumnsHistory, validatingInProgress.size, problematicRows.length, importResult])
 
   // 컬럼별 검증 실패 이유 생성
   const getValidationTooltip = (type: ValidationType, result: ValidationResult | null, productResult?: ProductMatchResult): string => {
