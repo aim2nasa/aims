@@ -11,7 +11,7 @@ const { prepareDocumentResponse, formatBytes } = require('./lib/documentStatusHe
 const { utcNowISO, utcNowDate, normalizeTimestamp } = require('./lib/timeUtils');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
-const { generateToken } = require('./middleware/auth');
+const { generateToken, authenticateJWT } = require('./middleware/auth');
 
 const app = express();
 app.use(cors({
@@ -222,10 +222,10 @@ function analyzeDocumentStatus(doc) {
 /**
  * 모든 문서 목록 조회 API (문서검색View용)
  */
-app.get('/api/documents', async (req, res) => {
+app.get('/api/documents', authenticateJWT, async (req, res) => {
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -540,7 +540,7 @@ app.get('/api/documents', async (req, res) => {
 /**
  * 모든 문서의 상태를 조회하는 API
  */
-app.get('/api/documents/status', async (req, res) => {
+app.get('/api/documents/status', authenticateJWT, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, search, sort, customerLink, fileScope = 'all' } = req.query;
     const skip = (page - 1) * limit;
@@ -549,14 +549,7 @@ app.get('/api/documents/status', async (req, res) => {
     console.error(`\n🔍🔍🔍 [정렬 디버깅] sort=${sort}, page=${page}, limit=${limit}, fileScope=${fileScope}`);
 
     // userId 추출 (헤더 또는 쿼리)
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // 필터 조건 구성 - ownerId 필터 추가
     let filter = {
       ownerId: userId
@@ -897,19 +890,12 @@ app.get('/api/documents/status', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.get('/api/documents/:id/status', async (req, res) => {
+app.get('/api/documents/:id/status', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -1011,17 +997,10 @@ app.get('/webhook/get-status/:document_id', async (req, res) => {
 /**
  * 문서 처리 상태 통계를 조회하는 API
  */
-app.get('/api/documents/statistics', async (req, res) => {
+app.get('/api/documents/statistics', authenticateJWT, async (req, res) => {
   try {
     // userId 추출 (헤더 또는 쿼리)
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // 사용자별 필터링 (ownerId 기준)
     const filter = { ownerId: userId };
     const documents = await db.collection(COLLECTION_NAME).find(filter).toArray();
@@ -1098,20 +1077,13 @@ app.get('/api/documents/statistics', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.post('/api/documents/:id/retry', async (req, res) => {
+app.post('/api/documents/:id/retry', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { stage } = req.body; // 'ocr' 또는 'docembed'
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -1182,17 +1154,10 @@ app.post('/api/documents/:id/retry', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.get('/api/documents/status/live', async (req, res) => {
+app.get('/api/documents/status/live', authenticateJWT, async (req, res) => {
   try {
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // ⭐ 소유권 검증: 해당 설계사의 문서만 조회
     const processingDocs = await db.collection(COLLECTION_NAME)
       .find({
@@ -1233,19 +1198,12 @@ app.get('/api/documents/status/live', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.patch('/api/documents/set-annual-report', async (req, res) => {
+app.patch('/api/documents/set-annual-report', authenticateJWT, async (req, res) => {
   try {
     const { filename, metadata } = req.body;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     console.log(`🏷️  [Set AR Flag] 요청 - filename: ${filename}, metadata:`, metadata);
 
     if (!filename) {
@@ -1316,19 +1274,12 @@ app.patch('/api/documents/set-annual-report', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.delete('/api/documents/:id', async (req, res) => {
+app.delete('/api/documents/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -1462,19 +1413,12 @@ app.delete('/api/documents/:id', async (req, res) => {
 /**
  * ⭐ 설계사별 문서 데이터 격리 적용
  */
-app.delete('/api/documents', async (req, res) => {
+app.delete('/api/documents', authenticateJWT, async (req, res) => {
   try {
     const { document_ids } = req.body;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     console.log(`🗑️  [문서 삭제] 복수 삭제 요청: ${document_ids?.length}건 (userId: ${userId})`);
 
     if (!document_ids || !Array.isArray(document_ids) || document_ids.length === 0) {
@@ -1689,17 +1633,10 @@ app.post('/api/dev/ensure-user', async (req, res) => {
  * DELETE /api/dev/customers/all
  * 주의: 개발 환경에서만 사용! 프로덕션에서는 절대 사용 금지!
  */
-app.delete('/api/dev/customers/all', async (req, res) => {
+app.delete('/api/dev/customers/all', authenticateJWT, async (req, res) => {
   try {
     // 요청한 사용자(설계사)의 고객만 삭제
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // 고객은 meta.created_by로 설계사 ID를 저장함 (문자열)
     const result = await db.collection(CUSTOMERS_COLLECTION).deleteMany({
       'meta.created_by': userId
@@ -1726,17 +1663,10 @@ app.delete('/api/dev/customers/all', async (req, res) => {
  * DELETE /api/dev/contracts/all
  * 주의: 개발 환경에서만 사용! 프로덕션에서는 절대 사용 금지!
  */
-app.delete('/api/dev/contracts/all', async (req, res) => {
+app.delete('/api/dev/contracts/all', authenticateJWT, async (req, res) => {
   try {
     // 요청한 사용자(설계사)의 계약만 삭제
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // agent_id가 ObjectId로 저장되어 있으므로 변환 필요
     const agentObjectId = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
 
@@ -1886,10 +1816,10 @@ app.put('/api/users/:id', async (req, res) => {
 /**
  * 고객 목록 조회 API
  */
-app.get('/api/customers', async (req, res) => {
+app.get('/api/customers', authenticateJWT, async (req, res) => {
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -2077,12 +2007,12 @@ async function generateUniqueCustomerName(originalName, userId) {
 /**
  * 새 고객 등록 API
  */
-app.post('/api/customers', async (req, res) => {
+app.post('/api/customers', authenticateJWT, async (req, res) => {
   try {
     const customerData = req.body;
 
     // ⭐ userId 추출 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -2143,19 +2073,12 @@ app.post('/api/customers', async (req, res) => {
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:id', async (req, res) => {
+app.get('/api/customers/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -2195,20 +2118,13 @@ app.get('/api/customers/:id', async (req, res) => {
  * 고객 정보 수정 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.put('/api/customers/:id', async (req, res) => {
+app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -2299,19 +2215,12 @@ app.put('/api/customers/:id', async (req, res) => {
  * 고객 삭제 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.delete('/api/customers/:id', async (req, res) => {
+app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -2558,20 +2467,13 @@ async function syncQdrantCustomerRelation(documentId, customerId) {
  * 고객에 문서 연결 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.post('/api/customers/:id/documents', async (req, res) => {
+app.post('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { document_id, relationship_type, notes, assigned_by } = req.body;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
         success: false,
@@ -2692,19 +2594,12 @@ app.post('/api/customers/:id/documents', async (req, res) => {
  * 고객에서 문서 연결 해제 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
+app.delete('/api/customers/:id/documents/:document_id', authenticateJWT, async (req, res) => {
   try {
     const { id, document_id } = req.params;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
         success: false,
@@ -2793,20 +2688,13 @@ app.delete('/api/customers/:id/documents/:document_id', async (req, res) => {
  * 고객 문서 메모 수정 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.patch('/api/customers/:id/documents/:document_id', async (req, res) => {
+app.patch('/api/customers/:id/documents/:document_id', authenticateJWT, async (req, res) => {
   try {
     const { id, document_id } = req.params;
     const { notes } = req.body;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id) || !ObjectId.isValid(document_id)) {
       return res.status(400).json({
         success: false,
@@ -2893,7 +2781,7 @@ app.patch('/api/customers/:id/documents/:document_id', async (req, res) => {
 /**
  * 고객 관련 문서 목록 조회 API
  */
-app.get('/api/customers/:id/documents', async (req, res) => {
+app.get('/api/customers/:id/documents', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -2905,7 +2793,7 @@ app.get('/api/customers/:id/documents', async (req, res) => {
     }
 
     // ⭐ userId 추출 (보안 강화)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
 
     // 고객 정보 조회
     const customer = await db.collection(CUSTOMERS_COLLECTION)
@@ -3400,14 +3288,7 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
     const { file_id } = req.params;
 
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // ⭐ 소유권 검증: 해당 설계사의 문서만 조회 가능
     if (ObjectId.isValid(file_id)) {
       const document = await db.collection(COLLECTION_NAME)
@@ -3454,13 +3335,13 @@ app.get('/api/annual-report/status/:file_id', async (req, res) => {
 /**
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
+app.get('/api/customers/:customerId/annual-reports', authenticateJWT, async (req, res) => {
   try {
     const { customerId } = req.params;
     const { limit } = req.query;
 
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -3515,19 +3396,12 @@ app.get('/api/customers/:customerId/annual-reports', async (req, res) => {
  * 고객의 AR 파싱 대기/진행 중인 문서 목록 조회
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) => {
+app.get('/api/customers/:customerId/annual-reports/pending', authenticateJWT, async (req, res) => {
   try {
     const { customerId } = req.params;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     // ⭐ 소유권 검증: 해당 설계사의 고객만 조회 가능
     const customer = await db.collection(CUSTOMERS_COLLECTION)
       .findOne({
@@ -3598,12 +3472,12 @@ app.get('/api/customers/:customerId/annual-reports/pending', async (req, res) =>
 /**
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => {
+app.get('/api/customers/:customerId/annual-reports/latest', authenticateJWT, async (req, res) => {
   const { customerId } = req.params; // catch 블록에서도 접근 가능하도록 밖으로 이동
 
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -3670,13 +3544,13 @@ app.get('/api/customers/:customerId/annual-reports/latest', async (req, res) => 
 /**
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
+app.delete('/api/customers/:customerId/annual-reports', authenticateJWT, async (req, res) => {
   try {
     const { customerId } = req.params;
     const { indices } = req.body;
 
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -3749,13 +3623,13 @@ app.delete('/api/customers/:customerId/annual-reports', async (req, res) => {
 /**
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', async (req, res) => {
+app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', authenticateJWT, async (req, res) => {
   try {
     const { customerId } = req.params;
     const { issue_date, reference_linked_at } = req.body;
 
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -3818,19 +3692,12 @@ app.post('/api/customers/:customerId/annual-reports/cleanup-duplicates', async (
  * 고객 주소 이력 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
-app.get('/api/customers/:id/address-history', async (req, res) => {
+app.get('/api/customers/:id/address-history', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
 
     // ⭐ 설계사별 고객 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -4304,17 +4171,10 @@ const CONTRACTS_COLLECTION = 'contracts';
  * GET /api/contracts
  * 계약 목록 조회
  */
-app.get('/api/contracts', async (req, res) => {
+app.get('/api/contracts', authenticateJWT, async (req, res) => {
   try {
     // ⭐ 설계사별 데이터 격리: userId 검증
-    const userId = req.query.userId || req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required for data isolation'
-      });
-    }
-
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     const { customer_id, search, limit = 1000, skip = 0 } = req.query;
 
     const query = {};
@@ -4851,7 +4711,7 @@ app.listen(PORT, '0.0.0.0', () => {
 app.post("/api/ar-background/trigger-parsing", async (req, res) => {
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
-    const userId = req.query.userId || req.headers['x-user-id'];
+    const userId = req.user.id;  // JWT 토큰에서 추출 (보안)
     if (!userId) {
       return res.status(400).json({
         success: false,
