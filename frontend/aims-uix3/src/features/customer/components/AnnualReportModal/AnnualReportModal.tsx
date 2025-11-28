@@ -350,7 +350,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             weight={SFSymbolWeight.REGULAR}
           />
           <div>
-            <h2>{customerName}님의 Annual Report</h2>
+            <h2>{report?.customer_name || customerName}님의 Annual Report</h2>
             <p>
               {report?.issue_date ? `발행일: ${report.issue_date.split('T')[0]}` : '정보 없음'}
               {report && ` · ${report.contract_count}건`}

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from services.detector import is_annual_report
+from services.detector import is_annual_report, extract_customer_info_from_first_page
 from services.parser import parse_annual_report
 from services.db_writer import save_annual_report
 from config import settings
@@ -87,6 +87,14 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         # 4. MongoDB 저장
         logger.info(f"💾 [Queue Parsing] DB 저장 중...")
         metadata = doc.get("ar_metadata", {})
+
+        # customer_name이 없으면 PDF 1페이지에서 직접 추출
+        if not metadata.get("customer_name"):
+            extracted = extract_customer_info_from_first_page(file_path)
+            if extracted.get("customer_name"):
+                metadata["customer_name"] = extracted["customer_name"]
+                logger.info(f"📝 [Queue Parsing] PDF에서 customer_name 추출: {extracted['customer_name']}")
+
         save_result = save_annual_report(
             db=db,
             customer_id=customer_id,
