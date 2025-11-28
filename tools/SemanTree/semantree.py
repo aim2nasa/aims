@@ -324,7 +324,7 @@ class DocumentViewer:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SemanTree v0.6.4 - AIMS Document & Vector Viewer")
+        self.root.title("SemanTree v0.6.5 - AIMS Document & Vector Viewer")
         self.root.geometry("1400x900")
 
         # MongoDB 연결
@@ -357,6 +357,7 @@ class DocumentViewer:
         self.current_db: tk.StringVar = tk.StringVar(value="docupload")  # 현재 선택된 DB
         self.current_collection: tk.StringVar = tk.StringVar(value="files")  # 현재 선택된 Collection
         self.raw_documents: List[Dict[str, Any]] = []  # Raw 탭 전용 문서 목록
+        self.raw_documents_loaded: bool = False  # Raw 탭 데이터가 명시적으로 로드되었는지 여부
 
         # Raw 데이터 자동 새로고침 상태
         self.raw_auto_refresh_enabled: bool = True  # 기본값: 자동 새로고침 활성화
@@ -1410,12 +1411,16 @@ class DocumentViewer:
 
     def update_raw_viewer(self):
         """Raw 데이터 뷰어 업데이트"""
-        # Raw 탭 전용 문서 목록 사용
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        # Raw 탭 데이터가 명시적으로 로드된 경우 raw_documents만 사용 (빈 리스트도 유효)
+        # 그렇지 않으면 documents 사용 (초기 상태 또는 문서 트리 탭에서 전환 시)
+        if self.raw_documents_loaded:
+            docs_to_use = self.raw_documents
+        else:
+            docs_to_use = self.raw_documents if self.raw_documents else self.documents
 
         if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             self.raw_text_area.delete(1.0, tk.END)
-            self.raw_text_area.insert(1.0, "문서가 없습니다.")
+            # 데이터가 없으면 영역을 깨끗하게 비움
             self.raw_doc_label.config(text="0 / 0")
             self.raw_prev_button.config(state=tk.DISABLED)
             self.raw_next_button.config(state=tk.DISABLED)
@@ -1472,7 +1477,7 @@ class DocumentViewer:
 
     def prev_raw_document(self):
         """이전 문서로 이동 (wrap around)"""
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
         if not docs_to_use:
             return
 
@@ -1489,7 +1494,7 @@ class DocumentViewer:
 
     def next_raw_document(self):
         """다음 문서로 이동 (wrap around)"""
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
         if not docs_to_use:
             return
 
@@ -1506,7 +1511,7 @@ class DocumentViewer:
 
     def goto_raw_document(self):
         """특정 문서 번호로 이동"""
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
         try:
             doc_num = int(self.raw_doc_number_var.get())
             if 1 <= doc_num <= len(docs_to_use):
@@ -1576,6 +1581,7 @@ class DocumentViewer:
 
             # 문서 로드 (최대 10000개)
             self.raw_documents = list(collection.find().sort("_id", -1).limit(10000))
+            self.raw_documents_loaded = True  # 로드 완료 플래그 설정
             self.raw_count_label.config(text=f"문서: {len(self.raw_documents)}/{total_count}개")
 
             # 첫 문서로 이동
@@ -1618,7 +1624,7 @@ class DocumentViewer:
 
     def refresh_current_raw_document(self):
         """현재 표시 중인 Raw 문서를 DB에서 다시 조회"""
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
         if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             return
 
@@ -1658,8 +1664,11 @@ class DocumentViewer:
 
     def update_raw_viewer_without_scheduling(self):
         """Raw 데이터 뷰어 업데이트 (자동 새로고침 스케줄링 제외)"""
-        # Raw 탭 전용 문서 목록 사용
-        docs_to_use = self.raw_documents if self.raw_documents else self.documents
+        # Raw 탭 데이터가 명시적으로 로드된 경우 raw_documents만 사용 (빈 리스트도 유효)
+        if self.raw_documents_loaded:
+            docs_to_use = self.raw_documents
+        else:
+            docs_to_use = self.raw_documents if self.raw_documents else self.documents
 
         if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
             return
@@ -1885,7 +1894,7 @@ class DocumentViewer:
         """현재 보고 있는 문서 삭제"""
         try:
             # 현재 문서 목록 가져오기
-            docs_to_use = self.raw_documents if self.raw_documents else self.documents
+            docs_to_use = self.raw_documents if self.raw_documents_loaded else (self.raw_documents if self.raw_documents else self.documents)
 
             if not docs_to_use or self.current_raw_index < 0 or self.current_raw_index >= len(docs_to_use):
                 messagebox.showwarning("경고", "삭제할 문서가 없습니다.")
@@ -2017,7 +2026,7 @@ class DocumentViewer:
         """Qdrant 데이터 뷰어 업데이트"""
         if not self.qdrant_points or self.current_qdrant_index < 0 or self.current_qdrant_index >= len(self.qdrant_points):
             self.qdrant_text_area.delete(1.0, tk.END)
-            self.qdrant_text_area.insert(1.0, "포인트가 없습니다.")
+            # 데이터가 없으면 영역을 깨끗하게 비움
             self.qdrant_point_label.config(text="0 / 0")
             self.qdrant_prev_button.config(state=tk.DISABLED)
             self.qdrant_next_button.config(state=tk.DISABLED)
