@@ -93,6 +93,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
       loadCustomers({ limit: 10000, page: 1 });
     }, [loadCustomers]);
 
+    // Note: customerChanged 이벤트 리스너는 불필요
+    // AllCustomersView는 useCustomerDocument 훅을 통해 CustomerDocument를 구독하므로
+    // Document가 변경되면 자동으로 업데이트됨 (Document-View 패턴)
+    // 이벤트 리스너를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
+
     // 검색 및 유형 필터링된 고객 목록
     const filteredCustomers = useMemo(() => {
       let customers = allCustomers;
@@ -349,7 +354,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         await CustomerService.deleteCustomers(ids);
 
         // 삭제 완료 후 새로고침 및 상태 초기화
-        await refresh();
+        await refresh({ limit: 10000, page: 1 });
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
       } catch (error) {
@@ -385,7 +390,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         });
 
         // 삭제 완료 후 새로고침 및 상태 초기화
-        await refresh();
+        await refresh({ limit: 10000, page: 1 });
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
       } catch (error) {
@@ -517,7 +522,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => refresh()}
+              onClick={() => refresh({ limit: 10000, page: 1 })}
               className="error-dismiss-button"
               aria-label="에러 닫기"
             >

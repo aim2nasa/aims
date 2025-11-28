@@ -360,12 +360,17 @@ export class CustomerDocument {
 
   /**
    * 전체 데이터 새로고침
+   * 기본값: limit: 10000, page: 1 (전체 데이터 로드)
+   * Zod 스키마의 기본 limit: 20이 적용되는 것을 방지
    */
   async refresh(query?: Partial<CustomerSearchQuery>): Promise<void> {
     if (import.meta.env.DEV) {
       console.log('[CustomerDocument] 전체 데이터 새로고침');
     }
-    await this.loadCustomers(query);
+    // 기본 query 설정 (limit이 없으면 10000 적용)
+    const defaultQuery = { limit: 10000, page: 1 };
+    const mergedQuery = query ? { ...defaultQuery, ...query } : defaultQuery;
+    await this.loadCustomers(mergedQuery);
   }
 
   /**

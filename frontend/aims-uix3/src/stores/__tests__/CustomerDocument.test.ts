@@ -695,7 +695,9 @@ describe('CustomerDocument', () => {
 
       await document.refresh({ limit: 20 })
 
-      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20 })
+      // refresh는 기본 { limit: 10000, page: 1 }에 사용자 query를 병합
+      // 사용자가 limit: 20을 전달하면 limit은 20으로 오버라이드되고 page: 1은 유지
+      expect(CustomerService.getCustomers).toHaveBeenCalledWith({ limit: 20, page: 1 })
     })
   })
 

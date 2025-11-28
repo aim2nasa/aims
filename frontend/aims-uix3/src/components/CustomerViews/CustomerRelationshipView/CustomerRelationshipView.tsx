@@ -76,7 +76,6 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     customers: allCustomers,
     isLoading: customersLoading,
     loadCustomers,
-    refresh,
   } = useCustomerDocument();
 
   const [relationships, setRelationships] = useState<PopulatedRelationship[]>([]);
@@ -217,14 +216,14 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     }
   }, [allCustomers.length, relationships.length, loadRelationshipsData]);
 
-  // relationshipChanged 이벤트 수신하여 데이터 새로고침
+  // relationshipChanged 이벤트 수신하여 관계 데이터 새로고침
+  // Note: refresh() 호출은 불필요 - 관계 변경은 고객 데이터에 영향 없음
   useEffect(() => {
     const handleRelationshipChange = async () => {
       if (import.meta.env.DEV) {
-        console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 데이터 새로고침');
+        console.log('[CustomerRelationshipView] relationshipChanged 이벤트 수신 - 관계 데이터 새로고침');
       }
-      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
-      await refresh({ limit: 10000 });
+      // 관계 데이터만 새로고침
       await loadRelationshipsData();
     };
 
@@ -232,16 +231,18 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return () => {
       window.removeEventListener('relationshipChanged', handleRelationshipChange);
     };
-  }, [refresh, loadRelationshipsData]);
+  }, [loadRelationshipsData]);
 
-  // customerChanged 이벤트 수신하여 데이터 새로고침 (고객 추가/수정/삭제 시)
+  // customerChanged 이벤트 수신하여 관계 데이터만 새로고침 (고객 추가/수정/삭제 시)
+  // Note: refresh() 호출은 불필요 - CustomerRelationshipView는 useCustomerDocument 훅을 통해
+  // CustomerDocument를 구독하므로 고객 데이터는 Document-View 패턴으로 자동 업데이트됨
+  // refresh()를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
   useEffect(() => {
     const handleCustomerChange = async () => {
       if (import.meta.env.DEV) {
-        console.log('[CustomerRelationshipView] customerChanged 이벤트 수신 - 데이터 새로고침');
+        console.log('[CustomerRelationshipView] customerChanged 이벤트 수신 - 관계 데이터 새로고침');
       }
-      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
-      await refresh({ limit: 10000 });
+      // 관계 데이터만 새로고침 (고객 데이터는 Document-View 패턴으로 자동 업데이트)
       await loadRelationshipsData();
     };
 
@@ -249,7 +250,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     return () => {
       window.removeEventListener('customerChanged', handleCustomerChange);
     };
-  }, [refresh, loadRelationshipsData]);
+  }, [loadRelationshipsData]);
 
   const loading = customersLoading || relationshipsLoading;
   // 데이터 구조화

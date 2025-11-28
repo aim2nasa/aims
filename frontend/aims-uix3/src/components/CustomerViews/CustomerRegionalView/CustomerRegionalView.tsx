@@ -69,21 +69,10 @@ export const CustomerRegionalView: React.FC<CustomerRegionalViewProps> = ({
     loadCustomers({ limit: 10000 })
   }, [loadCustomers])
 
-  // customerChanged 이벤트 리스너 (고객 생성/수정/삭제 시 즉시 반영)
-  useEffect(() => {
-    const handleCustomerChange = async () => {
-      if (import.meta.env.DEV) {
-        console.log('[CustomerRegionalView] customerChanged 이벤트 수신 - 데이터 새로고침')
-      }
-      // refresh()로 캐시 무시하고 서버에서 최신 데이터 강제 로드
-      await refresh({ limit: 10000 })
-    }
-
-    window.addEventListener('customerChanged', handleCustomerChange)
-    return () => {
-      window.removeEventListener('customerChanged', handleCustomerChange)
-    }
-  }, [refresh])
+  // Note: customerChanged 이벤트 리스너는 불필요
+  // CustomerRegionalView는 useCustomerDocument 훅을 통해 CustomerDocument를 구독하므로
+  // Document가 변경되면 자동으로 업데이트됨 (Document-View 패턴)
+  // 이벤트 리스너를 추가하면 중복 API 호출로 인한 경쟁 조건(race condition) 발생
 
   // 트리에서 고객 선택 핸들러 (RightPane 표시 안 함)
   const handleCustomerSelect = useCallback((_customerId: string) => {
