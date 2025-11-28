@@ -635,12 +635,33 @@ export class DocumentService {
       throw new Error('삭제할 문서 ID가 필요합니다');
     }
 
+    // JWT 토큰 가져오기 (api.ts와 동일한 로직)
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          token = parsed?.state?.token || null;
+        }
+      } catch {
+        // 파싱 실패 시 무시
+      }
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // JWT 토큰이 있으면 Authorization 헤더 추가
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     // DELETE 요청은 body를 직접 전달
     const response = await fetch(`/api/documents`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ document_ids: ids })
     });
 

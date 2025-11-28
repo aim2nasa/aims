@@ -685,16 +685,37 @@ export const DocumentLibraryView: React.FC<DocumentLibraryViewProps> = ({
     try {
       setIsDeleting(true)
 
+      // JWT 토큰 가져오기 (api.ts와 동일한 로직)
+      let token: string | null = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            token = parsed?.state?.token || null;
+          }
+        } catch {
+          // 파싱 실패 시 무시
+        }
+      }
+
       // 선택된 모든 문서 삭제
       const deletePromises = Array.from(selectedDocumentIds).map(async (docId) => {
         try {
           const userIdForDelete = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'x-user-id': userIdForDelete,
+          };
+
+          // JWT 토큰이 있으면 Authorization 헤더 추가
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
           const response = await fetch(`/api/documents/${docId}`, {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-user-id': userIdForDelete,
-            },
+            headers,
           })
 
           if (!response.ok) {
