@@ -156,20 +156,20 @@ export const useCustomerRegistrationController = ({
       // API 요청 형식으로 변환
       const apiData = transformToApiFormat(formData);
 
-      // API 호출 (api.post는 자동으로 X-User-Id 헤더 추가)
+      // API 호출 (api.post는 자동으로 Authorization 헤더 추가)
       const result = await api.post<{
         success: boolean;
         data: {
-          customer_id: string;
-          customer_name: string;
+          _id: string;
+          personal_info: { name: string; };
         }
       }>(
         '/api/customers',
         apiData
       );
 
-      const customerId = result.data?.customer_id;
-      const customerName = result.data?.customer_name;
+      const customerId = result.data?._id;
+      const customerName = result.data?.personal_info?.name;
 
       if (!customerId || !customerName) {
         throw new Error('고객 등록에 실패했습니다.');

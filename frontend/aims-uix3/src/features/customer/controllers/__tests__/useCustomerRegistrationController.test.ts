@@ -21,7 +21,7 @@ describe('useCustomerRegistrationController', () => {
       status: 200,
       statusText: 'OK',
       headers: new Headers({ 'content-type': 'application/json' }),
-      json: async () => ({ success: true, data: { customer_id: 'test-id', customer_name: 'Test' } })
+      json: async () => ({ success: true, data: { _id: 'test-id', personal_info: { name: 'Test' } } })
     } as Response);
 
     // dispatchEvent mock
@@ -117,7 +117,7 @@ describe('useCustomerRegistrationController', () => {
     it('name이 없어도 제출할 수 있어야 함 (name은 optional)', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -132,7 +132,7 @@ describe('useCustomerRegistrationController', () => {
     it('name이 있으면 검증 통과해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -151,7 +151,7 @@ describe('useCustomerRegistrationController', () => {
     it('이벤트 객체가 있으면 preventDefault를 호출해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -180,7 +180,7 @@ describe('useCustomerRegistrationController', () => {
         status: 200,
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true, data: { customer_id: mockCustomerId, customer_name: mockCustomerName } })
+        json: async () => ({ success: true, data: { _id: mockCustomerId, personal_info: { name: mockCustomerName } } })
       } as Response);
 
       const { result } = renderHook(() =>
@@ -204,7 +204,7 @@ describe('useCustomerRegistrationController', () => {
         status: 200,
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: '홍길동' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: '홍길동' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -230,7 +230,7 @@ describe('useCustomerRegistrationController', () => {
         status: 200,
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: '홍길동' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: '홍길동' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -257,7 +257,7 @@ describe('useCustomerRegistrationController', () => {
         () => new Promise(resolve => {
           resolveSubmit = () => resolve({
             ok: true,
-            json: async () => ({ data: { customer_id: 'new-customer-123', customer_name: '홍길동' } })
+            json: async () => ({ data: { _id: 'new-customer-123', personal_info: { name: '홍길동' } } })
           } as Response);
         })
       );
@@ -333,7 +333,7 @@ describe('useCustomerRegistrationController', () => {
     it('올바른 API 엔드포인트와 메서드로 요청해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -361,7 +361,7 @@ describe('useCustomerRegistrationController', () => {
     it('폼 데이터를 올바른 API 형식으로 변환해야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -403,7 +403,7 @@ describe('useCustomerRegistrationController', () => {
     it('주소 필드가 모두 없으면 address를 포함하지 않아야 함', async () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: 'Test' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: 'Test' } } })
       } as Response);
 
       const { result } = renderHook(() => useCustomerRegistrationController());
@@ -473,7 +473,7 @@ describe('useCustomerRegistrationController', () => {
         status: 200,
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: '홍길동' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: '홍길동' } } })
       } as Response);
 
       const { result } = renderHook(() =>
@@ -554,7 +554,7 @@ describe('useCustomerRegistrationController', () => {
         status: 200,
         statusText: 'OK',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: true, data: { customer_id: 'new-customer-123', customer_name: '홍길동' } })
+        json: async () => ({ success: true, data: { _id: 'new-customer-123', personal_info: { name: '홍길동' } } })
       } as Response);
 
       // 2. 재제출
