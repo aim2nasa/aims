@@ -474,13 +474,13 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     setCurrentPage(1)
   }, [searchTerm, customerLinkFilter])
 
-  // 🍎 페이지, 페이지네이션 또는 정렬 옵션 변경 시 문서 다시 가져오기
+  // 🍎 페이지, 페이지네이션, 정렬, 검색어 또는 필터 변경 시 문서 다시 가져오기
   useEffect(() => {
     if (typeof window === 'undefined') return
     fetchDocuments(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // fetchDocuments를 dependency에 포함하면 무한 루프 발생 (fetchDocuments 자체가 자주 재생성됨)
-  }, [currentPage, itemsPerPage, sortField, sortDirection])
+  }, [currentPage, itemsPerPage, sortField, sortDirection, searchTerm, customerLinkFilter])
 
   // State 객체
   const state: DocumentStatusState = useMemo(
