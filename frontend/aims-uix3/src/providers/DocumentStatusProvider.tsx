@@ -14,6 +14,27 @@ import {
 import { DocumentStatusService } from '@/services/DocumentStatusService'
 import type { Document, DocumentCustomerRelation } from '../types/documentStatus'
 
+/**
+ * JWT 토큰을 포함한 Authorization 헤더 가져오기
+ */
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      const token = parsed?.state?.token;
+      if (token) {
+        return { 'Authorization': `Bearer ${token}` };
+      }
+    }
+  } catch {
+    // 파싱 실패 시 무시
+  }
+  return {};
+}
+
 interface DocumentStatusProviderProps {
   children: React.ReactNode
   initialFiles?: Document[]
@@ -140,10 +161,9 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
           await Promise.all(
             Array.from(customerIds).map(async (customerId) => {
               try {
-                // ⭐ 설계사별 고객 데이터 격리
-                const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                // ⭐ JWT 인증으로 설계사별 고객 데이터 격리
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: { 'x-user-id': currentUserId }
+                  headers: getAuthHeaders()
                 })
                 if (customerResponse.ok) {
                   const customerData = await customerResponse.json()

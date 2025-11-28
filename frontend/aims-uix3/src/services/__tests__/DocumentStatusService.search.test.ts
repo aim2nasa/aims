@@ -201,9 +201,12 @@ describe('DocumentStatusService - Search Parameter', () => {
   })
 
   describe('API 호출 구조 검증', () => {
-    it('x-user-id 헤더가 포함되어야 함', async () => {
-      // Given
-      localStorage.setItem('aims-current-user-id', 'test-user')
+    it('JWT Authorization 헤더가 포함되어야 함', async () => {
+      // Given - JWT 토큰을 auth-storage에 설정
+      const mockToken = 'test-jwt-token'
+      localStorage.setItem('auth-storage', JSON.stringify({
+        state: { token: mockToken }
+      }))
 
       const mockResponse = {
         success: true,
@@ -227,7 +230,7 @@ describe('DocumentStatusService - Search Parameter', () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-user-id': 'test-user'
+            'Authorization': `Bearer ${mockToken}`
           })
         })
       )
