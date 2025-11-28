@@ -64,8 +64,13 @@ export class SearchService {
             try {
               // MongoDB에서 전체 문서 정보 조회
               const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+              const authData = localStorage.getItem('auth-storage');
+              const token = authData ? JSON.parse(authData).state?.token : null;
               const docResponse = await fetch(`/api/documents/${docId}/status`, {
-                headers: { 'x-user-id': userId }
+                headers: {
+                  'x-user-id': userId,
+                  ...(token && { Authorization: `Bearer ${token}` })
+                }
               })
               if (!docResponse.ok) {
                 console.warn(`[SearchService] 문서 ${docId} 조회 실패`)
@@ -117,8 +122,13 @@ export class SearchService {
               try {
                 // ⭐ 설계사별 고객 데이터 격리
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                const authDataForCustomer = localStorage.getItem('auth-storage');
+                const tokenForCustomer = authDataForCustomer ? JSON.parse(authDataForCustomer).state?.token : null;
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: { 'x-user-id': currentUserId }
+                  headers: {
+                    'x-user-id': currentUserId,
+                    ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
+                  }
                 })
                 if (customerResponse.ok) {
                   const customerData = await customerResponse.json()
@@ -162,13 +172,48 @@ export class SearchService {
         }
       }
 
-      // 키워드 검색의 경우 customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
+      // 키워드 검색의 경우 MongoDB에서 customer_relation 조회 후 customer_name 보강
       if (query.search_mode === 'keyword' && data.search_results && data.search_results.length > 0) {
-        // customer_id 수집 (중복 제거) - ObjectId를 문자열로 변환
+        // 1단계: 각 검색 결과에 대해 MongoDB에서 customer_relation 조회
+        const enrichedWithRelation = await Promise.all(
+          data.search_results.map(async (item: SearchResultItem) => {
+            // 이미 customer_relation이 있으면 그대로 반환
+            if (item.customer_relation) return item
+
+            // _id로 문서 상태 조회하여 customer_relation 가져오기
+            const docId = ('_id' in item && item._id) || ('id' in item && item.id)
+            if (!docId) return item
+
+            try {
+              const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+              const authData = localStorage.getItem('auth-storage');
+              const token = authData ? JSON.parse(authData).state?.token : null;
+              const docResponse = await fetch(`/api/documents/${docId}/status`, {
+                headers: {
+                  'x-user-id': currentUserId,
+                  ...(token && { Authorization: `Bearer ${token}` })
+                }
+              })
+              if (!docResponse.ok) return item
+
+              const docData = await docResponse.json()
+              if (!docData.success || !docData.data?.raw?.customer_relation) return item
+
+              return {
+                ...item,
+                customer_relation: docData.data.raw.customer_relation
+              }
+            } catch (error) {
+              console.error(`[SearchService] 키워드 검색 - 문서 ${docId} customer_relation 조회 오류:`, error)
+              return item
+            }
+          })
+        )
+
+        // 2단계: customer_name 보강 (customer_relation이 있지만 customer_name이 없는 경우)
         const customerIds = new Set<string>()
-        data.search_results.forEach((item: SearchResultItem) => {
+        enrichedWithRelation.forEach((item) => {
           if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            // ObjectId를 문자열로 변환
             const customerId = String(item.customer_relation.customer_id)
             customerIds.add(customerId)
           }
@@ -182,8 +227,13 @@ export class SearchService {
               try {
                 // ⭐ 설계사별 고객 데이터 격리
                 const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
+                const authDataForCustomer = localStorage.getItem('auth-storage');
+                const tokenForCustomer = authDataForCustomer ? JSON.parse(authDataForCustomer).state?.token : null;
                 const customerResponse = await fetch(`/api/customers/${customerId}`, {
-                  headers: { 'x-user-id': currentUserId }
+                  headers: {
+                    'x-user-id': currentUserId,
+                    ...(tokenForCustomer && { Authorization: `Bearer ${tokenForCustomer}` })
+                  }
                 })
                 if (customerResponse.ok) {
                   const customerData = await customerResponse.json()
@@ -202,9 +252,8 @@ export class SearchService {
         }
 
         // 검색 결과에 customer_name + customer_type 추가
-        const enrichedResults = data.search_results.map((item: SearchResultItem) => {
+        const enrichedResults = enrichedWithRelation.map((item) => {
           if (item.customer_relation?.customer_id && !item.customer_relation.customer_name) {
-            // ObjectId를 문자열로 변환
             const customerId = String(item.customer_relation.customer_id)
             const customerInfo = customerMap[customerId]
             if (customerInfo) {
