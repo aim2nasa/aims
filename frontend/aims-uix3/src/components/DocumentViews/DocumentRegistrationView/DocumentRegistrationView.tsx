@@ -17,10 +17,8 @@ import { UploadFile, UploadState, UploadStatus, UploadProgressEvent } from './ty
 import { ProcessingLog as Log, LogLevel } from './types/logTypes'
 import { uploadService, fileValidator } from './services/uploadService'
 import { uploadConfig, UserContextService } from './services/userContextService'
-import { CustomerIdentificationModal } from '@/features/customer/components/CustomerIdentificationModal'
 import { api } from '@/shared/lib/api'
-import { AnnualReportApi } from '@/features/customer/api/annualReportApi'
-import { checkAnnualReportFromPDF, type CheckAnnualReportResult } from '@/features/customer/utils/pdfParser'
+import { checkAnnualReportFromPDF } from '@/features/customer/utils/pdfParser'
 import type { Customer } from '@/entities/customer/model'
 import type { Document } from '../../../types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
@@ -150,29 +148,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [uploadState, setUploadState] = useState<UploadState>(getInitialState)
 
 
-  // Annual Report 고객 식별 모달 상태
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
-  const [annualReportMetadata, setAnnualReportMetadata] = useState<CheckAnnualReportResult['metadata']>(null)
-  const [annualReportCustomers, setAnnualReportCustomers] = useState<Customer[]>([])
-  const [annualReportFile, setAnnualReportFile] = useState<{ file: File; fileName: string } | null>(null)
-
-  // 🎯 AR 파일 큐 (여러 AR을 순차 처리)
-  const arQueueRef = useRef<Array<{
-    file: File
-    fileName: string
-    metadata: CheckAnnualReportResult['metadata']
-    customers: Customer[]
-  }>>([])
-
-
   // 🏷️ AR 파일명 추적 (업로드 완료 후 DB 플래그 설정용)
   const arFilenamesRef = useRef<Set<string>>(new Set())
 
   // 🔗 AR 파일명 → 고객 ID 매핑 (자동 연결용)
   const arCustomerMappingRef = useRef<Map<string, string>>(new Map())
 
-  // 📝 AR 파일명 → metadata 매핑 (발행일, 고객명 등 DB 저장용)
-  const arMetadataMappingRef = useRef<Map<string, { customer_name: string; issue_date?: string; report_title?: string }>>(new Map())
+  // 📝 AR 파일명 → metadata 매핑 (발행일 등 DB 저장용)
+  const arMetadataMappingRef = useRef<Map<string, { issue_date?: string; report_title?: string }>>(new Map())
 
   // 🔗 AR 문서 ID → 고객 ID 매핑 (더 확실한 연결용)
   const arDocumentCustomerMappingRef = useRef<Map<string, string>>(new Map())
@@ -292,38 +275,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }, [])
 
-  // 🔒 절대 신뢰성 모달 함수는 utils에서 import
-
-  /**
-   * 🎯 AR 큐에서 다음 파일을 꺼내서 모달 표시 (isProcessingArQueue 체크 없음!)
-   */
-  const processNextArInQueue = useCallback(() => {
-    console.log('🔥 [processNextArInQueue] 큐 길이:', arQueueRef.current.length)
-
-    if (arQueueRef.current.length === 0) {
-      console.log('✅ [processNextArInQueue] 큐 비어있음 - AR 처리 완료')
-      // 실제로 처리된 파일이 있을 때만 완료 로그 출력
-      if (arProcessedCountRef.current > 0) {
-        addLog('success', '고객 선택 완료', `${arProcessedCountRef.current}건의 AR 파일 - 업로드 및 자동 연결 진행 중`)
-      }
-      // 카운터 리셋
-      arProcessedCountRef.current = 0
-      return
-    }
-
-    const nextAr = arQueueRef.current.shift()
-    if (!nextAr) return
-
-    console.log('✅ [processNextArInQueue] 다음 AR:', nextAr.fileName, '| 남은:', arQueueRef.current.length)
-
-    setAnnualReportMetadata(nextAr.metadata)
-    setAnnualReportCustomers(nextAr.customers)
-    setAnnualReportFile({ file: nextAr.file, fileName: nextAr.fileName })
-    setIsCustomerModalOpen(true)
-
-    addLog('ar-detect', `AR 모달: ${nextAr.metadata?.customer_name}`, `남은 AR: ${arQueueRef.current.length}개`)
-  }, [addLog])
-
   /**
    * 파일 선택 핸들러
    */
@@ -344,86 +295,66 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
             console.log('[DocumentRegistrationView] 🔍 PDF 파일 감지, Annual Report 체크:', file.name);
             const checkResult = await checkAnnualReportFromPDF(file);
 
-            if (checkResult.is_annual_report && checkResult.metadata) {
+            if (checkResult.is_annual_report) {
               console.log('[DocumentRegistrationView] ✅ Annual Report 감지!', checkResult.metadata);
 
-              // 고객명으로 검색 (현재 userId로 필터링)
-              const currentUserId = UserContextService.getContext().identifierValue;
-              const customers = await AnnualReportApi.searchCustomersByName(checkResult.metadata.customer_name, currentUserId);
-              console.log('[DocumentRegistrationView] 고객 검색 결과:', customers.length, '명');
-
-              // 🔍 고객이 1명일 때만 중복 체크
-              // 동명이인(2명 이상)은 무조건 모달 띄우고, 선택 후에 중복 체크
-              if (customers.length === 1 && customers[0]) {
-                const customerId = customers[0]._id;
-                const processResult = await processAnnualReportFile(file, customerId);
-
-                // 문서 중복이면 건너뛰기
-                if (processResult.isDuplicateDoc) {
-                  addLog(
-                    'warning',
-                    `중복 문서 감지: ${file.name}`,
-                    `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
-                  );
-                  continue;
-                }
-              }
-
-              // AR 처리 (항상 실행)
-              addLog('success', `[1/4] PDF 분석 완료: ${file.name}`)
-              addLog(
-                'ar-detect',
-                `[2/5] Annual Report 감지: ${checkResult.metadata.customer_name}`,
-                `발행일: ${checkResult.metadata.issue_date} | 고객 ${customers.length}명 검색됨 → AR 전용 처리로 전환`
-              )
-
-              // 🎯 고객이 1명이면 자동 선택 (모달 띄우지 않음)
-              if (customers.length === 1 && customers[0]) {
-                const customerId = customers[0]._id;
-                addLog(
-                  'ar-auto',
-                  `AR 자동 등록: ${checkResult.metadata.customer_name}`,
-                  `고객 1명 → 자동 선택`
-                );
-
-                // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
-                const result = await registerArDocument(file, customerId, checkResult.metadata?.issue_date, {
-                  addLog,
-                  generateFileId,
-                  addToUploadQueue: (uploadFile) => {
-                    newUploadFiles.push(uploadFile);
-                  },
-                  trackArFile: (fileName, custId) => {
-                    arFilenamesRef.current.add(fileName);
-                    arCustomerMappingRef.current.set(fileName, custId);
-                    arMetadataMappingRef.current.set(fileName, checkResult.metadata!);
-                  }
-                });
-
-                if (result.success) {
-                  console.log('[DocumentRegistrationView] AR 문서 등록 성공:', file.name);
-                  arProcessedCountRef.current += 1;
-                }
-
+              // 🎯 사전 선택된 고객 확인 (고객 검색 불필요)
+              if (!customerFileCustomer) {
+                addLog('warning', `AR 문서 감지됨: ${file.name}`, '고객을 먼저 선택해주세요');
                 continue;
               }
 
-              // 🎯 고객이 0명 또는 2명 이상이면 AR 큐에 추가 (모달 표시)
-              const isFirstArFile = arQueueRef.current.length === 0;
+              const customerId = customerFileCustomer._id;
+              const customerName = customerFileCustomer.personal_info?.name || '알 수 없음';
 
-              arQueueRef.current.push({
-                file,
-                fileName: file.name,
-                metadata: checkResult.metadata,
-                customers
-              })
-
-              // 첫 AR 파일일 때 처리 시작 로그 출력
-              if (isFirstArFile) {
-                addLog('info', 'Annual Report 처리 시작', 'AR 파일 감지 - 고객 선택 대기 중');
+              // 중복 문서 체크
+              const processResult = await processAnnualReportFile(file, customerId);
+              if (processResult.isDuplicateDoc) {
+                addLog(
+                  'warning',
+                  `중복 문서 감지: ${file.name}`,
+                  `이미 존재하는 파일이므로 업로드를 건너뜁니다.`
+                );
+                continue;
               }
 
-              console.log('🔥 [handleFilesSelected] AR 큐 추가:', file.name, '| 큐:', arQueueRef.current.length);
+              // AR 처리 시작
+              addLog('success', `[1/4] PDF 분석 완료: ${file.name}`)
+              addLog(
+                'ar-detect',
+                `[2/5] Annual Report 감지`,
+                `사전 선택된 고객: ${customerName} → AR 전용 처리로 전환`
+              )
+
+              addLog(
+                'ar-auto',
+                `AR 자동 등록: ${file.name}`,
+                `사전 선택된 고객: ${customerName}`
+              );
+
+              // ✅ 사전 선택된 고객으로 AR 등록
+              const result = await registerArDocument(file, customerId, checkResult.metadata?.issue_date, {
+                addLog,
+                generateFileId,
+                addToUploadQueue: (uploadFile) => {
+                  newUploadFiles.push(uploadFile);
+                },
+                trackArFile: (fileName, custId) => {
+                  arFilenamesRef.current.add(fileName);
+                  arCustomerMappingRef.current.set(fileName, custId);
+                  if (checkResult.metadata) {
+                    arMetadataMappingRef.current.set(fileName, checkResult.metadata);
+                  }
+                  // 고객명 매핑 저장 (자동 연결 로그에서 사용)
+                  customerNameMappingRef.current.set(custId, customerName);
+                }
+              });
+
+              if (result.success) {
+                console.log('[DocumentRegistrationView] AR 문서 등록 성공:', file.name);
+                arProcessedCountRef.current += 1;
+              }
+
               continue;
             } else {
               addLog('info', `[1/4] PDF 분석 완료: ${file.name}`, 'Annual Report 아님 - 일반 문서로 처리')
@@ -528,12 +459,7 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       }
     }
 
-    // 🎯 AR 큐 처리 시작
-    if (arQueueRef.current.length > 0) {
-      console.log('🔥 [handleFilesSelected] AR 큐 처리 시작, 큐:', arQueueRef.current.length)
-      processNextArInQueue()
-    }
-  }, [generateFileId, addLog, processNextArInQueue, customerFileCustomer, customerFileDocType, customerFileNotes])
+  }, [generateFileId, addLog, customerFileCustomer, customerFileDocType, customerFileNotes])
 
   /**
    * 파일 재시도 핸들러
@@ -901,91 +827,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   }, [addLog]);
 
   /**
-   * 고객 선택 완료 핸들러
-   */
-  const handleCustomerSelected = useCallback(async (customerId: string) => {
-    if (!annualReportFile) return;
-
-    // 👤 선택된 고객의 이름 (DB에 저장된 이름 그대로 사용)
-    const selectedCustomer = annualReportCustomers.find(c => c._id === customerId);
-    const customerName = selectedCustomer?.personal_info?.name || annualReportMetadata?.customer_name || '알 수 없음';
-
-    // 👤 고객 ID → 고객명 매핑 저장 (나중에 자동 연결 로그에서 사용)
-    customerNameMappingRef.current.set(customerId, customerName);
-
-    try {
-      // ✅ 리팩토링된 함수 호출 (중복 체크 + AR 파싱 + 문서 업로드)
-      // customerName을 명시적으로 전달 (state는 사용하지 않음)
-      addLog('info', `[3/5] 중복 확인 중: ${annualReportFile.fileName}`, undefined, customerName);
-
-      const result = await registerArDocument(annualReportFile.file, customerId, annualReportMetadata?.issue_date, {
-        addLog: (level, message, details) => addLog(level, message, details, customerName), // 고객명 포함
-        generateFileId,
-        addToUploadQueue: (uploadFile) => {
-          // 업로드 상태에 추가
-          setUploadState(prev => ({
-            ...prev,
-            files: [uploadFile, ...prev.files]
-          }));
-
-          // 업로드 큐에 추가 및 즉시 시작
-          uploadService.queueFiles([uploadFile]);
-
-          console.log('[DocumentRegistrationView] Annual Report 파일을 업로드 큐에 추가:', annualReportFile.fileName);
-
-          // 업로드 서비스가 이미 실행 중이 아니면 시작
-          if (!uploadState.uploading) {
-            setUploadState(prev => ({ ...prev, uploading: true }));
-          }
-        },
-        trackArFile: (fileName, custId) => {
-          arFilenamesRef.current.add(fileName);
-          arCustomerMappingRef.current.set(fileName, custId);
-          arMetadataMappingRef.current.set(fileName, annualReportMetadata!);
-          console.log(`[DocumentRegistrationView] 🏷️ AR 파일 추적 추가 (모달): ${fileName}`);
-          console.log(`[DocumentRegistrationView] 🔗 AR 고객 매핑 저장: ${fileName} → ${custId}`);
-        }
-      });
-
-      if (result.isDuplicate) {
-        console.log('[DocumentRegistrationView] 중복 문서로 인해 AR 처리 건너뜀:', annualReportFile.fileName);
-      } else if (result.success) {
-        console.log('[DocumentRegistrationView] AR 문서 등록 성공 (모달):', annualReportFile.fileName);
-        arProcessedCountRef.current += 1;
-      }
-
-    } catch (error) {
-      console.error('[DocumentRegistrationView] Annual Report 처리 중 오류:', error);
-    } finally {
-      // 모달 닫기
-      setIsCustomerModalOpen(false);
-      setAnnualReportMetadata(null);
-      setAnnualReportCustomers([]);
-      setAnnualReportFile(null);
-
-      // 🎯 다음 AR 처리
-      setTimeout(() => processNextArInQueue(), 100)
-    }
-  }, [annualReportFile, annualReportMetadata, annualReportCustomers, generateFileId, processNextArInQueue, uploadState.uploading, addLog]);
-
-  /**
-   * 고객 식별 모달 닫기 (취소)
-   */
-  const handleCustomerModalClose = useCallback(() => {
-    if (annualReportFile) {
-      addLog('warning', `AR 등록 취소: ${annualReportFile.fileName}`)
-    }
-
-    setIsCustomerModalOpen(false);
-    setAnnualReportMetadata(null);
-    setAnnualReportCustomers([]);
-    setAnnualReportFile(null);
-
-    // 🎯 취소해도 다음 AR 처리
-    setTimeout(() => processNextArInQueue(), 100)
-  }, [annualReportFile, addLog, processNextArInQueue]);
-
-  /**
    * 업로드 상태 변경 콜백
    */
   const handleStatusChange = useCallback((fileId: string, status: UploadStatus, error?: string) => {
@@ -1310,17 +1151,6 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           />
         </div>
 
-        {/* 🔒 절대 신뢰성 모달은 DOM 직접 조작으로 처리됨 */}
-
-        {/* Annual Report 고객 식별 모달 */}
-        <CustomerIdentificationModal
-          isOpen={isCustomerModalOpen}
-          onClose={handleCustomerModalClose}
-          metadata={annualReportMetadata}
-          customers={annualReportCustomers}
-          onCustomerSelected={handleCustomerSelected}
-          fileName={annualReportFile?.fileName || ''}
-        />
       </div>
     </CenterPaneView>
   )

@@ -79,7 +79,6 @@ describe('pdfParser', () => {
       expect(result.is_annual_report).toBe(true)
       expect(result.confidence).toBe(1.0)
       expect(result.metadata).not.toBeNull()
-      expect(result.metadata?.customer_name).toBe('안영미')
       expect(result.metadata?.report_title).toBe('Annual Review Report')
       expect(result.metadata?.issue_date).toBe('2025-08-27')
     })
@@ -124,25 +123,7 @@ describe('pdfParser', () => {
       expect(result.is_annual_report).toBe(false)
     })
 
-    it.skip('한글 고객명을 올바르게 추출해야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' },
-          { str: '김철수 고객님을 위한' },
-          { str: 'MetLife' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'customer.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.metadata?.customer_name).toBe('김철수')
-    })
+    // 고객명 추출 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
 
     it.skip('다양한 날짜 형식을 파싱해야 함', async () => {
       const testCases = [
@@ -277,26 +258,7 @@ describe('pdfParser', () => {
   })
 
   describe('메타데이터 추출', () => {
-    it.skip('고객명이 없으면 빈 문자열을 반환해야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' },
-          { str: 'MetLife' },
-          { str: '보유계약 현황' }
-          // 고객명 없음
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'no-customer.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.metadata?.customer_name).toBe('')
-    })
+    // 고객명 추출 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
 
     it('날짜가 없으면 issue_date가 undefined여야 함', async () => {
       const mockText = {
@@ -339,54 +301,7 @@ describe('pdfParser', () => {
       expect(result.is_annual_report).toBe(false)
     })
 
-    it.skip('여러 고객명 패턴 중 첫 번째만 추출해야 함', async () => {
-      const mockText = {
-        items: [
-          { str: 'Annual Review Report' },
-          { str: '김철수 고객님을 위한' },
-          { str: '이영희 고객님을 위한' }, // 무시되어야 함
-          { str: 'MetLife' }
-        ]
-      }
-
-      mockPage.getTextContent.mockResolvedValue(mockText)
-
-      const file = new File(['pdf content'], 'multiple-names.pdf', {
-        type: 'application/pdf'
-      })
-
-      const result = await checkAnnualReportFromPDF(file)
-
-      expect(result.metadata?.customer_name).toBe('김철수')
-    })
-
-    it.skip('2자~4자 한글 이름만 추출해야 함', async () => {
-      const testCases = [
-        { input: '김철 고객님을 위한', expected: '김철' },
-        { input: '박영희 고객님을 위한', expected: '박영희' },
-        { input: '홍길동순 고객님을 위한', expected: '홍길동순' }
-      ]
-
-      for (const testCase of testCases) {
-        const mockText = {
-          items: [
-            { str: 'Annual Review Report' },
-            { str: testCase.input },
-            { str: 'MetLife' }
-          ]
-        }
-
-        mockPage.getTextContent.mockResolvedValue(mockText)
-
-        const file = new File(['pdf content'], 'name-test.pdf', {
-          type: 'application/pdf'
-        })
-
-        const result = await checkAnnualReportFromPDF(file)
-
-        expect(result.metadata?.customer_name).toBe(testCase.expected)
-      }
-    })
+    // 고객명 관련 테스트 제거 - 사전 선택된 고객 사용으로 변경됨
   })
 
   describe('텍스트 항목 처리', () => {

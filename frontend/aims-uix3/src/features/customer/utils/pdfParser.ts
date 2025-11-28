@@ -14,7 +14,6 @@ export interface CheckAnnualReportResult {
   is_annual_report: boolean;
   confidence: number;
   metadata: {
-    customer_name: string;
     report_title?: string;
     issue_date?: string;
   } | null;
@@ -50,19 +49,10 @@ async function extractFirstPageText(file: File): Promise<string> {
 }
 
 /**
- * 메타데이터 추출
+ * 메타데이터 추출 (AR 감지용 - 고객명은 사전 선택된 고객 사용)
  */
 function extractMetadata(text: string) {
-  const metadata: { customer_name: string; report_title?: string; issue_date?: string } = {
-    customer_name: ''
-  };
-
-  // 고객명 추출: "안영미 고객님을 위한"
-  const customerPattern1 = /([가-힣]{2,4})\s*고객님을\s*위한/;
-  const customerMatch1 = text.match(customerPattern1);
-  if (customerMatch1 && customerMatch1[1]) {
-    metadata.customer_name = customerMatch1[1].trim();
-  }
+  const metadata: { report_title?: string; issue_date?: string } = {};
 
   // 보고서 제목 추출
   if (text.includes('Annual Review Report')) {
