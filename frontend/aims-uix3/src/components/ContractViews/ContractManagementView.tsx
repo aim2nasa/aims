@@ -6,8 +6,8 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CenterPaneView from '../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
 import { StatCard } from '@/shared/ui/StatCard';
@@ -43,6 +43,23 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
 }) => {
   // 최근 활동 기간 선택 상태
   const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1month');
+
+  const queryClient = useQueryClient();
+
+  // contractChanged 이벤트 리스너 (계약 삭제/추가 시 자동 새로고침)
+  useEffect(() => {
+    const handleContractChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[ContractManagementView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
+      }
+      queryClient.invalidateQueries({ queryKey: ['contracts-list'] })
+    }
+
+    window.addEventListener('contractChanged', handleContractChange)
+    return () => {
+      window.removeEventListener('contractChanged', handleContractChange)
+    }
+  }, [queryClient])
 
   // 계약 목록 조회 (통계 계산용)
   const {

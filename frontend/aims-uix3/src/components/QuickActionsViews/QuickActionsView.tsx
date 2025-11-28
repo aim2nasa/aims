@@ -6,8 +6,8 @@
  * 고객 관리, 계약 관리, 문서 관리로 빠르게 이동할 수 있는 허브 페이지
  */
 
-import React, { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useEffect, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
 import { StatCard } from '@/shared/ui/StatCard'
@@ -35,6 +35,42 @@ export const QuickActionsView: React.FC<QuickActionsViewProps> = ({
   onClose,
   onNavigate,
 }) => {
+  const queryClient = useQueryClient()
+
+  // 데이터 변경 이벤트 리스너 (고객, 계약, 문서 변경 시 쿼리 캐시 무효화)
+  useEffect(() => {
+    const handleCustomerChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[QuickActionsView] customerChanged 이벤트 수신 - 고객 데이터 새로고침')
+      }
+      queryClient.invalidateQueries({ queryKey: ['allCustomers'] })
+    }
+
+    const handleContractChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[QuickActionsView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
+      }
+      queryClient.invalidateQueries({ queryKey: ['contracts-list'] })
+    }
+
+    const handleDocumentChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[QuickActionsView] documentChanged 이벤트 수신 - 문서 데이터 새로고침')
+      }
+      queryClient.invalidateQueries({ queryKey: ['documentStatistics'] })
+    }
+
+    window.addEventListener('customerChanged', handleCustomerChange)
+    window.addEventListener('contractChanged', handleContractChange)
+    window.addEventListener('documentChanged', handleDocumentChange)
+
+    return () => {
+      window.removeEventListener('customerChanged', handleCustomerChange)
+      window.removeEventListener('contractChanged', handleContractChange)
+      window.removeEventListener('documentChanged', handleDocumentChange)
+    }
+  }, [queryClient])
+
   // 고객 통계 조회
   const {
     data: customersData,

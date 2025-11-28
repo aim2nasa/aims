@@ -148,6 +148,12 @@ export class ContractService {
     if (!response.success) {
       throw new Error(response.message || '계약 삭제에 실패했습니다');
     }
+
+    // contractChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
+    window.dispatchEvent(new CustomEvent('contractChanged'));
+    if (import.meta.env.DEV) {
+      console.log('[ContractService.deleteContract] contractChanged 이벤트 발생');
+    }
   }
 
   /**

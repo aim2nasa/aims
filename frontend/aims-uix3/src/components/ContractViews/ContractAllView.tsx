@@ -116,6 +116,21 @@ export default function ContractAllView({
     }
   }, [visible, loadContracts])
 
+  // contractChanged 이벤트 리스너 (계약 삭제/추가 시 자동 새로고침)
+  useEffect(() => {
+    const handleContractChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[ContractAllView] contractChanged 이벤트 수신 - 계약 데이터 새로고침')
+      }
+      loadContracts()
+    }
+
+    window.addEventListener('contractChanged', handleContractChange)
+    return () => {
+      window.removeEventListener('contractChanged', handleContractChange)
+    }
+  }, [loadContracts])
+
   // 고객명 클릭 핸들러 - 등록된 고객이면 RightPane에 표시
   const handleCustomerNameClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {
     e.stopPropagation()

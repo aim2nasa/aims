@@ -141,6 +141,9 @@ export class CustomerService {
     }
 
     await api.delete(ENDPOINTS.CUSTOMER(id));
+
+    // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
+    window.dispatchEvent(new CustomEvent('customerChanged'));
   }
 
   /**
