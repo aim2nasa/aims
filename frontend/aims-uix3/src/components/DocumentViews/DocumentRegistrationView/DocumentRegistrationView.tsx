@@ -528,21 +528,11 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 매핑된 metadata 가져오기
       const metadata = arMetadataMappingRef.current.get(fileName);
 
-      // JWT 토큰 가져오기
-      const userIdForAR = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const authDataForAR = localStorage.getItem('auth-storage');
-      const tokenForAR = authDataForAR ? JSON.parse(authDataForAR).state?.token : null;
-
-      const response = await fetch('/api/documents/set-annual-report', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userIdForAR,
-          ...(tokenForAR && { Authorization: `Bearer ${tokenForAR}` })
-        },
-        body: JSON.stringify({ filename: fileName, metadata })
-      });
-      const responseData = await response.json();
+      // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+      const responseData = await api.patch<{ success: boolean; document_id?: string }>(
+        '/api/documents/set-annual-report',
+        { filename: fileName, metadata }
+      );
       console.log(`✅ [AR] is_annual_report=true 설정 완료 (metadata 포함):`, responseData);
 
       // 🔗 문서 처리 완료 대기 후 자동 연결
@@ -567,16 +557,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           attempts++;
 
           try {
-            const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const authDataForFetch = localStorage.getItem('auth-storage');
-            const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
-            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-              headers: {
-                'x-user-id': userIdForFetch,
-                ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
-              }
-            });
-            const response = await docResponse.json();
+            // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+            const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
+              `/api/documents/${documentId}/status`
+            );
 
             // 문서 처리 완료 확인 (overallStatus === 'completed')
             if (response.success && response.data?.computed?.overallStatus === 'completed') {
@@ -598,20 +582,15 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
               // 🚀 고객 연결 완료 직후 백그라운드 파싱 트리거!
               try {
-                const currentUserId = UserContextService.getContext().identifierValue;
-                console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}, userId=${currentUserId}`);
-                const bgParseResponse = await fetch('/api/ar-background/trigger-parsing', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-user-id': currentUserId
-                  },
-                  body: JSON.stringify({
+                console.log(`🚀 [AR 백그라운드 파싱] 트리거 시작: ${fileName}, customerId=${customerId}`);
+                // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+                const bgParseData = await api.post<{ success: boolean; message?: string }>(
+                  '/api/ar-background/trigger-parsing',
+                  {
                     customer_id: customerId,
                     file_id: documentId
-                  })
-                });
-                const bgParseData = await bgParseResponse.json();
+                  }
+                );
                 console.log(`✅ [AR 백그라운드 파싱] 트리거 완료:`, bgParseData);
               } catch (bgError) {
                 console.error(`❌ [AR 백그라운드 파싱] 트리거 실패:`, bgError);
@@ -685,16 +664,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         attempts++;
 
         try {
-          const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-          const authDataForFetch = localStorage.getItem('auth-storage');
-          const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
-          const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-            headers: {
-              'x-user-id': userIdForFetch,
-              ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
-            }
-          });
-          const response = await docResponse.json();
+          // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+          const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
+            `/api/documents/${documentId}/status`
+          );
 
           if (response.success && response.data?.computed?.overallStatus === 'completed') {
             clearInterval(checkAndLink);
@@ -786,16 +759,10 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
         attempts++;
 
         try {
-          const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-          const authDataForFetch = localStorage.getItem('auth-storage');
-          const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
-          const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-            headers: {
-              'x-user-id': userIdForFetch,
-              ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
-            }
-          });
-          const response = await docResponse.json();
+          // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+          const response = await api.get<{ success: boolean; data?: { computed?: { overallStatus?: string } } }>(
+            `/api/documents/${documentId}/status`
+          );
 
           // 문서 처리 완료 확인 (overallStatus === 'completed')
           if (response.success && response.data?.computed?.overallStatus === 'completed') {

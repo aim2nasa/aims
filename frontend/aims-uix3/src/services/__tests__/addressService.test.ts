@@ -6,8 +6,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AddressService } from '../addressService';
 import type { AddressHistoryItem } from '@/entities/customer/model';
 
-// Global fetch mock
-global.fetch = vi.fn();
+// api 모듈 mock 설정
+const mockApiGet = vi.fn();
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn()
+  }
+}));
 
 describe('AddressService', () => {
   beforeEach(() => {
@@ -40,58 +48,29 @@ describe('AddressService', () => {
         },
       ];
 
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: true,
-          data: mockHistory,
-        }),
-      } as Response);
+      // api.get()은 이미 파싱된 JSON을 반환
+      mockApiGet.mockResolvedValueOnce({
+        success: true,
+        data: mockHistory,
+      });
 
       const result = await AddressService.getAddressHistory('customer123');
 
-      expect(fetch).toHaveBeenCalledWith(
-        '/api/customers/customer123/address-history',
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'tester', // ⭐ 설계사별 데이터 격리
-          },
-        }
-      );
+      expect(mockApiGet).toHaveBeenCalledWith('/api/customers/customer123/address-history');
       expect(result).toEqual(mockHistory);
       expect(result).toHaveLength(2);
     });
 
     it('빈 고객 ID의 경우 에러를 발생시켜야 함', async () => {
       await expect(AddressService.getAddressHistory('')).rejects.toThrow('고객 ID가 필요합니다');
-      expect(fetch).not.toHaveBeenCalled();
-    });
-
-    it('HTTP 에러 시 에러를 발생시켜야 함', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-        json: async () => ({}),
-      } as Response);
-
-      await expect(AddressService.getAddressHistory('customer123')).rejects.toThrow(
-        'HTTP 404: Not Found'
-      );
+      expect(mockApiGet).not.toHaveBeenCalled();
     });
 
     it('success가 false인 경우 에러를 발생시켜야 함', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: false,
-          message: '권한이 없습니다',
-        }),
-      } as Response);
+      mockApiGet.mockResolvedValueOnce({
+        success: false,
+        message: '권한이 없습니다',
+      });
 
       await expect(AddressService.getAddressHistory('customer123')).rejects.toThrow(
         '권한이 없습니다'
@@ -99,13 +78,9 @@ describe('AddressService', () => {
     });
 
     it('success가 false이지만 message가 없는 경우 기본 에러 메시지를 사용해야 함', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: false,
-        }),
-      } as Response);
+      mockApiGet.mockResolvedValueOnce({
+        success: false,
+      });
 
       await expect(AddressService.getAddressHistory('customer123')).rejects.toThrow(
         '주소 이력 조회에 실패했습니다'
@@ -113,21 +88,17 @@ describe('AddressService', () => {
     });
 
     it('data가 없는 경우 빈 배열을 반환해야 함', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          success: true,
-          data: null,
-        }),
-      } as Response);
+      mockApiGet.mockResolvedValueOnce({
+        success: true,
+        data: null,
+      });
 
       const result = await AddressService.getAddressHistory('customer123');
       expect(result).toEqual([]);
     });
 
     it('네트워크 에러 시 에러를 발생시켜야 함', async () => {
-      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+      mockApiGet.mockRejectedValueOnce(new Error('Network error'));
 
       await expect(AddressService.getAddressHistory('customer123')).rejects.toThrow(
         'Network error'
@@ -135,7 +106,7 @@ describe('AddressService', () => {
     });
 
     it('알 수 없는 에러 시 기본 에러 메시지를 사용해야 함', async () => {
-      vi.mocked(fetch).mockRejectedValueOnce('Unknown error');
+      mockApiGet.mockRejectedValueOnce('Unknown error');
 
       await expect(AddressService.getAddressHistory('customer123')).rejects.toThrow(
         '주소 이력을 불러오는 중 오류가 발생했습니다'

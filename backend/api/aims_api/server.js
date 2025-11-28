@@ -4708,7 +4708,7 @@ app.listen(PORT, '0.0.0.0', () => {
  * AR 백그라운드 파싱 프록시 엔드포인트
  * 포트 8004 방화벽 문제 우회용
  */
-app.post("/api/ar-background/trigger-parsing", async (req, res) => {
+app.post("/api/ar-background/trigger-parsing", authenticateJWT, async (req, res) => {
   try {
     // ⭐ userId 추출 및 검증 (사용자 계정 기능)
     const userId = req.user.id;  // JWT 토큰에서 추출 (보안)

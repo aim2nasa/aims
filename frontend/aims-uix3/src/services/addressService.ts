@@ -11,11 +11,7 @@
 
 import type { AddressHistoryItem } from '@/entities/customer/model';
 import { formatDateTime } from '@/shared/lib/timeUtils';
-
-/**
- * API 기본 URL
- */
-const API_BASE_URL = '/api';
+import { api } from '@/shared/lib/api';
 
 /**
  * AddressService 클래스
@@ -42,28 +38,11 @@ export class AddressService {
       throw new Error('고객 ID가 필요합니다');
     }
 
-    // ⭐ 설계사별 데이터 격리: localStorage에서 userId 가져오기
-    const userId = typeof window !== 'undefined'
-      ? localStorage.getItem('aims-current-user-id') || 'tester'
-      : 'tester';
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/customers/${customerId}/address-history`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': userId, // ⭐ 백엔드 필수 헤더
-          },
-        }
+      // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+      const data = await api.get<{ success: boolean; data: AddressHistoryItem[]; message?: string }>(
+        `/api/customers/${customerId}/address-history`
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
 
       if (!data.success) {
         throw new Error(data.message || '주소 이력 조회에 실패했습니다');

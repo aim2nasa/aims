@@ -13,6 +13,7 @@ import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
+import { api } from '@/shared/lib/api';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -150,12 +151,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
   const loadPendingDocuments = async () => {
     try {
-      // ⭐ 설계사별 고객 데이터 격리
-      const currentUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-      const response = await fetch(`/api/customers/${customer._id}/annual-reports/pending`, {
-        headers: { 'x-user-id': currentUserId }
-      });
-      const data = await response.json();
+      // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+      const data = await api.get<{ success: boolean; data: { pending_count: number; documents: PendingDocument[] } }>(
+        `/api/customers/${customer._id}/annual-reports/pending`
+      );
 
       if (data.success) {
         setPendingCount(data.data.pending_count);
@@ -175,12 +174,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
       // ⭐ 먼저 Documents 탭의 문서들을 가져와서 중복 AR 정리
       try {
-        // ⭐ 설계사별 고객 데이터 격리
-        const docsUserId = localStorage.getItem('aims-current-user-id') || 'tester';
-        const docsResponse = await fetch(`/api/customers/${customer._id}/documents`, {
-          headers: { 'x-user-id': docsUserId }
-        });
-        const docsData = await docsResponse.json();
+        // ⭐ 공유 api 클라이언트 사용 (JWT 토큰 자동 포함)
+        const docsData = await api.get<{ success: boolean; data: { documents: any[] } }>(
+          `/api/customers/${customer._id}/documents`
+        );
 
         if (docsData.success && docsData.data?.documents) {
           const arDocuments = docsData.data.documents.filter(

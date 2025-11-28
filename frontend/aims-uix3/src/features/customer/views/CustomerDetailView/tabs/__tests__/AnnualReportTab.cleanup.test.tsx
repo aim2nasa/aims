@@ -15,8 +15,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnnualReportTab } from '../AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
 
-// Fetch mock 설정
+// Fetch mock 설정 (cleanup API, annual-reports API 등에서 사용)
 global.fetch = vi.fn();
+
+// api 모듈 mock 설정 (documents, pending 조회에서 사용)
+const mockApiGet = vi.fn();
+vi.mock('@/shared/lib/api', () => ({
+  api: {
+    get: (...args: unknown[]) => mockApiGet(...args),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn()
+  }
+}));
 
 // Mock customer data
 const mockCustomer: Customer = {
@@ -56,6 +67,7 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 describe('AnnualReportTab 중복 AR 자동 정리', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockApiGet.mockReset();
   });
 
   describe('자동 정리 실행', () => {
@@ -110,11 +122,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Documents API
-          ok: true,
-          json: async () => mockDocuments
-        })
         .mockResolvedValueOnce({  // Cleanup 1
           ok: true,
           json: async () => mockCleanupResponse1
@@ -164,11 +175,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Documents API
-          ok: true,
-          json: async () => mockDocuments
-        })
         .mockResolvedValueOnce({  // Annual Reports API
           ok: true,
           json: async () => mockAnnualReports
@@ -228,11 +238,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Documents API
-          ok: true,
-          json: async () => mockDocuments
-        })
         .mockResolvedValueOnce({  // Cleanup (doc1만)
           ok: true,
           json: async () => mockCleanupResponse
@@ -297,11 +306,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         data: []
       };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Documents API
-          ok: true,
-          json: async () => mockDocuments
-        })
         .mockResolvedValueOnce({  // Cleanup (doc1만)
           ok: true,
           json: async () => mockCleanupResponse
@@ -358,11 +366,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({  // Documents API
-          ok: true,
-          json: async () => mockDocuments
-        })
         .mockRejectedValueOnce(  // Cleanup 실패
           new Error('Network error')
         )
@@ -400,10 +407,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
         ]
       };
 
+      // Documents API 실패 (api.get)
+      mockApiGet.mockRejectedValue(new Error('Network error'));
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(  // Documents API 실패
-          new Error('Network error')
-        )
         .mockResolvedValueOnce({  // Annual Reports API (정리 없이 바로 실행)
           ok: true,
           json: async () => mockAnnualReports
@@ -468,8 +475,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       // Annual Reports API 응답
       const mockAnnualReports = { success: true, data: [] };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockDocuments })
         .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse1 })
         .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse2 })
         .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse3 })
@@ -514,8 +523,10 @@ describe('AnnualReportTab 중복 AR 자동 정리', () => {
       // Annual Reports API 응답
       const mockAnnualReports = { success: true, data: [] };
 
+      // Documents API는 이제 api.get 사용
+      mockApiGet.mockResolvedValue(mockDocuments);
+
       (global.fetch as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ ok: true, json: async () => mockDocuments })
         .mockResolvedValueOnce({ ok: true, json: async () => mockCleanupResponse })
         .mockResolvedValueOnce({ ok: true, json: async () => mockAnnualReports });
 
