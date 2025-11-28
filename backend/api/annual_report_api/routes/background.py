@@ -88,12 +88,20 @@ def parse_single_ar_document(db, file_id: str, customer_id: str) -> dict:
         logger.info(f"💾 [Queue Parsing] DB 저장 중...")
         metadata = doc.get("ar_metadata", {})
 
+        # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
+        parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
+
         # customer_name이 없으면 PDF 1페이지에서 직접 추출
-        if not metadata.get("customer_name"):
+        if not parsed_customer_name:
             extracted = extract_customer_info_from_first_page(file_path)
             if extracted.get("customer_name"):
-                metadata["customer_name"] = extracted["customer_name"]
-                logger.info(f"📝 [Queue Parsing] PDF에서 customer_name 추출: {extracted['customer_name']}")
+                parsed_customer_name = extracted["customer_name"]
+                metadata["customer_name"] = parsed_customer_name
+                logger.info(f"📝 [Queue Parsing] PDF에서 customer_name 추출: {parsed_customer_name}")
+
+        # ⭐ AR 파싱은 항상 파일을 업로드한 고객(customer_id 파라미터)에게 저장
+        # customer_name은 AR 데이터 내에서 식별용으로만 사용
+        logger.info(f"📝 [Queue Parsing] AR 파싱을 고객에게 저장: {customer_id} (AR 소유자: {parsed_customer_name or '알 수 없음'})")
 
         save_result = save_annual_report(
             db=db,
@@ -259,6 +267,22 @@ def process_ar_documents_background(db, customer_id: Optional[str] = None, speci
                 # 7. MongoDB 저장
                 logger.info(f"💾 [BG Parsing] DB 저장 중...")
                 metadata = doc.get("ar_metadata", {})
+
+                # ⭐ AR 파싱 결과에서 customer_name 추출 (metadata에 저장용)
+                parsed_customer_name = metadata.get("customer_name") or result.get("고객명")
+
+                # customer_name이 없으면 PDF 1페이지에서 직접 추출
+                if not parsed_customer_name:
+                    extracted = extract_customer_info_from_first_page(file_path)
+                    if extracted.get("customer_name"):
+                        parsed_customer_name = extracted["customer_name"]
+                        metadata["customer_name"] = parsed_customer_name
+                        logger.info(f"📝 [BG Parsing] PDF에서 customer_name 추출: {parsed_customer_name}")
+
+                # ⭐ AR 파싱은 항상 파일을 업로드한 고객(doc_customer_id)에게 저장
+                # customer_name은 AR 데이터 내에서 식별용으로만 사용
+                logger.info(f"📝 [BG Parsing] AR 파싱을 고객에게 저장: {doc_customer_id} (AR 소유자: {parsed_customer_name or '알 수 없음'})")
+
                 save_result = save_annual_report(
                     db=db,
                     customer_id=str(doc_customer_id),

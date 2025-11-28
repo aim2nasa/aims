@@ -138,6 +138,37 @@ def save_annual_report(
             except Exception as e:
                 logger.warning(f"source_file_id 변환 실패: {source_file_id} ({e})")
 
+        # 4.5 중복 체크: customer_name + issue_date 둘 다 같으면 중복
+        # 중복 판단 기준: issue_date AND customer_name 둘 다 같아야 중복
+        if customer_name and issue_date:
+            existing_reports = customer.get("annual_reports", [])
+            for existing in existing_reports:
+                existing_name = existing.get("customer_name", "")
+                existing_issue_date = existing.get("issue_date")
+
+                # issue_date 비교 (날짜만)
+                if existing_issue_date:
+                    if isinstance(existing_issue_date, datetime):
+                        existing_date_str = existing_issue_date.strftime("%Y-%m-%d")
+                    elif isinstance(existing_issue_date, str):
+                        existing_date_str = existing_issue_date.split('T')[0]
+                    else:
+                        existing_date_str = None
+
+                    if existing_date_str == issue_date_str and existing_name == customer_name:
+                        logger.info(
+                            f"⏭️  중복 AR 건너뜀: customer_name={customer_name}, issue_date={issue_date_str}"
+                        )
+                        return {
+                            "success": True,
+                            "message": "이미 동일한 Annual Report가 존재합니다 (중복 건너뜀)",
+                            "duplicate": True,
+                            "summary": {
+                                "customer_name": customer_name,
+                                "issue_date": issue_date_str
+                            }
+                        }
+
         # 5. customers 컬렉션 업데이트
         result = customers_collection.update_one(
             {"_id": customer_obj_id},
@@ -415,19 +446,25 @@ def cleanup_duplicate_annual_reports(
     db,
     customer_id: str,
     issue_date: str,
-    reference_linked_at: str
+    reference_linked_at: str,
+    customer_name: str = None
 ) -> Dict[str, any]:
     """
-    동일 발행일(issue_date)의 중복 Annual Report 정리
+    동일 발행일(issue_date) + 동일 고객명(customer_name)의 중복 Annual Report 정리
 
     문서 탭의 연결일(linked_at)과 가장 가까운 파싱일시(parsed_at)를 가진
-    Annual Report만 남기고 나머지 동일 발행일 AR 삭제
+    Annual Report만 남기고 나머지 동일 발행일+고객명 AR 삭제
+
+    중복 판단 기준:
+    - issue_date AND customer_name 둘 다 같아야 중복
+    - 날짜만 같고 고객명이 다르면 중복이 아님
 
     Args:
         db: MongoDB database 객체
         customer_id: 고객 ObjectId (문자열)
         issue_date: 발행일 (YYYY-MM-DD 또는 ISO 형식)
         reference_linked_at: 기준 연결일 (ISO 8601 형식)
+        customer_name: AR의 고객명 (선택, 없으면 issue_date만으로 중복 체크)
 
     Returns:
         dict: {
@@ -437,7 +474,7 @@ def cleanup_duplicate_annual_reports(
             "kept_report": dict (optional, 유지된 리포트 정보)
         }
     """
-    logger.info(f"중복 Annual Reports 정리: customer_id={customer_id}, issue_date={issue_date}, reference={reference_linked_at}")
+    logger.info(f"중복 Annual Reports 정리: customer_id={customer_id}, issue_date={issue_date}, customer_name={customer_name}, reference={reference_linked_at}")
 
     try:
         # ObjectId 변환
@@ -467,26 +504,37 @@ def cleanup_duplicate_annual_reports(
         # 발행일 정규화 (날짜만 비교)
         target_issue_date = issue_date.split('T')[0]  # "2025-08-29"
 
-        # 동일 발행일의 리포트 필터링
+        # 동일 발행일 + 동일 고객명의 리포트 필터링
+        # 중복 판단: issue_date AND customer_name 둘 다 같아야 중복
         same_issue_reports = []
         other_reports = []
 
         for report in all_reports:
             report_issue_date = None
+            report_customer_name = report.get("customer_name", "")
+
             if "issue_date" in report:
                 if isinstance(report["issue_date"], datetime):
                     report_issue_date = report["issue_date"].strftime("%Y-%m-%d")
                 elif isinstance(report["issue_date"], str):
                     report_issue_date = report["issue_date"].split('T')[0]
 
-            if report_issue_date == target_issue_date:
+            # 중복 판단: issue_date AND customer_name 둘 다 같아야 중복
+            # customer_name이 제공되지 않으면 중복 판단 불가 → 중복으로 처리하지 않음
+            if customer_name:
+                is_duplicate = (report_issue_date == target_issue_date and report_customer_name == customer_name)
+            else:
+                # customer_name이 없으면 중복 판단 불가
+                is_duplicate = False
+
+            if is_duplicate:
                 same_issue_reports.append(report)
             else:
                 other_reports.append(report)
 
         # 중복이 없으면 작업 불필요
         if len(same_issue_reports) <= 1:
-            logger.info(f"중복 없음: 발행일 {target_issue_date}의 리포트가 {len(same_issue_reports)}개")
+            logger.info(f"중복 없음: 발행일={target_issue_date}, 고객명={customer_name}, 리포트={len(same_issue_reports)}개")
             return {
                 "success": True,
                 "message": "중복된 Annual Report가 없습니다",

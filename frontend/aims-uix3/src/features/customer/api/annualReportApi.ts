@@ -573,20 +573,26 @@ export class AnnualReportApi {
   /**
    * 중복 Annual Reports 정리
    *
-   * 동일 발행일(issue_date)의 AR 중 문서 연결일(linked_at)과 가장 가까운
-   * 파싱일시(parsed_at)를 가진 AR만 남기고 나머지 삭제
+   * 동일 발행일(issue_date) + 동일 고객명(customerName)의 AR 중
+   * 문서 연결일(linked_at)과 가장 가까운 파싱일시(parsed_at)를 가진 AR만 남기고 나머지 삭제
+   *
+   * 중복 판단 기준:
+   * - issue_date AND customer_name 둘 다 같아야 중복
+   * - 날짜만 같고 고객명이 다르면 중복이 아님
    *
    * @param customerId 고객 ID
    * @param userId 사용자 ID (설계사 계정)
    * @param issueDate 발행일 (YYYY-MM-DD 또는 ISO 형식)
    * @param referenceLinkedAt 기준 연결일 (ISO 8601 형식)
+   * @param customerName AR의 고객명 (중복 판단에 사용)
    * @returns 정리 결과
    */
   static async cleanupDuplicates(
     customerId: string,
     userId: string,
     issueDate: string,
-    referenceLinkedAt: string
+    referenceLinkedAt: string,
+    customerName?: string
   ): Promise<{
     success: boolean;
     message: string;
@@ -609,6 +615,7 @@ export class AnnualReportApi {
           body: JSON.stringify({
             issue_date: issueDate,
             reference_linked_at: referenceLinkedAt,
+            customer_name: customerName,
           }),
         }
       );

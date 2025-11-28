@@ -284,7 +284,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 .annual-report-table-header {
   display: grid;
-  grid-template-columns: 40px 110px 160px 1fr 100px 80px;
+  grid-template-columns: 40px 80px 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -304,7 +304,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-table-header:not(:has(.header-checkbox)) {
-  grid-template-columns: 110px 160px 1fr 100px 80px;
+  grid-template-columns: 80px 110px 160px 1fr 100px 80px;
 }
 
 html[data-theme="dark"] .annual-report-table-header {
@@ -362,7 +362,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 .annual-report-row {
   display: grid;
-  grid-template-columns: 40px 110px 160px 1fr 100px 80px;
+  grid-template-columns: 40px 80px 110px 160px 1fr 100px 80px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -377,7 +377,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-row:not(:has(.row-checkbox)) {
-  grid-template-columns: 110px 160px 1fr 100px 80px;
+  grid-template-columns: 80px 110px 160px 1fr 100px 80px;
 }
 
 /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */
@@ -444,6 +444,20 @@ html[data-theme="dark"] .annual-report-row--selected {
 }
 
 /* ==================== 🍎 ROW CELLS ==================== */
+
+.row-owner,
+.header-owner {
+  font-weight: 500;
+  color: var(--color-ios-text-primary-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme="dark"] .row-owner,
+html[data-theme="dark"] .header-owner {
+  color: var(--color-ios-text-primary-dark);
+}
 
 .row-issue-date {
   /* font-size: var(--font-size-footnote); (13px - FONT_SIZE_STANDARDS.md ) */

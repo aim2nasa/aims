@@ -189,14 +189,16 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
             for (const doc of arDocuments) {
               const issueDate = doc.ar_metadata.issue_date.split('T')[0];
+              const customerName = doc.ar_metadata.customer_name;
 
-              console.log(`[AnnualReportTab] AR 중복 정리: issue_date=${issueDate}, linkedAt=${doc.linkedAt}`);
+              console.log(`[AnnualReportTab] AR 중복 정리: issue_date=${issueDate}, customer_name=${customerName}, linkedAt=${doc.linkedAt}`);
 
               const result = await AnnualReportApi.cleanupDuplicates(
                 customer._id,
                 userId,
                 issueDate,
-                doc.linkedAt
+                doc.linkedAt,
+                customerName
               );
 
               if (result.deleted_count && result.deleted_count > 0) {
@@ -549,6 +551,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
               />
             </div>
           )}
+          <div className="header-owner">소유주</div>
           <div className="header-issue-date">발행일</div>
           <div className="header-parsed-at">파싱일시</div>
           <div className="header-premium">총 월보험료</div>
@@ -580,6 +583,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
                     />
                   </div>
                 )}
+                <div className="row-owner">{report.customer_name || '-'}</div>
                 <div className="row-issue-date">{formattedDate}</div>
                 <div className="row-parsed-at">{AnnualReportApi.formatDateTime(report.parsed_at)}</div>
                 <div className="row-premium">{AnnualReportApi.formatCurrency(report.total_monthly_premium)}</div>

@@ -407,12 +407,14 @@ class CleanupDuplicatesRequest(BaseModel):
     """중복 Annual Reports 정리 요청"""
     issue_date: str = Field(..., description="발행일 (YYYY-MM-DD 또는 ISO 형식)")
     reference_linked_at: str = Field(..., description="기준 연결일 (ISO 8601 형식)")
+    customer_name: Optional[str] = Field(None, description="AR 고객명 (중복 판단에 사용)")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "issue_date": "2025-08-29",
-                "reference_linked_at": "2025-11-03T06:25:33Z"
+                "reference_linked_at": "2025-11-03T06:25:33Z",
+                "customer_name": "홍길동"
             }
         }
 
@@ -461,7 +463,7 @@ async def cleanup_duplicate_reports(
     logger.info(
         f"🧹 중복 Annual Reports 정리 요청: "
         f"customer_id={customer_id}, user_id={user_id}, "
-        f"issue_date={request.issue_date}, reference={request.reference_linked_at}"
+        f"issue_date={request.issue_date}, customer_name={request.customer_name}, reference={request.reference_linked_at}"
     )
 
     try:
@@ -498,7 +500,8 @@ async def cleanup_duplicate_reports(
             db=db,
             customer_id=customer_id,
             issue_date=request.issue_date,
-            reference_linked_at=request.reference_linked_at
+            reference_linked_at=request.reference_linked_at,
+            customer_name=request.customer_name
         )
 
         if not result["success"] and result.get("deleted_count", 0) == 0:
