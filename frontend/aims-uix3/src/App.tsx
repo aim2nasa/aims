@@ -730,8 +730,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     try {
       // /api/documents/:id/status API로 문서 상세 정보 조회
       const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+      const authData = localStorage.getItem('auth-storage');
+      const token = authData ? JSON.parse(authData).state?.token : null;
       const response = await fetch(`/api/documents/${documentId}/status`, {
-        headers: { 'x-user-id': userId }
+        headers: {
+          'x-user-id': userId,
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
       })
 
       if (!response.ok) {

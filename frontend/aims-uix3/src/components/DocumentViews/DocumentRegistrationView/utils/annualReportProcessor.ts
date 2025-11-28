@@ -45,9 +45,14 @@ export async function processAnnualReportFile(
       for (const doc of customerDocs.documents) {
         try {
           const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const docStatus = await fetch(`/api/documents/${doc._id}/status`, {
-        headers: { 'x-user-id': userId }
-      });
+          const authData = localStorage.getItem('auth-storage');
+          const token = authData ? JSON.parse(authData).state?.token : null;
+          const docStatus = await fetch(`/api/documents/${doc._id}/status`, {
+            headers: {
+              'x-user-id': userId,
+              ...(token && { Authorization: `Bearer ${token}` })
+            }
+          });
           const docData = await docStatus.json();
 
           if (docData.success && docData.data?.raw?.meta?.file_hash) {

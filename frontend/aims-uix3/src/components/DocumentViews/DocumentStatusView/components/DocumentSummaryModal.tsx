@@ -66,9 +66,14 @@ export const DocumentSummaryModal: React.FC<DocumentSummaryModalProps> = ({
 
         // 백엔드 API를 통해 문서 상세 정보 가져오기
         const userId = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-      const response = await fetch(`/api/documents/${docId}/status`, {
-        headers: { 'x-user-id': userId }
-      })
+        const authData = localStorage.getItem('auth-storage');
+        const token = authData ? JSON.parse(authData).state?.token : null;
+        const response = await fetch(`/api/documents/${docId}/status`, {
+          headers: {
+            'x-user-id': userId,
+            ...(token && { Authorization: `Bearer ${token}` })
+          }
+        })
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)

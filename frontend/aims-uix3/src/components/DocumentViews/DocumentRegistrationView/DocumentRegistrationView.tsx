@@ -447,7 +447,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           progress: 0,
           error: undefined,
           completedAt: undefined,
-          relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined
+          relativePath: (file as FileWithRelativePath).webkitRelativePath || undefined,
+          customerId: customerFileCustomer?._id  // 🔗 고객 선택 시 자동 연결
         })
       } else {
         // 검증 실패한 파일은 에러로 표시
@@ -635,8 +636,13 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
           try {
             const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+            const authDataForFetch = localStorage.getItem('auth-storage');
+            const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
             const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-              headers: { 'x-user-id': userIdForFetch }
+              headers: {
+                'x-user-id': userIdForFetch,
+                ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
+              }
             });
             const response = await docResponse.json();
 
@@ -748,9 +754,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
         try {
           const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-              headers: { 'x-user-id': userIdForFetch }
-            });
+          const authDataForFetch = localStorage.getItem('auth-storage');
+          const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
+          const docResponse = await fetch(`/api/documents/${documentId}/status`, {
+            headers: {
+              'x-user-id': userIdForFetch,
+              ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
+            }
+          });
           const response = await docResponse.json();
 
           if (response.success && response.data?.computed?.overallStatus === 'completed') {
@@ -844,9 +855,14 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
 
         try {
           const userIdForFetch = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
-            const docResponse = await fetch(`/api/documents/${documentId}/status`, {
-              headers: { 'x-user-id': userIdForFetch }
-            });
+          const authDataForFetch = localStorage.getItem('auth-storage');
+          const tokenForFetch = authDataForFetch ? JSON.parse(authDataForFetch).state?.token : null;
+          const docResponse = await fetch(`/api/documents/${documentId}/status`, {
+            headers: {
+              'x-user-id': userIdForFetch,
+              ...(tokenForFetch && { Authorization: `Bearer ${tokenForFetch}` })
+            }
+          });
           const response = await docResponse.json();
 
           // 문서 처리 완료 확인 (overallStatus === 'completed')
