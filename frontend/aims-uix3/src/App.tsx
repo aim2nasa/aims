@@ -1616,6 +1616,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             setPreviewModalVisible(false);
             setPreviewModalDocument(null);
           }}
+          {...(previewModalDocument?.fileUrl ? {
+            onDownload: () => {
+              // 새 창에서 파일 열기 (다운로드)
+              window.open(previewModalDocument.fileUrl!, '_blank');
+            }
+          } : {})}
         />
       </Suspense>
 

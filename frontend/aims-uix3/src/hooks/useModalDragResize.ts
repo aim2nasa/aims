@@ -15,6 +15,11 @@ interface ModalDragResizeState {
   isDragging: boolean
   isResizing: boolean
   resizeHandle: ResizeHandle | null
+  isMaximized: boolean
+  preMaximizeState: {
+    position: { x: number; y: number }
+    size: { width: number; height: number }
+  } | null
 }
 
 type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
@@ -34,9 +39,11 @@ interface UseModalDragResizeReturn {
   isDragging: boolean
   isResizing: boolean
   isResizedFromDefault: boolean
+  isMaximized: boolean
   modalStyle: React.CSSProperties
   headerProps: {
     onMouseDown: (e: React.MouseEvent) => void
+    onDoubleClick: (e: React.MouseEvent) => void
     style: { cursor: string }
   }
   resizeHandles: Array<{
@@ -45,6 +52,7 @@ interface UseModalDragResizeReturn {
     style: React.CSSProperties
   }>
   reset: () => void
+  toggleMaximize: () => void
 }
 
 /**
@@ -98,7 +106,9 @@ export const useModalDragResize = (
     size: { width: initialWidth, height: initialHeight },
     isDragging: false,
     isResizing: false,
-    resizeHandle: null
+    resizeHandle: null,
+    isMaximized: false,
+    preMaximizeState: null
   })
 
   const dragStartRef = useRef({ x: 0, y: 0 })
@@ -113,14 +123,59 @@ export const useModalDragResize = (
   const reset = useCallback(() => {
     setState(prev => ({
       ...prev,
-      size: initialValuesRef.current.size
+      size: initialValuesRef.current.size,
+      isMaximized: false,
+      preMaximizeState: null
     }))
+  }, [])
+
+  // 최대화/복원 토글
+  const toggleMaximize = useCallback(() => {
+    setState(prev => {
+      if (prev.isMaximized) {
+        // 복원: 이전 상태로 돌아가기
+        if (prev.preMaximizeState) {
+          return {
+            ...prev,
+            position: prev.preMaximizeState.position,
+            size: prev.preMaximizeState.size,
+            isMaximized: false,
+            preMaximizeState: null
+          }
+        }
+        // preMaximizeState가 없으면 초기값으로 복원
+        return {
+          ...prev,
+          position: initialValuesRef.current.position,
+          size: initialValuesRef.current.size,
+          isMaximized: false,
+          preMaximizeState: null
+        }
+      } else {
+        // 최대화: 현재 상태 저장 후 화면 가득 채우기 (전체 화면)
+        return {
+          ...prev,
+          preMaximizeState: {
+            position: prev.position,
+            size: prev.size
+          },
+          position: { x: 0, y: 0 },
+          size: {
+            width: window.innerWidth,
+            height: window.innerHeight
+          },
+          isMaximized: true
+        }
+      }
+    })
   }, [])
 
   // 드래그 시작
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     // 버튼 클릭 등은 무시
     if ((e.target as HTMLElement).tagName === 'BUTTON') return
+    // 최대화 상태에서는 드래그 불가
+    if (state.isMaximized) return
 
     e.preventDefault()
     setState(prev => ({ ...prev, isDragging: true }))
@@ -128,11 +183,14 @@ export const useModalDragResize = (
       x: e.clientX - state.position.x,
       y: e.clientY - state.position.y
     }
-  }, [state.position])
+  }, [state.position, state.isMaximized])
 
   // 리사이즈 시작
   const handleResizeStart = useCallback(
     (handle: ResizeHandle) => (e: React.MouseEvent) => {
+      // 최대화 상태에서는 리사이즈 불가
+      if (state.isMaximized) return
+
       e.preventDefault()
       e.stopPropagation()
       setState(prev => ({ ...prev, isResizing: true, resizeHandle: handle }))
@@ -145,7 +203,7 @@ export const useModalDragResize = (
         posY: state.position.y
       }
     },
-    [state.size, state.position]
+    [state.size, state.position, state.isMaximized]
   )
 
   // 마우스 이동
@@ -238,13 +296,23 @@ export const useModalDragResize = (
     height: `${state.size.height}px`,
     maxWidth: 'none',
     maxHeight: 'none',
-    userSelect: state.isDragging || state.isResizing ? 'none' : 'auto'
+    userSelect: state.isDragging || state.isResizing ? 'none' : 'auto',
+    // 최대화/복원 애니메이션 (드래그/리사이즈 중에는 비활성화)
+    transition: state.isDragging || state.isResizing ? 'none' : 'all 0.3s ease'
   }
+
+  // 헤더 더블클릭 핸들러
+  const handleHeaderDoubleClick = useCallback((e: React.MouseEvent) => {
+    // 버튼 클릭은 무시
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return
+    toggleMaximize()
+  }, [toggleMaximize])
 
   // 헤더 props (드래그 핸들)
   const headerProps = {
     onMouseDown: handleDragStart,
-    style: { cursor: state.isDragging ? 'grabbing' : 'grab' }
+    onDoubleClick: handleHeaderDoubleClick,
+    style: { cursor: state.isMaximized ? 'default' : (state.isDragging ? 'grabbing' : 'grab') }
   }
 
   // 리사이즈 핸들 정의
@@ -271,10 +339,12 @@ export const useModalDragResize = (
     isDragging: state.isDragging,
     isResizing: state.isResizing,
     isResizedFromDefault,
+    isMaximized: state.isMaximized,
     modalStyle,
     headerProps,
     resizeHandles,
-    reset
+    reset,
+    toggleMaximize
   }
 }
 

@@ -50,6 +50,19 @@ html[data-theme="dark"] .draggable-modal {
   box-shadow: var(--shadow-modal-dark);
 }
 
+/* 최대화 상태 */
+.draggable-modal--maximized {
+  border-radius: 0;
+}
+
+.draggable-modal--maximized .draggable-modal__header {
+  border-radius: 0;
+}
+
+.draggable-modal--maximized .draggable-modal__footer {
+  border-radius: 0;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);
@@ -123,6 +136,39 @@ html[data-theme="dark"] .draggable-modal {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+/* 최대화/복원 버튼 */
+.draggable-modal__maximize-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-in-out);
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.draggable-modal__maximize-button:hover {
+  background: transparent;
+  color: var(--color-text-primary);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.draggable-modal__maximize-button:active {
+  transform: scale(0.95);
+}
+
+.draggable-modal__maximize-button svg {
   flex-shrink: 0;
 }
 

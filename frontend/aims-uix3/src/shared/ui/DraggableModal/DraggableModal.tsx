@@ -113,7 +113,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
       role="presentation"
     >
       <div
-        className={`draggable-modal ${className}`}
+        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${className}`}
         style={modal.modalStyle}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -121,8 +121,8 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
         aria-label={ariaLabel || (typeof title === 'string' ? title : 'Modal')}
         tabIndex={-1}
       >
-        {/* Resize Handles */}
-        {modal.resizeHandles.map(handle => (
+        {/* Resize Handles (최대화 상태에서는 숨김) */}
+        {!modal.isMaximized && modal.resizeHandles.map(handle => (
           <div
             key={handle.position}
             className={`resize-handle resize-handle--${handle.position}`}
@@ -139,7 +139,32 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
           >
             <h2 className="draggable-modal__title">{title}</h2>
             <div className="draggable-modal__header-buttons">
-              {showResetButton && modal.isResizedFromDefault && (
+              {/* 최대화/복원 버튼 */}
+              <Tooltip content={modal.isMaximized ? "복원 (더블클릭)" : "최대화 (더블클릭)"}>
+                <button
+                  className="draggable-modal__maximize-button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    modal.toggleMaximize()
+                  }}
+                  aria-label={modal.isMaximized ? "창 복원" : "창 최대화"}
+                  type="button"
+                >
+                  {modal.isMaximized ? (
+                    /* 복원 아이콘: 두 개의 겹친 사각형 */
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M5 5V3.5A1.5 1.5 0 0 1 6.5 2H12.5A1.5 1.5 0 0 1 14 3.5V9.5A1.5 1.5 0 0 1 12.5 11H11" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  ) : (
+                    /* 최대화 아이콘: 단일 사각형 */
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  )}
+                </button>
+              </Tooltip>
+              {showResetButton && modal.isResizedFromDefault && !modal.isMaximized && (
                 <Tooltip content="초기 크기로 복원">
                   <button
                     className="draggable-modal__reset-button draggable-modal__reset-button--icon"
