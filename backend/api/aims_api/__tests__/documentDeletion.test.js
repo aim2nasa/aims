@@ -465,4 +465,191 @@ describe('문서 삭제 시 고객 참조 자동 정리', () => {
       expect(customer.meta.updated_at.getTime()).toBeGreaterThan(initialUpdateTime.getTime());
     });
   });
+
+  describe('복수 문서 삭제 (DELETE /api/documents)', () => {
+
+    test('복수 문서 삭제 시 모든 고객의 documents 배열에서 참조 제거', async () => {
+      // Given: 3개의 문서를 2명의 고객이 참조
+      const document1Id = new ObjectId();
+      const document2Id = new ObjectId();
+      const document3Id = new ObjectId();
+      const customer1Id = new ObjectId();
+      const customer2Id = new ObjectId();
+
+      // ID 추적
+      createdDocumentIds.push(document1Id, document2Id, document3Id);
+      createdCustomerIds.push(customer1Id, customer2Id);
+
+      await filesCollection.insertMany([
+        { _id: document1Id, upload: { destPath: '/tmp/test-bulk1.pdf', uploaded_at: new Date() } },
+        { _id: document2Id, upload: { destPath: '/tmp/test-bulk2.pdf', uploaded_at: new Date() } },
+        { _id: document3Id, upload: { destPath: '/tmp/test-bulk3.pdf', uploaded_at: new Date() } }
+      ]);
+
+      await customersCollection.insertMany([
+        {
+          _id: customer1Id,
+          personal_info: { name: '테스트고객복수1' },
+          documents: [
+            { document_id: document1Id, relationship: 'annual_report', upload_date: new Date(), notes: '' },
+            { document_id: document2Id, relationship: 'contract', upload_date: new Date(), notes: '' }
+          ],
+          meta: { created_at: new Date(), updated_at: new Date() }
+        },
+        {
+          _id: customer2Id,
+          personal_info: { name: '테스트고객복수2' },
+          documents: [
+            { document_id: document2Id, relationship: 'annual_report', upload_date: new Date(), notes: '' },
+            { document_id: document3Id, relationship: 'claim', upload_date: new Date(), notes: '' }
+          ],
+          meta: { created_at: new Date(), updated_at: new Date() }
+        }
+      ]);
+
+      // When: 복수 문서 삭제 로직 실행 (document1, document2 삭제)
+      const deleteDocIds = [document1Id, document2Id];
+
+      // 고객 참조 정리 (복수 삭제 API 로직)
+      const customersUpdateResult = await customersCollection.updateMany(
+        { 'documents.document_id': { $in: deleteDocIds } },
+        {
+          $pull: { documents: { document_id: { $in: deleteDocIds } } },
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+
+      // 문서 삭제
+      await filesCollection.deleteMany({ _id: { $in: deleteDocIds } });
+
+      // Then: 검증
+      // 1. 2명의 고객이 업데이트되었는지 확인
+      expect(customersUpdateResult.modifiedCount).toBe(2);
+
+      // 2. customer1: documents 배열이 비어있음 (document1, document2 모두 삭제됨)
+      const customer1 = await customersCollection.findOne({ _id: customer1Id });
+      expect(customer1.documents).toEqual([]);
+
+      // 3. customer2: document3만 남아있음 (document2만 삭제됨)
+      const customer2 = await customersCollection.findOne({ _id: customer2Id });
+      expect(customer2.documents).toHaveLength(1);
+      expect(customer2.documents[0].document_id.toString()).toBe(document3Id.toString());
+
+      // 4. document1, document2는 삭제되고 document3은 남아있음
+      const doc1 = await filesCollection.findOne({ _id: document1Id });
+      const doc2 = await filesCollection.findOne({ _id: document2Id });
+      const doc3 = await filesCollection.findOne({ _id: document3Id });
+      expect(doc1).toBeNull();
+      expect(doc2).toBeNull();
+      expect(doc3).not.toBeNull();
+    });
+
+    test('복수 문서 삭제 시 참조가 없는 문서도 정상 처리', async () => {
+      // Given: 2개의 문서 중 1개만 고객이 참조
+      const document1Id = new ObjectId();
+      const document2Id = new ObjectId();
+      const customerId = new ObjectId();
+
+      // ID 추적
+      createdDocumentIds.push(document1Id, document2Id);
+      createdCustomerIds.push(customerId);
+
+      await filesCollection.insertMany([
+        { _id: document1Id, upload: { destPath: '/tmp/test-partial1.pdf', uploaded_at: new Date() } },
+        { _id: document2Id, upload: { destPath: '/tmp/test-partial2.pdf', uploaded_at: new Date() } }
+      ]);
+
+      await customersCollection.insertOne({
+        _id: customerId,
+        personal_info: { name: '테스트고객부분참조' },
+        documents: [
+          { document_id: document1Id, relationship: 'annual_report', upload_date: new Date(), notes: '' }
+        ],
+        meta: { created_at: new Date(), updated_at: new Date() }
+      });
+
+      // When: 복수 문서 삭제 (document1, document2 모두 삭제)
+      const deleteDocIds = [document1Id, document2Id];
+
+      const customersUpdateResult = await customersCollection.updateMany(
+        { 'documents.document_id': { $in: deleteDocIds } },
+        {
+          $pull: { documents: { document_id: { $in: deleteDocIds } } },
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+
+      await filesCollection.deleteMany({ _id: { $in: deleteDocIds } });
+
+      // Then: 검증
+      // 1. 1명의 고객만 업데이트됨 (document2는 참조가 없었음)
+      expect(customersUpdateResult.modifiedCount).toBe(1);
+
+      // 2. 고객의 documents 배열이 비어있음
+      const customer = await customersCollection.findOne({ _id: customerId });
+      expect(customer.documents).toEqual([]);
+
+      // 3. 두 문서 모두 삭제됨
+      const doc1 = await filesCollection.findOne({ _id: document1Id });
+      const doc2 = await filesCollection.findOne({ _id: document2Id });
+      expect(doc1).toBeNull();
+      expect(doc2).toBeNull();
+    });
+
+    test('20개 문서 대량 삭제 시 모든 참조 정리', async () => {
+      // Given: 20개 문서, 5명의 고객이 각각 4개씩 참조
+      const documentIds = Array.from({ length: 20 }, () => new ObjectId());
+      const customerIds = Array.from({ length: 5 }, () => new ObjectId());
+
+      // ID 추적
+      createdDocumentIds.push(...documentIds);
+      createdCustomerIds.push(...customerIds);
+
+      await filesCollection.insertMany(
+        documentIds.map((id, i) => ({
+          _id: id,
+          upload: { destPath: `/tmp/test-bulk-${i}.pdf`, uploaded_at: new Date() }
+        }))
+      );
+
+      await customersCollection.insertMany(
+        customerIds.map((id, i) => ({
+          _id: id,
+          personal_info: { name: `테스트고객대량${i}` },
+          documents: documentIds.slice(i * 4, (i + 1) * 4).map(docId => ({
+            document_id: docId,
+            relationship: 'annual_report',
+            upload_date: new Date(),
+            notes: ''
+          })),
+          meta: { created_at: new Date(), updated_at: new Date() }
+        }))
+      );
+
+      // When: 모든 20개 문서 삭제
+      const customersUpdateResult = await customersCollection.updateMany(
+        { 'documents.document_id': { $in: documentIds } },
+        {
+          $pull: { documents: { document_id: { $in: documentIds } } },
+          $set: { 'meta.updated_at': new Date() }
+        }
+      );
+
+      await filesCollection.deleteMany({ _id: { $in: documentIds } });
+
+      // Then: 검증
+      // 1. 5명의 고객 모두 업데이트됨
+      expect(customersUpdateResult.modifiedCount).toBe(5);
+
+      // 2. 모든 고객의 documents 배열이 비어있음
+      const customers = await customersCollection.find({ _id: { $in: customerIds } }).toArray();
+      customers.forEach(customer => {
+        expect(customer.documents).toEqual([]);
+      });
+
+      // 3. 모든 문서가 삭제됨
+      const remainingDocs = await filesCollection.find({ _id: { $in: documentIds } }).toArray();
+      expect(remainingDocs).toEqual([]);
+    });
+  });
 });

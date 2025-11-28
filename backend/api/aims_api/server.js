@@ -1447,6 +1447,26 @@ app.delete('/api/documents', authenticateJWT, async (req, res) => {
       });
     }
 
+    // ========== 고객 참조 정리 추가 ==========
+    // 문서 삭제 전에 이 문서들을 참조하는 모든 고객의 documents 배열에서 제거
+    try {
+      const deleteObjectIds = ownedDocIds.map(id => new ObjectId(id));
+      const customersUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
+        { 'documents.document_id': { $in: deleteObjectIds } },
+        {
+          $pull: { documents: { document_id: { $in: deleteObjectIds } } },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+      if (customersUpdateResult.modifiedCount > 0) {
+        console.log(`✅ [문서 삭제] 고객 참조 정리: ${customersUpdateResult.modifiedCount}명의 고객에서 문서 참조 제거`);
+      }
+    } catch (customerError) {
+      console.warn('⚠️ [문서 삭제] 고객 참조 정리 실패:', customerError.message);
+      // 고객 참조 정리 실패해도 문서 삭제는 진행
+    }
+    // ========================================
+
     // Python API (포트 8080)로 프록시 (검증된 문서만)
     const pythonApiUrl = 'http://172.17.0.1:8080/documents';
 
@@ -2249,17 +2269,34 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
         { related_customer: new ObjectId(id) }
       ]
     });
-
     console.log(`🗑️ 고객 ${id}과 관련된 관계 레코드 ${relationshipsDeleteResult.deletedCount}개 삭제됨`);
 
-    // 2. 고객 삭제
+    // 2. 해당 고객의 계약 삭제 (Cascading Delete)
+    const contractsDeleteResult = await db.collection('contracts').deleteMany({
+      customer_id: new ObjectId(id)
+    });
+    console.log(`🗑️ 고객 ${id}의 계약 ${contractsDeleteResult.deletedCount}개 삭제됨`);
+
+    // 3. 문서에서 해당 고객 참조 제거 (customer_relation.customer_id 정리)
+    const filesUpdateResult = await db.collection(COLLECTION_NAME).updateMany(
+      { 'customer_relation.customer_id': new ObjectId(id) },
+      {
+        $unset: { 'customer_relation.customer_id': '' },
+        $set: { 'meta.updated_at': utcNowDate() }
+      }
+    );
+    console.log(`🗑️ 고객 ${id}을 참조하던 문서 ${filesUpdateResult.modifiedCount}개 정리됨`);
+
+    // 4. 고객 삭제
     const result = await db.collection(CUSTOMERS_COLLECTION)
       .deleteOne({ _id: new ObjectId(id) });
 
     res.json({
       success: true,
       message: '고객이 성공적으로 삭제되었습니다.',
-      deletedRelationships: relationshipsDeleteResult.deletedCount
+      deletedRelationships: relationshipsDeleteResult.deletedCount,
+      deletedContracts: contractsDeleteResult.deletedCount,
+      updatedFiles: filesUpdateResult.modifiedCount
     });
   } catch (error) {
     console.error('고객 삭제 오류:', error);
@@ -4550,16 +4587,41 @@ app.delete('/api/contracts/:id', async (req, res) => {
       });
     }
 
-    const result = await db.collection(CONTRACTS_COLLECTION).deleteOne({
+    // 1. 계약 정보 조회 (customer_id 확인)
+    const contract = await db.collection(CONTRACTS_COLLECTION).findOne({
       _id: new ObjectId(id)
     });
 
-    if (result.deletedCount === 0) {
+    if (!contract) {
       return res.status(404).json({
         success: false,
         error: '계약을 찾을 수 없습니다.'
       });
     }
+
+    // 2. 고객의 contracts 배열에서 이 계약 참조 제거 (있는 경우)
+    if (contract.customer_id) {
+      const customerId = ObjectId.isValid(contract.customer_id)
+        ? new ObjectId(contract.customer_id)
+        : contract.customer_id;
+
+      const customerUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateOne(
+        { _id: customerId },
+        {
+          $pull: { contracts: { contract_id: new ObjectId(id) } },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+
+      if (customerUpdateResult.modifiedCount > 0) {
+        console.log(`🗑️ 고객 ${contract.customer_id}의 contracts 배열에서 계약 ${id} 참조 제거`);
+      }
+    }
+
+    // 3. 계약 삭제
+    const result = await db.collection(CONTRACTS_COLLECTION).deleteOne({
+      _id: new ObjectId(id)
+    });
 
     res.json({
       success: true,
@@ -4600,6 +4662,31 @@ app.delete('/api/contracts/bulk', async (req, res) => {
       });
     }
 
+    // 1. 삭제할 계약들의 customer_id 조회
+    const contracts = await db.collection(CONTRACTS_COLLECTION).find({
+      _id: { $in: objectIds }
+    }, { projection: { customer_id: 1 } }).toArray();
+
+    // 2. 고객의 contracts 배열에서 이 계약들 참조 제거
+    const customerIds = contracts
+      .filter(c => c.customer_id)
+      .map(c => ObjectId.isValid(c.customer_id) ? new ObjectId(c.customer_id) : c.customer_id);
+
+    if (customerIds.length > 0) {
+      const customerUpdateResult = await db.collection(CUSTOMERS_COLLECTION).updateMany(
+        { _id: { $in: customerIds } },
+        {
+          $pull: { contracts: { contract_id: { $in: objectIds } } },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+
+      if (customerUpdateResult.modifiedCount > 0) {
+        console.log(`🗑️ ${customerUpdateResult.modifiedCount}명의 고객 contracts 배열에서 계약 참조 제거`);
+      }
+    }
+
+    // 3. 계약 삭제
     const result = await db.collection(CONTRACTS_COLLECTION).deleteMany({
       _id: { $in: objectIds }
     });
