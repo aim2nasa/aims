@@ -16,6 +16,7 @@ interface ModalDragResizeState {
   isResizing: boolean
   resizeHandle: ResizeHandle | null
   isMaximized: boolean
+  isImmersive: boolean
   preMaximizeState: {
     position: { x: number; y: number }
     size: { width: number; height: number }
@@ -40,6 +41,7 @@ interface UseModalDragResizeReturn {
   isResizing: boolean
   isResizedFromDefault: boolean
   isMaximized: boolean
+  isImmersive: boolean
   modalStyle: React.CSSProperties
   headerProps: {
     onMouseDown: (e: React.MouseEvent) => void
@@ -53,6 +55,7 @@ interface UseModalDragResizeReturn {
   }>
   reset: () => void
   toggleMaximize: () => void
+  toggleImmersive: () => void
 }
 
 /**
@@ -108,6 +111,7 @@ export const useModalDragResize = (
     isResizing: false,
     resizeHandle: null,
     isMaximized: false,
+    isImmersive: false,
     preMaximizeState: null
   })
 
@@ -125,6 +129,7 @@ export const useModalDragResize = (
       ...prev,
       size: initialValuesRef.current.size,
       isMaximized: false,
+      isImmersive: false,
       preMaximizeState: null
     }))
   }, [])
@@ -140,6 +145,7 @@ export const useModalDragResize = (
             position: prev.preMaximizeState.position,
             size: prev.preMaximizeState.size,
             isMaximized: false,
+            isImmersive: false,
             preMaximizeState: null
           }
         }
@@ -149,6 +155,7 @@ export const useModalDragResize = (
           position: initialValuesRef.current.position,
           size: initialValuesRef.current.size,
           isMaximized: false,
+          isImmersive: false,
           preMaximizeState: null
         }
       } else {
@@ -164,10 +171,19 @@ export const useModalDragResize = (
             width: window.innerWidth,
             height: window.innerHeight
           },
-          isMaximized: true
+          isMaximized: true,
+          isImmersive: false
         }
       }
     })
+  }, [])
+
+  // 몰입 모드 토글 (헤더/푸터 숨김)
+  const toggleImmersive = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      isImmersive: !prev.isImmersive
+    }))
   }, [])
 
   // 드래그 시작
@@ -340,11 +356,13 @@ export const useModalDragResize = (
     isResizing: state.isResizing,
     isResizedFromDefault,
     isMaximized: state.isMaximized,
+    isImmersive: state.isImmersive,
     modalStyle,
     headerProps,
     resizeHandles,
     reset,
-    toggleMaximize
+    toggleMaximize,
+    toggleImmersive
   }
 }
 

@@ -113,7 +113,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
       role="presentation"
     >
       <div
-        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${className}`}
+        className={`draggable-modal ${modal.isMaximized ? 'draggable-modal--maximized' : ''} ${modal.isImmersive ? 'draggable-modal--immersive' : ''} ${className}`}
         style={modal.modalStyle}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -164,6 +164,25 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
                   )}
                 </button>
               </Tooltip>
+              {/* 몰입 모드 버튼 (최대화 상태에서만 표시) */}
+              {modal.isMaximized && (
+                <Tooltip content="몰입 모드 (헤더/푸터 숨김)">
+                  <button
+                    className="draggable-modal__immersive-button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      modal.toggleImmersive()
+                    }}
+                    aria-label="몰입 모드"
+                    type="button"
+                  >
+                    {/* 몰입 모드 아이콘: 확장 화살표 */}
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </Tooltip>
+              )}
               {showResetButton && modal.isResizedFromDefault && !modal.isMaximized && (
                 <Tooltip content="초기 크기로 복원">
                   <button
@@ -174,6 +193,7 @@ export const DraggableModal: React.FC<DraggableModalProps> = ({
                       onReset?.()
                     }}
                     aria-label="초기 크기로 복원"
+                    type="button"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

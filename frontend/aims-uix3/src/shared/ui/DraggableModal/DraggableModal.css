@@ -63,6 +63,93 @@ html[data-theme="dark"] .draggable-modal {
   border-radius: 0;
 }
 
+/* ===== 몰입 모드 (Immersive Mode) ===== */
+
+/* 몰입 모드: 헤더 위로 슬라이드 */
+.draggable-modal--immersive .draggable-modal__header {
+  transform: translateY(-100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+/* 몰입 모드: 헤더 호버 시 다시 표시 */
+.draggable-modal--immersive .draggable-modal__header:hover,
+.draggable-modal--immersive:hover .draggable-modal__header {
+  transform: translateY(0);
+}
+
+/* 몰입 모드: ViewerControls (PDFViewer 하단 툴바) - 플로팅 스타일 */
+.draggable-modal--immersive .viewer-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(calc(100% + 40px));
+  z-index: 100;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  border-top: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  width: auto;
+  min-width: 200px;
+}
+
+html[data-theme="dark"] .draggable-modal--immersive .viewer-controls {
+  background-color: rgba(44, 44, 46, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* 몰입 모드: ViewerControls 호버 시 다시 표시 */
+.draggable-modal--immersive .viewer-controls:hover,
+.draggable-modal--immersive:hover .viewer-controls {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* 몰입 모드: 콘텐츠 영역 전체 확장 */
+.draggable-modal--immersive .draggable-modal__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* 몰입 모드: 오버레이 컨트롤 표시 영역 (상단) */
+.draggable-modal--immersive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 99;
+  pointer-events: none;
+}
+
+/* 몰입 모드: 오버레이 컨트롤 표시 영역 (하단) */
+.draggable-modal--immersive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 99;
+  pointer-events: none;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);
@@ -169,6 +256,39 @@ html[data-theme="dark"] .draggable-modal {
 }
 
 .draggable-modal__maximize-button svg {
+  flex-shrink: 0;
+}
+
+/* 몰입 모드 버튼 */
+.draggable-modal__immersive-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-ease-in-out);
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.draggable-modal__immersive-button:hover {
+  background: transparent;
+  color: var(--color-text-primary);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.draggable-modal__immersive-button:active {
+  transform: scale(0.95);
+}
+
+.draggable-modal__immersive-button svg {
   flex-shrink: 0;
 }
 
