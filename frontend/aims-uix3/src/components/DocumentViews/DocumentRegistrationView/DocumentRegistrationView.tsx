@@ -602,11 +602,17 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
       // 매핑된 metadata 가져오기
       const metadata = arMetadataMappingRef.current.get(fileName);
 
+      // JWT 토큰 가져오기
+      const userIdForAR = typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester';
+      const authDataForAR = localStorage.getItem('auth-storage');
+      const tokenForAR = authDataForAR ? JSON.parse(authDataForAR).state?.token : null;
+
       const response = await fetch('/api/documents/set-annual-report', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': typeof window !== 'undefined' ? localStorage.getItem('aims-current-user-id') || 'tester' : 'tester'
+          'x-user-id': userIdForAR,
+          ...(tokenForAR && { Authorization: `Bearer ${tokenForAR}` })
         },
         body: JSON.stringify({ filename: fileName, metadata })
       });
