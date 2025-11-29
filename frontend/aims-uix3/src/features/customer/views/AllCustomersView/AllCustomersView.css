@@ -253,14 +253,13 @@ html[data-theme="dark"] .type-filter-separator {
 .customer-list-header {
   display: grid;
   grid-template-columns:
-    24px           /* 아이콘 */
+    50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 (텍스트 표시) */
     60px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
-    80px           /* 유형 (텍스트 표시) */
     80px           /* 상태 (텍스트 표시) */
     160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
   align-items: center;
@@ -512,14 +511,13 @@ html[data-theme="dark"] .customer-list-empty {
 .customer-item {
   display: grid;
   grid-template-columns:
-    24px           /* 아이콘 */
+    50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 (텍스트 표시) */
     60px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
-    80px           /* 유형 (텍스트 표시) */
     80px           /* 상태 (텍스트 표시) */
     160px;         /* 등록일 (YYYY.MM.DD HH:MM:SS) */
   gap: 12px;
@@ -692,18 +690,23 @@ html[data-theme="dark"] .customer-address {
   color: var(--color-ios-text-quaternary-dark);
 }
 
-/* 🍎 CUSTOMER TYPE: 고객 타입 */
+/* 🍎 CUSTOMER TYPE: 고객 타입 (아이콘 표시) */
 .customer-type {
-  /* font-size: var(--font-size-caption-2); (11px - FONT_RULES.md: 보조 데이터 ) */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-weight: 500;
-  color: var(--color-ios-text-quaternary-light);
-  text-align: center;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  flex-shrink: 0;
 }
 
-html[data-theme="dark"] .customer-type {
-  color: var(--color-ios-text-quaternary-dark);
+/* 개인 고객 아이콘 - 파란색 */
+.customer-type .customer-icon--personal {
+  color: var(--color-icon-blue);
+}
+
+/* 법인 고객 아이콘 - 주황색 */
+.customer-type .customer-icon--corporate {
+  color: var(--color-icon-orange);
 }
 
 /* 🍎 CUSTOMER STATUS: 상태 */
@@ -1064,14 +1067,13 @@ html[data-theme="dark"] .customer-library-container .selected-count-inline {
 .customer-list-header:has(.header-checkbox) {
   grid-template-columns:
     24px           /* 체크박스 */
-    24px           /* 아이콘 */
+    50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 */
     60px           /* 성별 */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
-    80px           /* 유형 */
     80px           /* 상태 */
     160px;         /* 등록일 */
 }
@@ -1080,14 +1082,13 @@ html[data-theme="dark"] .customer-library-container .selected-count-inline {
 .customer-item:has(.customer-checkbox) {
   grid-template-columns:
     24px           /* 체크박스 */
-    24px           /* 아이콘 */
+    50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 */
     60px           /* 성별 */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
-    80px           /* 유형 */
     80px           /* 상태 */
     160px;         /* 등록일 */
 }
