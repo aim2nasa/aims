@@ -28,7 +28,7 @@ interface ContractAllViewProps {
   onCustomerClick?: (customerId: string, customer: Customer) => void
 }
 
-type SortField = 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
+type SortField = 'customer_type' | 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
 const ITEMS_PER_PAGE_OPTIONS = [
@@ -204,6 +204,11 @@ export default function ContractAllView({
       let bVal: string | number = ''
 
       switch (sortField) {
+        case 'customer_type':
+          // 고객 유형으로 정렬 (개인 < 법인)
+          aVal = a.customer_id ? (customerTypeMap.get(a.customer_id) === '법인' ? 1 : 0) : -1
+          bVal = b.customer_id ? (customerTypeMap.get(b.customer_id) === '법인' ? 1 : 0) : -1
+          break
         case 'customer_name':
           aVal = a.customer_name || ''
           bVal = b.customer_name || ''
@@ -252,7 +257,7 @@ export default function ContractAllView({
       if (strA > strB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [filteredContracts, sortField, sortDirection])
+  }, [filteredContracts, sortField, sortDirection, customerTypeMap])
 
   // 페이지네이션
   const itemsPerPageNumber = parseInt(itemsPerPage, 10)
@@ -629,6 +634,10 @@ export default function ContractAllView({
                   />
                 </div>
               )}
+              <div className="header-type header-sortable" onClick={() => handleColumnSort('customer_type')}>
+                <span>유형</span>
+                {renderSortIndicator('customer_type')}
+              </div>
               <div className="header-customer header-sortable" onClick={() => handleColumnSort('customer_name')}>
                 <svg className="header-icon-svg" width="13" height="13" viewBox="0 0 16 16">
                   <circle cx="8" cy="5" r="2.5" fill="currentColor"/>
@@ -745,11 +754,8 @@ export default function ContractAllView({
                   />
                 </div>
               )}
-              <span
-                className={`contract-customer ${contract.customer_id ? 'contract-customer--clickable' : ''}`}
-                onClick={contract.customer_id ? (e) => handleCustomerNameClick(contract, e) : undefined}
-              >
-                {/* 고객 유형 아이콘 (개인/법인) - AllCustomersView와 동일 */}
+              {/* 고객 유형 아이콘 칼럼 (개인/법인) */}
+              <span className="contract-type">
                 {contract.customer_id && customerTypeMap.get(contract.customer_id) === '법인' ? (
                   <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon customer-type-icon--corporate">
                     <circle cx="10" cy="10" r="10" opacity="0.2" />
@@ -762,6 +768,11 @@ export default function ContractAllView({
                     <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
                   </svg>
                 )}
+              </span>
+              <span
+                className={`contract-customer ${contract.customer_id ? 'contract-customer--clickable' : ''}`}
+                onClick={contract.customer_id ? (e) => handleCustomerNameClick(contract, e) : undefined}
+              >
                 {contract.customer_name || '-'}
               </span>
               <span className="contract-product" title={contract.product_name || '-'}>

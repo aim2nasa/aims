@@ -182,7 +182,8 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
 .contract-list-header {
   display: grid;
   grid-template-columns:
-    156px                /* 고객명 (+30%) */
+    50px                 /* 유형 (개인/법인) */
+    140px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     115px                /* 증권번호 */
@@ -195,7 +196,7 @@ html[data-theme="dark"] .contract-list::-webkit-scrollbar-thumb {
   gap: 12px;
   padding: 8px 12px;
   height: 32px;          /* AllCustomersView와 동일 */
-  min-width: 1111px;     /* 최소 너비 - 수평 스크롤 트리거 (+36px) */
+  min-width: 1145px;     /* 최소 너비 - 수평 스크롤 트리거 */
   background: #f5f6f7;   /* 완전 불투명 배경 */
   border-bottom: 1px solid var(--color-ios-separator-light);
   font-size: var(--font-size-caption-1); /* 12px */
@@ -366,6 +367,12 @@ html[data-theme="dark"] .sort-indicator {
   opacity: 1;
 }
 
+/* 유형 헤더 - 최소 폭으로 중앙 정렬 */
+.header-type {
+  justify-content: center;
+  font-size: var(--font-size-caption-2);
+}
+
 /* 🎨 컬럼 헤더 아이콘 색상 - iOS System Colors */
 .header-customer .header-icon-svg {
   color: var(--color-icon-blue);
@@ -421,7 +428,8 @@ html[data-theme="dark"] .sort-indicator {
 .contract-item {
   display: grid;
   grid-template-columns:
-    156px                /* 고객명 (+30%) */
+    50px                 /* 유형 (개인/법인) */
+    140px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     115px                /* 증권번호 */
@@ -432,7 +440,7 @@ html[data-theme="dark"] .sort-indicator {
     100px;               /* 납입상태 */
   gap: 12px;
   align-items: center;
-  min-width: 1111px;     /* 헤더와 동일 - 수평 스크롤 (+36px) */
+  min-width: 1145px;     /* 헤더와 동일 - 수평 스크롤 */
   height: 32px;
   padding: 6px 12px;
   background: var(--color-ios-bg-primary-light);
@@ -470,6 +478,13 @@ html[data-theme="dark"] .contract-item > span {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* === 고객 유형 칼럼 (개인/법인) === */
+.contract-type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* === 고객 유형 아이콘 (개인/법인) - AllCustomersView와 동일 === */
@@ -971,7 +986,8 @@ html[data-theme="dark"] .contract-all-view .selected-count-inline {
 .contract-list-header--delete-mode {
   grid-template-columns:
     24px                 /* 체크박스 */
-    156px                /* 고객명 (+30%) */
+    50px                 /* 유형 (개인/법인) */
+    140px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     115px                /* 증권번호 */
@@ -986,7 +1002,8 @@ html[data-theme="dark"] .contract-all-view .selected-count-inline {
 .contract-item--delete-mode {
   grid-template-columns:
     24px                 /* 체크박스 */
-    156px                /* 고객명 (+30%) */
+    50px                 /* 유형 (개인/법인) */
+    140px                /* 고객명 */
     minmax(200px, 1fr)   /* 상품명 */
     100px                /* 계약일 */
     115px                /* 증권번호 */
