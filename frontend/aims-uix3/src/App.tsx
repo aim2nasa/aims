@@ -340,8 +340,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     persistentState.activeDocumentView
   )
 
-  // 계정 설정 Store (등록은 나중에 수행)
-  const { registerSetters } = useAccountSettingsStore()
+  // 계정 설정 Store
+  const { registerSetters, openRequested, clearOpenRequest } = useAccountSettingsStore()
 
   // RightPane 문서 프리뷰 상태
   const [selectedDocument, setSelectedDocument] = useState<SelectedDocument | null>(null)
@@ -716,6 +716,28 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       updateURLParams
     })
   }, [registerSetters, setActiveDocumentView, setRightPaneVisible, setSelectedDocument, setSelectedCustomer, setRightPaneContentType, updateURLParams])
+
+  // 계정 설정 화면 열기 요청 처리 (새로운 상태 기반 API)
+  useEffect(() => {
+    if (openRequested) {
+      // RightPane 숨기기
+      setRightPaneVisible(false)
+
+      // 선택 해제
+      setSelectedDocument(null)
+      setSelectedCustomer(null)
+      setRightPaneContentType(null)
+
+      // View 변경
+      setActiveDocumentView('account-settings')
+
+      // URL 파라미터 제거
+      updateURLParams({ customerId: null, documentId: null })
+
+      // 요청 처리 완료
+      clearOpenRequest()
+    }
+  }, [openRequested, clearOpenRequest, updateURLParams])
 
   const closeDocumentView = useCallback(() => {
     setActiveDocumentView(null)

@@ -1,27 +1,39 @@
 /**
  * Account Settings Store
  * @since 2025-11-07
+ * @updated 2025-11-29
  *
  * 계정 설정 View 상태 관리 (Zustand)
- * App.tsx의 activeDocumentView 시스템과 통합
+ * 상태 기반 접근으로 리팩토링 (setter 저장 안티패턴 제거)
  */
 
 import { create } from 'zustand'
 
 interface AccountSettingsState {
-  /** activeDocumentView setter */
+  /** 계정 설정 화면 열기 요청 (App.tsx가 구독) */
+  openRequested: boolean
+
+  /** 계정 설정 화면 열기 요청 */
+  requestOpenAccountSettings: () => void
+
+  /** 요청 처리 완료 후 초기화 */
+  clearOpenRequest: () => void
+
+  // === Legacy API (하위 호환성) ===
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /** @deprecated registerSetters 대신 openRequested 상태를 구독하세요 */
   setActiveDocumentView: ((view: string | null) => void) | null
-  /** RightPane visible setter */
+  /** @deprecated */
   setRightPaneVisible: ((visible: boolean) => void) | null
-  /** selectedDocument setter */
+  /** @deprecated */
   setSelectedDocument: ((doc: any) => void) | null
-  /** selectedCustomer setter */
+  /** @deprecated */
   setSelectedCustomer: ((customer: any) => void) | null
-  /** rightPaneContentType setter */
+  /** @deprecated */
   setRightPaneContentType: ((type: 'document' | 'customer' | null) => void) | null
-  /** updateURLParams function */
+  /** @deprecated */
   updateURLParams: ((params: any) => void) | null
-  /** setter 등록 */
+  /** @deprecated requestOpenAccountSettings를 사용하세요 */
   registerSetters: (setters: {
     setActiveDocumentView: (view: string | null) => void
     setRightPaneVisible: (visible: boolean) => void
@@ -30,37 +42,51 @@ interface AccountSettingsState {
     setRightPaneContentType: (type: 'document' | 'customer' | null) => void
     updateURLParams: (params: any) => void
   }) => void
-  /** 계정 설정 View 열기 */
+  /** @deprecated requestOpenAccountSettings를 사용하세요 */
   openAccountSettingsView: () => void
 }
 
 export const useAccountSettingsStore = create<AccountSettingsState>((set, get) => ({
+  // 새로운 상태 기반 API
+  openRequested: false,
+
+  requestOpenAccountSettings: () => {
+    set({ openRequested: true })
+  },
+
+  clearOpenRequest: () => {
+    set({ openRequested: false })
+  },
+
+  // Legacy API (하위 호환성 유지)
   setActiveDocumentView: null,
   setRightPaneVisible: null,
   setSelectedDocument: null,
   setSelectedCustomer: null,
   setRightPaneContentType: null,
   updateURLParams: null,
+
   registerSetters: (setters) => {
     set(setters)
   },
+
   openAccountSettingsView: () => {
     const state = get()
+
+    // 새로운 API 사용 시도
+    if (state.openRequested === false) {
+      set({ openRequested: true })
+    }
+
+    // Legacy fallback
     if (state.setActiveDocumentView && state.setRightPaneVisible &&
         state.setSelectedDocument && state.setSelectedCustomer &&
         state.setRightPaneContentType && state.updateURLParams) {
-      // RightPane 강제로 숨기기
       state.setRightPaneVisible(false)
-
-      // 선택 해제
       state.setSelectedDocument(null)
       state.setSelectedCustomer(null)
       state.setRightPaneContentType(null)
-
-      // View 변경
       state.setActiveDocumentView('account-settings')
-
-      // URL 파라미터 제거
       state.updateURLParams({ customerId: null, documentId: null })
     }
   }

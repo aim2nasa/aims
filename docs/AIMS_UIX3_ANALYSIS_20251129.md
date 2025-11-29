@@ -1072,5 +1072,147 @@ src/stores/           ← 2개 (user.ts, CustomerDocument.ts)
 
 ---
 
+## Phase 3: 상태 관리 패턴 개선 및 접근성 훅 구현 (2025-11-29)
+
+### 작업 7: AccountSettingsStore 안티패턴 수정 ✅
+
+**문제점**:
+- setter 함수를 store에 저장하는 안티패턴 사용
+- App.tsx와의 강한 결합
+- React 상태 흐름 원칙 위반
+
+**해결 방안**:
+- 요청 기반 상태 패턴으로 리팩토링
+- `openRequested` boolean 상태 추가
+- App.tsx가 상태를 구독하여 처리
+
+**수정 내용**:
+
+```typescript
+// src/shared/store/useAccountSettingsStore.ts
+interface AccountSettingsState {
+  /** 계정 설정 화면 열기 요청 (App.tsx가 구독) */
+  openRequested: boolean
+
+  /** 계정 설정 화면 열기 요청 */
+  requestOpenAccountSettings: () => void
+
+  /** 요청 처리 완료 후 초기화 */
+  clearOpenRequest: () => void
+
+  // === Legacy API (하위 호환성 @deprecated) ===
+  // 기존 API 유지하되 deprecated 표시
+}
+```
+
+**App.tsx 변경**:
+```typescript
+const { registerSetters, openRequested, clearOpenRequest } = useAccountSettingsStore()
+
+// 계정 설정 화면 열기 요청 처리 (새로운 상태 기반 API)
+useEffect(() => {
+  if (openRequested) {
+    setRightPaneVisible(false)
+    setSelectedDocument(null)
+    setSelectedCustomer(null)
+    setRightPaneContentType(null)
+    setActiveDocumentView('account-settings')
+    updateURLParams({ customerId: null, documentId: null })
+    clearOpenRequest()
+  }
+}, [openRequested, clearOpenRequest, updateURLParams])
+```
+
+**장점**:
+- 하위 호환성 유지 (기존 코드 동작)
+- 점진적 마이그레이션 가능
+- 명확한 데이터 흐름
+
+---
+
+### 작업 9: Focus Trap 훅 구현 ✅
+
+**목적**:
+- 모달/다이얼로그에서 Tab 키 순환
+- WCAG 2.1 AA 접근성 준수
+- 자동 첫 요소 포커스
+- 포커스 복원
+
+**구현 파일**:
+- `src/hooks/useFocusTrap.ts`
+- `src/hooks/__tests__/useFocusTrap.test.tsx`
+
+**사용법**:
+```tsx
+function Modal({ isOpen, onClose }) {
+  const containerRef = useFocusTrap<HTMLDivElement>({ enabled: isOpen })
+
+  if (!isOpen) return null
+
+  return (
+    <div ref={containerRef} role="dialog" aria-modal="true">
+      <button onClick={onClose}>닫기</button>
+      <input type="text" placeholder="입력" />
+      <button>확인</button>
+    </div>
+  )
+}
+```
+
+**옵션**:
+| 옵션 | 타입 | 기본값 | 설명 |
+|-----|------|-------|------|
+| enabled | boolean | true | 훅 활성화 여부 |
+| autoFocus | boolean | true | 첫 요소 자동 포커스 |
+| restoreFocus | boolean | true | 이전 포커스 복원 |
+| initialFocusSelector | string | undefined | 초기 포커스 요소 선택자 |
+
+**테스트 (7개 모두 통과)**:
+| 테스트 | 설명 |
+|-------|------|
+| 자동 포커스 | 첫 번째 포커스 가능 요소에 포커스 |
+| autoFocus=false | 자동 포커스 비활성화 |
+| isOpen=false | 모달 미렌더링 |
+| Tab 순환 | 마지막 → 첫 번째 요소 |
+| Shift+Tab 순환 | 첫 번째 → 마지막 요소 |
+| 빈 컨테이너 | 에러 없이 동작 |
+| 포커스 복원 | 모달 닫힐 때 이전 포커스 복원 |
+
+**기술적 고려사항**:
+- jsdom 환경에서 `offsetParent`가 항상 `null`이므로 `getComputedStyle` 사용
+- `setTimeout(0)` 사용 (jsdom에서 `requestAnimationFrame` 미지원)
+
+---
+
+### Phase 3 작업 결과 요약
+
+| 작업 | 상태 | 생성/수정 파일 | 테스트 |
+|-----|------|--------------|-------|
+| AccountSettingsStore 리팩토링 | ✅ 완료 | 2 (수정) | 타입체크 통과 |
+| useFocusTrap 훅 구현 | ✅ 완료 | 2 (신규) | 7 테스트 통과 |
+
+### 업데이트된 훅 목록 (Phase 3)
+
+| 훅 | 위치 | 용도 | 테스트 |
+|---|------|-----|-------|
+| useFocusTrap | src/hooks/ | 모달 포커스 트랩 | 7개 |
+| useClickOutside | src/hooks/ | 요소 외부 클릭 감지 | 8개 |
+| useCustomerDocument | src/hooks/ | 고객 문서 관리 | ✅ |
+| useDraggable | src/hooks/ | 드래그 기능 | - |
+| useGaps | src/hooks/ | 레이아웃 갭 관리 | - |
+| useModalDragResize | src/hooks/ | 모달 드래그/리사이즈 | - |
+| useNavigation | src/hooks/ | 네비게이션 | - |
+| usePersistedState | src/hooks/ | 영속 상태 | - |
+| useViewerControls | src/hooks/ | 뷰어 컨트롤 | - |
+
+### 전체 테스트 결과
+
+```
+ Test Files   131 passed | 2 skipped (133)
+      Tests   3010 passed | 26 skipped (3036)
+```
+
+---
+
 **작성자**: Claude Code
 **검토 필요**: 개발팀
