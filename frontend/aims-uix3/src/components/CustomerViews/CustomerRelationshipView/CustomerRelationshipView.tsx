@@ -16,6 +16,7 @@ import Tooltip from '@/shared/ui/Tooltip';
 import { RelationshipService, type Relationship } from '../../../services/relationshipService';
 import { useCustomerDocument } from '@/hooks/useCustomerDocument';
 import type { Customer } from '@/entities/customer/model';
+import { QuickFamilyAssignPanel } from './QuickFamilyAssignPanel';
 import './CustomerRelationshipView.css';
 
 // 🚀 성능 최적화: 초성 인덱스 맵을 상수로 미리 계산 (O(1) 조회)
@@ -87,6 +88,9 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   // 트리 뷰 모드: 대표만 보기 → 초성만 보기 → 전체 보기 (순환)
   type ViewMode = 'representative' | 'consonant' | 'all';
   const [viewMode, setViewMode] = useState<ViewMode>('representative');
+
+  // 빠른 가족 등록 패널용 상태
+  const [selectedUnassignedCustomer, setSelectedUnassignedCustomer] = useState<Customer | null>(null);
 
   // LocalStorage에서 트리 확장 상태 복원
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
@@ -810,7 +814,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <div>등록된 고객 관계가 없습니다</div>
         </div>
       ) : (
-        <div className="relationship-tree">
+        <div className="relationship-view__content">
+          <div className="relationship-tree">
           {/* 헤더: 제목 + 검색 + 새로고침 */}
           <div className="relationship-header">
             <div className="relationship-title">고객 관계 현황</div>
@@ -993,8 +998,8 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                                 </svg>
                               </span>
                               <span
-                                className="tree-node__label tree-node__label--clickable"
-                                onClick={(e) => handleCustomerClick(customer._id, e)}
+                                className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
+                                onClick={(e) => { e.stopPropagation(); setSelectedUnassignedCustomer(customer); }}
                               >
                                 {highlightText(customer.personal_info?.name || '이름없음')}
                               </span>
@@ -1226,6 +1231,20 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
 				}
                 </div>
               )}
+            </div>
+          )}
+          </div>
+
+          {/* 빠른 가족 등록 패널 */}
+          {selectedUnassignedCustomer && (
+            <div className="relationship-view__panel">
+              <QuickFamilyAssignPanel
+                customer={selectedUnassignedCustomer}
+                onComplete={() => {
+                  setSelectedUnassignedCustomer(null);
+                }}
+                onClose={() => setSelectedUnassignedCustomer(null)}
+              />
             </div>
           )}
         </div>
