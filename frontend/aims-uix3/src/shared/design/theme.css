@@ -125,6 +125,12 @@
   --color-layout-brb-icon: var(--color-layout-brb-icon-light); /* 호버 아이콘 색상 */
   --color-layout-rightpane-bg: var(--color-layout-rightpane-light); /* gapRight 시각적 구분을 위한 별도 색상 */
 
+  /* Header Glass Effect Colors - Light Theme (glassmorphism) */
+  --color-header-glass-bg: rgba(255, 255, 255, 0.7); /* 헤더 glassmorphism 배경 */
+  --color-scrollbar-thumb: var(--color-ios-scrollbar-light); /* 스크롤바 thumb */
+  --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-light); /* 스크롤바 thumb 호버 */
+  --color-text-placeholder: var(--color-ios-text-placeholder-light); /* 플레이스홀더 텍스트 */
+
   /* Gap Controller Colors */
   --color-gap-button-active: var(--color-error-500);
   --color-gap-button-inactive: var(--color-neutral-700);
@@ -305,6 +311,12 @@
   --color-layout-brb-hover: var(--color-layout-brb-hover-dark); /* 호버 시 진한 다크 그레이 */
   --color-layout-brb-icon: var(--color-layout-brb-icon-dark); /* 호버 아이콘 색상 */
   --color-layout-rightpane-bg: var(--color-layout-rightpane-dark); /* gapRight 시각적 구분을 위한 별도 색상 */
+
+  /* Header Glass Effect Colors - Dark Theme (glassmorphism) */
+  --color-header-glass-bg: rgba(28, 28, 30, 0.7); /* 헤더 glassmorphism 배경 */
+  --color-scrollbar-thumb: var(--color-ios-scrollbar-dark); /* 스크롤바 thumb */
+  --color-scrollbar-thumb-hover: var(--color-ios-scrollbar-hover-dark); /* 스크롤바 thumb 호버 */
+  --color-text-placeholder: var(--color-ios-text-placeholder-dark); /* 플레이스홀더 텍스트 */
 
   /* Gap Controller Colors - Dark Theme */
   --color-gap-button-active: var(--color-error-400);

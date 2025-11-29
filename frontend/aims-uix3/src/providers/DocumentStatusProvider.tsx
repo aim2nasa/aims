@@ -3,7 +3,7 @@
  * @description 문서 처리 현황 상태 관리 Provider
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   DocumentStatusContext,
   type DocumentStatusState,
@@ -273,6 +273,19 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     }))
   }, [])
 
+  // 🔧 useRef로 최신 함수 참조 유지 (폴링 interval 및 이벤트 리스너 안정화)
+  const fetchDocumentsRef = useRef(fetchDocuments)
+  const checkApiHealthRef = useRef(checkApiHealth)
+
+  // 최신 함수로 ref 업데이트 (렌더링마다)
+  useEffect(() => {
+    fetchDocumentsRef.current = fetchDocuments
+  }, [fetchDocuments])
+
+  useEffect(() => {
+    checkApiHealthRef.current = checkApiHealth
+  }, [checkApiHealth])
+
   /**
    * searchQuery prop 변경 시 searchTerm 동기화
    */
@@ -282,6 +295,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
 
   /**
    * Page Visibility API: 브라우저 탭이 백그라운드일 때 폴링 중지
+   * 🔧 useRef 사용으로 이벤트 리스너 재등록 방지
    */
   useEffect(() => {
     // 테스트 환경에서는 스킵
@@ -291,10 +305,10 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
       const isVisible = document.visibilityState === 'visible'
       setPageVisible(isVisible)
 
-      // 탭이 다시 보이면 즉시 데이터 새로고침
+      // 탭이 다시 보이면 즉시 데이터 새로고침 (ref 사용)
       if (isVisible) {
-        fetchDocuments(false)
-        checkApiHealth()
+        fetchDocumentsRef.current(false)
+        checkApiHealthRef.current()
       }
     }
 
@@ -305,7 +319,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [fetchDocuments, checkApiHealth])
+  }, []) // 🔧 의존성 제거 - ref 사용으로 안정화
 
   /**
    * 초기 로드
@@ -350,6 +364,7 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
   /**
    * 실시간 폴링 (5초마다)
    * 페이지가 보이고(isPageVisible) 폴링이 활성화(isPollingEnabled)되어 있을 때만 실행
+   * 🔧 useRef 사용으로 interval 재생성 방지 (메모리 누수 수정)
    */
   useEffect(() => {
     // 테스트 환경에서는 폴링 스킵
@@ -358,12 +373,12 @@ export const DocumentStatusProvider: React.FC<DocumentStatusProviderProps> = ({
     if (!isPageVisible) return // 페이지가 백그라운드면 폴링 중지
 
     const interval = setInterval(() => {
-      fetchDocuments(false)
-      checkApiHealth()
+      fetchDocumentsRef.current(false)
+      checkApiHealthRef.current()
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [isPollingEnabled, isPageVisible, fetchDocuments, checkApiHealth])
+  }, [isPollingEnabled, isPageVisible]) // 🔧 fetchDocuments, checkApiHealth 의존성 제거
 
   /**
    * 🔍 검색 및 필터링

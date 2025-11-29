@@ -183,9 +183,9 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   padding: 10px 16px;
   font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
   font-family: var(--font-family-text);
-  color: #dc3545;
-  background: rgba(220, 53, 69, 0.1);
-  border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--color-status-error); /* 테마별 에러 색상 */
+  background: var(--color-status-error-bg); /* 테마별 에러 배경 */
+  border-bottom: 1px solid var(--color-border-error); /* 테마별 에러 테두리 */
   flex-shrink: 0;
 }
 
