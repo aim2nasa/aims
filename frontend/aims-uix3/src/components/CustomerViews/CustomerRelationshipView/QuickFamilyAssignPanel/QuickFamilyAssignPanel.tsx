@@ -88,12 +88,12 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         setCustomersLoading(false);
 
         // 가족 관계 ID 추출
-        const familyIds = new Set<string>();
-        const representativeIds = new Set<string>();
+        const familyIds = new Set<string>(); // 가족 관계에 포함된 모든 고객
+        const representativeIds = new Set<string>(); // 가족 대표 (family_representative 필드)
 
         relationshipsResponse.relationships.forEach(rel => {
           if (rel.relationship_info?.relationship_category === 'family') {
-            // from_customer가 가족 대표
+            // from_customer ID 추출
             let fromId = '';
             if (typeof rel.from_customer === 'string') {
               fromId = rel.from_customer;
@@ -101,18 +101,37 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
               fromId = rel.from_customer._id;
             }
 
-            if (fromId) {
-              familyIds.add(fromId);
-              representativeIds.add(fromId); // 가족 대표로 추가
+            // related_customer ID 추출
+            let toId = '';
+            if (typeof rel.related_customer === 'string') {
+              toId = rel.related_customer;
+            } else if (rel.related_customer && typeof rel.related_customer === 'object' && '_id' in rel.related_customer) {
+              toId = rel.related_customer._id;
             }
 
-            // related_customer가 가족 구성원
-            if (typeof rel.related_customer === 'string') {
-              familyIds.add(rel.related_customer);
-            } else if (rel.related_customer && typeof rel.related_customer === 'object' && '_id' in rel.related_customer) {
-              familyIds.add(rel.related_customer._id);
+            // family_representative ID 추출 (진짜 가족 대표!)
+            let repId = '';
+            const familyRep = (rel as { family_representative?: string | { _id: string } }).family_representative;
+            if (typeof familyRep === 'string') {
+              repId = familyRep;
+            } else if (familyRep && typeof familyRep === 'object' && '_id' in familyRep) {
+              repId = familyRep._id;
+            }
+
+            // 모든 가족 구성원을 familyIds에 추가
+            if (fromId) familyIds.add(fromId);
+            if (toId) familyIds.add(toId);
+
+            // 가족 대표 추가
+            if (repId) {
+              representativeIds.add(repId);
             }
           }
+        });
+
+        console.log('[QuickFamilyAssignPanel] 가족 관계:', {
+          familyCount: familyIds.size,
+          representativeCount: representativeIds.size
         });
 
         setFamilyCustomerIds(familyIds);
