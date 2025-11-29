@@ -1,19 +1,21 @@
 /**
  * QuickFamilyAssignPanel Component
  * @since 2025-11-29
- * @version 1.0.0
+ * @version 2.0.0
  *
- * 빠른 가족 등록 패널
- * - 가족관계 미설정 고객 선택 시 표시
- * - 후보 고객 검색 및 선택
+ * 빠른 가족 등록 패널 (CustomerSelectorModal 스타일 UI 임베드)
+ * - 검색, 초성 필터, 정렬 가능한 테이블 UI
+ * - 가족관계 미설정 고객만 표시
  * - 관계 유형 선택 및 등록
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { RelationshipService, type CreateRelationshipData } from '@/services/relationshipService';
-import { useCustomerDocument } from '@/hooks/useCustomerDocument';
+import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
 import Button from '@/shared/ui/Button';
+import { SFSymbol } from '../../../SFSymbol/SFSymbol';
+import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
 import './QuickFamilyAssignPanel.css';
 
 interface QuickFamilyAssignPanelProps {
@@ -33,17 +35,19 @@ const FAMILY_RELATIONSHIP_TYPES = [
 ];
 
 /**
- * QuickFamilyAssignPanel - 빠른 가족 등록 패널
+ * QuickFamilyAssignPanel - 빠른 가족 등록 패널 (테이블 UI 임베드 버전)
  */
 export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   customer,
   onComplete,
   onClose,
 }) => {
-  // Document에서 고객 목록 가져오기
-  const { customers: allCustomers } = useCustomerDocument();
+  // 로드 상태 추적 (중복 로드 방지)
+  const hasLoadedRef = useRef(false);
 
   // 상태 관리
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
   const [familyCustomerIds, setFamilyCustomerIds] = useState<Set<string>>(new Set());
   const [selectedCandidate, setSelectedCandidate] = useState<Customer | null>(null);
   const [relationshipType, setRelationshipType] = useState<string | null>(null);
@@ -52,23 +56,40 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   const [candidatesLoading, setCandidatesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 이미 가족 관계가 있는 고객 ID 로드
-  useEffect(() => {
-    const loadFamilyCustomers = async () => {
-      setCandidatesLoading(true);
-      try {
-        const { relationships } = await RelationshipService.getAllRelationshipsWithCustomers();
+  // 초성 필터 상태
+  const [selectedInitial, setSelectedInitial] = useState<string | null>(null);
+  const [initialType, setInitialType] = useState<'korean' | 'alphabet' | 'number'>('korean');
 
+  // 정렬 상태
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+  // 고객 데이터 및 가족 관계 로드 (마운트 시 1회만 실행)
+  useEffect(() => {
+    // 이미 로드했으면 스킵
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    const loadAllData = async () => {
+      try {
+        // 고객 목록과 가족 관계를 병렬로 로드
+        const [customersResponse, relationshipsResponse] = await Promise.all([
+          CustomerService.getCustomers({ limit: 10000, page: 1 }),
+          RelationshipService.getAllRelationshipsWithCustomers()
+        ]);
+
+        // 고객 목록 설정
+        setAllCustomers(customersResponse.customers);
+        setCustomersLoading(false);
+
+        // 가족 관계 ID 추출
         const familyIds = new Set<string>();
-        relationships.forEach(rel => {
+        relationshipsResponse.relationships.forEach(rel => {
           if (rel.relationship_info?.relationship_category === 'family') {
-            // from_customer ID 추가
             if (typeof rel.from_customer === 'string') {
               familyIds.add(rel.from_customer);
             } else if (rel.from_customer && typeof rel.from_customer === 'object' && '_id' in rel.from_customer) {
               familyIds.add(rel.from_customer._id);
             }
-            // to_customer ID 추가
             if (typeof rel.related_customer === 'string') {
               familyIds.add(rel.related_customer);
             } else if (rel.related_customer && typeof rel.related_customer === 'object' && '_id' in rel.related_customer) {
@@ -78,34 +99,147 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         });
 
         setFamilyCustomerIds(familyIds);
+        setCandidatesLoading(false);
       } catch (err) {
-        console.error('[QuickFamilyAssignPanel] 가족 관계 로드 실패:', err);
-        setError('후보 목록을 불러오는데 실패했습니다.');
-      } finally {
+        console.error('[QuickFamilyAssignPanel] 데이터 로드 실패:', err);
+        setError('데이터를 불러오는데 실패했습니다.');
+        setCustomersLoading(false);
         setCandidatesLoading(false);
       }
     };
 
-    loadFamilyCustomers();
+    loadAllData();
   }, []);
 
-  // 후보 고객 필터링
+  // 한글 초성 추출 함수
+  const getInitialConsonant = (name: string): string => {
+    if (!name) return '';
+    const firstChar = name.charAt(0);
+    const code = firstChar.charCodeAt(0);
+
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const initialIndex = Math.floor((code - 0xAC00) / 588);
+      const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+      return initials[initialIndex] || '';
+    }
+
+    if (code >= 0x3131 && code <= 0x314E) {
+      return firstChar;
+    }
+
+    return '';
+  };
+
+  // 알파벳 초성 추출 함수
+  const getAlphabetInitial = (name: string): string => {
+    if (!name) return '';
+    const firstChar = name.charAt(0).toUpperCase();
+    if (firstChar >= 'A' && firstChar <= 'Z') {
+      return firstChar;
+    }
+    return '';
+  };
+
+  // 숫자 초성 추출 함수
+  const getNumberInitial = (name: string): string => {
+    if (!name) return '';
+    const firstChar = name.charAt(0);
+    if (firstChar >= '0' && firstChar <= '9') {
+      return firstChar;
+    }
+    return '';
+  };
+
+  // 이름의 초성 추출
+  const getNameInitial = (name: string, type: 'korean' | 'alphabet' | 'number'): string => {
+    if (type === 'korean') return getInitialConsonant(name);
+    if (type === 'alphabet') return getAlphabetInitial(name);
+    if (type === 'number') return getNumberInitial(name);
+    return '';
+  };
+
+  // 검색 중인지 여부
+  const isSearching = searchQuery.trim().length > 0;
+
+  // 후보 고객 필터링 및 정렬
   const candidates = useMemo(() => {
-    return allCustomers.filter(c => {
+    let filtered = allCustomers.filter(c => {
       // 자기 자신 제외
       if (c._id === customer._id) return false;
       // 개인 고객만
       if (c.insurance_info?.customer_type !== '개인') return false;
       // 이미 가족 관계가 있는 고객 제외
       if (familyCustomerIds.has(c._id)) return false;
-      // 검색어 필터
-      if (searchQuery) {
-        const name = c.personal_info?.name || '';
-        return name.toLowerCase().includes(searchQuery.toLowerCase());
-      }
       return true;
     });
-  }, [allCustomers, customer._id, familyCustomerIds, searchQuery]);
+
+    // 검색어 필터
+    if (isSearching) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(c => {
+        const name = c.personal_info?.name?.toLowerCase() || '';
+        const phone = c.personal_info?.mobile_phone?.replace(/-/g, '') || '';
+        return name.includes(query) || phone.includes(query);
+      });
+    }
+
+    // 초성 필터 적용
+    if (selectedInitial && !isSearching) {
+      filtered = filtered.filter(c => {
+        const name = c.personal_info?.name || '';
+        return getNameInitial(name, initialType) === selectedInitial;
+      });
+    }
+
+    // 정렬 적용
+    if (sortConfig) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: string = '';
+        let bValue: string = '';
+
+        switch (sortConfig.key) {
+          case 'name':
+            aValue = a.personal_info?.name || '';
+            bValue = b.personal_info?.name || '';
+            break;
+          case 'birth':
+            aValue = a.personal_info?.birth_date || '';
+            bValue = b.personal_info?.birth_date || '';
+            break;
+          case 'gender':
+            aValue = a.personal_info?.gender || '';
+            bValue = b.personal_info?.gender || '';
+            break;
+          case 'phone':
+            aValue = a.personal_info?.mobile_phone || '';
+            bValue = b.personal_info?.mobile_phone || '';
+            break;
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // 기본 정렬: 이름순
+      filtered.sort((a, b) => {
+        const nameA = a.personal_info?.name || '';
+        const nameB = b.personal_info?.name || '';
+        return nameA.localeCompare(nameB, 'ko-KR');
+      });
+    }
+
+    return filtered;
+  }, [allCustomers, customer._id, familyCustomerIds, searchQuery, isSearching, selectedInitial, initialType, sortConfig]);
+
+  // 정렬 핸들러
+  const handleSort = useCallback((key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  }, [sortConfig]);
 
   // 관계 유형 라벨 가져오기
   const getRelationshipLabel = useCallback((type: string): string => {
@@ -143,7 +277,6 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         relationshipData
       );
 
-      // 성공 시 이벤트 발생 (트리 자동 새로고침)
       window.dispatchEvent(new CustomEvent('relationshipChanged'));
       onComplete();
     } catch (err) {
@@ -157,16 +290,19 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
   // 후보 선택
   const handleCandidateSelect = useCallback((candidate: Customer) => {
     setSelectedCandidate(candidate);
-    setRelationshipType(null); // 관계 유형 초기화
     setError(null);
   }, []);
 
-  // 후보 선택 취소
-  const handleCandidateDeselect = useCallback(() => {
+  // 선택 초기화
+  const handleReset = useCallback(() => {
     setSelectedCandidate(null);
     setRelationshipType(null);
+    setSearchQuery('');
+    setSelectedInitial(null);
     setError(null);
   }, []);
+
+  const isDataLoading = customersLoading || candidatesLoading;
 
   return (
     <div className="quick-family-assign-panel">
@@ -200,124 +336,228 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
         </div>
       )}
 
-      {/* 후보 선택 상태에 따른 UI */}
-      {!selectedCandidate ? (
-        <>
-          {/* 검색 */}
-          <div className="quick-family-assign-panel__search">
-            <input
-              type="text"
-              placeholder="후보 고객 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="quick-family-assign-panel__search-input"
-              aria-label="후보 고객 검색"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="quick-family-assign-panel__search-clear"
-                onClick={() => setSearchQuery('')}
-                aria-label="검색어 지우기"
-              >
-                ×
-              </button>
-            )}
-          </div>
+      {/* 검색 입력 */}
+      <div className="quick-family-assign-panel__search">
+        <div className="quick-family-assign-panel__search-wrapper">
+          <SFSymbol
+            name="magnifyingglass"
+            size={SFSymbolSize.FOOTNOTE}
+            weight={SFSymbolWeight.MEDIUM}
+            className="quick-family-assign-panel__search-icon"
+            decorative
+          />
+          <input
+            type="text"
+            className="quick-family-assign-panel__search-input"
+            placeholder="이름 또는 전화번호로 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="후보 고객 검색"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="quick-family-assign-panel__search-clear"
+              onClick={() => setSearchQuery('')}
+              aria-label="검색어 지우기"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
 
-          {/* 후보 목록 */}
-          <div className="quick-family-assign-panel__candidates">
-            <span className="quick-family-assign-panel__label">
-              후보 고객 ({candidates.length}명)
+      {/* 초성 인덱스 (검색 중이 아닐 때만 표시) */}
+      {!isSearching && (
+        <div className="quick-family-assign-panel__initials">
+          {/* 초성 타입 토글 버튼 */}
+          <button
+            type="button"
+            className="quick-family-assign-panel__initial-type-toggle"
+            onClick={() => {
+              const nextType = initialType === 'korean' ? 'alphabet' : initialType === 'alphabet' ? 'number' : 'korean';
+              setInitialType(nextType);
+              setSelectedInitial(null);
+            }}
+            title="초성 타입 전환 (한글/영문/숫자)"
+            aria-label="초성 타입 전환"
+          >
+            <svg
+              className="quick-family-assign-panel__globe-icon"
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="12" cy="12" r="10" fill="none" strokeWidth="2" />
+              <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" fill="none" strokeWidth="2" />
+            </svg>
+            <span className="quick-family-assign-panel__initial-type-label">
+              {initialType === 'korean' ? 'ㄱㄴ' : initialType === 'alphabet' ? 'AB' : '12'}
             </span>
-            {candidatesLoading ? (
-              <div className="quick-family-assign-panel__loading">
-                로딩 중...
-              </div>
-            ) : candidates.length === 0 ? (
-              <div className="quick-family-assign-panel__empty">
-                {searchQuery
-                  ? '검색 결과가 없습니다.'
-                  : '등록 가능한 후보 고객이 없습니다.'}
-              </div>
-            ) : (
-              <ul className="quick-family-assign-panel__candidate-list">
-                {candidates.slice(0, 50).map((candidate) => (
-                  <li
-                    key={candidate._id}
-                    className="quick-family-assign-panel__candidate-item"
-                    onClick={() => handleCandidateSelect(candidate)}
-                  >
-                    <span className="quick-family-assign-panel__candidate-icon">
-                      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
-                        <circle cx="10" cy="10" r="10" opacity="0.15" />
-                        <circle cx="10" cy="7" r="3" />
-                        <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
-                      </svg>
-                    </span>
-                    <span className="quick-family-assign-panel__candidate-name">
-                      {candidate.personal_info?.name || '이름없음'}
-                    </span>
-                  </li>
-                ))}
-                {candidates.length > 50 && (
-                  <li className="quick-family-assign-panel__more">
-                    +{candidates.length - 50}명 더 있음 (검색으로 찾아주세요)
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          {/* 선택된 후보 */}
-          <div className="quick-family-assign-panel__selected-candidate">
-            <span className="quick-family-assign-panel__label">가족으로 등록할 고객</span>
-            <div className="quick-family-assign-panel__selected-candidate-info">
-              <span className="quick-family-assign-panel__candidate-name--selected">
-                {selectedCandidate.personal_info?.name || '이름없음'}
-              </span>
-              <button
-                type="button"
-                className="quick-family-assign-panel__change-btn"
-                onClick={handleCandidateDeselect}
-              >
-                변경
-              </button>
-            </div>
-          </div>
+          </button>
 
-          {/* 관계 유형 선택 */}
-          <div className="quick-family-assign-panel__relationship-types">
-            <span className="quick-family-assign-panel__label">관계 유형</span>
-            <div className="quick-family-assign-panel__type-buttons">
-              {FAMILY_RELATIONSHIP_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  className={`quick-family-assign-panel__type-btn ${
-                    relationshipType === type.value ? 'selected' : ''
-                  }`}
-                  onClick={() => setRelationshipType(type.value)}
-                >
-                  <span className="quick-family-assign-panel__type-icon">{type.icon}</span>
-                  <span className="quick-family-assign-panel__type-label">{type.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
+          {/* 초성 버튼들 */}
+          {initialType === 'korean' && ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].map(initial => (
+            <button
+              type="button"
+              key={initial}
+              className={`quick-family-assign-panel__initial ${selectedInitial === initial ? 'active' : ''}`}
+              onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+              title={`${initial}로 시작하는 고객`}
+            >
+              {initial}
+            </button>
+          ))}
+          {initialType === 'alphabet' && ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'].map(initial => (
+            <button
+              type="button"
+              key={initial}
+              className={`quick-family-assign-panel__initial ${selectedInitial === initial ? 'active' : ''}`}
+              onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+              title={`${initial}로 시작하는 고객`}
+            >
+              {initial}
+            </button>
+          ))}
+          {initialType === 'number' && ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(initial => (
+            <button
+              type="button"
+              key={initial}
+              className={`quick-family-assign-panel__initial ${selectedInitial === initial ? 'active' : ''}`}
+              onClick={() => setSelectedInitial(selectedInitial === initial ? null : initial)}
+              title={`${initial}로 시작하는 고객`}
+            >
+              {initial}
+            </button>
+          ))}
+
+          {/* 필터 상태 표시 */}
+          {selectedInitial && (
+            <button
+              type="button"
+              className="quick-family-assign-panel__filter-clear"
+              onClick={() => setSelectedInitial(null)}
+              title="초성 필터 해제"
+              aria-label="초성 필터 해제"
+            >
+              <SFSymbol
+                name="xmark.circle.fill"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative
+              />
+            </button>
+          )}
+        </div>
       )}
+
+      {/* 고객 테이블 */}
+      <div className="quick-family-assign-panel__table-container">
+        {isDataLoading ? (
+          <div className="quick-family-assign-panel__loading">
+            로딩 중...
+          </div>
+        ) : (
+          <>
+            {/* 테이블 헤더 */}
+            <div className="quick-family-assign-panel__table-header">
+              <div className="header-name sortable" onClick={() => handleSort('name')}>
+                <span>이름</span>
+                {sortConfig?.key === 'name' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div className="header-birth sortable" onClick={() => handleSort('birth')}>
+                <span>생년월일</span>
+                {sortConfig?.key === 'birth' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div className="header-gender sortable" onClick={() => handleSort('gender')}>
+                <span>성별</span>
+                {sortConfig?.key === 'gender' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+              <div className="header-phone sortable" onClick={() => handleSort('phone')}>
+                <span>전화</span>
+                {sortConfig?.key === 'phone' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
+            </div>
+
+            {/* 테이블 바디 */}
+            <div className="quick-family-assign-panel__table-body">
+              {candidates.length === 0 ? (
+                <div className="quick-family-assign-panel__empty">
+                  {isSearching ? '검색 결과가 없습니다' : '등록 가능한 후보 고객이 없습니다.'}
+                </div>
+              ) : (
+                candidates.map(candidate => {
+                  const birthDate = candidate.personal_info?.birth_date;
+                  const birthDisplay = birthDate
+                    ? new Date(birthDate).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+                    : '-';
+                  const gender = candidate.personal_info?.gender;
+                  const genderDisplay = gender === 'M' ? '남' : gender === 'F' ? '여' : '-';
+
+                  return (
+                    <div
+                      key={candidate._id}
+                      className={`quick-family-assign-panel__table-row ${
+                        selectedCandidate?._id === candidate._id ? 'selected' : ''
+                      }`}
+                      onClick={() => handleCandidateSelect(candidate)}
+                    >
+                      <div className="cell-name">{candidate.personal_info?.name || '이름 없음'}</div>
+                      <div className="cell-birth">{birthDisplay}</div>
+                      <div className="cell-gender">{genderDisplay}</div>
+                      <div className="cell-phone">{candidate.personal_info?.mobile_phone || '-'}</div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div className="quick-family-assign-panel__table-footer">
+              후보 고객 {candidates.length}명
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 관계 유형 선택 */}
+      <div className="quick-family-assign-panel__relationship-section">
+        <span className="quick-family-assign-panel__label">
+          관계 유형 {selectedCandidate && `(${selectedCandidate.personal_info?.name})`}
+        </span>
+        <div className="quick-family-assign-panel__type-buttons">
+          {FAMILY_RELATIONSHIP_TYPES.map((type) => (
+            <button
+              key={type.value}
+              type="button"
+              className={`quick-family-assign-panel__type-btn ${
+                relationshipType === type.value ? 'selected' : ''
+              }`}
+              onClick={() => setRelationshipType(type.value)}
+              disabled={!selectedCandidate}
+            >
+              <span className="quick-family-assign-panel__type-icon">{type.icon}</span>
+              <span className="quick-family-assign-panel__type-label">{type.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 액션 버튼 */}
       <div className="quick-family-assign-panel__actions">
         <Button
           variant="ghost"
-          onClick={selectedCandidate ? handleCandidateDeselect : onClose}
+          onClick={selectedCandidate ? handleReset : onClose}
           disabled={loading}
         >
-          {selectedCandidate ? '이전' : '닫기'}
+          {selectedCandidate ? '초기화' : '닫기'}
         </Button>
         <Button
           variant="primary"
