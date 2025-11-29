@@ -312,8 +312,12 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
 
       {/* 액션 버튼 */}
       <div className="quick-family-assign-panel__actions">
-        <Button variant="ghost" onClick={onClose} disabled={loading}>
-          취소
+        <Button
+          variant="ghost"
+          onClick={selectedCandidate ? handleCandidateDeselect : onClose}
+          disabled={loading}
+        >
+          {selectedCandidate ? '이전' : '닫기'}
         </Button>
         <Button
           variant="primary"
