@@ -796,9 +796,18 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   }, [updateURLParams])
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
-  const handleCustomerClick = useCallback(async (customerId: string, customerData?: Customer) => {
+  // customerId가 null이면 RightPane 닫기 (CustomerRelationshipView에서 빠른 가족 등록 패널 열 때 사용)
+  const handleCustomerClick = useCallback(async (customerId: string | null, customerData?: Customer) => {
     if (import.meta.env.DEV) {
       console.log('[App] 고객 클릭:', customerId, customerData)
+    }
+
+    // customerId가 null이면 RightPane 닫기
+    if (!customerId) {
+      setSelectedCustomer(null)
+      setRightPaneVisible(false)
+      updateURLParams({ customerId: null, documentId: null })
+      return
     }
 
     if (customerData) {

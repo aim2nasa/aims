@@ -30,8 +30,8 @@ interface CustomerRelationshipViewProps {
   visible: boolean;
   /** View 닫기 핸들러 */
   onClose: () => void;
-  /** 고객 선택 핸들러 */
-  onCustomerSelect?: (customerId: string, customer?: Customer) => void;
+  /** 고객 선택 핸들러 (null이면 RightPane 닫기) */
+  onCustomerSelect?: (customerId: string | null, customer?: Customer) => void;
 }
 
 interface FamilyGroup {
@@ -739,6 +739,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
     e.stopPropagation();
     const customer = resolvedCustomerMap.get(customerId);
     if (customer) {
+      setSelectedUnassignedCustomer(null); // QuickFamilyAssignPanel 닫기
       onCustomerSelect?.(customerId, customer);
     }
   }, [resolvedCustomerMap, onCustomerSelect]);
@@ -999,7 +1000,7 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
                               </span>
                               <span
                                 className={`tree-node__label tree-node__label--clickable ${selectedUnassignedCustomer?._id === customer._id ? "tree-node__label--selected" : ""}`}
-                                onClick={(e) => { e.stopPropagation(); setSelectedUnassignedCustomer(customer); }}
+                                onClick={(e) => { e.stopPropagation(); onCustomerSelect?.(null, undefined); setSelectedUnassignedCustomer(customer); }}
                               >
                                 {highlightText(customer.personal_info?.name || '이름없음')}
                               </span>
