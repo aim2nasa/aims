@@ -144,6 +144,8 @@ export class CustomerService {
 
     // customerChanged 이벤트 발생 (대시보드 등 다른 View 동기화)
     window.dispatchEvent(new CustomEvent('customerChanged'));
+    // contractChanged 이벤트 발생 (고객 삭제 시 계약도 cascade 삭제됨)
+    window.dispatchEvent(new CustomEvent('contractChanged'));
   }
 
   /**
