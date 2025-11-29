@@ -55,7 +55,7 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 .quick-family-assign-panel__title-icon {
   opacity: 0.7;
   flex-shrink: 0;
-  color: var(--color-accent);
+  color: var(--color-icon-orange);
 }
 
 .quick-family-assign-panel__close {
