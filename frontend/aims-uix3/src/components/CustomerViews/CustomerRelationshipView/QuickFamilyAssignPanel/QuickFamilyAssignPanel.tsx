@@ -343,7 +343,12 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
     <div className="quick-family-assign-panel">
       {/* 헤더 */}
       <div className="quick-family-assign-panel__header">
-        <h3 className="quick-family-assign-panel__title">빠른 가족 등록</h3>
+        <h3 className="quick-family-assign-panel__title">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="quick-family-assign-panel__title-icon">
+            <path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641l2.5-8.5z"/>
+          </svg>
+          빠른 가족 등록
+        </h3>
         <button
           type="button"
           className="quick-family-assign-panel__close"

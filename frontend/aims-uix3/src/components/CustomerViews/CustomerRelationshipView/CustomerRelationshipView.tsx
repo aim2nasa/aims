@@ -819,7 +819,12 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
           <div className="relationship-tree">
           {/* 헤더: 제목 + 검색 + 새로고침 */}
           <div className="relationship-header">
-            <div className="relationship-title">고객 관계 현황</div>
+            <div className="relationship-title">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="relationship-title__icon">
+                <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5zm.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4zm0 3a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4z"/>
+              </svg>
+              고객 관계 현황
+            </div>
             <div className="relationship-header-actions">
               {/* 트리 뷰 모드 전환 버튼 */}
               <div className="relationship-tree-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
