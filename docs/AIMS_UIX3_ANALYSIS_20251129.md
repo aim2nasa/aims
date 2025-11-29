@@ -899,5 +899,178 @@ border-bottom: 1px solid var(--color-border-error);
 
 ---
 
+### 2025-11-29 Phase 2 작업 완료
+
+#### ✅ 작업 4: App.tsx 상태 추출 (useLayoutStore)
+
+**문제**:
+- App.tsx에 23개 useState 집중 (레이아웃 관련 15개)
+- 성능 병목 및 유지보수 어려움
+
+**해결**:
+- `useLayoutStore` Zustand 스토어 생성
+- 레이아웃 관련 상태 및 액션 정의
+
+**생성 파일**:
+- `src/shared/store/useLayoutStore.ts`
+
+**스토어 구조**:
+```typescript
+interface LayoutStore {
+  // Pane visibility 상태 (7개)
+  headerVisible, leftPaneVisible, centerPaneVisible,
+  rightPaneVisible, mainPaneVisible, brbVisible, paginationVisible
+
+  // Pane 크기/비율 (2개)
+  centerWidth, leftPaneCollapsed
+
+  // 애니메이션/드래그 상태 (4개)
+  leftPaneAnimationState, isDraggingBRB, isResizing, resizeTimer
+
+  // 모달 상태 (2개)
+  layoutControlModalOpen, modalClickProtection
+
+  // Actions: toggle*, set*, open/close 등
+}
+```
+
+**특징**:
+- localStorage 영속화 (`leftPaneCollapsed`)
+- 애니메이션 상태 관리 (expanding/collapsing/idle)
+- 모달 클릭 보호 로직 포함
+
+**검증**:
+- TypeScript 타입체크 통과
+
+**향후 작업**:
+- App.tsx에서 점진적으로 useState → useLayoutStore 마이그레이션
+
+---
+
+#### ✅ 작업 5: useClickOutside 훅 추출
+
+**문제**:
+- 4개 파일에서 동일한 click outside 패턴 중복
+  - DocumentLibraryView.tsx
+  - PersonalFilesView.tsx
+  - Dropdown.tsx
+  - UserProfileMenu.tsx
+
+**해결**:
+- 공통 `useClickOutside` 훅 생성
+- `useClickOutsideToggle` 헬퍼 훅 추가
+
+**생성 파일**:
+- `src/hooks/useClickOutside.ts`
+- `src/hooks/__tests__/useClickOutside.test.tsx`
+
+**훅 API**:
+```typescript
+// 기본 사용법
+const ref = useClickOutside<HTMLDivElement>(
+  () => setIsOpen(false),
+  { enabled: isOpen }
+)
+
+// delay 옵션 (열릴 때 즉시 닫힘 방지)
+const ref = useClickOutside<HTMLDivElement>(
+  () => onClose(),
+  { enabled: isOpen, delay: 0 }
+)
+
+// 간편 헬퍼
+const ref = useClickOutsideToggle<HTMLDivElement>(isOpen, setIsOpen)
+```
+
+**옵션**:
+| 옵션 | 타입 | 기본값 | 설명 |
+|-----|------|-------|------|
+| enabled | boolean | true | 훅 활성화 여부 |
+| delay | number | undefined | 이벤트 리스너 등록 지연 시간 |
+| eventType | 'mousedown' \| 'click' | 'mousedown' | 이벤트 타입 |
+
+**테스트**:
+| 테스트 | 설명 |
+|-------|------|
+| 외부 클릭 감지 | 콜백 호출 확인 |
+| 내부 클릭 무시 | 콜백 미호출 확인 |
+| enabled=false | 콜백 미호출 확인 |
+| delay 옵션 | 지연 등록 확인 |
+| useClickOutsideToggle | isOpen 토글 확인 |
+
+**검증**:
+- 8개 테스트 모두 통과
+
+**향후 작업**:
+- 기존 컴포넌트에서 중복 코드를 훅으로 교체
+
+---
+
+#### 📋 작업 6: 스토어 위치 통합 (분석 완료, 마이그레이션 보류)
+
+**현황 분석**:
+```
+src/shared/store/     ← 4개 (useAccountSettingsStore, useDevModeStore,
+                           useRecentCustomersStore, useLayoutStore)
+src/shared/stores/    ← 1개 (authStore)
+src/stores/           ← 2개 (user.ts, CustomerDocument.ts)
+```
+
+**영향 받는 파일** (35개 import):
+- App.tsx, AppRouter.tsx
+- 각종 View 컴포넌트
+- Header, Pages, Features, Providers
+
+**권장 통합 위치**: `src/shared/store/`
+- 가장 많은 스토어 보유 (4개)
+- 새로 생성한 useLayoutStore도 이 위치
+
+**마이그레이션 보류 이유**:
+- 변경 범위가 넓어 별도 PR로 분리 권장
+- 점진적 마이그레이션으로 리스크 최소화
+
+**권장 마이그레이션 순서**:
+1. `src/stores/user.ts` → `src/shared/store/useUserStore.ts`
+2. `src/stores/CustomerDocument.ts` → `src/shared/store/useCustomerDocumentStore.ts`
+3. `src/shared/stores/authStore.ts` → `src/shared/store/useAuthStore.ts`
+4. re-export 패턴으로 기존 import 경로 유지 (호환성)
+
+---
+
+### Phase 2 작업 결과 요약
+
+| 작업 | 상태 | 생성/수정 파일 | 테스트 |
+|-----|------|--------------|-------|
+| useLayoutStore 생성 | ✅ 완료 | 1 (신규) | 타입체크 통과 |
+| useClickOutside 훅 추출 | ✅ 완료 | 2 (신규) | 8 테스트 통과 |
+| 스토어 위치 통합 | 📋 분석 완료 | - | 별도 PR 권장 |
+
+### 업데이트된 훅 목록
+
+| 훅 | 위치 | 용도 | 테스트 |
+|---|------|-----|-------|
+| useClickOutside | src/hooks/ | 요소 외부 클릭 감지 | 8개 |
+| useCustomerDocument | src/hooks/ | 고객 문서 관리 | ✅ |
+| useDraggable | src/hooks/ | 드래그 기능 | - |
+| useGaps | src/hooks/ | 레이아웃 갭 관리 | - |
+| useModalDragResize | src/hooks/ | 모달 드래그/리사이즈 | - |
+| useNavigation | src/hooks/ | 네비게이션 | - |
+| usePersistedState | src/hooks/ | 영속 상태 | - |
+| useViewerControls | src/hooks/ | 뷰어 컨트롤 | - |
+
+### 업데이트된 스토어 목록
+
+| 스토어 | 위치 | 용도 | 상태 |
+|-------|------|-----|-----|
+| useLayoutStore | src/shared/store/ | 레이아웃 상태 | 🆕 신규 |
+| useDevModeStore | src/shared/store/ | 개발자 모드 | ✅ |
+| useAccountSettingsStore | src/shared/store/ | 계정 설정 | ✅ |
+| useRecentCustomersStore | src/shared/store/ | 최근 고객 | ✅ |
+| useAuthStore | src/shared/stores/ | 인증 | ⚠️ 이전 필요 |
+| useUserStore | src/stores/ | 사용자 | ⚠️ 이전 필요 |
+| CustomerDocument | src/stores/ | 고객 문서 | ⚠️ 이전 필요 |
+
+---
+
 **작성자**: Claude Code
 **검토 필요**: 개발팀
