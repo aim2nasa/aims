@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { RelationshipService, type CreateRelationshipData } from '@/services/relationshipService';
 import { CustomerService } from '@/services/customerService';
-import type { Customer } from '@/entities/customer/model';
+import { CustomerUtils, type Customer } from '@/entities/customer/model';
 import Button from '@/shared/ui/Button';
 import { SFSymbol } from '../../../SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
@@ -238,6 +238,10 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
           case 'phone':
             aValue = a.personal_info?.mobile_phone || '';
             bValue = b.personal_info?.mobile_phone || '';
+            break;
+          case 'address':
+            aValue = CustomerUtils.getAddressText(a);
+            bValue = CustomerUtils.getAddressText(b);
             break;
         }
 
@@ -566,6 +570,12 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
                   <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                 )}
               </div>
+              <div className="header-address sortable" onClick={() => handleSort('address')}>
+                <span>주소</span>
+                {sortConfig?.key === 'address' && (
+                  <span className="sort-indicator">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                )}
+              </div>
             </div>
 
             {/* 테이블 바디 */}
@@ -595,6 +605,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
                       <div className="cell-birth">{birthDisplay}</div>
                       <div className="cell-gender">{genderDisplay}</div>
                       <div className="cell-phone">{candidate.personal_info?.mobile_phone || '-'}</div>
+                      <div className="cell-address">{CustomerUtils.getAddressText(candidate)}</div>
                     </div>
                   );
                 })
