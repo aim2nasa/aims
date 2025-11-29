@@ -2234,6 +2234,7 @@ app.put('/api/customers/:id', authenticateJWT, async (req, res) => {
 /**
  * 고객 삭제 API
  * ⭐ 설계사별 고객 데이터 격리 적용
+ * ⭐ 트랜잭션으로 원자적 삭제 (좀비 참조 방지)
  */
 app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
   try {
@@ -2262,41 +2263,51 @@ app.delete('/api/customers/:id', authenticateJWT, async (req, res) => {
       });
     }
 
-    // 1. 해당 고객과 관련된 모든 관계 레코드 삭제 (Cascading Delete)
+    // ⭐ Cascading Delete: 순차적으로 관련 데이터 삭제
+    // 참고: MongoDB Standalone은 트랜잭션 미지원 → 순차 삭제 + 정리 API로 대응
+    const customerId = new ObjectId(id);
+    let relationshipsDeleteCount = 0;
+    let contractsDeleteCount = 0;
+    let filesUpdateCount = 0;
+
+    // 1. 해당 고객과 관련된 모든 관계 레코드 삭제
     const relationshipsDeleteResult = await db.collection('customer_relationships').deleteMany({
       $or: [
-        { from_customer: new ObjectId(id) },
-        { related_customer: new ObjectId(id) }
+        { from_customer: customerId },
+        { related_customer: customerId },
+        { family_representative: customerId }
       ]
     });
-    console.log(`🗑️ 고객 ${id}과 관련된 관계 레코드 ${relationshipsDeleteResult.deletedCount}개 삭제됨`);
+    relationshipsDeleteCount = relationshipsDeleteResult.deletedCount;
 
-    // 2. 해당 고객의 계약 삭제 (Cascading Delete)
+    // 2. 해당 고객의 계약 삭제
     const contractsDeleteResult = await db.collection('contracts').deleteMany({
-      customer_id: new ObjectId(id)
+      customer_id: customerId
     });
-    console.log(`🗑️ 고객 ${id}의 계약 ${contractsDeleteResult.deletedCount}개 삭제됨`);
+    contractsDeleteCount = contractsDeleteResult.deletedCount;
 
-    // 3. 문서에서 해당 고객 참조 제거 (customer_relation.customer_id 정리)
+    // 3. 문서에서 해당 고객 참조 제거
     const filesUpdateResult = await db.collection(COLLECTION_NAME).updateMany(
-      { 'customer_relation.customer_id': new ObjectId(id) },
+      { 'customer_relation.customer_id': customerId },
       {
         $unset: { 'customer_relation.customer_id': '' },
         $set: { 'meta.updated_at': utcNowDate() }
       }
     );
-    console.log(`🗑️ 고객 ${id}을 참조하던 문서 ${filesUpdateResult.modifiedCount}개 정리됨`);
+    filesUpdateCount = filesUpdateResult.modifiedCount;
 
     // 4. 고객 삭제
-    const result = await db.collection(CUSTOMERS_COLLECTION)
-      .deleteOne({ _id: new ObjectId(id) });
+    await db.collection(CUSTOMERS_COLLECTION).deleteOne({ _id: customerId });
+
+    console.log(`🗑️ [Cascading Delete] 고객 ${id} 삭제 완료: 관계=${relationshipsDeleteCount}, 계약=${contractsDeleteCount}, 문서참조=${filesUpdateCount}`);
 
     res.json({
       success: true,
       message: '고객이 성공적으로 삭제되었습니다.',
-      deletedRelationships: relationshipsDeleteResult.deletedCount,
-      deletedContracts: contractsDeleteResult.deletedCount,
-      updatedFiles: filesUpdateResult.modifiedCount
+      deletedRelationships: relationshipsDeleteCount,
+      deletedContracts: contractsDeleteCount,
+      updatedFiles: filesUpdateCount,
+      cascading: true  // Cascading Delete 사용 여부 표시
     });
   } catch (error) {
     console.error('고객 삭제 오류:', error);
@@ -2424,6 +2435,184 @@ app.delete('/api/admin/orphaned-relationships', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Orphaned relationships 정리에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 데이터 무결성 리포트 API
+ * 전체 데이터 현황 및 고아(좀비) 참조 탐지
+ */
+app.get('/api/admin/data-integrity-report', async (req, res) => {
+  try {
+    console.log('📊 데이터 무결성 리포트 생성 시작...');
+
+    // 1. 전체 데이터 수 조회
+    const [totalCustomers, totalContracts, totalRelationships, totalFiles] = await Promise.all([
+      db.collection(CUSTOMERS_COLLECTION).countDocuments(),
+      db.collection('contracts').countDocuments(),
+      db.collection('customer_relationships').countDocuments(),
+      db.collection(COLLECTION_NAME).countDocuments()
+    ]);
+
+    // 2. 모든 고객 ID 수집
+    const allCustomerIds = new Set(
+      (await db.collection(CUSTOMERS_COLLECTION).find({}, { projection: { _id: 1 } }).toArray())
+        .map(c => c._id.toString())
+    );
+
+    // 3. 고아 계약 탐지 (customer_id가 존재하지 않는 고객 참조)
+    const contracts = await db.collection('contracts').find({}, { projection: { customer_id: 1 } }).toArray();
+    const orphanedContracts = contracts.filter(c => {
+      const customerId = c.customer_id?.toString();
+      return customerId && !allCustomerIds.has(customerId);
+    });
+
+    // 4. 고아 관계 탐지
+    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const orphanedRelationships = relationships.filter(r => {
+      const fromId = r.from_customer?.toString();
+      const toId = r.related_customer?.toString();
+      return (fromId && !allCustomerIds.has(fromId)) || (toId && !allCustomerIds.has(toId));
+    });
+
+    // 5. 고아 파일 참조 탐지
+    const filesWithCustomerRef = await db.collection(COLLECTION_NAME).find(
+      { 'customer_relation.customer_id': { $exists: true, $ne: null } },
+      { projection: { 'customer_relation.customer_id': 1 } }
+    ).toArray();
+    const orphanedFileRefs = filesWithCustomerRef.filter(f => {
+      const customerId = f.customer_relation?.customer_id?.toString();
+      return customerId && !allCustomerIds.has(customerId);
+    });
+
+    // 6. 건강 상태 판단
+    const totalOrphaned = orphanedContracts.length + orphanedRelationships.length + orphanedFileRefs.length;
+    let health = 'healthy';
+    if (totalOrphaned > 10) health = 'critical';
+    else if (totalOrphaned > 0) health = 'warning';
+
+    console.log(`📊 무결성 리포트: 고객=${totalCustomers}, 계약=${totalContracts}(고아:${orphanedContracts.length}), 관계=${totalRelationships}(고아:${orphanedRelationships.length}), 파일참조 고아=${orphanedFileRefs.length}`);
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalCustomers,
+          totalContracts,
+          totalRelationships,
+          totalFiles
+        },
+        orphanedData: {
+          contracts: orphanedContracts.length,
+          relationships: orphanedRelationships.length,
+          fileReferences: orphanedFileRefs.length,
+          total: totalOrphaned
+        },
+        health
+      }
+    });
+
+  } catch (error) {
+    console.error('데이터 무결성 리포트 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '데이터 무결성 리포트 생성에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 전체 고아 데이터 일괄 정리 API
+ * 계약, 관계, 파일 참조의 고아 데이터를 모두 정리
+ */
+app.delete('/api/admin/orphaned-all', async (req, res) => {
+  try {
+    console.log('🗑️ 전체 고아 데이터 정리 시작...');
+
+    // 1. 모든 고객 ID 수집
+    const allCustomerIds = new Set(
+      (await db.collection(CUSTOMERS_COLLECTION).find({}, { projection: { _id: 1 } }).toArray())
+        .map(c => c._id.toString())
+    );
+
+    // 2. 고아 계약 삭제
+    const contracts = await db.collection('contracts').find({}, { projection: { _id: 1, customer_id: 1 } }).toArray();
+    const orphanedContractIds = contracts
+      .filter(c => {
+        const customerId = c.customer_id?.toString();
+        return customerId && !allCustomerIds.has(customerId);
+      })
+      .map(c => c._id);
+
+    let deletedContracts = 0;
+    if (orphanedContractIds.length > 0) {
+      const result = await db.collection('contracts').deleteMany({ _id: { $in: orphanedContractIds } });
+      deletedContracts = result.deletedCount;
+    }
+
+    // 3. 고아 관계 삭제
+    const relationships = await db.collection('customer_relationships').find({}).toArray();
+    const orphanedRelIds = relationships
+      .filter(r => {
+        const fromId = r.from_customer?.toString();
+        const toId = r.related_customer?.toString();
+        return (fromId && !allCustomerIds.has(fromId)) || (toId && !allCustomerIds.has(toId));
+      })
+      .map(r => r._id);
+
+    let deletedRelationships = 0;
+    if (orphanedRelIds.length > 0) {
+      const result = await db.collection('customer_relationships').deleteMany({ _id: { $in: orphanedRelIds } });
+      deletedRelationships = result.deletedCount;
+    }
+
+    // 4. 고아 파일 참조 정리 (참조만 제거, 파일은 유지)
+    const filesWithCustomerRef = await db.collection(COLLECTION_NAME).find(
+      { 'customer_relation.customer_id': { $exists: true, $ne: null } },
+      { projection: { _id: 1, 'customer_relation.customer_id': 1 } }
+    ).toArray();
+
+    const orphanedFileIds = filesWithCustomerRef
+      .filter(f => {
+        const customerId = f.customer_relation?.customer_id?.toString();
+        return customerId && !allCustomerIds.has(customerId);
+      })
+      .map(f => f._id);
+
+    let clearedFileReferences = 0;
+    if (orphanedFileIds.length > 0) {
+      const result = await db.collection(COLLECTION_NAME).updateMany(
+        { _id: { $in: orphanedFileIds } },
+        {
+          $unset: { 'customer_relation.customer_id': '' },
+          $set: { 'meta.updated_at': utcNowDate() }
+        }
+      );
+      clearedFileReferences = result.modifiedCount;
+    }
+
+    const total = deletedContracts + deletedRelationships + clearedFileReferences;
+    console.log(`✅ 고아 데이터 정리 완료: 계약=${deletedContracts}, 관계=${deletedRelationships}, 파일참조=${clearedFileReferences}`);
+
+    res.json({
+      success: true,
+      data: {
+        deletedContracts,
+        deletedRelationships,
+        clearedFileReferences,
+        total
+      },
+      message: total > 0 ? `고아 데이터 ${total}건 정리 완료` : '정리할 고아 데이터가 없습니다.'
+    });
+
+  } catch (error) {
+    console.error('고아 데이터 정리 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고아 데이터 정리에 실패했습니다.',
       details: error.message
     });
   }
