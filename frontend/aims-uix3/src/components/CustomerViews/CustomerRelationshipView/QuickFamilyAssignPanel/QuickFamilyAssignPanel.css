@@ -34,9 +34,11 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__title {
-  font-size: 15px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -80,7 +82,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 
 .quick-family-assign-panel__label {
   display: block;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지/라벨 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -89,9 +92,11 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__customer-name {
-  font-size: 14px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-accent);
+  letter-spacing: -0.01em;
 }
 
 /* 역할 선택 버튼 */
@@ -111,7 +116,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   background: var(--color-bg-primary);
   cursor: pointer;
   transition: all 0.15s ease;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
 }
 
 .quick-family-assign-panel__role-btn:hover {
@@ -141,7 +147,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   padding: 8px 16px;
   background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   flex-shrink: 0;
 }
@@ -158,7 +165,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 /* 에러 메시지 */
 .quick-family-assign-panel__error {
   padding: 10px 16px;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   color: #dc3545;
   background: rgba(220, 53, 69, 0.1);
   border-bottom: 1px solid rgba(220, 53, 69, 0.2);
@@ -188,7 +196,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 .quick-family-assign-panel__search-input {
   width: 100%;
   padding: 8px 32px 8px 32px;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 입력 */
+  font-family: var(--font-family-text);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-bg-secondary, rgba(0, 0, 0, 0.03));
@@ -249,7 +258,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   border-radius: 6px;
   background: var(--color-bg-primary);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   transition: all 0.15s ease;
   margin-right: 4px;
@@ -276,7 +286,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-caption-1); /* 12px - FONT_SIZE_STANDARDS.md: 섹션 제목 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   color: var(--color-text-secondary);
   transition: all 0.15s ease;
@@ -325,7 +336,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 .quick-family-assign-panel__empty {
   padding: 32px 16px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
 }
 
@@ -344,7 +356,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+  font-family: var(--font-family-text);
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -392,8 +405,10 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__table-row > div {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -413,7 +428,8 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 /* 테이블 푸터 */
 .quick-family-assign-panel__table-footer {
   padding: 8px 16px;
-  font-size: 11px;
+  font-size: var(--font-size-caption-2); /* 11px - FONT_SIZE_STANDARDS.md: 뱃지 */
+  font-family: var(--font-family-text);
   color: var(--color-text-secondary);
   background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
   border-top: 1px solid var(--color-border);
@@ -469,9 +485,11 @@ html[data-theme="dark"] .quick-family-assign-panel__header {
 }
 
 .quick-family-assign-panel__type-label {
-  font-size: 13px;
+  font-size: var(--font-size-footnote); /* 13px - FONT_SIZE_STANDARDS.md: 본문 */
+  font-family: var(--font-family-text);
   font-weight: 500;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 /* 액션 버튼 */
