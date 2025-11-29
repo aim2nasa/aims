@@ -93,17 +93,22 @@ export const CustomerRelationshipView: React.FC<CustomerRelationshipViewProps> =
   const [selectedUnassignedCustomer, setSelectedUnassignedCustomer] = useState<Customer | null>(null);
 
   // LocalStorage에서 트리 확장 상태 복원
+  // 기본 viewMode가 'representative'이므로 'no-family-relationship'은 닫힌 상태
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem('aims_relationship_expanded_nodes');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return new Set(Array.isArray(parsed) ? parsed : ['family', 'no-family-relationship', 'corporate']);
+        if (Array.isArray(parsed)) {
+          // 'representative' 모드 기본값이므로 'no-family-relationship' 제외
+          const filtered = parsed.filter((node: string) => node !== 'no-family-relationship');
+          return new Set(filtered);
+        }
       }
     } catch (error) {
       console.error('[CustomerRelationshipView] 확장 상태 복원 실패:', error);
     }
-    return new Set(['family', 'no-family-relationship', 'corporate']);
+    return new Set(['family', 'corporate']);
   });
 
   // 트리 확장 상태 변경 시 LocalStorage에 저장
