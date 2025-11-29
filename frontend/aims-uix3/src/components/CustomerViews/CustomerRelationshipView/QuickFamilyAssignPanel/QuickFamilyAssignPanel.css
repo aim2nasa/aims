@@ -18,6 +18,13 @@
   overflow: hidden;
 }
 
+html[data-theme="dark"] .quick-family-assign-panel {
+  background: var(--color-layout-main-dark);
+  /* 내부 요소들도 동일한 톤 사용하도록 변수 오버라이드 */
+  --color-bg-primary: var(--color-layout-main-dark);
+  --color-bg-secondary: var(--color-layout-accent-dark);
+}
+
 /* 헤더 */
 .quick-family-assign-panel__header {
   display: flex;
