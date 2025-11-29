@@ -256,7 +256,7 @@ html[data-theme="dark"] .type-filter-separator {
     50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 (텍스트 표시) */
-    60px           /* 성별 (텍스트 표시) */
+    70px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
@@ -514,7 +514,7 @@ html[data-theme="dark"] .customer-list-empty {
     50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 (텍스트 표시) */
-    60px           /* 성별 (텍스트 표시) */
+    70px           /* 성별 (텍스트 표시) */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
@@ -1070,7 +1070,7 @@ html[data-theme="dark"] .customer-library-container .selected-count-inline {
     50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 */
-    60px           /* 성별 */
+    70px           /* 성별 */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
@@ -1085,7 +1085,7 @@ html[data-theme="dark"] .customer-library-container .selected-count-inline {
     50px           /* 유형 (개인/법인 아이콘) */
     minmax(100px, 1.5fr)  /* 이름 */
     110px          /* 생년월일 */
-    60px           /* 성별 */
+    70px           /* 성별 */
     120px          /* 전화번호 */
     minmax(150px, 2fr)  /* 이메일 */
     minmax(150px, 2fr)  /* 주소 */
