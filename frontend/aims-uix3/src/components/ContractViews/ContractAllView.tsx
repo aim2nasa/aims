@@ -177,27 +177,6 @@ export default function ContractAllView({
     }
   }, [onCustomerClick])
 
-  // 피보험자 클릭 핸들러 - 등록된 고객인지 이름으로 검색
-  const handleInsuredPersonClick = useCallback(async (insuredName: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!onCustomerClick || !insuredName || insuredName === '-') return
-
-    try {
-      const response = await CustomerService.searchCustomers(insuredName)
-      const matchedCustomer = response.customers.find(
-        c => c.personal_info?.name === insuredName
-      )
-      if (matchedCustomer) {
-        onCustomerClick(matchedCustomer._id, matchedCustomer)
-      } else {
-        setNotRegisteredModal({ isOpen: true, name: insuredName })
-      }
-    } catch (err) {
-      console.error('[ContractAllView] 피보험자 검색 실패:', err)
-      setNotRegisteredModal({ isOpen: true, name: insuredName })
-    }
-  }, [onCustomerClick])
-
   // 검색 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
     if (!searchValue.trim()) return contracts
@@ -767,8 +746,8 @@ export default function ContractAllView({
                 </div>
               )}
               <span
-                className={`contract-customer ${onCustomerClick ? 'contract-customer--clickable' : ''}`}
-                onClick={onCustomerClick ? (e) => handleCustomerNameClick(contract, e) : undefined}
+                className={`contract-customer ${contract.customer_id ? 'contract-customer--clickable' : ''}`}
+                onClick={contract.customer_id ? (e) => handleCustomerNameClick(contract, e) : undefined}
               >
                 {/* 고객 유형 아이콘 (개인/법인) - AllCustomersView와 동일 */}
                 {contract.customer_id && customerTypeMap.get(contract.customer_id) === '법인' ? (
@@ -793,10 +772,7 @@ export default function ContractAllView({
               <span className="contract-premium">{formatPremium(contract.premium)}</span>
               <span className="contract-payment-day">{contract.payment_day || '-'}</span>
               <span className="contract-cycle">{contract.payment_cycle || '-'}</span>
-              <span
-                className={`contract-insured ${onCustomerClick && contract.insured_person ? 'contract-insured--clickable' : ''}`}
-                onClick={onCustomerClick && contract.insured_person ? (e) => handleInsuredPersonClick(contract.insured_person!, e) : undefined}
-              >
+              <span className="contract-insured">
                 {contract.insured_person || '-'}
               </span>
               <span className={`contract-status contract-status--${contract.payment_status === '납입중' ? 'active' : contract.payment_status === '납입완료' ? 'completed' : 'default'}`}>
