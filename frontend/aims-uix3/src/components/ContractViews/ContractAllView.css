@@ -467,6 +467,24 @@ html[data-theme="dark"] .contract-item > span {
 
 .contract-customer {
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* === 고객 유형 아이콘 (개인/법인) - AllCustomersView와 동일 === */
+.customer-type-icon {
+  flex-shrink: 0;
+}
+
+/* 개인 고객 - 파란색 */
+.customer-type-icon--personal {
+  color: var(--color-icon-blue);
+}
+
+/* 법인 고객 - 주황색 */
+.customer-type-icon--corporate {
+  color: var(--color-icon-orange);
 }
 
 .contract-product {

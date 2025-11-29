@@ -49,6 +49,7 @@ export default function ContractAllView({
 
   // 데이터 상태
   const [contracts, setContracts] = useState<Contract[]>([])
+  const [customerTypeMap, setCustomerTypeMap] = useState<Map<string, '개인' | '법인'>>(new Map())
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -99,8 +100,20 @@ export default function ContractAllView({
     setIsLoading(true)
     setError(null)
     try {
-      const response = await ContractService.getContracts({ limit: 10000 })
-      setContracts(response.data)
+      // 계약과 고객 목록 병렬 로드
+      const [contractResponse, customerResponse] = await Promise.all([
+        ContractService.getContracts({ limit: 10000 }),
+        CustomerService.getCustomers({ limit: 10000 }),
+      ])
+      setContracts(contractResponse.data)
+
+      // 고객 ID -> 고객 유형 맵 생성
+      const typeMap = new Map<string, '개인' | '법인'>()
+      customerResponse.customers.forEach((customer) => {
+        const customerType = customer.insurance_info?.customer_type || '개인'
+        typeMap.set(customer._id, customerType)
+      })
+      setCustomerTypeMap(typeMap)
     } catch (err) {
       console.error('[ContractAllView] 계약 목록 조회 실패:', err)
       setError('계약 목록을 불러오는 데 실패했습니다.')
@@ -757,6 +770,19 @@ export default function ContractAllView({
                 className={`contract-customer ${onCustomerClick ? 'contract-customer--clickable' : ''}`}
                 onClick={onCustomerClick ? (e) => handleCustomerNameClick(contract, e) : undefined}
               >
+                {/* 고객 유형 아이콘 (개인/법인) - AllCustomersView와 동일 */}
+                {contract.customer_id && customerTypeMap.get(contract.customer_id) === '법인' ? (
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon customer-type-icon--corporate">
+                    <circle cx="10" cy="10" r="10" opacity="0.2" />
+                    <path d="M6 5h2v2H6V5zm0 3h2v2H6V8zm0 3h2v2H6v-2zm3-6h2v2H9V5zm0 3h2v2H9V8zm0 3h2v2H9v-2zm3-6h2v2h-2V5zm0 3h2v2h-2V8zm0 3h2v2h-2v-2zM5 14h10v2H5v-2z" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="customer-type-icon customer-type-icon--personal">
+                    <circle cx="10" cy="10" r="10" opacity="0.2" />
+                    <circle cx="10" cy="7" r="3" />
+                    <path d="M10 11c-3 0-5 2-5 4v2h10v-2c0-2-2-4-5-4z" />
+                  </svg>
+                )}
                 {contract.customer_name || '-'}
               </span>
               <span className="contract-product" title={contract.product_name || '-'}>
