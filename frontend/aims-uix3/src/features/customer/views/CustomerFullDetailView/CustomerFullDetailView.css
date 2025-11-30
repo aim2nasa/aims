@@ -335,17 +335,17 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   min-width: 0;
 }
 
-/* 계약 헤더 - 데이터 기반 칼럼 폭 + 모든 칼럼 표시 */
+/* 계약 헤더 - 🍎 모든 칼럼에 동적 폭 CSS 변수 사용 */
 .customer-full-detail__section-content--contracts .customer-contracts-list-header {
   display: grid;
   grid-template-columns:
-    var(--product-column-width, 180px)  /* 상품명 - 동적 */
-    80px                                 /* 계약일 */
-    90px                                 /* 증권번호 */
-    80px                                 /* 보험료 */
-    50px                                 /* 이체일 */
-    60px                                 /* 납입주기 */
-    60px;                                /* 납입상태 */
+    var(--product-column-width, 200px)           /* 상품명 - 동적 */
+    var(--contract-date-column-width, 100px)     /* 계약일 - 동적 */
+    var(--policy-number-column-width, 115px)     /* 증권번호 - 동적 */
+    var(--premium-column-width, 100px)           /* 보험료 - 동적 */
+    var(--payment-day-column-width, 75px)        /* 이체일 - 동적 */
+    var(--payment-cycle-column-width, 90px)      /* 납입주기 - 동적 */
+    var(--payment-status-column-width, 100px);   /* 납입상태 - 동적 */
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
@@ -374,17 +374,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   display: none;
 }
 
-/* 계약 아이템 - 데이터 기반 칼럼 폭 + 모든 칼럼 표시 */
+/* 계약 아이템 - 🍎 모든 칼럼에 동적 폭 CSS 변수 사용 (헤더와 동일) */
 .customer-full-detail__section-content--contracts .customer-contracts-item {
   display: grid;
   grid-template-columns:
-    var(--product-column-width, 180px)  /* 상품명 - 동적 */
-    80px                                 /* 계약일 */
-    90px                                 /* 증권번호 */
-    80px                                 /* 보험료 */
-    50px                                 /* 이체일 */
-    60px                                 /* 납입주기 */
-    60px;                                /* 납입상태 */
+    var(--product-column-width, 200px)           /* 상품명 - 동적 */
+    var(--contract-date-column-width, 100px)     /* 계약일 - 동적 */
+    var(--policy-number-column-width, 115px)     /* 증권번호 - 동적 */
+    var(--premium-column-width, 100px)           /* 보험료 - 동적 */
+    var(--payment-day-column-width, 75px)        /* 이체일 - 동적 */
+    var(--payment-cycle-column-width, 90px)      /* 납입주기 - 동적 */
+    var(--payment-status-column-width, 100px);   /* 납입상태 - 동적 */
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);

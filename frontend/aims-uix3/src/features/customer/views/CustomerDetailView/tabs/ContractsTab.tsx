@@ -38,6 +38,20 @@ const ITEMS_PER_PAGE_OPTIONS = [
 type SortField = 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
+// 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
+const calculateTextWidth = (text: string): number => {
+  let width = 0
+  for (const char of text) {
+    // 한글, 한자, 일본어 등 전각 문자는 12px, 그 외는 7px
+    if (/[\u3131-\uD79D\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]/.test(char)) {
+      width += 12
+    } else {
+      width += 7
+    }
+  }
+  return width
+}
+
 export const ContractsTab: React.FC<ContractsTabProps> = ({
   customer,
   onContractCountChange
@@ -173,12 +187,12 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return contracts.reduce((sum, c) => sum + (c.premium || 0), 0)
   }, [contracts])
 
-  // 🍎 가장 긴 상품명 기준으로 칼럼폭 계산
+  // 🍎 가장 긴 상품명 기준으로 칼럼폭 계산 (한글 전각 문자 고려)
   const productColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 200 // 기본값
-    const maxLength = Math.max(...contracts.map(c => (c.product_name || '').length))
-    // 글자당 약 8px, 최소 150px, 최대 400px
-    const calculatedWidth = Math.max(150, Math.min(400, maxLength * 8 + 40))
+    const maxWidth = Math.max(...contracts.map(c => calculateTextWidth(c.product_name || '')))
+    // 패딩 포함, 최소 200px, 최대 450px
+    const calculatedWidth = Math.max(200, Math.min(450, maxWidth + 40))
     return calculatedWidth
   }, [contracts])
 
