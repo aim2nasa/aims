@@ -42,6 +42,9 @@ interface DocumentsTabProps {
   onAnnualReportNeedRefresh?: () => void
 }
 
+// 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
+const SORT_ICON_WIDTH = 14
+
 // 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
 const ITEMS_PER_PAGE_OPTIONS_BASE = [
   { value: 'auto', label: '자동' },
@@ -211,16 +214,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     setCurrentPage(1)
   }, [sortField])
 
-  // 🍎 동적 칼럼 폭 계산: 파일명(originalName) 기준
+  // 🍎 동적 칼럼 폭 계산: 파일명(originalName) 기준 (+ 정렬 아이콘)
   const filenameColumnWidth = useMemo(() => {
     if (documents.length === 0) return 200; // 기본값
     const maxLength = Math.max(...documents.map(d => (d.originalName || '').length));
-    // 글자당 약 7px, 최소 150px, 최대 400px
-    const calculatedWidth = Math.max(150, Math.min(400, maxLength * 7 + 40));
+    // 글자당 약 7px + 정렬 아이콘, 최소 150px, 최대 415px
+    const calculatedWidth = Math.max(150, Math.min(415, maxLength * 7 + 40 + SORT_ICON_WIDTH));
     return calculatedWidth;
   }, [documents]);
 
-  // 🍎 동적 칼럼 폭 계산: 연결일(linkedAt) 기준
+  // 🍎 동적 칼럼 폭 계산: 연결일(linkedAt) 기준 (+ 정렬 아이콘)
   const dateColumnWidth = useMemo(() => {
     if (documents.length === 0) return 130; // 기본값
     // 연결일 형식: "2025-11-29 10:03:22" (약 19자)
@@ -231,12 +234,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         return formatted.length;
       })
     );
-    // 글자당 약 7px, 최소 100px, 최대 180px
-    const calculatedWidth = Math.max(100, Math.min(180, maxLength * 7 + 16));
+    // 글자당 약 7px + 정렬 아이콘, 최소 100px, 최대 195px
+    const calculatedWidth = Math.max(100, Math.min(195, maxLength * 7 + 16 + SORT_ICON_WIDTH));
     return calculatedWidth;
   }, [documents]);
 
-  // 🍎 동적 칼럼 폭 계산: 크기(fileSize) 기준
+  // 🍎 동적 칼럼 폭 계산: 크기(fileSize) 기준 (+ 정렬 아이콘)
   const sizeColumnWidth = useMemo(() => {
     if (documents.length === 0) return 70; // 기본값
     const maxLength = Math.max(
@@ -245,8 +248,8 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         return sizeLabel.length;
       })
     );
-    // 글자당 약 7px, 최소 50px, 최대 100px
-    const calculatedWidth = Math.max(50, Math.min(100, maxLength * 7 + 16));
+    // 글자당 약 7px + 정렬 아이콘, 최소 50px, 최대 115px
+    const calculatedWidth = Math.max(50, Math.min(115, maxLength * 7 + 16 + SORT_ICON_WIDTH));
     return calculatedWidth;
   }, [documents]);
 

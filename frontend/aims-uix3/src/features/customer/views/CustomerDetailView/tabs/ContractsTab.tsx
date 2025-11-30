@@ -46,6 +46,9 @@ const DEFAULT_PAGINATION_HEIGHT = 26
 type SortField = 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'payment_status'
 type SortDirection = 'asc' | 'desc'
 
+// 🍎 정렬 아이콘 폭 (font-size: 10px + gap: 4px)
+const SORT_ICON_WIDTH = 14
+
 // 🍎 한글 전각 문자를 고려한 텍스트 폭 계산 유틸리티
 const calculateTextWidth = (text: string): number => {
   let width = 0
@@ -302,72 +305,72 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return contracts.reduce((sum, c) => sum + (c.premium || 0), 0)
   }, [contracts])
 
-  // 🍎 가장 긴 상품명 기준으로 칼럼폭 계산 (한글 전각 문자 고려)
+  // 🍎 가장 긴 상품명 기준으로 칼럼폭 계산 (한글 전각 문자 고려 + 정렬 아이콘)
   const productColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 200 // 기본값
     const maxWidth = Math.max(...contracts.map(c => calculateTextWidth(c.product_name || '')))
-    // 패딩 포함, 최소 200px, 최대 450px
-    const calculatedWidth = Math.max(200, Math.min(450, maxWidth + 40))
+    // 패딩 + 정렬 아이콘 포함, 최소 200px, 최대 450px
+    const calculatedWidth = Math.max(200, Math.min(450, maxWidth + 40 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 계약일 기준
+  // 🍎 동적 칼럼 폭 계산: 계약일 기준 (+ 정렬 아이콘)
   const contractDateColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 100 // 기본값
     const maxLength = Math.max(...contracts.map(c => (c.contract_date || '').length))
-    // 글자당 약 7px, 최소 80px, 최대 120px
-    const calculatedWidth = Math.max(80, Math.min(120, maxLength * 7 + 16))
+    // 글자당 약 7px + 정렬 아이콘, 최소 80px, 최대 135px
+    const calculatedWidth = Math.max(80, Math.min(135, maxLength * 7 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 증권번호 기준
+  // 🍎 동적 칼럼 폭 계산: 증권번호 기준 (+ 정렬 아이콘)
   const policyNumberColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 115 // 기본값
     const maxLength = Math.max(...contracts.map(c => (c.policy_number || '').length))
-    // 글자당 약 7px, 최소 80px, 최대 160px
-    const calculatedWidth = Math.max(80, Math.min(160, maxLength * 7 + 16))
+    // 글자당 약 7px + 정렬 아이콘, 최소 80px, 최대 175px
+    const calculatedWidth = Math.max(80, Math.min(175, maxLength * 7 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 보험료 기준
+  // 🍎 동적 칼럼 폭 계산: 보험료 기준 (+ 정렬 아이콘)
   const premiumColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 100 // 기본값
     const maxLength = Math.max(...contracts.map(c => {
       const formatted = ContractUtils.formatPremium(c.premium)
       return formatted.length
     }))
-    // 글자당 약 8px, 최소 70px, 최대 140px
-    const calculatedWidth = Math.max(70, Math.min(140, maxLength * 8 + 16))
+    // 글자당 약 8px + 정렬 아이콘, 최소 70px, 최대 155px
+    const calculatedWidth = Math.max(70, Math.min(155, maxLength * 8 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 이체일 기준
+  // 🍎 동적 칼럼 폭 계산: 이체일 기준 (+ 정렬 아이콘)
   const paymentDayColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 75 // 기본값
     const maxLength = Math.max(...contracts.map(c => {
       const day = c.payment_day || '-'
       return day.length
     }))
-    // 글자당 약 8px, 최소 50px, 최대 90px
-    const calculatedWidth = Math.max(50, Math.min(90, maxLength * 8 + 16))
+    // 글자당 약 8px + 정렬 아이콘, 최소 50px, 최대 105px
+    const calculatedWidth = Math.max(50, Math.min(105, maxLength * 8 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 납입주기 기준
+  // 🍎 동적 칼럼 폭 계산: 납입주기 기준 (+ 정렬 아이콘)
   const paymentCycleColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 90 // 기본값
     const maxLength = Math.max(...contracts.map(c => (c.payment_cycle || '').length))
-    // 글자당 약 10px (한글), 최소 60px, 최대 120px
-    const calculatedWidth = Math.max(60, Math.min(120, maxLength * 10 + 16))
+    // 글자당 약 10px (한글) + 정렬 아이콘, 최소 60px, 최대 135px
+    const calculatedWidth = Math.max(60, Math.min(135, maxLength * 10 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
-  // 🍎 동적 칼럼 폭 계산: 납입상태 기준
+  // 🍎 동적 칼럼 폭 계산: 납입상태 기준 (+ 정렬 아이콘)
   const paymentStatusColumnWidth = useMemo(() => {
     if (contracts.length === 0) return 100 // 기본값
     const maxLength = Math.max(...contracts.map(c => (c.payment_status || '').length))
-    // 글자당 약 10px (한글), 최소 70px, 최대 130px
-    const calculatedWidth = Math.max(70, Math.min(130, maxLength * 10 + 16))
+    // 글자당 약 10px (한글) + 정렬 아이콘, 최소 70px, 최대 145px
+    const calculatedWidth = Math.max(70, Math.min(145, maxLength * 10 + 16 + SORT_ICON_WIDTH))
     return calculatedWidth
   }, [contracts])
 
