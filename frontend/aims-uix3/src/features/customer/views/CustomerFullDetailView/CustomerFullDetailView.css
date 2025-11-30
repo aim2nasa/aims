@@ -65,6 +65,41 @@ html[data-theme="dark"] .customer-full-detail__actions {
   flex: 1;
 }
 
+/* 🍎 레이아웃 리셋 버튼 */
+.customer-full-detail__reset-layout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.customer-full-detail__reset-layout:hover {
+  background: var(--color-ios-bg-tertiary-light);
+  color: var(--color-primary-500);
+  transform: scale(1.05);
+}
+
+html[data-theme="dark"] .customer-full-detail__reset-layout:hover {
+  background: var(--color-ios-bg-tertiary-dark);
+}
+
+.customer-full-detail__reset-layout:active {
+  transform: scale(0.95);
+}
+
+.customer-full-detail__reset-layout svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* === 콘텐츠 - 2행 레이아웃 === */
 .customer-full-detail__content {
   flex: 1;

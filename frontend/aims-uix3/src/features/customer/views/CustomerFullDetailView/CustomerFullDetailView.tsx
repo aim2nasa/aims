@@ -61,12 +61,43 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
 
+  // 🍎 리사이즈 기본값
+  const DEFAULT_TOP_LEFT_WIDTH = 37.5
+  const DEFAULT_BOTTOM_LEFT_WIDTH = 62.01
+  const DEFAULT_TOP_ROW_FLEX = 0.97
+
   // 🍎 리사이즈 상태 (퍼센트 기반)
-  const [topLeftWidth, setTopLeftWidth] = useState(37.5) // 고객정보 폭 %
-  const [bottomLeftWidth, setBottomLeftWidth] = useState(65) // 문서 폭 %
-  const [topRowFlex, setTopRowFlex] = useState(1) // 상단 행 비율
+  const [topLeftWidth, setTopLeftWidth] = useState(DEFAULT_TOP_LEFT_WIDTH) // 고객정보 폭 %
+  const [bottomLeftWidth, setBottomLeftWidth] = useState(DEFAULT_BOTTOM_LEFT_WIDTH) // 문서 폭 %
+  const [topRowFlex, setTopRowFlex] = useState(DEFAULT_TOP_ROW_FLEX) // 상단 행 비율
+
+  // 🍎 레이아웃 변경 여부 확인
+  const isLayoutModified =
+    Math.abs(topLeftWidth - DEFAULT_TOP_LEFT_WIDTH) > 0.01 ||
+    Math.abs(bottomLeftWidth - DEFAULT_BOTTOM_LEFT_WIDTH) > 0.01 ||
+    Math.abs(topRowFlex - DEFAULT_TOP_ROW_FLEX) > 0.001
+
+  // 🍎 레이아웃 리셋 핸들러
+  const handleResetLayout = useCallback(() => {
+    setTopLeftWidth(DEFAULT_TOP_LEFT_WIDTH)
+    setBottomLeftWidth(DEFAULT_BOTTOM_LEFT_WIDTH)
+    setTopRowFlex(DEFAULT_TOP_ROW_FLEX)
+  }, [])
   const [isDragging, setIsDragging] = useState<'top-h' | 'bottom-h' | 'vertical' | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const prevIsDragging = useRef<'top-h' | 'bottom-h' | 'vertical' | null>(null)
+
+  // 🍎 리사이즈 값 로그 출력 (드래그 종료 시)
+  useEffect(() => {
+    if (prevIsDragging.current !== null && isDragging === null) {
+      console.log('📐 [레이아웃 값]', {
+        topLeftWidth: topLeftWidth.toFixed(2),
+        bottomLeftWidth: bottomLeftWidth.toFixed(2),
+        topRowFlex: topRowFlex.toFixed(3)
+      })
+    }
+    prevIsDragging.current = isDragging
+  }, [isDragging, topLeftWidth, bottomLeftWidth, topRowFlex])
 
   const confirmController = useAppleConfirmController()
 
@@ -436,6 +467,21 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 고객 삭제
               </Button>
               <div className="customer-full-detail__actions-spacer" />
+              {/* 🍎 레이아웃 리셋 버튼 (변경 시에만 표시) */}
+              {isLayoutModified && (
+                <button
+                  type="button"
+                  className="customer-full-detail__reset-layout"
+                  onClick={handleResetLayout}
+                  title="레이아웃을 기본값으로 되돌립니다"
+                  aria-label="레이아웃 초기화"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                  </svg>
+                </button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
