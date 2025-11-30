@@ -6,7 +6,7 @@
  * 통계, 빠른 액션, 최근 활동을 포함
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CenterPaneView from '../CenterPaneView/CenterPaneView';
 import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../SFSymbol';
@@ -48,6 +48,33 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
   onCustomerClick,
   onCustomerDoubleClick,
 }) => {
+  // 클릭/더블클릭 구분을 위한 타이머 ref
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 싱글클릭 핸들러 (더블클릭과 구분하기 위해 딜레이)
+  const handleCustomerSingleClick = useCallback((customerId: string) => {
+    // 기존 타이머가 있으면 취소
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+    // 300ms 후에 싱글클릭 실행 (더블클릭이면 취소됨)
+    // 브라우저 더블클릭 임계값은 보통 200-500ms
+    clickTimerRef.current = setTimeout(() => {
+      onCustomerClick?.(customerId);
+      clickTimerRef.current = null;
+    }, 300);
+  }, [onCustomerClick]);
+
+  // 더블클릭 핸들러 (싱글클릭 타이머 취소)
+  const handleCustomerDblClick = useCallback((customerId: string) => {
+    // 싱글클릭 타이머 취소
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    onCustomerDoubleClick?.(customerId);
+  }, [onCustomerDoubleClick]);
+
   // 최근 활동 기간 선택 상태
   const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1week');
 
@@ -463,8 +490,8 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
                       {(onCustomerClick || onCustomerDoubleClick) && contract.customer_id ? (
                         <div
                           className="recent-cell-customer recent-cell-customer--clickable"
-                          onClick={() => onCustomerClick?.(contract.customer_id!)}
-                          onDoubleClick={() => onCustomerDoubleClick?.(contract.customer_id!)}
+                          onClick={() => handleCustomerSingleClick(contract.customer_id!)}
+                          onDoubleClick={() => handleCustomerDblClick(contract.customer_id!)}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {

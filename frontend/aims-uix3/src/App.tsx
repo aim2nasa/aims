@@ -860,6 +860,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       console.log('[App] 고객 클릭:', customerId, customerData, initialTab)
     }
 
+    // customers-full-detail 뷰에서는 RightPane 열지 않음 (race condition 방지)
+    if (activeDocumentView === 'customers-full-detail') {
+      if (import.meta.env.DEV) {
+        console.log('[App] customers-full-detail 뷰에서는 RightPane 열지 않음')
+      }
+      return
+    }
+
     // customerId가 null이면 RightPane 닫기
     if (!customerId) {
       setSelectedCustomer(null)
@@ -881,19 +889,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // URL에 고객 ID와 탭 저장
     updateURLParams({ customerId, documentId: null, tab: initialTab || null })
-  }, [updateURLParams])
+  }, [updateURLParams, activeDocumentView])
 
   // 고객 전체 정보 페이지 열기 핸들러
   const handleOpenFullDetail = useCallback((customerId: string) => {
-    // RightPane 닫기
+    // RightPane 완전히 닫기 (콘텐츠 타입도 초기화)
+    setSelectedCustomer(null)
+    setRightPaneContentType(null)
     setRightPaneVisible(false)
 
     // CustomerFullDetailView 표시
     setFullDetailCustomerId(customerId)
     setActiveDocumentView('customers-full-detail')
 
-    // URL 업데이트
-    updateURLParams({ view: 'customers-full-detail', customerId })
+    // URL 업데이트 (customerId는 전체 정보 뷰용으로 유지)
+    updateURLParams({ view: 'customers-full-detail', customerId, tab: null })
   }, [updateURLParams])
 
   // 고객 전체 정보 페이지 닫기 핸들러
