@@ -61,15 +61,38 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
 
-  // 🍎 리사이즈 기본값
+  // 🍎 리사이즈 기본값 및 localStorage 키
+  const LAYOUT_STORAGE_KEY = 'aims-customer-full-detail-layout'
   const DEFAULT_TOP_LEFT_WIDTH = 37.5
   const DEFAULT_BOTTOM_LEFT_WIDTH = 62.01
   const DEFAULT_TOP_ROW_FLEX = 0.97
 
-  // 🍎 리사이즈 상태 (퍼센트 기반)
-  const [topLeftWidth, setTopLeftWidth] = useState(DEFAULT_TOP_LEFT_WIDTH) // 고객정보 폭 %
-  const [bottomLeftWidth, setBottomLeftWidth] = useState(DEFAULT_BOTTOM_LEFT_WIDTH) // 문서 폭 %
-  const [topRowFlex, setTopRowFlex] = useState(DEFAULT_TOP_ROW_FLEX) // 상단 행 비율
+  // 🍎 localStorage에서 저장된 레이아웃 불러오기
+  const getInitialLayoutValues = () => {
+    try {
+      const saved = localStorage.getItem(LAYOUT_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return {
+          topLeftWidth: parsed.topLeftWidth ?? DEFAULT_TOP_LEFT_WIDTH,
+          bottomLeftWidth: parsed.bottomLeftWidth ?? DEFAULT_BOTTOM_LEFT_WIDTH,
+          topRowFlex: parsed.topRowFlex ?? DEFAULT_TOP_ROW_FLEX
+        }
+      }
+    } catch (e) {
+      console.warn('[CustomerFullDetailView] localStorage 레이아웃 불러오기 실패:', e)
+    }
+    return {
+      topLeftWidth: DEFAULT_TOP_LEFT_WIDTH,
+      bottomLeftWidth: DEFAULT_BOTTOM_LEFT_WIDTH,
+      topRowFlex: DEFAULT_TOP_ROW_FLEX
+    }
+  }
+
+  // 🍎 리사이즈 상태 (퍼센트 기반) - localStorage에서 초기값 로드
+  const [topLeftWidth, setTopLeftWidth] = useState(() => getInitialLayoutValues().topLeftWidth)
+  const [bottomLeftWidth, setBottomLeftWidth] = useState(() => getInitialLayoutValues().bottomLeftWidth)
+  const [topRowFlex, setTopRowFlex] = useState(() => getInitialLayoutValues().topRowFlex)
 
   // 🍎 레이아웃 변경 여부 확인
   const isLayoutModified =
@@ -77,17 +100,24 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     Math.abs(bottomLeftWidth - DEFAULT_BOTTOM_LEFT_WIDTH) > 0.01 ||
     Math.abs(topRowFlex - DEFAULT_TOP_ROW_FLEX) > 0.001
 
-  // 🍎 레이아웃 리셋 핸들러
+  // 🍎 레이아웃 리셋 핸들러 (localStorage도 삭제)
   const handleResetLayout = useCallback(() => {
     setTopLeftWidth(DEFAULT_TOP_LEFT_WIDTH)
     setBottomLeftWidth(DEFAULT_BOTTOM_LEFT_WIDTH)
     setTopRowFlex(DEFAULT_TOP_ROW_FLEX)
+
+    // 🍎 localStorage에서 저장된 레이아웃 삭제
+    try {
+      localStorage.removeItem(LAYOUT_STORAGE_KEY)
+    } catch (e) {
+      console.warn('[CustomerFullDetailView] localStorage 레이아웃 삭제 실패:', e)
+    }
   }, [])
   const [isDragging, setIsDragging] = useState<'top-h' | 'bottom-h' | 'vertical' | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const prevIsDragging = useRef<'top-h' | 'bottom-h' | 'vertical' | null>(null)
 
-  // 🍎 리사이즈 값 로그 출력 (드래그 종료 시)
+  // 🍎 리사이즈 값 로그 출력 및 localStorage 저장 (드래그 종료 시)
   useEffect(() => {
     if (prevIsDragging.current !== null && isDragging === null) {
       console.log('📐 [레이아웃 값]', {
@@ -95,6 +125,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
         bottomLeftWidth: bottomLeftWidth.toFixed(2),
         topRowFlex: topRowFlex.toFixed(3)
       })
+
+      // 🍎 localStorage에 레이아웃 저장
+      try {
+        localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
+          topLeftWidth,
+          bottomLeftWidth,
+          topRowFlex
+        }))
+      } catch (e) {
+        console.warn('[CustomerFullDetailView] localStorage 레이아웃 저장 실패:', e)
+      }
     }
     prevIsDragging.current = isDragging
   }, [isDragging, topLeftWidth, bottomLeftWidth, topRowFlex])
