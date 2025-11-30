@@ -414,10 +414,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
-    // 🍎 customers-full-detail은 전체 정보를 CenterPane에 표시하므로 RightPane 무조건 숨김
+    // 🍎 customers-full-detail은 전체 정보를 CenterPane에 표시
+    // 단, 관계자 클릭 시 RightPane에 고객 상세 표시를 위해 selectedCustomer 체크
     if (activeDocumentView === "customers-full-detail") {
       setPaginationVisible(false)
-      setRightPaneVisible(false)
+      // selectedCustomer가 없을 때만 RightPane 숨김 (관계자 클릭 시 RightPane 열림)
+      if (!selectedCustomer) {
+        setRightPaneVisible(false)
+      }
     } else if (activeDocumentView === "documents" ||
         activeDocumentView === "documents-register" ||
         activeDocumentView === "documents-library" ||
