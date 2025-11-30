@@ -1,7 +1,16 @@
 /**
- * 🍎 Customer Full Detail View - 고객 전체 정보 페이지 스타일
- * CenterPane 전용 전체 화면 레이아웃 - 공간 효율성 최적화
+ * 🍎 Customer Full Detail View - 고객 전체 정보 페이지
+ * 4개 섹션: 고객정보(기본+가족) | 보험계약 | 문서 | Annual Report
+ * 2x2 그리드 레이아웃 - 통일된 행 높이 28px
  */
+
+/* 통일 변수 - A행 기준 */
+.customer-full-detail {
+  --row-height: 32px;
+  --font-size: 12px;
+  --label-color: var(--color-text-tertiary);
+  --value-color: var(--color-text-primary);
+}
 
 .customer-full-detail {
   display: flex;
@@ -16,15 +25,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-6);
-  text-align: center;
+  gap: 8px;
+  padding: 24px;
   color: var(--color-text-secondary);
   flex: 1;
-}
-
-.customer-full-detail__state--loading {
-  color: var(--color-text-secondary);
 }
 
 .customer-full-detail__state--error {
@@ -32,29 +36,24 @@
 }
 
 .customer-full-detail__retry {
-  padding: var(--spacing-1) var(--spacing-3);
+  padding: 4px 12px;
   border-radius: 999px;
   border: 1px solid var(--color-primary-200);
-  background-color: transparent;
+  background: transparent;
   color: var(--color-primary-600);
   cursor: pointer;
-  font-size: var(--font-size-caption-1);
-  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+  font-size: 11px;
 }
 
-.customer-full-detail__retry:hover {
-  background-color: var(--color-primary-100);
-}
-
-/* === 액션 버튼 영역 - 컴팩트 === */
+/* === 액션 버튼 === */
 .customer-full-detail__actions {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
+  gap: 6px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--color-ios-separator-light);
-  flex-shrink: 0;
   background: var(--color-ios-bg-primary-light);
+  flex-shrink: 0;
 }
 
 html[data-theme="dark"] .customer-full-detail__actions {
@@ -66,69 +65,42 @@ html[data-theme="dark"] .customer-full-detail__actions {
   flex: 1;
 }
 
-/* === 콘텐츠 스크롤 영역 === */
+/* === 콘텐츠 - 2행 레이아웃 === */
 .customer-full-detail__content {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--spacing-3);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* === 행 공통 === */
+.customer-full-detail__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto auto;
-  gap: var(--spacing-3);
-  align-content: start;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
 }
 
-/* 스크롤바 */
-.customer-full-detail__content::-webkit-scrollbar {
-  width: 6px;
+/* === 상단 행 - 고객정보 37.5% | 보험계약 62.5% === */
+.customer-full-detail__row--top {
+  grid-template-columns: 3fr 5fr;
 }
 
-.customer-full-detail__content::-webkit-scrollbar-track {
-  background: transparent;
+/* === 하단 행 - 문서 65% | Annual Report 35% === */
+.customer-full-detail__row--bottom {
+  grid-template-columns: 65fr 35fr;
 }
 
-.customer-full-detail__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-light);
-  border-radius: 3px;
-}
-
-html[data-theme="dark"] .customer-full-detail__content::-webkit-scrollbar-thumb {
-  background-color: var(--color-ios-scrollbar-dark);
-}
-
-/* === 섹션 그리드 배치 === */
-.customer-full-detail__section:nth-child(1) {
-  grid-column: 1;
-  grid-row: 1 / 3; /* 기본정보는 2행 차지 */
-}
-
-.customer-full-detail__section:nth-child(2) {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.customer-full-detail__section:nth-child(3) {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.customer-full-detail__section:nth-child(4) {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.customer-full-detail__section:nth-child(5) {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-/* === 섹션 - 컴팩트 === */
+/* === 섹션 공통 === */
 .customer-full-detail__section {
   background: var(--color-ios-bg-primary-light);
   border-radius: 8px;
   border: 1px solid var(--color-ios-separator-light);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 
@@ -137,17 +109,20 @@ html[data-theme="dark"] .customer-full-detail__section {
   border-color: var(--color-ios-separator-dark);
 }
 
+/* === 섹션 헤더 === */
 .customer-full-detail__section-title {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   margin: 0;
-  font-size: var(--font-size-caption-1);
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-primary);
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
+  height: 36px;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-title {
@@ -156,24 +131,24 @@ html[data-theme="dark"] .customer-full-detail__section-title {
 }
 
 .customer-full-detail__section-title svg {
-  flex-shrink: 0;
   width: 14px;
   height: 14px;
   color: var(--color-primary-500);
 }
 
 .customer-full-detail__section-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
   background: var(--color-primary-100);
   color: var(--color-primary-700);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-count {
@@ -181,137 +156,711 @@ html[data-theme="dark"] .customer-full-detail__section-count {
   color: var(--color-primary-300);
 }
 
+/* === 섹션 컨텐츠 === */
 .customer-full-detail__section-content {
-  padding: 8px 10px;
-  max-height: 300px;
+  padding: 0;
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* === 기본정보 섹션 - 더 컴팩트하게 === */
-.customer-full-detail__section:first-child .customer-full-detail__section-content {
-  max-height: none;
+/* ============================================
+   🍎 고객 정보 - 테이블 스타일
+   ============================================ */
+
+.customer-full-detail__section-content--customer-info {
+  display: flex;
+  flex-direction: column;
 }
 
-/* 기본정보 내부 form-section 스타일 오버라이드 */
-.customer-full-detail__section-content .form-section {
-  margin-bottom: 8px;
+/* 기본정보 테이블 */
+.customer-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.customer-info-table td {
+  height: var(--row-height);
+  padding: 0 10px;
+  font-size: var(--font-size);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  vertical-align: middle;
+}
+
+html[data-theme="dark"] .customer-info-table td {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-info-table__label {
+  width: 70px;
+  color: var(--label-color);
+  font-weight: 500;
+  background: var(--color-ios-bg-secondary-light);
+}
+
+html[data-theme="dark"] .customer-info-table__label {
+  background: var(--color-ios-bg-secondary-dark);
+}
+
+.customer-info-table__value {
+  color: var(--value-color);
+}
+
+.customer-info-table__type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+html[data-theme="dark"] .customer-info-table__type-badge {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+/* 가족 리스트 - 구분선 없이 연결 */
+.customer-info-family-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* 관계 테이블 래퍼 - 테두리 제거 */
+.customer-info-family-list .relationships-table-wrapper {
   border: none;
-  box-shadow: none;
-  background: transparent;
+  border-radius: 0;
 }
 
-.customer-full-detail__section-content .form-section:last-child {
-  margin-bottom: 0;
+/* 관계 테이블 - A행 기준 32px 높이 적용 */
+.customer-info-family-list .relationships-table {
+  min-width: auto;
+  font-size: var(--font-size);
 }
 
-.customer-full-detail__section-content .form-section__title {
+/* 테이블 헤더 - A행 높이 32px 적용 */
+.customer-info-family-list .relationships-table th {
+  height: var(--row-height);
+  padding: 0 10px;
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 0;
-  margin-bottom: 4px;
+  color: var(--label-color);
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .customer-info-family-list .relationships-table th {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* 테이블 데이터 셀 - A행 높이 32px 적용 */
+.customer-info-family-list .relationships-table td {
+  height: var(--row-height);
+  padding: 0 10px;
+  font-size: var(--font-size);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .customer-info-family-list .relationships-table td {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-info-family-list .relationships-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 관계 카테고리 아이콘 - 크기 축소 */
+.customer-info-family-list .relationships-category__icon {
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+}
+
+/* 삭제 버튼 - 크기 축소 */
+.customer-info-family-list .relationships-action {
+  width: 24px;
+  height: 24px;
+}
+
+/* 빈 상태 메시지 */
+.customer-info-family-list .relationships-state {
+  height: var(--row-height);
+  padding: 0 10px;
+  font-size: var(--font-size);
+  gap: 6px;
   background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  border-radius: 0;
 }
 
-.customer-full-detail__section-content .form-section__title svg {
-  width: 12px;
-  height: 12px;
+.customer-info-family-list .relationships-state .sf-symbol {
+  font-size: 14px;
 }
 
-.customer-full-detail__section-content .form-section__content {
+/* ============================================
+   🍎 보험계약 섹션 - 통일된 행 높이 + 수평 스크롤
+   ============================================ */
+
+.customer-full-detail__section-content--contracts {
   padding: 0;
-}
-
-.customer-full-detail__section-content .form-row {
-  display: flex;
-  align-items: center;
-  padding: 2px 0;
-  font-size: var(--font-size-caption-1);
-  min-height: 22px;
-}
-
-.customer-full-detail__section-content .form-row__label {
-  width: 70px;
-  flex-shrink: 0;
-  color: var(--color-text-tertiary);
-  font-size: 11px;
-}
-
-.customer-full-detail__section-content .form-row__value {
-  flex: 1;
-  color: var(--color-text-primary);
-  font-size: 12px;
-}
-
-/* === 계약/문서 섹션 === */
-.customer-full-detail__section-content--contracts,
-.customer-full-detail__section-content--documents {
-  padding: 0;
-  max-height: 250px;
+  overflow: hidden;
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts {
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts__header {
-  padding: 6px 10px;
+  display: none;
 }
 
+/* 리스트 컨테이너 - 수평/수직 스크롤 */
 .customer-full-detail__section-content--contracts .customer-contracts__list-container {
-  max-height: 180px;
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
 }
 
-.customer-full-detail__section-content--contracts .customer-contracts-list-header,
-.customer-full-detail__section-content--contracts .customer-contracts-item {
-  padding: 4px 8px;
-  height: 26px;
+/* 계약 헤더 - 데이터 기반 칼럼 폭 + 모든 칼럼 표시 */
+.customer-full-detail__section-content--contracts .customer-contracts-list-header {
+  display: grid;
+  grid-template-columns:
+    var(--product-column-width, 180px)  /* 상품명 - 동적 */
+    80px                                 /* 계약일 */
+    90px                                 /* 증권번호 */
+    80px                                 /* 보험료 */
+    50px                                 /* 이체일 */
+    60px                                 /* 납입주기 */
+    60px;                                /* 납입상태 */
+  gap: 8px;
+  padding: 0 10px;
+  height: var(--row-height);
+  min-width: max-content;
   font-size: 11px;
+  font-weight: 600;
+  color: var(--label-color);
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.customer-full-detail__section-content--contracts .contract-pagination {
-  padding: 8px 10px;
-  margin-top: 4px;
+html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-list-header {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
 }
 
-/* === 문서 탭 컴팩트 === */
-.customer-full-detail__section-content--documents .documents-tab {
+/* 헤더 아이콘 숨기기 (공간 절약) */
+.customer-full-detail__section-content--contracts .customer-contracts-list-header .header-icon-svg {
+  display: none;
+}
+
+/* 계약 아이템 - 데이터 기반 칼럼 폭 + 모든 칼럼 표시 */
+.customer-full-detail__section-content--contracts .customer-contracts-item {
+  display: grid;
+  grid-template-columns:
+    var(--product-column-width, 180px)  /* 상품명 - 동적 */
+    80px                                 /* 계약일 */
+    90px                                 /* 증권번호 */
+    80px                                 /* 보험료 */
+    50px                                 /* 이체일 */
+    60px                                 /* 납입주기 */
+    60px;                                /* 납입상태 */
+  gap: 8px;
+  padding: 0 10px;
+  height: var(--row-height);
+  min-width: max-content;
+  align-items: center;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  font-size: var(--font-size);
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-item {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-full-detail__section-content--contracts .customer-contracts-item:last-child {
+  border-bottom: none;
+}
+
+/* 상품명 - 전체 표시 (말줄임 제거) */
+.customer-full-detail__section-content--contracts .contract-product {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 계약일 */
+.customer-full-detail__section-content--contracts .contract-date {
+  font-size: 11px;
+  color: var(--label-color);
+  text-align: center;
+}
+
+/* 증권번호 */
+.customer-full-detail__section-content--contracts .contract-policy {
+  font-size: 11px;
+  text-align: center;
+}
+
+/* 보험료 */
+.customer-full-detail__section-content--contracts .contract-premium {
+  font-weight: 500;
+  text-align: right;
+}
+
+/* 이체일 */
+.customer-full-detail__section-content--contracts .contract-payment-day {
+  font-size: 11px;
+  text-align: center;
+}
+
+/* 납입주기 */
+.customer-full-detail__section-content--contracts .contract-cycle {
+  font-size: 11px;
+  text-align: center;
+}
+
+/* 납입상태 */
+.customer-full-detail__section-content--contracts .contract-status {
+  text-align: center;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 빈 상태 */
+.customer-full-detail__section-content--contracts .customer-contracts__state {
+  padding: 16px;
+  text-align: center;
+  font-size: var(--font-size);
+  color: var(--label-color);
+  height: var(--row-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
-.customer-full-detail__section-content--documents .documents-tab__header {
-  padding: 6px 10px;
+/* 페이지네이션 */
+.customer-full-detail__section-content--contracts .contract-pagination {
+  padding: 0 10px;
+  height: var(--row-height);
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
 }
 
-.customer-full-detail__section-content--documents .documents-tab__list-container {
-  max-height: 180px;
+/* ============================================
+   🍎 문서 섹션 - 통일된 행 높이 (A행 32px 기준)
+   ============================================ */
+
+.customer-full-detail__section-content--documents {
+  padding: 0;
 }
 
-/* === Annual Report 섹션 === */
-.customer-full-detail__section-content--annual-report {
-  padding: 8px 10px;
-  max-height: 200px;
+.customer-full-detail__section-content--documents .customer-documents {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
 }
 
-/* === 관계 탭 컴팩트 === */
-.customer-full-detail__section-content .relationships-tab {
-  height: auto;
+.customer-full-detail__section-content--documents .customer-documents__header {
+  display: none;
 }
 
-.customer-full-detail__section-content .relationships-tab__state {
-  padding: var(--spacing-3);
-}
-
-.customer-full-detail__section-content .relationships-tab__list {
-  max-height: 150px;
+.customer-full-detail__section-content--documents .customer-documents__list-container {
+  flex: 1;
   overflow-y: auto;
+  gap: 0;
+  padding: 0;
 }
 
-/* === 고객 아이콘 === */
+/* 문서 리스트 헤더 - A행 높이 32px */
+.customer-full-detail__section-content--documents .customer-documents-list-header {
+  display: grid;
+  grid-template-columns: 20px 1fr 60px 90px 44px;
+  gap: 6px;
+  padding: 0 10px;
+  height: var(--row-height);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label-color);
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  align-items: center;
+  margin-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--documents .customer-documents-list-header {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+/* 문서 아이템 - A행 높이 32px */
+.customer-full-detail__section-content--documents .customer-documents-item {
+  display: grid;
+  grid-template-columns: 20px 1fr 60px 90px 44px;
+  gap: 6px;
+  padding: 0 10px;
+  height: var(--row-height);
+  align-items: center;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  font-size: var(--font-size);
+  border-radius: 0;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--documents .customer-documents-item {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-full-detail__section-content--documents .customer-documents-item:last-child {
+  border-bottom: none;
+}
+
+.customer-full-detail__section-content--documents .customer-documents-item:hover {
+  transform: none;
+}
+
+/* 문서 아이콘 크기 축소 */
+.customer-full-detail__section-content--documents .document-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 파일명 */
+.customer-full-detail__section-content--documents .status-filename {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size);
+}
+
+/* 크기, 날짜 */
+.customer-full-detail__section-content--documents .document-size,
+.customer-full-detail__section-content--documents .status-date {
+  font-size: 11px;
+  color: var(--label-color);
+}
+
+/* 액션 버튼 크기 축소 */
+.customer-full-detail__section-content--documents .action-btn {
+  width: 20px;
+  height: 20px;
+}
+
+/* 빈 상태 */
+.customer-full-detail__section-content--documents .customer-documents__state {
+  height: var(--row-height);
+  padding: 0 10px;
+  font-size: var(--font-size);
+  gap: 6px;
+  background: transparent;
+  border-radius: 0;
+}
+
+/* 페이지네이션 */
+.customer-full-detail__section-content--documents .document-pagination {
+  padding: 2px 8px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  font-size: 10px;
+  border-top: 1px solid var(--color-ios-separator-light);
+  justify-content: space-between;
+  flex-shrink: 0;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--documents .document-pagination {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+/* 드롭다운 - 페이지네이션 높이에 맞춤 */
+.customer-full-detail__section-content--documents .pagination-limit {
+  display: flex;
+  align-items: center;
+  height: 20px;
+}
+
+/* iOS Dropdown 컴포넌트 스타일 오버라이드 */
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown {
+  min-width: 65px;
+}
+
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__trigger {
+  padding: 2px 6px;
+  height: 18px;
+  min-height: 18px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__value {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__arrow {
+  font-size: 8px;
+  margin-left: 4px;
+}
+
+/* 드롭다운 메뉴 - 작은 폰트 */
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__menu {
+  min-width: 60px;
+}
+
+.customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__option {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+/* 페이지네이션 컨트롤 */
+.customer-full-detail__section-content--documents .pagination-controls {
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  height: 100%;
+}
+
+/* 페이지네이션 버튼 크기 축소 */
+.customer-full-detail__section-content--documents .pagination-button {
+  width: 18px;
+  height: 18px;
+}
+
+/* 페이지네이션 화살표 크기 축소 */
+.customer-full-detail__section-content--documents .pagination-arrow {
+  font-size: 12px;
+}
+
+/* 페이지 정보 글씨 크기 축소 */
+.customer-full-detail__section-content--documents .pagination-info {
+  font-size: 10px;
+  min-width: 30px;
+}
+
+/* ============================================
+   🍎 Annual Report 섹션 - 데이터 기반 칼럼 + 수평스크롤
+   ============================================ */
+
+.customer-full-detail__section-content--annual-report {
+  padding: 0;
+  overflow: hidden;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab {
+  padding: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab__header {
+  display: none;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-actions {
+  display: none;
+}
+
+/* 테이블 컨테이너 - 수평/수직 스크롤 */
+.customer-full-detail__section-content--annual-report .annual-report-table-container {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+}
+
+/* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */
+.customer-full-detail__section-content--annual-report .annual-report-table-header {
+  grid-template-columns: 50px 80px 125px 85px 45px 40px;
+  gap: 4px;
+  padding: 0 8px;
+  height: var(--row-height);
+  min-height: var(--row-height);
+  min-width: max-content;
+  font-size: 11px;
+}
+
+/* 테이블 바디 */
+.customer-full-detail__section-content--annual-report .annual-report-table-body {
+  gap: 0;
+  padding: 0;
+}
+
+/* 테이블 행 - 6개 칼럼 */
+.customer-full-detail__section-content--annual-report .annual-report-row {
+  grid-template-columns: 50px 80px 125px 85px 45px 40px;
+  gap: 4px;
+  padding: 0 8px;
+  height: var(--row-height);
+  min-width: max-content;
+  font-size: var(--font-size);
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  animation: none;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--annual-report .annual-report-row {
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-row:last-child {
+  border-bottom: none;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-row:hover {
+  transform: none;
+}
+
+/* 셀 스타일 - nowrap으로 데이터 한 줄 유지 */
+.customer-full-detail__section-content--annual-report .row-owner,
+.customer-full-detail__section-content--annual-report .row-issue-date,
+.customer-full-detail__section-content--annual-report .row-parsed-at,
+.customer-full-detail__section-content--annual-report .row-premium,
+.customer-full-detail__section-content--annual-report .row-count {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 빈 상태 */
+.customer-full-detail__section-content--annual-report .annual-report-tab__empty {
+  min-height: 0;
+  padding: 16px 10px;
+  font-size: var(--font-size);
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab__empty-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab__empty-title {
+  font-size: var(--font-size);
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab__empty-description {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.customer-full-detail__section-content--annual-report .annual-report-tab__empty-hint {
+  display: none;
+}
+
+/* 로딩/에러 상태 */
+.customer-full-detail__section-content--annual-report .annual-report-tab__loading,
+.customer-full-detail__section-content--annual-report .annual-report-tab__error {
+  min-height: 0;
+  padding: 16px 10px;
+  font-size: var(--font-size);
+}
+
+/* 페이지네이션 - 좌측 드롭다운, 우측 페이지 컨트롤 */
+.customer-full-detail__section-content--annual-report .annual-report-pagination {
+  padding: 2px 8px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  margin-top: 0;
+  font-size: 10px;
+  border-top: 1px solid var(--color-ios-separator-light);
+  justify-content: space-between;
+  flex-shrink: 0;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--annual-report .annual-report-pagination {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+/* 드롭다운(10개씩) - 페이지네이션 높이에 맞춤 */
+.customer-full-detail__section-content--annual-report .pagination-limit {
+  display: flex;
+  align-items: center;
+  height: 20px;
+}
+
+/* iOS Dropdown 컴포넌트 스타일 오버라이드 */
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown {
+  min-width: 65px;
+}
+
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__trigger {
+  padding: 2px 6px;
+  height: 18px;
+  min-height: 18px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__value {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__arrow {
+  font-size: 8px;
+  margin-left: 4px;
+}
+
+/* 드롭다운 메뉴 - 작은 폰트 */
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__menu {
+  min-width: 60px;
+}
+
+.customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__option {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+/* 페이지네이션 컨트롤 우측 */
+.customer-full-detail__section-content--annual-report .pagination-controls {
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  height: 100%;
+}
+
+/* 페이지네이션 버튼 크기 축소 */
+.customer-full-detail__section-content--annual-report .pagination-button {
+  width: 18px;
+  height: 18px;
+}
+
+/* 페이지네이션 화살표 크기 축소 */
+.customer-full-detail__section-content--annual-report .pagination-arrow {
+  font-size: 12px;
+}
+
+/* 페이지 정보 글씨 크기 축소 */
+.customer-full-detail__section-content--annual-report .pagination-info {
+  font-size: 10px;
+  min-width: 30px;
+}
+
+/* ============================================
+   🍎 고객 아이콘
+   ============================================ */
+
 .customer-full-detail-icon {
   flex-shrink: 0;
 }
@@ -324,26 +873,18 @@ html[data-theme="dark"] .customer-full-detail__section-count {
   color: var(--color-icon-purple);
 }
 
-/* === 반응형 - 좁은 화면 === */
-@media (max-width: 900px) {
-  .customer-full-detail__content {
+/* ============================================
+   🍎 반응형
+   ============================================ */
+
+@media (max-width: 1000px) {
+  .customer-full-detail__row {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
+    grid-auto-rows: auto;
   }
 
-  .customer-full-detail__section:nth-child(1),
-  .customer-full-detail__section:nth-child(2),
-  .customer-full-detail__section:nth-child(3),
-  .customer-full-detail__section:nth-child(4),
-  .customer-full-detail__section:nth-child(5) {
-    grid-column: 1;
-    grid-row: auto;
-  }
-}
-
-/* === 접근성 === */
-@media (prefers-reduced-motion: reduce) {
-  .customer-full-detail__retry {
-    transition: none;
+  .customer-full-detail__row--top,
+  .customer-full-detail__row--bottom {
+    grid-template-columns: 1fr;
   }
 }

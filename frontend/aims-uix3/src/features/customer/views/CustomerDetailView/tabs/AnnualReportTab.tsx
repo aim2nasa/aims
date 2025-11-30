@@ -66,8 +66,9 @@ interface AnnualReportTabProps {
 
 const ITEMS_PER_PAGE_OPTIONS = [
   { value: '10', label: '10개씩' },
-  { value: '20', label: '20개씩' },
+  { value: '25', label: '25개씩' },
   { value: '50', label: '50개씩' },
+  { value: '100', label: '100개씩' },
 ];
 
 export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange, refreshTrigger }) => {

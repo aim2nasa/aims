@@ -3,9 +3,9 @@
  * @since 2025-11-30
  *
  * 🍎 고객 전체 정보 페이지 (CenterPane 전용)
- * - 기본정보, 가족관계, 보험계약, 문서, Annual Report 모두 표시
+ * - 고객정보(기본+가족), 보험계약, 문서, Annual Report 표시
  * - RightPane 없이 CenterPane 전체 활용
- * - CustomerDetailView(RightPane)의 확장 버전
+ * - 완전히 새로운 컴팩트 레이아웃
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
@@ -16,7 +16,6 @@ import CorporateRelationshipModal from '../../components/CorporateRelationshipMo
 import { useAppleConfirmController } from '../../../../controllers/useAppleConfirmController'
 import { AppleConfirmModal } from '../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal'
 import { Button } from '../../../../shared/ui/Button'
-import { BasicInfoTab } from '../CustomerDetailView/tabs/BasicInfoTab'
 import { RelationshipsTab } from '../CustomerDetailView/tabs/RelationshipsTab'
 import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
@@ -359,37 +358,65 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
             {/* 🍎 섹션들 - 스크롤 가능한 컨테이너 */}
             <div className="customer-full-detail__content">
-              {/* 🍎 기본 정보 섹션 */}
-              <section className="customer-full-detail__section">
+              {/* 🍎 상단 행 - 고객정보 | 보험계약 */}
+              <div className="customer-full-detail__row customer-full-detail__row--top">
+                {/* 🍎 고객 정보 섹션 (기본정보 + 가족관계 통합) */}
+                <section className="customer-full-detail__section customer-full-detail__section--customer-info">
                 <h2 className="customer-full-detail__section-title">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="8" cy="5" r="2.5"/>
                     <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
                   </svg>
-                  <span>기본 정보</span>
+                  <span>고객 정보</span>
                 </h2>
-                <div className="customer-full-detail__section-content">
-                  <BasicInfoTab customer={customer} />
-                </div>
-              </section>
-
-              {/* 🍎 가족관계/관계인 섹션 */}
-              <section className="customer-full-detail__section">
-                <h2 className="customer-full-detail__section-title">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.5 3.5a2 2 0 100 4 2 2 0 000-4zM10.5 3.5a2 2 0 100 4 2 2 0 000-4zM2 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1H2v-1zM10 12.5c0-1.5 1-2.5 3.5-2.5s3.5 1 3.5 2.5v1h-7v-1z"/>
-                  </svg>
-                  <span>{isBusinessCustomer ? '관계인' : '가족 관계'}</span>
-                  {relationshipsCount > 0 && (
-                    <span className="customer-full-detail__section-count">{relationshipsCount}</span>
-                  )}
-                </h2>
-                <div className="customer-full-detail__section-content">
-                  <RelationshipsTab
-                    customer={customer}
-                    onRelationshipsCountChange={setRelationshipsCount}
-                    {...(onSelectCustomer ? { onSelectCustomer } : {})}
-                  />
+                <div className="customer-full-detail__section-content customer-full-detail__section-content--customer-info">
+                  {/* 기본정보 + 가족 통합 테이블 */}
+                  <table className="customer-info-table">
+                    <tbody>
+                      <tr>
+                        <td className="customer-info-table__label">이름</td>
+                        <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
+                        <td className="customer-info-table__label">휴대폰</td>
+                        <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
+                      </tr>
+                      <tr>
+                        <td className="customer-info-table__label">생년월일</td>
+                        <td className="customer-info-table__value">{customer.personal_info?.birth_date || '-'}</td>
+                        <td className="customer-info-table__label">성별</td>
+                        <td className="customer-info-table__value">
+                          {customer.personal_info?.gender === 'M' ? '남성' : customer.personal_info?.gender === 'F' ? '여성' : '-'}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="customer-info-table__label">이메일</td>
+                        <td className="customer-info-table__value" colSpan={3}>{customer.personal_info?.email || '-'}</td>
+                      </tr>
+                      <tr>
+                        <td className="customer-info-table__label">주소</td>
+                        <td className="customer-info-table__value" colSpan={3}>
+                          {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
+                          {customer.personal_info?.address?.address1 || '-'}
+                          {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="customer-info-table__label">유형</td>
+                        <td className="customer-info-table__value">
+                          <span className="customer-info-table__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
+                        </td>
+                        <td className="customer-info-table__label">{isBusinessCustomer ? '관계인' : '가족'}</td>
+                        <td className="customer-info-table__value">{relationshipsCount}명</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  {/* 가족 리스트 - 구분선 없이 바로 아래 */}
+                  <div className="customer-info-family-list">
+                    <RelationshipsTab
+                      customer={customer}
+                      onRelationshipsCountChange={setRelationshipsCount}
+                      {...(onSelectCustomer ? { onSelectCustomer } : {})}
+                    />
+                  </div>
                 </div>
               </section>
 
@@ -412,55 +439,59 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   />
                 </div>
               </section>
+              </div>
 
-              {/* 🍎 문서 섹션 */}
-              <section className="customer-full-detail__section">
-                <h2 className="customer-full-detail__section-title">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
-                  </svg>
-                  <span>문서</span>
-                  {documentCount > 0 && (
-                    <span className="customer-full-detail__section-count">{documentCount}</span>
-                  )}
-                </h2>
-                <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
-                  <DocumentsTab
-                    customer={customer}
-                    onDocumentCountChange={setDocumentCount}
-                    onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
-                  />
-                </div>
-              </section>
+              {/* 🍎 하단 행 - 문서 | Annual Report */}
+              <div className="customer-full-detail__row customer-full-detail__row--bottom">
+                {/* 🍎 문서 섹션 */}
+                <section className="customer-full-detail__section">
+                  <h2 className="customer-full-detail__section-title">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M3 2.5A1.5 1.5 0 014.5 1h5.586a1.5 1.5 0 011.06.44l2.415 2.414a1.5 1.5 0 01.439 1.061V13.5A1.5 1.5 0 0112.5 15h-8A1.5 1.5 0 013 13.5v-11z"/>
+                    </svg>
+                    <span>문서</span>
+                    {documentCount > 0 && (
+                      <span className="customer-full-detail__section-count">{documentCount}</span>
+                    )}
+                  </h2>
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
+                    <DocumentsTab
+                      customer={customer}
+                      onDocumentCountChange={setDocumentCount}
+                      onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)}
+                    />
+                  </div>
+                </section>
 
-              {/* 🍎 Annual Report 섹션 */}
-              <section className="customer-full-detail__section">
-                <h2 className="customer-full-detail__section-title">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--color-success-overlay-bg)"/>
-                    <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                    <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                    <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/>
-                  </svg>
-                  <span>Annual Report</span>
-                  {annualReportCount > 0 && (
-                    <span className="customer-full-detail__section-count">{annualReportCount}</span>
-                  )}
-                </h2>
-                <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
-                  <AnnualReportTab
-                    customer={customer}
-                    onAnnualReportCountChange={setAnnualReportCount}
-                    refreshTrigger={annualReportRefreshTrigger}
-                  />
-                </div>
-              </section>
+                {/* 🍎 Annual Report 섹션 */}
+                <section className="customer-full-detail__section">
+                  <h2 className="customer-full-detail__section-title">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect x="2" y="1" width="12" height="14" rx="1.5" fill="var(--color-success-overlay-bg)"/>
+                      <rect x="4" y="9" width="1.5" height="4" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                      <rect x="7" y="7" width="1.5" height="6" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                      <rect x="10" y="5" width="1.5" height="8" rx="0.5" fill="var(--color-success-overlay-icon)"/>
+                    </svg>
+                    <span>Annual Report</span>
+                    {annualReportCount > 0 && (
+                      <span className="customer-full-detail__section-count">{annualReportCount}</span>
+                    )}
+                  </h2>
+                  <div className="customer-full-detail__section-content customer-full-detail__section-content--annual-report">
+                    <AnnualReportTab
+                      customer={customer}
+                      onAnnualReportCountChange={setAnnualReportCount}
+                      refreshTrigger={annualReportRefreshTrigger}
+                    />
+                  </div>
+                </section>
+              </div>
             </div>
           </>
         )}
