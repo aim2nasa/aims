@@ -414,7 +414,11 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // 고객 관련 View 활성 시 PaginationPane 숨김 (디폴트 상태)
   // RightPane은 문서/고객 선택 시에만 표시되도록 handleDocumentClick/handleCustomerClick에서 관리
   useEffect(() => {
-    if (activeDocumentView === "documents" ||
+    // 🍎 customers-full-detail은 전체 정보를 CenterPane에 표시하므로 RightPane 무조건 숨김
+    if (activeDocumentView === "customers-full-detail") {
+      setPaginationVisible(false)
+      setRightPaneVisible(false)
+    } else if (activeDocumentView === "documents" ||
         activeDocumentView === "documents-register" ||
         activeDocumentView === "documents-library" ||
         activeDocumentView === "documents-search" ||
@@ -425,7 +429,6 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "customers-all" ||
         activeDocumentView === "customers-regional" ||
         activeDocumentView === "customers-relationship" ||
-        activeDocumentView === "customers-full-detail" ||
         activeDocumentView === "contracts" ||
         activeDocumentView === "contracts-all" ||
         activeDocumentView === "contracts-import" ||
@@ -492,21 +495,26 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // 고객 ID가 URL에 있으면 고객 정보 로드
     if (urlCustomerId) {
-      // 비동기 로딩을 즉시 실행
-      CustomerService.getCustomer(urlCustomerId)
-        .then(customer => {
-          setSelectedCustomer(customer)
-          setRightPaneContentType('customer')
-          setRightPaneVisible(true)
-          if (import.meta.env.DEV) {
-            console.log('[App] URL에서 고객 정보 복원 완료:', customer)
-          }
-        })
-        .catch(error => {
-          console.error('[App] URL에서 고객 정보 복원 실패:', error)
-          // URL에서 잘못된 고객 ID 제거
-          updateURLParams({ customerId: null })
-        })
+      // 🍎 customers-full-detail 뷰일 때는 fullDetailCustomerId 설정
+      if (urlView === 'customers-full-detail') {
+        setFullDetailCustomerId(urlCustomerId)
+      } else {
+        // 일반 고객 선택 (RightPane에 표시)
+        CustomerService.getCustomer(urlCustomerId)
+          .then(customer => {
+            setSelectedCustomer(customer)
+            setRightPaneContentType('customer')
+            setRightPaneVisible(true)
+            if (import.meta.env.DEV) {
+              console.log('[App] URL에서 고객 정보 복원 완료:', customer)
+            }
+          })
+          .catch(error => {
+            console.error('[App] URL에서 고객 정보 복원 실패:', error)
+            // URL에서 잘못된 고객 ID 제거
+            updateURLParams({ customerId: null })
+          })
+      }
     }
 
     // 문서 ID가 URL에 있으면 문서 정보 로드

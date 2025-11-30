@@ -258,8 +258,8 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     )
   }
 
-  // 🍎 렌더링
-  if (!visible) return null
+  // 🍎 렌더링 - customerId 없으면 렌더링하지 않음
+  if (!visible || !customerId) return null
 
   return (
     <CenterPaneView
