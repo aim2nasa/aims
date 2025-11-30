@@ -44,6 +44,33 @@
   border-bottom-color: var(--color-layout-brb-dark);
 }
 
+/* 🍎 전체 보기 버튼 커스텀 스타일 (teal/info 색상) */
+.customer-detail-view__actions .button--full-view {
+  background-color: var(--color-teal-500, #14b8a6);
+  border-color: var(--color-teal-500, #14b8a6);
+  color: var(--color-neutral-50, #ffffff);
+}
+
+.customer-detail-view__actions .button--full-view:hover:not(:disabled) {
+  background-color: var(--color-teal-600, #0d9488);
+  border-color: var(--color-teal-600, #0d9488);
+}
+
+.customer-detail-view__actions .button--full-view:active:not(:disabled) {
+  background-color: var(--color-teal-700, #0f766e);
+  border-color: var(--color-teal-700, #0f766e);
+}
+
+[data-theme="dark"] .customer-detail-view__actions .button--full-view {
+  background-color: var(--color-teal-600, #0d9488);
+  border-color: var(--color-teal-600, #0d9488);
+}
+
+[data-theme="dark"] .customer-detail-view__actions .button--full-view:hover:not(:disabled) {
+  background-color: var(--color-teal-500, #14b8a6);
+  border-color: var(--color-teal-500, #14b8a6);
+}
+
 
 /* Tabs spacing */
 .customer-detail-view__tab-content {

@@ -489,10 +489,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             </Button>
             {onOpenFullDetail && (
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
+                className="button--full-view"
                 onClick={() => onOpenFullDetail(customer._id)}
-                leftIcon={<span>↗️</span>}
+                leftIcon={<span>📋</span>}
                 title="전체 화면에서 모든 정보를 한눈에 봅니다"
               >
                 전체 보기
