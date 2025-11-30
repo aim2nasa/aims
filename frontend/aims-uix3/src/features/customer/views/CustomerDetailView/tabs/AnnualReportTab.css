@@ -853,3 +853,53 @@ html[data-theme="dark"] .pagination-total {
     flex-direction: column;
   }
 }
+
+/* ==================== 🍎 정렬 가능한 헤더 스타일 ==================== */
+
+.annual-report-table__sortable {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color var(--duration-micro-quick, 0.1s) ease-out;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+}
+
+.annual-report-table__sortable:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme="dark"] .annual-report-table__sortable:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.annual-report-table__header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.annual-report-table__sort-icon {
+  font-size: 10px;
+  color: var(--color-ios-text-quaternary-light);
+  opacity: 0.4;
+  transition: opacity 0.15s ease-out, color 0.15s ease-out;
+}
+
+html[data-theme="dark"] .annual-report-table__sort-icon {
+  color: var(--color-ios-text-quaternary-dark);
+}
+
+.annual-report-table__sortable:hover .annual-report-table__sort-icon {
+  opacity: 0.7;
+}
+
+.annual-report-table__sort-icon--active {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+html[data-theme="dark"] .annual-report-table__sort-icon--active {
+  color: var(--color-primary-400);
+}

@@ -8,7 +8,7 @@
  * - Document-Controller-View 패턴 준수
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
@@ -20,6 +20,10 @@ import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { UserContextService } from '../../../../../components/DocumentViews/DocumentRegistrationView/services/userContextService';
 import type { Customer } from '@/entities/customer/model';
 import './AnnualReportTab.css';
+
+// 🍎 정렬 필드 타입
+type SortField = 'customer_name' | 'issue_date' | 'parsed_at' | 'total_monthly_premium' | 'contract_count' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 // 백엔드 원시 응답 타입 정의
 interface RawAnnualReportData {
@@ -98,6 +102,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
   // Page Visibility API: 백그라운드 탭에서 폴링 중지
   const [isPageVisible, setPageVisible] = useState(true);
+
+  // 🍎 정렬 상태
+  const [sortField, setSortField] = useState<SortField>('issue_date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // 개발자 모드 - 전역 상태 사용
   const { isDevMode } = useDevModeStore();
@@ -361,6 +369,18 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     setIsModalOpen(true);
   };
 
+  // 🍎 정렬 핸들러
+  const handleSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      // 같은 필드 클릭 시 방향 토글
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭 시 해당 필드로 변경, 기본 내림차순
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }, [sortField]);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedReport(null);
@@ -463,6 +483,56 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     }
   };
 
+  // 🍎 정렬된 리포트 목록 (hooks는 조건부 반환 이전에 호출해야 함)
+  const sortedReports = useMemo(() => {
+    return [...reports].sort((a, b) => {
+      let comparison = 0;
+      const aIndex = reports.indexOf(a);
+      const bIndex = reports.indexOf(b);
+
+      switch (sortField) {
+        case 'customer_name':
+          comparison = (a.customer_name || '').localeCompare(b.customer_name || '', 'ko');
+          break;
+        case 'issue_date':
+          comparison = new Date(a.issue_date).getTime() - new Date(b.issue_date).getTime();
+          break;
+        case 'parsed_at':
+          comparison = new Date(a.parsed_at || 0).getTime() - new Date(b.parsed_at || 0).getTime();
+          break;
+        case 'total_monthly_premium':
+          comparison = (a.total_monthly_premium || 0) - (b.total_monthly_premium || 0);
+          break;
+        case 'contract_count':
+          comparison = (a.contract_count || 0) - (b.contract_count || 0);
+          break;
+        case 'status':
+          // status는 최신(index 0)인지 여부로 정렬
+          comparison = aIndex - bIndex;
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [reports, sortField, sortDirection]);
+
+  // 🍎 페이지네이션 계산 (hooks 이후에 배치)
+  const itemsPerPageNumber = itemsPerPage;
+  const totalPages = Math.max(1, Math.ceil(sortedReports.length / itemsPerPageNumber));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  // 현재 페이지에 표시할 리포트들
+  const visibleReports = sortedReports.slice(
+    (safeCurrentPage - 1) * itemsPerPageNumber,
+    safeCurrentPage * itemsPerPageNumber
+  );
+
+  // 전체 선택 여부 (현재 페이지 기준)
+  const isAllSelected = visibleReports.length > 0 && visibleReports.every((_, idx) => {
+    const globalIndex = (safeCurrentPage - 1) * itemsPerPageNumber + idx;
+    return selectedIndices.has(globalIndex);
+  });
+
   // 로딩 상태
   if (isLoading) {
     return (
@@ -555,32 +625,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     );
   }
 
-  // 페이지네이션 계산
-  const itemsPerPageNumber = itemsPerPage;
-  const totalPages = Math.max(1, Math.ceil(reports.length / itemsPerPageNumber));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-
-  // 현재 페이지에 표시할 리포트들
-  const visibleReports = reports.slice(
-    (safeCurrentPage - 1) * itemsPerPageNumber,
-    safeCurrentPage * itemsPerPageNumber
-  );
-
-  // 디버그 로그: 페이지네이션 상태 확인
-  if (import.meta.env.DEV) {
-    console.log('[AnnualReportTab] 페이지네이션 상태:', {
-      itemsPerPageMode,
-      autoCalculatedItems,
-      itemsPerPage,
-      itemsPerPageNumber,
-      totalReports: reports.length,
-      totalPages,
-      currentPage,
-      safeCurrentPage,
-      visibleCount: visibleReports.length
-    })
-  }
-
   // 페이지 변경 핸들러
   const handlePrevPage = () => {
     if (safeCurrentPage > 1) {
@@ -606,12 +650,6 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     }
     setCurrentPage(1);
   };
-
-  // 전체 선택 여부 (현재 페이지 기준)
-  const isAllSelected = visibleReports.length > 0 && visibleReports.every((_, idx) => {
-    const globalIndex = (safeCurrentPage - 1) * itemsPerPageNumber + idx;
-    return selectedIndices.has(globalIndex);
-  });
 
   // Annual Report 목록 있음
   return (
@@ -681,12 +719,72 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
               />
             </div>
           )}
-          <div className="header-owner">소유주</div>
-          <div className="header-issue-date">발행일</div>
-          <div className="header-parsed-at">파싱일시</div>
-          <div className="header-premium">총 월보험료</div>
-          <div className="header-count">계약 수</div>
-          <div className="header-status">상태</div>
+          <div
+            className="header-owner annual-report-table__sortable"
+            onClick={() => handleSort('customer_name')}
+          >
+            <span className="annual-report-table__header-content">
+              소유주
+              <span className={`annual-report-table__sort-icon ${sortField === 'customer_name' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'customer_name' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
+          <div
+            className="header-issue-date annual-report-table__sortable"
+            onClick={() => handleSort('issue_date')}
+          >
+            <span className="annual-report-table__header-content">
+              발행일
+              <span className={`annual-report-table__sort-icon ${sortField === 'issue_date' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'issue_date' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
+          <div
+            className="header-parsed-at annual-report-table__sortable"
+            onClick={() => handleSort('parsed_at')}
+          >
+            <span className="annual-report-table__header-content">
+              파싱일시
+              <span className={`annual-report-table__sort-icon ${sortField === 'parsed_at' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'parsed_at' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
+          <div
+            className="header-premium annual-report-table__sortable"
+            onClick={() => handleSort('total_monthly_premium')}
+          >
+            <span className="annual-report-table__header-content">
+              총 월보험료
+              <span className={`annual-report-table__sort-icon ${sortField === 'total_monthly_premium' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'total_monthly_premium' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
+          <div
+            className="header-count annual-report-table__sortable"
+            onClick={() => handleSort('contract_count')}
+          >
+            <span className="annual-report-table__header-content">
+              계약 수
+              <span className={`annual-report-table__sort-icon ${sortField === 'contract_count' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'contract_count' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
+          <div
+            className="header-status annual-report-table__sortable"
+            onClick={() => handleSort('status')}
+          >
+            <span className="annual-report-table__header-content">
+              상태
+              <span className={`annual-report-table__sort-icon ${sortField === 'status' ? 'annual-report-table__sort-icon--active' : ''}`}>
+                {sortField === 'status' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+              </span>
+            </span>
+          </div>
         </div>
 
         {/* 테이블 바디 */}

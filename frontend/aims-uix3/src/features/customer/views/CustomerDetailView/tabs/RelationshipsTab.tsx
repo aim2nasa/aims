@@ -9,7 +9,7 @@
  * - 관련 고객 상세 보기 이동
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Customer } from '@/entities/customer/model';
 import { useCustomerRelationshipsController } from '@/controllers/useCustomerRelationshipsController';
 import type { Relationship } from '@/services/relationshipService';
@@ -39,6 +39,10 @@ interface RelationshipsTabProps {
   onRelationshipsCountChange?: (count: number) => void;
 }
 
+// 🍎 정렬 필드 타입
+type SortField = 'relationshipType' | 'relatedCustomer' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   customer,
   onSelectCustomer,
@@ -50,6 +54,10 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
     state: { relationships, isLoading, error },
     actions: { loadRelationships, deleteRelationship, getRelationshipTypeLabel },
   } = useCustomerRelationshipsController({ customerId: customer?._id, autoLoad: true });
+
+  // 🍎 정렬 상태
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const relationshipsCount = relationships.length;
 
@@ -65,6 +73,18 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
     },
     [onSelectCustomer],
   );
+
+  // 🍎 정렬 핸들러
+  const handleSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      // 같은 필드 클릭 시 방향 토글
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드 클릭 시 해당 필드로 변경, 기본 내림차순
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }, [sortField]);
 
   const handleDelete = useCallback(
     async (relationshipId: string) => {
@@ -100,7 +120,17 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
   }, [onRelationshipsUpdated]);
 
   const rows = useMemo(() => {
-    return (relationships as ExtendedRelationship[]).map((relationship) => {
+    // 관계별 보기와 동일한 이모지 아이콘 사용
+    const getRelationIcon = (type: string) => {
+      switch (type) {
+        case 'spouse': return '❤️';       // 배우자 (하트)
+        case 'child': return '👶';        // 자녀
+        case 'parent': return '👨‍👩';     // 부모 (부모 세대)
+        default: return '👥';             // 기타
+      }
+    };
+
+    const mappedRows = (relationships as ExtendedRelationship[]).map((relationship) => {
       const relatedCustomer =
         (relationship.related_customer as Customer | undefined) ?? undefined;
       const category = relationship.relationship_info?.relationship_category ?? 'default';
@@ -108,16 +138,7 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
       const createdAt =
         relationship.meta?.created_at ?? relationship.created_at ?? '';
       const createdAtLabel = formatDateTime(createdAt);
-
-      // 관계별 보기와 동일한 이모지 아이콘 사용
-      const getRelationIcon = (type: string) => {
-        switch (type) {
-          case 'spouse': return '❤️';       // 배우자 (하트)
-          case 'child': return '👶';        // 자녀
-          case 'parent': return '👨‍👩';     // 부모 (부모 세대)
-          default: return '👥';             // 기타
-        }
-      };
+      const relatedCustomerName = relatedCustomer?.personal_info?.name || '';
 
       return {
         key: relationship._id,
@@ -126,11 +147,32 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
         relationIcon: getRelationIcon(relationshipType),
         relationship,
         relatedCustomer,
+        relatedCustomerName,
         createdAt: createdAtLabel,
+        createdAtRaw: createdAt, // 정렬용 원본 날짜
         isReversed: relationship.is_reversed ?? false,
       };
     });
-  }, [relationships]);
+
+    // 🍎 정렬 적용
+    return mappedRows.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case 'relationshipType':
+          comparison = a.relationshipType.localeCompare(b.relationshipType, 'ko');
+          break;
+        case 'relatedCustomer':
+          comparison = a.relatedCustomerName.localeCompare(b.relatedCustomerName, 'ko');
+          break;
+        case 'createdAt':
+          comparison = new Date(a.createdAtRaw).getTime() - new Date(b.createdAtRaw).getTime();
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [relationships, sortField, sortDirection]);
 
   const renderState = () => {
     if (isLoading && relationshipsCount === 0) {
@@ -199,9 +241,39 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
             <table className="relationships-table">
               <thead>
                 <tr>
-                  <th>관계 유형</th>
-                  <th>관련 고객</th>
-                  <th>등록일</th>
+                  <th
+                    className="relationships-table__sortable"
+                    onClick={() => handleSort('relationshipType')}
+                  >
+                    <span className="relationships-table__header-content">
+                      관계 유형
+                      <span className={`relationships-table__sort-icon ${sortField === 'relationshipType' ? 'relationships-table__sort-icon--active' : ''}`}>
+                        {sortField === 'relationshipType' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    className="relationships-table__sortable"
+                    onClick={() => handleSort('relatedCustomer')}
+                  >
+                    <span className="relationships-table__header-content">
+                      관련 고객
+                      <span className={`relationships-table__sort-icon ${sortField === 'relatedCustomer' ? 'relationships-table__sort-icon--active' : ''}`}>
+                        {sortField === 'relatedCustomer' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    className="relationships-table__sortable"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    <span className="relationships-table__header-content">
+                      등록일
+                      <span className={`relationships-table__sort-icon ${sortField === 'createdAt' ? 'relationships-table__sort-icon--active' : ''}`}>
+                        {sortField === 'createdAt' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
+                      </span>
+                    </span>
+                  </th>
                   <th className="relationships-table__delete-header">{deleteHeaderLabel}</th>
                 </tr>
               </thead>
