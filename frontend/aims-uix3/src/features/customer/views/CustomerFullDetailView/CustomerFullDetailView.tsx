@@ -28,6 +28,7 @@ import { CustomerService } from '@/services/customerService'
 import { CustomerDocument } from '@/stores/CustomerDocument'
 import { RelationshipService } from '@/services/relationshipService'
 import SFSymbol, { SFSymbolSize, SFSymbolWeight, SFSymbolAnimation } from '../../../../components/SFSymbol'
+import { formatDate } from '@/shared/lib/timeUtils'
 import './CustomerFullDetailView.css'
 
 interface CustomerFullDetailViewProps {
@@ -570,7 +571,7 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                         <td className="customer-info-table__label">이름</td>
                         <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
                         <td className="customer-info-table__label">생년월일</td>
-                        <td className="customer-info-table__value">{customer.personal_info?.birth_date || '-'}</td>
+                        <td className="customer-info-table__value">{formatDate(customer.personal_info?.birth_date)}</td>
                         <td className="customer-info-table__label">성별</td>
                         <td className="customer-info-table__value">
                           {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}

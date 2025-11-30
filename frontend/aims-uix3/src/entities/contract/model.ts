@@ -183,12 +183,28 @@ export const ContractUtils = {
   },
 
   /**
-   * 계약일 포맷팅
+   * 계약일 포맷팅 (YYYY.MM.DD 형식)
    */
   formatContractDate: (date: string | null): string => {
     if (!date) return '-';
     try {
-      return new Date(date).toLocaleDateString('ko-KR');
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return date;
+
+      // KST로 변환하여 각 부분 추출
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+
+      const parts = formatter.formatToParts(d);
+      const year = parts.find(p => p.type === 'year')?.value || '';
+      const month = parts.find(p => p.type === 'month')?.value || '';
+      const day = parts.find(p => p.type === 'day')?.value || '';
+
+      return `${year}.${month}.${day}`;
     } catch {
       return date;
     }

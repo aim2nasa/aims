@@ -399,23 +399,44 @@ export class AnnualReportApi {
   }
 
   /**
-   * 일시 포맷 (ISO 8601 → YYYY-MM-DD HH:mm:ss)
+   * 일시 포맷 (ISO 8601 → YYYY.MM.DD HH:mm:ss)
    *
    * @param dateTimeString ISO 8601 날짜 문자열
-   * @returns 포맷된 문자열 (예: "2025-10-16 21:30:08")
+   * @returns 포맷된 문자열 (예: "2025.10.16 21:30:08")
    */
   static formatDateTime(dateTimeString: string | undefined | null): string {
     if (!dateTimeString) return '-';
 
     try {
       const date = new Date(dateTimeString);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      if (isNaN(date.getTime())) return dateTimeString;
+
+      // KST로 변환하여 각 부분 추출
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
+      const parts = formatter.formatToParts(date);
+      const year = parts.find(p => p.type === 'year')?.value || '';
+      const month = parts.find(p => p.type === 'month')?.value || '';
+      const day = parts.find(p => p.type === 'day')?.value || '';
+      let hours = parts.find(p => p.type === 'hour')?.value || '';
+      const minutes = parts.find(p => p.type === 'minute')?.value || '';
+      const seconds = parts.find(p => p.type === 'second')?.value || '';
+
+      // 자정을 24:00:00이 아닌 00:00:00으로 표시
+      if (hours === '24') {
+        hours = '00';
+      }
+
+      return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
     } catch {
       return dateTimeString;
     }

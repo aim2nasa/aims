@@ -54,12 +54,8 @@ describe('TimeUtils - Timestamp 정규화 통합 테스트', () => {
       const timestamp = '2025-11-01T07:17:21.143Z'
       const result = formatDateTime(timestamp)
 
-      // UTC 07:17 → KST 16:17 (오후 4시 17분)
-      expect(result).toContain('2025')
-      expect(result).toContain('11')
-      expect(result).toContain('01')
-      expect(result).toMatch(/오후.*[04]/) // "오후 04" 또는 "오후 4"
-      expect(result).toContain('17')
+      // UTC 07:17 → KST 16:17:21
+      expect(result).toBe('2025.11.01 16:17:21')
     })
 
     it('null/undefined는 "-" 반환', () => {
@@ -77,8 +73,8 @@ describe('TimeUtils - Timestamp 정규화 통합 테스트', () => {
       const timestamp = '2025-11-01T07:17:21.143456Z'
       const result = formatDateTime(timestamp)
 
-      expect(result).toContain('2025')
-      expect(result).toMatch(/오후.*[04]/) // 시간이 표시되어야 함
+      // UTC 07:17 → KST 16:17:21
+      expect(result).toBe('2025.11.01 16:17:21')
     })
   })
 
@@ -88,9 +84,7 @@ describe('TimeUtils - Timestamp 정규화 통합 테스트', () => {
       const result = formatDate(timestamp)
 
       // KST로는 11월 2일
-      expect(result).toContain('2025')
-      expect(result).toContain('11')
-      expect(result).toContain('02')
+      expect(result).toBe('2025.11.02')
     })
 
     it('null/undefined는 "-" 반환', () => {
@@ -108,9 +102,8 @@ describe('TimeUtils - Timestamp 정규화 통합 테스트', () => {
       const timestamp = '2025-11-01T07:17:21.143Z'
       const result = formatTime(timestamp)
 
-      // UTC 07:17 → KST 16:17 (오후 4시 17분)
-      expect(result).toMatch(/오후.*[04]/) // "오후 04" 또는 "오후 4"
-      expect(result).toContain('17')
+      // UTC 07:17 → KST 16:17:21
+      expect(result).toBe('16:17:21')
     })
 
     it('null/undefined는 "-" 반환', () => {
@@ -339,10 +332,9 @@ describe('TimeUtils - Timestamp 정규화 통합 테스트', () => {
       const uploadedDisplay = formatDateTime(apiResponse.uploadedAt)
       const updatedDisplay = formatDateTime(apiResponse.updatedAt)
 
-      // 3. 검증
-      expect(uploadedDisplay).toContain('2025')
-      expect(uploadedDisplay).toMatch(/오후.*[04]/) // KST 16시 (오후 4시)
-      expect(updatedDisplay).toMatch(/오후.*5/) // KST 17시 (오후 5시)
+      // 3. 검증 - 새 표준 형식 (YYYY.MM.DD HH:mm:ss)
+      expect(uploadedDisplay).toBe('2025.11.01 16:17:21') // KST 16시
+      expect(updatedDisplay).toBe('2025.11.02 17:30:00') // KST 17시 30분
     })
 
     it('다양한 형식 혼재 → 정규화 후 일관된 표시', () => {

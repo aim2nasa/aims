@@ -14,6 +14,7 @@ import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
 import { AnnualReportApi, type AnnualReport } from '@/features/customer/api/annualReportApi';
 import { api } from '@/shared/lib/api';
+import { formatDate } from '@/shared/lib/timeUtils';
 import { AppleConfirmModal } from '../../../../../components/DocumentViews/DocumentRegistrationView/AppleConfirmModal/AppleConfirmModal';
 import { useAppleConfirmController } from '../../../../../controllers/useAppleConfirmController';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
@@ -792,7 +793,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
           {visibleReports.map((report) => {
             const globalIndex = reports.indexOf(report);
             const isLatest = globalIndex === 0;
-            const formattedDate = report.issue_date.split('T')[0];
+            const formattedDate = formatDate(report.issue_date);
             const isSelected = selectedIndices.has(globalIndex);
 
             return (

@@ -177,15 +177,17 @@ describe('AddressService', () => {
       const dateString = '2025-01-15T10:30:00.000Z';
       const result = AddressService.formatDate(dateString);
 
-      // Timezone 차이로 정확한 날짜는 다를 수 있으므로 패턴만 확인
-      expect(result).toMatch(/\d{4}\.\s\d{1,2}\.\s\d{1,2}\.\s오[전후]\s\d{1,2}:\d{2}/);
+      // 새 표준 형식: YYYY.MM.DD HH:mm:ss (24시간제)
+      // UTC 10:30 → KST 19:30
+      expect(result).toBe('2025.01.15 19:30:00');
     });
 
     it('다른 형식의 날짜 문자열도 포맷팅해야 함', () => {
       const dateString = '2025-12-31T23:59:59.999Z';
       const result = AddressService.formatDate(dateString);
 
-      expect(result).toMatch(/\d{4}\.\s\d{1,2}\.\s\d{1,2}\.\s오[전후]\s\d{1,2}:\d{2}/);
+      // UTC 23:59 → KST 다음날 08:59
+      expect(result).toBe('2026.01.01 08:59:59');
     });
 
     it('잘못된 날짜 문자열의 경우 "잘못된 시간"을 반환해야 함', () => {

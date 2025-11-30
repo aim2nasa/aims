@@ -1,18 +1,19 @@
 /**
  * Timestamp Utility Functions Unit Tests
  * @since 2025-11-01
+ * @updated 2025-11-30
  *
  * 테스트 범위:
- * 1. formatDateTime - ISO 8601 → 한국 시간 (날짜 + 시간)
- * 2. formatDate - ISO 8601 → 한국 날짜
- * 3. formatTime - ISO 8601 → 한국 시간
+ * 1. formatDateTime - ISO 8601 → 한국 시간 (날짜 + 시간) - 형식: YYYY.MM.DD HH:mm:ss
+ * 2. formatDate - ISO 8601 → 한국 날짜 - 형식: YYYY.MM.DD
+ * 3. formatTime - ISO 8601 → 한국 시간 - 형식: HH:mm:ss (24시간제)
  * 4. formatRelativeTime - 상대 시간 표시
  * 5. utcNowISO - 현재 UTC 시간
  * 6. toUTCISO - Date → ISO 8601
  * 7. parseISOTimestamp - ISO 8601 → Date
  * 8. getTimeDiff - 두 timestamp 차이
  * 9. formatDuration - 밀리초를 읽기 쉽게
- * 10. formatDateTimeCompact - ISO 8601 → YYYY-MM-DD HH:mm:ss (문서 탭 통일 형식)
+ * 10. formatDateTimeCompact - formatDateTime과 동일 (별칭)
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -37,8 +38,8 @@ describe('timeUtils', () => {
   describe('formatDateTime', () => {
     it('ISO 8601 UTC timestamp를 한국 시간으로 변환해야 한다', () => {
       const result = formatDateTime(TEST_UTC_TIME);
-      // 2025-11-01T07:17:21.143Z (UTC) → KST 16:17
-      expect(result).toMatch(/2025\. 11\. 01\. 오후 \d{2}:17/);
+      // 2025-11-01T07:17:21.143Z (UTC) → KST 16:17:21
+      expect(result).toBe('2025.11.01 16:17:21');
     });
 
     it('null이나 undefined를 "-"로 변환해야 한다', () => {
@@ -55,18 +56,18 @@ describe('timeUtils', () => {
     it('다양한 시간대를 올바르게 KST로 변환해야 한다', () => {
       // 자정 UTC → 오전 9시 KST
       const midnight = formatDateTime('2025-11-01T00:00:00.000Z');
-      expect(midnight).toMatch(/2025\. 11\. 01\. 오전 \d{2}:00/);
+      expect(midnight).toBe('2025.11.01 09:00:00');
 
       // 정오 UTC → 오후 9시 KST
       const noon = formatDateTime('2025-11-01T12:00:00.000Z');
-      expect(noon).toMatch(/2025\. 11\. 01\. 오후 \d{2}:00/);
+      expect(noon).toBe('2025.11.01 21:00:00');
     });
   });
 
   describe('formatDate', () => {
     it('ISO 8601 UTC timestamp를 한국 날짜만 변환해야 한다', () => {
       const result = formatDate(TEST_UTC_TIME);
-      expect(result).toMatch(/2025\. 11\. 01\./);
+      expect(result).toBe('2025.11.01');
     });
 
     it('null이나 undefined를 "-"로 변환해야 한다', () => {
@@ -83,14 +84,14 @@ describe('timeUtils', () => {
     it('날짜 경계를 넘는 경우 KST 날짜로 변환해야 한다', () => {
       // 2025-11-01 23:00:00 UTC → 2025-11-02 08:00 KST
       const result = formatDate('2025-11-01T23:00:00.000Z');
-      expect(result).toMatch(/2025\. 11\. 02\./);
+      expect(result).toBe('2025.11.02');
     });
   });
 
   describe('formatTime', () => {
     it('ISO 8601 UTC timestamp를 한국 시간만 변환해야 한다', () => {
       const result = formatTime(TEST_UTC_TIME);
-      expect(result).toMatch(/오후 \d{2}:17/);
+      expect(result).toBe('16:17:21');
     });
 
     it('null이나 undefined를 "-"로 변환해야 한다', () => {
@@ -104,14 +105,14 @@ describe('timeUtils', () => {
       expect(formatTime('2025-99-99')).toBe('잘못된 시간');
     });
 
-    it('오전/오후를 올바르게 표시해야 한다', () => {
+    it('24시간제로 올바르게 표시해야 한다', () => {
       // 오전
       const morning = formatTime('2025-11-01T01:30:00.000Z'); // KST 10:30
-      expect(morning).toMatch(/오전 \d{2}:30/);
+      expect(morning).toBe('10:30:00');
 
       // 오후
       const afternoon = formatTime('2025-11-01T07:30:00.000Z'); // KST 16:30
-      expect(afternoon).toMatch(/오후 \d{2}:30/);
+      expect(afternoon).toBe('16:30:00');
     });
   });
 
@@ -163,7 +164,7 @@ describe('timeUtils', () => {
     it('7일 이상이면 날짜를 반환해야 한다', () => {
       const sevenDaysAgo = '2025-10-25T07:17:21.143Z'; // 7일 전
       const result = formatRelativeTime(sevenDaysAgo);
-      expect(result).toMatch(/2025\. 10\. 25\./);
+      expect(result).toBe('2025.10.25');
     });
 
     it('null이나 undefined를 "-"로 변환해야 한다', () => {
@@ -366,15 +367,15 @@ describe('timeUtils', () => {
       const midnightUTC = '2025-11-01T00:00:00.000Z';
       const result = formatTime(midnightUTC);
 
-      expect(result).toMatch(/오전 \d{2}:00/);
+      expect(result).toBe('09:00:00');
     });
   });
 
   describe('formatDateTimeCompact', () => {
-    it('ISO 8601 UTC timestamp를 "YYYY-MM-DD HH:mm:ss" 형식으로 변환해야 한다', () => {
-      // 2025-11-03T06:25:30.000Z (UTC) → 2025-11-03 15:25:30 (KST)
+    it('ISO 8601 UTC timestamp를 "YYYY.MM.DD HH:mm:ss" 형식으로 변환해야 한다', () => {
+      // 2025-11-03T06:25:30.000Z (UTC) → 2025.11.03 15:25:30 (KST)
       const result = formatDateTimeCompact('2025-11-03T06:25:30.000Z');
-      expect(result).toBe('2025-11-03 15:25:30');
+      expect(result).toBe('2025.11.03 15:25:30');
     });
 
     it('null이나 undefined를 "-"로 변환해야 한다', () => {
@@ -389,39 +390,39 @@ describe('timeUtils', () => {
     });
 
     it('자정(00:00:00)을 올바르게 처리해야 한다', () => {
-      // 2025-11-02T15:00:00.000Z (UTC) → 2025-11-03 00:00:00 (KST)
+      // 2025-11-02T15:00:00.000Z (UTC) → 2025.11.03 00:00:00 (KST)
       const result = formatDateTimeCompact('2025-11-02T15:00:00.000Z');
-      expect(result).toBe('2025-11-03 00:00:00');
+      expect(result).toBe('2025.11.03 00:00:00');
     });
 
     it('정오(12:00:00)를 올바르게 처리해야 한다', () => {
-      // 2025-11-03T03:00:00.000Z (UTC) → 2025-11-03 12:00:00 (KST)
+      // 2025-11-03T03:00:00.000Z (UTC) → 2025.11.03 12:00:00 (KST)
       const result = formatDateTimeCompact('2025-11-03T03:00:00.000Z');
-      expect(result).toBe('2025-11-03 12:00:00');
+      expect(result).toBe('2025.11.03 12:00:00');
     });
 
     it('날짜 경계를 넘는 경우 KST 날짜로 변환해야 한다', () => {
-      // 2025-11-02T16:00:00.000Z (UTC) → 2025-11-03 01:00:00 (KST)
+      // 2025-11-02T16:00:00.000Z (UTC) → 2025.11.03 01:00:00 (KST)
       const result = formatDateTimeCompact('2025-11-02T16:00:00.000Z');
-      expect(result).toBe('2025-11-03 01:00:00');
+      expect(result).toBe('2025.11.03 01:00:00');
     });
 
     it('밀리초를 올바르게 버려야 한다', () => {
       // 밀리초가 999ms여도 초 단위만 표시
       const result = formatDateTimeCompact('2025-11-03T06:25:30.999Z');
-      expect(result).toBe('2025-11-03 15:25:30');
+      expect(result).toBe('2025.11.03 15:25:30');
     });
 
     it('한 자리 숫자를 두 자리로 패딩해야 한다', () => {
-      // 2025-01-05T00:05:05.000Z (UTC) → 2025-01-05 09:05:05 (KST)
+      // 2025-01-05T00:05:05.000Z (UTC) → 2025.01.05 09:05:05 (KST)
       const result = formatDateTimeCompact('2025-01-05T00:05:05.000Z');
-      expect(result).toBe('2025-01-05 09:05:05');
+      expect(result).toBe('2025.01.05 09:05:05');
     });
 
     it('연말연시 경계를 올바르게 처리해야 한다', () => {
-      // 2024-12-31T16:00:00.000Z (UTC) → 2025-01-01 01:00:00 (KST)
+      // 2024-12-31T16:00:00.000Z (UTC) → 2025.01.01 01:00:00 (KST)
       const result = formatDateTimeCompact('2024-12-31T16:00:00.000Z');
-      expect(result).toBe('2025-01-01 01:00:00');
+      expect(result).toBe('2025.01.01 01:00:00');
     });
 
     it('문서 연결일 형식과 일치해야 한다 (DocumentsTab에서 사용)', () => {
@@ -429,8 +430,8 @@ describe('timeUtils', () => {
       const linkedAt = '2025-11-03T06:24:00.000Z';
       const result = formatDateTimeCompact(linkedAt);
 
-      expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
-      expect(result).toBe('2025-11-03 15:24:00');
+      expect(result).toMatch(/^\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}$/);
+      expect(result).toBe('2025.11.03 15:24:00');
     });
 
     it('Annual Report 파싱일시 형식과 일치해야 한다', () => {
@@ -438,7 +439,7 @@ describe('timeUtils', () => {
       const parsedAt = '2025-11-03T06:25:30.000Z';
       const result = formatDateTimeCompact(parsedAt);
 
-      expect(result).toBe('2025-11-03 15:25:30');
+      expect(result).toBe('2025.11.03 15:25:30');
     });
   });
 
@@ -448,7 +449,7 @@ describe('timeUtils', () => {
       const date = parseISOTimestamp(leapDay);
 
       expect(date).toBeInstanceOf(Date);
-      expect(formatDate(leapDay)).toMatch(/2024\. 02\. 29\./);
+      expect(formatDate(leapDay)).toBe('2024.02.29');
     });
 
     it('연도 경계를 넘는 경우를 올바르게 처리해야 한다', () => {
@@ -456,7 +457,7 @@ describe('timeUtils', () => {
       const yearEnd = '2024-12-31T23:00:00.000Z';
       const result = formatDate(yearEnd);
 
-      expect(result).toMatch(/2025\. 01\. 01\./);
+      expect(result).toBe('2025.01.01');
     });
 
     it('매우 큰 timestamp 차이를 올바르게 처리해야 한다', () => {

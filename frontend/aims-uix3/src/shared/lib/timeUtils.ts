@@ -15,11 +15,11 @@
  * ISO 8601 timestamp를 한국 시간으로 포맷팅 (날짜 + 시간)
  *
  * @param timestamp - ISO 8601 문자열 (UTC)
- * @returns 포맷된 문자열 (예: "2025. 11. 1. 오후 4:17")
+ * @returns 포맷된 문자열 (예: "2025.11.30 18:35:32")
  *
  * @example
  * formatDateTime("2025-11-01T07:17:21.143Z")
- * // "2025. 11. 1. 오후 4:17"
+ * // "2025.11.01 16:17:21"
  */
 export function formatDateTime(timestamp: string | undefined | null): string {
   if (!timestamp) return '-';
@@ -28,14 +28,32 @@ export function formatDateTime(timestamp: string | undefined | null): string {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
-    return new Intl.DateTimeFormat('ko-KR', {
+    // KST로 변환하여 각 부분 추출
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Seoul'
-    }).format(date);
+      second: '2-digit',
+      hour12: false
+    });
+
+    const parts = formatter.formatToParts(date);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    let hours = parts.find(p => p.type === 'hour')?.value || '';
+    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+    const seconds = parts.find(p => p.type === 'second')?.value || '';
+
+    // 자정을 24:00:00이 아닌 00:00:00으로 표시
+    if (hours === '24') {
+      hours = '00';
+    }
+
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
   } catch (e) {
     return '잘못된 시간';
   }
@@ -45,11 +63,11 @@ export function formatDateTime(timestamp: string | undefined | null): string {
  * ISO 8601 timestamp를 한국 날짜만 포맷팅
  *
  * @param timestamp - ISO 8601 문자열 (UTC)
- * @returns 포맷된 문자열 (예: "2025. 11. 1.")
+ * @returns 포맷된 문자열 (예: "2025.11.30")
  *
  * @example
  * formatDate("2025-11-01T07:17:21.143Z")
- * // "2025. 11. 1."
+ * // "2025.11.01"
  */
 export function formatDate(timestamp: string | undefined | null): string {
   if (!timestamp) return '-';
@@ -58,12 +76,20 @@ export function formatDate(timestamp: string | undefined | null): string {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 날짜';
 
-    return new Intl.DateTimeFormat('ko-KR', {
+    // KST로 변환하여 각 부분 추출
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      timeZone: 'Asia/Seoul'
-    }).format(date);
+    });
+
+    const parts = formatter.formatToParts(date);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+
+    return `${year}.${month}.${day}`;
   } catch (e) {
     return '잘못된 날짜';
   }
@@ -73,11 +99,11 @@ export function formatDate(timestamp: string | undefined | null): string {
  * ISO 8601 timestamp를 한국 시간만 포맷팅
  *
  * @param timestamp - ISO 8601 문자열 (UTC)
- * @returns 포맷된 문자열 (예: "오후 4:17")
+ * @returns 포맷된 문자열 (예: "18:35:32")
  *
  * @example
  * formatTime("2025-11-01T07:17:21.143Z")
- * // "오후 4:17"
+ * // "16:17:21"
  */
 export function formatTime(timestamp: string | undefined | null): string {
   if (!timestamp) return '-';
@@ -86,11 +112,26 @@ export function formatTime(timestamp: string | undefined | null): string {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
-    return new Intl.DateTimeFormat('ko-KR', {
+    // KST로 변환하여 각 부분 추출
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Seoul'
-    }).format(date);
+      second: '2-digit',
+      hour12: false
+    });
+
+    const parts = formatter.formatToParts(date);
+    let hours = parts.find(p => p.type === 'hour')?.value || '';
+    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+    const seconds = parts.find(p => p.type === 'second')?.value || '';
+
+    // 자정을 24:00:00이 아닌 00:00:00으로 표시
+    if (hours === '24') {
+      hours = '00';
+    }
+
+    return `${hours}:${minutes}:${seconds}`;
   } catch (e) {
     return '잘못된 시간';
   }
@@ -250,50 +291,17 @@ export function formatDuration(ms: number | undefined | null): string {
 }
 
 /**
- * ISO 8601 timestamp를 YYYY-MM-DD HH:mm:ss 형식으로 포맷팅
- * Annual Report API와 동일한 포맷
+ * ISO 8601 timestamp를 YYYY.MM.DD HH:mm:ss 형식으로 포맷팅
+ * formatDateTime과 동일한 포맷 (별칭)
  *
  * @param timestamp - ISO 8601 문자열 (UTC)
- * @returns 포맷된 문자열 (예: "2025-11-03 15:25:30")
+ * @returns 포맷된 문자열 (예: "2025.11.03 15:25:30")
  *
  * @example
  * formatDateTimeCompact("2025-11-03T06:25:30.000Z")
- * // "2025-11-03 15:25:30" (KST)
+ * // "2025.11.03 15:25:30" (KST)
  */
 export function formatDateTimeCompact(timestamp: string | undefined | null): string {
-  if (!timestamp) return '-';
-
-  try {
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) return '잘못된 시간';
-
-    // KST로 변환하여 각 부분 추출
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Seoul',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-
-    const parts = formatter.formatToParts(date);
-    const year = parts.find(p => p.type === 'year')?.value || '';
-    const month = parts.find(p => p.type === 'month')?.value || '';
-    const day = parts.find(p => p.type === 'day')?.value || '';
-    let hours = parts.find(p => p.type === 'hour')?.value || '';
-    const minutes = parts.find(p => p.type === 'minute')?.value || '';
-    const seconds = parts.find(p => p.type === 'second')?.value || '';
-
-    // 자정을 24:00:00이 아닌 00:00:00으로 표시
-    if (hours === '24') {
-      hours = '00';
-    }
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  } catch (e) {
-    return '잘못된 시간';
-  }
+  // formatDateTime과 동일한 형식 사용
+  return formatDateTime(timestamp);
 }
