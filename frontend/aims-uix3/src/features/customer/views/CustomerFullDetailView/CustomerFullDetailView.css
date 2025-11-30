@@ -315,7 +315,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
 
 .customer-full-detail__section-content--contracts {
   padding: 0;
-  overflow: visible;
+  /* overflow: visible 제거 - 문서 섹션과 동일하게 기본값 사용 */
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts {
@@ -329,11 +329,11 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   display: none;
 }
 
-/* 리스트 컨테이너 - 수평/수직 스크롤 */
+/* 리스트 컨테이너 - 수직 스크롤 (문서 섹션과 동일) */
 .customer-full-detail__section-content--contracts .customer-contracts__list-container {
   flex: 1;
-  overflow: auto;
-  min-width: 0;
+  overflow-y: auto;
+  padding: 0;
 }
 
 /* 계약 헤더 - 🍎 모든 칼럼에 동적 폭 CSS 변수 사용 */
@@ -758,7 +758,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 .customer-full-detail__section-content--annual-report {
   padding: 0;
-  overflow: visible;
+  /* overflow: visible 제거 - 문서 섹션과 동일하게 기본값 사용 */
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-tab {
@@ -777,11 +777,11 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   display: none;
 }
 
-/* 테이블 컨테이너 - 수평/수직 스크롤 */
+/* 테이블 컨테이너 - 수직 스크롤 (문서 섹션과 동일) */
 .customer-full-detail__section-content--annual-report .annual-report-table-container {
   flex: 1;
-  overflow: auto;
-  min-width: 0;
+  overflow-y: auto;
+  padding: 0;
 }
 
 /* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */

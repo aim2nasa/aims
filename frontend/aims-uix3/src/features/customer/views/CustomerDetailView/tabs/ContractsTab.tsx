@@ -264,6 +264,21 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const endIndex = startIndex + itemsPerPage
   const paginatedContracts = sortedContracts.slice(startIndex, endIndex)
 
+  // 디버그 로그: 페이지네이션 상태 확인
+  if (import.meta.env.DEV) {
+    console.log('[ContractsTab] 페이지네이션 상태:', {
+      itemsPerPageMode,
+      autoCalculatedItems,
+      itemsPerPage,
+      totalContracts: sortedContracts.length,
+      totalPages,
+      currentPage,
+      startIndex,
+      endIndex,
+      paginatedCount: paginatedContracts.length
+    })
+  }
+
   // 🍎 페이지 변경
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -271,13 +286,16 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
 
   // 🍎 페이지당 항목 수 변경 ('auto' 또는 숫자)
   const handleLimitChange = useCallback((value: string) => {
+    if (import.meta.env.DEV) {
+      console.log('[ContractsTab] handleLimitChange 호출:', { value, currentMode: itemsPerPageMode })
+    }
     if (value === 'auto') {
       setItemsPerPageMode('auto')
     } else {
       setItemsPerPageMode(Number(value))
     }
     setCurrentPage(1)
-  }, [])
+  }, [itemsPerPageMode])
 
   // 🍎 총 보험료 계산
   const totalPremium = useMemo(() => {

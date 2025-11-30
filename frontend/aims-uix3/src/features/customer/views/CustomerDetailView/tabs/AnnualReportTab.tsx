@@ -566,6 +566,21 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     safeCurrentPage * itemsPerPageNumber
   );
 
+  // 디버그 로그: 페이지네이션 상태 확인
+  if (import.meta.env.DEV) {
+    console.log('[AnnualReportTab] 페이지네이션 상태:', {
+      itemsPerPageMode,
+      autoCalculatedItems,
+      itemsPerPage,
+      itemsPerPageNumber,
+      totalReports: reports.length,
+      totalPages,
+      currentPage,
+      safeCurrentPage,
+      visibleCount: visibleReports.length
+    })
+  }
+
   // 페이지 변경 핸들러
   const handlePrevPage = () => {
     if (safeCurrentPage > 1) {
@@ -581,6 +596,9 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
   // 🍎 페이지당 항목 수 변경 ('auto' 또는 숫자)
   const handleItemsPerPageChange = (value: string) => {
+    if (import.meta.env.DEV) {
+      console.log('[AnnualReportTab] handleItemsPerPageChange 호출:', { value, currentMode: itemsPerPageMode })
+    }
     if (value === 'auto') {
       setItemsPerPageMode('auto');
     } else {
