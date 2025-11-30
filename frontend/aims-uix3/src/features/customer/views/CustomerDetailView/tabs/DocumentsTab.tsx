@@ -933,13 +933,13 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
                         <PreviewIcon />
                       </button>
                     </Tooltip>
-                    <Tooltip content={document.isAnnualReport ? "AR 문서는 연결 해제 불가" : "연결 해제"}>
+                    <Tooltip content="연결된 문서는 해제할 수 없습니다">
                       <button
                         type="button"
                         className="action-btn action-btn--unlink"
                         onClick={() => void handleUnlink(document)}
                         aria-label="연결 해제"
-                        disabled={unlinkingId === document._id || document.isAnnualReport}
+                        disabled={true}
                       >
                         {unlinkingId === document._id ? (
                           <SFSymbol
