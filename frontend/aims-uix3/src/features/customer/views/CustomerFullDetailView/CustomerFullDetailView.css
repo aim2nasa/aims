@@ -1,15 +1,48 @@
 /**
  * 🍎 Customer Full Detail View - 고객 전체 정보 페이지
  * 4개 섹션: 고객정보(기본+가족) | 보험계약 | 문서 | Annual Report
- * 2x2 그리드 레이아웃 - 통일된 행 높이 28px
+ * 2x2 그리드 레이아웃 - Dense Typography System 적용
+ *
+ * @see docs/DENSE_TYPOGRAPHY_SYSTEM.md
  */
 
-/* 통일 변수 - A행 기준 */
+/* 🍎 Dense Typography - 통일된 폰트 시스템 */
 .customer-full-detail {
-  --row-height: 32px;
-  --font-size: 12px;
+  /* ========================================
+     📝 폰트 시스템 - SF Pro Text 통일
+     ======================================== */
+
+  /* 폰트 패밀리 - 전체 통일 */
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+
+  /* 폰트 크기 - Dense Typography Scale */
+  --font-title: 13px;      /* 섹션 제목 */
+  --font-body: 12px;       /* 테이블 데이터 (기본) */
+  --font-header: 11px;     /* 테이블 헤더 */
+  --font-caption: 11px;    /* 보조 텍스트 */
+  --font-micro: 10px;      /* 페이지네이션/배지 */
+  --font-icon: 14px;       /* 아이콘 크기 */
+  --font-icon-large: 24px; /* 대형 아이콘 */
+  --font-arrow: 8px;       /* 드롭다운 화살표 */
+
+  /* 폰트 굵기 - 2단계만 사용 */
+  --weight-normal: 400;    /* 일반 텍스트 */
+  --weight-semibold: 600;  /* 헤더/제목 */
+
+  /* 레이아웃 변수 */
+  --row-height: var(--dense-row-height, 32px);
+  --header-height: var(--dense-header-height, 32px);
+  --pagination-height: var(--dense-pagination-height, 26px);
+
+  /* 색상 변수 */
   --label-color: var(--color-text-tertiary);
   --value-color: var(--color-text-primary);
+  --text-color: var(--color-text-primary);
+
+  /* 🍎 기존 폰트 변수 매핑 (자식 컴포넌트 호환) */
+  --font-size-footnote: var(--font-title);
+  --font-size-caption-1: var(--font-body);
+  --font-size-caption-2: var(--font-header);
 }
 
 .customer-full-detail {
@@ -42,7 +75,7 @@
   background: transparent;
   color: var(--color-primary-600);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-caption);
 }
 
 /* === 액션 버튼 === */
@@ -234,13 +267,13 @@ html[data-theme="dark"] .customer-full-detail__section {
   gap: 6px;
   padding: 8px 12px;
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-title);
+  font-weight: var(--weight-title);
   color: var(--color-text-primary);
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
   flex-shrink: 0;
-  height: 36px;
+  height: var(--header-height);
 }
 
 html[data-theme="dark"] .customer-full-detail__section-title {
@@ -261,8 +294,8 @@ html[data-theme="dark"] .customer-full-detail__section-title {
   border-radius: 9px;
   background: var(--color-primary-100);
   color: var(--color-primary-700);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-caption);
+  font-weight: var(--weight-title);
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -303,7 +336,8 @@ html[data-theme="dark"] .customer-full-detail__section-count {
   min-height: var(--row-height);
   max-height: var(--row-height);
   padding: 0 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
+  font-weight: var(--weight-body);
   border-bottom: 1px solid var(--color-ios-separator-light);
   vertical-align: middle;
   box-sizing: border-box;
@@ -316,7 +350,6 @@ html[data-theme="dark"] .customer-info-table td {
 .customer-info-table__label {
   width: 70px;
   color: var(--label-color);
-  font-weight: 500;
   background: var(--color-ios-bg-secondary-light);
 }
 
@@ -354,8 +387,7 @@ html[data-theme="dark"] .customer-info-table__label {
   border-radius: 4px;
   background: var(--color-primary-100);
   color: var(--color-primary-700);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--font-header);
 }
 
 html[data-theme="dark"] .customer-info-table__type-badge {
@@ -388,7 +420,7 @@ html[data-theme="dark"] .customer-info-table__type-badge {
   border-radius: 4px;
   background: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: var(--font-header);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -447,7 +479,7 @@ html[data-theme="dark"] .customer-info-table__address-history-btn:hover {
 /* 관계 테이블 - A행 기준 32px 높이 적용 */
 .customer-info-family-list .relationships-table {
   min-width: auto;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
 }
 
 /* 테이블 헤더 - A행 높이 32px 적용 */
@@ -456,7 +488,7 @@ html[data-theme="dark"] .customer-info-table__address-history-btn:hover {
   min-height: var(--row-height);
   max-height: var(--row-height);
   padding: 0 10px;
-  font-size: 11px;
+  font-size: var(--font-header);
   font-weight: 600;
   color: var(--label-color);
   background: var(--color-ios-bg-secondary-light);
@@ -475,7 +507,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table th {
   min-height: var(--row-height);
   max-height: var(--row-height);
   padding: 0 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   border-bottom: 1px solid var(--color-ios-separator-light);
   box-sizing: border-box;
 }
@@ -492,7 +524,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
 .customer-info-family-list .relationships-category__icon {
   width: 20px;
   height: 20px;
-  font-size: 14px;
+  font-size: var(--font-icon);
 }
 
 /* 삭제 버튼 - 크기 축소 */
@@ -505,14 +537,14 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
 .customer-info-family-list .relationships-state {
   height: var(--row-height);
   padding: 0 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   gap: 6px;
   background: transparent;
   border-radius: 0;
 }
 
 .customer-info-family-list .relationships-state .sf-symbol {
-  font-size: 14px;
+  font-size: var(--font-icon);
 }
 
 /* ============================================
@@ -559,7 +591,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   min-height: var(--row-height);
   max-height: var(--row-height);
   min-width: max-content;
-  font-size: 11px;
+  font-size: var(--font-header);
   font-weight: 600;
   color: var(--label-color);
   background: var(--color-ios-bg-secondary-light);
@@ -600,7 +632,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   min-width: max-content;
   align-items: center;
   border-bottom: 1px solid var(--color-ios-separator-light);
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   box-sizing: border-box;
 }
 
@@ -614,45 +646,34 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
 
 /* 상품명 - 전체 표시 (말줄임 제거) */
 .customer-full-detail__section-content--contracts .contract-product {
-  font-weight: 500;
   white-space: nowrap;
 }
 
-/* 계약일 */
-.customer-full-detail__section-content--contracts .contract-date {
-  font-size: 11px;
-  color: var(--label-color);
-  text-align: center;
-}
-
-/* 증권번호 */
+/* 계약일, 증권번호 - 통일 규칙에서 처리됨 (UNIFIED TYPOGRAPHY 섹션 참조) */
+.customer-full-detail__section-content--contracts .contract-date,
 .customer-full-detail__section-content--contracts .contract-policy {
-  font-size: 11px;
   text-align: center;
 }
 
 /* 보험료 */
 .customer-full-detail__section-content--contracts .contract-premium {
-  font-weight: 500;
   text-align: right;
 }
 
 /* 이체일 */
 .customer-full-detail__section-content--contracts .contract-payment-day {
-  font-size: 11px;
   text-align: center;
 }
 
 /* 납입주기 */
 .customer-full-detail__section-content--contracts .contract-cycle {
-  font-size: 11px;
   text-align: center;
 }
 
 /* 납입상태 */
 .customer-full-detail__section-content--contracts .contract-status {
   text-align: center;
-  font-size: 10px;
+  font-size: var(--font-micro);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -661,7 +682,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
 .customer-full-detail__section-content--contracts .customer-contracts__state {
   padding: 16px;
   text-align: center;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   color: var(--label-color);
   height: var(--row-height);
   display: flex;
@@ -676,7 +697,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   height: 26px;
   min-height: 26px;
   max-height: 26px;
-  font-size: 10px;
+  font-size: var(--font-micro);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -706,17 +727,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
   padding: 2px 6px;
   height: 18px;
   min-height: 18px;
-  font-size: 10px;
+  font-size: var(--font-micro);
   gap: 4px;
 }
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__value {
-  font-size: 10px;
+  font-size: var(--font-micro);
   white-space: nowrap;
 }
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__arrow {
-  font-size: 8px;
+  font-size: var(--font-arrow);
   margin-left: 4px;
 }
 
@@ -729,7 +750,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 
 .customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__option {
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지네이션 컨트롤 */
@@ -748,12 +769,12 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
 
 /* 페이지네이션 화살표 크기 축소 */
 .customer-full-detail__section-content--contracts .pagination-arrow {
-  font-size: 12px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
 .customer-full-detail__section-content--contracts .pagination-info {
-  font-size: 10px;
+  font-size: var(--font-micro);
   min-width: 30px;
 }
 
@@ -793,7 +814,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .contr
   height: var(--row-height);
   min-height: var(--row-height);
   max-height: var(--row-height);
-  font-size: 11px;
+  font-size: var(--font-header);
   font-weight: 600;
   color: var(--label-color);
   background: var(--color-ios-bg-secondary-light);
@@ -821,7 +842,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   max-height: var(--row-height);
   align-items: center;
   border-bottom: 1px solid var(--color-ios-separator-light);
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   border-radius: 0;
   box-sizing: border-box;
 }
@@ -849,15 +870,10 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
 }
 
-/* 크기, 날짜 */
-.customer-full-detail__section-content--documents .document-size,
-.customer-full-detail__section-content--documents .status-date {
-  font-size: 11px;
-  color: var(--label-color);
-}
+/* 크기, 날짜 - 통일 규칙에서 처리됨 (UNIFIED TYPOGRAPHY 섹션 참조) */
 
 /* 액션 버튼 크기 축소 */
 .customer-full-detail__section-content--documents .action-btn {
@@ -869,7 +885,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
 .customer-full-detail__section-content--documents .customer-documents__state {
   height: var(--row-height);
   padding: 0 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   gap: 6px;
   background: transparent;
   border-radius: 0;
@@ -881,7 +897,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   height: 26px;
   min-height: 26px;
   max-height: 26px;
-  font-size: 10px;
+  font-size: var(--font-micro);
   border-top: 1px solid var(--color-ios-separator-light);
   justify-content: space-between;
   flex-shrink: 0;
@@ -909,17 +925,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   padding: 2px 6px;
   height: 18px;
   min-height: 18px;
-  font-size: 10px;
+  font-size: var(--font-micro);
   gap: 4px;
 }
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__value {
-  font-size: 10px;
+  font-size: var(--font-micro);
   white-space: nowrap;
 }
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__arrow {
-  font-size: 8px;
+  font-size: var(--font-arrow);
   margin-left: 4px;
 }
 
@@ -930,7 +946,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 .customer-full-detail__section-content--documents .pagination-limit .ios-dropdown__option {
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지네이션 컨트롤 */
@@ -949,12 +965,12 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 /* 페이지네이션 화살표 크기 축소 */
 .customer-full-detail__section-content--documents .pagination-arrow {
-  font-size: 12px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
 .customer-full-detail__section-content--documents .pagination-info {
-  font-size: 10px;
+  font-size: var(--font-micro);
   min-width: 30px;
 }
 
@@ -992,6 +1008,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 /* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */
 /* 🍎 계약수 칼럼: 45px → 70px (정렬 아이콘 + "계약 수" 텍스트 1줄 표시) */
+/* 🍎 스타일 통일: 보험계약 헤더와 동일 (font-weight, color, background, border) */
 .customer-full-detail__section-content--annual-report .annual-report-table-header {
   grid-template-columns: 50px 80px 125px 85px 70px 40px;
   gap: 6px;
@@ -1000,8 +1017,24 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   min-height: var(--row-height);
   max-height: var(--row-height);
   min-width: max-content;
-  font-size: 11px;
+  font-size: var(--font-header);
+  font-weight: 600;
+  color: var(--label-color);
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   box-sizing: border-box;
+  /* 🍎 AnnualReportTab.css 오버라이드: uppercase/letter-spacing 제거 (보험계약과 통일) */
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--annual-report .annual-report-table-header {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
 }
 
 /* 테이블 바디 */
@@ -1020,7 +1053,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
   min-height: var(--row-height);
   max-height: var(--row-height);
   min-width: max-content;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
   border-radius: 0;
   border-bottom: 1px solid var(--color-ios-separator-light);
   animation: none;
@@ -1050,24 +1083,26 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   text-overflow: ellipsis;
 }
 
+/* 날짜 칼럼 - 통일 규칙에서 처리됨 (UNIFIED TYPOGRAPHY 섹션 참조) */
+
 /* 빈 상태 */
 .customer-full-detail__section-content--annual-report .annual-report-tab__empty {
   min-height: 0;
   padding: 16px 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-tab__empty-icon {
-  font-size: 24px;
+  font-size: var(--font-icon-large);
   margin-bottom: 8px;
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-tab__empty-title {
-  font-size: var(--font-size);
+  font-size: var(--font-body);
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-tab__empty-description {
-  font-size: 11px;
+  font-size: var(--font-header);
   margin-bottom: 8px;
 }
 
@@ -1080,7 +1115,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 .customer-full-detail__section-content--annual-report .annual-report-tab__error {
   min-height: 0;
   padding: 16px 10px;
-  font-size: var(--font-size);
+  font-size: var(--font-body);
 }
 
 /* 페이지네이션 - 좌측 드롭다운, 우측 페이지 컨트롤 */
@@ -1090,7 +1125,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   min-height: 26px;
   max-height: 26px;
   margin-top: 0;
-  font-size: 10px;
+  font-size: var(--font-micro);
   border-top: 1px solid var(--color-ios-separator-light);
   justify-content: space-between;
   flex-shrink: 0;
@@ -1118,17 +1153,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   padding: 2px 6px;
   height: 18px;
   min-height: 18px;
-  font-size: 10px;
+  font-size: var(--font-micro);
   gap: 4px;
 }
 
 .customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__value {
-  font-size: 10px;
+  font-size: var(--font-micro);
   white-space: nowrap;
 }
 
 .customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__arrow {
-  font-size: 8px;
+  font-size: var(--font-arrow);
   margin-left: 4px;
 }
 
@@ -1139,7 +1174,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 
 .customer-full-detail__section-content--annual-report .pagination-limit .ios-dropdown__option {
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지네이션 컨트롤 우측 */
@@ -1158,12 +1193,12 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 
 /* 페이지네이션 화살표 크기 축소 */
 .customer-full-detail__section-content--annual-report .pagination-arrow {
-  font-size: 12px;
+  font-size: var(--font-micro);
 }
 
 /* 페이지 정보 글씨 크기 축소 */
 .customer-full-detail__section-content--annual-report .pagination-info {
-  font-size: 10px;
+  font-size: var(--font-micro);
   min-width: 30px;
 }
 
@@ -1184,6 +1219,112 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
 }
 
 /* ============================================
+   🍎 UNIFIED TYPOGRAPHY - 최종 오버라이드
+
+   폰트 시스템:
+   - 폰트: SF Pro Text (--font-family)
+   - 크기: Dense Typography Scale (--font-*)
+   - 굵기: 400 normal / 600 semibold
+
+   ⚠️ 중요: 컴포넌트 CSS가 나중에 로드되어 덮어쓰기 때문에,
+   3개 이상 클래스 체인으로 우선순위 확보
+   ============================================ */
+
+/* 🍎 모든 텍스트 기본 스타일 */
+.customer-full-detail,
+.customer-full-detail * {
+  font-family: var(--font-family);
+}
+
+/* 🍎 고객정보 테이블 - 모든 셀 */
+.customer-full-detail .customer-full-detail__section-content .customer-info-table td,
+.customer-full-detail .customer-full-detail__section-content .customer-info-table__label,
+.customer-full-detail .customer-full-detail__section-content .customer-info-table__value {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+  color: var(--text-color);
+}
+
+/* 🍎 가족관계 테이블 - 데이터 셀 (td) */
+.customer-full-detail .customer-full-detail__section-content .relationships-table td {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+  color: var(--text-color);
+}
+
+/* 🍎 가족관계 테이블 - 헤더 셀 (th) - 11px, semibold */
+.customer-full-detail .customer-full-detail__section-content .relationships-table th {
+  font-size: var(--font-header);
+  font-weight: var(--weight-semibold);
+  color: var(--label-color);
+}
+
+/* 🍎 보험계약 - 모든 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-product,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-date,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-policy,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-premium,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-payment-day,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-cycle {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+  color: var(--text-color);
+}
+
+/* 🍎 문서 - 텍스트 셀만 (아이콘/뱃지 제외) */
+.customer-full-detail .customer-full-detail__section-content--documents .status-filename,
+.customer-full-detail .customer-full-detail__section-content--documents .document-size,
+.customer-full-detail .customer-full-detail__section-content--documents .status-date {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+  color: var(--text-color);
+}
+
+/* 🍎 Annual Report - 모든 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-owner,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-issue-date,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-parsed-at,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-premium,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-count {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+  color: var(--text-color);
+}
+
+/* 🍎 예외: 섹션 제목 - 13px, semibold */
+.customer-full-detail .customer-full-detail__section-title {
+  font-size: var(--font-title);
+  font-weight: var(--weight-semibold);
+}
+
+/* 🍎 예외: 테이블 헤더 행 - 11px, semibold */
+.customer-full-detail .customer-full-detail__section-content--contracts .customer-contracts-list-header,
+.customer-full-detail .customer-full-detail__section-content--contracts .customer-contracts-list-header span,
+.customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header,
+.customer-full-detail .customer-full-detail__section-content--documents .customer-documents-list-header span,
+.customer-full-detail .customer-full-detail__section-content--annual-report .annual-report-table-header,
+.customer-full-detail .customer-full-detail__section-content--annual-report .annual-report-table-header div {
+  font-size: var(--font-header);
+  font-weight: var(--weight-semibold);
+}
+
+/* 🍎 예외: 상태 배지 - 10px, normal */
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-status,
+.customer-full-detail .customer-full-detail__section-content--annual-report .status-badge {
+  font-size: var(--font-micro);
+  font-weight: var(--weight-normal);
+}
+
+/* 🍎 예외: 페이지네이션 - 10px */
+.customer-full-detail .contract-pagination,
+.customer-full-detail .document-pagination,
+.customer-full-detail .annual-report-pagination,
+.customer-full-detail .pagination-info,
+.customer-full-detail .pagination-limit {
+  font-size: var(--font-micro);
+}
+
+/* ============================================
    🍎 반응형
    ============================================ */
 
@@ -1197,4 +1338,69 @@ html[data-theme="dark"] .customer-full-detail__section-content--annual-report .a
   .customer-full-detail__row--bottom {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================
+   🍎 Annual Report 헤더 강제 오버라이드 (보험계약 기준 통일)
+   AnnualReportTab.css의 .header-owner 등을 덮어쓰기
+   ============================================ */
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-owner,
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-issue-date,
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-parsed-at,
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-premium,
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-count,
+.customer-full-detail .customer-full-detail__section-content--annual-report .header-status,
+.customer-full-detail .customer-full-detail__section-content--annual-report .annual-report-table__header-content,
+.customer-full-detail .customer-full-detail__section-content--annual-report .annual-report-table__header-content span {
+  font-size: var(--font-header);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+}
+
+/* 🍎 가족관계 - 관계유형 텍스트 (자녀, 배우자 등) 크기 통일 */
+.customer-full-detail .customer-full-detail__section-content .relationships-category,
+.customer-full-detail .customer-full-detail__section-content .relationships-category__reverse,
+.customer-full-detail .customer-full-detail__section-content .relationships-link {
+  font-size: var(--font-body);
+  font-weight: 400;
+}
+
+/* 🍎 가족관계 - 관계유형 라벨 (자녀, 배우자 등) 폰트 크기 통일 */
+.customer-full-detail .customer-full-detail__section-content .relationships-category__label {
+  font-size: var(--font-body);
+  font-weight: 400;
+}
+
+/* ============================================
+   🍎 데이터 셀 폰트 통일 (12px, font-weight: 400)
+   보험계약, 문서, Annual Report 테이블 모두 동일
+   ============================================ */
+
+/* 🍎 보험계약 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-product,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-date,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-policy,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-premium,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-payment-day,
+.customer-full-detail .customer-full-detail__section-content--contracts .contract-cycle {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+}
+
+/* 🍎 문서 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--documents .status-filename,
+.customer-full-detail .customer-full-detail__section-content--documents .document-size,
+.customer-full-detail .customer-full-detail__section-content--documents .status-date {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
+}
+
+/* 🍎 Annual Report 데이터 셀 */
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-owner,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-issue-date,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-parsed-at,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-premium,
+.customer-full-detail .customer-full-detail__section-content--annual-report .row-count {
+  font-size: var(--font-body);
+  font-weight: var(--weight-normal);
 }

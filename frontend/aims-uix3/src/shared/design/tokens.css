@@ -323,6 +323,26 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
+  /* === DENSE TYPOGRAPHY SCALE === */
+  /* 데이터 테이블, 대시보드 등 정보 밀도가 높은 뷰를 위한 타이포그래피 */
+  /* iOS Dynamic Type 기반 + 밀집 UI 최적화 */
+
+  --dense-font-title: 13px;       /* 섹션 제목 - iOS Footnote */
+  --dense-font-header: 11px;      /* 테이블 헤더 - iOS Caption 2 */
+  --dense-font-body: 12px;        /* 테이블 데이터 - iOS Caption 1 */
+  --dense-font-caption: 11px;     /* 보조 텍스트 - iOS Caption 2 */
+  --dense-font-micro: 10px;       /* 페이지네이션/배지 - 최소 크기 */
+
+  --dense-weight-title: 600;      /* semibold */
+  --dense-weight-header: 600;     /* semibold */
+  --dense-weight-body: 400;       /* normal */
+  --dense-weight-caption: 400;    /* normal */
+  --dense-weight-micro: 500;      /* medium */
+
+  --dense-row-height: 32px;       /* 데이터 행 높이 */
+  --dense-header-height: 36px;    /* 섹션 헤더 높이 */
+  --dense-pagination-height: 26px; /* 페이지네이션 높이 */
+
   /* === SPACING === */
 
   /* 4px 기반 스케일 */

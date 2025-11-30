@@ -1047,6 +1047,26 @@ python scripts/rag_search.py
 
 **자세한 내용**: `frontend/aims-uix3/CSS_SYSTEM.md` 참조
 
+### 📐 Dense Typography System (타이포그래피 표준)
+
+**AIMS 프로젝트 전체의 폰트 크기 표준입니다.**
+
+| 용도 | 크기 | 변수 | font-weight |
+|------|------|------|-------------|
+| 섹션 제목 | 13px | `--font-title` | 600 |
+| 테이블 데이터 | 12px | `--font-body` | 400 |
+| 테이블 헤더 | 11px | `--font-header` | 600 |
+| 페이지네이션/배지 | 10px | `--font-micro` | 400 |
+
+**폰트 패밀리**: `-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`
+
+**폰트 굵기 규칙**:
+- ✅ 400 (normal) - 일반 텍스트
+- ✅ 600 (semibold) - 헤더/제목
+- ❌ 500 (medium) - **사용 금지**
+
+**자세한 내용**: [`frontend/aims-uix3/docs/DENSE_TYPOGRAPHY_SYSTEM.md`](frontend/aims-uix3/docs/DENSE_TYPOGRAPHY_SYSTEM.md) 참조
+
 ---
 
 ## 🍎 애플 디자인 철학 (UIX3 표준)
