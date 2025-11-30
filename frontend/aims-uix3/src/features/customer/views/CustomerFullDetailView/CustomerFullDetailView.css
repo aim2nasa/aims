@@ -785,8 +785,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 }
 
 /* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */
+/* 🍎 계약수 칼럼: 45px → 70px (정렬 아이콘 + "계약 수" 텍스트 1줄 표시) */
 .customer-full-detail__section-content--annual-report .annual-report-table-header {
-  grid-template-columns: 50px 80px 125px 85px 45px 40px;
+  grid-template-columns: 50px 80px 125px 85px 70px 40px;
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
@@ -804,8 +805,9 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 }
 
 /* 테이블 행 - 6개 칼럼 */
+/* 🍎 계약수 칼럼: 45px → 70px (헤더와 동일) */
 .customer-full-detail__section-content--annual-report .annual-report-row {
-  grid-template-columns: 50px 80px 125px 85px 45px 40px;
+  grid-template-columns: 50px 80px 125px 85px 70px 40px;
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
