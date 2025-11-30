@@ -477,58 +477,65 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             {/* 🍎 액션 버튼 영역 */}
             <div className="customer-full-detail__actions">
               {canAddFamilyRelation && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsFamilyModalVisible(true)}
-                  title="가족 구성원을 추가합니다 (가족대표만 가능)"
-                  leftIcon={<span>👥</span>}
-                >
-                  가족 추가
-                </Button>
+                <Tooltip content="가족대표가 되어 가족 구성원을 추가합니다">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsFamilyModalVisible(true)}
+                    leftIcon={<span>👥</span>}
+                  >
+                    가족 추가
+                  </Button>
+                </Tooltip>
               )}
               {isBusinessCustomer && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsCorporateModalVisible(true)}
-                  title="법인 관계자를 추가합니다"
-                  leftIcon={<span>👤</span>}
-                >
-                  관계자 추가
-                </Button>
+                <Tooltip content="법인 관계자를 추가합니다">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsCorporateModalVisible(true)}
+                    leftIcon={<span>👤</span>}
+                  >
+                    관계자 추가
+                  </Button>
+                </Tooltip>
               )}
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleEditClick}
-                leftIcon={<span>✏️</span>}
-              >
-                정보 수정
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteClick}
-                leftIcon={<span>🗑️</span>}
-              >
-                고객 삭제
-              </Button>
+              <Tooltip content="고객 정보(연락처,주소등)를 수정합니다">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleEditClick}
+                  leftIcon={<span>✏️</span>}
+                >
+                  정보 수정
+                </Button>
+              </Tooltip>
+              <Tooltip content="고객을 삭제합니다. 삭제후 되돌릴 수 없습니다.">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteClick}
+                  leftIcon={<span>🗑️</span>}
+                >
+                  고객 삭제
+                </Button>
+              </Tooltip>
               <div className="customer-full-detail__actions-spacer" />
               {/* 🍎 레이아웃 리셋 버튼 (변경 시에만 표시) */}
               {isLayoutModified && (
-                <button
-                  type="button"
-                  className="customer-full-detail__reset-layout"
-                  onClick={handleResetLayout}
-                  title="레이아웃을 기본값으로 되돌립니다"
-                  aria-label="레이아웃 초기화"
-                >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                  </svg>
-                </button>
+                <Tooltip content="레이아웃을 기본값으로 되돌립니다">
+                  <button
+                    type="button"
+                    className="customer-full-detail__reset-layout"
+                    onClick={handleResetLayout}
+                    aria-label="레이아웃 초기화"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                      <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                  </button>
+                </Tooltip>
               )}
               <Button
                 variant="ghost"
