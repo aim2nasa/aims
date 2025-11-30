@@ -20,6 +20,8 @@ interface CustomerAllViewProps {
   onClose: () => void;
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string, customer: Customer) => void;
+  /** 고객 더블클릭 핸들러 (전체 보기로 이동) */
+  onCustomerDoubleClick?: (customerId: string, customer: Customer) => void;
   /** 새로고침 함수를 노출하는 콜백 */
   onRefreshExpose?: (refreshFn: () => void) => void;
 }
@@ -42,6 +44,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
   visible,
   onClose,
   onCustomerClick,
+  onCustomerDoubleClick,
   onRefreshExpose,
 }) => {
   const allCustomersViewRef = React.useRef<AllCustomersViewRef | null>(null);
@@ -68,6 +71,7 @@ export const CustomerAllView: React.FC<CustomerAllViewProps> = ({
       <AllCustomersView
         ref={allCustomersViewRef}
         {...(onCustomerClick && { onCustomerClick })}
+        {...(onCustomerDoubleClick && { onCustomerDoubleClick })}
       />
     </CenterPaneView>
   );

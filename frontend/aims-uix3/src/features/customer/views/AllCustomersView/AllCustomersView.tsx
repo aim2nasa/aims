@@ -22,6 +22,8 @@ import './AllCustomersView.css';
 interface AllCustomersViewProps {
   /** 고객 클릭 핸들러 */
   onCustomerClick?: (customerId: string, customer: Customer) => void;
+  /** 고객 더블클릭 핸들러 (전체 보기로 이동) */
+  onCustomerDoubleClick?: (customerId: string, customer: Customer) => void;
 }
 
 export interface AllCustomersViewRef {
@@ -40,7 +42,7 @@ type SortField = 'name' | 'birth' | 'gender' | 'phone' | 'email' | 'address' | '
 type SortDirection = 'asc' | 'desc';
 
 export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersViewProps>(
-  function AllCustomersView({ onCustomerClick }, ref) {
+  function AllCustomersView({ onCustomerClick, onCustomerDoubleClick }, ref) {
     // 🍎 애플 스타일 알림 모달
     const { showAlert } = useAppleConfirm();
 
@@ -795,6 +797,11 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
                     handleSelectCustomer(customer._id, { stopPropagation: () => {} } as React.MouseEvent);
                   } else if (onCustomerClick) {
                     onCustomerClick(customer._id, customer);
+                  }
+                }}
+                onDoubleClick={() => {
+                  if (!isDeleteMode && onCustomerDoubleClick) {
+                    onCustomerDoubleClick(customer._id, customer);
                   }
                 }}
               >

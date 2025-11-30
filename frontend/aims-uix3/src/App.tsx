@@ -1290,6 +1290,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers-all'}
               onClose={closeDocumentView}
               onCustomerClick={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
               onRefreshExpose={(refreshFn) => {
                 customerAllViewRefreshRef.current = refreshFn
               }}
