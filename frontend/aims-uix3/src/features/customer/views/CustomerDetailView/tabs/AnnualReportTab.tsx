@@ -8,7 +8,7 @@
  * - Document-Controller-View 패턴 준수
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
@@ -123,6 +123,37 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       setSelectedIndices(new Set());
     }
   }, [isDevMode]);
+
+  // 🍎 동적 칼럼 폭 계산: 소유주(customer_name) 기준
+  const ownerColumnWidth = useMemo(() => {
+    if (reports.length === 0) return 80; // 기본값
+    const maxLength = Math.max(...reports.map(r => (r.customer_name || '').length));
+    // 글자당 약 10px (한글), 최소 60px, 최대 150px
+    const calculatedWidth = Math.max(60, Math.min(150, maxLength * 10 + 16));
+    return calculatedWidth;
+  }, [reports]);
+
+  // 🍎 동적 칼럼 폭 계산: 총 월보험료 기준
+  const premiumColumnWidth = useMemo(() => {
+    if (reports.length === 0) return 120; // 기본값
+    const maxLength = Math.max(
+      ...reports.map(r => AnnualReportApi.formatCurrency(r.total_monthly_premium).length)
+    );
+    // 글자당 약 8px, 최소 80px, 최대 180px
+    const calculatedWidth = Math.max(80, Math.min(180, maxLength * 8 + 16));
+    return calculatedWidth;
+  }, [reports]);
+
+  // 🍎 동적 칼럼 폭 계산: 파싱일시 기준
+  const parsedAtColumnWidth = useMemo(() => {
+    if (reports.length === 0) return 130; // 기본값
+    const maxLength = Math.max(
+      ...reports.map(r => AnnualReportApi.formatDateTime(r.parsed_at).length)
+    );
+    // 글자당 약 7px, 최소 100px, 최대 180px
+    const calculatedWidth = Math.max(100, Math.min(180, maxLength * 7 + 16));
+    return calculatedWidth;
+  }, [reports]);
 
   // Annual Report 목록 로드
   useEffect(() => {
@@ -539,7 +570,14 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       )}
 
       {/* 테이블 컨테이너 */}
-      <div className="annual-report-table-container">
+      <div
+        className="annual-report-table-container"
+        style={{
+          '--owner-column-width': `${ownerColumnWidth}px`,
+          '--parsed-at-column-width': `${parsedAtColumnWidth}px`,
+          '--premium-column-width': `${premiumColumnWidth}px`,
+        } as React.CSSProperties}
+      >
         {/* 테이블 헤더 */}
         <div className="annual-report-table-header">
           {isDevMode && (

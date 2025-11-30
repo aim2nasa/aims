@@ -88,11 +88,12 @@
 /* === 🍎 COLUMN HEADER: 칼럼 헤더 === */
 .customer-documents-list-header {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
   grid-template-columns:
     24px              /* 파일 타입 아이콘 */
-    minmax(150px, 1fr)  /* 파일명 (가변) */
-    80px              /* 크기 */
-    130px             /* 연결일 */
+    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
+    var(--size-column-width, 70px)  /* 크기 (동적) */
+    var(--date-column-width, 130px)  /* 연결일 (동적) */
     52px;             /* 액션 버튼 (2개) */
   gap: 12px;
   align-items: center;
@@ -227,11 +228,12 @@
 /* === 🍎 LIST ITEM: 문서 아이템 === */
 .customer-documents-item {
   display: grid;
+  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
   grid-template-columns:
     24px              /* 파일 타입 아이콘 */
-    minmax(150px, 1fr)  /* 파일명 (가변) */
-    80px              /* 크기 */
-    130px             /* 연결일 */
+    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
+    var(--size-column-width, 70px)  /* 크기 (동적) */
+    var(--date-column-width, 130px)  /* 연결일 (동적) */
     52px;             /* 액션 버튼 (2개) */
   gap: 12px;
   align-items: center;
@@ -841,22 +843,24 @@ html[data-theme="dark"] .edit-mode-icon-button--active {
 
 /* 삭제 모드일 때 그리드 레이아웃 변경 */
 .customer-documents--delete-mode .customer-documents-list-header {
+  /* 🍎 동적 칼럼 폭: 삭제 모드에서도 동일한 CSS 변수 사용 */
   grid-template-columns:
     24px              /* 체크박스 */
     24px              /* 파일 타입 아이콘 */
-    minmax(150px, 1fr)  /* 파일명 (가변) */
-    80px              /* 크기 */
-    130px             /* 연결일 */
+    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
+    var(--size-column-width, 70px)  /* 크기 (동적) */
+    var(--date-column-width, 130px)  /* 연결일 (동적) */
     52px;             /* 액션 버튼 (2개) */
 }
 
 .customer-documents--delete-mode .customer-documents-item {
+  /* 🍎 동적 칼럼 폭: 삭제 모드에서도 동일한 CSS 변수 사용 */
   grid-template-columns:
     24px              /* 체크박스 */
     24px              /* 파일 타입 아이콘 */
-    minmax(150px, 1fr)  /* 파일명 (가변) */
-    80px              /* 크기 */
-    130px             /* 연결일 */
+    var(--filename-column-width, minmax(150px, 1fr))  /* 파일명 (동적) */
+    var(--size-column-width, 70px)  /* 크기 (동적) */
+    var(--date-column-width, 130px)  /* 연결일 (동적) */
     52px;             /* 액션 버튼 (2개) */
 }
 

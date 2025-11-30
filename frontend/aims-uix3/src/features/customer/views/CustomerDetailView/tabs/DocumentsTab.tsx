@@ -118,6 +118,45 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     setCurrentPage(1)
   }, [sortField])
 
+  // 🍎 동적 칼럼 폭 계산: 파일명(originalName) 기준
+  const filenameColumnWidth = useMemo(() => {
+    if (documents.length === 0) return 200; // 기본값
+    const maxLength = Math.max(...documents.map(d => (d.originalName || '').length));
+    // 글자당 약 7px, 최소 150px, 최대 400px
+    const calculatedWidth = Math.max(150, Math.min(400, maxLength * 7 + 40));
+    return calculatedWidth;
+  }, [documents]);
+
+  // 🍎 동적 칼럼 폭 계산: 연결일(linkedAt) 기준
+  const dateColumnWidth = useMemo(() => {
+    if (documents.length === 0) return 130; // 기본값
+    // 연결일 형식: "2025-11-29 10:03:22" (약 19자)
+    const maxLength = Math.max(
+      ...documents.map(d => {
+        const linkedAt = d.linkedAt ?? d.uploadedAt ?? null;
+        const formatted = formatDateTimeCompact(linkedAt);
+        return formatted.length;
+      })
+    );
+    // 글자당 약 7px, 최소 100px, 최대 180px
+    const calculatedWidth = Math.max(100, Math.min(180, maxLength * 7 + 16));
+    return calculatedWidth;
+  }, [documents]);
+
+  // 🍎 동적 칼럼 폭 계산: 크기(fileSize) 기준
+  const sizeColumnWidth = useMemo(() => {
+    if (documents.length === 0) return 70; // 기본값
+    const maxLength = Math.max(
+      ...documents.map(d => {
+        const sizeLabel = d.fileSize ? DocumentUtils.formatFileSize(d.fileSize) : '-';
+        return sizeLabel.length;
+      })
+    );
+    // 글자당 약 7px, 최소 50px, 최대 100px
+    const calculatedWidth = Math.max(50, Math.min(100, maxLength * 7 + 16));
+    return calculatedWidth;
+  }, [documents]);
+
   // 🍎 정렬된 문서 목록
   const sortedDocuments = useMemo(() => {
     const sorted = [...documents].sort((a, b) => {
@@ -574,7 +613,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
       {!isEmpty && documents.length > 0 && (
         <>
           {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
-          <div className="customer-documents__list-container">
+          <div
+            className="customer-documents__list-container"
+            style={{
+              '--filename-column-width': `${filenameColumnWidth}px`,
+              '--size-column-width': `${sizeColumnWidth}px`,
+              '--date-column-width': `${dateColumnWidth}px`,
+            } as React.CSSProperties}
+          >
             {/* 🍎 칼럼 헤더 - CenterPane과 동일 */}
             <div className="customer-documents-list-header">
               {/* 🍎 삭제 모드일 때만 체크박스 표시 */}

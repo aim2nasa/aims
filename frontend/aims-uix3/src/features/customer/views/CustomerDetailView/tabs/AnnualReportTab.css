@@ -284,7 +284,8 @@ html[data-theme="dark"] .parsing-file-name {
 
 .annual-report-table-header {
   display: grid;
-  grid-template-columns: 40px 80px 110px 160px 1fr 100px 80px;
+  /* 🍎 동적 칼럼 폭: 모든 데이터 칼럼에 CSS 변수 사용 */
+  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -304,7 +305,7 @@ html[data-theme="dark"] .parsing-file-name {
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-table-header:not(:has(.header-checkbox)) {
-  grid-template-columns: 80px 110px 160px 1fr 100px 80px;
+  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
 }
 
 html[data-theme="dark"] .annual-report-table-header {
@@ -362,7 +363,8 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 .annual-report-row {
   display: grid;
-  grid-template-columns: 40px 80px 110px 160px 1fr 100px 80px;
+  /* 🍎 동적 칼럼 폭: 헤더와 동일한 CSS 변수 사용 */
+  grid-template-columns: 40px var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
   gap: 12px;
   align-items: center;
   height: 32px;
@@ -377,7 +379,7 @@ html[data-theme="dark"] .annual-report-table-body::-webkit-scrollbar-thumb:hover
 
 /* 개발자 모드가 아닐 때 (체크박스 없음) */
 .annual-report-row:not(:has(.row-checkbox)) {
-  grid-template-columns: 80px 110px 160px 1fr 100px 80px;
+  grid-template-columns: var(--owner-column-width, 80px) 90px var(--parsed-at-column-width, 130px) var(--premium-column-width, 120px) 60px 50px;
 }
 
 /* 🍎 SMOOTH FADE-IN: Double buffering 효과 */

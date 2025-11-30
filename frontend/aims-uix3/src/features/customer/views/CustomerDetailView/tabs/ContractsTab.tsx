@@ -182,6 +182,66 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     return calculatedWidth
   }, [contracts])
 
+  // 🍎 동적 칼럼 폭 계산: 계약일 기준
+  const contractDateColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 100 // 기본값
+    const maxLength = Math.max(...contracts.map(c => (c.contract_date || '').length))
+    // 글자당 약 7px, 최소 80px, 최대 120px
+    const calculatedWidth = Math.max(80, Math.min(120, maxLength * 7 + 16))
+    return calculatedWidth
+  }, [contracts])
+
+  // 🍎 동적 칼럼 폭 계산: 증권번호 기준
+  const policyNumberColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 115 // 기본값
+    const maxLength = Math.max(...contracts.map(c => (c.policy_number || '').length))
+    // 글자당 약 7px, 최소 80px, 최대 160px
+    const calculatedWidth = Math.max(80, Math.min(160, maxLength * 7 + 16))
+    return calculatedWidth
+  }, [contracts])
+
+  // 🍎 동적 칼럼 폭 계산: 보험료 기준
+  const premiumColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 100 // 기본값
+    const maxLength = Math.max(...contracts.map(c => {
+      const formatted = ContractUtils.formatPremium(c.premium)
+      return formatted.length
+    }))
+    // 글자당 약 8px, 최소 70px, 최대 140px
+    const calculatedWidth = Math.max(70, Math.min(140, maxLength * 8 + 16))
+    return calculatedWidth
+  }, [contracts])
+
+  // 🍎 동적 칼럼 폭 계산: 이체일 기준
+  const paymentDayColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 75 // 기본값
+    const maxLength = Math.max(...contracts.map(c => {
+      const day = c.payment_day || '-'
+      return day.length
+    }))
+    // 글자당 약 8px, 최소 50px, 최대 90px
+    const calculatedWidth = Math.max(50, Math.min(90, maxLength * 8 + 16))
+    return calculatedWidth
+  }, [contracts])
+
+  // 🍎 동적 칼럼 폭 계산: 납입주기 기준
+  const paymentCycleColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 90 // 기본값
+    const maxLength = Math.max(...contracts.map(c => (c.payment_cycle || '').length))
+    // 글자당 약 10px (한글), 최소 60px, 최대 120px
+    const calculatedWidth = Math.max(60, Math.min(120, maxLength * 10 + 16))
+    return calculatedWidth
+  }, [contracts])
+
+  // 🍎 동적 칼럼 폭 계산: 납입상태 기준
+  const paymentStatusColumnWidth = useMemo(() => {
+    if (contracts.length === 0) return 100 // 기본값
+    const maxLength = Math.max(...contracts.map(c => (c.payment_status || '').length))
+    // 글자당 약 10px (한글), 최소 70px, 최대 130px
+    const calculatedWidth = Math.max(70, Math.min(130, maxLength * 10 + 16))
+    return calculatedWidth
+  }, [contracts])
+
   const isEmpty = contracts.length === 0
 
   const renderState = () => {
@@ -265,7 +325,15 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
           {/* 🍎 리스트 컨테이너 */}
           <div
             className="customer-contracts__list-container"
-            style={{ '--product-column-width': `${productColumnWidth}px` } as React.CSSProperties}
+            style={{
+              '--product-column-width': `${productColumnWidth}px`,
+              '--contract-date-column-width': `${contractDateColumnWidth}px`,
+              '--policy-number-column-width': `${policyNumberColumnWidth}px`,
+              '--premium-column-width': `${premiumColumnWidth}px`,
+              '--payment-day-column-width': `${paymentDayColumnWidth}px`,
+              '--payment-cycle-column-width': `${paymentCycleColumnWidth}px`,
+              '--payment-status-column-width': `${paymentStatusColumnWidth}px`,
+            } as React.CSSProperties}
           >
             {/* 🍎 칼럼 헤더 */}
             <div className="customer-contracts-list-header">
