@@ -64,3 +64,19 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+// ResizeObserver stub (테스트 환경에서 ResizeObserver API가 없음)
+if (typeof ResizeObserver === 'undefined') {
+  (global as any).ResizeObserver = class ResizeObserver {
+    private callback: ResizeObserverCallback
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback
+    }
+    observe() {
+      // 즉시 콜백 호출 (높이 0으로 시뮬레이션)
+      this.callback([], this)
+    }
+    unobserve() {}
+    disconnect() {}
+  }
+}

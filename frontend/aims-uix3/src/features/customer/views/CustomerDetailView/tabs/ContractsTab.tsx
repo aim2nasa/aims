@@ -7,7 +7,7 @@
  * - 정렬, 페이지네이션 지원
  */
 
-import React, { useCallback, useState, useMemo, useEffect } from 'react'
+import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import type { Customer } from '@/entities/customer/model'
 import type { Contract } from '@/entities/contract/model'
 import { ContractService } from '@/services/contractService'
@@ -26,13 +26,21 @@ interface ContractsTabProps {
   onContractCountChange?: (count: number) => void
 }
 
-// 🍎 페이지당 항목 수 옵션
-const ITEMS_PER_PAGE_OPTIONS = [
+// 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
+const ITEMS_PER_PAGE_OPTIONS_BASE = [
+  { value: 'auto', label: '자동' },
   { value: '10', label: '10개씩' },
   { value: '25', label: '25개씩' },
   { value: '50', label: '50개씩' },
   { value: '100', label: '100개씩' }
 ]
+
+// 🍎 행 높이 상수 (CSS와 동일하게 유지)
+const ROW_HEIGHT = 32   // CSS height: 32px
+const ROW_GAP = 2       // CSS gap: 2px (행 사이 간격)
+// 🍎 기본 높이값 (실제 DOM 측정이 안될 때 fallback)
+const DEFAULT_LIST_HEADER_HEIGHT = 32
+const DEFAULT_PAGINATION_HEIGHT = 26
 
 // 🍎 정렬 필드 타입
 type SortField = 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'payment_status'
@@ -61,9 +69,94 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 🍎 페이지네이션 상태
+  // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto')
+  const [containerHeight, setContainerHeight] = useState(0)
+  const sectionContainerRef = useRef<HTMLDivElement>(null)
+
+  // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산
+  // ⚠️ CustomerFullDetailView에서는 .customer-contracts__header가 display:none으로 숨겨지고
+  //    페이지네이션 높이도 26px로 오버라이드됨. 따라서 실제 DOM 요소 높이를 측정해야 함.
+  const autoCalculatedItems = useMemo(() => {
+    if (containerHeight <= 0) return 10 // 기본값
+
+    const container = sectionContainerRef.current
+    if (!container) return 10
+
+    // 요약 헤더 높이 측정 (CustomerFullDetailView에서는 display:none → 0)
+    const summaryHeader = container.querySelector('.customer-contracts__header') as HTMLElement | null
+    const summaryHeight = summaryHeader ? summaryHeader.getBoundingClientRect().height : 0
+
+    // 리스트 헤더 높이 측정 (⚠️ 0이면 기본값 사용 - 렌더링 전 상태 대응)
+    const listHeader = container.querySelector('.customer-contracts-list-header') as HTMLElement | null
+    const measuredListHeaderHeight = listHeader ? listHeader.getBoundingClientRect().height : 0
+    const listHeaderHeight = measuredListHeaderHeight > 0 ? measuredListHeaderHeight : DEFAULT_LIST_HEADER_HEIGHT
+
+    // 페이지네이션 높이 측정 (⚠️ 0이면 기본값 사용 - 렌더링 전 상태 대응)
+    const pagination = container.querySelector('.contract-pagination') as HTMLElement | null
+    const measuredPaginationHeight = pagination ? pagination.getBoundingClientRect().height : 0
+    const paginationHeight = measuredPaginationHeight > 0 ? measuredPaginationHeight : DEFAULT_PAGINATION_HEIGHT
+
+    // 컨테이너 gap 측정 (요약 헤더가 보일 때만 적용)
+    const containerStyle = getComputedStyle(container)
+    const gap = parseFloat(containerStyle.gap) || 0
+
+    // fixedHeight 계산: 실제 보이는 요소들의 높이 합
+    const fixedHeight = summaryHeight + (summaryHeight > 0 ? gap : 0) + listHeaderHeight + paginationHeight
+    const availableHeight = containerHeight - fixedHeight
+
+    // N개 행의 총 높이 = N * ROW_HEIGHT + (N-1) * ROW_GAP
+    // 이를 풀면: N <= (availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)
+    const maxItems = Math.max(1, Math.floor((availableHeight + ROW_GAP) / (ROW_HEIGHT + ROW_GAP)))
+
+    // 디버그 로그 (개발 모드에서만)
+    if (import.meta.env.DEV) {
+      console.log('[ContractsTab] 자동 페이지네이션 계산:', {
+        containerHeight,
+        summaryHeight,
+        listHeaderHeight: `${measuredListHeaderHeight} → ${listHeaderHeight}`,
+        paginationHeight: `${measuredPaginationHeight} → ${paginationHeight}`,
+        gap,
+        fixedHeight,
+        availableHeight,
+        maxItems
+      })
+    }
+
+    return maxItems
+  }, [containerHeight])
+
+  // 🍎 실제 적용되는 페이지당 항목 수
+  const itemsPerPage = itemsPerPageMode === 'auto' ? autoCalculatedItems : itemsPerPageMode
+
+  // 🍎 섹션 컨테이너 높이 측정 (ResizeObserver)
+  useEffect(() => {
+    const container = sectionContainerRef.current
+    if (!container) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height)
+      }
+    })
+
+    resizeObserver.observe(container)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  // 🍎 드롭다운 옵션 (자동 모드일 때 계산된 값 표시)
+  const itemsPerPageOptions = useMemo(() => {
+    return ITEMS_PER_PAGE_OPTIONS_BASE.map(opt => {
+      if (opt.value === 'auto') {
+        return {
+          value: 'auto',
+          label: itemsPerPageMode === 'auto' ? `자동(${autoCalculatedItems})` : '자동'
+        }
+      }
+      return opt
+    })
+  }, [itemsPerPageMode, autoCalculatedItems])
 
   // 🍎 정렬 상태
   const [sortField, setSortField] = useState<SortField>('contract_date')
@@ -176,9 +269,13 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
     setCurrentPage(page)
   }, [])
 
-  // 🍎 페이지당 항목 수 변경
-  const handleLimitChange = useCallback((limit: number) => {
-    setItemsPerPage(limit)
+  // 🍎 페이지당 항목 수 변경 ('auto' 또는 숫자)
+  const handleLimitChange = useCallback((value: string) => {
+    if (value === 'auto') {
+      setItemsPerPageMode('auto')
+    } else {
+      setItemsPerPageMode(Number(value))
+    }
     setCurrentPage(1)
   }, [])
 
@@ -318,7 +415,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
   }
 
   return (
-    <div className="customer-contracts">
+    <div ref={sectionContainerRef} className="customer-contracts">
       <div className="customer-contracts__header">
         <div className="customer-contracts__summary">
           <span className="customer-contracts__count">
@@ -494,11 +591,11 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
             <div className="contract-pagination">
               <div className="pagination-limit">
                 <Dropdown
-                  value={String(itemsPerPage)}
-                  options={ITEMS_PER_PAGE_OPTIONS}
-                  onChange={(value) => handleLimitChange(Number(value))}
+                  value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}
+                  options={itemsPerPageOptions}
+                  onChange={handleLimitChange}
                   aria-label="페이지당 항목 수"
-                  width={80}
+                  width={90}
                 />
               </div>
 

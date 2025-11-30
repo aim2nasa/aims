@@ -8,7 +8,7 @@
  * - Document-Controller-View 패턴 준수
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Dropdown } from '@/shared/ui';
 import { AnnualReportModal } from '@/features/customer/components/AnnualReportModal';
@@ -64,12 +64,20 @@ interface AnnualReportTabProps {
   refreshTrigger?: number;
 }
 
-const ITEMS_PER_PAGE_OPTIONS = [
+// 🍎 페이지당 항목 수 옵션 (자동 옵션 포함)
+const ITEMS_PER_PAGE_OPTIONS_BASE = [
+  { value: 'auto', label: '자동' },
   { value: '10', label: '10개씩' },
   { value: '25', label: '25개씩' },
   { value: '50', label: '50개씩' },
   { value: '100', label: '100개씩' },
 ];
+
+// 🍎 행 높이 상수 (CSS와 동일하게 유지)
+const ROW_HEIGHT = 32;   // CSS height: 32px
+// 🍎 기본 높이값 (실제 DOM 측정이 안될 때 fallback)
+const DEFAULT_TABLE_HEADER_HEIGHT = 32;
+const DEFAULT_PAGINATION_HEIGHT = 26;
 
 export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAnnualReportCountChange, refreshTrigger }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,9 +85,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   const [selectedReport, setSelectedReport] = useState<AnnualReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // 페이지네이션 상태
-  const [itemsPerPage, setItemsPerPage] = useState('10');
+  // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
+  const [itemsPerPageMode, setItemsPerPageMode] = useState<'auto' | number>('auto');
   const [currentPage, setCurrentPage] = useState(1);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const sectionContainerRef = useRef<HTMLDivElement>(null);
   // 삭제 기능 상태
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -123,6 +133,64 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
       setSelectedIndices(new Set());
     }
   }, [isDevMode]);
+
+  // 🍎 자동 모드일 때 컨테이너 높이 기반 항목 수 계산 (DocumentsTab과 동일한 단순 상수 방식)
+  const autoCalculatedItems = useMemo(() => {
+    if (containerHeight <= 0) return 10; // 기본값
+
+    // CustomerFullDetailView에서는:
+    // - annual-report-table-header: 32px
+    // - annual-report-pagination: 26px (고정)
+    // - annual-report-tab__header, annual-report-actions: display:none
+    const fixedHeight = DEFAULT_TABLE_HEADER_HEIGHT + DEFAULT_PAGINATION_HEIGHT; // 32 + 26 = 58px
+    const availableHeight = containerHeight - fixedHeight;
+
+    // 가용 높이를 행 높이로 나눠서 최대 항목 수 계산 (최소 1개)
+    const maxItems = Math.max(1, Math.floor(availableHeight / ROW_HEIGHT));
+
+    // 디버그 로그 (개발 모드에서만)
+    if (import.meta.env.DEV) {
+      console.log('[AnnualReportTab] 자동 페이지네이션 계산:', {
+        containerHeight,
+        fixedHeight,
+        availableHeight,
+        maxItems
+      });
+    }
+
+    return maxItems;
+  }, [containerHeight]);
+
+  // 🍎 실제 적용되는 페이지당 항목 수
+  const itemsPerPage = itemsPerPageMode === 'auto' ? autoCalculatedItems : itemsPerPageMode;
+
+  // 🍎 섹션 컨테이너 높이 측정 (ResizeObserver)
+  useEffect(() => {
+    const container = sectionContainerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // 🍎 드롭다운 옵션 (자동 모드일 때 계산된 값 표시)
+  const itemsPerPageOptions = useMemo(() => {
+    return ITEMS_PER_PAGE_OPTIONS_BASE.map(opt => {
+      if (opt.value === 'auto') {
+        return {
+          value: 'auto',
+          label: itemsPerPageMode === 'auto' ? `자동(${autoCalculatedItems})` : '자동'
+        };
+      }
+      return opt;
+    });
+  }, [itemsPerPageMode, autoCalculatedItems]);
 
   // 🍎 동적 칼럼 폭 계산: 소유주(customer_name) 기준
   const ownerColumnWidth = useMemo(() => {
@@ -301,7 +369,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   // 체크박스 전체 선택/해제
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const allIndices = new Set(visibleReports.map((_, idx) => (currentPage - 1) * parseInt(itemsPerPage) + idx));
+      const allIndices = new Set(visibleReports.map((_, idx) => (currentPage - 1) * itemsPerPage + idx));
       setSelectedIndices(allIndices);
     } else {
       setSelectedIndices(new Set());
@@ -398,7 +466,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   // 로딩 상태
   if (isLoading) {
     return (
-      <div className="annual-report-tab">
+      <div ref={sectionContainerRef} className="annual-report-tab">
         <div className="annual-report-tab__loading">
           <div className="annual-report-tab__loading-spinner"></div>
           <p>Annual Report를 불러오는 중...</p>
@@ -410,7 +478,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   // 에러 상태
   if (error) {
     return (
-      <div className="annual-report-tab">
+      <div ref={sectionContainerRef} className="annual-report-tab">
         <div className="annual-report-tab__error">
           <div className="annual-report-tab__error-icon">⚠️</div>
           <p>{error}</p>
@@ -425,7 +493,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   // Annual Report 없음
   if (reports.length === 0) {
     return (
-      <div className="annual-report-tab">
+      <div ref={sectionContainerRef} className="annual-report-tab">
         {/* AR 파싱 진행 중 알림 (빈 상태에서도 표시) */}
         {pendingCount > 0 && (
           <div className="annual-report-parsing-notice">
@@ -488,7 +556,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
   }
 
   // 페이지네이션 계산
-  const itemsPerPageNumber = parseInt(itemsPerPage, 10);
+  const itemsPerPageNumber = itemsPerPage;
   const totalPages = Math.max(1, Math.ceil(reports.length / itemsPerPageNumber));
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
@@ -511,8 +579,13 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
     }
   };
 
+  // 🍎 페이지당 항목 수 변경 ('auto' 또는 숫자)
   const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(value);
+    if (value === 'auto') {
+      setItemsPerPageMode('auto');
+    } else {
+      setItemsPerPageMode(Number(value));
+    }
     setCurrentPage(1);
   };
 
@@ -524,7 +597,7 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
 
   // Annual Report 목록 있음
   return (
-    <div className="annual-report-tab">
+    <div ref={sectionContainerRef} className="annual-report-tab">
       {/* AR 파싱 진행 중 알림 */}
       {pendingCount > 0 && (
         <div className="annual-report-parsing-notice">
@@ -641,10 +714,11 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({ customer, onAn
         {/* 페이지당 항목 수 선택 */}
         <div className="pagination-limit">
           <Dropdown
-            value={itemsPerPage}
-            options={ITEMS_PER_PAGE_OPTIONS}
+            value={itemsPerPageMode === 'auto' ? 'auto' : String(itemsPerPageMode)}
+            options={itemsPerPageOptions}
             onChange={handleItemsPerPageChange}
             aria-label="페이지당 항목 수"
+            width={90}
           />
         </div>
 
