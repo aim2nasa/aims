@@ -494,7 +494,13 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     const urlDocumentId = urlParams.get('documentId')
 
     // 활성 View 복원 (URL 우선, 그 다음 LocalStorage, 기본값: 고객 관리)
-    const viewToRestore = urlView || persistentState.activeDocumentView || 'customers'
+    let viewToRestore = urlView || persistentState.activeDocumentView || 'customers'
+
+    // 🍎 customers-full-detail은 customerId가 필수 - 없으면 기본 뷰로 폴백
+    if (viewToRestore === 'customers-full-detail' && !urlCustomerId) {
+      viewToRestore = 'customers'
+    }
+
     setActiveDocumentView(viewToRestore)
 
     // 고객 ID가 URL에 있으면 고객 정보 로드
