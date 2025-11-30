@@ -182,10 +182,13 @@ html[data-theme="dark"] .customer-full-detail__section-count {
 
 .customer-info-table td {
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   padding: 0 10px;
   font-size: var(--font-size);
   border-bottom: 1px solid var(--color-ios-separator-light);
   vertical-align: middle;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-info-table td {
@@ -244,12 +247,15 @@ html[data-theme="dark"] .customer-info-table__type-badge {
 /* 테이블 헤더 - A행 높이 32px 적용 */
 .customer-info-family-list .relationships-table th {
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   padding: 0 10px;
   font-size: 11px;
   font-weight: 600;
   color: var(--label-color);
   background: var(--color-ios-bg-secondary-light);
   border-bottom: 1px solid var(--color-ios-separator-light);
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-info-family-list .relationships-table th {
@@ -260,9 +266,12 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table th {
 /* 테이블 데이터 셀 - A행 높이 32px 적용 */
 .customer-info-family-list .relationships-table td {
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   padding: 0 10px;
   font-size: var(--font-size);
   border-bottom: 1px solid var(--color-ios-separator-light);
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-info-family-list .relationships-table td {
@@ -337,9 +346,11 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
     50px                                 /* 이체일 */
     60px                                 /* 납입주기 */
     60px;                                /* 납입상태 */
-  gap: 8px;
+  gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   min-width: max-content;
   font-size: 11px;
   font-weight: 600;
@@ -350,6 +361,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   position: sticky;
   top: 0;
   z-index: 1;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-list-header {
@@ -373,13 +385,16 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
     50px                                 /* 이체일 */
     60px                                 /* 납입주기 */
     60px;                                /* 납입상태 */
-  gap: 8px;
+  gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   min-width: max-content;
   align-items: center;
   border-bottom: 1px solid var(--color-ios-separator-light);
   font-size: var(--font-size);
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--contracts .customer-contracts-item {
@@ -495,6 +510,8 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   font-size: 11px;
   font-weight: 600;
   color: var(--label-color);
@@ -504,6 +521,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   margin-bottom: 0;
   border-radius: 0;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--documents .customer-documents-list-header {
@@ -518,10 +536,13 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .custo
   gap: 6px;
   padding: 0 10px;
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   align-items: center;
   border-bottom: 1px solid var(--color-ios-separator-light);
   font-size: var(--font-size);
   border-radius: 0;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--documents .customer-documents-item {
@@ -691,12 +712,14 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 /* 테이블 헤더 - 6개 칼럼 (소유주, 발행일, 파싱일시, 총월보험료, 계약수, 상태) */
 .customer-full-detail__section-content--annual-report .annual-report-table-header {
   grid-template-columns: 50px 80px 125px 85px 45px 40px;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 0 10px;
   height: var(--row-height);
   min-height: var(--row-height);
+  max-height: var(--row-height);
   min-width: max-content;
   font-size: 11px;
+  box-sizing: border-box;
 }
 
 /* 테이블 바디 */
@@ -708,14 +731,17 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 /* 테이블 행 - 6개 칼럼 */
 .customer-full-detail__section-content--annual-report .annual-report-row {
   grid-template-columns: 50px 80px 125px 85px 45px 40px;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 0 10px;
   height: var(--row-height);
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   min-width: max-content;
   font-size: var(--font-size);
   border-radius: 0;
   border-bottom: 1px solid var(--color-ios-separator-light);
   animation: none;
+  box-sizing: border-box;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--annual-report .annual-report-row {
