@@ -484,7 +484,7 @@ export const ContractsTab: React.FC<ContractsTabProps> = ({
                   options={ITEMS_PER_PAGE_OPTIONS}
                   onChange={(value) => handleLimitChange(Number(value))}
                   aria-label="페이지당 항목 수"
-                  width={100}
+                  width={80}
                 />
               </div>
 

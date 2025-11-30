@@ -98,7 +98,7 @@ html[data-theme="dark"] .customer-full-detail__actions {
   background: var(--color-ios-bg-primary-light);
   border-radius: 8px;
   border: 1px solid var(--color-ios-separator-light);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -315,7 +315,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
 
 .customer-full-detail__section-content--contracts {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts {
@@ -463,17 +463,90 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   gap: 6px;
 }
 
-/* 페이지네이션 */
+/* 페이지네이션 - 문서/Annual Report와 동일한 스타일 */
 .customer-full-detail__section-content--contracts .contract-pagination {
-  padding: 0 10px;
-  height: var(--row-height);
-  font-size: 11px;
+  padding: 2px 8px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  font-size: 10px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
   border-top: 1px solid var(--color-ios-separator-light);
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-content--contracts .contract-pagination {
+  border-top-color: var(--color-ios-separator-dark);
+}
+
+/* 드롭다운 - 페이지네이션 높이에 맞춤 */
+.customer-full-detail__section-content--contracts .pagination-limit {
+  display: flex;
+  align-items: center;
+  height: 20px;
+}
+
+/* iOS Dropdown 컴포넌트 스타일 오버라이드 */
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown {
+  min-width: 70px;
+}
+
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__trigger {
+  padding: 2px 6px;
+  height: 18px;
+  min-height: 18px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__value {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__arrow {
+  font-size: 8px;
+  margin-left: 4px;
+}
+
+/* 드롭다운 메뉴 - 위로 열리도록 강제 (overflow 잘림 방지) */
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__menu {
+  min-width: 70px;
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.customer-full-detail__section-content--contracts .pagination-limit .ios-dropdown__option {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+/* 페이지네이션 컨트롤 */
+.customer-full-detail__section-content--contracts .pagination-controls {
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  height: 100%;
+}
+
+/* 페이지네이션 버튼 크기 축소 */
+.customer-full-detail__section-content--contracts .pagination-button {
+  width: 18px;
+  height: 18px;
+}
+
+/* 페이지네이션 화살표 크기 축소 */
+.customer-full-detail__section-content--contracts .pagination-arrow {
+  font-size: 12px;
+}
+
+/* 페이지 정보 글씨 크기 축소 */
+.customer-full-detail__section-content--contracts .pagination-info {
+  font-size: 10px;
+  min-width: 30px;
 }
 
 /* ============================================
@@ -683,7 +756,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--documents .docum
 
 .customer-full-detail__section-content--annual-report {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .customer-full-detail__section-content--annual-report .annual-report-tab {
