@@ -322,6 +322,7 @@ html[data-theme="dark"] .customer-info-family-list .relationships-table td {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 .customer-full-detail__section-content--contracts .customer-contracts__header {
@@ -476,6 +477,7 @@ html[data-theme="dark"] .customer-full-detail__section-content--contracts .custo
   border-top: 1px solid var(--color-ios-separator-light);
   flex-shrink: 0;
   box-sizing: border-box;
+  margin-top: auto;
 }
 
 html[data-theme="dark"] .customer-full-detail__section-content--contracts .contract-pagination {
