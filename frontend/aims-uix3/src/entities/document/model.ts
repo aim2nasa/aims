@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { formatDateTime } from '@/shared/lib/timeUtils';
 
 /**
  * 문서 기본 정보 스키마
@@ -407,16 +408,7 @@ export const DocumentUtils = {
    */
   formatUploadDate: (date?: string): string => {
     if (!date) return '-';
-
-    const uploadDate = new Date(date);
-    const year = uploadDate.getFullYear();
-    const month = String(uploadDate.getMonth() + 1).padStart(2, '0');
-    const day = String(uploadDate.getDate()).padStart(2, '0');
-    const hours = String(uploadDate.getHours()).padStart(2, '0');
-    const minutes = String(uploadDate.getMinutes()).padStart(2, '0');
-    const seconds = String(uploadDate.getSeconds()).padStart(2, '0');
-
-    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+    return formatDateTime(date);
   },
 
   /**

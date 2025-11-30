@@ -21,6 +21,7 @@ import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import HorizontalBarChart from '@/shared/ui/HorizontalBarChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
+import { formatDate } from '@/shared/lib/timeUtils';
 import './DocumentManagementView.css';
 
 type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
@@ -302,7 +303,7 @@ export const DocumentManagementView: React.FC<DocumentManagementViewProps> = ({
     if (diffHours < 24) return `${diffHours}시간 전`;
     if (diffDays < 7) return `${diffDays}일 전`;
 
-    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    return formatDate(date);
   };
 
   /**

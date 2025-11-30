@@ -22,6 +22,7 @@ import type {
   RawDocumentData
 } from '../types/documentStatus'
 import { DocumentProcessingModule } from '../entities/document/DocumentProcessingModule'
+import { formatDateTime } from '@/shared/lib/timeUtils'
 
 const API_BASE_URL = import.meta.env['VITE_API_URL'] || ''
 // @ts-ignore - 다른 모듈에서 사용될 수 있음
@@ -635,25 +636,13 @@ export class DocumentStatusService {
 
   /**
    * 업로드 날짜 포맷
-   * "YYYY. MM. DD. HH:MM:SS" 형식으로 표시
+   * "YYYY.MM.DD HH:mm:ss" 형식으로 표시
    */
   static formatUploadDate(dateString: string | null): string {
     if (!dateString) return '-'
-
-    try {
-      const date = new Date(dateString)
-      if (isNaN(date.getTime())) return '-'
-
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-
-      return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`
-    } catch {
-      return '-'
-    }
+    const result = formatDateTime(dateString)
+    // formatDateTime이 에러 메시지를 반환하면 '-'로 대체
+    if (result === '잘못된 시간') return '-'
+    return result
   }
 }

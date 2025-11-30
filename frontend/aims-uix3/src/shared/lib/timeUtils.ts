@@ -21,11 +21,11 @@
  * formatDateTime("2025-11-01T07:17:21.143Z")
  * // "2025.11.01 16:17:21"
  */
-export function formatDateTime(timestamp: string | undefined | null): string {
+export function formatDateTime(timestamp: string | Date | undefined | null): string {
   if (!timestamp) return '-';
 
   try {
-    const date = new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
     // KST로 변환하여 각 부분 추출
@@ -69,11 +69,11 @@ export function formatDateTime(timestamp: string | undefined | null): string {
  * formatDate("2025-11-01T07:17:21.143Z")
  * // "2025.11.01"
  */
-export function formatDate(timestamp: string | undefined | null): string {
+export function formatDate(timestamp: string | Date | undefined | null): string {
   if (!timestamp) return '-';
 
   try {
-    const date = new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 날짜';
 
     // KST로 변환하여 각 부분 추출
@@ -105,11 +105,11 @@ export function formatDate(timestamp: string | undefined | null): string {
  * formatTime("2025-11-01T07:17:21.143Z")
  * // "16:17:21"
  */
-export function formatTime(timestamp: string | undefined | null): string {
+export function formatTime(timestamp: string | Date | undefined | null): string {
   if (!timestamp) return '-';
 
   try {
-    const date = new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     if (isNaN(date.getTime())) return '잘못된 시간';
 
     // KST로 변환하여 각 부분 추출

@@ -16,6 +16,7 @@ import { CustomerUtils, type Customer } from '@/entities/customer/model';
 import Button from '@/shared/ui/Button';
 import { SFSymbol } from '../../../SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../SFSymbol/SFSymbol.types';
+import { formatDate } from '@/shared/lib/timeUtils';
 import './QuickFamilyAssignPanel.css';
 
 interface QuickFamilyAssignPanelProps {
@@ -612,7 +613,7 @@ export const QuickFamilyAssignPanel: React.FC<QuickFamilyAssignPanelProps> = ({
                 candidates.map(candidate => {
                   const birthDate = candidate.personal_info?.birth_date;
                   const birthDisplay = birthDate
-                    ? new Date(birthDate).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+                    ? formatDate(birthDate)
                     : '-';
                   const gender = candidate.personal_info?.gender;
                   const genderDisplay = gender === 'M' ? '남' : gender === 'F' ? '여' : '-';

@@ -17,6 +17,7 @@ import { DraggableModal } from '../DraggableModal';
 import { Button } from '../Button';
 import { SFSymbol } from '../../../components/SFSymbol/SFSymbol';
 import { SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol/SFSymbol.types';
+import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerSelectorModal.css';
 
 export interface CustomerSelectorModalProps {
@@ -677,7 +678,7 @@ export const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
               displayedCustomers.map(customer => {
                 const birthDate = customer.personal_info?.birth_date;
                 const birthDisplay = birthDate
-                  ? new Date(birthDate).toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+                  ? formatDate(birthDate)
                   : '-';
                 const gender = customer.personal_info?.gender;
                 const genderDisplay = gender === 'M' ? '남' : gender === 'F' ? '여' : '-';

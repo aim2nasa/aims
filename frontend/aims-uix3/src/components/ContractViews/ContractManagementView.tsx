@@ -18,6 +18,7 @@ import { FileTypePieChart } from '@/shared/ui/FileTypePieChart';
 import type { FileTypeData } from '@/shared/ui/FileTypePieChart';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import type { Contract } from '@/entities/contract';
+import { formatDate } from '@/shared/lib/timeUtils';
 import './ContractManagementView.css';
 
 type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
@@ -428,7 +429,7 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
 
                   const activityText = isModified ? '정보 수정' : '계약 등록';
 
-                  const formatTime = (date: Date | null) => {
+                  const formatRelativeTime = (date: Date | null) => {
                     if (!date) return '-';
                     const now = new Date();
                     const diff = now.getTime() - date.getTime();
@@ -441,9 +442,7 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
                     if (hours < 24) return `${hours}시간 전`;
                     if (days < 30) return `${days}일 전`;
 
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${month}.${day}`;
+                    return formatDate(date);
                   };
 
                   const statusClass = (() => {
@@ -465,7 +464,7 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
                       <div className={`recent-cell-status ${statusClass}`}>
                         {contract.payment_status || '-'}
                       </div>
-                      <div className="recent-cell-time">{formatTime(displayTime)}</div>
+                      <div className="recent-cell-time">{formatRelativeTime(displayTime)}</div>
                     </div>
                   );
                 })}

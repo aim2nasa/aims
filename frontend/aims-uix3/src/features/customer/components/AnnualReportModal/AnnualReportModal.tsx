@@ -17,7 +17,7 @@ import SFSymbol, { SFSymbolSize, SFSymbolWeight } from '../../../../components/S
 import Tooltip from '../../../../shared/ui/Tooltip';
 import type { AnnualReport, InsuranceContract } from '../../api/annualReportApi';
 import { AnnualReportApi } from '../../api/annualReportApi';
-import { formatDateTime } from '@/shared/lib/timeUtils';
+import { formatDateTime, formatDate } from '@/shared/lib/timeUtils';
 import './AnnualReportModal.css';
 
 /**
@@ -202,7 +202,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           <div className="annual-report-summary__item">
             <span className="annual-report-summary__label">발행일</span>
             <span className="annual-report-summary__value">
-              {report.issue_date.split('T')[0]}
+              {formatDate(report.issue_date)}
             </span>
           </div>
           <div className="annual-report-summary__item">
@@ -352,7 +352,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
           <div>
             <h2>{report?.customer_name || customerName}님의 Annual Report</h2>
             <p>
-              {report?.issue_date ? `발행일: ${report.issue_date.split('T')[0]}` : '정보 없음'}
+              {report?.issue_date ? `발행일: ${formatDate(report.issue_date)}` : '정보 없음'}
               {report && ` · ${report.contract_count}건`}
             </p>
           </div>

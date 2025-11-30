@@ -37,7 +37,14 @@ vi.mock('../../../../shared/ui/Tooltip', () => ({
 }));
 
 vi.mock('@/shared/lib/timeUtils', () => ({
-  formatDateTime: (date: string) => new Date(date).toLocaleString('ko-KR')
+  formatDateTime: (date: string) => new Date(date).toLocaleString('ko-KR'),
+  formatDate: (date: string) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+  }
 }));
 
 vi.mock('../../api/annualReportApi', () => ({
@@ -212,8 +219,8 @@ describe('AnnualReportModal', () => {
         />
       );
 
-      // 발행일 확인
-      expect(screen.getByText('2025-10-01')).toBeInTheDocument();
+      // 발행일 확인 (formatDate 적용: YYYY.MM.DD)
+      expect(screen.getByText('2025.10.01')).toBeInTheDocument();
 
       // 총 월보험료 확인 (formatCurrency 적용)
       expect(screen.getByText('500,000원')).toBeInTheDocument();

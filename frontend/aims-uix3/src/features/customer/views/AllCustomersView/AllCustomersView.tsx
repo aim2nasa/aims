@@ -17,6 +17,7 @@ import { usePersistedState } from '@/hooks/usePersistedState';
 import { useDevModeStore } from '@/shared/store/useDevModeStore';
 import { CustomerService } from '@/services/customerService';
 import type { Customer } from '@/entities/customer/model';
+import { formatDate, formatDateTime } from '@/shared/lib/timeUtils';
 import './AllCustomersView.css';
 
 interface AllCustomersViewProps {
@@ -442,11 +443,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const getCustomerBirthDate = (customer: Customer) => {
       const birthDate = customer.personal_info?.birth_date;
       if (!birthDate) return '-';
-      const date = new Date(birthDate);
-      const year = date.getFullYear().toString().slice(2);
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}.${month}.${day}`;
+      return formatDate(birthDate);
     };
 
     const getCustomerGender = (customer: Customer) => {
@@ -471,14 +468,7 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
     const getCustomerCreatedDate = (customer: Customer) => {
       const createdAt = customer.meta?.created_at;
       if (!createdAt) return '-';
-      const date = new Date(createdAt);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+      return formatDateTime(createdAt);
     };
 
     return (

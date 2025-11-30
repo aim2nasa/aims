@@ -19,6 +19,7 @@ import { CustomerService } from '@/services/customerService'
 import { useDevModeStore } from '@/shared/store/useDevModeStore'
 import type { Contract } from '@/entities/contract'
 import type { Customer } from '@/entities/customer'
+import { formatDate } from '@/shared/lib/timeUtils'
 import './ContractAllView.css'
 
 interface ContractAllViewProps {
@@ -324,20 +325,6 @@ export default function ContractAllView({
   // 보험료 포맷
   const formatPremium = (premium: number) => {
     return premium.toLocaleString('ko-KR') + '원'
-  }
-
-  // 계약일 포맷 (고정 폭: YYYY. MM. DD.)
-  const formatDate = (date: string | null) => {
-    if (!date) return '-'
-    try {
-      const d = new Date(date)
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${year}. ${month}. ${day}.`
-    } catch {
-      return date
-    }
   }
 
   // 증권번호 포맷 (10자리 전체 또는 앞자리 0 제거)

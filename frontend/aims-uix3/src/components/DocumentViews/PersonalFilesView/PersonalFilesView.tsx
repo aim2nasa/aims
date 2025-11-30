@@ -23,6 +23,7 @@ import { DocumentStatusService } from '@/services/DocumentStatusService'
 import { DocumentUtils } from '@/entities/document'
 import type { Document } from '../../../types/documentStatus'
 import { uploadService } from '../DocumentRegistrationView/services/uploadService'
+import { formatDate, formatTime } from '@/shared/lib/timeUtils'
 import type { UploadFile } from '../DocumentRegistrationView/types/uploadTypes'
 import {
   EyeIcon,
@@ -51,14 +52,6 @@ const formatFileSize = (bytes: number): string => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
 
-// 날짜 포맷팅
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}.${month}.${day}`
-}
 
 // Document를 PersonalFileItem으로 변환
 const convertDocumentToFileItem = (doc: Document): PersonalFileItem => {
@@ -605,10 +598,7 @@ export const PersonalFilesView: React.FC<PersonalFilesViewProps> = ({
   // 마지막 업데이트 시간 포맷팅 (시분초만 표시)
   const formatLastUpdated = useCallback((date: Date | null): string => {
     if (!date) return ''
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-    return `${hours}:${minutes}:${seconds}`
+    return formatTime(date)
   }, [])
 
   // 폴더 확장/축소
