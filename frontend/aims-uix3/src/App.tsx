@@ -365,7 +365,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   const documentLibraryRefreshRef = useRef<(() => Promise<void>) | null>(null)
 
   // URL 상태 동기화 헬퍼 함수들
-  const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null }) => {
+  const updateURLParams = useCallback((params: { view?: string | null; customerId?: string | null; documentId?: string | null; tab?: string | null }) => {
     const url = new URL(window.location.href)
 
     if (params.view !== undefined) {
@@ -389,6 +389,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         url.searchParams.set('documentId', params.documentId)
       } else {
         url.searchParams.delete('documentId')
+      }
+    }
+
+    if (params.tab !== undefined) {
+      if (params.tab) {
+        url.searchParams.set('tab', params.tab)
+      } else {
+        url.searchParams.delete('tab')
       }
     }
 
@@ -846,16 +854,17 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 고객 클릭 핸들러 - RightPane 열기 및 고객 상세 정보
   // customerId가 null이면 RightPane 닫기 (CustomerRelationshipView에서 빠른 가족 등록 패널 열 때 사용)
-  const handleCustomerClick = useCallback(async (customerId: string | null, customerData?: Customer) => {
+  // initialTab: 선택적으로 초기 탭 지정 (예: 'contracts' - 계약 탭으로 열기)
+  const handleCustomerClick = useCallback(async (customerId: string | null, customerData?: Customer, initialTab?: string) => {
     if (import.meta.env.DEV) {
-      console.log('[App] 고객 클릭:', customerId, customerData)
+      console.log('[App] 고객 클릭:', customerId, customerData, initialTab)
     }
 
     // customerId가 null이면 RightPane 닫기
     if (!customerId) {
       setSelectedCustomer(null)
       setRightPaneVisible(false)
-      updateURLParams({ customerId: null, documentId: null })
+      updateURLParams({ customerId: null, documentId: null, tab: null })
       return
     }
 
@@ -870,8 +879,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     // RightPane이 숨겨져 있으면 표시
     setRightPaneVisible(true)
 
-    // URL에 고객 ID 저장
-    updateURLParams({ customerId, documentId: null })
+    // URL에 고객 ID와 탭 저장
+    updateURLParams({ customerId, documentId: null, tab: initialTab || null })
   }, [updateURLParams])
 
   // 고객 전체 정보 페이지 열기 핸들러
@@ -1358,6 +1367,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'contracts'}
               onClose={closeDocumentView}
               onNavigate={handleMenuClick}
+              onCustomerClick={(customerId) => handleCustomerClick(customerId, undefined, 'contracts')}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
           </Suspense>
 
@@ -1365,7 +1376,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
             <ContractAllView
               visible={activeDocumentView === 'contracts-all'}
               onClose={closeDocumentView}
-              onCustomerClick={handleCustomerClick}
+              onCustomerClick={(customerId) => handleCustomerClick(customerId, undefined, 'contracts')}
             />
           </Suspense>
 

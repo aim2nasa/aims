@@ -154,6 +154,28 @@
   text-overflow: ellipsis;
 }
 
+/* 클릭 가능한 고객명 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
+.recent-cell-customer--clickable {
+  cursor: pointer;
+  color: var(--color-primary-500);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.recent-cell-customer--clickable:hover {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.recent-cell-customer--clickable:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.recent-cell-customer--clickable:active {
+  color: var(--color-primary-700);
+}
+
 .recent-cell-product {
   font-size: var(--font-size-caption-1);
   color: var(--color-text-secondary);

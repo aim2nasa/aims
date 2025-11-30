@@ -30,6 +30,10 @@ interface ContractManagementViewProps {
   onClose: () => void;
   /** 메뉴 네비게이션 핸들러 */
   onNavigate?: (menuKey: string) => void;
+  /** 고객 클릭 핸들러 (싱글 클릭 - RightPane 표시) */
+  onCustomerClick?: (customerId: string) => void;
+  /** 고객 더블클릭 핸들러 (더블 클릭 - 전체 정보 뷰로 이동) */
+  onCustomerDoubleClick?: (customerId: string) => void;
 }
 
 /**
@@ -41,6 +45,8 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
   visible,
   onClose,
   onNavigate,
+  onCustomerClick,
+  onCustomerDoubleClick,
 }) => {
   // 최근 활동 기간 선택 상태
   const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1week');
@@ -454,7 +460,23 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
                         {activityIcon}
                         <span className="activity-text">{activityText}</span>
                       </div>
-                      <div className="recent-cell-customer">{contract.customer_name || '-'}</div>
+                      {(onCustomerClick || onCustomerDoubleClick) && contract.customer_id ? (
+                        <div
+                          className="recent-cell-customer recent-cell-customer--clickable"
+                          onClick={() => onCustomerClick?.(contract.customer_id!)}
+                          onDoubleClick={() => onCustomerDoubleClick?.(contract.customer_id!)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && onCustomerClick && contract.customer_id) {
+                              e.preventDefault();
+                              onCustomerClick(contract.customer_id);
+                            }
+                          }}
+                        >{contract.customer_name || '-'}</div>
+                      ) : (
+                        <div className="recent-cell-customer">{contract.customer_name || '-'}</div>
+                      )}
                       <div className="recent-cell-product">{contract.product_name || '-'}</div>
                       <div className="recent-cell-premium">{contract.premium?.toLocaleString() || '0'}원</div>
                       <div className={`recent-cell-status ${statusClass}`}>
