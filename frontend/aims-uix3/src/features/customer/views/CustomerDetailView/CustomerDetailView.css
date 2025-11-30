@@ -22,12 +22,16 @@
   background-color: var(--color-layout-main-dark);
 }
 
-/* Inner Container - 극도로 컴팩트 */
+/* Inner Container - 극도로 컴팩트 + flex 레이아웃 (탭 높이 계산 지원) */
 .customer-detail-view__inner {
   width: 100%;
   max-width: none;
   margin: 0 auto;
   padding: var(--spacing-4) var(--spacing-4);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* 🍎 액션 버튼 영역 */
@@ -38,6 +42,12 @@
   margin-bottom: var(--spacing-4);
   padding-bottom: var(--spacing-4);
   border-bottom: 1px solid var(--color-layout-brb-light);
+  flex-shrink: 0;
+}
+
+/* 🍎 탭 바 고정 (축소 방지) */
+.customer-detail-view__tabs {
+  flex-shrink: 0;
 }
 
 [data-theme="dark"] .customer-detail-view__actions {
@@ -72,9 +82,14 @@
 }
 
 
-/* Tabs spacing */
+/* Tabs spacing + flex 확장 (탭 내 컴포넌트 높이 계산 지원) */
 .customer-detail-view__tab-content {
   padding-top: var(--spacing-3);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 🍎 탭 패널 - 항상 렌더링하되 숨김 처리 */
@@ -83,7 +98,11 @@
 }
 
 .customer-detail-view__tab-panel--active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Form */
