@@ -38,6 +38,7 @@ const PDFViewer = lazy(() => import('./components/PDFViewer'))
 const ImageViewer = lazy(() => import('./components/ImageViewer'))
 const DownloadOnlyViewer = lazy(() => import('./components/DownloadOnlyViewer'))
 const CustomerDetailView = lazy(() => import('./features/customer/views/CustomerDetailView'))
+const CustomerFullDetailView = lazy(() => import('./features/customer/views/CustomerFullDetailView'))
 const AccountSettingsView = lazy(() => import('./features/AccountSettings/AccountSettingsView'))
 const CustomerDocumentPreviewModal = lazy(() => import('./features/customer/views/CustomerDetailView/tabs/CustomerDocumentPreviewModal'))
 import type { PreviewDocumentInfo } from './features/customer/controllers/useCustomerDocumentsController'
@@ -349,6 +350,9 @@ function App({ gaps: initialGaps }: AppProps = {}) {
   // RightPane 고객 상세 상태
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [rightPaneContentType, setRightPaneContentType] = useState<'document' | 'customer' | null>(null)
+
+  // CustomerFullDetailView 상태 (CenterPane에서 고객 전체 정보 표시)
+  const [fullDetailCustomerId, setFullDetailCustomerId] = useState<string | null>(null)
  
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
@@ -421,6 +425,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
         activeDocumentView === "customers-all" ||
         activeDocumentView === "customers-regional" ||
         activeDocumentView === "customers-relationship" ||
+        activeDocumentView === "customers-full-detail" ||
         activeDocumentView === "contracts" ||
         activeDocumentView === "contracts-all" ||
         activeDocumentView === "contracts-import" ||
@@ -685,7 +690,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
       // 문서 관리 View들
       'documents', 'documents-register', 'documents-library', 'documents-search', 'documents-my-files', 'dsd',
       // 고객 관리 View들
-      'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship',
+      'customers', 'customers-register', 'customers-all', 'customers-regional', 'customers-relationship', 'customers-full-detail',
       // 계약 관리 View들
       'contracts', 'contracts-all', 'contracts-import',
       // 설정 View들
@@ -845,6 +850,27 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // URL에 고객 ID 저장
     updateURLParams({ customerId, documentId: null })
+  }, [updateURLParams])
+
+  // 고객 전체 정보 페이지 열기 핸들러
+  const handleOpenFullDetail = useCallback((customerId: string) => {
+    // RightPane 닫기
+    setRightPaneVisible(false)
+
+    // CustomerFullDetailView 표시
+    setFullDetailCustomerId(customerId)
+    setActiveDocumentView('customers-full-detail')
+
+    // URL 업데이트
+    updateURLParams({ view: 'customers-full-detail', customerId })
+  }, [updateURLParams])
+
+  // 고객 전체 정보 페이지 닫기 핸들러
+  const handleCloseFullDetail = useCallback(() => {
+    setFullDetailCustomerId(null)
+    // 이전 뷰로 복귀 (고객 전체보기)
+    setActiveDocumentView('customers-all')
+    updateURLParams({ view: 'customers-all', customerId: null })
   }, [updateURLParams])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
@@ -1280,6 +1306,21 @@ function App({ gaps: initialGaps }: AppProps = {}) {
           </Suspense>
 
           <Suspense fallback={null}>
+            <CustomerFullDetailView
+              visible={activeDocumentView === 'customers-full-detail'}
+              customerId={fullDetailCustomerId}
+              onClose={handleCloseFullDetail}
+              onCustomerDeleted={() => {
+                handleCloseFullDetail()
+                if (customerAllViewRefreshRef.current) {
+                  customerAllViewRefreshRef.current()
+                }
+              }}
+              onSelectCustomer={handleCustomerClick}
+            />
+          </Suspense>
+
+          <Suspense fallback={null}>
             <AccountSettingsView
               visible={activeDocumentView === 'account-settings'}
               onClose={closeDocumentView}
@@ -1479,6 +1520,7 @@ function App({ gaps: initialGaps }: AppProps = {}) {
                 onRefresh={handleCustomerRefresh}
                 onDelete={handleCustomerDelete}
                 onSelectCustomer={handleCustomerClick}
+                onOpenFullDetail={handleOpenFullDetail}
                 {...(documentLibraryRefreshRef.current ? { onDocumentLibraryRefresh: documentLibraryRefreshRef.current } : {})}
                 gapLeft={gapValues.gapLeft}
                 gapRight={gapValues.gapRight}

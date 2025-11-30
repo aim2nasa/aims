@@ -1,0 +1,349 @@
+/**
+ * 🍎 Customer Full Detail View - 고객 전체 정보 페이지 스타일
+ * CenterPane 전용 전체 화면 레이아웃 - 공간 효율성 최적화
+ */
+
+.customer-full-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* === 상태 표시 === */
+.customer-full-detail__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.customer-full-detail__state--loading {
+  color: var(--color-text-secondary);
+}
+
+.customer-full-detail__state--error {
+  color: var(--color-icon-red);
+}
+
+.customer-full-detail__retry {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: 999px;
+  border: 1px solid var(--color-primary-200);
+  background-color: transparent;
+  color: var(--color-primary-600);
+  cursor: pointer;
+  font-size: var(--font-size-caption-1);
+  transition: background-color var(--duration-micro-quick) var(--easing-ease-out);
+}
+
+.customer-full-detail__retry:hover {
+  background-color: var(--color-primary-100);
+}
+
+/* === 액션 버튼 영역 - 컴팩트 === */
+.customer-full-detail__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+  flex-shrink: 0;
+  background: var(--color-ios-bg-primary-light);
+}
+
+html[data-theme="dark"] .customer-full-detail__actions {
+  border-bottom-color: var(--color-ios-separator-dark);
+  background: var(--color-ios-bg-primary-dark);
+}
+
+.customer-full-detail__actions-spacer {
+  flex: 1;
+}
+
+/* === 콘텐츠 스크롤 영역 === */
+.customer-full-detail__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: var(--spacing-3);
+  align-content: start;
+}
+
+/* 스크롤바 */
+.customer-full-detail__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customer-full-detail__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.customer-full-detail__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-light);
+  border-radius: 3px;
+}
+
+html[data-theme="dark"] .customer-full-detail__content::-webkit-scrollbar-thumb {
+  background-color: var(--color-ios-scrollbar-dark);
+}
+
+/* === 섹션 그리드 배치 === */
+.customer-full-detail__section:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1 / 3; /* 기본정보는 2행 차지 */
+}
+
+.customer-full-detail__section:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.customer-full-detail__section:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.customer-full-detail__section:nth-child(4) {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.customer-full-detail__section:nth-child(5) {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* === 섹션 - 컴팩트 === */
+.customer-full-detail__section {
+  background: var(--color-ios-bg-primary-light);
+  border-radius: 8px;
+  border: 1px solid var(--color-ios-separator-light);
+  overflow: hidden;
+  min-height: 0;
+}
+
+html[data-theme="dark"] .customer-full-detail__section {
+  background: var(--color-ios-bg-primary-dark);
+  border-color: var(--color-ios-separator-dark);
+}
+
+.customer-full-detail__section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin: 0;
+  font-size: var(--font-size-caption-1);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background: var(--color-ios-bg-secondary-light);
+  border-bottom: 1px solid var(--color-ios-separator-light);
+}
+
+html[data-theme="dark"] .customer-full-detail__section-title {
+  background: var(--color-ios-bg-secondary-dark);
+  border-bottom-color: var(--color-ios-separator-dark);
+}
+
+.customer-full-detail__section-title svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--color-primary-500);
+}
+
+.customer-full-detail__section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .customer-full-detail__section-count {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.customer-full-detail__section-content {
+  padding: 8px 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* === 기본정보 섹션 - 더 컴팩트하게 === */
+.customer-full-detail__section:first-child .customer-full-detail__section-content {
+  max-height: none;
+}
+
+/* 기본정보 내부 form-section 스타일 오버라이드 */
+.customer-full-detail__section-content .form-section {
+  margin-bottom: 8px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.customer-full-detail__section-content .form-section:last-child {
+  margin-bottom: 0;
+}
+
+.customer-full-detail__section-content .form-section__title {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 0;
+  margin-bottom: 4px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.customer-full-detail__section-content .form-section__title svg {
+  width: 12px;
+  height: 12px;
+}
+
+.customer-full-detail__section-content .form-section__content {
+  padding: 0;
+}
+
+.customer-full-detail__section-content .form-row {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+  font-size: var(--font-size-caption-1);
+  min-height: 22px;
+}
+
+.customer-full-detail__section-content .form-row__label {
+  width: 70px;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.customer-full-detail__section-content .form-row__value {
+  flex: 1;
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+/* === 계약/문서 섹션 === */
+.customer-full-detail__section-content--contracts,
+.customer-full-detail__section-content--documents {
+  padding: 0;
+  max-height: 250px;
+}
+
+.customer-full-detail__section-content--contracts .customer-contracts {
+  gap: 6px;
+}
+
+.customer-full-detail__section-content--contracts .customer-contracts__header {
+  padding: 6px 10px;
+}
+
+.customer-full-detail__section-content--contracts .customer-contracts__list-container {
+  max-height: 180px;
+}
+
+.customer-full-detail__section-content--contracts .customer-contracts-list-header,
+.customer-full-detail__section-content--contracts .customer-contracts-item {
+  padding: 4px 8px;
+  height: 26px;
+  font-size: 11px;
+}
+
+.customer-full-detail__section-content--contracts .contract-pagination {
+  padding: 8px 10px;
+  margin-top: 4px;
+}
+
+/* === 문서 탭 컴팩트 === */
+.customer-full-detail__section-content--documents .documents-tab {
+  gap: 6px;
+}
+
+.customer-full-detail__section-content--documents .documents-tab__header {
+  padding: 6px 10px;
+}
+
+.customer-full-detail__section-content--documents .documents-tab__list-container {
+  max-height: 180px;
+}
+
+/* === Annual Report 섹션 === */
+.customer-full-detail__section-content--annual-report {
+  padding: 8px 10px;
+  max-height: 200px;
+}
+
+/* === 관계 탭 컴팩트 === */
+.customer-full-detail__section-content .relationships-tab {
+  height: auto;
+}
+
+.customer-full-detail__section-content .relationships-tab__state {
+  padding: var(--spacing-3);
+}
+
+.customer-full-detail__section-content .relationships-tab__list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* === 고객 아이콘 === */
+.customer-full-detail-icon {
+  flex-shrink: 0;
+}
+
+.customer-icon--personal {
+  color: var(--color-icon-blue);
+}
+
+.customer-icon--corporate {
+  color: var(--color-icon-purple);
+}
+
+/* === 반응형 - 좁은 화면 === */
+@media (max-width: 900px) {
+  .customer-full-detail__content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .customer-full-detail__section:nth-child(1),
+  .customer-full-detail__section:nth-child(2),
+  .customer-full-detail__section:nth-child(3),
+  .customer-full-detail__section:nth-child(4),
+  .customer-full-detail__section:nth-child(5) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+/* === 접근성 === */
+@media (prefers-reduced-motion: reduce) {
+  .customer-full-detail__retry {
+    transition: none;
+  }
+}

@@ -32,6 +32,7 @@ interface CustomerDetailViewProps {
   onRefresh?: () => void;
   onDelete?: () => void;
   onSelectCustomer?: (customerId: string, customerData?: Customer) => void;
+  onOpenFullDetail?: (customerId: string) => void;
   onDocumentLibraryRefresh?: () => Promise<void>;
   gapLeft?: number;
   gapRight?: number;
@@ -45,6 +46,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onRefresh,
   onDelete,
   onSelectCustomer,
+  onOpenFullDetail,
   onDocumentLibraryRefresh,
   gapLeft = 2,
   gapRight = 2,
@@ -485,6 +487,17 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             >
               고객 삭제
             </Button>
+            {onOpenFullDetail && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onOpenFullDetail(customer._id)}
+                leftIcon={<span>↗️</span>}
+                title="전체 화면에서 모든 정보를 한눈에 봅니다"
+              >
+                전체 보기
+              </Button>
+            )}
           </div>
 
           {/* 🍎 탭 네비게이션 */}
