@@ -54,7 +54,6 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   const [annualReportRefreshTrigger, setAnnualReportRefreshTrigger] = useState(0)
 
   // 🍎 개수 상태
-  const [relationshipsCount, setRelationshipsCount] = useState(0)
   const [contractCount, setContractCount] = useState(0)
   const [documentCount, setDocumentCount] = useState(0)
   const [annualReportCount, setAnnualReportCount] = useState(0)
@@ -368,9 +367,6 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
                   </svg>
                   <span>고객 정보</span>
-                  {relationshipsCount > 0 && (
-                    <span className="customer-full-detail__section-count">{relationshipsCount}</span>
-                  )}
                 </h2>
                 <div className="customer-full-detail__section-content customer-full-detail__section-content--customer-info">
                   {/* 🍎 기본정보 테이블 (3행 컴팩트 레이아웃) */}
@@ -413,7 +409,6 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   <div className="customer-info-family-list">
                     <RelationshipsTab
                       customer={customer}
-                      onRelationshipsCountChange={setRelationshipsCount}
                       {...(onSelectCustomer ? { onSelectCustomer } : {})}
                     />
                   </div>

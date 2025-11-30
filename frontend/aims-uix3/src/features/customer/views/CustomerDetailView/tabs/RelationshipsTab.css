@@ -272,3 +272,24 @@
 [data-theme="dark"] .relationships-table__sort-icon--active {
   color: var(--color-primary-400);
 }
+
+/* 🍎 관계 개수 뱃지 */
+.relationships-table__count-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+}
+
+[data-theme="dark"] .relationships-table__count-badge {
+  background: var(--color-primary-900);
+  color: var(--color-primary-300);
+}

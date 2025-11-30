@@ -250,6 +250,9 @@ export const RelationshipsTab: React.FC<RelationshipsTabProps> = ({
                       <span className={`relationships-table__sort-icon ${sortField === 'relationshipType' ? 'relationships-table__sort-icon--active' : ''}`}>
                         {sortField === 'relationshipType' ? (sortDirection === 'asc' ? '▲' : '▼') : '▼'}
                       </span>
+                      {relationshipsCount > 0 && (
+                        <span className="relationships-table__count-badge">{relationshipsCount}</span>
+                      )}
                     </span>
                   </th>
                   <th
