@@ -368,44 +368,44 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     <path d="M8 9c-2.5 0-4.5 1.5-4.5 3v1.5h9V12c0-1.5-2-3-4.5-3z"/>
                   </svg>
                   <span>고객 정보</span>
+                  {relationshipsCount > 0 && (
+                    <span className="customer-full-detail__section-count">{relationshipsCount}</span>
+                  )}
                 </h2>
                 <div className="customer-full-detail__section-content customer-full-detail__section-content--customer-info">
-                  {/* 기본정보 + 가족 통합 테이블 */}
-                  <table className="customer-info-table">
+                  {/* 🍎 기본정보 테이블 (3행 컴팩트 레이아웃) */}
+                  <table className="customer-info-table customer-info-table--compact">
                     <tbody>
+                      {/* Row 1: 이름, 생년월일, 성별, 유형 (모두 짧은 필드) */}
                       <tr>
                         <td className="customer-info-table__label">이름</td>
                         <td className="customer-info-table__value">{customer.personal_info?.name || '-'}</td>
-                        <td className="customer-info-table__label">휴대폰</td>
-                        <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
-                      </tr>
-                      <tr>
                         <td className="customer-info-table__label">생년월일</td>
                         <td className="customer-info-table__value">{customer.personal_info?.birth_date || '-'}</td>
                         <td className="customer-info-table__label">성별</td>
                         <td className="customer-info-table__value">
-                          {customer.personal_info?.gender === 'M' ? '남성' : customer.personal_info?.gender === 'F' ? '여성' : '-'}
+                          {customer.personal_info?.gender === 'M' ? '남' : customer.personal_info?.gender === 'F' ? '여' : '-'}
                         </td>
-                      </tr>
-                      <tr>
-                        <td className="customer-info-table__label">이메일</td>
-                        <td className="customer-info-table__value" colSpan={3}>{customer.personal_info?.email || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td className="customer-info-table__label">주소</td>
-                        <td className="customer-info-table__value" colSpan={3}>
-                          {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
-                          {customer.personal_info?.address?.address1 || '-'}
-                          {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
-                        </td>
-                      </tr>
-                      <tr>
                         <td className="customer-info-table__label">유형</td>
                         <td className="customer-info-table__value">
                           <span className="customer-info-table__type-badge">{customer.insurance_info?.customer_type || '개인'}</span>
                         </td>
-                        <td className="customer-info-table__label">{isBusinessCustomer ? '관계인' : '가족'}</td>
-                        <td className="customer-info-table__value">{relationshipsCount}명</td>
+                      </tr>
+                      {/* Row 2: 휴대폰, 이메일 (중간 길이 필드) */}
+                      <tr>
+                        <td className="customer-info-table__label">휴대폰</td>
+                        <td className="customer-info-table__value">{customer.personal_info?.mobile_phone || '-'}</td>
+                        <td className="customer-info-table__label">이메일</td>
+                        <td className="customer-info-table__value" colSpan={5}>{customer.personal_info?.email || '-'}</td>
+                      </tr>
+                      {/* Row 3: 주소 (긴 필드, 전체 행 사용) */}
+                      <tr>
+                        <td className="customer-info-table__label">주소</td>
+                        <td className="customer-info-table__value" colSpan={7}>
+                          {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
+                          {customer.personal_info?.address?.address1 || '-'}
+                          {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                        </td>
                       </tr>
                     </tbody>
                   </table>

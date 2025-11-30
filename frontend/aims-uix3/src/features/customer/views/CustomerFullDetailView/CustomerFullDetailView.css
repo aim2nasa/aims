@@ -210,6 +210,26 @@ html[data-theme="dark"] .customer-info-table__label {
   color: var(--value-color);
 }
 
+/* 🍎 컴팩트 레이아웃 (3행, 8열) - 2행 절약 */
+.customer-info-table--compact {
+  table-layout: auto;
+}
+
+.customer-info-table--compact .customer-info-table__label {
+  width: auto;
+  min-width: 50px;
+  max-width: 60px;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.customer-info-table--compact .customer-info-table__value {
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .customer-info-table__type-badge {
   display: inline-block;
   padding: 2px 8px;
