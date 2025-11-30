@@ -363,6 +363,74 @@ html[data-theme="dark"] .customer-info-table__type-badge {
   color: var(--color-primary-300);
 }
 
+/* 🍎 주소 행 - 버튼과 텍스트 배치 (wrapper div에 flex 적용) */
+.customer-info-table__address-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%; /* 전체 너비 사용 */
+}
+
+.customer-info-table__address-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 🍎 주소 변경 이력 버튼 */
+.customer-info-table__address-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 4px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto; /* 🍎 우측 정렬 */
+}
+
+.customer-info-table__address-history-btn:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.customer-info-table__address-history-btn svg {
+  flex-shrink: 0;
+}
+
+/* 🍎 주소 변경 이력 아이콘 색상 (RightPane과 동일) */
+.customer-info-table__address-history-icon {
+  color: var(--color-icon-orange);
+}
+
+.customer-info-table__address-history-btn:hover .customer-info-table__address-history-icon {
+  color: var(--color-icon-orange);
+}
+
+.customer-info-table__address-history-label {
+  display: inline;
+}
+
+html[data-theme="dark"] .customer-info-table__address-history-btn {
+  background: var(--color-bg-tertiary-dark, rgba(255, 255, 255, 0.05));
+  border-color: var(--color-border-subtle-dark, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-secondary-dark, rgba(255, 255, 255, 0.7));
+}
+
+html[data-theme="dark"] .customer-info-table__address-history-btn:hover {
+  background: var(--color-bg-secondary-dark, rgba(255, 255, 255, 0.1));
+  border-color: var(--color-border-dark, rgba(255, 255, 255, 0.2));
+  color: var(--color-text-primary-dark, #ffffff);
+}
+
 /* 가족 리스트 - 구분선 없이 연결 */
 .customer-info-family-list {
   flex: 1;

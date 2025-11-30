@@ -20,6 +20,9 @@ import { RelationshipsTab } from '../CustomerDetailView/tabs/RelationshipsTab'
 import { ContractsTab } from '../CustomerDetailView/tabs/ContractsTab'
 import { DocumentsTab } from '../CustomerDetailView/tabs/DocumentsTab'
 import { AnnualReportTab } from '../CustomerDetailView/tabs/AnnualReportTab'
+import { useAddressArchiveController } from '../../controllers/useAddressArchiveController'
+import { AddressArchiveModal } from '../../components/AddressArchiveModal'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import type { Customer } from '@/entities/customer/model'
 import { CustomerService } from '@/services/customerService'
 import { CustomerDocument } from '@/stores/CustomerDocument'
@@ -141,6 +144,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
   }, [isDragging, topLeftWidth, bottomLeftWidth, topRowFlex])
 
   const confirmController = useAppleConfirmController()
+
+  // 🍎 주소 변경 이력 컨트롤러
+  const addressArchiveController = useAddressArchiveController(customerId || '')
 
   // 🍎 고객 데이터 로드
   const loadCustomer = useCallback(async () => {
@@ -585,9 +591,28 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       <tr>
                         <td className="customer-info-table__label">주소</td>
                         <td className="customer-info-table__value" colSpan={7}>
-                          {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
-                          {customer.personal_info?.address?.address1 || '-'}
-                          {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                          <div className="customer-info-table__address-wrapper">
+                            <span className="customer-info-table__address-text">
+                              {customer.personal_info?.address?.postal_code && `(${customer.personal_info.address.postal_code}) `}
+                              {customer.personal_info?.address?.address1 || '-'}
+                              {customer.personal_info?.address?.address2 && ` ${customer.personal_info.address.address2}`}
+                            </span>
+                            <Tooltip content="주소 변경 이력 보기">
+                              <button
+                                className="customer-info-table__address-history-btn"
+                                onClick={addressArchiveController.open}
+                                aria-label="주소 변경 이력"
+                                type="button"
+                              >
+                                <span className="customer-info-table__address-history-label">
+                                  이력({addressArchiveController.addressHistory.length})
+                                </span>
+                                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="customer-info-table__address-history-icon">
+                                  <path d="M2 2h12v3H2V2zm0 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6zm3 3h6v1H5V9z"/>
+                                </svg>
+                              </button>
+                            </Tooltip>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -728,6 +753,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             onCancel={() => setIsCorporateModalVisible(false)}
             customerId={customer._id}
             onSuccess={handleRelationshipSuccess}
+          />
+
+          <AddressArchiveModal
+            isOpen={addressArchiveController.isOpen}
+            onClose={addressArchiveController.close}
+            addressHistory={addressArchiveController.addressHistory}
+            isLoading={addressArchiveController.isLoading}
+            error={addressArchiveController.error}
+            customerName={customer.personal_info?.name || ''}
           />
         </>
       )}
