@@ -21,7 +21,7 @@ import { Dropdown } from '@/shared/ui/Dropdown';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerManagementView.css';
 
-type ActivityPeriod = 'today' | '1week' | '1month' | '3months';
+type ActivityPeriod = '1week' | '1month' | '2months' | '3months';
 
 interface CustomerManagementViewProps {
   /** View 표시 여부 */
@@ -58,7 +58,7 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   onCustomerDoubleClick,
 }) => {
   // 최근 활동 기간 선택 상태
-  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('today');
+  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1week');
 
   // 고객 목록 조회 (통계 계산용)
   const {
@@ -500,15 +500,14 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
     // 기간에 따른 기준 날짜 계산
     switch (activityPeriod) {
-      case 'today':
-        // 오늘 자정부터
-        cutoffDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
       case '1week':
         cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case '1month':
         cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '2months':
+        cutoffDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
         break;
       case '3months':
         cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
@@ -735,9 +734,9 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <Dropdown
               value={activityPeriod}
               options={[
-                { value: 'today', label: '오늘' },
                 { value: '1week', label: '최근 1주일' },
                 { value: '1month', label: '최근 1개월' },
+                { value: '2months', label: '최근 2개월' },
                 { value: '3months', label: '최근 3개월' },
               ]}
               onChange={(value) => setActivityPeriod(value as ActivityPeriod)}

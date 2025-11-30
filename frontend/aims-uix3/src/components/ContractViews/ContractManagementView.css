@@ -72,32 +72,9 @@
   margin-left: -10px;
 }
 
-/* 최근 활동 */
+/* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
 .contract-management-view__recent-activity {
-  max-height: 500px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-
-/* WebKit 브라우저용 스크롤바 스타일 */
-.contract-management-view__recent-activity::-webkit-scrollbar {
-  width: 8px;
-}
-
-.contract-management-view__recent-activity::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.contract-management-view__recent-activity::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-full);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.contract-management-view__recent-activity::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
+  /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
 }
 
 /* 최근 활동 테이블 - 라이트 모드 테두리 적용 */

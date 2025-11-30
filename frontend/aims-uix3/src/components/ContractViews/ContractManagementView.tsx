@@ -21,7 +21,7 @@ import type { Contract } from '@/entities/contract';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './ContractManagementView.css';
 
-type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
+type ActivityPeriod = '1week' | '1month' | '2months' | '3months';
 
 interface ContractManagementViewProps {
   /** View 표시 여부 */
@@ -43,7 +43,7 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
   onNavigate,
 }) => {
   // 최근 활동 기간 선택 상태
-  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1month');
+  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1week');
 
   const queryClient = useQueryClient();
 
@@ -184,14 +184,11 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
       case '1month':
         cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
+      case '2months':
+        cutoffDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+        break;
       case '3months':
         cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case '6months':
-        cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case '1year':
-        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
     }
 
@@ -371,9 +368,8 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
               options={[
                 { value: '1week', label: '최근 1주일' },
                 { value: '1month', label: '최근 1개월' },
+                { value: '2months', label: '최근 2개월' },
                 { value: '3months', label: '최근 3개월' },
-                { value: '6months', label: '최근 6개월' },
-                { value: '1year', label: '최근 1년' },
               ]}
               onChange={(value) => setActivityPeriod(value as ActivityPeriod)}
               aria-label="활동 기간 선택"
