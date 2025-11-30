@@ -58,6 +58,9 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
   const [customerFileDocType, setCustomerFileDocType] = useState<string>('unspecified')
   const [customerFileNotes, setCustomerFileNotes] = useState<string>('')
 
+  // 🍎 처리 로그 표시 상태 (업로드 시작 전에는 숨김)
+  const [isLogVisible, setIsLogVisible] = useState<boolean>(false)
+
   // UI 상태 (localStorage에서 복원)
   const [isGuideExpanded, setIsGuideExpanded] = useState(() => {
     const saved = localStorage.getItem('doc-reg-guide-expanded')
@@ -318,7 +321,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
                 continue;
               }
 
-              // AR 처리 시작
+              // 🍎 AR 처리 시작 시 처리 로그 표시
+              setIsLogVisible(true)
               addLog('success', `[1/4] PDF 분석 완료: ${file.name}`)
               addLog(
                 'ar-detect',
@@ -441,6 +445,8 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
     // 유효한 파일들만 업로드 큐에 추가
     const validFiles = newUploadFiles.filter(f => f.status === 'pending')
     if (validFiles.length > 0) {
+      // 🍎 업로드 시작 시 처리 로그 표시
+      setIsLogVisible(true)
       uploadService.queueFiles(validFiles)
       addLog('info', `[2/4] 일반 문서 ${validFiles.length}개 업로드 시작`)
 
@@ -1102,21 +1108,25 @@ export const DocumentRegistrationView: React.FC<DocumentRegistrationViewProps> =
           disabled={!customerFileCustomer || uploadState.uploading}
         />
 
-        {/* 처리 로그 (업로드 진행률 및 파일 요약 통합) */}
-        <div className="file-log-container">
-          <ProcessingLog
-            logs={processingLogs}
-            maxHeight={9999}
-            onClear={() => {
-              setProcessingLogs([])
-              setUploadState(prev => ({ ...prev, files: [] }))
-            }}
-            uploadState={uploadState}
-            uploadStats={stats}
-            onCancelUpload={handleCancelAll}
-            onRetryFile={handleRetryFile}
-          />
-        </div>
+        {/* 🍎 처리 로그 (업로드 시작 후에만 표시) */}
+        {isLogVisible && (
+          <div className="file-log-container">
+            <ProcessingLog
+              logs={processingLogs}
+              maxHeight={9999}
+              onClear={() => {
+                setProcessingLogs([])
+                setUploadState(prev => ({ ...prev, files: [] }))
+                // 🍎 로그 지우기 시 로그 영역 숨김
+                setIsLogVisible(false)
+              }}
+              uploadState={uploadState}
+              uploadStats={stats}
+              onCancelUpload={handleCancelAll}
+              onRetryFile={handleRetryFile}
+            />
+          </div>
+        )}
 
       </div>
     </CenterPaneView>
