@@ -353,7 +353,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // CustomerFullDetailView 상태 (CenterPane에서 고객 전체 정보 표시)
   const [fullDetailCustomerId, setFullDetailCustomerId] = useState<string | null>(null)
- 
+  // 고객 전체 정보 뷰 열기 전의 전체 UI 상태 저장 (돌아가기 버튼용)
+  const previousUIStateRef = useRef<{
+    view: string | null
+    customer: Customer | null
+    rightPaneVisible: boolean
+    rightPaneContentType: 'document' | 'customer' | null
+  } | null>(null)
+
   // 문서 프리뷰 모달 상태
   const [previewModalVisible, setPreviewModalVisible] = useState(false)
   const [previewModalDocument, setPreviewModalDocument] = useState<PreviewDocumentInfo | null>(null)
@@ -893,6 +900,14 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
   // 고객 전체 정보 페이지 열기 핸들러
   const handleOpenFullDetail = useCallback((customerId: string) => {
+    // 🍎 현재 전체 UI 상태 저장 (돌아가기 버튼에서 복원용)
+    previousUIStateRef.current = {
+      view: activeDocumentView,
+      customer: selectedCustomer,
+      rightPaneVisible: rightPaneVisible,
+      rightPaneContentType: rightPaneContentType,
+    }
+
     // RightPane 완전히 닫기 (콘텐츠 타입도 초기화)
     setSelectedCustomer(null)
     setRightPaneContentType(null)
@@ -904,14 +919,29 @@ function App({ gaps: initialGaps }: AppProps = {}) {
 
     // URL 업데이트 (customerId는 전체 정보 뷰용으로 유지)
     updateURLParams({ view: 'customers-full-detail', customerId, tab: null })
-  }, [updateURLParams])
+  }, [updateURLParams, activeDocumentView, selectedCustomer, rightPaneVisible, rightPaneContentType])
 
   // 고객 전체 정보 페이지 닫기 핸들러
   const handleCloseFullDetail = useCallback(() => {
     setFullDetailCustomerId(null)
-    // 이전 뷰로 복귀 (고객 전체보기)
-    setActiveDocumentView('customers-all')
-    updateURLParams({ view: 'customers-all', customerId: null })
+
+    // 🍎 이전 전체 UI 상태 복원
+    const prevState = previousUIStateRef.current
+    if (prevState) {
+      setActiveDocumentView(prevState.view || 'customers-all')
+      setSelectedCustomer(prevState.customer)
+      setRightPaneContentType(prevState.rightPaneContentType)
+      setRightPaneVisible(prevState.rightPaneVisible)
+      updateURLParams({
+        view: prevState.view || 'customers-all',
+        customerId: prevState.customer?._id || null,
+      })
+      previousUIStateRef.current = null
+    } else {
+      // 폴백: 저장된 상태가 없으면 고객 전체보기로
+      setActiveDocumentView('customers-all')
+      updateURLParams({ view: 'customers-all', customerId: null })
+    }
   }, [updateURLParams])
 
   // 고객 정보 새로고침 핸들러 (수정 시 사용)
