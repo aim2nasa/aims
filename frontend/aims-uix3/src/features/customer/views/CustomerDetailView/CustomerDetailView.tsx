@@ -18,6 +18,7 @@ import { Button } from '../../../../shared/ui/Button';
 import { Tabs, type Tab } from '../../../../components/Tabs';
 import { BasicInfoTab } from './tabs/BasicInfoTab';
 import { RelationshipsTab } from './tabs/RelationshipsTab';
+import { ContractsTab } from './tabs/ContractsTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { AnnualReportTab } from './tabs/AnnualReportTab';
 import type { Customer } from '@/entities/customer/model';
@@ -65,6 +66,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false);
   const [relationshipsCount, setRelationshipsCount] = useState(0);
+  const [contractCount, setContractCount] = useState(0);
   const [documentCount, setDocumentCount] = useState(0);
   const [annualReportCount, setAnnualReportCount] = useState(0);
   const confirmController = useAppleConfirmController();
@@ -325,6 +327,19 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       });
     }
 
+    // 보험 계약 탭 추가
+    baseTabs.push({
+      key: 'contracts',
+      label: '보험 계약',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="2" y="2" width="12" height="12" rx="2"/>
+          <path d="M5 5h6M5 8h6M5 11h4" stroke="white" strokeWidth="1" strokeLinecap="round"/>
+        </svg>
+      ),
+      count: contractCount
+    });
+
     // 문서, Annual Report 탭 추가
     baseTabs.push(
       {
@@ -365,7 +380,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     );
 
     return baseTabs;
-  }, [isBusinessCustomer, relationshipsCount, documentCount, annualReportCount]);
+  }, [isBusinessCustomer, relationshipsCount, contractCount, documentCount, annualReportCount]);
 
   // 🍎 탭 내용 렌더링 (개수 업데이트를 위해 모든 탭을 숨김 상태로 렌더링)
   const renderTabContent = () => {
@@ -394,6 +409,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onRelationshipsCountChange={setRelationshipsCount}
             {...(onSelectCustomer ? { onSelectCustomer } : {})}
             {...(onRefresh ? { onRelationshipsUpdated: onRefresh } : {})}
+          />
+        </div>
+
+        {/* 보험 계약 탭 - 항상 렌더링하여 개수 표시 */}
+        <div className={`customer-detail-view__tab-panel ${activeTab === 'contracts' ? 'customer-detail-view__tab-panel--active' : ''}`}>
+          <ContractsTab
+            customer={customer}
+            onContractCountChange={setContractCount}
           />
         </div>
 
