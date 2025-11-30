@@ -8,7 +8,7 @@
  * - 완전히 새로운 컴팩트 레이아웃
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { CenterPaneView } from '../../../../components/CenterPaneView/CenterPaneView'
 import CustomerEditModal from '../CustomerEditModal'
 import FamilyRelationshipModal from '../../components/FamilyRelationshipModal'
@@ -60,6 +60,13 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
 
   // 🍎 가족 관계 추가 가능 여부
   const [canAddFamilyRelation, setCanAddFamilyRelation] = useState(false)
+
+  // 🍎 리사이즈 상태 (퍼센트 기반)
+  const [topLeftWidth, setTopLeftWidth] = useState(37.5) // 고객정보 폭 %
+  const [bottomLeftWidth, setBottomLeftWidth] = useState(65) // 문서 폭 %
+  const [topRowFlex, setTopRowFlex] = useState(1) // 상단 행 비율
+  const [isDragging, setIsDragging] = useState<'top-h' | 'bottom-h' | 'vertical' | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const confirmController = useAppleConfirmController()
 
@@ -235,6 +242,90 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
     void loadCustomer()
   }, [loadCustomer])
 
+  // 🍎 리사이즈 핸들러 - 수평 (상단 행: 고객정보 ↔ 보험계약)
+  const handleTopHorizontalResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = topLeftWidth
+    const container = contentRef.current
+    if (!container) return
+
+    setIsDragging('top-h')
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const containerRect = container.getBoundingClientRect()
+      const deltaX = moveEvent.clientX - startX
+      const deltaPercent = (deltaX / containerRect.width) * 100
+      const newWidth = Math.max(20, Math.min(80, startWidth + deltaPercent))
+      setTopLeftWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [topLeftWidth])
+
+  // 🍎 리사이즈 핸들러 - 수평 (하단 행: 문서 ↔ Annual Report)
+  const handleBottomHorizontalResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = bottomLeftWidth
+    const container = contentRef.current
+    if (!container) return
+
+    setIsDragging('bottom-h')
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const containerRect = container.getBoundingClientRect()
+      const deltaX = moveEvent.clientX - startX
+      const deltaPercent = (deltaX / containerRect.width) * 100
+      const newWidth = Math.max(20, Math.min(80, startWidth + deltaPercent))
+      setBottomLeftWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [bottomLeftWidth])
+
+  // 🍎 리사이즈 핸들러 - 수직 (상단 행 ↔ 하단 행)
+  const handleVerticalResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startY = e.clientY
+    const startFlex = topRowFlex
+    const container = contentRef.current
+    if (!container) return
+
+    setIsDragging('vertical')
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const containerRect = container.getBoundingClientRect()
+      const deltaY = moveEvent.clientY - startY
+      const deltaPercent = (deltaY / containerRect.height) * 2 // 2배로 민감도 조절
+      const newFlex = Math.max(0.3, Math.min(3, startFlex + deltaPercent))
+      setTopRowFlex(newFlex)
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [topRowFlex])
+
   // 🍎 법인 고객 여부
   const isBusinessCustomer = customer?.insurance_info?.customer_type === '법인'
 
@@ -356,8 +447,17 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
             </div>
 
             {/* 🍎 섹션들 - 스크롤 가능한 컨테이너 */}
-            <div className="customer-full-detail__content">
-              {/* 🍎 상단 행 - 고객정보 | 보험계약 */}
+            <div
+              ref={contentRef}
+              className={`customer-full-detail__content ${isDragging === 'top-h' || isDragging === 'bottom-h' ? 'customer-full-detail--resizing-horizontal' : ''} ${isDragging === 'vertical' ? 'customer-full-detail--resizing-vertical' : ''}`}
+              style={{
+                '--top-left-width': `${topLeftWidth}%`,
+                '--bottom-left-width': `${bottomLeftWidth}%`,
+                '--top-row-flex': topRowFlex,
+                '--bottom-row-flex': 1,
+              } as React.CSSProperties}
+            >
+              {/* 🍎 상단 행 - 고객정보 | 리사이즈 핸들 | 보험계약 */}
               <div className="customer-full-detail__row customer-full-detail__row--top">
                 {/* 🍎 고객 정보 섹션 (기본정보 + 가족관계 통합) */}
                 <section className="customer-full-detail__section customer-full-detail__section--customer-info">
@@ -415,6 +515,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                 </div>
               </section>
 
+              {/* 🍎 리사이즈 핸들 - 고객정보 ↔ 보험계약 */}
+              <div
+                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal ${isDragging === 'top-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                onMouseDown={handleTopHorizontalResize}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="고객정보와 보험계약 사이 크기 조절"
+              />
+
               {/* 🍎 보험 계약 섹션 */}
               <section className="customer-full-detail__section">
                 <h2 className="customer-full-detail__section-title">
@@ -436,7 +545,16 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
               </section>
               </div>
 
-              {/* 🍎 하단 행 - 문서 | Annual Report */}
+              {/* 🍎 리사이즈 핸들 - 상단 행 ↔ 하단 행 */}
+              <div
+                className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--vertical ${isDragging === 'vertical' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                onMouseDown={handleVerticalResize}
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="상단 행과 하단 행 사이 크기 조절"
+              />
+
+              {/* 🍎 하단 행 - 문서 | 리사이즈 핸들 | Annual Report */}
               <div className="customer-full-detail__row customer-full-detail__row--bottom">
                 {/* 🍎 문서 섹션 */}
                 <section className="customer-full-detail__section">
@@ -457,6 +575,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                     />
                   </div>
                 </section>
+
+                {/* 🍎 리사이즈 핸들 - 문서 ↔ Annual Report */}
+                <div
+                  className={`customer-full-detail__resize-handle customer-full-detail__resize-handle--horizontal ${isDragging === 'bottom-h' ? 'customer-full-detail__resize-handle--dragging' : ''}`}
+                  onMouseDown={handleBottomHorizontalResize}
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="문서와 Annual Report 사이 크기 조절"
+                />
 
                 {/* 🍎 Annual Report 섹션 */}
                 <section className="customer-full-detail__section">
