@@ -6,7 +6,7 @@
  * DocumentLibraryView 패턴 기반 구현
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import CenterPaneView from '../CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../SFSymbol'
@@ -27,6 +27,8 @@ interface ContractAllViewProps {
   onClose: () => void
   /** 고객 클릭 핸들러 - RightPane에 고객 상세 정보 표시 */
   onCustomerClick?: (customerId: string, customer: Customer) => void
+  /** 고객 더블클릭 핸들러 - 전체 정보 뷰로 이동 */
+  onCustomerDoubleClick?: (customerId: string) => void
 }
 
 type SortField = 'customer_type' | 'customer_name' | 'product_name' | 'contract_date' | 'policy_number' | 'premium' | 'payment_day' | 'payment_cycle' | 'insured_person' | 'payment_status'
@@ -43,10 +45,14 @@ const ITEMS_PER_PAGE_OPTIONS = [
 export default function ContractAllView({
   visible,
   onClose,
-  onCustomerClick
+  onCustomerClick,
+  onCustomerDoubleClick
 }: ContractAllViewProps) {
   // 🍎 애플 스타일 알림 모달
   const { showAlert } = useAppleConfirm()
+
+  // 🍎 클릭/더블클릭 분리를 위한 타이머 Ref
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 데이터 상태
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -145,20 +151,65 @@ export default function ContractAllView({
     }
   }, [loadContracts])
 
-  // 고객명 클릭 핸들러 - 등록된 고객이면 RightPane에 표시
-  const handleCustomerNameClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {
+  // 🍎 고객명 클릭 핸들러 - 300ms 후 RightPane에 표시 (더블클릭 대기)
+  const handleCustomerClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!onCustomerClick) return
 
-    // customer_id가 있으면 등록된 고객
-    if (contract.customer_id) {
-      try {
-        const customer = await CustomerService.getCustomer(contract.customer_id)
-        onCustomerClick(contract.customer_id, customer)
-      } catch (err) {
-        console.error('[ContractAllView] 고객 조회 실패:', err)
-        setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+    // 이전 타이머가 있으면 취소
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+
+    // 300ms 후 단일 클릭 처리
+    clickTimerRef.current = setTimeout(async () => {
+      clickTimerRef.current = null
+
+      // customer_id가 있으면 등록된 고객
+      if (contract.customer_id) {
+        try {
+          const customer = await CustomerService.getCustomer(contract.customer_id)
+          onCustomerClick(contract.customer_id, customer)
+        } catch (err) {
+          console.error('[ContractAllView] 고객 조회 실패:', err)
+          setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+        }
+      } else {
+        // customer_id가 없으면 이름으로 검색
+        try {
+          const response = await CustomerService.searchCustomers(contract.customer_name || '')
+          const matchedCustomer = response.customers.find(
+            c => c.personal_info?.name === contract.customer_name
+          )
+          if (matchedCustomer) {
+            onCustomerClick(matchedCustomer._id, matchedCustomer)
+          } else {
+            setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+          }
+        } catch (err) {
+          console.error('[ContractAllView] 고객 검색 실패:', err)
+          setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
+        }
       }
+    }, 300)
+  }, [onCustomerClick])
+
+  // 🍎 고객명 더블클릭 핸들러 - 전체 정보 뷰로 이동
+  const handleCustomerDoubleClick = useCallback(async (contract: Contract, e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    // 단일 클릭 타이머 취소
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+
+    if (!onCustomerDoubleClick) return
+
+    // customer_id가 있으면 바로 전체 정보 뷰로 이동
+    if (contract.customer_id) {
+      onCustomerDoubleClick(contract.customer_id)
     } else {
       // customer_id가 없으면 이름으로 검색
       try {
@@ -167,7 +218,7 @@ export default function ContractAllView({
           c => c.personal_info?.name === contract.customer_name
         )
         if (matchedCustomer) {
-          onCustomerClick(matchedCustomer._id, matchedCustomer)
+          onCustomerDoubleClick(matchedCustomer._id)
         } else {
           setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
         }
@@ -176,7 +227,7 @@ export default function ContractAllView({
         setNotRegisteredModal({ isOpen: true, name: contract.customer_name || '알 수 없음' })
       }
     }
-  }, [onCustomerClick])
+  }, [onCustomerDoubleClick])
 
   // 검색 필터링된 계약 목록
   const filteredContracts = useMemo(() => {
@@ -758,7 +809,8 @@ export default function ContractAllView({
               </span>
               <span
                 className={`contract-customer ${contract.customer_id ? 'contract-customer--clickable' : ''}`}
-                onClick={contract.customer_id ? (e) => handleCustomerNameClick(contract, e) : undefined}
+                onClick={contract.customer_id ? (e) => handleCustomerClick(contract, e) : undefined}
+                onDoubleClick={contract.customer_id ? (e) => handleCustomerDoubleClick(contract, e) : undefined}
               >
                 {contract.customer_name || '-'}
               </span>
