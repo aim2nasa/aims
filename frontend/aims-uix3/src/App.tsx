@@ -756,8 +756,12 @@ function App({ gaps: initialGaps }: AppProps = {}) {
     }
   }, [openRequested, clearOpenRequest, updateURLParams])
 
+  // 🍎 기본 View (빈 CenterPane 방지)
+  const DEFAULT_VIEW = 'customers'
+
   const closeDocumentView = useCallback(() => {
-    setActiveDocumentView(null)
+    // null 대신 기본 View로 설정하여 빈 CenterPane 방지
+    setActiveDocumentView(DEFAULT_VIEW)
   }, [])
 
   // 문서 클릭 핸들러 - RightPane 열기 및 문서 프리뷰
