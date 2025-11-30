@@ -1289,6 +1289,8 @@ function App({ gaps: initialGaps }: AppProps = {}) {
               visible={activeDocumentView === 'customers'}
               onClose={closeDocumentView}
               onNavigate={handleMenuClick}
+              onCustomerClick={handleCustomerClick}
+              onCustomerDoubleClick={(customerId) => handleOpenFullDetail(customerId)}
             />
           </Suspense>
 

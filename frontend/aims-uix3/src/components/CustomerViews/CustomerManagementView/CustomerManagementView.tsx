@@ -21,7 +21,7 @@ import { Dropdown } from '@/shared/ui/Dropdown';
 import { formatDate } from '@/shared/lib/timeUtils';
 import './CustomerManagementView.css';
 
-type ActivityPeriod = '1week' | '1month' | '3months' | '6months' | '1year';
+type ActivityPeriod = 'today' | '1week' | '1month' | '3months';
 
 interface CustomerManagementViewProps {
   /** View 표시 여부 */
@@ -30,6 +30,10 @@ interface CustomerManagementViewProps {
   onClose: () => void;
   /** 메뉴 네비게이션 핸들러 */
   onNavigate?: (menuKey: string) => void;
+  /** 고객 클릭 핸들러 (싱글 클릭 - RightPane 표시) */
+  onCustomerClick?: (customerId: string) => void;
+  /** 고객 더블클릭 핸들러 (더블 클릭 - 전체 정보 뷰로 이동) */
+  onCustomerDoubleClick?: (customerId: string) => void;
 }
 
 /**
@@ -50,9 +54,11 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
   visible,
   onClose,
   onNavigate,
+  onCustomerClick,
+  onCustomerDoubleClick,
 }) => {
   // 최근 활동 기간 선택 상태
-  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('1month');
+  const [activityPeriod, setActivityPeriod] = useState<ActivityPeriod>('today');
 
   // 고객 목록 조회 (통계 계산용)
   const {
@@ -494,6 +500,10 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
 
     // 기간에 따른 기준 날짜 계산
     switch (activityPeriod) {
+      case 'today':
+        // 오늘 자정부터
+        cutoffDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
       case '1week':
         cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
@@ -502,12 +512,6 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
         break;
       case '3months':
         cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case '6months':
-        cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case '1year':
-        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
     }
 
@@ -731,11 +735,10 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
             <Dropdown
               value={activityPeriod}
               options={[
+                { value: 'today', label: '오늘' },
                 { value: '1week', label: '최근 1주일' },
                 { value: '1month', label: '최근 1개월' },
                 { value: '3months', label: '최근 3개월' },
-                { value: '6months', label: '최근 6개월' },
-                { value: '1year', label: '최근 1년' },
               ]}
               onChange={(value) => setActivityPeriod(value as ActivityPeriod)}
               aria-label="활동 기간 선택"
@@ -839,7 +842,23 @@ export const CustomerManagementView: React.FC<CustomerManagementViewProps> = ({
                         <span className="activity-text">{activityText}</span>
                       </div>
                       <div className="recent-cell-icon">{customerTypeIcon}</div>
-                      <div className="recent-cell-name">{customer.personal_info?.name || '이름 없음'}</div>
+                      {(onCustomerClick || onCustomerDoubleClick) ? (
+                        <div
+                          className="recent-cell-name recent-cell-name--clickable"
+                          onClick={() => onCustomerClick?.(customer._id)}
+                          onDoubleClick={() => onCustomerDoubleClick?.(customer._id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && onCustomerClick) {
+                              e.preventDefault();
+                              onCustomerClick(customer._id);
+                            }
+                          }}
+                        >{customer.personal_info?.name || '이름 없음'}</div>
+                      ) : (
+                        <div className="recent-cell-name">{customer.personal_info?.name || '이름 없음'}</div>
+                      )}
                       <div className="recent-cell-phone">{phone}</div>
                       <div className="recent-cell-address">{shortAddress}</div>
                       <div className="recent-cell-time">{formatRelativeTime(displayTime)}</div>

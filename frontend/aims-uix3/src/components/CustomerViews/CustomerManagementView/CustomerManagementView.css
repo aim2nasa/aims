@@ -24,6 +24,11 @@
   margin-bottom: var(--spacing-4);
 }
 
+/* 최근 활동 드롭다운 최소 폭 - "최근 6개월" 기준 */
+.customer-management-view__section-header .ios-dropdown {
+  min-width: 130px;
+}
+
 .customer-management-view__section-title {
   font-size: var(--font-size-caption-1);
   font-weight: var(--font-weight-semibold);
@@ -155,35 +160,9 @@
   margin: 0 auto; /* 중앙 정렬 */
 }
 
-/* 최근 활동 (사용 가이드와 동일한 폭 사용) */
+/* 최근 활동 - CenterPane 수직 스크롤로 전체 목록 표시 */
 .customer-management-view__recent-activity {
-  /* max-width 제거하여 전체 폭 사용 */
-  max-height: 500px;
-  overflow-y: auto;
-
-  /* iOS 스타일 스크롤바 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-
-/* WebKit 브라우저용 스크롤바 스타일 */
-.customer-management-view__recent-activity::-webkit-scrollbar {
-  width: 8px;
-}
-
-.customer-management-view__recent-activity::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.customer-management-view__recent-activity::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-full);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.customer-management-view__recent-activity::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-tertiary);
+  /* max-height 없음 - 전체 목록 표시, CenterPane 스크롤 사용 */
 }
 
 /* 최근 활동 테이블 */
@@ -262,6 +241,28 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 클릭 가능한 이름 셀 - 싱글클릭: RightPane, 더블클릭: 전체 정보 */
+.recent-cell-name--clickable {
+  cursor: pointer;
+  color: var(--color-primary-500);
+  transition: color var(--duration-fast) var(--easing-ease-out);
+}
+
+.recent-cell-name--clickable:hover {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.recent-cell-name--clickable:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.recent-cell-name--clickable:active {
+  color: var(--color-primary-700);
 }
 
 .recent-cell-phone {
