@@ -79,6 +79,9 @@ export default function CustomerExcelImporter() {
   const [showSkipped, setShowSkipped] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
 
+  // 액션 로그 (계약 가져오기와 동일한 UX)
+  const [actionLog, setActionLog] = useState<string | null>(null)
+
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
   const customerType = currentSheet ? detectCustomerType(currentSheet.name) : '개인'
@@ -249,18 +252,16 @@ export default function CustomerExcelImporter() {
       // customerChanged 이벤트 발생
       window.dispatchEvent(new CustomEvent('customerChanged'))
 
-      showAlert({
-        title: '가져오기 완료',
-        message: `${result.createdCount}건 등록, ${result.updatedCount}건 업데이트, ${result.skippedCount}건 건너뜀`,
-        iconType: 'success'
-      })
+      // 액션 로그로 결과 표시 (계약 가져오기와 동일한 UX)
+      const parts: string[] = []
+      if (result.createdCount > 0) parts.push(`등록 ${result.createdCount}`)
+      if (result.updatedCount > 0) parts.push(`업데이트 ${result.updatedCount}`)
+      if (result.skippedCount > 0) parts.push(`건너뜀 ${result.skippedCount}`)
+      if (result.errorCount > 0) parts.push(`오류 ${result.errorCount}`)
+      setActionLog(`✓ 고객 가져오기 완료: ${parts.join(' | ')}`)
     } catch (error) {
       console.error('고객 가져오기 오류:', error)
-      showAlert({
-        title: '가져오기 실패',
-        message: error instanceof Error ? error.message : '고객 가져오기에 실패했습니다.',
-        iconType: 'error'
-      })
+      setActionLog(`✗ 가져오기 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     } finally {
       setIsImporting(false)
     }
@@ -395,6 +396,20 @@ export default function CustomerExcelImporter() {
           </span>
         </div>
         <div className="customer-excel-importer__actions">
+          {/* 액션 로그 메시지 */}
+          {actionLog && !isImporting && (
+            <div className="customer-excel-importer__action-log">
+              {actionLog}
+              <button
+                type="button"
+                className="customer-excel-importer__action-log-clear"
+                onClick={() => setActionLog(null)}
+                title="로그 지우기"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <Button
             variant="primary"
             size="sm"

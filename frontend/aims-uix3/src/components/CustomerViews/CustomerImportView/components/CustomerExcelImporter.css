@@ -238,7 +238,47 @@ html[data-theme="dark"] .customer-excel-importer__format-legend-item--required {
 
 .customer-excel-importer__actions {
   display: flex;
+  align-items: center;
   gap: var(--spacing-2);
+}
+
+/* === ACTION LOG === */
+
+.customer-excel-importer__action-log {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-excel-importer__action-log-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.customer-excel-importer__action-log-clear:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
 }
 
 /* === TABS === */
