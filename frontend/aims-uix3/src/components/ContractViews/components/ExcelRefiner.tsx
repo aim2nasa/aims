@@ -1416,8 +1416,8 @@ export function ExcelRefiner() {
     } else if (problematicRows.length > 0) {
       // 문제 발견
       return { step: 3, label: '데이터 수정', message: `${problematicRows.length}개 문제 발견 → '검증 초기화' 클릭 → 컬럼별로 검증하며 수정`, resultStatus: null }
-    } else if (validatedRequiredCount === requiredColIndices.length && requiredColIndices.length > 0) {
-      // 모든 필수 컬럼 검증 완료, 문제 없음
+    } else if (validatedRequiredCount === requiredColIndices.length && requiredColIndices.length === requiredTypes.length) {
+      // 모든 필수 컬럼(4개) 검증 완료, 문제 없음
       // 등록 결과가 있으면 결과 메시지 표시
       if (importResult && resultStatus) {
         let message = ''
@@ -1431,6 +1431,10 @@ export function ExcelRefiner() {
         return { step: 4, label: '등록', message, resultStatus }
       }
       return { step: 4, label: '가져오기', message: "'계약 가져오기' 버튼을 클릭하여 계약 데이터를 등록하세요.", resultStatus: null }
+    } else if (requiredColIndices.length < requiredTypes.length) {
+      // 필수 4개 컬럼이 없는 시트 (개인/법인 등)
+      const missingCount = requiredTypes.length - requiredColIndices.length
+      return { step: 1, label: '컬럼 부족', message: `필수 컬럼 ${missingCount}개 누락. 계약 데이터가 있는 시트를 선택하세요.`, resultStatus: null }
     } else {
       // 일부 필수 컬럼만 검증됨
       return { step: 2, label: '검증 계속', message: `필수 컬럼 ${validatedRequiredCount}/${requiredColIndices.length}개 검증 완료. 계속 검증하세요.`, resultStatus: null }
