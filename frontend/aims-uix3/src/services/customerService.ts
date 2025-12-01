@@ -28,6 +28,7 @@ const ENDPOINTS = {
   CUSTOMER_STATS: '/api/customers/stats',
   CUSTOMER_EXPORT: '/api/customers/export',
   CUSTOMER_IMPORT: '/api/customers/import',
+  CUSTOMER_BULK: '/api/customers/bulk',
 } as const;
 
 /**
@@ -296,6 +297,27 @@ export class CustomerService {
   }
 
   /**
+   * 고객 일괄 등록/업데이트 (Excel Import용)
+   * - 고객명 기준 upsert: 존재하면 업데이트, 없으면 생성
+   */
+  static async bulkImportCustomers(customers: BulkCustomerInput[]): Promise<BulkImportResult> {
+    if (!customers || customers.length === 0) {
+      throw new Error('고객 데이터가 필요합니다');
+    }
+
+    const response = await api.post<{ success: boolean; message: string; data: BulkImportResult }>(
+      ENDPOINTS.CUSTOMER_BULK,
+      { customers }
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || '고객 일괄 등록에 실패했습니다');
+    }
+
+    return response.data;
+  }
+
+  /**
    * 고객 일괄 삭제 (소프트 삭제)
    */
   static async deleteCustomers(ids: string[]): Promise<void> {
@@ -355,6 +377,32 @@ export interface ImportCustomersResult {
 }
 
 /**
+ * 고객 일괄 등록 입력 데이터
+ */
+export interface BulkCustomerInput {
+  name: string;
+  customer_type: '개인' | '법인';
+  mobile_phone?: string;
+  address?: string;
+  gender?: string;
+  birth_date?: string;
+}
+
+/**
+ * 고객 일괄 등록 결과
+ */
+export interface BulkImportResult {
+  createdCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  created: Array<{ name: string; _id: string }>;
+  updated: Array<{ name: string; _id: string; changes: string[] }>;
+  skipped: Array<{ name: string; reason: string }>;
+  errors: Array<{ name: string; reason: string }>;
+}
+
+/**
  * 편의를 위한 함수 내보내기 (기존 API와 호환성 유지)
  */
 export const {
@@ -370,6 +418,7 @@ export const {
   getCustomerStats,
   exportCustomers,
   importCustomers,
+  bulkImportCustomers,
 } = CustomerService;
 
 /**

@@ -38,7 +38,10 @@ export const PersonalInfoSchema = z.object({
   name: z.string().optional(),
   name_en: z.string().optional(),
   birth_date: z.string().nullable().optional(),
-  gender: z.enum(['M', 'F']).optional(),
+  gender: z.preprocess(
+    (val) => (val === '남' ? 'M' : val === '여' ? 'F' : val === null ? undefined : val),
+    z.enum(['M', 'F']).optional()
+  ),
   mobile_phone: z.string().optional(),
   home_phone: z.string().optional(),
   work_phone: z.string().optional(),

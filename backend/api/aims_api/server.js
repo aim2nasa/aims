@@ -2090,6 +2090,179 @@ app.post('/api/customers', authenticateJWT, async (req, res) => {
 });
 
 /**
+ * POST /api/customers/bulk
+ * 고객 일괄 등록/업데이트 (Excel Import용)
+ * - 고객명 기준 upsert: 존재하면 업데이트, 없으면 생성
+ * - 변경사항 없으면 건너뜀
+ */
+app.post('/api/customers/bulk', authenticateJWT, async (req, res) => {
+  try {
+    const { customers } = req.body;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId required'
+      });
+    }
+
+    if (!Array.isArray(customers) || customers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '고객 데이터가 비어있습니다.'
+      });
+    }
+
+    const now = utcNowDate();
+
+    // 해당 설계사의 기존 고객 목록 조회 (이름으로 매칭)
+    const existingCustomers = await db.collection(CUSTOMERS_COLLECTION)
+      .find({ 'meta.created_by': userId })
+      .toArray();
+
+    const customerMap = new Map();
+    existingCustomers.forEach(c => {
+      const name = c.personal_info?.name?.trim();
+      if (name) customerMap.set(name, c);
+    });
+
+    const created = [];
+    const updated = [];
+    const skipped = [];
+    const errors = [];
+
+    for (const customer of customers) {
+      try {
+        const name = customer.name?.trim();
+        if (!name) {
+          errors.push({ name: customer.name || '(이름없음)', reason: '고객명 누락' });
+          continue;
+        }
+
+        const existingCustomer = customerMap.get(name);
+
+        if (existingCustomer) {
+          // 기존 고객 존재 - 업데이트 필요 여부 확인
+          const changes = [];
+          const updateFields = {};
+
+          // 연락처 비교/업데이트
+          if (customer.mobile_phone && customer.mobile_phone !== existingCustomer.personal_info?.mobile_phone) {
+            updateFields['personal_info.mobile_phone'] = customer.mobile_phone;
+            changes.push('연락처');
+          }
+
+          // 주소 비교/업데이트
+          if (customer.address && customer.address !== existingCustomer.personal_info?.address?.address1) {
+            updateFields['personal_info.address.address1'] = customer.address;
+            changes.push('주소');
+          }
+
+          // 성별 비교/업데이트 (개인 고객만)
+          if (customer.gender) {
+            const normalizedGender = customer.gender === '남' || customer.gender === 'M' ? 'M' :
+                                     customer.gender === '여' || customer.gender === 'F' ? 'F' : null;
+            if (normalizedGender && normalizedGender !== existingCustomer.personal_info?.gender) {
+              updateFields['personal_info.gender'] = normalizedGender;
+              changes.push('성별');
+            }
+          }
+
+          // 생년월일 비교/업데이트 (개인 고객만)
+          if (customer.birth_date && customer.birth_date !== existingCustomer.personal_info?.birth_date) {
+            updateFields['personal_info.birth_date'] = customer.birth_date;
+            changes.push('생년월일');
+          }
+
+          // 고객 유형 비교/업데이트
+          if (customer.customer_type && customer.customer_type !== existingCustomer.insurance_info?.customer_type) {
+            updateFields['insurance_info.customer_type'] = customer.customer_type;
+            changes.push('고객유형');
+          }
+
+          if (changes.length > 0) {
+            // 변경사항 있음 - 업데이트
+            updateFields['meta.updated_at'] = now;
+            updateFields['meta.last_modified_by'] = userId;
+
+            await db.collection(CUSTOMERS_COLLECTION).updateOne(
+              { _id: existingCustomer._id },
+              { $set: updateFields }
+            );
+
+            updated.push({ name, _id: existingCustomer._id.toString(), changes });
+          } else {
+            // 변경사항 없음 - 건너뜀
+            skipped.push({ name, reason: '변경사항 없음' });
+          }
+        } else {
+          // 신규 고객 생성
+          const normalizedGender = customer.gender === '남' || customer.gender === 'M' ? 'M' :
+                                   customer.gender === '여' || customer.gender === 'F' ? 'F' : undefined;
+
+          const newCustomer = {
+            personal_info: {
+              name: name,
+              mobile_phone: customer.mobile_phone || undefined,
+              gender: normalizedGender,
+              birth_date: customer.birth_date || undefined,
+              address: customer.address ? { address1: customer.address } : undefined
+            },
+            insurance_info: {
+              customer_type: customer.customer_type || '개인'
+            },
+            contracts: [],
+            documents: [],
+            consultations: [],
+            tags: [],
+            meta: {
+              created_at: now,
+              updated_at: now,
+              created_by: userId,
+              last_modified_by: userId,
+              status: 'active',
+              source: 'excel_import'
+            }
+          };
+
+          const result = await db.collection(CUSTOMERS_COLLECTION).insertOne(newCustomer);
+          created.push({ name, _id: result.insertedId.toString() });
+
+          // 현재 배치 내 중복 방지를 위해 맵에 추가
+          customerMap.set(name, { ...newCustomer, _id: result.insertedId });
+        }
+      } catch (itemError) {
+        errors.push({ name: customer.name || '(이름없음)', reason: itemError.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `${created.length}건 등록, ${updated.length}건 업데이트, ${skipped.length}건 건너뜀`,
+      data: {
+        createdCount: created.length,
+        updatedCount: updated.length,
+        skippedCount: skipped.length,
+        errorCount: errors.length,
+        created: created.slice(0, 50),
+        updated: updated.slice(0, 50),
+        skipped: skipped.slice(0, 50),
+        errors: errors.slice(0, 50)
+      }
+    });
+
+  } catch (error) {
+    console.error('고객 일괄 등록 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '고객 일괄 등록에 실패했습니다.',
+      details: error.message
+    });
+  }
+});
+
+/**
  * 고객 상세 정보 조회 API
  * ⭐ 설계사별 고객 데이터 격리 적용
  */
