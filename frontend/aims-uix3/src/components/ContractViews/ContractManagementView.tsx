@@ -264,8 +264,8 @@ export const ContractManagementView: React.FC<ContractManagementViewProps> = ({
           style={{ color: 'var(--color-ios-green)' }}
         />
       ),
-      title: '계약 가져오기',
-      description: '엑셀 파일에서 계약 데이터를 일괄 가져옵니다. 보험사 양식에 맞는 파일을 업로드하세요.',
+      title: '계약 일괄등록',
+      description: '엑셀 파일에서 계약 데이터를 일괄 등록합니다. 보험사 양식에 맞는 파일을 업로드하세요.',
       ...(onNavigate && { onClick: () => onNavigate('contracts-import') }),
     },
   ];

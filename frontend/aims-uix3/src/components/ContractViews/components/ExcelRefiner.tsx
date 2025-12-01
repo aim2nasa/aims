@@ -1430,7 +1430,7 @@ export function ExcelRefiner() {
         }
         return { step: 4, label: '등록', message, resultStatus }
       }
-      return { step: 4, label: '가져오기', message: "'계약 가져오기' 버튼을 클릭하여 계약 데이터를 등록하세요.", resultStatus: null }
+      return { step: 4, label: '일괄등록', message: "'계약 일괄등록' 버튼을 클릭하여 계약 데이터를 등록하세요.", resultStatus: null }
     } else if (requiredColIndices.length < requiredTypes.length) {
       // 필수 4개 컬럼이 없는 시트 (개인/법인 등)
       const missingCount = requiredTypes.length - requiredColIndices.length
@@ -1774,7 +1774,7 @@ export function ExcelRefiner() {
                         onClick={handleImportContracts}
                         disabled={isImporting}
                       >
-                        {isImporting ? '가져오는 중...' : '계약 가져오기'}
+                        {isImporting ? '등록 중...' : '계약 일괄등록'}
                       </Button>
                     </>
                   ) : problematicRows.length > 0 ? (
@@ -2180,11 +2180,11 @@ export function ExcelRefiner() {
         )}
       </Modal>
 
-      {/* 계약 가져오기 확인 모달 */}
+      {/* 계약 일괄등록 확인 모달 */}
       <Modal
         visible={importConfirmModal.isOpen}
         onClose={() => setImportConfirmModal({ isOpen: false, customerCount: 0, customerNames: [] })}
-        title="계약 가져오기"
+        title="계약 일괄등록"
         size="sm"
         backdropClosable
       >

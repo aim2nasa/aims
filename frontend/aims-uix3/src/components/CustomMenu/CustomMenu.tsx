@@ -331,14 +331,14 @@ const CustomMenu = ({
         {
           key: 'customers-import',
           icon: <span className="menu-icon-blue"><SFSymbol name="person-2-fill" size={SFSymbolSize.CALLOUT} weight={SFSymbolWeight.MEDIUM} /></span>,
-          label: '고객 가져오기',
-          tooltipTitle: '엑셀 파일에서 고객 정보를 가져옵니다',
+          label: '고객 일괄등록',
+          tooltipTitle: '엑셀 파일에서 고객 정보를 일괄 등록합니다',
         },
         {
           key: 'contracts-import',
           icon: <span className="menu-icon-green"><MenuIcons.ContractImport /></span>,
-          label: '계약 가져오기',
-          tooltipTitle: '엑셀 파일에서 계약 정보를 가져옵니다',
+          label: '계약 일괄등록',
+          tooltipTitle: '엑셀 파일에서 계약 정보를 일괄 등록합니다',
         }
       ]
     },

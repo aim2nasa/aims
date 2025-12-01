@@ -322,16 +322,16 @@ export default function CustomerExcelImporter() {
       // customerChanged 이벤트 발생
       window.dispatchEvent(new CustomEvent('customerChanged'))
 
-      // 액션 로그로 결과 표시 (계약 가져오기와 동일한 UX)
+      // 액션 로그로 결과 표시 (계약 일괄등록과 동일한 UX)
       const parts: string[] = []
       if (result.createdCount > 0) parts.push(`등록 ${result.createdCount}`)
       if (result.updatedCount > 0) parts.push(`업데이트 ${result.updatedCount}`)
       if (result.skippedCount > 0) parts.push(`건너뜀 ${result.skippedCount}`)
       if (result.errorCount > 0) parts.push(`오류 ${result.errorCount}`)
-      setActionLog(`✓ 고객 가져오기 완료: ${parts.join(' | ')}`)
+      setActionLog(`✓ 고객 일괄등록 완료: ${parts.join(' | ')}`)
     } catch (error) {
-      console.error('고객 가져오기 오류:', error)
-      setActionLog(`✗ 가져오기 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+      console.error('고객 일괄등록 오류:', error)
+      setActionLog(`✗ 일괄등록 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     } finally {
       setIsImporting(false)
     }

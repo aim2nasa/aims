@@ -2,7 +2,7 @@
  * ContractImportView Component
  * @since 1.0.0
  *
- * 계약 가져오기 뷰 - Excel Refiner 통합
+ * 계약 일괄등록 뷰 - Excel Refiner 통합
  * CenterPaneView 기반 구현
  */
 
@@ -24,7 +24,7 @@ export default function ContractImportView({
   return (
     <CenterPaneView
       visible={visible}
-      title="계약 가져오기"
+      title="계약 일괄등록"
       titleIcon={
         <span className="menu-icon-green">
           <SFSymbol
@@ -36,7 +36,7 @@ export default function ContractImportView({
       }
       onClose={onClose}
       placeholderIcon="tablecells"
-      placeholderMessage="엑셀 파일에서 계약 정보를 가져옵니다."
+      placeholderMessage="엑셀 파일에서 계약 정보를 일괄 등록합니다."
     >
       <div className="contract-import-view">
         <ExcelRefiner />

@@ -1,6 +1,6 @@
 /**
  * CustomerImportView Component
- * 고객 가져오기 뷰 - Excel 파일에서 고객 일괄 등록
+ * 고객 일괄등록 뷰 - Excel 파일에서 고객 일괄 등록
  */
 
 import CenterPaneView from '../../CenterPaneView/CenterPaneView'
@@ -20,7 +20,7 @@ export default function CustomerImportView({
   return (
     <CenterPaneView
       visible={visible}
-      title="고객 가져오기"
+      title="고객 일괄등록"
       titleIcon={
         <span className="menu-icon-blue">
           <SFSymbol
@@ -32,7 +32,7 @@ export default function CustomerImportView({
       }
       onClose={onClose}
       placeholderIcon="person.crop.rectangle.stack"
-      placeholderMessage="엑셀 파일에서 고객 정보를 가져옵니다."
+      placeholderMessage="엑셀 파일에서 고객 정보를 일괄 등록합니다."
     >
       <div className="customer-import-view">
         <CustomerExcelImporter />
