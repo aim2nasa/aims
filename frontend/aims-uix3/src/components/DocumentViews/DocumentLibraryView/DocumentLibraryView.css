@@ -859,7 +859,7 @@ html[data-theme="dark"] .document-item:active {
   align-items: center;
   justify-content: center;
   min-width: 18px;
-  height: 14px;
+  height: 12px;
   padding: 0 3px;
   background-color: var(--color-badge-ar);
   border-radius: 6px;
