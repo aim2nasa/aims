@@ -1337,6 +1337,10 @@ export function ExcelRefiner() {
         console.error('고객 생성 오류:', customerErrors)
       }
 
+      // 가져오기 완료 후 이벤트 발생 (대시보드 동기화)
+      window.dispatchEvent(new CustomEvent('customerChanged'))
+      window.dispatchEvent(new CustomEvent('contractChanged'))
+
     } catch (err) {
       console.error('가져오기 오류:', err)
       showAlert({

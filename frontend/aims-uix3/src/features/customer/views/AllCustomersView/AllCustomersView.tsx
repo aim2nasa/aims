@@ -8,6 +8,7 @@
  */
 
 import React, { forwardRef, useImperativeHandle, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider';
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../../components/SFSymbol';
 import { Dropdown, Tooltip, Modal } from '@/shared/ui';
@@ -46,6 +47,9 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
   function AllCustomersView({ onCustomerClick, onCustomerDoubleClick }, ref) {
     // 🍎 애플 스타일 알림 모달
     const { showAlert } = useAppleConfirm();
+
+    // React Query 캐시 무효화를 위한 queryClient
+    const queryClient = useQueryClient();
 
     // F5 이후에도 유지되는 상태들
     const [itemsPerPage, setItemsPerPage] = usePersistedState('customer-all-items-per-page', '15');
@@ -386,6 +390,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         await refresh({ limit: 10000, page: 1 });
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
+
+        // 고객 관리 뷰 통계 즉시 반영을 위한 쿼리 캐시 무효화
+        queryClient.invalidateQueries({ queryKey: ['allCustomers'] });
+        queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
       } catch (error) {
         console.error('[AllCustomersView] 고객 삭제 실패:', error);
         showAlert({
@@ -422,6 +430,10 @@ export const AllCustomersView = forwardRef<AllCustomersViewRef, AllCustomersView
         await refresh({ limit: 10000, page: 1 });
         setSelectedCustomerIds(new Set());
         setIsDeleteMode(false);
+
+        // 고객 관리 뷰 통계 즉시 반영을 위한 쿼리 캐시 무효화
+        queryClient.invalidateQueries({ queryKey: ['allCustomers'] });
+        queryClient.invalidateQueries({ queryKey: ['allRelationships'] });
       } catch (error) {
         console.error('[AllCustomersView] 고객 전체 삭제 실패:', error);
         showAlert({

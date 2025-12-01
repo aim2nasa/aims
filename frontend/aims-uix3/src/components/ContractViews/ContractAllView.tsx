@@ -446,6 +446,9 @@ export default function ContractAllView({
       await loadContracts()
       setSelectedContractIds(new Set())
       setIsDeleteMode(false)
+
+      // 계약 관리 대시보드 동기화를 위한 이벤트 발생
+      window.dispatchEvent(new CustomEvent('contractChanged'))
     } catch (error) {
       console.error('[ContractAllView] 계약 삭제 실패:', error)
       showAlert({
@@ -482,6 +485,9 @@ export default function ContractAllView({
       await loadContracts()
       setSelectedContractIds(new Set())
       setIsDeleteMode(false)
+
+      // 계약 관리 대시보드 동기화를 위한 이벤트 발생
+      window.dispatchEvent(new CustomEvent('contractChanged'))
     } catch (error) {
       console.error('[ContractAllView] 계약 전체 삭제 실패:', error)
       showAlert({
