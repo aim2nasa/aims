@@ -642,7 +642,7 @@ describe('API_CONFIG', () => {
   it('API 설정이 올바르게 정의되어야 함', () => {
     expect(API_CONFIG).toBeDefined();
     expect(API_CONFIG.BASE_URL).toBeDefined();
-    expect(API_CONFIG.TIMEOUT).toBe(10000);
+    expect(API_CONFIG.TIMEOUT).toBe(30000);
     expect(API_CONFIG.DEFAULT_HEADERS).toEqual({
       'Content-Type': 'application/json'
     });

@@ -13,7 +13,7 @@ const API_DEBUG = false;
 // API 설정
 export const API_CONFIG = {
   BASE_URL: import.meta.env['VITE_API_BASE_URL'] || '',
-  TIMEOUT: 10000, // 10초
+  TIMEOUT: 30000, // 30초
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
   },
