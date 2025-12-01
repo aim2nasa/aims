@@ -3,7 +3,7 @@
  * 고객 엑셀 가져오기 핵심 컴포넌트
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useAppleConfirm } from '@/contexts/AppleConfirmProvider'
 import { Button } from '@/shared/ui/Button'
 import {
@@ -58,6 +58,45 @@ function detectCustomerType(sheetName: string): '개인' | '법인' {
   return '개인'
 }
 
+// sessionStorage 키
+const STORAGE_KEY = 'customerExcelImporter_state'
+
+// sessionStorage에 저장할 상태 타입
+interface PersistedState {
+  fileName: string | null
+  sheets: SheetData[]
+  activeSheetIndex: number
+}
+
+// sessionStorage에서 상태 로드
+function loadPersistedState(): PersistedState | null {
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (!saved) return null
+    return JSON.parse(saved) as PersistedState
+  } catch {
+    return null
+  }
+}
+
+// sessionStorage에 상태 저장
+function savePersistedState(state: PersistedState): void {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // 저장 실패 시 무시 (quota 초과 등)
+  }
+}
+
+// sessionStorage에서 상태 삭제
+function clearPersistedState(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // 삭제 실패 시 무시
+  }
+}
+
 export default function CustomerExcelImporter() {
   const { showAlert, showConfirm } = useAppleConfirm()
 
@@ -81,6 +120,34 @@ export default function CustomerExcelImporter() {
 
   // 액션 로그 (계약 가져오기와 동일한 UX)
   const [actionLog, setActionLog] = useState<string | null>(null)
+
+  // 초기화 완료 여부 (sessionStorage 로드 후 true)
+  const initialized = useRef(false)
+
+  // sessionStorage에서 상태 복원 (마운트 시 1회)
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
+    const saved = loadPersistedState()
+    if (saved) {
+      setFileName(saved.fileName)
+      setSheets(saved.sheets)
+      setActiveSheetIndex(saved.activeSheetIndex)
+    }
+  }, [])
+
+  // 상태 변경 시 sessionStorage에 저장
+  useEffect(() => {
+    if (!initialized.current) return
+    if (!fileName) return // 파일 없으면 저장하지 않음
+
+    savePersistedState({
+      fileName,
+      sheets,
+      activeSheetIndex
+    })
+  }, [fileName, sheets, activeSheetIndex])
 
   // 현재 시트 데이터
   const currentSheet = sheets[activeSheetIndex] || null
@@ -169,6 +236,9 @@ export default function CustomerExcelImporter() {
     setShowUpdated(false)
     setShowSkipped(false)
     setShowErrors(false)
+    setActionLog(null)
+    // sessionStorage 정리
+    clearPersistedState()
   }, [])
 
   // 시트 탭 변경
